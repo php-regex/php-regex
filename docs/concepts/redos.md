@@ -73,7 +73,7 @@ The result says which of the two decided: `proof` is `proven`, `heuristic`, `bud
 
 {% include install-prerelease.html package="php-regex/regex-cli" %}
 
-The CLI commands live in the `regex` binary; the PHP API lives in `php-regex/regex-toolkit`. The pre-release monorepo above installs both, binary included.
+The CLI commands live in the `regex` binary from `php-regex/regex-cli`; the PHP API lives in `php-regex/regex-toolkit`.
 
 ## Using PHPRegex for ReDoS protection
 

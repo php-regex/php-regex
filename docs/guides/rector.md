@@ -26,9 +26,9 @@ composer require --working-dir=tools/rector --dev rector/rector php-regex/regex-
 tools/rector/vendor/bin/rector process
 ```
 
-Under the pre-release monorepo install, the rules already sit in your
-project's vendor: Rector alone goes in that directory,
-`composer require --working-dir=tools/rector --dev rector/rector`.
+If Rector lives in your project's vendor, `php-regex/regex-rector` installs the
+rules beside it. If Rector lives under `tools/rector`, install both packages in
+that directory, as above.
 
 ## Configuration
 

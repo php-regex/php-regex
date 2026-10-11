@@ -25,10 +25,8 @@ includes:
 ```
 {: data-file="phpstan.neon" }
 
-This guide writes the split-package paths — what
-`composer require --dev php-regex/regex-phpstan` installs from the 2.0.0
-release. Until then, the monorepo install above puts the same neon files
-under `vendor/php-regex/php-regex/src/PHPStan/`.
+The paths below are the files `php-regex/regex-phpstan` installs under its
+package root.
 
 ## What it reports by default
 

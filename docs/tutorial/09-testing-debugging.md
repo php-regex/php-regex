@@ -11,7 +11,7 @@ description: "Test and debug regex patterns with PHPRegex: explain them in plain
 
 ## Prerequisites
 
-This chapter uses the `Regex` facade and the `vendor/bin/regex` binary. Both come from one install (the binary ships as `php-regex/regex-cli` in the split layout). You need PHP 8.2 or newer with the `mbstring` extension. The [Quick Start](../quick-start.md) walks through the same setup in full.
+This chapter uses the `Regex` facade and the `vendor/bin/regex` binary. The facade comes from `php-regex/regex-toolkit`, and the binary from `php-regex/regex-cli`. You need PHP 8.2 or newer with the `mbstring` extension. The [Quick Start](../quick-start.md) walks through the same setup in full.
 
 {% include install-prerelease.html package="php-regex/regex-toolkit" %}
 

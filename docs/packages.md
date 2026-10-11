@@ -5,17 +5,19 @@ permalink: /packages/
 ---
 # Choose a package
 
-PHPRegex is developed as one family of focused packages. During the prerelease, one monorepo install gives you every package and every integration. After the {{ site.data.product.release }} tag, install only the surface you need.
+PHPRegex is developed as one family of focused packages. The focused packages are published now as `{{ site.data.product.release }}-dev`; install the surface you need and let Composer pull its dependencies.
 
-## Today: one prerelease install
+## Install the surface you need
 
 ```bash
-composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev
+composer config minimum-stability dev
+composer config prefer-stable true
+composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev
 ```
 
-This provides the parser, toolkit facade, CLI, linter, ReDoS analyzer, language server, static-analysis bridges, and framework integrations. It is the right starting point for trying PHPRegex and for tool authors that compose several analyses.
+The first two commands run once in the consuming project: they allow the prerelease PHPRegex packages while still preferring stable releases everywhere else. The final command installs the terminal binary and the analyses it runs. Use the table below to pick another surface.
 
-## After the 2.0 split
+## Choose by package
 
 | You need… | Install | Why this package |
 |-----------|---------|------------------|
@@ -45,4 +47,12 @@ The focused analysis libraries remain available for tools that compose them dire
 3. **Improve an existing project in CI:** start with `regex-cli`; add a static-analysis or framework package when your workflow already uses one.
 4. **Get feedback while editing:** install `regex-language-server`.
 
-When in doubt, install the prerelease monorepo, try the workflows, then narrow the dependency after the split is tagged.
+## When the monorepo is useful
+
+`php-regex/php-regex` is the development monorepo. Install it only when you are contributing to PHPRegex, testing several integrations from one checkout, or building a tool that composes many packages and you explicitly want every component present:
+
+```bash
+composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev
+```
+
+It replaces every focused package with the same version, so do not install it merely to use the CLI, parser, or one bridge.

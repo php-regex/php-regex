@@ -25,8 +25,7 @@ The server requires PHP 8.2 or later.
 
 {% include install-prerelease.html package="php-regex/regex-language-server" %}
 
-The server binary is `vendor/bin/regex-lsp` (the monorepo install provides it
-too: Composer links it from `src/LanguageServer/bin/regex-lsp`). Run it with
+The server binary is `vendor/bin/regex-lsp`. Run it with
 `--help` for its options, `--version` for the release it was built from:
 
 ```bash

@@ -5,11 +5,7 @@ description: "Choose the PHPRegex integration that fits your workflow: PHPStan, 
 
 # Guides
 
-PHPRegex reports where you already work. Pick one surface below; each guide shows the exact configuration, findings, and limits for that integration.
-
-{% include install-prerelease.html %}
-
-During the pre-release, that one install provides every integration. The package-specific commands in the individual guides are the target layout after the split is tagged.
+PHPRegex reports where you already work. Pick one surface below; each guide installs only the package for that integration and shows its exact configuration, findings, and limits. If you want to compare the packages first, start with [Choose a package](../packages.md).
 
 ## Static analysis
 

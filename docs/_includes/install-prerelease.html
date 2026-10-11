@@ -1,10 +1,10 @@
 {% comment %}
-  The one installation story shared by every page: the monorepo
-  command until the 2.0.0 tag, then the split package command.
-  Parameter: package — the split Composer package this page targets;
-  unused until the 2.0.0 switch, kept so the switch stays one file.
+  The one installation story shared by every page: the focused package that
+  page is about. Parameter: package — the Composer package to install.
 {% endcomment %}
 <section class="install-block">
   <h2 id="installation">Installation</h2>
-  <div class="install"><pre><code>composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev</code></pre></div>
+  <div class="install"><pre><code>composer config minimum-stability dev
+composer config prefer-stable true
+composer require --dev {{ include.package }}:{{ site.data.product.release }}-dev</code></pre></div>
 </section>

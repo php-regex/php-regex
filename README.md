@@ -42,12 +42,14 @@ integration, and the reference pages behind each verdict the library prints.
 
 ## 2.0 is coming
 
-The library is being split into focused `php-regex/*` packages, and the 2.0 tag
-is close. Until then, install the development build of the monorepo and shape
-it with us — it provides every package below, the `vendor/bin/regex` CLI included:
+The focused `php-regex/*` packages are published as `2.x-dev`, and the stable
+2.0 tag is close. Install the package for the surface you need and shape the
+release with us:
 
 ```bash
-composer require --dev php-regex/php-regex:2.x-dev
+composer config minimum-stability dev
+composer config prefer-stable true
+composer require --dev php-regex/regex-cli:2.x-dev
 ```
 
 Try it, break it, and tell us what your project needs — feedback and wishes go
@@ -58,14 +60,16 @@ If you are new to regex, start with the [Regex Tutorial](https://php-regex.com/t
 ## Getting started
 
 ```bash
-# Install everything (2.x-dev until the 2.0 tag)
-composer require --dev php-regex/php-regex:2.x-dev
+# Install the CLI (the API toolkit comes with it)
+composer config minimum-stability dev
+composer config prefer-stable true
+composer require --dev php-regex/regex-cli:2.x-dev
 
 # Try the command-line tool
 vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 ```
 
-The monorepo requires the `mbstring` and `tokenizer` extensions; the standalone
+The CLI requires the `mbstring` and `tokenizer` extensions; the standalone
 parser package needs only `mbstring`.
 
 PHPRegex is a family of packages, developed together in

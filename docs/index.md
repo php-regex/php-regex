@@ -14,7 +14,9 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
           <a class="button button-primary" href="/quick-start/">Start in five minutes</a>
           <a class="hero-link" href="/docs/">Browse the docs →</a>
         </div>
-        <div class="install"><pre><code>composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev</code></pre></div>
+        <div class="install"><pre><code>composer config minimum-stability dev
+composer config prefer-stable true
+composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev</code></pre></div>
       </div>
       <div class="hero-foot">
         <p class="hero-sub">New to regex? Start with the <a href="/tutorial/">ten-chapter tutorial</a>.</p>
@@ -87,7 +89,7 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
 
 <section class="constellation">
   <h2 class="section-title">Put the findings where you work</h2>
-  <p>The monorepo install includes every integration until the {{ site.data.product.release }} split is tagged. Pick the surface that fits your workflow.</p>
+  <p>Every integration has its own Composer package. Pick the surface that fits your workflow.</p>
   <div class="component-grid">
     <article class="component">
       <h3 class="component-name">CLI</h3>

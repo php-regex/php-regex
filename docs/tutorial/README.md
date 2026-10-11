@@ -37,7 +37,7 @@ Every chapter mixes two things: regex concepts you can use with `preg_match()` t
 - the `mbstring` extension
 - nothing else: the regex engine (PCRE2) ships inside PHP itself
 
-Under the pre-release monorepo install, the `vendor/bin/regex` binary is available immediately; in the split layout it ships as the `php-regex/regex-cli` package.
+The API examples use `php-regex/regex-toolkit`. The terminal examples use `php-regex/regex-cli`; install it as well when you reach those chapters.
 
 ---
 

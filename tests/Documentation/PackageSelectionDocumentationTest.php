@@ -32,15 +32,44 @@ final class PackageSelectionDocumentationTest extends TestCase
     }
 
     #[Test]
-    public function test_the_package_guide_separates_prerelease_and_split_installs(): void
+    public function test_onboarding_installs_the_focused_cli_package(): void
+    {
+        $home = (string) file_get_contents(__DIR__.'/../../docs/index.md');
+        $quickStart = (string) file_get_contents(__DIR__.'/../../docs/quick-start.md');
+        $readme = (string) file_get_contents(__DIR__.'/../../README.md');
+
+        $command = 'composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev';
+
+        $this->assertStringContainsString('composer config minimum-stability dev', $home);
+        $this->assertStringContainsString('composer config prefer-stable true', $home);
+        $this->assertStringContainsString($command, $home);
+        $this->assertStringContainsString('composer config minimum-stability dev', $quickStart);
+        $this->assertStringContainsString($command, $quickStart);
+        $this->assertStringContainsString('composer config minimum-stability dev', $readme);
+        $this->assertStringContainsString('composer require --dev php-regex/regex-cli:2.x-dev', $readme);
+        $this->assertStringNotContainsString('composer require --dev php-regex/php-regex:2.x-dev', $readme);
+    }
+
+    #[Test]
+    public function test_each_page_installs_its_own_focused_package(): void
+    {
+        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install-prerelease.html');
+
+        $this->assertStringContainsString('{{ include.package }}:{{ site.data.product.release }}-dev', $include);
+        $this->assertStringNotContainsString('php-regex/php-regex:{{ site.data.product.release }}-dev', $include);
+        $this->assertStringNotContainsString('unused until the 2.0.0 switch', $include);
+    }
+
+    #[Test]
+    public function test_the_package_guide_marks_the_monorepo_as_not_the_default(): void
     {
         $this->assertFileExists(self::PAGE);
 
         $page = (string) file_get_contents(self::PAGE);
 
-        $this->assertStringContainsString('## Today: one prerelease install', $page);
-        $this->assertStringContainsString('composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev', $page);
-        $this->assertStringContainsString('## After the 2.0 split', $page);
+        $this->assertStringContainsString('## Install the surface you need', $page);
+        $this->assertStringContainsString('The focused packages are published now as `{{ site.data.product.release }}-dev`', $page);
+        $this->assertStringContainsString('`php-regex/php-regex` is the development monorepo', $page);
         foreach (['regex-parser', 'regex-toolkit', 'regex-cli', 'regex-phpstan', 'regex-language-server'] as $package) {
             $this->assertStringContainsString('`php-regex/'.$package.'`', $page);
         }
