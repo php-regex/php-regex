@@ -82,6 +82,12 @@ in `ignoreErrors`, as with any PHPStan rule. The defaults as shipped:
 | `checks.optimizations.minSavings` | `1` | characters saved before a suggestion is reported |
 | `checks.optimizations.options` | as shipped | which rewrites the optimizer may apply: `digits`, `word`, `ranges`, `canonicalizeCharClasses` and `verifyWithAutomata` on, `possessive` and `factorize` off, `minQuantifierCount` at `4` |
 
+The rules are silent for a pattern the PCRE2 running PHPStan refuses to
+compile: PHPStan core's own `regexp.pattern` rule reports those, for the
+engine it runs on. What that engine does compile, the rules judge for the
+target the options above name; `pcreVersion` judges it for any PCRE2 release,
+not only the one the PHP version bundles.
+
 Usage
 -----
 

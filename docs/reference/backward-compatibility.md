@@ -284,6 +284,45 @@ Nothing promised disappears silently: anything removed from the promised
 surface in 3.0 is deprecated in a 2.x minor first, with the replacement named
 (see [Deprecations](#what-a-minor-release-may-change)).
 
+## Which PCRE2 a behaviour needs
+
+The library runs wherever PHP 8.2 runs, whatever PCRE2 that build links. The
+behaviours below exist only from the release named: the library reads them for
+a target that has the release, and the test suite verifies each row against a
+real engine that does. Ubuntu 24.04 links PCRE2 10.42 into its PHP packages,
+and PHP bundles 10.40 (8.2), 10.42 (8.3) and 10.44 (8.4 and 8.5), so a
+pattern that uses one of these behaviours does not compile on such an engine.
+A row names the `PcreFeature` case that owns it where there is one; the
+[PCRE page](../concepts/pcre.md#what-changed-in-which-release) carries the
+table of the feature-gated behaviours that differ between releases.
+
+| behaviour | from |
+|---|---|
+| `CaselessRestrictModifier`: the `r` modifier, `(?r)` and `(?-r)`, caseless matching restricted to one script; the matches of `/(k)/iur` and the capture shapes under `(?r)` are verified from the same release | PCRE2 10.43 |
+| `AsciiOptions`: `(?a)` with its `D`, `S`, `W`, `P`, `T` variants, `(?-a)` and the `(?^i)` restore: ASCII-only classes | PCRE2 10.43 |
+| `OpenAndPaddedRepeatCounts`: `a{,2}` and a count padded with spaces, as `a{ 2 }`, repeat instead of matching as text | PCRE2 10.43 |
+| `PaddedBracedEscapes`: spaces inside braced escapes, references and names, as `\x{ 41 }`, `\g{ 1 }` or `\k{ name }`; a braced name left open is reported past its padding | PCRE2 10.43 |
+| `VariableLengthLookbehind`: a lookbehind may hold branches of different lengths, up to 255 characters | PCRE2 10.43 |
+| `^` after spaces in a property, as `\p{ ^Lu}` | PCRE2 10.45 |
+| `RangeFromTypeReadToItsEnd`: a range from a type, a POSIX class or a property is read to its end before it is refused, as `[\d-abc` | PCRE2 10.45 |
+| `ErrorOffsetPastTheFault`: most syntax errors are reported past the faulty character rather than on it, among them an inline option letter at the letter (`(?u`), a quantifier after a non-atomic lookbehind opener past the opener (`(?<*+`) and a called name left open past its padding | PCRE2 10.47 |
+| `GReferenceNumberReadBeforeClosing`: an unclosed `\g{-1` is refused after the number, and a count stacked on a quantified reference, as `\g1+{2}`, past the count | PCRE2 10.47 |
+| A class under `u` that combines code points at or below U+00FF with code points from U+0100 up: PCRE2 reads it correctly from 10.48; before, its scan missed code points and a leading such class did not anchor the search ([PCRE2 #841](https://github.com/PCRE2Project/pcre2/issues/841)). The ReDoS search-cost proof follows the corrected reading | PCRE2 10.48 |
+
+`\K` inside a lookaround is a PHP rule, not a PCRE2 release: PCRE2 has
+refused it at compile by default since 10.37, and PHP up to 8.4 compiles
+every pattern with `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`, allowing it on any
+engine, while PHP 8.5 does not set the option and refuses it there.
+
+So is the place of the named keys in `$matches`: PHP up to 8.4 writes each
+name just before its group number, while PHP 8.5 writes every name after
+the numeric keys, in group order — the capture-shape analysis answers for
+the PHP version it targets.
+
+The `r` flag carries a PHP floor of its own: PHP reads it from 8.4 only,
+whatever the engine, while the inline `(?r)` and `(?-r)` follow the PCRE2
+release alone.
+
 ## Caches
 
 `RegexParser::CACHE_VERSION` changes whenever the code that builds a tree
