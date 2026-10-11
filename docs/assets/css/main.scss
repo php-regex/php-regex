@@ -496,6 +496,84 @@ main tbody tr:hover {
   background: var(--code-bg);
 }
 
+/* Cookbook quick reference: a three-column table puts the longest regex and
+   the shortest verdict in the same grid, so the verdict column collapses. A
+   borderless editorial list keeps each verdict beside its task and gives the
+   regex the full measure of its own row. */
+.recipe-index {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  gap: 1.25rem 3rem;
+  margin: 2rem 0;
+  padding: 0;
+}
+
+.recipe-entry {
+  min-width: 0;
+  margin: 0;
+}
+
+.recipe-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem .75rem;
+}
+
+.recipe-entry-name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.recipe-entry-name:hover {
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: .25em;
+}
+
+.recipe-verdict {
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  line-height: 1.35;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.recipe-entry pre {
+  margin-top: .35rem;
+  padding: .1rem 0 0;
+  border: 0;
+  background: transparent;
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.recipe-entry pre.has-copy {
+  padding-right: 4rem;
+}
+
+.recipe-entry pre::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+
+.recipe-entry pre::-webkit-scrollbar-thumb {
+  border-color: var(--paper);
+}
+
+.recipe-entry .copy-btn {
+  top: 0;
+  right: 0;
+  border: 0;
+  background: transparent;
+}
+
 /* A wide table is a scroll box on a narrow screen, and a scroll box with no
    tell reads as a table that is broken. The page script marks the tables
    that really do overflow and keeps only the cut edge marked while it
@@ -1125,6 +1203,10 @@ main table::-webkit-scrollbar-thumb {
  * way, so nothing is lost. */
 @media (max-width: 639px) {
   .site-header nav {
+    display: none;
+  }
+
+  .brand .version-tag {
     display: none;
   }
 

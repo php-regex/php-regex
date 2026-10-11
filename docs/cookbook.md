@@ -17,25 +17,115 @@ Requires PHP 8.2 or later and the `mbstring` extension. The PHP examples use the
 
 ## Quick Reference
 
-One row per recipe: the pattern, its section, and the verdict `Regex::redos()` returns for it.
+One row per recipe: the task and verdict read on one line, then the regex sits alone on its own scrollable line.
 
-| Task | Pattern | Analyzer verdict |
-|------|---------|------------------|
-| [Email](#email-rfc-5322-simplified) | `/^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i` | `safe (proven)` |
-| [URL](#url) | `/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(\/[^\s]*)?$/i` | `safe (proven)` |
-| [UUID](#uuid-v1-v5) | `/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i` | `safe (proven)` |
-| [IPv4](#ip-address) | `/^(?:25[0-5]\|2[0-4][0-9]\|1[0-9][0-9]\|[1-9][0-9]\|[0-9])(?:\.(?:25[0-5]\|2[0-4][0-9]\|1[0-9][0-9]\|[1-9][0-9]\|[0-9])){3}$/` | `safe (proven)` |
-| [IPv6](#ip-address) | `/^(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i` | `safe (proven)` |
-| [ISO date](#date-formats) | `/^\d{4}-(?:0[1-9]\|1[0-2])-(?:0[1-9]\|[12][0-9]\|3[01])$/` | `safe (proven)` |
-| [Time (24h)](#time-formats) | `/^(?:[01]?[0-9]\|2[0-3]):[0-5][0-9]$/` | `safe (proven)` |
-| [DateTime](#datetime-iso-8601) | `/^\d{4}-(?:0[1-9]\|1[0-2])-(?:0[1-9]\|[12][0-9]\|3[01])T(?:[01]?[0-9]\|2[0-3]):[0-5][0-9](?::[0-5][0-9])?(?:Z\|[+-](?:[01]?[0-9]\|2[0-3]):[0-5][0-9])?$/u` | `safe (proven)` |
-| [Slug](#slug) | `/^[a-z0-9]+(?:-[a-z0-9]+)*$/` | `safe (proven)` |
-| [Username](#username) | `/^[a-zA-Z][a-zA-Z0-9_-]{2,31}$/` | `safe (proven)` |
-| [Password](#password-strength) | `/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$/` | `safe (proven)` |
-| [Phone (E.164)](#phone-number) | `/^\+[1-9]\d{6,14}$/` | `safe (proven)` |
-| [Credit card](#credit-card) | `/^[0-9]{13,19}$/` | `safe (proven)` |
-| [Hex color](#hex-color) | `/^#(?:[0-9a-fA-F]{3}){1,2}$/` | `safe (proven)` |
-| [SemVer](#semantic-versioning) | `/^(0\|[1-9]\d*)\.(0\|[1-9]\d*)\.(0\|[1-9]\d*)(?:-((?:0\|[1-9]\d*\|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0\|[1-9]\d*\|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/` | `safe (proven)` |
+<ul class="recipe-index">
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#email-rfc-5322-simplified">Email</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^[a-z0-9]([a-z0-9._%+-]*[a-z0-9])?@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#url">URL</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^https?:\/\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(\/[^\s]*)?$/i</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#uuid-v1-v5">UUID</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#ip-address">IPv4</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])){3}$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#ip-address">IPv6</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#date-formats">ISO date</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#time-formats">Time (24h)</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^(?:[01]?[0-9]|2[0-3]):[0-5][0-9]$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#datetime-iso-8601">DateTime</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])T(?:[01]?[0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?(?:Z|[+-](?:[01]?[0-9]|2[0-3]):[0-5][0-9])?$/u</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#slug">Slug</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^[a-z0-9]+(?:-[a-z0-9]+)*$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#username">Username</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^[a-zA-Z][a-zA-Z0-9_-]{2,31}$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#password-strength">Password</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#phone-number">Phone (E.164)</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^\+[1-9]\d{6,14}$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#credit-card">Credit card</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^[0-9]{13,19}$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#hex-color">Hex color</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^#(?:[0-9a-fA-F]{3}){1,2}$/</code></pre>
+  </li>
+  <li class="recipe-entry" data-copy="">
+    <div class="recipe-entry-head">
+      <a class="recipe-entry-name" href="#semantic-versioning">SemVer</a>
+      <span class="recipe-verdict"><span class="visually-hidden">Analyzer verdict: </span>safe (proven)</span>
+    </div>
+    <pre><code class="recipe-pattern">/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/</code></pre>
+  </li>
+</ul>
 
 ## How to Use This Cookbook
 
