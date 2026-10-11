@@ -22,6 +22,7 @@ PHPRegex parses a PCRE pattern into an AST and gives structured answers about va
 | Goal | Start here |
 |------|------------|
 | Install and run one analysis | [Quick Start](/quick-start/) |
+| Choose between the monorepo and focused packages | [Choose a package](/packages/) |
 | Learn regular expressions from zero | [Tutorial](/tutorial/) |
 | Lint a PHP codebase | [CLI guide](/guides/cli/) |
 | Put findings in PHPStan, Psalm, Rector, Laravel, Symfony, or an editor | [Guides](/guides/) |

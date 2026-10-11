@@ -14,7 +14,7 @@ This page is the shortest path from installation to a useful result. It does not
 composer require --dev php-regex/php-regex:{{ site.data.product.release }}-dev
 ```
 
-You need PHP {{ site.data.product.php_floor }} or later with the `mbstring` and `tokenizer` extensions. Until the {{ site.data.product.release }} split is tagged, this monorepo package provides the API, the `regex` binary, the language server, and every bridge. The standalone parser package will require only `mbstring`.
+You need PHP {{ site.data.product.php_floor }} or later with the `mbstring` and `tokenizer` extensions. Until the {{ site.data.product.release }} split is tagged, this monorepo package provides the API, the `regex` binary, the language server, and every bridge. To narrow the install after the split, [choose the right package](/packages/).
 
 Verify the binary:
 

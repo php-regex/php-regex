@@ -5,6 +5,8 @@
       url: /docs/
     - title: Quick Start
       url: /quick-start/
+    - title: Choose a package
+      url: /packages/
     - title: Regex 101 tutorial
       url: /tutorial/
       pages:
