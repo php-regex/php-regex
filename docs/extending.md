@@ -1,7 +1,6 @@
 ---
 description: "Add a new PCRE construct to the parser — node, lexer token, parser rule, visitor method, tests — with the callout syntax (?C) as the worked example."
 redirect_from:
-  - /EXTENDING_GUIDE/
   - /EXTENDING_GUIDE.html
 ---
 # Extending PHPRegex

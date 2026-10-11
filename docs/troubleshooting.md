@@ -1,7 +1,6 @@
 ---
 description: "Fixes for the errors PHPRegex actually prints: lexer messages, ReDoS verdicts, cache and memory issues, CLI and Symfony bridge problems."
 redirect_from:
-  - /TROUBLESHOOTING/
   - /TROUBLESHOOTING.html
 ---
 # Troubleshooting Guide

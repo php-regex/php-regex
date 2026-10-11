@@ -1,7 +1,6 @@
 ---
 description: "How PHPRegex walks the AST: double dispatch, choosing a visitor base class, transformations that preserve positions, and guards against deep recursion."
 redirect_from:
-  - /design/AST_TRAVERSAL/
   - /design/AST_TRAVERSAL.html
 ---
 # AST Traversal Design

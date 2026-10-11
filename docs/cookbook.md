@@ -1,7 +1,6 @@
 ---
 description: "Copy-ready PHP regex patterns for emails, URLs, dates, phones and more — each one proven safe against ReDoS by the analyzer, with matched and rejected examples."
 redirect_from:
-  - /COOKBOOK/
   - /COOKBOOK.html
 ---
 # Regex Cookbook: Practical Patterns for PHP
