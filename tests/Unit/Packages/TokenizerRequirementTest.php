@@ -29,8 +29,12 @@ final class TokenizerRequirementTest extends TestCase
 
         foreach ($manifestPaths as $package => $path) {
             $manifest = json_decode((string) file_get_contents($path), true, 512, \JSON_THROW_ON_ERROR);
+            $require = [];
+            if (\is_array($manifest) && \is_array($manifest['require'] ?? null)) {
+                $require = $manifest['require'];
+            }
 
-            $this->assertSame('*', $manifest['require']['ext-tokenizer'] ?? null, $package);
+            $this->assertSame('*', $require['ext-tokenizer'] ?? null, $package);
         }
     }
 }
