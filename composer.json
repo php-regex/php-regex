@@ -28,7 +28,8 @@
     "prefer-stable": true,
     "require": {
         "php": ">=8.2",
-        "ext-mbstring": "*"
+        "ext-mbstring": "*",
+        "ext-tokenizer": "*"
     },
     "replace": {
         "php-regex/regex-automata": "self.version",

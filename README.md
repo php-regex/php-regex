@@ -65,6 +65,9 @@ composer require --dev php-regex/php-regex:2.x-dev
 vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 ```
 
+The monorepo requires the `mbstring` and `tokenizer` extensions; the standalone
+parser package needs only `mbstring`.
+
 PHPRegex is a family of packages, developed together in
 [php-regex/php-regex](https://github.com/php-regex/php-regex) and released
 with one version number. Install the one you need:

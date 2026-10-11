@@ -24,6 +24,7 @@
     ],
     "require": {
         "php": ">=8.2",
+        "ext-tokenizer": "*",
         "php-regex/regex-explain": "self.version",
         "php-regex/regex-linter": "self.version",
         "php-regex/regex-parser": "self.version",
