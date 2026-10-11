@@ -271,10 +271,16 @@ final class MatchesTypeTest extends TestCase
     }
 
     /**
+     * The rows with a named key expect the order the running PHP writes:
+     * each name beside its group number until 8.4, every name after the
+     * numeric ones from 8.5 — the values each key holds are the same.
+     *
      * @return iterable<string, array{pattern: string, flags: 0|256|512|768, expected: string, subjects: list<string>}>
      */
     public static function provideMatchTypes(): iterable
     {
+        $php85 = self::php85();
+
         // preg_match('/(a)(b)?/', 'a', $m) -> ['a', 'a']; on 'ab' -> ['ab', 'a', 'b'] (PHP 8.4.26)
         yield 'literals, a trailing optional group left out' => ['pattern' => '/(a)(b)?/', 'flags' => 0, 'expected' => "array{0: 'a'|'ab', 1: 'a', 2?: 'b'}", 'subjects' => ['a', 'ab']];
         // with PREG_UNMATCHED_AS_NULL on 'a' -> ['a', 'a', null]
@@ -285,9 +291,9 @@ final class MatchesTypeTest extends TestCase
         yield 'offset pairs holding null' => ['pattern' => '/(a)(b)?/', 'flags' => \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: list{'a'|'ab', int<0, max>}, 1: list{'a', int<0, max>}, 2: list{'b'|null, int<-1, max>}}", 'subjects' => ['a', 'ab']];
         // preg_match('/(z)?(a)/', 'a', $m) -> ['a', '', 'a']
         yield 'unset group before a set one reads empty' => ['pattern' => '/(z)?(a)/', 'flags' => 0, 'expected' => "array{0: 'a'|'za', 1: ''|'z', 2: 'a'}", 'subjects' => ['a', 'za']];
-        yield 'digits never falsy become non-falsy-string' => ['pattern' => '/(?<y>\d{4})-(?<m>\d\d)?/', 'flags' => 0, 'expected' => 'array{0: non-falsy-string, y: non-falsy-string, 1: non-falsy-string, m?: non-falsy-string, 2?: non-falsy-string}', 'subjects' => ['2026-10', '2026-']];
+        yield 'digits never falsy become non-falsy-string' => ['pattern' => '/(?<y>\d{4})-(?<m>\d\d)?/', 'flags' => 0, 'expected' => $php85 ? 'array{0: non-falsy-string, 1: non-falsy-string, 2?: non-falsy-string, y: non-falsy-string, m?: non-falsy-string}' : 'array{0: non-falsy-string, y: non-falsy-string, 1: non-falsy-string, m?: non-falsy-string, 2?: non-falsy-string}', 'subjects' => ['2026-10', '2026-']];
         yield 'digits that may be 0' => ['pattern' => '/(\d+)/', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}', 'subjects' => ['0', '42']];
-        yield 'non-falsy text' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => "array{0: non-falsy-string, n: non-falsy-string, 1: non-falsy-string, 2: 'b'}", 'subjects' => ['ab', 'aab']];
+        yield 'non-falsy text' => ['pattern' => '/(?<n>a+)(b)/', 'flags' => 0, 'expected' => $php85 ? "array{0: non-falsy-string, 1: non-falsy-string, 2: 'b', n: non-falsy-string}" : "array{0: non-falsy-string, n: non-falsy-string, 1: non-falsy-string, 2: 'b'}", 'subjects' => ['ab', 'aab']];
         yield 'non-empty text' => ['pattern' => '/(.+)/', 'flags' => 0, 'expected' => 'array{0: non-empty-string, 1: non-empty-string}', 'subjects' => ['0', 'xy']];
         yield 'unknown text' => ['pattern' => '/(\w*)/', 'flags' => 0, 'expected' => 'array{0: string, 1: string}', 'subjects' => ['', 'ab']];
         yield 'empty group' => ['pattern' => '/()/', 'flags' => 0, 'expected' => "array{0: '', 1: ''}", 'subjects' => ['']];
@@ -297,15 +303,15 @@ final class MatchesTypeTest extends TestCase
         // preg_match('/a(*MARK:x)|b(*MARK:y)/', 'b', $m) -> ['b', 'MARK' => 'y']
         yield 'marks a verb leaves' => ['pattern' => '/a(*MARK:x)|b(*MARK:y)/', 'flags' => 0, 'expected' => "array{0: 'a'|'b', MARK?: 'x'|'y'}", 'subjects' => ['a', 'b']];
         yield 'marks a verb leaves, plain beside offset pairs' => ['pattern' => '/a(*MARK:x)|b(*MARK:y)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list{'a'|'b', int<0, max>}, MARK?: 'x'|'y'}", 'subjects' => ['a', 'b']];
-        // preg_match('/(?<MARK>a)(*MARK:m)/', 'a', $m, PREG_OFFSET_CAPTURE) -> [['a', 0], 'MARK' => 'm', ['a', 0]]
-        yield 'group named MARK beside a verb' => ['pattern' => '/(?<MARK>a)(*MARK:m)/', 'flags' => 0, 'expected' => "array{0: 'a', MARK: 'a'|'m', 1: 'a'}", 'subjects' => ['a']];
-        yield 'group named MARK beside a verb, offsets' => ['pattern' => '/(?<MARK>a)(*MARK:m)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list{'a', int<0, max>}, MARK: list{'a', int<0, max>}|'m', 1: list{'a', int<0, max>}}", 'subjects' => ['a']];
+        // preg_match('/(?<MARK>a)(*MARK:m)/', 'a', $m, PREG_OFFSET_CAPTURE) -> [['a', 0], 'MARK' => 'm', ['a', 0]]; on PHP 8.5 -> [['a', 0], ['a', 0], 'MARK' => 'm']
+        yield 'group named MARK beside a verb' => ['pattern' => '/(?<MARK>a)(*MARK:m)/', 'flags' => 0, 'expected' => $php85 ? "array{0: 'a', 1: 'a', MARK: 'a'|'m'}" : "array{0: 'a', MARK: 'a'|'m', 1: 'a'}", 'subjects' => ['a']];
+        yield 'group named MARK beside a verb, offsets' => ['pattern' => '/(?<MARK>a)(*MARK:m)/', 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => $php85 ? "array{0: list{'a', int<0, max>}, 1: list{'a', int<0, max>}, MARK: list{'a', int<0, max>}|'m'}" : "array{0: list{'a', int<0, max>}, MARK: list{'a', int<0, max>}|'m', 1: list{'a', int<0, max>}}", 'subjects' => ['a']];
         // preg_match('/(?J)(?<n>a)(?<n>z)?(c)/', 'ac', $m) -> ['ac', 'n' => 'a', 'a', '', 'c']
-        yield 'shared name, one group always set' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => 0, 'expected' => "array{0: 'ac'|'azc', n: 'a'|'z', 1: 'a', 2: ''|'z', 3: 'c'}", 'subjects' => ['ac', 'azc']];
+        yield 'shared name, one group always set' => ['pattern' => '/(?J)(?<n>a)(?<n>z)?(c)/', 'flags' => 0, 'expected' => $php85 ? "array{0: 'ac'|'azc', 1: 'a', 2: ''|'z', 3: 'c', n: 'a'|'z'}" : "array{0: 'ac'|'azc', n: 'a'|'z', 1: 'a', 2: ''|'z', 3: 'c'}", 'subjects' => ['ac', 'azc']];
         // preg_match('/(?J)(?<n>a)|(?<n>b)/', 'a', $m) -> ['a', 'n' => 'a', 'a']; on 'b' -> ['b', 'n' => 'b', '', 'b']
-        yield 'shared name, split pattern, cases merged key by key' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => "array{0: 'a'|'b', n: 'a'|'b', 1: ''|'a', 2?: 'b'}", 'subjects' => ['a', 'b']];
+        yield 'shared name, split pattern, cases merged key by key' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => 0, 'expected' => $php85 ? "array{0: 'a'|'b', 1: ''|'a', 2?: 'b', n: 'a'|'b'}" : "array{0: 'a'|'b', n: 'a'|'b', 1: ''|'a', 2?: 'b'}", 'subjects' => ['a', 'b']];
         yield 'branch reset' => ['pattern' => '/(?|(a)|(b))/', 'flags' => 0, 'expected' => "array{0: 'a'|'b', 1: 'a'|'b'}", 'subjects' => ['a', 'b']];
-        yield 'no auto capture' => ['pattern' => '/(a)(?<x>b)/n', 'flags' => 0, 'expected' => "array{0: 'ab', x: 'b', 1: 'b'}", 'subjects' => ['ab']];
+        yield 'no auto capture' => ['pattern' => '/(a)(?<x>b)/n', 'flags' => 0, 'expected' => $php85 ? "array{0: 'ab', 1: 'b', x: 'b'}" : "array{0: 'ab', x: 'b', 1: 'b'}", 'subjects' => ['ab']];
         // preg_match('/(?!(b))a/', 'a', $m, PREG_UNMATCHED_AS_NULL) -> ['a', null]; without the flag -> ['a']
         yield 'group no match sets, last' => ['pattern' => '/(?!(b))a/', 'flags' => 0, 'expected' => "array{0: 'a'}", 'subjects' => ['a']];
         yield 'group no match sets, last, as null' => ['pattern' => '/(?!(b))a/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'expected' => "array{0: 'a', 1: null}", 'subjects' => ['a']];
@@ -320,10 +326,15 @@ final class MatchesTypeTest extends TestCase
     }
 
     /**
+     * The rows with a named key expect the order the running PHP writes,
+     * as provideMatchTypes() does.
+     *
      * @return iterable<string, array{pattern: string, flags: int, expected: string, subjects: list<string>}>
      */
     public static function provideMatchAllTypes(): iterable
     {
+        $php85 = self::php85();
+
         // preg_match_all('/(a)(b)?/', 'a ab', $m) -> [['a', 'ab'], ['a', 'a'], ['', 'b']]; on 'x' -> [[], [], []] (PHP 8.4.26)
         yield 'pattern order' => ['pattern' => '/(a)(b)?/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'ab'>, 1: list<'a'>, 2: list<''|'b'>}", 'subjects' => ['a ab', 'x']];
         yield 'pattern order when flags are 0' => ['pattern' => '/(a)(b)?/', 'flags' => 0, 'expected' => "array{0: list<'a'|'ab'>, 1: list<'a'>, 2: list<''|'b'>}", 'subjects' => ['a ab', 'x']];
@@ -331,9 +342,9 @@ final class MatchesTypeTest extends TestCase
         yield 'pattern order, offsets' => ['pattern' => '/(a)(b)?/', 'flags' => \PREG_PATTERN_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "array{0: list<list{'a'|'ab', int<0, max>}>, 1: list<list{'a', int<0, max>}>, 2: list<list{''|'b', int<-1, max>}>}", 'subjects' => ['a ab', 'x']];
         // preg_match_all('/a(*MARK:x)|b(*MARK:y)/', 'ab', $m) -> [['a', 'b'], 'MARK' => ['x', 'y']]
         yield 'pattern order, marks keyed by match' => ['pattern' => '/a(*MARK:x)|b(*MARK:y)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, MARK?: array<int, 'x'|'y'>}", 'subjects' => ['ab', 'z']];
-        yield 'pattern order, group named MARK beside a verb' => ['pattern' => '/(?<MARK>a)(*MARK:m)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'>, MARK: list<'a'>|array<int, 'm'>, 1: list<'a'>}", 'subjects' => ['aa', 'z']];
+        yield 'pattern order, group named MARK beside a verb' => ['pattern' => '/(?<MARK>a)(*MARK:m)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => $php85 ? "array{0: list<'a'>, 1: list<'a'>, MARK: list<'a'>|array<int, 'm'>}" : "array{0: list<'a'>, MARK: list<'a'>|array<int, 'm'>, 1: list<'a'>}", 'subjects' => ['aa', 'z']];
         // preg_match_all('/(?J)(?<n>a)|(?<n>b)/', 'ab', $m) -> n => ['', 'b']: the list of the highest-numbered group
-        yield 'pattern order, shared name' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => "array{0: list<'a'|'b'>, n: list<''|'b'>, 1: list<''|'a'>, 2: list<''|'b'>}", 'subjects' => ['ab', 'z']];
+        yield 'pattern order, shared name' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'flags' => \PREG_PATTERN_ORDER, 'expected' => $php85 ? "array{0: list<'a'|'b'>, 1: list<''|'a'>, 2: list<''|'b'>, n: list<''|'b'>}" : "array{0: list<'a'|'b'>, n: list<''|'b'>, 1: list<''|'a'>, 2: list<''|'b'>}", 'subjects' => ['ab', 'z']];
         yield 'set order' => ['pattern' => '/(a)(b)?/', 'flags' => \PREG_SET_ORDER, 'expected' => "list<array{0: 'a'|'ab', 1: 'a', 2?: 'b'}>", 'subjects' => ['a ab', 'x']];
         yield 'set order, offsets' => ['pattern' => '/(a)(b)?/', 'flags' => \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE, 'expected' => "list<array{0: list{'a'|'ab', int<0, max>}, 1: list{'a', int<0, max>}, 2?: list{'b', int<-1, max>}}>", 'subjects' => ['a ab', 'x']];
         // preg_match_all('/(a)|(b)/', 'ab', $m, PREG_SET_ORDER) -> [['a', 'a'], ['b', '', 'b']]
@@ -362,14 +373,27 @@ final class MatchesTypeTest extends TestCase
         }
     }
 
+    /**
+     * Whether the running PHP writes every named key after the numeric ones,
+     * as 8.5 and later do: the expected orders below follow it.
+     */
+    private static function php85(): bool
+    {
+        return \PHP_VERSION_ID >= 80500;
+    }
+
     private static function shape(string $pattern): CaptureShape
     {
         // Psalm builds a literal string type only under a configuration, which
         // a Psalm run sets up: the builder runs inside one, these rows do not.
         PsalmTypes::codebase();
 
-        // A fixed target, as the digests are read with one: the types this
-        // parity holds must not change with the PCRE2 running the tests.
+        // A fixed parse target, as the digests are read with one: the rules
+        // this parity judges must not change with the PCRE2 running the
+        // tests. The key ORDER follows the running PHP instead — the engine
+        // the rows replay writes $matches with it: from 8.5 it appends every
+        // named key after the numeric ones, where 8.4 writes each beside its
+        // group number.
         return (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse($pattern));
     }
 

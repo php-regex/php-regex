@@ -91,7 +91,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     public function test_the_written_shape_is_the_type_phpstan_prints(string $pattern, int $flags, string $printed): void
     {
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
-        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchShape($flags);
+        $written = self::storedShape($pattern)->matchShape($flags);
 
         self::assertEquivalent($resolver->resolve($printed), $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
     }
@@ -139,7 +139,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
             $this->assertTrue($type->isConstantArray()->yes(), \sprintf('PHPStan reads "%s" as %s, not an array shape.', $expected, $type->describe(VerbosityLevel::precise())));
         }
 
-        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
+        $written = self::storedShape($pattern)->matchAllShape($flags);
         self::assertEquivalent($type, $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
     }
 
@@ -162,7 +162,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     public function test_a_group_named_mark_yields_its_list_to_the_marks_in_pattern_order(string $pattern, int $flags, string $expected): void
     {
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
-        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
+        $written = self::storedShape($pattern)->matchAllShape($flags);
 
         self::assertEquivalent($resolver->resolve($expected), $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
     }
@@ -210,6 +210,20 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
         yield 'an empty branch' => ['pattern' => '/(a)|/', 'flags' => 0, 'printed' => "array{''}|array{'a', 'a'}"];
         yield 'a name shared under /J' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'flags' => 0, 'printed' => "array{0: 'a', n: 'a', 1: 'a'}|array{0: 'b', n: 'b', 1: '', 2: 'b'}"];
         yield 'a name shared under /J, as null' => ['pattern' => '/(?<n>a)|(?<n>b)/J', 'flags' => \PREG_UNMATCHED_AS_NULL, 'printed' => "array{0: 'a', n: 'a', 1: 'a', 2: null}|array{0: 'b', n: 'b', 1: null, 2: 'b'}"];
+    }
+
+    /**
+     * A stored expectation is read for a fixed PHP 8.4 target, as the
+     * digests are: the strings below must not change with the PHP running
+     * the tests, which from 8.5 writes the named keys after the numeric
+     * ones. What the running interpreter writes is replayed against the
+     * bare analyzer by the engine tests above.
+     */
+    private static function storedShape(string $pattern): CaptureShape
+    {
+        $parser = RegexParser::create(['php_version' => '8.4']);
+
+        return (new CaptureShapeAnalyzer($parser->target()))->analyze($parser->parse($pattern));
     }
 
     /**

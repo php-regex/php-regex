@@ -340,7 +340,7 @@ final readonly class Regex
      */
     public function captureShape(string $regex): CaptureShape
     {
-        return (new CaptureShapeAnalyzer())->analyze($this->parse($regex));
+        return (new CaptureShapeAnalyzer($this->parser->target()))->analyze($this->parse($regex));
     }
 
     /**

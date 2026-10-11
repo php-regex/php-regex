@@ -43,8 +43,11 @@ final class CaptureShapeDigest
      */
     public static function strings(string $pattern): array
     {
-        // A fixed target: the digests must not change with the PCRE2 running the tests.
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse($pattern));
+        // A fixed target, parser and analyzer both: the digests must not
+        // change with the PHP or the PCRE2 running the tests — from 8.5 the
+        // key order moves with the interpreter.
+        $parser = RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']);
+        $shape = (new CaptureShapeAnalyzer($parser->target()))->analyze($parser->parse($pattern));
 
         $strings = [];
         foreach (self::MATCH_FLAGS as $flags) {

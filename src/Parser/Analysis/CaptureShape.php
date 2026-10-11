@@ -36,21 +36,25 @@ final readonly class CaptureShape
     /**
      * @internal built by CaptureShapeAnalyzer::analyze()
      *
-     * @param array<int<1, max>, CaptureGroupShape> $groups keyed by group number, 1 to the capture count with no gap; branch reset groups sharing a number share a record
-     * @param list<string>                          $marks  the names a (*MARK) verb, or a verb that sets one, may leave under "MARK"
-     * @param list<self>                            $cases  shapes whose union covers every match, empty when the pattern is not split; a case shares no index with the alternatives of the pattern
+     * @param array<int<1, max>, CaptureGroupShape> $groups       keyed by group number, 1 to the capture count with no gap; branch reset groups sharing a number share a record
+     * @param list<string>                          $marks        the names a (*MARK) verb, or a verb that sets one, may leave under "MARK"
+     * @param list<self>                            $cases        shapes whose union covers every match, empty when the pattern is not split; a case shares no index with the alternatives of the pattern
+     * @param int                                   $phpVersionId the PHP the shape is judged for, as a PHP_VERSION_ID: from 8.5 the keys are written with every named one after the numeric ones, where until 8.4 each name sits just before its group number — the running PHP when the shape is built by hand
      */
     public function __construct(
         public CaptureGroupShape $whole,
         public array $groups,
         public array $marks,
         public array $cases = [],
+        public int $phpVersionId = \PHP_VERSION_ID,
     ) {}
 
     /**
      * The array shape of $matches after preg_match() returned 1, written as a
      * PHPStan type, "array{0: 'a'|'ab', 1: 'a', 2?: 'b'}" for /(a)(b)?/, its keys in the order
-     * preg_match() writes them, or the union of the shapes of the cases when
+     * the PHP the shape is judged for writes them — until 8.4 each name just
+     * before its group number, from 8.5 every name after the last numeric
+     * key, in group order — or the union of the shapes of the cases when
      * the pattern is split and PHPStan keeps that union as array shapes (the
      * merged shape otherwise). It honours PREG_UNMATCHED_AS_NULL and
      * PREG_OFFSET_CAPTURE; like preg_match(), it ignores a bit above the low
@@ -104,7 +108,9 @@ final readonly class CaptureShape
      * Under PREG_PATTERN_ORDER, the default, also read from 0: one array
      * shape, "array{0: list<'a'|'ab'>, 1: list<'a'>, 2: list<''|'b'>}" for
      * /(a)(b)?/. Every group key is written on every call, in the order
-     * preg_match() writes them, each holding one value per match: what the
+     * preg_match() writes them for the PHP the shape is judged for — names
+     * beside their group until 8.4, after every number from 8.5 — each
+     * holding one value per match: what the
      * group captured, or '' where it was unset (null under
      * PREG_UNMATCHED_AS_NULL, a pair at offset -1 under PREG_OFFSET_CAPTURE).
      * A name several groups share (/J) holds the list of the highest-numbered

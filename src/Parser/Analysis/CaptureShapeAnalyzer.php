@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Reads, from the tree alone, what a successful preg_match() writes into
@@ -118,8 +119,19 @@ final class CaptureShapeAnalyzer
      */
     private CaptureFacts $facts;
 
-    public function __construct()
+    /**
+     * The PHP the shape is judged for, as a PHP_VERSION_ID: from 8.5 its
+     * named keys sit after the numeric ones.
+     */
+    private readonly int $phpVersionId;
+
+    /**
+     * @param PcreTarget|null $target the PHP and the PCRE2 the shape is
+     *                                judged for, the running ones by default
+     */
+    public function __construct(?PcreTarget $target = null)
     {
+        $this->phpVersionId = ($target ?? PcreTarget::runtime())->phpVersionId;
         $this->facts = new CaptureFacts();
     }
 
@@ -146,7 +158,7 @@ final class CaptureShapeAnalyzer
         }
         $this->selection = null;
 
-        return new CaptureShape($merged->whole, $merged->groups, $merged->marks, $cases);
+        return new CaptureShape($merged->whole, $merged->groups, $merged->marks, $cases, $this->phpVersionId);
     }
 
     /**
@@ -166,12 +178,12 @@ final class CaptureShapeAnalyzer
 
         // \K and (*ACCEPT) cut the whole match short: only its presence is known.
         if ($this->keeps || $this->accepts) {
-            return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, 0, null, null), $groups, $this->marks);
+            return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, 0, null, null), $groups, $this->marks, [], $this->phpVersionId);
         }
 
         $whole = $this->facts->of($this->rebuild($pattern) ?? self::nothing($pattern));
 
-        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks);
+        return new CaptureShape(new CaptureGroupShape(0, null, Participation::Always, $whole['min'], $whole['max'], $whole['values'], $whole['nonFalsy'], $whole['digitsOnly']), $groups, $this->marks, [], $this->phpVersionId);
     }
 
     private function reset(): void

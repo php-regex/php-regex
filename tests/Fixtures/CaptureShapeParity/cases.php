@@ -22,7 +22,7 @@ declare(strict_types=1);
  *    subject matches (the rows of one pattern share one entry);
  *  - "parity: <topic>": written for this corpus.
  *
- * @return list<array{source: string, pattern: string, subjects: non-empty-list<string>}>
+ * @return list<array{id?: string, source: string, pattern: string, subjects: non-empty-list<string>}>
  */
 return [
     // Engine rows of the capture-shape analyzer test.
@@ -57,10 +57,21 @@ return [
     ['source' => 'analyzer', 'pattern' => '/(a(*ACCEPT)b)c/', 'subjects' => ['a', 'abc']],
     ['source' => 'analyzer', 'pattern' => '/(\\x{e9})/u', 'subjects' => ['é']],
     ['source' => 'analyzer', 'pattern' => '/(\\b)a/i', 'subjects' => ['A']],
-    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)(*MARK:x)b/', 'subjects' => ['ab']],
-    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'subjects' => ['a', 'b']],
-    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)(?<y>b)(*MARK:x)c/', 'subjects' => ['abc']],
-    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)?(b)(?:(*MARK:x)c|d|(*MARK:y)e)/', 'subjects' => ['bc', 'bd', 'be', 'abc', 'abd', 'abe']],
+    // The four rows below carry an "id": they are the rows whose named keys
+    // PHP 8.5 writes at a different place from 8.4 — every name after the
+    // last numeric key ({0, 1, 2, MARK} for {0, MARK, 1, 2}), the values
+    // identical. The divergence follows the PHP version, not the PCRE2
+    // release: measured on the PHP 8.5 CI row (bundled PCRE2 10.44) against
+    // the PHP 8.4 rows and php -r, PCRE2 10.44 to 10.49 — the 8.5 pcre
+    // bridge of php-src appends the name keys at the hash tail where 8.4
+    // updates them in place beside their group. The analyzer encodes the
+    // order per target PHP version, so the rows replay on every engine; the
+    // id names them if an engine range ever needs keying again, it is not a
+    // replay field, and no other row carries one.
+    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)(*MARK:x)b/', 'subjects' => ['ab'], 'id' => 'mark-group-beside-verb'],
+    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'subjects' => ['a', 'b'], 'id' => 'mark-group-or-verb-branch'],
+    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)(?<y>b)(*MARK:x)c/', 'subjects' => ['abc'], 'id' => 'mark-group-verb-and-a-name'],
+    ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)?(b)(?:(*MARK:x)c|d|(*MARK:y)e)/', 'subjects' => ['bc', 'bd', 'be', 'abc', 'abd', 'abe'], 'id' => 'optional-mark-group-two-verbs'],
     ['source' => 'analyzer', 'pattern' => '/(?<MARK>a)/', 'subjects' => ['a']],
     ['source' => 'analyzer', 'pattern' => '/(?<x>a)(*MARK:m)b/', 'subjects' => ['ab']],
     ['source' => 'analyzer', 'pattern' => '/((*ACCEPT)a)/', 'subjects' => ['x', 'a']],
