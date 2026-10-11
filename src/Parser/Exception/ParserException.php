@@ -22,7 +22,7 @@ use PHPRegex\Parser\ErrorCode;
  *
  * @phpstan-consistent-constructor
  */
-class ParserException extends RegexException implements ExceptionInterface
+class ParserException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
     use VisualContextTrait;
 

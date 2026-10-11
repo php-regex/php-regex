@@ -134,6 +134,24 @@ final class ToolkitDocblockContractTest extends TestCase
     }
 
     /**
+     * The docblock alone lets a wrong value through at runtime: the
+     * parameter is typed natively, so PHP itself refuses anything that is
+     * not the LiteralSet literals() hands over.
+     */
+    #[Test]
+    #[DataProvider('provideLiteralSetHelpers')]
+    public function test_literal_extraction_helper_types_the_literal_set_natively(string $helper): void
+    {
+        $parameter = (new \ReflectionMethod(Regex::class, $helper))->getParameters()[0];
+        $type = $parameter->getType();
+
+        $this->assertInstanceOf(\ReflectionType::class, $type, \sprintf('Regex::%s() must declare its $literalSet parameter natively typed.', $helper));
+        $this->assertInstanceOf(\ReflectionNamedType::class, $type);
+        $this->assertFalse($type->allowsNull(), \sprintf('Regex::%s() must not accept null: literals() never passes one.', $helper));
+        $this->assertSame(LiteralSet::class, $type->getName(), \sprintf('Regex::%s() must type $literalSet as LiteralSet natively, not only in the docblock.', $helper));
+    }
+
+    /**
      * The fully spelled classes the @throws tags of a method name.
      *
      * @param class-string $className

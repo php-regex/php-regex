@@ -18,7 +18,7 @@ use PHPRegex\Parser\ErrorCode;
 /**
  * Represents a semantic validation error in a regex pattern.
  */
-final class SemanticErrorException extends RegexException implements ExceptionInterface
+final class SemanticErrorException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
     use VisualContextTrait;
 

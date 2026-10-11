@@ -15,24 +15,23 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Toolkit\Regex;
 
 /**
- * A config/regex-parser.php published by 1.x is no longer read: the provider
- * says so, once per registration, and names the file that replaced it.
+ * A config/regex-parser.php published by 1.x is no longer read, and 2.0.0
+ * says nothing about it either: Laravel keeps loading the file, the provider
+ * keeps ignoring it, and every php-regex.* default stays the 2.0 one.
  */
 final class OldConfigFileTest extends TestCase
 {
-    public function test_an_old_config_file_is_reported(): void
+    public function test_an_old_config_file_is_silently_ignored(): void
     {
         $this->app['config']->set('regex-parser', ['max_pattern_length' => 10]);
 
         $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->app))->register());
 
-        $this->assertSame(
-            ['config/regex-parser.php is no longer read since 2.0: move its settings to config/php-regex.php (php artisan vendor:publish --tag=php-regex-config).'],
-            $deprecations,
-        );
-        $this->assertNotSame(10, $this->app['config']->get('php-regex.max_pattern_length'));
+        $this->assertSame([], $deprecations, 'A 1.x config file must not raise a deprecation any more.');
+        $this->assertSame(Regex::DEFAULT_MAX_PATTERN_LENGTH, $this->app['config']->get('php-regex.max_pattern_length'));
     }
 
     public function test_no_old_config_file_reports_nothing(): void

@@ -15,10 +15,30 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPUnit\Framework\TestCase;
 
 final class ParserExceptionTest extends TestCase
 {
+    /**
+     * The snippet contract has a name: the exceptions that carry one
+     * implement the interface, so a consumer can catch the shape instead
+     * of the class.
+     */
+    public function test_the_exception_declares_the_visual_context_interface(): void
+    {
+        $this->assertTrue(interface_exists(VisualContextInterface::class), VisualContextInterface::class.' must exist.');
+        $this->assertTrue(is_a(ParserException::class, VisualContextInterface::class, true), ParserException::class.' must implement '.VisualContextInterface::class.'.');
+        $this->assertTrue((new \ReflectionMethod(VisualContextInterface::class, 'getVisualSnippet'))->isPublic());
+    }
+
+    public function test_the_snippet_of_an_exception_without_context_is_empty(): void
+    {
+        $exception = new ParserException('Error', ErrorCode::TokenUnexpected);
+
+        $this->assertSame('', $exception->getVisualSnippet());
+    }
+
     public function test_visual_snippet_at_beginning(): void
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 0, 'abc');

@@ -91,7 +91,7 @@ final class ReadmeExamplesTest extends TestCase
         $strict = Regex::create(['runtime_pcre_validation' => true]);
         $result = $strict->validate('/(?<=a+)\w/');
 
-        $this->assertFalse($result->isValid());
+        $this->assertFalse($result->isValid);
         $this->assertNotNull($result->getCaretSnippet());
         $this->assertNotNull($result->getHint());
     }
@@ -186,7 +186,7 @@ final class ReadmeExamplesTest extends TestCase
         ]);
 
         $result = $regex->validate('/^([0-9]{4}-[0-9]{2}-[0-9]{2})$/');
-        $this->assertTrue($result->isValid());
+        $this->assertTrue($result->isValid);
 
         (new FilesystemCache($cacheDir))->clear();
     }

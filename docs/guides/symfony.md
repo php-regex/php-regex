@@ -256,7 +256,8 @@ cannot be used (see [the CLI guide](cli.md#exit-codes)).
 See [UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md): `exclude_paths` is now `exclude`,
 `analysis.ignore_patterns` is merged into `redos.ignored_patterns`, and
 `analysis.redos_threshold` is gone. A 1.x key stops the container compile with
-the key that replaces it.
+Symfony's own unrecognized-option message, naming the key and the valid
+options.
 
 `redos.enabled: true` now makes `regex:lint` report ReDoS findings: 1.x read
 the setting and never ran the analysis. Expect new warnings on the first run.

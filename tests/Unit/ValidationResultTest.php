@@ -57,6 +57,23 @@ final class ValidationResultTest extends TestCase
         $this->assertSame(ErrorCode::TokenUnexpected, $result->errorCode);
     }
 
+    /**
+     * The two accessors 1.x carried beside the public properties are gone:
+     * a caller reading them gets a fatal error, not a deprecated mirror.
+     * The other accessors stay: they carry names the properties do not.
+     */
+    public function test_the_is_valid_and_error_message_accessors_are_gone(): void
+    {
+        $this->assertFalse(
+            method_exists(ValidationResult::class, 'isValid'),
+            'ValidationResult::isValid() must be gone: read the public $isValid property.',
+        );
+        $this->assertFalse(
+            method_exists(ValidationResult::class, 'getErrorMessage'),
+            'ValidationResult::getErrorMessage() must be gone: read the public $error property.',
+        );
+    }
+
     public function test_accessors_mirror_properties(): void
     {
         $result = new ValidationResult(false, 'error', 123);
@@ -65,8 +82,6 @@ final class ValidationResultTest extends TestCase
         $this->assertSame('error', $result->error);
         $this->assertSame(123, $result->complexityScore);
 
-        $this->assertFalse($result->isValid());
-        $this->assertSame('error', $result->getErrorMessage());
         $this->assertSame(123, $result->getComplexityScore());
     }
 
@@ -129,7 +144,7 @@ final class ValidationResultTest extends TestCase
     {
         $result = new ValidationResult(true);
 
-        $this->assertNull($result->getErrorMessage());
+        $this->assertNull($result->error);
         $this->assertNotInstanceOf(ValidationErrorCategory::class, $result->getErrorCategory());
         $this->assertNull($result->getErrorOffset());
         $this->assertNull($result->getCaretSnippet());
@@ -144,11 +159,11 @@ final class ValidationResultTest extends TestCase
             complexityScore: 5,
         );
 
-        $this->assertTrue($result->isValid());
         $this->assertTrue($result->isValid);
+        $this->assertIsBool($result->isValid);
         $this->assertSame(5, $result->getComplexityScore());
         $this->assertSame(5, $result->complexityScore);
-        $this->assertNull($result->getErrorMessage());
+        $this->assertNull($result->error);
     }
 
     public function test_all_error_categories(): void
@@ -199,7 +214,7 @@ final class ValidationResultTest extends TestCase
             errorCode: ErrorCode::PatternEmpty,
         );
 
-        $this->assertSame('', $result->getErrorMessage());
+        $this->assertSame('', $result->error);
         $this->assertSame('', $result->getCaretSnippet());
         $this->assertSame('', $result->getHint());
         // An error code is an enum case now, never an empty string.

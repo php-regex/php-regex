@@ -48,15 +48,15 @@ final class ExhaustiveVisitorTest extends TestCase
         $compiler = new PatternPrinter();
 
         // \p{L} (short)
-        $node = new UnicodePropNode('L', 0, 0);
+        $node = new UnicodePropNode('L', false, 0, 0);
         $this->assertSame('\pL', $node->accept($compiler));
 
         // \p{Lu} (long)
-        $node = new UnicodePropNode('Lu', 0, 0);
+        $node = new UnicodePropNode('Lu', false, 0, 0);
         $this->assertSame('\p{Lu}', $node->accept($compiler));
 
         // \P{L} (negated)
-        $node = new UnicodePropNode('^L', 0, 0);
+        $node = new UnicodePropNode('^L', false, 0, 0);
         $this->assertSame('\p{^L}', $node->accept($compiler));
     }
 

@@ -64,9 +64,10 @@ The configuration takes the PHPRegex name:
 | Laravel: publish tag `regex-parser-config` | `php-regex-config` |
 | Laravel: container entries `regex-parser.*` | `php-regex.*` |
 
-Laravel loads a `config/regex-parser.php` left from 1.3 but nothing reads it;
-the provider raises a deprecation while it is there. Publish the new file,
-move your settings to it, and delete the old one.
+Laravel loads a `config/regex-parser.php` left from 1.3 but nothing reads it
+and nothing warns about it: every setting in it silently takes the package
+default. Publish the new file, move your settings to it, and delete the old
+one.
 
 <!-- upgrade-map:start (php tests/Tools/write_upgrade_map.php) -->
 
@@ -454,8 +455,10 @@ move your settings to it, and delete the old one.
 The baseline file has a new format, `{"version": 1, "issues": [...]}`, and an
 issue is matched on its identifier, its file and its pattern rather than on
 its line and message, so a moved pattern or a reworded message no longer
-brings it back. A 1.x baseline is still read the 1.x way, with a note; generate
-it once more to switch to the new matching:
+brings it back. **A 1.x baseline, a plain list, no longer loads at all**: it
+is refused as a usage error (exit code 2) before anything is scanned or
+written — including a run that also passes `--generate-baseline`. Generate it
+once more to move to the new matching:
 
 ```bash
 vendor/bin/regex lint src/ --generate-baseline regex-baseline.json
@@ -846,6 +849,11 @@ lines after the message. It is now the message alone; the snippet is in
 caret prints `$caretSnippet` after it; code that cut `$error` at its first
 line can drop that step.
 
+The deprecated accessors `isValid()` and `getErrorMessage()` are gone: read
+the `$isValid` and `$error` properties. Rector cannot rewrite a method call
+into a property read, so change these two by hand (PHPStan reports each
+remaining call).
+
 #### Every offset counts from the pattern body
 
 `ValidationResult::$offset` and `RegexException::getPosition()` count from the
@@ -871,8 +879,9 @@ whole pattern as written, its caret under the character at fault.
 The lint command reads `regex.dist.json` and `regex.json` strictly. A key it
 does not know, a lint rule id it does not know, or a value of the wrong kind
 is an error: the command lists every one of them at once and exits with code
-2 before scanning anything. 1.x ignored an unknown key and still read the old
-spellings; 2.0 refuses them and names the key to use:
+2 before scanning anything. 1.x ignored an unknown key and accepted the old
+spellings; 2.0 refuses them with a plain unknown-key error naming the key
+(a "Did you mean" hint appears when a known key is close):
 
 | 1.x | 2.0 |
 |---|---|
@@ -1062,7 +1071,7 @@ not change.
   `{"version": 1, "issues": [...]}`, each entry holding
   `{file, line, column, issue_id, message, severity, pattern, pattern_hash}`;
   1.x wrote a plain list, with `type` and a `pattern` always `null`. A 1.x
-  baseline still loads, matched by file, line and message (see
+  baseline no longer loads: it is refused as a usage error, exit code 2 (see
   [`regex lint --baseline`](#regex-lint---baseline)). Regenerate it once so
   that a moved pattern or a reworded message no longer brings an issue back.
 - A string is written as itself, its control characters in JSON's own
@@ -1152,8 +1161,8 @@ The configuration moves from `regex_parser:` to `php_regex:`, with these keys:
 | `analysis.redos_threshold`              | removed: it was never read                                 |
 | —                                       | `php_version`, `pcre_version`: the target of `regex:lint`  |
 
-A 1.x key stops the container compile with a message naming the key that
-replaces it.
+A 1.x key stops the container compile with Symfony's own unrecognized-option
+message, naming the key and the valid options.
 
 `runtime_pcre_validation` no longer follows `kernel.debug`: a debug kernel
 compiled every pattern a second time with the running PHP. Set it to `true` to
@@ -1182,6 +1191,7 @@ The keys of `config/regex-parser.php` become, in `config/php-regex.php`:
 | `exclude_paths`                                  | `exclude`                                             |
 | `analysis.ignore_patterns`                       | `redos.ignored_patterns`                              |
 | `analysis.redos_threshold`                       | removed: it was never read                            |
+| `REGEX_PARSER_IDE` in `.env`                     | `PHP_REGEX_IDE` (`APP_EDITOR` stays the fallback)     |
 | —                                                | `php_version`, `pcre_version`: the target of `regex:lint` |
 | `automata.*`, never read                         | the defaults of `regex:compare`                       |
 
@@ -1192,10 +1202,10 @@ php artisan vendor:publish --tag=php-regex-config
 ```
 
 then move your settings over from `config/regex-parser.php`, under the keys
-above, and delete the old file: nothing reads it, and the provider raises a
-deprecation while it is there. Every key the new file lacks, inside each
-section too, takes the package default. A 1.x key copied as it is is not read,
-and `regex:lint` prints a warning for it with the key that replaces it.
+above, and delete the old file: nothing reads it and nothing warns about it.
+Every key the new file lacks, inside each section too, takes the package
+default. A 1.x key copied as it is is silently ignored — unlike the Symfony
+bundle, whose container compile refuses an unknown key outright.
 
 `redos.enabled` now switches the ReDoS analysis of `regex:lint` on; 1.x handed
 it to another setting and never ran the analysis. `regex:lint` judges for the

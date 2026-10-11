@@ -230,5 +230,5 @@ return [
     | - 'phpstorm://open?file=%file%&line=%line%&column=%column%'
     |
     */
-    'ide' => env('REGEX_PARSER_IDE', env('APP_EDITOR', null)),
+    'ide' => env('PHP_REGEX_IDE', env('APP_EDITOR', null)),
 ];

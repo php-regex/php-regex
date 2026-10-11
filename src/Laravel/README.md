@@ -63,7 +63,7 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `analysis.warning_threshold` | `50` | Complexity score above which a warning is emitted |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind `regex:compare` |
 | `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
-| `paths`, `exclude`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `env('REGEX_PARSER_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, and the editor behind its clickable links |
+| `paths`, `exclude`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, and the editor behind its clickable links |
 
 Usage
 -----

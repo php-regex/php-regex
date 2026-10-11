@@ -23,7 +23,7 @@ use Symfony\Component\Config\Definition\Processor;
 /**
  * php_version takes what Regex::create() takes ("8.2", "8.2.4", 80200) and
  * pcre_version a release; a value neither can read stops the container
- * compile. A 1.x key is refused with the key that replaces it.
+ * compile. A 1.x key is refused like any key the tree never knew.
  */
 final class ConfigurationTargetTest extends TestCase
 {
@@ -82,24 +82,28 @@ final class ConfigurationTargetTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{array<string, mixed>, string}>
+     * @return iterable<string, array{array<string, mixed>, string, string, string}>
      */
     public static function provideRemovedKeys(): iterable
     {
-        yield 'exclude_paths' => [['exclude_paths' => ['vendor']], '"exclude"'];
-        yield 'analysis.ignore_patterns' => [['analysis' => ['ignore_patterns' => ['foo']]], '"redos.ignored_patterns"'];
-        yield 'analysis.redos_threshold' => [['analysis' => ['redos_threshold' => 100]], '"redos.threshold"'];
+        yield 'exclude_paths' => [['exclude_paths' => ['vendor']], 'exclude_paths', 'php_regex', 'Available options are'];
+        yield 'analysis.ignore_patterns' => [['analysis' => ['ignore_patterns' => ['foo']]], 'ignore_patterns', 'php_regex.analysis', 'Available option is'];
+        yield 'analysis.redos_threshold' => [['analysis' => ['redos_threshold' => 100]], 'redos_threshold', 'php_regex.analysis', 'Available option is'];
     }
 
     /**
+     * A 1.x key no longer carries a message of its own: it is simply a key
+     * the tree does not know, and the one refusal names it under its parent
+     * node with the options that do exist.
+     *
      * @param array<string, mixed> $settings
      */
     #[Test]
     #[DataProvider('provideRemovedKeys')]
-    public function test_a_removed_key_names_its_replacement(array $settings, string $replacement): void
+    public function test_a_removed_key_is_only_an_unrecognized_option(array $settings, string $key, string $parentPath, string $optionsPhrase): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage($replacement);
+        $this->expectExceptionMessageMatches(\sprintf('/Unrecognized option "%s" under "%s"\. %s/', preg_quote($key, '/'), preg_quote($parentPath, '/'), preg_quote($optionsPhrase, '/')));
 
         $this->process($settings);
     }

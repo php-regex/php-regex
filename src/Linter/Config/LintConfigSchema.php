@@ -28,20 +28,6 @@ namespace PHPRegex\Linter\Config;
 final class LintConfigSchema
 {
     /**
-     * Keys 1.x read and 2.0 refuses, with the key that replaced each one;
-     * null when nothing did.
-     */
-    public const REMOVED_KEYS = [
-        'rules' => 'checks',
-        'redosMode' => 'checks.redos.mode',
-        'redosThreshold' => 'checks.redos.threshold',
-        'redosNoJit' => null,
-        'optimizations' => 'checks.optimizations.options',
-        'minSavings' => 'checks.optimizations.minSavings',
-        'checks.redos.noJit' => null,
-    ];
-
-    /**
      * Every lint rule id, with what it reports and whether it runs when
      * regex.json does not mention it.
      */

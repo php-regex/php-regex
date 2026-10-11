@@ -34,29 +34,29 @@ final class LintConfigLoaderStrictTest extends TestCase
 
     #[Test]
     #[DataProvider('provideRemovedKeys')]
-    public function test_load_refuses_a_removed_key_and_names_its_replacement(string $json, string $removed, ?string $replacement): void
+    public function test_load_refuses_a_removed_key_as_a_plain_unknown_key(string $json, string $removed): void
     {
         $error = $this->loadError(['regex.json' => $json]);
 
+        $this->assertStringContainsString('Unknown key', $error);
         $this->assertStringContainsString($removed, $error);
-        if (null !== $replacement) {
-            $this->assertStringContainsString($replacement, $error);
-        }
+        $this->assertStringNotContainsString('was removed in 2.0', $error);
+        $this->assertStringNotContainsString('instead', $error);
     }
 
     /**
-     * @return iterable<string, array{string, string, ?string}>
+     * @return iterable<string, array{string, string}>
      */
     public static function provideRemovedKeys(): iterable
     {
-        yield 'rules' => ['{"rules": {"redos": true, "validation": true, "optimization": false}}', 'rules', 'checks'];
-        yield 'redosMode' => ['{"redosMode": "confirmed"}', 'redosMode', 'checks.redos.mode'];
-        yield 'redosThreshold' => ['{"redosThreshold": "high"}', 'redosThreshold', 'checks.redos.threshold'];
-        yield 'optimizations' => ['{"optimizations": {"digits": true}}', 'optimizations', 'checks.optimizations.options'];
-        yield 'top-level minSavings' => ['{"minSavings": 3}', 'minSavings', 'checks.optimizations.minSavings'];
+        yield 'rules' => ['{"rules": {"redos": true, "validation": true, "optimization": false}}', 'rules'];
+        yield 'redosMode' => ['{"redosMode": "confirmed"}', 'redosMode'];
+        yield 'redosThreshold' => ['{"redosThreshold": "high"}', 'redosThreshold'];
+        yield 'optimizations' => ['{"optimizations": {"digits": true}}', 'optimizations'];
+        yield 'top-level minSavings' => ['{"minSavings": 3}', 'minSavings'];
         // The engine always runs without JIT: neither key has a replacement.
-        yield 'redosNoJit' => ['{"redosNoJit": true}', 'redosNoJit', null];
-        yield 'checks.redos.noJit' => ['{"checks": {"redos": {"enabled": true, "noJit": false}}}', 'checks.redos.noJit', null];
+        yield 'redosNoJit' => ['{"redosNoJit": true}', 'redosNoJit'];
+        yield 'checks.redos.noJit' => ['{"checks": {"redos": {"enabled": true, "noJit": false}}}', 'checks.redos.noJit'];
     }
 
     #[Test]
@@ -72,7 +72,8 @@ final class LintConfigLoaderStrictTest extends TestCase
     {
         $error = $this->loadError(['regex.dist.json' => '{"redosThreshold": "high"}']);
 
-        $this->assertStringContainsString('checks.redos.threshold', $error);
+        $this->assertStringContainsString('Unknown key', $error);
+        $this->assertStringContainsString('redosThreshold', $error);
     }
 
     #[Test]

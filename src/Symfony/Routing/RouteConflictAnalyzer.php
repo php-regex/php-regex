@@ -23,6 +23,7 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\Routing\CompiledRoute;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -320,7 +321,7 @@ final readonly class RouteConflictAnalyzer
             'name' => $name,
             'path' => $route->getPath(),
             'pathPattern' => $pathNormalization['pattern'],
-            'staticPrefix' => $this->resolveStaticPrefix($compiled, $route),
+            'staticPrefix' => $this->resolveStaticPrefix($compiled),
             'staticSegments' => $this->extractStaticSegments($route->getPath()),
             'methods' => $this->normalizeMethods($route->getMethods()),
             'schemes' => $this->normalizeSchemes($route->getSchemes()),
@@ -332,30 +333,19 @@ final readonly class RouteConflictAnalyzer
         ];
     }
 
-    private function resolveHostRegex(object $compiled): ?string
+    private function resolveHostRegex(CompiledRoute $compiled): ?string
     {
-        if (!method_exists($compiled, 'getHostRegex')) {
-            return null;
-        }
-
         $hostRegex = $compiled->getHostRegex();
-        if (!\is_string($hostRegex) || '' === $hostRegex) {
+        if (null === $hostRegex || '' === $hostRegex) {
             return null;
         }
 
         return $hostRegex;
     }
 
-    private function resolveStaticPrefix(object $compiled, Route $route): string
+    private function resolveStaticPrefix(CompiledRoute $compiled): string
     {
-        if (method_exists($compiled, 'getStaticPrefix')) {
-            $prefix = $compiled->getStaticPrefix();
-            if (\is_string($prefix)) {
-                return $prefix;
-            }
-        }
-
-        return $route->getPath();
+        return $compiled->getStaticPrefix();
     }
 
     /**

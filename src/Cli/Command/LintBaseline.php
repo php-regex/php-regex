@@ -36,9 +36,6 @@ use PHPRegex\Parser\Validation\ValidationResult;
  * aligned in line order, as a diff aligns two versions of a file, and the
  * copies of a pattern inserted since the baseline are reported.
  *
- * A 1.x baseline, a plain list, is still read with its own key: the file,
- * the line and the message.
- *
  * @internal
  *
  * @phpstan-import-type LintIssue from LintReport
@@ -55,10 +52,9 @@ final readonly class LintBaseline
     private const ALIGNMENT_BUDGET = 1_000_000;
 
     /**
-     * @param array<string, array<int, int>> $lines  the line of each entry, by key
-     * @param bool                           $legacy whether the file is a 1.x list
+     * @param array<string, array<int, int>> $lines the line of each entry, by key
      */
-    private function __construct(private array $lines, public bool $legacy) {}
+    private function __construct(private array $lines) {}
 
     /**
      * @throws CliException when the file is missing, unreadable, or holds no baseline
@@ -81,10 +77,6 @@ final readonly class LintBaseline
             $data = json_decode($content, false, 512, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             throw new CliException(\sprintf('The baseline file %s is not valid JSON: %s.', $file, $e->getMessage()), 0, $e);
-        }
-
-        if (\is_array($data)) {
-            return self::fromList($file, $data);
         }
 
         if ($data instanceof \stdClass) {
@@ -283,23 +275,6 @@ final readonly class LintBaseline
         return $aligned;
     }
 
-    /**
-     * @param array<mixed> $list
-     */
-    private static function fromList(string $file, array $list): self
-    {
-        $lines = [];
-        foreach ($list as $item) {
-            $entry = $item instanceof \stdClass ? get_object_vars($item) : null;
-            if (null === $entry || !\is_string($entry['file'] ?? null) || !\is_int($entry['line'] ?? null) || !\is_string($entry['message'] ?? null)) {
-                throw self::notABaseline($file);
-            }
-            $lines[self::legacyKey(self::normalizePath($entry['file']), $entry['line'], $entry['message'])][] = $entry['line'];
-        }
-
-        return new self($lines, true);
-    }
-
     private static function fromDocument(string $file, \stdClass $document): self
     {
         $data = get_object_vars($document);
@@ -324,7 +299,7 @@ final readonly class LintBaseline
             $lines[self::key($entry['issue_id'], self::normalizeSpelledPath($entry['file']), $entry['pattern_hash'])][] = $entry['line'];
         }
 
-        return new self($lines, false);
+        return new self($lines);
     }
 
     private static function notABaseline(string $file): CliException
@@ -338,21 +313,12 @@ final readonly class LintBaseline
      */
     private function keyOf(array $issue, array $result): string
     {
-        if ($this->legacy) {
-            return self::legacyKey(self::relativePath($issue['file']), $issue['line'], $issue['message']);
-        }
-
         return self::key(self::issueId($issue), self::escape(self::relativePath($issue['file'])), self::hash($result['pattern'] ?? ''));
     }
 
     private static function key(string $issueId, string $file, string $patternHash): string
     {
         return $issueId."\0".$file."\0".$patternHash;
-    }
-
-    private static function legacyKey(string $file, int $line, string $message): string
-    {
-        return $file.':'.$line.':'.$message;
     }
 
     /**

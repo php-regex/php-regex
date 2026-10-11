@@ -136,6 +136,8 @@ final class LintBaselineTest extends TestCase
         yield '1.x entry without a message' => ['content' => '[{"file": "a.php", "line": 3}]'];
         yield '1.x entry without a file' => ['content' => '[{"line": 3, "message": "m"}]'];
         yield '1.x entry whose line is a string' => ['content' => '[{"file": "a.php", "line": "3", "message": "m"}]'];
+        yield 'a well-formed 1.x list' => ['content' => '[{"file": "a.php", "line": 3, "message": "Known issue"}]'];
+        yield 'an empty 1.x list' => ['content' => '[]'];
         yield 'document without a version' => ['content' => '{"issues": []}'];
         yield 'document whose issues are an object' => ['content' => '{"version": 1, "issues": {}}'];
         yield 'entry holding a number' => ['content' => '{"version": 1, "issues": [1]}'];
@@ -461,34 +463,35 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
-     * A 1.x entry is matched on its file, its line and its message, each
-     * kept apart: values that only run together into the same text are
-     * another issue.
+     * A 1.x baseline, a plain list, is no baseline any more: whatever its
+     * entries hold, the file is refused with the one message that says what
+     * a baseline is. The rows are the entries 1.x wrote, well-formed or not.
      *
      * @param array<string, mixed> $entry
      */
     #[Test]
     #[DataProvider('provideLegacyEntries')]
-    public function test_filter_matches_a_legacy_entry_on_file_line_and_message(array $entry, bool $known): void
+    public function test_a_legacy_list_entry_is_refused_like_any_non_baseline(array $entry): void
     {
-        $issue = ['type' => 'error', 'message' => 'm3', 'file' => 'src/v1', 'line' => 23, 'issueId' => 'regex.lint.known'];
-        $report = self::report([self::lintResult([$issue], [])]);
+        $file = $this->directory.'/baseline.json';
+        file_put_contents($file, json_encode([$entry], \JSON_THROW_ON_ERROR));
 
-        $filtered = $this->baselineFrom([$entry])->filter($report);
+        $this->expectException(CliException::class);
+        $this->expectExceptionMessage(\sprintf('The file %s is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $file));
 
-        $this->assertSame($known ? [] : $report->results, $filtered->results);
+        LintBaseline::load($file);
     }
 
     /**
-     * @return iterable<string, array{entry: array<string, mixed>, known: bool}>
+     * @return iterable<string, array{entry: array<string, mixed>}>
      */
     public static function provideLegacyEntries(): iterable
     {
-        yield 'the same file, line and message' => ['entry' => ['file' => 'src/v1', 'line' => 23, 'message' => 'm3'], 'known' => true];
-        yield 'another file' => ['entry' => ['file' => 'src/v2', 'line' => 23, 'message' => 'm3'], 'known' => false];
-        yield 'another message' => ['entry' => ['file' => 'src/v1', 'line' => 23, 'message' => 'm4'], 'known' => false];
-        yield 'a file and a line that run together' => ['entry' => ['file' => 'src/v12', 'line' => 3, 'message' => 'm3'], 'known' => false];
-        yield 'a line and a message that run together' => ['entry' => ['file' => 'src/v1', 'line' => 2, 'message' => '3m3'], 'known' => false];
+        yield 'the same file, line and message an issue has' => ['entry' => ['file' => 'src/v1', 'line' => 23, 'message' => 'm3']];
+        yield 'another file' => ['entry' => ['file' => 'src/v2', 'line' => 23, 'message' => 'm3']];
+        yield 'another message' => ['entry' => ['file' => 'src/v1', 'line' => 23, 'message' => 'm4']];
+        yield 'a file and a line that run together' => ['entry' => ['file' => 'src/v12', 'line' => 3, 'message' => 'm3']];
+        yield 'a line and a message that run together' => ['entry' => ['file' => 'src/v1', 'line' => 2, 'message' => '3m3']];
     }
 
     /**

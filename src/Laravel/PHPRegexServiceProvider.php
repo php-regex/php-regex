@@ -168,12 +168,6 @@ final class PHPRegexServiceProvider extends ServiceProvider
             $current = $config->get('php-regex', []);
 
             $config->set('php-regex', self::withDefaults($defaults, \is_array($current) ? $current : []));
-
-            // 1.x published config/regex-parser.php: Laravel still loads it,
-            // nothing reads it any more.
-            if ($config->has('regex-parser')) {
-                @trigger_error('config/regex-parser.php is no longer read since 2.0: move its settings to config/php-regex.php (php artisan vendor:publish --tag=php-regex-config).', \E_USER_DEPRECATED);
-            }
         }
     }
 

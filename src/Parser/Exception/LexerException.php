@@ -20,7 +20,7 @@ use PHPRegex\Parser\ErrorCode;
  *
  * @see \PHPRegex\Parser\Lexer
  */
-final class LexerException extends RegexException implements ExceptionInterface
+final class LexerException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
     use VisualContextTrait;
 

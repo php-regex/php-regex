@@ -16,12 +16,13 @@ namespace PHPRegex\Transpiler;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\Exception\VisualContextTrait;
 
 /**
  * Raised when a regex cannot be safely transpiled to a target dialect.
  */
-final class TranspileException extends RegexException implements ExceptionInterface
+final class TranspileException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
     use VisualContextTrait;
 

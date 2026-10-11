@@ -277,7 +277,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             } else {
                 $this->writeReport($output, $format, $formatter->format($emptyReport));
             }
-            $this->writeRequestedFiles($output, $arguments, $baseline, $format, $formatter, $emptyReport);
+            $this->writeRequestedFiles($output, $arguments, $format, $formatter, $emptyReport);
 
             return self::SUCCESS;
         }
@@ -339,7 +339,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $output->write($formatter->formatFooter());
         }
 
-        $this->writeRequestedFiles($output, $arguments, $baseline, $format, $formatter, $report);
+        $this->writeRequestedFiles($output, $arguments, $format, $formatter, $report);
 
         return $report->stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
     }
@@ -430,20 +430,15 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * Name the baseline written, note a 1.x baseline, and write the report
-     * to --output as well.
+     * Name the baseline written, and write the report to --output as well.
      */
-    private function writeRequestedFiles(Output $output, LintArguments $arguments, ?LintBaseline $baseline, string $format, OutputFormatterInterface $formatter, LintReport $report): void
+    private function writeRequestedFiles(Output $output, LintArguments $arguments, string $format, OutputFormatterInterface $formatter, LintReport $report): void
     {
         // Only the console report shares stdout with status lines.
         $status = 'console' === $format ? $output->write(...) : $output->writeError(...);
 
         if (null !== $arguments->generateBaseline) {
             $status("Baseline generated at {$arguments->generateBaseline}\n");
-        }
-
-        if (null !== $baseline && $baseline->legacy) {
-            $status("Note: the baseline {$arguments->baseline} is in the 1.x format, matched on file, line and message; regenerate it with --generate-baseline to match issues whose line or message changed.\n");
         }
 
         $outputFile = $arguments->output;

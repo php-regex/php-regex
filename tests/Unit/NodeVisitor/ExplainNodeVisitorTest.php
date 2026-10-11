@@ -140,7 +140,7 @@ final class ExplainNodeVisitorTest extends TestCase
 
     public function test_visit_unicode_prop_node(): void
     {
-        $node = new UnicodePropNode('L', 0, 2);
+        $node = new UnicodePropNode('L', false, 0, 2);
         $visitor = new TextExplainer();
 
         $this->assertSame('Unicode Property: any character matching "L"', $node->accept($visitor));

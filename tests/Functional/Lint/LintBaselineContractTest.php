@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
  * pattern_hash} are sorted like the report, ending with a newline. A
  * baseline matches an issue by file, issue_id and pattern, so a message
  * reworded in a minor does not resurface it; a 1.x list, whose entries have
- * no issue_id, still matches by file, line and message.
+ * no issue_id, is not a baseline at all: reading it is a usage error.
  */
 final class LintBaselineContractTest extends TestCase
 {
@@ -128,10 +128,12 @@ final class LintBaselineContractTest extends TestCase
     }
 
     /**
-     * Green before the change: the 1.x entries keep matching.
+     * A baseline written as the 1.x list, well-formed entries included, is
+     * refused before any analysis: exit 2, the stage "usage", the one
+     * message that says what a baseline is — never a silent pass-all.
      */
     #[Test]
-    public function test_baseline_entry_without_issue_id_matches_by_message(): void
+    public function test_a_1x_list_baseline_is_refused_as_a_usage_error(): void
     {
         $this->enterProject(self::FILES);
         $this->runRegex([...self::LINT, '--generate-baseline=generated.json']);
@@ -148,26 +150,42 @@ final class LintBaselineContractTest extends TestCase
 
         [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
 
-        $this->assertSame(0, $exitCode, $stdout);
-        $document = json_decode($stdout, true);
-        $this->assertIsArray($document, $stdout);
-        $this->assertIsArray($document['results'] ?? null);
-        foreach ($document['results'] as $result) {
-            $this->assertIsArray($result);
-            $this->assertSame([], $result['issues'] ?? null, $stdout);
-        }
+        $this->assertSame(2, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame(['error', 'stage'], array_keys($document));
+        $this->assertSame('The file baseline.json is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $document['error']);
+        $this->assertSame('usage', $document['stage']);
+    }
+
+    /**
+     * The 1.x list is refused even when the same run means to write a new
+     * baseline: the file is read before anything is generated, so nothing
+     * is written and no issue slips through unfiltered.
+     */
+    #[Test]
+    public function test_a_1x_list_baseline_is_refused_even_alongside_generate_baseline(): void
+    {
+        $this->enterProject(self::FILES + ['old.json' => (string) json_encode([['file' => 'src/a.php', 'line' => 3, 'message' => 'Known issue']], \JSON_PRETTY_PRINT | \JSON_THROW_ON_ERROR)]);
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=old.json', '--generate-baseline=fresh.json']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $document = JsonContract::decodeDocument($stdout);
+        $this->assertSame('The file old.json is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $document['error']);
+        $this->assertSame('usage', $document['stage']);
+        $this->assertFileDoesNotExist('fresh.json');
     }
 
     /**
      * A baseline entry filters its own issue: not another issue of the same
-     * pattern, not the same issue on another line, whether it matches by
-     * issue_id or, written without one in a 1.x list, by message.
+     * pattern, not the same issue on another line. The entry is the one
+     * --generate-baseline writes, issue_id and pattern hash included.
      *
      * @param list<array{string, int, string}> $remaining
      */
     #[Test]
     #[DataProvider('provideSingleEntryBaselines')]
-    public function test_baseline_entry_filters_its_own_issue_only(string $code, int $line, string $issueId, bool $withoutIssueId, array $remaining): void
+    public function test_baseline_entry_filters_its_own_issue_only(string $code, int $line, string $issueId, array $remaining): void
     {
         $this->enterProject(['src/c.php' => $code]);
         $this->runRegex([...self::LINT, '--generate-baseline=generated.json']);
@@ -176,15 +194,11 @@ final class LintBaselineContractTest extends TestCase
         foreach (JsonContract::asArray(JsonContract::decodeDocument((string) file_get_contents('generated.json'))['issues'] ?? null) as $entry) {
             $entry = JsonContract::asArray($entry);
             if ($line === ($entry['line'] ?? null) && $issueId === ($entry['issue_id'] ?? null)) {
-                if ($withoutIssueId) {
-                    unset($entry['issue_id'], $entry['pattern'], $entry['pattern_hash']);
-                }
                 $kept[] = $entry;
             }
         }
         $this->assertCount(1, $kept);
-        // An entry without issue_id is a 1.x one, read from a 1.x list.
-        file_put_contents('baseline.json', json_encode($withoutIssueId ? $kept : ['version' => 1, 'issues' => $kept], \JSON_PRETTY_PRINT));
+        file_put_contents('baseline.json', json_encode(['version' => 1, 'issues' => $kept], \JSON_PRETTY_PRINT));
 
         [, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
 
@@ -192,7 +206,38 @@ final class LintBaselineContractTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{code: string, line: int, issueId: string, withoutIssueId: bool, remaining: list<array{string, int, string}>}>
+     * The same entries with their issue_id, pattern and pattern_hash taken
+     * out — the 1.x shape — make the file a 1.x list, and the run refuses
+     * it whatever it holds.
+     *
+     * @param list<array{string, int, string}> $remaining
+     */
+    #[Test]
+    #[DataProvider('provideSingleEntryBaselines')]
+    public function test_a_single_1x_shaped_entry_is_refused(string $code, int $line, string $issueId, array $remaining): void
+    {
+        $this->enterProject(['src/c.php' => $code]);
+        $this->runRegex([...self::LINT, '--generate-baseline=generated.json']);
+
+        $kept = [];
+        foreach (JsonContract::asArray(JsonContract::decodeDocument((string) file_get_contents('generated.json'))['issues'] ?? null) as $entry) {
+            $entry = JsonContract::asArray($entry);
+            if ($line === ($entry['line'] ?? null) && $issueId === ($entry['issue_id'] ?? null)) {
+                unset($entry['issue_id'], $entry['pattern'], $entry['pattern_hash']);
+                $kept[] = $entry;
+            }
+        }
+        $this->assertCount(1, $kept);
+        file_put_contents('baseline.json', json_encode($kept, \JSON_PRETTY_PRINT));
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $this->assertSame('usage', JsonContract::decodeDocument($stdout)['stage'] ?? null);
+    }
+
+    /**
+     * @return iterable<string, array{code: string, line: int, issueId: string, remaining: list<array{string, int, string}>}>
      */
     public static function provideSingleEntryBaselines(): iterable
     {
@@ -200,22 +245,18 @@ final class LintBaselineContractTest extends TestCase
         $twoIssues = "<?php\n\npreg_match('/a{1}(?:b)/', \$s);\n";
         $twoLines = "<?php\n\npreg_match('/a{1}/', \$s);\npreg_match('/a{1}/', \$s);\n";
 
-        foreach (['by issue_id' => false, 'by message' => true] as $match => $withoutIssueId) {
-            yield 'another issue of the same pattern, '.$match => [
-                'code' => $twoIssues,
-                'line' => 3,
-                'issueId' => 'regex.lint.quantifier.useless',
-                'withoutIssueId' => $withoutIssueId,
-                'remaining' => [['src/c.php', 3, 'regex.lint.group.redundant']],
-            ];
-            yield 'the same issue on the next line, '.$match => [
-                'code' => $twoLines,
-                'line' => 3,
-                'issueId' => 'regex.lint.quantifier.useless',
-                'withoutIssueId' => $withoutIssueId,
-                'remaining' => [['src/c.php', 4, 'regex.lint.quantifier.useless']],
-            ];
-        }
+        yield 'another issue of the same pattern' => [
+            'code' => $twoIssues,
+            'line' => 3,
+            'issueId' => 'regex.lint.quantifier.useless',
+            'remaining' => [['src/c.php', 3, 'regex.lint.group.redundant']],
+        ];
+        yield 'the same issue on the next line' => [
+            'code' => $twoLines,
+            'line' => 3,
+            'issueId' => 'regex.lint.quantifier.useless',
+            'remaining' => [['src/c.php', 4, 'regex.lint.quantifier.useless']],
+        ];
     }
 
     /**

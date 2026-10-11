@@ -16,12 +16,13 @@ namespace PHPRegex\Automata\Exception;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\Exception\VisualContextTrait;
 
 /**
  * Raised when a regex exceeds the supported regular subset for automata conversion.
  */
-final class ComplexityException extends RegexException implements ExceptionInterface
+final class ComplexityException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
     use VisualContextTrait;
 
