@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,7 +22,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * A bare "\g" reference reads a sign and digits, no more: a "+" after the
  * digits is a quantifier, and a count after it stacks on it, which PCRE2
- * refuses (pcre2test 10.49, error 109).
+ * refuses past the count (pcre2test 10.49, error 109), where releases
+ * before 10.47 report it inside the braces.
  */
 final class GReferenceQuantifierTest extends TestCase
 {
@@ -29,6 +31,10 @@ final class GReferenceQuantifierTest extends TestCase
     #[DataProvider('provideStackedQuantifiers')]
     public function test_a_count_after_a_quantified_reference_is_refused_where_pcre_refuses_it(string $pattern, int $offset): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.47')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.47 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);

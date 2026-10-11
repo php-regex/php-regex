@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,15 @@ final class MatchEquivalenceTest extends TestCase
     #[DataProvider('provideEquivalentPairs')]
     public function test_match_equivalent_patterns_write_the_same_matches_everywhere(string $left, string $right, string $letters): void
     {
+        // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
+        // engine or an older PHP refuses the flag.
+        if ('/k/iur' === $left && \PHP_VERSION_ID < 80400) {
+            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $left, \PHP_VERSION));
+        }
+        if ('/k/iur' === $left && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $left, \PCRE_VERSION));
+        }
+
         $result = (new LanguageSolver())->matchEquivalent($left, $right);
 
         $this->assertTrue($result->isEquivalent, \sprintf('%s and %s write the same matches, yet %s was handed back.', $left, $right, json_encode($result->counterExample)));
@@ -52,6 +62,15 @@ final class MatchEquivalenceTest extends TestCase
     #[DataProvider('provideDifferentPairs')]
     public function test_the_counter_example_shows_the_difference(string $left, string $right, string $shortest): void
     {
+        // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
+        // engine or an older PHP refuses the flag.
+        if ('/k/iur' === $left && \PHP_VERSION_ID < 80400) {
+            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $left, \PHP_VERSION));
+        }
+        if ('/k/iur' === $left && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $left, \PCRE_VERSION));
+        }
+
         $result = (new LanguageSolver())->matchEquivalent($left, $right);
 
         $this->assertFalse($result->isEquivalent);

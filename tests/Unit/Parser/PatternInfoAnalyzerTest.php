@@ -17,7 +17,6 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\NewlineConvention;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -247,9 +246,14 @@ final class PatternInfoAnalyzerTest extends TestCase
     #[DataProvider('provideMatchLengthSubjects')]
     public function test_match_length_holds_every_match_the_engine_finds(string $pattern, array $subjects): void
     {
-        // The engine refuses "\K" inside a lookbehind before PCRE2 10.43.
-        if ('/(?<=a\Kb)c/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        // "\K" inside a lookbehind follows the PHP version, not the PCRE2
+        // release: PCRE2 has refused it at compile by default since 10.37
+        // (error 199), PHP 8.2 to 8.4 set PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK
+        // in every compile and allow it on any engine, and PHP 8.5 does not
+        // set it, so the pattern is refused there (src/Parser/PcreTarget.php
+        // documents the 8.5 rule).
+        if ('/(?<=a\Kb)c/' === $pattern && \PHP_VERSION_ID >= 80500) {
+            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and earlier, whose engine context allows \K in a lookbehind; PHP %s refuses it at compile.', $pattern, \PHP_VERSION));
         }
 
         $info = $this->info($pattern);

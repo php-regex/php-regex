@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -89,6 +90,15 @@ final class PossessiveImpossibleRuleTest extends TestCase
     #[DataProvider('provideAtomsThatCanStillMatch')]
     public function test_an_atom_that_can_still_match_is_not_reported(string $pattern, string $subject, string $match): void
     {
+        // The ASCII options and "(?r)" are PCRE2 10.43.
+        $verifiedAgainst = match ($pattern) {
+            '/(?aW)\w*+é/u', '/(?aD)\d*+٣/u', '/(?a)(?-aD)\w*+é/u', '/(?r)k*+\x{212A}/iu' => '10.43',
+            default => null,
+        };
+        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        }
+
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the pattern matches.
         $this->assertSame(1, preg_match($pattern, $subject, $matches), $pattern);
         $this->assertSame($match, $matches[0]);
@@ -128,6 +138,15 @@ final class PossessiveImpossibleRuleTest extends TestCase
     #[Test]
     public function test_caseless_restrict_turned_off_inside_the_pattern_is_read(): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', '/(?-r)k*+\x{212A}/iur', \PCRE_VERSION));
+        }
+        // The "r" modifier is read from PHP 8.4 only: an older PHP refuses
+        // the flag, whatever its engine.
+        if (\PHP_VERSION_ID < 80400) {
+            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', '/(?-r)k*+\x{212A}/iur', \PHP_VERSION));
+        }
+
         // Oracle, PHP 8.4.26 / PCRE2 10.49.
         foreach (["\u{212A}", 'k', 'K', "k\u{212A}", ''] as $subject) {
             $this->assertSame(0, preg_match('/(?-r)k*+\x{212A}/iur', $subject), var_export($subject, true));

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,7 +22,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * "(?<*" opens a non-atomic lookbehind: a "+" or "?" right after the "*"
  * repeats nothing, which PCRE2 refuses past it (pcre2test 10.49, error
- * 109 "quantifier does not follow a repeatable item").
+ * 109 "quantifier does not follow a repeatable item"), where releases
+ * before 10.47 report it on the quantifier itself.
  */
 final class NonAtomicLookbehindQuantifierTest extends TestCase
 {
@@ -29,6 +31,10 @@ final class NonAtomicLookbehindQuantifierTest extends TestCase
     #[DataProvider('provideQuantifiersAfterTheOpener')]
     public function test_a_quantifier_right_after_the_opener_repeats_nothing(string $pattern, int $offset): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.47')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.47 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);

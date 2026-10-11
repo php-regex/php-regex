@@ -38,7 +38,8 @@ use PHPUnit\Framework\TestCase;
  * that holds the characters each option moves: k, K, the Kelvin sign,
  * U+0663, U+00A0, U+00E9, U+00AA, U+0085, ASCII digits, letters and spaces.
  * Engine: PHP 8.4.26, PCRE2 10.49. PCRE2 before 10.43 refuses "(?r)" and
- * the ASCII options: a row it cannot compile says so and stops.
+ * the ASCII options, and PHP before 8.4 refuses the "r" modifier: a row
+ * it cannot compile says so and stops.
  */
 final class SolverInlineOptionsTest extends TestCase
 {
@@ -367,13 +368,21 @@ final class SolverInlineOptionsTest extends TestCase
     }
 
     /**
-     * Whether this PCRE2 compiles the row: "(?r)" and the ASCII options
-     * need 10.43 or later, and nothing else may be refused.
+     * Whether this PHP and its PCRE2 compile the row: "(?r)" and the ASCII
+     * options need PCRE2 10.43 or later, the "r" modifier PHP 8.4 or later,
+     * and nothing else may be refused.
      */
     private static function compilesHere(string $pattern): bool
     {
         if (false !== @preg_match($pattern, '')) {
             return true;
+        }
+
+        // The "r" modifier is read from PHP 8.4 only: an older PHP refuses
+        // the flag before its engine is asked. A new PHP on an old engine,
+        // like the inline "(?r)", is refused by the tripwire below.
+        if (\PHP_VERSION_ID < 80400 && str_contains(substr($pattern, (int) strrpos($pattern, $pattern[0]) + 1), 'r')) {
+            return false;
         }
 
         self::assertTrue(version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile on PCRE2 '.\PCRE_VERSION);

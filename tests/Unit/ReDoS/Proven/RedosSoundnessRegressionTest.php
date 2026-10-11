@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
@@ -165,6 +166,11 @@ final class RedosSoundnessRegressionTest extends TestCase
     #[DataProvider('provideExtendedMorePatterns')]
     public function test_the_xx_option_is_read_by_the_proof(string $pattern, RedosComplexity $complexity): void
     {
+        // The ASCII digit option is PCRE2 10.43.
+        if ('/^(?xxaD)(?:[a b]|\x20)*$/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern.' is "'.$analysis->headline().'"');

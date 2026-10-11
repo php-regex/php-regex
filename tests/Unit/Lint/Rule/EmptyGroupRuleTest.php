@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -120,6 +121,15 @@ final class EmptyGroupRuleTest extends TestCase
     #[DataProvider('provideGroupsInsideBraces')]
     public function test_an_empty_group_that_keeps_braces_from_a_quantifier_is_not_reported(string $pattern, string $subject): void
     {
+        // "{,2}" and a count padded with spaces repeat only from PCRE2 10.43.
+        $verifiedAgainst = match ($pattern) {
+            '/^a{(?:),2}$/', '/^a{ (?:) 2 }$/' => '10.43',
+            default => null,
+        };
+        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        }
+
         // Oracle, PHP 8.4.26 / PCRE2 10.49.
         $this->assertSame(1, preg_match($pattern, $subject), $pattern);
         $this->assertSame(0, preg_match(str_replace('(?:)', '', $pattern), $subject), 'Without the group the braces are a quantifier.');

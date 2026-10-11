@@ -96,6 +96,12 @@ final class ForkedWorkerPoolTest extends TestCase
     #[Test]
     public function test_a_child_does_not_write_out_what_its_parent_buffered(): void
     {
+        // The fork runs in a PHP of its own, where no test support can
+        // stand in for the extension.
+        if (!\function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl is not available.');
+        }
+
         $autoload = \dirname(__DIR__, 3).'/vendor/autoload.php';
         $script = \sprintf(<<<'PHP_WRAP'
             require %s;

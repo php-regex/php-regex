@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Internal\LastCodeUnit;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,6 +34,15 @@ final class LastCodeUnitTest extends TestCase
     #[DataProvider('provideLastCodeUnits')]
     public function test_last_code_unit_is_the_one_pcre2_requires(string $pattern, ?string $expected): void
     {
+        // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
+        // engine or an older PHP refuses the flag.
+        if ('/xk/iur' === $pattern && \PHP_VERSION_ID < 80400) {
+            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $pattern, \PHP_VERSION));
+        }
+        if ('/xk/iur' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $regex = RegexParser::create()->parse($pattern);
         $unit = LastCodeUnit::of($regex);
 
@@ -123,6 +133,15 @@ final class LastCodeUnitTest extends TestCase
     #[DataProvider('provideCaselessLastCodeUnits')]
     public function test_last_code_unit_is_caseless_only_where_pcre2_reads_it_caseless(string $pattern, string $expected, bool $caseless): void
     {
+        // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
+        // engine or an older PHP refuses the flag.
+        if ('/xk/iur' === $pattern && \PHP_VERSION_ID < 80400) {
+            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $pattern, \PHP_VERSION));
+        }
+        if ('/xk/iur' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $regex = RegexParser::create()->parse($pattern);
 
         $this->assertSame([$expected, $caseless], array_map(

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,7 +22,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * u and d are PHP modifiers, not inline options: PCRE2 10.49 refuses them
  * after "(?" (pcre2test, error 111 "unrecognized character after (? or
- * (?-") on the letter itself.
+ * (?-") on the letter itself, where releases before 10.47 report the
+ * error on the "(?" itself.
  */
 final class InlineOptionLettersTest extends TestCase
 {
@@ -29,6 +31,10 @@ final class InlineOptionLettersTest extends TestCase
     #[DataProvider('provideModifiersThatAreNoOptions')]
     public function test_a_php_modifier_is_no_inline_option(string $pattern, int $offset): void
     {
+        if (!PcreTarget::runtime()->pcreAtLeast('10.47')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.47 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);

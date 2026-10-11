@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Internal\SearchCostProver;
@@ -579,6 +580,14 @@ final class RedosSearchCostTest extends TestCase
     #[DataProvider('provideAnchoredSearches')]
     public function test_search_cost_is_not_reported_when_every_attempt_is_tied_to_the_search_start(string $pattern): void
     {
+        // PCRE2 up to 10.47 reads a class that combines characters at or
+        // below U+00FF with characters at U+0100 and above incorrectly
+        // (pcre2test 10.44: no match on U+0100): the scan of the leading
+        // class misses code points, and the search reads as unanchored.
+        if ('/[[:^ascii:][:ascii:]]*\d$/u' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.48')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.48 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);

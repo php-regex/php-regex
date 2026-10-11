@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -134,6 +135,11 @@ final class RelativeConditionReferenceTest extends TestCase
     #[DataProvider('provideUnclosedBackwardReferences')]
     public function test_an_unclosed_backward_reference_is_refused_as_pcre_reads_it(string $pattern, int $offset): void
     {
+        // PCRE2 10.47 refuses an unclosed "\g{3" past the number, not at "\g".
+        if ('/(a)\g{-1/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.47')) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.47 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        }
+
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);
@@ -160,6 +166,17 @@ final class RelativeConditionReferenceTest extends TestCase
     #[DataProvider('provideBracedNamesNotClosed')]
     public function test_a_braced_name_not_closed_is_refused_past_its_padding(string $pattern, int $offset): void
     {
+        // PCRE2 10.43 pads a braced name with spaces; 10.47 reports a
+        // called name left open past the "(" that stops it.
+        $verifiedAgainst = match ($pattern) {
+            '/\k{a b}/', '/\k{ a/' => '10.43',
+            '/(?&a(?:z)/', '/(?P>a(?:z)/' => '10.47',
+            default => null,
+        };
+        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
+            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        }
+
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 
         $result = Regex::create(['cache' => null])->validate($pattern);
