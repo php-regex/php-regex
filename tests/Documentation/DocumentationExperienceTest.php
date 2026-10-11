@@ -58,20 +58,24 @@ final class DocumentationExperienceTest extends TestCase
     {
         $home = (string) file_get_contents(self::HOME);
 
-        $this->assertStringContainsString('vendor/bin/regex diagram', $home);
-        $this->assertStringContainsString('Group (named) name=&quot;date&quot;', $home);
-        $this->assertStringContainsString('Quantifier ({4}, greedy)', $home);
-        $this->assertStringContainsString('CharType (\d)', $home);
+        $this->assertStringContainsString('site.data.hero_ast.command', $home);
+        $this->assertStringContainsString('site.data.hero_ast.output', $home);
         $this->assertStringNotContainsString('vendor/bin/regex analyze', $home);
     }
 
     #[Test]
     public function test_the_landing_terminal_fits_without_horizontal_scrolling(): void
     {
-        $home = (string) file_get_contents(self::HOME);
+        $this->assertSame(1, preg_match(
+            '/command: \|-\n(.*?)\noutput: \|-\n(.*?)\z/s',
+            (string) file_get_contents(__DIR__.'/../../docs/_data/hero_ast.yml'),
+            $matches,
+        ));
 
-        $this->assertSame(1, preg_match('/<pre class="terminal-body">(.*?)<\/pre>/s', $home, $matches));
-        $terminal = html_entity_decode(strip_tags($matches[1]));
+        $terminal = implode("\n", array_map(
+            static fn (string $line): string => str_starts_with($line, '  ') ? substr($line, 2) : $line,
+            explode("\n", $matches[1]."\n".$matches[2]),
+        ));
         $longestLine = max(array_map(strlen(...), explode("\n", $terminal)));
 
         $this->assertLessThanOrEqual(58, $longestLine, 'Terminal lines longer than 58 characters force horizontal scrolling.');

@@ -1,0 +1,19 @@
+command: |-
+  $ vendor/bin/regex diagram \
+  > '/^(?<date>\d{4}-\d{2}-\d{2})$/' \
+  > --format=text
+output: |-
+  Regex
+  \-- Sequence
+      |-- Anchor (^)
+      |-- Group (named) name="date"
+      |   \-- Sequence
+      |       |-- Quantifier ({4}, greedy)
+      |       |   \-- CharType (\d)
+      |       |-- Literal ('-')
+      |       |-- Quantifier ({2}, greedy)
+      |       |   \-- CharType (\d)
+      |       |-- Literal ('-')
+      |       \-- Quantifier ({2}, greedy)
+      |           \-- CharType (\d)
+      \-- Anchor ($)

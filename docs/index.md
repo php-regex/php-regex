@@ -23,23 +23,8 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
     </div>
     <div class="terminal">
       <div class="terminal-bar">AST</div>
-      <pre class="terminal-body"><span class="command">$ vendor/bin/regex diagram \
-&gt; '/^(?&lt;date&gt;\d{4}-\d{2}-\d{2})$/' \
-&gt; --format=text</span>
-Regex
-\-- Sequence
-    |-- Anchor (^)
-    |-- Group (named) name=&quot;date&quot;
-    |   \-- Sequence
-    |       |-- Quantifier ({4}, greedy)
-    |       |   \-- CharType (\d)
-    |       |-- Literal ('-')
-    |       |-- Quantifier ({2}, greedy)
-    |       |   \-- CharType (\d)
-    |       |-- Literal ('-')
-    |       \-- Quantifier ({2}, greedy)
-    |           \-- CharType (\d)
-    \-- Anchor ($)</pre>
+      <pre class="terminal-body"><span class="command">{{ site.data.hero_ast.command | escape }}</span>
+{{ site.data.hero_ast.output | escape }}</pre>
       <p class="terminal-more">Learn the tree behind every verdict in <a href="/concepts/ast/">What is an AST?</a>.</p>
     </div>
   </div>
