@@ -80,17 +80,23 @@ parameters:
         - message: '#^Call to static method PHPRegex\\Linter\\Rule\\Support\\NodePredicates::isStandaloneInlineFlagsGroup\(\) with PHPRegex\\Parser\\Node\\GroupNode will always evaluate to true\.$#'
           identifier: staticMethod.alreadyNarrowedType
         # These tests probe the running engine for syntax newer PCRE2 releases
-        # added, as (?[...]) or (*scs:...), and only match with it when it
-        # compiles: the analysis, run on an older PCRE2, cannot compile them.
+        # added, as (?[...]), (*scs:...), (?^i) or a \K inside a lookbehind,
+        # and only match with it when it compiles: the analysis, run on an
+        # older PCRE2, cannot compile them. Revisit once PHPStan's own regexp
+        # rule learns to read the engine version instead of refusing.
         - identifiers:
             - regexp.pattern
           paths:
+            - tests/Integration/Bridge/PHPStan/RegexParserRuleExtensionNeonRangeTest.php
+            - tests/Integration/Bridge/PHPStan/RegexParserRuleReplacementGroupEdgeTest.php
             - tests/Integration/Bridge/PHPStan/RegexParserRuleTargetVersionTest.php
             - tests/Unit/Automata/DfaCacheKeyVersionTest.php
             - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
             - tests/Unit/Hir/ClassSetProviderCacheTest.php
             - tests/Unit/Internal/InlineFlagsTest.php
             - tests/Unit/Internal/StartOptionsTest.php
+            - tests/Unit/Lint/Rule/ImpossibleLookaroundRuleTest.php
+            - tests/Unit/Lint/Rule/PossessiveImpossibleRuleTest.php
             - tests/Unit/NodeVisitor/CasingSettingsTest.php
             - tests/Unit/NodeVisitor/ExtendedCharClassDisplayTest.php
             - tests/Unit/NodeVisitor/SampleGeneratorEndAnchorTest.php
