@@ -295,7 +295,7 @@ final class PackageManifestTest extends TestCase
         $root = self::decode(self::root().'/composer.json');
 
         $this->assertSame('php-regex/php-regex', self::dig($root, 'name'));
-        $this->assertSame('https://github.com/php-regex/php-regex', self::dig($root, 'homepage'));
+        $this->assertSame('https://php-regex.com', self::dig($root, 'homepage'));
     }
 
     #[Test]
