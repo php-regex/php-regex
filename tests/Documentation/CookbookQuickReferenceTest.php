@@ -33,6 +33,16 @@ final class CookbookQuickReferenceTest extends TestCase
     }
 
     #[Test]
+    public function test_quick_reference_stays_on_one_column(): void
+    {
+        $stylesheet = (string) file_get_contents(__DIR__.'/../../docs/assets/css/main.scss');
+
+        $this->assertStringContainsString(".recipe-index {\n  list-style: none;\n  display: grid;\n  grid-template-columns: minmax(0, 1fr);", $stylesheet);
+        $this->assertStringContainsString("  gap: 2rem;\n  margin: 2rem 0;", $stylesheet);
+        $this->assertStringNotContainsString('repeat(auto-fit, minmax(min(100%, 21rem), 1fr))', $stylesheet);
+    }
+
+    #[Test]
     public function test_every_quick_reference_pattern_stays_copyable(): void
     {
         $section = self::quickReference();
