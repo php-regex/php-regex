@@ -1,5 +1,5 @@
 - title: Learn
-  url: /docs/#learn
+  url: /tutorial/
   pages:
     - title: Documentation
       url: /docs/
@@ -7,6 +7,27 @@
       url: /quick-start/
     - title: Regex 101 tutorial
       url: /tutorial/
+      pages:
+        - title: "01 · Regex basics"
+          url: /tutorial/01-basics/
+        - title: "02 · Character classes & escapes"
+          url: /tutorial/02-character-classes/
+        - title: "03 · Anchors & boundaries"
+          url: /tutorial/03-anchors-boundaries/
+        - title: "04 · Quantifiers & greediness"
+          url: /tutorial/04-quantifiers/
+        - title: "05 · Groups & alternation"
+          url: /tutorial/05-groups-alternation/
+        - title: "06 · Lookarounds & assertions"
+          url: /tutorial/06-lookarounds/
+        - title: "07 · Backreferences & recursion"
+          url: /tutorial/07-backreferences-recursion/
+        - title: "08 · Performance & ReDoS"
+          url: /tutorial/08-performance-redos/
+        - title: "09 · Testing & debugging"
+          url: /tutorial/09-testing-debugging/
+        - title: "10 · Real-world PHP"
+          url: /tutorial/10-real-world-php/
     - title: Regex in PHP
       url: /guides/regex-in-php/
     - title: ReDoS guide
@@ -52,40 +73,44 @@
   pages:
     - title: Reference index
       url: /reference/
-    - title: Lint rules
+    - title: Find a diagnostic
       url: /reference/rules/
-    - title: API
-      url: /reference/api/
-    - title: Diagnostics
-      url: /reference/diagnostics/
-    - title: Diagnostics cheat sheet
-      url: /reference/diagnostics-cheatsheet/
-    - title: JSON output
-      url: /reference/json-output/
-    - title: Feature support matrix
+      pages:
+        - title: Diagnostics
+          url: /reference/diagnostics/
+        - title: Diagnostics cheat sheet
+          url: /reference/diagnostics-cheatsheet/
+        - title: Sonar rule mapping
+          url: /reference/sonar/
+    - title: Check compatibility
       url: /reference/feature-support-matrix/
-    - title: Correctness contracts
-      url: /reference/correctness-contracts/
-    - title: Backward compatibility
-      url: /reference/backward-compatibility/
-    - title: Capture shapes
-      url: /reference/capture-shapes/
-    - title: Pattern info
-      url: /reference/pattern-info/
-    - title: Prefilters
-      url: /reference/prefilters/
-    - title: PCRE2 conformance
-      url: /reference/pcre2-conformance/
-    - title: Sonar
-      url: /reference/sonar/
-    - title: Logic solver
-      url: /reference/logic-solver/
-    - title: FAQ and Glossary
+      pages:
+        - title: Correctness contracts
+          url: /reference/correctness-contracts/
+        - title: Backward compatibility
+          url: /reference/backward-compatibility/
+        - title: PCRE2 conformance
+          url: /reference/pcre2-conformance/
+    - title: Use the data
+      url: /reference/api/
+      pages:
+        - title: JSON output
+          url: /reference/json-output/
+        - title: Capture shapes
+          url: /reference/capture-shapes/
+        - title: Pattern info
+          url: /reference/pattern-info/
+        - title: Prefilters
+          url: /reference/prefilters/
+        - title: Logic solver
+          url: /reference/logic-solver/
+    - title: Learn more
       url: /reference/faq-glossary/
-    - title: External References
-      url: /reference/resources/
+      pages:
+        - title: External references
+          url: /reference/resources/
 - title: Internals
-  url: /docs/#internals
+  url: /architecture/
   pages:
     - title: Architecture
       url: /architecture/

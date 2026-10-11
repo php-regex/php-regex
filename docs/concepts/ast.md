@@ -80,7 +80,7 @@ vendor/bin/regex diagram '/^hello\d+$/'
 vendor/bin/regex parse '/^hello\d+$/'
 ```
 
-The `vendor/bin/regex` binary ships with the [pre-release monorepo](../quick-start.md#installation); from the 2.0.0 release it is its own package, `php-regex/regex-cli`. The `diagram` command prints the one-node-per-character structure verbatim:
+The `vendor/bin/regex` binary ships with the [pre-release monorepo](../quick-start.md); from the 2.0.0 release it is its own package, `php-regex/regex-cli`. The `diagram` command prints the one-node-per-character structure verbatim:
 
 ```
 Regex
