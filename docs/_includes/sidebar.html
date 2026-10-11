@@ -8,14 +8,23 @@
     <h2 class="nav-title">{{ section.title }}</h2>
     <ul class="nav-list">
       {% for item in section.pages %}
-      <li>
+      <li class="nav-item">
         <a href="{{ item.url }}"{% if page.url == item.url %} aria-current="page"{% endif %}>{{ item.title }}</a>
         {% if item.pages %}
-        <ul class="nav-list">
-          {% for child in item.pages %}
-          <li><a href="{{ child.url }}"{% if page.url == child.url %} aria-current="page"{% endif %}>{{ child.title }}</a></li>
-          {% endfor %}
-        </ul>
+        {% assign open_group = false %}
+        {% for child in item.pages %}
+        {% if child.url == page.url %}{% assign open_group = true %}{% endif %}
+        {% endfor %}
+        <details class="nav-group"{% if open_group %} open{% endif %}>
+          <summary class="nav-group-toggle" aria-label='Toggle {{ item.title }} submenu'>
+            <span class="nav-group-marker" aria-hidden="true"></span>
+          </summary>
+          <ul class="nav-list">
+            {% for child in item.pages %}
+            <li><a href="{{ child.url }}"{% if page.url == child.url %} aria-current="page"{% endif %}>{{ child.title }}</a></li>
+            {% endfor %}
+          </ul>
+        </details>
         {% endif %}
       </li>
       {% endfor %}

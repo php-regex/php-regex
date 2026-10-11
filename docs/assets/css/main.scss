@@ -1369,8 +1369,61 @@ main table::-webkit-scrollbar-thumb {
   background: var(--code-bg);
 }
 
-/* Nested lists (tutorial chapters): a guide line carries the indent. */
+/* An item with children keeps its primary destination as the left link and
+   puts the submenu control in a narrow second column. The current group is
+   opened server-side, so the active page is visible before JavaScript. */
+.nav-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 2.25rem;
+  align-items: center;
+}
+
+.nav-item > a {
+  min-width: 0;
+}
+
+.nav-group {
+  grid-column: 2;
+}
+
+.nav-group-toggle {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.nav-group-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.nav-group-toggle:hover,
+.nav-group[open] > .nav-group-toggle {
+  color: var(--amber);
+}
+
+.nav-group-marker {
+  position: relative;
+  display: block;
+  width: .5rem;
+  height: .5rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .15s ease;
+}
+
+.nav-group[open] > .nav-group-toggle .nav-group-marker {
+  transform: rotate(225deg);
+}
+
+/* Nested lists (tutorial chapters and reference task groups): a guide line
+   carries the indent. */
 .nav-list .nav-list {
+  grid-column: 1 / -1;
   margin-left: .75rem;
   padding-left: .75rem;
   border-left: 1px solid var(--line);
