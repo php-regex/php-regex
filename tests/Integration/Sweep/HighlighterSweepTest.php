@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class HighlighterSweepTest extends TestCase
 {
-    public function test_highlighter_visitor_limit_match(): void
+    public function test_highlighter_limit_match(): void
     {
         $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
@@ -47,7 +47,7 @@ final class HighlighterSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_highlighter_visitor_callout(): void
+    public function test_highlighter_callout(): void
     {
         $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
@@ -65,7 +65,7 @@ final class HighlighterSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_highlighter_visitor_script_run(): void
+    public function test_highlighter_script_run(): void
     {
         $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string
@@ -83,7 +83,7 @@ final class HighlighterSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_highlighter_visitor_version_condition(): void
+    public function test_highlighter_version_condition(): void
     {
         $visitor = new class extends AbstractHighlighter {
             protected function wrap(string $content, string $type): string

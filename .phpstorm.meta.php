@@ -19,9 +19,11 @@ registerArgumentsSet(
     'digits',
     'word',
     'ranges',
-    'autoPossessify',
-    'allowAlternationFactorization',
-    'minQuantifierCount'
+    'canonicalize_char_classes',
+    'possessive',
+    'factorize',
+    'min_quantifier_count',
+    'verify_with_automata'
 );
 
 registerArgumentsSet(
@@ -70,9 +72,9 @@ registerArgumentsSet(
     \PHPRegex\Redos\RedosSeverity::Safe,
     \PHPRegex\Redos\RedosSeverity::Low,
     \PHPRegex\Redos\RedosSeverity::Medium,
+    \PHPRegex\Redos\RedosSeverity::Unknown,
     \PHPRegex\Redos\RedosSeverity::High,
-    \PHPRegex\Redos\RedosSeverity::Critical,
-    \PHPRegex\Redos\RedosSeverity::Unknown
+    \PHPRegex\Redos\RedosSeverity::Critical
 );
 
 expectedArguments(

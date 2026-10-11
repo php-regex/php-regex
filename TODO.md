@@ -35,20 +35,13 @@ No Laravel `Rule` and no Symfony Validator `Constraint` combines `validate()`
 and `redos()` for "a user submits a regex" forms; the extractors only read
 such rules for linting.
 
-## Refresh SECURITY.md for 2.x
-
-The supported-versions table lists 1.x only. The text says disclosure is
-email-only, but GitHub Private Vulnerability Reporting is already enabled on
-the repository — say so. A live `1.x` branch exists on the remote (frozen at
-v1.3.0): give it its status in the table and add the 2.x row.
-
 ## Give the phar a build provenance
 
 `bin/release` builds `bin/regex.phar` locally and attaches that same build to
 the GitHub release: no CI-built artifact, no signing, no attestation, and no
-checksum published at all today. A compiled 354 KB `regex.phar` also sits
-tracked in git (export-ignored at `.gitattributes:75`) — decide whether it
-stays.
+checksum published at all today. The tracked `bin/regex.phar` (export-ignored
+at `.gitattributes:75`) is rebuilt from HEAD on 2.x before each release —
+decide whether the rebuild moves to CI with provenance.
 
 ## Extraction gaps left on purpose
 
@@ -307,6 +300,3 @@ interactively. *Verify*: `docs/README.md`. Effort: M, optional.
 package, and nothing tells a reader who only wants `validate()` which one to
 install. *Verify*: the package table in `README.md`. *Fix*: one line at the top
 naming the entry point. Effort: XS.
-
-**F3 — `SECURITY.md` still lists 1.x only.** *See also*: "Refresh SECURITY.md
-for 2.x" above. *Verify*: read `SECURITY.md`. Effort: XS.

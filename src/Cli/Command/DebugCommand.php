@@ -220,8 +220,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $output->write('  Mode:      '.strtoupper($analysis->mode->value)."\n");
             $output->write('  Confidence: '.strtoupper($analysis->confidenceLevel()->value)."\n");
 
-            if (null !== $analysis->getVulnerableSubpattern()) {
-                $output->write('  Culprit:    '.$analysis->getVulnerableSubpattern()."\n");
+            if (null !== $analysis->vulnerablePart) {
+                $output->write('  Culprit:    '.$analysis->vulnerablePart."\n");
             }
 
             if (null !== $analysis->trigger && '' !== $analysis->trigger) {

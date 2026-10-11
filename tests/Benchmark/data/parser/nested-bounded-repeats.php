@@ -14,5 +14,5 @@ declare(strict_types=1);
 return [
     'pattern' => '/^(?:(?:a{16}){16}){16}$/',
     'origin' => 'synthetic',
-    'note' => 'Three bounded repeats nested at the cutoff (tests/Unit/ReDoS/Proven/RedosProofFallbackTest.php).',
+    'note' => 'Three bounded repeats nested at the cutoff (tests/Unit/Redos/Proven/RedosProofFallbackTest.php).',
 ];

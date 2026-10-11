@@ -431,7 +431,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_run_throws_when_phar_not_writable_via_override(): void
     {
-        $pharPath = $this->copyBundledPhar();
+        $pharPath = $this->copyTemplatePhar();
         $output = new Output(false, true);
 
         SelfUpdateFunctionOverrides::queueIsWritable(false);
@@ -453,7 +453,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_run_throws_when_tempnam_fails(): void
     {
-        $pharPath = $this->copyBundledPhar();
+        $pharPath = $this->copyTemplatePhar();
         $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
@@ -479,7 +479,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_run_throws_when_hash_file_fails(): void
     {
-        $pharPath = $this->copyBundledPhar();
+        $pharPath = $this->copyTemplatePhar();
         $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
@@ -503,7 +503,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_run_throws_when_checksum_mismatch_without_phar_writes(): void
     {
-        $pharPath = $this->copyBundledPhar();
+        $pharPath = $this->copyTemplatePhar();
         $checksumFile = $this->writeChecksumFile($pharPath, str_repeat('a', 64));
         $output = new Output(false, true);
 
@@ -525,7 +525,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_run_throws_when_copy_fails_after_rename_failure(): void
     {
-        $pharPath = $this->copyBundledPhar();
+        $pharPath = $this->copyTemplatePhar();
         $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
@@ -550,7 +550,7 @@ final class SelfUpdaterTest extends TestCase
 
     public function test_run_uses_copy_when_rename_fails(): void
     {
-        $pharPath = $this->copyBundledPhar();
+        $pharPath = $this->copyTemplatePhar();
         $checksumFile = $this->writeChecksumFile($pharPath);
         $output = new Output(false, true);
 
@@ -767,38 +767,12 @@ final class SelfUpdaterTest extends TestCase
         }
     }
 
-    private function copyBundledPhar(): string
+    private function copyTemplatePhar(): string
     {
-        $source = __DIR__.'/../../../bin/regex.phar';
+        $source = __DIR__.'/../../Fixtures/Cli/template.phar';
         $target = sys_get_temp_dir().'/regex-parser-phar-'.bin2hex(random_bytes(4)).'.phar';
 
-        if (file_exists($source)) {
-            copy($source, $target);
-        } else {
-            // Try to find an existing phar to use as a template
-            $composerPhar = getenv('COMPOSER_HOME') ? getenv('COMPOSER_HOME').'/composer.phar' : null;
-            if ($composerPhar && file_exists($composerPhar)) {
-                copy($composerPhar, $target);
-            } elseif (file_exists(sys_get_temp_dir().'/composer.phar')) {
-                copy(sys_get_temp_dir().'/composer.phar', $target);
-            } else {
-                // Try to download composer.phar as a template
-                try {
-                    $composerTemp = sys_get_temp_dir().'/downloaded-composer.phar';
-                    $composerUrl = 'https://getcomposer.org/download/2.8.0/composer.phar';
-                    $composerData = @file_get_contents($composerUrl);
-                    if (false !== $composerData) {
-                        file_put_contents($composerTemp, $composerData);
-                        copy($composerTemp, $target);
-                        @unlink($composerTemp);
-                    } else {
-                        throw new \RuntimeException('Cannot create test phar file: no template available');
-                    }
-                } catch (\Exception $e) {
-                    throw new \RuntimeException('Cannot create test phar file: '.$e->getMessage());
-                }
-            }
-        }
+        copy($source, $target);
 
         return $target;
     }

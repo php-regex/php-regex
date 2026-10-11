@@ -14,6 +14,6 @@ declare(strict_types=1);
 return [
     'pattern' => '/(a|a)*$/',
     'origin' => 'synthetic',
-    'note' => 'Two identical alternatives under a star (tests/Unit/ReDoS/ReDoSEnterpriseAnalyzerTest.php).',
+    'note' => 'Two identical alternatives under a star (tests/Unit/Redos/RedosEnterpriseAnalyzerTest.php).',
     'expect' => 'proven',
 ];

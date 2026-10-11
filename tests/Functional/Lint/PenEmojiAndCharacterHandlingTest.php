@@ -108,7 +108,7 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
      */
     #[DataProvider('nonPrintableCharacterProvider')]
     #[Test]
-    public function test_explain_node_visitor_handles_non_printable_characters(string $inputChar): void
+    public function test_text_explainer_handles_non_printable_characters(string $inputChar): void
     {
         $charNode = new LiteralNode($inputChar, 0, 1);
         $result = $this->explainVisitor->visitLiteral($charNode);
@@ -123,7 +123,7 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
      */
     #[DataProvider('nonPrintableCharacterProvider')]
     #[Test]
-    public function test_compiler_node_visitor_handles_non_printable_characters(string $inputChar): void
+    public function test_pattern_printer_handles_non_printable_characters(string $inputChar): void
     {
         $charNode = new LiteralNode($inputChar, 0, 1);
         $result = $this->compilerVisitor->visitLiteral($charNode);
@@ -138,7 +138,7 @@ final class PenEmojiAndCharacterHandlingTest extends TestCase
      */
     #[DataProvider('nonPrintableCharacterProvider')]
     #[Test]
-    public function test_console_highlighter_visitor_handles_non_printable_characters(string $inputChar): void
+    public function test_console_highlighter_handles_non_printable_characters(string $inputChar): void
     {
         $charNode = new LiteralNode($inputChar, 0, 1);
         $result = $this->highlightVisitor->visitLiteral($charNode);

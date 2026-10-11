@@ -47,7 +47,6 @@ parameters:
         - tests/Integration/Bridge/PHPStan/Fixtures/
         # Psalm reads these, invalid patterns and all
         - tests/Integration/Bridge/Psalm/Fixtures/
-        - tests/Tools/extract_pcre_tests.php
         - tests/Tools/validate_library.php
         # Laravel bridge - requires illuminate/* packages which are optional
         - src/Laravel/*
@@ -98,9 +97,9 @@ parameters:
         - identifiers:
             - regexp.pattern
           paths:
-            - tests/Integration/Bridge/PHPStan/RegexParserRuleExtensionNeonRangeTest.php
-            - tests/Integration/Bridge/PHPStan/RegexParserRuleReplacementGroupEdgeTest.php
-            - tests/Integration/Bridge/PHPStan/RegexParserRuleTargetVersionTest.php
+            - tests/Integration/Bridge/PHPStan/RegexPatternRuleExtensionNeonRangeTest.php
+            - tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupEdgeTest.php
+            - tests/Integration/Bridge/PHPStan/RegexPatternRuleTargetVersionTest.php
             - tests/Unit/Automata/DfaCacheKeyVersionTest.php
             - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
             - tests/Unit/Hir/ClassSetProviderCacheTest.php
@@ -115,7 +114,7 @@ parameters:
             - tests/Unit/Parser/ExtendedCharClassTest.php
             - tests/Unit/Parser/GroupNameLengthReleaseTest.php
             - tests/Unit/Parser/ScanSubstringTest.php
-            - tests/Unit/ReDoS/Proven/RedosInlineOptionsTest.php
+            - tests/Unit/Redos/Proven/RedosInlineOptionsTest.php
         # Two tests hand preg_match() flags outside its stub on purpose: a bit
         # PHP refuses (PREG_SET_ORDER and the like) and one it ignores (1024).
         - message: '#^Parameter \#4 \$flags of function preg_match expects #'
@@ -125,7 +124,7 @@ parameters:
         # The replacement test asks the engine what a reference to a missing
         # group gives: those calls are the ones the rule reports, on purpose.
         - identifier: regex.replacement.undefinedGroup
-          path: tests/Integration/Bridge/PHPStan/RegexParserRuleReplacementGroupTest.php
+          path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
         # The contract test pins what the types already say: the replace,
         # split and brace rules have no PHP floor, and a later change must
         # not add one.

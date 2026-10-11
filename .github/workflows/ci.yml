@@ -280,7 +280,7 @@ jobs:
         run: tools/phpunit/vendor/bin/phpunit tests/Unit/PcreFeatureCompletenessTest.php --testdox
 
       - name: Run ReDoS Detection Tests
-        run: tools/phpunit/vendor/bin/phpunit tests/Unit/ReDoS/ReDoSEdgeCasesTest.php --testdox
+        run: tools/phpunit/vendor/bin/phpunit tests/Unit/Redos/RedosEdgeCasesTest.php --testdox
 
   pcre2-fixture:
     # The PCRE2 conformance fixture records what PCRE2 10.40 (the engine of the

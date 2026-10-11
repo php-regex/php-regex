@@ -44,7 +44,7 @@ final class JsonContract
         'runtime' => ['version', 'jit', 'backtrack_limit', 'recursion_limit'],
         'validation' => ['is_valid', 'error', 'error_code', 'category', 'offset', 'caret_snippet', 'hint', 'complexity_score'],
         'redos_analysis' => [
-            'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part', 'vulnerable_subpattern',
+            'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part',
             'trigger', 'false_positive_risk', 'suggested_rewrite', 'recommendations', 'error', 'findings',
             'hotspots', 'confirmation', 'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions',
             'pcre_version', 'analysis_version', 'search_cost',

@@ -87,8 +87,8 @@ final readonly class Optimizer
             optimizeWord: $options->word,
             ranges: $options->ranges,
             canonicalizeCharClasses: $options->canonicalizeCharClasses,
-            autoPossessify: $options->possessive,
-            allowAlternationFactorization: $options->factorize,
+            possessive: $options->possessive,
+            factorize: $options->factorize,
             minQuantifierCount: $options->minQuantifierCount,
         );
 

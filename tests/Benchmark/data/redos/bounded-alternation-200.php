@@ -14,6 +14,6 @@ declare(strict_types=1);
 return [
     'pattern' => '/^(?:'.implode('|', array_map(static fn (int $i): string => sprintf('k%03d\\d{16}', $i), range(0, 199))).')$/',
     'origin' => 'synthetic',
-    'note' => '200 alternatives of 20 states each (tests/Unit/ReDoS/Proven/RedosProofFallbackTest.php).',
+    'note' => '200 alternatives of 20 states each (tests/Unit/Redos/Proven/RedosProofFallbackTest.php).',
     'expect' => 'budget_exceeded',
 ];

@@ -577,7 +577,6 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `confirmed` | bool | Whether the replay made PCRE fail |
 | `confidence` | string | `low`, `medium` or `high`; an open set |
 | `vulnerable_part` | string \| null | The sub-pattern at fault |
-| `vulnerable_subpattern` | string \| null | The same, kept for readers of 1.x |
 | `trigger` | string \| null | The construct at fault, as `quantifier +` |
 | `false_positive_risk` | string \| null | How likely the verdict is wrong, for people |
 | `suggested_rewrite` | string \| null | A rewrite to try, for people; verify it |

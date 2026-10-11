@@ -86,12 +86,12 @@ final class Rewriter extends AbstractNodeVisitor
          * but can change semantics when backreferences are involved.
          * Default is false to ensure semantic preservation.
          */
-        private readonly bool $autoPossessify = false,
+        private readonly bool $possessive = false,
         /**
          * Whether to perform string-based alternation factorization.
          * This can make verbose (/x) patterns harder to read.
          */
-        private readonly bool $allowAlternationFactorization = false,
+        private readonly bool $factorize = false,
         int $minQuantifierCount = 4
     ) {
         $this->minQuantifierCount = max(2, $minQuantifierCount);
@@ -171,7 +171,7 @@ final class Rewriter extends AbstractNodeVisitor
             $optimizedAlts = $deduplicatedAlts;
         }
 
-        if ($this->allowAlternationFactorization) {
+        if ($this->factorize) {
             $factoredAlts = $this->factorizeAlternation($optimizedAlts);
 
             if ($factoredAlts !== $optimizedAlts) {
@@ -263,7 +263,7 @@ final class Rewriter extends AbstractNodeVisitor
 
         // Auto-possessivization (opt-in, conservative by default)
         // This optimization is opt-in because it can change semantics with backreferences
-        if ($this->autoPossessify) {
+        if ($this->possessive) {
             for ($i = 0; $i < \count($optimizedChildren); $i++) {
                 $current = $optimizedChildren[$i];
                 $suffix = array_slice($optimizedChildren, $i + 1);

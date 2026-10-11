@@ -14,6 +14,6 @@ declare(strict_types=1);
 return [
     'pattern' => '/(a+)+$/',
     'origin' => 'synthetic',
-    'note' => 'The textbook nested quantifier (tests/Unit/ReDoS/ReDoSEnterpriseAnalyzerTest.php).',
+    'note' => 'The textbook nested quantifier (tests/Unit/Redos/RedosEnterpriseAnalyzerTest.php).',
     'expect' => 'proven',
 ];

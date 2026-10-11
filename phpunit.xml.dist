@@ -41,7 +41,6 @@
         <exclude>
             <directory>src/Parser/Exception</directory>
             <directory>src/Automata/Exception</directory>
-            <directory>src/Bundle</directory>
         </exclude>
     </source>
 </phpunit>

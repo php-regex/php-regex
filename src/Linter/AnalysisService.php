@@ -603,8 +603,8 @@ final readonly class AnalysisService
                         optimizeWord: $options->word,
                         ranges: $options->ranges,
                         canonicalizeCharClasses: $options->canonicalizeCharClasses,
-                        autoPossessify: $options->possessive,
-                        allowAlternationFactorization: false,
+                        possessive: $options->possessive,
+                        factorize: false,
                         minQuantifierCount: $options->minQuantifierCount,
                     );
 
@@ -1183,8 +1183,8 @@ final readonly class AnalysisService
             $hints = array_merge($hints, $analysis->recommendations);
         }
 
-        if (null !== $analysis->vulnerableSubpattern) {
-            $hints[] = \sprintf('The risky part is: %s', $analysis->vulnerableSubpattern);
+        if (null !== $analysis->vulnerablePart) {
+            $hints[] = \sprintf('The risky part is: %s', $analysis->vulnerablePart);
         }
 
         $hotspot = $analysis->getPrimaryHotspot();
@@ -1250,8 +1250,8 @@ final readonly class AnalysisService
         }
 
         // If we have a vulnerable subpattern, try to suggest a specific fix
-        if (null !== $analysis->vulnerableSubpattern) {
-            $vulnerable = $analysis->vulnerableSubpattern;
+        if (null !== $analysis->vulnerablePart) {
+            $vulnerable = $analysis->vulnerablePart;
             if (LibraryPcre::match('/(\w+)\+(\)\+)/', $vulnerable, $matches)) {
                 $char = $matches[1];
                 $hints[] = "Suggested (verify behavior): replace ($char+)+ with atomic group (?>$char+) or possessive $char++.";

@@ -14,6 +14,6 @@ declare(strict_types=1);
 return [
     'pattern' => '/^(?:(?:a{16}){16}){16}$/',
     'origin' => 'synthetic',
-    'note' => '4,096 unrolled states: past the prover budget (tests/Unit/ReDoS/Proven/RedosProofFallbackTest.php).',
+    'note' => '4,096 unrolled states: past the prover budget (tests/Unit/Redos/Proven/RedosProofFallbackTest.php).',
     'expect' => 'budget_exceeded',
 ];

@@ -45,7 +45,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->regexService = Regex::create();
     }
 
-    public function test_html_highlighter_visitor_dot(): void
+    public function test_html_highlighter_dot(): void
     {
         $visitor = new HtmlHighlighter();
         $node = new DotNode(1, 2);
@@ -53,7 +53,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_html_highlighter_visitor_limit_match(): void
+    public function test_html_highlighter_limit_match(): void
     {
         $visitor = new HtmlHighlighter();
         $node = new LimitMatchNode(1000, 0, 16);
@@ -61,7 +61,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_html_highlighter_visitor_callout(): void
+    public function test_html_highlighter_callout(): void
     {
         $visitor = new HtmlHighlighter();
         $node = new CalloutNode(1, false, 0, 4);
@@ -69,7 +69,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_html_highlighter_visitor_script_run(): void
+    public function test_html_highlighter_script_run(): void
     {
         $visitor = new HtmlHighlighter();
         $node = new ScriptRunNode('Latin', 0, 18);
@@ -77,7 +77,7 @@ final class HtmlExplainSweepTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
-    public function test_html_highlighter_visitor_version_condition(): void
+    public function test_html_highlighter_version_condition(): void
     {
         $visitor = new HtmlHighlighter();
         $node = new VersionConditionNode('>=', '10.0', 0, 18);

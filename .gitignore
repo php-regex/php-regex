@@ -19,6 +19,7 @@
 
 # Build & Distribution
 /build/
+/bin/regex.phar
 /coverage/
 
 # Logs

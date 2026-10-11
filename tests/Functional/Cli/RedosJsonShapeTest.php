@@ -24,14 +24,12 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The JSON of a ReDoS analysis, pinned key by key: the 1.x keys unchanged,
- * the verdict keys added, for each kind of result.
+ * The JSON of a ReDoS analysis, pinned key by key, for each kind of result.
  */
 final class RedosJsonShapeTest extends TestCase
 {
     private const KEYS = [
-        // 1.x keys, unchanged.
-        'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part', 'vulnerable_subpattern',
+        'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part',
         'trigger', 'false_positive_risk', 'suggested_rewrite', 'recommendations', 'error', 'findings',
         'hotspots', 'confirmation',
         // The verdict.

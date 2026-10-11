@@ -21,13 +21,11 @@ if (version_compare('8.2.0', \PHP_VERSION, '>')) {
 gc_disable();
 
 $autoloadPath = null;
-// The monorepo (src/Cli/bin), the php-regex/regex-cli package
-// (vendor/php-regex/regex-cli/bin), and the 1.x package name
-// (vendor/yoeunes/regex-parser/src/Cli/bin).
+// The monorepo (src/Cli/bin) and the php-regex/regex-cli package
+// (vendor/php-regex/regex-cli/bin).
 $autoloadPaths = [
     __DIR__.'/../../../vendor/autoload.php',
     __DIR__.'/../../../autoload.php',
-    __DIR__.'/../../../../../autoload.php',
 ];
 
 foreach ($autoloadPaths as $path) {

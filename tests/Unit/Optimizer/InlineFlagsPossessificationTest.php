@@ -48,7 +48,7 @@ final class InlineFlagsPossessificationTest extends TestCase
         $this->assertSame('aa', $match[0]);
         $this->assertSame(0, preg_match($possessive, 'aa'));
 
-        $optimized = Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(autoPossessify: true))->accept(new PatternPrinter());
+        $optimized = Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(possessive: true))->accept(new PatternPrinter());
 
         $this->assertSame($pattern, $optimized);
     }

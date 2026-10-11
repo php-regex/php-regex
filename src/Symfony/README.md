@@ -80,7 +80,7 @@ Check one for ReDoS:
 $analysis = $regex->redos('/^(a+)+$/');
 $analysis->isSafe();                  // false
 $analysis->severity->value;           // 'critical'
-$analysis->getVulnerableSubpattern(); // 'a+'
+$analysis->vulnerablePart; // 'a+'
 $analysis->headline();                // 'Exponential backtracking (proven)'
 $analysis->witness->render();         // '"a" x n . "!"', the input that triggers it
 ```

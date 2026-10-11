@@ -8,6 +8,9 @@
 # bytes are pattern data), never normalized
 /tests/Fixtures/Pcre2/testdata/** -text
 
+# The CLI phar fixtures carry a byte-exact signature: never normalized
+/tests/Fixtures/Cli/*.phar -text
+
 # Export-ignore patterns (for composer archive)
 # Development and CI/CD files
 /.github                export-ignore
@@ -69,8 +72,6 @@
 /phar                   export-ignore
 
 # Additional files not needed in distribution
-/bin/build              export-ignore
-/bin/regex.phar         export-ignore
 /regex.dist.json        export-ignore
 
 # PHP files

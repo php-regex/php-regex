@@ -14,6 +14,6 @@ declare(strict_types=1);
 return [
     'pattern' => '/^(?:(?:a{16}){16}){16}(a+)+$/',
     'origin' => 'synthetic',
-    'note' => 'The over-budget repeats before a nested loop (tests/Unit/ReDoS/Proven/RedosProofFallbackTest.php).',
+    'note' => 'The over-budget repeats before a nested loop (tests/Unit/Redos/Proven/RedosProofFallbackTest.php).',
     'expect' => 'budget_exceeded',
 ];

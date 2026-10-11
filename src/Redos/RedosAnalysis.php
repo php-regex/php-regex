@@ -25,8 +25,6 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final readonly class RedosAnalysis implements \JsonSerializable
 {
-    public ?string $vulnerableSubpattern;
-
     /**
      * The PCRE2 release the verdict was computed with: verdicts are
      * deterministic per release and analysis version.
@@ -52,7 +50,6 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public ?string $vulnerablePart = null,
         public array $recommendations = [],
         public ?string $error = null,
-        ?string $vulnerableSubpattern = null,
         public ?string $trigger = null,
         public ?RedosConfidence $confidence = null,
         public ?string $falsePositiveRisk = null,
@@ -73,13 +70,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public ?int $upperBoundDegree = null,
         public ?RedosSearchCost $searchCost = null,
     ) {
-        $this->vulnerableSubpattern = $vulnerableSubpattern ?? $vulnerablePart;
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
-    }
-
-    public function getVulnerableSubpattern(): ?string
-    {
-        return $this->vulnerableSubpattern ?? $this->vulnerablePart;
     }
 
     public function getCulpritNode(): ?NodeInterface
@@ -171,7 +162,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, vulnerable_subpattern: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string, search_cost: SearchCostArray|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string, search_cost: SearchCostArray|null}
      */
     public function jsonSerialize(): array
     {
@@ -182,7 +173,6 @@ final readonly class RedosAnalysis implements \JsonSerializable
             'confirmed' => $this->isConfirmed(),
             'confidence' => $this->confidenceLevel()->value,
             'vulnerable_part' => $this->vulnerablePart,
-            'vulnerable_subpattern' => $this->vulnerableSubpattern,
             'trigger' => $this->trigger,
             'false_positive_risk' => $this->falsePositiveRisk,
             'suggested_rewrite' => $this->suggestedRewrite,
