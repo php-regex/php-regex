@@ -53,7 +53,7 @@ final class ValidatorSuccessTest extends TestCase
         (new CharLiteralNode('012', 0o12, CharLiteralType::OctalLegacy, 0, 0))->accept($this->validator);
 
         // Valid Unicode Prop (cached)
-        (new UnicodePropNode('L', 0, 0))->accept($this->validator);
+        (new UnicodePropNode('L', false, 0, 0))->accept($this->validator);
     }
 
     public function test_valid_subroutines_pass(): void

@@ -763,6 +763,13 @@ Exception hierarchy (simplified):
 `catch (ParserException)` does not see it — catch `RegexException` to handle
 every parse-time failure.
 
+`VisualContextInterface` marks the exceptions that carry the failing pattern
+with a caret under the offending character: `getVisualSnippet(): string` on
+`ParserException` (and its syntax, recursion and resource subclasses),
+`LexerException`, `SemanticErrorException`, `TranspileException` and the
+automata `ComplexityException`. Test for it with `instanceof` to render the
+snippet when the caught exception has one.
+
 **Usage Examples:**
 
 ```php

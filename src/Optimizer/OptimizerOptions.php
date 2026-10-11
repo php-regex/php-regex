@@ -37,14 +37,6 @@ final readonly class OptimizerOptions
     ];
 
     /**
-     * The 1.x key of an option renamed in 2.0, and its name now.
-     */
-    private const RENAMED = [
-        'autoPossessify' => 'possessive',
-        'allowAlternationFactorization' => 'factorize',
-    ];
-
-    /**
      * @param bool $digits                  "[0-9]" becomes "\d"
      * @param bool $word                    "[a-zA-Z0-9_]" becomes "\w"
      * @param bool $ranges                  runs of consecutive characters become ranges
@@ -108,11 +100,7 @@ final readonly class OptimizerOptions
         foreach ($options as $key => $value) {
             $parameter = $parameters[$key] ?? null;
             if (null === $parameter) {
-                $renamed = self::RENAMED[$key] ?? null;
-
-                throw new InvalidRegexOptionException(null !== $renamed
-                    ? \sprintf('Unknown optimizer option "%s": it is "%s" since 2.0.', $key, $renamed)
-                    : \sprintf('Unknown optimizer option "%s"; the options are: %s.', $key, implode(', ', array_keys($parameters))));
+                throw new InvalidRegexOptionException(\sprintf('Unknown optimizer option "%s"; the options are: %s.', $key, implode(', ', array_keys($parameters))));
             }
 
             if ('minQuantifierCount' === $parameter) {

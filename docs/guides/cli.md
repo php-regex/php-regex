@@ -762,7 +762,9 @@ with code 2 before scanning anything.
 
 ### Removed Keys
 
-These 1.x keys are refused, with the message naming what replaced them:
+These 1.x keys no longer exist: each is refused like any unknown key, with a
+plain unknown-key error naming it (a "Did you mean" hint appears when a known
+key is close). The table says where each setting went:
 
 | 1.x key                 | Use instead                                                  |
 |-------------------------|--------------------------------------------------------------|
@@ -1220,8 +1222,9 @@ Both options take their file after a space or an `=`.
   `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
   lists them. Bytes that are not valid UTF-8 are written `\xHH`, so the file
   is always valid JSON.
-- **A 1.x baseline**, a plain list, is still read, matched on file, line and
-  message as 1.x did; the run prints a note suggesting to generate it again.
+- **A 1.x baseline**, a plain list, is refused like any non-baseline file:
+  exit code 2, `stage: "usage"` in JSON, before anything is scanned — even on
+  a run that also passes `--generate-baseline`. Regenerate it once.
 - **Exit code 2** when the baseline file is missing, empty or not a baseline,
   or when the generated file cannot be written.
 

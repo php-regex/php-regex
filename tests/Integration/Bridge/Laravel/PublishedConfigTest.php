@@ -27,7 +27,7 @@ use PHPUnit\Framework\Attributes\Test;
  * app kept but that lack keys added since, and a key 2.0 removed. The
  * provider falls back to the package default for every missing nested key
  * (Laravel's mergeConfigFrom() only fills top-level keys), and the stale key
- * is reported by regex:lint, never while the app boots.
+ * is read by no one and reported by no one.
  *
  * The attribute is not deferred: the config is in place before the provider
  * registers, as a published file is.
@@ -106,7 +106,7 @@ final class PublishedConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_the_lint_command_reports_the_stale_key(): void
+    public function test_the_lint_command_says_nothing_about_the_stale_key(): void
     {
         $status = Artisan::call('regex:lint', [
             'paths' => [$this->sourceDir],
@@ -116,9 +116,11 @@ final class PublishedConfigTest extends TestCase
         ]);
         $output = Artisan::output();
 
-        // A warning, not a failure: the pattern is fine.
+        // No warning, not a failure: the pattern is fine and the key is
+        // nobody's business any more.
         $this->assertSame(0, $status, $output);
-        $this->assertStringContainsString('analysis.redos_threshold', $output);
+        $this->assertStringNotContainsString('analysis.redos_threshold', $output);
+        $this->assertStringNotContainsString('redos_threshold', $output);
     }
 
     #[Test]

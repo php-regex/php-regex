@@ -531,7 +531,7 @@ final class JsonOutputContractTest extends TestCase
         $this->enterProject([
             'src/a.php' => self::LINTED_FILE,
             'empty/b.php' => "<?php\n",
-            'baseline.json' => "[]\n",
+            'baseline.json' => "{\"version\": 1, \"issues\": []}\n",
         ]);
     }
 

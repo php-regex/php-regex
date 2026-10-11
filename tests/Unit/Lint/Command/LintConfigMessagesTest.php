@@ -59,8 +59,24 @@ final class LintConfigMessagesTest extends TestCase
         yield 'duplicate function' => ['{"extraction": {"functions": ["a", "a"]}}', 'a list of distinct non-empty strings'];
         yield 'unknown IDE' => ['{"ide": "notepad"}', 'a URL template holding %f or %l'];
         yield 'removed mode off' => ['{"checks": {"redos": {"mode": "off"}}}', 'set checks.redos.enabled to false'];
-        yield 'removed key with a replacement' => ['{"minSavings": 2}', 'use "checks.optimizations.minSavings" instead'];
+        yield '1.x key, once removed with its replacement named' => ['{"minSavings": 2}', 'Unknown key "minSavings"'];
+        yield '1.x key without a replacement' => ['{"redosNoJit": true}', 'Unknown key "redosNoJit"'];
         yield 'PHP_VERSION_ID too small' => ['{"phpVersion": 83}', 'a PHP_VERSION_ID like 80300'];
+    }
+
+    /**
+     * A 1.x key is told about like any unknown key: its name and the file it
+     * sits in, never what 2.0 replaced it with or that it was removed.
+     */
+    #[Test]
+    public function test_load_names_no_replacement_for_a_1_x_key(): void
+    {
+        $error = (string) (new LintConfigLoader())->load($this->makeProject(['regex.json' => '{"minSavings": 2, "redosNoJit": true}']))->error;
+
+        $this->assertNotSame('', $error);
+        $this->assertStringNotContainsString('instead', $error);
+        $this->assertStringNotContainsString('was removed', $error);
+        $this->assertStringNotContainsString('has no replacement', $error);
     }
 
     #[Test]

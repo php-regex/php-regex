@@ -105,11 +105,11 @@ final class LintCommandBaselineTest extends TestCase
     }
 
     /**
-     * A 1.x baseline, a plain list matched on file, line and message, is
-     * still read: its issues stay filtered, and the report suggests
-     * generating the baseline again.
+     * A 1.x baseline, a plain list matched on file, line and message, is no
+     * longer read: the run refuses it as a usage error, before any issue is
+     * filtered, and the message says to generate the baseline again.
      */
-    public function test_a_1x_list_baseline_still_filters_its_issues(): void
+    public function test_a_1x_list_baseline_is_refused_before_its_issues_filter(): void
     {
         $dir = $this->makeTempDir();
         $file = realpath($dir).'/test.php';
@@ -131,7 +131,6 @@ final class LintCommandBaselineTest extends TestCase
         $legacyFile = $dir.'/legacy.json';
         file_put_contents($legacyFile, json_encode($legacy, \JSON_PRETTY_PRINT));
 
-        // Not quiet: the note goes where the report's status lines go.
         $errors = fopen('php://memory', 'w+');
         $this->assertIsResource($errors);
         $exitCode = 0;
@@ -139,15 +138,16 @@ final class LintCommandBaselineTest extends TestCase
         rewind($errors);
         $buffer .= (string) stream_get_contents($errors);
 
-        $this->assertSame(0, $exitCode);
+        $this->assertSame(2, $exitCode);
         $this->assertStringNotContainsString('Unknown regex flag', $buffer);
-        $this->assertMatchesRegularExpression('/regenerat/i', $buffer);
+        $this->assertMatchesRegularExpression('/not a lint baseline/', $buffer);
+        $this->assertMatchesRegularExpression('/generate-baseline/', $buffer);
     }
 
     /**
-     * An empty 1.x baseline is a valid baseline that filters nothing.
+     * An empty 1.x baseline, a bare list, is refused like any non-baseline.
      */
-    public function test_an_empty_1x_list_baseline_is_accepted(): void
+    public function test_an_empty_1x_list_baseline_is_refused(): void
     {
         $dir = $this->makeTempDir();
         $file = realpath($dir).'/test.php';
@@ -158,7 +158,7 @@ final class LintCommandBaselineTest extends TestCase
         $exitCode = 0;
         $this->captureOutput(fn (): int => $this->makeLintCommand()->run($this->makeInput([$file, '--baseline='.$baselineFile]), new Output(true, true)), $exitCode);
 
-        $this->assertSame(1, $exitCode);
+        $this->assertSame(2, $exitCode);
     }
 
     private function makeLintCommand(): LintCommand

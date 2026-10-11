@@ -51,7 +51,7 @@ final class VisitorMethodsTest extends TestCase
             new KeepNode(0, 0),
             new BackrefNode('1', 0, 0),
             new CharLiteralNode('\x00', 0, CharLiteralType::Unicode, 0, 0),
-            new UnicodePropNode('L', 0, 0),
+            new UnicodePropNode('L', false, 0, 0),
             new CharLiteralNode('\o{10}', 0o10, CharLiteralType::Octal, 0, 0),
             new CharLiteralNode('10', 0o10, CharLiteralType::OctalLegacy, 0, 0),
             new PosixClassNode('alnum', 0, 0),
@@ -97,7 +97,7 @@ final class VisitorMethodsTest extends TestCase
             new AssertionNode('b', 0, 0),
             new KeepNode(0, 0),
             new CharLiteralNode('x', 0, CharLiteralType::Unicode, 0, 0),
-            new UnicodePropNode('L', 0, 0),
+            new UnicodePropNode('L', false, 0, 0),
             new CharLiteralNode('1', 1, CharLiteralType::Octal, 0, 0),
             new CharLiteralNode('1', 1, CharLiteralType::OctalLegacy, 0, 0),
             new PosixClassNode('digit', 0, 0),
@@ -156,7 +156,7 @@ final class VisitorMethodsTest extends TestCase
             new PosixClassNode('alnum', 0, 0),
             new SubroutineNode('1', '', 0, 0),
             new CharLiteralNode('FFFF', 0xFFFF, CharLiteralType::Unicode, 0, 0),
-            new UnicodePropNode('L', 0, 0),
+            new UnicodePropNode('L', false, 0, 0),
         ];
 
         $visitors = [

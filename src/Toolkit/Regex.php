@@ -515,33 +515,22 @@ final readonly class Regex
      *
      * @return array<string> Unique literals
      */
-    private function extractUniqueLiterals(mixed $literalSet): array
+    private function extractUniqueLiterals(LiteralSet $literalSet): array
     {
-        if (!\is_object($literalSet)) {
-            return [];
-        }
-
-        /** @var array<string> $prefixes */
-        $prefixes = property_exists($literalSet, 'prefixes') ? $literalSet->prefixes : [];
-
-        /** @var array<string> $suffixes */
-        $suffixes = property_exists($literalSet, 'suffixes') ? $literalSet->suffixes : [];
+        $prefixes = $literalSet->prefixes;
+        $suffixes = $literalSet->suffixes;
 
         return array_values(array_unique(array_merge($prefixes, $suffixes)));
     }
 
     /**
-     * @param LiteralSet               $literalSet
+     * @param LiteralSet               $literalSet     The literal set to read $property from
      * @param callable(string): string $patternBuilder
      *
      * @return array<string>
      */
-    private function processLiteralPatterns(mixed $literalSet, string $property, callable $patternBuilder): array
+    private function processLiteralPatterns(LiteralSet $literalSet, string $property, callable $patternBuilder): array
     {
-        if (!\is_object($literalSet) || !property_exists($literalSet, $property)) {
-            return [];
-        }
-
         /** @var iterable<string> $items */
         $items = $literalSet->$property;
         $patterns = [];
@@ -562,7 +551,7 @@ final readonly class Regex
      *
      * @return array<string> Search patterns
      */
-    private function buildSearchPatterns(mixed $literalSet): array
+    private function buildSearchPatterns(LiteralSet $literalSet): array
     {
         $prefixPatterns = $this->processLiteralPatterns(
             $literalSet,
@@ -586,14 +575,10 @@ final readonly class Regex
      *
      * @return string Confidence level ('high', 'medium', or 'low')
      */
-    private function determineConfidenceLevel(mixed $literalSet): string
+    private function determineConfidenceLevel(LiteralSet $literalSet): string
     {
-        if (!\is_object($literalSet)) {
-            return 'low';
-        }
-
-        $isComplete = property_exists($literalSet, 'complete') ? $literalSet->complete : false;
-        $isVoid = (method_exists($literalSet, 'isVoid') && $literalSet->isVoid()) ? true : false;
+        $isComplete = $literalSet->complete;
+        $isVoid = $literalSet->isVoid();
 
         if ($isVoid) {
             return 'low';

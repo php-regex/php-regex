@@ -25,6 +25,7 @@ use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\PcreVerb;
@@ -68,7 +69,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-81acb9afdb966d612478eec79aa6214f';
+    public const CACHE_VERSION = 'ast-4aaa1a48a30462bb37d9fe7cd3c90374';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -884,9 +885,8 @@ final readonly class RegexParser
     {
         $errorMessage = $exception->getMessage();
         $visualSnippet = '';
-        if (method_exists($exception, 'getVisualSnippet')) {
-            $snippet = $exception->getVisualSnippet();
-            $visualSnippet = \is_string($snippet) ? $snippet : '';
+        if ($exception instanceof VisualContextInterface) {
+            $visualSnippet = $exception->getVisualSnippet();
         }
         $position = null;
         $errorCode = null;

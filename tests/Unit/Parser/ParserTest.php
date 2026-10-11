@@ -497,7 +497,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?A:a)/');
 
-        $this->assertFalse($result->isValid());
+        $this->assertFalse($result->isValid);
         $this->assertNotNull($result->error);
         $this->assertStringContainsString('Invalid group modifier syntax', (string) $result->error);
     }
@@ -507,7 +507,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?^i:a)/');
 
-        $this->assertTrue($result->isValid());
+        $this->assertTrue($result->isValid);
     }
 
     #[Test]
@@ -515,7 +515,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?n:(a)(b))/');
 
-        $this->assertTrue($result->isValid());
+        $this->assertTrue($result->isValid);
     }
 
     #[Test]
@@ -524,13 +524,13 @@ final class ParserTest extends TestCase
         $regex83 = Regex::create(['php_version' => '8.3']);
         $result83 = $regex83->validate('/(?r:foo)/');
 
-        $this->assertFalse($result83->isValid());
+        $this->assertFalse($result83->isValid);
         $this->assertStringContainsString('Invalid group modifier syntax', (string) $result83->error);
 
         $regex84 = Regex::create(['php_version' => '8.4']);
         $result84 = $regex84->validate('/(?r:foo)/');
 
-        $this->assertTrue($result84->isValid());
+        $this->assertTrue($result84->isValid);
     }
 
     #[Test]
@@ -538,7 +538,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?<a>.) (?<a>.)/');
 
-        $this->assertFalse($result->isValid());
+        $this->assertFalse($result->isValid);
         $this->assertNotNull($result->error);
         $this->assertStringContainsString('Duplicate group name "a"', (string) $result->error);
     }
@@ -548,7 +548,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?J)(?<a>.) (?<a>.)/');
 
-        $this->assertTrue($result->isValid());
+        $this->assertTrue($result->isValid);
     }
 
     #[Test]
@@ -556,7 +556,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?<name>.) \k<nam>/');
 
-        $this->assertFalse($result->isValid());
+        $this->assertFalse($result->isValid);
         $this->assertNotNull($result->error);
         $this->assertStringContainsString('Did you mean: name?', (string) $result->error);
     }
@@ -566,7 +566,7 @@ final class ParserTest extends TestCase
     {
         $result = $this->regex->validate('/(?<=a*)b/');
 
-        $this->assertFalse($result->isValid());
+        $this->assertFalse($result->isValid);
         $this->assertNotNull($result->error);
         $this->assertStringContainsString('Lookbehind is unbounded', (string) $result->error);
     }
@@ -888,15 +888,15 @@ final class ParserTest extends TestCase
     {
         // Case 1: Null byte in a group
         $result = $this->regex->validate('/(\0)/');
-        $this->assertTrue($result->isValid());
+        $this->assertTrue($result->isValid);
 
         // Case 2: Null byte in a character class (The Symfony case)
         $result2 = $this->regex->validate('/[^\0]/');
-        $this->assertTrue($result2->isValid());
+        $this->assertTrue($result2->isValid);
 
         // Case 3: Null byte followed by non-digit
         $result3 = $this->regex->validate('/\0a/');
-        $this->assertTrue($result3->isValid());
+        $this->assertTrue($result3->isValid);
     }
 
     #[Test]

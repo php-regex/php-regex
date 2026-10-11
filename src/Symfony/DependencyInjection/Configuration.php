@@ -18,7 +18,6 @@ use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\Builder\VariableNodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
@@ -28,15 +27,6 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 final readonly class Configuration implements ConfigurationInterface
 {
-    /**
-     * The 1.x keys 2.0 refuses, with what replaces them.
-     */
-    private const REMOVED_KEYS = [
-        'exclude_paths' => '"exclude_paths" was renamed "exclude" in 2.0.',
-        'ignore_patterns' => '"ignore_patterns" was merged into "redos.ignored_patterns" in 2.0.',
-        'redos_threshold' => '"redos_threshold" was removed in 2.0: it was never read; the ReDoS threshold is "redos.threshold".',
-    ];
-
     /**
      * @return TreeBuilder<'array'> the tree builder instance
      */
@@ -124,8 +114,6 @@ final readonly class Configuration implements ConfigurationInterface
                             ->min(0)
                             ->info('Complexity score above which a warning is emitted.')
                         ->end()
-                        ->append(self::removedKey('ignore_patterns'))
-                        ->append(self::removedKey('redos_threshold'))
                     ->end()
                 ->end()
                 ->arrayNode('automata')
@@ -202,7 +190,6 @@ final readonly class Configuration implements ConfigurationInterface
                     ->defaultValue(['vendor'])
                     ->info('Directories regex:lint does not scan. Defaults to vendor/.')
                 ->end()
-                ->append(self::removedKey('exclude_paths'))
                 ->scalarNode('ide')
                     ->defaultValue('%env(default::SYMFONY_IDE)%')
                     ->info('IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Falls back to framework.ide.')
@@ -210,22 +197,6 @@ final readonly class Configuration implements ConfigurationInterface
             ->end();
 
         return $treeBuilder;
-    }
-
-    /**
-     * A 1.x key: no value, and refused with what replaces it when set, so
-     * that the message names the new key instead of listing every option.
-     */
-    private static function removedKey(string $name): VariableNodeDefinition
-    {
-        $node = new VariableNodeDefinition($name);
-        $node
-            ->info('Removed in 2.0. '.self::REMOVED_KEYS[$name])
-            ->validate()
-                ->always(static fn (): never => throw new InvalidRegexOptionException(self::REMOVED_KEYS[$name]))
-            ->end();
-
-        return $node;
     }
 
     /**

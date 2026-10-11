@@ -20,8 +20,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * It reads the keywords the definition uses, and reports every problem of
  * a file in one pass, each message naming the key by its dotted path: an
- * unknown key, a key 2.0 removed (with the key that replaced it), a value
- * of the wrong kind.
+ * unknown key, a value of the wrong kind.
  *
  * @internal
  */
@@ -105,15 +104,6 @@ final readonly class LintConfigValidator
 
             if (\array_key_exists($name, $properties)) {
                 $this->checkNode($this->map($properties[$name]), $property, $childPath, $file, $errors);
-
-                continue;
-            }
-
-            if (\array_key_exists($childPath, LintConfigSchema::REMOVED_KEYS)) {
-                $replacement = LintConfigSchema::REMOVED_KEYS[$childPath];
-                $errors[] = null === $replacement
-                    ? \sprintf('"%s" in %s was removed in 2.0 and has no replacement: the lint command always runs the ReDoS confirmation without JIT.', $childPath, $file)
-                    : \sprintf('"%s" in %s was removed in 2.0: use "%s" instead.', $childPath, $file, $replacement);
 
                 continue;
             }

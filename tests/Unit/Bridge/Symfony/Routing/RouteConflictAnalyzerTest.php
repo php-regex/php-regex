@@ -17,11 +17,23 @@ use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Routing\CompiledRoute;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 final class RouteConflictAnalyzerTest extends TestCase
 {
+    #[Test]
+    public function test_the_resolvers_take_the_compiled_route_natively(): void
+    {
+        foreach (['resolveHostRegex', 'resolveStaticPrefix'] as $method) {
+            $type = new \ReflectionMethod(RouteConflictAnalyzer::class, $method)->getParameters()[0]->getType();
+            $this->assertInstanceOf(\ReflectionNamedType::class, $type);
+
+            $this->assertSame(CompiledRoute::class, $type->getName(), $method.' lost its native CompiledRoute type.');
+        }
+    }
+
     #[Test]
     public function test_detects_shadowed_route(): void
     {

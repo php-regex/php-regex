@@ -34,22 +34,6 @@ final readonly class ValidationResult implements \JsonSerializable
         public ?ErrorCode $errorCode = null,
     ) {}
 
-    /**
-     * @deprecated read the public $isValid property instead
-     */
-    public function isValid(): bool
-    {
-        return $this->isValid;
-    }
-
-    /**
-     * @deprecated read the public $error property instead
-     */
-    public function getErrorMessage(): ?string
-    {
-        return $this->error;
-    }
-
     public function getComplexityScore(): int
     {
         return $this->complexityScore;

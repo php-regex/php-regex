@@ -91,7 +91,7 @@ final class VisitorExhaustiveTest extends TestCase
             new SequenceNode([], 0, 0),
             new SubroutineNode('1', '', 0, 0),
             new CharLiteralNode('\x41', 0x41, CharLiteralType::Unicode, 0, 0),
-            new UnicodePropNode('L', 0, 0),
+            new UnicodePropNode('L', false, 0, 0),
         ];
 
         foreach ($visitors as $visitor) {

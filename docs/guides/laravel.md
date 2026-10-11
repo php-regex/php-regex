@@ -23,9 +23,8 @@ php artisan vendor:publish --tag=php-regex-config
 ## Configuration
 
 `config/php-regex.php`, with its defaults. A `config/regex-parser.php` published
-by 1.x is no longer read: publish the new file, move your settings to it and
-delete the old one (the provider raises a deprecation while the old one is
-there).
+by 1.x is no longer read and nothing warns about it: publish the new file,
+move your settings to it and delete the old one.
 
 ```php
 return [
@@ -65,7 +64,7 @@ return [
     ],
     'paths' => ['app'],
     'exclude' => ['vendor', 'node_modules', 'storage'],
-    'ide' => env('REGEX_PARSER_IDE', env('APP_EDITOR', null)),
+    'ide' => env('PHP_REGEX_IDE', env('APP_EDITOR', null)),
 ];
 ```
 
@@ -237,14 +236,16 @@ explains each verdict.
 
 ## Upgrading from 1.x
 
-2.0 renames or removes three keys. `regex:lint` warns about each one it still
-finds in your file, with the key to use instead:
+2.0 renames or removes three keys — and the `REGEX_PARSER_IDE` env var becomes
+`PHP_REGEX_IDE`. A leftover 1.x key is silently ignored (no warning is
+printed), so move each one over by hand:
 
 | 1.x key                     | 2.0                                   |
 |-----------------------------|---------------------------------------|
 | `exclude_paths`             | `exclude`                             |
 | `analysis.ignore_patterns`  | merged into `redos.ignored_patterns`  |
 | `analysis.redos_threshold`  | removed (it was never read)           |
+| `REGEX_PARSER_IDE`          | `PHP_REGEX_IDE` (`APP_EDITOR` unchanged) |
 
 `redos.enabled` now makes `regex:lint` report ReDoS findings: 1.x never ran
 the analysis, whatever the setting. Expect new warnings on the first run.

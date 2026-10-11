@@ -27,8 +27,8 @@ use Symfony\Component\Console\Output\StreamOutput;
  * A setting the lint cannot use costs the lint, not the application: an
  * unknown ReDoS threshold is refused when regex:lint runs, while every other
  * artisan command keeps working. A 1.x key still in a published config is
- * named by regex:lint with the key that replaces it. The automata settings
- * are the defaults of regex:compare, whose options win.
+ * ignored in silence: no warning on stdout, stderr or in the JSON report.
+ * The automata settings are the defaults of regex:compare, whose options win.
  */
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
@@ -86,14 +86,14 @@ final class LaravelLazyConfigTest extends TestCase
 
     #[Test]
     #[WithConfig('php-regex.exclude_paths', ['vendor'])]
-    public function test_the_lint_command_names_the_replacement_of_a_stale_key(): void
+    public function test_the_lint_command_says_nothing_about_a_stale_key(): void
     {
         $status = Artisan::call('regex:lint', $this->lintArguments());
         $output = Artisan::output();
 
         $this->assertSame(0, $status, $output);
-        $this->assertStringContainsString('exclude_paths', $output);
-        $this->assertStringContainsString('"exclude"', $output);
+        $this->assertStringNotContainsString('exclude_paths', $output);
+        $this->assertStringNotContainsString('ignored since 2.0', $output);
     }
 
     #[Test]
@@ -105,12 +105,13 @@ final class LaravelLazyConfigTest extends TestCase
 
         $this->assertSame(0, $status, $output);
         $this->assertIsArray(json_decode($output, true), 'regex:lint did not print JSON: '.$output);
+        $this->assertStringNotContainsString('ignore_patterns', $output);
     }
 
     #[Test]
     #[WithConfig('php-regex.analysis.ignore_patterns', ['foo'])]
     #[WithConfig('php-regex.php_version', '8.2')]
-    public function test_other_formats_say_the_target_and_the_stale_keys_on_stderr(): void
+    public function test_other_formats_say_the_target_on_stderr_and_no_stale_key(): void
     {
         $stdout = fopen('php://memory', 'r+');
         $stderr = fopen('php://memory', 'r+');
@@ -151,7 +152,7 @@ final class LaravelLazyConfigTest extends TestCase
         $this->assertSame(0, $status, $report.$errors);
         $this->assertIsArray(json_decode($report, true), 'stdout is not JSON: '.$report);
         $this->assertStringContainsString('Target: PHP 8.2, PCRE2 10.40 (config php-regex.php_version)', $errors);
-        $this->assertStringContainsString('analysis.ignore_patterns', $errors);
+        $this->assertStringNotContainsString('ignore_patterns', $errors);
     }
 
     #[Test]

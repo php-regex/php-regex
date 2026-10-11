@@ -483,6 +483,29 @@ final class HelpCommandTest extends TestCase
         );
     }
 
+    /**
+     * The help pages teach what 2.0 reads, never what 1.x did: the word
+     * "1.x" appears on no page, the lint page's baseline options included —
+     * a 1.x baseline is refused, not read, and the copy does not claim
+     * otherwise.
+     *
+     * Pins an invariant that already holds: the copy never carried the
+     * 1.x-baseline claim (the runtime note in LintCommand did, and the
+     * baseline refusal tests cover its removal).
+     */
+    #[Test]
+    public function test_no_help_page_claims_a_1_x_behaviour(): void
+    {
+        $pages = [self::commandHelp(null)];
+        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'clear-cache', 'version', 'help'] as $command) {
+            $pages[] = self::commandHelp($command);
+        }
+
+        foreach ($pages as $page) {
+            $this->assertStringNotContainsString('1.x', $page);
+        }
+    }
+
     public function test_get_command_data_returns_data_for_lint(): void
     {
         $command = new HelpCommand();

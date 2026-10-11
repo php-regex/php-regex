@@ -179,7 +179,7 @@ final class ModernizerNodeVisitorTest extends TestCase
 
     public function test_preserves_unicode_prop(): void
     {
-        $unicodeProp = new UnicodePropNode('L', 0, 5);
+        $unicodeProp = new UnicodePropNode('L', false, 0, 5);
         $result = $unicodeProp->accept($this->visitor);
 
         $this->assertSame($unicodeProp, $result);

@@ -123,26 +123,39 @@ final class ConfigurationVocabularyTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{array<string, mixed>, string}>
+     * @return iterable<string, array{array<string, mixed>, string, string}>
      */
     public static function provideRemovedKeys(): iterable
     {
-        yield 'exclude_paths, renamed exclude' => [['exclude_paths' => ['vendor']], 'exclude_paths'];
-        yield 'analysis.ignore_patterns, merged into redos.ignored_patterns' => [['analysis' => ['ignore_patterns' => ['foo']]], 'ignore_patterns'];
-        yield 'analysis.redos_threshold, never read' => [['analysis' => ['redos_threshold' => 100]], 'redos_threshold'];
+        yield 'exclude_paths, renamed exclude in 1.x' => [['exclude_paths' => ['vendor']], 'exclude_paths', 'php_regex'];
+        yield 'analysis.ignore_patterns, merged into redos.ignored_patterns in 1.x' => [['analysis' => ['ignore_patterns' => ['foo']]], 'ignore_patterns', 'php_regex.analysis'];
+        yield 'analysis.redos_threshold, never read' => [['analysis' => ['redos_threshold' => 100]], 'redos_threshold', 'php_regex.analysis'];
+        yield 'a key no release ever had' => [['poo' => 1], 'poo', 'php_regex'];
     }
 
     /**
+     * A 1.x key meets the same refusal as a typo: the tree knows nothing
+     * about it, so Symfony's own "Unrecognized option" error names it under
+     * its parent node — never a tailored message about what the key became.
+     *
      * @param array<string, mixed> $settings
      */
     #[Test]
     #[DataProvider('provideRemovedKeys')]
-    public function test_a_removed_key_is_refused(array $settings, string $key): void
+    public function test_a_removed_key_meets_the_native_unrecognized_option_error(array $settings, string $key, string $parentPath): void
     {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('"'.$key.'"');
-
-        $this->process($settings);
+        try {
+            $this->process($settings);
+            $this->fail(\sprintf('"%s" was accepted.', $key));
+        } catch (InvalidConfigurationException $e) {
+            $this->assertMatchesRegularExpression(
+                \sprintf('/Unrecognized option "%s" under "%s"/', preg_quote($key, '/'), preg_quote($parentPath, '/')),
+                $e->getMessage(),
+            );
+            $this->assertStringNotContainsString('renamed', $e->getMessage());
+            $this->assertStringNotContainsString('merged into', $e->getMessage());
+            $this->assertStringNotContainsString('redos.threshold', $e->getMessage());
+        }
     }
 
     #[Test]

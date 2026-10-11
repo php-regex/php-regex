@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\NullCache;
@@ -280,15 +281,15 @@ final class RegexTest extends TestCase
     public function test_validate_method_with_valid_regex(): void
     {
         $result = $this->regexService->validate('/a+/');
-        $this->assertTrue($result->isValid());
-        $this->assertNull($result->getErrorMessage());
+        $this->assertTrue($result->isValid);
+        $this->assertNull($result->error);
     }
 
     public function test_validate_method_with_invalid_regex(): void
     {
         $result = $this->regexService->validate('/a(/');
-        $this->assertFalse($result->isValid());
-        $this->assertStringContainsString('Expected )', (string) $result->getErrorMessage());
+        $this->assertFalse($result->isValid);
+        $this->assertStringContainsString('Expected )', (string) $result->error);
     }
 
     public function test_redos_method(): void
@@ -297,10 +298,34 @@ final class RegexTest extends TestCase
         $this->assertIsBool($analysis->isSafe());
     }
 
-    public function test_literals_method(): void
+    /**
+     * What literals() reads, spelled once: the helper typing must not move
+     * one literal, one search pattern or one confidence level.
+     *
+     * @param list<string> $literals
+     * @param list<string> $patterns
+     */
+    #[Test]
+    #[DataProvider('provideLiteralExtractions')]
+    public function test_literals_method(string $pattern, array $literals, array $patterns, string $confidence): void
     {
-        $result = $this->regexService->literals('/a+/');
-        $this->assertIsArray($result->literals);
+        $result = $this->regexService->literals($pattern);
+
+        $this->assertSame($literals, $result->literals);
+        $this->assertSame($patterns, $result->patterns);
+        $this->assertSame($confidence, $result->confidence);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, literals: list<string>, patterns: list<string>, confidence: string}>
+     */
+    public static function provideLiteralExtractions(): iterable
+    {
+        yield 'a repeated literal' => ['pattern' => '/a+/', 'literals' => ['a'], 'patterns' => ['^a'], 'confidence' => 'medium'];
+        yield 'an anchored head and tail' => ['pattern' => '/^foo.*bar$/', 'literals' => ['foo', 'bar'], 'patterns' => ['^foo', 'bar$'], 'confidence' => 'medium'];
+        yield 'two whole-word alternatives' => ['pattern' => '/abc|abd/', 'literals' => ['abc', 'abd'], 'patterns' => ['^abc', '^abd', 'abc$', 'abd$'], 'confidence' => 'high'];
+        yield 'a repeated group before a literal' => ['pattern' => '/(a|b)+c/', 'literals' => ['a', 'b', 'c'], 'patterns' => ['^a', '^b', 'c$'], 'confidence' => 'medium'];
+        yield 'literals around a class' => ['pattern' => '/x[0-9]y/', 'literals' => ['x', 'y'], 'patterns' => ['^x', 'y$'], 'confidence' => 'medium'];
     }
 
     public function test_generate_method(): void
@@ -366,24 +391,7 @@ final class RegexTest extends TestCase
         $buildSearch = $ref->getMethod('buildSearchPatterns');
         $determine = $ref->getMethod('determineConfidenceLevel');
 
-        $literalSet = new class {
-            /**
-             * @var array<string>
-             */
-            public array $prefixes = ['foo'];
-
-            /**
-             * @var array<string>
-             */
-            public array $suffixes = ['bar'];
-
-            public bool $complete = false;
-
-            public function isVoid(): bool
-            {
-                return false;
-            }
-        };
+        $literalSet = new LiteralSet(['foo'], ['bar'], false);
 
         /** @var array<string> $patterns */
         $patterns = $buildSearch->invoke($regex, $literalSet);
@@ -391,8 +399,10 @@ final class RegexTest extends TestCase
         $this->assertContains('bar$', $patterns);
         $this->assertSame('medium', $determine->invoke($regex, $literalSet));
 
-        $this->assertSame([], $buildSearch->invoke($regex, ['not-an-object']));
-        $this->assertSame('low', $determine->invoke($regex, 'not-an-object'));
+        // The parameter is typed natively: anything but a LiteralSet is
+        // refused by the engine, not quietly read as empty.
+        $this->expectException(\TypeError::class);
+        $buildSearch->invoke($regex, ['not-a-literal-set']);
     }
 
     public function test_create_explanation_visitor_html_and_invalid(): void
@@ -458,22 +468,13 @@ final class RegexTest extends TestCase
         $ref = new \ReflectionClass($this->regexService);
         $method = $ref->getMethod('extractUniqueLiterals');
 
-        $literalSet = new class {
-            /**
-             * @var array<string>
-             */
-            public array $prefixes = ['a', 'b'];
-
-            /**
-             * @var array<string>
-             */
-            public array $suffixes = ['b', 'c'];
-        };
-
-        $result = $method->invoke($this->regexService, $literalSet);
+        $result = $method->invoke($this->regexService, new LiteralSet(['a', 'b'], ['b', 'c']));
         $this->assertSame(['a', 'b', 'c'], $result);
 
-        $this->assertSame([], $method->invoke($this->regexService, 'not object'));
+        // Natively typed: a non-LiteralSet is an engine error, never an
+        // empty answer read as "no literals".
+        $this->expectException(\TypeError::class);
+        $method->invoke($this->regexService, 'not-a-literal-set');
     }
 
     public function test_determine_confidence_level(): void
@@ -481,37 +482,17 @@ final class RegexTest extends TestCase
         $ref = new \ReflectionClass($this->regexService);
         $method = $ref->getMethod('determineConfidenceLevel');
 
-        $completeSet = new class {
-            public bool $complete = true;
-
-            public function isVoid(): bool
-            {
-                return false;
-            }
-        };
-
-        $voidSet = new class {
-            public bool $complete = false;
-
-            public function isVoid(): bool
-            {
-                return true;
-            }
-        };
-
-        $incompleteSet = new class {
-            public bool $complete = false;
-
-            public function isVoid(): bool
-            {
-                return false;
-            }
-        };
+        $completeSet = LiteralSet::fromString('a');
+        $voidSet = LiteralSet::empty();
+        $incompleteSet = new LiteralSet(['a'], ['b'], false);
 
         $this->assertSame('high', $method->invoke($this->regexService, $completeSet));
         $this->assertSame('low', $method->invoke($this->regexService, $voidSet));
         $this->assertSame('medium', $method->invoke($this->regexService, $incompleteSet));
-        $this->assertSame('low', $method->invoke($this->regexService, 'not object'));
+
+        // The old "anything else is low" arm is gone with the native type.
+        $this->expectException(\TypeError::class);
+        $method->invoke($this->regexService, 'not-a-literal-set');
     }
 
     #[Test]
@@ -568,8 +549,8 @@ final class RegexTest extends TestCase
         $result = $method->invoke($this->regexService->parser(), $exception);
 
         $this->assertInstanceOf(ValidationResult::class, $result);
-        $this->assertFalse($result->isValid());
-        $this->assertSame('Test error', $result->getErrorMessage());
+        $this->assertFalse($result->isValid);
+        $this->assertSame('Test error', $result->error);
         $this->assertSame(ErrorCode::TokenUnexpected, $result->getErrorCode());
     }
 
@@ -783,6 +764,6 @@ final class RegexTest extends TestCase
         $regex = Regex::create(['runtime_pcre_validation' => true]);
         $result = $regex->validate('/(?P<a>a)\1/'); // Backreference to named group, might cause error
         // Depending on PCRE version, it might pass or fail
-        $this->assertIsBool($result->isValid());
+        $this->assertIsBool($result->isValid);
     }
 }

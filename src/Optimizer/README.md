@@ -71,7 +71,8 @@ the proof builds automata for both patterns, which costs time on large ones,
 and a rewrite it disproves is withdrawn, the original pattern returned.
 
 An unknown key or a value of the wrong type throws `InvalidRegexOptionException`. The 1.x names
-`autoPossessify` and `allowAlternationFactorization` are `possessive` and `factorize` since 2.0.
+`autoPossessify` and `allowAlternationFactorization` were renamed `possessive` and `factorize`:
+the old names meet the same unknown-option error as any typo.
 
 Usage
 -----

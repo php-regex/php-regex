@@ -97,6 +97,47 @@ final class NoLegacyNamesTest extends TestCase
         $this->assertFalse(method_exists(NodeVisitorInterface::class, 'visitClassOperation'));
     }
 
+    /**
+     * The PHP sources carry no 1.x knowledge: the old Laravel config key is
+     * read nowhere, the old environment variable name nowhere either. The
+     * upgrade guide and UpgradeMap keep theirs — they are migration tools,
+     * not runtime code.
+     */
+    #[Test]
+    #[DataProvider('provideLegacyStrings')]
+    public function test_no_php_source_carries_a_1_x_string(string $needle, string $what): void
+    {
+        $found = [];
+        foreach (self::phpSources() as $file) {
+            if (str_contains((string) file_get_contents($file), $needle)) {
+                $found[] = $file;
+            }
+        }
+
+        $this->assertSame([], $found, \sprintf('%s still named in: %s.', $what, implode(', ', $found)));
+    }
+
+    /**
+     * @return iterable<string, array{needle: string, what: string}>
+     */
+    public static function provideLegacyStrings(): iterable
+    {
+        yield 'the 1.x Laravel config key' => ['needle' => "'regex-parser'", 'what' => 'The 1.x config key'];
+        yield 'the 1.x environment prefix' => ['needle' => 'REGEX_PARSER_', 'what' => 'The 1.x environment variable name'];
+        yield 'the 1.x baseline reader' => ['needle' => 'fromList', 'what' => 'The 1.x baseline reader'];
+        yield 'the 1.x baseline key' => ['needle' => 'legacyKey', 'what' => 'The 1.x baseline key'];
+        yield 'the stale Laravel key table' => ['needle' => 'STALE_KEYS', 'what' => 'The stale-key table'];
+        yield 'the removed-key tables' => ['needle' => 'REMOVED_KEYS', 'what' => 'The removed-key table'];
+    }
+
+    #[Test]
+    public function test_the_optimizer_options_carry_no_rename_table(): void
+    {
+        $source = (string) file_get_contents(__DIR__.'/../../src/Optimizer/OptimizerOptions.php');
+
+        $this->assertStringNotContainsString('RENAMED', $source, 'OptimizerOptions must not keep a 1.x rename table: a 1.x key is an unknown key.');
+    }
+
     #[Test]
     public function test_composer_loads_no_file_on_every_request(): void
     {
@@ -104,5 +145,20 @@ final class NoLegacyNamesTest extends TestCase
         $composer = json_decode((string) file_get_contents(__DIR__.'/../../composer.json'), true, 512, \JSON_THROW_ON_ERROR);
 
         $this->assertArrayNotHasKey('files', $composer['autoload']);
+    }
+
+    /**
+     * Every PHP file under src/, the packages' own files included.
+     *
+     * @return \Generator<string, string>
+     */
+    private static function phpSources(): \Generator
+    {
+        $directory = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(__DIR__.'/../../src', \FilesystemIterator::SKIP_DOTS));
+        foreach ($directory as $file) {
+            if ($file instanceof \SplFileInfo && 'php' === $file->getExtension()) {
+                yield $file->getPathname() => $file->getPathname();
+            }
+        }
     }
 }

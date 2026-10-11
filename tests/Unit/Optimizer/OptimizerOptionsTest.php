@@ -80,8 +80,8 @@ final class OptimizerOptionsTest extends TestCase
     public static function provideRefusedOptions(): iterable
     {
         yield 'unknown key' => ['options' => ['digit' => true], 'message' => 'Unknown optimizer option "digit"'];
-        yield '1.x key for possessive' => ['options' => ['autoPossessify' => true], 'message' => 'Unknown optimizer option "autoPossessify": it is "possessive" since 2.0'];
-        yield '1.x key for factorize' => ['options' => ['allowAlternationFactorization' => true], 'message' => 'Unknown optimizer option "allowAlternationFactorization": it is "factorize" since 2.0'];
+        yield '1.x key for possessive' => ['options' => ['autoPossessify' => true], 'message' => 'Unknown optimizer option "autoPossessify"; the options are:'];
+        yield '1.x key for factorize' => ['options' => ['allowAlternationFactorization' => true], 'message' => 'Unknown optimizer option "allowAlternationFactorization"; the options are:'];
         yield 'camelCase key' => ['options' => ['minQuantifierCount' => 3], 'message' => 'Unknown optimizer option "minQuantifierCount"'];
         yield 'list key' => ['options' => [true], 'message' => 'Unknown optimizer option "0"'];
         yield 'string for a flag' => ['options' => ['digits' => 'yes'], 'message' => '"digits" must be a bool'];
@@ -96,6 +96,67 @@ final class OptimizerOptionsTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
 
         new OptimizerOptions(minQuantifierCount: 1);
+    }
+
+    /**
+     * A 1.x name is refused without a word about what replaced it: the
+     * message names the key and lists the options, and stops there.
+     */
+    #[Test]
+    #[DataProvider('provideRenamedKeys')]
+    public function test_from_array_names_no_replacement_for_a_1_x_key(string $key): void
+    {
+        try {
+            OptimizerOptions::fromArray([$key => true]);
+            $this->fail(\sprintf('"%s" was accepted.', $key));
+        } catch (InvalidRegexOptionException $e) {
+            $this->assertStringContainsString(\sprintf('Unknown optimizer option "%s"', $key), $e->getMessage());
+            $this->assertStringNotContainsString('since 2.0', $e->getMessage());
+            $this->assertDoesNotMatchRegularExpression('/it is "/', $e->getMessage());
+        }
+    }
+
+    /**
+     * The camelCase reader (regex.json, the PHPStan parameters) refuses a
+     * 1.x name the same generic way.
+     */
+    #[Test]
+    #[DataProvider('provideRenamedKeys')]
+    public function test_from_camel_case_array_names_no_replacement_for_a_1_x_key(string $key): void
+    {
+        try {
+            OptimizerOptions::fromCamelCaseArray([$key => true]);
+            $this->fail(\sprintf('"%s" was accepted.', $key));
+        } catch (InvalidRegexOptionException $e) {
+            $this->assertStringContainsString(\sprintf('Unknown optimizer option "%s"', $key), $e->getMessage());
+            $this->assertStringNotContainsString('since 2.0', $e->getMessage());
+            $this->assertDoesNotMatchRegularExpression('/it is "/', $e->getMessage());
+        }
+    }
+
+    /**
+     * The refusal lists the option names, not the constructor parameters
+     * the reader maps them to: an old name sees the same list a typo does.
+     */
+    #[Test]
+    public function test_the_refusal_lists_the_option_names(): void
+    {
+        try {
+            OptimizerOptions::fromArray(['autoPossessify' => true]);
+            $this->fail('The option was accepted.');
+        } catch (InvalidRegexOptionException $e) {
+            $this->assertMatchesRegularExpression('/the options are: .*\\bmin_quantifier_count\\b/', $e->getMessage());
+            $this->assertStringNotContainsString('minQuantifierCount', $e->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{key: string}>
+     */
+    public static function provideRenamedKeys(): iterable
+    {
+        yield '1.x possessive' => ['key' => 'autoPossessify'];
+        yield '1.x factorize' => ['key' => 'allowAlternationFactorization'];
     }
 
     /**

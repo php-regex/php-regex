@@ -171,7 +171,7 @@ analyses move onto it.
 
 Validation runs against the AST and produces structured errors. `Regex::validate()` returns a `ValidationResult` containing:
 
-- `isValid()`
+- `isValid` (public property)
 - Error message and hint
 - Byte offset and caret snippet
 

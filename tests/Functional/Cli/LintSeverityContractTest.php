@@ -185,7 +185,7 @@ final class LintSeverityContractTest extends TestCase
         $this->enterProject([
             'src/a.php' => self::MULTIBYTE_CLASS_FILE,
             'src/b.php' => self::UNNAMED_QUANTIFIED_CAPTURE_FILE,
-            'baseline.json' => '[]',
+            'baseline.json' => '{"version": 1, "issues": []}',
         ]);
 
         [$code, $stdout] = $this->runLint(['src', '--jobs=1', '--baseline=baseline.json']);
@@ -216,7 +216,7 @@ final class LintSeverityContractTest extends TestCase
                 preg_match('/(a+)+$/', $subject);
 
                 PHP,
-            'baseline.json' => '[]',
+            'baseline.json' => '{"version": 1, "issues": []}',
         ]);
         $arguments = ['src', '--jobs=1', '--format=json', '--redos', '--redos-mode=confirmed', '--redos-threshold=high', '--no-optimize'];
 
@@ -250,7 +250,7 @@ final class LintSeverityContractTest extends TestCase
                 preg_match('/z[0-9]w/', $subject);
 
                 PHP,
-            'baseline.json' => '[]',
+            'baseline.json' => '{"version": 1, "issues": []}',
         ]);
 
         [, $withoutBaseline] = $this->runLint(['src', '--jobs=1', '--format=json']);

@@ -116,6 +116,26 @@ parameters:
           path: tests/Integration/Bridge/Rector/RuleContractTest.php
           count: 3
 
+        # The accessor test pins absence: the deprecated isValid() and
+        # getErrorMessage() must stay gone, and a later change must not
+        # reintroduce them.
+        - identifier: function.impossibleType
+          path: tests/Unit/ValidationResultTest.php
+          count: 2
+        # The interface test pins what the types already say: ParserException
+        # implements VisualContextInterface, and a later change must not
+        # drop it.
+        - identifier: function.alreadyNarrowedType
+          path: tests/Unit/ParserExceptionTest.php
+        # The node test hands the constructor the legacy 3-argument int form
+        # on purpose: the TypeError it now raises is the pinned contract.
+        - message: '#^Call to new PHPRegex\\Parser\\Node\\UnicodePropNode\(\) on a separate line has no effect\.$#'
+          identifier: new.resultUnused
+          path: tests/Unit/Node/UnicodePropNodeTest.php
+        - message: '#^Parameter \#2 \$hasBraces of class PHPRegex\\Parser\\Node\\UnicodePropNode constructor expects bool, int given\.$#'
+          identifier: argument.type
+          path: tests/Unit/Node/UnicodePropNodeTest.php
+
         # The Psalm plugin's tests drive Psalm in this process, through its
         # project analyser, issue buffer and type comparator, which Psalm
         # marks internal: there is no public API to run an analysis.

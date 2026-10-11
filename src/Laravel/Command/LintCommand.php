@@ -57,16 +57,6 @@ final class LintCommand extends Command
     private const ISSUE_ID_SOURCE_UNREADABLE = 'regex.lint.source.unreadable';
 
     /**
-     * Keys of config/php-regex.php that 2.0 no longer reads, with what
-     * to write instead. A config published by 1.x may still hold them.
-     */
-    private const STALE_KEYS = [
-        'exclude_paths' => 'renamed "exclude"',
-        'analysis.ignore_patterns' => 'merged into "redos.ignored_patterns"',
-        'analysis.redos_threshold' => 'removed, it was never read; the ReDoS threshold is "redos.threshold"',
-    ];
-
-    /**
      * The name and signature of the console command.
      *
      * @var string
@@ -346,16 +336,13 @@ final class LintCommand extends Command
         foreach ($target->notices() as $notice) {
             $this->line('<fg=gray>Note: '.$notice.'</>');
         }
-        foreach ($this->staleKeyWarnings() as $warning) {
-            $this->warn($warning);
-        }
 
         $this->newLine();
     }
 
     /**
      * Outside the console format, stdout holds the report alone: the
-     * target, the notices and the stale keys go to stderr, when there is one.
+     * target and the notices go to stderr, when there is one.
      */
     private function reportOnStderr(ProjectTarget $target): void
     {
@@ -365,32 +352,10 @@ final class LintCommand extends Command
         }
 
         $stderr = $output->getErrorOutput();
-        foreach ([...$target->notices(), ...$this->staleKeyWarnings()] as $line) {
+        foreach ($target->notices() as $line) {
             $stderr->writeln($line, OutputInterface::OUTPUT_RAW);
         }
         $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
-    }
-
-    /**
-     * The keys of config/php-regex.php 2.0 ignores, each with what
-     * replaces it.
-     *
-     * @return list<string>
-     */
-    private function staleKeyWarnings(): array
-    {
-        $warnings = [];
-        foreach (self::STALE_KEYS as $key => $replacement) {
-            if (config()->has('php-regex.'.$key)) {
-                $warnings[] = \sprintf(
-                    'config/php-regex.php: "%s" is ignored since 2.0: %s. Re-publish the config (php artisan vendor:publish --tag=php-regex-config --force) or edit the key.',
-                    $key,
-                    $replacement,
-                );
-            }
-        }
-
-        return $warnings;
     }
 
     /**
