@@ -342,8 +342,7 @@ vendor/bin/regex help
 composer update php-regex/php-regex
 ```
 
-# Use alternative command
-```
+## Use alternative command
 
 ### A Very Large File Reports No Patterns
 
