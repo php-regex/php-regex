@@ -5,6 +5,13 @@
          - #[^a-zA-Z0-9\-\_]#is
          + #[^a-zA-Z0-9\-\_]#i
 
+  corpus/Alexia/php7mar/classes/tests.php:177:21
+      → #line (?P<line>\d*)#is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #line (?P<line>\d*)#is
+         + #line (?P<line>\d*)#i
+
   corpus/Automattic/jetpack/projects/packages/agents-manager/src/class-agents-manager.php:439:30
       → /([-_].*)$/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -612,6 +619,12 @@
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
+  corpus/DaveLiddament/sarb/src/Domain/HistoryAnalyser/UnifiedDiffParser/internal/RangeInformation.php:45:29
+      → /^@@ -(\d+)(,\d+){0,1} \+(\d+)(,\d+){0,1} @@/
+     TIP 
+         - /^@@ -(\d+)(,\d+){0,1} \+(\d+)(,\d+){0,1} @@/
+         + /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@/
+
   corpus/EdgedesignCZ/phpqa/src/Tools/GetVersions.php:173:29
       → /\.0$/s
      WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -701,6 +714,11 @@
      INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/Jumping-Beaver/PHP_Static_Type_Checker/php_static_type_checker.php:2547:36
+      → |/(\./)+|
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
   corpus/MyIntervals/PHP-CSS-Parser/src/Parsing/ParserState.php:119:40
       → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
      WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -741,10 +759,74 @@
       → /^\[[^\]]+\](.*?)\[[^\]]+\]$/is
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:502:28
+      → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     TIP 
+         - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
+         + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
+
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCommentSniff.php:295:28
+      → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+     TIP 
+         - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+         + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
+
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:80:28
+      → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9_\[\]]+))*)( .*)?`i
+     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:313:28
+      → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+     TIP 
+         - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+         + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
+
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:141:20
+      → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
+     WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
+         ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:1980:39
+      → `^((?<!\.)_[0-9A-F][0-9A-F\.]*)+$`iD
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
+  corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:1984:39
+      → `^(?:(?<![\.e])_[0-9][0-9e\.]*)+$`iD
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
   corpus/PHPCheckstyle/phpcheckstyle/test/sample/issue61.php:43:36
       → /^20[123][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$/
      WARN  Character range is unnecessary; list the characters explicitly.
          ↳ Use '1' and '2' explicitly instead of a range.
+
+  corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php:128:28
+      → `^((?<![\.e])_[0-9][0-9e\.]*)+$`iD
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
+  corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php:176:29
+      → `^(?:[o_][0-7_]*)?[8-9]+[_0-9]*$`iD
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+     WARN  Character range is unnecessary; list the characters explicitly.
+         ↳ Use '8' and '9' explicitly instead of a range.
+
+  corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php:181:25
+      → `^0[0-7]*[8-9]+[0-9]*$`iD
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+     WARN  Character range is unnecessary; list the characters explicitly.
+         ↳ Use '8' and '9' explicitly instead of a range.
 
   corpus/PHPMailer/PHPMailer/src/PHPMailer.php:946:37
       → /\r\n|\r/m
@@ -1120,6 +1202,27 @@
      TIP 
          - /^#[A-Z0\/]{3,5}[!?]{1}$/
          + /^#[A-Z0\/]{3,5}[!?]$/
+
+  corpus/PhpCodeArcheology/PhpCodeArcheology/src/Analysis/LocVisitor.php:306:39
+      → !('[^']*'|"[^"]*")|((?:#|//).*$)!m
+     WARN  An anchor holds for its own alternative only: "('[^']*'|"[^"]*")" matches anywhere in the subject.
+         ↳ If the anchors are meant for every alternative, group them: "(?:('[^']*'|"[^"]*")|((?:#|//).*))$".
+
+  corpus/PhpCodeArcheology/PhpCodeArcheology/src/Analysis/LocVisitor.php:314:44
+      → !(^\s*[\r\n])!sm
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - !(^\s*[\r\n])!sm
+         + !(^\s*[\r\n])!m
+
+  corpus/PhpCodeArcheology/PhpCodeArcheology/src/Application/Service/TestCoversVisitor.php:64:28
+      → /@covers(?:Class)?\s+(\\?[\w\\]+)(?:::[\w]+)?/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
+     TIP 
+         - /@covers(?:Class)?\s+(\\?[\w\\]+)(?:::[\w]+)?/m
+         + /@covers(?:Class)?\s+(\\?[\w\\]+)(?:::[\w]+)?/
 
   corpus/PrestaShop/PrestaShop/classes/Connection.php:126:17
       → /BotLink|ahoy|AlkalineBOT|anthill|appie|arale|araneo|AraybOt|ariadne|arks|ATN_Worldwide|Atomz|bbot|Bjaaland|Ukonline|borg\-bot\/0\.9|boxseabot|bspider|calif|christcrawler|CMC\/0\.01|combine|confuzzledbot|CoolBot|cosmos|Internet Cruiser Robot|cusco|cyberspyder|cydralspider|desertrealm, desert realm|digger|DIIbot|grabber|downloadexpress|DragonBot|dwcp|ecollector|ebiness|elfinbot|esculapio|esther|fastcrawler|FDSE|FELIX IDE|ESI|fido|H\xc3\xa4m\xc3\xa4h\xc3\xa4kki|KIT\-Fireball|fouineur|Freecrawl|gammaSpider|gazz|gcreep|golem|griffon|Gromit|gulliver|gulper|hambot|havIndex|hotwired|htdig|iajabot|INGRID\/0\.1|Informant|InfoSpiders|inspectorwww|irobot|Iron33|JBot|jcrawler|Teoma|Jeeves|jobo|image\.kapsi\.net|KDD\-Explorer|ko_yappo_robot|label\-grabber|larbin|legs|Linkidator|linkwalker|Lockon|logo_gif_crawler|marvin|mattie|mediafox|MerzScope|NEC\-MeshExplorer|MindCrawler|udmsearch|moget|\bMotor\b|msnbot|muncher|muninn|MuscatFerret|MwdSearch|sharp\-info\-agent|WebMechanic|NetScoop|newscan\-online|ObjectsSearch|Occam|Orbsearch\/1\.0|packrat|pageboy|ParaSite|patric|pegasus|perlcrawler|phpdig|piltdownman|Pimptrain|pjspider|PlumtreeWebAccessor|PortalBSpider|psbot|Getterrobo\-Plus|Raven|RHCS|RixBot|roadrunner|Robbie|robi|RoboCrawl|robofox|Scooter|Search\-AU|searchprocess|Senrigan|Shagseeker|sift|SimBot|Site Valet|skymob|SLCrawler\/2\.0|slurp|ESI|snooper|solbot|speedy|spider_monkey|SpiderBot\/1\.0|spiderline|nil|suke|http:\/\/www\.sygol\.com|tach_bw|TechBOT|templeton|titin|topiclink|UdmSearch|urlck|Valkyrie libwww\-perl|verticrawl|Victoria|void\-bot|Voyager|VWbot_K|crawlpaper|wapspider|WebBandit\/1\.0|webcatcher|T\-H\-U\-N\-D\-E\-R\-S\-T\-O\-N\-E|WebMoose|webquest|webreaper|\bwebs\b|webspider|WebWalker|wget|winona|whowhere|wlm|WOLP|WWWC|none|XGET|Nederland\.zoek|AISearchBot|woriobot|NetSeer|Nutch|YandexBot|bingbot|Baiduspider|Applebot|Amazonbot|SeznamBot|Googlebot|AdsBot-Google|AhrefsBot|SemrushBot|DotBot|MJ12bot|PetalBot|DataForSeoBot|GPTBot|ClaudeBot|CCBot|Bytespider|PerplexityBot|DuckDuckBot|ia_archiver|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|Discordbot|TelegramBot|lighthouse|PageSpeed/i
@@ -1587,6 +1690,12 @@
      TIP 
          - ~^\d+(\.\d+){0,}$~
          + ~^\d+(\.\d+)*$~
+
+  corpus/QafooLabs/php-refactoring-browser/features/bootstrap/FeatureContext.php:124:47
+      → ~^((?:---|\+\+\+)\s*(?:a|b)/)(.*)~
+     TIP 
+         - ~^((?:---|\+\+\+)\s*(?:a|b)/)(.*)~
+         + ~^((?:---|\+\+\+)\s*[ab]/)(.*)~
 
   corpus/Respect/Validation/src-dev/Markdown/Content.php:145:29
       → /\[(.+?)\](?:\[\]|\(.+?\))/
@@ -3756,6 +3865,21 @@
      WARN  Character class contains duplicate elements that do not add new matches.
          ↳ Remove the redundant character class element.
 
+  corpus/designsecurity/progpilot/package/src/progpilot/Analysis/IncludeAnalysis.php:55:47
+      → /^[a-bA-B]*:/
+     WARN  Character range is unnecessary; list the characters explicitly.
+         ↳ Use 'a' and 'b' explicitly instead of a range.
+
+  corpus/designsecurity/progpilot/package/src/progpilot/Analysis/IncludeAnalysis.php:81:55
+      → /^[a-bA-B]*:/
+     WARN  Character range is unnecessary; list the characters explicitly.
+         ↳ Use 'a' and 'b' explicitly instead of a range.
+
+  corpus/designsecurity/progpilot/package/src/progpilot/Inputs/MyInputsInternalApi.php:84:31
+      → /^[a-bA-B]*:/
+     WARN  Character range is unnecessary; list the characters explicitly.
+         ↳ Use 'a' and 'b' explicitly instead of a range.
+
   corpus/doctrine/dbal/src/Platforms/SQLServerPlatform.php:1309:40
       → /[\s]+order\s+by\s/im
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -3975,6 +4099,11 @@
          - #(\[|\]\[|\])#
          + #(\[|\]\[|])#
 
+  corpus/ecsphp/ecs/packages/coding-standard/src/Fixer/Annotation/RemoveEventSubscriberDescriptionFixer.php:149:37
+      → #[/*\s]+#
+     WARN  "*" is a literal character inside a character class, not a quantifier.
+         ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
+
   corpus/elementor/elementor/core/utils/svg/svg-sanitizer.php:233:33
       → ~^url\(\s*['"]\s*(.*)\s*['"]\s*\)$~xi
      WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -4059,9 +4188,378 @@
       → /^(.*)\/?/i
      WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+  corpus/exakat/exakat/RoboFile.php:299:12
+      → /BUILD = (\d+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /BUILD = (\d+)/is
+         + /BUILD = (\d+)/i
+
+  corpus/exakat/exakat/RoboFile.php:523:32
+      → /\[example\d+\]/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /\[example\d+\]/s
+         + /\[example\d+\]/
+
+  corpus/exakat/exakat/RoboFile.php:589:28
+      → /(?<!`)`[^`_]+?`(?!`)(?!_)/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /(?<!`)`[^`_]+?`(?!`)(?!_)/s
+         + /(?<!`)`[^`_]+?`(?!`)(?!_)/
+
+  corpus/exakat/exakat/RoboFile.php:1056:20
+      → /const BUILD = (\d+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /const BUILD = (\d+)/is
+         + /const BUILD = (\d+)/i
+
+  corpus/exakat/exakat/RoboFile.php:1075:29
+      → #(class|interface) ([^ ]+)#is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #(class|interface) ([^ ]+)#is
+         + #(class|interface) ([^ ]+)#i
+
+  corpus/exakat/exakat/RoboFile.php:1089:20
+      → /static public \$FORMATS        = array\(([^\)]+)\);/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /static public \$FORMATS        = array\(([^\)]+)\);/is
+         + /static public \$FORMATS {8}= array\(([^)]+)\);/i
+
+  corpus/exakat/exakat/RoboFile.php:1114:24
+      → #'([A-Z][a-z0-9]+?/[A-Z][a-zA-Z0-9]+?)'#s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #'([A-Z][a-z0-9]+?/[A-Z][a-zA-Z0-9]+?)'#s
+         + #'([A-Z][a-z0-9]+?/[A-Z][a-zA-Z0-9]+?)'#
+
+  corpus/exakat/exakat/library/Exakat/Analyzer/Functions/CouldCentralize.php:54:32
+      → /^(\S+), (.*?)$/is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/exakat/exakat/library/Exakat/Data/Dictionary.php:123:28
+      → /^['"](.+?)::(.+?)/
+     WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
+         ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/exakat/exakat/library/Exakat/Reports/Emissary.php:2964:29
+      → /^(.+) = /i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/exakat/exakat/library/Exakat/Reports/Emissary.php:2983:29
+      → /^(.+) = /i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/exakat/exakat/library/Exakat/Reports/Emissary.php:3048:24
+      → /(\$\S+)/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/exakat/exakat/library/Exakat/Reports/Emissary.php:3536:45
+      → #<br />#is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #<br />#is
+         + #<br />#i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Exakatyaml.php:48:39
+      → /    (\d+): \[(.+?)\]/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /    (\d+): \[(.+?)\]/m
+         + / {4}(\d+): \[(.+?)]/
+
+  corpus/exakat/exakat/library/Exakat/Reports/Phpconfiguration.php:160:32
+      → #(https?://[^"]+?)"#is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #(https?://[^"]+?)"#is
+         + #(https?://[^"]+?)"#i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:46:43
+      → /public /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /public /is
+         + /public /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:46:58
+      → /protected /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /protected /is
+         + /protected /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:46:76
+      → /private /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /private /is
+         + /private /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:46:92
+      → /(static|abstract) /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /(static|abstract) /is
+         + /(static|abstract) /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:57:46
+      → /public /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /public /is
+         + /public /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:57:61
+      → /protected /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /protected /is
+         + /protected /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:57:79
+      → /private /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /private /is
+         + /private /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Plantuml.php:57:95
+      → /(static|abstract) /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /(static|abstract) /is
+         + /(static|abstract) /i
+
+  corpus/exakat/exakat/library/Exakat/Reports/Stubs.php:322:69
+      → /\n\s+\*/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /\n\s+\*/m
+         + /\n\s+\*/
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Dump.php:430:39
+      → #\\[^\\]*?$#is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #\\[^\\]*?$#is
+         + #\\[^\\]*?$#i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Dump.php:498:39
+      → #\\[^\\]*?$#is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #\\[^\\]*?$#is
+         + #\\[^\\]*?$#i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Dump.php:566:39
+      → #\\[^\\]*?$#is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #\\[^\\]*?$#is
+         + #\\[^\\]*?$#i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Helpers/Calls.php:143:28
+      → /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=\+!`@\-]/is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: ' ' (duplicate)
+     TIP 
+         - /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=\+!`@\-]/is
+         + /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=\+!`@\-]/i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Load.php:6356:24
+      → /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: ' ' (duplicate)
+     TIP 
+         - /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/is
+         + /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Load.php:6362:24
+      → /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: ' ' (duplicate)
+     TIP 
+         - /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/is
+         + /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Load.php:6384:24
+      → /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/is
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: ' ' (duplicate)
+     TIP 
+         - /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/is
+         + /[$ #?;%^\*'\"\. <>~&,|\(\){}\[\]\/\s=+!`@\-]/i
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Upgrade.php:54:28
+      → /Download exakat version (\d+\.\d+\.\d+) \(Latest\)/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /Download exakat version (\d+\.\d+\.\d+) \(Latest\)/s
+         + /Download exakat version (\d+\.\d+\.\d+) \(Latest\)/
+
+  corpus/exakat/exakat/library/Exakat/Tasks/Upgrade.php:62:28
+      → /^\d+\.\d+\.\d+$/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /^\d+\.\d+\.\d+$/s
+         + /^\d+\.\d+\.\d+$/
+
+  corpus/exakat/exakat/library/Exakat/Vcs/Mercurial.php:98:24
+      → /date:\s+(\S.+\d{4})/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /date:\s+(\S.+\d{4})/m
+         + /date:\s+(\S.+\d{4})/
+
+  corpus/exakat/exakat/library/Exakat/Vcs/Rar.php:63:30
+      → /UNRAR\s+([0-9\.]+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /UNRAR\s+([0-9\.]+)/is
+         + /UNRAR\s+([0-9\.]+)/i
+
+  corpus/exakat/exakat/library/Exakat/Vcs/SevenZ.php:63:30
+      → /p7zip Version ([0-9\.]+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /p7zip Version ([0-9\.]+)/is
+         + /p7zip Version ([0-9\.]+)/i
+
+  corpus/exakat/exakat/library/Exakat/Vcs/Svn.php:128:24
+      → /Last Changed Date: (\d{4}.+\d{4}) /m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /Last Changed Date: (\d{4}.+\d{4}) /m
+         + /Last Changed Date: (\d{4}.+\d{4}) /
+
+  corpus/exakat/exakat/library/Exakat/Vcs/Tarbz.php:33:25
+      → #\d+\.\d+(\.\d+)?#s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #\d+\.\d+(\.\d+)?#s
+         + #\d+\.\d+(\.\d+)?#
+
+  corpus/exakat/exakat/library/Exakat/Vcs/Targz.php:30:25
+      → #\d+\.\d+(\.\d+)?#s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #\d+\.\d+(\.\d+)?#s
+         + #\d+\.\d+(\.\d+)?#
+
+  corpus/exakat/exakat/library/Exakat/Vcs/Zip.php:59:30
+      → /Zip\s+([0-9\.]+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /Zip\s+([0-9\.]+)/is
+         + /Zip\s+([0-9\.]+)/i
+
+  corpus/exakat/exakat/library/helpers.php:484:25
+      → /`([^<]+?) <([^>]+?)>`_+/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /`([^<]+?) <([^>]+?)>`_+/s
+         + /`([^<]+?) <([^>]+?)>`_+/
+
+  corpus/exakat/exakat/scripts/docs/buildDefinitions.php:398:28
+      → /(`[^`]*?>`_)/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /(`[^`]*?>`_)/s
+         + /(`[^`]*?>`_)/
+
+  corpus/exakat/exakat/scripts/docs/buildDefinitions.php:428:20
+      → /const VERSION = '([0-9\.]+)';/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /const VERSION = '([0-9\.]+)';/is
+         + /const VERSION = '([0-9\.]+)';/i
+
+  corpus/exakat/exakat/scripts/docs/buildDefinitions.php:436:20
+      → /const BUILD = ([0-9]+);/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /const BUILD = ([0-9]+);/is
+         + /const BUILD = ([0-9]+);/i
+
+  corpus/exakat/exakat/scripts/docs/buildDefinitions.php:693:46
+      → /----(\d+)----/s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /----(\d+)----/s
+         + /-{4}(\d+)-{4}/
+
+  corpus/exakat/exakat/scripts/docs/buildDefinitions.php:1286:38
+      → # ([^/ `\']+?/[^/ :`\']+?)( |\.)#s
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - # ([^/ `\']+?/[^/ :`\']+?)( |\.)#s
+         + # ([^/ `']+?/[^/ :`']+?)([ .])#
+
+  corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:62:20
+      → /PHP_FUNCTION\(([a-z0-9_]+)\)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /PHP_FUNCTION\(([a-z0-9_]+)\)/is
+         + /PHP_FUNCTION\(([a-z0-9_]+)\)/i
+
+  corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:77:24
+      → /PHP_EVENT_REGISTER_CLASS\("([a-z0-9_]+)", /is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /PHP_EVENT_REGISTER_CLASS\("([a-z0-9_]+)", /is
+         + /PHP_EVENT_REGISTER_CLASS\("([a-z0-9_]+)", /i
+
+  corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:83:26
+      → /INIT_CLASS_ENTRY\([a-z_]+, "([a-zA-Z0-9_]+)"/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /INIT_CLASS_ENTRY\([a-z_]+, "([a-zA-Z0-9_]+)"/is
+         + /INIT_CLASS_ENTRY\([a-z_]+, "([a-zA-Z0-9_]+)"/i
+
+  corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:88:26
+      → /INIT_CLASS_ENTRY\([a-z\_]+,\s*([a-zA-Z0-9_]+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /INIT_CLASS_ENTRY\([a-z\_]+,\s*([a-zA-Z0-9_]+)/is
+         + /INIT_CLASS_ENTRY\([a-z\_]+,\s*([a-zA-Z0-9_]+)/i
+
+  corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:96:26
+      → /INIT_CLASS_ENTRY\(ce,\s*"([a-z\\_]+)",\s*([a-zA-Z0-9_]+)/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /INIT_CLASS_ENTRY\(ce,\s*"([a-z\\_]+)",\s*([a-zA-Z0-9_]+)/is
+         + /INIT_CLASS_ENTRY\(ce,\s*"([a-z\\_]+)",\s*([a-zA-Z0-9_]+)/i
+
+  corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:112:24
+      → /REGISTER_LONG_CONSTANT\(\s*"([a-zA-Z0-9_]+)"/is
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - /REGISTER_LONG_CONSTANT\(\s*"([a-zA-Z0-9_]+)"/is
+         + /REGISTER_LONG_CONSTANT\(\s*"([a-zA-Z0-9_]+)"/i
+
   corpus/exposedev/expose/app/Support/ConsoleSectionOutput.php:134:37
       → /]8;;(.*)]8;;/m
      WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+
+  corpus/exussum12/coverageChecker/src/Loaders/Infection.php:107:24
+      → /^[0-9]+\) (.*?):([0-9]+) (.*)/i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
   corpus/ezyang/htmlpurifier/library/HTMLPurifier/AttrDef/URI/IPv6.php:81:29
       → #^[0-9a-fA-F]{4}$#s
@@ -6644,6 +7142,16 @@
          - )}xs
          ---
          + )}x
+
+  corpus/mihaeu/dephpend/src/Analyser/DependencyInspectionVisitor.php:384:30
+      → /(\[\])+$/
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/mihaeu/dephpend/src/Analyser/DependencyInspectionVisitor.php:419:30
+      → /(\[\])+$/
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/minkphp/Mink/src/Selector/Xpath/Manipulator.php:53:28
       → /^[\(\s*]+/
@@ -9328,6 +9836,36 @@
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/nbs-system/php-malware-finder/php-malware-finder/samples/artificial/dodgy.php:13:15
+      → /*/e
+     FAIL  The 'e' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.
+         ↳         /*/e
+                      ^
+
+  corpus/nbs-system/php-malware-finder/php-malware-finder/samples/classic/angel.php:1093:36
+      → /\/\*[^(\*\/)]*\*\//i
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+
+  corpus/nbs-system/php-malware-finder/php-malware-finder/samples/classic/angel.php:1094:26
+      → /from\s+`{0,1}([\w]+)`{0,1}\s+/i
+     TIP 
+         - /from\s+`{0,1}([\w]+)`{0,1}\s+/i
+         + /from\s+`?([\w]+)`?\s+/i
+
+  corpus/nbs-system/php-malware-finder/php-malware-finder/samples/classic/angel.php:1339:19
+      → #<\?#si
+     WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - #<\?#si
+         + #<\?#i
+
+  corpus/nbs-system/php-malware-finder/php-malware-finder/samples/obfuscators/online_php_obfuscator.php:1:96
+      → /.*/e
+     FAIL  The 'e' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.
+         ↳         /.*/e
+                       ^
+
   corpus/nelmio/alice/src/FixtureBuilder/ExpressionLanguage/Lexer/FunctionTreeTokenizer.php:47:13
       → /(.*?)<((?:.*?:)?(?:\p{L}|_|[0-9])+?)\((.*?)/
      FAIL  Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
@@ -9712,6 +10250,143 @@
       → /(-+[\w-]+)/
      WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
          ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/phan/phan/.phan/plugins/WhitespacePlugin.php:49:25
+      → /[\r\t]|[ \t]\r?$/mS
+     WARN  An anchor holds for its own alternative only: "[\r\t]" matches anywhere in the subject.
+         ↳ If the anchors are meant for every alternative, group them: "(?:[\r\t]|[ \t]\r?)$".
+
+  corpus/phan/phan/internal/emit_signature_map_for_php_version.php:30:30
+      → /(^<\?php)|\\?strtolower/i
+     WARN  An anchor holds for its own alternative only: "\\?strtolower" matches anywhere in the subject.
+         ↳ If the anchors are meant for every alternative, group them: "^(?:(<\?php)|\\?strtolower)".
+
+  corpus/phan/phan/internal/extract_arg_info.php:98:28
+      → @^\s*F[01NRXC]\(\s*"(\w+)",\s*(\w+(\s*\|\s*\w+)*)\s*\),@
+     INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/internal/lib/IncompatibleRealStubsSignatureDetector.php:375:29
+      → @\((PECL|PHP|No version information)[^)]*\)\s*<br/>\s*@im
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - @\((PECL|PHP|No version information)[^)]*\)\s*<br/>\s*@im
+         + @\((PECL|PHP|No version information)[^)]*\)\s*<br/>\s*@i
+
+  corpus/phan/phan/internal/lib/IncompatibleStubsSignatureDetector.php:357:29
+      → @\((PECL|PHP|No version information)[^)]*\)\s*<br/>\s*@im
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - @\((PECL|PHP|No version information)[^)]*\)\s*<br/>\s*@im
+         + @\((PECL|PHP|No version information)[^)]*\)\s*<br/>\s*@i
+
+  corpus/phan/phan/internal/lib/IncompatibleXMLSignatureDetector.php:781:43
+      → /\s+/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /\s+/m
+         + /\s+/
+
+  corpus/phan/phan/internal/lib/IncompatibleXMLSignatureDetector.php:805:32
+      → /\s+/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /\s+/m
+         + /\s+/
+
+  corpus/phan/phan/internal/lib/IncompatibleXMLSignatureDetector.php:988:29
+      → /\s+/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /\s+/m
+         + /\s+/
+
+  corpus/phan/phan/internal/lib/IncompatibleXMLSignatureDetector.php:1042:41
+      → /\s+/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /\s+/m
+         + /\s+/
+
+  corpus/phan/phan/src/Phan/AST/TolerantASTConverter/TolerantASTConverterWithNodeMapping.php:334:24
+      → /\\?[a-z_\x7f-\xff][a-z0-9_\x7f-\xff]*(\\[a-z_\x7f-\xff][a-z0-9_\x7f-\xff]*)*/i
+     INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/src/Phan/CLI.php:2443:40
+      → @^(\.[/\\]+)+@
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/src/Phan/Config.php:1620:35
+      → @^(\./)+@
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/src/Phan/Config/Initializer.php:111:29
+      → /^        (['"])([a-z0-9A-Z_]+)\1\s*=>/
+     TIP 
+         - /^        (['"])([a-z0-9A-Z_]+)\1\s*=>/
+         + /^ {8}(['"])([a-z0-9A-Z_]+)\1\s*=>/
+
+  corpus/phan/phan/src/Phan/Config/Initializer.php:545:61
+      → @(/+\.)+$@D
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:465:38
+      → /^\/?[*\s]+/
+     WARN  "*" is a literal character inside a character class, not a quantifier.
+         ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
+
+  corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:549:25
+      → /(?:^|{)@((?i)param|deprecated|var|return|throws|throw|returns|inherits|extends|implements|use|require-extends|require-implements|suppress|unused-param|no-named-arguments|phan-[a-z0-9_-]*|psalm-(?:template(?:-(?:co|contra)variant)?|param|var|return|require-extends|require-implements)(?-i)|method|property|property-read|property-write|abstract|template(?:-(?:co|contra)variant)?|PhanClosureScope|readonly|mixin|seal-(?:methods|properties))(?:[^a-zA-Z0-9_\x7f-\xff-]|$)/D
+     WARN  Inline flag '-i' overrides a flag set by an earlier inline flag group.
+         ↳ Consider removing the outer flag or limiting it to specific groups.
+
+  corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:685:25
+      → /@(phan-)?mixin\s+(\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)\b/
+     WARN  Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
+  corpus/phan/phan/src/Phan/Language/Type/LiteralStringType.php:122:13
+      → /[^- .\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]/
+     WARN  Redundant elements detected in character class.
+         ↳ Redundant elements: '_' (duplicate)
+
+  corpus/phan/phan/src/Phan/Library/Paths.php:53:31
+      → @^(\.[\\/]+)+@
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/src/Phan/Library/PhaseTimer.php:674:46
+      → @^(\./)+@
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/src/Phan/Plugin/Internal/BaselineLoadingPlugin.php:195:31
+      → @^(\./)+@
+     INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phan/phan/tool/validate_stubs.php:93:42
+      → /@template\s+\w+.*$/m
+     WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
+         ↳ Consider tightening the first quantifier to its minimum.
+
+  corpus/phan/phan/tool/validate_stubs.php:95:42
+      → /@param\s+T\w+\s+/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /@param\s+T\w+\s+/m
+         + /@param\s+T\w+\s+/
+
+  corpus/phan/phan/tool/validate_stubs.php:96:42
+      → /@return\s+T\w+\s*/m
+     WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+     TIP 
+         - /@return\s+T\w+\s*/m
+         + /@return\s+T\w+\s*/
 
   corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
       → /\?(?=(?:[^'\\']*'[^'\']*')*[^'\\']*$)(?:\?)/
@@ -10164,6 +10839,18 @@
       → /^test[a-zA-Z0-9]*(_[a-z0-9][a-zA-Z0-9]*)*$/
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+  corpus/phpmetrics/PhpMetrics/src/Hal/Metric/Class_/Text/LengthVisitor.php:66:43
+      → !('[^']*'|"[^"]*")|((?:#|\/\/).*$)!m
+     WARN  An anchor holds for its own alternative only: "('[^']*'|"[^"]*")" matches anywhere in the subject.
+         ↳ If the anchors are meant for every alternative, group them: "(?:('[^']*'|"[^"]*")|((?:#|\/\/).*))$".
+
+  corpus/phpmetrics/PhpMetrics/src/Hal/Metric/Class_/Text/LengthVisitor.php:74:39
+      → !(^\s*[\r\n])!sm
+     WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+     TIP 
+         - !(^\s*[\r\n])!sm
+         + !(^\s*[\r\n])!m
 
   corpus/phpmyadmin/phpmyadmin/src/Bookmarks/Bookmark.php:136:40
       → |/\*(.*\[VARIABLE[0-9]*\].*)\*/|imsU
@@ -13466,7 +14153,7 @@
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-  corpus/symfony/symfony/src/Symfony/Component/Mailer/Transport.php:156:32
+  corpus/symfony/symfony/src/Symfony/Component/Mailer/Transport.php:158:32
       → {\(([^()]|(?R))*\)}A
      INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -13740,6 +14427,11 @@
       → /\R+/Uu
      WARN  Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.
          ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/tighten/tlint/src/Linters/NoJsonDirective.php:26:17
+      → /\B@(@?\w+(?:::\w+)?)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?/x
+     INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
   corpus/tijsverkoyen/CssToInlineStyles/src/Css/Processor.php:60:29
       → /@media [^{]*+{([^{}]++|{[^{}]*+})*+}/
@@ -14078,6 +14770,14 @@
       → /^\S+?\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?(\S+?)\s+?/
      WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
          ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
+
+  corpus/wapmorgan/PhpCodeAnalyzer/src/PhpCodeAnalyzer.php:60:25
+      → ~^[[:digit:]]{1}\.[[:digit:]]{1}(\.[[:digit:]]{1})?$~
+     WARN  Quantifier is redundant; it matches exactly once.
+         ↳ Remove the {1} quantifier; it does not change the match.
+     TIP 
+         - ~^[[:digit:]]{1}\.[[:digit:]]{1}(\.[[:digit:]]{1})?$~
+         + ~^[[:digit:]]\.[[:digit:]](\.[[:digit:]])?$~
 
   corpus/wikimedia/mediawiki/includes/Debug/MWDebug.php:575:4
       → /( [\xC0-\xC1] | [\xF5-\xFF] | \xE0[\x80-\x9F] | \xF0[\x80-\x8F] | [\xC2-\xDF](?![\x80-\xBF]) | [\xE0-\xEF](?![\x80-\xBF]{2}) | [\xF0-\xF4](?![\x80-\xBF]{3}) | (?<=[\x0-\x7F\xF5-\xFF])[\x80-\xBF] | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4] | [\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) )/x
@@ -14468,7 +15168,7 @@
          - /'''''/
          + /'{5}/
 
-  corpus/wikimedia/mediawiki/includes/Title/Title.php:2244:21
+  corpus/wikimedia/mediawiki/includes/Title/Title.php:2243:21
       → /^(.*&|)action=([^&]*)(&(.*)|)$/
      WARN  Alternation contains an empty alternative.
          ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
