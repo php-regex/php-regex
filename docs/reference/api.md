@@ -880,8 +880,4 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 | `SearchCostArray` | `Redos\RedosSearchCost` | degree, witness and replay of a search |
 | `AlphabetRange` | `Automata\Model\Dfa` | `{0: int, 1: int}` — code point range, both ends in |
 | `RangeTransition` | `Automata\Model\DfaState` | `{0: int, 1: int, 2: int}` — range start, end, target state |
-| `LintIssue`, `LintResult`, `LintStats`, `OptimizationEntry`, `FlattenedProblem` | `Linter\LintReport` | one lint result, its issue and optimization entries, a flattened problem |
-| `SvgPoint` … `SvgLayout` | `Explain\RailroadSvgRenderer` | the railroad diagram geometry |
-| `TargetDescription` | `Linter\Config\ProjectTarget` | `{php: string, pcre: string}` |
 | `TestCases` | `Generator\TestCaseGenerator` | `{matching: array<string>, non_matching: array<string>}` |
-| `AccessRule`, `AccessConflict`, `AccessSkip` | `Symfony\Security\SecurityAccessControlReport` | one security analysis report entry |

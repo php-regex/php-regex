@@ -21,7 +21,7 @@ use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\RedosCommand;
-use PHPRegex\Explain\RailroadSvgRenderer;
+use PHPRegex\Explain\Internal\RailroadLayoutVisitor;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
@@ -105,7 +105,7 @@ final class TypeAliasInventoryTest extends TestCase
         SecurityAnalyzer::class => ['SkippedFile'],
 
         // Exported before the named-shape change and frozen since.
-        RailroadSvgRenderer::class => ['SvgBox', 'SvgLayout', 'SvgMarker', 'SvgNode', 'SvgPath', 'SvgPoint', 'SvgText'],
+        RailroadLayoutVisitor::class => ['SvgBox', 'SvgLayout', 'SvgMarker', 'SvgNode', 'SvgPath', 'SvgPoint', 'SvgText'],
         LintReport::class => ['FlattenedProblem', 'LintIssue', 'LintResult', 'LintStats', 'OptimizationEntry'],
         RouteConflictReport::class => ['RouteConflict', 'RouteDescriptor', 'RouteSkip'],
         SecurityAccessControlReport::class => ['AccessConflict', 'AccessRule', 'AccessSkip'],
