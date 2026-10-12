@@ -20,6 +20,7 @@ use PHPRegex\Parser\Validation\CompatibilityChecker;
 use PHPRegex\Parser\Validation\PatternCompatibility;
 use PHPRegex\Parser\Validation\TargetVerdict;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,6 +38,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CompatibilityCheckerTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The PHP versions a rule changes at: the 8.2 floor, the PCRE2 that 8.3
      * and 8.4 bundle, "r" (8.4), \C under "u" (8.4.25, 8.5.10), \K in a
@@ -244,8 +247,8 @@ final class CompatibilityCheckerTest extends TestCase
         // PHP 8.4 spells "r" only where its engine reads it, PCRE2 10.43:
         // on an older one the engine refuses the pattern, and the row is
         // replayed where 10.43 runs.
-        if ('/a/r' === $regex && \PHP_VERSION_ID >= 80400 && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $regex, \PCRE_VERSION));
+        if ('/a/r' === $regex && \PHP_VERSION_ID >= 80400) {
+            $this->requiresPcre2('10.43', $regex);
         }
 
         $verdict = self::runningEngineVerdict((new CompatibilityChecker())->check($regex));

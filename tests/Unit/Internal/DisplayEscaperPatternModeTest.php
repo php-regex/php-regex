@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\Internal\DisplayEscaper;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class DisplayEscaperPatternModeTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The code point and the hex spelling of each hidden character.
      */
@@ -551,13 +553,8 @@ final class DisplayEscaperPatternModeTest extends TestCase
             "/[a\\k{\t}]/" => '10.45',
             default => null,
         };
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf(
-                '%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.',
-                $pattern,
-                $verifiedAgainst,
-                \PCRE_VERSION,
-            ));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
 
         $shown = DisplayEscaper::escape($pattern);

@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +28,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexParserRuleReplacementGroupEdgeTest extends RuleTestCase
 {
+    use PcreGates;
+
     private const FIXTURE = __DIR__.'/Fixtures/ReplacementGroupEdgeFixture.php';
 
     /**
@@ -37,9 +39,7 @@ final class RegexParserRuleReplacementGroupEdgeTest extends RuleTestCase
     public function test_the_engine_pairs_by_position_whatever_the_keys(): void
     {
         // "(?r)" is PCRE2 10.43: an older engine refuses the last assertion.
-        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', '/(?r)(a)/', \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.43', '/(?r)(a)/');
 
         $this->assertSame('[a][x]', preg_replace(['/(a)/', '/b/'], [5 => '[$1]', 0 => '[x]'], 'ab'));
         // An entry missing from the replacements is the empty string.

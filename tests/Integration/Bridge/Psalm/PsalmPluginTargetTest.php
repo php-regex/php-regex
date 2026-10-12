@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +35,8 @@ use Psalm\Internal\Analyzer\IssueData;
  */
 final class PsalmPluginTargetTest extends TestCase
 {
+    use PcreGates;
+
     private const FILE = 'Target/target.php';
 
     private const KEEP = '/(?=a\Ka)(a)/';
@@ -64,8 +66,8 @@ final class PsalmPluginTargetTest extends TestCase
         // refuses: "(?aD)" needs PCRE2 10.43, and where the engine cannot
         // read it the plugin reports it as invalid. The row is replayed
         // where 10.43 runs.
-        if (isset($options['phpVersion']) && 'runtime' === $options['phpVersion'] && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', self::ASCII, \PCRE_VERSION));
+        if (isset($options['phpVersion']) && 'runtime' === $options['phpVersion']) {
+            $this->requiresPcre2('10.43', self::ASCII);
         }
 
         $issues = PsalmRun::inFile(PsalmRun::issues([self::FILE], $phpVersion, $options), self::FILE);

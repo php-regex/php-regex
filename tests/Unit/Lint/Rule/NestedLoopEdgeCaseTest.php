@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class NestedLoopEdgeCaseTest extends TestCase
 {
+    use PcreGates;
+
     private const NESTED = 'regex.lint.quantifier.nested';
 
     private const DOT_STAR = 'regex.lint.dotstar.nested';
@@ -232,9 +235,7 @@ final class NestedLoopEdgeCaseTest extends TestCase
     {
         // A row only a newer engine can run — "(*CASELESS_RESTRICT)" is
         // PCRE2 10.43 — has no oracle steps where that engine refuses it.
-        if (false === @preg_match($pattern, '')) {
-            $this->markTestSkipped(sprintf('%s does not run on PCRE2 %s.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresCompile($pattern);
 
         $short = self::steps($pattern, self::repeatUnit($unit, 6).'!');
         $long = self::steps($pattern, self::repeatUnit($unit, 12).'!');

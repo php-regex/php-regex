@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class EmptyRepeatRuleTest extends TestCase
 {
+    use PcreGates;
+
     private const ID = 'regex.lint.quantifier.emptyRepeat';
 
     /**
@@ -264,8 +266,8 @@ final class EmptyRepeatRuleTest extends TestCase
     public function test_no_tip_is_given_where_no_rewrite_applies(string $pattern): void
     {
         // "{,0}" repeats only from PCRE2 10.43.
-        if ('/(?:a{,0})+/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/(?:a{,0})+/' === $pattern) {
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         $this->assertNotFalse(@preg_match($pattern, ''), $pattern);

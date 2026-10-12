@@ -28,6 +28,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\NodeDumper;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,6 +41,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExtendedCharClassDisplayTest extends TestCase
 {
+    use PcreGates;
+
     private const PATTERN = '/(?[ \d - ( [3] & ![a] ) ^ \x61 | [b] ])/';
 
     /**
@@ -106,9 +109,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
         $pattern = '/(?[ [a] & ( [b] | ![c] ) ])/';
         // Where the engine refuses the extended class outright, it cannot
         // give up splitting it half-way: there is no layout to keep.
-        if (false === @preg_match($pattern, '')) {
-            $this->markTestSkipped(sprintf('%s does not run on PCRE2 %s.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresCompile($pattern);
 
         $tree = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern);
         $saved = ['pcre.jit' => ini_get('pcre.jit'), 'pcre.backtrack_limit' => ini_get('pcre.backtrack_limit')];

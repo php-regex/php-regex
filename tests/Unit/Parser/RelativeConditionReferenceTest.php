@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,6 +26,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RelativeConditionReferenceTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideBackwardReferencesPastTheGroups')]
     public function test_a_backward_count_past_the_open_groups_is_refused_first(string $pattern, int $offset): void
@@ -136,8 +138,8 @@ final class RelativeConditionReferenceTest extends TestCase
     public function test_an_unclosed_backward_reference_is_refused_as_pcre_reads_it(string $pattern, int $offset): void
     {
         // PCRE2 10.47 refuses an unclosed "\g{3" past the number, not at "\g".
-        if ('/(a)\g{-1/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.47')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.47 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/(a)\g{-1/' === $pattern) {
+            $this->requiresPcre2('10.47', $pattern);
         }
 
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
@@ -173,8 +175,8 @@ final class RelativeConditionReferenceTest extends TestCase
             '/(?&a(?:z)/', '/(?P>a(?:z)/' => '10.47',
             default => null,
         };
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
 
         $this->assertFalse(@preg_match($pattern, ''), $pattern);

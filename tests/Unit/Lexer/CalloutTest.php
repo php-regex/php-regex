@@ -15,8 +15,8 @@ namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 final class CalloutTest extends TestCase
 {
     use LinearTimeAssertions;
+    use PcreGates;
 
     /**
      * Measured when each unclosed callout was read to the end again: 20 000
@@ -78,8 +79,8 @@ final class CalloutTest extends TestCase
         // The offset PCRE reports for a callout run it never closes moved
         // with the releases: the row below is verified against 10.45 and
         // later.
-        if ('/(?C(?C/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/(?C(?C/' === $pattern) {
+            $this->requiresPcre2('10.45', $pattern);
         }
 
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');

@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Lint;
 
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintBaselineContractTest extends TestCase
 {
+    use PcreGates;
     use RunsRegexCli;
     use TemporaryProject;
 
@@ -309,8 +310,8 @@ final class LintBaselineContractTest extends TestCase
         // The broken-document refusal is the one the PCRE2 10.43 and later
         // CI engines report; the 10.42 jobs read the row differently, so
         // it is replayed where 10.43 runs.
-        if ('[{"file": ' === $content && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $content, \PCRE_VERSION));
+        if ('[{"file": ' === $content) {
+            $this->requiresPcre2('10.43', $content);
         }
 
         $this->enterProject(self::FILES + ['baseline.json' => $content]);

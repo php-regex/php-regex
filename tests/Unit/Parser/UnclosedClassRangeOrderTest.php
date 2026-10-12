@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class UnclosedClassRangeOrderTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideUnclosedClasses')]
     public function test_a_reversed_range_is_refused_before_the_missing_bracket(string $pattern, int $offset): void
@@ -62,8 +64,8 @@ final class UnclosedClassRangeOrderTest extends TestCase
     public function test_a_class_escape_as_a_bound_is_an_invalid_range(string $pattern, int $offset): void
     {
         // PCRE2 10.45 reads a range from a type to its end before refusing it.
-        if ('/[\d-abc/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/[\d-abc/' === $pattern) {
+            $this->requiresPcre2('10.45', $pattern);
         }
 
         $this->assertFalse(@preg_match($pattern, ''));

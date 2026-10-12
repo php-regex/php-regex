@@ -14,13 +14,15 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Linter\PatternLinter;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class LinterRulesTest extends TestCase
 {
+    use PcreGates;
+
     public function test_nested_quantifier_warning(): void
     {
         // The "$" makes the loop matter: (a+)+$ on a{20}b takes 2 621 440
@@ -260,8 +262,8 @@ final class LinterRulesTest extends TestCase
     #[DataProvider('provideUnicodeNamedEscapes')]
     public function test_suspicious_escape_looks_up_the_unicode_character_name(string $pattern, array $expected): void
     {
-        if ('/\\N{NO SUCH CHARACTER}/u' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/\\N{NO SUCH CHARACTER}/u' === $pattern) {
+            $this->requiresPcre2('10.45', $pattern);
         }
 
         $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PCRE2 compiles no \N{name}.');

@@ -21,10 +21,10 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Lexer;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -41,6 +41,7 @@ use PHPUnit\Framework\TestCase;
 final class AlphaAssertionBodyTest extends TestCase
 {
     use LinearTimeAssertions;
+    use PcreGates;
 
     /**
      * The rows below hold what PCRE2 10.45 reports: the POSIX-class and
@@ -318,7 +319,9 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideUnclosedPropertiesOutsideABody')]
     public function test_validate_refuses_an_unclosed_property_outside_a_body_where_pcre_does(string $pattern, int $offset): void
     {
-        self::skipWhenTheEngineReportsItDifferently($pattern);
+        if (\in_array($pattern, self::VERDICTS_OF_10_45, true)) {
+            $this->requiresPcre2('10.45', $pattern);
+        }
 
         $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
         $this->assertSame($offset, Regex::create(['cache' => null])->validate($pattern)->offset, $pattern);
@@ -344,7 +347,9 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodyItemsReadAsAnywhere')]
     public function test_validate_reads_each_body_item_as_the_lexer_does_anywhere(string $pattern, ?int $offset): void
     {
-        self::skipWhenTheEngineReportsItDifferently($pattern);
+        if (\in_array($pattern, self::VERDICTS_OF_10_45, true)) {
+            $this->requiresPcre2('10.45', $pattern);
+        }
 
         $this->assertSame(null === $offset, false !== @preg_match($pattern, ''), \sprintf('Oracle: %s.', $pattern));
 
@@ -775,7 +780,9 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodiesReadInPlaceToTheEnd')]
     public function test_validate_reports_an_error_inside_a_body_as_pcre_does(string $pattern, ErrorCode $code, int $offset): void
     {
-        self::skipWhenTheEngineReportsItDifferently($pattern);
+        if (\in_array($pattern, self::VERDICTS_OF_10_45, true)) {
+            $this->requiresPcre2('10.45', $pattern);
+        }
 
         $pcre = self::pcreError($pattern);
         $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
@@ -1187,7 +1194,9 @@ final class AlphaAssertionBodyTest extends TestCase
     #[DataProvider('provideBodiesTheLexerDoesNotRead')]
     public function test_tokenize_refuses_a_body_pcre_does_not_read_where_pcre_does(string $pattern, ErrorCode $code, int $offset, array $tokens): void
     {
-        self::skipWhenTheEngineReportsItDifferently($pattern);
+        if (\in_array($pattern, self::VERDICTS_OF_10_45, true)) {
+            $this->requiresPcre2('10.45', $pattern);
+        }
 
         $pcre = self::pcreError('/'.$pattern.'/');
         $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
@@ -1389,17 +1398,6 @@ final class AlphaAssertionBodyTest extends TestCase
         $this->assertContains($result->errorCode?->value, $allowed, $said);
         if ($pinned) {
             $this->assertSame($code, $result->errorCode, $said);
-        }
-    }
-
-    /**
-     * A row whose verdict the engine changed in PCRE2 10.45 is replayed
-     * where that release runs: an older one reports it differently.
-     */
-    private static function skipWhenTheEngineReportsItDifferently(string $pattern): void
-    {
-        if (\in_array($pattern, self::VERDICTS_OF_10_45, true) && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            self::markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
         }
     }
 

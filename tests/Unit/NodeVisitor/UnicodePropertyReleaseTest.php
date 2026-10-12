@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class UnicodePropertyReleaseTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param list<int> $refusedBy
      */
@@ -42,8 +44,8 @@ final class UnicodePropertyReleaseTest extends TestCase
         // live probe answers for the target that bundles it, and its verdict
         // is not the table's.
         $verifiedAgainst = str_contains($pattern, ' ^') ? '10.45' : null;
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
 
         foreach ([80200, 80300, 80400, 80500] as $phpVersion) {
@@ -70,8 +72,8 @@ final class UnicodePropertyReleaseTest extends TestCase
         unset($refusedBy);
 
         $verifiedAgainst = str_contains($pattern, ' ^') ? '10.45' : null;
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
 
         $this->assertSame(false !== @preg_match($pattern, ''), Regex::create(['cache' => null])->validate($pattern)->isValid, $pattern);

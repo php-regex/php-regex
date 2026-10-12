@@ -20,6 +20,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverOnHirNewlyAnswerableTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideEquivalenceRows')]
     public function test_equivalence_answers_the_row(
@@ -49,8 +52,8 @@ final class SolverOnHirNewlyAnswerableTest extends TestCase
         // are still measured on that engine: a row holding an extended class
         // is judged only where the engine reads one.
         $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.45']));
-        if (str_contains($left, '(?[') && false === @preg_match($left, '')) {
-            $this->markTestSkipped(\sprintf('%s does not run on PCRE2 %s.', $left, \PCRE_VERSION));
+        if (str_contains($left, '(?[')) {
+            $this->requiresCompile($left);
         }
 
         try {

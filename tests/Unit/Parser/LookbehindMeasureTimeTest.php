@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 final class LookbehindMeasureTimeTest extends TestCase
 {
     use LinearTimeAssertions;
+    use PcreGates;
 
     /**
      * Two more levels make the lookbehind four times as long: measured
@@ -187,8 +188,8 @@ final class LookbehindMeasureTimeTest extends TestCase
             '/(?<=(?1))((?3)(?<!a))()((?(?<!(?1))a))/',
             '/(?<=(?1))(a(?2))(c(?(?C1)(?<=(?1))x))/',
             '/(?<=(?1))(a(?2))(c(?(?=(?<=(?1)))x))/',
-        ], true) && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        ], true)) {
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         $pcre = PcreMessageCodes::read(PcreMessageCodes::warningOf($pattern) ?? 'compiles');

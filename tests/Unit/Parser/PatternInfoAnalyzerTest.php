@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class PatternInfoAnalyzerTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * Every row is read for one target, so that no row depends on the PHP
      * running the suite: the variable-length lookbehinds need PCRE2 10.43.
@@ -252,8 +255,8 @@ final class PatternInfoAnalyzerTest extends TestCase
         // in every compile and allow it on any engine, and PHP 8.5 does not
         // set it, so the pattern is refused there (src/Parser/PcreTarget.php
         // documents the 8.5 rule).
-        if ('/(?<=a\Kb)c/' === $pattern && \PHP_VERSION_ID >= 80500) {
-            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and earlier, whose engine context allows \K in a lookbehind; PHP %s refuses it at compile.', $pattern, \PHP_VERSION));
+        if ('/(?<=a\Kb)c/' === $pattern) {
+            $this->forbidsPhp('8.4', $pattern, 'no longer allows \K in a lookbehind and refuses it at compile');
         }
 
         $info = $this->info($pattern);

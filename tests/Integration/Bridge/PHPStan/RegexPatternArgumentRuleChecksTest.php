@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\PHPStan\RegexPatternArgumentRule;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -28,6 +28,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternArgumentRuleChecksTest extends RuleTestCase
 {
+    use PcreGates;
+
     public static function getAdditionalConfigFiles(): array
     {
         return [
@@ -42,9 +44,7 @@ final class RegexPatternArgumentRuleChecksTest extends RuleTestCase
     {
         // The fixture's "/(?aD)x/" is PCRE2 10.43: on an older engine
         // PHPStan core's regexp.pattern rule reports it too.
-        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', '/(?aD)x/', \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.43', '/(?aD)x/');
 
         $identifiers = array_map(
             static fn (Error $error): string => $error->getLine().' '.$error->getIdentifier(),

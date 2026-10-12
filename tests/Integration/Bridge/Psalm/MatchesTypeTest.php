@@ -19,6 +19,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Psalm\Internal\MatchesType;
 use PHPRegex\Tests\Integration\Bridge\PHPStan\EngineMatches;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +40,8 @@ use Psalm\Type\Union;
  */
 final class MatchesTypeTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param 0|256|512|768 $flags
      * @param list<string>  $subjects
@@ -99,7 +102,7 @@ final class MatchesTypeTest extends TestCase
     #[DataProvider('provideCorpus')]
     public function test_match_type_holds_every_engine_result_of_the_parity_corpus(string $source, string $pattern, array $subjects): void
     {
-        self::skipWhenTheEngineCannotRun($pattern, $source);
+        $this->requiresCompile($pattern, $source);
 
         $shape = self::shape($pattern);
 
@@ -124,7 +127,7 @@ final class MatchesTypeTest extends TestCase
     #[DataProvider('provideCorpus')]
     public function test_match_all_type_holds_every_engine_result_of_the_parity_corpus(string $source, string $pattern, array $subjects): void
     {
-        self::skipWhenTheEngineCannotRun($pattern, $source);
+        $this->requiresCompile($pattern, $source);
 
         $shape = self::shape($pattern);
 
@@ -153,7 +156,7 @@ final class MatchesTypeTest extends TestCase
     #[DataProvider('provideCorpus')]
     public function test_matches_type_never_holds_numeric_string(string $source, string $pattern, array $subjects): void
     {
-        self::skipWhenTheEngineCannotRun($pattern, $source);
+        $this->requiresCompile($pattern, $source);
 
         $shape = self::shape($pattern);
 
@@ -358,18 +361,6 @@ final class MatchesTypeTest extends TestCase
     {
         foreach (EngineMatches::corpus() as $index => $row) {
             yield \sprintf('#%d %s', $index, $row['pattern']) => $row;
-        }
-    }
-
-    /**
-     * The corpus holds rows only a newer engine can run — the "r" flag needs
-     * PHP 8.4 and PCRE2 10.43 — and a pattern the running engine refuses has
-     * no engine result to hold: the row is replayed where it compiles.
-     */
-    private static function skipWhenTheEngineCannotRun(string $pattern, string $source): void
-    {
-        if (false === @preg_match($pattern, '')) {
-            self::markTestSkipped(sprintf('%s (%s) does not run on PCRE2 %s.', $pattern, $source, \PCRE_VERSION));
         }
     }
 

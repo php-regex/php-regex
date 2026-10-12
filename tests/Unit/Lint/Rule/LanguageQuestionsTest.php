@@ -20,7 +20,7 @@ use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\PatternInfo;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LanguageQuestionsTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_a_question_asked_again_reads_the_dfas_the_cache_kept(): void
     {
@@ -80,14 +82,14 @@ final class LanguageQuestionsTest extends TestCase
             '/(?a)\w/u', '/(?aD:\d)/u', '/(?-a)\w/u' => '10.43',
             default => null,
         };
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
         // The "r" modifier is read from PHP 8.4 only: an older PHP refuses
         // the flag, whatever its engine. The inline "(?r)" needs no PHP.
         $flags = substr($pattern, (int) strrpos($pattern, $pattern[0]) + 1);
-        if (str_contains($flags, 'r') && \PHP_VERSION_ID < 80400) {
-            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $pattern, \PHP_VERSION));
+        if (str_contains($flags, 'r')) {
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
         }
 
         $tree = Regex::create()->parse($pattern);

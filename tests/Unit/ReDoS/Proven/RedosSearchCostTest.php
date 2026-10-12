@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ResourceLimitException;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Internal\SearchCostProver;
@@ -28,6 +27,7 @@ use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +43,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSearchCostTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideQuadraticSearches')]
     public function test_search_cost_witness_is_reported_for_an_unanchored_linear_attempt(string $pattern): void
@@ -584,8 +586,8 @@ final class RedosSearchCostTest extends TestCase
         // below U+00FF with characters at U+0100 and above incorrectly
         // (pcre2test 10.44: no match on U+0100): the scan of the leading
         // class misses code points, and the search reads as unanchored.
-        if ('/[[:^ascii:][:ascii:]]*\d$/u' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.48')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.48 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/[[:^ascii:][:ascii:]]*\d$/u' === $pattern) {
+            $this->requiresPcre2('10.48', $pattern);
         }
 
         $analysis = (new RedosAnalyzer())->analyze($pattern);

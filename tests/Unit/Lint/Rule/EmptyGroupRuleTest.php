@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class EmptyGroupRuleTest extends TestCase
 {
+    use PcreGates;
+
     private const ID = 'regex.lint.group.empty';
 
     /**
@@ -126,8 +128,8 @@ final class EmptyGroupRuleTest extends TestCase
             '/^a{(?:),2}$/', '/^a{ (?:) 2 }$/' => '10.43',
             default => null,
         };
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49.

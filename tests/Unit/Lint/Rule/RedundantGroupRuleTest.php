@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedundantGroupRuleTest extends TestCase
 {
+    use PcreGates;
+
     private const ID = 'regex.lint.group.redundant';
 
     #[Test]
@@ -52,8 +54,8 @@ final class RedundantGroupRuleTest extends TestCase
     public function test_a_quantified_group_around_one_character_is_reported(string $pattern, string $without, array $subjects): void
     {
         // "{,2}" repeats only from PCRE2 10.43.
-        if ('/^(?:\N){,2}$/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/^(?:\N){,2}$/' === $pattern) {
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the two patterns match the same text.

@@ -17,8 +17,8 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class BraceCountWhitespaceTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideTextBraces')]
     public function test_a_count_padded_with_other_white_space_is_text(string $pattern, string $member, string $outsider): void
@@ -49,9 +51,7 @@ final class BraceCountWhitespaceTest extends TestCase
     public function test_spaces_and_tabs_still_pad_a_count(string $pattern): void
     {
         // Before PCRE2 10.43 the braces are text: the count does not pad.
-        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.43', $pattern);
 
         $this->assertSame(1, preg_match($pattern, 'aa'), $pattern);
 

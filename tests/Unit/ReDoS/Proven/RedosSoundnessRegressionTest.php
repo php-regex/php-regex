@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSoundnessRegressionTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The most pumps a replay tries (the confirmation runner's bound).
      */
@@ -167,8 +169,8 @@ final class RedosSoundnessRegressionTest extends TestCase
     public function test_the_xx_option_is_read_by_the_proof(string $pattern, RedosComplexity $complexity): void
     {
         // The ASCII digit option is PCRE2 10.43.
-        if ('/^(?xxaD)(?:[a b]|\x20)*$/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/^(?xxaD)(?:[a b]|\x20)*$/' === $pattern) {
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         $analysis = (new RedosAnalyzer())->analyze($pattern);

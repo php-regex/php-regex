@@ -18,6 +18,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -42,6 +43,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosInlineOptionsTest extends TestCase
 {
+    use PcreGates;
+
     private const KELVIN_SIGN = "\u{212A}";
 
     /**
@@ -70,9 +73,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideCarriedOptionRows')]
     public function test_an_option_set_inside_an_alternative_holds_in_the_next_ones(string $pattern, string $unit, string $suffix, bool $exponential): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, $suffix, $exponential);
         $this->assertVerdict($pattern, $exponential);
@@ -135,9 +136,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideCommittedCarriedOptionRows')]
     public function test_an_option_carried_into_a_committed_alternation_finds_no_risk(string $pattern, string $unit, string $suffix): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, $suffix, false);
 
@@ -175,9 +174,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideRestoredOptionRows')]
     public function test_a_group_end_restores_the_options_set_inside_it(string $pattern, string $subjectPrefix, string $unit, string $suffix, bool $exponential): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, $suffix, $exponential, $subjectPrefix);
         $this->assertVerdict($pattern, $exponential);
@@ -214,9 +211,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideCaselessRestrictRows')]
     public function test_caseless_restrict_follows_inline_options(string $pattern, string $unit, string $suffix, bool $exponential): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, $suffix, $exponential);
         $this->assertVerdict($pattern, $exponential);
@@ -262,9 +257,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideAsciiOptionRows')]
     public function test_ascii_options_are_read_per_scope(string $pattern, string $unit, bool $exponential): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, '!', $exponential);
         $this->assertVerdict($pattern, $exponential);
@@ -316,9 +309,7 @@ final class RedosInlineOptionsTest extends TestCase
     public function test_word_boundaries_under_different_ascii_scopes_are_out_of_model(): void
     {
         $pattern = '/(?aW:\b)x\b(?:a|a)*$/u';
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $scoped = preg_match('/(?aW)\b/u', self::E_ACUTE);
         $plain = preg_match('/\b/u', self::E_ACUTE);
@@ -343,9 +334,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideCaretResetRows')]
     public function test_caret_reset_clears_r_and_keeps_u_and_the_ascii_options(string $pattern, string $unit, bool $exponential): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, '!', $exponential);
         $this->assertVerdict($pattern, $exponential);
@@ -401,9 +390,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideOptionsReachingEveryAtomRows')]
     public function test_the_options_in_force_reach_every_atom_of_the_loop(string $pattern, string $unit, bool $exponential): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertEngineGrowth($pattern, $unit, '!', $exponential);
         $this->assertVerdict($pattern, $exponential);
@@ -453,9 +440,7 @@ final class RedosInlineOptionsTest extends TestCase
     #[DataProvider('provideRepeatedScopeRows')]
     public function test_repeated_scopes_with_the_same_options_stay_within_the_budget(string $pattern): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $this->assertLessThan(10, self::steps($pattern, '1111x1x1x1!'));
         $this->assertProvenSafe((new RedosAnalyzer())->analyze($pattern), $pattern);
@@ -507,22 +492,26 @@ final class RedosInlineOptionsTest extends TestCase
     }
 
     /**
-     * Whether this PHP and PCRE2 compile the row. A refusal is accepted
-     * only where it is expected: /r before PHP 8.4, "(?r)" and the ASCII
-     * options before PCRE2 10.43.
+     * Skip the row unless this PHP and PCRE2 compile it. A refusal is
+     * accepted only where it is expected: /r before PHP 8.4, "(?r)" and the
+     * ASCII options before PCRE2 10.43.
      */
-    private static function compilesHere(string $pattern): bool
+    private function compilesHere(string $pattern): void
     {
         if (false !== @preg_match($pattern, '')) {
-            return true;
+            return;
         }
 
         $modifiers = substr($pattern, (int) strrpos($pattern, '/') + 1);
         $expected = (\PHP_VERSION_ID < 80400 && str_contains($modifiers, 'r'))
             || version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<');
-        self::assertTrue($expected, $pattern.' does not compile on PHP '.\PHP_VERSION.' / PCRE2 '.\PCRE_VERSION);
+        $this->assertTrue($expected, $pattern.' does not compile on PHP '.\PHP_VERSION.' / PCRE2 '.\PCRE_VERSION);
 
-        return false;
+        if (\PHP_VERSION_ID < 80400 && str_contains($modifiers, 'r')) {
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
+        }
+
+        $this->requiresCompile($pattern);
     }
 
     /**

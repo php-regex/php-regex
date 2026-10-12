@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\ReDoS\Proven;
 
 use PHPRegex\Parser\Hir\Utf8;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Internal\LastCodeUnit;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,17 +30,17 @@ use PHPUnit\Framework\TestCase;
  */
 final class LastCodeUnitTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideLastCodeUnits')]
     public function test_last_code_unit_is_the_one_pcre2_requires(string $pattern, ?string $expected): void
     {
         // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
         // engine or an older PHP refuses the flag.
-        if ('/xk/iur' === $pattern && \PHP_VERSION_ID < 80400) {
-            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $pattern, \PHP_VERSION));
-        }
-        if ('/xk/iur' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/xk/iur' === $pattern) {
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         $regex = RegexParser::create()->parse($pattern);
@@ -135,11 +135,9 @@ final class LastCodeUnitTest extends TestCase
     {
         // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
         // engine or an older PHP refuses the flag.
-        if ('/xk/iur' === $pattern && \PHP_VERSION_ID < 80400) {
-            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $pattern, \PHP_VERSION));
-        }
-        if ('/xk/iur' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/xk/iur' === $pattern) {
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         $regex = RegexParser::create()->parse($pattern);

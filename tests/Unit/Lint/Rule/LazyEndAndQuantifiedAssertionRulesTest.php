@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LazyEndAndQuantifiedAssertionRulesTest extends TestCase
 {
+    use PcreGates;
+
     private const LAZY_END = 'regex.lint.quantifier.lazyEnd';
 
     private const ASSERTION = 'regex.lint.quantifier.assertion';
@@ -229,9 +231,7 @@ final class LazyEndAndQuantifiedAssertionRulesTest extends TestCase
     {
         // Both rows failed on the PCRE2 10.42 CI engines and pass on 10.44
         // and later: the oracle is replayed where 10.43 runs.
-        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.43', $pattern);
 
         // Oracle: the recursed instance of "a+?" takes "aa" to reach the "y".
         $this->assertSame(1, preg_match($pattern, 'xaay', $matches));

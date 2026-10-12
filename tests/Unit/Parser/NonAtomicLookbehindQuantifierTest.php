@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,13 +27,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class NonAtomicLookbehindQuantifierTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideQuantifiersAfterTheOpener')]
     public function test_a_quantifier_right_after_the_opener_repeats_nothing(string $pattern, int $offset): void
     {
-        if (!PcreTarget::runtime()->pcreAtLeast('10.47')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.47 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.47', $pattern);
 
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 

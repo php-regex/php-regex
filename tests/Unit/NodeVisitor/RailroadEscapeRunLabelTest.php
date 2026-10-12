@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\RailroadSvgRenderer;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,14 +33,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class RailroadEscapeRunLabelTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideRuns')]
     public function test_railroad_run_label_reads_back_as_the_run(string $pattern, string $flags, string $subject): void
     {
         // White space inside braces, which the engine refuses before PCRE2 10.43.
-        if (false === @preg_match($pattern, '')) {
-            $this->markTestSkipped(sprintf('%s does not run on PCRE2 %s.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresCompile($pattern);
 
         $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: the pattern matches the subject.');
 

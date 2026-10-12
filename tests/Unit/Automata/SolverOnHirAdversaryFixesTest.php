@@ -23,6 +23,7 @@ use PHPRegex\Cli\Graph\MermaidDumper;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,6 +38,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverOnHirAdversaryFixesTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * Oracle: preg_match('/[a\x{D800}]/u', 'a') is false and the compile
      * fails ("disallowed Unicode code point"): no subject the engine can
@@ -189,9 +192,7 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
     {
         // The oracle probes below need an engine that reads "r" (PHP 8.4,
         // PCRE2 10.43); where it does not, there is nothing to read.
-        if (false === @preg_match('/^(?ri)k$/u', '')) {
-            $this->markTestSkipped('The engine does not read the inline caseless restrict (PCRE2 '.\PCRE_VERSION.').');
-        }
+        $this->requiresCompile('/^(?ri)k$/u', 'the inline caseless restrict');
 
         $solver = new LanguageSolver();
 

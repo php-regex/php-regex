@@ -17,9 +17,9 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Lexer;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +29,7 @@ use PHPUnit\Framework\TestCase;
 final class QuoteModeTest extends TestCase
 {
     use LinearTimeAssertions;
+    use PcreGates;
 
     /**
      * A quoted run in a class stands for its characters one by one, and
@@ -107,9 +108,7 @@ final class QuoteModeTest extends TestCase
             return;
         }
 
-        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.45', $pattern);
 
         $pcre = PcreMessageCodes::read($warning ?? 'compiles');
         $this->assertSame(['message' => 'range out of order in character class', 'offset' => $offset], $pcre, 'Oracle: '.$pattern);

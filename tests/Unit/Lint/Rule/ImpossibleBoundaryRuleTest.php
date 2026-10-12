@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ImpossibleBoundaryRuleTest extends TestCase
 {
+    use PcreGates;
+
     private const ID = 'regex.lint.anchor.impossible.boundary';
 
     private const SUBJECTS = ['', 'a', 'ab', 'a b', 'a!', '!a', ' !', '!', 'a1', '1a', 'aa', 'éx', 'é x', 'x', 'b', 'ba'];
@@ -40,8 +42,8 @@ final class ImpossibleBoundaryRuleTest extends TestCase
     public function test_a_boundary_its_neighbours_contradict_is_reported(string $pattern): void
     {
         // The ASCII word option is PCRE2 10.43.
-        if ('/(?aW)a\bb/u' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/(?aW)a\bb/u' === $pattern) {
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: no subject matches.
@@ -85,8 +87,8 @@ final class ImpossibleBoundaryRuleTest extends TestCase
             '/(?aW)é\bx/u', '/(?a)(?-aD)é\bx/u' => '10.43',
             default => null,
         };
-        if (null !== $verifiedAgainst && !PcreTarget::runtime()->pcreAtLeast($verifiedAgainst)) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $pattern, $verifiedAgainst, \PCRE_VERSION));
+        if (null !== $verifiedAgainst) {
+            $this->requiresPcre2($verifiedAgainst, $pattern);
         }
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the subject matches.

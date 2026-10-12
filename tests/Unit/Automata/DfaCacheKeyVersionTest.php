@@ -18,6 +18,7 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -29,14 +30,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class DfaCacheKeyVersionTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_a_dfa_stored_under_the_key_of_an_older_version_is_not_reused(): void
     {
         // The class sets the solve reads are measured on the engine running
         // the suite: one without the ASCII options cannot judge this key.
-        if (false === @preg_match('/(?aD)\d/u', '')) {
-            $this->markTestSkipped('The engine does not read the ASCII options (PCRE2 '.\PCRE_VERSION.').');
-        }
+        $this->requiresCompile('/(?aD)\d/u', 'the ASCII options');
 
         $options = new SolverOptions();
         // A target that reads the ASCII options of "/(?aD)": PCRE2 takes
@@ -84,9 +85,7 @@ final class DfaCacheKeyVersionTest extends TestCase
     {
         // The class sets the solve reads are measured on the engine running
         // the suite: one without the ASCII options cannot judge this key.
-        if (false === @preg_match('/(?aD)\d/u', '')) {
-            $this->markTestSkipped('The engine does not read the ASCII options (PCRE2 '.\PCRE_VERSION.').');
-        }
+        $this->requiresCompile('/(?aD)\d/u', 'the ASCII options');
 
         $cache = new class implements DfaCacheInterface {
             /**

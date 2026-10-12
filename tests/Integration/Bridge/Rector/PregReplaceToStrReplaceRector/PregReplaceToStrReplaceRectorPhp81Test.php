@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector\PregReplaceToStrReplaceRector;
 
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Rector\Testing\PHPUnit\AbstractRectorTestCase;
@@ -25,6 +25,8 @@ use Rector\Testing\PHPUnit\AbstractRectorTestCase;
  */
 final class PregReplaceToStrReplaceRectorPhp81Test extends AbstractRectorTestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideFixtures')]
     public function test_fixture_is_rewritten_or_left_alone(string $filePath): void
@@ -33,8 +35,8 @@ final class PregReplaceToStrReplaceRectorPhp81Test extends AbstractRectorTestCas
         // running engine reads "/a{,0}b/" as its text, agrees with the 8.1
         // target, and rewrites the call the fixture holds as left alone.
         // The row is replayed where 10.43 runs.
-        if ('skip_quantifier_without_a_minimum' === basename($filePath, '.php.inc') && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', '/a{,0}b/', \PCRE_VERSION));
+        if ('skip_quantifier_without_a_minimum' === basename($filePath, '.php.inc')) {
+            $this->requiresPcre2('10.43', '/a{,0}b/');
         }
 
         $this->doTestFile($filePath);

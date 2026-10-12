@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class MatchEquivalenceTest extends TestCase
 {
+    use PcreGates;
+
     private const FLAGS = \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
 
     #[Test]
@@ -41,11 +43,9 @@ final class MatchEquivalenceTest extends TestCase
     {
         // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
         // engine or an older PHP refuses the flag.
-        if ('/k/iur' === $left && \PHP_VERSION_ID < 80400) {
-            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $left, \PHP_VERSION));
-        }
-        if ('/k/iur' === $left && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $left, \PCRE_VERSION));
+        if ('/k/iur' === $left) {
+            $this->requiresPhp('8.4', $left, 'does not read the r modifier');
+            $this->requiresPcre2('10.43', $left);
         }
 
         $result = (new LanguageSolver())->matchEquivalent($left, $right);
@@ -64,11 +64,9 @@ final class MatchEquivalenceTest extends TestCase
     {
         // The "r" modifier is PCRE2 10.43 and read from PHP 8.4: an older
         // engine or an older PHP refuses the flag.
-        if ('/k/iur' === $left && \PHP_VERSION_ID < 80400) {
-            $this->markTestSkipped(sprintf('%s is verified against PHP 8.4 and later: PHP %s does not read the r modifier.', $left, \PHP_VERSION));
-        }
-        if ('/k/iur' === $left && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $left, \PCRE_VERSION));
+        if ('/k/iur' === $left) {
+            $this->requiresPhp('8.4', $left, 'does not read the r modifier');
+            $this->requiresPcre2('10.43', $left);
         }
 
         $result = (new LanguageSolver())->matchEquivalent($left, $right);

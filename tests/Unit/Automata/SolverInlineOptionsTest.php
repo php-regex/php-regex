@@ -22,6 +22,7 @@ use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +44,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverInlineOptionsTest extends TestCase
 {
+    use PcreGates;
+
     private const ALPHABET = [
         'a', 'A', 'b', 'B', 'c', 'k', 'K', "\u{212A}", 'x', 'y', '_', '0', '3', "\u{0663}", "\u{0660}",
         ' ', "\t", "\n", "\u{A0}", "\u{85}", "\u{E9}", "\u{AA}", '!',
@@ -74,13 +77,12 @@ final class SolverInlineOptionsTest extends TestCase
     public function test_inline_options_change_equivalence_as_the_engine_does(string $left, string $right, bool $equivalent): void
     {
         // An extended class, "(?[ ])", is PCRE2 10.45.
-        if (str_contains($left, '(?[') && false === @preg_match($left, '')) {
-            $this->markTestSkipped(\sprintf('%s does not run on PCRE2 %s.', $left, \PCRE_VERSION));
+        if (str_contains($left, '(?[')) {
+            $this->requiresCompile($left);
         }
 
-        if (!self::compilesHere($left) || !self::compilesHere($right)) {
-            return;
-        }
+        $this->compilesHere($left);
+        $this->compilesHere($right);
 
         $this->assertSame($equivalent, $this->engineEquivalent($left, $right), 'Oracle disagrees with the row.');
 
@@ -178,9 +180,8 @@ final class SolverInlineOptionsTest extends TestCase
     #[DataProvider('provideSubsetRows')]
     public function test_inline_options_change_subset_answers_as_the_engine_does(string $left, string $right, bool $subset): void
     {
-        if (!self::compilesHere($left) || !self::compilesHere($right)) {
-            return;
-        }
+        $this->compilesHere($left);
+        $this->compilesHere($right);
 
         $engineSubset = true;
         foreach (self::subjects() as $subject) {
@@ -248,9 +249,7 @@ final class SolverInlineOptionsTest extends TestCase
     #[DataProvider('provideConditionalCarryRows')]
     public function test_an_option_set_in_the_yes_branch_holds_in_the_no_branch(string $pattern, array $inNoBranch, array $notInNoBranch): void
     {
-        if (!self::compilesHere($pattern)) {
-            return;
-        }
+        $this->compilesHere($pattern);
 
         $anchored = $pattern[0].'^(?:'.substr($pattern, 1, (int) strrpos($pattern, $pattern[0]) - 1).')$'.substr($pattern, (int) strrpos($pattern, $pattern[0]));
         foreach ($inNoBranch as $codePoint) {
@@ -368,26 +367,26 @@ final class SolverInlineOptionsTest extends TestCase
     }
 
     /**
-     * Whether this PHP and its PCRE2 compile the row: "(?r)" and the ASCII
-     * options need PCRE2 10.43 or later, the "r" modifier PHP 8.4 or later,
-     * and nothing else may be refused.
+     * Skip the row unless this PHP and its PCRE2 compile it: "(?r)" and the
+     * ASCII options need PCRE2 10.43 or later, the "r" modifier PHP 8.4 or
+     * later, and nothing else may be refused.
      */
-    private static function compilesHere(string $pattern): bool
+    private function compilesHere(string $pattern): void
     {
         if (false !== @preg_match($pattern, '')) {
-            return true;
+            return;
         }
 
         // The "r" modifier is read from PHP 8.4 only: an older PHP refuses
         // the flag before its engine is asked. A new PHP on an old engine,
         // like the inline "(?r)", is refused by the tripwire below.
         if (\PHP_VERSION_ID < 80400 && str_contains(substr($pattern, (int) strrpos($pattern, $pattern[0]) + 1), 'r')) {
-            return false;
+            $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
         }
 
-        self::assertTrue(version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile on PCRE2 '.\PCRE_VERSION);
+        $this->assertTrue(version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '<'), $pattern.' does not compile on PCRE2 '.\PCRE_VERSION);
 
-        return false;
+        $this->requiresCompile($pattern);
     }
 
     private static function fullMatch(): SolverOptions

@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\Internal\StartOptions;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +26,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class StartOptionsTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * Every start option PCRE2 10.49 lists, each one that PHP's PCRE
      * compiles in front of "a". "(*TURKISH_CASING)" needs UTF mode, so it is
@@ -54,8 +56,8 @@ final class StartOptionsTest extends TestCase
     #[DataProvider('provideStartOptions')]
     public function test_of_reads_every_start_option_pcre_accepts(string $options): void
     {
-        if ((str_contains($options, 'CASELESS_RESTRICT') || str_contains($options, 'TURKISH_CASING')) && !PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $options, \PCRE_VERSION));
+        if (str_contains($options, 'CASELESS_RESTRICT') || str_contains($options, 'TURKISH_CASING')) {
+            $this->requiresPcre2('10.45', $options);
         }
 
         // Oracle: PHP's PCRE compiles the option and matches past it.
@@ -80,9 +82,7 @@ final class StartOptionsTest extends TestCase
     #[DataProvider('provideNewlinesAfterACasingSetting')]
     public function test_newline_reads_past_a_casing_setting(string $source): void
     {
-        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $source, \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.45', $source);
 
         $dotOnNewline = substr($source, 0, -1).'^.$';
         $this->assertSame(1, preg_match('/'.$dotOnNewline.'/', "\n"));
@@ -98,9 +98,7 @@ final class StartOptionsTest extends TestCase
     #[Test]
     public function test_utf_after_turkish_casing_turns_utf_on(): void
     {
-        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(\sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', '(*TURKISH_CASING)(*UTF)', \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.45', '(*TURKISH_CASING)(*UTF)');
 
         $this->assertSame(1, preg_match('/(*TURKISH_CASING)(*UTF)^.$/', 'é'));
 

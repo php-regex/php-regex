@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,13 +25,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class PropertyNegationSpacingTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideSpacedNegations')]
     public function test_a_space_before_the_caret_keeps_the_negation(string $pattern, string $subject, int $matches): void
     {
-        if (!PcreTarget::runtime()->pcreAtLeast('10.45')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.45 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.45', $pattern);
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49.
         $this->assertSame($matches, preg_match($pattern, $subject), $pattern);

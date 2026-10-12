@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
-use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LookaroundEdgeQuantifierTest extends TestCase
 {
+    use PcreGates;
+
     private const RULE = 'regex.lint.lookaround.edgeQuantifier';
 
     private const SUBJECTS = ['', 'a', 'aa', 'aaa', 'aaaa', 'aaaaaaa', 'ab', 'aab', 'abb', 'b', 'ba', 'baa', 'aaab', 'xaaay', 'xa', 'xaa', 'aax', 'aab!'];
@@ -39,8 +41,8 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     {
         // A lookbehind may hold branches of different lengths only from
         // PCRE2 10.43: older engines refuse the range the rewrite names.
-        if ('/(?<=a{2,6})b/' === $pattern && !PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', $pattern, \PCRE_VERSION));
+        if ('/(?<=a{2,6})b/' === $pattern) {
+            $this->requiresPcre2('10.43', $pattern);
         }
 
         foreach (self::SUBJECTS as $subject) {
@@ -114,9 +116,7 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     public function test_a_body_the_rule_cannot_judge_is_not_reported(): void
     {
         // The ASCII digit option is PCRE2 10.43.
-        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
-            $this->markTestSkipped(sprintf('%s is verified against PCRE2 10.43 and later; PCRE2 %s reports it differently.', '/(?aD)x(?=a{2,6})/', \PCRE_VERSION));
-        }
+        $this->requiresPcre2('10.43', '/(?aD)x(?=a{2,6})/');
 
         $this->assertSame([], $this->messages('/(?=a{2,}+)/', true));
         $this->assertSame([], $this->messages('/(?aD)x(?=a{2,6})/', true));
