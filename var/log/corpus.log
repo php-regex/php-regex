@@ -5998,6 +5998,12 @@
      INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
          ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+  corpus/liip/RMT/src/Liip/RMT/Changelog/Formatter/SemanticChangelogFormatter.php:146:32
+      → /^=======/
+     TIP 
+         - /^=======/
+         + /^={7}/
+
   corpus/livewire/blaze/src/Directive/BlazeDirective.php:18:26
       → /^\s*(?:\/\*.*?\*\/\s*)*@blaze(?:\s*\(([^)]+)\))?/s
      WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
