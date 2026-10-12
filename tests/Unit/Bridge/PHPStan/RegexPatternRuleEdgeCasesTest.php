@@ -30,6 +30,8 @@ use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\TipRuleError;
+use PHPStan\Type\Constant\ConstantArrayType;
+use PHPStan\Type\Constant\ConstantIntegerType;
 use PHPStan\Type\Constant\ConstantStringType;
 use PHPStan\Type\StringType;
 use PHPStan\Type\Type;
@@ -122,6 +124,12 @@ final class RegexPatternRuleEdgeCasesTest extends TestCase
         /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createStub(Scope::class);
         $scope->method('getFile')->willReturn('file.php');
+        // The keys are read from the map's type, as PHPStan gives it for
+        // the literal below: an integer key, then a pattern.
+        $scope->method('getType')->willReturn(new ConstantArrayType(
+            [new ConstantIntegerType(1), new ConstantStringType('/(a+)+$/')],
+            [new ConstantStringType('handler'), new ConstantStringType('handler')],
+        ));
 
         $array = new Array_([
             new ArrayItem(new String_('handler'), new LNumber(1)),

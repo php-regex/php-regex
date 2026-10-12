@@ -251,6 +251,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The PHPStan extension judges each pattern of an array given to `preg_replace()`, `preg_replace_callback()` or `preg_filter()`, as the Psalm plugin does: only the replacement references of such an array were checked, so `preg_replace(['/(a+)+$/'], 'x', $input)` passed without a lint or ReDoS finding. The keys of a `preg_replace_callback_array()` map are read from its type, so a map held in a variable or a constant is judged too, where only a map written in the call was.
 - `regex version`, `regex self-update` and `regex help <command>` refuse an option or argument they do not take, and every pattern command refuses a second pattern (`Unexpected argument: …`), with the usage error and exit code 2 the other commands use: `version --bogus` and `parse /a/ /b/` exited 0.
 - `regex lint --enable-rule=<id>` and `--disable-rule=<id>` refuse an id that `checks.lint.rules` in `regex.json` refuses (`Unknown lint rule "quantifer.nested" in --disable-rule.`, exit code 2) instead of ignoring it; the lint usage line lists `--lint`, `--no-lint` and both rule options.
 - `regex help transpile` and the help overview name the three `--target` values: `js`, `html` and `python`.

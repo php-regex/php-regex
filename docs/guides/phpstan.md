@@ -3,8 +3,11 @@ description: "Install the PHPRegex PHPStan extension: the invalid-for-target che
 ---
 # PHPStan
 
-The PHPStan extension reads the regex patterns passed to `preg_*` functions,
-and to your own functions and methods that mark a parameter as a pattern,
+The PHPStan extension reads the regex patterns passed to `preg_*` functions
+(each pattern of an array given to `preg_replace()`, `preg_replace_callback()`
+or `preg_filter()`, and each key of the map given to
+`preg_replace_callback_array()`, included), and to your own functions and
+methods that mark a parameter as a pattern,
 and reports what PHPStan itself cannot see: a pattern the PHP your project
 targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
 analysis are there too, off until you ask for them.

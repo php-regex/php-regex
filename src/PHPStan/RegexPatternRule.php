@@ -16,11 +16,8 @@ namespace PHPRegex\PHPStan;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
-use PhpParser\Node\Expr\Array_;
-use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
-use PhpParser\Node\Scalar\String_;
 use PhpParser\PrettyPrinter\Standard;
 use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Parser\Analysis\GroupNumbering;
@@ -78,6 +75,11 @@ final class RegexPatternRule implements Rule
         'preg_filter' => [2, 'subject'],
         'preg_replace_callback_array' => [1, 'subject'],
     ];
+
+    /**
+     * The functions whose pattern may also be an array of patterns.
+     */
+    private const PATTERN_LISTS = ['preg_replace', 'preg_replace_callback', 'preg_filter'];
 
     private readonly PatternChecker $checker;
 
@@ -142,15 +144,27 @@ final class RegexPatternRule implements Rule
         // preg_match($pattern, $subject) alone, its result the only output.
         $plainMatch = $this->checker->optimizationsEnabled() && 'preg_match' === $functionName && 2 === \count($args) && null !== $subjectArg;
 
+        $patternType = $scope->getType($patternArg);
+        $patterns = self::constantStrings($patternType);
+        // An array of patterns is a pattern each: preg_match() and the
+        // others take a string only, PHP refuses an array there.
+        if (\in_array($functionName, self::PATTERN_LISTS, true)) {
+            foreach ($patternType->getConstantArrays() as $patternArray) {
+                foreach ($patternArray->getValueTypes() as $patternValue) {
+                    $patterns = [...$patterns, ...self::constantStrings($patternValue)];
+                }
+            }
+        }
+
         $errors = [];
-        foreach ($scope->getType($patternArg)->getConstantStrings() as $constantString) {
+        foreach (array_values(array_unique($patterns)) as $pattern) {
             $errors = array_merge(
                 $errors,
-                $this->checker->check($constantString->getValue(), $node->getLine(), $scope, $this->formatSource($functionName), $constantSubject),
+                $this->checker->check($pattern, $node->getLine(), $scope, $this->formatSource($functionName), $constantSubject),
             );
 
             if ($plainMatch) {
-                $errors = array_merge($errors, $this->trivialMatch($constantString->getValue(), $subjectArg, $node->getLine()));
+                $errors = array_merge($errors, $this->trivialMatch($pattern, $subjectArg, $node->getLine()));
             }
         }
 
@@ -408,19 +422,19 @@ final class RegexPatternRule implements Rule
     /**
      * @return array<IdentifierRuleError>
      */
-    private function processPregReplaceCallbackArray(Node $arrayNode, Scope $scope, int $lineNumber, string $functionName, bool $constantSubject): array
+    private function processPregReplaceCallbackArray(Expr $map, Scope $scope, int $lineNumber, string $functionName, bool $constantSubject): array
     {
-        if (!$arrayNode instanceof Array_) {
-            return [];
+        // The keys are the patterns, wherever the map is written: in the
+        // call, in a variable or in a constant.
+        $patterns = [];
+        foreach ($scope->getType($map)->getConstantArrays() as $callbacks) {
+            foreach ($callbacks->getKeyTypes() as $key) {
+                $patterns = [...$patterns, ...self::constantStrings($key)];
+            }
         }
 
         $errors = [];
-        foreach ($arrayNode->items as $item) {
-            if (!$item instanceof ArrayItem || !$item->key instanceof String_) {
-                continue;
-            }
-
-            $pattern = $item->key->value;
+        foreach (array_values(array_unique($patterns)) as $pattern) {
             $errors = array_merge(
                 $errors,
                 $this->checker->check($pattern, $lineNumber, $scope, $this->formatSource($functionName), $constantSubject),
