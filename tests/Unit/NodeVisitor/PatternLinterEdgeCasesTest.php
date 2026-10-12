@@ -23,6 +23,7 @@ use PHPRegex\Linter\Rule\OverlappingAlternationRule;
 use PHPRegex\Linter\Rule\PatternInfo;
 use PHPRegex\Linter\Rule\RedundantCharClassRule;
 use PHPRegex\Linter\Rule\RedundantGroupRule;
+use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\UselessIFlagRule;
@@ -58,7 +59,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
         $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::Octal, 0, 0);
         $node->accept($linter);
 
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
         $this->assertNotEmpty($warnings);
         $this->assertStringContainsString('Suspicious octal escape', $warnings[0]);
     }
@@ -70,7 +71,7 @@ final class PatternLinterEdgeCasesTest extends TestCase
             $linter = new PatternLinter();
             Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
-            return array_values(array_filter($linter->getWarnings(), static fn (string $warning): bool => str_contains($warning, 'Suspicious octal escape')));
+            return array_values(array_filter(array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues()), static fn (string $warning): bool => str_contains($warning, 'Suspicious octal escape')));
         };
 
         $this->assertSame([], $octalWarnings('/\\666/u'));

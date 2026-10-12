@@ -24,7 +24,6 @@ use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -148,7 +147,7 @@ final class PatternLinter extends AbstractNodeVisitor
     /**
      * @var list<LintRuleInterface<NodeInterface>>
      */
-    private readonly array $rules;
+    private array $rules = [];
 
     /**
      * @var array<class-string<NodeInterface>, list<LintRuleInterface<NodeInterface>>>
@@ -156,44 +155,28 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $dispatchMap = [];
 
     /**
-     * @param array<string, bool>   $enabledRules
-     * @param LintRuleRegistry|null $registry     @internal custom registries are not yet a public extension point
+     * @param array<string, bool> $enabledRules the rules to turn on or off by id; the others keep their default
      */
-    public function __construct(/**
-     * Configuration for which lint rules are enabled.
-     */
-        private array $enabledRules = [],
-        ?LintRuleRegistry $registry = null)
+    public function __construct(private array $enabledRules = [])
     {
         $this->charSetAnalyzer = new CharSetAnalyzer();
-        $this->rules = ($registry ?? new LintRuleRegistry())->all();
-        foreach ($this->rules as $rule) {
-            foreach ($rule->getNodeTypes() as $nodeType) {
-                $this->dispatchMap[$nodeType][] = $rule;
-            }
-        }
+        $this->useRules(new LintRuleRegistry());
         $this->context = $this->createContext();
     }
 
     /**
-     * Get the full regex pattern including delimiters and flags
+     * A linter running the rules of a registry other than the library's.
+     *
+     * @internal custom rule registries are not a public extension point
+     *
+     * @param array<string, bool> $enabledRules
      */
-    public function getFullPattern(): string
+    public static function withRegistry(array $enabledRules, LintRuleRegistry $registry): self
     {
-        $closingDelimiter = PatternParser::closingDelimiter($this->delimiter);
+        $linter = new self($enabledRules);
+        $linter->useRules($registry);
 
-        return $this->delimiter.$this->patternValue.$closingDelimiter.$this->flags;
-    }
-
-    /**
-     * @return array<string>
-     */
-    public function getWarnings(): array
-    {
-        return array_map(
-            static fn (RuleViolation $issue): string => $issue->message,
-            $this->issues,
-        );
+        return $linter;
     }
 
     /**
@@ -779,4 +762,15 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     // Add other visit methods as needed, default to no-op
+
+    private function useRules(LintRuleRegistry $registry): void
+    {
+        $this->rules = $registry->all();
+        $this->dispatchMap = [];
+        foreach ($this->rules as $rule) {
+            foreach ($rule->getNodeTypes() as $nodeType) {
+                $this->dispatchMap[$nodeType][] = $rule;
+            }
+        }
+    }
 }

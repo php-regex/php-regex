@@ -27,7 +27,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^\d+$/i');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
@@ -37,7 +37,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/[a-z]/i');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         // Ensure we did not incorrectly emit the useless-flag warning when
         // case-sensitive characters are present.
@@ -49,7 +49,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^<(\\w+)>.*<\\/\\1>$/i');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
@@ -59,7 +59,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^<(?<tag>\\w+)>.*<\\/\\k<tag>>$/i');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
@@ -69,7 +69,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\x41/i');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
@@ -79,7 +79,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/[\\x41]/i');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
@@ -89,7 +89,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\p{Lu}/iu');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
@@ -99,7 +99,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^\d+$/s');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains("Flag 's' is useless: the pattern contains no unescaped dot outside a character class.", $warnings);
     }
@@ -109,7 +109,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/.+/s');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 's' is useless: the pattern contains no unescaped dot outside a character class.", $warnings);
         $this->assertNotContains('regex.lint.flag.useless.s', array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
@@ -172,7 +172,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\d+/m');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $found = false;
         foreach ($warnings as $warning) {
@@ -192,7 +192,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^test$/m');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         // The message checked is the one the rule emits, so this can fail.
         $this->assertNotContains("Flag 'm' is useless: the pattern contains no ^ or $ anchor.", $warnings);
@@ -204,7 +204,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/foo^bar/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
@@ -214,7 +214,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/$foo/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains("End anchor '$' appears before consuming characters, making it impossible to match.", $warnings);
     }
@@ -244,7 +244,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^foo$/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Start anchor '^' appears after consuming characters", $warnings);
         $this->assertNotContains("End anchor '$' appears before consuming characters", $warnings);
@@ -255,7 +255,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^header\n^body/m');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Start anchor '^' appears after consuming characters", $warnings);
     }
@@ -265,7 +265,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/foo^bar/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
@@ -275,7 +275,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/foo\\n^bar/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
     }
@@ -285,7 +285,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/foo\\$bar/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("End anchor '$' appears before consuming characters, making it impossible to match.", $warnings);
         $this->assertNotContains("Start anchor '^' appears after consuming characters, making it impossible to match.", $warnings);
@@ -297,7 +297,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse($pattern);
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $startMessage = "Start anchor '^' appears after consuming characters, making it impossible to match.";
         $endMessage = "End anchor '$' appears before consuming characters, making it impossible to match.";
@@ -441,7 +441,7 @@ final class PatternLinterTest extends TestCase
         $regex->accept($linter);
 
         $issueIds = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('regex.lint.charclass.redundant', $issueIds);
         $this->assertNotContains("Start anchor '^' appears after consuming characters", $warnings);
@@ -453,7 +453,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\2/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains('Backreference \\2 refers to a non-existent capturing group.', $warnings);
     }
@@ -463,7 +463,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/(a)\\1/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Backreference \\1 refers to a non-existent capturing group.', $warnings);
     }
@@ -473,7 +473,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\g{2}/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains('Backreference \\2 refers to a non-existent capturing group.', $warnings);
     }
@@ -483,7 +483,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/(a)\\g{-1}/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Backreference \\1 refers to a non-existent capturing group.', $warnings);
     }
@@ -493,7 +493,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\k<foo>/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains('Backreference \\k<foo> refers to a non-existent named group.', $warnings);
     }
@@ -503,7 +503,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/(?<foo>a)\\k<foo>/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Backreference \\k<foo> refers to a non-existent named group.', $warnings);
     }
@@ -514,7 +514,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/([a-c]|[b-d])+/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -525,7 +525,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/[a-c]|[b-d]/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -535,7 +535,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/[a-c]|[d-e]/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -545,7 +545,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/[0-9]/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -556,7 +556,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/(\\d|[0-9])+/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -567,7 +567,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/\\r\\n|\\r|\\n/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -578,7 +578,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/^(978|979)/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -589,7 +589,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/([a-c]|[b-d])++/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }
@@ -600,7 +600,7 @@ final class PatternLinterTest extends TestCase
         $regex = Regex::create()->parse('/(?>[a-c]|[b-d])+/');
         $linter = new PatternLinter();
         $regex->accept($linter);
-        $warnings = $linter->getWarnings();
+        $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains('Alternation branches have overlapping character sets, which may cause unnecessary backtracking.', $warnings);
     }

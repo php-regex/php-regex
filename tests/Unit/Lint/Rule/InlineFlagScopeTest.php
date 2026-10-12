@@ -166,7 +166,7 @@ final class InlineFlagScopeTest extends TestCase
         $registry = new LintRuleRegistry();
         $registry->register($rule);
 
-        $linter = new PatternLinter([], $registry);
+        $linter = PatternLinter::withRegistry([], $registry);
         Regex::create()->parse($pattern)->accept($linter);
 
         return array_values(array_map(

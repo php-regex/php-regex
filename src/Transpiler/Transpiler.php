@@ -23,7 +23,12 @@ use PHPRegex\Transpiler\Target\TargetRegistry;
  */
 final readonly class Transpiler
 {
-    public function __construct(private RegexParser $parser, private TargetRegistry $targets = new TargetRegistry()) {}
+    private TargetRegistry $targets;
+
+    public function __construct(private RegexParser $parser)
+    {
+        $this->targets = new TargetRegistry();
+    }
 
     /**
      * Transpile a PCRE regex into the spelling of a target dialect.

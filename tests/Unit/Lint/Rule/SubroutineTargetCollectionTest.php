@@ -113,7 +113,7 @@ final class SubroutineTargetCollectionTest extends TestCase
             }
         });
 
-        $linter = new PatternLinter([], $registry);
+        $linter = PatternLinter::withRegistry([], $registry);
         Regex::create()->parse('/(a)(?1)(?&n)(?<n>b)/')->accept($linter);
         $messages = array_map(static fn ($issue): string => $issue->message, array_values(array_filter($linter->getIssues(), static fn ($issue): bool => 'test.subroutine' === $issue->id)));
 

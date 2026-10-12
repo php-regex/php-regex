@@ -52,6 +52,16 @@ final class ParameterNamesTest extends TestCase
     }
 
     /**
+     * The dialects a transpiler knows are the library's: its constructor
+     * takes the parser alone.
+     */
+    #[Test]
+    public function test_the_transpiler_takes_the_parser_alone(): void
+    {
+        $this->assertSame(1, (new \ReflectionMethod(Transpiler::class, '__construct'))->getNumberOfParameters());
+    }
+
+    /**
      * @return iterable<string, array{class: class-string, method: string, names: list<string>}>
      */
     public static function provideSignatures(): iterable

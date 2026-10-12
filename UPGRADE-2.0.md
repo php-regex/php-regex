@@ -926,6 +926,7 @@ instead.
 | `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `optimizations()`, `explain()`, `highlighted()` | the property of the same name |
 | `RegexException::getErrorCode()`, `getPosition()`, `getSnippet()` | `$errorCode`, `$position`, `$snippet` |
 | `SemanticErrorException::getHint()` | `$hint` |
+| `LinterNodeVisitor::getWarnings()`, `getFullPattern()` | `PatternLinter::getIssues()`, each issue's `$message`; the pattern you linted |
 | `ReDoSAnalysis::confidenceLevel()` | `RedosAnalysis::$confidence`, never null (`Low` when nothing raised it) |
 | `ReDoSAnalysis::getCulpritNode()` | `RedosAnalysis::$culpritNode` |
 | `ReDoSAnalysis::getPrimaryHotspot()` | `RedosAnalysis::primaryHotspot()` |
