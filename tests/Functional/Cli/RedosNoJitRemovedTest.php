@@ -17,9 +17,9 @@ use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Cli\Output;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,12 +38,13 @@ final class RedosNoJitRemovedTest extends TestCase
         $command = 'analyze' === $name ? new AnalyzeCommand() : new DebugCommand();
         $input = new Input($name, ['/(a+)+$/', '--redos-mode=confirmed', '--redos-no-jit'], new GlobalOptions(false, false, false, false, null, null), []);
 
+        $output = OutputFactory::create();
         ob_start();
 
         try {
-            $exitCode = $command->run($input, new Output(false, false));
+            $exitCode = $command->run($input, $output);
         } finally {
-            $written = (string) ob_get_clean();
+            $written = (string) ob_get_clean().OutputFactory::errors($output);
         }
 
         // A usage error, as every command reports one.

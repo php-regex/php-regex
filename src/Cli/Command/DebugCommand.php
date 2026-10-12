@@ -69,7 +69,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 if ($json) {
                     $output->writeDocument(JsonDocument::error($configResult->error, JsonDocument::STAGE_CONFIG));
                 } else {
-                    $output->write($output->error('Error: '.$configResult->error."\n"));
+                    $output->writeError($output->error('Error: '.$configResult->error."\n"));
                 }
 
                 return self::INVALID;

@@ -78,7 +78,7 @@ final class DiagramCommand extends AbstractCommand
                 $diagram = (new RailroadSvgRenderer())->visitRegex($ast);
                 if (null !== $outputPath) {
                     if (false === @file_put_contents($outputPath, $diagram)) {
-                        $output->write($output->error("Error: Unable to write SVG to '{$outputPath}'.\n"));
+                        $output->writeError($output->error("Error: Unable to write SVG to '{$outputPath}'.\n"));
 
                         return self::INVALID;
                     }
@@ -94,7 +94,7 @@ final class DiagramCommand extends AbstractCommand
             $diagram = $ast->accept(new AsciiTreeRenderer());
             if (null !== $outputPath) {
                 if (false === @file_put_contents($outputPath, $diagram)) {
-                    $output->write($output->error("Error: Unable to write output to '{$outputPath}'.\n"));
+                    $output->writeError($output->error("Error: Unable to write output to '{$outputPath}'.\n"));
 
                     return self::INVALID;
                 }

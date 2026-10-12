@@ -266,7 +266,7 @@ final readonly class HelpCommand implements CommandInterface
     {
         $commandData = $this->getCommandData($command);
         if (null === $commandData) {
-            $output->write($output->error("Unknown command: {$command}\n\n"));
+            $output->writeError($output->error("Unknown command: {$command}\n\n"));
             $this->renderTextSection($output, 'Available Commands', $this->commandNames());
 
             return self::INVALID;

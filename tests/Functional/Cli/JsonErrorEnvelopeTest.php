@@ -201,7 +201,7 @@ final class JsonErrorEnvelopeTest extends TestCase
         $this->enterProject();
         $message = 'Invalid option: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".';
 
-        [$exitCode, $stdout] = $this->runRegex(['--php-version=99', $command, '/a/', ...($json ? ['--json'] : [])]);
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=99', $command, '/a/', ...($json ? ['--json'] : [])]);
 
         $this->assertSame(2, $exitCode, $stdout);
         if ($json) {
@@ -210,7 +210,8 @@ final class JsonErrorEnvelopeTest extends TestCase
             return;
         }
 
-        $this->assertSame($message."\n", $stdout);
+        $this->assertSame('', $stdout);
+        $this->assertSame($message."\n", $stderr);
     }
 
     /**
@@ -236,10 +237,11 @@ final class JsonErrorEnvelopeTest extends TestCase
     {
         $this->enterProject();
 
-        [$exitCode, $stdout] = $this->runRegex(['--php-version=99', ...$arguments]);
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=99', ...$arguments]);
 
         $this->assertSame(2, $exitCode, $stdout);
-        $this->assertSame("Invalid option: \"php_version\" must be a version string like \"8.2\", a PHP_VERSION_ID integer, or \"runtime\".\n", $stdout);
+        $this->assertSame('', $stdout);
+        $this->assertSame("Invalid option: \"php_version\" must be a version string like \"8.2\", a PHP_VERSION_ID integer, or \"runtime\".\n", $stderr);
     }
 
     /**
@@ -254,7 +256,7 @@ final class JsonErrorEnvelopeTest extends TestCase
     }
 
     /**
-     * Without JSON the same failures are one error line on stdout.
+     * Without JSON the same failures are one error line, on stderr.
      *
      * @param list<string> $arguments
      */
@@ -264,10 +266,10 @@ final class JsonErrorEnvelopeTest extends TestCase
     {
         $this->enterProject('' === $files ? [] : ['regex.json' => $files]);
 
-        [$exitCode, $stdout] = $this->runRegex($arguments);
+        [$exitCode, $stdout, $stderr] = $this->runRegex($arguments);
 
         $this->assertSame(2, $exitCode, $stdout);
-        $this->assertMatchesRegularExpression($line, $stdout);
+        $this->assertMatchesRegularExpression($line, $stdout.$stderr);
     }
 
     /**

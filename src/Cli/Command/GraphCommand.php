@@ -81,7 +81,7 @@ final class GraphCommand extends AbstractCommand
             }
 
             if (false === @file_put_contents($outputFile, $content)) {
-                $output->write($output->error("Error: Unable to write the graph to '{$outputFile}'.")."\n");
+                $output->writeError($output->error("Error: Unable to write the graph to '{$outputFile}'.")."\n");
 
                 return self::INVALID;
             }

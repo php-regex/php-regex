@@ -41,7 +41,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', []), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
@@ -53,7 +53,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a+/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a+/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Severity', $buffer);
@@ -65,7 +65,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a+/', '--format=json']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a+/', '--format=json']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
 
@@ -92,7 +92,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/(?<=a+)b/', '--format=json']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/(?<=a+)b/', '--format=json']), $output), $exitCode, $output);
 
         $validation = $this->requireArrayKey($this->decodeJsonPayload($buffer), 'validation');
         $this->assertFalse($validation['is_valid'] ?? null);
@@ -113,7 +113,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
@@ -125,7 +125,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['[unclosed']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['[unclosed']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('Analyze failed:', $buffer);
@@ -138,7 +138,7 @@ final class CommandTest extends TestCase
 
         // Pattern that may cause validation error (e.g., invalid quantifier range)
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a{5,3}/']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('analyze', ['/a{5,3}/']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         // Check if validation error is shown
@@ -157,7 +157,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Vulnerable:', $buffer);
@@ -187,7 +187,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', []), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
@@ -199,7 +199,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input']), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing value for --input', $buffer);
@@ -211,7 +211,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--format=json']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--format=json']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
 
@@ -235,7 +235,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input=aaaa']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input=aaaa']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
     }
@@ -246,7 +246,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['[unclosed']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['[unclosed']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('Debug failed:', $buffer);
@@ -258,7 +258,7 @@ final class CommandTest extends TestCase
         $output = new Output(true, false);
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Debug', $buffer);
@@ -270,7 +270,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Input:', $buffer);
@@ -283,7 +283,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input', 'testinput']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/', '--input', 'testinput']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Input:      "testinput"', $buffer);
@@ -303,7 +303,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
@@ -323,7 +323,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         // Should process without error
@@ -335,7 +335,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/a/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/a/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Debug', $buffer);
@@ -347,7 +347,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', []), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
@@ -359,7 +359,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=bogus']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=bogus']), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Unsupported format', $buffer);
@@ -371,7 +371,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
     }
@@ -382,7 +382,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=svg']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=svg']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('<svg', $buffer);
@@ -397,7 +397,7 @@ final class CommandTest extends TestCase
         $this->assertNotFalse($tempFile);
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=svg', '--output='.$tempFile]), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format=svg', '--output='.$tempFile]), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertSame('', $buffer);
@@ -414,7 +414,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['[unclosed']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['[unclosed']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('Diagram failed:', $buffer);
@@ -426,7 +426,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format', 'console']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format', 'console']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('a', $buffer); // Should contain diagram output
@@ -446,7 +446,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
@@ -458,7 +458,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', []), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
@@ -470,7 +470,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('/a+/', $buffer);
@@ -483,7 +483,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=html']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=html']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
     }
@@ -494,7 +494,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['[unclosed']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['[unclosed']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('FAIL Error:', $buffer);
@@ -506,7 +506,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format', 'console']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format', 'console']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('/a+/', $buffer);
@@ -518,7 +518,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('explain', ['/a+/', '--format=text']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('explain', ['/a+/', '--format=text']), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString("Unsupported format 'text'. Use --format=console or --format=html.", $buffer);
@@ -530,7 +530,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=invalid']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=invalid']), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString("Unsupported format 'invalid'. Use --format=auto, --format=console or --format=html.", $buffer);
@@ -550,7 +550,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
@@ -562,7 +562,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', []), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
@@ -574,7 +574,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['/a+/', '--validate']), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['/a+/', '--validate']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
     }
@@ -585,7 +585,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['[unclosed']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('parse', ['[unclosed']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('Parse failed:', $buffer);
@@ -605,7 +605,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
@@ -617,7 +617,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', []), $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Missing pattern', $buffer);
@@ -629,7 +629,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', ['/(abc/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', ['/(abc/']), $output), $exitCode, $output);
 
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString('INVALID', $buffer);
@@ -677,7 +677,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', ['/abc/']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', ['/abc/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('OK', $buffer);
@@ -697,7 +697,7 @@ final class CommandTest extends TestCase
         );
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run($input, $output), $exitCode, $output);
 
         $this->assertSame(2, $exitCode);
         $this->assertStringContainsString('Invalid option:', $buffer);
@@ -709,7 +709,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('help', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('help', []), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('Usage', $buffer);
@@ -729,7 +729,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('version', []), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('version', []), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('PHPRegex', $buffer);
@@ -789,7 +789,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode);
+        $this->captureOutput(static fn (): int => $command->run(self::makeInput('self-update', []), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
     }
@@ -1001,9 +1001,12 @@ final class CommandTest extends TestCase
     }
 
     /**
+     * What the command printed: stdout, then what it wrote to the error
+     * stream of $output.
+     *
      * @param callable(): int $callback
      */
-    private function captureOutput(callable $callback, int &$exitCode): string
+    private function captureOutput(callable $callback, int &$exitCode, ?Output $output = null): string
     {
         $initialLevel = ob_get_level();
         ob_start();
@@ -1012,6 +1015,9 @@ final class CommandTest extends TestCase
             $exitCode = $callback();
 
             $content = (string) ob_get_clean();
+            if (null !== $output) {
+                $content .= OutputFactory::errors($output);
+            }
 
             // Clean up any extra buffers started by the callback
             while (ob_get_level() > $initialLevel) {

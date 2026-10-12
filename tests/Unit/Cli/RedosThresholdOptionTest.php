@@ -134,7 +134,7 @@ final class RedosThresholdOptionTest extends TestCase
 
         ob_start();
         $exitCode = $command->run($input, $output);
-        $buffer = (string) ob_get_clean();
+        $buffer = (string) ob_get_clean().OutputFactory::errors($output);
 
         return [$exitCode, $buffer];
     }

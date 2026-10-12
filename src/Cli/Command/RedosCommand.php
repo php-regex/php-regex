@@ -134,7 +134,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             if ($json) {
                 $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
             } else {
-                $output->write($output->error("Error: {$message}\n"));
+                $output->writeError($output->error("Error: {$message}\n"));
             }
 
             return self::INVALID;
@@ -164,7 +164,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
                 if ($json) {
                     $output->writeDocument(JsonDocument::error("Input file not readable: {$inputFile}", JsonDocument::STAGE_USAGE));
                 } else {
-                    $output->write($output->error("Error: Input file not readable: {$inputFile}\n"));
+                    $output->writeError($output->error("Error: Input file not readable: {$inputFile}\n"));
                 }
 
                 return self::INVALID;

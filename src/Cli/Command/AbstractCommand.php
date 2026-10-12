@@ -41,7 +41,7 @@ abstract class AbstractCommand implements CommandInterface
             if ($json) {
                 $output->writeDocument(JsonDocument::error('Invalid option: '.$e->getMessage(), JsonDocument::STAGE_USAGE));
             } else {
-                $output->write($output->error('Invalid option: '.$e->getMessage()."\n"));
+                $output->writeError($output->error('Invalid option: '.$e->getMessage()."\n"));
             }
 
             return null;
@@ -127,8 +127,8 @@ abstract class AbstractCommand implements CommandInterface
             return self::INVALID;
         }
 
-        $output->write($output->error('Error: '.$message."\n"));
-        $output->write($usage);
+        $output->writeError($output->error('Error: '.$message."\n"));
+        $output->writeError($usage);
 
         return self::INVALID;
     }

@@ -45,7 +45,7 @@ final class ClearCacheCommand extends AbstractCommand implements CommandInterfac
         try {
             $cache = ParserOptions::fromArray($input->regexOptions)->cache;
         } catch (InvalidRegexOptionException $e) {
-            $output->write($output->error('Invalid option: '.$e->getMessage()."\n"));
+            $output->writeError($output->error('Invalid option: '.$e->getMessage()."\n"));
 
             return self::INVALID;
         }

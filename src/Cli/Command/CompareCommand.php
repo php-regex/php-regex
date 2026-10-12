@@ -54,8 +54,8 @@ final class CompareCommand extends AbstractCommand
     {
         $parsed = $this->parseArguments($input->args);
         if (null !== $parsed['error']) {
-            $output->write($output->error('Error: '.$parsed['error']."\n"));
-            $output->write("Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
+            $output->writeError($output->error('Error: '.$parsed['error']."\n"));
+            $output->writeError("Usage: regex compare <pattern1> <pattern2> [--method intersection|subset|equivalence] [--minimizer hopcroft|moore] [--determinizer subset|subset-indexed]\n");
 
             return self::INVALID;
         }

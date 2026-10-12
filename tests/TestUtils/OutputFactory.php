@@ -30,4 +30,19 @@ final class OutputFactory
 
         return new Output($ansi, $quiet, errorStream: $errorStream);
     }
+
+    /**
+     * What an output built here wrote to its error stream so far; nothing
+     * for an output that writes to the process's STDERR.
+     */
+    public static function errors(Output $output): string
+    {
+        $stream = (new \ReflectionProperty(Output::class, 'errorStream'))->getValue($output);
+        if (!\is_resource($stream)) {
+            return '';
+        }
+        rewind($stream);
+
+        return (string) stream_get_contents($stream);
+    }
 }

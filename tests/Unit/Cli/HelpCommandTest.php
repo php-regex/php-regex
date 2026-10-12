@@ -257,7 +257,8 @@ final class HelpCommandTest extends TestCase
         $text = (string) ob_get_clean();
 
         $this->assertSame(2, $result);
-        $this->assertStringContainsString('Unknown command: invalid', $text);
+        $this->assertStringContainsString('Unknown command: invalid', OutputFactory::errors($output));
+        $this->assertStringNotContainsString('Unknown command', $text);
         $this->assertStringContainsString('Available Commands', $text);
     }
 
