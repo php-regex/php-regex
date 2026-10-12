@@ -20,7 +20,8 @@ use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
 use PHPRegex\Toolkit\Regex;
 
 /**
- * Analyze Laravel route patterns for conflicts and issues.
+ * Lists the Laravel routes that have a regex constraint, and validates the
+ * constraints.
  *
  * @internal
  */
@@ -41,7 +42,19 @@ final class RoutesCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Analyze Laravel route patterns for conflicts and issues';
+    protected $description = 'List the routes that have a regex constraint, and validate the constraints';
+
+    /**
+     * The console command help text.
+     *
+     * @var string
+     */
+    protected $help = <<<'HELP'
+        Lists the routes that have a regex constraint. --show-constraints prints
+        each constraint; --validate compiles each one as the router matches it,
+        anchored and under the s, D and u flags, marks it valid or invalid, and
+        exits with 1 when one is invalid.
+        HELP;
 
     public function __construct(
         private readonly Router $router,

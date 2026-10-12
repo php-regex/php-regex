@@ -131,7 +131,7 @@ Artisan commands
 | `regex:lint`      | Lint the regex patterns of your PHP code     |
 | `regex:compare`   | Compare two patterns with automata           |
 | `regex:explain`   | Explain a pattern in plain English           |
-| `regex:routes`    | Detect route conflicts                       |
+| `regex:routes`    | List and validate route constraints          |
 | `regex:transpile` | Translate a pattern for another regex engine |
 
 ```bash
