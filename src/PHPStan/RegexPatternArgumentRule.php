@@ -103,7 +103,7 @@ final readonly class RegexPatternArgumentRule implements Rule
         foreach (self::markedParameters($variants) as $position => [$parameterName, $variadic]) {
             foreach (self::arguments($args, $position, $parameterName, $variadic) as $argument) {
                 foreach ($scope->getType($argument)->getConstantStrings() as $constantString) {
-                    $errors = [...$errors, ...$this->patternErrors($constantString->getValue(), $node->getLine(), $scope, $source)];
+                    $errors = [...$errors, ...$this->patternErrors($constantString->getValue(), $node->getLine(), $scope, $source, PatternChecker::literalOffset($argument))];
                 }
             }
         }
@@ -114,7 +114,7 @@ final readonly class RegexPatternArgumentRule implements Rule
     /**
      * @return list<IdentifierRuleError>
      */
-    private function patternErrors(string $pattern, int $lineNumber, Scope $scope, string $source): array
+    private function patternErrors(string $pattern, int $lineNumber, Scope $scope, string $source, ?int $fileOffset): array
     {
         $refusal = (new PcreEngine())->compile($pattern);
         if (null !== $refusal) {
@@ -128,7 +128,7 @@ final readonly class RegexPatternArgumentRule implements Rule
                 ->build()];
         }
 
-        return array_values($this->checker->check($pattern, $lineNumber, $scope, $source, false));
+        return array_values($this->checker->check($pattern, $lineNumber, $scope, $source, false, $fileOffset));
     }
 
     /**

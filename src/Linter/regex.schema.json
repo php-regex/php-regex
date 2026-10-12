@@ -435,6 +435,11 @@
               "description": "Report a final $ in a pattern anchored at its start, which also matches before a trailing newline (info).",
               "default": false
             },
+            "literal.invisible": {
+              "type": "boolean",
+              "description": "Warn about a control character, or a character that hides or moves text, written raw in a pattern.",
+              "default": true
+            },
             "redos.search": {
               "type": "boolean",
               "description": "Report the quadratic cost of an unanchored search whose every attempt is proven linear. It runs under the ReDoS check and is medium: a threshold of medium or low shows it.",

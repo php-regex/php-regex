@@ -16,8 +16,11 @@ namespace PHPRegex\PHPStan;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\ArrayItem;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Name;
+use PhpParser\Node\Scalar\String_;
 use PhpParser\PrettyPrinter\Standard;
 use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Parser\Analysis\GroupNumbering;
@@ -145,22 +148,27 @@ final class RegexPatternRule implements Rule
         $plainMatch = $this->checker->optimizationsEnabled() && 'preg_match' === $functionName && 2 === \count($args) && null !== $subjectArg;
 
         $patternType = $scope->getType($patternArg);
-        $patterns = self::constantStrings($patternType);
+        // A pattern written as the argument has its literal at hand, to tell
+        // a character written raw from one PHP's escapes produced; one read
+        // from an array has none.
+        $literalOffset = PatternChecker::literalOffset($patternArg);
+        $patterns = array_fill_keys(self::constantStrings($patternType), $literalOffset);
         // An array of patterns is a pattern each: preg_match() and the
         // others take a string only, PHP refuses an array there.
         if (\in_array($functionName, self::PATTERN_LISTS, true)) {
             foreach ($patternType->getConstantArrays() as $patternArray) {
                 foreach ($patternArray->getValueTypes() as $patternValue) {
-                    $patterns = [...$patterns, ...self::constantStrings($patternValue)];
+                    $patterns += array_fill_keys(self::constantStrings($patternValue), null);
                 }
             }
         }
 
         $errors = [];
-        foreach (array_values(array_unique($patterns)) as $pattern) {
+        foreach ($patterns as $pattern => $offset) {
+            $pattern = (string) $pattern;
             $errors = array_merge(
                 $errors,
-                $this->checker->check($pattern, $node->getLine(), $scope, $this->formatSource($functionName), $constantSubject),
+                $this->checker->check($pattern, $node->getLine(), $scope, $this->formatSource($functionName), $constantSubject, $offset),
             );
 
             if ($plainMatch) {
@@ -426,6 +434,16 @@ final class RegexPatternRule implements Rule
     {
         // The keys are the patterns, wherever the map is written: in the
         // call, in a variable or in a constant.
+        // A map written in the call has each key's literal at hand.
+        $offsets = [];
+        if ($map instanceof Array_) {
+            foreach ($map->items as $item) {
+                if ($item instanceof ArrayItem && $item->key instanceof String_) {
+                    $offsets[$item->key->value] = PatternChecker::literalOffset($item->key);
+                }
+            }
+        }
+
         $patterns = [];
         foreach ($scope->getType($map)->getConstantArrays() as $callbacks) {
             foreach ($callbacks->getKeyTypes() as $key) {
@@ -437,7 +455,7 @@ final class RegexPatternRule implements Rule
         foreach (array_values(array_unique($patterns)) as $pattern) {
             $errors = array_merge(
                 $errors,
-                $this->checker->check($pattern, $lineNumber, $scope, $this->formatSource($functionName), $constantSubject),
+                $this->checker->check($pattern, $lineNumber, $scope, $this->formatSource($functionName), $constantSubject, $offsets[$pattern] ?? null),
             );
         }
 

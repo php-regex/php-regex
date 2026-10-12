@@ -65,6 +65,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.group.empty' => ['/a(?:)b/', '/a()b/'],
         'regex.lint.group.quantifiedCapture' => ['/(a)*/', '/(?:a)*/'],
         'regex.lint.group.redundant' => ['/(?:a)/', '/(?:ab)+/'],
+        'regex.lint.literal.invisible' => ["/a\tb/", '/a\tb/'],
         'regex.lint.literal.multipleSpaces' => ['/a  b/', '/a {2}b/'],
         'regex.lint.lookaround.edgeQuantifier' => ['/x(?=a{2,6})/', '/x(?=a{2})/'],
         'regex.lint.lookaround.impossible' => ['/(?=a)b/', '/(?=a)[ab]/'],

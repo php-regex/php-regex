@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\PHPStan;
 
+use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Scalar\String_;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\PatternOccurrence;
@@ -112,6 +115,7 @@ final class PatternChecker
         'regex.lint.group.empty' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#empty-group',
         'regex.lint.charclass.single' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#single-character-class',
         'regex.lint.literal.multipleSpaces' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#multiple-spaces',
+        'regex.lint.literal.invisible' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#invisible-character-written-raw',
         'regex.lint.quantifier.lazyToClass' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lazy-quantifier-before-a-delimiter',
         'regex.lint.complexity' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#complexity-threshold',
     ];
@@ -257,11 +261,14 @@ final class PatternChecker
      * The errors of a pattern the running engine compiles; the caller
      * reports one it refuses (PHPStan core does in a preg_*() call).
      *
-     * @param string $source where the pattern was found, as "php:preg_match()"
+     * @param string   $source     where the pattern was found, as "php:preg_match()"
+     * @param int|null $fileOffset where the literal the pattern was written with starts in the file, when
+     *                             the call holds it: a raw character is reported only where that literal
+     *                             holds it as written
      *
      * @return array<IdentifierRuleError>
      */
-    public function check(string $pattern, int $lineNumber, Scope $scope, string $source, bool $constantSubject): array
+    public function check(string $pattern, int $lineNumber, Scope $scope, string $source, bool $constantSubject, ?int $fileOffset = null): array
     {
         if (null === $this->targetLabel && [] === $this->range && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled && !$this->complexityEnabled) {
             return [];
@@ -305,6 +312,7 @@ final class PatternChecker
             $scope->getFile(),
             $lineNumber,
             $source,
+            fileOffset: $fileOffset,
         );
 
         $redosIssues = [];
@@ -415,6 +423,28 @@ final class PatternChecker
     /**
      * Whether the engine running PHPStan compiles the pattern.
      */
+    /**
+     * Where the expression starts in its file, when it is a string literal
+     * or literals joined by ".": the pattern is then written there.
+     */
+    public static function literalOffset(Expr $expr): ?int
+    {
+        $parts = [$expr];
+        while ([] !== $parts) {
+            $part = array_pop($parts);
+            if ($part instanceof Concat) {
+                $parts[] = $part->left;
+                $parts[] = $part->right;
+            } elseif (!$part instanceof String_) {
+                return null;
+            }
+        }
+
+        $offset = $expr->getStartFilePos();
+
+        return $offset >= 0 ? $offset : null;
+    }
+
     public function runningEngineCompiles(string $pattern): bool
     {
         return null === (new PcreEngine())->compile($pattern);

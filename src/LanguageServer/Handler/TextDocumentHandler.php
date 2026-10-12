@@ -19,7 +19,9 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Toolkit\Regex;
@@ -258,6 +260,14 @@ final readonly class TextDocumentHandler
                 $ast->accept($linter);
 
                 foreach ($linter->getIssues() as $issue) {
+                    // A raw character the literal spells with an escape, as
+                    // a double-quoted "\t", is no raw character in the source.
+                    if (InvisibleCharacterRule::ID === $issue->id
+                        && !LiteralSpelling::holdsRaw($this->documents->getContent($uri) ?? '', $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))
+                    ) {
+                        continue;
+                    }
+
                     $diagnostics[] = $this->diagnosticConverter->convert(
                         $issue,
                         $bodyStart,

@@ -83,6 +83,7 @@ final class LintConfigSchema
         'quantifier.uselessLazy' => ['Report a lazy quantifier that matches what the greedy one matches (style).', false],
         'lookaround.edgeQuantifier' => ['Report a repeat at the edge of a lookaround past its minimum, which is never checked (perf).', false],
         'anchor.dollarNewline' => ['Report a final $ in a pattern anchored at its start, which also matches before a trailing newline (info).', false],
+        'literal.invisible' => ['Warn about a control character, or a character that hides or moves text, written raw in a pattern.', true],
     ];
 
     /**

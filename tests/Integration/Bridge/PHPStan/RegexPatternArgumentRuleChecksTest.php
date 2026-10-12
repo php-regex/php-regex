@@ -57,6 +57,7 @@ final class RegexPatternArgumentRuleChecksTest extends RuleTestCase
             '30 regex.lint.quantifier.nested',
             '30 regex.redos',
             '31 regex.lint.group.redundant',
+            '34 regex.lint.literal.invisible',
         ], $identifiers);
     }
 

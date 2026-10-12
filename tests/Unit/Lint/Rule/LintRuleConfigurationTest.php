@@ -108,6 +108,7 @@ final class LintRuleConfigurationTest extends TestCase
         yield 'literal.multipleSpaces' => ['key' => 'literal.multipleSpaces', 'default' => false];
         yield 'quantifier.lazyToClass' => ['key' => 'quantifier.lazyToClass', 'default' => false];
         yield 'anchor.dollarNewline' => ['key' => 'anchor.dollarNewline', 'default' => false];
+        yield 'literal.invisible' => ['key' => 'literal.invisible', 'default' => true];
     }
 
     /**

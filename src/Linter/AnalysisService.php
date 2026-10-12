@@ -16,9 +16,11 @@ namespace PHPRegex\Linter;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\RedosVerdict;
+use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -354,10 +356,21 @@ final readonly class AnalysisService
             if ($this->lintEnabled) {
                 $linter = new PatternLinter($this->lintRules);
                 $ast->accept($linter);
+                $code = null;
 
                 foreach ($linter->getIssues() as $issue) {
                     if ($skipRiskAnalysis && isset(self::RISK_LINT_ISSUE_IDS[$issue->id])) {
                         continue;
+                    }
+
+                    // A raw character the PHP literal spells with an escape,
+                    // as a double-quoted "\t", is no raw character in the
+                    // source; without the source, the spelling is unknown.
+                    if (InvisibleCharacterRule::ID === $issue->id) {
+                        $code ??= null === $occurrence->fileOffset ? '' : (string) @file_get_contents($occurrence->file);
+                        if ('' === $code || !LiteralSpelling::holdsRaw($code, (int) $occurrence->fileOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))) {
+                            continue;
+                        }
                     }
 
                     // No automatic rewrite for the risk rules: wrapping the

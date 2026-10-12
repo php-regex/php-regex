@@ -222,4 +222,50 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertSame(['line' => 1, 'character' => 14], $range['start'] ?? null);
         $this->assertSame(['line' => 1, 'character' => 15], $range['end'] ?? null);
     }
+
+    /**
+     * A double-quoted "\t" reaches the pattern as a raw tab, though the
+     * document spells it: the raw character is reported only where the
+     * literal holds it as written. The code is built with PHP's own escapes,
+     * so that this file holds no raw tab.
+     *
+     * @return iterable<string, array{literal: string, reported: bool}>
+     */
+    public static function provideTabSpellings(): iterable
+    {
+        yield 'a raw tab in single quotes' => ['literal' => "'/a\tb/'", 'reported' => true];
+        yield 'a tab escape in double quotes' => ['literal' => '"/a\tb/"', 'reported' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideTabSpellings')]
+    public function test_a_raw_character_is_published_only_where_the_document_holds_it_raw(string $literal, bool $reported): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///d.php', 'text' => "<?php\npreg_match(".$literal.", \$s);\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+
+        $codes = array_map(static fn (mixed $diagnostic): mixed => \is_array($diagnostic) ? ($diagnostic['code'] ?? null) : null, $diagnostics);
+        $this->assertSame($reported, \in_array('regex.lint.literal.invisible', $codes, true));
+    }
 }

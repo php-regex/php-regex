@@ -82,11 +82,12 @@ final class LintRuleRegistryTest extends TestCase
             ['regex.lint.lookaround.edgeQuantifier'],
             ['regex.lint.group.alwaysEmptyCapture'],
             ['regex.lint.anchor.dollarNewline'],
+            ['regex.lint.literal.invisible'],
         ], $ruleIds);
     }
 
     #[Test]
-    public function test_all_51_rule_ids_are_covered(): void
+    public function test_all_52_rule_ids_are_covered(): void
     {
         $ids = [];
         foreach ((new LintRuleRegistry())->all() as $rule) {
@@ -96,6 +97,6 @@ final class LintRuleRegistryTest extends TestCase
             }
         }
 
-        $this->assertCount(51, $ids);
+        $this->assertCount(52, $ids);
     }
 }

@@ -31,5 +31,7 @@ final class Calls
         $str->matches($subject, '/(?:a)/'); // lint: redundant non-capturing group
         // "(?aD)" arrived in PCRE2 10.43; PHP 8.2 bundles 10.40, which refuses it at offset 2.
         $str->matches($subject, '/(?aD)x/');
+        $str->matches($subject, '/a	b/'); // lint: a raw tab
+        $str->matches($subject, "/a\tb/"); // a tab the source spells
     }
 }
