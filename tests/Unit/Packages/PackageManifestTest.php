@@ -182,13 +182,29 @@ final class PackageManifestTest extends TestCase
         $this->assertSame('<4.18', self::dig(self::decode(self::root().'/composer.json'), 'conflict', 'nikic/php-parser'));
     }
 
+    /**
+     * The monorepo package carries every bridge, but only its own manifest
+     * reaches a project that installs it: the host releases a bridge cannot
+     * run on are refused there as the bridge's package refuses them.
+     */
+    #[Test]
+    public function test_the_monorepo_package_refuses_the_hosts_its_bridges_refuse(): void
+    {
+        $root = self::decode(self::root().'/composer.json');
+
+        $this->assertSame('<2.4', self::dig($root, 'conflict', 'rector/rector'));
+        $this->assertSame('<6.19', self::dig($root, 'conflict', 'vimeo/psalm'));
+    }
+
     #[Test]
     public function test_rector_package_is_a_rector_extension_on_rector_2(): void
     {
         $manifest = self::manifest('Rector');
 
         $this->assertSame('rector-extension', self::dig($manifest, 'type'));
-        $this->assertSame('^2.0', self::dig($manifest, 'require', 'rector/rector'));
+        // AbstractRector::getNativeType(), which the trivial-match rule reads,
+        // arrived in Rector 2.4.
+        $this->assertSame('^2.4', self::dig($manifest, 'require', 'rector/rector'));
         // Rector bundles the parser it runs on: requiring another copy could
         // only conflict with it.
         $this->assertNull(self::dig($manifest, 'require', 'nikic/php-parser'));

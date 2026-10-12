@@ -16,7 +16,7 @@ the same thing, only when the automata prove it: no proof, no change. One more
 rule readies patterns for the PCRE2 of PHP 8.4, which reads some of them
 otherwise.
 
-Requires PHP 8.2+ to run and Rector 2.x. MIT licensed.
+Requires PHP 8.2+ to run and Rector 2.4 or later. MIT licensed.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Rector guide](https://php-regex.com/guides/rector/) walks each rewrite and the proof that unlocks it.
 

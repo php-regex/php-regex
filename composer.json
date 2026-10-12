@@ -117,7 +117,9 @@
         }
     },
     "conflict": {
-        "nikic/php-parser": "<4.18"
+        "nikic/php-parser": "<4.18",
+        "rector/rector": "<2.4",
+        "vimeo/psalm": "<6.19"
     },
     "suggest": {
         "psr/cache": "To share AST cache via PSR-6 pools.",
