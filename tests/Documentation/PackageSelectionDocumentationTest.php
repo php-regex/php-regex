@@ -61,6 +61,29 @@ final class PackageSelectionDocumentationTest extends TestCase
     }
 
     #[Test]
+    public function test_a_package_that_runs_in_production_installs_without_dev(): void
+    {
+        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install-prerelease.html');
+        $this->assertStringContainsString('composer require {% if include.dev %}--dev {% endif %}{{ include.package }}', $include);
+
+        $runtime = ['guides/laravel.md', 'guides/symfony.md', 'reference/api.md', 'reference/logic-solver.md', 'cookbook.md', 'guides/regex-in-php.md'];
+        $tools = ['guides/cli.md', 'guides/phpstan.md', 'guides/psalm.md', 'guides/rector.md', 'guides/lsp.md', 'concepts/redos.md'];
+        foreach ([...$runtime, ...$tools] as $page) {
+            $text = (string) file_get_contents(__DIR__.'/../../docs/'.$page);
+            $this->assertSame(1, preg_match('~\{% include install-prerelease\.html package="[^"]+"( dev=true)? %\}~', $text, $match), $page);
+            $this->assertSame(\in_array($page, $tools, true), isset($match[1]), $page.': a development tool passes dev=true, a runtime package does not.');
+        }
+    }
+
+    #[Test]
+    public function test_the_readme_points_at_the_package_guide(): void
+    {
+        $readme = (string) file_get_contents(__DIR__.'/../../README.md');
+
+        $this->assertStringContainsString('https://php-regex.com/packages/', $readme);
+    }
+
+    #[Test]
     public function test_the_package_guide_marks_the_monorepo_as_not_the_default(): void
     {
         $this->assertFileExists(self::PAGE);

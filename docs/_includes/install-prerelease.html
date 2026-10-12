@@ -1,10 +1,12 @@
 {% comment %}
   The one installation story shared by every page: the focused package that
-  page is about. Parameter: package — the Composer package to install.
+  page is about. Parameters: package — the Composer package to install; dev —
+  true for a development tool (CLI, static analysis, editor), left out for a
+  package the application runs in production.
 {% endcomment %}
 <section class="install-block">
   <h2 id="installation">Installation</h2>
   <div class="install"><pre><code>composer config minimum-stability dev
 composer config prefer-stable true
-composer require --dev {{ include.package }}:{{ site.data.product.release }}-dev</code></pre></div>
+composer require {% if include.dev %}--dev {% endif %}{{ include.package }}:{{ site.data.product.release }}-dev</code></pre></div>
 </section>

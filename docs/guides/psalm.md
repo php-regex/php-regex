@@ -9,7 +9,7 @@ description: "The PHPRegex Psalm plugin: how $matches gets the shape of the patt
 `$matches` is the shape of the pattern, and after `preg_match_all()` too. The
 plugin also reports the patterns the PHP you target refuses.
 
-{% include install-prerelease.html package="php-regex/regex-psalm" %}
+{% include install-prerelease.html package="php-regex/regex-psalm" dev=true %}
 
 Then declare the plugin in `psalm.xml`:
 

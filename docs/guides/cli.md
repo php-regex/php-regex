@@ -7,7 +7,7 @@ description: "Install the PHPRegex CLI and drive it end to end: parse, explain, 
 This guide covers PHPRegex's command-line tool and the workflows it enables.
 The binary requires PHP 8.2 or later.
 
-{% include install-prerelease.html package="php-regex/regex-cli" %}
+{% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
 
 Once installed, the binary is `vendor/bin/regex`:
 

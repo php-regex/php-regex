@@ -74,7 +74,8 @@ parser package needs only `mbstring`.
 
 PHPRegex is a family of packages, developed together in
 [php-regex/php-regex](https://github.com/php-regex/php-regex) and released
-with one version number. Install the one you need:
+with one version number. Install the one you need; the
+[package guide](https://php-regex.com/packages/) helps you choose:
 
 | package | what it holds |
 |---|---|

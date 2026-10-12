@@ -10,7 +10,7 @@ becomes `\str_starts_with($url, 'https:')`, `preg_split('/;/', $csv)` becomes
 Rector runs, that the two answer alike on every subject. When they cannot,
 the code is left as it is.
 
-{% include install-prerelease.html package="php-regex/regex-rector" %}
+{% include install-prerelease.html package="php-regex/regex-rector" dev=true %}
 
 The package runs on PHP 8.2 or later and requires Rector 2.x
 (`rector/rector ^2.0`). A project that targets an older PHP can still use it:

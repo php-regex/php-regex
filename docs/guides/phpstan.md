@@ -9,7 +9,7 @@ and reports what PHPStan itself cannot see: a pattern the PHP your project
 targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
 analysis are there too, off until you ask for them.
 
-{% include install-prerelease.html package="php-regex/regex-phpstan" %}
+{% include install-prerelease.html package="php-regex/regex-phpstan" dev=true %}
 
 The extension runs on PHP 8.2 or later and PHPStan 2.x
 (`phpstan/phpstan ^2.0`); reading a parameter attribute needs PHPStan
