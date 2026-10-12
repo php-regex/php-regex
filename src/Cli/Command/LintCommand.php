@@ -139,7 +139,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             // read from regex.json or the environment, a configuration one.
             $fromCommandLine = null !== $input->globalOptions->phpVersion || null !== $input->globalOptions->pcreVersion;
 
-            return $this->fail($output, $json, 'Invalid option: '.$e->getMessage(), $fromCommandLine ? JsonDocument::STAGE_USAGE : JsonDocument::STAGE_CONFIG, self::INVALID);
+            return $this->fail($output, $json, $this->invalidOptionMessage($e, $input->regexOptions), $fromCommandLine ? JsonDocument::STAGE_USAGE : JsonDocument::STAGE_CONFIG, self::INVALID);
         }
 
         $paths = $arguments->paths;

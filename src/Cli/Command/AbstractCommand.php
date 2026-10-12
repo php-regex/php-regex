@@ -38,14 +38,34 @@ abstract class AbstractCommand implements CommandInterface
         try {
             return Regex::create($options);
         } catch (InvalidRegexOptionException $e) {
+            $message = $this->invalidOptionMessage($e, $options);
             if ($json) {
-                $output->writeDocument(JsonDocument::error('Invalid option: '.$e->getMessage(), JsonDocument::STAGE_USAGE));
+                $output->writeDocument(JsonDocument::error($message, JsonDocument::STAGE_USAGE));
             } else {
-                $output->writeError($output->error('Invalid option: '.$e->getMessage()."\n"));
+                $output->writeError($output->error($message."\n"));
             }
 
             return null;
         }
+    }
+
+    /**
+     * The message of an option the library refused. A version the command
+     * line gave is named by its option, --php-version or --pcre-version,
+     * not by the library's key.
+     *
+     * @param array<string, mixed> $fromCommandLine the library options the command line set
+     */
+    protected function invalidOptionMessage(InvalidRegexOptionException $e, array $fromCommandLine): string
+    {
+        $flags = [];
+        foreach (['php_version' => '--php-version', 'pcre_version' => '--pcre-version'] as $key => $flag) {
+            if (isset($fromCommandLine[$key])) {
+                $flags['"'.$key.'"'] = $flag;
+            }
+        }
+
+        return 'Invalid option: '.strtr($e->getMessage(), $flags);
     }
 
     /**
