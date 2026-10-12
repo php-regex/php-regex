@@ -48,11 +48,18 @@ in its own form, not as the envelope.
   [Exit Codes](../guides/cli.md#exit-codes)).
 - PHP's own diagnostics (warnings, notices) go to stderr in JSON mode, never
   into the document. A fatal error, such as `redos` running out of
-  `--time-limit`, prints the envelope with stage `internal` and exits with 1.
-  An exception the command does not handle prints the envelope with stage
-  `internal` and exits with 1 too. A process killed from outside, by a hard
-  limit or a signal, cannot print anything: stdout is then empty, and the exit
-  code is the one the system gives.
+  `--time-limit` between two matches, prints the envelope with stage
+  `internal` and exits with 1. An exception the command does not handle
+  prints the envelope with stage `internal` and exits with 1 too. A process
+  killed from outside, by a hard limit or a signal, cannot print anything:
+  stdout is then empty, and the exit code is the one the system gives.
+- `redos` running out of `--time-limit` during a single match can be such a
+  kill. PHP cannot stop a running `preg_match()` call: it gives the call
+  `hard_timeout` more seconds to return (2 by default, a setting of php.ini
+  only), and the fatal error above follows when it does. A call still running
+  then has PHP end the process itself, with `Maximum execution time of …
+  seconds exceeded (terminated)` on stderr, nothing on stdout and exit code
+  124.
 - JSON mode is read before anything else: `--format=json`, `--format json`
   and `--json` count wherever they sit on the command line, so a mistake in
   another option is reported as JSON too. An unknown command, or `--json`
