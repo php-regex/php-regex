@@ -18,7 +18,7 @@ use PHPRegex\Toolkit\Regex;
  * under the route's utf8 option. That compiled form is what is checked here.
  */
 
-require_once __DIR__.'/../../../vendor/autoload.php';
+require_once __DIR__.'/../../vendor/autoload.php';
 
 // Example routes from a Symfony application: path => requirements
 $routes = [

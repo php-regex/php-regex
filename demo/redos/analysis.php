@@ -17,7 +17,7 @@ use PHPRegex\Redos\ConfirmationOptions;
  * - Validating optimized patterns
  */
 
-require_once __DIR__ . '/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 // Risky pattern with nested quantifiers (classic ReDoS example)
 $riskyPattern = '/^(\w+)+$/';
