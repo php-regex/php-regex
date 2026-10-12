@@ -13,6 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Psalm\Internal;
 
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\MatchMode;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\RegexParser;
 use Psalm\Type\Atomic\TNonEmptyString;
 use Psalm\Type\Atomic\TNonFalsyString;
 use Psalm\Type\Atomic\TString;
@@ -31,10 +36,24 @@ use Psalm\Type\Atomic\TString;
  * '0' from 0 and from 1, where \G matches its end. A call that fails (a
  * backtrack limit the runtime may raise) rules nothing out.
  *
+ * A pattern anchored at both ends may match only a few strings: then the
+ * subject is one of them (stringsOfMatch()).
+ *
  * @internal
  */
 final class SubjectType
 {
+    /**
+     * Past this many strings, the subject keeps the facts of its pattern, as
+     * a group keeps its own past as many values.
+     */
+    private const MAX_STRINGS = 16;
+
+    /**
+     * @var array<string, non-empty-list<string>|null> by target, pattern and Psalm's literal length
+     */
+    private static array $strings = [];
+
     /**
      * The type of the subject where preg_match() returned 1, or null when
      * the pattern may match ''.
@@ -48,6 +67,52 @@ final class SubjectType
         }
 
         return self::mayMatch($pattern, '0', self::offsetsInto(1, $offset)) ? new TNonEmptyString() : new TNonFalsyString();
+    }
+
+    /**
+     * Every string preg_match() returns 1 for from offset 0, when they are
+     * at most MAX_STRINGS, each shorter than $maxLength bytes: where the
+     * call returned 1, the subject is one of them. The solver reads the
+     * pattern searched anywhere in the subject, so a "\n" that $ lets
+     * through before the end is among them. Null when the solver cannot
+     * read the pattern, when the strings are more or longer, or when the
+     * running engine does not match one of them.
+     *
+     * @return non-empty-list<string>|null
+     */
+    public static function stringsOfMatch(string $pattern, RegexParser $parser, int $maxLength): ?array
+    {
+        $target = $parser->target();
+        $key = $target->phpVersionId.'/'.$target->pcreVersion."\0".$pattern."\0".$maxLength;
+
+        return \array_key_exists($key, self::$strings) ? self::$strings[$key] : self::$strings[$key] = self::readStrings($pattern, $parser, $maxLength);
+    }
+
+    /**
+     * @return non-empty-list<string>|null
+     */
+    private static function readStrings(string $pattern, RegexParser $parser, int $maxLength): ?array
+    {
+        try {
+            $language = (new LanguageSolver($parser))->language($pattern, new SolverOptions(matchMode: MatchMode::Partial));
+            if (!$language->isFinite()) {
+                return null;
+            }
+
+            $strings = [];
+            foreach ($language->strings() as $string) {
+                // The engine has the last word: a string it does not match drops them all.
+                if (self::MAX_STRINGS === \count($strings) || \strlen($string) >= $maxLength || 1 !== @preg_match($pattern, $string)) {
+                    return null;
+                }
+
+                $strings[] = $string;
+            }
+        } catch (ExceptionInterface) {
+            return null; // Past the solver's regular subset or its budgets.
+        }
+
+        return [] === $strings ? null : $strings;
     }
 
     /**

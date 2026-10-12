@@ -24,13 +24,16 @@ Features
 
 * Where `preg_match()` returned 1, `$matches` is the shape of the pattern: one
   key per group, named groups included, each holding what the group can
-  capture (a literal, a non-falsy string, a non-empty string), optional where
-  PHP may leave the key out. Where it did not, `$matches` is `[]`.
+  capture (literals, as `'a'|'aa'|'aaa'` for `(a{1,3})`, a non-falsy string,
+  a non-empty string), optional where PHP may leave the key out. Where it did
+  not, `$matches` is `[]`.
 * After `preg_match_all()`, `$matches` is the shape of the pattern, in either
   order, for a pattern without `\K` and an offset absent or a constant ≤ 0.
 * Where `preg_match()` returned 1, a `string` subject is a `non-empty-string`
   when the pattern never matches `''`, a `non-falsy-string` when it matches
-  neither `''` nor `'0'`, on a call that does not type `$matches`.
+  neither `''` nor `'0'`, on a call that does not type `$matches`. When the
+  pattern matches no more than 16 strings, as `/^(?:yes|no)$/D`, the subject
+  is one of them.
 * `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL` are read, as are named
   arguments in any order.
 * An invalid pattern is reported as `InvalidRegexPattern`, with the error and
@@ -135,6 +138,25 @@ function order_id(string $input): string
 $input: non-empty-string
 ```
 
+```php
+function answer(string $input): bool
+{
+    if (!preg_match('/^(?:yes|no)$/', $input)) {
+        throw new InvalidArgumentException('Answer yes or no.');
+    }
+
+    /** @psalm-trace $input */
+
+    return 'yes' === $input;
+}
+```
+
+```
+$input: 'no'|'no\n'|'yes'|'yes\n'
+```
+
+`$` matches before a final `"\n"` too: `/^(?:yes|no)$/D` or `\z` leaves it out.
+
 An invalid pattern, in `app/broken.php`:
 
 ```php
@@ -198,6 +220,13 @@ The plugin reads a call only when it can tell what the pattern is:
   `preg_match(…) ? $m[1] : 'none'`. A group of digits is a `non-falsy-string`
   where it cannot be `'0'`, else a `non-empty-string`; so is the subject of
   `/^\d+$/`.
+* a subject is narrowed to the strings its pattern matches only from offset
+  0 (no offset argument), up to 16 strings each below `maxStringLength`
+  bytes, and not when it holds literals already: where the call is false,
+  Psalm would take those strings out of it, and a match error returns `false`
+  on them too. Without `/u`, a caseless part, a shorthand class (`\d`, `\w`,
+  `\s`…), a POSIX class or `\b` reads the character tables of the locale
+  `setlocale()` sets: such a subject keeps the facts of its pattern.
 * the subject of a call that types `$matches` keeps its type: Psalm reads a
   false condition as the negation of what holds where it is true, and on two
   variables that negation would take the `[]` from `$matches`. A subject that

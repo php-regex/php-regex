@@ -189,7 +189,8 @@ final class PsalmPluginTargetTest extends TestCase
      * A pattern every target accepts may mean something else for each:
      * "{,3}" is a quantifier from PCRE2 10.43 (ChangeLog 10.43, the Perl 5.34
      * syntax), literal text before. preg_match('/(a{,3})/', 'aa', $m) -> 1,
-     * $m = ['aa', 'aa'] (PHP 8.4.26, PCRE2 10.44 and later). Each target gets
+     * $m = ['aa', 'aa'], and on 'xaa' $m = ['', ''] (PHP 8.4.26, PCRE2 10.44
+     * and later): from 0 to 3 a's. Each target gets
      * its own type, whichever run comes first in the process.
      */
     #[Test]
@@ -198,7 +199,7 @@ final class PsalmPluginTargetTest extends TestCase
         $file = 'Target/short_quantifier.php';
         $expected = [
             '8.2' => "array{0: 'a{,3}', 1: 'a{,3}'}",
-            '8.4' => 'array{0: string, 1: string}',
+            '8.4' => "array{0: ''|'a'|'aa'|'aaa', 1: ''|'a'|'aa'|'aaa'}",
         ];
 
         foreach ($expected as $phpVersion => $type) {

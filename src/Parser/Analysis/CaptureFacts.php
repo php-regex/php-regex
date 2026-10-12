@@ -166,19 +166,33 @@ final class CaptureFacts
     {
         $bounds = QuantifierBounds::parse($node->quantifier);
         $body = $this->values($node->node);
-        if (null === $bounds || null === $body) {
+        if (null === $bounds || null === $body || null === $bounds->max) {
             return null;
         }
 
-        if (0 === $bounds->min && 1 === $bounds->max) {
-            return $this->union([[''], $body]);
+        // A body that reads nothing reads nothing at any count.
+        if ([''] === $body) {
+            return [''];
         }
 
-        if ($bounds->min !== $bounds->max || $bounds->min > 4) {
+        // Each count adds a string longer than any before: past MAX_VALUES counts, the values are unknown.
+        if ($bounds->max > self::MAX_VALUES) {
             return null;
         }
 
-        return $this->product(array_fill(0, $bounds->min, $body));
+        // The body read once per count, from the least to the most; lazy or
+        // possessive, the quantifier still stops at one of these counts.
+        $values = 0 === $bounds->min ? [''] : [];
+        $power = [''];
+        for ($count = 1; $count <= $bounds->max; $count++) {
+            $power = $this->product([$power, $body]);
+            $values = $count < $bounds->min || null === $power ? $values : $this->union([$values, $power]);
+            if (null === $power || null === $values) {
+                return null;
+            }
+        }
+
+        return $values;
     }
 
     /**

@@ -18,7 +18,7 @@ declare(strict_types=1);
  * @return array{version: string, digests: array<string, string>}
  */
 return [
-    'version' => '1',
+    'version' => '2',
     'digests' => [
         '/(a)(z)?/' => 'fceffee5528c62d919aa50fe9f9a0e4f57b34252',
         '/(z)?(a)/' => 'dad1b8133f483a94938631586006071bd8a02a22',
@@ -78,7 +78,7 @@ return [
         '/(a)?([a-z]*)(\\d*)/' => '0d71b2e5a9c32ab390eea88a006b7c058b141e7b',
         '/(4)?(2)?\\d/' => 'c462358a91e55c8c10086cf3f53b822f78bbea2c',
         '/(?<a>4)?(?<b>2)?\\d/' => '8e0a6baf083d26f4a2303b02fc0b94c81f846a4e',
-        '/a{1,3}b/U' => '16deaf3ac7f88ce33fbf6a68a5a0441218c895ce',
+        '/a{1,3}b/U' => '7a1b5637bfba98351daa32fcf66bb65de022c838',
         '/./' => '7412399dfeca50bbfe5a1c5f47aa60c3f28cbce9',
         '/\\S+/' => '7412399dfeca50bbfe5a1c5f47aa60c3f28cbce9',
         '/\\w/u' => '7412399dfeca50bbfe5a1c5f47aa60c3f28cbce9',
@@ -154,8 +154,9 @@ u/x' => '88ca49fb2d88671cedd9fb2488d7a05b788f3e92',
         '/(?:(a)|(b))+/' => 'dca56ff5631734cf8ae1a1d374ac0c491d3d1858',
         '/(a)*/' => 'b8d132e9a8acec6a3ca0cdaae6ba2f13c107d142',
         '/(a){2}/' => '15eca7d5940309cb28ad8972758b6cc5dd680f74',
-        '/(a){1,3}/' => '102635affea7244b08edd9701ce715c4327cf9c9',
-        '/(a|b){0,2}/' => 'ccd27715af77dec62b4058220e3fd6e586cbae66',
+        '/(a){1,3}/' => '992af12aaa03a86320ca71e8611535954eb056db',
+        '/(a|b){0,2}/' => '2315d7d4747422397ff06eaf656617af8d1e9149',
+        '/(a{1,3})(b{0,2}?)c/' => 'dfcc41318573c93cca6dea4985db55153f8f1d8e',
         '/(?<n>a)+/' => '0269b335b1fb40265b9d751798de445b332b88f9',
         '/(a+)/U' => 'fc5c68ab9c356f0dc0c318b6ddb3ebbfc3c015ad',
         '/(a)|(b)|(c)/' => 'b28eb2f33241424d2a0e8e202893cb79cfb45506',

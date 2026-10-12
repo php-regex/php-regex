@@ -40,8 +40,17 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -55,11 +64,12 @@ use Psalm\NodeTypeProvider;
 use Psalm\Plugin\EventHandler\AfterExpressionAnalysisInterface;
 use Psalm\Plugin\EventHandler\Event\AfterExpressionAnalysisEvent;
 use Psalm\StatementsSource;
+use Psalm\Storage\Assertion\InArray;
 use Psalm\Storage\Assertion\IsType;
 use Psalm\Storage\Possibilities;
 use Psalm\Type;
 use Psalm\Type\Atomic;
-use Psalm\Type\Atomic\TString;
+use Psalm\Type\Atomic\TLiteralString;
 use Psalm\Type\Union;
 
 /**
@@ -81,7 +91,7 @@ use Psalm\Type\Union;
  *
  * @internal
  *
- * @phpstan-type PatternVerdict array{error: ?string, shape: ?CaptureShape, noAutoCapture: bool, keepsOut: bool}
+ * @phpstan-type PatternVerdict array{error: ?string, shape: ?CaptureShape, noAutoCapture: bool, keepsOut: bool, fewStrings: bool}
  * @phpstan-type CachedType array{type: Union, keys: int}
  */
 final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
@@ -249,7 +259,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             return;
         }
 
-        $subject = self::subjectType($pattern, $arguments, $nodeTypes);
+        $subject = self::subjectType($pattern, $verdict, $arguments, $nodeTypes, $parser, $codebase);
         if (null !== $subject && isset($arguments['subject'])) {
             self::assertOnResult($nodeTypes, $call, [self::assertion($call, $arguments['subject'], $subject)], []);
         }
@@ -288,14 +298,20 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * The type of a string subject where preg_match() returned 1, or null
+     * What a string subject holds where preg_match() returned 1, or null
      * when it is not narrowed: a subject that may be another type is read as
      * a string, and a subject read from $matches is gone once the call
      * wrote it.
      *
+     * From offset 0, a pattern that matches only a few strings makes the
+     * subject one of them. Not for a subject that holds literals already:
+     * where the call is false, Psalm would take those strings out of it,
+     * and a match error returns false on them too.
+     *
+     * @param PatternVerdict      $verdict
      * @param array<string, Expr> $arguments
      */
-    private static function subjectType(string $pattern, array $arguments, NodeTypeProvider $nodeTypes): ?TString
+    private static function subjectType(string $pattern, array $verdict, array $arguments, NodeTypeProvider $nodeTypes, RegexParser $parser, Codebase $codebase): Atomic|Union|null
     {
         $subject = $arguments['subject'] ?? null;
         $type = null === $subject ? null : $nodeTypes->getType($subject);
@@ -307,6 +323,11 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         if (isset($arguments['offset'])) {
             $offsetType = $nodeTypes->getType($arguments['offset']);
             $offset = null !== $offsetType && $offsetType->isSingleIntLiteral() ? $offsetType->getSingleIntLiteral()->value : null;
+        }
+
+        $strings = $verdict['fewStrings'] && !isset($arguments['offset']) && !$type->hasLiteralString() ? SubjectType::stringsOfMatch($pattern, $parser, $codebase->config->max_string_length) : null;
+        if (null !== $strings) {
+            return new Union(array_map(TLiteralString::make(...), $strings));
         }
 
         return SubjectType::ofMatch($pattern, $offset);
@@ -339,12 +360,15 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      * The assertion that the argument holds the type, or null when the
      * argument cannot be found among the call's.
      */
-    private static function assertion(FuncCall $call, Expr $argument, Atomic $type): ?Possibilities
+    private static function assertion(FuncCall $call, Expr $argument, Atomic|Union $type): ?Possibilities
     {
         // An assertion names the argument by its index in the call.
         $index = array_search($argument, array_map(static fn ($argument): Expr => $argument->value, $call->getArgs()), true);
 
-        return \is_int($index) ? new Possibilities($index, [new IsType($type)]) : null; // Never null: the argument is the call's.
+        // A union of literals is asserted as in_array() asserts it.
+        $assertion = $type instanceof Union ? new InArray($type) : new IsType($type);
+
+        return \is_int($index) ? new Possibilities($index, [$assertion]) : null; // Never null: the argument is the call's.
     }
 
     /**
@@ -544,22 +568,84 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             $regex = $parser->parse($pattern);
         } catch (ResourceLimitException|RecursionLimitException) {
             // The library's own limits, not PCRE's: it cannot judge the pattern, which PCRE may well accept.
-            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false];
+            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
         } catch (ExceptionInterface) {
             $regex = null;
         }
 
         $validation = $parser->validate($pattern);
         if (!$validation->isValid) {
-            return ['error' => self::message($parser, $validation), 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false];
+            return ['error' => self::message($parser, $validation), 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
         }
 
         // A pattern the running engine does not compile leaves $matches as it was: nothing is asserted on it.
         if (null === $regex || null !== (new PcreEngine())->compile($pattern)) {
-            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false]; // Only on a running PCRE2 older than the target's, as the 10.40 and 10.42 CI images.
+            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false]; // Only on a running PCRE2 older than the target's, as the 10.40 and 10.42 CI images.
         }
 
-        return ['error' => null, 'shape' => (new CaptureShapeAnalyzer())->analyze($regex), 'noAutoCapture' => str_contains($regex->flags, 'n'), 'keepsOut' => self::keepsOut($regex)];
+        $shape = (new CaptureShapeAnalyzer())->analyze($regex);
+
+        return [
+            'error' => null,
+            'shape' => $shape,
+            'noAutoCapture' => str_contains($regex->flags, 'n'),
+            'keepsOut' => self::keepsOut($regex),
+            // Only a match of bounded length, from the start of the subject, may leave a few strings to read.
+            'fewStrings' => null !== $shape->whole->maxLength && self::startsAtTheStart($regex->pattern) && (str_contains($regex->flags, 'u') || !self::readsTheLocale($regex)),
+        ];
+    }
+
+    /**
+     * Whether every match starts at the start of the subject, as far as the
+     * tree shows it: ^ or \A first in each branch.
+     */
+    private static function startsAtTheStart(NodeInterface $node): bool
+    {
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if (!self::startsAtTheStart($alternative)) {
+                    return false;
+                }
+            }
+
+            return [] !== $node->alternatives;
+        }
+
+        return match (true) {
+            $node instanceof AnchorNode => '^' === $node->value,
+            $node instanceof AssertionNode => 'A' === $node->value,
+            $node instanceof SequenceNode => [] !== $node->children && self::startsAtTheStart($node->children[0]),
+            $node instanceof GroupNode => \in_array($node->type, [GroupType::Capturing, GroupType::Named, GroupType::NonCapturing, GroupType::Atomic], true) && self::startsAtTheStart($node->child),
+            default => false,
+        };
+    }
+
+    /**
+     * Whether, without /u, the pattern reads PCRE's character tables, which
+     * PHP builds from the locale setlocale() sets: a caseless part, a
+     * shorthand class, a POSIX class or a word boundary. After
+     * setlocale(LC_CTYPE, 'fr_FR.ISO8859-1'), preg_match('/^\w$/', "\xE9")
+     * returns 1, where it returns 0 under the C locale the solver reads.
+     */
+    private static function readsTheLocale(NodeInterface $node): bool
+    {
+        if ($node instanceof RegexNode && str_contains($node->flags, 'i')) {
+            return true;
+        }
+
+        if ($node instanceof CharTypeNode || $node instanceof PosixClassNode
+            || ($node instanceof AssertionNode && \in_array($node->value, ['b', 'B'], true))
+            || ($node instanceof GroupNode && str_contains((string) $node->flags, 'i'))) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::readsTheLocale($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

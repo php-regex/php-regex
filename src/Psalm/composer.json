@@ -25,6 +25,7 @@
     "require": {
         "php": ">=8.2",
         "vimeo/psalm": "^6.19",
+        "php-regex/regex-automata": "self.version",
         "php-regex/regex-parser": "self.version"
     },
     "autoload": {

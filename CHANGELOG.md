@@ -89,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Psalm: a subject whose pattern matches at most 16 strings is narrowed to their union of literals (`/^(?:yes|no)$/` gives `'no'|"no\n"|'yes'|"yes\n"`, `$` letting a final newline through), and capture groups enumerate bounded repeats (`(a{1,3})` gives `'a'|'aa'|'aaa'`, in the PHPStan shapes too; `CaptureShapeAnalyzer::ANALYSIS_VERSION` is now `2`). `php-regex/regex-psalm` now requires `php-regex/regex-automata`.
 - Psalm: where `preg_match()` returned 1, a `string` subject is narrowed to `non-empty-string` when the pattern never matches `''`, and to `non-falsy-string` when it matches neither `''` nor `'0'` (on calls that do not type `$matches`).
 - The style rule `regex.lint.lookaround.redundant`, off by default, reports a positive lookahead that ends a lookahead, or a positive lookbehind that starts a lookbehind, which the outer assertion can hold: `(?=a(?=b))` is `(?=ab)`.
 - The lint rule `regex.lint.literal.invisible` (warning) reports a C0 control, DEL, or a character that hides or moves text (C1 controls, format characters such as U+200B or U+202E, U+2028, U+2029) written raw where the pattern reads text, with the escape to write. The lint command, PHPStan and the language server keep the report only where the PHP literal holds the character as written: a double-quoted `"\t"` is not reported.

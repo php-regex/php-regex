@@ -150,6 +150,43 @@ Where the call did not return 1, the subject keeps its type. No
 `numeric-string` either, for the reason the groups of digits have none:
 `/^\d+$/` makes a `non-empty-string`.
 
+A pattern anchored at both ends may match only a few strings. Up to 16 of
+them, each below `maxStringLength` bytes, the subject is one of them; the
+plugin reads them from the pattern's automaton (`php-regex/regex-automata`),
+and each one is matched by the PHP running Psalm before it is used:
+
+```php
+function answer(string $input): bool
+{
+    if (!preg_match('/^(?:yes|no)$/', $input)) {
+        throw new InvalidArgumentException('Answer yes or no.');
+    }
+
+    /** @psalm-trace $input */
+
+    return 'yes' === $input;
+}
+```
+
+```
+$input: 'no'|'no\n'|'yes'|'yes\n'
+```
+
+`$` matches before a final `"\n"` too, so `"yes\n"` is among them;
+`/^(?:yes|no)$/D` or `/^(?:yes|no)\z/` leaves it out. Under `/iu`, the
+strings follow Unicode case folding: `/^(?:ok)$/Diu` matches six, `k` folding
+with U+212A KELVIN SIGN. The strings are read only from offset 0, a call with
+no offset argument. A subject that holds literals already keeps them: where
+the call is false, Psalm would take the strings out of it, and a match error
+(a backtrack limit the runtime lowered) returns `false` on them too. Without
+`/u`, PHP builds PCRE's character tables from the locale `setlocale()` sets:
+after `setlocale(LC_CTYPE, 'fr_FR.ISO8859-1')`, `preg_match('/^\w$/', "\xE9")`
+returns 1. A caseless part, a shorthand class, a POSIX class or `\b` without
+`/u` leaves the subject the facts of its pattern.
+
+A group reads its literals the same way, through alternations and bounded
+repeats: `(a{1,3})` holds `'a'|'aa'|'aaa'`.
+
 The subject is narrowed on a call that does not type `$matches`. Psalm reads
 a false condition as the negation of what holds where it is true; on two
 variables that negation says nothing of either, and `$matches` would lose

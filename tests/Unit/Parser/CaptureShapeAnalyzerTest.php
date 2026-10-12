@@ -945,6 +945,18 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield 'caseless' => ['pattern' => '/(foo)/i', 'group' => 1, 'values' => null];
         yield 'inline caseless' => ['pattern' => '/(?i)(foo)/', 'group' => 1, 'values' => null];
         yield 'unbounded' => ['pattern' => '/(a+)/', 'group' => 1, 'values' => null];
+        // A bounded repeat holds each count of its body: preg_match('/(a{1,3})/', 'aa') -> ['aa', 'aa'] (PHP 8.4.26).
+        yield 'bounded repeat' => ['pattern' => '/(a{1,3})/', 'group' => 1, 'values' => ['a', 'aa', 'aaa']];
+        yield 'bounded repeat from zero' => ['pattern' => '/(a{0,2})/', 'group' => 1, 'values' => ['', 'a', 'aa']];
+        yield 'bounded repeat of an alternation' => ['pattern' => '/((?:a|b){1,2})/', 'group' => 1, 'values' => ['a', 'b', 'aa', 'ab', 'ba', 'bb']];
+        // Laziness and possession pick a count, never a string the counts do not hold:
+        // preg_match('/(a{2,3}?)/', 'aaa') -> ['aa', 'aa'] (PHP 8.4.26).
+        yield 'lazy bounded repeat' => ['pattern' => '/(a{2,3}?)/', 'group' => 1, 'values' => ['aa', 'aaa']];
+        yield 'possessive bounded repeat' => ['pattern' => '/((?:ab){0,2}+)/', 'group' => 1, 'values' => ['', 'ab', 'abab']];
+        yield 'exact repeat past four' => ['pattern' => '/(a{5})/', 'group' => 1, 'values' => ['aaaaa']];
+        yield 'bounded repeat of an empty body' => ['pattern' => '/((?:){2,1000})/', 'group' => 1, 'values' => ['']];
+        yield 'bounded repeat past the limit' => ['pattern' => '/(a{1,33})/', 'group' => 1, 'values' => null];
+        yield 'bounded repeat past the limit by its product' => ['pattern' => '/((?:a|b|c){1,3})/', 'group' => 1, 'values' => null];
         yield 'extended mode' => ['pattern' => '/(a b)/x', 'group' => 1, 'values' => ['ab']];
         yield 'branch reset joins' => ['pattern' => '/(?|(a)|(b))/', 'group' => 1, 'values' => ['a', 'b']];
         // A branch reset number joins the values of its branches, up to 32: preg_match() on each of
@@ -1033,6 +1045,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         yield '/(?<n>a)(b)/' => ['pattern' => '/(?<n>a)(b)/', 'subjects' => ['ab']];
         yield '/(?J)(?<n>a)|(?<n>b)/' => ['pattern' => '/(?J)(?<n>a)|(?<n>b)/', 'subjects' => ['a', 'b']];
         yield '/(a){0}b/' => ['pattern' => '/(a){0}b/', 'subjects' => ['b']];
+        yield '/(a{1,3})(b{0,2}?)c/' => ['pattern' => '/(a{1,3})(b{0,2}?)c/', 'subjects' => ['ac', 'aaabbc', 'abc']];
         yield '/^(\d{3})-(\d{4})$/' => ['pattern' => '/^(\d{3})-(\d{4})$/', 'subjects' => ['555-1234']];
         yield '/(foo|bar)(baz)?/i' => ['pattern' => '/(foo|bar)(baz)?/i', 'subjects' => ['FOObaz', 'bar']];
         yield '/(a b)/x' => ['pattern' => '/(a b)/x', 'subjects' => ['ab']];

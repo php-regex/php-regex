@@ -422,8 +422,9 @@ Every answer is sound: a group reported `Always` is set by every match, a value 
 every string the group can take, a length bound holds every match. When the pattern alone
 cannot tell, the answer widens rather than guesses:
 
-- Values come from literals only. Under `/i`, or once `(?i)` appears anywhere, they are
-  unknown.
+- Values come from literals only, through alternations and bounded repeats: `(a{1,3})`
+  holds `'a'`, `'aa'` or `'aaa'`, up to 32 strings. Under `/i`, or once `(?i)` appears
+  anywhere, they are unknown.
 - `\K` and `(*ACCEPT)` cut a match short: the whole match then keeps only its presence,
   and `(*ACCEPT)` makes every group `MayBeUnset` with unknown values.
 - A group read through a subroutine call, or a backreference, has unknown values.

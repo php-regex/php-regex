@@ -168,6 +168,7 @@ return [
     ['source' => 'parity: repeat', 'pattern' => '/(a){2}/', 'subjects' => ['aa']],
     ['source' => 'parity: repeat', 'pattern' => '/(a){1,3}/', 'subjects' => ['a', 'aaa']],
     ['source' => 'parity: repeat', 'pattern' => '/(a|b){0,2}/', 'subjects' => ['', 'ab']],
+    ['source' => 'parity: repeat', 'pattern' => '/(a{1,3})(b{0,2}?)c/', 'subjects' => ['ac', 'aaabbc', 'abc']],
     ['source' => 'parity: repeat', 'pattern' => '/(?<n>a)+/', 'subjects' => ['aa']],
     ['source' => 'parity: repeat', 'pattern' => '/(a+)/U', 'subjects' => ['aa']],
 
