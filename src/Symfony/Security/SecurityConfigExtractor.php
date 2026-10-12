@@ -76,6 +76,7 @@ final readonly class SecurityConfigExtractor
         /** @var int|null $currentListIndent */
         $currentListIndent = null;
         $whenIndent = null;
+        $whenChildIndent = null;
         $skipWhen = false;
 
         foreach ($lines as $index => $line) {
@@ -89,21 +90,27 @@ final readonly class SecurityConfigExtractor
 
             if (null !== $whenIndent && $indent <= $whenIndent) {
                 $whenIndent = null;
+                $whenChildIndent = null;
                 $skipWhen = false;
             }
 
             if (null !== $key && 0 === $indent && str_starts_with($key, 'when@')) {
                 $whenIndent = $indent;
+                $whenChildIndent = null;
                 $skipWhen = null !== $environment && $environment !== substr($key, 5);
 
                 continue;
+            }
+
+            if (null !== $whenIndent && null === $whenChildIndent) {
+                $whenChildIndent = $indent;
             }
 
             if (null !== $whenIndent && $skipWhen && $indent > $whenIndent) {
                 continue;
             }
 
-            if (null !== $key && 'security' === $key) {
+            if ('security' === $key && $this->isSecurityRoot($indent, $whenChildIndent)) {
                 $securityIndent = $indent;
                 $accessIndent = null;
                 $currentRuleIndex = null;
@@ -244,6 +251,7 @@ final readonly class SecurityConfigExtractor
         $currentFirewallIndex = null;
         $currentFirewallIndent = null;
         $whenIndent = null;
+        $whenChildIndent = null;
         $skipWhen = false;
 
         foreach ($lines as $index => $line) {
@@ -257,21 +265,27 @@ final readonly class SecurityConfigExtractor
 
             if (null !== $whenIndent && $indent <= $whenIndent) {
                 $whenIndent = null;
+                $whenChildIndent = null;
                 $skipWhen = false;
             }
 
             if (null !== $key && 0 === $indent && str_starts_with($key, 'when@')) {
                 $whenIndent = $indent;
+                $whenChildIndent = null;
                 $skipWhen = null !== $environment && $environment !== substr($key, 5);
 
                 continue;
+            }
+
+            if (null !== $whenIndent && null === $whenChildIndent) {
+                $whenChildIndent = $indent;
             }
 
             if (null !== $whenIndent && $skipWhen && $indent > $whenIndent) {
                 continue;
             }
 
-            if (null !== $key && 'security' === $key) {
+            if ('security' === $key && $this->isSecurityRoot($indent, $whenChildIndent)) {
                 $securityIndent = $indent;
                 $firewallsIndent = null;
                 $currentFirewallIndex = null;
@@ -353,6 +367,16 @@ final readonly class SecurityConfigExtractor
         $normalizedFirewalls = array_values($firewalls);
 
         return $normalizedFirewalls;
+    }
+
+    /**
+     * Only a top-level "security:", or one directly under "when@<env>:", is
+     * the security config: the same key deeper (a firewall's "security:
+     * false") belongs to something else.
+     */
+    private function isSecurityRoot(int $indent, ?int $whenChildIndent): bool
+    {
+        return 0 === $indent || $indent === $whenChildIndent;
     }
 
     /**

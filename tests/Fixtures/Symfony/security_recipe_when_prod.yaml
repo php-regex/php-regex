@@ -1,0 +1,14 @@
+when@prod:
+    security:
+        firewalls:
+            dev:
+                pattern: ^/(_(profiler|wdt)|css|images|js)/
+                security: false
+            api:
+                pattern: ^/api/(\w+/?)+$
+            main:
+                lazy: true
+
+        access_control:
+            - { path: ^/admin, roles: ROLE_ADMIN }
+            - { path: ^/admin/users, roles: ROLE_SUPER_ADMIN }

@@ -48,4 +48,29 @@ final class SecurityCommandTest extends TestCase
         $this->assertStringContainsString('Access Control Conflicts', (string) $tester->getDisplay());
         $this->assertStringContainsString('Firewall Regex ReDoS', (string) $tester->getDisplay());
     }
+
+    #[Test]
+    public function test_command_reads_the_recipe_layout_past_the_dev_firewall(): void
+    {
+        $path = dirname(__DIR__, 4).'/Fixtures/Symfony/security_recipe_layout.yaml';
+
+        $command = new SecurityCommand(
+            new SecurityConfigExtractor(),
+            new SecurityAccessControlAnalyzer(Regex::create()),
+            new SecurityFirewallAnalyzer(Regex::create()),
+            new SecurityConfigLocator(),
+            new SecurityAccessSuggestionBuilder(),
+            null,
+            'high',
+        );
+
+        $tester = new CommandTester($command);
+        $status = $tester->execute(['--config' => [$path]]);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(1, $status, $display);
+        $this->assertMatchesRegularExpression('/Rules\s*:\s*2\b/', $display);
+        $this->assertMatchesRegularExpression('/Firewalls\s*:\s*3\b/', $display);
+        $this->assertStringContainsString('api', $display);
+    }
 }
