@@ -25,7 +25,7 @@ use PHPRegex\Parser\Internal\PatternParser;
  *
  * @phpstan-type CommandHelp array{description: string, options: list<array{string, string}>, notes: list<string>, examples: list<array{list<string>, string}>}
  */
-final readonly class HelpCommand implements CommandInterface
+final class HelpCommand extends AbstractCommand
 {
     /**
      * The commands help documents on its own, used when it is asked for help
@@ -73,7 +73,7 @@ final readonly class HelpCommand implements CommandInterface
      *                                               that the summary cannot
      *                                               drift from what it runs
      */
-    public function __construct(private array $commands = []) {}
+    public function __construct(private readonly array $commands = []) {}
 
     /**
      * @param array<int, CommandInterface> $commands
@@ -100,6 +100,13 @@ final readonly class HelpCommand implements CommandInterface
 
     public function run(Input $input, Output $output): int
     {
+        // The one argument help takes is a command name.
+        $first = $input->args[0] ?? '';
+        $error = $this->unexpectedArgument(str_starts_with($first, '-') ? $input->args : \array_slice($input->args, 1));
+        if (null !== $error) {
+            return $this->usageError($output, $error, "Usage: regex help [command]\n");
+        }
+
         $binary = $this->resolveInvocation();
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];

@@ -17,8 +17,11 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\DiagramCommand;
 use PHPRegex\Cli\Command\GraphCommand;
+use PHPRegex\Cli\Command\HelpCommand;
+use PHPRegex\Cli\Command\ParseCommand;
 use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Cli\Command\ValidateCommand;
+use PHPRegex\Cli\Command\VersionCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Tests\TestUtils\OutputFactory;
@@ -64,6 +67,11 @@ final class UsageErrorStreamTest extends TestCase
         yield 'diagram, a text file that cannot be written' => [new DiagramCommand(), 'diagram', ['/a/', '--output='.$unwritable.'.txt'], [], 'Unable to write output'];
         yield 'graph, a file that cannot be written' => [new GraphCommand(), 'graph', ['/a/', '--output='.$unwritable.'.dot'], [], 'Unable to write the graph'];
         yield 'redos, an unknown option' => [new RedosCommand(), 'redos', ['/a/', '--bogus'], [], 'Error:'];
+        yield 'version, an unknown option' => [new VersionCommand(), 'version', ['--bogus'], [], 'Unknown option: --bogus'];
+        yield 'version, an argument' => [new VersionCommand(), 'version', ['extra'], [], 'Unexpected argument: extra'];
+        yield 'help, an unknown option' => [new HelpCommand(), 'help', ['--bogus'], [], 'Unknown option: --bogus'];
+        yield 'help, a second argument' => [new HelpCommand(), 'help', ['analyze', 'extra'], [], 'Unexpected argument: extra'];
+        yield 'parse, a second pattern' => [new ParseCommand(), 'parse', ['/a/', '/b/'], [], 'Unexpected argument: /b/'];
         yield 'validate, an invalid library option' => [new ValidateCommand(), 'validate', ['/a/'], ['php_version' => 'abc'], 'Invalid option:'];
     }
 }

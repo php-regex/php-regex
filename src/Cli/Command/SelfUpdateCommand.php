@@ -21,9 +21,9 @@ use PHPRegex\Cli\SelfUpdate\SelfUpdater;
 /**
  * @internal
  */
-final readonly class SelfUpdateCommand implements CommandInterface
+final class SelfUpdateCommand extends AbstractCommand
 {
-    public function __construct(private SelfUpdater $updater) {}
+    public function __construct(private readonly SelfUpdater $updater) {}
 
     public function getName(): string
     {
@@ -46,6 +46,11 @@ final readonly class SelfUpdateCommand implements CommandInterface
             $output->write("Usage: regex self-update\n");
 
             return self::SUCCESS;
+        }
+
+        $error = $this->unexpectedArgument($input->args);
+        if (null !== $error) {
+            return $this->usageError($output, $error, "Usage: regex self-update\n");
         }
 
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);

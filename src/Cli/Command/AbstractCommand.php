@@ -51,8 +51,8 @@ abstract class AbstractCommand implements CommandInterface
     /**
      * Read a command line of one pattern and the options named here. A flag
      * stands alone; a valued option is "--name=value" or "--name value". An
-     * argument starting with "--" is an option until "--" ends them, and the
-     * first other argument is the pattern.
+     * argument starting with "--" is an option until "--" ends them, the
+     * first other argument is the pattern, and a second one is an error.
      *
      * @param array<int, string> $args
      * @param list<string>       $flags
@@ -71,7 +71,11 @@ abstract class AbstractCommand implements CommandInterface
             $arg = $args[$i];
 
             if ($endOfOptions || !str_starts_with($arg, '--')) {
-                $pattern ??= $arg;
+                if (null !== $pattern) {
+                    return ['pattern' => '', 'options' => [], 'error' => 'Unexpected argument: '.$arg];
+                }
+
+                $pattern = $arg;
 
                 continue;
             }
@@ -112,6 +116,22 @@ abstract class AbstractCommand implements CommandInterface
         }
 
         return ['pattern' => $pattern, 'options' => $options, 'error' => null];
+    }
+
+    /**
+     * What is wrong with the arguments of a command that takes none: the
+     * first is an option it does not know, or an argument it does not take.
+     *
+     * @param array<int, string> $args
+     */
+    protected function unexpectedArgument(array $args): ?string
+    {
+        $first = array_key_first($args);
+        if (null === $first) {
+            return null;
+        }
+
+        return str_starts_with($args[$first], '-') ? 'Unknown option: '.$args[$first] : 'Unexpected argument: '.$args[$first];
     }
 
     /**

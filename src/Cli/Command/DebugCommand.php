@@ -434,6 +434,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
                 continue;
             }
+
+            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Unexpected argument: '.$arg];
         }
 
         if ('' === $pattern) {

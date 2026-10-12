@@ -176,6 +176,8 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
 
                 continue;
             }
+
+            return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Unexpected argument: '.$arg];
         }
 
         if ('' === $pattern) {

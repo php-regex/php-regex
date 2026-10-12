@@ -21,7 +21,7 @@ use PHPRegex\Toolkit\Regex;
 /**
  * @internal
  */
-final readonly class VersionCommand implements CommandInterface
+final class VersionCommand extends AbstractCommand
 {
     public function getName(): string
     {
@@ -40,6 +40,11 @@ final readonly class VersionCommand implements CommandInterface
 
     public function run(Input $input, Output $output): int
     {
+        $error = $this->unexpectedArgument($input->args);
+        if (null !== $error) {
+            return $this->usageError($output, $error, "Usage: regex version\n");
+        }
+
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         if ($style->visualsEnabled()) {
             $style->renderBanner('version');

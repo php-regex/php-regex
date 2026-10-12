@@ -67,7 +67,18 @@ final class ExitCodeContractTest extends TestCase
             yield $command.' without a pattern' => [[$command]];
             yield $command.' with an unknown option' => [[$command, '/a/', '--bogus']];
             yield $command.' with an invalid --php-version' => [['--php-version=abc', $command, '/a/']];
+            yield $command.' with a second pattern' => [[$command, '/a/', '/b/']];
+            yield $command.' with a second pattern after the end of the options' => [[$command, '--', '/a/', '/b/']];
         }
+
+        // A command without arguments refuses every one, as the others do.
+        yield 'version with an unknown option' => [['version', '--bogus']];
+        yield 'version with an unknown --format' => [['version', '--format=bogus']];
+        yield 'version with an argument' => [['version', 'extra']];
+        yield 'self-update with an unknown option' => [['self-update', '--bogus']];
+        yield 'self-update with an argument' => [['self-update', 'extra']];
+        yield 'help with an unknown option' => [['help', '--bogus']];
+        yield 'help with a second argument' => [['help', 'analyze', 'extra']];
 
         foreach (['analyze', 'debug', 'diagram', 'highlight', 'explain', 'transpile', 'redos', 'graph'] as $command) {
             yield $command.' with an unknown --format' => [[$command, '/a/', '--format=xml']];

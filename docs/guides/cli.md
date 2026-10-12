@@ -949,7 +949,8 @@ never replayed, leave 0 too.
 Code 2 covers an unknown command or option, an option without its value or
 with a value the command does not accept (an unknown `--format`, `--target`,
 `--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
-a missing pattern, an
+a missing pattern, an argument the command does not take (one pattern more
+than it reads, or anything after `version` or `self-update`), an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
 and a `regex.json` that cannot be read (`lint` and `debug`) — in which case
 nothing was scanned. `regex` run without a command prints the help and exits

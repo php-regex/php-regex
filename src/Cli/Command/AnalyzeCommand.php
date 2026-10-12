@@ -227,6 +227,8 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
 
                 continue;
             }
+
+            return $this->errorResult($format, $redosMode, $redosThreshold, 'Unexpected argument: '.$arg);
         }
 
         if ('' === $pattern) {
