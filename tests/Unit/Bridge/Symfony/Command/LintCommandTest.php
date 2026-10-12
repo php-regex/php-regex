@@ -23,10 +23,15 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
+use PHPRegex\Symfony\Extractor\RoutePatternSource;
+use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\Routing\Route;
+use Symfony\Component\Routing\RouteCollection;
+use Symfony\Component\Routing\RouterInterface;
 
 final class LintCommandTest extends TestCase
 {
@@ -487,6 +492,31 @@ final class LintCommandTest extends TestCase
         $this->assertIsArray($data);
         $this->assertIsArray($data['stats'] ?? null);
         $this->assertSame(1, $data['stats']['infos'] ?? null);
+    }
+
+    /**
+     * The router compiles every requirement as "{^...$}sD" and turns its
+     * unnamed groups into non-capturing ones: none of that is the user's
+     * to change, so none of it is reported.
+     */
+    #[Test]
+    public function test_execute_reports_nothing_the_router_adds_to_a_route_requirement(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('product', new Route('/product/{id}', [], ['id' => '\d+']));
+        $collection->add('home', new Route('/{locale}', [], ['locale' => '(en|fr)+']));
+        $router = $this->createStub(RouterInterface::class);
+        $router->method('getRouteCollection')->willReturn($collection);
+
+        $tester = new CommandTester($this->createCommandWithSources([new RoutePatternSource(new RouteRequirementNormalizer(), $router)]));
+        $status = $tester->execute(['paths' => ['nonexistent']]);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status, $display);
+        $this->assertStringContainsString('found 2 patterns', $display);
+        $this->assertStringNotContainsString("Flag 's' is useless", $display);
+        $this->assertStringNotContainsString('Quantified capturing group', $display);
+        $this->assertStringNotContainsString('TIP', $display);
     }
 
     private function createCommand(): LintCommand

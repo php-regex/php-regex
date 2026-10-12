@@ -672,6 +672,105 @@ final class LintServiceTest extends TestCase
     }
 
     /**
+     * Symfony's RouteCompiler matches every requirement with "{^...$}sD":
+     * a route requirement cannot drop s or D, so neither is reported as
+     * useless there, while the same pattern elsewhere still is.
+     */
+    #[Test]
+    #[DataProvider('provideRouterFlags')]
+    public function test_analyze_leaves_out_the_flags_the_router_compiles_a_route_with(string $pattern, string $issueId): void
+    {
+        $this->assertContains($issueId, $this->issueIds($pattern, 'php:preg_match()'), 'control: reported outside a route');
+        $this->assertNotContains($issueId, $this->issueIds($pattern, 'route:home:id'));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, issueId: string}>
+     */
+    public static function provideRouterFlags(): iterable
+    {
+        yield 'no dot under s' => ['pattern' => '{^\d+$}sD', 'issueId' => 'regex.lint.flag.useless.s'];
+        // An inline m reads the router's $ as a line end: D reads nothing.
+        yield 'every $ under m' => ['pattern' => '{^(?m)a$}sD', 'issueId' => 'regex.lint.flag.useless.D'];
+    }
+
+    /**
+     * The RouteCompiler turns "(" into "(?:" unless "?" or "*" follows: an
+     * unnamed group of a requirement captures nothing, a named one still
+     * lands in the route attributes.
+     */
+    #[Test]
+    public function test_analyze_leaves_out_the_quantified_unnamed_group_of_a_route(): void
+    {
+        $this->assertContains('regex.lint.group.quantifiedCapture', $this->issueIds('{^(en|fr)+$}sD', 'php:preg_match()'), 'control');
+        $this->assertNotContains('regex.lint.group.quantifiedCapture', $this->issueIds('{^(en|fr)+$}sD', 'route:home:locale'));
+        $this->assertContains('regex.lint.group.quantifiedCapture', $this->issueIds('{^(?<l>en|fr)+$}sD', 'route:home:locale'));
+    }
+
+    /**
+     * A rewrite of a route requirement keeps the flags the router adds; one
+     * that only drops them is no rewrite the requirement can take.
+     */
+    #[Test]
+    public function test_analyze_keeps_the_router_flags_in_a_route_optimization(): void
+    {
+        $this->assertSame(['{^\d+$}D'], $this->optimized('{^\d+$}sD', 'php:preg_match()'), 'control');
+        $this->assertSame([], $this->optimized('{^\d+$}sD', 'route:home:id'));
+        $this->assertSame(['{^\d+$}sD'], $this->optimized('{^[0-9]+$}sD', 'route:home:id'));
+        $this->assertSame(['{^ab$}sDu'], $this->optimized('{^a{1}b$}sDu', 'route:home:id'));
+    }
+
+    #[Test]
+    public function test_analyze_drops_a_route_optimization_the_router_flags_bring_under_the_minimum_savings(): void
+    {
+        // "[0-9]" to "\d" saves 3 characters, dropping s a fourth.
+        $this->assertSame(['{^\d+$}D'], $this->optimized('{^[0-9]+$}sD', 'php:preg_match()', 4), 'control');
+        $this->assertSame([], $this->optimized('{^[0-9]+$}sD', 'route:home:id', 4));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function issueIds(string $pattern, string $source): array
+    {
+        $result = (new LintService($this->analysis, $this->sources))->analyze(
+            [new PatternOccurrence($pattern, 'test.php', 1, $source)],
+            new LintRequest(['.'], [], 0),
+            null,
+        );
+
+        $ids = [];
+        foreach ($result->results as $item) {
+            foreach ($item['issues'] as $issue) {
+                $ids[] = $issue['issueId'] ?? '';
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function optimized(string $pattern, string $source, int $minSavings = 1): array
+    {
+        $result = (new LintService($this->analysis, $this->sources))->analyze(
+            [new PatternOccurrence($pattern, 'test.php', 1, $source)],
+            new LintRequest(['.'], [], $minSavings),
+            null,
+        );
+
+        $optimized = [];
+        foreach ($result->results as $item) {
+            foreach ($item['optimizations'] as $optimization) {
+                $optimized[] = $optimization['optimization']->optimized;
+            }
+        }
+
+        return $optimized;
+    }
+
+    /**
      * The smallest backtrack limit the match attempt runs under: the
      * engine's count of steps for one start, JIT off, start optimizations
      * off.

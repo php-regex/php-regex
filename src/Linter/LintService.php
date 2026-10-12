@@ -19,6 +19,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -42,6 +43,10 @@ final readonly class LintService
         'regex.lint.quantifier.nested' => true,
         'regex.lint.dotstar.nested' => true,
         'regex.lint.overlap.charset' => true,
+        // Symfony's RouteCompiler matches every requirement with "{^...$}sD":
+        // the requirement cannot drop either flag.
+        'regex.lint.flag.useless.s' => true,
+        'regex.lint.flag.useless.D' => true,
     ];
 
     public function __construct(private AnalysisService $analysis, private PatternSourceCollection $sources) {}
@@ -86,7 +91,7 @@ final readonly class LintService
 
         /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
         $optimizations = $request->checkOptimizations
-            ? array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers))
+            ? $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers)), $request->minSavings)
             : [];
 
         $results = $this->combineResults($issues, $optimizations, $patterns);
@@ -173,10 +178,55 @@ final readonly class LintService
                 if (\is_string($issueId) && isset(self::ROUTE_IGNORED_ISSUE_IDS[$issueId])) {
                     return false;
                 }
+
+                // The RouteCompiler turns an unnamed group of a requirement
+                // into a non-capturing one; a named group, reported as a
+                // warning, still captures.
+                if ('regex.lint.group.quantifiedCapture' === $issueId && 'info' === $issue['type']) {
+                    return false;
+                }
             }
 
             return true;
         }));
+    }
+
+    /**
+     * A route requirement is matched under the flags the router adds: its
+     * rewrite keeps them, and one that only drops them is no rewrite. The
+     * body was rewritten under those flags, and only a flag it no longer
+     * reads was dropped, so putting them back changes nothing.
+     *
+     * @phpstan-param list<OptimizationEntry> $optimizations
+     *
+     * @phpstan-return list<OptimizationEntry>
+     */
+    private function keepRouteFlags(array $optimizations, int $minSavings): array
+    {
+        $kept = [];
+
+        foreach ($optimizations as $entry) {
+            if (!str_starts_with($entry['source'] ?? '', 'route:')) {
+                $kept[] = $entry;
+
+                continue;
+            }
+
+            $original = DelimitedPattern::fromDelimited($entry['optimization']->original);
+            $optimized = DelimitedPattern::fromDelimited($entry['optimization']->optimized);
+            $rewritten = (new DelimitedPattern($optimized->pattern, $original->flags, $optimized->delimiter))->toString();
+
+            $savings = \strlen($entry['optimization']->original) - \strlen($rewritten);
+            if ($savings < max(1, $minSavings)) {
+                continue;
+            }
+
+            $entry['optimization'] = new OptimizationResult($entry['optimization']->original, $rewritten, $entry['optimization']->changes);
+            $entry['savings'] = $savings;
+            $kept[] = $entry;
+        }
+
+        return $kept;
     }
 
     /**

@@ -120,7 +120,10 @@ Each one is read as the pattern Symfony runs:
   `Route::sanitizeRequirement()` does, and it is matched with
   `{^...$}sD`, plus `u` when the route sets its `utf8` option: `\d+`
   is linted as `{^\d+$}sD`. A requirement that starts with `/` or `#` is
-  no delimited regex there either.
+  no delimited regex there either. What the router adds is not the
+  requirement's to change: a useless `s` or `D`, a rewrite that only
+  drops a flag, and a repeated unnamed group (the router makes it
+  non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
   `path: /api` matches `/v1/api` too.
