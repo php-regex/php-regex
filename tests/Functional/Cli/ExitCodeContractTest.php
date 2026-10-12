@@ -100,6 +100,10 @@ final class ExitCodeContractTest extends TestCase
         yield 'redos with both --input and --input-file' => [['redos', '/a/', '--input=a', '--input-file=a.txt']];
         yield 'redos with an --input-file it cannot read' => [['redos', '/a/', '--input-file=missing.txt']];
         yield 'transpile with an unknown --target' => [['transpile', '/a/', '--target=perl']];
+        // Each prints its one rendering: --format is not an option of theirs.
+        yield 'parse with --format' => [['parse', '/a/', '--format=console']];
+        yield 'validate with --format' => [['validate', '/a/', '--format=console']];
+        yield 'compare with --format' => [['compare', '/a/', '/b/', '--format=console']];
         yield 'diagram with an --output it cannot write' => [['diagram', '/a/', '--output=missing/dir/a.txt']];
         yield 'diagram with an SVG --output it cannot write' => [['diagram', '/a/', '--format=svg', '--output=missing/dir/a.svg']];
         yield 'graph with an --output it cannot write' => [['graph', '/a/', '--output=missing/dir/a.dot']];

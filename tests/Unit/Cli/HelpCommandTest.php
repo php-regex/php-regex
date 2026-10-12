@@ -18,6 +18,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Tests\TestUtils\OutputFactory;
+use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -463,6 +464,25 @@ final class HelpCommandTest extends TestCase
     {
         yield 'graph' => ['command' => 'graph', 'description' => 'Generate a graph diagram (DOT/Mermaid) of the NFA'];
         yield 'version' => ['command' => 'version', 'description' => 'Display version information'];
+    }
+
+    /**
+     * `transpile --target=html` writes an HTML pattern attribute: the page
+     * and the overview name the three targets, each one the command takes.
+     */
+    #[Test]
+    public function test_transpile_help_names_every_target(): void
+    {
+        $page = self::section(self::commandHelp('transpile'), 'Options')['--target <dialect>'] ?? null;
+        $overview = self::section(self::commandHelp(null), 'Transpile Options')['--target <dialect>'] ?? null;
+
+        $this->assertSame('Target dialect (js, html, python)', $page);
+        $this->assertSame($page, $overview);
+
+        $registry = new TargetRegistry();
+        foreach (['js', 'html', 'python'] as $target) {
+            $this->assertContains($target, $registry->listTargets());
+        }
     }
 
     /**

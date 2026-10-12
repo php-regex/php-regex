@@ -157,7 +157,7 @@ final class HelpCommand extends AbstractCommand
         $this->renderTableSection($output, 'Diagram Options', $diagramOptions, fn (string $value): string => $this->formatOption($output, $value));
 
         $transpileOptions = [
-            ['--target <dialect>', 'Target dialect (js, python)'],
+            ['--target <dialect>', 'Target dialect (js, html, python)'],
             ['--format <format>', 'Output format (console, json)'],
             ['--json', 'Same as --format=json'],
         ];
@@ -453,7 +453,7 @@ final class HelpCommand extends AbstractCommand
             'transpile' => [
                 'description' => 'Transpile PCRE regex to other dialects',
                 'options' => [
-                    ['--target <dialect>', 'Target dialect (js, python)'],
+                    ['--target <dialect>', 'Target dialect (js, html, python)'],
                     ['--format <format>', 'Output format (console, json)'],
                     ['--json', 'Same as --format=json'],
                 ],

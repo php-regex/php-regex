@@ -72,13 +72,15 @@ PHPRegex CLI provides these commands:
 Options may come before or after the pattern; `--` ends them, so that what
 follows is read as the pattern even when it starts with `-`.
 
-`--format` calls the terminal rendering `console` on every command; the
-other values depend on the command: `json` for `analyze`, `debug`, `redos`,
-`transpile` and `lint` (with `github`, `checkstyle` and `junit` for `lint`),
-`html` for `explain` and `highlight` (`auto`, the default of `highlight`,
-picks `console` in a terminal), `svg` for `diagram`, and `dot` or `mermaid`
-for `graph`. An unknown value is a usage error that names the values the
-command takes.
+`parse`, `validate` and `compare` print one rendering and take no
+`--format`: giving them one is a usage error. The other commands take it and,
+but for `graph`, call the terminal rendering `console`; the other values
+depend on the command: `json` for `analyze`, `debug`, `redos`, `transpile` and
+`lint` (with `github`, `checkstyle` and `junit` for `lint`), `html` for
+`explain` and `highlight` (`auto`, the default of `highlight`, picks `console`
+in a terminal), `svg` for `diagram`, and `dot` (the default) or `mermaid` for
+`graph`. An unknown value is a usage error that names the values the command
+takes.
 
 ### Exit Codes
 

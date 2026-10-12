@@ -55,7 +55,7 @@ Commands
 |---------|-------------|---------|-------------|
 | `parse` | Parse and recompile a pattern | `highlight` | Highlight a regex for display |
 | `analyze` | Parse, validate, analyze ReDoS risk | `validate` | Validate a pattern |
-| `compare` | Compare two patterns (automata) | `transpile` | Transpile to js or python |
+| `compare` | Compare two patterns (automata) | `transpile` | Transpile to js, html or python |
 | `explain` | Explain a pattern in plain language | `lint` | Lint patterns in PHP sources |
 | `debug` | Deep ReDoS analysis, heatmap | `version` | Display version information |
 | `redos` | Benchmark patterns for ReDoS | `self-update` | Update the phar in place |
