@@ -1298,7 +1298,7 @@ final class Validator extends AbstractNodeVisitor
                 $this->raiseMissingReference(
                     \sprintf('Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE). The pattern has no group named "%s".', $ref),
                     $this->missingReferenceOffset($node->condition),
-                    ErrorCode::ConditionMissingGroup,
+                    ErrorCode::ConditionalMissingGroup,
                 );
             }
             // Now validate the backreference itself
@@ -1515,7 +1515,7 @@ final class Validator extends AbstractNodeVisitor
             $this->raiseSemanticError(
                 \sprintf('Version condition "%s" is not supported: PCRE compares with "=" or ">=".', $node->operator),
                 $pcreOffset ?? $node->startPosition,
-                ErrorCode::ConditionVersionOperator,
+                ErrorCode::ConditionalVersionOperator,
             );
         }
 
@@ -1530,7 +1530,7 @@ final class Validator extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     \sprintf('Missing ")" to close the condition at position %d.', $tooBig),
                     $tooBig,
-                    ErrorCode::ConditionUnclosed,
+                    ErrorCode::ConditionalUnclosed,
                 );
             }
 
@@ -1538,7 +1538,7 @@ final class Validator extends AbstractNodeVisitor
                 $this->raiseSemanticError(
                     \sprintf('Invalid version "%s" in a version condition: the number is too big.', $node->version),
                     $tooBig,
-                    ErrorCode::ConditionVersionSyntax,
+                    ErrorCode::ConditionalVersionSyntax,
                     'PCRE takes a major and a minor of at most 1000, and before PCRE2 10.47 a minor of two digits.',
                 );
             }
@@ -1560,7 +1560,7 @@ final class Validator extends AbstractNodeVisitor
             // ")" belongs; it stops on one it reads where a digit belongs.
             // Before, it stops on a third digit of a minor.
             $pcreOffset ?? $versionStart + \strlen($valid) + ($afterNumber && $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0),
-            ErrorCode::ConditionVersionSyntax,
+            ErrorCode::ConditionalVersionSyntax,
         );
     }
 

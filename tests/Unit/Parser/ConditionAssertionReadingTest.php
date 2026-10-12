@@ -65,13 +65,13 @@ final class ConditionAssertionReadingTest extends TestCase
         yield from self::rows('comment ending the pattern', '/(?(?#c)/', self::RELEASES, ErrorCode::GroupUnclosed, 7);
 
         // A callout, then no assertion.
-        yield from self::rows('callout, then a letter', '/(?(?C1)a)/', self::RELEASES, ErrorCode::ConditionAssertionExpected, 7);
-        yield from self::rows('callout, then an atomic group left open', '/(?(?C1)(*atomic:a/', self::RELEASES, ErrorCode::ConditionAssertionExpected, 15);
+        yield from self::rows('callout, then a letter', '/(?(?C1)a)/', self::RELEASES, ErrorCode::ConditionalAssertionExpected, 7);
+        yield from self::rows('callout, then an atomic group left open', '/(?(?C1)(*atomic:a/', self::RELEASES, ErrorCode::ConditionalAssertionExpected, 15);
 
         // A verb or a name PCRE knows that is no lookaround.
-        yield from self::rows('a verb as the condition', '/(?(*MARK:a)b)/', self::BEFORE_10_47, ErrorCode::ConditionAssertionExpected, 2);
-        yield from self::rows('a verb as the condition', '/(?(*MARK:a)b)/', ['10.49'], ErrorCode::ConditionAssertionExpected, 3);
-        yield from self::rows('an atomic group as the condition', '/(?(*atomic:a)b)/', self::RELEASES, ErrorCode::ConditionAssertionExpected, 10);
+        yield from self::rows('a verb as the condition', '/(?(*MARK:a)b)/', self::BEFORE_10_47, ErrorCode::ConditionalAssertionExpected, 2);
+        yield from self::rows('a verb as the condition', '/(?(*MARK:a)b)/', ['10.49'], ErrorCode::ConditionalAssertionExpected, 3);
+        yield from self::rows('an atomic group as the condition', '/(?(*atomic:a)b)/', self::RELEASES, ErrorCode::ConditionalAssertionExpected, 10);
 
         // An alphabetic name no ":" follows, the pattern going on.
         yield from self::rows('alphabetic name, then "!"', '/(?(*pla!/', self::BEFORE_10_47, ErrorCode::VerbInvalid, 7);
@@ -85,9 +85,9 @@ final class ConditionAssertionReadingTest extends TestCase
         yield from self::rows('recursion condition with a plus sign', '/(?(R+1)a)/', self::RELEASES, ErrorCode::GroupNameUnterminated, 4);
 
         // A version condition, then an error the lexer or the parser meets.
-        yield from self::rows('version condition left open', '/(?(VERSION=10/', self::RELEASES, ErrorCode::ConditionVersionSyntax, 13);
-        yield from self::rows('bad version, then a class left open', '/(?(VERSION=10z)a)[/', self::BEFORE_10_47, ErrorCode::ConditionUnclosed, 13);
-        yield from self::rows('bad version, then a class left open', '/(?(VERSION=10z)a)[/', ['10.49'], ErrorCode::ConditionVersionSyntax, 14);
+        yield from self::rows('version condition left open', '/(?(VERSION=10/', self::RELEASES, ErrorCode::ConditionalVersionSyntax, 13);
+        yield from self::rows('bad version, then a class left open', '/(?(VERSION=10z)a)[/', self::BEFORE_10_47, ErrorCode::ConditionalUnclosed, 13);
+        yield from self::rows('bad version, then a class left open', '/(?(VERSION=10z)a)[/', ['10.49'], ErrorCode::ConditionalVersionSyntax, 14);
 
         // A group named "VERSION" is no version condition.
         yield from self::rows('group named VERSION as the condition, then a group left open', '/(?<VERSION>x)(?(VERSION)a)(/', self::RELEASES, ErrorCode::GroupUnclosed, 27);

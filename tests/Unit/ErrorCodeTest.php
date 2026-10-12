@@ -141,6 +141,19 @@ final class ErrorCodeTest extends TestCase
     }
 
     /**
+     * One area names one construct: the conditional group's codes all read
+     * "regex.conditional.*", none "regex.conditional.*".
+     */
+    #[Test]
+    public function test_error_codes_name_the_conditional_group_one_way(): void
+    {
+        $areas = array_unique(array_map(static fn (ErrorCode $code): string => explode('.', $code->value)[1] ?? '', ErrorCode::cases()));
+
+        $this->assertNotContains('condition', $areas);
+        $this->assertContains('regex.conditional.unclosed', array_map(static fn (ErrorCode $code): string => $code->value, ErrorCode::cases()));
+    }
+
+    /**
      * @return iterable<string, array{value: string}>
      */
     public static function provideValuesThatKeepTheirString(): iterable

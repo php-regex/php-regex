@@ -527,11 +527,11 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.charclass.unclosed` | `CharclassUnclosed` | A character class is not closed by "]". |
 | `regex.comment.unclosed` | `CommentUnclosed` | A "(?#" comment is not closed by ")". |
 | `regex.complexity` | `Complexity` | The pattern is past the budget of the automata analysis. |
-| `regex.condition.assertion_expected` | `ConditionAssertionExpected` | A conditional group needs a lookaround assertion as its condition here. |
-| `regex.condition.missing_group` | `ConditionMissingGroup` | A condition names a group the pattern does not have. |
-| `regex.condition.unclosed` | `ConditionUnclosed` | The condition of a conditional group is not closed by ")". |
-| `regex.condition.version_operator` | `ConditionVersionOperator` | A VERSION condition compares with an operator other than "=" or ">=". |
-| `regex.condition.version_syntax` | `ConditionVersionSyntax` | A VERSION condition does not name a version as major.minor. |
+| `regex.conditional.assertion_expected` | `ConditionalAssertionExpected` | A conditional group needs a lookaround assertion as its condition here. |
+| `regex.conditional.missing_group` | `ConditionalMissingGroup` | A condition names a group the pattern does not have. |
+| `regex.conditional.unclosed` | `ConditionalUnclosed` | The condition of a conditional group is not closed by ")". |
+| `regex.conditional.version_operator` | `ConditionalVersionOperator` | A VERSION condition compares with an operator other than "=" or ">=". |
+| `regex.conditional.version_syntax` | `ConditionalVersionSyntax` | A VERSION condition does not name a version as major.minor. |
 | `regex.conditional.invalid` | `ConditionalInvalid` | A condition is neither a group reference, a lookaround, nor DEFINE. |
 | `regex.conditional.too_many_branches` | `ConditionalTooManyBranches` | A conditional group has more than two branches. |
 | `regex.control_char.invalid` | `ControlCharInvalid` | "\c" is not followed by a printable ASCII character. |

@@ -1364,7 +1364,7 @@ final class Lexer
 
                 throw LexerException::withContext(
                     \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $colon),
-                    ErrorCode::ConditionAssertionExpected,
+                    ErrorCode::ConditionalAssertionExpected,
                     $colon,
                     $this->pattern,
                 );

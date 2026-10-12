@@ -1228,11 +1228,11 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'unknown name after text' => ['pattern' => 'a(*foo:b', 'code' => ErrorCode::VerbInvalid, 'offset' => 6, 'tokens' => [[TokenType::Literal, 'a', 0, 1]]];
         yield 'unknown name with nothing after the colon' => ['pattern' => '(*foo:', 'code' => ErrorCode::VerbInvalid, 'offset' => 5, 'tokens' => []];
         // PCRE: "atomic assertion expected after (?( or (?(?C)", at the colon.
-        yield 'atomic group as the condition' => ['pattern' => '(?(*atomic:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 10, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
-        yield 'short script run as the condition' => ['pattern' => '(?(*sr:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 6, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
-        yield 'non-atomic lookahead as the condition' => ['pattern' => '(?(*napla:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
-        yield 'substring scan as the condition' => ['pattern' => '(?(*scs:(1)a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
-        yield 'atomic group as the condition after a callout' => ['pattern' => '(?(?C1)(*atomic:a', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 15, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2], [TokenType::Callout, '1', 2, 7]]];
+        yield 'atomic group as the condition' => ['pattern' => '(?(*atomic:a', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 10, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'short script run as the condition' => ['pattern' => '(?(*sr:a', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 6, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'non-atomic lookahead as the condition' => ['pattern' => '(?(*napla:a', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'substring scan as the condition' => ['pattern' => '(?(*scs:(1)a', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2]]];
+        yield 'atomic group as the condition after a callout' => ['pattern' => '(?(?C1)(*atomic:a', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 15, 'tokens' => [[TokenType::GroupModifierOpen, '(?', 0, 2], [TokenType::Callout, '1', 2, 7]]];
     }
 
     /**
@@ -1313,9 +1313,9 @@ final class AlphaAssertionBodyTest extends TestCase
         yield 'a callout condition cut short' => ['pattern' => '/(*pla:(?(?C1/', 'code' => ErrorCode::CalloutUnclosed, 'offset' => 12];
         // PCRE: "atomic assertion expected after (?( or (?(?C)", where the
         // condition starts: a lookahead opener the pattern ends on.
-        yield 'a lookahead opener as the condition' => ['pattern' => '/(*pla:(?(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
-        yield 'a lookahead opener after a callout condition' => ['pattern' => '/(*pla:(?(?C1)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 13];
-        yield 'a negative lookahead opener after a comment' => ['pattern' => '/(*pla:(?(?#c)(?!/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 14];
+        yield 'a lookahead opener as the condition' => ['pattern' => '/(*pla:(?(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9];
+        yield 'a lookahead opener after a callout condition' => ['pattern' => '/(*pla:(?(?C1)(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 13];
+        yield 'a negative lookahead opener after a comment' => ['pattern' => '/(*pla:(?(?#c)(?!/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 14];
         // Reported where PCRE reports them already: kept as guards.
         yield 'an assertion name left open' => ['pattern' => '/(*pla:(*pla/', 'code' => ErrorCode::VerbUnclosed, 'offset' => 11];
         yield 'an assertion name left open as the condition' => ['pattern' => '/(*pla:(?(*pl/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 12];
@@ -1347,14 +1347,14 @@ final class AlphaAssertionBodyTest extends TestCase
         // PCRE: "atomic assertion expected after (?( or (?(?C)": a lookahead
         // opener the pattern ends on is no assertion yet. Reported where
         // the condition starts, after any callout or comment before it.
-        yield 'a lookahead opener as the condition' => ['pattern' => '/(?(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'a negative lookahead opener as the condition' => ['pattern' => '/(?(?!/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'a lookahead opener after a callout condition' => ['pattern' => '/(?(?C1)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'a negative lookahead opener after a callout condition' => ['pattern' => '/(?(?C1)(?!/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'a lookahead opener after a string callout condition' => ['pattern' => '/(?(?C"x")(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
-        yield 'a lookahead opener after a comment' => ['pattern' => '/(?(?#c)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'a lookahead opener after a callout then a comment' => ['pattern' => '/(?(?C1)(?#c)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 12];
-        yield 'a lookahead opener after a comment then a callout' => ['pattern' => '/(?(?#c)(?C1)(?=/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 12];
+        yield 'a lookahead opener as the condition' => ['pattern' => '/(?(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'a negative lookahead opener as the condition' => ['pattern' => '/(?(?!/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'a lookahead opener after a callout condition' => ['pattern' => '/(?(?C1)(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'a negative lookahead opener after a callout condition' => ['pattern' => '/(?(?C1)(?!/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'a lookahead opener after a string callout condition' => ['pattern' => '/(?(?C"x")(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9];
+        yield 'a lookahead opener after a comment' => ['pattern' => '/(?(?#c)(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'a lookahead opener after a callout then a comment' => ['pattern' => '/(?(?C1)(?#c)(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 12];
+        yield 'a lookahead opener after a comment then a callout' => ['pattern' => '/(?(?#c)(?C1)(?=/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 12];
         // PCRE: "missing closing parenthesis", at the end of the pattern: a
         // lookbehind opener, or a lookahead holding anything, is read as
         // the assertion. Reported there already: kept as guards.
@@ -1367,7 +1367,7 @@ final class AlphaAssertionBodyTest extends TestCase
         // What PCRE says here depends on the release: compared with the
         // running engine, PCRE2 10.49's verdict pinned. 10.49: "atomic
         // assertion expected after (?( or (?(?C)" at 3.
-        yield 'a one-letter name left open as the condition' => ['pattern' => '/(?(*p/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
+        yield 'a one-letter name left open as the condition' => ['pattern' => '/(?(*p/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
         // 10.49: "missing closing parenthesis" at 6.
         yield 'an assertion name left open as the condition' => ['pattern' => '/(?(*pl/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 6];
         // Reported where PCRE reports it already: kept as a guard.

@@ -234,8 +234,8 @@ final class PcreVerbTest extends TestCase
     public static function provideErrorsBeforeADoubleStar(): iterable
     {
         // PCRE: "atomic assertion expected after (?( or (?(?C)".
-        yield 'as the condition' => ['pattern' => '/(?(**)a)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'as the condition after a callout' => ['pattern' => '/(?(?C1)(**a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'as the condition' => ['pattern' => '/(?(**)a)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'as the condition after a callout' => ['pattern' => '/(?(?C1)(**a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
         // PCRE: "subpattern name expected", at the "(".
         yield 'in a group read as the condition' => ['pattern' => '/(?((**a)b)/', 'code' => ErrorCode::ConditionalInvalid, 'offset' => 3];
         yield 'as a group name in angle brackets' => ['pattern' => '/(?<(**>a)/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 3];

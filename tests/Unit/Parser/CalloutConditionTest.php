@@ -127,11 +127,11 @@ final class CalloutConditionTest extends TestCase
         // PCRE: "missing terminating ] for character class".
         yield 'class left open in the lookahead body' => ['pattern' => '/(?(?C1)(*pla:[a)b)/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 18];
         // PCRE: "atomic assertion expected after (?( or (?(?C)", at the colon.
-        yield 'non-atomic lookahead' => ['pattern' => '/(?(?C1)(*napla:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 14];
-        yield 'non-atomic lookbehind' => ['pattern' => '/(?(?C1)(*naplb:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 14];
-        yield 'atomic group' => ['pattern' => '/(?(?C1)(*atomic:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 15];
-        yield 'short script run' => ['pattern' => '/(?(?C1)(*sr:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 11];
-        yield 'script run' => ['pattern' => '/(?(?C1)(*script_run:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 19];
+        yield 'non-atomic lookahead' => ['pattern' => '/(?(?C1)(*napla:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 14];
+        yield 'non-atomic lookbehind' => ['pattern' => '/(?(?C1)(*naplb:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 14];
+        yield 'atomic group' => ['pattern' => '/(?(?C1)(*atomic:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 15];
+        yield 'short script run' => ['pattern' => '/(?(?C1)(*sr:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 11];
+        yield 'script run' => ['pattern' => '/(?(?C1)(*script_run:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 19];
         // PCRE: "(*alpha_assertion) not recognized", at the colon.
         yield 'unknown name' => ['pattern' => '/(?(?C1)(*foo:a)b)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 12];
         // PCRE: "conditional subpattern contains more than two branches".
@@ -141,13 +141,13 @@ final class CalloutConditionTest extends TestCase
         yield 'lookahead body never closed' => ['pattern' => '/(?(?C1)(*pla:a/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 14];
         yield 'lookahead body never closed under u' => ['pattern' => '/(?(?C1)(*pla:a/u', 'code' => ErrorCode::GroupUnclosed, 'offset' => 14];
         // PCRE: "atomic assertion expected after (?( or (?(?C)", at the opener.
-        yield 'verb' => ['pattern' => '/(?(?C1)(*FAIL)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'short non-atomic lookahead' => ['pattern' => '/(?(?C1)(?*a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'name in capitals' => ['pattern' => '/(?(?C1)(*PLA:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'verb' => ['pattern' => '/(?(?C1)(*FAIL)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'short non-atomic lookahead' => ['pattern' => '/(?(?C1)(?*a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'name in capitals' => ['pattern' => '/(?(?C1)(*PLA:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
         // A plain group is no "(*" either, whatever its text reads like.
-        yield 'group holding a letter, then a name and a colon' => ['pattern' => '/(?(?C1)(xfoo:a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'group holding a property left open' => ['pattern' => '/(?(?C1)(\\p{/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'name in capitals then lowercase never closed' => ['pattern' => '/(?(?C1)(*Xfoo/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'group holding a letter, then a name and a colon' => ['pattern' => '/(?(?C1)(xfoo:a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'group holding a property left open' => ['pattern' => '/(?(?C1)(\\p{/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'name in capitals then lowercase never closed' => ['pattern' => '/(?(?C1)(*Xfoo/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
     }
 
     /**
@@ -237,18 +237,18 @@ final class CalloutConditionTest extends TestCase
     public static function provideRefusedAsTheCondition(): iterable
     {
         // PCRE: "atomic assertion expected after (?( or (?(?C)", at the colon.
-        yield 'non-atomic lookahead' => ['pattern' => '/(?(*napla:a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
-        yield 'non-atomic lookbehind' => ['pattern' => '/(?(*naplb:a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
-        yield 'atomic group' => ['pattern' => '/(?(*atomic:a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 10];
-        yield 'short script run' => ['pattern' => '/(?(*sr:a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 6];
-        yield 'script run' => ['pattern' => '/(?(*script_run:a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 14];
-        yield 'substring scan' => ['pattern' => '/(?(*scs:(1)a)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'non-atomic lookahead' => ['pattern' => '/(?(*napla:a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9];
+        yield 'non-atomic lookbehind' => ['pattern' => '/(?(*naplb:a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9];
+        yield 'atomic group' => ['pattern' => '/(?(*atomic:a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 10];
+        yield 'short script run' => ['pattern' => '/(?(*sr:a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 6];
+        yield 'script run' => ['pattern' => '/(?(*script_run:a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 14];
+        yield 'substring scan' => ['pattern' => '/(?(*scs:(1)a)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
         // PCRE: "atomic assertion expected after (?( or (?(?C)", past the "*".
-        yield 'short non-atomic lookahead' => ['pattern' => '/(?(?*a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'verb' => ['pattern' => '/(?(*FAIL)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'accepting verb' => ['pattern' => '/(?(*ACCEPT)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'verb with an argument' => ['pattern' => '/(?(*MARK:x)b)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'name in capitals' => ['pattern' => '/(?(*PLA:a)b|c)/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
+        yield 'short non-atomic lookahead' => ['pattern' => '/(?(?*a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'verb' => ['pattern' => '/(?(*FAIL)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'accepting verb' => ['pattern' => '/(?(*ACCEPT)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'verb with an argument' => ['pattern' => '/(?(*MARK:x)b)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'name in capitals' => ['pattern' => '/(?(*PLA:a)b|c)/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
         // PCRE: "(*alpha_assertion) not recognized", at the colon.
         yield 'unknown name' => ['pattern' => '/(?(*foo:a)b|c)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 7];
         // PCRE: "conditional subpattern contains more than two branches".
@@ -256,18 +256,18 @@ final class CalloutConditionTest extends TestCase
         // PCRE: "missing terminating ] for character class".
         yield 'class left open in the lookahead body' => ['pattern' => '/(?(*pla:[a)b|c)/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 15];
         // A body that never closes: the name is refused, not the ")".
-        yield 'atomic group never closed' => ['pattern' => '/(?(*atomic:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 10];
-        yield 'atomic group with nothing after the colon' => ['pattern' => '/(?(*atomic:/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 10];
-        yield 'non-atomic lookahead never closed' => ['pattern' => '/(?(*napla:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
-        yield 'non-atomic lookbehind never closed' => ['pattern' => '/(?(*naplb:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 9];
-        yield 'short script run never closed' => ['pattern' => '/(?(*sr:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 6];
-        yield 'short script run never closed under u' => ['pattern' => '/(?(*sr:a/u', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 6];
-        yield 'script run never closed' => ['pattern' => '/(?(*script_run:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 14];
-        yield 'substring scan never closed' => ['pattern' => '/(?(*scs:(1)a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
-        yield 'short non-atomic lookahead never closed' => ['pattern' => '/(?(?*a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 3];
-        yield 'script run never closed inside an atomic body' => ['pattern' => '/(*atomic:(?(*sr:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 15];
-        yield 'atomic group never closed after a callout' => ['pattern' => '/(?(?C1)(*atomic:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 15];
-        yield 'short non-atomic lookahead never closed after a callout' => ['pattern' => '/(?(?C1)(?*a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 7];
+        yield 'atomic group never closed' => ['pattern' => '/(?(*atomic:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 10];
+        yield 'atomic group with nothing after the colon' => ['pattern' => '/(?(*atomic:/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 10];
+        yield 'non-atomic lookahead never closed' => ['pattern' => '/(?(*napla:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9];
+        yield 'non-atomic lookbehind never closed' => ['pattern' => '/(?(*naplb:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 9];
+        yield 'short script run never closed' => ['pattern' => '/(?(*sr:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 6];
+        yield 'short script run never closed under u' => ['pattern' => '/(?(*sr:a/u', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 6];
+        yield 'script run never closed' => ['pattern' => '/(?(*script_run:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 14];
+        yield 'substring scan never closed' => ['pattern' => '/(?(*scs:(1)a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
+        yield 'short non-atomic lookahead never closed' => ['pattern' => '/(?(?*a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 3];
+        yield 'script run never closed inside an atomic body' => ['pattern' => '/(*atomic:(?(*sr:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 15];
+        yield 'atomic group never closed after a callout' => ['pattern' => '/(?(?C1)(*atomic:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 15];
+        yield 'short non-atomic lookahead never closed after a callout' => ['pattern' => '/(?(?C1)(?*a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 7];
         // PCRE: "(*alpha_assertion) not recognized", at the colon.
         yield 'unknown name never closed' => ['pattern' => '/(?(*foo:a/', 'code' => ErrorCode::VerbInvalid, 'offset' => 7];
         yield 'unknown name never closed after a callout' => ['pattern' => '/(?(?C1)(*foo:a/', 'code' => ErrorCode::VerbInvalid, 'offset' => 12];
@@ -282,16 +282,16 @@ final class CalloutConditionTest extends TestCase
         yield 'unknown name never closed after a comment and x whitespace' => ['pattern' => '/(?(?#c) (*foo/x', 'code' => ErrorCode::GroupUnclosed, 'offset' => 13];
         // PCRE: "atomic assertion expected after (?( or (?(?C)": "(*" cut
         // short, a verb in capitals or a digit is no assertion.
-        yield 'opener alone after a comment' => ['pattern' => '/(?(?#c)(*/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'one letter never closed after a comment' => ['pattern' => '/(?(?#c)(*p/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'verb never closed after a comment' => ['pattern' => '/(?(?#c)(*ACCEPT/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'name in capitals never closed after a comment' => ['pattern' => '/(?(?#c)(*FOO/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'digit never closed after a comment' => ['pattern' => '/(?(?#c)(*1/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
+        yield 'opener alone after a comment' => ['pattern' => '/(?(?#c)(*/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'one letter never closed after a comment' => ['pattern' => '/(?(?#c)(*p/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'verb never closed after a comment' => ['pattern' => '/(?(?#c)(*ACCEPT/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'name in capitals never closed after a comment' => ['pattern' => '/(?(?#c)(*FOO/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'digit never closed after a comment' => ['pattern' => '/(?(?#c)(*1/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
         // The name is read from its first letter: a capital, a digit or an
         // underscore there opens no name, whatever follows.
-        yield 'capital then a lowercase name after a comment' => ['pattern' => '/(?(?#c)(*Xfoo:a/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'digit then a lowercase name never closed after a comment' => ['pattern' => '/(?(?#c)(*1foo/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
-        yield 'underscore then a lowercase name never closed after a comment' => ['pattern' => '/(?(?#c)(*_foo/', 'code' => ErrorCode::ConditionAssertionExpected, 'offset' => 8];
+        yield 'capital then a lowercase name after a comment' => ['pattern' => '/(?(?#c)(*Xfoo:a/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'digit then a lowercase name never closed after a comment' => ['pattern' => '/(?(?#c)(*1foo/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
+        yield 'underscore then a lowercase name never closed after a comment' => ['pattern' => '/(?(?#c)(*_foo/', 'code' => ErrorCode::ConditionalAssertionExpected, 'offset' => 8];
         // PCRE: "missing closing parenthesis", at the end, for a lowercase
         // name the pattern ends in, whatever its second character.
         yield 'one letter and a capital never closed after a comment' => ['pattern' => '/(?(?#c)(*pX/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 11];

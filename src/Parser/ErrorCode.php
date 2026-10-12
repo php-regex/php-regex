@@ -93,27 +93,27 @@ enum ErrorCode: string
     /**
      * A conditional group needs a lookaround assertion as its condition here.
      */
-    case ConditionAssertionExpected = 'regex.condition.assertion_expected';
+    case ConditionalAssertionExpected = 'regex.conditional.assertion_expected';
 
     /**
      * A condition names a group the pattern does not have.
      */
-    case ConditionMissingGroup = 'regex.condition.missing_group';
+    case ConditionalMissingGroup = 'regex.conditional.missing_group';
 
     /**
      * The condition of a conditional group is not closed by ")".
      */
-    case ConditionUnclosed = 'regex.condition.unclosed';
+    case ConditionalUnclosed = 'regex.conditional.unclosed';
 
     /**
      * A VERSION condition compares with an operator other than "=" or ">=".
      */
-    case ConditionVersionOperator = 'regex.condition.version_operator';
+    case ConditionalVersionOperator = 'regex.conditional.version_operator';
 
     /**
      * A VERSION condition does not name a version as major.minor.
      */
-    case ConditionVersionSyntax = 'regex.condition.version_syntax';
+    case ConditionalVersionSyntax = 'regex.conditional.version_syntax';
 
     /**
      * A condition is neither a group reference, a lookaround, nor DEFINE.

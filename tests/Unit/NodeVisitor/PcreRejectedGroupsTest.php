@@ -92,7 +92,7 @@ final class PcreRejectedGroupsTest extends TestCase
         $result = Regex::create()->validate('/(*pla:(?(VERSION>=10.0.0)a|b))c/');
 
         $this->assertFalse($result->isValid);
-        $this->assertSame(ErrorCode::from('regex.condition.version_syntax'), $result->errorCode);
+        $this->assertSame(ErrorCode::from('regex.conditional.version_syntax'), $result->errorCode);
     }
 
     #[Test]

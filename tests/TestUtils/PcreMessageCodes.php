@@ -31,7 +31,7 @@ final class PcreMessageCodes
     public const CODES = [
         // The wording of the older releases the suite runs on: PCRE2 10.40 to 10.44.
         'lookbehind assertion is not fixed length' => ['regex.lookbehind.unbounded', 'regex.lookbehind.variable_length_not_supported'],
-        'assertion expected after (?( or (?(?C)' => ['regex.condition.assertion_expected'],
+        'assertion expected after (?( or (?(?C)' => ['regex.conditional.assertion_expected'],
         'digits missing in \\x{} or \\o{} or \\N{U+}' => ['regex.escape.digits_missing'],
         '\\ at end of pattern' => ['regex.escape.trailing_backslash'],
         'digit expected after (?+ or (?-' => ['regex.subroutine.invalid_syntax'],
@@ -79,7 +79,7 @@ final class PcreMessageCodes
             'regex.subroutine.relative_missing',
             'regex.subroutine.recursion',
             'regex.group_list.missing_group',
-            'regex.condition.missing_group',
+            'regex.conditional.missing_group',
         ],
         'a relative value of zero is not allowed' => ['regex.backref.zero', 'regex.subroutine.relative_zero', 'regex.group_list.relative_zero'],
         'syntax error in subpattern number (missing terminator?)' => ['regex.backref.invalid_syntax', 'regex.subroutine.invalid_syntax'],
@@ -88,11 +88,11 @@ final class PcreMessageCodes
         'expected capture group number or name' => ['regex.group_list.item_expected'],
 
         // Conditions.
-        'atomic assertion expected after (?( or (?(?C)' => ['regex.condition.assertion_expected'],
-        'missing closing parenthesis for condition' => ['regex.condition.unclosed'],
+        'atomic assertion expected after (?( or (?(?C)' => ['regex.conditional.assertion_expected'],
+        'missing closing parenthesis for condition' => ['regex.conditional.unclosed'],
         'conditional subpattern contains more than two branches' => ['regex.conditional.too_many_branches'],
         'DEFINE subpattern contains more than one branch' => ['regex.define.too_many_branches'],
-        'syntax error or number too big in (?(VERSION condition' => ['regex.condition.version_syntax', 'regex.condition.version_operator'],
+        'syntax error or number too big in (?(VERSION condition' => ['regex.conditional.version_syntax', 'regex.conditional.version_operator'],
 
         // Callouts.
         'unrecognized string delimiter follows (?C' => ['regex.callout.invalid_delimiter'],

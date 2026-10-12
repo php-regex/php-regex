@@ -1594,7 +1594,7 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-                ErrorCode::ConditionAssertionExpected,
+                ErrorCode::ConditionalAssertionExpected,
                 $position,
             );
         }
@@ -1783,7 +1783,7 @@ final class TokenParser
 
         throw $this->parserException(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-            ErrorCode::ConditionAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected,
             $position,
         );
     }
@@ -1831,7 +1831,7 @@ final class TokenParser
 
             throw $this->parserException(
                 \sprintf('Invalid conditional condition at position %d: a callout in a condition must be followed by an assertion.', $position),
-                ErrorCode::ConditionAssertionExpected,
+                ErrorCode::ConditionalAssertionExpected,
                 $position,
             );
         } else {
@@ -1884,7 +1884,7 @@ final class TokenParser
 
         throw $this->parserException(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $position),
-            ErrorCode::ConditionAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected,
             $position,
         );
     }
@@ -1919,7 +1919,7 @@ final class TokenParser
 
         throw $this->parserException(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $faultAt),
-            ErrorCode::ConditionAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected,
             $faultAt,
         );
     }
@@ -1947,7 +1947,7 @@ final class TokenParser
 
         return $this->alphaNameConditionError($open + 2) ?? $this->parserException(
             \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $unnamedAt),
-            ErrorCode::ConditionAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected,
             $unnamedAt,
         );
     }
@@ -2787,7 +2787,7 @@ final class TokenParser
                 throw $this->versionConditionError($this->versionConditionErrorOffset($condition->startPosition) ?? $this->stream->current()->position, $condition->startPosition);
             }
 
-            $this->stream->consume(TokenType::GroupClose, 'Expected ) after condition', ErrorCode::ConditionUnclosed);
+            $this->stream->consume(TokenType::GroupClose, 'Expected ) after condition', ErrorCode::ConditionalUnclosed);
         }
 
         return $this->parseConditionalBranches($startPosition, $condition);
@@ -2859,7 +2859,7 @@ final class TokenParser
 
         throw $this->parserException(
             'Invalid conditional condition at position '.$position,
-            ErrorCode::ConditionAssertionExpected,
+            ErrorCode::ConditionalAssertionExpected,
             $position,
         );
     }
@@ -3207,14 +3207,14 @@ final class TokenParser
         if (!$this->supports(PcreFeature::VersionConditionLeftOpenIsVersionError) && VersionCondition::isMajorLeftOpenAt($this->pattern, $start, $position)) {
             return $this->parserException(
                 \sprintf('Missing ")" to close the condition at position %d.', $position),
-                ErrorCode::ConditionUnclosed,
+                ErrorCode::ConditionalUnclosed,
                 $position,
             );
         }
 
         return $this->parserException(
             \sprintf('Invalid VERSION condition at position %d: PCRE takes "VERSION=" or "VERSION>=", a major number, an optional ".minor", and ")".', $position),
-            ErrorCode::ConditionVersionSyntax,
+            ErrorCode::ConditionalVersionSyntax,
             $position,
         );
     }

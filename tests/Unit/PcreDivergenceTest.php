@@ -97,8 +97,8 @@ final class PcreDivergenceTest extends TestCase
         yield from self::rows('bare name past the length limit, unterminated', '/(?('.str_repeat('a', 130).'!)a)/', ['10.44', '10.49'], 'subpattern name is too long (maximum 128 code units)', 133, ErrorCode::GroupNameTooLong);
 
         // "R" followed by anything but digits is a name like any other.
-        yield from self::rows('recursion condition with a letter after the number', '/(?(R1a)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::ConditionMissingGroup);
-        yield from self::rows('name starting with R', '/(?(Rx)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::ConditionMissingGroup);
+        yield from self::rows('recursion condition with a letter after the number', '/(?(R1a)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::ConditionalMissingGroup);
+        yield from self::rows('name starting with R', '/(?(Rx)a)/', self::LIVE_RELEASES, 'reference to non-existent subpattern', 3, ErrorCode::ConditionalMissingGroup);
         yield from self::rows('recursion condition with a letter after the number, left open', '/(?(R1a)/', self::LIVE_RELEASES, 'missing closing parenthesis', 7, ErrorCode::GroupUnclosed);
 
         // A space before "VERSION" is where the name was expected.
@@ -107,20 +107,20 @@ final class PcreDivergenceTest extends TestCase
         // "VERSION" not followed by ")", with ten characters left, is a
         // version condition before it can be a name, a group's name included.
         foreach (['VERSION then a letter' => ['/(?(VERSIONx)a)/', 10], 'VERSION then a letter, a group left open after' => ['/(?(VERSIONx)a)(/', 10], 'VERSION then letters naming a group' => ['/(?<VERSIONab>a)(?(VERSIONab)a)/', 25]] as $name => [$pattern, $offset]) {
-            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'syntax error or number too big in (?(VERSION condition', $offset, ErrorCode::ConditionVersionSyntax);
-            yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $offset + 1, ErrorCode::ConditionVersionSyntax);
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'syntax error or number too big in (?(VERSION condition', $offset, ErrorCode::ConditionalVersionSyntax);
+            yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $offset + 1, ErrorCode::ConditionalVersionSyntax);
         }
 
         // Under /u, 10.49 steps past the whole character that stops the
         // version, not past its first byte; before 10.45 it stops on it.
         foreach (['VERSION then a two-byte letter' => ['/(?(VERSIONé)a)/u', 10, 12], 'VERSION= then a two-byte letter' => ['/(?(VERSION=é)a)/u', 11, 13], 'VERSION then a four-byte character' => ['/(?(VERSION😀)a)/u', 10, 14], 'VERSION=1. then a two-byte letter' => ['/(?(VERSION=1.é)a)/u', 13, 15]] as $name => [$pattern, $before, $after]) {
-            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'syntax error or number too big in (?(VERSION condition', $before, ErrorCode::ConditionVersionSyntax);
-            yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $after, ErrorCode::ConditionVersionSyntax);
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'syntax error or number too big in (?(VERSION condition', $before, ErrorCode::ConditionalVersionSyntax);
+            yield from self::rows($name, $pattern, ['10.49'], 'syntax error or number too big in (?(VERSION condition', $after, ErrorCode::ConditionalVersionSyntax);
         }
-        yield from self::rows('VERSION=10.1 then a two-byte letter', '/(?(VERSION=10.1é)a)/u', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 17, ErrorCode::ConditionVersionSyntax);
-        yield from self::rows('VERSION>=10 then a two-byte letter', '/(?(VERSION>=10é)a)/u', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 16, ErrorCode::ConditionVersionSyntax);
+        yield from self::rows('VERSION=10.1 then a two-byte letter', '/(?(VERSION=10.1é)a)/u', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 17, ErrorCode::ConditionalVersionSyntax);
+        yield from self::rows('VERSION>=10 then a two-byte letter', '/(?(VERSION>=10é)a)/u', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 16, ErrorCode::ConditionalVersionSyntax);
         // Without /u, the same bytes are single characters.
-        yield from self::rows('VERSION then a two-byte letter, without /u', '/(?(VERSIONé)a)/', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 11, ErrorCode::ConditionVersionSyntax);
+        yield from self::rows('VERSION then a two-byte letter, without /u', '/(?(VERSIONé)a)/', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 11, ErrorCode::ConditionalVersionSyntax);
 
         // Under /u a name starts with no digit of any script: 10.49 reports
         // past the digit, before 10.45 on it.
@@ -145,21 +145,21 @@ final class PcreDivergenceTest extends TestCase
         // A group that is no assertion after the callout of a condition is
         // refused where it starts, on every release.
         foreach (['callout condition then a non-capturing group' => ['/(?(?C1)(?:a))/', 7], 'string callout condition then a non-capturing group' => ['/(?(?C"x")(?:a))/', 9], 'callout condition then a comment and a non-capturing group' => ['/(?(?C1)(?#c)(?:a))/', 12]] as $name => [$pattern, $offset]) {
-            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', $offset, ErrorCode::ConditionAssertionExpected);
-            yield from self::rows($name, $pattern, ['10.49'], 'atomic assertion expected after (?( or (?(?C)', $offset, ErrorCode::ConditionAssertionExpected);
+            yield from self::rows($name, $pattern, self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', $offset, ErrorCode::ConditionalAssertionExpected);
+            yield from self::rows($name, $pattern, ['10.49'], 'atomic assertion expected after (?( or (?(?C)', $offset, ErrorCode::ConditionalAssertionExpected);
         }
 
         // A comment where the condition belongs: 10.49 reports one character
         // later, under its "atomic assertion" wording.
-        yield from self::rows('comment as the condition', '/(?(?#c)a)/', self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', 7, ErrorCode::ConditionAssertionExpected);
-        yield from self::rows('comment as the condition', '/(?(?#c)a)/', ['10.49'], 'atomic assertion expected after (?( or (?(?C)', 8, ErrorCode::ConditionAssertionExpected);
+        yield from self::rows('comment as the condition', '/(?(?#c)a)/', self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', 7, ErrorCode::ConditionalAssertionExpected);
+        yield from self::rows('comment as the condition', '/(?(?#c)a)/', ['10.49'], 'atomic assertion expected after (?( or (?(?C)', 8, ErrorCode::ConditionalAssertionExpected);
 
         // An alpha assertion as the condition, left open.
         yield from self::rows('alpha lookahead condition left open', '/(?(*pla:a/', self::LIVE_RELEASES, 'missing closing parenthesis', 9, ErrorCode::GroupUnclosed);
 
         // "(*atomic:" is no assertion: refused where the condition must be.
-        yield from self::rows('atomic group as the condition', '/(?(*atomic:a/', self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', 10, ErrorCode::ConditionAssertionExpected);
-        yield from self::rows('atomic group as the condition', '/(?(*atomic:a/', ['10.49'], 'atomic assertion expected after (?( or (?(?C)', 10, ErrorCode::ConditionAssertionExpected);
+        yield from self::rows('atomic group as the condition', '/(?(*atomic:a/', self::BEFORE_10_45, 'assertion expected after (?( or (?(?C)', 10, ErrorCode::ConditionalAssertionExpected);
+        yield from self::rows('atomic group as the condition', '/(?(*atomic:a/', ['10.49'], 'atomic assertion expected after (?( or (?(?C)', 10, ErrorCode::ConditionalAssertionExpected);
 
         // A quote after "(?P<" starts no name.
         yield from self::rows('quote after (?P< before a name', "/(?P<'name>x)/", self::LIVE_RELEASES, 'subpattern name expected', 4, ErrorCode::GroupNameExpected);
@@ -186,8 +186,8 @@ final class PcreDivergenceTest extends TestCase
         yield from self::rows('(*scan_substring as the condition, left open', '/(?(*scan_substring/', ['10.49'], 'missing closing parenthesis', 18, ErrorCode::GroupUnclosed);
 
         // A space inside the version.
-        yield from self::rows('version condition with a space', '/(?(VERSION=10 )/', self::BEFORE_10_45, 'missing closing parenthesis for condition', 13, ErrorCode::ConditionUnclosed);
-        yield from self::rows('version condition with a space', '/(?(VERSION=10 )/', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 14, ErrorCode::ConditionVersionSyntax);
+        yield from self::rows('version condition with a space', '/(?(VERSION=10 )/', self::BEFORE_10_45, 'missing closing parenthesis for condition', 13, ErrorCode::ConditionalUnclosed);
+        yield from self::rows('version condition with a space', '/(?(VERSION=10 )/', ['10.49'], 'syntax error or number too big in (?(VERSION condition', 14, ErrorCode::ConditionalVersionSyntax);
 
         // Under (?xx) the space in the class is skipped, which leaves "\E"
         // ending the pattern before 10.45.
@@ -260,8 +260,8 @@ final class PcreDivergenceTest extends TestCase
         yield 'unknown POSIX class, 10.44' => ['pattern' => '/[[:foo:]](/', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 3];
         yield 'unknown POSIX class, 10.49' => ['pattern' => '/[[:foo:]](/', 'release' => '10.49', 'code' => ErrorCode::PosixInvalid, 'offset' => 8];
         // PCRE: "syntax error or number too big in (?(VERSION condition" at 10, at 11 on 10.49.
-        yield 'VERSION then a letter, 10.44' => ['pattern' => '/(?(VERSIONx)a)(/', 'release' => '10.44', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 10];
-        yield 'VERSION then a letter, 10.49' => ['pattern' => '/(?(VERSIONx)a)(/', 'release' => '10.49', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 11];
+        yield 'VERSION then a letter, 10.44' => ['pattern' => '/(?(VERSIONx)a)(/', 'release' => '10.44', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 10];
+        yield 'VERSION then a letter, 10.49' => ['pattern' => '/(?(VERSIONx)a)(/', 'release' => '10.49', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 11];
         // PCRE: "syntax error in subpattern name (missing terminator?)" at 5.
         yield 'bare name then a character no name holds, 10.49' => ['pattern' => '/(?(ab!)a)(/', 'release' => '10.49', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 5];
     }

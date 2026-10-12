@@ -64,8 +64,8 @@ final class OldReleaseErrorCodeTest extends TestCase
         yield 'range ending in \\N, 10.40' => ['pattern' => '/a[B-\\Nc]/', 'release' => '10.40', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 6];
 
         // "missing closing parenthesis for condition" before 10.47.
-        yield 'version with a letter, 10.40' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.40', 'code' => ErrorCode::ConditionUnclosed, 'offset' => 13];
-        yield 'version with a letter, 10.46' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.46', 'code' => ErrorCode::ConditionUnclosed, 'offset' => 13];
-        yield 'version with a letter, 10.47' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.47', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 14];
+        yield 'version with a letter, 10.40' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.40', 'code' => ErrorCode::ConditionalUnclosed, 'offset' => 13];
+        yield 'version with a letter, 10.46' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.46', 'code' => ErrorCode::ConditionalUnclosed, 'offset' => 13];
+        yield 'version with a letter, 10.47' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.47', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 14];
     }
 }

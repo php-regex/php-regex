@@ -104,31 +104,31 @@ final class VersionConditionValidationTest extends TestCase
     public static function provideVersionConditionsBeforeALaterError(): iterable
     {
         // PCRE: "syntax error or number too big in (?(VERSION condition".
-        yield 'no number, then a group left open' => ['pattern' => '/(?(VERSION>=x)a|b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
-        yield 'no number, then a class left open' => ['pattern' => '/(?(VERSION>=x)a|b)[a/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
-        yield 'no number, then a stray parenthesis' => ['pattern' => '/(?(VERSION>=x)a|b)x)/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
-        yield 'no number, then a reversed range' => ['pattern' => '/(?(VERSION>=x)a|b)[z-a]/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
-        yield 'letter as the minor, then a group left open' => ['pattern' => '/(?(VERSION>=10.x)a|b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 16];
-        yield 'no minor after the dot, then a group left open' => ['pattern' => '/(?(VERSION>=10.)a|b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 16];
-        yield 'no comparison, then a group left open' => ['pattern' => '/(?(VERSION10.4)a|b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 11];
-        yield 'empty version, then a group left open' => ['pattern' => '/(?(VERSION>=)a|b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
-        yield 'letter after VERSION, then a stray parenthesis' => ['pattern' => '/(?(VERSIONx)a|b)x)/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 11];
+        yield 'no number, then a group left open' => ['pattern' => '/(?(VERSION>=x)a|b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
+        yield 'no number, then a class left open' => ['pattern' => '/(?(VERSION>=x)a|b)[a/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
+        yield 'no number, then a stray parenthesis' => ['pattern' => '/(?(VERSION>=x)a|b)x)/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
+        yield 'no number, then a reversed range' => ['pattern' => '/(?(VERSION>=x)a|b)[z-a]/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
+        yield 'letter as the minor, then a group left open' => ['pattern' => '/(?(VERSION>=10.x)a|b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 16];
+        yield 'no minor after the dot, then a group left open' => ['pattern' => '/(?(VERSION>=10.)a|b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 16];
+        yield 'no comparison, then a group left open' => ['pattern' => '/(?(VERSION10.4)a|b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 11];
+        yield 'empty version, then a group left open' => ['pattern' => '/(?(VERSION>=)a|b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
+        yield 'letter after VERSION, then a stray parenthesis' => ['pattern' => '/(?(VERSIONx)a|b)x)/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 11];
         // A number too big is judged once the condition is read whole, past
         // the parsing that stops on the later error.
-        yield 'number too big, then a group left open' => ['pattern' => '/(?(VERSION>=99999999999)a)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 23];
-        yield 'major past 1000, then a group left open' => ['pattern' => '/(?(VERSION=1001.1)a)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 15];
-        yield 'major past 1000, then a class left open' => ['pattern' => '/(?(VERSION=1001.1)a)[a/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 15];
-        yield 'major past 1000, then a stray parenthesis' => ['pattern' => '/(?(VERSION=1001.1)a)x)/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 15];
-        yield 'major past 1000, the condition never closed' => ['pattern' => '/(?(VERSION=1001.1)a/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 15];
-        yield 'minor past 1000, then a group left open' => ['pattern' => '/(?(VERSION=10.1001)a)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 18];
-        yield 'major past 1000 after a valid condition' => ['pattern' => '/(?(VERSION>=10.4)a)(?(VERSION=1001.1)b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 34];
-        yield 'two majors past 1000, the first is reported' => ['pattern' => '/(?(VERSION=1001.1)a)(?(VERSION=1002.1)b)(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 15];
-        yield 'major past 1000 in an alphabetic lookahead' => ['pattern' => '/(*pla:(?(VERSION=1001.1)a))(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 21];
-        yield 'two invalid conditions, the first is reported' => ['pattern' => '/(?(VERSION>=x)a|b)(?(VERSION>=y)c)(d/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
-        yield 'invalid condition after a valid one' => ['pattern' => '/(?(VERSION>=10.4)a|b)(?(VERSION>=x)c)(d/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 33];
-        yield 'invalid condition nested in a valid one' => ['pattern' => '/(?(VERSION>=10.4)(?(VERSION>=x)a))(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 29];
-        yield 'invalid condition in an alphabetic lookahead' => ['pattern' => '/(*pla:(?(VERSION>=x)a))(c/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 18];
-        yield 'invalid condition never closed' => ['pattern' => '/(?(VERSION>=x/', 'code' => ErrorCode::ConditionVersionSyntax, 'offset' => 12];
+        yield 'number too big, then a group left open' => ['pattern' => '/(?(VERSION>=99999999999)a)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 23];
+        yield 'major past 1000, then a group left open' => ['pattern' => '/(?(VERSION=1001.1)a)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 15];
+        yield 'major past 1000, then a class left open' => ['pattern' => '/(?(VERSION=1001.1)a)[a/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 15];
+        yield 'major past 1000, then a stray parenthesis' => ['pattern' => '/(?(VERSION=1001.1)a)x)/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 15];
+        yield 'major past 1000, the condition never closed' => ['pattern' => '/(?(VERSION=1001.1)a/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 15];
+        yield 'minor past 1000, then a group left open' => ['pattern' => '/(?(VERSION=10.1001)a)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 18];
+        yield 'major past 1000 after a valid condition' => ['pattern' => '/(?(VERSION>=10.4)a)(?(VERSION=1001.1)b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 34];
+        yield 'two majors past 1000, the first is reported' => ['pattern' => '/(?(VERSION=1001.1)a)(?(VERSION=1002.1)b)(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 15];
+        yield 'major past 1000 in an alphabetic lookahead' => ['pattern' => '/(*pla:(?(VERSION=1001.1)a))(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 21];
+        yield 'two invalid conditions, the first is reported' => ['pattern' => '/(?(VERSION>=x)a|b)(?(VERSION>=y)c)(d/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
+        yield 'invalid condition after a valid one' => ['pattern' => '/(?(VERSION>=10.4)a|b)(?(VERSION>=x)c)(d/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 33];
+        yield 'invalid condition nested in a valid one' => ['pattern' => '/(?(VERSION>=10.4)(?(VERSION>=x)a))(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 29];
+        yield 'invalid condition in an alphabetic lookahead' => ['pattern' => '/(*pla:(?(VERSION>=x)a))(c/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 18];
+        yield 'invalid condition never closed' => ['pattern' => '/(?(VERSION>=x/', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 12];
         // PCRE: "missing closing parenthesis": the condition is valid.
         yield 'valid condition, then a group left open' => ['pattern' => '/(?(VERSION>=10.4)a|b)(c/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 23];
         yield 'valid exact condition, then a group left open' => ['pattern' => '/(?(VERSION=10.4)a|b)(c/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 22];

@@ -235,7 +235,7 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'unclosed inline option' => ['pattern' => '/(?i/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.group.unclosed'];
         yield 'unclosed call' => ['pattern' => '/(?1/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.group.unclosed'];
         yield 'second hyphen in an option setting' => ['pattern' => '/(?x-i-i)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.group.option_hyphen'];
-        yield 'extended class as a condition' => ['pattern' => '/(?(?[a])b)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.assertion_expected'];
+        yield 'extended class as a condition' => ['pattern' => '/(?(?[a])b)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.assertion_expected'];
 
         // "closing parenthesis for (?C expected".
         yield 'callout number followed by a letter' => ['pattern' => '/(?C1x)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.callout.unclosed'];
@@ -273,9 +273,9 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'unclosed callout 256' => ['pattern' => '/(?C256/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.callout.out_of_range'];
 
         // "syntax error or number too big in (?(VERSION condition".
-        yield 'version with a letter' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.version_syntax'];
-        yield 'version with no number' => ['pattern' => '/(?(VERSION=)a)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.version_syntax'];
-        yield 'version with no minor' => ['pattern' => '/(?(VERSION=10.)a)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.version_syntax'];
+        yield 'version with a letter' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.version_syntax'];
+        yield 'version with no number' => ['pattern' => '/(?(VERSION=)a)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.version_syntax'];
+        yield 'version with no minor' => ['pattern' => '/(?(VERSION=10.)a)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.version_syntax'];
 
         // "subpattern name expected".
         yield 'quoted group name at the end' => ['pattern' => "/(?'/", 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.group.name_expected'];
@@ -297,11 +297,11 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'spaced count too big at the start' => ['pattern' => '/{ 70000 }/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.quantifier.too_big'];
 
         // "atomic assertion expected after (?( or (?(?C)".
-        yield 'lone (* as a condition' => ['pattern' => '/(?(*/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.assertion_expected'];
+        yield 'lone (* as a condition' => ['pattern' => '/(?(*/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.assertion_expected'];
 
         // "reference to non-existent subpattern" from a named condition.
-        yield 'angle-bracketed condition naming no group' => ['pattern' => '/(?(<a>)x)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.missing_group'];
-        yield 'bare condition naming no group' => ['pattern' => '/(?(abc))/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.condition.missing_group'];
+        yield 'angle-bracketed condition naming no group' => ['pattern' => '/(?(<a>)x)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.missing_group'];
+        yield 'bare condition naming no group' => ['pattern' => '/(?(abc))/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.conditional.missing_group'];
 
         // "syntax error in subpattern name (missing terminator?)".
         yield 'space inside a group name' => ['pattern' => '/(?<a b>)/', 'options' => [], 'engineRefuses' => true, 'expected' => 'regex.group.name_unterminated'];
@@ -379,7 +379,7 @@ final class ErrorCodeSpecificityTest extends TestCase
      */
     public static function provideFaultsWithTheirOffsetAndMessage(): iterable
     {
-        yield 'extended class as a condition' => ['pattern' => '/(?(?[a])b)/', 'code' => 'regex.condition.assertion_expected', 'message' => 'a lookaround assertion is expected'];
+        yield 'extended class as a condition' => ['pattern' => '/(?(?[a])b)/', 'code' => 'regex.conditional.assertion_expected', 'message' => 'a lookaround assertion is expected'];
         yield 'reversed count on an option setting' => ['pattern' => '/(?i){2,1}/', 'code' => 'regex.quantifier.invalid_range', 'message' => 'out of order'];
         yield 'reversed count on an option setting after a literal' => ['pattern' => '/a(?i){2,1}/', 'code' => 'regex.quantifier.invalid_range', 'message' => 'out of order'];
         yield 'non-hex digit in \\N{U+}' => ['pattern' => '/\\N{U+zz}/u', 'code' => 'regex.unicode.invalid_digit', 'message' => '\\N{U+}'];
