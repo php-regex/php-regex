@@ -15,6 +15,7 @@ namespace PHPRegex\Automata\Options;
 
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 
 /**
  * Configuration for automata-based regex comparisons.
@@ -29,6 +30,8 @@ final readonly class SolverOptions
      * @param MinimizationAlgorithm    $minimizationAlgorithm    Strategy used for DFA minimization
      * @param int|null                 $maxTransitionsProcessed  Hard limit on transition work (determinize/minimize); null disables the guard
      * @param DeterminizationAlgorithm $determinizationAlgorithm Strategy used for NFA determinization
+     *
+     * @throws InvalidRegexOptionException when a state cap is below 1, or the transition budget below 0
      */
     public function __construct(
         public MatchMode $matchMode = MatchMode::Full,
@@ -40,5 +43,12 @@ final readonly class SolverOptions
         // spin the determinization loop for tens of minutes.
         public ?int $maxTransitionsProcessed = 1_000_000,
         public DeterminizationAlgorithm $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed,
-    ) {}
+    ) {
+        // A transition budget of 0 is a budget: the first transition spends it.
+        foreach (['maxNfaStates' => [$maxNfaStates, 1], 'maxDfaStates' => [$maxDfaStates, 1], 'maxTransitionsProcessed' => [$maxTransitionsProcessed ?? 0, 0]] as $name => [$value, $floor]) {
+            if ($value < $floor) {
+                throw new InvalidRegexOptionException(\sprintf('"%s" must be at least %d, %d given.', $name, $floor, $value));
+            }
+        }
+    }
 }
