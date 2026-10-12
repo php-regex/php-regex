@@ -59,6 +59,17 @@ parameters:
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
 
     ignoreErrors:
+        # The gate self-test asserts every skip message verbatim by catching
+        # the skip — the class is PHPUnit-internal, its message is the very
+        # contract under test — and its sentinel comparisons read the floor
+        # every runner must meet, which the analyser folds against the
+        # composer floor of the machine it happens to run on.
+        - identifiers:
+            - catch.internalClass
+            - greaterOrEqual.alwaysTrue
+            - greaterOrEqual.alwaysFalse
+          paths:
+            - tests/Unit/Support/PcreGatesTest.php
         # The memory reserve of a JSON run is only ever freed, when PHP stops
         # the run: holding it is its whole use.
         - message: '#^Static property PHPRegex\\Cli\\Application::\$memoryReserve is never read, only written\.$#'
