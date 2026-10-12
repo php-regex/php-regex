@@ -152,6 +152,55 @@ final class LintCommandDeclarationPathsTest extends TestCase
     }
 
     /**
+     * With no path argument and no php-regex.paths, the lint reads app/, the
+     * default of the published configuration, instead of failing on a null
+     * list of paths.
+     *
+     * @param list<string>|null $setting
+     */
+    #[Test]
+    #[DataProvider('provideNoPathSettings')]
+    public function test_lint_without_any_path_reads_the_default_one(?array $setting): void
+    {
+        $project = $this->makeProject(['app/caller.php' => "<?php\n"]);
+        $this->app?->setBasePath($project);
+        config(['php-regex.paths' => $setting]);
+        $source = new class implements PatternSourceInterface {
+            public ?PatternSourceContext $context = null;
+
+            public function getName(): string
+            {
+                return 'recording';
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function extract(PatternSourceContext $context): array
+            {
+                $this->context = $context;
+
+                return [];
+            }
+        };
+        $analysis = $this->app?->make('php-regex.analysis');
+        $this->assertInstanceOf(AnalysisService::class, $analysis);
+        $this->app?->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$source])));
+
+        $exitCode = Artisan::call('regex:lint', [
+            '--format' => 'json',
+            '--no-routes' => true,
+            '--no-validators' => true,
+            '--jobs' => '1',
+        ]);
+
+        $this->assertSame(0, $exitCode, Artisan::output());
+        $this->assertSame(['app'], $source->context?->paths);
+    }
+
+    /**
      * @return iterable<string, array{setting: list<string>|null}>
      */
     public static function provideNoPathSettings(): iterable

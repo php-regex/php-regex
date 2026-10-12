@@ -99,9 +99,9 @@ final class LintCommand extends Command
 
         /** @var array<string>|null $pathsArg */
         $pathsArg = $this->argument('paths');
-        /** @var array<string> $defaultPaths */
-        $defaultPaths = config('php-regex.paths', ['app']);
-        $paths = !empty($pathsArg) ? $pathsArg : $defaultPaths;
+        // A null or empty php-regex.paths reads app/, the published default.
+        $defaultPaths = array_values(array_filter((array) config('php-regex.paths', ['app']), \is_string(...)));
+        $paths = !empty($pathsArg) ? $pathsArg : ([] === $defaultPaths ? ['app'] : $defaultPaths);
 
         /** @var array<string>|null $excludeOption */
         $excludeOption = $this->option('exclude');
