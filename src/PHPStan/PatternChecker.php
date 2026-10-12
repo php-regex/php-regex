@@ -112,6 +112,7 @@ final class PatternChecker
         'regex.lint.charclass.single' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#single-character-class',
         'regex.lint.literal.multipleSpaces' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#multiple-spaces',
         'regex.lint.quantifier.lazyToClass' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lazy-quantifier-before-a-delimiter',
+        'regex.lint.complexity' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#complexity-threshold',
     ];
 
     /**
@@ -137,6 +138,13 @@ final class PatternChecker
 
     private readonly OptimizerOptions $optimizationOptions;
 
+    private readonly bool $complexityEnabled;
+
+    /**
+     * The complexity score from which a pattern is reported.
+     */
+    private readonly int $complexityThreshold;
+
     /**
      * The later PHP versions of PHPStan's range a pattern is validated at
      * too, each with its label ("PHP 8.5 with PCRE2 10.44").
@@ -149,7 +157,8 @@ final class PatternChecker
 
     /**
      * @param array<string, mixed> $config          the "phpRegex" parameter: "phpVersion", "pcreVersion" and
-     *                                              "checks" ("lint", "redos", "optimizations"), every key optional
+     *                                              "checks" ("lint", "redos", "optimizations", "complexity"), every
+     *                                              key optional
      * @param PhpVersion|null      $phpVersion      the PHP version PHPStan analyses the project for: patterns are
      *                                              judged for it, with the PCRE2 it bundles, unless "phpVersion"
      *                                              is "runtime" or names a version, and "pcreVersion" a release
@@ -157,7 +166,8 @@ final class PatternChecker
      *                                              also validated at each later PHP up to max where a rule of the
      *                                              library changes, unless "phpVersion" names one version
      *
-     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
+     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion", "checks.redos.threshold" or
+     *                                     "checks.complexity.threshold" cannot be read
      */
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null, mixed $phpVersionRange = null)
     {
@@ -176,6 +186,7 @@ final class PatternChecker
         $lint = self::section($checks, 'lint');
         $redos = self::section($checks, 'redos');
         $optimizations = self::section($checks, 'optimizations');
+        $complexity = self::section($checks, 'complexity');
 
         $this->lintEnabled = true === ($lint['enabled'] ?? false);
         $this->redosEnabled = true === ($redos['enabled'] ?? false);
@@ -186,6 +197,8 @@ final class PatternChecker
         // The PHPStan parameters name the options in camelCase; every rewrite
         // is checked with the automata unless the parameters say otherwise.
         $this->optimizationOptions = OptimizerOptions::fromCamelCaseArray(self::section($optimizations, 'options') + ['verifyWithAutomata' => true]);
+        $this->complexityEnabled = true === ($complexity['enabled'] ?? false);
+        $this->complexityThreshold = self::complexityThreshold($complexity['threshold'] ?? null);
     }
 
     /**
@@ -249,7 +262,7 @@ final class PatternChecker
      */
     public function check(string $pattern, int $lineNumber, Scope $scope, string $source, bool $constantSubject): array
     {
-        if (null === $this->targetLabel && [] === $this->range && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
+        if (null === $this->targetLabel && [] === $this->range && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled && !$this->complexityEnabled) {
             return [];
         }
 
@@ -281,7 +294,7 @@ final class PatternChecker
             }
         }
 
-        if (!$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled) {
+        if (!$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled && !$this->complexityEnabled) {
             return [];
         }
 
@@ -295,12 +308,21 @@ final class PatternChecker
 
         $redosIssues = [];
         $lintIssues = [];
-        if ($this->lintEnabled || $this->redosEnabled) {
+        if ($this->lintEnabled || $this->redosEnabled || $this->complexityEnabled) {
             foreach ($this->getAnalysisService()->lint([$occurrence]) as $issue) {
                 // A pattern the library cannot read comes back without an
                 // issue id, alone: nothing below reports it.
                 $issueId = $issue['issueId'] ?? null;
                 if (self::ISSUE_ID_COMPLEXITY === $issueId) {
+                    if ($this->complexityEnabled) {
+                        $lintIssues[] = $issue;
+                    }
+
+                    continue;
+                }
+
+                // Turned on alone, the complexity check reports nothing else.
+                if (!$this->lintEnabled && !$this->redosEnabled) {
                     continue;
                 }
 
@@ -543,6 +565,25 @@ final class PatternChecker
     }
 
     /**
+     * "checks.complexity.threshold", 50 when unset. It is read even while
+     * the section is off, as the ReDoS threshold is.
+     *
+     * @throws InvalidRegexOptionException when the value is not an integer of at least 1
+     */
+    private static function complexityThreshold(mixed $threshold): int
+    {
+        if (null === $threshold) {
+            return 50;
+        }
+
+        if (!\is_int($threshold) || $threshold < 1) {
+            throw new InvalidRegexOptionException(\sprintf('"checks.complexity.threshold" must be an integer of at least 1, not %s.', json_encode($threshold)));
+        }
+
+        return $threshold;
+    }
+
+    /**
      * @param array<mixed> $config
      *
      * @return array<mixed>
@@ -559,6 +600,7 @@ final class PatternChecker
         return $this->analysis ??= new AnalysisService(
             $this->regex,
             null,
+            warningThreshold: $this->complexityThreshold,
             redosThreshold: $this->redosThreshold,
             redosMode: RedosMode::Theoretical,
             redosEnabled: $this->redosEnabled,

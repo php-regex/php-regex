@@ -1282,7 +1282,33 @@ $result = Regex::create()->validate('/((a|b)+c?){3}(x|y)*[0-9]{2,4}(p|q|r)+\s*z{
 echo $result->complexityScore;  // 74
 ```
 
-`regex lint` and the PHPStan rule leave this one out of their report: read the score itself. The Symfony route analysis reports it, with its own threshold under `php_regex.analysis.warning_threshold`.
+It is off by default. `regex lint` reports it once `regex.json` turns it on, with the threshold you choose:
+
+```json
+{
+  "checks": {
+    "complexity": {
+      "enabled": true,
+      "threshold": 50
+    }
+  }
+}
+```
+{: data-file="regex.json" }
+
+The PHPStan rule reports it under the same identifier once its `complexity` check is on; `rules.neon` leaves it off:
+
+```neon
+parameters:
+    phpRegex:
+        checks:
+            complexity:
+                enabled: true
+                threshold: 50
+```
+{: data-file="phpstan.neon" }
+
+The Symfony and Laravel lint commands leave it out.
 
 **Fix:** Split the pattern, or factor its repeated parts out.
 

@@ -760,10 +760,11 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `checks.optimizations`          | object           | `enabled` (default `true`), `minSavings`, `options`      |
 | `checks.optimizations.options`  | object           | digits, word, ranges, canonicalizeCharClasses, possessive, factorize, minQuantifierCount, verifyWithAutomata |
 | `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false`; `redos.search` turns the search cost of the ReDoS check off |
+| `checks.complexity`             | object           | `enabled` (default `false`) and `threshold`, an integer of at least 1 (default `50`): a warning, `regex.lint.complexity`, for each pattern whose complexity score reaches it |
 
-`checks.redos`, `checks.optimizations` and `checks.lint` are objects, and only
-their `enabled` key switches a check on or off: setting `threshold`, `mode`,
-`minSavings`, `options` or `rules` alone never enables it. `mode` and
+`checks.redos`, `checks.optimizations`, `checks.lint` and `checks.complexity`
+are objects, and only their `enabled` key switches a check on or off: setting
+`threshold`, `mode`, `minSavings`, `options` or `rules` alone never enables it. `mode` and
 `threshold` are read whatever their case.
 
 The lint command refuses a file it cannot fully use. Every unknown key, every

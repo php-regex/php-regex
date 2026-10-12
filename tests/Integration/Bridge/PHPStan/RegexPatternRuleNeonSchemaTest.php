@@ -77,10 +77,35 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{string}>
+     */
+    public static function provideUnreadableComplexitySettings(): iterable
+    {
+        yield 'threshold zero' => ["checks:\n            complexity:\n                threshold: 0"];
+        yield 'threshold negative' => ["checks:\n            complexity:\n                threshold: -5"];
+        yield 'threshold as a string' => ["checks:\n            complexity:\n                threshold: many"];
+        yield 'switch as a string' => ["checks:\n            complexity:\n                enabled: maybe"];
+        yield 'unknown key' => ["checks:\n            complexity:\n                max: 20"];
+    }
+
+    #[Test]
+    #[DataProvider('provideUnreadableComplexitySettings')]
+    public function test_schema_refuses_an_unreadable_complexity_setting(string $neon): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}complexity\u{A0}›\u{A0}");
+
+        $this->loadExtensionWith($neon);
+    }
+
+    /**
      * @return iterable<string, array{string, list<string>, mixed}>
      */
     public static function provideAcceptedSettings(): iterable
     {
+        yield 'complexity switch' => ["checks:\n            complexity:\n                enabled: true", ['checks', 'complexity', 'enabled'], true];
+        yield 'complexity threshold' => ["checks:\n            complexity:\n                threshold: 20", ['checks', 'complexity', 'threshold'], 20];
+        yield 'complexity threshold of one' => ["checks:\n            complexity:\n                threshold: 1", ['checks', 'complexity', 'threshold'], 1];
         yield 'lint switch' => ["checks:\n            lint:\n                enabled: true", ['checks', 'lint', 'enabled'], true];
         yield 'threshold low' => ["checks:\n            redos:\n                threshold: low", ['checks', 'redos', 'threshold'], 'low'];
         yield 'threshold medium' => ["checks:\n            redos:\n                threshold: medium", ['checks', 'redos', 'threshold'], 'medium'];

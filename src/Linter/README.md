@@ -70,6 +70,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | `checks.optimizations.options` | see the next column | What the optimizer may rewrite: `digits`, `word`, `ranges`, `canonicalizeCharClasses` and `verifyWithAutomata` default to `true`, `possessive` and `factorize` to `false`, and `minQuantifierCount` (at least `2`) to `4` |
 | `checks.lint.enabled` | `true` | Lint rules |
 | `checks.lint.rules.<id>` | `true` | One boolean per rule id; `unicode.shorthandWithoutU`, `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass`, `quantifier.uselessLazy` and `lookaround.edgeQuantifier` default to `false` |
+| `checks.complexity.enabled`, `checks.complexity.threshold` | `false`, `50` | `regex.lint.complexity`, a warning for each pattern whose complexity score reaches the threshold (an integer of at least `1`) |
 
 Usage
 -----

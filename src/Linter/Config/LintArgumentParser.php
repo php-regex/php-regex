@@ -156,6 +156,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -184,6 +186,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -216,6 +220,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -252,6 +258,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
                 $i++;
 
@@ -286,6 +294,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -324,6 +334,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
                 $i++;
 
@@ -353,6 +365,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -381,6 +395,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -413,6 +429,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -445,6 +463,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -499,6 +519,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -533,6 +555,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
                 $i++;
 
@@ -562,6 +586,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -594,6 +620,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -627,6 +655,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
                 $i++;
 
@@ -664,6 +694,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
                 $i++;
 
@@ -693,6 +725,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
 
                 continue;
@@ -725,6 +759,8 @@ final class LintArgumentParser
                     $arguments->lintRules,
                     $arguments->interop,
                     $arguments->patternFunctions,
+                    $arguments->checkComplexity,
+                    $arguments->complexityThreshold,
                 );
                 $i++;
 
@@ -763,6 +799,8 @@ final class LintArgumentParser
                 $arguments->lintRules,
                 $arguments->interop,
                 $arguments->patternFunctions,
+                $arguments->checkComplexity,
+                $arguments->complexityThreshold,
             );
         }
 
@@ -831,6 +869,8 @@ final class LintArgumentParser
             $arguments->lintRules,
             $arguments->interop,
             $arguments->patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
         );
     }
 
@@ -861,6 +901,8 @@ final class LintArgumentParser
             $arguments->lintRules,
             $arguments->interop,
             $arguments->patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
         );
     }
 
@@ -913,6 +955,8 @@ final class LintArgumentParser
             $arguments->lintRules,
             $interop,
             $arguments->patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
         );
     }
 
@@ -945,6 +989,8 @@ final class LintArgumentParser
             $arguments->lintRules,
             $arguments->interop,
             $patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
         );
     }
 
@@ -972,6 +1018,8 @@ final class LintArgumentParser
             $arguments->lintRules,
             $arguments->interop,
             $arguments->patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
         );
     }
 
@@ -1002,6 +1050,8 @@ final class LintArgumentParser
             $lintRules,
             $arguments->interop,
             $arguments->patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
         );
     }
 }

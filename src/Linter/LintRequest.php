@@ -33,6 +33,8 @@ final readonly class LintRequest
      *                                              the paths linted: the project's paths
      * @param array<string>       $vendorPaths      the libraries read the same way, vendor/: a project
      *                                              declaration wins over a copy found there
+     * @param bool                $checkComplexity  whether regex.lint.complexity is reported, at the threshold
+     *                                              of the analysis
      */
     public function __construct(
         public array $paths,
@@ -48,6 +50,7 @@ final readonly class LintRequest
         public array $lintRules = [],
         public array $declarationPaths = [],
         public array $vendorPaths = [],
+        public bool $checkComplexity = false,
     ) {}
 
     /**

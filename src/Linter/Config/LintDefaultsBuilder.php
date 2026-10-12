@@ -42,6 +42,8 @@ final class LintDefaultsBuilder
         'checks.optimizations.options' => 'optimizations',
         'checks.lint.enabled' => 'checkLint',
         'checks.lint.rules' => 'lintRules',
+        'checks.complexity.enabled' => 'checkComplexity',
+        'checks.complexity.threshold' => 'complexityThreshold',
     ];
 
     /**

@@ -168,6 +168,7 @@ final class LintConfigSchema
                 'checksRedos' => self::checksRedos(),
                 'checksOptimizations' => self::checksOptimizations(),
                 'checksLint' => self::checksLint(),
+                'checksComplexity' => self::checksComplexity(),
             ],
             'properties' => [
                 '$schema' => [
@@ -236,6 +237,10 @@ final class LintConfigSchema
                         'lint' => [
                             '$ref' => '#/$defs/checksLint',
                             'description' => 'Lint rule settings.',
+                        ],
+                        'complexity' => [
+                            '$ref' => '#/$defs/checksComplexity',
+                            'description' => 'Pattern complexity settings: regex.lint.complexity, a warning for each pattern whose complexity score reaches the threshold.',
                         ],
                     ],
                 ],
@@ -418,6 +423,30 @@ final class LintConfigSchema
                     'description' => 'Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.',
                     'additionalProperties' => false,
                     'properties' => $rules,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function checksComplexity(): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'properties' => [
+                'enabled' => [
+                    'type' => 'boolean',
+                    'description' => 'Report regex.lint.complexity, a warning for each pattern whose complexity score reaches the threshold. Disabled by default; setting threshold does not enable it.',
+                    'default' => false,
+                ],
+                'threshold' => [
+                    'type' => 'integer',
+                    'description' => 'The complexity score from which a pattern is reported: the score Regex::validate() returns as complexityScore.',
+                    'minimum' => 1,
+                    'default' => 50,
                 ],
             ],
         ];

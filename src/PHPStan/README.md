@@ -36,7 +36,7 @@ Features
 * Opt-in ReDoS analysis, theoretical only — the pattern is read, never run inside PHPStan — with four severity thresholds: a proven exponential or polynomial verdict, or a heuristic one, with the attack input in the tip, and, under `regex.redos.search`, the quadratic cost of an unanchored search whose every attempt is linear. A call whose subject PHPStan knows to be constant is not reported: no input can reach it.
 * Opt-in optimization suggestions behind a minimum-savings setting; every rewrite is proven equivalent by the automata solver before it is reported.
 * With optimizations on, a `preg_match($pattern, $subject)` a string function answers alike is reported with the function: `/^https:/` is `str_starts_with($subject, 'https:')`, `/^(?:GET|POST)\z/` an `in_array()`. Each is proven by the automata; `/^foo$/` is no `===`, as `$` also takes `"foo\n"`.
-* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regexp.pattern` (a marked parameter), `regex.replacement.undefinedGroup`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`.
+* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regexp.pattern` (a marked parameter), `regex.replacement.undefinedGroup`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`, `regex.lint.complexity`.
 * The `phpRegex` parameter is validated by a Neon schema before analysis starts; a version or threshold that names no real value stops the run there.
 
 Installation
@@ -57,7 +57,7 @@ includes:
 ```
 
 `rules.neon` turns the lint rules and the ReDoS analysis on — optimizations
-stay off, enable them with your own parameters:
+and the complexity check stay off, enable them with your own parameters:
 
 ```neon
 includes:
@@ -81,6 +81,8 @@ in `ignoreErrors`, as with any PHPStan rule. The defaults as shipped:
 | `checks.optimizations.enabled` | `false` | optimization suggestions |
 | `checks.optimizations.minSavings` | `1` | characters saved before a suggestion is reported |
 | `checks.optimizations.options` | as shipped | which rewrites the optimizer may apply: `digits`, `word`, `ranges`, `canonicalizeCharClasses` and `verifyWithAutomata` on, `possessive` and `factorize` off, `minQuantifierCount` at `4` |
+| `checks.complexity.enabled` | `false` | `regex.lint.complexity`, for a pattern whose complexity score reaches the threshold |
+| `checks.complexity.threshold` | `50` | the complexity score from which a pattern is reported, at least `1` |
 
 The rules are silent for a pattern the PCRE2 running PHPStan refuses to
 compile: PHPStan core's own `regexp.pattern` rule reports those, for the

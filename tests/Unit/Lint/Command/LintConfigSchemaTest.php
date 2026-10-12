@@ -91,6 +91,14 @@ final class LintConfigSchemaTest extends TestCase
         yield 'threshold unknown' => ['{"checks": {"redos": {"threshold": "unknown"}}}'];
         yield 'minQuantifierCount below 2' => ['{"checks": {"optimizations": {"options": {"minQuantifierCount": 1}}}}'];
         yield 'jobs below 1' => ['{"jobs": 0}'];
+        yield 'complexity as a boolean' => ['{"checks": {"complexity": true}}'];
+        yield 'complexity off as a boolean' => ['{"checks": {"complexity": false}}'];
+        yield 'complexity threshold zero' => ['{"checks": {"complexity": {"threshold": 0}}}'];
+        yield 'complexity threshold negative' => ['{"checks": {"complexity": {"threshold": -5}}}'];
+        yield 'complexity threshold as a string' => ['{"checks": {"complexity": {"threshold": "50"}}}'];
+        yield 'complexity threshold as a float' => ['{"checks": {"complexity": {"threshold": 12.5}}}'];
+        yield 'complexity enabled as a string' => ['{"checks": {"complexity": {"enabled": "yes"}}}'];
+        yield 'unknown complexity key' => ['{"checks": {"complexity": {"max": 20}}}'];
     }
 
     #[Test]
@@ -113,6 +121,9 @@ final class LintConfigSchemaTest extends TestCase
         yield 'target as strings' => ['{"phpVersion": "8.3", "pcreVersion": "10.42"}'];
         yield 'target as a PHP_VERSION_ID' => ['{"phpVersion": 80300}'];
         yield 'every check as an object' => ['{"checks": {"validation": true, "redos": {"enabled": true, "mode": "confirmed", "threshold": "high"}, "optimizations": {"enabled": true, "minSavings": 2, "options": {"digits": true, "minQuantifierCount": 2}}, "lint": {"enabled": true, "rules": {"unicode.shorthandWithoutU": true}}}}'];
+        yield 'complexity on with a threshold' => ['{"checks": {"complexity": {"enabled": true, "threshold": 20}}}'];
+        yield 'complexity off' => ['{"checks": {"complexity": {"enabled": false}}}'];
+        yield 'complexity threshold of one' => ['{"checks": {"complexity": {"threshold": 1}}}'];
         yield 'empty lists' => ['{"paths": [], "exclude": [], "extraction": {"interop": [], "functions": []}}'];
     }
 

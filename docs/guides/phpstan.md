@@ -324,8 +324,19 @@ parameters:
                     factorize: false
                     minQuantifierCount: 4
                     verifyWithAutomata: true
+            complexity:
+                enabled: false
+                # The complexity score from which a pattern is reported.
+                threshold: 50
 ```
 {: data-file="phpstan.neon" }
+
+`rules.neon` leaves `optimizations` and `complexity` off. With `complexity`
+on, a pattern whose complexity score, the `complexityScore` of
+`Regex::validate()`, reaches `threshold` is reported as `regex.lint.complexity`
+with the message `regex lint` prints, `Pattern is complex (score: 56).`; it
+needs neither `lint` nor `redos`. A `threshold` below 1 stops the analysis when
+it starts, even while `complexity` is off.
 
 A `phpVersion` or `pcreVersion` that names no release stops the analysis when
 it starts, not on the first file. So does a `threshold` that is not `low`,
@@ -346,6 +357,7 @@ custom wiring, reads them in any case.
 | `regex.optimization` | a pattern with a shorter equivalent |
 | `regex.trivialMatch` | a `preg_match($pattern, $subject)` a string function answers alike, `str_starts_with()` for `/^https:/`, proven by the automata; with `optimizations` on |
 | `regex.lint.<rule>` | a lint rule, as `regex.lint.flag.useless.i` |
+| `regex.lint.complexity` | a pattern whose complexity score reaches `checks.complexity.threshold`; with `complexity` on |
 
 Use them in `ignoreErrors` or a baseline as with any PHPStan identifier.
 

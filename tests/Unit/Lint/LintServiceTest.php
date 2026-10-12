@@ -324,6 +324,44 @@ final class LintServiceTest extends TestCase
         $this->assertCount(0, $complexityIssues);
     }
 
+    /**
+     * "/^(a|b|c)(d|e|f)(g|h)$/" scores 16: reported from a threshold of 16,
+     * not from 17, and only when the request turns the check on.
+     *
+     * @return iterable<string, array{threshold: int, checkComplexity: bool, expected: list<string>}>
+     */
+    public static function provideComplexityRequests(): iterable
+    {
+        yield 'on, threshold reached' => ['threshold' => 16, 'checkComplexity' => true, 'expected' => ['Pattern is complex (score: 16).']];
+        yield 'on, threshold one above' => ['threshold' => 17, 'checkComplexity' => true, 'expected' => []];
+        yield 'off, threshold reached' => ['threshold' => 16, 'checkComplexity' => false, 'expected' => []];
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[Test]
+    #[DataProvider('provideComplexityRequests')]
+    public function test_analyze_reports_complexity_only_when_the_request_asks(int $threshold, bool $checkComplexity, array $expected): void
+    {
+        $this->assertSame(16, RegexParser::create()->validate('/^(a|b|c)(d|e|f)(g|h)$/')->complexityScore);
+
+        $request = new LintRequest(['.'], [], 1, checkOptimizations: false, checkComplexity: $checkComplexity);
+        $service = new LintService(new AnalysisService(RegexParser::create(), warningThreshold: $threshold), $this->sources);
+        $result = $service->analyze([new PatternOccurrence('/^(a|b|c)(d|e|f)(g|h)$/', 'test.php', 1, 'php:preg_match()')], $request, null);
+
+        $messages = [];
+        foreach ($result->results as $entry) {
+            foreach ($entry['issues'] as $issue) {
+                if ('regex.lint.complexity' === ($issue['issueId'] ?? null)) {
+                    $messages[] = $issue['message'];
+                }
+            }
+        }
+
+        $this->assertSame($expected, $messages);
+    }
+
     #[Test]
     public function test_analyze_with_route_pattern_filters_route_issues(): void
     {

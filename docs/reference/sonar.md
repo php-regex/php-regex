@@ -21,7 +21,7 @@ by `regex lint`, the language server and the Symfony and Laravel commands only.
 |---|---|---|---|
 | S5361 | `preg_replace()` where `str_replace()` does | the Rector rules ([Rector guide](../guides/rector.md)); PHPStan `regex.trivialMatch` for `preg_match()` | covered |
 | S5842 | a repeated part that can match the empty string | `regex.lint.quantifier.emptyRepeat` | covered; silent where an empty alternative, a quantified lookaround or a nested quantifier already reports the repeat, as long as the configuration turns that rule on |
-| S5843 | an overly complex expression | `regex.lint.complexity` | partial: PHPRegex keeps its own complexity score |
+| S5843 | an overly complex expression | `regex.lint.complexity` (off by default) | covered, with a configurable threshold: `checks.complexity` in `regex.json`, `phpRegex.checks.complexity` in PHPStan; the score is PHPRegex's own, not Sonar's |
 | S5850 | anchors that bind to one alternative only | `regex.lint.anchor.alternationPrecedence` | covered; silent, as in SonarPHP, when an anchor sits anywhere but the start of the first alternative and the end of the last, and when every alternative is anchored on one side |
 | S5855 | redundant alternatives | `regex.lint.alternation.duplicateDisjunction` | partial: identical alternatives only |
 | S5856 | an invalid pattern | the validation every entry point runs (`regex lint` errors, PHPStan core and `regex.invalidForTarget`) | covered |

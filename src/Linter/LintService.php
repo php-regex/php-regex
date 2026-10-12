@@ -39,6 +39,8 @@ use PHPRegex\Redos\RedosSeverity;
  */
 final readonly class LintService
 {
+    private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
+
     /**
      * A route constraint is a fragment that carries no flag of its own: the
      * s, D and i a route source judges it under are the router's, and
@@ -144,7 +146,8 @@ final readonly class LintService
     }
 
     /**
-     * Apply high-level toggles from the lint request (validation / ReDoS).
+     * Apply high-level toggles from the lint request (validation, ReDoS,
+     * complexity).
      *
      * @phpstan-param array<LintIssue> $issues
      *
@@ -158,6 +161,11 @@ final readonly class LintService
             }
 
             if (!$request->checkRedos && isset($issue['analysis'])) {
+                return false;
+            }
+
+            // "Pattern is complex (score: N).": reported only on demand.
+            if (!$request->checkComplexity && self::ISSUE_ID_COMPLEXITY === ($issue['issueId'] ?? null)) {
                 return false;
             }
 
@@ -175,11 +183,6 @@ final readonly class LintService
         return array_values(array_filter($issues, static function (array $issue): bool {
             $source = $issue['source'] ?? '';
             $issueId = $issue['issueId'] ?? null;
-
-            // Hide complexity-based warnings ("Pattern is complex (score: N).")
-            if (\is_string($issueId) && 'regex.lint.complexity' === $issueId) {
-                return false;
-            }
 
             if (str_starts_with($source, 'route:')) {
                 if (\is_string($issueId) && isset(self::ROUTE_IGNORED_ISSUE_IDS[$issueId])) {

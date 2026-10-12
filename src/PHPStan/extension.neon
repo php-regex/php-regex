@@ -29,6 +29,11 @@ parametersSchema:
                     minQuantifierCount: int(),
                     verifyWithAutomata: bool()
                 ])
+            ]),
+            complexity: structure([
+                enabled: bool(),
+                # The complexity score from which a pattern is reported
+                threshold: schema(int(), min(1))
             ])
         ])
     ])
@@ -42,7 +47,8 @@ parameters:
         phpVersion: null
         pcreVersion: null
 
-        # Off by default; rules.neon turns lint and ReDoS on.
+        # Off by default; rules.neon turns lint and ReDoS on, and leaves
+        # optimizations and complexity off.
         checks:
             lint:
                 enabled: false
@@ -61,6 +67,9 @@ parameters:
                     factorize: false
                     minQuantifierCount: 4
                     verifyWithAutomata: true
+            complexity:
+                enabled: false
+                threshold: 50
 
 services:
     -

@@ -189,6 +189,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         // is the one it measures against; there is no setting to turn JIT on.
         $analysis = new AnalysisService(
             $regex->parser(),
+            warningThreshold: $arguments->complexityThreshold,
             redosThreshold: $arguments->redosThreshold ?? RedosSeverity::High->value,
             redosMode: $arguments->redosMode,
             redosConfirmOptions: new ConfirmationOptions(),
@@ -261,6 +262,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 optimizations: OptimizerOptions::fromCamelCaseArray($arguments->optimizations + ['verifyWithAutomata' => true]),
                 declarationPaths: self::declarationPaths($lintDefaults, $paths),
                 vendorPaths: [(getcwd() ?: '.').'/vendor'],
+                checkComplexity: $arguments->checkComplexity,
             );
             $patterns = $lint->collectPatterns($request, $collectionProgress);
         } catch (\Throwable $e) {

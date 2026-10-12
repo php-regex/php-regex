@@ -110,12 +110,14 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
             'redos' => true,
             'threshold' => 'critical',
             'optimizations' => false,
+            'complexity' => false,
         ], [
             'phpVersion' => NeonParameters::read($parameters, 'phpVersion'),
             'lint' => NeonParameters::read($parameters, 'checks', 'lint', 'enabled'),
             'redos' => NeonParameters::read($parameters, 'checks', 'redos', 'enabled'),
             'threshold' => NeonParameters::read($parameters, 'checks', 'redos', 'threshold'),
             'optimizations' => NeonParameters::read($parameters, 'checks', 'optimizations', 'enabled'),
+            'complexity' => NeonParameters::read($parameters, 'checks', 'complexity', 'enabled'),
         ]);
     }
 

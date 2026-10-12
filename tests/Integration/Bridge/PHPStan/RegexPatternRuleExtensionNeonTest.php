@@ -57,6 +57,8 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
             'threshold' => 'critical',
             'optimizations' => false,
             'minSavings' => 1,
+            'complexity' => false,
+            'complexityThreshold' => 50,
         ], [
             'phpVersion' => NeonParameters::read($parameters, 'phpVersion'),
             'pcreVersion' => NeonParameters::read($parameters, 'pcreVersion'),
@@ -65,6 +67,8 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
             'threshold' => NeonParameters::read($parameters, 'checks', 'redos', 'threshold'),
             'optimizations' => NeonParameters::read($parameters, 'checks', 'optimizations', 'enabled'),
             'minSavings' => NeonParameters::read($parameters, 'checks', 'optimizations', 'minSavings'),
+            'complexity' => NeonParameters::read($parameters, 'checks', 'complexity', 'enabled'),
+            'complexityThreshold' => NeonParameters::read($parameters, 'checks', 'complexity', 'threshold'),
         ]);
     }
 

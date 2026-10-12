@@ -62,6 +62,8 @@ final class LintConfigMessagesTest extends TestCase
         yield 'mode off' => ['{"checks": {"redos": {"mode": "off"}}}', 'checks.redos.enabled set to false turns the analysis off'];
         yield '1.x key, once removed with its replacement named' => ['{"minSavings": 2}', 'Unknown key "minSavings"'];
         yield '1.x key without a replacement' => ['{"redosNoJit": true}', 'Unknown key "redosNoJit"'];
+        yield 'boolean complexity form' => ['{"checks": {"complexity": false}}', 'expected an object (write {"enabled": false})'];
+        yield 'complexity threshold below 1' => ['{"checks": {"complexity": {"threshold": 0}}}', 'Invalid "checks.complexity.threshold" in '];
         yield 'PHP_VERSION_ID too small' => ['{"phpVersion": 83}', 'a PHP_VERSION_ID like 80300'];
     }
 

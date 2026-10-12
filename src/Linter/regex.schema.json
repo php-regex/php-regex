@@ -443,6 +443,23 @@
           }
         }
       }
+    },
+    "checksComplexity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Report regex.lint.complexity, a warning for each pattern whose complexity score reaches the threshold. Disabled by default; setting threshold does not enable it.",
+          "default": false
+        },
+        "threshold": {
+          "type": "integer",
+          "description": "The complexity score from which a pattern is reported: the score Regex::validate() returns as complexityScore.",
+          "minimum": 1,
+          "default": 50
+        }
+      }
     }
   },
   "properties": {
@@ -693,6 +710,10 @@
         "lint": {
           "$ref": "#/$defs/checksLint",
           "description": "Lint rule settings."
+        },
+        "complexity": {
+          "$ref": "#/$defs/checksComplexity",
+          "description": "Pattern complexity settings: regex.lint.complexity, a warning for each pattern whose complexity score reaches the threshold."
         }
       }
     }
