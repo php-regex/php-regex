@@ -6,7 +6,7 @@ use PHPRegex\Toolkit\Regex;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
- * Example: Email validation with RegexParser
+ * Example: Email validation with PHPRegex
  *
  * This example demonstrates:
  * - Email pattern validation

@@ -1,7 +1,7 @@
 {
     "name": "php-regex/php-regex",
-    "description": "A PCRE regex parser with lexer, AST builder, validation, ReDoS analysis, and syntax highlighting. Zero runtime dependencies.",
-    "keywords": ["regex", "parser", "pcre", "lexer", "ast", "validation", "redos", "security", "syntax-highlighting", "php", "cli"],
+    "description": "Static analysis for PHP regular expressions: parse, validate, explain, prove ReDoS safety, lint, optimize and compare patterns, with PHPStan, Psalm, Rector, Symfony and Laravel integrations.",
+    "keywords": ["regex", "pcre", "parser", "ast", "validation", "redos", "security", "linter", "static-analysis", "automata", "phpstan", "psalm", "rector", "symfony", "laravel", "cli"],
     "homepage": "https://php-regex.com",
     "type": "library",
     "license": "MIT",

@@ -8,7 +8,7 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\ConfirmationOptions;
 
 /**
- * Example: Advanced ReDoS analysis and mitigation with RegexParser
+ * Example: Advanced ReDoS analysis and mitigation with PHPRegex
  *
  * This example demonstrates:
  * - Detecting catastrophic backtracking risks

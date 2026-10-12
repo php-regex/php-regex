@@ -6,7 +6,7 @@ use PHPRegex\Toolkit\Regex;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
- * Example: Validate a regex pattern with RegexParser
+ * Example: Validate a regex pattern with PHPRegex
  *
  * This example demonstrates:
  * - Basic pattern validation

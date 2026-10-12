@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /*
- * PHP-CS-Fixer Configuration for RegexParser
+ * PHP-CS-Fixer Configuration for PHPRegex
  *
  * This configuration provides the highest quality code formatting for modern PHP libraries,
  * focusing on readability, consistency, performance, and modern PHP best practices.

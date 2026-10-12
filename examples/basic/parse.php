@@ -5,7 +5,7 @@ declare(strict_types=1);
 use PHPRegex\Toolkit\Regex;
 
 /**
- * Example: Parse and analyze a regex pattern with RegexParser
+ * Example: Parse and analyze a regex pattern with PHPRegex
  *
  * This example demonstrates:
  * - Parsing a pattern into an AST
