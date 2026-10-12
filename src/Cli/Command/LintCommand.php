@@ -330,12 +330,11 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $output->write($formatter->getSummary($report->stats));
             $elapsed = (float) microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
-            $cacheStats = $regex->getCacheStats();
             $timeStr = round($elapsed, 2).'s';
             $memoryStr = round($peakMemory / 1024 / 1024, 2).' MB';
-            $cacheStr = $cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses';
             $processesStr = (string) $jobs;
-            $output->write('  '.$output->dim('Time: ').$output->warning($timeStr).'  '.$output->dim('Memory: ').$output->warning($memoryStr).'  '.$output->dim('Cache: ').$output->warning($cacheStr).'  '.$output->dim('Processes: ').$output->warning($processesStr)."\n");
+            // No cache line: the binary keeps no cache between runs.
+            $output->write('  '.$output->dim('Time: ').$output->warning($timeStr).'  '.$output->dim('Memory: ').$output->warning($memoryStr).'  '.$output->dim('Processes: ').$output->warning($processesStr)."\n");
             $output->write($formatter->formatFooter());
         }
 

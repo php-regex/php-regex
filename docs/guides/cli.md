@@ -525,7 +525,7 @@ Configuration : regex.dist.json
   [2/2] Analyzing patterns
 
   PASS No issues found, 0 optimizations available.
-  Time: 0.02s  Memory: 8 MB  Cache: 3 hits, 1 misses  Processes: 10
+  Time: 0.02s  Memory: 8 MB  Processes: 10
   If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex
 ```
 

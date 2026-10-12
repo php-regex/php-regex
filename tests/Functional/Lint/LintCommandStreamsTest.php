@@ -76,6 +76,33 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertStringContainsString('Scanned 1 files, found 1 patterns', $stdout);
     }
 
+    /**
+     * The console footer gives the time, the memory and the processes. It
+     * names no cache: the binary keeps none between runs, and the workers'
+     * caches are not the parent's, whose count read 0 hits, 0 misses.
+     */
+    #[Test]
+    #[DataProvider('provideJobs')]
+    public function test_lint_console_footer_names_no_cache(string $jobs): void
+    {
+        $this->enterProject(['src/a.php' => self::PHP_FILE, 'src/b.php' => self::PHP_FILE]);
+
+        [$exitCode, $stdout] = $this->runLint(['src', '--format=console', '--jobs='.$jobs, '--no-redos']);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertMatchesRegularExpression('/^  Time: \S+  Memory: \S+ MB  Processes: '.$jobs.'$/m', $stdout);
+        $this->assertStringNotContainsString('Cache:', $stdout);
+    }
+
+    /**
+     * @return iterable<string, array{jobs: string}>
+     */
+    public static function provideJobs(): iterable
+    {
+        yield 'one process' => ['jobs' => '1'];
+        yield 'two processes' => ['jobs' => '2'];
+    }
+
     #[Test]
     public function test_lint_prints_the_notices_in_the_banner_for_the_console_format(): void
     {
