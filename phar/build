@@ -22,13 +22,24 @@ cleanup() {
 }
 trap cleanup EXIT
 
-rsync -a \
-  --exclude='vendor/' \
-  --exclude='.git/' \
-  --exclude='.idea/' \
-  --exclude='tests/' \
-  --exclude='*.phar' \
-  "${ROOT}/" "${TMP_DIR}/"
+# Only the tracked files are copied: an ignored directory, such as a local
+# corpus, can be very large, and nothing untracked belongs in the phar. The
+# vendor directory is installed afresh below, from the checkout's
+# composer.lock when there is one; a tracked file deleted from the working
+# tree is left out.
+(
+  cd "${ROOT}"
+  git ls-files -z -- ':(exclude,glob)**/tests/**' ':(exclude,glob)**/*.phar' \
+    | while IFS= read -r -d '' file; do
+        if [ -e "${file}" ] || [ -L "${file}" ]; then
+          printf '%s\0' "${file}"
+        fi
+      done
+) | rsync -a --from0 --files-from=- "${ROOT}/" "${TMP_DIR}/"
+
+if [ -f "${ROOT}/composer.lock" ]; then
+  cp "${ROOT}/composer.lock" "${TMP_DIR}/composer.lock"
+fi
 
 (
   cd "${TMP_DIR}"
