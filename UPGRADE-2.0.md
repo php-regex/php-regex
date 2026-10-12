@@ -179,7 +179,6 @@ one.
 | `RegexParser\Cli\Application` | `PHPRegex\Cli\Application` |
 | `RegexParser\Cli\Command\AbstractCommand` | `PHPRegex\Cli\Command\AbstractCommand` |
 | `RegexParser\Cli\Command\AnalyzeCommand` | `PHPRegex\Cli\Command\AnalyzeCommand` |
-| `RegexParser\Cli\Command\ClearCacheCommand` | `PHPRegex\Cli\Command\ClearCacheCommand` |
 | `RegexParser\Cli\Command\CommandInterface` | `PHPRegex\Cli\Command\CommandInterface` |
 | `RegexParser\Cli\Command\CompareCommand` | `PHPRegex\Cli\Command\CompareCommand` |
 | `RegexParser\Cli\Command\DebugCommand` | `PHPRegex\Cli\Command\DebugCommand` |
@@ -359,6 +358,7 @@ one.
 | `RegexParser\Automata\Transform\AstToNfaTransformerInterface` | removed: type against `PHPRegex\Automata\Transform\HirToNfaTransformer`, one concrete class |
 | `RegexParser\Automata\Solver\RegexSolverCompilerInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
 | `RegexParser\Automata\Solver\RegexSolverInterface` | removed: type against `PHPRegex\Automata\LanguageSolver` |
+| `RegexParser\Cli\Command\ClearCacheCommand` | removed: no replacement: the binary keeps no cache between runs, so the regex clear-cache command had nothing to clear |
 | `RegexParser\Node\ClassOperationNode` | removed: no replacement: PHP reads "&&" and "--" in a class as members and ranges, so no pattern ever produced it |
 | `RegexParser\Node\ClassOperationType` | removed: no replacement: it only typed ClassOperationNode |
 | `RegexParser\Node\UnicodeNode` | removed: use `PHPRegex\Parser\Node\CharLiteralNode`, which every \x{...} and \u{...} escape already became |
@@ -515,6 +515,16 @@ instance's target; `TokenStream` is internal.
 | `Regex::tokenize($regex, $phpVersionId)` | `Regex::create(['php_version' => $phpVersionId])->tokenize($regex)` |
 | `$stream->getTokens()` | the list itself |
 | `$stream->getPattern()` | the pattern body you passed, without its delimiters and flags |
+
+#### `regex clear-cache` is gone
+
+The `clear-cache` command and its `cache:clear` alias are removed. The binary
+never configured a persistent cache: every run parses with an in-memory cache
+that ends with the process, so the command had nothing to clear. Remove it
+from your scripts; `regex clear-cache` is now an unknown command and exits
+with 2. An application that configures a removable cache, such as
+`FilesystemCache`, clears it from its own code: `$regex->getCache()->clear()`
+when the cache implements `RemovableCacheInterface`.
 
 #### A cache is emptied whole
 

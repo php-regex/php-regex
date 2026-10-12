@@ -229,6 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The `regex clear-cache` command and its `cache:clear` alias: the binary keeps no cache between runs, so the command cleared nothing while it printed "Cache cleared."; both are now unknown commands (exit code 2). See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `Automata\Alphabet\CharSet` and the AST-side transformer `AstToNfaTransformer` (with its interface): the one character set is `Parser\Hir\CharSet`, the one transformer `Transform\HirToNfaTransformer`. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `RegexParser\Node\ClassOperationNode`, `ClassOperationType`, `TokenType::T_CLASS_INTERSECTION`, `TokenType::T_CLASS_SUBTRACTION` and `NodeVisitorInterface::visitClassOperation()` with every implementation: PHP reads `&&` and `--` inside a class as members and ranges, so the parser never built the node and the lexer never produced the tokens. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - `RegexParser\Node\UnicodeNode` and `NodeVisitorInterface::visitUnicode()`: no parser path ever produced the node — `\x{...}` and `\u{...}` escapes become a `CharLiteralNode` — so every visitor carried a method that could not be called. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
@@ -245,6 +246,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex version`, `regex self-update` and `regex help <command>` refuse an option or argument they do not take, and every pattern command refuses a second pattern (`Unexpected argument: …`), with the usage error and exit code 2 the other commands use: `version --bogus` and `parse /a/ /b/` exited 0.
+- `regex lint --enable-rule=<id>` and `--disable-rule=<id>` refuse an id that `checks.lint.rules` in `regex.json` refuses (`Unknown lint rule "quantifer.nested" in --disable-rule.`, exit code 2) instead of ignoring it; the lint usage line lists `--lint`, `--no-lint` and both rule options.
+- `regex help transpile` and the help overview name the three `--target` values: `js`, `html` and `python`.
+- `regex debug` names itself `debug` in its banner, and reports an invalid pattern by its message, without the exception class.
+- An invalid `--php-version` or `--pcre-version` is reported by its option (`Invalid option: --php-version must be …`), no longer by the library key `"php_version"`.
+- The `regex lint` console footer no longer prints a cache count, which read `0 hits, 0 misses` whenever workers did the parsing.
 - Laravel `regex:lint` and `regex:routes --validate` judge a route constraint as the router matches it, anchored at both ends under `sDu` (`sDiu` for a domain parameter), where they wrapped it in bare slashes: the catastrophic backtracking of `->where('v', '(a+)+')` is now reported, a top-level alternation stays anchored, and a constraint starting with `/` is no longer read as a delimited pattern. A route constraint or requirement no longer gets a useless `s`, `D` or `i` flag finding the user cannot act on.
 - Laravel `regex:routes --show-constraints` marks a constraint valid or invalid only under `--validate`; without it there is no mark, and `valid` is `null` in the JSON report, where every constraint was marked valid. The command no longer claims to detect route conflicts: it lists the routes that have a constraint and validates the constraints.
 - Laravel `regex:compare`, `regex:transpile` and `regex:explain --highlight` print the pattern as plain text when the output is not decorated (piped, or `--no-ansi`), where they printed raw ANSI escape sequences.
@@ -564,6 +571,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- The CLI guide says which commands take `--format` (`parse`, `validate` and `compare` take none); the JSON reference says when `redos` running out of `--time-limit` is ended by PHP itself (exit code 124, empty stdout) instead of printing the error envelope; the CLI README's GitHub example is a real run's output.
 - Added comprehensive LSP integration guide (`docs/guides/lsp.md`) with configuration for VS Code, PhpStorm (LSP4IJ), Neovim, Vim, Emacs, Sublime Text, Helix, and Zed.
 - Updated CLI configuration examples to use `checks` and note deprecated keys.
 - The ReDoS guide says why a short witness can look harmless and still be the attack: PCRE2 looks for the code unit a match requires only on a subject shorter than 5,000 code units for an anchored pattern, 5,000,000 for an unanchored one, and past that cap pays the cost (`/color\s*:\s*[^;]+;/`, flat up to 5,000,000 bytes, was stopped after 8 seconds just past it).
