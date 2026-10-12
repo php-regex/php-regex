@@ -106,11 +106,11 @@ pointed at what you are working on. Run it with `composer infection`.
 ## Submitting Changes
 
 ### Commit Messages
-Use conventional commits:
+Write the subject as a short imperative sentence that says what the change does, with no type prefix; explain the why in the body when it is not obvious:
 ```bash
-git commit -m "fix: backreference compilation now escapes numeric refs"
-git commit -m "feat: add support for branch reset groups (?|...)"
-git commit -m "test: add behavioral compliance tests for lookarounds"
+git commit -m "Escape numeric references when compiling a backreference"
+git commit -m "Support branch reset groups (?|...)"
+git commit -m "Test lookarounds against the running engine"
 ```
 
 ### Pull Request Process
