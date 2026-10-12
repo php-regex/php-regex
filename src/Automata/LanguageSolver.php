@@ -37,9 +37,10 @@ use PHPRegex\Parser\RegexParser;
  * Answers questions about the languages regexes match: whether two overlap,
  * whether one is contained in another, whether they match the same strings.
  *
- * Each pattern is compiled to a DFA, so only the regular subset is supported:
- * backreferences, lookarounds, recursion and the like throw a
- * ComplexityException instead of an answer that would be wrong.
+ * Each pattern is compiled to a DFA, so only the regular subset is supported.
+ * A plain lookaround is read; backreferences, recursion, a lookaround nested
+ * in another, an anchor or a boundary inside one, (*napla:...) and the like
+ * throw a ComplexityException instead of an answer that would be wrong.
  *
  * @phpstan-import-type AlphabetRange from Dfa
  */

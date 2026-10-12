@@ -28,7 +28,7 @@ use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
- * Detects Symfony route conflicts using RegexParser automata logic.
+ * Detects Symfony route conflicts with the PHPRegex automata.
  *
  * @internal
  *
