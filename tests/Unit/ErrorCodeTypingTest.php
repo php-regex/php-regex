@@ -37,7 +37,7 @@ final class ErrorCodeTypingTest extends TestCase
         try {
             RegexParser::create(['cache' => null])->parse('/a(/');
         } catch (SyntaxErrorException $e) {
-            $this->assertSame(ErrorCode::from('regex.group.unclosed'), $e->getErrorCode());
+            $this->assertSame(ErrorCode::from('regex.group.unclosed'), $e->errorCode);
 
             return;
         }
@@ -51,7 +51,7 @@ final class ErrorCodeTypingTest extends TestCase
         try {
             RegexParser::create(['cache' => null])->parse('/[a/');
         } catch (LexerException $e) {
-            $this->assertSame(ErrorCode::from('regex.charclass.unclosed'), $e->getErrorCode());
+            $this->assertSame(ErrorCode::from('regex.charclass.unclosed'), $e->errorCode);
 
             return;
         }
@@ -65,7 +65,7 @@ final class ErrorCodeTypingTest extends TestCase
         try {
             RegexParser::create(['cache' => null])->parse('/abc');
         } catch (ParserException $e) {
-            $this->assertSame(ErrorCode::from('regex.delimiter.unclosed'), $e->getErrorCode());
+            $this->assertSame(ErrorCode::from('regex.delimiter.unclosed'), $e->errorCode);
 
             return;
         }
@@ -76,7 +76,7 @@ final class ErrorCodeTypingTest extends TestCase
     #[Test]
     public function test_regex_exception_error_code_is_never_null(): void
     {
-        $type = (new \ReflectionMethod(RegexException::class, 'getErrorCode'))->getReturnType();
+        $type = (new \ReflectionProperty(RegexException::class, 'errorCode'))->getType();
 
         $this->assertInstanceOf(\ReflectionNamedType::class, $type);
         $this->assertSame(ErrorCode::class, $type->getName());

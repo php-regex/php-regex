@@ -531,7 +531,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $this->walkPattern($prefix);
         } catch (SemanticErrorException $error) {
-            return ($error->getPosition() ?? $limit) < $limit ? $error : null;
+            return ($error->position ?? $limit) < $limit ? $error : null;
         } finally {
             $this->readingPrefix = false;
         }

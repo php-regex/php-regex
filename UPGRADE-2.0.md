@@ -832,7 +832,7 @@ Nothing to do; a warm cache directory rebuilds itself.
 
 #### Error codes are an `ErrorCode` enum
 
-`RegexException::getErrorCode()` returns a `PHPRegex\Parser\ErrorCode` and is never
+`RegexException::$errorCode` is a `PHPRegex\Parser\ErrorCode` and is never
 `null`; `ValidationResult::$errorCode` is `?ErrorCode`.
 The values of the codes 1.x already had are unchanged, so code comparing strings
 moves to `->value` or, better, to the case:
@@ -914,6 +914,8 @@ instead.
 | `ValidationResult::getHint()` | `$hint` |
 | `ValidationResult::getErrorCode()` | `$errorCode` |
 | `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `optimizations()`, `explain()`, `highlighted()` | the property of the same name |
+| `RegexException::getErrorCode()`, `getPosition()`, `getSnippet()` | `$errorCode`, `$position`, `$snippet` |
+| `SemanticErrorException::getHint()` | `$hint` |
 | `ReDoSAnalysis::confidenceLevel()` | `RedosAnalysis::$confidence`, never null (`Low` when nothing raised it) |
 | `ReDoSAnalysis::getCulpritNode()` | `RedosAnalysis::$culpritNode` |
 | `ReDoSAnalysis::getPrimaryHotspot()` | `RedosAnalysis::primaryHotspot()` |
@@ -935,7 +937,7 @@ included; 1.x wrote console output for every format but `html`.
 
 #### Every offset counts from the pattern body
 
-`ValidationResult::$offset` and `RegexException::getPosition()` count from the
+`ValidationResult::$offset` and `RegexException::$position` count from the
 first character of the pattern body, the coordinate PCRE2 uses, for every
 error. In 1.x a modifier error and a pattern past `max_pattern_length` counted
 from the start of the whole string, delimiter included, and a modifier error

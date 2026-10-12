@@ -489,7 +489,7 @@ For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-c
 
 ## Error Codes
 
-Every `RegexException` carries an `ErrorCode` (`RegexException::getErrorCode()`), and so does a
+Every `RegexException` carries an `ErrorCode` (`RegexException::$errorCode`), and so does a
 failed validation (`ValidationResult::$errorCode`). An invalid option (`InvalidRegexOptionException`)
 or a cache failure (`CacheException`) is no judgement on a pattern and carries none. Lint advice has
 ids of its own, `regex.lint.<area>.<rule>` in camelCase (see the lint rule reference): PHPStan reports

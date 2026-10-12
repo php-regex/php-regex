@@ -26,11 +26,6 @@ trait VisualContextTrait
 
     private string $visualSnippet = '';
 
-    public function getPosition(): ?int
-    {
-        return $this->position;
-    }
-
     public function getPattern(): ?string
     {
         return $this->pattern;

@@ -108,8 +108,8 @@ use PHPRegex\Toolkit\Regex;
 try {
     $ast = Regex::create()->parse('/[unclosed/');
 } catch (RegexException $e) {
-    echo "Error at position: " . $e->getPosition() . "\n";
-    echo "Snippet: " . $e->getSnippet() . "\n";
+    echo "Error at position: " . $e->position . "\n";
+    echo "Snippet: " . $e->snippet . "\n";
 }
 ```
 

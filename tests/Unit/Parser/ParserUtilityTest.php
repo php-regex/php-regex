@@ -337,7 +337,7 @@ final class ParserUtilityTest extends TestCase
             PatternParser::extractPatternAndFlags($regex);
             $this->fail(\sprintf('%s must be refused.', json_encode($regex)));
         } catch (ParserException $e) {
-            $this->assertSame(ErrorCode::DelimiterInvalid, $e->getErrorCode());
+            $this->assertSame(ErrorCode::DelimiterInvalid, $e->errorCode);
             // The NUL byte is the delimiter named, not a character after it.
             $this->assertStringStartsWith('Invalid delimiter "\x00".', $e->getMessage());
         }

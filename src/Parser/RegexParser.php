@@ -69,7 +69,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-87e357bba9c61c994f680618d54aa26b';
+    public const CACHE_VERSION = 'ast-74c9654f74928c18a4bac863870d633f';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -299,7 +299,7 @@ final readonly class RegexParser
     private function firstParseError(string $regex, LexerException|ParserException $error): RegexException
     {
         $cause = $error->getPrevious();
-        $judged = $cause instanceof SemanticErrorException && $cause->getPosition() === $error->getPosition() ? $cause : $error;
+        $judged = $cause instanceof SemanticErrorException && $cause->position === $error->position ? $cause : $error;
 
         return $this->earlierError($regex, $error) ?? $judged;
     }
@@ -324,7 +324,7 @@ final readonly class RegexParser
      */
     private function earlierError(string $regex, LexerException|ParserException $error): ?RegexException
     {
-        $position = $error->getPosition() ?? 0;
+        $position = $error->position ?? 0;
 
         try {
             [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
@@ -371,7 +371,7 @@ final readonly class RegexParser
             $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
         ];
         foreach ($laterErrors as $laterError) {
-            if (null !== $laterError && (null === $earlier || ($laterError->getPosition() ?? $position) < ($earlier->getPosition() ?? $position))) {
+            if (null !== $laterError && (null === $earlier || ($laterError->position ?? $position) < ($earlier->position ?? $position))) {
                 $earlier = $laterError;
             }
         }
@@ -390,12 +390,12 @@ final readonly class RegexParser
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
             } catch (LexerException|ParserException $syntaxError) {
-                $at = $syntaxError->getPosition() ?? $position;
+                $at = $syntaxError->position ?? $position;
                 // A body that never closes is read to the end: an error met
                 // there, other than that ")" missing, comes first.
-                $atTheEnd = $at === $position && ErrorCode::GroupUnclosed === $error->getErrorCode()
-                    && ErrorCode::GroupUnclosed !== $syntaxError->getErrorCode();
-                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->getPosition() ?? $position))) {
+                $atTheEnd = $at === $position && ErrorCode::GroupUnclosed === $error->errorCode
+                    && ErrorCode::GroupUnclosed !== $syntaxError->errorCode;
+                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))) {
                     return $syntaxError;
                 }
             }
@@ -623,7 +623,7 @@ final readonly class RegexParser
                     ->parse(new TokenStream([$token, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
                 $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
             } catch (RegexException $error) {
-                if (($error->getPosition() ?? $position) < $position) {
+                if (($error->position ?? $position) < $position) {
                     return $error;
                 }
             }
@@ -678,7 +678,7 @@ final readonly class RegexParser
 
                 $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
             } catch (SemanticErrorException $versionError) {
-                if (($versionError->getPosition() ?? $position) < $position) {
+                if (($versionError->position ?? $position) < $position) {
                     return $versionError;
                 }
             } catch (LexerException|ParserException) {
@@ -895,12 +895,12 @@ final readonly class RegexParser
         $hint = null;
 
         if ($exception instanceof RegexException) {
-            $position = $exception->getPosition();
-            $errorCode = $exception->getErrorCode();
+            $position = $exception->position;
+            $errorCode = $exception->errorCode;
         }
 
         if ($exception instanceof SemanticErrorException) {
-            $hint = $exception->getHint();
+            $hint = $exception->hint;
         }
 
         if ($exception instanceof SemanticErrorException) {
@@ -940,7 +940,7 @@ final readonly class RegexParser
     {
         [$pattern, $flags, $delimiter, $length] = $this->safeExtractPattern($regex);
 
-        return $this->buildFallbackAst($pattern, $flags, $delimiter, $length, $exception->getPosition());
+        return $this->buildFallbackAst($pattern, $flags, $delimiter, $length, $exception->position);
     }
 
     /**

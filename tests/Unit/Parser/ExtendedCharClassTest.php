@@ -221,7 +221,7 @@ final class ExtendedCharClassTest extends TestCase
 
         $error = (new \ReflectionMethod($parser, 'firstMemberErrorBefore'))->invoke($parser, $members, 8);
         $this->assertInstanceOf(ParserException::class, $error);
-        $this->assertSame(7, $error->getPosition());
+        $this->assertSame(7, $error->position);
     }
 
     #[Test]

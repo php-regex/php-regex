@@ -765,8 +765,8 @@ final class LexerBranchesTest extends TestCase
             (new Lexer())->tokenize($body);
             $this->fail(\sprintf('%s must be refused.', var_export($body, true)));
         } catch (LexerException $e) {
-            $this->assertSame(ErrorCode::EscapeTrailingBackslash, $e->getErrorCode());
-            $this->assertSame($position, $e->getPosition());
+            $this->assertSame(ErrorCode::EscapeTrailingBackslash, $e->errorCode);
+            $this->assertSame($position, $e->position);
         }
     }
 

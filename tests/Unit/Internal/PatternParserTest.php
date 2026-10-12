@@ -86,7 +86,7 @@ final class PatternParserTest extends TestCase
             $this->fail('No exception for '.$regex);
         } catch (ParserException $e) {
             $this->assertStringContainsString('Unescaped delimiter', $e->getMessage());
-            $this->assertSame($position, $e->getPosition());
+            $this->assertSame($position, $e->position);
         }
     }
 

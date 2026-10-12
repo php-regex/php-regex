@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos;
 
-use PHPRegex\Redos\Hotspot;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;

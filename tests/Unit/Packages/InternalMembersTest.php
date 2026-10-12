@@ -55,29 +55,25 @@ final class InternalMembersTest extends TestCase
     public static function provideInternalMembers(): iterable
     {
         $members = [
-            [PcreEngine::class, 'prepare'],
-            [PatternPrinter::class, 'resetState'],
-            [RegexPatternRule::class, 'isOptimizationFormatSafe'],
-            [LiteralSet::class, '__construct'],
-            [LiteralSet::class, 'empty'],
-            [LiteralSet::class, 'fromString'],
-            [LiteralSet::class, 'concat'],
-            [LiteralSet::class, 'unite'],
-            [Dfa::class, '__construct'],
-            [DfaState::class, '__construct'],
-            [RegexException::class, '__construct'],
-            [ParserException::class, '__construct'],
-            [ParserException::class, 'withContext'],
-            [LexerException::class, '__construct'],
-            [LexerException::class, 'withContext'],
-            [SemanticErrorException::class, '__construct'],
-            [ComplexityException::class, '__construct'],
-            [TranspileException::class, '__construct'],
-            [SampleGenerationException::class, '__construct'],
+            PcreEngine::class => ['prepare'],
+            PatternPrinter::class => ['resetState'],
+            RegexPatternRule::class => ['isOptimizationFormatSafe'],
+            LiteralSet::class => ['__construct', 'empty', 'fromString', 'concat', 'unite'],
+            Dfa::class => ['__construct'],
+            DfaState::class => ['__construct'],
+            RegexException::class => ['__construct'],
+            ParserException::class => ['__construct', 'withContext'],
+            LexerException::class => ['__construct', 'withContext'],
+            SemanticErrorException::class => ['__construct'],
+            ComplexityException::class => ['__construct'],
+            TranspileException::class => ['__construct'],
+            SampleGenerationException::class => ['__construct'],
         ];
 
-        foreach ($members as [$class, $method]) {
-            yield substr($class, (int) strrpos($class, '\\') + 1).'::'.$method => ['class' => $class, 'method' => $method];
+        foreach ($members as $class => $methods) {
+            foreach ($methods as $method) {
+                yield substr($class, (int) strrpos($class, '\\') + 1).'::'.$method => ['class' => $class, 'method' => $method];
+            }
         }
     }
 }

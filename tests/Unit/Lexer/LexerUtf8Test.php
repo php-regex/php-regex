@@ -66,8 +66,8 @@ final class LexerUtf8Test extends TestCase
             (new Lexer())->tokenize($pattern, $flags);
             $this->fail('The pattern is not valid UTF-8 but was read.');
         } catch (LexerException $exception) {
-            $this->assertSame(ErrorCode::EncodingInvalidUtf8, $exception->getErrorCode());
-            $this->assertSame($offset, $exception->getPosition());
+            $this->assertSame(ErrorCode::EncodingInvalidUtf8, $exception->errorCode);
+            $this->assertSame($offset, $exception->position);
         }
     }
 

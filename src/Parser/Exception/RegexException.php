@@ -32,19 +32,4 @@ class RegexException extends \Exception implements ExceptionInterface
     ) {
         parent::__construct($message, 0, $previous);
     }
-
-    public function getErrorCode(): ErrorCode
-    {
-        return $this->errorCode;
-    }
-
-    public function getPosition(): ?int
-    {
-        return $this->position;
-    }
-
-    public function getSnippet(): ?string
-    {
-        return $this->snippet;
-    }
 }

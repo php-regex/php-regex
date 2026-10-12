@@ -2110,7 +2110,7 @@ final class TokenParser
      */
     private function movedError(LexerException|ParserException $error, int $offset): LexerException|ParserException
     {
-        return $error::withContext($error->getMessage(), $error->getErrorCode(), (int) $error->getPosition() + $offset, $this->pattern, $error);
+        return $error::withContext($error->getMessage(), $error->errorCode, (int) $error->position + $offset, $this->pattern, $error);
     }
 
     /**
@@ -2138,7 +2138,7 @@ final class TokenParser
             $tree->accept(new Validator(pattern: $this->pattern, target: $this->target));
         } catch (RegexException $error) {
             // A parse error, which keeps the judgement it wraps.
-            return ParserException::withContext($error->getMessage(), $error->getErrorCode(), $error->getPosition() ?? $start, $this->pattern, $error);
+            return ParserException::withContext($error->getMessage(), $error->errorCode, $error->position ?? $start, $this->pattern, $error);
         }
 
         return null;
@@ -2158,7 +2158,7 @@ final class TokenParser
         } catch (LexerException $error) {
             $moved = $this->movedError($error, $at);
 
-            throw $this->firstMemberErrorBefore($this->movedTokens($lexer->tokensRead(), $at), $moved->getPosition() ?? $at) ?? $moved;
+            throw $this->firstMemberErrorBefore($this->movedTokens($lexer->tokensRead(), $at), $moved->position ?? $at) ?? $moved;
         }
 
         $tokens = $this->movedTokens($read, $at, $class);
@@ -2169,7 +2169,7 @@ final class TokenParser
         try {
             return $parser->parse(new TokenStream($tokens, $this->pattern), $this->flags, '/', \strlen($this->pattern))->pattern;
         } catch (ParserException $error) {
-            throw ($class ? $this->firstMemberErrorBefore($tokens, $error->getPosition() ?? $at) : null) ?? $error;
+            throw ($class ? $this->firstMemberErrorBefore($tokens, $error->position ?? $at) : null) ?? $error;
         }
     }
 
@@ -2229,7 +2229,7 @@ final class TokenParser
 
             // A member refused where the fault is was read first.
             $error = $this->firstOperandError([$class], $token->position);
-            if (null !== $error && ($error->getPosition() ?? $position) <= $position) {
+            if (null !== $error && ($error->position ?? $position) <= $position) {
                 return $error;
             }
         }

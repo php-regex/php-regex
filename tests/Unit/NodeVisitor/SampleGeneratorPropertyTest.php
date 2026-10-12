@@ -57,7 +57,7 @@ final class SampleGeneratorPropertyTest extends TestCase
             Regex::create(['cache' => null])->generate('/\\p{Cs}/u');
             self::fail('A sample was given for a property no character has.');
         } catch (SampleGenerationException $e) {
-            $this->assertSame(ErrorCode::GenerateNoMatch, $e->getErrorCode());
+            $this->assertSame(ErrorCode::GenerateNoMatch, $e->errorCode);
         }
 
         $tree = new RegexNode(new UnicodePropNode('{NoSuchProperty}', true, 0, 17), 'u', '/', 0, 17);

@@ -37,9 +37,4 @@ final class SemanticErrorException extends RegexException implements ExceptionIn
 
         parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
-
-    public function getHint(): ?string
-    {
-        return $this->hint;
-    }
 }

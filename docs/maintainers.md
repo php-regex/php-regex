@@ -186,7 +186,7 @@ try {
     echo "Invalid configuration: " . $e->getMessage();
 } catch (LexerException $e) {
     // Tokenization failed - malformed pattern
-    echo "Tokenization error at position {$e->getPosition()}: {$e->getMessage()}";
+    echo "Tokenization error at position {$e->position}: {$e->getMessage()}";
 } catch (ParserException $e) {
     // Grammar failed - invalid structure
     echo "Parse error: {$e->getMessage()}";

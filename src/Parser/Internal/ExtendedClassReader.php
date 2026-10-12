@@ -469,7 +469,7 @@ final class ExtendedClassReader
         } catch (LexerException|ParserException $error) {
             // A fault in what the pattern writes comes first; one at its end
             // is the "]" added to read it.
-            if (($error->getPosition() ?? $this->length) < $this->length) {
+            if (($error->position ?? $this->length) < $this->length) {
                 ($this->fail)($error, $start, $this->operands);
             }
         }

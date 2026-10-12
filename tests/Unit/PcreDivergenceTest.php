@@ -241,8 +241,8 @@ final class PcreDivergenceTest extends TestCase
         $this->assertTrue($tolerant->hasErrors(), \sprintf('%s on %s must report an error.', $pattern, $release));
         $first = $tolerant->errors[0];
         $this->assertInstanceOf(RegexException::class, $first);
-        $this->assertSame($code, $first->getErrorCode(), \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
-        $this->assertSame($offset, $first->getPosition(), \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
+        $this->assertSame($code, $first->errorCode, \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
+        $this->assertSame($offset, $first->position, \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
     }
 
     /**

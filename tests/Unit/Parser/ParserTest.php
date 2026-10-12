@@ -705,8 +705,8 @@ final class ParserTest extends TestCase
         } catch (ParserException $refusal) {
         }
         $this->assertInstanceOf(ParserException::class, $refusal);
-        $this->assertSame(ErrorCode::GroupNameUnterminated, $refusal->getErrorCode());
-        $this->assertSame(4, $refusal->getPosition());
+        $this->assertSame(ErrorCode::GroupNameUnterminated, $refusal->errorCode);
+        $this->assertSame(4, $refusal->position);
     }
 
     /**
