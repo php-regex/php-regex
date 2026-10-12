@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Cli;
 
 use PHPRegex\Cli\Command\AnalyzeCommand;
-use PHPRegex\Cli\Command\ClearCacheCommand;
 use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\DebugCommand;
@@ -79,7 +78,6 @@ final class ApplicationFactory
             new HighlightCommand(),
             new TranspileCommand(),
             new ValidateCommand(),
-            new ClearCacheCommand(),
             new LintCommand(
                 $help,
                 new LintConfigLoader(),

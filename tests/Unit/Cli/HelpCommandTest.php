@@ -462,8 +462,26 @@ final class HelpCommandTest extends TestCase
     public static function provideCommandsWithAHelpPage(): iterable
     {
         yield 'graph' => ['command' => 'graph', 'description' => 'Generate a graph diagram (DOT/Mermaid) of the NFA'];
-        yield 'clear-cache' => ['command' => 'clear-cache', 'description' => 'Clear the regex parser cache'];
         yield 'version' => ['command' => 'version', 'description' => 'Display version information'];
+    }
+
+    /**
+     * The binary configures no cache that outlives a run, so there is no
+     * clear-cache command: the overview does not list one and its page is
+     * an unknown command's.
+     */
+    #[Test]
+    public function test_help_documents_no_clear_cache_command(): void
+    {
+        $this->assertStringNotContainsString('clear-cache', self::commandHelp(null));
+
+        $output = OutputFactory::create();
+        ob_start();
+        $exitCode = (new HelpCommand())->run(new Input('help', ['clear-cache'], new GlobalOptions(false, null, false, false, null, null), []), $output);
+        ob_end_clean();
+
+        $this->assertSame(2, $exitCode);
+        $this->assertStringContainsString('Unknown command: clear-cache', OutputFactory::errors($output));
     }
 
     /**
@@ -498,7 +516,7 @@ final class HelpCommandTest extends TestCase
     public function test_no_help_page_claims_a_1_x_behaviour(): void
     {
         $pages = [self::commandHelp(null)];
-        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'clear-cache', 'version', 'help'] as $command) {
+        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'version', 'help'] as $command) {
             $pages[] = self::commandHelp($command);
         }
 

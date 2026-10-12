@@ -57,10 +57,10 @@ Commands
 | `analyze` | Parse, validate, analyze ReDoS risk | `validate` | Validate a pattern |
 | `compare` | Compare two patterns (automata) | `transpile` | Transpile to js or python |
 | `explain` | Explain a pattern in plain language | `lint` | Lint patterns in PHP sources |
-| `debug` | Deep ReDoS analysis, heatmap | `clear-cache` | Clear the parser cache |
-| `redos` | Benchmark patterns for ReDoS | `version` | Display version information |
-| `diagram` | AST diagram, text or SVG | `self-update` | Update the phar in place |
-| `graph` | NFA graph, DOT or Mermaid | `help` | Display the help message |
+| `debug` | Deep ReDoS analysis, heatmap | `version` | Display version information |
+| `redos` | Benchmark patterns for ReDoS | `self-update` | Update the phar in place |
+| `diagram` | AST diagram, text or SVG | `help` | Display the help message |
+| `graph` | NFA graph, DOT or Mermaid | | |
 
 Configuration
 -------------

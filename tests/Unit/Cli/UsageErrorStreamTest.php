@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Cli;
 
-use PHPRegex\Cli\Command\ClearCacheCommand;
 use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\DiagramCommand;
 use PHPRegex\Cli\Command\GraphCommand;
 use PHPRegex\Cli\Command\RedosCommand;
+use PHPRegex\Cli\Command\ValidateCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Tests\TestUtils\OutputFactory;
@@ -59,11 +59,11 @@ final class UsageErrorStreamTest extends TestCase
     {
         $unwritable = '/nonexistent/dir/out';
 
-        yield 'clear-cache, an invalid library option' => [new ClearCacheCommand(), 'clear-cache', [], ['php_version' => 'abc'], 'Invalid option:'];
         yield 'compare, a missing pattern' => [new CompareCommand(), 'compare', ['/a/'], [], 'Usage: regex compare'];
         yield 'diagram, an SVG file that cannot be written' => [new DiagramCommand(), 'diagram', ['/a/', '--format=svg', '--output='.$unwritable.'.svg'], [], 'Unable to write SVG'];
         yield 'diagram, a text file that cannot be written' => [new DiagramCommand(), 'diagram', ['/a/', '--output='.$unwritable.'.txt'], [], 'Unable to write output'];
         yield 'graph, a file that cannot be written' => [new GraphCommand(), 'graph', ['/a/', '--output='.$unwritable.'.dot'], [], 'Unable to write the graph'];
         yield 'redos, an unknown option' => [new RedosCommand(), 'redos', ['/a/', '--bogus'], [], 'Error:'];
+        yield 'validate, an invalid library option' => [new ValidateCommand(), 'validate', ['/a/'], ['php_version' => 'abc'], 'Invalid option:'];
     }
 }

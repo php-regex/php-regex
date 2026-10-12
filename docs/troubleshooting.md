@@ -293,15 +293,12 @@ $ast2 = $regex->parse('/\d+/');  // Should use cache
 echo "Cache enabled: " . ($regex->getCacheStats()['hits']) . " hits\n";
 ```
 
-2. Clear cache for long-running processes:
+2. Clear the cache of a long-running process from your code (the `regex`
+   binary keeps no cache between runs, so it has none to clear):
 
-```bash
-# CLI
-vendor/bin/regex clear-cache
-
-# Programmatically
+```php
 $cache = $regex->getCache();
-if ($cache instanceof RemovableCacheInterface) {
+if ($cache instanceof \PHPRegex\Parser\Cache\RemovableCacheInterface) {
     $cache->clear();
 }
 ```

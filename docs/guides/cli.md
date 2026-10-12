@@ -52,7 +52,6 @@ PHPRegex CLI provides these commands:
 | `validate`    | Validate pattern syntax                                  |
 | `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`) |
 | `lint`        | Lint entire codebase for regex issues                    |
-| `clear-cache` | Clear the regex parser cache                             |
 | `version`     | Display version information                              |
 | `self-update` | Update PHAR to latest version                            |
 | `help`        | Show help message                                        |

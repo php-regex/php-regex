@@ -33,8 +33,8 @@ final readonly class HelpCommand implements CommandInterface
      */
     private const DOCUMENTED_COMMANDS = [
         'parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram',
-        'graph', 'highlight', 'validate', 'transpile', 'lint', 'clear-cache',
-        'version', 'self-update', 'help',
+        'graph', 'highlight', 'validate', 'transpile', 'lint', 'version',
+        'self-update', 'help',
     ];
 
     /**
@@ -486,14 +486,6 @@ final readonly class HelpCommand implements CommandInterface
                 'examples' => [
                     [[$this->resolveInvocation(), 'graph', "'/a+b/'"], 'Render the automaton as DOT'],
                     [[$this->resolveInvocation(), 'graph', "'/a+b/'", '--format=mermaid'], 'Render it as Mermaid'],
-                ],
-            ],
-            'clear-cache' => [
-                'description' => 'Clear the regex parser cache',
-                'options' => [],
-                'notes' => ['Removes the cached ASTs; the patterns are parsed again on the next run.'],
-                'examples' => [
-                    [[$this->resolveInvocation(), 'clear-cache'], 'Empty the cache directory'],
                 ],
             ],
             'version' => [

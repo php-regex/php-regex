@@ -58,7 +58,10 @@ final class ExitCodeContractTest extends TestCase
         yield 'unknown command' => [['nosuch']];
         yield 'global option without its value' => [['--php-version']];
         yield 'help for an unknown command' => [['help', 'nosuch']];
-        yield 'clear-cache with an invalid --php-version' => [['--php-version=abc', 'clear-cache']];
+        // The binary configures no cache that outlives the run: there is
+        // none to clear, and the command is gone.
+        yield 'the removed clear-cache' => [['clear-cache']];
+        yield 'the removed cache:clear' => [['cache:clear']];
 
         foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph'] as $command) {
             yield $command.' without a pattern' => [[$command]];
@@ -194,7 +197,6 @@ final class ExitCodeContractTest extends TestCase
         yield 'help' => [['help']];
         yield 'help for a command' => [['help', 'analyze']];
         yield 'version' => [['version']];
-        yield 'clear-cache' => [['clear-cache']];
         yield 'lint on valid files' => [['lint', 'src', '--jobs=1', '--format=json']];
         yield 'lint on files without patterns' => [['lint', 'empty', '--jobs=1']];
         yield 'compare --method=subset on a subset' => [['compare', '/a/', '/a|b/', '--method=subset']];
