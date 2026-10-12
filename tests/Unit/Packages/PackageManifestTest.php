@@ -131,6 +131,28 @@ final class PackageManifestTest extends TestCase
         $this->assertFileExists($path.'/.gitattributes');
     }
 
+    /**
+     * The README banners are read from the repository, never from an
+     * install: a package leaves them out of its archive, as it does its
+     * tests.
+     */
+    #[Test]
+    #[DataProvider('provideDirectories')]
+    public function test_a_package_leaves_its_tests_and_banners_out_of_its_archive(string $directory): void
+    {
+        $path = self::root().'/src/'.$directory;
+        $attributes = (string) file_get_contents($path.'/.gitattributes');
+
+        if (is_dir($path.'/Tests')) {
+            $this->assertMatchesRegularExpression('~^/Tests\s+export-ignore$~m', $attributes);
+        }
+        if (is_dir($path.'/art')) {
+            $this->assertMatchesRegularExpression('~^/art\s+export-ignore$~m', $attributes, \sprintf('src/%s/.gitattributes ships the banners.', $directory));
+        } else {
+            $this->assertDirectoryDoesNotExist($path.'/art');
+        }
+    }
+
     #[Test]
     public function test_a_package_ships_the_files_its_manifest_names(): void
     {
