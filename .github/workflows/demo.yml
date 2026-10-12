@@ -31,6 +31,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 8.5 is the ceiling of the Laravel lock (nette packages stop there)
+      # and above the Symfony lock floor (8.4.1); 8.6 would need
+      # --ignore-platform-req=php+ as in ci.yml.
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
