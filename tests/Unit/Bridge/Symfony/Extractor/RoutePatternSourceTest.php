@@ -398,6 +398,66 @@ final class RoutePatternSourceTest extends TestCase
         }
     }
 
+    /**
+     * A requirement written in block YAML is read from the router and found
+     * again in the file: it is one pattern, reported at its own line.
+     */
+    public function test_extract_reports_a_block_yaml_requirement_once_at_its_line(): void
+    {
+        $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
+        copy(__DIR__.'/../../../../Fixtures/Symfony/yaml_content.yaml', $tempYaml);
+
+        try {
+            $router = $this->createStub(RouterInterface::class);
+            $collection = new RouteCollection();
+            $collection->add('test_route', new Route('/test/{id}/{slug}', [], ['id' => '\d+', 'slug' => '[a-z-]+']));
+            $collection->addResource(new FileResource($tempYaml));
+            $router->method('getRouteCollection')->willReturn($collection);
+
+            $result = (new RoutePatternSource($this->normalizer, $router))->extract(new PatternSourceContext(['.'], []));
+
+            $this->assertSame(
+                [
+                    ['route:test_route:id', '{^\d+$}sD', 4],
+                    ['route:test_route:slug', '{^[a-z-]+$}sD', 5],
+                ],
+                array_map(static fn ($occurrence): array => [$occurrence->source, $occurrence->pattern, $occurrence->line], $result),
+            );
+            $this->assertSame([$tempYaml, $tempYaml], array_map(static fn ($occurrence): string => $occurrence->file, $result));
+        } finally {
+            unlink($tempYaml);
+        }
+    }
+
+    /**
+     * Only found in the file, a requirement is still read there, at its line.
+     */
+    public function test_extract_reads_a_requirement_found_only_in_yaml_at_its_line(): void
+    {
+        $tempYaml = tempnam(sys_get_temp_dir(), 'routes').'.yaml';
+        copy(__DIR__.'/../../../../Fixtures/Symfony/yaml_content.yaml', $tempYaml);
+
+        try {
+            $router = $this->createStub(RouterInterface::class);
+            $collection = new RouteCollection();
+            $collection->add('test_route', new Route('/test/{id}/{slug}', [], ['id' => '\d+']));
+            $collection->addResource(new FileResource($tempYaml));
+            $router->method('getRouteCollection')->willReturn($collection);
+
+            $result = (new RoutePatternSource($this->normalizer, $router))->extract(new PatternSourceContext(['.'], []));
+
+            $this->assertSame(
+                [
+                    ['route:test_route:id', 4],
+                    ['route:test_route:slug', 5],
+                ],
+                array_map(static fn ($occurrence): array => [$occurrence->source, $occurrence->line], $result),
+            );
+        } finally {
+            unlink($tempYaml);
+        }
+    }
+
     public function test_collect_yaml_resources_skips_non_file_resource_and_empty_path(): void
     {
         $collection = new RouteCollection();

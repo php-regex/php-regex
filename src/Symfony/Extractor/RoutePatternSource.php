@@ -81,7 +81,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                 $patterns[] = new PatternOccurrence(
                     $normalized,
                     $file,
-                    $requirementLines[$parameter] ?? $routeLine ?? $lineCounter--,
+                    isset($requirementLines[$parameter]) ? $requirementLines[$parameter] + 1 : ($routeLine ?? $lineCounter--),
                     'route:'.$name.':'.$parameter,
                     $pattern,
                     $location,
@@ -89,11 +89,11 @@ final readonly class RoutePatternSource implements PatternSourceInterface
             }
         }
 
-        // Process YAML requirements
+        // A requirement the router does not hold is still read from the
+        // YAML file; one it holds was read above, once.
         foreach ($yamlIndex as $routeName => $yamlRoute) {
             $yamlRequirements = $yamlRoute['requirements'] ?? [];
             $yamlFile = $yamlRoute['file'];
-            $routeLine = $yamlRoute['line'];
             $lines = @file($yamlFile, \FILE_IGNORE_NEW_LINES);
             if (false !== $lines) {
                 foreach ($yamlRequirements as $parameter => $lineIndex) {
@@ -103,17 +103,16 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     }
                     $value = trim($matches[1], " \t\n\r\0\x0B'\"");
                     $route = $collection->get($routeName);
-                    if (null === $route) {
+                    if (null === $route || $route->hasRequirement($parameter)) {
                         continue;
                     }
                     $normalized = $this->patternNormalizer->normalize($value, (bool) $route->getOption('utf8'));
                     $patterns[] = new PatternOccurrence(
                         $normalized,
                         $yamlFile,
-                        $routeLine ?? $lineIndex + 1,
+                        $lineIndex + 1,
                         'route:'.$routeName.':'.$parameter,
                         $value,
-                        null === $routeLine ? $this->formatRouteLocation($routeName, $route, $hasYamlResources) : null,
                     );
                 }
             }
