@@ -89,6 +89,38 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         yield 'php version as a string' => ["phpVersion: '8.2'", ['phpVersion'], '8.2'];
         yield 'php version as an integer' => ['phpVersion: 80200', ['phpVersion'], 80200];
         yield 'pcre version' => ["pcreVersion: '10.42'", ['pcreVersion'], '10.42'];
+        yield 'php version runtime' => ['phpVersion: runtime', ['phpVersion'], 'runtime'];
+        yield 'php version with a patch' => ["phpVersion: '8.4.10'", ['phpVersion'], '8.4.10'];
+        yield 'php version id as a string' => ["phpVersion: '80400'", ['phpVersion'], '80400'];
+        yield 'pcre version as PCRE_VERSION spells it' => ["pcreVersion: '10.44 2024-06-07'", ['pcreVersion'], '10.44 2024-06-07'];
+        yield 'pcre pre-release' => ["pcreVersion: '10.45-RC1'", ['pcreVersion'], '10.45-RC1'];
+    }
+
+    /**
+     * A version the library cannot read stops PHPStan while it loads the
+     * configuration, naming the key, rather than as an internal error on the
+     * first file the rule is built for.
+     *
+     * @return iterable<string, array{string, string}>
+     */
+    public static function provideUnreadableVersions(): iterable
+    {
+        yield 'php version word' => ['phpVersion: banana', 'phpVersion'];
+        yield 'php version empty' => ["phpVersion: ''", 'phpVersion'];
+        yield 'php version zero' => ['phpVersion: 0', 'phpVersion'];
+        yield 'php version negative' => ['phpVersion: -80200', 'phpVersion'];
+        yield 'pcre version word' => ['pcreVersion: ten', 'pcreVersion'];
+        yield 'pcre version without a minor' => ["pcreVersion: '10'", 'pcreVersion'];
+    }
+
+    #[Test]
+    #[DataProvider('provideUnreadableVersions')]
+    public function test_schema_refuses_a_version_the_library_cannot_read(string $neon, string $key): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}".$key."'");
+
+        $this->loadExtensionWith($neon);
     }
 
     /**
