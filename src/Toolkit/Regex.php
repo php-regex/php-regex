@@ -299,17 +299,19 @@ final readonly class Regex
      *
      * @param string              $regex  The regular expression to highlight
      * @param string|OutputFormat $format Output format (OutputFormat::Console or OutputFormat::Html)
+     *
+     * @throws InvalidRegexOptionException when the format is neither console nor html
      */
     public function highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
     {
         $format = \is_string($format) ? $format : $format->value;
-        $ast = $this->parse($regex);
+        $visitor = match ($format) {
+            'console' => new ConsoleHighlighter(),
+            'html' => new HtmlHighlighter(),
+            default => throw new InvalidRegexOptionException(\sprintf('Invalid format for highlight(): %s; expected console or html.', $format)),
+        };
 
-        $visitor = 'html' === $format
-            ? new HtmlHighlighter()
-            : new ConsoleHighlighter();
-
-        return $ast->accept($visitor);
+        return $this->parse($regex)->accept($visitor);
     }
 
     /**
@@ -593,7 +595,7 @@ final readonly class Regex
         return match ($format) {
             'text' => new TextExplainer(),
             'html' => new HtmlExplainer(),
-            default => throw new InvalidRegexOptionException("Invalid format: $format"),
+            default => throw new InvalidRegexOptionException(\sprintf('Invalid format for explain(): %s; expected text or html.', $format)),
         };
     }
 }

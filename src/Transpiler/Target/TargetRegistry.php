@@ -61,7 +61,7 @@ final class TargetRegistry
             return $this->targets[$key];
         }
 
-        throw new TranspileException('Unknown transpile target: '.$name.'.');
+        throw new TranspileException(\sprintf('Unknown transpile target: %s. Expected one of: %s.', $name, implode(', ', $this->listTargets())));
     }
 
     /**

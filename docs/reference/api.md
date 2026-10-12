@@ -599,6 +599,8 @@ echo $html;
 ### highlight(string $regex, string|OutputFormat $format = OutputFormat::Console): string
 
 Generates syntax-highlighted output, one span per token in the HTML format.
+The format is `console` or `html`; any other value throws
+`InvalidRegexOptionException`.
 
 ```php
 use PHPRegex\Toolkit\Regex;

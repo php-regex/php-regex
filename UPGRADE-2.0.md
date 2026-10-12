@@ -868,6 +868,12 @@ instead.
 Rector cannot rewrite a method call into a property read, so change these by
 hand (PHPStan reports each remaining call).
 
+#### `Regex::highlight()` refuses an unknown format
+
+`highlight()` takes `console` or `html` (or the matching `OutputFormat`
+case) and throws `InvalidRegexOptionException` on anything else, `text`
+included; 1.x wrote console output for every format but `html`.
+
 #### `LiteralExtractionResult::$confidence` is an enum
 
 `Regex::literals()` gives its confidence as `LiteralConfidence::High`,
