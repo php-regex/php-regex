@@ -30,6 +30,8 @@ final readonly class Token
     public int $sourceLength;
 
     /**
+     * @internal the lexer builds the tokens
+     *
      * @param int|null $sourceLength defaults to the length of the value, which
      *                               is right for every token the lexer does not
      *                               rewrite

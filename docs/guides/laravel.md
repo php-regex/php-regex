@@ -122,8 +122,8 @@ The facade mirrors the whole service — `create`, `parse`, `parseTolerant`, `pa
 `parser`, `validate`, `analyze`, `redos`, `optimize`, `transpile`, `explain`, `highlight`,
 `literals`, `captureShape`, `info`, `compatibility`, `generate`, `tokenize`, `target`,
 `getCache`, `getCacheStats` and `clearCaches`; [the API reference](../reference/api.md) documents each.
-Two of those bypass the configured singleton: `Regex::create()` returns a fresh instance,
-and `Regex::tokenize()` never sees instance options. Type-hinting
+One of those bypasses the configured singleton: `Regex::create()` returns a fresh instance.
+Type-hinting
 `PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
 
 ## The service and the lint judge for different targets

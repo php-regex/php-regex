@@ -23,7 +23,7 @@ use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\PatternCompatibility;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -57,7 +57,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static PatternInfo                   info(string $regex)
  * @method static PatternCompatibility          compatibility(string $regex)
  * @method static string                        generate(string $regex)
- * @method static TokenStream                   tokenize(string $regex, ?PcreTarget $target = null)
+ * @method static list<Token>                   tokenize(string $regex)
  * @method static PcreTarget                    target()
  * @method static CacheInterface                getCache()
  * @method static array{hits: int, misses: int} getCacheStats()

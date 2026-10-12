@@ -17,10 +17,10 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 
 /**
- * Token stream with direct indexing and caching.
+ * The cursor the parser walks the tokens with. Read the tokens of a regex
+ * through RegexParser::tokenize() or Regex::tokenize(), a list.
  *
- * This implementation eliminates O(n) array operations and provides constant-time
- * access to tokens through direct array indexing with minimal memory overhead.
+ * @internal
  */
 final class TokenStream
 {
@@ -29,7 +29,7 @@ final class TokenStream
     private int $maxPosition = 0;
 
     /**
-     * @param array<Token> $tokens
+     * @param list<Token> $tokens
      */
     public function __construct(private readonly array $tokens, private readonly string $pattern)
     {
@@ -124,7 +124,7 @@ final class TokenStream
     }
 
     /**
-     * @return array<Token>
+     * @return list<Token>
      */
     public function getTokens(): array
     {
@@ -206,11 +206,8 @@ final class TokenStream
      */
     public function previous(): Token
     {
-        if (0 === $this->position) {
-            return new Token(TokenType::Eof, '', 0);
-        }
-
-        return $this->tokens[$this->position - 1];
+        // Before the first token there is none: an end-of-pattern stands in.
+        return $this->tokens[$this->position - 1] ?? new Token(TokenType::Eof, '', 0);
     }
 
     /**

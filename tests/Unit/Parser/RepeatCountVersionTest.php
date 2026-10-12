@@ -18,7 +18,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -109,8 +108,8 @@ final class RepeatCountVersionTest extends TestCase
     #[Test]
     public function test_tokenizing_for_a_version_reads_the_count_as_it_does(): void
     {
-        $old = Regex::tokenize('/a{,2}/', PcreTarget::bundledWith(80300))->getTokens();
-        $new = Regex::tokenize('/a{,2}/', PcreTarget::bundledWith(80400))->getTokens();
+        $old = Regex::create(['cache' => null, 'php_version' => 80300])->tokenize('/a{,2}/');
+        $new = Regex::create(['cache' => null, 'php_version' => 80400])->tokenize('/a{,2}/');
 
         $this->assertSame(TokenType::Literal, $old[1]->type);
         $this->assertSame('{', $old[1]->value);

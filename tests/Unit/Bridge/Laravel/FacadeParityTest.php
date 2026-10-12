@@ -206,7 +206,8 @@ final class FacadeParityTest extends TestCase
      * What the facade line should answer for: the reflected return type, with
      * self spelled out (it would name the facade on the docblock side) and a
      * bare array refined by the shape the method's own @return declares —
-     * getCacheStats() carries its array{hits: int, misses: int} shape there.
+     * getCacheStats() carries its array{hits: int, misses: int} shape there,
+     * tokenize() its list<Token>.
      */
     private static function expectedFacadeReturnType(\ReflectionMethod $method): string
     {
@@ -217,7 +218,7 @@ final class FacadeParityTest extends TestCase
         }
 
         if ('array' === $declared
-            && preg_match('/@return\s+(array\{[^}]*\})/', (string) $method->getDocComment(), $match)
+            && preg_match('/@return\s+(array\{[^}]*\}|list<[^>]+>)/', (string) $method->getDocComment(), $match)
         ) {
             return self::normalizeType($match[1], [], '');
         }
@@ -332,6 +333,13 @@ final class FacadeParityTest extends TestCase
         if (str_contains($name, '{')) {
             // An array shape: canonicalize whitespace only; both sides must spell it the same way.
             return trim((string) preg_replace('/\s+/', ' ', $name));
+        }
+
+        if (str_starts_with($name, 'list<')) {
+            // A list: its member class read by short name, imported on each side.
+            $member = substr($name, 5, -1);
+
+            return 'list<'.substr($member, (int) strrpos('\\'.$member, '\\')).'>';
         }
 
         static $keywords = [

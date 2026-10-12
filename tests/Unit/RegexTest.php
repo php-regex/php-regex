@@ -352,10 +352,10 @@ final class RegexTest extends TestCase
 
     public function test_tokenize_extracts_pattern_and_flags(): void
     {
-        $stream = Regex::tokenize('/ab/i');
-        $this->assertSame('ab', $stream->getPattern());
+        $tokens = Regex::create()->tokenize('/ab/i');
+        $this->assertSame([0, 1, 2], array_map(static fn (Token $token): int => $token->position, $tokens));
 
-        $types = array_map(static fn (Token $token): string => $token->type->name, $stream->getTokens());
+        $types = array_map(static fn (Token $token): string => $token->type->name, $tokens);
         $this->assertSame(['Literal', 'Literal', 'Eof'], $types);
     }
 

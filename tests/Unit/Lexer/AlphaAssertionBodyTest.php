@@ -1048,7 +1048,7 @@ final class AlphaAssertionBodyTest extends TestCase
     {
         $this->assertSame(1, preg_match('/(?xx)(*pla:[ ]a)])./', ')x'), 'Oracle: the class holds ")".');
 
-        $tokens = Regex::tokenize('/(?xx)(*pla:[ ]a)])./')->getTokens();
+        $tokens = Regex::create()->tokenize('/(?xx)(*pla:[ ]a)])./');
 
         $this->assertSame(
             [[TokenType::PcreVerb, 'pla:[ ]a)]', 5], [TokenType::Dot, '.', 18], [TokenType::Eof, '', 19]],
@@ -1064,7 +1064,7 @@ final class AlphaAssertionBodyTest extends TestCase
         $caught = null;
 
         try {
-            Regex::tokenize('/(?xx)(*pla:[ ])./');
+            Regex::create()->tokenize('/(?xx)(*pla:[ ])./');
         } catch (LexerException $exception) {
             $caught = $exception;
         }

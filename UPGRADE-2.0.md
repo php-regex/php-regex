@@ -481,6 +481,20 @@ A baseline file that is missing or is not a baseline is now a usage error
 - `Regex::cacheSeed()` is gone, and `RegexParser::cacheSeed()` is internal: the
   seed's shape follows the cache version and may change in any release.
 
+#### `tokenize()` returns the tokens, for the instance's target
+
+`Regex::tokenize()` was static and returned a `TokenStream`, the cursor the
+parser walks the tokens with. It is now an instance method, like
+`RegexParser::tokenize()`, and both return a `list<Token>` read for the
+instance's target; `TokenStream` is internal.
+
+| before | after |
+|---|---|
+| `Regex::tokenize($regex)` | `Regex::create()->tokenize($regex)` |
+| `Regex::tokenize($regex, $phpVersionId)` | `Regex::create(['php_version' => $phpVersionId])->tokenize($regex)` |
+| `$stream->getTokens()` | the list itself |
+| `$stream->getPattern()` | the pattern body you passed, without its delimiters and flags |
+
 #### A cache is emptied whole
 
 `RemovableCacheInterface::clear()` takes no argument. The parser stores a tree
@@ -539,7 +553,6 @@ everything that reads it.
 | `new Lexer($versionId)` or `new Lexer(bool)` | `new Lexer(?PcreTarget $target = null)` |
 | `new Parser($depth, ?int $phpVersionId)` | `new Parser($depth, ?PcreTarget $target)` |
 | `new ValidatorNodeVisitor($max, $pattern, int $phpVersionId)` | `new ValidatorNodeVisitor($max, $pattern, ?PcreTarget $target)` |
-| `Regex::tokenize($regex, ?int $phpVersionId)` | `Regex::tokenize($regex, ?PcreTarget $target)` |
 | `Regex::cacheSeed($regex, int $phpVersionId, $depth)` | `Regex::cacheSeed($regex, PcreTarget $target, $depth)` |
 | `RegexPattern::fromDelimited($regex, ?int)`, `PatternParser::extractPatternAndFlags($regex, ?int)` | take `?PcreTarget` |
 | `RegexOptions::$phpVersionId`, `$phpVersionExplicit` | `RegexOptions::$target` |

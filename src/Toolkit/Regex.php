@@ -38,12 +38,11 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Token\TokenStream;
+use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\CompatibilityChecker;
 use PHPRegex\Parser\Validation\PatternCompatibility;
@@ -460,21 +459,16 @@ final readonly class Regex
     }
 
     /**
-     * Tokenize a regex into a token stream with positions.
+     * The tokens of a regex as the parser reads them for this instance's
+     * target: the same lexer the parser uses, literal characters,
+     * whitespace and comment markers included, each tagged with its byte
+     * offset in the pattern body, the end-of-pattern token last.
      *
-     * This exposes the same lexer the parser uses internally, including all
-     * literal characters, whitespace, and comment markers, each tagged with
-     * its byte offset in the pattern body. Combined with the delimiter and
-     * flags extracted via PatternParser, this allows reconstructing the
-     * original pattern and mapping nodes back to their exact locations.
-     *
-     * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
+     * @return list<Token>
      */
-    public static function tokenize(string $regex, ?PcreTarget $target = null): TokenStream
+    public function tokenize(string $regex): array
     {
-        [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $target);
-
-        return (new Lexer($target))->tokenize($pattern, $flags);
+        return $this->parser->tokenize($regex);
     }
 
     /**

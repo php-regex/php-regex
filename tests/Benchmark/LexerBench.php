@@ -53,6 +53,13 @@ final class LexerBench
 
     private string $pattern = '';
 
+    private readonly Regex $regex;
+
+    public function __construct()
+    {
+        $this->regex = Regex::create(['cache' => null]);
+    }
+
     /**
      * The memory floor: the same code and inputs loaded, no work.
      */
@@ -63,7 +70,7 @@ final class LexerBench
     public function benchTokenizeRealistic(): void
     {
         foreach ($this->patterns as $pattern) {
-            Regex::tokenize($pattern);
+            $this->regex->tokenize($pattern);
         }
     }
 
@@ -74,14 +81,14 @@ final class LexerBench
     #[ParamProviders('provideCases')]
     public function benchTokenizeCase(array $params): void
     {
-        Regex::tokenize($this->pattern);
+        $this->regex->tokenize($this->pattern);
     }
 
     public function setUpNoop(): void
     {
         $this->setUpRealistic();
         BenchCases::all();
-        Regex::tokenize('/a/');
+        $this->regex->tokenize('/a/');
         ColdStart::regex();
         memory_reset_peak_usage();
     }

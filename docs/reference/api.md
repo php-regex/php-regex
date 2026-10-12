@@ -41,16 +41,14 @@ echo $result->isValid ? 'Valid' : 'Invalid';
 
 ---
 
-### Regex::tokenize(string $regex, ?PcreTarget $target = null): TokenStream
+### tokenize(string $regex): list<Token>
 
-Lexes a regex into a `TokenStream` with positional offsets. Useful for custom analysis or debugging. The stream is a cursor over the tokens, not an iterator: walk it with `current()`, `next()`, `peek()` and `hasMore()`, or read the whole array with `getTokens()`. Each `Token` exposes its `type`, its `value`, its `position` and `end()`, the offset just past it.
+Lexes a regex into its tokens, as the parser reads them for the instance's target. Useful for custom analysis or debugging. Each `Token` exposes its `type`, its `value`, its `position` in the pattern body and `end()`, the offset just past it; the end-of-pattern token comes last.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
-$stream = Regex::tokenize('/foo|bar/i');
-
-foreach ($stream->getTokens() as $token) {
+foreach (Regex::create()->tokenize('/foo|bar/i') as $token) {
     echo "Type: {$token->type->value}, Value: '{$token->value}'\n";
     echo "Position: {$token->position} - {$token->end()}\n";
 }
@@ -809,7 +807,7 @@ try {
 | Method                  | Returns                 | Purpose           |
 |-------------------------|-------------------------|-------------------|
 | `create($options)`      | Regex                   | Factory method    |
-| `tokenize($regex, $target)` (static) | TokenStream | Lex into tokens |
+| `tokenize($regex)`      | list<Token>             | Lex into tokens   |
 | `parse($pattern)`       | RegexNode               | Parse to AST      |
 | `parseTolerant($pattern)` | TolerantParseResult   | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |

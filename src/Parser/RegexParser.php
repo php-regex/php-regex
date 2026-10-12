@@ -69,7 +69,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-4aaa1a48a30462bb37d9fe7cd3c90374';
+    public const CACHE_VERSION = 'ast-c6f1bd5375a9ff34be86f1f26ff353ba';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -215,14 +215,16 @@ final readonly class RegexParser
     }
 
     /**
-     * Tokenize a regex into a token stream with positions, as the parser
-     * reads it for this target.
+     * The tokens of a regex as the parser reads them for this target, each
+     * with its offset in the pattern body, the end-of-pattern token last.
+     *
+     * @return list<Token>
      */
-    public function tokenize(string $regex): TokenStream
+    public function tokenize(string $regex): array
     {
         [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $this->target);
 
-        return (new Lexer($this->target))->tokenize($pattern, $flags);
+        return (new Lexer($this->target))->tokenize($pattern, $flags)->getTokens();
     }
 
     /**

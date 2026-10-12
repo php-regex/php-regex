@@ -71,7 +71,8 @@ final class RegexParserTest extends TestCase
     #[Test]
     public function test_the_tokens_are_the_ones_the_facade_gives(): void
     {
-        $this->assertEquals(Regex::tokenize('/a+(b)/'), RegexParser::create()->tokenize('/a+(b)/'));
+        $this->assertEquals(Regex::create()->tokenize('/a+(b)/'), RegexParser::create()->tokenize('/a+(b)/'));
+        $this->assertTrue(array_is_list(RegexParser::create()->tokenize('/a+(b)/')));
     }
 
     #[Test]
