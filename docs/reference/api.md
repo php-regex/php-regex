@@ -315,7 +315,7 @@ echo $report->isValid;           // true/false
 echo count($report->errors);      // Validation errors
 echo count($report->lintIssues);  // Lint warnings
 echo $report->redos->severity->value;  // 'critical', 'safe', etc.
-echo $report->explain;            // Human explanation
+echo $report->explanation;        // Human explanation
 echo $report->highlighted;        // Syntax-highlighted pattern
 ```
 
@@ -691,7 +691,7 @@ if ($report->redos->severity->value !== 'safe') {
 }
 
 // Get explanation
-echo $report->explain;
+echo $report->explanation;
 ```
 
 ---

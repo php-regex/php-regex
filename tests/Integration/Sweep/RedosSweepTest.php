@@ -40,13 +40,13 @@ final class RedosSweepTest extends TestCase
             errors: [],
             lintIssues: [],
             redos: $redos,
-            optimizations: $optimizations,
-            explain: 'Test explanation',
+            optimization: $optimizations,
+            explanation: 'Test explanation',
             highlighted: '<span>Test</span>',
         );
 
-        $this->assertSame($optimizations, $report->optimizations);
-        $this->assertSame('Test explanation', $report->explain);
+        $this->assertSame($optimizations, $report->optimization);
+        $this->assertSame('Test explanation', $report->explanation);
         $this->assertSame('<span>Test</span>', $report->highlighted);
     }
 

@@ -99,9 +99,9 @@ final class ExplainCommand extends Command
 
         if ($analysis->isValid) {
             // Show optimizations if available
-            if ($analysis->optimizations->original !== $analysis->optimizations->optimized) {
+            if ($analysis->optimization->original !== $analysis->optimization->optimized) {
                 $this->line('<fg=white;options=bold>Optimization Suggestion:</>');
-                $this->line('  <fg=red>-</> '.$analysis->optimizations->original);
+                $this->line('  <fg=red>-</> '.$analysis->optimization->original);
                 $this->line('  <fg=green>+</> '.$analysis->optimizations->optimized);
                 $this->newLine();
             }

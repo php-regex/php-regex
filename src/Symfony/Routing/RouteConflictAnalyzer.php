@@ -375,10 +375,10 @@ final readonly class RouteConflictAnalyzer
             $unsupported[] = $flag;
         }
 
-        $normalized = DelimitedPattern::fromRaw($pattern->pattern, $normalizedFlags, $pattern->delimiter);
+        $normalized = new DelimitedPattern($pattern->pattern, $normalizedFlags, $pattern->delimiter);
 
         return [
-            'pattern' => $normalized->toString(),
+            'pattern' => (string) $normalized,
             'ignoredFlags' => $ignored,
             'unsupportedFlags' => array_values(array_unique($unsupported)),
         ];

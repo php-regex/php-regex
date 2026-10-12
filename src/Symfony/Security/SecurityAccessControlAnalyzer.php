@@ -431,7 +431,7 @@ final readonly class SecurityAccessControlAnalyzer
     {
         $regexPattern = DelimitedPattern::fromDelimited($this->patternNormalizer->normalize($pattern, $host));
 
-        return DelimitedPattern::fromRaw($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter)->toString();
+        return (string) new DelimitedPattern($this->normalizeSearchPattern($regexPattern->pattern), $regexPattern->flags, $regexPattern->delimiter);
     }
 
     private function normalizeSearchPattern(string $pattern): string

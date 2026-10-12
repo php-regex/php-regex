@@ -221,7 +221,7 @@ final readonly class LintService
 
             $original = DelimitedPattern::fromDelimited($entry['optimization']->original);
             $optimized = DelimitedPattern::fromDelimited($entry['optimization']->optimized);
-            $rewritten = (new DelimitedPattern($optimized->pattern, $original->flags, $optimized->delimiter))->toString();
+            $rewritten = (string) new DelimitedPattern($optimized->pattern, $original->flags, $optimized->delimiter);
 
             $savings = \strlen($entry['optimization']->original) - \strlen($rewritten);
             if ($savings < max(1, $minSavings)) {

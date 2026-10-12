@@ -26,9 +26,14 @@ final readonly class DelimitedPattern implements \Stringable
         public string $delimiter = '/',
     ) {}
 
+    /**
+     * The full delimited regex, as "/foo/i".
+     */
     public function __toString(): string
     {
-        return $this->toString();
+        $closingDelimiter = PatternParser::closingDelimiter($this->delimiter);
+
+        return $this->delimiter.$this->pattern.$closingDelimiter.$this->flags;
     }
 
     /**
@@ -39,23 +44,5 @@ final readonly class DelimitedPattern implements \Stringable
         [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $target);
 
         return new self($pattern, $flags, $delimiter);
-    }
-
-    /**
-     * Create from raw pattern, flags, and optional delimiter.
-     */
-    public static function fromRaw(string $pattern, string $flags = '', string $delimiter = '/'): self
-    {
-        return new self($pattern, $flags, $delimiter);
-    }
-
-    /**
-     * Get the full delimited regex string.
-     */
-    public function toString(): string
-    {
-        $closingDelimiter = PatternParser::closingDelimiter($this->delimiter);
-
-        return $this->delimiter.$this->pattern.$closingDelimiter.$this->flags;
     }
 }

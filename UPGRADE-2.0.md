@@ -923,7 +923,9 @@ instead.
 | `ValidationResult::getCaretSnippet()` | `$caretSnippet` |
 | `ValidationResult::getHint()` | `$hint` |
 | `ValidationResult::getErrorCode()` | `$errorCode` |
-| `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `optimizations()`, `explain()`, `highlighted()` | the property of the same name |
+| `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `highlighted()` | the property of the same name |
+| `AnalysisReport::optimizations()`, `explain()` | `$optimization` (one result), `$explanation` |
+| `RegexPattern::fromRaw($pattern, $flags, $delimiter)`, `toString()` | `new DelimitedPattern($pattern, $flags, $delimiter)`, `(string) $pattern` |
 | `RegexException::getErrorCode()`, `getPosition()`, `getSnippet()` | `$errorCode`, `$position`, `$snippet` |
 | `SemanticErrorException::getHint()` | `$hint` |
 | `LinterNodeVisitor::getWarnings()`, `getFullPattern()` | `PatternLinter::getIssues()`, each issue's `$message`; the pattern you linted |

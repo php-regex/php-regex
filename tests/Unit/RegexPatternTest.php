@@ -29,13 +29,13 @@ final class RegexPatternTest extends TestCase
     public function test_to_string(): void
     {
         $pattern = new DelimitedPattern('foo', 'i', '#');
-        $this->assertSame('#foo#i', $pattern->toString());
+        $this->assertSame('#foo#i', (string) $pattern);
         $this->assertSame('#foo#i', (string) $pattern);
     }
 
     public function test_from_raw(): void
     {
-        $pattern = DelimitedPattern::fromRaw('foo', 'i', '#');
+        $pattern = new DelimitedPattern('foo', 'i', '#');
         $this->assertSame('foo', $pattern->pattern);
         $this->assertSame('i', $pattern->flags);
         $this->assertSame('#', $pattern->delimiter);
@@ -72,6 +72,6 @@ final class RegexPatternTest extends TestCase
         $this->assertSame('foo', $pattern->pattern);
         $this->assertSame('i', $pattern->flags);
         $this->assertSame('(', $pattern->delimiter);
-        $this->assertSame('(foo)i', $pattern->toString());
+        $this->assertSame('(foo)i', (string) $pattern);
     }
 }

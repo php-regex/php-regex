@@ -939,7 +939,7 @@ final class ParserTest extends TestCase
     #[Test]
     public function test_regex_pattern_from_raw(): void
     {
-        $pattern = DelimitedPattern::fromRaw('foo', 'i', '#');
+        $pattern = new DelimitedPattern('foo', 'i', '#');
 
         $this->assertSame('foo', $pattern->pattern);
         $this->assertSame('i', $pattern->flags);
@@ -954,7 +954,7 @@ final class ParserTest extends TestCase
         $this->assertTrue($report->isValid);
         $this->assertIsArray($report->errors);
         $this->assertIsArray($report->lintIssues);
-        $this->assertIsString($report->explain);
+        $this->assertIsString($report->explanation);
         $this->assertIsString($report->highlighted);
     }
 

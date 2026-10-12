@@ -33,8 +33,8 @@ final readonly class AnalysisReport
         public array $errors,
         public array $lintIssues,
         public RedosAnalysis $redos,
-        public OptimizationResult $optimizations,
-        public string $explain,
+        public OptimizationResult $optimization,
+        public string $explanation,
         public string $highlighted,
     ) {}
 }
