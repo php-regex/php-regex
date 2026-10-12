@@ -30,7 +30,8 @@ Features
 
 * A `Regex` service and a `Regex` facade, registered by package discovery on install
 * Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`
-* `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass
+* `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass, a route constraint
+  anchored and flagged as the router matches it
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
 

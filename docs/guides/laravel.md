@@ -190,6 +190,12 @@ whatever `exclude` says; a project declaration wins over a copy in
 [the CLI guide](cli.md#patterns-behind-a-wrapper)); every rule it can report
 is catalogued in [Lint rules](../reference/rules.md).
 
+A route constraint is judged as the router matches it: anchored at both
+ends, under the `s`, `D` and `u` flags Laravel's route compiler adds (and
+`i` for a domain parameter). `->where('v', '(a+)+')` is linted as
+`/^(a+)+$/sDu`, so its backtracking is reported; the flags the router adds
+are never a finding, since the constraint cannot remove them.
+
 ## ReDoS findings
 
 With `'redos' => ['enabled' => true]`, `regex:lint` adds the ReDoS issue,

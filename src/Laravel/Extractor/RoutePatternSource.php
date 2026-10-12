@@ -15,6 +15,7 @@ namespace PHPRegex\Laravel\Extractor;
 
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
+use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
@@ -26,7 +27,7 @@ use PHPRegex\Linter\Source\PatternSourceInterface;
  */
 final readonly class RoutePatternSource implements PatternSourceInterface
 {
-    public function __construct(private Router $router) {}
+    public function __construct(private Router $router, private RouteConstraintNormalizer $normalizer = new RouteConstraintNormalizer()) {}
 
     public function getName(): string
     {
@@ -59,7 +60,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     continue;
                 }
 
-                $normalized = $this->normalizePattern($pattern);
+                $normalized = $this->normalizer->normalize($route, (string) $parameter, $pattern);
                 $location = $this->formatRouteLocation($routeName, $controller);
 
                 $patterns[] = new PatternOccurrence(
@@ -74,41 +75,6 @@ final readonly class RoutePatternSource implements PatternSourceInterface
         }
 
         return $patterns;
-    }
-
-    /**
-     * Normalize a route constraint pattern to a valid regex.
-     */
-    private function normalizePattern(string $pattern): string
-    {
-        // If pattern doesn't have delimiters, wrap it
-        if (!$this->hasDelimiters($pattern)) {
-            return '/'.addcslashes($pattern, '/').'/';
-        }
-
-        return $pattern;
-    }
-
-    /**
-     * Check if a pattern has regex delimiters.
-     */
-    private function hasDelimiters(string $pattern): bool
-    {
-        if (\strlen($pattern) < 2) {
-            return false;
-        }
-
-        $firstChar = $pattern[0];
-        $validDelimiters = ['/', '#', '~', '!', '@', '%', '`'];
-
-        if (!\in_array($firstChar, $validDelimiters, true)) {
-            return false;
-        }
-
-        // Check if it ends with the same delimiter (possibly with flags)
-        $lastDelimiterPos = strrpos($pattern, $firstChar);
-
-        return false !== $lastDelimiterPos && $lastDelimiterPos > 0;
     }
 
     /**

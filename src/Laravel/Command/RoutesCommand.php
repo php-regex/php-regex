@@ -16,6 +16,7 @@ namespace PHPRegex\Laravel\Command;
 use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
+use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -42,8 +43,11 @@ final class RoutesCommand extends Command
      */
     protected $description = 'Analyze Laravel route patterns for conflicts and issues';
 
-    public function __construct(private readonly Router $router, private readonly Regex $regex)
-    {
+    public function __construct(
+        private readonly Router $router,
+        private readonly Regex $regex,
+        private readonly RouteConstraintNormalizer $normalizer = new RouteConstraintNormalizer(),
+    ) {
         parent::__construct();
     }
 
@@ -87,7 +91,7 @@ final class RoutesCommand extends Command
                 ];
 
                 if ($validate) {
-                    $normalized = $this->normalizePattern($pattern);
+                    $normalized = $this->normalizer->normalize($route, (string) $parameter, $pattern);
                     $validation = $this->regex->validate($normalized);
 
                     if (!$validation->isValid) {
@@ -191,32 +195,5 @@ final class RoutesCommand extends Command
         }
 
         return 'Unknown';
-    }
-
-    private function normalizePattern(string $pattern): string
-    {
-        if ($this->hasDelimiters($pattern)) {
-            return $pattern;
-        }
-
-        return '/'.addcslashes($pattern, '/').'/';
-    }
-
-    private function hasDelimiters(string $pattern): bool
-    {
-        if (\strlen($pattern) < 2) {
-            return false;
-        }
-
-        $firstChar = $pattern[0];
-        $validDelimiters = ['/', '#', '~', '!', '@', '%', '`'];
-
-        if (!\in_array($firstChar, $validDelimiters, true)) {
-            return false;
-        }
-
-        $lastDelimiterPos = strrpos($pattern, $firstChar);
-
-        return false !== $lastDelimiterPos && $lastDelimiterPos > 0;
     }
 }

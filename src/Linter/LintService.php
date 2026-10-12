@@ -39,14 +39,21 @@ use PHPRegex\Redos\RedosSeverity;
  */
 final readonly class LintService
 {
+    /**
+     * A route constraint is a fragment that carries no flag of its own: the
+     * s, D and i a route source judges it under are the router's, and
+     * nobody can remove them.
+     */
     private const ROUTE_IGNORED_ISSUE_IDS = [
         'regex.lint.quantifier.nested' => true,
         'regex.lint.dotstar.nested' => true,
         'regex.lint.overlap.charset' => true,
-        // Symfony's RouteCompiler matches every requirement with "{^...$}sD":
-        // the requirement cannot drop either flag.
+        // Symfony's RouteCompiler, which Laravel's router goes through too,
+        // matches every requirement with "{^...$}sD" (and "i" on a host): the
+        // requirement can drop none of those flags.
         'regex.lint.flag.useless.s' => true,
         'regex.lint.flag.useless.D' => true,
+        'regex.lint.flag.useless.i' => true,
     ];
 
     public function __construct(private AnalysisService $analysis, private PatternSourceCollection $sources) {}
