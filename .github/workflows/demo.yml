@@ -5,18 +5,14 @@ on:
     branches: [2.x]
     paths:
       - 'demo/**'
-      - 'src/Laravel/**'
-      - 'src/Symfony/**'
-      - 'src/Toolkit/**'
+      - 'src/**'
       - 'composer.json'
       - '.github/workflows/demo.yml'
   pull_request:
     branches: [2.x]
     paths:
       - 'demo/**'
-      - 'src/Laravel/**'
-      - 'src/Symfony/**'
-      - 'src/Toolkit/**'
+      - 'src/**'
       - 'composer.json'
       - '.github/workflows/demo.yml'
   schedule:
