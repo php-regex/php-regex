@@ -19,12 +19,12 @@ use PHPRegex\Parser\Analysis\Participation;
 
 /**
  * The keys preg_match() or preg_match_all() writes into $matches, in the
- * order the PHP the shape is judged for writes them, read from the merged
- * view of a shape: the whole match under 0; then each group's number, each
- * name at the first group bearing it — until PHP 8.4 a name just before
- * its number, from 8.5 every name after the last numeric key, in group
- * order; then "MARK" for the marks a verb leaves, unless a group named
- * MARK already holds that key, which the marks then share.
+ * order PHP writes them, read from the merged view of a shape: the whole
+ * match under 0; then, for each group, its name at the first group bearing
+ * it, before its number; then "MARK" for the marks a verb leaves, unless a
+ * group named MARK already holds that key, which the marks then share.
+ * PHP 8.5 alone writes that shared key a second time, last, when a mark is
+ * set; it reads the mark there as on 8.4 and 8.6, so the layout lists it once.
  *
  * Every rendering of a shape as a type reads this one walk, so they all say
  * the same keys.
@@ -33,22 +33,6 @@ use PHPRegex\Parser\Analysis\Participation;
  */
 final readonly class CaptureLayout
 {
-    /**
-     * The PHP release from which $matches holds every named key after the
-     * last numeric one, where before each sat just before its group number:
-     * the pcre bridge of php-src appends the name keys at the hash tail
-     * (zend_hash_str_add_new) where 8.4 updated them in place beside their
-     * group (add_assoc_string_ex). The values are identical on both — only
-     * the key order moves. Measured on the PHP 8.5 CI row (bundled PCRE2
-     * 10.44) against the PHP 8.4 rows and php -r, PCRE2 10.44 to 10.49:
-     *   preg_match('/(?<MARK>a)(*MARK:m)/', 'a', $m)           -> {"0":"a","1":"a","MARK":"m"}          (8.4: 0, MARK, 1)
-     *   preg_match('/(?<MARK>a)(?<y>b)(*MARK:x)c/', 'abc', $m) -> {"0":"abc","1":"a","2":"b","MARK":"x","y":"b"}
-     *
-     * A rule of the shape rendering, not of what a pattern parses into:
-     * unlike PhpVersionGates it takes no part in the AST fingerprint.
-     */
-    private const NAMED_KEYS_AFTER_NUMBERS = 80500;
-
     /**
      * Past this many values, a group's literals say less than its facts.
      */
@@ -111,10 +95,7 @@ final readonly class CaptureLayout
             }
         }
 
-        $namesLast = $shape->phpVersionId >= self::NAMED_KEYS_AFTER_NUMBERS;
         $keys = [self::wholeKey($shape)];
-        $numbers = [];
-        $names = [];
         $marked = false;
         $named = [];
         foreach ($shape->groups as $group) {
@@ -126,31 +107,16 @@ final readonly class CaptureLayout
 
             $always = Participation::Always === $group->participation;
             $name = $group->name;
-            $nameKey = null;
             if (null !== $name && !isset($named[$name])) {
                 $named[$name] = true;
                 $marked = $marked || 'MARK' === $name;
                 [$groups, $unset] = self::nameValue($byName[$name], $unmatchedAsNull, $lastAlways, $lastMaySet);
                 // A name several groups share (/J) is set whenever one of them always is.
                 $nameAlways = [] !== array_filter($byName[$name], static fn (CaptureGroupShape $shared): bool => Participation::Always === $shared->participation);
-                $names[] = $nameKey = new CaptureKey($name, $optional, $groups, $unset, 'MARK' === $name && [] !== $shape->marks, $nameAlways);
+                $keys[] = new CaptureKey($name, $optional, $groups, $unset, 'MARK' === $name && [] !== $shape->marks, $nameAlways);
             }
 
-            $numberKey = new CaptureKey($group->number, $optional, self::setGroups([$group]), self::readsUnset($group, $unmatchedAsNull, $lastAlways, $lastMaySet), false, $always);
-            $numbers[] = $numberKey;
-
-            // Until PHP 8.4, a name is written just before its group number.
-            if (!$namesLast) {
-                if (null !== $nameKey) {
-                    $keys[] = $nameKey;
-                }
-                $keys[] = $numberKey;
-            }
-        }
-
-        // From PHP 8.5, every name comes after the last numeric key.
-        if ($namesLast) {
-            $keys = [$keys[0], ...$numbers, ...$names];
+            $keys[] = new CaptureKey($group->number, $optional, self::setGroups([$group]), self::readsUnset($group, $unmatchedAsNull, $lastAlways, $lastMaySet), false, $always);
         }
 
         if ([] !== $shape->marks && !$marked) {
@@ -177,35 +143,18 @@ final readonly class CaptureLayout
             }
         }
 
-        $namesLast = $shape->phpVersionId >= self::NAMED_KEYS_AFTER_NUMBERS;
         $keys = [self::wholeKey($shape)];
-        $numbers = [];
-        $names = [];
         $marked = false;
         $named = [];
         foreach ($shape->groups as $group) {
             $name = $group->name;
-            $nameKey = null;
             if (null !== $name && !isset($named[$name])) {
                 $named[$name] = true;
                 $marked = $marked || 'MARK' === $name;
-                $names[] = $nameKey = self::listKey($name, $lastByName[$name], 'MARK' === $name && [] !== $shape->marks);
+                $keys[] = self::listKey($name, $lastByName[$name], 'MARK' === $name && [] !== $shape->marks);
             }
 
-            $numbers[] = $numberKey = self::listKey($group->number, $group, false);
-
-            // Until PHP 8.4, a name is written at the place of its first group.
-            if (!$namesLast) {
-                if (null !== $nameKey) {
-                    $keys[] = $nameKey;
-                }
-                $keys[] = $numberKey;
-            }
-        }
-
-        // From PHP 8.5, every name comes after the last numeric key.
-        if ($namesLast) {
-            $keys = [$keys[0], ...$numbers, ...$names];
+            $keys[] = self::listKey($group->number, $group, false);
         }
 
         if ([] !== $shape->marks && !$marked) {

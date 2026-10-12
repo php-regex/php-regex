@@ -176,33 +176,33 @@ final class CaptureShapeAnalyzerTest extends TestCase
     }
 
     /**
-     * From PHP 8.5 the interpreter appends every named key after the last
-     * numeric one, where until 8.4 it wrote each beside its group number;
-     * the values, the flags and the marks stay untouched. Read from the
-     * engine on the PHP 8.5 CI row (bundled PCRE2 10.44) against the 8.4
-     * rows and php -r (values identical on both):
-     *   preg_match('/(?<MARK>a)(*MARK:m)/', 'a', $m)           -> {"0":"a","1":"a","MARK":"m"}          (8.4: 0, MARK, 1)
-     *   preg_match('/(?<MARK>a)(?<y>b)(*MARK:x)c/', 'abc', $m) -> {"0":"abc","1":"a","2":"b","MARK":"x","y":"b"}
-     * The four rows below are the corpus rows the old PCRE2-10.48 bound
-     * used to skip, judged for a PHP 8.5 target: no engine runs them, the
-     * expectations are stored.
+     * A mark and a group named MARK share the key on every PHP, the name in
+     * its place before the group number; the key reads the mark when one is
+     * set. PHP 8.5 alone also writes the key a second time, last, where 8.4
+     * and 8.6 overwrite the group's entry (8.4.26, 8.5.11, 8.6.0RC3, PCRE2
+     * 10.44):
+     *   preg_match('/(?<MARK>a)(*MARK:m)/', 'a', $m)  -> keys 0, MARK, 1 (8.5: 0, MARK, 1, MARK); $m['MARK'] = 'm'
+     *   preg_match('/(?<n>a)(b)/', 'ab', $m)          -> keys 0, n, 1, 2 on all three.
      */
     #[Test]
-    #[DataProvider('providePhp85NameOrders')]
-    public function test_from_php_8_5_the_named_keys_come_after_every_number(string $pattern, int $flags, bool $matchAll, string $expected): void
+    public function test_a_named_key_keeps_its_place_before_its_number_on_every_php(): void
     {
-        $parser = RegexParser::create(['php_version' => '8.5', 'pcre_version' => '10.44']);
-        $shape = (new CaptureShapeAnalyzer($parser->target()))->analyze($parser->parse($pattern));
+        $matches = [];
+        preg_match('/(?<MARK>a)(*MARK:m)/', 'a', $matches);
+        $this->assertSame('m', $matches['MARK']);
+        $this->assertSame([0, 'MARK', 1], array_values(array_unique(array_keys($matches))));
 
-        $this->assertSame($expected, $matchAll ? $shape->matchAllShape($flags) : $shape->matchShape($flags));
+        foreach (['8.4', '8.5', '8.6'] as $php) {
+            $parser = RegexParser::create(['php_version' => $php]);
+            $this->assertSame("array{0: 'a', MARK: 'a'|'m', 1: 'a'}", (new CaptureShapeAnalyzer())->analyze($parser->parse('/(?<MARK>a)(*MARK:m)/'))->matchShape(), $php);
+            $this->assertSame("array{0: 'ab', n: 'a', 1: 'a', 2: 'b'}", (new CaptureShapeAnalyzer())->analyze($parser->parse('/(?<n>a)(b)/'))->matchShape(), $php);
+        }
     }
 
     /**
-     * PHP writes $matches in insertion order: 0, then, until 8.4, per group
-     * its name before its number; from 8.5 every name after the last
-     * numeric key, in group order — the running interpreter decides which.
-     * Each shape of the string lists its keys in that order, once each, and
-     * one of them holds the keys each match writes.
+     * PHP writes $matches in insertion order: 0, then per group its name
+     * before its number. Each shape of the string lists its keys in that
+     * order, once each, and one of them holds the keys each match writes.
      *
      * @param list<string> $subjects
      */
@@ -210,7 +210,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideEngineRows')]
     public function test_the_match_shape_lists_keys_in_the_order_preg_match_writes_them(string $pattern, array $subjects): void
     {
-        $shape = $this->live($pattern);
+        $shape = $this->analyze($pattern);
 
         foreach (self::FLAG_SETS as $flags) {
             $members = self::topLevelKeys($shape->matchShape($flags));
@@ -221,7 +221,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
             foreach ($subjects as $subject) {
                 $matches = [];
                 preg_match($pattern, $subject, $matches, $flags);
-                $written = array_map(strval(...), array_keys($matches));
+                // The second "MARK" PHP 8.5 alone writes, see above.
+                $written = array_values(array_unique(array_map(strval(...), array_keys($matches))));
 
                 $ordered = array_filter($members, static fn (array $keys): bool => $written === array_values(array_intersect($keys, $written)));
                 $this->assertNotSame([], $ordered, \sprintf('%s on "%s" with flags %d: keys out of order.', $pattern, $subject, $flags));
@@ -766,10 +767,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
     /**
      * Under PREG_PATTERN_ORDER PHP writes every key on every call, a match
-     * or none, in the order preg_match() would for the running interpreter
-     * (0, then until 8.4 per group its name before its number, from 8.5
-     * every name after the last numeric key), and MARK last, only when a
-     * match set a mark (PHP 8.4.26, PCRE2 10.49):
+     * or none, in the order preg_match() would (0, then per group its name
+     * before its number), and MARK last, only when a match set a mark
+     * (PHP 8.4.26, PCRE2 10.49):
      *   preg_match_all('/(?<x>a)(b)?/', 'a', $m)        -> {"0":["a"],"x":["a"],"1":["a"],"2":[""]}
      *   preg_match_all('/(?<x>a)(b)?/', 'x', $m)        -> {"0":[],"x":[],"1":[],"2":[]}
      *   preg_match_all('/(*MARK:m)(a)|(b)/', 'ab', $m)  -> {"0":["a","b"],"1":["a",""],"2":["","b"],"MARK":["m"]}
@@ -783,7 +783,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideCaseEngineRows')]
     public function test_match_all_shape_in_pattern_order_lists_every_key_in_the_order_php_writes_them(string $pattern, array $subjects): void
     {
-        $shape = $this->live($pattern);
+        $shape = $this->analyze($pattern);
         $replayed = [implode('', $subjects), ...$subjects];
         if (0 === preg_match($pattern, "\x00")) {
             $replayed[] = "\x00";
@@ -1138,28 +1138,6 @@ final class CaptureShapeAnalyzerTest extends TestCase
         // A mark name holding a control byte cannot be written as a constant: preg_match('/(?<MARK>a)(*MARK:x\x01)b/', 'ab') writes "x\x01".
         yield 'mark name not writable as a constant' => ['pattern' => "/(?<MARK>a)(*MARK:x\x01)b/", 'flags' => 0, 'expected' => "array{0: 'ab', MARK: 'a'|non-empty-string, 1: 'a'}"];
         yield 'mark name not writable as a constant, offsets' => ['pattern' => "/(?<MARK>a)(*MARK:x\x01)b/", 'flags' => \PREG_OFFSET_CAPTURE, 'expected' => "array{0: array{'ab', int<0, max>}, MARK: array{'a', int<0, max>}|non-empty-string, 1: array{'a', int<0, max>}}"];
-    }
-
-    /**
-     * The corpus rows whose named keys PHP 8.5 moves, keyed by their corpus
-     * id, judged for a PHP 8.5 target: every numeric key first, then the
-     * named ones in group order, the value each key holds unchanged.
-     *
-     * @return iterable<string, array{pattern: string, flags: int, matchAll: bool, expected: string}>
-     */
-    public static function providePhp85NameOrders(): iterable
-    {
-        yield 'mark-group-beside-verb' => ['pattern' => '/(?<MARK>a)(*MARK:x)b/', 'flags' => 0, 'matchAll' => false, 'expected' => "array{0: 'ab', 1: 'a', MARK: 'a'|'x'}"];
-        // preg_match('/(?<MARK>a)|(*MARK:x)b/', 'a', $m, PREG_UNMATCHED_AS_NULL) -> {"0":"a","1":"a","MARK":"a"};
-        // on 'b' -> {"0":"b","1":null,"MARK":"x"} (PHP 8.5, bundled PCRE2 10.44).
-        yield 'mark-group-or-verb-branch' => ['pattern' => '/(?<MARK>a)|(*MARK:x)b/', 'flags' => \PREG_UNMATCHED_AS_NULL, 'matchAll' => false, 'expected' => "array{0: 'a', 1: 'a', MARK: 'a'}|array{0: 'b', 1: null, MARK: 'x'|null}"];
-        yield 'mark-group-verb-and-a-name' => ['pattern' => '/(?<MARK>a)(?<y>b)(*MARK:x)c/', 'flags' => 0, 'matchAll' => false, 'expected' => "array{0: 'abc', 1: 'a', 2: 'b', MARK: 'a'|'x', y: 'b'}"];
-        // PREG_PATTERN_ORDER walks the same rule: the whole key, every numeric
-        // key, then the names in group order; the 8.5 CI row replays it live.
-        yield 'mark-group-verb-and-a-name, pattern order' => ['pattern' => '/(?<MARK>a)(?<y>b)(*MARK:x)c/', 'flags' => 0, 'matchAll' => true, 'expected' => "array{0: list<'abc'>, 1: list<'a'>, 2: list<'b'>, MARK: list<'a'>|array<int, 'x'>, y: list<'b'>}"];
-        // Every set of preg_match_all(..., PREG_SET_ORDER) on 'bcbdbeabcabdabe' is numeric-first:
-        // {"0":"bc","1":"","2":"b","MARK":"x"}, ..., MARK reading '' on 'bd', 'a' on 'abd', 'x' and 'y' on the rest.
-        yield 'optional-mark-group-two-verbs' => ['pattern' => '/(?<MARK>a)?(b)(?:(*MARK:x)c|d|(*MARK:y)e)/', 'flags' => \PREG_SET_ORDER, 'matchAll' => true, 'expected' => "list<array{0: 'bc'|'bd'|'be'|'abc'|'abd'|'abe', 1: ''|'a', 2: 'b', MARK: ''|'a'|'x'|'y'}>"];
     }
 
     /**
@@ -1938,24 +1916,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         return $keys;
     }
 
-    /**
-     * A fixed PHP 8.4 target, as the digests are read with one: a stored
-     * expectation must not change with the PHP running the tests, which
-     * from 8.5 writes the named keys after the numeric ones. What the
-     * running interpreter writes is read through live() below.
-     */
     private function analyze(string $pattern): CaptureShape
-    {
-        $parser = RegexParser::create(['php_version' => '8.4']);
-
-        return (new CaptureShapeAnalyzer($parser->target()))->analyze($parser->parse($pattern));
-    }
-
-    /**
-     * The running interpreter: the shape's keys are ordered as the engine
-     * replaying the rows below writes them.
-     */
-    private function live(string $pattern): CaptureShape
     {
         return (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
     }

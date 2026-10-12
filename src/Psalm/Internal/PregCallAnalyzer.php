@@ -461,7 +461,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false]; // Only on a running PCRE2 older than the target's, as the 10.40 and 10.42 CI images.
         }
 
-        return ['error' => null, 'shape' => (new CaptureShapeAnalyzer($parser->target()))->analyze($regex), 'noAutoCapture' => str_contains($regex->flags, 'n'), 'keepsOut' => self::keepsOut($regex)];
+        return ['error' => null, 'shape' => (new CaptureShapeAnalyzer())->analyze($regex), 'noAutoCapture' => str_contains($regex->flags, 'n'), 'keepsOut' => self::keepsOut($regex)];
     }
 
     /**

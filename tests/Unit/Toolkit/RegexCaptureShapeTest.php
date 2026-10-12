@@ -91,18 +91,14 @@ final class RegexCaptureShapeTest extends TestCase
 
     /**
      * preg_match('/(a)?b/', 'b') -> ["b"]; on 'ab' -> ["ab","a"] (PHP 8.4.26).
-     * The facade judges for the running PHP: a named key is expected beside
-     * its group until 8.4, after the numeric ones from 8.5.
      *
      * @return iterable<string, array{pattern: string, expected: string}>
      */
     public static function providePatterns(): iterable
     {
-        $php85 = \PHP_VERSION_ID >= 80500;
-
         yield 'trailing optional group' => ['pattern' => '/(a)?b/', 'expected' => "array{0: 'b'|'ab', 1?: 'a'}"];
         yield 'no group' => ['pattern' => '/a/', 'expected' => "array{0: 'a'}"];
-        yield 'named group' => ['pattern' => '/(?<x>a)/', 'expected' => $php85 ? "array{0: 'a', 1: 'a', x: 'a'}" : "array{0: 'a', x: 'a', 1: 'a'}"];
+        yield 'named group' => ['pattern' => '/(?<x>a)/', 'expected' => "array{0: 'a', x: 'a', 1: 'a'}"];
     }
 
     /**

@@ -54,6 +54,10 @@ final class PsalmTypes
      * The exact type of a value preg_match() or preg_match_all() writes:
      * literal strings and ints, null, and sealed array shapes, a list where
      * the keys are 0 to n - 1 in order.
+     *
+     * An array is read key by key, as a caller reads it: PHP 8.5 writes
+     * "MARK" twice when a mark meets a group named MARK, and the key reads
+     * the mark.
      */
     public static function ofValue(mixed $value): Union
     {
@@ -65,7 +69,7 @@ final class PsalmTypes
             \is_int($value) => Type::getInt(false, $value),
             \is_array($value) => [] === $value
                 ? Type::getEmptyArray()
-                : new Union([new TKeyedArray(array_map(self::ofValue(...), $value), null, null, array_is_list($value))]),
+                : new Union([new TKeyedArray(array_combine(array_keys($value), array_map(static fn (int|string $key): Union => self::ofValue($value[$key]), array_keys($value))), null, null, array_is_list($value))]),
             default => throw new \LogicException(\sprintf('No Psalm type for a %s here.', get_debug_type($value))),
         };
     }

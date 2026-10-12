@@ -314,10 +314,11 @@ refused it at compile by default since 10.37, and PHP up to 8.4 compiles
 every pattern with `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`, allowing it on any
 engine, while PHP 8.5 does not set the option and refuses it there.
 
-So is the place of the named keys in `$matches`: PHP up to 8.4 writes each
-name just before its group number, while PHP 8.5 writes every name after
-the numeric keys, in group order — the capture-shape analysis answers for
-the PHP version it targets.
+The place of the named keys in `$matches` does not depend on the version:
+every PHP writes each name just before its group number. PHP 8.5 alone writes
+the `MARK` key a second time, last, when a mark meets a group named `MARK`;
+the key reads the mark there as on 8.4 and 8.6, so the capture shapes are the
+same for every target.
 
 The `r` flag carries a PHP floor of its own: PHP reads it from 8.4 only,
 whatever the engine, while the inline `(?r)` and `(?-r)` follow the PCRE2

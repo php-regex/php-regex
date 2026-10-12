@@ -65,23 +65,14 @@ final class EngineMatches
     private const NON_MATCHING_CANDIDATES = ["\x00", '', '#', ' ', "\n", '0', 'Z', '~!~'];
 
     /**
-     * The corpus rows. Some declare an "id" beside their replay fields —
-     * the rows measured for the key order PHP 8.5 writes; it is stripped
-     * here, a data set must carry only what a test method takes, or PHPUnit
-     * passes it as a named parameter.
-     *
      * @return list<array{source: string, pattern: string, subjects: non-empty-list<string>}>
      */
     public static function corpus(): array
     {
-        /** @var list<array{id?: string, source: string, pattern: string, subjects: non-empty-list<string>}> $rows */
+        /** @var list<array{source: string, pattern: string, subjects: non-empty-list<string>}> $rows */
         $rows = require self::CORPUS;
 
-        return array_map(static fn (array $row): array => [
-            'source' => $row['source'],
-            'pattern' => $row['pattern'],
-            'subjects' => $row['subjects'],
-        ], $rows);
+        return $rows;
     }
 
     /**

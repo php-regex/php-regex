@@ -208,12 +208,7 @@ final class CaptureLayoutTest extends TestCase
 
     private static function shape(string $pattern): CaptureShape
     {
-        // A fixed PHP 8.4 target, as the digests are read with one: the key
-        // orders below must not change with the PHP running the tests —
-        // from 8.5 it writes every named key after the numeric ones.
-        $parser = RegexParser::create(['php_version' => '8.4']);
-
-        return (new CaptureShapeAnalyzer($parser->target()))->analyze($parser->parse($pattern));
+        return (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
     }
 
     /**
