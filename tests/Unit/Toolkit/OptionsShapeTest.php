@@ -24,18 +24,18 @@ use PHPUnit\Framework\TestCase;
  */
 final class OptionsShapeTest extends TestCase
 {
-    private const FIXTURE = <<<'PHP_WRAP'
-        <?php
-    
-        declare(strict_types=1);
-    
-        \PHPRegex\Toolkit\Regex::create(['max_pattern_lenght' => 5]);
-        \PHPRegex\Parser\RegexParser::create(['cache' => 42]);
-        \PHPRegex\Toolkit\Regex::create(['php_version' => []]);
-        \PHPRegex\Toolkit\Regex::create(['php_version' => '8.2', 'cache' => null, 'redos_ignored_patterns' => ['/a/']]);
-        \PHPRegex\Parser\RegexParser::create(['max_recursion_depth' => 10]);
-    
-        PHP_WRAP;
+    private const FIXTURE = [
+        '<?php',
+        '',
+        'declare(strict_types=1);',
+        '',
+        "\\PHPRegex\\Toolkit\\Regex::create(['max_pattern_lenght' => 5]);",
+        "\\PHPRegex\\Parser\\RegexParser::create(['cache' => 42]);",
+        "\\PHPRegex\\Toolkit\\Regex::create(['php_version' => []]);",
+        "\\PHPRegex\\Toolkit\\Regex::create(['php_version' => '8.2', 'cache' => null, 'redos_ignored_patterns' => ['/a/']]);",
+        "\\PHPRegex\\Parser\\RegexParser::create(['max_recursion_depth' => 10]);",
+        '',
+    ];
 
     #[Test]
     public function test_phpstan_refuses_an_option_outside_the_shape(): void
@@ -54,7 +54,7 @@ final class OptionsShapeTest extends TestCase
         $directory = sys_get_temp_dir().'/regex-options-shape-'.bin2hex(random_bytes(4));
         mkdir($directory);
         $fixture = $directory.'/OptionsProbe.php';
-        file_put_contents($fixture, self::FIXTURE);
+        file_put_contents($fixture, implode("\n", self::FIXTURE));
 
         try {
             $process = proc_open(

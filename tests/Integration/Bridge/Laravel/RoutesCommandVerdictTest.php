@@ -84,6 +84,12 @@ final class RoutesCommandVerdictTest extends TestCase
         $verdicts = [];
         foreach ($payload['routes'] as $route) {
             $this->assertIsArray($route);
+            // The application may register routes of its own, as Laravel
+            // 12's local disk does with storage/{path}: only this test's.
+            if ('broken' !== ($route['name'] ?? null)) {
+                continue;
+            }
+
             foreach ((array) ($route['constraints'] ?? []) as $constraint) {
                 $this->assertIsArray($constraint);
                 $this->assertArrayHasKey('valid', $constraint);
