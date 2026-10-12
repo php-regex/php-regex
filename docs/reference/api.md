@@ -80,9 +80,9 @@ $regex->parser()->parse('/a+/');              // the tree $regex->parse() gives
 
 A library that only reads and validates patterns needs nothing else.
 
-### Regex::clearCaches(): void
+### clearCaches(): void
 
-Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. `RegexParser::clearCaches()` does the same.
+Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. The method is called on an instance, and `$regex->parser()->clearCaches()` does the same.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -177,8 +177,9 @@ so it is refused with a target that is not that engine. See
 The PHP version (`$phpVersionId`) and the PCRE2 release (`$pcreVersion`) the
 instance judges for. `PcreTarget::runtime()` is the running engine,
 `PcreTarget::bundledWith(80400)` a PHP version with its bundled PCRE2, and
-`new PcreTarget(80400, '10.42')` any pair; `Lexer`, `Parser`,
-and `Validator` take one.
+`new PcreTarget(80400, '10.42')` any pair. `RegexParser` judges for one too
+(its `target()`), and `ParserOptions` carries the one the `php_version` and
+`pcre_version` options name.
 
 A rule that depends on the release asks the target for a behaviour, named in
 `PcreFeature`, rather than for a release written by hand:
@@ -359,7 +360,7 @@ var_dump($confirmed->replayed);                               // bool(true)
 | `abstractions`     | list<string>      | What the model analysed differently from the pattern |
 | `pcreVersion`      | string            | PCRE2 release the verdict was computed with |
 | `analysisVersion`  | string            | `RedosAnalyzer::ANALYSIS_VERSION`         |
-| `confidence`       | Confidence         | Analysis confidence (use `confidenceLevel()`) |
+| `confidence`       | RedosConfidence\|null | Analysis confidence (use `confidenceLevel()`) |
 | `confirmation`     | Confirmation\|null | Bounded evidence details              |
 | `vulnerablePart`   | string\|null       | Risky subpattern                          |
 | `recommendations`  | array              | Suggested fixes (verify behavior)         |
@@ -837,7 +838,10 @@ hand you. Import one instead of restating the shape:
  */
 final class MyCacheMonitor
 {
-    public function report(CacheStats $stats): string // {hits: int, misses: int}
+    /**
+     * @param CacheStats $stats {hits: int, misses: int}
+     */
+    public function report(array $stats): string
     {
         return $stats['hits'].' hits, '.$stats['misses'].' misses';
     }

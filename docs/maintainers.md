@@ -90,8 +90,11 @@ $regex = Regex::create([
         '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',  // Safe email
     ],
     'max_recursion_depth' => 1024,
-    'php_version' => '8.2',
 ]);
+
+// 'runtime_pcre_validation' compiles with the running PHP, so it cannot be
+// combined with a 'php_version' target such as '8.2': create() throws.
+// To judge for another PHP, set 'php_version' and drop the runtime check.
 
 // Now use $regex for parsing, validation, or analysis
 $result = $regex->validate('/foo|bar/');
@@ -102,7 +105,9 @@ echo $result->isValid ? 'Valid' : 'Invalid';
 
 ```php
 // PITFALL 1: Cache path not writable
-// ERROR: the cache directory must be creatable, and only its owner may write to it
+// No error is raised: a directory that cannot be created, or that someone
+// other than its owner may write to, is skipped silently and every parse
+// misses the cache (getCacheStats() reports only misses)
 $regex = Regex::create([
     'cache' => '/nonexistent/path/cache',  // WRONG
 ]);
@@ -125,7 +130,7 @@ $regex = Regex::create([
 ]);
 
 // PITFALL 3: Invalid PHP version
-// ERROR: Version must be valid semver or PHP_VERSION_ID
+// ERROR: "php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".
 $regex = Regex::create([
     'php_version' => 'invalid-version',  // WRONG
 ]);
@@ -414,7 +419,7 @@ class PatternAnalyzer
 ### Integration Pattern 3: Symfony Integration
 
 ```php
-// src/Validator/RegexValidator.php
+// src/Validator/RegexConstraintValidator.php
 namespace App\Validator;
 
 use PHPRegex\Toolkit\Regex;
@@ -433,7 +438,7 @@ class RegexConstraintValidator extends ConstraintValidator
             'runtime_pcre_validation' => true,
         ]);
 
-        $result = $regex->validate($constraint->pattern);
+        $result = $regex->validate($value);
 
         if (!$result->isValid) {
             $this->context->buildViolation($constraint->message)
@@ -443,7 +448,7 @@ class RegexConstraintValidator extends ConstraintValidator
         }
 
         // Check ReDoS safety
-        $analysis = $regex->redos($constraint->pattern);
+        $analysis = $regex->redos($value);
         if ($analysis->severity->value !== 'safe') {
             $this->context->buildViolation($constraint->redosMessage)
                 ->setParameter(':severity', $analysis->severity->value)

@@ -43,7 +43,7 @@ $ast = Regex::create()->parse('/foo/i');
 
 echo $ast->delimiter;  // '/'
 echo $ast->flags;      // 'i'
-echo $ast->pattern;    // SequenceNode instance
+echo $ast->pattern::class;  // 'PHPRegex\Parser\Node\SequenceNode'
 ```
 
 **Common Errors:**
@@ -251,12 +251,12 @@ var_dump($bounds->max);  // int(4); null when unbounded, as in '{2,}'
 ```php
 // WRONG: Confusing quantifier with literal
 // Pattern: /a+/ contains a QUANTIFIER, not a plus literal
-$literal = $ast->pattern;
+$literal = Regex::create()->parse('/a+/')->pattern;
 echo $literal instanceof QuantifierNode;  // true
 
 // RIGHT: Access the quantified node
-echo $quantifier->node instanceof LiteralNode;  // true
-echo $quantifier->node->value;  // 'a'
+echo $literal->node instanceof LiteralNode;  // true
+echo $literal->node->value;  // 'a'
 ```
 
 ---
@@ -385,7 +385,7 @@ echo $ctrl->codePoint; // 13 — \cM is CR
 ```php
 use PHPRegex\Toolkit\Regex;
 
-$ast = Regex::create()->parse('/\d+/');
+$ast = Regex::create()->parse('/\d/');
 $digitClass = $ast->pattern;
 
 echo $digitClass->value;  // 'd'

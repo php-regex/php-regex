@@ -165,7 +165,10 @@ $ast = Regex::create()->parse('/a(?C1)b(?C"tag")/');
 **Location:** `src/Parser/NodeVisitorInterface.php`
 
 ```php
-public function visitCallout(CalloutNode $node): mixed;
+/**
+ * @return TReturn
+ */
+public function visitCallout(CalloutNode $node);
 ```
 
 ### Add Default to AbstractNodeVisitor
@@ -173,7 +176,7 @@ public function visitCallout(CalloutNode $node): mixed;
 **Location:** `src/Parser/AbstractNodeVisitor.php`
 
 ```php
-public function visitCallout(CalloutNode $node): mixed
+public function visitCallout(CalloutNode $node)
 {
     return $this->defaultReturn();
 }
@@ -372,7 +375,7 @@ use PHPRegex\Parser\Node\CalloutNode;
 
 class CalloutNodeTest extends TestCase
 {
-    public function testCreateWithNumber(): void
+    public function test_create_with_number(): void
     {
         $node = new CalloutNode(42, false, 0, 10);
 
@@ -382,7 +385,7 @@ class CalloutNodeTest extends TestCase
         $this->assertSame(10, $node->endPosition);
     }
 
-    public function testCreateWithoutNumber(): void
+    public function test_create_without_number(): void
     {
         $node = new CalloutNode(null, false, 0, 5);
 

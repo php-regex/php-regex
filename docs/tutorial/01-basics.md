@@ -33,7 +33,7 @@ Think of a pattern like a **wanted poster** for text. You describe what you're l
 
 ## Your First Pattern
 
-The examples below use the PHPRegex facade. If you have not installed it yet, see [Before You Start](README.md#installation) — one `composer require` is enough. From here on, **every PHP block in this chapter assumes this import** at the top of your script:
+The examples below use the PHPRegex facade. If you have not installed it yet, see [Before You Start](README.md#before-you-start) — one `composer require` is enough. From here on, **every PHP block in this chapter assumes this import** at the top of your script:
 
 ```php
 use PHPRegex\Toolkit\Regex;

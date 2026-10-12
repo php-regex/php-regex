@@ -57,7 +57,7 @@ PHPRegex 2.0.0-DEV by Younes ENNAJI
 
 Runtime : PHP 8.4.26
 Command : explain
-Format  : text
+Format  : console
 
   [1/2] Pattern
   Pattern
@@ -85,7 +85,7 @@ PHPRegex 2.0.0-DEV by Younes ENNAJI
 
 Runtime : PHP 8.4.26
 Command : diagram
-Format  : text
+Format  : console
 
   [1/1] Rendering diagram
   Pattern

@@ -294,19 +294,7 @@ exit code follows the same rule as `analyze`.
 Render a text diagram of the pattern structure (`--format=console`, the default):
 
 ```bash
-vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i'
-```
-
-Render SVG (prints XML to stdout):
-
-```bash
-vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i' --format=svg
-```
-
-Write SVG to a file:
-
-```bash
-vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i' --format=svg --output=graph.svg
+vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i' --no-visuals
 ```
 
 **Output:**
@@ -333,6 +321,20 @@ Regex (flags: i)
     |           \-- Literal ('z')
     \-- Anchor ($)
 ```
+
+Render SVG (prints XML to stdout):
+
+```bash
+vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i' --format=svg
+```
+
+Write SVG to a file:
+
+```bash
+vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i' --format=svg --output=graph.svg
+```
+
+Nothing is printed: the SVG goes to the file.
 
 ---
 
