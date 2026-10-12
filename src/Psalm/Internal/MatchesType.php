@@ -88,10 +88,13 @@ final class MatchesType
      * What preg_match_all() writes on every call that compiles, one that
      * finds no match included: under PREG_PATTERN_ORDER, the default, one
      * list per key; under PREG_SET_ORDER, a list of what preg_match() writes.
+     * Where the call returned a count of 1 or more ($matched), every list
+     * holds that many entries: none is empty. The marks under "MARK" are
+     * keyed by the matches that set one, which may be none.
      *
      * @throws InvalidRegexOptionException when the low byte of $flags is neither 0, PREG_PATTERN_ORDER nor PREG_SET_ORDER
      */
-    public static function ofMatchAll(CaptureShape $shape, int $flags = \PREG_PATTERN_ORDER): Union
+    public static function ofMatchAll(CaptureShape $shape, int $flags = \PREG_PATTERN_ORDER, bool $matched = false): Union
     {
         $order = $flags & 0xFF;
         if (0 !== $order && \PREG_PATTERN_ORDER !== $order && \PREG_SET_ORDER !== $order) {
@@ -100,10 +103,10 @@ final class MatchesType
 
         $flags &= \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
         if (\PREG_SET_ORDER === $order) {
-            return Type::getList(self::ofMatch($shape, $flags));
+            return $matched ? Type::getNonEmptyList(self::ofMatch($shape, $flags)) : Type::getList(self::ofMatch($shape, $flags));
         }
 
-        return new Union([self::patternOrderShape($shape, $flags)]);
+        return new Union([self::patternOrderShape($shape, $flags, $matched)]);
     }
 
     /**
@@ -153,7 +156,7 @@ final class MatchesType
         return $properties ?: throw new \LogicException('A layout holds the whole match under 0, always.');
     }
 
-    private static function patternOrderShape(CaptureShape $shape, int $flags): TKeyedArray
+    private static function patternOrderShape(CaptureShape $shape, int $flags, bool $matched): TKeyedArray
     {
         $asNull = 0 !== ($flags & \PREG_UNMATCHED_AS_NULL);
         $offsets = 0 !== ($flags & \PREG_OFFSET_CAPTURE);
@@ -165,7 +168,8 @@ final class MatchesType
             if ($key->holdsMarksOnly()) {
                 $value = $marks;
             } else {
-                $value = Type::getList(self::entry(self::groupType($key, $asNull), $key->alwaysSet, $offsets));
+                $entry = self::entry(self::groupType($key, $asNull), $key->alwaysSet, $offsets);
+                $value = $matched ? Type::getNonEmptyList($entry) : Type::getList($entry);
                 // Once a match sets a mark, PHP writes the marks over the list of a group named MARK.
                 if ($key->marks) {
                     $value = self::union($value, $marks);

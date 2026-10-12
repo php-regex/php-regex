@@ -172,10 +172,20 @@ parameters:
         # Psalm release move them.
         - identifier: instanceof.internalClass
           path: src/Psalm/Internal/PregCallAnalyzer.php
-          count: 3
+          count: 4
         - identifier: method.internalClass
           path: src/Psalm/Internal/PregCallAnalyzer.php
           count: 5
+        # Psalm asks for the parameters of preg_replace_callback() before it
+        # analyses the arguments: the plugin reads the stub's through the
+        # statements analyser, and analyses in place an argument that writes
+        # nothing, as Psalm's own ArgTypeInferer does.
+        - identifier: staticMethod.internalClass
+          path: src/Psalm/Internal/PregCallAnalyzer.php
+          count: 1
+        - identifier: instanceof.internalClass
+          path: src/Psalm/Internal/CallbackParameters.php
+          count: 1
         - message: '#^Call to function method_exists\(\) with Psalm\\Internal\\#'
           identifier: function.alreadyNarrowedType
           path: src/Psalm/Internal/PregCallAnalyzer.php

@@ -14,14 +14,17 @@ declare(strict_types=1);
 namespace PHPRegex\Psalm;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Psalm\Internal\CallbackParameters;
 use PHPRegex\Psalm\Internal\PregCallAnalyzer;
 use Psalm\Plugin\PluginEntryPointInterface;
 use Psalm\Plugin\RegistrationInterface;
 
 /**
  * The Psalm plugin: types $matches where preg_match() returned 1 and after
- * preg_match_all(), from the pattern, and reports the patterns the targeted
- * PHP and PCRE2 refuse as InvalidRegexPattern.
+ * preg_match_all(), the subject where preg_match() returned 1, the callback
+ * of preg_replace_callback() and the pieces of preg_split(), from the
+ * pattern and the flags, and reports the patterns the targeted PHP and PCRE2
+ * refuse as InvalidRegexPattern.
  *
  * Patterns are judged for the PHP version Psalm analyses for, 8.2 at least,
  * with the PCRE2 it bundles, unless the plugin's options say otherwise:
@@ -43,7 +46,11 @@ final class Plugin implements PluginEntryPointInterface
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {
         PregCallAnalyzer::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'));
-        $registration->registerHooksFromClass(PregCallAnalyzer::class);
+        foreach ([PregCallAnalyzer::class, CallbackParameters::class] as $hooks) {
+            // Psalm registers a class only once it is loaded.
+            class_exists($hooks);
+            $registration->registerHooksFromClass($hooks);
+        }
     }
 
     private static function option(?\SimpleXMLElement $config, string $name): ?string

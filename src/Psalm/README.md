@@ -28,7 +28,14 @@ Features
   a non-empty string), optional where PHP may leave the key out. Where it did
   not, `$matches` is `[]`.
 * After `preg_match_all()`, `$matches` is the shape of the pattern, in either
-  order, for a pattern without `\K` and an offset absent or a constant ≤ 0.
+  order, for a pattern without `\K` and an offset absent or a constant ≤ 0;
+  where it returned a count of 1 or more, no list in it is empty.
+* The callback of `preg_replace_callback()` takes the shape of the pattern, as
+  `preg_match()` writes it on a match.
+* `preg_split()` returns a `list<non-empty-string>` under
+  `PREG_SPLIT_NO_EMPTY`, and `[piece, offset]` pairs typed
+  `list{string, int<0, max>}` under `PREG_SPLIT_OFFSET_CAPTURE`, in a
+  `non-empty-list` unless empty pieces are left out.
 * Where `preg_match()` returned 1, a `string` subject is a `non-empty-string`
   when the pattern never matches `''`, a `non-falsy-string` when it matches
   neither `''` nor `'0'`, on a call that does not type `$matches`. When the
@@ -48,9 +55,9 @@ Features
 * Patterns are judged for the PHP version Psalm analyses for, with the PCRE2
   release that PHP bundles: a pattern your PHP 8.4 accepts but PHP 8.2 refuses
   is reported on a project that targets 8.2.
-* The plugin never replaces Psalm's own description of the `preg_*`
-  functions: their purity, return types, parameter checks and taint flows
-  stay as they are.
+* The plugin keeps Psalm's own description of the `preg_*` functions: their
+  purity, parameter checks and taint flows stay as they are, and a type it
+  narrows keeps the data flow of Psalm's.
 
 Installation
 ------------
@@ -121,6 +128,40 @@ preg_match_all('/#([a-z]+)(?::(\d+))?/', $text, $sets, PREG_SET_ORDER);
 ```
 $m: array{0: list<non-falsy-string>, 1: list<non-falsy-string>}
 $sets: list<array{0: non-falsy-string, 1: non-falsy-string, 2?: non-empty-string}>
+```
+
+Where `preg_match_all()` found a match (Psalm reports the bare call as a
+`RiskyTruthyFalsyComparison`; a cast to `bool` reads the same):
+
+```php
+if ((bool) preg_match_all('/#([a-z]+)/', $text, $m)) {
+    /** @psalm-trace $m */
+}
+```
+
+```
+$m: array{0: non-empty-list<non-falsy-string>, 1: non-empty-list<non-falsy-string>}
+```
+
+The callback of `preg_replace_callback()`, and `preg_split()`:
+
+```php
+preg_replace_callback('/#([a-z]+)(?::(\d+))?/', static function (array $m): string {
+    /** @psalm-trace $m */
+
+    return $m[1];
+}, $text);
+
+$words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+$pieces = preg_split('/,/', $text, -1, PREG_SPLIT_OFFSET_CAPTURE);
+/** @psalm-trace $words */
+/** @psalm-trace $pieces */
+```
+
+```
+$m: array{0: non-falsy-string, 1: non-falsy-string, 2?: non-empty-string}
+$words: false|list<non-empty-string>
+$pieces: false|non-empty-list<list{string, int<0, max>}>
 ```
 
 The subject, where `preg_match()` returned 1:
@@ -244,9 +285,16 @@ The plugin reads a call only when it can tell what the pattern is:
   may be another type than `string`, or that is read from the `$matches`
   variable, keeps its type too.
 
-The callbacks of `preg_replace_callback()` and `preg_replace_callback_array()`,
-and the results of `preg_split()`, `preg_grep()`, `preg_replace()` and
-`preg_filter()`, keep Psalm's types: the plugin only checks their patterns.
+The callback of `preg_replace_callback()` takes the shape of a constant
+pattern, or of a pattern built around `preg_quote()`, and the flags must be
+constant too; a callback the plugin cannot type keeps Psalm's
+`callable(string[]): string`. `preg_match_all()` reads its success from the
+forms `preg_match()` reads its own from: compared with anything, as
+`preg_match_all(…) > 0`, it says nothing of `$matches`. `preg_split()` reads
+constant flags only. The callbacks of `preg_replace_callback_array()`, and the
+results of `preg_grep()`, `preg_replace()` and `preg_filter()`, keep Psalm's
+types, which already follow the subject's: the plugin only checks their
+patterns.
 
 Configuration
 -------------

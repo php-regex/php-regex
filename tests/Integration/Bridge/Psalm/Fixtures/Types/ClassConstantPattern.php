@@ -26,4 +26,15 @@ final class ClassConstantPattern
              */
         }
     }
+
+    public function replace(string $s): void
+    {
+        preg_replace_callback(self::PATTERN, static function (array $n): string {
+            /**
+             * @psalm-check-type-exact $n = array{0: 'a'|'ab', 1: 'a', 2?: 'b'}
+             * @psalm-trace $n
+             */
+            return $n[1];
+        }, $s);
+    }
 }

@@ -88,6 +88,72 @@ $m: array{0: list<non-falsy-string>, 1: list<non-falsy-string>}
 $sets: list<array{0: non-falsy-string, 1: non-falsy-string, 2?: non-empty-string}>
 ```
 
+Where `preg_match_all()` returned a count of 1 or more, every list holds
+that many entries: none is empty. The marks under `MARK` sit only under the
+matches that set one, so their array may still be empty. The call is read
+from the forms `preg_match()` is read from (see "Where `preg_match()` is
+narrowed"); Psalm reports the bare call as a `RiskyTruthyFalsyComparison`,
+and a cast to `bool` reads the same:
+
+```php
+if ((bool) preg_match_all('/#([a-z]+)/', $text, $m)) {
+    /** @psalm-trace $m */
+}
+```
+
+```
+$m: array{0: non-empty-list<non-falsy-string>, 1: non-empty-list<non-falsy-string>}
+```
+
+### The callback of `preg_replace_callback()`
+
+The callback receives what `preg_match()` writes on a match, the flags of the
+call included: its parameter takes the shape of the pattern. Psalm types an
+untyped closure parameter from it, and narrows an `array` one.
+
+```php
+preg_replace_callback('/#([a-z]+)(?::(\d+))?/', static function (array $m): string {
+    /** @psalm-trace $m */
+
+    return $m[1];
+}, $text);
+```
+
+```
+$m: array{0: non-falsy-string, 1: non-falsy-string, 2?: non-empty-string}
+```
+
+The pattern and the flags must be constant: a literal, a constant, a variable
+holding one literal, or a pattern built with `preg_quote()`. Psalm reads the
+parameters before the arguments, so the plugin reads only arguments that
+write nothing (a call to anything but `preg_quote()`, an assignment, are left
+to Psalm's `callable(string[]): string`). An array of patterns, and
+`preg_replace_callback_array()`, keep Psalm's type.
+
+### `preg_split()`
+
+Under `PREG_SPLIT_NO_EMPTY` the pieces are `non-empty-string`, and under
+`PREG_SPLIT_OFFSET_CAPTURE` each is a `list{string, int<0, max>}` pair;
+without `PREG_SPLIT_NO_EMPTY` there is always one piece at least, the whole
+subject when the pattern never matches. Psalm's stub says only the first of
+these, for the default flags:
+
+```php
+$words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+$pieces = preg_split('/,/', $text, -1, PREG_SPLIT_OFFSET_CAPTURE);
+/** @psalm-trace $words */
+/** @psalm-trace $pieces */
+```
+
+```
+$words: false|list<non-empty-string>
+$pieces: false|non-empty-list<list{string, int<0, max>}>
+```
+
+The `false` of a failed call stays, ignored as Psalm's stub ignores it. The
+flags must be one constant. `preg_grep()`, `preg_replace()` and
+`preg_filter()` keep Psalm's types, which already follow the subject's.
+
 ### Where `preg_match()` is narrowed
 
 In the branch where `preg_match()` returned 1, `$matches` is the shape; in the
@@ -255,12 +321,14 @@ does not know it. Only `preg_match()` reads such a pattern;
 - A shape of more keys than `maxShapedArraySize`: Psalm keeps no such shape.
 - A `preg_match_all()` call whose pattern holds `\K`, or whose offset is not
   a constant ≤ 0: it may return `false` and leave `[]`.
-- The callbacks of `preg_replace_callback()` and
-  `preg_replace_callback_array()`, and the results of the other `preg_*`
-  functions.
+- `preg_match_all()` compared with anything, as `preg_match_all(…) > 0`: no
+  success is read from it.
+- The callbacks of `preg_replace_callback_array()`, and the results of
+  `preg_grep()`, `preg_replace()` and `preg_filter()`.
 
-The plugin never replaces the stubs Psalm describes the `preg_*` functions
-with: their purity, return types, parameter checks and taint flows stay.
+The plugin keeps the stubs Psalm describes the `preg_*` functions with: their
+purity, parameter checks and taint flows stay, and a type the plugin narrows
+keeps the data flow of Psalm's.
 
 ## Invalid patterns
 

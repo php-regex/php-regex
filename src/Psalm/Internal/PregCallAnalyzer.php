@@ -13,11 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Psalm\Internal;
 
+use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp;
+use PhpParser\Node\Expr\BinaryOp\BitwiseOr;
 use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\BinaryOp\Equal;
 use PhpParser\Node\Expr\BinaryOp\Greater;
@@ -28,12 +30,17 @@ use PhpParser\Node\Expr\BinaryOp\NotIdentical;
 use PhpParser\Node\Expr\BinaryOp\Smaller;
 use PhpParser\Node\Expr\BinaryOp\SmallerOrEqual;
 use PhpParser\Node\Expr\BinaryOp\Spaceship;
+use PhpParser\Node\Expr\ClassConstFetch;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\NullsafePropertyFetch;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
+use PhpParser\Node\Scalar\Int_;
+use PhpParser\Node\Scalar\String_;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
@@ -59,6 +66,8 @@ use PHPRegex\Psalm\Plugin;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Config;
+use Psalm\Context;
+use Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer;
 use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\IssueBuffer;
@@ -71,7 +80,11 @@ use Psalm\Storage\Assertion\IsType;
 use Psalm\Storage\Possibilities;
 use Psalm\Type;
 use Psalm\Type\Atomic;
+use Psalm\Type\Atomic\TFalse;
+use Psalm\Type\Atomic\TKeyedArray;
 use Psalm\Type\Atomic\TLiteralString;
+use Psalm\Type\Atomic\TNonEmptyString;
+use Psalm\Type\Atomic\TString;
 use Psalm\Type\Union;
 
 /**
@@ -87,9 +100,11 @@ use Psalm\Type\Union;
  * the pattern can match (SubjectType). preg_quote() of literals is typed as
  * the literal it returns; around preg_quote() of a text not known,
  * preg_match() types $matches from the rest of the pattern (QuotedPattern).
- * Everything else is
- * left to Psalm's stubs, which the plugin never replaces: their taint flows,
- * purity and parameter checks all stay.
+ * preg_split() under PREG_SPLIT_NO_EMPTY or PREG_SPLIT_OFFSET_CAPTURE
+ * returns what the flags say; the callback of preg_replace_callback() is
+ * typed by CallbackParameters. Everything else is left to Psalm's stubs,
+ * whose taint flows, purity and parameter checks all stay: a type the plugin
+ * narrows keeps the data flow of the stub's.
  *
  * The narrowing goes through Psalm's internal node data, read behind an
  * instanceof check: should it move, the calls are left to the stubs.
@@ -194,7 +209,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         }
 
         $function = self::globalFunction($call->name, $source, $codebase);
-        $arguments = null === $function ? null : self::bind($call, self::PARAMETERS[$function]);
+        $arguments = null === $function ? null : self::bind(array_values($call->getArgs()), self::PARAMETERS[$function]);
         if ('preg_quote' === $function && null !== $arguments) {
             self::quote($call, $arguments, $source->getNodeTypeProvider());
 
@@ -215,6 +230,46 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
+     * What the callback of a preg_replace_callback() call receives on each
+     * match: what preg_match() writes for the call's pattern and flags, a
+     * pattern built around preg_quote() of a text not known included, which
+     * matches only where it compiles. Null when the plugin cannot read the
+     * call, which leaves the callback to Psalm's stub.
+     *
+     * Psalm asks for the parameters before it analyses the arguments: an
+     * argument is analysed here when it is a literal, a constant, a variable,
+     * or a concatenation or an | of those and of preg_quote() calls, none of
+     * which writes anything.
+     *
+     * @internal for CallbackParameters
+     *
+     * @param list<Arg> $args
+     */
+    public static function callbackMatchesType(array $args, StatementsSource $source, Context $context): ?Union
+    {
+        $codebase = $source->getCodebase();
+        $arguments = self::bind($args, self::PARAMETERS['preg_replace_callback']);
+        $nodeTypes = $source->getNodeTypeProvider();
+        if (null === $arguments || !isset($arguments['pattern']) || !self::analysedInPlace($arguments['pattern'], $source, $context) || (isset($arguments['flags']) && !self::analysedInPlace($arguments['flags'], $source, $context))) {
+            return null;
+        }
+
+        $parser = self::parser($codebase);
+
+        try {
+            $pattern = self::literal($arguments['pattern'], $nodeTypes) ?? self::patternAroundQuotes($arguments['pattern'], $source, $codebase, $parser);
+            $verdict = null === $pattern ? null : self::verdict($parser, $pattern);
+            if (null === $pattern || null === $verdict || null !== $verdict['error'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR)) {
+                return null;
+            }
+
+            return self::matchesType($parser, $pattern, $verdict, 'preg_replace_callback', $arguments, $nodeTypes, $codebase);
+        } catch (ExceptionInterface) {
+            return null; // The library could not read the call: Psalm's stub decides.
+        }
+    }
+
+    /**
      * @param array<string, Expr> $arguments the argument bound to each parameter, by name
      */
     private static function analyse(AfterExpressionAnalysisEvent $event, FuncCall $call, string $function, array $arguments): void
@@ -231,6 +286,10 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             if (null !== $verdict['error']) {
                 IssueBuffer::maybeAdd(new InvalidRegexPattern($verdict['error'], new CodeLocation($source, $node)), $source->getSuppressedIssues());
             }
+        }
+
+        if ('preg_split' === $function) {
+            self::splitType($call, $arguments, $nodeTypes);
         }
 
         if (null === $judged) {
@@ -258,6 +317,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
                 $current = $context->vars_in_scope['$'.$matches->name] ?? null;
                 if (null !== $current) {
                     $context->vars_in_scope['$'.$matches->name] = $type->setParentNodes($current->parent_nodes);
+                }
+
+                // Where it returned a count of 1 or more, no list is empty.
+                $matched = self::matchesType($parser, $pattern, $verdict, $function, $arguments, $nodeTypes, $codebase, true);
+                if (null !== $matched && $matched->isSingle()) {
+                    self::assertOnResult($nodeTypes, $call, [self::assertion($call, $matches, $matched->getSingleAtomic())], []);
                 }
             }
 
@@ -357,13 +422,86 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
+     * Whether the argument was analysed, which it is only when it writes
+     * nothing: analysing it again, in its turn, changes nothing either.
+     */
+    private static function analysedInPlace(Expr $argument, StatementsSource $source, Context $context): bool
+    {
+        if (!$source instanceof StatementsAnalyzer || !self::writesNothing($argument, $source)) {
+            return false; // A source of another kind never: Psalm asks while it analyses a call.
+        }
+
+        return false !== ExpressionAnalyzer::analyze($source, $argument, $context);
+    }
+
+    /**
+     * Whether analysing the expression changes nothing: a literal, a
+     * constant, a variable, or a concatenation or an | of those and of
+     * preg_quote() calls.
+     */
+    private static function writesNothing(Expr $expr, StatementsSource $source): bool
+    {
+        if ($expr instanceof FuncCall) {
+            if (!$expr->name instanceof Name || $expr->isFirstClassCallable() || 'preg_quote' !== self::globalFunction($expr->name, $source, $source->getCodebase())) {
+                return false;
+            }
+
+            foreach ($expr->getArgs() as $argument) {
+                if ($argument->unpack || $argument->byRef || !self::writesNothing($argument->value, $source)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return match (true) {
+            $expr instanceof String_, $expr instanceof Int_, $expr instanceof ConstFetch, $expr instanceof Variable => true,
+            $expr instanceof ClassConstFetch => $expr->class instanceof Name && $expr->name instanceof Identifier,
+            $expr instanceof Concat, $expr instanceof BitwiseOr => self::writesNothing($expr->left, $source) && self::writesNothing($expr->right, $source),
+            default => false,
+        };
+    }
+
+    /**
+     * preg_split() leaves out the empty pieces under PREG_SPLIT_NO_EMPTY,
+     * and writes each piece with its offset in the subject under
+     * PREG_SPLIT_OFFSET_CAPTURE; it writes at least one piece otherwise, the
+     * whole subject when the pattern never matches. Psalm's stub says the
+     * list may be empty under PREG_SPLIT_OFFSET_CAPTURE, and says nothing of
+     * the pieces under PREG_SPLIT_NO_EMPTY or of the offsets. The call keeps
+     * its false, which Psalm ignores as its stub does, and its data flow.
+     *
+     * @param array<string, Expr> $arguments
+     */
+    private static function splitType(FuncCall $call, array $arguments, NodeTypeProvider $nodeTypes): void
+    {
+        $flagsType = isset($arguments['flags']) ? $nodeTypes->getType($arguments['flags']) : null;
+        $current = $nodeTypes->getType($call);
+        // PHP reads the three low bits of the flags and ignores the others.
+        $flags = null !== $flagsType && $flagsType->isSingleIntLiteral() ? $flagsType->getSingleIntLiteral()->value & (\PREG_SPLIT_NO_EMPTY | \PREG_SPLIT_DELIM_CAPTURE | \PREG_SPLIT_OFFSET_CAPTURE) : 0;
+        if (null === $current || 0 === ($flags & (\PREG_SPLIT_NO_EMPTY | \PREG_SPLIT_OFFSET_CAPTURE))) {
+            return; // The stub says it: a non-empty-list<string>.
+        }
+
+        $noEmpty = 0 !== ($flags & \PREG_SPLIT_NO_EMPTY);
+        $piece = new Union([$noEmpty ? new TNonEmptyString() : new TString()]);
+        if (0 !== ($flags & \PREG_SPLIT_OFFSET_CAPTURE)) {
+            $piece = new Union([TKeyedArray::make([$piece, Type::getIntRange(0, null)], null, null, true)]);
+        }
+
+        $type = new Union([($noEmpty ? Type::getList($piece) : Type::getNonEmptyList($piece))->getSingleAtomic(), new TFalse()]);
+        $nodeTypes->setType($call, $type->setProperties(['ignore_falsable_issues' => $current->ignore_falsable_issues])->setParentNodes($current->parent_nodes));
+    }
+
+    /**
      * The type of $matches the call writes, or null when the plugin leaves
      * it to Psalm.
      *
      * @param PatternVerdict      $verdict
      * @param array<string, Expr> $arguments
      */
-    private static function matchesType(RegexParser $parser, string $pattern, array $verdict, string $function, array $arguments, NodeTypeProvider $nodeTypes, Codebase $codebase): ?Union
+    private static function matchesType(RegexParser $parser, string $pattern, array $verdict, string $function, array $arguments, NodeTypeProvider $nodeTypes, Codebase $codebase, bool $matched = false): ?Union
     {
         $shape = $verdict['shape'];
         $matchAll = 'preg_match_all' === $function;
@@ -382,7 +520,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             $flags = $flagsType->getSingleIntLiteral()->value;
         }
 
-        ['type' => $type, 'keys' => $keys] = self::type($parser, $pattern, $shape, $flags, $matchAll, $codebase);
+        ['type' => $type, 'keys' => $keys] = self::type($parser, $pattern, $shape, $flags, $matchAll, $codebase, $matched);
 
         // Past this many keys Psalm keeps no array shape.
         return $keys > $codebase->config->max_shaped_array_size ? null : $type;
@@ -500,7 +638,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         }
 
         foreach ([$comparison->left, $comparison->right] as $operand) {
-            if ($operand instanceof FuncCall && $operand->name instanceof Name && 'preg_match' === self::globalFunction($operand->name, $source, $codebase)) {
+            if ($operand instanceof FuncCall && $operand->name instanceof Name && \in_array(self::globalFunction($operand->name, $source, $codebase), ['preg_match', 'preg_match_all'], true)) {
                 $nodeTypes->setIfTrueAssertions($operand, []);
                 $nodeTypes->setIfFalseAssertions($operand, []);
             }
@@ -562,14 +700,15 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      * by name. Null when the call unpacks arguments or names a parameter
      * the function does not have.
      *
+     * @param list<Arg>    $arguments
      * @param list<string> $parameters
      *
      * @return array<string, Expr>|null
      */
-    private static function bind(FuncCall $call, array $parameters): ?array
+    private static function bind(array $arguments, array $parameters): ?array
     {
         $bound = [];
-        foreach ($call->getArgs() as $position => $argument) {
+        foreach ($arguments as $position => $argument) {
             if ($argument->unpack) {
                 return null;
             }
@@ -779,12 +918,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     /**
      * @return CachedType
      */
-    private static function type(RegexParser $parser, string $pattern, CaptureShape $shape, int $flags, bool $matchAll, Codebase $codebase): array
+    private static function type(RegexParser $parser, string $pattern, CaptureShape $shape, int $flags, bool $matchAll, Codebase $codebase, bool $matched = false): array
     {
-        $key = implode("\0", [self::targetKey($parser), $pattern, $matchAll ? 'all' : 'one', $flags, $codebase->config->max_string_length]);
+        $key = implode("\0", [self::targetKey($parser), $pattern, $matchAll ? ($matched ? 'all matched' : 'all') : 'one', $flags, $codebase->config->max_string_length]);
 
         return self::$types[$key] ??= [
-            'type' => $matchAll ? MatchesType::ofMatchAll($shape, $flags) : MatchesType::ofMatch($shape, $flags),
+            'type' => $matchAll ? MatchesType::ofMatchAll($shape, $flags, $matched) : MatchesType::ofMatch($shape, $flags),
             'keys' => MatchesType::keyCount($shape, $flags, $matchAll),
         ];
     }
