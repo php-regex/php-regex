@@ -26,6 +26,9 @@ final class ComplexityException extends RegexException implements ExceptionInter
 {
     use VisualContextTrait;
 
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     */
     public function __construct(
         string $message,
         ?int $position = null,

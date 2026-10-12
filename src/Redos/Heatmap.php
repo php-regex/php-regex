@@ -15,6 +15,8 @@ namespace PHPRegex\Redos;
 
 /**
  * Renders a terminal heatmap for ReDoS hotspots based on byte offsets.
+ *
+ * @internal the CLI draws it
  */
 final class Heatmap
 {

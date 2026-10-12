@@ -22,6 +22,9 @@ final class SemanticErrorException extends RegexException implements ExceptionIn
 {
     use VisualContextTrait;
 
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     */
     public function __construct(
         string $message,
         ErrorCode $errorCode,

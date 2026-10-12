@@ -40,6 +40,8 @@ final readonly class LiteralSet
     public bool $complete;
 
     /**
+     * @internal the literal extractor builds the sets
+     *
      * @param array<string> $prefixes
      * @param array<string> $suffixes
      */
@@ -56,11 +58,17 @@ final readonly class LiteralSet
         $this->complete = $complete && [] !== $this->prefixes;
     }
 
+    /**
+     * @internal the literal extractor builds the sets
+     */
     public static function empty(): self
     {
         return new self([], [], false);
     }
 
+    /**
+     * @internal the literal extractor builds the sets
+     */
     public static function fromString(string $literal): self
     {
         // Limit string length to prevent memory issues
@@ -71,6 +79,9 @@ final readonly class LiteralSet
         return new self([$literal], [$literal], true);
     }
 
+    /**
+     * @internal the literal extractor builds the sets
+     */
     public function concat(self $other): self
     {
         $newPrefixes = $this->prefixes;
@@ -102,6 +113,9 @@ final readonly class LiteralSet
         return new self($newPrefixes, $this->deduplicate($newSuffixes), $newComplete && [] !== $newPrefixes);
     }
 
+    /**
+     * @internal the literal extractor builds the sets
+     */
     public function unite(self $other): self
     {
         // Fast path for identical sets

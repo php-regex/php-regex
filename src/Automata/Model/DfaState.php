@@ -24,6 +24,8 @@ namespace PHPRegex\Automata\Model;
 final readonly class DfaState
 {
     /**
+     * @internal the solver builds the automata
+     *
      * @param array<int, int>             $transitions
      * @param array<int, RangeTransition> $ranges
      */

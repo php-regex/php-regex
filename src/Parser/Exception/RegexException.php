@@ -20,6 +20,9 @@ use PHPRegex\Parser\ErrorCode;
  */
 class RegexException extends \Exception implements ExceptionInterface
 {
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     */
     public function __construct(
         string $message,
         public readonly ErrorCode $errorCode,

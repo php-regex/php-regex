@@ -23,6 +23,8 @@ namespace PHPRegex\Automata\Model;
 final readonly class Dfa
 {
     /**
+     * @internal the solver builds the automata
+     *
      * @param array<int, DfaState>      $states
      * @param array<int, AlphabetRange> $alphabetRanges
      */

@@ -24,6 +24,9 @@ use PHPRegex\Parser\Exception\RegexException;
  */
 final class SampleGenerationException extends RegexException implements ExceptionInterface
 {
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     */
     public function __construct(
         string $message,
         ?\Throwable $previous = null,

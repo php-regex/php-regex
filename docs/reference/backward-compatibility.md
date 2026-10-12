@@ -63,7 +63,7 @@ In short, the public surface is:
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `SampleGenerationException` |
 | `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language` |
-| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Heatmap`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
+| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `TranspileException` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |

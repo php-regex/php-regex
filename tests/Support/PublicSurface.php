@@ -69,7 +69,7 @@ final class PublicSurface
         'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'EscapeLiteralBraceRector', 'Set/RegexSetList'],
         'Redos' => [
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
-            'Finding', 'Hotspot', 'Heatmap', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
+            'Finding', 'Hotspot', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
             'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
         ],

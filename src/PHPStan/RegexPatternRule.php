@@ -162,6 +162,9 @@ final class RegexPatternRule implements Rule
         return $errors;
     }
 
+    /**
+     * @internal the rule's own check
+     */
     public function isOptimizationFormatSafe(string $original, string $optimized): bool
     {
         return $this->checker->isOptimizationFormatSafe($original, $optimized);

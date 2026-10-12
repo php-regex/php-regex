@@ -27,6 +27,8 @@ class ParserException extends RegexException implements ExceptionInterface, Visu
     use VisualContextTrait;
 
     /**
+     * @internal the library throws its exceptions; catch them, read them
+     *
      * @param int|null $snippetPosition where the caret stands in $pattern when that is not
      *                                  $position: a fault outside the body is counted from the
      *                                  body but shown in the whole pattern
@@ -45,6 +47,8 @@ class ParserException extends RegexException implements ExceptionInterface, Visu
     }
 
     /**
+     * @internal the library throws its exceptions; catch them, read them
+     *
      * @param int|null $snippetPosition where the caret stands in $pattern when that is not $position
      */
     public static function withContext(

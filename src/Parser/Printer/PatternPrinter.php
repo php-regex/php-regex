@@ -166,6 +166,9 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->layout = $this->pretty;
     }
 
+    /**
+     * @internal the optimizer reuses one printer
+     */
     public function resetState(): void
     {
         $this->inCharClass = false;

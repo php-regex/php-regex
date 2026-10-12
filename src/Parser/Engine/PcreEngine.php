@@ -47,6 +47,8 @@ final readonly class PcreEngine
      * its own, to a bracket pair when its body holds every other one. The
      * pattern as it is when PHP refuses its delimiters, or when no delimiter
      * is left for it; the engine then turns the JIT off for the call.
+     *
+     * @internal the ReDoS confirmation reads the pattern PCRE compiles
      */
     public function prepare(string $regex): string
     {

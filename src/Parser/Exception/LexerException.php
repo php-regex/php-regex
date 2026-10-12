@@ -24,6 +24,9 @@ final class LexerException extends RegexException implements ExceptionInterface,
 {
     use VisualContextTrait;
 
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     */
     public function __construct(
         string $message,
         ErrorCode $errorCode,
@@ -36,6 +39,9 @@ final class LexerException extends RegexException implements ExceptionInterface,
         parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
     }
 
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     */
     public static function withContext(
         string $message,
         ErrorCode $errorCode,
