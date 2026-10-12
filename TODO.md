@@ -174,3 +174,38 @@ them without depending on internals.
 **F1 — No local playground or REPL.** The documentation home sends readers to
 regex101 for exploration; nothing in the repository runs a pattern
 interactively. *Verify*: `docs/README.md`. Effort: M, optional.
+
+### G. Left by the audit before the tag (2026-10-12)
+
+Each item was verified at the tag candidate and is additive.
+
+**G1 — A proven-safe pattern shows a heuristic hotspot.** `regex analyze '/a+/'`
+prints `Status: safe (proven)` then `Hotspot: 0-2`, and the JSON carries a
+`medium` finding next to `"severity": "safe"`: the severity comes from the
+proof, the findings and hotspots from the heuristic profiler
+(`docs/architecture.md`). *Fix*: hide the hotspot and label the findings as
+hints when the proof says safe, or document that they are. Effort: S.
+
+**G2 — The bridges' lint footers still print a cache count.** The CLI dropped
+it; `src/Symfony/Command/LintCommand.php` and `src/Laravel/Command/LintCommand.php`
+still print `Cache: … hits, … misses`, a count of the run's own process. Effort: XS.
+
+**G3 — A request after `shutdown` gets no answer from the language server.**
+The protocol asks for -32600 Invalid Request; `ServerTest::test_shutdown_stops_the_loop`
+pins the silence today. Effort: XS.
+
+**G4 — Two route-constraint edges in Laravel.** The constraint is judged
+between `/`-family delimiters, where the router uses `{…}`: a constraint with
+an unbalanced brace, as `[{]`, passes the lint and fails the router. A
+constraint ending in an escaped `\$` is cut as Symfony's sanitizer cuts it,
+but may compile where the route does not. `regex:compare` prints its
+counterexample unescaped. Effort: S.
+
+**G5 — No Symfony Flex recipe.** Flex guesses `PHPRegexSymfonyBundle` or
+`SymfonyBundle`, never `PHPRegexBundle`, so `composer require
+php-regex/regex-symfony` registers nothing (the guide says so). *Fix*: a
+recipe in symfony/recipes-contrib. Effort: S.
+
+**G6 — A Symfony route requirement shows as a delimited pattern.** In the lint
+console output `\d+` reads `→ /\d+/` while `[a-z]+` reads as typed.
+Effort: XS.
