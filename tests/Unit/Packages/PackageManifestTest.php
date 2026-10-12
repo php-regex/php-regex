@@ -169,6 +169,19 @@ final class PackageManifestTest extends TestCase
         }
     }
 
+    /**
+     * The linter reads PHP with nikic/php-parser when it is installed, through
+     * ParserFactory::createForHostVersion(), which arrived in 4.18: an older
+     * copy installed for another reason would end the lint with a fatal
+     * error, so the linter and the monorepo package refuse it.
+     */
+    #[Test]
+    public function test_linter_refuses_a_php_parser_without_create_for_host_version(): void
+    {
+        $this->assertSame('<4.18', self::dig(self::manifest('Linter'), 'conflict', 'nikic/php-parser'));
+        $this->assertSame('<4.18', self::dig(self::decode(self::root().'/composer.json'), 'conflict', 'nikic/php-parser'));
+    }
+
     #[Test]
     public function test_rector_package_is_a_rector_extension_on_rector_2(): void
     {

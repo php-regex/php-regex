@@ -241,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex lint` with a `nikic/php-parser` older than 4.18 installed ended with a fatal error (`ParserFactory::createForHostVersion()` arrived in 4.18): the linter now conflicts with those releases.
 - `regex lint --jobs` workers end without running the shutdown functions and destructors they inherit from the process that forked them, which flushed, closed or notified on its behalf, and could load their classes from a phar in several workers at once and read corrupted bytes. `regex.phar` stores its files uncompressed: workers loading classes from a gzip-compressed phar at once read each other's half-inflated bytes.
 - Laravel `regex:lint` run without a path, with `php-regex.paths` null or empty, stopped on a `TypeError`; it now lints `app/`, the default of the published configuration.
 - `regex lint --no-visuals` leaves out the banner (runtime, target, processes, JIT and limits) as every other command does, and the lint footer no longer prints a `Cache: 0 hits, 0 misses` line written in the code rather than measured.

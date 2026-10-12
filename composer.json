@@ -116,6 +116,9 @@
             "regex.dist.json": "./src/Linter/regex.schema.json"
         }
     },
+    "conflict": {
+        "nikic/php-parser": "<4.18"
+    },
     "suggest": {
         "psr/cache": "To share AST cache via PSR-6 pools.",
         "psr/simple-cache": "To share AST cache via PSR-16 caches.",
