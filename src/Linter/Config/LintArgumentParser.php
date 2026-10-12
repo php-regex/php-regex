@@ -70,16 +70,15 @@ final class LintArgumentParser
                 continue;
             }
 
-            if (str_starts_with($arg, '--enable-rule=')) {
-                $ruleId = substr($arg, \strlen('--enable-rule='));
-                $arguments = $this->withLintRule($arguments, $ruleId, true);
+            if (str_starts_with($arg, '--enable-rule=') || str_starts_with($arg, '--disable-rule=')) {
+                [$option, $ruleId] = explode('=', $arg, 2);
+                // A rule reads its setting under its short id, as regex.json writes it.
+                $shortId = str_starts_with($ruleId, 'regex.lint.') ? substr($ruleId, \strlen('regex.lint.')) : $ruleId;
+                if (!LintConfigSchema::isRuleId($shortId)) {
+                    return new LintParseResult(null, \sprintf('Unknown lint rule "%s" in %s.', $ruleId, $option));
+                }
 
-                continue;
-            }
-
-            if (str_starts_with($arg, '--disable-rule=')) {
-                $ruleId = substr($arg, \strlen('--disable-rule='));
-                $arguments = $this->withLintRule($arguments, $ruleId, false);
+                $arguments = $this->withLintRule($arguments, $shortId, '--enable-rule' === $option);
 
                 continue;
             }
@@ -978,11 +977,6 @@ final class LintArgumentParser
 
     private function withLintRule(LintArguments $arguments, string $ruleId, bool $enabled): LintArguments
     {
-        // A rule reads its setting under its short id, as regex.json writes it.
-        if (str_starts_with($ruleId, 'regex.lint.')) {
-            $ruleId = substr($ruleId, \strlen('regex.lint.'));
-        }
-
         $lintRules = $arguments->lintRules;
         $lintRules[$ruleId] = $enabled;
 

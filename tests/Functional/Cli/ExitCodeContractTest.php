@@ -112,6 +112,8 @@ final class ExitCodeContractTest extends TestCase
         yield 'compare with an invalid --php-version' => [['--php-version=abc', 'compare', '/a/', '/b/']];
         yield 'lint with an unknown option' => [['lint', '--bogus']];
         yield 'lint with an unknown --format' => [['lint', '--format=xml']];
+        yield 'lint with an unknown --disable-rule' => [['lint', '--disable-rule=quantifer.nested']];
+        yield 'lint with an unknown --enable-rule' => [['lint', '--enable-rule=nope.nope']];
         yield 'lint with an invalid --php-version' => [['--php-version=abc', 'lint', '.', '--jobs=1']];
     }
 

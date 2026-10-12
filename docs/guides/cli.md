@@ -1184,7 +1184,9 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 
 `--redos-mode` takes `theoretical` or `confirmed`, and `--no-redos` skips the
 analysis; the confirmation always runs without JIT. Any other mode is a usage
-error (exit code 2), as is an unknown `--format`.
+error (exit code 2), as is an unknown `--format`, and an `--enable-rule` or
+`--disable-rule` id that `checks.lint.rules` in `regex.json` would refuse
+(`Unknown lint rule "quantifer.nested" in --disable-rule.`).
 
 When `nikic/php-parser` is installed, and the lint reads files with it, a
 file the PHP parser cannot read (a syntax error, for one) is read again

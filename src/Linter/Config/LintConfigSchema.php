@@ -284,6 +284,15 @@ final class LintConfigSchema
     }
 
     /**
+     * Whether checks.lint.rules may name the id: a lint rule, or an
+     * analysis issue turned off the same way.
+     */
+    public static function isRuleId(string $id): bool
+    {
+        return isset(self::LINT_RULES[$id]) || isset(self::ANALYSIS_RULES[$id]);
+    }
+
+    /**
      * The interop presets extraction.interop may name.
      *
      * @return list<string>

@@ -54,5 +54,7 @@ final class ErrorStreamTest extends TestCase
         yield 'an unknown option' => [['analyze', '/a/', '--bogus'], 'Unknown option: --bogus'];
         yield 'a missing pattern' => [['explain'], 'Error:'];
         yield 'an unknown transpile target' => [['transpile', '/a/', '--target=perl'], 'perl'];
+        yield 'an unknown lint rule' => [['lint', '--disable-rule=quantifer.nested'], 'Unknown lint rule "quantifer.nested" in --disable-rule.'];
+        yield 'an unknown lint rule, with the usage naming the rule options' => [['lint', '--enable-rule=nope.nope'], '[--enable-rule=<id>] [--disable-rule=<id>]'];
     }
 }

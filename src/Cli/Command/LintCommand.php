@@ -51,7 +51,7 @@ use PHPRegex\Toolkit\Regex;
  */
 final class LintCommand extends AbstractCommand implements JsonCommandInterface
 {
-    private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
+    private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
 
     public function __construct(
         private readonly HelpCommand $helpCommand,
