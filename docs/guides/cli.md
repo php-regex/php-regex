@@ -209,7 +209,7 @@ polynomial verdict is never replayed.
 
 `--format=json` prints the same verdict under `redos`, with `complexity`,
 `degree`, `proof`, `witness`, `replayed`, `abstractions`, `pcre_version` and
-`analysis_version` next to the 1.x keys (every key is in the
+`analysis_version` next to `severity`, `score` and the other keys (every key is in the
 [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis)):
 
 ```bash
@@ -940,7 +940,7 @@ never replayed, leave 0 too.
 Code 2 covers an unknown command or option, an option without its value or
 with a value the command does not accept (an unknown `--format`, `--target`,
 `--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
-a missing pattern, a removed option such as `--redos-no-jit`, an
+a missing pattern, an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
 and a `regex.json` that cannot be read (`lint` and `debug`) — in which case
 nothing was scanned. `regex` run without a command prints the help and exits
@@ -1172,10 +1172,9 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration. The default threshold is `high`: a proven quadratic pattern is `medium`, and is reported with `--redos-threshold=medium` only.
 
-`--redos-mode=off` and `--redos-no-jit` were removed from `lint` in 2.0: use
-`--no-redos` to skip the analysis; the confirmation always runs without JIT.
-Either one is now a usage error (exit code 2), as is an unknown `--format`.
-`analyze` and `debug` refuse `--redos-no-jit` too, for the same reason.
+`--redos-mode` takes `theoretical` or `confirmed`, and `--no-redos` skips the
+analysis; the confirmation always runs without JIT. Any other mode is a usage
+error (exit code 2), as is an unknown `--format`.
 
 When `nikic/php-parser` is installed, and the lint reads files with it, a
 file the PHP parser cannot read (a syntax error, for one) is read again

@@ -73,7 +73,7 @@ final readonly class LintConfigValidator
             $expected = $this->describe($schema);
         }
         if (\is_bool($value) && isset($schema['properties']) && \is_array($schema['properties']) && isset($schema['properties']['enabled'])) {
-            $expected .= \sprintf(' (the boolean form was removed in 2.0: write {"enabled": %s})', $value ? 'true' : 'false');
+            $expected .= \sprintf(' (write {"enabled": %s})', $value ? 'true' : 'false');
         }
 
         $item = $schema['x-item'] ?? null;

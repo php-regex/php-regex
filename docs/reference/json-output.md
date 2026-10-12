@@ -695,10 +695,8 @@ decides between entries that share all three, and an issue's `target` plays
 no part. One entry hides one issue. A run with `--baseline` still reports
 `column` and `file_offset` for the issues left.
 
-A 1.x baseline, a plain list of `{file, line, message}` entries, is still
-read, matched by `file`, `line` and `message`, with a note on stderr (on
-stdout with the console report) suggesting to generate it again. A baseline
-that is missing or holds neither form is a usage error.
+A baseline that is missing or does not hold this object, a plain list of
+entries included, is a usage error (exit code 2, `stage: "usage"`).
 
 ```json
 {

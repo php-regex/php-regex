@@ -218,10 +218,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
                 continue;
             }
 
-            if (!$stopParsing && '--redos-no-jit' === $arg) {
-                return $this->errorResult($format, $redosMode, $redosThreshold, '--redos-no-jit was removed in 2.0: the confirmation always runs without JIT.');
-            }
-
             if (!$stopParsing && str_starts_with($arg, '-')) {
                 return $this->errorResult($format, $redosMode, $redosThreshold, 'Unknown option: '.$arg);
             }

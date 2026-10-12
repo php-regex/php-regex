@@ -56,7 +56,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Fallbacks:** Backreferences, conditionals, recursion, subroutine calls, verbs, callouts, `\X`, `\R`, non-atomic
   lookarounds, `\b` and `\B` under two different ASCII scopes in one pattern, bounded repeats whose body can match empty, a pattern over the analysis budget, an
   ambiguity the analysis cannot witness, and a witness crossing an over-approximated atomic body or character class
-  are judged by the structural heuristics (best-effort, as in 1.x), with `proof: heuristic` or `budget_exceeded`. An
+  are judged by the structural heuristics (best-effort), with `proof: heuristic` or `budget_exceeded`. An
   invalid pattern is never proven safe: `proof: not_analyzed`, severity `unknown`.
 
 **Search cost**

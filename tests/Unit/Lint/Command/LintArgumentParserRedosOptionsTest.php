@@ -61,6 +61,7 @@ final class LintArgumentParserRedosOptionsTest extends TestCase
 
         $this->assertNull($result->arguments);
         $this->assertStringContainsString($message, (string) $result->error);
+        $this->assertStringNotContainsString('removed', (string) $result->error);
     }
 
     /**
@@ -70,7 +71,7 @@ final class LintArgumentParserRedosOptionsTest extends TestCase
     {
         yield '--redos-mode=off names --no-redos' => [['--redos-mode=off'], '--no-redos'];
         yield '--redos-mode off names --no-redos' => [['--redos-mode', 'OFF'], '--no-redos'];
-        yield '--redos-no-jit' => [['--redos-no-jit'], '--redos-no-jit option was removed'];
+        yield '--redos-no-jit' => [['--redos-no-jit'], 'Unknown option: --redos-no-jit'];
         yield 'unknown mode' => [['--redos-mode=fast'], 'expected theoretical or confirmed'];
     }
 }

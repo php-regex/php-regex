@@ -332,7 +332,7 @@ final class LintConfigSchema
     {
         $mode = self::enumProperty('ReDoS analysis mode. To turn the analysis off, set enabled to false.', self::REDOS_MODES, 'theoretical');
         $mode['x-case-insensitive'] = true;
-        $mode['x-expected'] = 'theoretical or confirmed (the "off" mode was removed: set checks.redos.enabled to false)';
+        $mode['x-expected'] = 'theoretical or confirmed (checks.redos.enabled set to false turns the analysis off)';
 
         $threshold = self::enumProperty('Minimum severity threshold for reporting ReDoS issues.', self::THRESHOLDS, 'high');
         $threshold['x-case-insensitive'] = true;

@@ -147,7 +147,7 @@ ReDoS analysis defaults to **theoretical** mode: the pattern is read, never run.
 
 - an **exponential** witness is replayed: built with one pump, then two, up to 64, until `preg_match()` fails. PCRE gives up at once on a subject that lacks a literal every match needs, so the replay tries several suffixes (the bare one, the shortest one the loop cannot take, and that one followed by each required literal) and publishes the one that reproduced. Each is then tried once more at 5,000 bytes or just past, where PCRE2 stops looking for the code unit an anchored pattern requires (`#^<iframe(?:"[^"]*"|'[^']*'|[^>])*>#i` reproduces only there: its witness holds no `>`). Only a failure on the backtrack limit counts as reproduced; the replay stops at a fixed amount of work, and then reports `replayed: false`;
 - a **polynomial** verdict is not replayed: the backtrack counter does not measure polynomial work, and a timing would depend on the machine. It is still reported, with `replayed: null`;
-- a **heuristic** verdict is run on inputs of growing length, as in 1.x.
+- a **heuristic** verdict is run on inputs of growing length.
 
 When the running PHP cannot set the limits of the replay (`ini_set()` in
 `disable_functions`), nothing is replayed: the verdict keeps its severity and
@@ -257,7 +257,7 @@ In confirmed mode, when the threshold is `medium` or lower, the witness is repla
 
 ## Outside the model: heuristics and budget
 
-A pattern holding a construct the model does not cover is judged by the structural heuristics, as in 1.x, and says so:
+A pattern holding a construct the model does not cover is judged by the structural heuristics, and says so:
 
 ```bash
 vendor/bin/regex analyze '/(a)\1+$/'
@@ -339,7 +339,7 @@ patterns left `unknown` into ones with a polynomial ceiling.
 
 ## Reading the result
 
-`RedosAnalysis` keeps the fields of 1.x (`severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendations`, `confirmation`, …) and adds:
+Next to `severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendations` and `confirmation`, `RedosAnalysis` carries:
 
 | field | type | meaning |
 |---|---|---|
@@ -385,7 +385,7 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 
 On the repository's corpus of real-world patterns, the model proves the class of about 95 % of them; the heuristics decide for about 5 %, mostly patterns outside the model, a few with an ambiguity the analysis could not witness, almost none because of the budget. Analysing a pattern takes about a third of a millisecond at the median and about 5 ms at the 99th percentile.
 
-Compared with the 1.x heuristics, many former `medium` findings, most of them on unanchored patterns, are now proven safe, and a smaller number of patterns rate higher, each with its attack. In confirmed mode, about seven in eight of the corpus' proven exponential verdicts reproduce on PCRE2; the others are reported as not reproduced, through a bounded repeat analysed as unbounded or a loop that PCRE's optimizations defuse.
+In confirmed mode, about seven in eight of the corpus' proven exponential verdicts reproduce on PCRE2; the others are reported as not reproduced, through a bounded repeat analysed as unbounded or a loop that PCRE's optimizations defuse.
 
 ## Using PHPRegex
 

@@ -43,6 +43,13 @@ final class LintConfigSchemaTest extends TestCase
     }
 
     #[Test]
+    public function test_schema_describes_the_values_it_takes_not_former_ones(): void
+    {
+        $this->assertStringNotContainsString('removed', (string) file_get_contents(self::ROOT.'/src/Linter/regex.schema.json'));
+        $this->assertStringContainsString('checks.redos.enabled', (string) file_get_contents(self::ROOT.'/src/Linter/regex.schema.json'));
+    }
+
+    #[Test]
     public function test_dist_config_validates_against_the_definition(): void
     {
         $contents = (string) file_get_contents(self::ROOT.'/regex.dist.json');

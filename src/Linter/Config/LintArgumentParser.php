@@ -331,10 +331,6 @@ final class LintArgumentParser
                 continue;
             }
 
-            if ('--redos-no-jit' === $arg) {
-                return new LintParseResult(null, 'The --redos-no-jit option was removed in 2.0: the lint command always runs the ReDoS confirmation without JIT.');
-            }
-
             if ('--no-validate' === $arg) {
                 $arguments = new LintArguments(
                     $arguments->paths,
@@ -807,7 +803,7 @@ final class LintArgumentParser
 
         return match ($mode) {
             null => 'Invalid value for --redos-mode: expected theoretical or confirmed.',
-            RedosMode::Off => 'The --redos-mode=off value was removed in 2.0: use --no-redos.',
+            RedosMode::Off => 'Invalid value for --redos-mode: expected theoretical or confirmed; --no-redos skips the analysis.',
             default => $mode,
         };
     }

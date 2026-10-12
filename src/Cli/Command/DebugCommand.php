@@ -425,10 +425,6 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 continue;
             }
 
-            if (!$stopParsing && '--redos-no-jit' === $arg) {
-                return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => '--redos-no-jit was removed in 2.0: the confirmation always runs without JIT.'];
-            }
-
             if (!$stopParsing && str_starts_with($arg, '-')) {
                 return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Unknown option: '.$arg];
             }

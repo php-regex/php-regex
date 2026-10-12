@@ -25,15 +25,15 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The ReDoS confirmation always runs without the JIT: the option that
- * turned it off is refused with the reason, and nothing records a request
- * that can no longer change anything.
+ * The ReDoS confirmation always runs without the JIT: no option turns it
+ * off, --redos-no-jit is an unknown option like any other, and nothing
+ * records a request that could change anything.
  */
 final class RedosNoJitRemovedTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideCommands')]
-    public function test_the_option_is_refused_with_the_reason(string $name): void
+    public function test_the_option_is_refused_as_an_unknown_one(string $name): void
     {
         $command = 'analyze' === $name ? new AnalyzeCommand() : new DebugCommand();
         $input = new Input($name, ['/(a+)+$/', '--redos-mode=confirmed', '--redos-no-jit'], new GlobalOptions(false, false, false, false, null, null), []);
@@ -48,7 +48,8 @@ final class RedosNoJitRemovedTest extends TestCase
 
         // A usage error, as every command reports one.
         $this->assertSame(2, $exitCode);
-        $this->assertStringContainsString('--redos-no-jit was removed in 2.0: the confirmation always runs without JIT', $written);
+        $this->assertStringContainsString('Unknown option: --redos-no-jit', $written);
+        $this->assertStringNotContainsString('removed', $written);
     }
 
     /**

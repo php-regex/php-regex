@@ -104,7 +104,7 @@
           ],
           "default": "theoretical",
           "x-case-insensitive": true,
-          "x-expected": "theoretical or confirmed (the \"off\" mode was removed: set checks.redos.enabled to false)"
+          "x-expected": "theoretical or confirmed (checks.redos.enabled set to false turns the analysis off)"
         },
         "threshold": {
           "type": "string",

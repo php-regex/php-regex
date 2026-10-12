@@ -39,6 +39,7 @@ final class LintConfigMessagesTest extends TestCase
 
         $this->assertNotNull($error);
         $this->assertStringContainsString($message, (string) $error);
+        $this->assertStringNotContainsString('removed', (string) $error);
     }
 
     /**
@@ -58,7 +59,7 @@ final class LintConfigMessagesTest extends TestCase
         yield 'duplicate preset' => ['{"extraction": {"interop": ["nette-utils", "nette-utils"]}}', 'a list of distinct presets'];
         yield 'duplicate function' => ['{"extraction": {"functions": ["a", "a"]}}', 'a list of distinct non-empty strings'];
         yield 'unknown IDE' => ['{"ide": "notepad"}', 'a URL template holding %f or %l'];
-        yield 'removed mode off' => ['{"checks": {"redos": {"mode": "off"}}}', 'set checks.redos.enabled to false'];
+        yield 'mode off' => ['{"checks": {"redos": {"mode": "off"}}}', 'checks.redos.enabled set to false turns the analysis off'];
         yield '1.x key, once removed with its replacement named' => ['{"minSavings": 2}', 'Unknown key "minSavings"'];
         yield '1.x key without a replacement' => ['{"redosNoJit": true}', 'Unknown key "redosNoJit"'];
         yield 'PHP_VERSION_ID too small' => ['{"phpVersion": 83}', 'a PHP_VERSION_ID like 80300'];
