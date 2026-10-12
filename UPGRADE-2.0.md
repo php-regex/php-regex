@@ -566,18 +566,18 @@ Nothing implemented it, `ReDoSAnalyzer` included. Type against `ReDoSAnalyzer`.
 #### One target: `PcreTarget` replaces the PHP version id
 
 A pattern is judged for one PHP version and one PCRE2 release, now a value,
-`RegexParser\PcreTarget`, resolved once by `Regex::create()` and passed to
+`PHPRegex\Parser\PcreTarget`, resolved once by `Regex::create()` and passed to
 everything that reads it.
 
 | before | after |
 |---|---|
-| `new Lexer($versionId)` or `new Lexer(bool)` | `new Lexer(?PcreTarget $target = null)` |
-| `new Parser($depth, ?int $phpVersionId)` | `new Parser($depth, ?PcreTarget $target)` |
-| `new ValidatorNodeVisitor($max, $pattern, int $phpVersionId)` | `new ValidatorNodeVisitor($max, $pattern, ?PcreTarget $target)` |
-| `Regex::cacheSeed($regex, int $phpVersionId, $depth)` | `Regex::cacheSeed($regex, PcreTarget $target, $depth)` |
-| `RegexPattern::fromDelimited($regex, ?int)`, `PatternParser::extractPatternAndFlags($regex, ?int)` | take `?PcreTarget` |
-| `RegexOptions::$phpVersionId`, `$phpVersionExplicit` | `RegexOptions::$target` |
-| `new RegexOptions(..., $maxRecursionDepth, int $phpVersionId, bool $phpVersionExplicit)` | `new RegexOptions(..., $maxRecursionDepth, ?PcreTarget $target)` |
+| `new Lexer($versionId)` or `new Lexer(bool)` | internal: `RegexParser::create(['php_version' => ...])->tokenize($regex)` |
+| `new Parser($depth, ?int $phpVersionId)` | internal: `RegexParser::create(['php_version' => ...])->parse($regex)` |
+| `new ValidatorNodeVisitor($max, $pattern, int $phpVersionId)` | internal: `RegexParser::create(['php_version' => ...])->validate($regex)` |
+| `Regex::cacheSeed($regex, int $phpVersionId, $depth)` | gone (see above) |
+| `RegexPattern::fromDelimited($regex, ?int)` | `DelimitedPattern::fromDelimited($regex, ?PcreTarget)` |
+| `RegexOptions::$phpVersionId`, `$phpVersionExplicit` | `ParserOptions::$target` |
+| `new RegexOptions(..., $maxRecursionDepth, int $phpVersionId, bool $phpVersionExplicit)` | `ParserOptions::fromArray(['php_version' => ..., 'pcre_version' => ...])` |
 | `Lexer::readsWideRepeatCounts()` | gone: `PcreTarget::pcreAtLeast('10.43')` |
 
 `null` means `PcreTarget::runtime()`, the running PHP and the PCRE2 it links.
@@ -585,7 +585,7 @@ everything that reads it.
 
 #### `GroupType` has a new case, and two nodes a new field
 
-`GroupType::T_GROUP_SCAN_SUBSTRING` stands for `(*scs:(1)...)`, PCRE2 10.45: a
+`GroupType::ScanSubstring` stands for `(*scs:(1)...)`, PCRE2 10.45: a
 `match` over `GroupType` without a `default` arm needs one for it.
 `GroupNode::$scannedGroups` lists the groups it scans, and
 `SubroutineNode::$returnedGroups` the groups a call returns,
@@ -605,7 +605,7 @@ needs them.
 
 `Regex::generate()` used to return its last attempt when no sample matched,
 as for `a(*FAIL)`: a string the pattern does not match. It now throws
-`RegexParser\Exception\SampleGenerationException`. Catch it where a pattern
+`PHPRegex\Generator\SampleGenerationException`. Catch it where a pattern
 may match nothing.
 
 #### `php_version` alone always means the PCRE2 that PHP bundles
@@ -722,11 +722,11 @@ require a proof.
 #### The pattern extractors moved, and one is renamed
 
 The two ways of finding regex patterns in PHP source now sit together under
-`RegexParser\Lint\Extraction`, with the interface they implement:
+`PHPRegex\Linter\Extraction`, with the interface they implement:
 
-  - `RegexParser\Lint\ExtractorInterface` → `RegexParser\Lint\Extraction\ExtractorInterface`
-  - `RegexParser\Lint\TokenBasedExtractionStrategy` → `RegexParser\Lint\Extraction\TokenBasedExtractionStrategy`
-  - `RegexParser\Lint\PhpStanExtractionStrategy` → `RegexParser\Lint\Extraction\PhpParserExtractionStrategy`
+  - `RegexParser\Lint\ExtractorInterface` → `PHPRegex\Linter\Extraction\ExtractorInterface`
+  - `RegexParser\Lint\TokenBasedExtractionStrategy` → `PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy`
+  - `RegexParser\Lint\PhpStanExtractionStrategy` → `PHPRegex\Linter\Extraction\PhpParserExtractionStrategy`
 
 The last one never had anything to do with PHPStan: it reads the source with
 nikic/php-parser, which PHPStan happens to bring along. The old names are
@@ -736,12 +736,12 @@ gone: import the new ones.
 
 `RegexParser\Bridge\Symfony\Analyzer\Severity` said `pass`, `warn`, `fail`
 and `critical` — the outcome of a check, not the severity of a lint issue,
-which is what `RegexParser\Severity` means. It is now `CheckOutcome`.
+which is what `PHPRegex\Linter\LintSeverity` means. It is now `PHPRegex\Symfony\Analyzer\CheckOutcome`.
 
 `RegexParser\Bridge\Symfony\Analyzer\AnalysisReport` is the sectioned
 report of the `regex:security` command and has nothing in common with
-`RegexParser\AnalysisReport`, the result of `Regex::analyze()`. It is now
-`SecurityReport`.
+`PHPRegex\Toolkit\AnalysisReport`, the result of `Regex::analyze()`. It is now
+`PHPRegex\Symfony\Analyzer\SecurityReport`.
 
 Both are marked `@internal`; the commands that build them are the only
 callers.
@@ -751,8 +751,8 @@ callers.
 `RegexParser\Lint\Command\LintCommand` and `LintOutputRenderer` are the only
 two classes of that namespace that needed the console, so the lint domain no
 longer depends on the CLI it is called from. They are now
-`RegexParser\Cli\Command\LintCommand` and
-`RegexParser\Cli\Command\LintOutputRenderer`.
+`PHPRegex\Cli\Command\LintCommand` and
+`PHPRegex\Cli\Command\LintOutputRenderer`, both internal.
 
 The old names are gone: import the new ones.
 
@@ -761,21 +761,21 @@ The old names are gone: import the new ones.
 Reading and judging a pattern moved from the `Regex` facade into
 `RegexParser`, which the rest of the library now takes instead of the facade:
 
-  - `new ReDoSAnalyzer(?RegexParser $parser, ...)`
+  - `new RedosAnalyzer(?RegexParser $parser, ...)`
   - `new LanguageSolver(?RegexParser $parser, ...)`, which replaces `RegexSolver` and `RegexLanguageSolver` (see below)
-  - `new RegexTranspiler(RegexParser $parser, ...)`
-  - `new RegexAnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
+  - `new Transpiler(RegexParser $parser, ...)`
+  - `new AnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
 
 Pass `$regex->parser()` where you passed a `Regex`, or build one with
 `RegexParser::create()`, which takes the options `Regex::create()` takes.
 `CharSet` and `CharSetAnalyzer` moved from `RegexParser\ReDoS` to
-`RegexParser\Analysis`.
+`PHPRegex\Parser\Hir\CharSet` and `PHPRegex\Parser\Analysis\CharSetAnalyzer`.
 
 #### One automata entry point: `LanguageSolver`
 
 `RegexParser\Automata\Solver\RegexSolver` and `RegexParser\Automata\Api\RegexLanguageSolver` offered the same
 questions under two sets of names. Both are gone, with `RegexSolverInterface` and `RegexSolverCompilerInterface`;
-`RegexParser\Automata\LanguageSolver` answers every question they did. The result classes are unchanged.
+`PHPRegex\Automata\LanguageSolver` answers every question they did. The result classes are unchanged.
 
 | 1.x | 2.0 |
 |---|---|
@@ -789,11 +789,12 @@ questions under two sets of names. Both are gone, with `RegexSolverInterface` an
 | `RegexSolverInterface`, `RegexSolverCompilerInterface` | gone: type against `LanguageSolver` |
 
 The solver no longer takes a `RegularSubsetValidator` or a `DfaBuilder`: choose the algorithms through
-`SolverOptions`. The public classes of `RegexParser\Automata` are now `LanguageSolver`, `Options\SolverOptions`,
-`Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`,
-`Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\EquivalenceResult`, `Model\Dfa`,
-`Solver\DfaCacheInterface` and `Solver\InMemoryDfaCache`; every other class of the namespace is `@internal` and may
-change in any release.
+`SolverOptions`. The public classes of `PHPRegex\Automata` are now `LanguageSolver`, `Options\SolverOptions`,
+`Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four
+result classes in `Solver\` (`IntersectionResult`, `SubsetResult`, `EquivalenceResult`, `MatchEquivalenceResult`),
+`Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`,
+`TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns, and `Language`; every other class
+of the namespace is `@internal` and may change in any release.
 
 #### A custom node implements `getChildren()`
 
@@ -831,7 +832,7 @@ Nothing to do; a warm cache directory rebuilds itself.
 
 #### Error codes are an `ErrorCode` enum
 
-`RegexException::getErrorCode()` returns a `RegexParser\ErrorCode` and is never
+`RegexException::getErrorCode()` returns a `PHPRegex\Parser\ErrorCode` and is never
 `null`; `ValidationResult::$errorCode` is `?ErrorCode`.
 The values of the codes 1.x already had are unchanged, so code comparing strings
 moves to `->value` or, better, to the case:
@@ -1341,22 +1342,21 @@ to empty them to keep its memory in check; it still may.
 #### Exceptions say whose mistake it is
 
 A mistake of the caller throws an exception implementing
-`RegexParser\Exception\RegexParserExceptionInterface`, so one `catch` holds
+`PHPRegex\Parser\Exception\ExceptionInterface`, so one `catch` holds
 every one of them. A bug of the library throws a plain `\LogicException`,
 which no caller should catch on purpose.
 
 | what went wrong | before | 2.0 |
 |---|---|---|
 | `Regex::explain()` with an unknown format | `\InvalidArgumentException` | `InvalidRegexOptionException` |
-| `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `RegexParser\Lint\LintException` |
-| a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `RegexParser\Lint\LintException` |
-| `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `RegexParser\Cli\CliException` |
+| `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `PHPRegex\Linter\LintException` |
+| a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `PHPRegex\Linter\LintException` |
+| `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\CliException` |
 | the sample generator on a call it cannot follow, as `(?R)`, or an empty class built by hand | `\LogicException`, `\RuntimeException` | `SampleGenerationException` |
-| `Regex::generate()` on a pattern the library judges invalid, as `/(?1)a/` | the parse or visitor exception, or a sample | `SampleGenerationException` |
-| a `TokenStream` read or moved past its bounds | `\RuntimeException` | `\LogicException` |
+| `Regex::generate()` on a pattern that parses but the library judges invalid, as `/(?1)a/` | the visitor exception, or a sample | `SampleGenerationException` (a pattern that does not parse still throws the parser's exception) |
 
 `LintException` and `CliException` extend `\RuntimeException`, so a `catch`
 of that class keeps holding them. `InvalidRegexOptionException` extends
-`\InvalidArgumentException`. A `catch (\RuntimeException)` around a token
-stream, or around the sample generator for a subroutine, catches
-`\LogicException` or `SampleGenerationException` instead.
+`\InvalidArgumentException`. A `catch (\RuntimeException)` around the
+sample generator for a subroutine catches `SampleGenerationException`
+instead.
