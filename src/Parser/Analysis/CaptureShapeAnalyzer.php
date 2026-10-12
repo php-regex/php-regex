@@ -123,18 +123,18 @@ final class CaptureShapeAnalyzer
         $this->facts = new CaptureFacts();
     }
 
-    public function analyze(RegexNode $regex): CaptureShape
+    public function analyze(RegexNode $ast): CaptureShape
     {
-        $this->caseless = str_contains($regex->flags, 'i');
-        $this->ucp = str_contains($regex->flags, 'u');
+        $this->caseless = str_contains($ast->flags, 'i');
+        $this->ucp = str_contains($ast->flags, 'u');
         $this->hasCalls = false;
-        $this->scan($regex->pattern);
-        $this->facts = new CaptureFacts($regex->isUnicode(), $this->caseless, $this->ucp);
+        $this->scan($ast->pattern);
+        $this->facts = new CaptureFacts($ast->isUnicode(), $this->caseless, $this->ucp);
         $this->selection = null;
 
-        $merged = $this->shape($regex->pattern);
+        $merged = $this->shape($ast->pattern);
 
-        $split = $this->split($regex->pattern);
+        $split = $this->split($ast->pattern);
         if (null === $split) {
             return $merged;
         }
@@ -142,7 +142,7 @@ final class CaptureShapeAnalyzer
         $cases = [];
         foreach ([...$split['alternation']->alternatives, ...(null === $split['optional'] ? [] : [null])] as $branch) {
             $this->selection = ['branch' => $branch] + $split;
-            $cases[] = $this->shape($regex->pattern);
+            $cases[] = $this->shape($ast->pattern);
         }
         $this->selection = null;
 

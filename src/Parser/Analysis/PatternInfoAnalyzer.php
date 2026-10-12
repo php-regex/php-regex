@@ -63,11 +63,11 @@ final class PatternInfoAnalyzer
 
     private const GROUP_NAME = '[_\p{L}][_\p{L}\p{Nd}]*+';
 
-    public function analyze(RegexNode $regex): PatternInfo
+    public function analyze(RegexNode $ast): PatternInfo
     {
-        $numbering = (new GroupNumberingCollector())->collect($regex);
-        $groups = GroupIndex::of($regex->pattern);
-        $unicode = $regex->isUnicode();
+        $numbering = (new GroupNumberingCollector())->collect($ast);
+        $groups = GroupIndex::of($ast->pattern);
+        $unicode = $ast->isUnicode();
 
         $names = [];
         foreach ($numbering->namedGroups as $name => $numbers) {
@@ -77,9 +77,9 @@ final class PatternInfoAnalyzer
         ksort($names, \SORT_STRING);
 
         $facts = ['backreference' => 0, 'backslashC' => false, 'keep' => false, 'skip' => false, 'lookbehinds' => []];
-        $this->collect($regex->pattern, $groups, $facts);
+        $this->collect($ast->pattern, $groups, $facts);
 
-        [$minLength, $maxLength] = $regex->accept(new LengthRangeCalculator($unicode));
+        [$minLength, $maxLength] = $ast->accept(new LengthRangeCalculator($unicode));
         if ($facts['keep']) {
             // "\K" moves where $matches[0] starts: it may hold nothing and, a
             // "\K" read inside a lookbehind starting it before the text the
@@ -98,11 +98,11 @@ final class PatternInfoAnalyzer
             }
         }
 
-        [$matchLimit, $depthLimit, $heapLimit, $newline, $bsr] = self::startOptions($regex->source ?? '');
+        [$matchLimit, $depthLimit, $heapLimit, $newline, $bsr] = self::startOptions($ast->source ?? '');
 
-        $hir = (new HirTranslator())->translate($regex);
-        $source = $regex->source ?? '';
-        $groupBefore = static fn (int $position): bool => self::groupBefore($regex->pattern, $position, $source);
+        $hir = (new HirTranslator())->translate($ast);
+        $source = $ast->source ?? '';
+        $groupBefore = static fn (int $position): bool => self::groupBefore($ast->pattern, $position, $source);
 
         return new PatternInfo(
             $numbering->maxGroupNumber,
@@ -120,7 +120,7 @@ final class PatternInfoAnalyzer
             // Under JIT, PHP's default, a (*SKIP) starts the next attempt
             // where it points even under "A" (/aa(*SKIP)b|a/A matches "aaa"
             // at 2): the modifier alone proves nothing then.
-            (str_contains($regex->flags, 'A') && !$facts['skip']) || self::startsAnchored($hir, $groupBefore),
+            (str_contains($ast->flags, 'A') && !$facts['skip']) || self::startsAnchored($hir, $groupBefore),
             !$hir->properties->accepts && self::endsAnchored($hir),
         );
     }

@@ -39,11 +39,11 @@ final class RequiredLiteralAnalyzer
      * @return list<string> the strings, longest runs first in pattern order,
      *                      none inside another
      */
-    public function analyze(RegexNode $regex): array
+    public function analyze(RegexNode $ast): array
     {
-        $this->unicode = $regex->isUnicode();
+        $this->unicode = $ast->isUnicode();
 
-        return self::maximal($this->required((new HirTranslator())->translate($regex)));
+        return self::maximal($this->required((new HirTranslator())->translate($ast)));
     }
 
     /**

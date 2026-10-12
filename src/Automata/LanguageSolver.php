@@ -167,11 +167,11 @@ final readonly class LanguageSolver
      *
      * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
      */
-    public function acceptsPrefix(string $pattern, string $input, ?SolverOptions $options = null): bool
+    public function acceptsPrefix(string $regex, string $subject, ?SolverOptions $options = null): bool
     {
-        $dfa = $this->buildDfa($pattern, $options ?? new SolverOptions());
+        $dfa = $this->buildDfa($regex, $options ?? new SolverOptions());
 
-        return PrefixReader::begins($dfa, $input, $this->parser()->parse($pattern)->isUnicode());
+        return PrefixReader::begins($dfa, $subject, $this->parser()->parse($regex)->isUnicode());
     }
 
     /**
@@ -181,9 +181,9 @@ final readonly class LanguageSolver
      *
      * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
      */
-    public function language(string $pattern, ?SolverOptions $options = null): Language
+    public function language(string $regex, ?SolverOptions $options = null): Language
     {
-        return new Language($this->buildDfa($pattern, $options ?? new SolverOptions()), $this->parser()->parse($pattern)->isUnicode());
+        return new Language($this->buildDfa($regex, $options ?? new SolverOptions()), $this->parser()->parse($regex)->isUnicode());
     }
 
     /**
@@ -192,9 +192,9 @@ final readonly class LanguageSolver
      *
      * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
      */
-    public function compile(string $pattern, ?SolverOptions $options = null): Dfa
+    public function compile(string $regex, ?SolverOptions $options = null): Dfa
     {
-        return $this->buildDfa($pattern, $options ?? new SolverOptions());
+        return $this->buildDfa($regex, $options ?? new SolverOptions());
     }
 
     /**

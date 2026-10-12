@@ -45,14 +45,14 @@ final class GroupNumberingCollector
      */
     private array $namedGroups = [];
 
-    public function collect(RegexNode $node): GroupNumbering
+    public function collect(RegexNode $ast): GroupNumbering
     {
         $this->nextGroupNumber = 1;
         $this->maxGroupNumber = 0;
         $this->captureSequence = [];
         $this->namedGroups = [];
 
-        $this->collectNode($node->pattern);
+        $this->collectNode($ast->pattern);
 
         foreach ($this->namedGroups as $name => $numbers) {
             $this->namedGroups[$name] = array_values(array_unique($numbers));

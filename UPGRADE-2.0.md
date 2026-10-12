@@ -481,6 +481,27 @@ A baseline file that is missing or is not a baseline is now a usage error
 - `Regex::cacheSeed()` is gone, and `RegexParser::cacheSeed()` is internal: the
   seed's shape follows the cache version and may change in any release.
 
+#### One name per argument
+
+PHP lets a caller name an argument, so a parameter name is part of the API.
+`$regex` is a pattern with its delimiters and flags everywhere, `$pattern`
+its body, `$ast` a parsed tree, `$subject` the text matched against and
+`$parser` the parser a service takes. These parameters took another name:
+
+| method | before | after |
+|---|---|---|
+| `Transpiler::__construct()` | `$regex` | `$parser` |
+| `Transpiler::transpile()` | `$pattern` | `$regex` |
+| `LanguageSolver::acceptsPrefix()` | `$pattern`, `$input` | `$regex`, `$subject` |
+| `LanguageSolver::language()`, `compile()` | `$pattern` | `$regex` |
+| `TrivialMatchClassifier::classify()`, `matchedLiteral()` | `$pattern` | `$regex` |
+| `RedosRepairer::repair()` | `$pattern` | `$regex` |
+| `PcreEngine::compile()`, `match()`, `test()`, `matchAll()` | `$pattern` | `$regex` |
+| `CaptureShapeAnalyzer::analyze()`, `PatternInfoAnalyzer::analyze()`, `RequiredLiteralAnalyzer::analyze()` | `$regex` | `$ast` |
+| `GroupNumberingCollector::collect()` | `$node` | `$ast` |
+
+Only a call that names the argument changes.
+
 #### `tokenize()` returns the tokens, for the instance's target
 
 `Regex::tokenize()` was static and returned a `TokenStream`, the cursor the

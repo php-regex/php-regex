@@ -80,9 +80,9 @@ final readonly class TrivialMatchClassifier
      * The string function the pattern behaves as under preg_match(), or null
      * when there is none, or none the automata could prove.
      */
-    public function classify(string $pattern): ?TrivialMatch
+    public function classify(string $regex): ?TrivialMatch
     {
-        $ast = $this->parse($pattern);
+        $ast = $this->parse($regex);
         if (null === $ast) {
             return null;
         }
@@ -105,7 +105,7 @@ final readonly class TrivialMatchClassifier
         $literals = $this->product(array_map($this->literals(...), $parts));
         $candidate = null === $literals ? null : self::candidate($literals, $starts, $end);
 
-        return null !== $candidate && $this->proves($pattern, $candidate) ? $candidate : null;
+        return null !== $candidate && $this->proves($regex, $candidate) ? $candidate : null;
     }
 
     /**
@@ -124,9 +124,9 @@ final readonly class TrivialMatchClassifier
      * recursion or a conditional is refused before any proof, as are the
      * patterns classify() refuses.
      */
-    public function matchedLiteral(string $pattern): ?string
+    public function matchedLiteral(string $regex): ?string
     {
-        $ast = $this->parse($pattern);
+        $ast = $this->parse($regex);
         if (null === $ast) {
             return null;
         }
@@ -138,7 +138,7 @@ final readonly class TrivialMatchClassifier
 
         try {
             return ($this->solver ?? new LanguageSolver($this->parser))
-                ->equivalent($pattern, '/'.self::quote($literal).'/', new SolverOptions(matchMode: MatchMode::Full))
+                ->equivalent($regex, '/'.self::quote($literal).'/', new SolverOptions(matchMode: MatchMode::Full))
                 ->isEquivalent ? $literal : null;
         } catch (ComplexityException) {
             return null;

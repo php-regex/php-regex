@@ -23,7 +23,7 @@ use PHPRegex\Transpiler\Target\TargetRegistry;
  */
 final readonly class Transpiler
 {
-    public function __construct(private RegexParser $regex, private TargetRegistry $targets = new TargetRegistry()) {}
+    public function __construct(private RegexParser $parser, private TargetRegistry $targets = new TargetRegistry()) {}
 
     /**
      * Transpile a PCRE regex into the spelling of a target dialect.
@@ -31,7 +31,7 @@ final readonly class Transpiler
      * The target resolves through the registry before the pattern is parsed,
      * so an unknown dialect name is refused before any syntax fault is read.
      *
-     * @param string                $pattern The regex as written, delimiters and flags included ("/[a-z]+/i")
+     * @param string                $regex   The regex as written, delimiters and flags included ("/[a-z]+/i")
      * @param string                $target  A registered target name or alias: "javascript" or "js",
      *                                       "html-pattern" or "html", "python" or "py"; case and
      *                                       surrounding space are forgiven
@@ -39,25 +39,25 @@ final readonly class Transpiler
      *
      * @throws TranspileException when $target names no registered dialect, or the dialect refuses a
      *                            construct or a flag it cannot carry without changing what matches
-     * @throws ParserException    when $pattern does not parse: a delimiter or flag fault, a syntax error,
+     * @throws ParserException    when $regex does not parse: a delimiter or flag fault, a syntax error,
      *                            or a parser limit — the thrown subclasses are SyntaxErrorException,
      *                            RecursionLimitException and ResourceLimitException
-     * @throws LexerException     when $pattern does not tokenize, e.g. a /u body that is not valid UTF-8
+     * @throws LexerException     when $regex does not tokenize, e.g. a /u body that is not valid UTF-8
      *
      * @return TranspileResult The dialect's pattern, with its literal and constructor spellings
      */
-    public function transpile(string $pattern, string $target, ?TranspileOptions $options = null): TranspileResult
+    public function transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
     {
         $options ??= new TranspileOptions();
         $dialect = $this->targets->get($target);
-        $ast = $this->regex->parse($pattern);
+        $ast = $this->parser->parse($regex);
 
-        $context = new TranspileContext($pattern, $ast->flags, $options);
+        $context = new TranspileContext($regex, $ast->flags, $options);
         $compiled = $dialect->compile($ast, $context);
         $flags = $dialect->mapFlags($ast->flags, $context);
 
         return new TranspileResult(
-            $pattern,
+            $regex,
             $dialect->getName(),
             $compiled,
             $flags,

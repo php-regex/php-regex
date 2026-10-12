@@ -60,25 +60,25 @@ final readonly class RedosRepairer
      *
      * @return list<RedosRepair>
      */
-    public function repair(string $pattern): array
+    public function repair(string $regex): array
     {
         $parser = $this->parser ?? RegexParser::create();
 
         try {
-            $ast = $parser->parse($pattern);
+            $ast = $parser->parse($regex);
         } catch (ExceptionInterface) {
             return [];
         }
 
         $analyzer = $this->analyzer ?? new RedosAnalyzer($parser);
-        $verdict = $analyzer->analyze($pattern)->complexity;
+        $verdict = $analyzer->analyze($regex)->complexity;
         if (RedosComplexity::Exponential !== $verdict && RedosComplexity::Polynomial !== $verdict) {
             return [];
         }
 
         $engine = new PcreEngine();
         $repairs = [];
-        foreach ($this->candidates($ast, $pattern, $parser) as $candidate) {
+        foreach ($this->candidates($ast, $regex, $parser) as $candidate) {
             if (null !== $engine->compile($candidate)) {
                 continue; // the edits are textual: a guard, as none of them breaks a pattern today
             }
@@ -89,12 +89,12 @@ final readonly class RedosRepairer
             }
 
             // A rewrite proven to match other subjects is no repair.
-            $sameSubjects = $this->sameSubjects($pattern, $candidate, $parser);
+            $sameSubjects = $this->sameSubjects($regex, $candidate, $parser);
             if (false === $sameSubjects) {
                 continue; // a guard: flattening keeps the language, a possessive the solver reads is inert
             }
 
-            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($pattern, $candidate, $parser), $analysis->complexity);
+            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate, $parser), $analysis->complexity);
         }
 
         // Certified first, then those that also keep $matches.
