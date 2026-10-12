@@ -19,7 +19,7 @@ More complex scenarios and in-depth analysis:
 
 Examples specifically for Symfony applications:
 
-- [route-analyzer.php](symfony/route-analyzer.php) - Analyze Symfony routes for conflicts and ReDoS risks
+- [route-analyzer.php](symfony/route-analyzer.php) - Check the requirements of Symfony routes, as the route compiler anchors them, for errors and ReDoS risks
 
 ## Real-World Examples
 

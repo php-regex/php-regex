@@ -54,4 +54,4 @@ if ($riskLevel >= 2) {  // MEDIUM or worse
 echo "\n";
 echo "=== Pattern Details ===\n";
 $explanation = $regex->explain($pattern);
-echo $explanation;
+echo $explanation, "\n";

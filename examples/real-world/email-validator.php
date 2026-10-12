@@ -87,7 +87,7 @@ foreach ($emails as $email) {
 echo "\n=== Recommendations ===\n\n";
 echo "1. This is a simplified email pattern (RFC 5322 compliant but simplified)\n";
 echo "2. For production use, consider more robust email validation libraries:\n";
-echo "   - eguliasas/email-validator\n";
+echo "   - egulias/email-validator\n";
 echo "   - laminas/laminas-validator\n";
 echo "   - symfony/mailer (EmailValidator)\n";
 echo "3. For strict RFC compliance, use more complex patterns with proper TLD validation\n";

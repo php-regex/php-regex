@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use PHPRegex\Toolkit\OutputFormat;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -35,8 +36,11 @@ echo "=== Pattern Explanation ===\n";
 echo $explanation;
 echo "\n";
 
-// Get syntax highlighting
-$highlighted = $regex->highlight($pattern, 'console');
+// Get syntax highlighting: colours in a terminal, plain text when piped
+$highlighted = $regex->highlight($pattern, OutputFormat::Console);
+if (!stream_isatty(\STDOUT)) {
+    $highlighted = preg_replace('/\e\[[\d;]*m/', '', $highlighted) ?? $highlighted;
+}
 
 echo "=== Syntax Highlighting ===\n";
 echo $highlighted;
