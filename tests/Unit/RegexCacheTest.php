@@ -56,9 +56,9 @@ final class RegexCacheTest extends TestCase
         $cache = new class implements CacheInterface {
             public bool $writeCalled = false;
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return sys_get_temp_dir().'/'.md5($regex);
+                return sys_get_temp_dir().'/'.md5($seed);
             }
 
             public function write(string $key, RegexNode $ast): void

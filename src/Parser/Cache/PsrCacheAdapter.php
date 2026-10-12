@@ -23,7 +23,7 @@ use Psr\Cache\CacheItemPoolInterface;
 final readonly class PsrCacheAdapter implements RemovableCacheInterface
 {
     /**
-     * @param (\Closure(string): mixed)|null $keyFactory receives the regex as written and
+     * @param (\Closure(string): mixed)|null $keyFactory receives the seed generateKey() gets and
      *                                                   returns the key body: a string is prefixed as is,
      *                                                   anything else is serialized and sha256-hashed
      */
@@ -33,15 +33,15 @@ final readonly class PsrCacheAdapter implements RemovableCacheInterface
         private ?\Closure $keyFactory = null
     ) {}
 
-    public function generateKey(string $regex): string
+    public function generateKey(string $seed): string
     {
         if (null !== $this->keyFactory) {
-            $custom = ($this->keyFactory)($regex);
+            $custom = ($this->keyFactory)($seed);
 
             return $this->prefix.(\is_string($custom) ? $custom : hash('sha256', serialize($custom)));
         }
 
-        return $this->prefix.hash('sha256', $regex);
+        return $this->prefix.hash('sha256', $seed);
     }
 
     public function write(string $key, RegexNode $ast): void
@@ -57,14 +57,8 @@ final readonly class PsrCacheAdapter implements RemovableCacheInterface
         return \is_string($data) ? AstSerializer::unserialize($data) : null;
     }
 
-    public function clear(?string $regex = null): void
+    public function clear(): void
     {
-        if (null !== $regex) {
-            $this->pool->deleteItem($this->generateKey($regex));
-
-            return;
-        }
-
         $this->pool->clear();
     }
 

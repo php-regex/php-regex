@@ -481,6 +481,21 @@ A baseline file that is missing or is not a baseline is now a usage error
 - `Regex::cacheSeed()` is gone, and `RegexParser::cacheSeed()` is internal: the
   seed's shape follows the cache version and may change in any release.
 
+#### A cache is emptied whole
+
+`RemovableCacheInterface::clear()` takes no argument. The parser stores a tree
+under a seed built from the regex, the PCRE target and the recursion limit,
+never under the regex itself, so `clear('/foo/')` removed nothing; call
+`clear()`. An implementation of the interface drops the parameter.
+
+`CacheInterface::generateKey()` names its parameter `$seed`, and the
+`keyFactory` closure of `PsrCacheAdapter` and `PsrSimpleCacheAdapter`
+receives that seed. Its format is internal: a key built from it belongs in
+the cache, nowhere else.
+
+`FilesystemCache::clear()` removes the files the cache wrote and the
+directories they leave empty; anything else in the directory stays.
+
 #### `UnicodeNode` and `visitUnicode()` are gone
 
 No parser path ever produced a `UnicodeNode`: a `\u{...}` or `\x{...}` escape

@@ -58,9 +58,9 @@ final class RegexValidateFailureTest extends TestCase
         $cache = new class(new RegexNode($failing, '', '/', 0, 1)) implements CacheInterface {
             public function __construct(private readonly RegexNode $tree) {}
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return $regex;
+                return $seed;
             }
 
             public function write(string $key, RegexNode $ast): void {}

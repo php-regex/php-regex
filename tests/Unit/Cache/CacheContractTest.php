@@ -102,6 +102,39 @@ final class CacheContractTest extends TestCase
     }
 
     /**
+     * The parser keys a tree by a seed of its own, not by the regex: a cache
+     * can only be emptied as a whole, and emptying it empties what the
+     * facade stored.
+     *
+     * @param \Closure(string):CacheInterface $cache
+     */
+    #[Test]
+    #[DataProvider('provideCaches')]
+    public function test_clear_empties_what_the_facade_stored(\Closure $cache): void
+    {
+        $store = $cache($this->directory);
+        $this->assertInstanceOf(RemovableCacheInterface::class, $store);
+        $regex = Regex::create(['cache' => $store]);
+        $regex->parse('/a{2,3}/');
+        $key = $store->generateKey(RegexParser::cacheSeed('/a{2,3}/', $regex->target(), Regex::DEFAULT_MAX_RECURSION_DEPTH));
+        $this->assertInstanceOf(RegexNode::class, $store->load($key));
+
+        $store->clear();
+
+        $this->assertNull($store->load($key));
+    }
+
+    #[Test]
+    public function test_clear_takes_no_regex_and_a_key_is_generated_from_a_seed(): void
+    {
+        $clear = new \ReflectionMethod(RemovableCacheInterface::class, 'clear');
+        $generateKey = new \ReflectionMethod(CacheInterface::class, 'generateKey');
+
+        $this->assertSame(0, $clear->getNumberOfParameters(), 'A regex names no entry: the parser keys a tree by its seed.');
+        $this->assertSame('seed', $generateKey->getParameters()[0]->getName());
+    }
+
+    /**
      * @param \Closure():RemovableCacheInterface $make
      */
     #[DataProvider('provideStats')]

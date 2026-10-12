@@ -42,7 +42,7 @@ final class PsrSimpleCacheAdapterTest extends TestCase
     }
 
     #[Test]
-    public function test_clear_by_regex_removes_entry(): void
+    public function test_clear_removes_every_entry(): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache, prefix: 'simple_');
@@ -52,10 +52,11 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $otherKey = $adapter->generateKey('/baz/');
         $adapter->write($key, $this->tree('/bar/'));
         $adapter->write($otherKey, $other);
-        $adapter->clear('/bar/');
+        $this->assertEquals($other, $adapter->load($otherKey));
+        $adapter->clear();
 
         $this->assertNull($adapter->load($key));
-        $this->assertEquals($other, $adapter->load($otherKey));
+        $this->assertNull($adapter->load($otherKey));
     }
 
     #[Test]

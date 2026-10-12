@@ -352,7 +352,7 @@ final class AnalysisServiceTest extends TestCase
         $cache = new class implements CacheInterface {
             private int $loadCalls = 0;
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
                 return 'key';
             }

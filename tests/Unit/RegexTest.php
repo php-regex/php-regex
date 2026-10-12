@@ -506,9 +506,9 @@ final class RegexTest extends TestCase
              */
             public array $written = [];
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return 'key_'.$regex;
+                return 'key_'.$seed;
             }
 
             public function write(string $key, RegexNode $ast): void
@@ -622,9 +622,9 @@ final class RegexTest extends TestCase
     public function test_get_cache_stats_returns_zero_when_cache_not_removable(): void
     {
         $cache = new class implements CacheInterface {
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return 'key_'.$regex;
+                return 'key_'.$seed;
             }
 
             public function write(string $key, RegexNode $ast): void {}
@@ -735,9 +735,9 @@ final class RegexTest extends TestCase
         $cache = new class implements CacheInterface {
             public RegexNode $mockAst;
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return 'key_'.$regex;
+                return 'key_'.$seed;
             }
 
             public function write(string $key, RegexNode $ast): void {}

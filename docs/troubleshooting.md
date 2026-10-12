@@ -306,15 +306,9 @@ if ($cache instanceof RemovableCacheInterface) {
 }
 ```
 
-3. Check cache key generation:
-
-```php
-// Cache keys include pattern, flags, and PHP version
-// Make sure these are correct for your use case
-
-$cacheKey = $cache->generateKey('/\d+/i');
-echo "Cache key: {$cacheKey}\n";
-```
+3. Check what the cache keys depend on: the pattern with its flags, the PHP
+   version and PCRE2 release judged, and the recursion limit. A pattern
+   judged for another target is parsed and stored again, under its own key.
 
 ---
 

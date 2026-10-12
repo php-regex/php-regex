@@ -116,7 +116,7 @@ final class ArrayCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_clear_with_specific_regex_removes_only_that_entry(): void
+    public function test_clear_removes_every_entry(): void
     {
         $cache = new ArrayCache();
         $key1 = $cache->generateKey('/abc/');
@@ -125,23 +125,25 @@ final class ArrayCacheTest extends TestCase
 
         $cache->write($key1, $this->tree('/abc/'));
         $cache->write($key2, $tree2);
-        $cache->clear('/abc/');
+        $this->assertSame($tree2, $cache->load($key2));
+        $cache->clear();
 
         $this->assertNull($cache->load($key1));
-        $this->assertSame($tree2, $cache->load($key2));
+        $this->assertNull($cache->load($key2));
     }
 
     #[Test]
-    public function test_clear_nonexistent_regex_does_not_affect_other_entries(): void
+    public function test_a_cleared_cache_stores_again(): void
     {
         $cache = new ArrayCache();
         $key1 = $cache->generateKey('/existing/');
         $tree = $this->tree('/existing/');
 
         $cache->write($key1, $tree);
+        $cache->clear();
+        $this->assertNull($cache->load($key1));
 
-        $cache->clear('/nonexistent/');
-
+        $cache->write($key1, $tree);
         $this->assertSame($tree, $cache->load($key1));
     }
 

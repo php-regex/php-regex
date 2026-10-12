@@ -21,7 +21,13 @@ use PHPRegex\Parser\Node\RegexNode;
  */
 interface CacheInterface
 {
-    public function generateKey(string $regex): string;
+    /**
+     * The key a tree is stored under. The seed is what the parser builds
+     * from a regex, the PCRE target and the limits that shape its tree; its
+     * format is internal and may change in any release, so a key must not
+     * be stored anywhere but in this cache.
+     */
+    public function generateKey(string $seed): string;
 
     public function write(string $key, RegexNode $ast): void;
 

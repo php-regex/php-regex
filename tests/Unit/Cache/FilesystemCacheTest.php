@@ -101,7 +101,7 @@ namespace PHPRegex\Tests\Unit\Cache {
         }
 
         #[Test]
-        public function test_clear_specific_regex(): void
+        public function test_clear_removes_every_file(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key1 = $cache->generateKey('/abc/');
@@ -110,29 +110,53 @@ namespace PHPRegex\Tests\Unit\Cache {
 
             $cache->write($key1, $this->tree('/abc/'));
             $cache->write($key2, $tree2);
+            $this->assertEquals($tree2, $cache->load($key2));
 
-            // Clear only the first regex
-            $cache->clear('/abc/');
+            $cache->clear();
 
             $this->assertFileDoesNotExist($key1);
-            $this->assertFileExists($key2);
-            $this->assertEquals($tree2, $cache->load($key2));
+            $this->assertFileDoesNotExist($key2);
+            $this->assertNull($cache->load($key2));
         }
 
         #[Test]
-        public function test_clear_nonexistent_regex(): void
+        public function test_clear_leaves_files_outside_the_cache(): void
         {
             $cache = new FilesystemCache($this->cacheDir);
             $key = $cache->generateKey('/existing/');
             $tree = $this->tree('/existing/');
+            $outside = $this->cacheDir.'/README';
 
             $cache->write($key, $tree);
+            file_put_contents($outside, 'not a tree');
 
-            // Clear a non-existent regex - should not affect existing files
-            $cache->clear('/nonexistent/');
+            $cache->clear();
 
-            $this->assertFileExists($key);
-            $this->assertEquals($tree, $cache->load($key));
+            $this->assertFileExists($outside);
+            $this->assertNull($cache->load($key));
+        }
+
+        /**
+         * A write cut short leaves its temporary file beside the key: it is
+         * the cache's, and goes; a file of any other name in the same
+         * directory stays.
+         */
+        #[Test]
+        public function test_clear_removes_a_leftover_temporary_file_and_keeps_others(): void
+        {
+            $cache = new FilesystemCache($this->cacheDir);
+            $key = $cache->generateKey('/existing/');
+            $cache->write($key, $this->tree('/existing/'));
+            $leftover = $key.'.0123456789ab.tmp';
+            $foreign = \dirname($key).'/notes.cache';
+            file_put_contents($leftover, 'half a tree');
+            file_put_contents($foreign, 'not a tree');
+
+            $cache->clear();
+
+            $this->assertFileDoesNotExist($key);
+            $this->assertFileDoesNotExist($leftover);
+            $this->assertFileExists($foreign);
         }
 
         #[Test]

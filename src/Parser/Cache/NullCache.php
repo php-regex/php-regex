@@ -18,9 +18,9 @@ use PHPRegex\Parser\Node\RegexNode;
 final readonly class NullCache implements RemovableCacheInterface
 {
     #[\Override]
-    public function generateKey(string $regex): string
+    public function generateKey(string $seed): string
     {
-        return hash('sha256', $regex);
+        return hash('sha256', $seed);
     }
 
     #[\Override]
@@ -33,7 +33,7 @@ final readonly class NullCache implements RemovableCacheInterface
     }
 
     #[\Override]
-    public function clear(?string $regex = null): void {}
+    public function clear(): void {}
 
     #[\Override]
     public function getStats(): array

@@ -78,7 +78,7 @@ final class PsrCacheAdapterTest extends TestCase
         $cache->write($key, $tree);
         $this->assertEquals($tree, $cache->load($key));
 
-        $cache->clear('foo');
+        $cache->clear();
         $this->assertNull($cache->load($key));
 
         $cache->write($key, Regex::create(['cache' => null])->parse('/y/'));
@@ -87,7 +87,7 @@ final class PsrCacheAdapterTest extends TestCase
     }
 
     #[Test]
-    public function test_clear_by_regex_keeps_the_other_entries(): void
+    public function test_clear_empties_the_pool_whatever_the_key(): void
     {
         $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
@@ -95,10 +95,11 @@ final class PsrCacheAdapterTest extends TestCase
 
         $cache->write($cache->generateKey('/a/'), Regex::create(['cache' => null])->parse('/a/'));
         $cache->write($cache->generateKey('/b/'), $tree);
-        $cache->clear('/a/');
+        $this->assertEquals($tree, $cache->load($cache->generateKey('/b/')));
+        $cache->clear();
 
         $this->assertNull($cache->load($cache->generateKey('/a/')));
-        $this->assertEquals($tree, $cache->load($cache->generateKey('/b/')));
+        $this->assertNull($cache->load($cache->generateKey('/b/')));
     }
 
     /**

@@ -40,9 +40,9 @@ final class FilesystemCache implements RemovableCacheInterface
     }
 
     #[\Override]
-    public function generateKey(string $regex): string
+    public function generateKey(string $seed): string
     {
-        $hash = hash('sha256', $regex);
+        $hash = hash('sha256', $seed);
 
         return $this->directory.\DIRECTORY_SEPARATOR.substr($hash, 0, 2).\DIRECTORY_SEPARATOR.substr($hash, 2).'.cache';
     }
@@ -80,29 +80,27 @@ final class FilesystemCache implements RemovableCacheInterface
     }
 
     #[\Override]
-    public function clear(?string $regex = null): void
+    public function clear(): void
     {
         if (!is_dir($this->directory) || !$this->isTrusted()) {
             return;
         }
 
-        if (null !== $regex) {
-            @unlink($this->generateKey($regex));
-
-            return;
-        }
-
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($this->directory, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($iterator as $fileInfo) {
-            if (!$fileInfo instanceof \SplFileInfo) {
+        // Only the files this cache writes are removed, and the directories
+        // they leave empty: a directory shared with anything else keeps it.
+        foreach (self::entries($this->directory) as $shard) {
+            $path = $this->directory.\DIRECTORY_SEPARATOR.$shard;
+            if (2 !== \strlen($shard) || !self::isHex($shard) || is_link($path) || !is_dir($path)) {
                 continue;
             }
 
-            $fileInfo->isDir() ? @rmdir($fileInfo->getPathname()) : @unlink($fileInfo->getPathname());
+            foreach (self::entries($path) as $file) {
+                if (self::isTreeFile($file)) {
+                    @unlink($path.\DIRECTORY_SEPARATOR.$file);
+                }
+            }
+
+            @rmdir($path);
         }
 
         @rmdir($this->directory);
@@ -141,5 +139,31 @@ final class FilesystemCache implements RemovableCacheInterface
         if (!is_dir($directory) && !@mkdir($directory, 0o700, true) && !is_dir($directory)) {
             throw new CacheException(\sprintf('Unable to create the cache directory "%s".', $directory));
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function entries(string $directory): array
+    {
+        return array_values(array_diff(@scandir($directory) ?: [], ['.', '..']));
+    }
+
+    /**
+     * A file generateKey() names, "<62 hex digits>.cache", or one write()
+     * left beside it, "<name>.<12 hex digits>.tmp".
+     */
+    private static function isTreeFile(string $file): bool
+    {
+        if (str_ends_with($file, '.tmp')) {
+            $file = substr($file, 0, -17);
+        }
+
+        return 68 === \strlen($file) && str_ends_with($file, '.cache') && self::isHex(substr($file, 0, 62));
+    }
+
+    private static function isHex(string $text): bool
+    {
+        return \strlen($text) === strspn($text, '0123456789abcdef');
     }
 }

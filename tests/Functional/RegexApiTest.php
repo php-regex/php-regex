@@ -112,15 +112,15 @@ final class RegexApiTest extends TestCase
                 return $this->cache->load($key);
             }
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return $this->cache->generateKey($regex);
+                return $this->cache->generateKey($seed);
             }
 
-            public function clear(?string $regex = null): void
+            public function clear(): void
             {
                 if ($this->cache instanceof RemovableCacheInterface) {
-                    $this->cache->clear($regex);
+                    $this->cache->clear();
                 }
             }
 

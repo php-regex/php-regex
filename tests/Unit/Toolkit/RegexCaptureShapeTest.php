@@ -49,9 +49,9 @@ final class RegexCaptureShapeTest extends TestCase
 
             public function __construct(private readonly RegexNode $tree) {}
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
-                return 'key_'.$regex;
+                return 'key_'.$seed;
             }
 
             public function write(string $key, RegexNode $ast): void {}

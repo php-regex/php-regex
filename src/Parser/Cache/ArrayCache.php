@@ -36,9 +36,9 @@ final class ArrayCache implements RemovableCacheInterface
     public function __construct(private readonly int $maxEntries = 1024) {}
 
     #[\Override]
-    public function generateKey(string $regex): string
+    public function generateKey(string $seed): string
     {
-        return hash('sha256', $regex);
+        return hash('sha256', $seed);
     }
 
     #[\Override]
@@ -67,14 +67,8 @@ final class ArrayCache implements RemovableCacheInterface
     }
 
     #[\Override]
-    public function clear(?string $regex = null): void
+    public function clear(): void
     {
-        if (null !== $regex) {
-            unset($this->trees[$this->generateKey($regex)]);
-
-            return;
-        }
-
         $this->trees = [];
     }
 

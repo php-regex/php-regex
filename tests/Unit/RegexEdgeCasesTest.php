@@ -27,7 +27,7 @@ final class RegexEdgeCasesTest extends TestCase
         $cache = new class implements CacheInterface {
             private int $loadCalls = 0;
 
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
                 return 'key';
             }
@@ -69,7 +69,7 @@ final class RegexEdgeCasesTest extends TestCase
     public function test_store_in_cache_swallows_write_errors(): void
     {
         $cache = new class implements CacheInterface {
-            public function generateKey(string $regex): string
+            public function generateKey(string $seed): string
             {
                 return 'key';
             }

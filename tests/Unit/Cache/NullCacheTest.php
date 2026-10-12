@@ -32,7 +32,6 @@ final class NullCacheTest extends TestCase
         $this->assertNull($cache->load($key));
         $this->assertSame(['hits' => 0, 'misses' => 0], $cache->getStats());
 
-        $cache->clear();
-        $cache->clear('/bar/'); // should not throw
+        $cache->clear(); // should not throw
     }
 }

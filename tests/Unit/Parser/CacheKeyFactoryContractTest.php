@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The keyFactory both PSR adapters inject: a closure that receives the regex
+ * The keyFactory both PSR adapters inject: a closure that receives the cache seed
  * as written and returns the key body — a string is prefixed as is, anything
  * else is serialized and hashed (generateKey() checks). The bare ?Closure
  * the constructors say today tells a caller nothing: with the signature
@@ -55,7 +55,7 @@ final class CacheKeyFactoryContractTest extends TestCase
         $this->assertStringContainsString(
             'Closure(string): mixed',
             $type,
-            'The keyFactory receives the regex as written and returns mixed: string is the key body, anything else is hashed.',
+            'The keyFactory receives the cache seed and returns mixed: string is the key body, anything else is hashed.',
         );
 
         $members = explode('|', strtr($type, ['(' => '', ')' => '']));
@@ -65,7 +65,7 @@ final class CacheKeyFactoryContractTest extends TestCase
         $this->assertContains(
             'null',
             $members,
-            'The factory is optional: null means generateKey() hashes the regex itself.',
+            'The factory is optional: null means generateKey() hashes the seed itself.',
         );
     }
 
