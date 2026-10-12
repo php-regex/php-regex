@@ -52,7 +52,7 @@ vendor/bin/regex lint src/
 Configuration
 -------------
 
-The lint command reads a `regex.json` (committed) or `regex.dist.json` (template) from the project root. This package ships the JSON Schema as `regex.schema.json`, so editors validate the file as you type.
+The lint command reads `regex.dist.json` (the committed defaults), then `regex.json` (local overrides, which win: objects key by key, lists whole) from the project root. This package ships the JSON Schema as `regex.schema.json`, so editors validate the file as you type.
 
 | Key | Default | What it does |
 | --- | --- | --- |
@@ -67,6 +67,7 @@ The lint command reads a `regex.json` (committed) or `regex.dist.json` (template
 | `checks.redos.enabled` | `false` | ReDoS analysis |
 | `checks.redos.mode`, `checks.redos.threshold` | `theoretical`, `high` | Analysis mode, and the lowest severity reported |
 | `checks.optimizations.enabled`, `checks.optimizations.minSavings` | `true`, `1` | Optimization suggestions, and the minimum characters saved to report one |
+| `checks.optimizations.options` | see the next column | What the optimizer may rewrite: `digits`, `word`, `ranges`, `canonicalizeCharClasses` and `verifyWithAutomata` default to `true`, `possessive` and `factorize` to `false`, and `minQuantifierCount` (at least `2`) to `4` |
 | `checks.lint.enabled` | `true` | Lint rules |
 | `checks.lint.rules.<id>` | `true` | One boolean per rule id; `unicode.shorthandWithoutU`, `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass`, `quantifier.uselessLazy` and `lookaround.edgeQuantifier` default to `false` |
 

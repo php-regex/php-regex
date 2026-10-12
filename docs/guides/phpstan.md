@@ -311,6 +311,16 @@ parameters:
             optimizations:
                 enabled: false
                 minSavings: 1
+                # What the optimizer may rewrite.
+                options:
+                    digits: true
+                    word: true
+                    ranges: true
+                    canonicalizeCharClasses: true
+                    possessive: false
+                    factorize: false
+                    minQuantifierCount: 4
+                    verifyWithAutomata: true
 ```
 {: data-file="phpstan.neon" }
 

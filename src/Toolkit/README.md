@@ -53,9 +53,9 @@ Configuration
 | `max_pattern_length` | `100000` | Longest pattern accepted, in bytes |
 | `max_lookbehind_length` | `255` | Longest variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 |
 | `max_recursion_depth` | `1024` | How deep the parser may nest groups before it stops |
-| `cache` | `ArrayCache` | A `CacheInterface`; `FilesystemCache` survives restarts |
+| `cache` | `ArrayCache` | `null` disables caching, a string names a directory for a `FilesystemCache` (it survives restarts), a `CacheInterface` is used as is |
 | `redos_ignored_patterns` | `[]` | Patterns the ReDoS analysis skips |
-| `runtime_pcre_validation` | `false` | Compile each pattern with the running PCRE to validate it |
+| `runtime_pcre_validation` | `false` | Compile each pattern with the running PCRE to validate it; only when the running engine is the target (`php_version` unset or `"runtime"`, no other `pcre_version`), otherwise `create()` throws |
 | `php_version`, `pcre_version` | running releases | The PHP (`"8.3"`, `80300`, `"runtime"`) and PCRE2 (`"10.44"`) the patterns are judged for |
 
 Usage
