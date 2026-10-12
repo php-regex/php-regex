@@ -187,6 +187,10 @@ prints each constraint, and `--validate` compiles each one as the router
 matches it, marking it `✓` or `✗` with the error: without `--validate` a
 constraint gets no mark, and its `valid` key in the JSON report is `null`.
 
+`regex:compare`, `regex:transpile` and `regex:explain --highlight` colour a
+pattern only on a terminal: piped, or under `--no-ansi`, it is printed as
+plain text.
+
 `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
 `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, the
 linted paths when `paths` names none, and in the application's `vendor/`,

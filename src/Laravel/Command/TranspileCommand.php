@@ -21,6 +21,7 @@ use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -124,7 +125,7 @@ final class TranspileCommand extends Command
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Source (PCRE):</>');
-            $this->line('  '.$this->regex->highlight($pattern, 'console'));
+            $this->line('  '.$this->displayPattern($pattern));
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Target ('.ucfirst($result->target).'):</>');
@@ -170,5 +171,18 @@ final class TranspileCommand extends Command
     private function writeDocument(string $document): void
     {
         $this->output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
+    }
+
+    /**
+     * The pattern highlighted on a decorated output; elsewhere, as plain
+     * text, so that no escape sequence reaches a pipe or --no-ansi.
+     */
+    private function displayPattern(string $pattern): string
+    {
+        if ($this->output->isDecorated()) {
+            return $this->regex->highlight($pattern, 'console');
+        }
+
+        return '<fg=yellow>'.OutputFormatter::escape($pattern).'</>';
     }
 }

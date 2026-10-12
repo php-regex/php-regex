@@ -78,7 +78,9 @@ final class ExplainCommand extends Command
 
         // Show the pattern
         $this->line('<fg=white;options=bold>Pattern:</>');
-        if ($highlight) {
+        // Highlighting is for a decorated output only: piped or under
+        // --no-ansi, its escape sequences would be written as they are.
+        if ($highlight && $this->output->isDecorated()) {
             $highlighted = $this->regex->highlight($pattern, 'console');
             $this->line('  '.$highlighted);
         } else {

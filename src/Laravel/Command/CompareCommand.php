@@ -20,6 +20,7 @@ use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**
  * Compare two regex patterns for equivalence.
@@ -129,11 +130,11 @@ final class CompareCommand extends Command
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Pattern 1:</>');
-            $this->line('  '.$this->regex->highlight($pattern1, 'console'));
+            $this->line('  '.$this->displayPattern($pattern1));
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Pattern 2:</>');
-            $this->line('  '.$this->regex->highlight($pattern2, 'console'));
+            $this->line('  '.$this->displayPattern($pattern2));
             $this->newLine();
 
             if ($result->isEquivalent) {
@@ -191,5 +192,18 @@ final class CompareCommand extends Command
         $configured = config('php-regex.automata.'.$setting);
 
         return \is_string($configured) && '' !== $configured ? $configured : $default;
+    }
+
+    /**
+     * The pattern highlighted on a decorated output; elsewhere, as plain
+     * text, so that no escape sequence reaches a pipe or --no-ansi.
+     */
+    private function displayPattern(string $pattern): string
+    {
+        if ($this->output->isDecorated()) {
+            return $this->regex->highlight($pattern, 'console');
+        }
+
+        return '<fg=yellow>'.OutputFormatter::escape($pattern).'</>';
     }
 }
