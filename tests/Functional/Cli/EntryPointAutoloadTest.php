@@ -1,0 +1,68 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Tests\Functional\Cli;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * The entry points find the project's autoloader wherever Composer installs
+ * them: from the monorepo itself, from a split package, and from the
+ * monorepo installed as a dependency (php-regex/php-regex), where the script
+ * sits five levels below vendor/.
+ */
+final class EntryPointAutoloadTest extends TestCase
+{
+    private string $root = '';
+
+    protected function setUp(): void
+    {
+        $this->root = sys_get_temp_dir().'/php-regex-entry-'.bin2hex(random_bytes(6));
+        mkdir($this->root.'/vendor', 0o777, true);
+        // The project's autoloader: the repository's own, through one require.
+        file_put_contents($this->root.'/vendor/autoload.php', '<?php return require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';');
+    }
+
+    protected function tearDown(): void
+    {
+        exec('rm -rf '.escapeshellarg($this->root));
+    }
+
+    #[Test]
+    #[DataProvider('provideInstalledEntryPoints')]
+    public function test_an_installed_entry_point_finds_the_project_autoloader(string $source, string $installedAt, string $expected): void
+    {
+        $script = $this->root.'/vendor/'.$installedAt;
+        mkdir(\dirname($script), 0o777, true);
+        copy(\dirname(__DIR__, 3).'/'.$source, $script);
+
+        $output = [];
+        exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($script).' --version 2>&1', $output, $code);
+
+        $this->assertSame(0, $code, implode("\n", $output));
+        $this->assertStringContainsString($expected, implode("\n", $output));
+    }
+
+    /**
+     * @return iterable<string, array{source: string, installedAt: string, expected: string}>
+     */
+    public static function provideInstalledEntryPoints(): iterable
+    {
+        yield 'regex, monorepo as a dependency' => ['source' => 'src/Cli/bin/regex', 'installedAt' => 'php-regex/php-regex/src/Cli/bin/regex', 'expected' => 'PHPRegex'];
+        yield 'regex, split package' => ['source' => 'src/Cli/bin/regex', 'installedAt' => 'php-regex/regex-cli/bin/regex', 'expected' => 'PHPRegex'];
+        yield 'regex-lsp, monorepo as a dependency' => ['source' => 'src/LanguageServer/bin/regex-lsp', 'installedAt' => 'php-regex/php-regex/src/LanguageServer/bin/regex-lsp', 'expected' => 'php-regex-lsp'];
+        yield 'regex-lsp, split package' => ['source' => 'src/LanguageServer/bin/regex-lsp', 'installedAt' => 'php-regex/regex-language-server/bin/regex-lsp', 'expected' => 'php-regex-lsp'];
+    }
+}
