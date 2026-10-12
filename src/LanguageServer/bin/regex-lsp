@@ -50,8 +50,8 @@ Options:
 The language server communicates via stdin/stdout using the
 Language Server Protocol (LSP) over JSON-RPC.
 
-For VS Code integration, add to your settings.json:
-  "php-regex.lsp.path": "/path/to/bin/regex-lsp"
+Editor setup (VS Code, PhpStorm, Neovim, Zed):
+  https://php-regex.com/guides/lsp/
 
 HELP;
     exit(0);

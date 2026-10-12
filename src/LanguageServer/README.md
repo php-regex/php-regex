@@ -95,18 +95,11 @@ Integration
 
 ### VS Code
 
-Any LSP client extension; `.vscode/settings.json`:
-
-```json
-{
-  "lsp.servers": {
-    "php-regex": {
-      "command": ["vendor/bin/regex-lsp"],
-      "filetypes": ["php"]
-    }
-  }
-}
-```
+VS Code has no setting that points at an arbitrary language server: a small
+extension built on
+[vscode-languageclient](https://www.npmjs.com/package/vscode-languageclient)
+starts `vendor/bin/regex-lsp` for PHP files. The
+[editor guide](https://php-regex.com/guides/lsp/) shows the whole client.
 
 ### PhpStorm
 
