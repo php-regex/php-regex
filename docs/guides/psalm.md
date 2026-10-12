@@ -112,6 +112,51 @@ returns `0` when nothing matches, so `preg_match(…) !== false` holds on a
 call that left `[]`, and the plugin drops its condition from every
 comparison.
 
+### The subject of `preg_match()`
+
+Where `preg_match()` returned 1, a `string` subject is narrowed: to
+`non-empty-string` when the pattern never matches `''`, to
+`non-falsy-string` when it matches neither `''` nor `'0'`. The plugin asks
+the PHP running Psalm, from every offset the call may start at: `/a+/`,
+`/ab/` and `/(?<=a)/` make a `non-falsy-string`, `/\d/` a
+`non-empty-string`, and `/x*/`, which matches `''`, leaves a `string`.
+
+```php
+function order_id(string $input): string
+{
+    if (!preg_match('/^\d+$/', $input)) {
+        throw new InvalidArgumentException('Not an order id.');
+    }
+
+    /** @psalm-trace $input */
+
+    return $input;
+}
+
+function slug(string $input): void
+{
+    $slug = preg_match('/^[a-z]+(?:-[a-z]+)*$/', $input) ? $input : null;
+
+    /** @psalm-trace $slug */
+}
+```
+
+```
+$input: non-empty-string
+$slug: non-falsy-string|null
+```
+
+Where the call did not return 1, the subject keeps its type. No
+`numeric-string` either, for the reason the groups of digits have none:
+`/^\d+$/` makes a `non-empty-string`.
+
+The subject is narrowed on a call that does not type `$matches`. Psalm reads
+a false condition as the negation of what holds where it is true; on two
+variables that negation says nothing of either, and `$matches` would lose
+its `[]`. A subject that may be another type than `string` (PHP reads an
+`int` as a string) or that is read from the `$matches` variable is left as
+it is, and so is every form the previous section lists.
+
 ### What the plugin leaves to Psalm
 
 - A pattern or flags without one constant value: a parameter, a variable that

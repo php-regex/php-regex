@@ -28,6 +28,9 @@ Features
   PHP may leave the key out. Where it did not, `$matches` is `[]`.
 * After `preg_match_all()`, `$matches` is the shape of the pattern, in either
   order, for a pattern without `\K` and an offset absent or a constant ≤ 0.
+* Where `preg_match()` returned 1, a `string` subject is a `non-empty-string`
+  when the pattern never matches `''`, a `non-falsy-string` when it matches
+  neither `''` nor `'0'`, on a call that does not type `$matches`.
 * `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL` are read, as are named
   arguments in any order.
 * An invalid pattern is reported as `InvalidRegexPattern`, with the error and
@@ -113,6 +116,25 @@ $m: array{0: list<non-falsy-string>, 1: list<non-falsy-string>}
 $sets: list<array{0: non-falsy-string, 1: non-falsy-string, 2?: non-empty-string}>
 ```
 
+The subject, where `preg_match()` returned 1:
+
+```php
+function order_id(string $input): string
+{
+    if (!preg_match('/^\d+$/', $input)) {
+        throw new InvalidArgumentException('Not an order id.');
+    }
+
+    /** @psalm-trace $input */
+
+    return $input;
+}
+```
+
+```
+$input: non-empty-string
+```
+
 An invalid pattern, in `app/broken.php`:
 
 ```php
@@ -174,7 +196,13 @@ The plugin reads a call only when it can tell what the pattern is:
 * Psalm gets no `numeric-string`: Psalm 6.19's type combiner collapses
   `numeric-string|'a'` to `numeric-string`, which would reject `'none'` in
   `preg_match(…) ? $m[1] : 'none'`. A group of digits is a `non-falsy-string`
-  where it cannot be `'0'`, else a `non-empty-string`.
+  where it cannot be `'0'`, else a `non-empty-string`; so is the subject of
+  `/^\d+$/`.
+* the subject of a call that types `$matches` keeps its type: Psalm reads a
+  false condition as the negation of what holds where it is true, and on two
+  variables that negation would take the `[]` from `$matches`. A subject that
+  may be another type than `string`, or that is read from the `$matches`
+  variable, keeps its type too.
 
 The callbacks of `preg_replace_callback()` and `preg_replace_callback_array()`,
 and the results of `preg_split()`, `preg_grep()`, `preg_replace()` and

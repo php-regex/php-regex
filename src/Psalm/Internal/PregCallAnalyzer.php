@@ -16,6 +16,7 @@ namespace PHPRegex\Psalm\Internal;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp;
 use PhpParser\Node\Expr\BinaryOp\Equal;
 use PhpParser\Node\Expr\BinaryOp\Greater;
@@ -27,6 +28,8 @@ use PhpParser\Node\Expr\BinaryOp\Smaller;
 use PhpParser\Node\Expr\BinaryOp\SmallerOrEqual;
 use PhpParser\Node\Expr\BinaryOp\Spaceship;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
@@ -55,6 +58,8 @@ use Psalm\StatementsSource;
 use Psalm\Storage\Assertion\IsType;
 use Psalm\Storage\Possibilities;
 use Psalm\Type;
+use Psalm\Type\Atomic;
+use Psalm\Type\Atomic\TString;
 use Psalm\Type\Union;
 
 /**
@@ -65,7 +70,9 @@ use Psalm\Type\Union;
  * where preg_match() returned 1, the pattern's shape, where it did not, []
  * (no match writes [], and so does a match error), unless the call is
  * compared with something; after preg_match_all(), its shape, for a pattern
- * without \K and an offset absent or a constant <= 0. Everything else is
+ * without \K and an offset absent or a constant <= 0. Where preg_match()
+ * returned 1 and $matches is not typed, a string subject is narrowed to what
+ * the pattern can match (SubjectType). Everything else is
  * left to Psalm's stubs, which the plugin never replaces: their taint flows,
  * purity and parameter checks all stay.
  *
@@ -203,74 +210,164 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             }
         }
 
-        $matchAll = 'preg_match_all' === $function;
-        $matches = $arguments['matches'] ?? null;
-        if (null === $judged || !$matches instanceof Variable || !\is_string($matches->name)) {
+        if (null === $judged) {
             return;
         }
 
         [$pattern, $verdict] = $judged;
-        $shape = $verdict['shape'];
         // PHP refuses the n modifier below 8.2: such a pattern does not compile there.
-        if (null === $shape || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR)) {
+        if (null === $verdict['shape'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR)) {
             return;
         }
 
-        // preg_match_all() returns false and leaves [] for an offset past the
-        // subject, and for a match ending before it starts (\K in a lookahead).
-        if ($matchAll && ($verdict['keepsOut'] || !self::offsetNeverPastTheSubject($arguments['offset'] ?? null, $nodeTypes))) {
+        $matches = $arguments['matches'] ?? null;
+        $type = $matches instanceof Variable && \is_string($matches->name) ? self::matchesType($parser, $pattern, $verdict, $function, $arguments, $nodeTypes, $codebase) : null;
+        if ('preg_match_all' === $function) {
+            if (null !== $type && $matches instanceof Variable && \is_string($matches->name)) {
+                // Psalm assigned the stub's type to the variable: the shape replaces it, with its data flow.
+                $context = $event->getContext();
+                $current = $context->vars_in_scope['$'.$matches->name] ?? null;
+                if (null !== $current) {
+                    $context->vars_in_scope['$'.$matches->name] = $type->setParentNodes($current->parent_nodes);
+                }
+            }
+
             return;
+        }
+
+        if ('preg_match' !== $function) {
+            return;
+        }
+
+        // Psalm reads a false condition as the negation of what holds where it
+        // is true: on two variables that negation says nothing of either, and
+        // $matches would lose its [] where nothing matched. A call that types
+        // $matches leaves its subject as it is.
+        if (null !== $type && null !== $matches && $type->isSingle()) {
+            self::assertOnResult($nodeTypes, $call, [self::assertion($call, $matches, $type->getSingleAtomic())], [self::assertion($call, $matches, Type::getEmptyArrayAtomic())]);
+
+            return;
+        }
+
+        $subject = self::subjectType($pattern, $arguments, $nodeTypes);
+        if (null !== $subject && isset($arguments['subject'])) {
+            self::assertOnResult($nodeTypes, $call, [self::assertion($call, $arguments['subject'], $subject)], []);
+        }
+    }
+
+    /**
+     * The type of $matches the call writes, or null when the plugin leaves
+     * it to Psalm.
+     *
+     * @param PatternVerdict      $verdict
+     * @param array<string, Expr> $arguments
+     */
+    private static function matchesType(RegexParser $parser, string $pattern, array $verdict, string $function, array $arguments, NodeTypeProvider $nodeTypes, Codebase $codebase): ?Union
+    {
+        $shape = $verdict['shape'];
+        $matchAll = 'preg_match_all' === $function;
+        if (null === $shape || ($matchAll && ($verdict['keepsOut'] || !self::offsetNeverPastTheSubject($arguments['offset'] ?? null, $nodeTypes)))) {
+            // preg_match_all() returns false and leaves [] for an offset past the
+            // subject, and for a match ending before it starts (\K in a lookahead).
+            return null;
         }
 
         $flags = 0;
         if (isset($arguments['flags'])) {
             $flagsType = $nodeTypes->getType($arguments['flags']);
             if (null === $flagsType || !$flagsType->isSingleIntLiteral()) {
-                return;
+                return null;
             }
             $flags = $flagsType->getSingleIntLiteral()->value;
         }
 
         ['type' => $type, 'keys' => $keys] = self::type($parser, $pattern, $shape, $flags, $matchAll, $codebase);
+
         // Past this many keys Psalm keeps no array shape.
-        if ($keys > $codebase->config->max_shaped_array_size) {
-            return;
-        }
-
-        if ($matchAll) {
-            // Psalm assigned the stub's type to the variable: the shape replaces it, with its data flow.
-            $context = $event->getContext();
-            $current = $context->vars_in_scope['$'.$matches->name] ?? null;
-            if (null !== $current) {
-                $context->vars_in_scope['$'.$matches->name] = $type->setParentNodes($current->parent_nodes);
-            }
-
-            return;
-        }
-
-        self::assertOnResult($nodeTypes, $call, $matches, $type);
+        return $keys > $codebase->config->max_shaped_array_size ? null : $type;
     }
 
     /**
-     * Where the call returned 1, $matches is the shape; where it returned 0
-     * or false, []. Psalm reads these where the call is the condition or its
-     * negation, and where it is compared with a boolean, which
-     * dropAssertions() undoes.
+     * The type of a string subject where preg_match() returned 1, or null
+     * when it is not narrowed: a subject that may be another type is read as
+     * a string, and a subject read from $matches is gone once the call
+     * wrote it.
+     *
+     * @param array<string, Expr> $arguments
      */
-    private static function assertOnResult(NodeTypeProvider $nodeTypes, FuncCall $call, Variable $matches, Union $type): void
+    private static function subjectType(string $pattern, array $arguments, NodeTypeProvider $nodeTypes): ?TString
     {
-        if (!$nodeTypes instanceof NodeDataProvider || !method_exists($nodeTypes, 'setIfTrueAssertions') || !method_exists($nodeTypes, 'setIfFalseAssertions') || !$type->isSingle()) {
+        $subject = $arguments['subject'] ?? null;
+        $type = null === $subject ? null : $nodeTypes->getType($subject);
+        if (null === $subject || null === $type || !$type->isString() || self::readsFromMatches($subject, $arguments['matches'] ?? null)) {
+            return null;
+        }
+
+        $offset = 0;
+        if (isset($arguments['offset'])) {
+            $offsetType = $nodeTypes->getType($arguments['offset']);
+            $offset = null !== $offsetType && $offsetType->isSingleIntLiteral() ? $offsetType->getSingleIntLiteral()->value : null;
+        }
+
+        return SubjectType::ofMatch($pattern, $offset);
+    }
+
+    /**
+     * Whether the subject may be read from the variable $matches is written
+     * to: the same variable, an element or a property of it. When $matches
+     * is not a variable, only a variable subject is known to be apart.
+     */
+    private static function readsFromMatches(Expr $subject, ?Expr $matches): bool
+    {
+        if (null === $matches) {
+            return false;
+        }
+
+        $root = $subject;
+        while ($root instanceof ArrayDimFetch || $root instanceof PropertyFetch || $root instanceof NullsafePropertyFetch) {
+            $root = $root->var;
+        }
+
+        if (!$matches instanceof Variable || !\is_string($matches->name)) {
+            return !$subject instanceof Variable;
+        }
+
+        return !$root instanceof Variable || $root->name === $matches->name;
+    }
+
+    /**
+     * The assertion that the argument holds the type, or null when the
+     * argument cannot be found among the call's.
+     */
+    private static function assertion(FuncCall $call, Expr $argument, Atomic $type): ?Possibilities
+    {
+        // An assertion names the argument by its index in the call.
+        $index = array_search($argument, array_map(static fn ($argument): Expr => $argument->value, $call->getArgs()), true);
+
+        return \is_int($index) ? new Possibilities($index, [new IsType($type)]) : null; // Never null: the argument is the call's.
+    }
+
+    /**
+     * Where the call returned 1, $matches is the shape, or the subject is
+     * narrowed; where it returned 0 or false, $matches is []. Psalm reads
+     * these where the call is the condition or its negation, and where it is
+     * compared with a boolean, which dropAssertions() undoes. Where the call
+     * is false, Psalm also reads the negation of what holds where it is
+     * true: "not a non-empty-string" leaves a string as it is.
+     *
+     * @param list<Possibilities|null> $ifTrue
+     * @param list<Possibilities|null> $ifFalse
+     */
+    private static function assertOnResult(NodeTypeProvider $nodeTypes, FuncCall $call, array $ifTrue, array $ifFalse): void
+    {
+        if (!$nodeTypes instanceof NodeDataProvider || !method_exists($nodeTypes, 'setIfTrueAssertions') || !method_exists($nodeTypes, 'setIfFalseAssertions')) {
             return; // Only on a Psalm release that moved its node data: none the tests run has.
         }
 
-        // An assertion names the argument by its index in the call.
-        $index = array_search($matches, array_map(static fn ($argument): Expr => $argument->value, $call->getArgs()), true);
-        if (!\is_int($index)) {
-            return; // Never: $matches is an argument of the call.
+        $nodeTypes->setIfTrueAssertions($call, array_values(array_filter($ifTrue)));
+        if ([] !== $ifFalse) {
+            $nodeTypes->setIfFalseAssertions($call, array_values(array_filter($ifFalse)));
         }
-
-        $nodeTypes->setIfTrueAssertions($call, [new Possibilities($index, [new IsType($type->getSingleAtomic())])]);
-        $nodeTypes->setIfFalseAssertions($call, [new Possibilities($index, [new IsType(Type::getEmptyArrayAtomic())])]);
     }
 
     /**
