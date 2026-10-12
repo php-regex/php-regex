@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -136,7 +137,7 @@ final class ErrorCodeTypingTest extends TestCase
     #[DataProvider('provideValidPatterns')]
     public function test_validation_result_of_a_valid_pattern_has_no_error_code(string $pattern, array $options): void
     {
-        $result = RegexParser::create(['cache' => null] + $options)->validate($pattern);
+        $result = RegexParser::fromOptions(ParserOptions::fromArray(['cache' => null] + $options))->validate($pattern);
 
         $this->assertTrue($result->isValid, (string) $result->error);
         $this->assertNull($result->errorCode);

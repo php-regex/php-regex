@@ -118,7 +118,7 @@ $analysis->headline();                // 'Exponential backtracking (proven)'
 $analysis->witness->render();         // '"a" x n . "!"', the input that triggers it
 ```
 
-The facade mirrors the whole service — `create`, `parse`, `parseTolerant`, `parsePattern`,
+The facade mirrors the whole service — `create`, `fromOptions`, `parse`, `parseTolerant`, `parsePattern`,
 `parser`, `validate`, `analyze`, `redos`, `optimize`, `transpile`, `explain`, `highlight`,
 `literals`, `captureShape`, `info`, `compatibility`, `generate`, `tokenize`, `target`,
 `getCache`, `getCacheStats` and `clearCaches`; [the API reference](../reference/api.md) documents each.

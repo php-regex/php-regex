@@ -27,7 +27,7 @@ final class ParserOptionsTest extends TestCase
     public function test_create_with_unknown_option_throws(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        Regex::create(['unknown_option' => true]);
+        Regex::fromOptions(ParserOptions::fromArray(['unknown_option' => true]));
     }
 
     public function test_create_with_valid_options(): void

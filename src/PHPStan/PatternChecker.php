@@ -23,6 +23,7 @@ use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
@@ -161,7 +162,7 @@ final class PatternChecker
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null, mixed $phpVersionRange = null)
     {
         // Built now, so that an unreadable version stops PHPStan before any file is read.
-        $this->regex = RegexParser::create(self::targetOptions($config, $phpVersion));
+        $this->regex = RegexParser::fromOptions(ParserOptions::fromArray(self::targetOptions($config, $phpVersion)));
         $target = $this->regex->target();
         $this->range = self::rangeParsers($config, $target, $phpVersionRange);
         $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(

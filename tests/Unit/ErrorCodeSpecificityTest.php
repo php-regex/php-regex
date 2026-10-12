@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
@@ -634,7 +635,7 @@ final class ErrorCodeSpecificityTest extends TestCase
      */
     private static function validator(array $options): RegexParser
     {
-        return RegexParser::create(['cache' => null, 'pcre_version' => self::runtimePin()] + $options);
+        return RegexParser::fromOptions(ParserOptions::fromArray(['cache' => null, 'pcre_version' => self::runtimePin()] + $options));
     }
 
     /**

@@ -112,7 +112,7 @@ $result = Regex::transpile('/^[a-z]+(?=\d)$/i', 'javascript');
 $result->constructor; // 'new RegExp("^[a-z]+(?=\\d)$", "i")'
 ```
 
-The facade mirrors the whole service: `create`, `parse`, `parseTolerant`, `parsePattern`, `parser`, `validate`,
+The facade mirrors the whole service: `create`, `fromOptions`, `parse`, `parseTolerant`, `parsePattern`, `parser`, `validate`,
 `analyze`, `redos`, `optimize`, `transpile`, `explain`, `highlight`, `literals`, `captureShape`, `info`,
 `compatibility`, `generate`, `tokenize`, `target`, `getCache`, `getCacheStats` and `clearCaches`.
 

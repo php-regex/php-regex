@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -48,7 +49,7 @@ final class RegexCacheTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('The "cache" option must be null, a cache path, or a CacheInterface implementation.');
 
-        Regex::create(['cache' => new \stdClass()]);
+        Regex::fromOptions(ParserOptions::fromArray(['cache' => new \stdClass()]));
     }
 
     public function test_normalize_cache_accepts_cache_interface(): void

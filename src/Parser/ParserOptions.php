@@ -27,15 +27,19 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  * Provides a simple, validated way to configure regex parsing behavior
  * including limits, caching, and ReDoS pattern exclusions.
  *
+ * The keys are closed and each value has its type; the ranges (a positive
+ * length, a version that names a release) are checked when the options are
+ * read, where an InvalidRegexOptionException says which one is wrong.
+ *
  * @phpstan-type OptionsArray array{
- *     max_pattern_length?: positive-int,
- *     max_lookbehind_length?: int<0, max>,
+ *     max_pattern_length?: int,
+ *     max_lookbehind_length?: int,
  *     cache?: CacheInterface|string|null,
  *     redos_ignored_patterns?: array<string>,
  *     runtime_pcre_validation?: bool,
- *     max_recursion_depth?: positive-int,
- *     php_version?: positive-int|non-empty-string,
- *     pcre_version?: non-empty-string,
+ *     max_recursion_depth?: int,
+ *     php_version?: int|string|null,
+ *     pcre_version?: string|null,
  * }
  */
 final readonly class ParserOptions
@@ -97,7 +101,12 @@ final readonly class ParserOptions
     /**
      * Create configuration from array of options.
      *
-     * @param OptionsArray|array<string, mixed> $options Configuration options
+     * Reads options from anywhere, a configuration file or a command line
+     * included: each key and value is checked here. Code that writes its
+     * options as a literal array passes them to Regex::create() or
+     * RegexParser::create(), whose OptionsArray shape PHPStan checks.
+     *
+     * @param array<string, mixed> $options Configuration options
      *
      * @return self New configuration instance
      */

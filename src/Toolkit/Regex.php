@@ -63,6 +63,8 @@ use PHPRegex\Transpiler\TranspileResult;
  *
  * Provides methods for parsing, validating, optimizing, and analyzing
  * regular expressions. Supports caching and runtime PCRE validation.
+ *
+ * @phpstan-import-type OptionsArray from ParserOptions
  */
 final readonly class Regex
 {
@@ -105,15 +107,22 @@ final readonly class Regex
      *
      * Every call returns a fresh instance; nothing is memoized.
      *
-     * @param array<string, mixed> $options Configuration options
+     * @param OptionsArray $options Configuration options
      *
      * @return self New Regex instance
      */
     public static function create(array $options = []): self
     {
-        $configuration = ParserOptions::fromArray($options);
+        return self::fromOptions(ParserOptions::fromArray($options));
+    }
 
-        return new self(RegexParser::fromOptions($configuration), $configuration->redosIgnoredPatterns);
+    /**
+     * A facade configured by options already read, as from a configuration
+     * file through ParserOptions::fromArray().
+     */
+    public static function fromOptions(ParserOptions $options): self
+    {
+        return new self(RegexParser::fromOptions($options), $options->redosIgnoredPatterns);
     }
 
     /**

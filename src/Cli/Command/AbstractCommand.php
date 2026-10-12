@@ -18,6 +18,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
@@ -36,7 +37,7 @@ abstract class AbstractCommand implements CommandInterface
     protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
     {
         try {
-            return Regex::create($options);
+            return Regex::fromOptions(ParserOptions::fromArray($options));
         } catch (InvalidRegexOptionException $e) {
             $message = $this->invalidOptionMessage($e, $options);
             if ($json) {

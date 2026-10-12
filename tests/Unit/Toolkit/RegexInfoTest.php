@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Toolkit;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -84,7 +85,7 @@ final class RegexInfoTest extends TestCase
     #[DataProvider('provideRefusedPatterns')]
     public function test_info_throws_what_validate_refuses_at_the_instance_target(string $pattern, array $options): void
     {
-        $regex = Regex::create($options);
+        $regex = Regex::fromOptions(ParserOptions::fromArray($options));
         $this->assertFalse($regex->validate($pattern)->isValid, 'The row must be a pattern the target refuses.');
 
         $this->expectException(ExceptionInterface::class);

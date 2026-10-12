@@ -39,6 +39,20 @@ $result = $regex->validate('/foo|bar/');
 echo $result->isValid ? 'Valid' : 'Invalid';
 ```
 
+The options are a closed shape, `OptionsArray` (imported from
+`PHPRegex\Parser\ParserOptions`): PHPStan reports a misspelt key or a value
+of the wrong type where the array is written, and `create()` checks the
+ranges when it reads them. Options read from a configuration file go through
+`ParserOptions::fromArray()`, which checks every key and value, then to
+`Regex::fromOptions()` (or `RegexParser::fromOptions()`):
+
+```php
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Toolkit\Regex;
+
+$regex = Regex::fromOptions(ParserOptions::fromArray(['php_version' => '8.2']));
+```
+
 ---
 
 ### tokenize(string $regex): list<Token>

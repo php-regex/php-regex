@@ -27,6 +27,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -190,7 +191,7 @@ final class LintCommand extends Command
                 $this->projectDir,
                 getenv(),
             );
-            $parser = Regex::create($this->regexOptions + $target->regexOptions())->parser();
+            $parser = Regex::fromOptions(ParserOptions::fromArray($this->regexOptions + $target->regexOptions()))->parser();
             $range = $target->rangeParsers($parser, $this->regexOptions);
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, $output, $io, 'Invalid option: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, Command::INVALID);

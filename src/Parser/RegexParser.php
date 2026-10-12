@@ -116,7 +116,7 @@ final readonly class RegexParser
     ) {}
 
     /**
-     * @param OptionsArray|array<string, mixed> $options The options Regex::create() takes
+     * @param OptionsArray $options The options Regex::create() takes
      */
     public static function create(array $options = []): self
     {

@@ -39,6 +39,7 @@ use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Psalm\Plugin;
@@ -532,7 +533,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         }
 
         try {
-            RegexParser::create([$option => $value]);
+            ParserOptions::fromArray([$option => $value]);
         } catch (InvalidRegexOptionException $e) {
             throw new InvalidRegexOptionException(\sprintf('The <%s> option of %s must be %s; got "%s".', $element, Plugin::class, $expected, $value), 0, $e);
         }

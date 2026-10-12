@@ -21,6 +21,7 @@ use PHPRegex\Parser\Analysis\LiteralExtractionResult;
 use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
@@ -41,6 +42,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * Laravel Facade for the PHPRegex library.
  *
  * @method static ToolkitRegex                  create(array $options = [])
+ * @method static ToolkitRegex                  fromOptions(ParserOptions $options)
  * @method static RegexNode                     parse(string $regex)
  * @method static RegexParser                   parser()
  * @method static TolerantParseResult           parseTolerant(string $regex)

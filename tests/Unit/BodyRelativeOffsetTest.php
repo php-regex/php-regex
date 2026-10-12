@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,7 +35,7 @@ final class BodyRelativeOffsetTest extends TestCase
     #[DataProvider('provideFaultsOutsideTheBody')]
     public function test_offset_counts_from_the_body(string $pattern, array $options, ErrorCode $code, int $offset, string $underCaret): void
     {
-        $result = Regex::create(['cache' => null] + $options)->validate($pattern);
+        $result = Regex::fromOptions(ParserOptions::fromArray(['cache' => null] + $options))->validate($pattern);
 
         $this->assertSame($code, $result->errorCode, $pattern);
         $this->assertSame($offset, $result->offset, $pattern);
@@ -83,7 +84,7 @@ final class BodyRelativeOffsetTest extends TestCase
     public function test_snippet_shows_the_pattern_as_written(string $pattern, array $options, ErrorCode $code, int $offset, string $underCaret): void
     {
         unset($code, $offset, $underCaret);
-        $result = Regex::create(['cache' => null] + $options)->validate($pattern);
+        $result = Regex::fromOptions(ParserOptions::fromArray(['cache' => null] + $options))->validate($pattern);
 
         $lines = explode("\n", (string) $result->caretSnippet);
         $shown = (string) preg_replace('/^Line \d+: /', '', $lines[0]);

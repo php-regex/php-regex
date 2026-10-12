@@ -184,12 +184,12 @@ final readonly class ProjectTarget
         $parsers = [];
         foreach (\array_slice($this->range, 1) as $target) {
             // Compiling with the running PHP judges one version: the floor's.
-            $parsers[] = RegexParser::create([
+            $parsers[] = RegexParser::fromOptions(ParserOptions::fromArray([
                 'php_version' => $target->phpVersionId,
                 'pcre_version' => $target->pcreVersion,
                 'cache' => $floor->getCache(),
                 'runtime_pcre_validation' => false,
-            ] + $regexOptions);
+            ] + $regexOptions));
         }
 
         return $parsers;
