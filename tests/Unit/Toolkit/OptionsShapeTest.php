@@ -25,17 +25,17 @@ use PHPUnit\Framework\TestCase;
 final class OptionsShapeTest extends TestCase
 {
     private const FIXTURE = <<<'PHP_WRAP'
-    <?php
+        <?php
     
-    declare(strict_types=1);
+        declare(strict_types=1);
     
-    \PHPRegex\Toolkit\Regex::create(['max_pattern_lenght' => 5]);
-    \PHPRegex\Parser\RegexParser::create(['cache' => 42]);
-    \PHPRegex\Toolkit\Regex::create(['php_version' => []]);
-    \PHPRegex\Toolkit\Regex::create(['php_version' => '8.2', 'cache' => null, 'redos_ignored_patterns' => ['/a/']]);
-    \PHPRegex\Parser\RegexParser::create(['max_recursion_depth' => 10]);
+        \PHPRegex\Toolkit\Regex::create(['max_pattern_lenght' => 5]);
+        \PHPRegex\Parser\RegexParser::create(['cache' => 42]);
+        \PHPRegex\Toolkit\Regex::create(['php_version' => []]);
+        \PHPRegex\Toolkit\Regex::create(['php_version' => '8.2', 'cache' => null, 'redos_ignored_patterns' => ['/a/']]);
+        \PHPRegex\Parser\RegexParser::create(['max_recursion_depth' => 10]);
     
-    PHP_WRAP;
+        PHP_WRAP;
 
     #[Test]
     public function test_phpstan_refuses_an_option_outside_the_shape(): void
