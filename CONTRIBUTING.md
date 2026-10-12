@@ -126,11 +126,11 @@ Every package is released together, from the monorepo:
 ```bash
 php -d xdebug.mode=off tests/Tools/redos-verdict-gate.php   # ReDoS analysis cost on the corpus
 bin/status                     # CI, the split repositories, Packagist
-bin/bump 2.1.0                 # Regex::VERSION, and the CHANGELOG section dated
+bin/bump 2.1.0                 # Regex::VERSION and VERSION_ID, and the CHANGELOG section dated
 git commit -am "Release 2.1.0"
 git push origin 2.x            # wait for CI to pass
 bin/release --dry-run 2.1.0    # every check, nothing tagged
-bin/release 2.1.0              # the phar, the tag, the GitHub release
+bin/release 2.1.0              # the phar, a draft release, the tag, then the release
 bin/bump --next 2.1.1          # 2.1.1-DEV and a new Unreleased section
 ```
 
@@ -139,6 +139,13 @@ PHPStan and the linter do, and prints the median and 99th-percentile time per
 pattern and the share of each ReDoS proof. It exits with 1 when the 99th
 percentile is above 6 ms (`--max-p99=<ms>` sets another limit); a release
 waits until it passes. Run it on an idle machine: the times are wall-clock.
+
+`bin/release` creates the GitHub release as a draft before it pushes the
+tag, so a release GitHub refuses leaves nothing tagged; a tag cannot be moved
+or deleted once pushed. The release carries `regex.phar` and its SHA-256
+checksum, and the CHANGELOG section as its notes, or the section's opening
+words and a link to the CHANGELOG when the section is longer than GitHub
+takes.
 
 The tag triggers the split workflow, which tags every `php-regex/regex-*`
 repository; Packagist picks the versions up from there. A pre-release

@@ -70,6 +70,13 @@ if [ -z "$splitsh" ] && [ "$dry_run" -eq 0 ]; then
     exit 2
 fi
 
+# A tag checkout, as the split workflow makes on a tag, holds no local
+# branch: the branch is then read from its remote-tracking ref.
+origin="refs/heads/$branch"
+if ! git rev-parse -q --verify "$origin^{commit}" >/dev/null; then
+    origin="refs/remotes/origin/$branch"
+fi
+
 failed=0
 for split in "${SPLITS[@]}"; do
     prefix=${split%%:*}
@@ -84,7 +91,7 @@ for split in "${SPLITS[@]}"; do
         continue
     fi
 
-    if ! sha=$("$splitsh" --prefix="$prefix" --target="refs/heads/split-$repository" --origin="refs/heads/$branch" 2>/dev/null); then
+    if ! sha=$("$splitsh" --prefix="$prefix" --target="refs/heads/split-$repository" --origin="$origin" 2>/dev/null); then
         echo "✗ $repository: the split failed" >&2
         failed=$((failed + 1))
         continue
@@ -107,7 +114,7 @@ for split in "${SPLITS[@]}"; do
             continue
         fi
     fi
-    if ! git push -q "$remote" "$sha:refs/heads/$branch" -f; then
+    if ! git push -q --no-follow-tags "$remote" "$sha:refs/heads/$branch" -f; then
         echo "✗ $repository: the push failed" >&2
         failed=$((failed + 1))
         continue

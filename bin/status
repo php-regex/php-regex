@@ -76,10 +76,12 @@ else
     ko "github.com/php-regex/php-regex does not exist yet: rename php-regex/regex-parser"
 fi
 source_url=$(curl -sf https://packagist.org/packages/yoeunes/regex-parser.json 2>/dev/null | php -r '$d = json_decode(stream_get_contents(STDIN), true); echo $d["package"]["repository"] ?? "";')
+# yoeunes/regex-parser is the 1.x package: reading the monorepo, it would
+# publish every v2 tag as a stable version of its own.
 case "$source_url" in
-    *php-regex/php-regex*) ok "yoeunes/regex-parser on Packagist reads php-regex/php-regex" ;;
+    *php-regex/php-regex*) ko "yoeunes/regex-parser on Packagist reads php-regex/php-regex: a v2 tag would release it as 2.x; point it at a repository holding 1.x only" ;;
     "") na "yoeunes/regex-parser: Packagist did not answer" ;;
-    *) ko "yoeunes/regex-parser on Packagist reads $source_url: point it at php-regex/php-regex before creating regex-parser" ;;
+    *) ok "yoeunes/regex-parser on Packagist reads $source_url" ;;
 esac
 
 echo

@@ -20,6 +20,7 @@
 # Build & Distribution
 /build/
 /bin/regex.phar
+/bin/regex.phar.sha256
 /coverage/
 
 # Logs

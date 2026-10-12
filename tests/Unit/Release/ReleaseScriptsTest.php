@@ -45,7 +45,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         $this->root = sys_get_temp_dir().'/php-regex-release-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src/Toolkit', 0o777, true);
-        file_put_contents($this->root.'/src/Toolkit/Regex.php', "<?php\n\nfinal class Regex\n{\n    public const VERSION = '2.0.0-DEV';\n}\n");
+        file_put_contents($this->root.'/src/Toolkit/Regex.php', "<?php\n\nfinal class Regex\n{\n    public const VERSION = '2.0.0-DEV';\n    public const VERSION_ID = 20000;\n}\n");
         file_put_contents($this->root.'/CHANGELOG.md', self::CHANGELOG);
     }
 
@@ -127,6 +127,17 @@ final class ReleaseScriptsTest extends TestCase
     }
 
     #[Test]
+    public function test_bump_keeps_the_version_id_in_step(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        [$code] = $this->script('bump', '--next', '2.1.3');
+
+        $this->assertSame(0, $code);
+        $this->assertSame('2.1.3-DEV', $this->version());
+        $this->assertStringContainsString('public const VERSION_ID = 20103;', (string) file_get_contents($this->root.'/src/Toolkit/Regex.php'));
+    }
+
+    #[Test]
     public function test_release_refuses_a_version_the_code_does_not_carry(): void
     {
         $this->commit();
@@ -186,6 +197,103 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertSame(0, $code, $output);
         $this->assertStringContainsString('would tag v2.0.0', $output);
         $this->assertSame('', trim($this->git('tag', '--list')));
+    }
+
+    #[Test]
+    public function test_release_dry_run_names_the_changelog_section_as_the_notes(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('release notes: the CHANGELOG section', $output);
+    }
+
+    #[Test]
+    public function test_release_notes_summarize_a_section_too_long_for_github(): void
+    {
+        $entries = str_repeat("- A change described at length, as a major release lists many.\n", 2500);
+        file_put_contents($this->root.'/CHANGELOG.md', str_replace("### Added\n\n- Something.\n", "Opening words of the release.\n\n### Added\n\n".$entries, self::CHANGELOG));
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('release notes: a summary linking CHANGELOG.md', $output);
+        $this->assertStringContainsString('Opening words of the release.', $output);
+        $this->assertStringContainsString('https://github.com/php-regex/php-regex/blob/v2.0.0/CHANGELOG.md', $output);
+    }
+
+    #[Test]
+    public function test_release_publishes_a_draft_before_the_tag_leaves(): void
+    {
+        // A phar/build that writes a script reporting the version, a gh that
+        // records each call and whether the tag had reached origin by then.
+        mkdir($this->root.'/phar');
+        file_put_contents($this->root.'/phar/build', "#!/usr/bin/env bash\nmkdir -p bin\nprintf '%s' '<?php echo \"PHPRegex 2.0.0\\n\";' > bin/regex.phar\n");
+        chmod($this->root.'/phar/build', 0o755);
+        file_put_contents($this->root.'/.gitignore', "/bin/regex.phar\n/bin/regex.phar.sha256\n/origin.git/\n/fake/\n/gh.log\n");
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+        exec('git init -q --bare '.escapeshellarg($this->root.'/origin.git'));
+        $this->git('remote', 'add', 'origin', $this->root.'/origin.git');
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/gh', "#!/usr/bin/env bash\npushed=no\ngit ls-remote --tags origin | grep -q 'refs/tags/v2.0.0' && pushed=yes\necho \"\$* [tag on origin: \$pushed]\" >> \"\$GH_LOG\"\n");
+        chmod($this->root.'/fake/gh', 0o755);
+
+        [$code, $output] = $this->runScript('release', ['--skip-ci', '2.0.0'], ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_LOG' => $this->root.'/gh.log']);
+
+        $this->assertSame(0, $code, $output);
+        $calls = file($this->root.'/gh.log', \FILE_IGNORE_NEW_LINES);
+        $this->assertIsArray($calls);
+        $this->assertCount(2, $calls, implode("\n", $calls));
+        $this->assertStringStartsWith('release create v2.0.0 bin/regex.phar bin/regex.phar.sha256 ', $calls[0]);
+        $this->assertStringContainsString('--draft', $calls[0]);
+        $this->assertStringEndsWith('[tag on origin: no]', $calls[0]);
+        $this->assertStringStartsWith('release edit v2.0.0 --draft=false', $calls[1]);
+        $this->assertStringEndsWith('[tag on origin: yes]', $calls[1]);
+        $this->assertSame(hash_file('sha256', $this->root.'/bin/regex.phar').'  regex.phar', trim((string) file_get_contents($this->root.'/bin/regex.phar.sha256')));
+    }
+
+    #[Test]
+    public function test_split_reads_the_branch_a_tag_checkout_only_knows_as_a_remote(): void
+    {
+        // A tag checkout: HEAD detached on the tag, 2.x known only as origin/2.x.
+        mkdir($this->root.'/src/Parser');
+        file_put_contents($this->root.'/src/Parser/Parser.php', '<?php');
+        $this->commit();
+        $this->git('tag', '-a', 'v2.0.0', '-m', 'v2.0.0');
+        $this->git('update-ref', 'refs/remotes/origin/2.x', 'HEAD');
+        $this->git('checkout', '-q', '--detach', 'v2.0.0');
+        $this->git('branch', '-q', '-D', '2.x');
+        $remotes = $this->root.'/remotes';
+        mkdir($remotes);
+        exec('git init -q --bare '.escapeshellarg($remotes.'/regex-parser.git'));
+        $head = trim($this->git('rev-parse', 'HEAD'));
+
+        // A splitsh-lite that fails on an origin the repository cannot resolve.
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\nfor a in \"\$@\"; do case \$a in --origin=*) git rev-parse -q --verify \"\${a#--origin=}^{commit}\" >/dev/null || exit 1 ;; esac; done\necho {$head}\n");
+        chmod($this->root.'/fake/splitsh-lite', 0o755);
+
+        $process = proc_open(
+            [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--tag', 'v2.0.0', '--only', 'regex-parser'],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+            null,
+            ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
+        );
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process), $output);
+        $this->assertSame($head, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-parser.git').' rev-parse 2.x')));
+        $this->assertSame($head, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/regex-parser.git').' rev-parse v2.0.0')));
     }
 
     #[Test]
@@ -260,8 +368,19 @@ final class ReleaseScriptsTest extends TestCase
      */
     private function script(string $script, string ...$arguments): array
     {
-        $command = [\dirname(__DIR__, 3).'/bin/'.$script, '--root', $this->root, ...array_values($arguments)];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        return $this->runScript($script, array_values($arguments));
+    }
+
+    /**
+     * @param list<string>               $arguments
+     * @param array<string, string>|null $env
+     *
+     * @return array{int, string}
+     */
+    private function runScript(string $script, array $arguments, ?array $env = null): array
+    {
+        $command = [\dirname(__DIR__, 3).'/bin/'.$script, '--root', $this->root, ...$arguments];
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, null === $env ? null : $env + ['HOME' => (string) getenv('HOME')]);
         $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
         fclose($pipes[1]);

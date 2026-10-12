@@ -7,9 +7,10 @@
 # For the full copyright and license information, please view the LICENSE
 # file that was distributed with this source code.
 #
-# Releases a version: checks the tree is ready, builds the phar, tags the
-# monorepo and publishes the GitHub release with the phar attached. The split
-# workflow then pushes the tag to every php-regex/regex-* repository.
+# Releases a version: checks the tree is ready, builds the phar, drafts the
+# GitHub release with the phar and its checksum attached, tags the monorepo
+# and publishes the draft. The split workflow then pushes the tag to every
+# php-regex/regex-* repository.
 #
 # Usage:
 #   bin/release [--dry-run] [--skip-ci] [--skip-phar] [--branch <name>] <version>
@@ -35,7 +36,7 @@ while [ $# -gt 0 ]; do
         --skip-phar) skip_phar=1 ;;
         --branch) branch=${2:?--branch needs a name}; shift ;;
         --root) root=${2:?--root needs a directory}; shift ;;
-        -h|--help) sed -n '10,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '10,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*) echo "Unknown option: $1" >&2; exit 2 ;;
         *) version=$1 ;;
     esac
@@ -83,20 +84,35 @@ if [ "${#problems[@]}" -gt 0 ]; then
     exit 1
 fi
 
-# The release notes: the CHANGELOG section of a final release.
+# The release notes: the CHANGELOG section of a final release, or, when
+# that section is longer than the 125,000 characters GitHub takes, its
+# opening words and a link to the whole of it.
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
+blob="https://github.com/php-regex/php-regex/blob/$tag"
+notes_kind="the CHANGELOG section"
 if [ "$pre_release" -eq 0 ]; then
     awk -v v="$version" '$0 ~ "^## \\[" v "\\]" { on = 1; next } on && /^## \[/ { exit } on { print }' CHANGELOG.md > "$notes"
+    length=$(php -r 'echo mb_strlen(stream_get_contents(STDIN), "UTF-8");' < "$notes")
+    if [ "$length" -gt 125000 ]; then
+        notes_kind="a summary linking CHANGELOG.md (its section is $length characters, past the 125,000 GitHub takes)"
+        opening=$(awk '/^### / { exit } { print }' "$notes" | sed -e '/./,$!d')
+        {
+            [ -n "$opening" ] && printf '%s\n\n' "$opening"
+            printf 'Every change is listed in [CHANGELOG.md](%s/CHANGELOG.md).\n' "$blob"
+        } > "$notes"
+    fi
 else
-    printf 'Pre-release of %s. See [CHANGELOG.md](CHANGELOG.md) and [UPGRADE-2.0.md](UPGRADE-2.0.md).\n' "${version%%-*}" > "$notes"
+    printf 'Pre-release of %s. See [CHANGELOG.md](%s/CHANGELOG.md) and [UPGRADE-2.0.md](%s/UPGRADE-2.0.md).\n' "${version%%-*}" "$blob" "$blob" > "$notes"
 fi
 
 if [ "$dry_run" -eq 1 ]; then
     echo "Ready to release $version."
-    [ "$skip_phar" -eq 0 ] && echo "  would build bin/regex.phar with phar/build"
-    echo "  would tag $tag on $(git rev-parse --short HEAD) and push it (the split workflow tags every package)"
-    echo "  would publish the GitHub release $tag$([ "$pre_release" -eq 1 ] && echo ' as a pre-release')$([ "$skip_phar" -eq 0 ] && echo ', with regex.phar')"
+    [ "$skip_phar" -eq 0 ] && echo "  would build bin/regex.phar with phar/build, and its SHA-256 checksum"
+    echo "  would publish the GitHub release $tag as a draft$([ "$pre_release" -eq 1 ] && echo ' pre-release')$([ "$skip_phar" -eq 0 ] && echo ', with regex.phar and its checksum')"
+    echo "  would tag $tag on $(git rev-parse --short HEAD) and push it (the split workflow tags every package), then publish the draft"
+    echo "  release notes: $notes_kind"
+    [ "$notes_kind" = "the CHANGELOG section" ] || sed 's/^/    /' "$notes"
     exit 0
 fi
 
@@ -105,14 +121,19 @@ if [ "$skip_phar" -eq 0 ]; then
     phar/build
     reported=$(php bin/regex.phar --version 2>/dev/null | head -1)
     printf '%s' "$reported" | grep -qF "$version" || { echo "bin/regex.phar reports \"$reported\", not $version." >&2; exit 1; }
-    assets+=(bin/regex.phar)
+    php -r 'echo hash_file("sha256", "bin/regex.phar"), "  regex.phar\n";' > bin/regex.phar.sha256
+    assets+=(bin/regex.phar bin/regex.phar.sha256)
 fi
+
+# The release is created as a draft first: GitHub refuses it before anything
+# is tagged, and a tag pushed cannot be taken back.
+flags=(--title "PHPRegex $version" --notes-file "$notes" --draft --target "$(git rev-parse HEAD)")
+[ "$pre_release" -eq 1 ] && flags+=(--prerelease)
+gh release create "$tag" ${assets[@]+"${assets[@]}"} "${flags[@]}"
 
 git tag -a "$tag" -m "PHPRegex $version"
 git push origin "$tag"
 
-flags=(--title "PHPRegex $version" --notes-file "$notes" --verify-tag)
-[ "$pre_release" -eq 1 ] && flags+=(--prerelease)
-gh release create "$tag" "${assets[@]}" "${flags[@]}"
+gh release edit "$tag" --draft=false
 
 echo "Released $version. Next: bin/bump --next <version>, and check bin/status once the split has run."

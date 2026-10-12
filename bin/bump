@@ -13,8 +13,8 @@
 #   bin/bump [--dry-run] [--date YYYY-MM-DD] <version>
 #   bin/bump [--dry-run] --next <version>
 #
-#   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION, and for a
-#               final version dates the CHANGELOG's Unreleased section as it
+#   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION and VERSION_ID,
+#               and for a final version dates the CHANGELOG's Unreleased section as it
 #   --next      after a release: sets Regex::VERSION to <version>-DEV and opens
 #               a "## [<version>] - Unreleased" section in the CHANGELOG
 #   --date      the release date written in the CHANGELOG (default: today)
@@ -86,7 +86,11 @@ else
     new_changelog=$(awk -v v="$version" -v d="$date" 'done == 0 && /^## \[[^]]+\] - Unreleased$/ { print "## [" v "] - " d; done = 1; next } { print }' "$changelog")
     echo "CHANGELOG.md: ## [$version] - $date"
 fi
-echo "src/Toolkit/Regex.php: VERSION = '$target'"
+# VERSION_ID is the version as an integer, 2.1.3 as 20103, as PHP_VERSION_ID.
+base=${version%%-*}
+IFS=. read -r major minor patch <<< "$base"
+version_id=$((major * 10000 + minor * 100 + patch))
+echo "src/Toolkit/Regex.php: VERSION = '$target', VERSION_ID = $version_id"
 
 if [ "$dry_run" -eq 1 ]; then
     echo "(dry run: nothing written)"
@@ -94,7 +98,7 @@ if [ "$dry_run" -eq 1 ]; then
 fi
 
 tmp=$(mktemp)
-sed -E "s/(public const VERSION = ')[^']+(';)/\1$target\2/" "$regex" > "$tmp" && cat "$tmp" > "$regex"
+sed -E -e "s/(public const VERSION = ')[^']+(';)/\1$target\2/" -e "s/(public const VERSION_ID = )[0-9]+;/\1$version_id;/" "$regex" > "$tmp" && cat "$tmp" > "$regex"
 rm -f "$tmp"
 if [ -n "$new_changelog" ]; then
     printf '%s\n' "$new_changelog" > "$changelog"
