@@ -1175,6 +1175,11 @@ with the value quoted in the message.
 A Symfony configuration using `threshold: safe` to report every finding
 should use `low`.
 
+#### Symfony: `debug:compare` is gone
+
+The compare command answers to `regex:compare` only; replace the
+`debug:compare` alias in scripts and CI jobs.
+
 #### Symfony: the bundle configuration in 2.0
 
 The configuration moves from `regex_parser:` to `php_regex:`, with these keys:

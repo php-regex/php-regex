@@ -53,7 +53,6 @@ final class CompareCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setAliases(['debug:compare'])
             ->addArgument('pattern1', InputArgument::REQUIRED, 'The first regex pattern (with delimiters)')
             ->addArgument('pattern2', InputArgument::REQUIRED, 'The second regex pattern (with delimiters)')
             ->addOption('method', null, InputOption::VALUE_REQUIRED, 'intersection, subset, or equivalence', self::METHOD_INTERSECTION)
