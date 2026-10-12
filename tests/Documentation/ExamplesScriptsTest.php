@@ -23,11 +23,11 @@ final class ExamplesScriptsTest extends TestCase
      */
     public static function provideScripts(): \Generator
     {
-        yield 'basic parse' => ['script' => 'examples/basic/parse.php'];
-        yield 'basic validate' => ['script' => 'examples/basic/validate.php'];
-        yield 'advanced redos analysis' => ['script' => 'examples/advanced/redos-analysis.php'];
-        yield 'real-world email validator' => ['script' => 'examples/real-world/email-validator.php'];
-        yield 'symfony route analyzer' => ['script' => 'examples/symfony/route-analyzer.php'];
+        yield 'basic parse' => ['script' => 'demo/examples/basic/parse.php'];
+        yield 'basic validate' => ['script' => 'demo/examples/basic/validate.php'];
+        yield 'advanced redos analysis' => ['script' => 'demo/examples/advanced/redos-analysis.php'];
+        yield 'real-world email validator' => ['script' => 'demo/examples/real-world/email-validator.php'];
+        yield 'symfony route analyzer' => ['script' => 'demo/examples/symfony/route-analyzer.php'];
     }
 
     #[DataProvider('provideScripts')]

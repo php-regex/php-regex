@@ -68,7 +68,7 @@
 /tools                  export-ignore
 /.task                  export-ignore
 /.cache                 export-ignore
-/examples               export-ignore
+/demo                   export-ignore
 /phar                   export-ignore
 
 # Additional files not needed in distribution

@@ -1,0 +1,63 @@
+name: Demo applications
+
+on:
+  push:
+    branches: [2.x]
+    paths:
+      - 'demo/**'
+      - 'src/**'
+      - 'composer.json'
+      - '.github/workflows/demo.yml'
+  pull_request:
+    branches: [2.x]
+    paths:
+      - 'demo/**'
+      - 'src/**'
+      - 'composer.json'
+      - '.github/workflows/demo.yml'
+  schedule:
+    - cron: '37 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: demo-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # 8.5 is the ceiling of the Laravel lock (nette packages stop there)
+      # and above the Symfony lock floor (8.4.1); 8.6 would need
+      # --ignore-platform-req=php+ as in ci.yml.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+          coverage: none
+
+      - name: Install the Symfony application
+        run: composer install -d demo/symfony --no-interaction --no-progress
+
+      - name: Install the Laravel application
+        run: composer install -d demo/laravel --no-interaction --no-progress
+
+      - name: Warm the Symfony cache
+        run: php demo/symfony/bin/console cache:warmup
+
+      - name: Run the Symfony application tests
+        working-directory: demo/symfony
+        run: vendor/bin/phpunit
+
+      - name: Prepare the Laravel environment
+        run: |
+          cp demo/laravel/.env.example demo/laravel/.env
+          php demo/laravel/artisan key:generate
+
+      - name: Run the Laravel application tests
+        working-directory: demo/laravel
+        run: vendor/bin/phpunit

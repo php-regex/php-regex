@@ -1,0 +1,7 @@
+# PHPRegex bundle configuration for the demo application.
+php_regex:
+    redos:
+        enabled: true
+        threshold: medium
+    analysis:
+        warning_threshold: 30

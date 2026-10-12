@@ -459,8 +459,8 @@ composer phpunit --display-deprecations
 3. Look at examples:
 
 ```bash
-ls -la examples/
-php examples/basic/validate.php
+ls -la demo/examples/
+php demo/examples/basic/validate.php
 ```
 
 4. Search issues:
