@@ -39,6 +39,11 @@ final class ReleaseScriptsTest extends TestCase
 
         MD;
 
+    /**
+     * The identity bin/release tags with: a CI runner has none of its own.
+     */
+    private const IDENTITY = ['GIT_AUTHOR_NAME' => 't', 'GIT_AUTHOR_EMAIL' => 't@t', 'GIT_COMMITTER_NAME' => 't', 'GIT_COMMITTER_EMAIL' => 't@t'];
+
     private string $root = '';
 
     protected function setUp(): void
@@ -244,7 +249,7 @@ final class ReleaseScriptsTest extends TestCase
         file_put_contents($this->root.'/fake/gh', "#!/usr/bin/env bash\npushed=no\ngit ls-remote --tags origin | grep -q 'refs/tags/v2.0.0' && pushed=yes\necho \"\$* [tag on origin: \$pushed]\" >> \"\$GH_LOG\"\n");
         chmod($this->root.'/fake/gh', 0o755);
 
-        [$code, $output] = $this->runScript('release', ['--skip-ci', '2.0.0'], ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_LOG' => $this->root.'/gh.log']);
+        [$code, $output] = $this->runScript('release', ['--skip-ci', '2.0.0'], ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_LOG' => $this->root.'/gh.log', ...self::IDENTITY]);
 
         $this->assertSame(0, $code, $output);
         $calls = file($this->root.'/gh.log', \FILE_IGNORE_NEW_LINES);
@@ -265,7 +270,7 @@ final class ReleaseScriptsTest extends TestCase
         mkdir($this->root.'/src/Parser');
         file_put_contents($this->root.'/src/Parser/Parser.php', '<?php');
         $this->commit();
-        $this->git('tag', '-a', 'v2.0.0', '-m', 'v2.0.0');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'tag', '-a', 'v2.0.0', '-m', 'v2.0.0');
         $this->git('update-ref', 'refs/remotes/origin/2.x', 'HEAD');
         $this->git('checkout', '-q', '--detach', 'v2.0.0');
         $this->git('branch', '-q', '-D', '2.x');

@@ -73,10 +73,23 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     #[DataProvider('provideCheckedQuantifiers')]
     public function test_a_quantifier_whose_count_matters_is_not_reported(string $pattern, string $rewrite): void
     {
-        $differs = false;
-        foreach (self::SUBJECTS as $subject) {
-            $original = [preg_match_all($pattern, $subject, $actual, \PREG_OFFSET_CAPTURE), $actual];
-            $differs = $differs || $original !== [preg_match_all($rewrite, $subject, $expected, \PREG_OFFSET_CAPTURE), $expected];
+        // Under the JIT, which PHP runs by default. PCRE2's interpreter reads
+        // the end of the subject in a variable-length lookbehind at the real
+        // end, as a fixed-length one does: there /(?<=b{1,2}\z)a/ and
+        // /(?<=b\z)a/ answer alike (10.44 to 10.49, pcre.jit=0). A pattern
+        // another test compiled with the JIT off stays so in PHP's cache, so
+        // the patterns run here under a delimiter of their own.
+        $jit = (string) \ini_get('pcre.jit');
+        ini_set('pcre.jit', '1');
+
+        try {
+            $differs = false;
+            foreach (self::SUBJECTS as $subject) {
+                $original = [preg_match_all(self::keyed($pattern), $subject, $actual, \PREG_OFFSET_CAPTURE), $actual];
+                $differs = $differs || $original !== [preg_match_all(self::keyed($rewrite), $subject, $expected, \PREG_OFFSET_CAPTURE), $expected];
+            }
+        } finally {
+            ini_set('pcre.jit', $jit);
         }
 
         $this->assertTrue($differs, $pattern.' behaves as '.$rewrite);
@@ -128,6 +141,15 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     public function test_the_rule_is_off_by_default(): void
     {
         $this->assertSame([], $this->messages('/x(?=a{2,6})/', false));
+    }
+
+    /**
+     * The pattern under a delimiter no other test writes, so PHP compiles it
+     * here, with the JIT setting of this test.
+     */
+    private static function keyed(string $pattern): string
+    {
+        return "\x01".substr($pattern, 1, -1)."\x01";
     }
 
     /**

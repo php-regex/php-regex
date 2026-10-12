@@ -38,11 +38,12 @@ jobs:
       - name: Install PHPUnit Tooling
         # On dev PHP versions, some transitive deps have not raised their PHP
         # ceiling yet (e.g. nette/schema); ignore the platform PHP requirement.
-        # PHPStan too: a test analyses a fixture with the repository's own
-        # configuration.
+        # PHPStan too, and PHPBench whose sources its configuration scans: a
+        # test analyses a fixture with the repository's own configuration.
         run: |
           composer install -d tools/phpunit --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
           composer install -d tools/phpstan --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpbench --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
 
       - name: Run Test Suite
         # The whole tests/ tree, so that the functional, regression and
@@ -89,6 +90,7 @@ jobs:
           composer install --prefer-dist --no-interaction --no-progress
           composer install -d tools/phpunit --prefer-dist --no-interaction --no-progress
           composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
 
       - name: Run Test Suite
         # As a plain user: a container job runs as root, who may write where
@@ -127,6 +129,7 @@ jobs:
           composer install --prefer-dist --no-interaction --no-progress
           composer install -d tools/phpunit --prefer-dist --no-interaction --no-progress
           composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
 
       - name: Run Test Suite
         run: tools/phpunit/vendor/bin/phpunit --colors=always
