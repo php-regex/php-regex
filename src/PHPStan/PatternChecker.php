@@ -112,6 +112,7 @@ final class PatternChecker
         'regex.lint.anchor.impossible.boundary' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#anchor-conflicts',
         'regex.lint.anchor.dollarNewline' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#dollar-before-a-trailing-newline',
         'regex.lint.lookaround.impossible' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#impossible-lookaround',
+        'regex.lint.lookaround.redundant' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#lookaround-inside-a-lookaround',
         'regex.lint.group.empty' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#empty-group',
         'regex.lint.charclass.single' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#single-character-class',
         'regex.lint.literal.multipleSpaces' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#multiple-spaces',

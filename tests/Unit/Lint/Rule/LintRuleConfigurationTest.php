@@ -89,7 +89,7 @@ final class LintRuleConfigurationTest extends TestCase
 
         sort($off);
         sort($named);
-        $this->assertSame(['anchor.dollarNewline', 'charclass.single', 'literal.multipleSpaces', 'lookaround.edgeQuantifier', 'quantifier.lazyToClass', 'quantifier.uselessLazy', 'unicode.shorthandWithoutU'], $off);
+        $this->assertSame(['anchor.dollarNewline', 'charclass.single', 'literal.multipleSpaces', 'lookaround.edgeQuantifier', 'lookaround.redundant', 'quantifier.lazyToClass', 'quantifier.uselessLazy', 'unicode.shorthandWithoutU'], $off);
         $this->assertSame($off, $named);
     }
 
@@ -109,6 +109,7 @@ final class LintRuleConfigurationTest extends TestCase
         yield 'quantifier.lazyToClass' => ['key' => 'quantifier.lazyToClass', 'default' => false];
         yield 'anchor.dollarNewline' => ['key' => 'anchor.dollarNewline', 'default' => false];
         yield 'literal.invisible' => ['key' => 'literal.invisible', 'default' => true];
+        yield 'lookaround.redundant' => ['key' => 'lookaround.redundant', 'default' => false];
     }
 
     /**

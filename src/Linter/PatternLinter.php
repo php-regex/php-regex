@@ -70,6 +70,7 @@ final class PatternLinter extends AbstractNodeVisitor
         'quantifier.lazyToClass' => false,
         'quantifier.uselessLazy' => false,
         'lookaround.edgeQuantifier' => false,
+        'lookaround.redundant' => false,
     ];
 
     /**

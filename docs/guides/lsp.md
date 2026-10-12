@@ -583,6 +583,7 @@ No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
 | `regex.lint.literal.multipleSpaces` | Information | a run of literal spaces, ` {2}` (style, off by default) |
 | `regex.lint.quantifier.uselessLazy` | Information | `(a+?)b` matches as `(a+)b` (style, off by default) |
 | `regex.lint.lookaround.edgeQuantifier` | Information | `(?=a{2,6})` asserts what `(?=a{2})` asserts (perf, off by default) |
+| `regex.lint.lookaround.redundant` | Information | `(?=a(?=b))` asserts what `(?=ab)` asserts (style, off by default) |
 | `regex.lint.quantifier.lazyToClass` | Information | `".*?"` where `"[^"\n]*"` reads the run at once (perf, off by default) |
 | other `regex.lint.*` | Warning | The [lint rules](../reference/rules.md#quick-reference-table) |
 

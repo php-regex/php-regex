@@ -177,7 +177,7 @@
         },
         "rules": {
           "type": "object",
-          "description": "Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.",
+          "description": "Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier and lookaround.redundant.",
           "additionalProperties": false,
           "properties": {
             "unicode.shorthandWithoutU": {
@@ -439,6 +439,11 @@
               "type": "boolean",
               "description": "Warn about a control character, or a character that hides or moves text, written raw in a pattern.",
               "default": true
+            },
+            "lookaround.redundant": {
+              "type": "boolean",
+              "description": "Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).",
+              "default": false
             },
             "redos.search": {
               "type": "boolean",

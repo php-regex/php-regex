@@ -69,6 +69,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.literal.multipleSpaces' => ['/a  b/', '/a {2}b/'],
         'regex.lint.lookaround.edgeQuantifier' => ['/x(?=a{2,6})/', '/x(?=a{2})/'],
         'regex.lint.lookaround.impossible' => ['/(?=a)b/', '/(?=a)[ab]/'],
+        'regex.lint.lookaround.redundant' => ['/(?=a(?=b))/', '/(?=a(?!b))/'],
         'regex.lint.overlap.charset' => ['/([a-m]|[a-z])+/', '/([a-m]|[n-z])+/'],
         'regex.lint.quantifier.assertion' => ['/(?=a)?b/', '/(?=a)b/'],
         'regex.lint.quantifier.concatenation' => ['/.*.*x/', '/.*x/'],
@@ -98,6 +99,7 @@ final class LintRuleExamplesTest extends TestCase
         'quantifier.lazyToClass' => true,
         'quantifier.uselessLazy' => true,
         'lookaround.edgeQuantifier' => true,
+        'lookaround.redundant' => true,
         'anchor.dollarNewline' => true,
     ];
 

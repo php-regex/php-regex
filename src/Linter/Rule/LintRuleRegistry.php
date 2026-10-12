@@ -83,6 +83,7 @@ final class LintRuleRegistry
         $this->register(new AlwaysEmptyCaptureRule());
         $this->register(new DollarNewlineRule());
         $this->register(new InvisibleCharacterRule());
+        $this->register(new RedundantLookaroundRule());
     }
 
     /**

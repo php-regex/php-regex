@@ -84,6 +84,7 @@ final class LintConfigSchema
         'lookaround.edgeQuantifier' => ['Report a repeat at the edge of a lookaround past its minimum, which is never checked (perf).', false],
         'anchor.dollarNewline' => ['Report a final $ in a pattern anchored at its start, which also matches before a trailing newline (info).', false],
         'literal.invisible' => ['Warn about a control character, or a character that hides or moves text, written raw in a pattern.', true],
+        'lookaround.redundant' => ['Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).', false],
     ];
 
     /**
@@ -422,7 +423,7 @@ final class LintConfigSchema
                 ],
                 'rules' => [
                     'type' => 'object',
-                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.',
+                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier and lookaround.redundant.',
                     'additionalProperties' => false,
                     'properties' => $rules,
                 ],

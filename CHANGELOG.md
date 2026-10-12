@@ -89,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The style rule `regex.lint.lookaround.redundant`, off by default, reports a positive lookahead that ends a lookahead, or a positive lookbehind that starts a lookbehind, which the outer assertion can hold: `(?=a(?=b))` is `(?=ab)`.
 - The lint rule `regex.lint.literal.invisible` (warning) reports a C0 control, DEL, or a character that hides or moves text (C1 controls, format characters such as U+200B or U+202E, U+2028, U+2029) written raw where the pattern reads text, with the escape to write. The lint command, PHPStan and the language server keep the report only where the PHP literal holds the character as written: a double-quoted `"\t"` is not reported.
 - The lint rule `regex.lint.anchor.dollarNewline` (info, off by default, recommended for code validating untrusted input) reports a `$` that ends a pattern anchored at its start, read without `D` or `m`: it also matches before a trailing newline, so `/^\d+$/` accepts `"123\n"`. It speaks only where what precedes the `$` cannot take the newline and no lookahead can read it; `\Z`, `(*ANY)` and route requirements stay silent. The tip is `\z`, or the `D` modifier.
 - `regex lint` and the PHPStan extension report `regex.lint.complexity` on demand: `checks.complexity` in `regex.json` (`{"enabled": true, "threshold": 50}`) and `phpRegex.checks.complexity` in PHPStan, off by default, the threshold a positive integer (50 by default); it covers SonarPHP S5843 with PHPRegex's own complexity score.
