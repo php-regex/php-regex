@@ -2,8 +2,17 @@
 
 declare(strict_types=1);
 
-use PHPRegex\Toolkit\Regex;
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Toolkit\Regex;
 
 /**
  * Example: Validate a regex pattern with PHPRegex
@@ -15,7 +24,7 @@ use PHPRegex\Redos\RedosSeverity;
  * - ReDoS risk checking
  */
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__.'/../../vendor/autoload.php';
 
 $pattern = '/\d{4}-\d{2}-\d{2}/';
 
@@ -32,7 +41,7 @@ if ($result->isValid) {
 } else {
     echo "✗ Pattern is invalid\n";
     echo "Error: {$result->error}\n";
-    if ($result->hint !== null && $result->hint !== '') {
+    if (null !== $result->hint && '' !== $result->hint) {
         echo "Hint: {$result->hint}\n";
     }
     echo "\n";
@@ -41,12 +50,11 @@ if ($result->isValid) {
 
 $redosResult = $regex->redos($pattern);
 
-$severityOrder = [RedosSeverity::Safe, RedosSeverity::Low, RedosSeverity::Medium, RedosSeverity::High, RedosSeverity::Critical];
-$riskLevel = array_search($redosResult->severity, $severityOrder, true);
-
-if ($riskLevel >= 2) {  // MEDIUM or worse
+if ($redosResult->severity->rank() >= RedosSeverity::Medium->rank()) {
     echo "⚠️  ReDoS Risk: {$redosResult->severity->value}\n";
     echo "Consider using possessive quantifiers or atomic groups.\n";
+} elseif (RedosSeverity::Unknown === $redosResult->severity) {
+    echo "?  ReDoS Risk: unknown, the analysis could not reach a verdict\n";
 } else {
     echo "✓ ReDoS Risk: {$redosResult->severity->value}\n";
 }
