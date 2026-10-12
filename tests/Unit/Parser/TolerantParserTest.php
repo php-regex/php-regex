@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -44,5 +46,19 @@ final class TolerantParserTest extends TestCase
         $result = $this->regex->parseTolerant('/abc/');
 
         $this->assertFalse($result->hasErrors());
+    }
+
+    /**
+     * The errors are the library's: a list of the exceptions a strict parse
+     * throws, each with its error code and offset.
+     */
+    public function test_the_errors_are_a_list_of_regex_exceptions(): void
+    {
+        $result = $this->regex->parseTolerant('/(a+/');
+        $type = (string) (new \ReflectionClass(TolerantParseResult::class))->getConstructor()?->getDocComment();
+
+        $this->assertTrue(array_is_list($result->errors));
+        $this->assertContainsOnlyInstancesOf(RegexException::class, $result->errors);
+        $this->assertMatchesRegularExpression('/@param\s+list<RegexException>\s+\$errors/', $type);
     }
 }

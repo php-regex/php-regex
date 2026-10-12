@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser;
 
+use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\RegexNode;
 
 /**
@@ -23,7 +24,7 @@ final readonly class TolerantParseResult
     /**
      * @internal built by RegexParser::parseTolerant() and Regex::parseTolerant()
      *
-     * @param array<\Throwable> $errors
+     * @param list<RegexException> $errors what a strict parse would have thrown, the first error PCRE meets
      */
     public function __construct(public RegexNode $ast, public array $errors = []) {}
 

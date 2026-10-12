@@ -21,9 +21,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 interface NodeInterface
 {
     /**
-     * @template-covariant  T
-     *
-     * @phpstan-template  T
+     * @template T
      *
      * @param NodeVisitorInterface<T> $visitor
      *

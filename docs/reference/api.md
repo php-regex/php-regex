@@ -767,6 +767,8 @@ PHPRegex uses a focused exception hierarchy for precise error handling:
 Exception hierarchy (simplified):
 - `ExceptionInterface`
   - `InvalidRegexOptionException` (invalid configuration option)
+  - `CacheException` (a cache directory or file that cannot be written)
+  - `LintException` (a lint formatter or worker that failed)
   - `RegexException` (base exception with position and error code)
     - `LexerException` (tokenization failure)
     - `ParserException`
@@ -776,6 +778,7 @@ Exception hierarchy (simplified):
     - `SemanticErrorException` (semantic validation failure)
     - `TranspileException` (unsupported target or feature during transpile)
     - `SampleGenerationException` (no sample the pattern matches was found)
+    - `ComplexityException` (a pattern outside what the automata can decide)
 
 `SemanticErrorException` sits beside `ParserException`, not under it: a
 `catch (ParserException)` does not see it — catch `RegexException` to handle
