@@ -89,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The lint rule `regex.lint.anchor.dollarNewline` (info, off by default, recommended for code validating untrusted input) reports a `$` that ends a pattern anchored at its start, read without `D` or `m`: it also matches before a trailing newline, so `/^\d+$/` accepts `"123\n"`. It speaks only where what precedes the `$` cannot take the newline and no lookahead can read it; `\Z`, `(*ANY)` and route requirements stay silent. The tip is `\z`, or the `D` modifier.
 - `regex lint` and the PHPStan extension report `regex.lint.complexity` on demand: `checks.complexity` in `regex.json` (`{"enabled": true, "threshold": 50}`) and `phpRegex.checks.complexity` in PHPStan, off by default, the threshold a positive integer (50 by default); it covers SonarPHP S5843 with PHPRegex's own complexity score.
 - `php-regex/regex-laravel` installs on Laravel 13 as well as 12; the test suite runs on Laravel 13 from PHP 8.3.
 - `PHPRegex\Parser\Exception\VisualContextInterface`, implemented by the exceptions that carry the failing pattern with a caret under the offending character (`getVisualSnippet(): string`): `ParserException` and its syntax, recursion and resource subclasses, `LexerException`, `SemanticErrorException`, `TranspileException`, and the automata `ComplexityException`. An `instanceof` on it replaces probing the method at runtime; `ValidationResult::$caretSnippet` is written through it.

@@ -63,6 +63,7 @@ final class PatternLinter extends AbstractNodeVisitor
      * Rules that are disabled by default (can be enabled via config).
      */
     private const DEFAULT_DISABLED_RULES = [
+        'anchor.dollarNewline' => false,
         'unicode.shorthandWithoutU' => false,
         'charclass.single' => false,
         'literal.multipleSpaces' => false,

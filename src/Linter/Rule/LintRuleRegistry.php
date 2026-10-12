@@ -81,6 +81,7 @@ final class LintRuleRegistry
         $this->register(new UselessLazyRule());
         $this->register(new LookaroundEdgeQuantifierRule());
         $this->register(new AlwaysEmptyCaptureRule());
+        $this->register(new DollarNewlineRule());
     }
 
     /**

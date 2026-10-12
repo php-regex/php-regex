@@ -37,7 +37,9 @@ final class LintServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->analysis = new AnalysisService(RegexParser::create());
+        // anchor.dollarNewline is off by default: on here, so that a route
+        // source can be seen to leave it out.
+        $this->analysis = new AnalysisService(RegexParser::create(), lintRules: ['anchor.dollarNewline' => true]);
         $this->sources = new PatternSourceCollection([]);
     }
 
@@ -729,6 +731,9 @@ final class LintServiceTest extends TestCase
         yield 'no dot under s' => ['pattern' => '{^\d+$}sD', 'issueId' => 'regex.lint.flag.useless.s'];
         // An inline m reads the router's $ as a line end: D reads nothing.
         yield 'every $ under m' => ['pattern' => '{^(?m)a$}sD', 'issueId' => 'regex.lint.flag.useless.D'];
+        // A requirement handed over without the router's D: the router
+        // still matches it with D, so its final $ ends the subject.
+        yield 'a final $ read without D' => ['pattern' => '{^\d+$}s', 'issueId' => 'regex.lint.anchor.dollarNewline'];
     }
 
     /**

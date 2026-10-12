@@ -56,6 +56,9 @@ final readonly class LintService
         'regex.lint.flag.useless.s' => true,
         'regex.lint.flag.useless.D' => true,
         'regex.lint.flag.useless.i' => true,
+        // The same D keeps the router's final "$" from matching before a
+        // trailing newline.
+        'regex.lint.anchor.dollarNewline' => true,
     ];
 
     public function __construct(private AnalysisService $analysis, private PatternSourceCollection $sources) {}

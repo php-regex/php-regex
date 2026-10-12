@@ -177,7 +177,7 @@
         },
         "rules": {
           "type": "object",
-          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.",
+          "description": "Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.",
           "additionalProperties": false,
           "properties": {
             "unicode.shorthandWithoutU": {
@@ -428,6 +428,11 @@
             "lookaround.edgeQuantifier": {
               "type": "boolean",
               "description": "Report a repeat at the edge of a lookaround past its minimum, which is never checked (perf).",
+              "default": false
+            },
+            "anchor.dollarNewline": {
+              "type": "boolean",
+              "description": "Report a final $ in a pattern anchored at its start, which also matches before a trailing newline (info).",
               "default": false
             },
             "redos.search": {

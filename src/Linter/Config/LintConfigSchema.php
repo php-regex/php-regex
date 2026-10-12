@@ -82,6 +82,7 @@ final class LintConfigSchema
         'quantifier.lazyToClass' => ['Report a lazy dot before a single closing character, faster as a negated class (perf).', false],
         'quantifier.uselessLazy' => ['Report a lazy quantifier that matches what the greedy one matches (style).', false],
         'lookaround.edgeQuantifier' => ['Report a repeat at the edge of a lookaround past its minimum, which is never checked (perf).', false],
+        'anchor.dollarNewline' => ['Report a final $ in a pattern anchored at its start, which also matches before a trailing newline (info).', false],
     ];
 
     /**
@@ -420,7 +421,7 @@ final class LintConfigSchema
                 ],
                 'rules' => [
                     'type' => 'object',
-                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.',
+                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except anchor.dollarNewline, unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy and lookaround.edgeQuantifier.',
                     'additionalProperties' => false,
                     'properties' => $rules,
                 ],

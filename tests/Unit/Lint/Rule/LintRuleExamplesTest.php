@@ -39,6 +39,7 @@ final class LintRuleExamplesTest extends TestCase
         'regex.lint.alternation.empty' => ['/a|/', '/a|b/'],
         'regex.lint.alternation.overlap' => ['/(foo|foobar)+/', '/(foo|bar)+/'],
         'regex.lint.anchor.alternationPrecedence' => ['/^a|b/', '/^(?:a|b)/'],
+        'regex.lint.anchor.dollarNewline' => ['/^\d+$/', '/^\d+\z/'],
         'regex.lint.anchor.impossible.end' => ['/a$b/', '/ab$/'],
         'regex.lint.anchor.impossible.boundary' => ['/a\bb/', '/a\b!/'],
         'regex.lint.anchor.impossible.start' => ['/^a^/', '/^ab/'],
@@ -96,6 +97,7 @@ final class LintRuleExamplesTest extends TestCase
         'quantifier.lazyToClass' => true,
         'quantifier.uselessLazy' => true,
         'lookaround.edgeQuantifier' => true,
+        'anchor.dollarNewline' => true,
     ];
 
     #[Test]
