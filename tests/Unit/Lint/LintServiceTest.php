@@ -335,14 +335,13 @@ final class LintServiceTest extends TestCase
         $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
-        // For route patterns, certain issues like nested quantifiers should be filtered
-        if (!empty($result->results)) {
-            $routeIssues = array_filter(
-                $result->results[0]['issues'] ?? [],
-                static fn ($issue) => ($issue['issueId'] ?? '') === 'regex.lint.quantifier.nested',
-            );
-            $this->assertCount(0, $routeIssues);
-        }
+        // For route patterns, certain issues like nested quantifiers are
+        // filtered, whether or not another finding keeps the pattern listed.
+        $routeIssues = array_filter(
+            array_merge([], ...array_map(static fn (array $entry): array => $entry['issues'] ?? [], $result->results)),
+            static fn ($issue) => ($issue['issueId'] ?? '') === 'regex.lint.quantifier.nested',
+        );
+        $this->assertCount(0, $routeIssues);
     }
 
     #[Test]
