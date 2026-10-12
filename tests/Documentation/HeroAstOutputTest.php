@@ -38,7 +38,7 @@ final class HeroAstOutputTest extends TestCase
 
         $pattern = '/^(?<date>\d{4}-\d{2}-\d{2})$/';
         $command = sprintf(
-            '%s %s diagram %s --format=text --no-visuals --no-ansi',
+            '%s %s diagram %s --format=console --no-visuals --no-ansi',
             escapeshellarg(\PHP_BINARY),
             escapeshellarg(__DIR__.'/../../bin/regex'),
             escapeshellarg($pattern),

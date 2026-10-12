@@ -1175,6 +1175,17 @@ with the value quoted in the message.
 A Symfony configuration using `threshold: safe` to report every finding
 should use `low`.
 
+#### `--format` says `console` for the terminal
+
+| Command | 1.x | 2.0 |
+|---|---|---|
+| `regex explain`, `regex:explain` (Laravel) | `--format=text` | `--format=console` (the default) |
+| `regex diagram` | `--format=text`, `ascii` or `cli` | `--format=console` (the default) |
+| `regex highlight` | `--format=cli` | `--format=console` |
+
+The former values are usage errors (exit code 2). `html`, `svg` and `auto`
+are unchanged.
+
 #### Symfony: `debug:compare` is gone
 
 The compare command answers to `regex:compare` only; replace the

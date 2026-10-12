@@ -44,18 +44,18 @@ final class DiagramCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex diagram <pattern> [--format=text|svg] [--output=<file>]\n";
+        $usage = "Usage: regex diagram <pattern> [--format=console|svg] [--output=<file>]\n";
         $arguments = $this->readArguments($input->args, [], ['--format', '--output']);
         if (null !== $arguments['error']) {
             return $this->usageError($output, $arguments['error'], $usage);
         }
 
         $pattern = $arguments['pattern'];
-        $format = strtolower((string) ($arguments['options']['--format'] ?? 'text'));
+        $format = strtolower((string) ($arguments['options']['--format'] ?? 'console'));
         $outputPath = $arguments['options']['--output'] ?? null;
         $outputPath = \is_string($outputPath) ? $outputPath : null;
-        if (!\in_array($format, ['ascii', 'cli', 'text', 'svg'], true)) {
-            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=text or --format=svg.", $format), $usage);
+        if (!\in_array($format, ['console', 'svg'], true)) {
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console or --format=svg.", $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
@@ -68,7 +68,7 @@ final class DiagramCommand extends AbstractCommand
         $meta += $this->targetMeta($input, $output);
         $showConsoleOutput = 'svg' !== $format && null === $outputPath;
         if ($showConsoleOutput && $style->visualsEnabled()) {
-            $meta['Format'] = $output->warning('text');
+            $meta['Format'] = $output->warning('console');
             $style->renderBanner('diagram', $meta);
         }
 

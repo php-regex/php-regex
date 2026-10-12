@@ -42,16 +42,16 @@ final class ExplainCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex explain <pattern> [--format=text|html]\n";
+        $usage = "Usage: regex explain <pattern> [--format=console|html]\n";
         $arguments = $this->readArguments($input->args, [], ['--format']);
         if (null !== $arguments['error']) {
             return $this->usageError($output, $arguments['error'], $usage);
         }
 
         $pattern = $arguments['pattern'];
-        $format = $arguments['options']['--format'] ?? 'text';
-        if (!\is_string($format) || !\in_array($format, ['text', 'html'], true)) {
-            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=text or --format=html.", (string) $format), $usage);
+        $format = $arguments['options']['--format'] ?? 'console';
+        if (!\is_string($format) || !\in_array($format, ['console', 'html'], true)) {
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=console or --format=html.", (string) $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
@@ -62,24 +62,24 @@ final class ExplainCommand extends AbstractCommand
         $style = new ConsoleStyle($output, $input->globalOptions->visuals);
         $meta = [];
         $meta += $this->targetMeta($input, $output);
-        if ('text' === $format && $style->visualsEnabled()) {
-            $meta['Format'] = $output->warning('text');
+        if ('console' === $format && $style->visualsEnabled()) {
+            $meta['Format'] = $output->warning('console');
         }
 
-        if ('text' === $format) {
+        if ('console' === $format) {
             $style->renderBanner('explain', $meta);
         }
 
         try {
             $highlightedPattern = $pattern;
-            if ('text' === $format && $style->visualsEnabled() && $output->isAnsi()) {
+            if ('console' === $format && $style->visualsEnabled() && $output->isAnsi()) {
                 $ast = $regex->parse($pattern);
                 $highlightedPattern = $ast->accept(new ConsoleHighlighter());
             }
 
-            $explanation = $regex->explain($pattern, $format);
+            $explanation = $regex->explain($pattern, 'console' === $format ? 'text' : 'html');
 
-            if ('text' === $format && $style->visualsEnabled()) {
+            if ('console' === $format && $style->visualsEnabled()) {
                 $style->renderSection('Pattern', 1, 2);
                 $style->renderPattern($highlightedPattern);
                 $output->write("\n");

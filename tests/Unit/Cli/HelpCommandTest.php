@@ -167,12 +167,12 @@ final class HelpCommandTest extends TestCase
      * old spelling of text it still accepts, and the page does not offer it.
      */
     #[Test]
-    public function test_diagram_help_offers_the_text_and_svg_formats(): void
+    public function test_diagram_help_offers_the_console_and_svg_formats(): void
     {
         $rows = self::section(self::commandHelp('diagram'), 'Options');
 
         $this->assertArrayHasKey('--format <format>', $rows);
-        $this->assertSame('Output format (text, svg)', $rows['--format <format>']);
+        $this->assertSame('Output format (console, svg)', $rows['--format <format>']);
         $this->assertStringNotContainsString('ascii', implode("\n", $rows));
     }
 
@@ -325,7 +325,7 @@ final class HelpCommandTest extends TestCase
         $this->assertSame(0, $result);
         $this->assertStringContainsString('Render a diagram of the AST (text or SVG)', $text);
         $this->assertStringContainsString('--format <format>', $text);
-        $this->assertStringContainsString('Output format (text, svg)', $text);
+        $this->assertStringContainsString('Output format (console, svg)', $text);
         $this->assertStringContainsString('Basic diagram', $text);
     }
 
@@ -344,7 +344,7 @@ final class HelpCommandTest extends TestCase
         $this->assertSame(0, $result);
         $this->assertStringContainsString('Highlight a regex for display', $text);
         $this->assertStringContainsString('--format <format>', $text);
-        $this->assertStringContainsString('Output format (console, html)', $text);
+        $this->assertStringContainsString('Output format (auto, console, html)', $text);
         $this->assertStringContainsString('Console highlighting', $text);
         $this->assertStringContainsString('HTML highlighting', $text);
     }

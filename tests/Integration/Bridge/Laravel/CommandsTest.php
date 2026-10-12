@@ -32,6 +32,19 @@ final class CommandsTest extends TestCase
             ->expectsOutputToContain('Explanation:');
     }
 
+    public function test_explain_command_takes_the_console_and_html_formats(): void
+    {
+        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'console'])
+            ->assertSuccessful()
+            ->expectsOutputToContain('Explanation:');
+        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'html'])
+            ->assertSuccessful()
+            ->expectsOutputToContain('Explanation:');
+        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'text'])
+            ->assertExitCode(2)
+            ->expectsOutputToContain("Invalid format 'text'. Supported formats: console, html");
+    }
+
     public function test_explain_command_fails_on_invalid_pattern(): void
     {
         $this->artisan('regex:explain', ['pattern' => '/^(unclosed/'])

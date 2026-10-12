@@ -144,7 +144,7 @@ final readonly class HelpCommand implements CommandInterface
         $output->write($output->dim('  Inline ignore: // @regex-ignore-next-line or // @regex-ignore')."\n\n");
 
         $diagramOptions = [
-            ['--format <format>', 'Output format (text, svg)'],
+            ['--format <format>', 'Output format (console, svg)'],
             ['--output <file>', 'Write output to file'],
         ];
         $this->renderTableSection($output, 'Diagram Options', $diagramOptions, fn (string $value): string => $this->formatOption($output, $value));
@@ -351,7 +351,7 @@ final readonly class HelpCommand implements CommandInterface
             'explain' => [
                 'description' => 'Explain a regex pattern in plain language',
                 'options' => [
-                    ['--format <format>', 'Output format (text, html)'],
+                    ['--format <format>', 'Output format (console, html)'],
                 ],
                 'notes' => [],
                 'examples' => [
@@ -407,7 +407,7 @@ final readonly class HelpCommand implements CommandInterface
             'diagram' => [
                 'description' => 'Render a diagram of the AST (text or SVG)',
                 'options' => [
-                    ['--format <format>', 'Output format (text, svg)'],
+                    ['--format <format>', 'Output format (console, svg)'],
                     ['--output <file>', 'Write output to file'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
@@ -421,7 +421,7 @@ final readonly class HelpCommand implements CommandInterface
             'highlight' => [
                 'description' => 'Highlight a regex for display',
                 'options' => [
-                    ['--format <format>', 'Output format (console, html)'],
+                    ['--format <format>', 'Output format (auto, console, html)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],

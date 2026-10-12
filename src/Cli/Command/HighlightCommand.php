@@ -26,6 +26,8 @@ use PHPRegex\Parser\Exception\ParserException;
  */
 final class HighlightCommand extends AbstractCommand
 {
+    private const USAGE = "Usage: regex highlight <pattern> [--format=auto|console|html]\n";
+
     public function getName(): string
     {
         return 'highlight';
@@ -45,19 +47,17 @@ final class HighlightCommand extends AbstractCommand
     {
         $arguments = $this->readArguments($input->args, [], ['--format']);
         if (null !== $arguments['error']) {
-            return $this->usageError($output, $arguments['error'], "Usage: regex highlight <pattern> [--format=auto|cli|html]\n");
+            return $this->usageError($output, $arguments['error'], self::USAGE);
         }
 
         $pattern = $arguments['pattern'];
         $format = (string) ($arguments['options']['--format'] ?? 'auto');
         if ('auto' === $format) {
-            $format = \PHP_SAPI === 'cli' ? 'cli' : 'html';
+            $format = \PHP_SAPI === 'cli' ? 'console' : 'html';
         }
 
-        if (!\in_array($format, ['cli', 'html'], true)) {
-            $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error("Error: Invalid format: {$format}")."\n");
-
-            return self::INVALID;
+        if (!\in_array($format, ['console', 'html'], true)) {
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=auto, --format=console or --format=html.", $format), self::USAGE);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);
@@ -70,21 +70,21 @@ final class HighlightCommand extends AbstractCommand
         $meta += $this->targetMeta($input, $output);
 
         try {
-            if ('cli' === $format && $style->visualsEnabled()) {
-                $meta['Format'] = $output->warning('cli');
+            if ('console' === $format && $style->visualsEnabled()) {
+                $meta['Format'] = $output->warning('console');
                 $style->renderBanner('highlight', $meta);
             }
 
-            $visitor = 'cli' === $format ? new ConsoleHighlighter() : new HtmlHighlighter();
+            $visitor = 'console' === $format ? new ConsoleHighlighter() : new HtmlHighlighter();
 
             $ast = $regex->parse($pattern);
             $highlighted = $ast->accept($visitor);
 
-            if ('cli' === $format && !$output->isAnsi()) {
+            if ('console' === $format && !$output->isAnsi()) {
                 $highlighted = $pattern;
             }
 
-            if ('cli' === $format && $style->visualsEnabled()) {
+            if ('console' === $format && $style->visualsEnabled()) {
                 $style->renderSection('Highlighting pattern', 1, 1);
                 $style->renderPattern($highlighted);
             } else {

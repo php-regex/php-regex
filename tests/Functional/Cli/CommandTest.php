@@ -426,7 +426,7 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format', 'ascii']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('diagram', ['/a+/', '--format', 'console']), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('a', $buffer); // Should contain diagram output
@@ -506,10 +506,22 @@ final class CommandTest extends TestCase
         $output = OutputFactory::create();
 
         $exitCode = 0;
-        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format', 'cli']), $output), $exitCode);
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format', 'console']), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('/a+/', $buffer);
+    }
+
+    public function test_explain_command_refuses_the_former_text_format(): void
+    {
+        $command = new ExplainCommand();
+        $output = OutputFactory::create();
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('explain', ['/a+/', '--format=text']), $output), $exitCode);
+
+        $this->assertSame(2, $exitCode);
+        $this->assertStringContainsString("Unsupported format 'text'. Use --format=console or --format=html.", $buffer);
     }
 
     public function test_highlight_command_reports_invalid_format(): void
@@ -521,7 +533,7 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('highlight', ['/a+/', '--format=invalid']), $output), $exitCode);
 
         $this->assertSame(2, $exitCode);
-        $this->assertStringContainsString('FAIL Error: Invalid format: invalid', $buffer);
+        $this->assertStringContainsString("Unsupported format 'invalid'. Use --format=auto, --format=console or --format=html.", $buffer);
     }
 
     public function test_highlight_command_handles_invalid_regex_options(): void

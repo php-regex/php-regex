@@ -73,6 +73,14 @@ PHPRegex CLI provides these commands:
 Options may come before or after the pattern; `--` ends them, so that what
 follows is read as the pattern even when it starts with `-`.
 
+`--format` calls the terminal rendering `console` on every command; the
+other values depend on the command: `json` for `analyze`, `debug`, `redos`,
+`transpile` and `lint` (with `github`, `checkstyle` and `junit` for `lint`),
+`html` for `explain` and `highlight` (`auto`, the default of `highlight`,
+picks `console` in a terminal), `svg` for `diagram`, and `dot` or `mermaid`
+for `graph`. An unknown value is a usage error that names the values the
+command takes.
+
 ### Exit Codes
 
 Every command exits with one of three codes:
@@ -283,7 +291,7 @@ exit code follows the same rule as `analyze`.
 
 ### 4. Diagram (AST Visualization)
 
-Render text diagram of pattern structure (default):
+Render a text diagram of the pattern structure (`--format=console`, the default):
 
 ```bash
 vendor/bin/regex diagram '/^[a-z]+@[a-z]+\.[a-z]+$/i'

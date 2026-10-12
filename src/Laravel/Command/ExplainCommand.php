@@ -31,7 +31,7 @@ final class ExplainCommand extends Command
      */
     protected $signature = 'regex:explain
         {pattern : The regex pattern to explain}
-        {--format=text : Output format (text, html)}
+        {--format=console : Output format (console, html)}
         {--highlight : Include syntax highlighting}';
 
     /**
@@ -55,8 +55,8 @@ final class ExplainCommand extends Command
         $format = strtolower((string) $this->option('format'));
         $highlight = (bool) $this->option('highlight');
 
-        if (!\in_array($format, ['text', 'html'], true)) {
-            $this->error("Invalid format '{$format}'. Supported formats: text, html");
+        if (!\in_array($format, ['console', 'html'], true)) {
+            $this->error("Invalid format '{$format}'. Supported formats: console, html");
 
             return self::INVALID;
         }
@@ -88,7 +88,7 @@ final class ExplainCommand extends Command
 
         // Show explanation
         $this->line('<fg=white;options=bold>Explanation:</>');
-        $explanation = $this->regex->explain($pattern, $format);
+        $explanation = $this->regex->explain($pattern, 'console' === $format ? 'text' : 'html');
         $this->line($explanation);
         $this->newLine();
 
