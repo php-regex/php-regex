@@ -19,15 +19,49 @@ use PHPUnit\Framework\TestCase;
 final class ExamplesScriptsTest extends TestCase
 {
     /**
+     * The demo applications ship their own suites and their own trees; every
+     * other PHP file under demo/ is a standalone example script.
+     *
+     * @var list<string>
+     */
+    private const APPLICATIONS = ['symfony', 'laravel'];
+
+    /**
      * @return \Generator<string, array{script: string}>
      */
     public static function provideScripts(): \Generator
     {
-        yield 'basic parse' => ['script' => 'demo/examples/basic/parse.php'];
-        yield 'basic validate' => ['script' => 'demo/examples/basic/validate.php'];
-        yield 'advanced redos analysis' => ['script' => 'demo/examples/advanced/redos-analysis.php'];
-        yield 'real-world email validator' => ['script' => 'demo/examples/real-world/email-validator.php'];
-        yield 'symfony route analyzer' => ['script' => 'demo/examples/symfony/route-analyzer.php'];
+        $repoRoot = \dirname(__DIR__, 2);
+        $demoRoot = $repoRoot.'/demo';
+        $applications = \array_map(
+            static fn (string $application): string => $demoRoot.'/'.$application.'/',
+            self::APPLICATIONS,
+        );
+
+        $scripts = [];
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($demoRoot, \FilesystemIterator::SKIP_DOTS),
+        );
+
+        foreach ($files as $file) {
+            $path = $file->getPathname();
+
+            foreach ($applications as $application) {
+                if (\str_starts_with($path, $application)) {
+                    continue 2;
+                }
+            }
+
+            if ($file->getExtension() === 'php') {
+                $scripts[] = \substr($path, \strlen($repoRoot) + 1);
+            }
+        }
+
+        \sort($scripts);
+
+        foreach ($scripts as $script) {
+            yield $script => ['script' => $script];
+        }
     }
 
     #[DataProvider('provideScripts')]
@@ -37,6 +71,19 @@ final class ExamplesScriptsTest extends TestCase
 
         $this->assertSame(0, $exitCode, $output);
         $this->assertNotSame('', $output);
+    }
+
+    #[DataProvider('provideScripts')]
+    public function test_example_script_is_indexed_in_the_demo_readme(string $script): void
+    {
+        $readme = \file_get_contents(\dirname(__DIR__, 2).'/demo/README.md');
+
+        $this->assertIsString($readme);
+        $this->assertStringContainsString(
+            $script,
+            $readme,
+            \sprintf('Every example must be indexed in demo/README.md; %s is missing.', $script),
+        );
     }
 
     /**
