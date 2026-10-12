@@ -155,12 +155,6 @@ Effort: XS.
 theoretical mode and accepts no threshold, while `redos()` has four
 parameters. *Verify*: read `src/Toolkit/Regex.php:168-233`. Effort: XS.
 
-**B7 — The IDE completion set is incomplete.** `.phpstorm.meta.php` ships
-`regex_option_keys` without `pcre_version`, which `ParserOptions::VALID_OPTIONS`
-accepts, so the IDE suggests a wrong set. *Verify*: read
-`.phpstorm.meta.php:5-14` against `src/Parser/ParserOptions.php`.
-*Fix*: add the missing key. Effort: XS.
-
 **B8 — `hint` is null on the errors users actually hit.** Ten common mistakes
 (an unclosed class, a lone quantifier, `{2,1}`, an over-long quantifier, a bad
 range, a missing delimiter, a bad group name, a duplicate name, a non-existent

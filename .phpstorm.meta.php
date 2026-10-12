@@ -10,7 +10,8 @@ registerArgumentsSet(
     'redos_ignored_patterns',
     'runtime_pcre_validation',
     'max_recursion_depth',
-    'php_version'
+    'php_version',
+    'pcre_version'
 );
 
 registerArgumentsSet(
@@ -58,19 +59,20 @@ registerArgumentsSet(
 
 registerArgumentsSet(
     'highlight_formats',
-    'console',
-    'html'
+    'cli',
+    'html',
+    'auto'
 );
 
 registerArgumentsSet(
     'redos_thresholds',
     null,
-    \PHPRegex\Redos\RedosSeverity::SAFE,
-    \PHPRegex\Redos\RedosSeverity::LOW,
-    \PHPRegex\Redos\RedosSeverity::MEDIUM,
-    \PHPRegex\Redos\RedosSeverity::HIGH,
-    \PHPRegex\Redos\RedosSeverity::CRITICAL,
-    \PHPRegex\Redos\RedosSeverity::UNKNOWN
+    \PHPRegex\Redos\RedosSeverity::Safe,
+    \PHPRegex\Redos\RedosSeverity::Low,
+    \PHPRegex\Redos\RedosSeverity::Medium,
+    \PHPRegex\Redos\RedosSeverity::High,
+    \PHPRegex\Redos\RedosSeverity::Critical,
+    \PHPRegex\Redos\RedosSeverity::Unknown
 );
 
 expectedArguments(
@@ -127,4 +129,22 @@ override(
         true => \PHPRegex\Parser\TolerantParseResult::class,
         false => \PHPRegex\Parser\Node\RegexNode::class,
     ])
+);
+
+expectedArguments(
+    \PHPRegex\Tests\Support\PcreGates::requiresPcre2(),
+    0,
+    \PHPRegex\Tests\Support\PcreGateLimits::KNOWN_RELEASES
+);
+
+expectedArguments(
+    \PHPRegex\Tests\Support\PcreGates::requiresPhp(),
+    0,
+    \PHPRegex\Tests\Support\PcreGateLimits::KNOWN_PHP_VERSIONS
+);
+
+expectedArguments(
+    \PHPRegex\Tests\Support\PcreGates::forbidsPhp(),
+    0,
+    \PHPRegex\Tests\Support\PcreGateLimits::KNOWN_PHP_VERSIONS
 );
