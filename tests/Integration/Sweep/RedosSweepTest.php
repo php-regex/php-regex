@@ -45,9 +45,9 @@ final class RedosSweepTest extends TestCase
             highlighted: '<span>Test</span>',
         );
 
-        $this->assertSame($optimizations, $report->optimizations());
-        $this->assertSame('Test explanation', $report->explain());
-        $this->assertSame('<span>Test</span>', $report->highlighted());
+        $this->assertSame($optimizations, $report->optimizations);
+        $this->assertSame('Test explanation', $report->explain);
+        $this->assertSame('<span>Test</span>', $report->highlighted);
     }
 
     public function test_redos_analysis_exposes_the_vulnerable_part(): void

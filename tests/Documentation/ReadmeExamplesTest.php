@@ -92,8 +92,8 @@ final class ReadmeExamplesTest extends TestCase
         $result = $strict->validate('/(?<=a+)\w/');
 
         $this->assertFalse($result->isValid);
-        $this->assertNotNull($result->getCaretSnippet());
-        $this->assertNotNull($result->getHint());
+        $this->assertNotNull($result->caretSnippet);
+        $this->assertNotNull($result->hint);
     }
 
     #[Test]

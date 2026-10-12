@@ -37,49 +37,4 @@ final readonly class AnalysisReport
         public string $explain,
         public string $highlighted,
     ) {}
-
-    /**
-     * @return list<string>
-     */
-    public function errors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * @return list<RuleViolation>
-     */
-    public function lintIssues(): array
-    {
-        return $this->lintIssues;
-    }
-
-    /**
-     * Get ReDoS analysis.
-     */
-    public function redos(): RedosAnalysis
-    {
-        return $this->redos;
-    }
-
-    /**
-     * Get optimization suggestions.
-     */
-    public function optimizations(): OptimizationResult
-    {
-        return $this->optimizations;
-    }
-
-    public function explain(): string
-    {
-        return $this->explain;
-    }
-
-    /**
-     * Get highlighted version.
-     */
-    public function highlighted(): string
-    {
-        return $this->highlighted;
-    }
 }

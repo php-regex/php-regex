@@ -33,7 +33,7 @@ final class AnalysisReportRedosTest extends TestCase
     #[Test]
     public function test_analysis_report_carries_the_proven_verdict(): void
     {
-        $redos = Regex::create()->analyze('/(a+)+$/')->redos();
+        $redos = Regex::create()->analyze('/(a+)+$/')->redos;
 
         $this->assertSame(RedosProof::Proven, $redos->proof);
         $this->assertSame(RedosComplexity::Exponential, $redos->complexity);
@@ -45,7 +45,7 @@ final class AnalysisReportRedosTest extends TestCase
     #[Test]
     public function test_analysis_report_of_an_ignored_pattern_is_not_analyzed(): void
     {
-        $redos = Regex::create(['redos_ignored_patterns' => ['/(a+)+$/']])->analyze('/(a+)+$/')->redos();
+        $redos = Regex::create(['redos_ignored_patterns' => ['/(a+)+$/']])->analyze('/(a+)+$/')->redos;
 
         $this->assertSame(RedosProof::NotAnalyzed, $redos->proof);
         $this->assertSame(RedosComplexity::Unknown, $redos->complexity);

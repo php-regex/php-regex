@@ -783,7 +783,7 @@ Nothing to do; a warm cache directory rebuilds itself.
 #### Error codes are an `ErrorCode` enum
 
 `RegexException::getErrorCode()` returns a `RegexParser\ErrorCode` and is never
-`null`; `ValidationResult::$errorCode` and `getErrorCode()` are `?ErrorCode`.
+`null`; `ValidationResult::$errorCode` is `?ErrorCode`.
 The values of the codes 1.x already had are unchanged, so code comparing strings
 moves to `->value` or, better, to the case:
 
@@ -849,10 +849,24 @@ lines after the message. It is now the message alone; the snippet is in
 caret prints `$caretSnippet` after it; code that cut `$error` at its first
 line can drop that step.
 
-The deprecated accessors `isValid()` and `getErrorMessage()` are gone: read
-the `$isValid` and `$error` properties. Rector cannot rewrite a method call
-into a property read, so change these two by hand (PHPStan reports each
-remaining call).
+The accessors are gone, the deprecated `isValid()` and `getErrorMessage()`
+with the getters that repeated a property: read the public readonly property
+instead.
+
+| 1.x | 2.0 |
+|---|---|
+| `ValidationResult::isValid()` | `$isValid` |
+| `ValidationResult::getErrorMessage()` | `$error` |
+| `ValidationResult::getComplexityScore()` | `$complexityScore` |
+| `ValidationResult::getErrorCategory()` | `$category` |
+| `ValidationResult::getErrorOffset()` | `$offset` |
+| `ValidationResult::getCaretSnippet()` | `$caretSnippet` |
+| `ValidationResult::getHint()` | `$hint` |
+| `ValidationResult::getErrorCode()` | `$errorCode` |
+| `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `optimizations()`, `explain()`, `highlighted()` | the property of the same name |
+
+Rector cannot rewrite a method call into a property read, so change these by
+hand (PHPStan reports each remaining call).
 
 #### Every offset counts from the pattern body
 

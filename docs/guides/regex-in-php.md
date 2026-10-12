@@ -350,7 +350,7 @@ $result = $regex->validate($userPattern);
 
 if (!$result->isValid) {
     echo "Invalid pattern: " . $result->error;
-    echo "Hint: " . $result->getHint();
+    echo "Hint: " . $result->hint;
     return;
 }
 ```

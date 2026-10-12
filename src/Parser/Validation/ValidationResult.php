@@ -34,36 +34,6 @@ final readonly class ValidationResult implements \JsonSerializable
         public ?ErrorCode $errorCode = null,
     ) {}
 
-    public function getComplexityScore(): int
-    {
-        return $this->complexityScore;
-    }
-
-    public function getErrorCategory(): ?ValidationErrorCategory
-    {
-        return $this->category;
-    }
-
-    public function getErrorOffset(): ?int
-    {
-        return $this->offset;
-    }
-
-    public function getCaretSnippet(): ?string
-    {
-        return $this->caretSnippet;
-    }
-
-    public function getHint(): ?string
-    {
-        return $this->hint;
-    }
-
-    public function getErrorCode(): ?ErrorCode
-    {
-        return $this->errorCode;
-    }
-
     /**
      * @return array{is_valid: bool, error: string|null, complexity_score: int, category: string|null, offset: int|null, caret_snippet: string|null, hint: string|null, error_code: string|null}
      */

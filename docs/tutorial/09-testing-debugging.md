@@ -75,8 +75,8 @@ $result = $regex->validate('/(?<=a+)b/');
 
 if (!$result->isValid) {
     echo "Error: " . $result->error . "\n";
-    echo "Hint: " . $result->getHint() . "\n";
-    echo "Snippet:\n" . $result->getCaretSnippet() . "\n";
+    echo "Hint: " . $result->hint . "\n";
+    echo "Snippet:\n" . $result->caretSnippet . "\n";
 }
 ```
 
@@ -319,7 +319,7 @@ $pattern = '/(?<=a+)b/';
 $result = $regex->validate($pattern);
 
 echo $result->error . "\n";
-echo $result->getHint() . "\n";
+echo $result->hint . "\n";
 ```
 
 **Output:**

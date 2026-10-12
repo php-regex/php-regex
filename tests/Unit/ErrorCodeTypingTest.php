@@ -122,7 +122,7 @@ final class ErrorCodeTypingTest extends TestCase
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ErrorCode::from('regex.group.unclosed'), $result->errorCode);
-        $this->assertSame($result->errorCode, $result->getErrorCode());
+        $this->assertSame('regex.group.unclosed', $result->jsonSerialize()['error_code']);
     }
 
     /**
@@ -140,7 +140,7 @@ final class ErrorCodeTypingTest extends TestCase
 
         $this->assertTrue($result->isValid, (string) $result->error);
         $this->assertNull($result->errorCode);
-        $this->assertNull($result->getErrorCode());
+        $this->assertNull($result->jsonSerialize()['error_code']);
     }
 
     /**

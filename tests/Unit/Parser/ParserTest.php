@@ -952,10 +952,10 @@ final class ParserTest extends TestCase
         $report = $this->regex->analyze('/foo/');
 
         $this->assertTrue($report->isValid);
-        $this->assertIsArray($report->errors());
-        $this->assertIsArray($report->lintIssues());
-        $this->assertIsString($report->explain());
-        $this->assertIsString($report->highlighted());
+        $this->assertIsArray($report->errors);
+        $this->assertIsArray($report->lintIssues);
+        $this->assertIsString($report->explain);
+        $this->assertIsString($report->highlighted);
     }
 
     #[Test]

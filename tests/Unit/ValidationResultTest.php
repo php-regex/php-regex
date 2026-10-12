@@ -82,7 +82,7 @@ final class ValidationResultTest extends TestCase
         $this->assertSame('error', $result->error);
         $this->assertSame(123, $result->complexityScore);
 
-        $this->assertSame(123, $result->getComplexityScore());
+        $this->assertSame(123, $result->complexityScore);
     }
 
     public function test_get_error_category(): void
@@ -93,7 +93,7 @@ final class ValidationResultTest extends TestCase
         );
 
         $this->assertSame(ValidationErrorCategory::Semantic, $result->category);
-        $this->assertSame(ValidationErrorCategory::Semantic, $result->getErrorCategory());
+        $this->assertSame(ValidationErrorCategory::Semantic, $result->category);
     }
 
     public function test_get_error_offset(): void
@@ -104,7 +104,7 @@ final class ValidationResultTest extends TestCase
         );
 
         $this->assertSame(25, $result->offset);
-        $this->assertSame(25, $result->getErrorOffset());
+        $this->assertSame(25, $result->offset);
     }
 
     public function test_get_caret_snippet(): void
@@ -115,7 +115,7 @@ final class ValidationResultTest extends TestCase
         );
 
         $this->assertSame('error at this position', $result->caretSnippet);
-        $this->assertSame('error at this position', $result->getCaretSnippet());
+        $this->assertSame('error at this position', $result->caretSnippet);
     }
 
     public function test_get_hint(): void
@@ -126,7 +126,7 @@ final class ValidationResultTest extends TestCase
         );
 
         $this->assertSame('Consider using atomic groups', $result->hint);
-        $this->assertSame('Consider using atomic groups', $result->getHint());
+        $this->assertSame('Consider using atomic groups', $result->hint);
     }
 
     public function test_get_error_code(): void
@@ -137,7 +137,7 @@ final class ValidationResultTest extends TestCase
         );
 
         $this->assertSame(ErrorCode::GroupUnclosed, $result->errorCode);
-        $this->assertSame(ErrorCode::GroupUnclosed, $result->getErrorCode());
+        $this->assertSame(ErrorCode::GroupUnclosed, $result->errorCode);
     }
 
     public function test_null_values(): void
@@ -145,11 +145,11 @@ final class ValidationResultTest extends TestCase
         $result = new ValidationResult(true);
 
         $this->assertNull($result->error);
-        $this->assertNotInstanceOf(ValidationErrorCategory::class, $result->getErrorCategory());
-        $this->assertNull($result->getErrorOffset());
-        $this->assertNull($result->getCaretSnippet());
-        $this->assertNull($result->getHint());
-        $this->assertNull($result->getErrorCode());
+        $this->assertNotInstanceOf(ValidationErrorCategory::class, $result->category);
+        $this->assertNull($result->offset);
+        $this->assertNull($result->caretSnippet);
+        $this->assertNull($result->hint);
+        $this->assertNull($result->errorCode);
     }
 
     public function test_valid_result(): void
@@ -161,7 +161,7 @@ final class ValidationResultTest extends TestCase
 
         $this->assertTrue($result->isValid);
         $this->assertIsBool($result->isValid);
-        $this->assertSame(5, $result->getComplexityScore());
+        $this->assertSame(5, $result->complexityScore);
         $this->assertSame(5, $result->complexityScore);
         $this->assertNull($result->error);
     }
@@ -180,7 +180,7 @@ final class ValidationResultTest extends TestCase
                 category: $category,
             );
 
-            $this->assertSame($category, $result->getErrorCategory());
+            $this->assertSame($category, $result->category);
             $this->assertSame($category, $result->category);
         }
     }
@@ -189,7 +189,7 @@ final class ValidationResultTest extends TestCase
     {
         $result = new ValidationResult(true, null, 0);
 
-        $this->assertSame(0, $result->getComplexityScore());
+        $this->assertSame(0, $result->complexityScore);
         $this->assertSame(0, $result->complexityScore);
     }
 
@@ -200,7 +200,7 @@ final class ValidationResultTest extends TestCase
             offset: -1,
         );
 
-        $this->assertSame(-1, $result->getErrorOffset());
+        $this->assertSame(-1, $result->offset);
         $this->assertSame(-1, $result->offset);
     }
 
@@ -215,9 +215,9 @@ final class ValidationResultTest extends TestCase
         );
 
         $this->assertSame('', $result->error);
-        $this->assertSame('', $result->getCaretSnippet());
-        $this->assertSame('', $result->getHint());
+        $this->assertSame('', $result->caretSnippet);
+        $this->assertSame('', $result->hint);
         // An error code is an enum case now, never an empty string.
-        $this->assertSame(ErrorCode::PatternEmpty, $result->getErrorCode());
+        $this->assertSame(ErrorCode::PatternEmpty, $result->errorCode);
     }
 }

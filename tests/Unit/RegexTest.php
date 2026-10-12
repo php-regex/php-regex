@@ -206,14 +206,14 @@ final class RegexTest extends TestCase
     {
         $report = $this->regexService->analyze('/a+/');
         $this->assertIsBool($report->isValid);
-        $this->assertIsArray($report->errors());
+        $this->assertIsArray($report->errors);
     }
 
     public function test_analyze_method_with_invalid_regex(): void
     {
         $report = $this->regexService->analyze('/a(/');
         $this->assertFalse($report->isValid);
-        $this->assertNotEmpty($report->errors());
+        $this->assertNotEmpty($report->errors);
     }
 
     public function test_analyze_method_parsing_failure(): void
@@ -226,8 +226,8 @@ final class RegexTest extends TestCase
 
         // Should have parsing error in the catch block
         $this->assertFalse($report->isValid);
-        $this->assertNotEmpty($report->errors());
-        $this->assertStringContainsString('Recursion limit', $report->errors()[0]);
+        $this->assertNotEmpty($report->errors);
+        $this->assertStringContainsString('Recursion limit', $report->errors[0]);
     }
 
     public function test_parse_throws_recursion_limit_even_when_pattern_is_cached(): void
@@ -551,7 +551,7 @@ final class RegexTest extends TestCase
         $this->assertInstanceOf(ValidationResult::class, $result);
         $this->assertFalse($result->isValid);
         $this->assertSame('Test error', $result->error);
-        $this->assertSame(ErrorCode::TokenUnexpected, $result->getErrorCode());
+        $this->assertSame(ErrorCode::TokenUnexpected, $result->errorCode);
     }
 
     public function test_safe_extract_pattern_handles_parser_exception(): void
