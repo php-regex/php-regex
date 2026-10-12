@@ -109,6 +109,35 @@ final class ServerExitCodeTest extends TestCase
     }
 
     /**
+     * A malformed message between "initialize" and "shutdown" is answered
+     * with a parse error; "shutdown" is still answered, and "exit" after it
+     * ends the binary with 0.
+     */
+    #[Test]
+    public function test_the_binary_answers_a_malformed_message_and_serves_on(): void
+    {
+        $process = proc_open(
+            [\PHP_BINARY, __DIR__.'/../../../bin/regex-lsp'],
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        $this->assertIsResource($process);
+
+        fwrite($pipes[0], self::frames([['id' => 1, 'method' => 'initialize', 'params' => []]])
+            ."Content-Length: 9\r\n\r\n{not json"
+            .self::frames([['id' => 2, 'method' => 'shutdown'], ['method' => 'exit']]));
+        fclose($pipes[0]);
+        $written = (string) stream_get_contents($pipes[1]);
+        stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process));
+        $this->assertStringContainsString('{"jsonrpc":"2.0","id":null,"error":{"code":-32700,"message":"Parse error"}}', $written);
+        $this->assertStringContainsString('{"jsonrpc":"2.0","id":2,"result":null}', $written);
+    }
+
+    /**
      * @param list<array<string, mixed>> $messages
      */
     private function serve(array $messages): int

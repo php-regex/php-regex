@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp\Protocol;
 
+use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -216,5 +217,90 @@ final class MessageTest extends TestCase
         $this->assertSame(['rootUri' => null], $message->params);
 
         fclose($stream);
+    }
+
+    #[Test]
+    public function test_the_end_of_the_input_reads_as_null(): void
+    {
+        $stream = $this->streamOf('');
+
+        $this->assertNull(Message::readFrom($stream));
+
+        fclose($stream);
+    }
+
+    #[Test]
+    public function test_invalid_json_reads_as_a_parse_error_not_as_the_end(): void
+    {
+        $json = '{"jsonrpc":"2.0","id":2,"method":"shutdown"}';
+        $stream = $this->streamOf("Content-Length: 9\r\n\r\n{not jsonContent-Length: ".\strlen($json)."\r\n\r\n".$json);
+
+        $invalid = Message::readFrom($stream);
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32700, $invalid->code);
+        $this->assertSame('Parse error', $invalid->message);
+        $this->assertNull($invalid->id);
+
+        $next = Message::readFrom($stream);
+        $this->assertInstanceOf(Message::class, $next);
+        $this->assertSame('shutdown', $next->method);
+        $this->assertSame(2, $next->id);
+
+        fclose($stream);
+    }
+
+    #[Test]
+    public function test_an_invalid_request_keeps_the_id_it_carries(): void
+    {
+        $body = '{"jsonrpc":"2.0","id":"r-1","method":["hover"]}';
+        $stream = $this->streamOf('Content-Length: '.\strlen($body)."\r\n\r\n".$body);
+
+        $invalid = Message::readFrom($stream);
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32600, $invalid->code);
+        $this->assertSame('Invalid Request', $invalid->message);
+        $this->assertSame('r-1', $invalid->id);
+
+        fclose($stream);
+    }
+
+    /**
+     * A body sent without a Content-Length has no known end: the reader
+     * reports it, then finds the next message at the Content-Length header
+     * that closes the line the body runs into.
+     */
+    #[Test]
+    public function test_a_message_without_content_length_is_reported_and_the_next_one_read(): void
+    {
+        $lost = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"text":"Content-Length: 3"}}';
+        $json = '{"jsonrpc":"2.0","id":2,"method":"shutdown"}';
+        $stream = $this->streamOf("Content-Type: application/vscode-jsonrpc\r\n\r\n".$lost.'Content-Length: '.\strlen($json)."\r\n\r\n".$json);
+
+        $invalid = Message::readFrom($stream);
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32700, $invalid->code);
+        $this->assertNull($invalid->id);
+
+        $next = Message::readFrom($stream);
+        $this->assertInstanceOf(Message::class, $next);
+        $this->assertSame('shutdown', $next->method);
+        $this->assertSame(2, $next->id);
+
+        $this->assertNull(Message::readFrom($stream));
+
+        fclose($stream);
+    }
+
+    /**
+     * @return resource
+     */
+    private function streamOf(string $content)
+    {
+        $stream = fopen('php://memory', 'r+');
+        $this->assertIsResource($stream);
+        fwrite($stream, $content);
+        rewind($stream);
+
+        return $stream;
     }
 }

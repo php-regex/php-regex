@@ -20,6 +20,7 @@ use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
 use PHPRegex\LanguageServer\Handler\InitializeHandler;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
+use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Config\LintConfigLoader;
@@ -100,8 +101,8 @@ final class Server
     }
 
     /**
-     * Run the LSP server main loop, until "shutdown", "exit" or the end of
-     * the input.
+     * Run the LSP server main loop, until "exit" or the end of the input.
+     * After "shutdown", every message but "exit" is left unserved.
      *
      * @return int the code to exit with: 1 on an "exit" no "shutdown" came before, 0 otherwise
      */
@@ -119,11 +120,19 @@ final class Server
             stream_set_read_buffer($input, 0);
         }
 
-        while (!$this->shutdown && null === $this->exitCode) {
+        while (null === $this->exitCode) {
             $message = Message::readFrom($input);
             if (null === $message) {
                 // EOF or read error
                 break;
+            }
+
+            // A message that cannot be used costs one error answer, not the
+            // session.
+            if ($message instanceof InvalidMessage) {
+                Response::error($message->id, $message->code, $message->message);
+
+                continue;
             }
 
             // A pattern that trips a limit, or any other failure inside a
@@ -180,6 +189,11 @@ final class Server
         if ('exit' === $method) {
             $this->exitCode = $this->shutdown ? 0 : 1;
 
+            return;
+        }
+
+        // Shut down: nothing is served until "exit".
+        if ($this->shutdown) {
             return;
         }
 

@@ -243,6 +243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The language server answers a malformed message with a JSON-RPC error and keeps the session: -32700 Parse error for a body that is not JSON or has no usable `Content-Length` (reading resumes at the next `Content-Length` header), -32600 Invalid Request for JSON that is not a JSON-RPC 2.0 request; such a message ended the session without a word. After `shutdown` the server waits for `exit`, as the protocol asks, instead of returning at once.
 - A `phpRegex.phpVersion` or `phpRegex.pcreVersion` the library cannot read stops PHPStan while it loads its configuration, naming the key, as the documentation said: the rules are built lazily, so it surfaced as an internal error on the first file.
 - The Rector rules require Rector 2.4, the first release with the `AbstractRector::getNativeType()` the trivial-match rule calls: under 2.0 to 2.3 `rector process` stopped on an undefined method. The monorepo package `php-regex/php-regex` now refuses the Rector and Psalm releases its bridges cannot run on (`rector/rector <2.4`, `vimeo/psalm <6.19`), as the split packages do.
 - `regex lint` with a `nikic/php-parser` older than 4.18 installed ended with a fatal error (`ParserFactory::createForHostVersion()` arrived in 4.18): the linter now conflicts with those releases.

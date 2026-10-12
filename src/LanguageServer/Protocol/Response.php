@@ -52,8 +52,10 @@ final class Response
 
     /**
      * Send an error response.
+     *
+     * @param int|string|null $id null when the id of the request cannot be read
      */
-    public static function error(int|string $id, int $code, string $message, mixed $data = null): void
+    public static function error(int|string|null $id, int $code, string $message, mixed $data = null): void
     {
         $error = [
             'code' => $code,

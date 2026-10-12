@@ -409,8 +409,8 @@ Add to your settings:
 |--------|-------------|
 | `initialize` | Server capabilities negotiation |
 | `initialized` | Initialization complete |
-| `shutdown` | Graceful shutdown request |
-| `exit` | Server exit |
+| `shutdown` | Graceful shutdown request: nothing else is served until `exit` |
+| `exit` | Server exit: code 0 after `shutdown`, 1 without it |
 | `textDocument/didOpen` | Document opened |
 | `textDocument/didChange` | Document changed |
 | `textDocument/didClose` | Document closed |
@@ -420,6 +420,17 @@ Add to your settings:
 | `textDocument/codeAction` | Code actions (quick fixes) |
 | `textDocument/completion` | Completion suggestions |
 | `textDocument/publishDiagnostics` | Push diagnostics to client |
+
+### Malformed Messages
+
+A message the server cannot use is answered with a JSON-RPC error, and the
+session goes on:
+
+| Message | Answer |
+|---------|--------|
+| A body that is not JSON, or empty (`Content-Length: 0`) | `-32700` Parse error, `id` null |
+| Headers without a usable `Content-Length` | `-32700` Parse error, `id` null; the body has no known end, so reading starts again at the next `Content-Length` header |
+| JSON that is not a JSON-RPC 2.0 object: a batch, a scalar, no `"jsonrpc": "2.0"`, a `method` that is not a string, an `id` that is neither an integer nor a string, `params` that are neither an object nor an array | `-32600` Invalid Request, with the message's `id` when it is an integer or a string, else null |
 
 ### Server Capabilities
 
@@ -463,8 +474,9 @@ Add to your settings:
 
 3. Test it directly. The server speaks LSP over stdio, where a message is a
    `Content-Length` header followed by its JSON body — a bare `echo` prints
-   nothing: the server reads headers, finds no `Content-Length`, and exits
-   without a message to answer. Frame the message:
+   nothing: the server reads the line as a header, the input ends before the
+   blank line that closes the headers, and it exits without a message to
+   answer. Frame the message:
 
    ```bash
    MSG='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{},"rootUri":null}}'
