@@ -27,7 +27,7 @@ final readonly class LiteralExtractionResult
     public function __construct(
         public array $literals,
         public array $patterns,
-        public string $confidence,
+        public LiteralConfidence $confidence,
         public LiteralSet $literalSet,
     ) {}
 }

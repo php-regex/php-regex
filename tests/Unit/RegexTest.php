@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Explain\HtmlExplainer;
+use PHPRegex\Parser\Analysis\LiteralConfidence;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Cache\FilesystemCache;
@@ -313,7 +314,7 @@ final class RegexTest extends TestCase
 
         $this->assertSame($literals, $result->literals);
         $this->assertSame($patterns, $result->patterns);
-        $this->assertSame($confidence, $result->confidence);
+        $this->assertSame(LiteralConfidence::from($confidence), $result->confidence);
     }
 
     /**
@@ -324,6 +325,7 @@ final class RegexTest extends TestCase
         yield 'a repeated literal' => ['pattern' => '/a+/', 'literals' => ['a'], 'patterns' => ['^a'], 'confidence' => 'medium'];
         yield 'an anchored head and tail' => ['pattern' => '/^foo.*bar$/', 'literals' => ['foo', 'bar'], 'patterns' => ['^foo', 'bar$'], 'confidence' => 'medium'];
         yield 'two whole-word alternatives' => ['pattern' => '/abc|abd/', 'literals' => ['abc', 'abd'], 'patterns' => ['^abc', '^abd', 'abc$', 'abd$'], 'confidence' => 'high'];
+        yield 'no literal at all' => ['pattern' => '/\\d+/', 'literals' => [], 'patterns' => [], 'confidence' => 'low'];
         yield 'a repeated group before a literal' => ['pattern' => '/(a|b)+c/', 'literals' => ['a', 'b', 'c'], 'patterns' => ['^a', '^b', 'c$'], 'confidence' => 'medium'];
         yield 'literals around a class' => ['pattern' => '/x[0-9]y/', 'literals' => ['x', 'y'], 'patterns' => ['^x', 'y$'], 'confidence' => 'medium'];
     }
@@ -397,7 +399,7 @@ final class RegexTest extends TestCase
         $patterns = $buildSearch->invoke($regex, $literalSet);
         $this->assertContains('^foo', $patterns);
         $this->assertContains('bar$', $patterns);
-        $this->assertSame('medium', $determine->invoke($regex, $literalSet));
+        $this->assertSame(LiteralConfidence::Medium, $determine->invoke($regex, $literalSet));
 
         // The parameter is typed natively: anything but a LiteralSet is
         // refused by the engine, not quietly read as empty.
@@ -486,9 +488,9 @@ final class RegexTest extends TestCase
         $voidSet = LiteralSet::empty();
         $incompleteSet = new LiteralSet(['a'], ['b'], false);
 
-        $this->assertSame('high', $method->invoke($this->regexService, $completeSet));
-        $this->assertSame('low', $method->invoke($this->regexService, $voidSet));
-        $this->assertSame('medium', $method->invoke($this->regexService, $incompleteSet));
+        $this->assertSame(LiteralConfidence::High, $method->invoke($this->regexService, $completeSet));
+        $this->assertSame(LiteralConfidence::Low, $method->invoke($this->regexService, $voidSet));
+        $this->assertSame(LiteralConfidence::Medium, $method->invoke($this->regexService, $incompleteSet));
 
         // The old "anything else is low" arm is gone with the native type.
         $this->expectException(\TypeError::class);

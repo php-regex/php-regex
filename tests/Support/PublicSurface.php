@@ -50,7 +50,7 @@ final class PublicSurface
             'Printer/PatternPrinter', 'Printer/NodeDumper',
             'Analysis/ComplexityScorer', 'Analysis/GroupNumbering', 'Analysis/GroupNumberingCollector',
             'Analysis/LengthRangeCalculator', 'Analysis/LiteralExtractor', 'Analysis/LiteralExtractionResult',
-            'Analysis/LiteralSet', 'Analysis/MetricsCollector',
+            'Analysis/LiteralConfidence', 'Analysis/LiteralSet', 'Analysis/MetricsCollector',
             'Analysis/CaptureShapeAnalyzer', 'Analysis/CaptureShape', 'Analysis/CaptureGroupShape', 'Analysis/Participation',
             'Analysis/RequiredLiteralAnalyzer',
             'Analysis/PatternInfoAnalyzer', 'Analysis/PatternInfo', 'NewlineConvention', 'BsrConvention',

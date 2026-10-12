@@ -534,7 +534,7 @@ print_r($result->literals);                     // ['user-']
 echo $result->patterns[0];                      // '^user\-'
 echo $result->literalSet->getLongestPrefix();   // 'user-'
 print_r($result->literalSet->suffixes);         // [] (the digits vary)
-echo $result->confidence;                       // 'medium'
+echo $result->confidence->value;                // 'medium' (LiteralConfidence::Medium)
 ```
 
 ---
@@ -732,7 +732,7 @@ $result = Regex::create()->literals('/user-\d{4}/');
 
 echo $result->literalSet->getLongestPrefix();   // 'user-'
 var_dump($result->literalSet->complete);        // bool(false)
-echo $result->confidence;                       // 'medium'
+echo $result->confidence->value;                // 'medium' (LiteralConfidence::Medium)
 
 foreach ($result->literals as $literal) {
     echo "Found literal: $literal\n";

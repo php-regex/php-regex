@@ -25,6 +25,7 @@ use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
+use PHPRegex\Parser\Analysis\LiteralConfidence;
 use PHPRegex\Parser\Analysis\LiteralExtractionResult;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
@@ -569,22 +570,15 @@ final readonly class Regex
     }
 
     /**
-     * Determine confidence level for literal extraction.
-     *
-     * @param LiteralSet $literalSet The literal set to evaluate
-     *
-     * @return string Confidence level ('high', 'medium', or 'low')
+     * @param LiteralSet $literalSet what LiteralExtractor read from the pattern
      */
-    private function determineConfidenceLevel(LiteralSet $literalSet): string
+    private function determineConfidenceLevel(LiteralSet $literalSet): LiteralConfidence
     {
-        $isComplete = $literalSet->complete;
-        $isVoid = $literalSet->isVoid();
-
-        if ($isVoid) {
-            return 'low';
+        if ($literalSet->isVoid()) {
+            return LiteralConfidence::Low;
         }
 
-        return $isComplete ? 'high' : 'medium';
+        return $literalSet->complete ? LiteralConfidence::High : LiteralConfidence::Medium;
     }
 
     /**

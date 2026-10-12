@@ -868,6 +868,12 @@ instead.
 Rector cannot rewrite a method call into a property read, so change these by
 hand (PHPStan reports each remaining call).
 
+#### `LiteralExtractionResult::$confidence` is an enum
+
+`Regex::literals()` gives its confidence as `LiteralConfidence::High`,
+`Medium` or `Low` where 1.x gave the strings `'high'`, `'medium'` and
+`'low'`. Compare with the case, or read `->value` for the string.
+
 #### Every offset counts from the pattern body
 
 `ValidationResult::$offset` and `RegexException::getPosition()` count from the
