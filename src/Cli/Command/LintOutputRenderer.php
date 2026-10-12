@@ -117,8 +117,7 @@ final readonly class LintOutputRenderer
     {
         $output->write("\n");
         $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $output->write('  '.$output->dim($message.'https://github.com/php-regex/php-regex')."\n");
-        $output->write('  '.$output->dim('Cache: 0 hits, 0 misses')."\n\n");
+        $output->write('  '.$output->dim($message.'https://github.com/php-regex/php-regex')."\n\n");
     }
 
     private function relativePath(string $path): string

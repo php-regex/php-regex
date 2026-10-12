@@ -213,7 +213,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         ]);
         $lint = new LintService($analysis, $sources);
 
-        if ('console' === $format && OutputConfiguration::VERBOSITY_QUIET !== $verbosity) {
+        if ('console' === $format && OutputConfiguration::VERBOSITY_QUIET !== $verbosity && $input->globalOptions->visuals) {
             $output->write($this->outputRenderer->renderBanner($output, $target, $jobs, $lintConfigFiles));
         }
 

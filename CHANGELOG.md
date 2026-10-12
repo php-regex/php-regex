@@ -239,6 +239,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex lint --no-visuals` leaves out the banner (runtime, target, processes, JIT and limits) as every other command does, and the lint footer no longer prints a `Cache: 0 hits, 0 misses` line written in the code rather than measured.
 - `LanguageSolver::matchEquivalent()` refuses a pattern under `(*CRLF)`: the dot there reads a `\r` alone but not one before a `\n`, which it did not model, so `/(*CRLF)(.*)(\r?)\n/` and `/(*CRLF)(.*)()\n/` were called equivalent.
 - `TestCaseGenerator` checks every case against the running engine: `preg_match()` gives 1 on each matching case and 0 on each non-matching one, so `/foo|bar/` no longer lists `bar` as non-matching. A case the engine contradicts is dropped; strings near the matching ones, and samples from `SampleGenerator` when no matching case survives (`/(a)\1/` gets `aa`), fill the lists. A pattern the engine refuses has no case, and one that matches every subject has no non-matching case.
 - `regex.lint.alternation.overlap` reads a literal branch under `i` in either case: `/^(?:a|A)+$/i`, exponential, is reported, and so is a branch made caseless by `(?i:…)`.
