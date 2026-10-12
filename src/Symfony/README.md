@@ -55,7 +55,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `cache.pool`, `cache.directory`, `cache.prefix` | `null`, `'%kernel.cache_dir%/php_regex'`, `'regex_'` | Cache for parsed ASTs: a PSR-6 pool, else this directory |
 | `extractor_service` | `null` | Service id of a custom pattern extractor |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported, patterns skipped |
-| `analysis.warning_threshold` | `50` | Complexity score above which a warning is emitted |
+| `analysis.warning_threshold` | `50` | Complexity score from which a pattern counts as complex; `regex:lint` does not report it yet (`regex lint` does, under `checks.complexity`) |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind the automata comparisons |
 | `optimizations.*` | `digits`, `word`, `ranges`, `canonicalize_char_classes` `true`; `possessive`, `factorize` `false`; `min_quantifier_count` `4` | Default optimization switches for `regex:lint` |
 | `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips |

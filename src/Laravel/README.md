@@ -61,7 +61,7 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
 | `cache.store`, `cache.directory`, `cache.prefix` | `null`, `'{storage_path}/framework/cache/php-regex'`, `'regex_'` | Cache for parsed patterns: a Laravel store, else this directory |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported (`low` to `critical`), patterns skipped |
-| `analysis.warning_threshold` | `50` | Complexity score above which a warning is emitted |
+| `analysis.warning_threshold` | `50` | Complexity score from which a pattern counts as complex; `regex:lint` does not report it yet (`regex lint` does, under `checks.complexity`) |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind `regex:compare` |
 | `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
 | `paths`, `exclude`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, and the editor behind its clickable links |

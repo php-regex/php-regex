@@ -209,3 +209,9 @@ recipe in symfony/recipes-contrib. Effort: S.
 **G6 — A Symfony route requirement shows as a delimited pattern.** In the lint
 console output `\d+` reads `→ /\d+/` while `[a-z]+` reads as typed.
 Effort: XS.
+
+**G7 — The bridges' complexity threshold reports nothing.** Symfony's and
+Laravel's `analysis.warning_threshold` reaches the analysis, but their
+`regex:lint` never turns the complexity report on, as `regex lint` does under
+`checks.complexity`. *Fix*: an `analysis` switch beside the threshold.
+Effort: XS.
