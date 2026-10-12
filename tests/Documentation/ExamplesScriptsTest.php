@@ -21,8 +21,6 @@ final class ExamplesScriptsTest extends TestCase
     /**
      * The demo applications ship their own suites and their own trees; every
      * other PHP file under demo/ is a standalone example script.
-     *
-     * @var list<string>
      */
     private const APPLICATIONS = ['symfony', 'laravel'];
 
@@ -44,6 +42,10 @@ final class ExamplesScriptsTest extends TestCase
         );
 
         foreach ($files as $file) {
+            if (!$file instanceof \SplFileInfo) {
+                continue;
+            }
+
             $path = $file->getPathname();
 
             foreach ($applications as $application) {
@@ -52,7 +54,7 @@ final class ExamplesScriptsTest extends TestCase
                 }
             }
 
-            if ($file->getExtension() === 'php') {
+            if ('php' === $file->getExtension()) {
                 $scripts[] = \substr($path, \strlen($repoRoot) + 1);
             }
         }
@@ -81,7 +83,7 @@ final class ExamplesScriptsTest extends TestCase
         $this->assertIsString($readme);
         $this->assertStringContainsString(
             $script,
-            $readme,
+            (string) $readme,
             \sprintf('Every example must be indexed in demo/README.md; %s is missing.', $script),
         );
     }
