@@ -36,6 +36,8 @@ use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\RegexNode;
@@ -389,7 +391,10 @@ final readonly class Regex
      *
      * @param string $regex The regular expression to generate a sample for
      *
-     * @throws SampleGenerationException when the pattern is invalid, or no sample the running engine matches was found
+     * @throws ParserException           when the pattern does not parse (a delimiter, flag or syntax fault)
+     * @throws LexerException            when the pattern does not tokenize
+     * @throws SampleGenerationException when the pattern parses but is invalid, as a call to a group that does not
+     *                                   exist, or no sample the running engine matches was found
      *
      * @return string Generated sample string
      */

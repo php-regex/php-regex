@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Generator\SampleGenerationException;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -223,5 +224,23 @@ final class RegexGenerateTest extends TestCase
         foreach (['/\d{3}-[A-Z]{2}/', '/^(?:foo|bar)\b/', '/\bword\b/', '_a+_', '*b\*c*'] as $pattern) {
             $this->assertSame(1, preg_match($pattern, $regex->generate($pattern)), $pattern);
         }
+    }
+
+    /**
+     * A pattern that does not parse is refused by the parser, with its own
+     * exception; one that parses but no engine would compile has no sample.
+     */
+    #[Test]
+    public function test_a_pattern_that_does_not_parse_throws_the_parsers_exception(): void
+    {
+        try {
+            Regex::create()->generate('/(/');
+            $this->fail('A pattern that does not parse has no sample.');
+        } catch (SyntaxErrorException $exception) {
+            $this->assertSame(ErrorCode::GroupUnclosed, $exception->errorCode);
+        }
+
+        $this->expectException(SampleGenerationException::class);
+        Regex::create()->generate('/(?1)a/');
     }
 }

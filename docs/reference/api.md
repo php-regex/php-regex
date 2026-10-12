@@ -172,7 +172,7 @@ and the PCRE2 it links. `runtime_pcre_validation` compiles with the running PHP,
 so it is refused with a target that is not that engine. See
 [Which PHP and which PCRE2 judge a pattern](../concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern).
 
-### Regex::target(): PcreTarget
+### target(): PcreTarget
 
 The PHP version (`$phpVersionId`) and the PCRE2 release (`$pcreVersion`) the
 instance judges for. `PcreTarget::runtime()` is the running engine,
@@ -551,7 +551,10 @@ the engine gives up on, past `pcre.backtrack_limit` or `pcre.recursion_limit`
 or on an error it meets matching, is no answer either, and another is tried,
 up to eight such samples; when none is found, the exception's message says how many samples the engine
 gave up on and the error it gave, as `Backtrack limit exhausted`. A pattern
-the running PHP cannot compile gets a sample nothing checked.
+the running PHP cannot compile gets a sample nothing checked. A pattern that
+does not parse throws the parser's exception (`SyntaxErrorException` for
+`/(/`); one that parses but is invalid, as `/(?1)a/`, throws
+`SampleGenerationException`.
 
 ```php
 use PHPRegex\Toolkit\Regex;
