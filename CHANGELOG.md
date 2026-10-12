@@ -243,6 +243,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Laravel `regex:lint` and `regex:routes --validate` judge a route constraint as the router matches it, anchored at both ends under `sDu` (`sDiu` for a domain parameter), where they wrapped it in bare slashes: the catastrophic backtracking of `->where('v', '(a+)+')` is now reported, a top-level alternation stays anchored, and a constraint starting with `/` is no longer read as a delimited pattern. A route constraint or requirement no longer gets a useless `s`, `D` or `i` flag finding the user cannot act on.
+- Laravel `regex:routes --show-constraints` marks a constraint valid or invalid only under `--validate`; without it there is no mark, and `valid` is `null` in the JSON report, where every constraint was marked valid. The command no longer claims to detect route conflicts: it lists the routes that have a constraint and validates the constraints.
+- Laravel `regex:compare`, `regex:transpile` and `regex:explain --highlight` print the pattern as plain text when the output is not decorated (piped, or `--no-ansi`), where they printed raw ANSI escape sequences.
 - `regex:security` and `regex:analyze` read the whole `security.yaml` again: a firewall's `security: false`, as in the dev firewall of the Symfony recipe, no longer hides every firewall and `access_control` rule after it, so a ReDoS firewall pattern or a shadowed rule there was reported as passing.
 - `regex:lint` no longer reports, on a route requirement, what Symfony's router adds to it: a useless `s` or `D` flag, a rewrite that only drops a flag, or a repeated unnamed group (the router makes it non-capturing). A rewrite of a route requirement keeps the router's flags.
 - `regex:lint` reads a Symfony route requirement written in block YAML once, and reports it at its own line instead of at two others.
