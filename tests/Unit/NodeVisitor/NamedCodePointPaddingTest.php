@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,12 +41,20 @@ final class NamedCodePointPaddingTest extends TestCase
     {
         $this->assertFalse(@preg_match($pattern, ''), \sprintf('%s should not compile.', $pattern));
 
-        foreach (self::readersOfPcre1043() as $regex) {
+        $readers = self::readersOfPcre1043();
+        foreach ($readers as $regex) {
             $result = $regex->validate($pattern);
 
             $this->assertFalse($result->isValid, \sprintf('%s does not compile but was reported valid.', $pattern));
             $this->assertSame(ErrorCode::UnicodeInvalidDigit, $result->errorCode);
-            $this->assertContains($result->offset, $offsets, \sprintf('%s reported at offset %s, PCRE2 reports %s.', $pattern, var_export($result->offset, true), implode(' or ', $offsets)));
+            // PCRE2 10.47 reports "\N{U+ " at the end of the pattern one
+            // byte past the 10.48 offset: the running PHP judges its reader.
+            if ($regex !== $readers[0]) {
+                $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);
+            }
+            if ($regex === $readers[0] || '10.47' !== explode(' ', \PCRE_VERSION)[0]) {
+                $this->assertContains($result->offset, $offsets, \sprintf('%s reported at offset %s, PCRE2 reports %s.', $pattern, var_export($result->offset, true), implode(' or ', $offsets)));
+            }
         }
     }
 

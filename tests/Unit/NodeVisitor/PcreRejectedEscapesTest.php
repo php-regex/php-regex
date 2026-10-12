@@ -72,11 +72,43 @@ final class PcreRejectedEscapesTest extends TestCase
         $result = Regex::create()->validate($pattern);
 
         $this->assertFalse($result->isValid);
-        $this->assertContains(
-            $result->offset,
-            $offsets,
-            \sprintf('%s reported at offset %s, PCRE2 reports %s.', $pattern, var_export($result->offset, true), implode(' or ', $offsets)),
-        );
+        // The running PHP is the judge; the pinned offsets are those of
+        // 10.48 and 10.40, which 10.47 leaves for an escape left open at the
+        // end of the pattern (see the test below).
+        $this->assertSame(PhpErrorOffset::of($pattern), $result->offset, $pattern);
+        if ('10.47' !== explode(' ', \PCRE_VERSION)[0]) {
+            $this->assertContains(
+                $result->offset,
+                $offsets,
+                \sprintf('%s reported at offset %s, PCRE2 reports %s.', $pattern, var_export($result->offset, true), implode(' or ', $offsets)),
+            );
+        }
+    }
+
+    /**
+     * PCRE2 10.47 reports a braced escape the pattern ends inside one byte
+     * past the end, 10.48 at the end (both observed with pcre2test).
+     */
+    #[Test]
+    #[DataProvider('provideEscapesLeftOpenAtTheEnd')]
+    public function test_validate_reports_escape_left_open_at_the_end_past_it_for_pcre2_10_47(string $pattern, int $offset): void
+    {
+        $pcre1047 = Regex::create(['cache' => null, 'php_version' => 80400, 'pcre_version' => '10.47'])->validate($pattern);
+        $pcre1048 = Regex::create(['cache' => null, 'php_version' => 80400, 'pcre_version' => '10.48'])->validate($pattern);
+
+        $this->assertSame($offset + 1, $pcre1047->offset, $pattern);
+        $this->assertSame($offset, $pcre1048->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideEscapesLeftOpenAtTheEnd(): iterable
+    {
+        yield '\\o{' => ['pattern' => '/\\o{7/', 'offset' => 4];
+        yield '\\x{' => ['pattern' => '/\\x{2/', 'offset' => 4];
+        yield '\\N{U+ under (*UTF)' => ['pattern' => '/(*UTF)\\N{U+2/', 'offset' => 12];
+        yield '\\N{U+ with padding' => ['pattern' => '/\\N{U+ /u', 'offset' => 6];
     }
 
     #[Test]
