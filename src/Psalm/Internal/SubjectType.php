@@ -16,6 +16,7 @@ namespace PHPRegex\Psalm\Internal;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
 use Psalm\Type\Atomic\TNonEmptyString;
@@ -102,7 +103,7 @@ final class SubjectType
             $strings = [];
             foreach ($language->strings() as $string) {
                 // The engine has the last word: a string it does not match drops them all.
-                if (self::MAX_STRINGS === \count($strings) || \strlen($string) >= $maxLength || 1 !== @preg_match($pattern, $string)) {
+                if (self::MAX_STRINGS === \count($strings) || \strlen($string) >= $maxLength || true !== (new PcreEngine())->match($pattern, $string)->matched) {
                     return null;
                 }
 
@@ -141,7 +142,8 @@ final class SubjectType
     private static function mayMatch(string $pattern, string $subject, array $offsets): bool
     {
         foreach ($offsets as $offset) {
-            if (0 !== @preg_match($pattern, $subject, $matches, 0, $offset)) {
+            // An error is no answer: the call may still have matched.
+            if (false !== (new PcreEngine())->match($pattern, $subject, null, $offset)->matched) {
                 return true;
             }
         }

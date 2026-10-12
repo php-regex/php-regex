@@ -16,6 +16,7 @@ namespace PHPRegex\Psalm\Internal;
 use PHPRegex\Parser\Analysis\CaptureGroupShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -69,7 +70,7 @@ final class QuotedPattern
     public static function of(array $parts, RegexParser $parser): ?string
     {
         // The delimiter opens the first part and closes the last.
-        if (!\in_array(null, $parts, true) || null === $parts[0] || null === $parts[\count($parts) - 1] || '' === $parts[0] || ctype_space($parts[0][0])) {
+        if (!\in_array(null, $parts, true) || null === $parts[0] || null === $parts[\count($parts) - 1] || '' === $parts[0] || 1 === strspn($parts[0], " \t\n\v\f\r", 0, 1)) {
             return null;
         }
 
@@ -101,7 +102,7 @@ final class QuotedPattern
         $after = implode('', array_map(static fn (?string $part): string => $part ?? '', \array_slice($parts, $index + 1)));
 
         // After an empty text, a quantifier or a comment binds to what precedes it.
-        if (1 === preg_match('/^\s*+(?:[*+?{#]|\(\?#)/', $after)) {
+        if (1 === LibraryPcre::match('/^\s*+(?:[*+?{#]|\(\?#)/', $after)) {
             return false;
         }
 

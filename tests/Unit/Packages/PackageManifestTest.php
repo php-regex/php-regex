@@ -279,7 +279,7 @@ final class PackageManifestTest extends TestCase
             'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
             // The plugin reads the key layout CaptureShape renders for
             // PHPStan, so both type systems say the same keys.
-            'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout'],
+            'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
             'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
             'Symfony' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
             'Toolkit' => ['Parser\Internal\PatternParser'],
