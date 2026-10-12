@@ -12,9 +12,12 @@
 # package on Packagist. Reads only.
 #
 # Usage:
-#   bin/status [--offline]
+#   bin/status [--offline] [--root <dir>]
 #
 #   --offline   the local part only: version, tag, branch and the packages
+#   --root      the monorepo checkout to report on (default: the one holding this script)
+#
+# The marks are coloured only when the output is a terminal.
 set -uo pipefail
 
 offline=0
@@ -24,15 +27,21 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --offline) offline=1 ;;
         --root) root=${2:?--root needs a directory}; shift ;;
-        -h|--help) sed -n '10,17p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
     shift
 done
 
-ok() { printf '  \033[32m✓\033[0m %s\n' "$1"; }
-ko() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
-na() { printf '  \033[2m·\033[0m %s\n' "$1"; }
+# Colours for a terminal only: piped or redirected, the marks stay plain.
+if [ -t 1 ]; then
+    green=$'\033[32m' red=$'\033[31m' dim=$'\033[2m' reset=$'\033[0m'
+else
+    green='' red='' dim='' reset=''
+fi
+ok() { printf '  %s✓%s %s\n' "$green" "$reset" "$1"; }
+ko() { printf '  %s✗%s %s\n' "$red" "$reset" "$1"; }
+na() { printf '  %s·%s %s\n' "$dim" "$reset" "$1"; }
 
 # The packages, as bin/split pushes them.
 repositories=$(sed -nE 's/^[[:space:]]+"src\/[A-Za-z]+:([a-z-]+)"$/\1/p' "$here/split")

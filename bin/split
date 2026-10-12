@@ -11,11 +11,14 @@
 # splitsh-lite: each src/<Package> becomes the root of php-regex/<repository>.
 #
 # Usage:
-#   bin/split [--dry-run] [--branch <name>] [--tag <name>]
+#   bin/split [--dry-run] [--root <dir>] [--branch <name>] [--tag <name>] [--only <repository>]...
 #
-#   --dry-run        show what would be pushed, push nothing
-#   --branch <name>  the branch to split and push (default: the current one)
-#   --tag <name>     also push this tag, made on the split of the tagged commit
+#   --dry-run            show what would be pushed, push nothing
+#   --root <dir>         the monorepo checkout to split (default: the one holding this script)
+#   --branch <name>      the branch to split and push (default: the current one)
+#   --tag <name>         also push this tag, made on the split of the tagged commit
+#   --only <repository>  split this repository alone, as regex-parser (repeatable;
+#                        default: every one)
 #
 # The repositories are reached at $SPLIT_REMOTE_BASE/<repository>.git
 # (default: git@github.com:php-regex). splitsh-lite is taken from $PATH, or
@@ -53,7 +56,7 @@ while [ $# -gt 0 ]; do
         --tag) tag=${2:?--tag needs a name}; shift ;;
         --only) only+=("${2:?--only needs a repository name}"); shift ;;
         --root) root=${2:?--root needs a directory}; shift ;;
-        -h|--help) sed -n '12,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
     shift

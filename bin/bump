@@ -10,15 +10,17 @@
 # Sets the version every package reports, before a release or after one.
 #
 # Usage:
-#   bin/bump [--dry-run] [--date YYYY-MM-DD] <version>
-#   bin/bump [--dry-run] --next <version>
+#   bin/bump [--dry-run] [--root <dir>] [--date YYYY-MM-DD] <version>
+#   bin/bump [--dry-run] [--root <dir>] --next <version>
 #
 #   <version>   2.1.0, 2.1.0-BETA1, 2.1.0-RC1: sets Regex::VERSION and VERSION_ID,
-#               and for a final version dates the CHANGELOG's Unreleased section as it
+#               and for a final version dates the CHANGELOG's Unreleased section
+#               and names it after <version>
 #   --next      after a release: sets Regex::VERSION to <version>-DEV and opens
 #               a "## [<version>] - Unreleased" section in the CHANGELOG
 #   --date      the release date written in the CHANGELOG (default: today)
 #   --dry-run   say what would change, change nothing
+#   --root      the monorepo checkout to change (default: the one holding this script)
 #
 # The packages' composer.json files carry no version: Composer reads it from
 # the tag.
@@ -35,7 +37,7 @@ while [ $# -gt 0 ]; do
         --next) next=1 ;;
         --date) date=${2:?--date needs YYYY-MM-DD}; shift ;;
         --root) root=${2:?--root needs a directory}; shift ;;
-        -h|--help) sed -n '12,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*) echo "Unknown option: $1" >&2; exit 2 ;;
         *) version=$1 ;;
     esac

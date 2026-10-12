@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Release;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -365,6 +366,46 @@ final class ReleaseScriptsTest extends TestCase
         $this->assertStringContainsString('2.0.0-DEV', $output);
         foreach (['parser', 'explain', 'optimizer', 'generator', 'automata', 'redos', 'transpiler', 'linter', 'toolkit', 'cli', 'language-server', 'phpstan', 'symfony', 'laravel'] as $name) {
             $this->assertStringContainsString('php-regex/regex-'.$name, $output);
+        }
+    }
+
+    #[Test]
+    public function test_status_offline_prints_no_colour_when_piped(): void
+    {
+        [$code, $output] = $this->script('status', '--offline');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('· php-regex/regex-parser', $output);
+        $this->assertStringNotContainsString("\033[", $output);
+    }
+
+    /**
+     * @return iterable<string, array{script: string, description: non-empty-string, options: list<string>}>
+     */
+    public static function provideHelpCases(): iterable
+    {
+        yield 'bump' => ['script' => 'bump', 'description' => 'Sets the version every package reports', 'options' => ['--dry-run', '--next', '--date', '--root']];
+        yield 'split' => ['script' => 'split', 'description' => 'Splits the monorepo into the read-only repositories', 'options' => ['--dry-run', '--branch', '--tag', '--only', '--root']];
+        yield 'release' => ['script' => 'release', 'description' => 'Releases a version', 'options' => ['--dry-run', '--skip-ci', '--skip-phar', '--branch', '--root']];
+        yield 'status' => ['script' => 'status', 'description' => 'Where the release stands', 'options' => ['--offline', '--root']];
+    }
+
+    /**
+     * @param non-empty-string $description
+     * @param list<string>     $options
+     */
+    #[Test]
+    #[DataProvider('provideHelpCases')]
+    public function test_help_describes_the_script_and_names_every_option(string $script, string $description, array $options): void
+    {
+        [$code, $output] = $this->script($script, '--help');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringStartsWith($description, $output);
+        $this->assertStringContainsString('Usage:', $output);
+        $this->assertStringNotContainsString('set -', $output);
+        foreach ($options as $option) {
+            $this->assertStringContainsString($option, $output);
         }
     }
 

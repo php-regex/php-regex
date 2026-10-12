@@ -13,12 +13,13 @@
 # php-regex/regex-* repository.
 #
 # Usage:
-#   bin/release [--dry-run] [--skip-ci] [--skip-phar] [--branch <name>] <version>
+#   bin/release [--dry-run] [--skip-ci] [--skip-phar] [--branch <name>] [--root <dir>] <version>
 #
 #   --dry-run    run every check, say what would happen, tag nothing
 #   --skip-ci    do not ask GitHub whether CI passed on HEAD
 #   --skip-phar  do not build the phar (the release then has no phar)
 #   --branch     the branch to release from (default: 2.x)
+#   --root       the monorepo checkout to release (default: the one holding this script)
 #
 # Run bin/bump <version> first, and commit what it changed.
 set -euo pipefail
@@ -36,7 +37,7 @@ while [ $# -gt 0 ]; do
         --skip-phar) skip_phar=1 ;;
         --branch) branch=${2:?--branch needs a name}; shift ;;
         --root) root=${2:?--root needs a directory}; shift ;;
-        -h|--help) sed -n '10,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*) echo "Unknown option: $1" >&2; exit 2 ;;
         *) version=$1 ;;
     esac
