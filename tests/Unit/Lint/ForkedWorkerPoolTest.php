@@ -125,6 +125,52 @@ final class ForkedWorkerPoolTest extends TestCase
         $this->assertSame('', $stdout);
     }
 
+    /**
+     * A child ends without running what its parent registered to run at
+     * shutdown, nor its destructors: those belong to the parent process (a
+     * logger flush, a connection close), and loading the classes they need
+     * from a phar in several children at once reads corrupted bytes (the
+     * suite saw "Unterminated comment" in a PHPStan class).
+     */
+    #[Test]
+    public function test_a_child_does_not_run_its_parents_shutdown_functions(): void
+    {
+        if (!\function_exists('pcntl_fork')) {
+            $this->markTestSkipped('pcntl is not available.');
+        }
+
+        $marker = $this->payloadFile();
+        $autoload = \dirname(__DIR__, 3).'/vendor/autoload.php';
+        $script = \sprintf(<<<'PHP_WRAP'
+            require %s;
+            $parent = getmypid();
+            register_shutdown_function(static function () use ($parent): void {
+                if (getmypid() !== $parent) {
+                    file_put_contents(%s, 'shutdown ran in the child', FILE_APPEND);
+                }
+            });
+            $guard = new class($parent) {
+                public function __construct(private int $parent) {}
+                public function __destruct() { if (getmypid() !== $this->parent) { file_put_contents(%2$s, 'destructor ran in the child', FILE_APPEND); } }
+            };
+            $file = tempnam(sys_get_temp_dir(), 'pool');
+            $pid = (new PHPRegex\Linter\Internal\ForkedWorkerPool())->fork(static fn (): int => 1, $file);
+            pcntl_waitpid($pid, $status);
+            echo serialize(unserialize((string) file_get_contents($file)));
+            @unlink($file);
+            PHP_WRAP, var_export($autoload, true), var_export($marker, true));
+
+        $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-r', $script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $this->assertIsResource($process);
+        $stdout = (string) stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        $this->assertSame(serialize(['ok' => true, 'result' => 1]), $stdout, 'The child still writes its payload.');
+        $this->assertFileDoesNotExist($marker, 'A shutdown function or a destructor of the parent ran in the child.');
+    }
+
     private function payloadFile(): string
     {
         $file = sys_get_temp_dir().'/regexparser_pool_'.uniqid('', true);

@@ -47,7 +47,18 @@ final class ForkedWorkerPool
             ob_end_clean();
         }
 
-        exit($this->runChild($work, $payloadFile));
+        $code = $this->runChild($work, $payloadFile);
+
+        // The shutdown functions and destructors the child inherited belong
+        // to its parent: they would flush, close or notify on its behalf, and
+        // load their classes in every child at once, which reads corrupted
+        // bytes from a phar. The child ends without them; its parent reads
+        // the payload file, never the exit code.
+        if (\function_exists('posix_kill') && \function_exists('posix_getpid')) {
+            posix_kill(posix_getpid(), \SIGKILL);
+        }
+
+        exit($code);
     }
 
     /**
