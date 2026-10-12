@@ -36,6 +36,10 @@ Features
   is one of them.
 * `PREG_OFFSET_CAPTURE` and `PREG_UNMATCHED_AS_NULL` are read, as are named
   arguments in any order.
+* `preg_quote()` of literals is the literal it returns, so a pattern
+  concatenated from literals and such calls is read as any literal. Around
+  `preg_quote()` of a text not known, as `'/^' . preg_quote($id, '/') . '-(\d+)$/'`,
+  `$matches` of `preg_match()` is typed from the rest of the pattern.
 * An invalid pattern is reported as `InvalidRegexPattern`, with the error and
   its offset in the pattern, in every `preg_*` call: `preg_match()`,
   `preg_match_all()`, `preg_replace()`, `preg_replace_callback()`,
@@ -199,6 +203,13 @@ The plugin reads a call only when it can tell what the pattern is:
 * the pattern and the flags must each have one constant value: a literal, a
   constant, or a variable holding one literal. A pattern that may be one of
   two literals, or flags from a parameter, are left to Psalm.
+* a pattern concatenated around `preg_quote()` of a text not known types
+  `$matches` of `preg_match()` where it returned 1, and nothing else: it is
+  never reported, the subject is not narrowed, and where the call did not
+  return 1 `$matches` keeps Psalm's type (a text holding the delimiter makes
+  the pattern fail to compile, which leaves `$matches` as it was). Where the
+  text would not be read as literal characters (in a class, in braces, after
+  `\`, `(?` or `\Q`, before a quantifier), the call is left to Psalm.
 * Psalm keeps a literal string only below `maxStringLength` bytes (1000 by
   default, an attribute of `<psalm>`): a longer pattern is not constant for
   Psalm, and is not read.

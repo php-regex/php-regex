@@ -43,6 +43,18 @@ function pattern_held_by_a_variable(string $s): void
     preg_match($pattern, $s); // InvalidRegexPattern: $pattern
 }
 
+function pattern_built_from_a_quoted_literal(string $s): void
+{
+    // preg_quote('a', '/') -> 'a' (PHP 8.4.26): the pattern is '/(a/'.
+    preg_match('/('.preg_quote('a','/').'/', $s); // InvalidRegexPattern: '/('.preg_quote('a','/').'/'
+}
+
+function pattern_built_from_a_quoted_text_not_known(string $x, string $s): void
+{
+    // Whatever $x holds, '/(' and '/' leave a group open; the pattern is not known, so nothing is reported.
+    preg_match('/('.preg_quote($x, '/').'/', $s);
+}
+
 function valid_patterns_raise_nothing(string $s): void
 {
     preg_match('/(a)(b)?/', $s);

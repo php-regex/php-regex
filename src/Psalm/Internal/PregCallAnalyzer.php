@@ -18,6 +18,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayDimFetch;
 use PhpParser\Node\Expr\BinaryOp;
+use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\BinaryOp\Equal;
 use PhpParser\Node\Expr\BinaryOp\Greater;
 use PhpParser\Node\Expr\BinaryOp\GreaterOrEqual;
@@ -57,6 +58,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Psalm\Plugin;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
+use Psalm\Config;
 use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\IssueBuffer;
@@ -82,7 +84,10 @@ use Psalm\Type\Union;
  * compared with something; after preg_match_all(), its shape, for a pattern
  * without \K and an offset absent or a constant <= 0. Where preg_match()
  * returned 1 and $matches is not typed, a string subject is narrowed to what
- * the pattern can match (SubjectType). Everything else is
+ * the pattern can match (SubjectType). preg_quote() of literals is typed as
+ * the literal it returns; around preg_quote() of a text not known,
+ * preg_match() types $matches from the rest of the pattern (QuotedPattern).
+ * Everything else is
  * left to Psalm's stubs, which the plugin never replaces: their taint flows,
  * purity and parameter checks all stay.
  *
@@ -103,7 +108,8 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
     /**
      * The parameters of each function, in order: PHP binds the arguments to
-     * them by position, then by name. The pattern comes first in each.
+     * them by position, then by name. The pattern comes first in each but
+     * preg_quote(), which builds one.
      */
     private const PARAMETERS = [
         'preg_match' => ['pattern', 'subject', 'matches', 'flags', 'offset'],
@@ -114,6 +120,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         'preg_split' => ['pattern', 'subject', 'limit', 'flags'],
         'preg_grep' => ['pattern', 'array', 'flags'],
         'preg_filter' => ['pattern', 'replacement', 'subject', 'limit', 'count'],
+        'preg_quote' => ['str', 'delimiter'],
     ];
 
     /**
@@ -188,6 +195,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         $function = self::globalFunction($call->name, $source, $codebase);
         $arguments = null === $function ? null : self::bind($call, self::PARAMETERS[$function]);
+        if ('preg_quote' === $function && null !== $arguments) {
+            self::quote($call, $arguments, $source->getNodeTypeProvider());
+
+            return null;
+        }
+
         if (null === $function || null === $arguments || !isset($arguments['pattern'])) {
             return null;
         }
@@ -221,6 +234,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         }
 
         if (null === $judged) {
+            // A pattern built around preg_quote() of a text not known types $matches from its groups.
+            $quoted = 'preg_match' === $function ? self::patternAroundQuotes($arguments['pattern'], $source, $codebase, $parser) : null;
+            if (null !== $quoted) {
+                self::typeAroundQuotes($call, $quoted, $arguments, $nodeTypes, $parser, $codebase);
+            }
+
             return;
         }
 
@@ -262,6 +281,78 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $subject = self::subjectType($pattern, $verdict, $arguments, $nodeTypes, $parser, $codebase);
         if (null !== $subject && isset($arguments['subject'])) {
             self::assertOnResult($nodeTypes, $call, [self::assertion($call, $arguments['subject'], $subject)], []);
+        }
+    }
+
+    /**
+     * preg_quote() of literals is the literal it returns, as the running PHP
+     * quotes it: Psalm then folds a pattern built from it into a literal, as
+     * it folds any concatenation of literals. The call keeps its data flow.
+     *
+     * @param array<string, Expr> $arguments
+     */
+    private static function quote(FuncCall $call, array $arguments, NodeTypeProvider $nodeTypes): void
+    {
+        $text = isset($arguments['str']) ? self::literal($arguments['str'], $nodeTypes) : null;
+        $delimiterType = isset($arguments['delimiter']) ? $nodeTypes->getType($arguments['delimiter']) : Type::getNull();
+        $current = $nodeTypes->getType($call);
+        if (null === $text || null === $delimiterType || null === $current || !($delimiterType->isNull() || $delimiterType->isSingleStringLiteral())) {
+            return;
+        }
+
+        $quoted = preg_quote($text, $delimiterType->isSingleStringLiteral() ? $delimiterType->getSingleStringLiteral()->value : null);
+        // Psalm keeps a literal only below maxStringLength bytes.
+        if (\strlen($quoted) < Config::getInstance()->max_string_length) {
+            $nodeTypes->setType($call, (new Union([TLiteralString::make($quoted)]))->setParentNodes($current->parent_nodes));
+        }
+    }
+
+    /**
+     * The pattern standing for a concatenation of literals and preg_quote()
+     * calls (QuotedPattern), or null for any other expression.
+     */
+    private static function patternAroundQuotes(Expr $argument, StatementsSource $source, Codebase $codebase, RegexParser $parser): ?string
+    {
+        $nodeTypes = $source->getNodeTypeProvider();
+        $parts = [];
+        $pending = [$argument];
+        while ([] !== $pending) {
+            $part = array_shift($pending);
+            $text = self::literal($part, $nodeTypes);
+            if (null !== $text) {
+                $parts[] = $text;
+            } elseif ($part instanceof Concat) {
+                array_unshift($pending, $part->left, $part->right);
+            } elseif ($part instanceof FuncCall && $part->name instanceof Name && !$part->isFirstClassCallable() && 'preg_quote' === self::globalFunction($part->name, $source, $codebase)) {
+                $parts[] = null;
+            } else {
+                return null;
+            }
+        }
+
+        return $argument instanceof Concat && [] !== $parts ? QuotedPattern::of($parts, $parser) : null;
+    }
+
+    /**
+     * Where preg_match() returned 1, $matches is the shape of the pattern
+     * standing for the quoted texts. Where it did not, $matches is left as
+     * it is: a quoted text holding the delimiter makes the pattern fail to
+     * compile, and the call then leaves $matches as it was.
+     *
+     * @param array<string, Expr> $arguments
+     */
+    private static function typeAroundQuotes(FuncCall $call, string $pattern, array $arguments, NodeTypeProvider $nodeTypes, RegexParser $parser, Codebase $codebase): void
+    {
+        $verdict = self::verdict($parser, $pattern);
+        $matches = $arguments['matches'] ?? null;
+        // Never reported: the pattern stands for the groups, not for what the call compiles.
+        if (null !== $verdict['error'] || null === $verdict['shape'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR) || !$matches instanceof Variable) {
+            return;
+        }
+
+        $type = self::matchesType($parser, $pattern, $verdict, 'preg_match', $arguments, $nodeTypes, $codebase);
+        if (null !== $type && $type->isSingle()) {
+            self::assertOnResult($nodeTypes, $call, [self::assertion($call, $matches, $type->getSingleAtomic())], []);
         }
     }
 

@@ -36,7 +36,7 @@ final class PsalmPluginInvalidPatternTest extends TestCase
     /**
      * The patterns of the arguments that are not a literal.
      */
-    private const HELD = ['$pattern' => '/(/'];
+    private const HELD = ['$pattern' => '/(/', "'/('.preg_quote('a','/').'/'" => '/(a/'];
 
     #[Test]
     #[DataProvider('provideInvalidPatterns')]

@@ -194,11 +194,54 @@ its `[]`. A subject that may be another type than `string` (PHP reads an
 `int` as a string) or that is read from the `$matches` variable is left as
 it is, and so is every form the previous section lists.
 
+### Patterns built with `preg_quote()`
+
+`preg_quote()` of literals is the literal it returns:
+`preg_quote('1+1=2')` is `'1\+1\=2'` to Psalm, and a pattern concatenated
+from literals and such calls is a literal, typed, narrowed and validated as
+any other.
+
+`preg_quote()` of a text the analysis does not know escapes every character
+that means something in a pattern: where the pattern reads the text as
+literal characters, it adds no group. Where `preg_match()` returned 1,
+`$matches` is then the shape of the rest of the pattern, the text read as any
+string:
+
+```php
+function ticket(string $prefix, string $input): ?int
+{
+    if (!preg_match('/^' . preg_quote($prefix, '/') . '-(\d+)$/', $input, $m)) {
+        return null;
+    }
+
+    /** @psalm-trace $m */
+
+    return (int) $m[1];
+}
+```
+
+```
+$m: array{0: non-falsy-string, 1: non-empty-string}
+```
+
+The text is not read as literal characters everywhere, and there the call is
+left to Psalm: in a class (`'/[' . preg_quote($x) . ']/'`), in braces, where
+digits make a quantifier, after a `\` or a `(?`, which it would continue,
+after `\Q`, where a quoted `\E` ends the quoting, and before a quantifier,
+which an empty text leaves to what precedes it (`'/(a)' . preg_quote($x) . '{0}/'`).
+Where the call did not return 1, `$matches` keeps Psalm's type: a text
+holding the delimiter, which `preg_quote()` escapes only when it is given,
+makes the pattern fail to compile, and the call then leaves `$matches` as it
+was. The pattern is never reported, nor is the subject narrowed: the plugin
+does not know it. Only `preg_match()` reads such a pattern;
+`preg_match_all()` writes its shape only for a pattern that compiles.
+
 ### What the plugin leaves to Psalm
 
 - A pattern or flags without one constant value: a parameter, a variable that
-  may hold one of two literals. A constant, a class constant and a variable
-  holding one literal are read.
+  may hold one of two literals, a concatenation with anything but literals
+  and `preg_quote()`. A constant, a class constant and a variable holding one
+  literal are read.
 - A pattern of `maxStringLength` bytes or more (1000 by default, an attribute
   of `<psalm>`): Psalm does not keep it as a literal.
 - A call that unpacks its arguments, `preg_match(...$args)`.

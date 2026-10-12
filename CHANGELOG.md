@@ -89,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Psalm: `preg_quote()` of literals is typed as the literal it returns, so a pattern concatenated from them is read, typed and validated as a literal; around `preg_quote()` of a text that is not constant, `preg_match()` types `$matches` from the rest of the pattern where the quoted text is read as plain characters, and reports nothing.
 - Psalm: a subject whose pattern matches at most 16 strings is narrowed to their union of literals (`/^(?:yes|no)$/` gives `'no'|"no\n"|'yes'|"yes\n"`, `$` letting a final newline through), and capture groups enumerate bounded repeats (`(a{1,3})` gives `'a'|'aa'|'aaa'`, in the PHPStan shapes too; `CaptureShapeAnalyzer::ANALYSIS_VERSION` is now `2`). `php-regex/regex-psalm` now requires `php-regex/regex-automata`.
 - Psalm: where `preg_match()` returned 1, a `string` subject is narrowed to `non-empty-string` when the pattern never matches `''`, and to `non-falsy-string` when it matches neither `''` nor `'0'` (on calls that do not type `$matches`).
 - The style rule `regex.lint.lookaround.redundant`, off by default, reports a positive lookahead that ends a lookahead, or a positive lookbehind that starts a lookbehind, which the outer assertion can hold: `(?=a(?=b))` is `(?=ab)`.
