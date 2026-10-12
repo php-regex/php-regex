@@ -116,7 +116,7 @@ final class RedosAnalyzerTest extends TestCase
         $this->assertSame('backtrack_limit', $analysis->confirmation->evidence);
         // The confirmation runs without the JIT, whatever the process sets.
         $this->assertSame('0', $analysis->confirmation->jitSetting);
-        $this->assertSame(RedosConfidence::High, $analysis->confidenceLevel());
+        $this->assertSame(RedosConfidence::High, $analysis->confidence);
     }
 
     public function test_hotspots_capture_culprit_span(): void
@@ -124,7 +124,7 @@ final class RedosAnalyzerTest extends TestCase
         $analysis = $this->analyzer->analyze('/(a+)+b/');
 
         $this->assertNotEmpty($analysis->hotspots);
-        $this->assertInstanceOf(NodeInterface::class, $analysis->getCulpritNode());
+        $this->assertInstanceOf(NodeInterface::class, $analysis->culpritNode);
 
         $matched = false;
         foreach ($analysis->hotspots as $hotspot) {

@@ -81,7 +81,7 @@ final class RedosZeroWidthSoundnessTest extends TestCase
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertTrue($analysis->replayed, $pattern);
-        $this->assertSame(RedosConfidence::High, $analysis->confidenceLevel(), $pattern);
+        $this->assertSame(RedosConfidence::High, $analysis->confidence, $pattern);
 
         $witness = $analysis->witness;
         $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);

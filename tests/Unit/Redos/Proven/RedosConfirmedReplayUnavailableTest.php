@@ -149,7 +149,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
         $this->assertSame(RedosSeverity::Critical, $analysis->severity);
         $this->assertInstanceOf(RedosWitness::class, $analysis->witness);
         $this->assertSame($replayed, $analysis->replayed);
-        $this->assertSame(RedosConfidence::Medium, $analysis->confidenceLevel());
+        $this->assertSame(RedosConfidence::Medium, $analysis->confidence);
         $this->assertSame($answer, $analysis->confirmation);
     }
 

@@ -337,7 +337,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             'Status' => $status,
             'Severity' => $severityOutput.' (score '.$analysis->score.')',
             'Mode' => strtoupper($analysis->mode->value),
-            'Confidence' => strtoupper($analysis->confidenceLevel()->value),
+            'Confidence' => strtoupper($analysis->confidence->value),
         ]);
 
         foreach ($this->redosVerdictLines($analysis) as $line) {
@@ -348,7 +348,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             $output->write('  '.$output->error('ReDoS error: '.$analysis->error)."\n");
         }
 
-        $hotspot = $analysis->getPrimaryHotspot();
+        $hotspot = $analysis->primaryHotspot();
         if (null !== $hotspot) {
             $output->write('  Hotspot:   '.$hotspot->start.'-'.$hotspot->end."\n");
         }

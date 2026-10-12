@@ -144,7 +144,7 @@ $analysis = Regex::create()->redos('/(a+)+b/');
 
 echo $analysis->severity->value;          // 'critical' ('safe', 'low', 'medium', 'unknown', 'high', 'critical')
 echo $analysis->headline();               // 'Exponential backtracking (proven)'
-echo $analysis->confidenceLevel()->value; // 'medium' ('high' once replayed on PCRE)
+echo $analysis->confidence->value; // 'medium' ('high' once replayed on PCRE)
 echo $analysis->recommendations[0];       // Suggested fix
 
 $analysis->isProvenSafe();                // false: true only for 'safe (proven)'

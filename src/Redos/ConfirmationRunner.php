@@ -155,7 +155,7 @@ final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
         }
 
         $baseInput = null;
-        $culprit = $analysis->getCulpritNode();
+        $culprit = $analysis->culpritNode;
         if (null !== $culprit) {
             $baseInput = (new InputGenerator())->generate($culprit, $flags, $analysis->severity);
         }

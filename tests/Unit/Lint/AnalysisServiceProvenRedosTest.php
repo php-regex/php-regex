@@ -113,7 +113,7 @@ final class AnalysisServiceProvenRedosTest extends TestCase
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertObjectHasProperty('replayed', $analysis);
         $this->assertNull($analysis->replayed);
-        $this->assertSame('medium', $analysis->confidenceLevel()->value);
+        $this->assertSame('medium', $analysis->confidence->value);
     }
 
     /**

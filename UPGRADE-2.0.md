@@ -914,6 +914,9 @@ instead.
 | `ValidationResult::getHint()` | `$hint` |
 | `ValidationResult::getErrorCode()` | `$errorCode` |
 | `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `optimizations()`, `explain()`, `highlighted()` | the property of the same name |
+| `ReDoSAnalysis::confidenceLevel()` | `RedosAnalysis::$confidence`, never null (`Low` when nothing raised it) |
+| `ReDoSAnalysis::getCulpritNode()` | `RedosAnalysis::$culpritNode` |
+| `ReDoSAnalysis::getPrimaryHotspot()` | `RedosAnalysis::primaryHotspot()` |
 
 Rector cannot rewrite a method call into a property read, so change these by
 hand (PHPStan reports each remaining call).

@@ -564,7 +564,7 @@ final class AnalysisServiceTest extends TestCase
     public function test_worker_payload_round_trips_a_redos_analysis_with_its_culprit_node(): void
     {
         $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/');
-        $this->assertInstanceOf(NodeInterface::class, $analysis->getCulpritNode());
+        $this->assertInstanceOf(NodeInterface::class, $analysis->culpritNode);
 
         $file = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
         file_put_contents($file, serialize(['ok' => true, 'result' => [$analysis]]));
@@ -576,7 +576,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($payload['result']);
         $read = $payload['result'][0];
         $this->assertInstanceOf(RedosAnalysis::class, $read);
-        $this->assertInstanceOf(NodeInterface::class, $read->getCulpritNode());
+        $this->assertInstanceOf(NodeInterface::class, $read->culpritNode);
         $this->assertSame($analysis->severity, $read->severity);
         $this->assertCount(\count($analysis->findings), $read->findings);
         $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));

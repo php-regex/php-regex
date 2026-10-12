@@ -1187,7 +1187,7 @@ final readonly class AnalysisService
             $hints[] = \sprintf('The risky part is: %s', $analysis->vulnerablePart);
         }
 
-        $hotspot = $analysis->getPrimaryHotspot();
+        $hotspot = $analysis->primaryHotspot();
         if (null !== $hotspot) {
             $hints[] = \sprintf('Hotspot offsets: %d-%d', $hotspot->start, $hotspot->end);
         }

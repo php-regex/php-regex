@@ -88,7 +88,7 @@ $result = Regex::create()->redos(
 );
 
 echo 'Confirmed: ', $result->isConfirmed() ? 'yes' : 'no', "\n";
-echo 'Confidence: ', $result->confidenceLevel()->value, "\n";
+echo 'Confidence: ', $result->confidence->value, "\n";
 ```
 
 A proven verdict PCRE does not reproduce keeps `medium` confidence, and the CLI says `Not reproduced on PCRE2 …`. It is never an error in confirmed mode.

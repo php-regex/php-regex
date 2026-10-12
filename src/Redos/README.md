@@ -125,7 +125,7 @@ $replayed = (new RedosAnalyzer())->analyze('/(a+)+b/', mode: RedosMode::Confirme
 
 echo $replayed->witness->render(), "\n";         // "a" x n . "!b"
 var_dump($replayed->replayed);                   // bool(true)
-echo $replayed->confidenceLevel()->value, "\n"; // high
+echo $replayed->confidence->value, "\n"; // high
 ```
 
 What the model analysed differently from the pattern, and the budget it ran under:

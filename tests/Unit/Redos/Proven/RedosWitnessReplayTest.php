@@ -105,7 +105,7 @@ final class RedosWitnessReplayTest extends TestCase
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertTrue($analysis->replayed, $pattern);
-        $this->assertSame(RedosConfidence::High, $analysis->confidenceLevel(), $pattern);
+        $this->assertSame(RedosConfidence::High, $analysis->confidence, $pattern);
         $this->assertSame(RedosSeverity::Critical, $analysis->severity, $pattern);
 
         // The published witness is the one replayed: it reproduces as it stands.
@@ -222,7 +222,7 @@ final class RedosWitnessReplayTest extends TestCase
         $this->assertSame($degree, $analysis->degree);
         $this->assertNull($analysis->replayed);
         $this->assertSame($severity, $analysis->severity);
-        $this->assertSame(RedosConfidence::Medium, $analysis->confidenceLevel());
+        $this->assertSame(RedosConfidence::Medium, $analysis->confidence);
     }
 
     /**

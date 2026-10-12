@@ -130,7 +130,7 @@ final class RedosVerdictClassTest extends TestCase
         $this->assertNull($analysis->degree, $pattern);
         $this->assertNull($analysis->witness, $pattern);
         $this->assertSame(RedosSeverity::Safe, $analysis->severity, $pattern);
-        $this->assertSame(RedosConfidence::High, $analysis->confidenceLevel(), $pattern);
+        $this->assertSame(RedosConfidence::High, $analysis->confidence, $pattern);
         $this->assertTrue($analysis->isProvenSafe(), $pattern);
         $this->assertTrue($analysis->isSafe(), $pattern);
     }
@@ -240,7 +240,7 @@ final class RedosVerdictClassTest extends TestCase
 
         $this->assertObjectHasProperty('replayed', $analysis);
         $this->assertNull($analysis->replayed);
-        $this->assertSame(RedosConfidence::Medium, $analysis->confidenceLevel());
+        $this->assertSame(RedosConfidence::Medium, $analysis->confidence);
     }
 
     #[Test]

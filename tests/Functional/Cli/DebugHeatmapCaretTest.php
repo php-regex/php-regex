@@ -38,7 +38,7 @@ final class DebugHeatmapCaretTest extends TestCase
     #[DataProvider('provideRuns')]
     public function test_debug_caret_sits_under_the_hotspot_it_marks(string $pattern, RedosMode $mode, array $arguments): void
     {
-        $hotspot = (new RedosAnalyzer())->analyze($pattern, null, $mode)->getPrimaryHotspot();
+        $hotspot = (new RedosAnalyzer())->analyze($pattern, null, $mode)->primaryHotspot();
         $this->assertInstanceOf(Hotspot::class, $hotspot);
         $marked = substr($pattern, 1 + $hotspot->start, max(1, $hotspot->end - $hotspot->start));
 

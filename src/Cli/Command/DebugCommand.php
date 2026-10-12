@@ -155,9 +155,9 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             }
 
             $inputSource = '';
-            if (null === $inputValue && null !== $analysis->getCulpritNode()) {
+            if (null === $inputValue && null !== $analysis->culpritNode) {
                 $inputValue = (new InputGenerator())->generate(
-                    $analysis->getCulpritNode(),
+                    $analysis->culpritNode,
                     $patternInfo->flags,
                     $analysis->severity,
                 );
@@ -195,7 +195,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 $output->write($heatmapPrefix.$heatmapPattern."\n");
 
                 // The caret marks the primary hotspot on the line right above it.
-                $hotspot = $analysis->getPrimaryHotspot();
+                $hotspot = $analysis->primaryHotspot();
                 if (null !== $hotspot) {
                     $start = max(0, $hotspot->start);
                     $length = max(1, $hotspot->end - $hotspot->start);
@@ -218,7 +218,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $output->write('  Status:    '.$this->redosHeadline($analysis)."\n");
             $output->write('  Severity:  '.$severityOutput.' (score '.$analysis->score.")\n");
             $output->write('  Mode:      '.strtoupper($analysis->mode->value)."\n");
-            $output->write('  Confidence: '.strtoupper($analysis->confidenceLevel()->value)."\n");
+            $output->write('  Confidence: '.strtoupper($analysis->confidence->value)."\n");
 
             if (null !== $analysis->vulnerablePart) {
                 $output->write('  Culprit:    '.$analysis->vulnerablePart."\n");

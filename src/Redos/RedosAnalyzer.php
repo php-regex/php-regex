@@ -166,7 +166,7 @@ final class RedosAnalyzer
             return self::with(
                 $analysis,
                 $confirmation,
-                $confirmation->confirmed ? RedosConfidence::High : $analysis->confidenceLevel(),
+                $confirmation->confirmed ? RedosConfidence::High : $analysis->confidence,
                 $analysis->witness,
                 null,
             );
@@ -234,7 +234,7 @@ final class RedosAnalyzer
 
         $first = null;
         foreach ($candidates as $candidate) {
-            $confirmation = $this->confirmationRunner->confirm($regex, self::with($analysis, null, $analysis->confidenceLevel(), $candidate, null), $options);
+            $confirmation = $this->confirmationRunner->confirm($regex, self::with($analysis, null, $analysis->confidence, $candidate, null), $options);
             $first ??= $confirmation;
             if (self::reproduced($confirmation)) {
                 return self::with($analysis, $confirmation, self::provenConfidence($proof, true), $candidate, true);
@@ -278,7 +278,7 @@ final class RedosAnalyzer
             $analysis->falsePositiveRisk,
             $analysis->findings,
             $analysis->suggestedRewrite,
-            culpritNode: $analysis->getCulpritNode(),
+            culpritNode: $analysis->culpritNode,
             hotspots: $analysis->hotspots,
             mode: $analysis->mode,
             confirmation: $confirmation,

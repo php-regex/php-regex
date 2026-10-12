@@ -67,7 +67,7 @@ final class RedosEmptySuffixReplayTest extends TestCase
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertTrue($analysis->replayed);
-        $this->assertSame(RedosConfidence::High, $analysis->confidenceLevel());
+        $this->assertSame(RedosConfidence::High, $analysis->confidence);
 
         // The published witness is the one replayed: built and re-run as it stands.
         $witness = $analysis->witness;

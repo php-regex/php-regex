@@ -46,7 +46,7 @@ final class RedosVerdict
     {
         $details = [
             'severity: '.strtoupper($analysis->severity->value),
-            'confidence: '.strtoupper($analysis->confidenceLevel()->value),
+            'confidence: '.strtoupper($analysis->confidence->value),
         ];
 
         if (RedosProof::BudgetExceeded === $analysis->proof && RedosSeverity::Safe !== $analysis->severity) {

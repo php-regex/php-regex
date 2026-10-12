@@ -209,7 +209,7 @@ $analysis = (new RedosAnalyzer())->analyze('/(a+)+b/', mode: RedosMode::Confirme
 
 echo $analysis->witness->render(), "\n";                      // "a" x n . "!b"
 var_dump($analysis->replayed);                                // bool(true)
-echo $analysis->confidenceLevel()->value, "\n";               // high
+echo $analysis->confidence->value, "\n";               // high
 echo $analysis->confirmation->samples[0]->inputLength, "\n"; // 18
 echo $analysis->confirmation->samples[0]->pregError, "\n";   // Backtrack limit exhausted
 ```

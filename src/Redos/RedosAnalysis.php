@@ -51,11 +51,11 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public array $recommendations = [],
         public ?string $error = null,
         public ?string $trigger = null,
-        public ?RedosConfidence $confidence = null,
+        public RedosConfidence $confidence = RedosConfidence::Low,
         public ?string $falsePositiveRisk = null,
         public array $findings = [],
         public ?string $suggestedRewrite = null,
-        private ?NodeInterface $culpritNode = null,
+        public ?NodeInterface $culpritNode = null,
         public array $hotspots = [],
         public RedosMode $mode = RedosMode::Theoretical,
         public ?Confirmation $confirmation = null,
@@ -71,11 +71,6 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public ?RedosSearchCost $searchCost = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
-    }
-
-    public function getCulpritNode(): ?NodeInterface
-    {
-        return $this->culpritNode;
     }
 
     public function isSafe(): bool
@@ -131,12 +126,10 @@ final readonly class RedosAnalysis implements \JsonSerializable
         return RedosMode::Confirmed === $this->mode && (null !== $this->confirmation && $this->confirmation->confirmed);
     }
 
-    public function confidenceLevel(): RedosConfidence
-    {
-        return $this->confidence ?? RedosConfidence::Low;
-    }
-
-    public function getPrimaryHotspot(): ?Hotspot
+    /**
+     * The hotspot of the highest severity, the first one among equals.
+     */
+    public function primaryHotspot(): ?Hotspot
     {
         $best = null;
         $bestRank = -1;
@@ -171,7 +164,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
             'score' => $this->score,
             'mode' => $this->mode->value,
             'confirmed' => $this->isConfirmed(),
-            'confidence' => $this->confidenceLevel()->value,
+            'confidence' => $this->confidence->value,
             'vulnerable_part' => $this->vulnerablePart,
             'trigger' => $this->trigger,
             'false_positive_risk' => $this->falsePositiveRisk,

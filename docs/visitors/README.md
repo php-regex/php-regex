@@ -321,7 +321,7 @@ use PHPRegex\Toolkit\Regex;
 $analysis = Regex::create()->redos('/(a+)+b/');
 echo $analysis->severity->value;            // 'critical'
 echo $analysis->proof->value;               // 'proven'
-echo $analysis->confidenceLevel()->value;   // 'medium': not replayed on the engine yet
+echo $analysis->confidence->value;   // 'medium': not replayed on the engine yet
 ```
 
 ---

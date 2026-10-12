@@ -66,7 +66,7 @@ final class RedosSeverityRankTest extends TestCase
 
         $expected = $second->rank() > $first->rank() ? $secondHotspot : $firstHotspot;
 
-        $this->assertSame($expected, $analysis->getPrimaryHotspot());
+        $this->assertSame($expected, $analysis->primaryHotspot());
     }
 
     /**

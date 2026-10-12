@@ -703,7 +703,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
     {
         try {
             $analysis = $regex->redos($pattern);
-            $culprit = $analysis->getCulpritNode();
+            $culprit = $analysis->culpritNode;
             if (null !== $culprit) {
                 $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
                 $generated = (new InputGenerator())->generate($culprit, $patternInfo->flags, $analysis->severity);

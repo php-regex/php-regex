@@ -335,7 +335,7 @@ echo $analysis->complexity->value;        // 'exponential'
 echo $analysis->proof->value;             // 'proven'
 echo $analysis->witness->render();        // '"a" x n . "!b"'
 echo $analysis->score;                    // 10
-echo $analysis->confidenceLevel()->value; // 'medium' until replayed
+echo $analysis->confidence->value; // 'medium' until replayed
 echo $analysis->vulnerablePart;           // 'a+'
 echo $analysis->recommendations[0];       // Suggested fix
 
@@ -360,7 +360,7 @@ var_dump($confirmed->replayed);                               // bool(true)
 | `abstractions`     | list<string>      | What the model analysed differently from the pattern |
 | `pcreVersion`      | string            | PCRE2 release the verdict was computed with |
 | `analysisVersion`  | string            | `RedosAnalyzer::ANALYSIS_VERSION`         |
-| `confidence`       | RedosConfidence\|null | Analysis confidence (use `confidenceLevel()`) |
+| `confidence`       | RedosConfidence       | Analysis confidence, `Low` when nothing raised it |
 | `confirmation`     | Confirmation\|null | Bounded evidence details              |
 | `vulnerablePart`   | string\|null       | Risky subpattern                          |
 | `recommendations`  | array              | Suggested fixes (verify behavior)         |
