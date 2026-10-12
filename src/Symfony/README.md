@@ -109,9 +109,11 @@ Register the bundle in `config/bundles.php`:
 
 ```php
 return [
-    PHPRegex\Symfony\PHPRegexBundle::class => ['dev' => true, 'test' => true],
+    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
 ];
 ```
+
+Code that injects `PHPRegex\Toolkit\Regex` needs the bundle in every environment. A `['dev' => true, 'test' => true]` registration, for the commands alone, leaves no `Regex` service in prod and needs its configuration under `when@dev:` (and `when@test:`): a top-level `php_regex` key in prod has no extension to load it.
 
 | Command           | Description                                            |
 |-------------------|--------------------------------------------------------|

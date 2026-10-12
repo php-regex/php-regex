@@ -385,7 +385,7 @@ composer show php-regex/regex-symfony
 ```php
 // config/bundles.php
 return [
-    PHPRegex\Symfony\PHPRegexBundle::class => ['dev' => true, 'test' => true],
+    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
 ];
 ```
 

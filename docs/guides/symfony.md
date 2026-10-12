@@ -18,8 +18,22 @@ The bundle ships no Symfony Flex recipe: register it by hand in
 // config/bundles.php
 return [
     // ...
-    PHPRegex\Symfony\PHPRegexBundle::class => ['dev' => true, 'test' => true],
+    PHPRegex\Symfony\PHPRegexBundle::class => ['all' => true],
 ];
+```
+
+Register it for every environment as soon as your code injects the `Regex`
+service: the service is then a runtime dependency, and prod needs it too. If
+you only want the `regex:*` commands, a `['dev' => true, 'test' => true]`
+registration works, with two consequences: the configuration below moves
+under `when@dev:` (and `when@test:`), since prod has no extension to load a
+`php_regex` key, and no `Regex` service exists in prod.
+
+```yaml
+# config/packages/php_regex.yaml, with a dev-only registration
+when@dev:
+    php_regex:
+        paths: [src]
 ```
 
 ## Configuration
