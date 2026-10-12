@@ -56,9 +56,7 @@
             "public/index.php",
             "src/Controller/.gitignore",
             "src/Kernel.php",
-            ".editorconfig",
-            "AGENTS.md",
-            "CLAUDE.md"
+            ".editorconfig"
         ]
     },
     "symfony/routing": {
