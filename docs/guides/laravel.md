@@ -182,6 +182,11 @@ Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
 
+`regex:routes` lists the routes that have a constraint. `--show-constraints`
+prints each constraint, and `--validate` compiles each one as the router
+matches it, marking it `✓` or `✗` with the error: without `--validate` a
+constraint gets no mark, and its `valid` key in the JSON report is `null`.
+
 `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
 `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, the
 linted paths when `paths` names none, and in the application's `vendor/`,

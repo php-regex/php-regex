@@ -83,10 +83,11 @@ final class RoutesCommand extends Command
                     continue;
                 }
 
+                // A constraint has a verdict only once it is validated.
                 $constraintInfo = [
                     'parameter' => $parameter,
                     'pattern' => $pattern,
-                    'valid' => true,
+                    'valid' => $validate ? true : null,
                     'error' => null,
                 ];
 
@@ -151,8 +152,12 @@ final class RoutesCommand extends Command
 
             if ($showConstraints) {
                 foreach ($routeInfo['constraints'] as $constraint) {
-                    $status = $constraint['valid'] ? '<fg=green>✓</>' : '<fg=red>✗</>';
-                    $this->line("    {$status} <fg=cyan>{$constraint['parameter']}</> = <fg=white>{$constraint['pattern']}</>");
+                    $status = match ($constraint['valid']) {
+                        true => '<fg=green>✓</> ',
+                        false => '<fg=red>✗</> ',
+                        null => '',
+                    };
+                    $this->line("    {$status}<fg=cyan>{$constraint['parameter']}</> = <fg=white>{$constraint['pattern']}</>");
 
                     if (null !== $constraint['error']) {
                         $this->line("      <fg=red>{$constraint['error']}</>");
