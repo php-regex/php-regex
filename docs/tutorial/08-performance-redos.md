@@ -205,7 +205,7 @@ vendor/bin/regex debug '/(a+)+$/' --redos-mode=confirmed
 PHPRegex 2.0.0-DEV by Younes ENNAJI
 
 Runtime   : PHP 8.4.26
-Command   : Debug
+Command   : debug
 PCRE      : 10.49 2026-09-28
 PCRE JIT  : 1
 Backtrack : 1000000

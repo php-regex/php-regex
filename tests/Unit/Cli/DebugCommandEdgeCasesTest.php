@@ -74,6 +74,41 @@ final class DebugCommandEdgeCasesTest extends TestCase
     }
 
     /**
+     * The banner names the command as it is typed, as every other command's
+     * banner does.
+     */
+    public function test_debug_banner_names_the_command_in_lower_case(): void
+    {
+        $output = OutputFactory::create();
+        $input = new Input('debug', ['/a/'], new GlobalOptions(false, false, false, true, null, null), []);
+
+        $buffer = $this->captureOutput(static function () use ($input, $output): void {
+            (new DebugCommand())->run($input, $output);
+        });
+
+        $this->assertMatchesRegularExpression('/^Command\s*: debug$/m', $buffer);
+    }
+
+    /**
+     * A pattern that does not parse is reported by its message, as the
+     * other commands report it, without the class of the exception.
+     */
+    public function test_debug_reports_a_pattern_that_does_not_parse_by_its_message(): void
+    {
+        $output = OutputFactory::create();
+        $input = new Input('debug', ['/(/'], new GlobalOptions(false, false, false, true, null, null), []);
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static function () use ($input, $output, &$exitCode): void {
+            $exitCode = (new DebugCommand())->run($input, $output);
+        });
+
+        $this->assertSame(1, $exitCode);
+        $this->assertMatchesRegularExpression('/^  Error:\s+Expected \) at end of input \(found eof\)$/m', $buffer);
+        $this->assertStringNotContainsString('Exception', $buffer);
+    }
+
+    /**
      * @param callable(): void $callback
      */
     private function captureOutput(callable $callback): string

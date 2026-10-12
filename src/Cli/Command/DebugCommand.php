@@ -104,7 +104,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
         $meta['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
 
         if ('json' !== $format) {
-            $style->renderBanner('Debug', $meta);
+            $style->renderBanner('debug', $meta);
         }
 
         $target = $regex->target();
@@ -210,8 +210,11 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 }
             }
 
-            if (null !== $analysis->error) {
-                $output->write('  Error:      '.$output->error($analysis->error)."\n");
+            // An invalid pattern is reported by the validator's message, as
+            // the other commands report it.
+            $error = $validation->isValid ? $analysis->error : $validation->error;
+            if (null !== $error) {
+                $output->write('  Error:      '.$output->error($error)."\n");
             }
 
             $severityOutput = $this->formatRedosSeverity($analysis, $output);

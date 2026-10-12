@@ -261,7 +261,8 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/(a+)+$/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('Debug', $buffer);
+        // The banner names the command as typed.
+        $this->assertStringContainsString('debug', $buffer);
     }
 
     public function test_debug_command_generates_auto_input_when_none_provided(): void
@@ -338,7 +339,8 @@ final class CommandTest extends TestCase
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('debug', ['/a/']), $output), $exitCode, $output);
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('Debug', $buffer);
+        // The banner names the command as typed.
+        $this->assertMatchesRegularExpression('/^Command\s*: debug$/m', $buffer);
     }
 
     public function test_diagram_command_reports_missing_pattern(): void
