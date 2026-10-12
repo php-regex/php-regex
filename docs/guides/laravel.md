@@ -1,5 +1,5 @@
 ---
-description: "Wire PHPRegex into a Laravel 12 app: the Regex service and facade, the regex:* artisan commands, lint targets, ReDoS findings and the 1.x upgrade."
+description: "Wire PHPRegex into a Laravel 12 or 13 app: the Regex service and facade, the regex:* artisan commands, lint targets, ReDoS findings and the 1.x upgrade."
 ---
 
 # Laravel Guide
@@ -8,7 +8,7 @@ The service provider registers a `Regex` service (and the `Regex` facade) for
 your application and the `php artisan regex:*` commands. Package discovery
 enables it on install.
 
-Requires Laravel 12 and PHP 8.2 or later.
+Requires Laravel 12 or 13, and PHP 8.2 or later (8.3 for Laravel 13).
 
 {% include install-prerelease.html package="php-regex/regex-laravel" %}
 
