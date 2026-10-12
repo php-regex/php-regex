@@ -27,7 +27,7 @@ final class RouteConflictAnalyzerTest extends TestCase
     public function test_the_resolvers_take_the_compiled_route_natively(): void
     {
         foreach (['resolveHostRegex', 'resolveStaticPrefix'] as $method) {
-            $type = new \ReflectionMethod(RouteConflictAnalyzer::class, $method)->getParameters()[0]->getType();
+            $type = (new \ReflectionMethod(RouteConflictAnalyzer::class, $method))->getParameters()[0]->getType();
             $this->assertInstanceOf(\ReflectionNamedType::class, $type);
 
             $this->assertSame(CompiledRoute::class, $type->getName(), $method.' lost its native CompiledRoute type.');
