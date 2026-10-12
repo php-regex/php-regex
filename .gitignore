@@ -56,3 +56,8 @@ __pycache__/
 /docs/.sass-cache/
 /docs/.jekyll-cache/
 /docs/.jekyll-metadata
+
+# Demo applications
+/demo/*/vendor/
+/demo/*/var/
+/demo/*/node_modules/

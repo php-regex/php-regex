@@ -33,9 +33,9 @@ Each example includes:
 
 ```bash
 # From the project root
-php examples/basic/validate.php
-php examples/advanced/redos-analysis.php
-php examples/real-world/email-validator.php
+php demo/examples/basic/validate.php
+php demo/examples/advanced/redos-analysis.php
+php demo/examples/real-world/email-validator.php
 ```
 
 ## Requirements
@@ -49,7 +49,7 @@ composer install
 
 ## Learning Resources
 
-- [Quick Start Guide](../docs/quick-start.md)
-- [API Reference](../docs/reference/README.md)
-- [ReDoS Guide](../docs/guides/redos.md)
-- [Cookbook](../docs/cookbook.md)
+- [Quick Start Guide](../../docs/quick-start.md)
+- [API Reference](../../docs/reference/README.md)
+- [ReDoS Guide](../../docs/guides/redos.md)
+- [Cookbook](../../docs/cookbook.md)
