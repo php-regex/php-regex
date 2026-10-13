@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
+use PHPRegex\Optimizer\Internal\LayoutSplicer;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
@@ -122,6 +123,12 @@ final readonly class Optimizer
             $optimizedPattern = $optimizedCompiled;
         }
 
+        // Under x the rewrite is written into the pattern as laid out, only
+        // its changed parts printed again.
+        if ($pretty) {
+            $optimizedPattern = $this->keepLayout($regex, $ast, $optimizedAst) ?? $optimizedPattern;
+        }
+
         if ($optimizedPattern !== $regex && $this->introducesAtomicity($regex, $optimizedPattern)) {
             // A rewrite that adds a possessive quantifier or an atomic group
             // ships only when the solver verifies it: the solver refuses the
@@ -143,6 +150,25 @@ final readonly class Optimizer
         $appliedChanges = $optimizedPattern === $regex ? [] : ['Optimized pattern.'];
 
         return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
+    }
+
+    /**
+     * The rewrite written into the text of $regex, with the whitespace PHP
+     * skips before its delimiter and after its modifiers, or null when the
+     * tree has no text to write into.
+     */
+    private function keepLayout(string $regex, RegexNode $ast, RegexNode $optimizedAst): ?string
+    {
+        $splicer = new LayoutSplicer($this->parser);
+        $written = $splicer->splice($ast, $ast);
+        $spliced = $splicer->splice($ast, $optimizedAst);
+        // The pattern starts at its delimiter, past whitespace only: the
+        // first place it is found is the one.
+        if (null === $written || null === $spliced || false === $at = strpos($regex, $written)) {
+            return null;
+        }
+
+        return substr($regex, 0, $at).$spliced.substr($regex, $at + \strlen($written));
     }
 
     /**

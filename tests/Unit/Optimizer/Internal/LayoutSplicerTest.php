@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Lint\Internal;
+namespace PHPRegex\Tests\Unit\Optimizer\Internal;
 
-use PHPRegex\Linter\Internal\LayoutSplicer;
+use PHPRegex\Optimizer\Internal\LayoutSplicer;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
