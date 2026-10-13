@@ -320,6 +320,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The console and HTML highlighters spell the bytes of a comment that are no UTF-8 as `\xHH`: the console wrote the raw byte, and the HTML replaced it with U+FFFD.
 - `explain()`, text and HTML, spells the bytes of a comment that are no UTF-8 as `\xHH`: `/a(?#\xE1)b/` gave an explanation `json_encode()` refuses, and the language server dropped its hover reply.
 - The Mermaid diagram cuts a long comment on a character boundary: cut inside a multibyte character, the comment came out empty.
+- The Mermaid diagram and the HTML explanation show a byte of invalid UTF-8 in a pattern without `/u` as the replacement character (U+FFFD): the whole label of a literal (`/a\xE9b/` in Mermaid), of a callout argument or of a `\Q...\E` run came out empty.
 - A forked lint worker drops the output buffers it inherits: run under output buffering, `regex lint` with several jobs wrote what the caller had buffered once more for each worker.
 - A back reference in a lookbehind of a pattern that holds a branch reset anywhere is refused as not limited, as PCRE2 refuses it: `/(a)(?|b|c)(?<=\1)/` was measured and accepted.
 - `\C` in a lookbehind under `(*UTF)` without the `u` flag is refused where PCRE2 measures the lookbehind, `/(*UTF)(?<=b\C)/` at 6, where it was accepted.

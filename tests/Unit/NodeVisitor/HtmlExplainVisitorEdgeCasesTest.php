@@ -136,4 +136,18 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
 
         $this->assertStringContainsString('once or not at all', $output);
     }
+
+    /**
+     * A byte of invalid UTF-8 the explanation does not spell itself, in a
+     * callout argument or a quoted run, is shown as the replacement
+     * character: the rest of the text stays.
+     */
+    public function test_a_byte_of_invalid_utf8_keeps_the_text_around_it(): void
+    {
+        $callout = $this->regex->parse("/(?C\"a\xE9b\")x/")->accept($this->visitor);
+        $quoted = $this->regex->parse("/\\Qa\xE9b\\E/")->accept($this->visitor);
+
+        $this->assertStringContainsString("Callout: <strong>(?C&quot;a\u{FFFD}b&quot;)</strong>", $callout);
+        $this->assertStringContainsString("<strong>&#039;a\u{FFFD}b&#039;</strong>", $quoted);
+    }
 }

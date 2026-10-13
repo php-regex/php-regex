@@ -17,6 +17,7 @@ use PHPRegex\Explain\MermaidRenderer;
 use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class MermaidRendererEdgeCasesTest extends TestCase
@@ -49,5 +50,16 @@ final class MermaidRendererEdgeCasesTest extends TestCase
         $diagram = $regex->accept($visitor);
 
         $this->assertStringContainsString('Callout: (?Cid)', $diagram);
+    }
+
+    /**
+     * A byte of invalid UTF-8 in a pattern without /u is shown as the
+     * replacement character: the label keeps the rest of the literal.
+     */
+    public function test_a_byte_of_invalid_utf8_keeps_its_label(): void
+    {
+        $diagram = Regex::create()->parse("/a\xE9b/")->accept(new MermaidRenderer());
+
+        $this->assertStringContainsString("[\"Literal: \u{FFFD}\"]", $diagram);
     }
 }
