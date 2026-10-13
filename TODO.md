@@ -48,6 +48,58 @@ attestation. Decide whether the build moves to CI with provenance.
   never in `vendor/`, while the lint reads `vendor/` and configured paths
   whatever `exclude` says; group imports of the attribute are missed there.
 
+## Upstream PHPStan fixes (fork `php-regex/phpstan-src`)
+
+PHPStan types `preg_match()` `$matches` with its own Hoa grammar
+(`resources/RegexGrammar.pp`). A third-party extension cannot override it:
+PHPStan's type-specifying extension always runs first and `$matches` out-types
+are unioned (checked on 2.3.1). So the fixes go upstream, as small PRs: one
+grammar fix plus one regression test each, official PCRE2 and PHP manual
+references in the description, never a large rewrite.
+
+Four branches are ready in the local `../phpstan-src` checkout, one commit each
+on `2.3.x` (62ed20078), not pushed. To do: `git push origin <branch>`, then
+open each PR against `phpstan/phpstan-src:2.3.x`.
+
+1. `regex-grammar-backreference`: *Parse back references in regex patterns*
+   (`\1`, `\g{-1}`, `\k<name>`… were read as literals: `/(a)(\1)/` typed
+   group 2 as `'1'`).
+2. `regex-grammar-short-escapes`: *Parse \x with fewer than two hexadecimal
+   digits and short \0 escapes in regex patterns* (`/(\x4)/` gave `'x4'`,
+   `/(\0)/` gave `''`).
+3. `regex-grammar-single-letter-property`: *Parse single-letter Unicode
+   properties like \pL in regex patterns* (`/(\pL)/u` gave `'pL'`).
+4. `regex-lookaround-zero-width`: *Do not count regex lookarounds as matched
+   characters* (`/(?=a)/` gave `non-empty-string`, `/\d+(?=px)/`
+   `non-falsy-string` for `'0'`).
+
+PRs 2 and 3 touch adjacent grammar lines: rebase the second once the first is
+merged.
+
+Checked before publishing: every test pattern behaves the same on PCRE2 10.35
+(PHP 7.4) to 10.49; the regex tests pass on PHP 8.2, 8.3 and 8.5; on 11,628
+constant `preg_match()` patterns from `corpus/`, with subjects from
+`SampleGenerator`, no branch rejects a real match result that 2.3.x accepted
+(2.3.x already rejects 209).
+
+Left for later PRs, each verified against the engine:
+
+- `\x30`, `\060` and `\o{60}` match `'0'` but are typed non-falsy; `\o{}` is
+  not parsed (needs that fix first).
+- `\Q...\E` is not parsed (`/\Q(a)\E(b)/` sees two groups); a grammar-only fix
+  is not possible.
+- Inline `(?x)`, `(?-x)` and `[#]` under `x` (upstream issue #11746).
+- Inline `(?i)` keeps lowercase constants (`/(?i)(a)/` gives `'a'`).
+- Groups inside a negative lookaround are typed as set (`/x(?!(a))(b)/`
+  gives `'a'`, the engine `''`).
+- A quantifier with a minimum of one over a maybe-empty atom is non-empty
+  (`/((?:a?)+)/`).
+- `\g<1>` and `\g'1'` (subroutine calls) are read as literals.
+
+Parked, too large for upstream review: local branches
+`regex-negative-lookaround-groups`, `regex-quoted-sequence`,
+`regex-extended-mode`.
+
 ---
 
 ## After 2.0 — verified UX findings
