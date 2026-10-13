@@ -129,6 +129,55 @@ final class ReportSpelling
     }
 
     /**
+     * A pattern under x with the tabs that lay it out shown as spaces, up to
+     * the next stop of four columns counted in its characters, so that it
+     * reads as indented in its file. A tab x does not skip is a character,
+     * and stays: in a class, in a \Q...\E run, and in a pattern that turns
+     * x off inline, or that is not under x.
+     */
+    public static function expandLayoutTabs(string $pattern): string
+    {
+        if (!str_contains($pattern, "\t")) {
+            return $pattern;
+        }
+
+        try {
+            [$body, $modifiers, $delimiter] = PatternParser::extractPatternAndFlags($pattern);
+        } catch (ParserException) {
+            return $pattern;
+        }
+
+        if (!str_contains($modifiers, 'x') || 1 === LibraryPcre::match('/\(\?(?:\^|[a-zA-Z]*-[a-zA-Z]*x)/', $body)) {
+            return $pattern;
+        }
+
+        $bodyStart = \strlen($pattern) - \strlen($modifiers) - \strlen(PatternParser::closingDelimiter($delimiter)) - \strlen($body);
+        $layout = self::layoutTabOffsets($body, $bodyStart);
+
+        $expanded = '';
+        $column = 0;
+        $length = \strlen($pattern);
+        for ($offset = 0; $offset < $length; $offset++) {
+            $byte = $pattern[$offset];
+            if ("\n" === $byte) {
+                $column = 0;
+            } elseif (isset($layout[$offset])) {
+                $width = 4 - $column % 4;
+                $expanded .= str_repeat(' ', $width);
+                $column += $width;
+
+                continue;
+            } elseif (0x80 !== (\ord($byte) & 0xC0)) {
+                // A UTF-8 continuation byte adds no column.
+                $column++;
+            }
+            $expanded .= $byte;
+        }
+
+        return $expanded;
+    }
+
+    /**
      * Text a person reads, such as a message or a hint, in display form: a
      * character that moves or hides text (a C1 control, a format character
      * such as a bidirectional control or a zero-width space, the line and
@@ -152,6 +201,73 @@ final class ReportSpelling
     public static function displayField(string $text): string
     {
         return self::spellControls(self::spellHidden($text), self::FIELD_CONTROL);
+    }
+
+    /**
+     * The offsets of the tabs x skips in a body: outside a class and a
+     * \Q...\E run, a comment included.
+     *
+     * @return array<int, true>
+     */
+    private static function layoutTabOffsets(string $body, int $shift): array
+    {
+        $offsets = [];
+        $inClass = false;
+        $inComment = false;
+        $inQuote = false;
+        $length = \strlen($body);
+
+        for ($i = 0; $i < $length; $i++) {
+            $byte = $body[$i];
+
+            if ($inQuote) {
+                if ('\\' === $byte && 'E' === ($body[$i + 1] ?? '')) {
+                    $inQuote = false;
+                    $i++;
+                }
+
+                continue;
+            }
+
+            if ($inComment) {
+                $inComment = "\n" !== $byte;
+                if ("\t" === $byte) {
+                    $offsets[$i + $shift] = true;
+                }
+
+                continue;
+            }
+
+            if ('\\' === $byte) {
+                $inQuote = 'Q' === ($body[$i + 1] ?? '');
+                $i++;
+
+                continue;
+            }
+
+            if ($inClass) {
+                if ('[' === $byte && ':' === ($body[$i + 1] ?? '') && false !== $close = strpos($body, ':]', $i + 2)) {
+                    $i = $close + 1;
+                } elseif (']' === $byte) {
+                    $inClass = false;
+                }
+
+                continue;
+            }
+
+            if ("\t" === $byte) {
+                $offsets[$i + $shift] = true;
+            } elseif ('#' === $byte) {
+                $inComment = true;
+            } elseif ('[' === $byte) {
+                $inClass = true;
+                // A "]" right after the bracket, or after "^", is a member.
+                $i += '^' === ($body[$i + 1] ?? '') ? 1 : 0;
+                $i += ']' === ($body[$i + 1] ?? '') ? 1 : 0;
+            }
+        }
+
+        return $offsets;
     }
 
     /**

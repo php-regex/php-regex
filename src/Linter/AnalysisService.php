@@ -19,6 +19,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Linter\Internal\LayoutSplicer;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -30,6 +31,7 @@ use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
@@ -622,11 +624,19 @@ final readonly class AnalysisService
                     );
 
                     $ast = $this->regex->parse($occurrence->pattern);
-                    $pretty = str_contains($ast->flags, 'x');
-                    $baseline = $ast->accept(new PatternPrinter($pretty));
-
                     $optimizedAst = $ast->accept($optimizer);
-                    $optimizedPattern = $optimizedAst->accept(new PatternPrinter($pretty));
+
+                    // The rewrite is written into the pattern as laid out,
+                    // only its changed parts printed again; a tree without
+                    // that text is pretty-printed on both sides instead.
+                    $splicer = new LayoutSplicer($this->regex);
+                    $baseline = $splicer->splice($ast, $ast);
+                    $optimizedPattern = $optimizedAst instanceof RegexNode ? $splicer->splice($ast, $optimizedAst) : null;
+                    if (null === $baseline || null === $optimizedPattern) {
+                        $pretty = str_contains($ast->flags, 'x');
+                        $baseline = $ast->accept(new PatternPrinter($pretty));
+                        $optimizedPattern = $optimizedAst->accept(new PatternPrinter($pretty));
+                    }
 
                     if ($baseline === $optimizedPattern) {
                         continue;

@@ -257,9 +257,10 @@ class ConsoleFormatter extends AbstractOutputFormatter
     private function formatMultilineDiff(string $old, string $new): string
     {
         // Each line is spelled in its pattern's mode, so no character that
-        // moves or hides text reaches the terminal raw.
-        $oldLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $old), $this->splitLines($old));
-        $newLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $new), $this->splitLines($new));
+        // moves or hides text reaches the terminal raw; the tabs that only
+        // lay the pattern out are shown as the indent they are.
+        $oldLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $old), $this->splitLines(ReportSpelling::expandLayoutTabs($old)));
+        $newLines = array_map(static fn (string $line): string => ReportSpelling::displayFragment($line, $new), $this->splitLines(ReportSpelling::expandLayoutTabs($new)));
 
         $ops = $this->diffLines($oldLines, $newLines);
         if (empty($ops)) {

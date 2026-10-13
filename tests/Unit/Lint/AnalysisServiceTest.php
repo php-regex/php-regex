@@ -330,9 +330,9 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame('/a/x', $result[0]['optimization']->optimized);
     }
 
-    public function test_suggest_optimizations_extended_mode_uses_pretty_baseline(): void
+    public function test_suggest_optimizations_extended_mode_keeps_the_written_layout(): void
     {
-        $pattern = "/a{1}  # comment\n/x";
+        $pattern = "/\n\tfoo{1}\t# one\n\t(?:a|b)  # two\n/x";
         $patterns = [
             new PatternOccurrence($pattern, 'test.php', 1, 'preg_match'),
         ];
@@ -340,10 +340,36 @@ final class AnalysisServiceTest extends TestCase
         $result = $this->analysis->suggestOptimizations($patterns, 0);
 
         $this->assertCount(1, $result);
+        $this->assertSame($pattern, $result[0]['optimization']->original);
+        $this->assertSame("/\n\tfoo\t# one\n\t[ab]  # two\n/x", $result[0]['optimization']->optimized);
+    }
 
+    public function test_suggest_optimizations_extended_mode_falls_back_to_the_pretty_layout(): void
+    {
+        // A tree without the text it was read from has no layout to keep:
+        // both sides are pretty-printed. The cache here gives it back so.
+        $pattern = "/a{1}  # comment\n/x";
         $ast = Regex::create()->parse($pattern);
-        $baseline = $ast->accept(new PatternPrinter(str_contains($ast->flags, 'x')));
+        $cache = new class(new RegexNode($ast->pattern, $ast->flags, $ast->delimiter, $ast->startPosition, $ast->endPosition)) implements CacheInterface {
+            public function __construct(private readonly RegexNode $ast) {}
 
+            public function generateKey(string $seed): string
+            {
+                return 'key';
+            }
+
+            public function write(string $key, RegexNode $ast): void {}
+
+            public function load(string $key): RegexNode
+            {
+                return $this->ast;
+            }
+        };
+
+        $result = (new AnalysisService(RegexParser::create(['cache' => $cache])))->suggestOptimizations([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')], 0);
+
+        $this->assertCount(1, $result);
+        $baseline = $ast->accept(new PatternPrinter(str_contains($ast->flags, 'x')));
         $this->assertSame($baseline, $result[0]['optimization']->original);
     }
 

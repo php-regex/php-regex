@@ -22,7 +22,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A pattern under /x is rewritten from its pretty-printed tree, so that its
+ * A pattern under /x has its rewrite written into its own text, so that its
  * comments and layout survive the suggestion. The /x flag is read after the
  * bytes PHP skips before the delimiter (C's isspace(): space, \t, \n, \v,
  * \f, \r), and never behind a NUL byte, which PHP refuses as a delimiter.
@@ -62,8 +62,8 @@ final class ExtendedModeDelimiterTest extends TestCase
         $withLead = $this->onlySuggestion($lead.self::PATTERN);
         $without = $this->onlySuggestion(self::PATTERN);
 
-        // The /x path rewrites the pretty-printed tree, which knows nothing
-        // of the bytes before the delimiter: both suggestions are the same.
+        // The rewrite is written into the text from the delimiter on, which
+        // leaves the bytes before it out: both suggestions are the same.
         $this->assertSame($without->original, $withLead->original);
         $this->assertSame($without->optimized, $withLead->optimized);
         $this->assertStringContainsString('# one', $withLead->optimized);

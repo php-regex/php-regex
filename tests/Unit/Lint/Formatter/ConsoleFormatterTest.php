@@ -502,6 +502,31 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('foo', $output);
     }
 
+    public function test_format_multiline_diff_lays_out_the_tabs_x_skips(): void
+    {
+        $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));
+
+        $output = $formatter->format(new LintReport([[
+            'file' => 'test.php',
+            'line' => 10,
+            'pattern' => "/\n\tfoo{1}\t# one\n\t[\t]\n/x",
+            'issues' => [],
+            'optimizations' => [[
+                'file' => 'test.php',
+                'line' => 10,
+                'optimization' => new OptimizationResult("/\n\tfoo{1}\t# one\n\t[\t]\n/x", "/\n\tfoo\t# one\n\t[\t]\n/x", ['Optimized pattern.']),
+                'savings' => 3,
+            ]],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]));
+
+        $this->assertStringContainsString('-     foo{1}  # one', $output);
+        $this->assertStringContainsString('+     foo # one', $output);
+        // In a class, x keeps the tab: it is a character, spelled.
+        $this->assertStringContainsString('      [\t]', $output);
+        $this->assertStringNotContainsString("\t", $output);
+    }
+
     public function test_format_multiline_diff_with_ellipsis(): void
     {
         $config = new OutputConfiguration(ansi: false);

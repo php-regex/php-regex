@@ -301,4 +301,75 @@ final class ReportSpellingTest extends TestCase
         yield 'arabic number sign' => ['text' => "a\u{600}b", 'expected' => 'a\x{600}b'];
         yield 'no-break space, per mille sign and a letter kept' => ['text' => "a\u{A0}\u{2030}\u{E9}b", 'expected' => "a\u{A0}\u{2030}\u{E9}b"];
     }
+
+    #[Test]
+    #[DataProvider('provideLayoutTabs')]
+    public function test_layout_tabs_are_spaces_where_x_ignores_them(string $pattern, string $expected): void
+    {
+        $this->assertSame($expected, ReportSpelling::expandLayoutTabs($pattern));
+    }
+
+    /**
+     * Under x a tab outside a class lays the pattern out and is shown as
+     * spaces up to the next stop of four columns, counted in characters of
+     * the pattern; in a class or a quoted run, and wherever x does not hold,
+     * it is a character and stays.
+     *
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function provideLayoutTabs(): iterable
+    {
+        yield 'indents and aligned comments' => [
+            'pattern' => "/\n\t\t&\t# c\n\tb\n\t/x",
+            'expected' => "/\n        &   # c\n    b\n    /x",
+        ];
+        yield 'a multibyte character is one column' => [
+            'pattern' => "/\u{E9}\tb/x",
+            'expected' => "/\u{E9}  b/x",
+        ];
+        yield 'a tab in a class is a character' => [
+            'pattern' => "/\t[\t]\t/x",
+            'expected' => "/   [\t] /x",
+        ];
+        yield 'a class closing bracket first, and a POSIX class' => [
+            'pattern' => "/[]\t][^]\t][[:alpha:]\t]\t/x",
+            'expected' => "/[]\t][^]\t][[:alpha:]\t]  /x",
+        ];
+        yield 'an escaped bracket opens no class' => [
+            'pattern' => "/\\[\tb/x",
+            'expected' => '/\\[ b/x',
+        ];
+        yield 'a bracket in a comment opens no class' => [
+            'pattern' => "/a # [x\n\tb/x",
+            'expected' => "/a # [x\n    b/x",
+        ];
+        yield 'a tab in a comment' => [
+            'pattern' => "/a # x\ty\n/x",
+            'expected' => "/a # x  y\n/x",
+        ];
+        yield 'a quoted run keeps its tab' => [
+            'pattern' => "/\\Q\t\\E\tb/x",
+            'expected' => "/\\Q\t\\E  b/x",
+        ];
+        yield 'a hash delimiter is no comment' => [
+            'pattern' => "#\ta#x",
+            'expected' => '#   a#x',
+        ];
+        yield 'without x, a tab is a character' => [
+            'pattern' => "/a\tb/",
+            'expected' => "/a\tb/",
+        ];
+        yield 'x turned off inline' => [
+            'pattern' => "/a(?-x:\tb)/x",
+            'expected' => "/a(?-x:\tb)/x",
+        ];
+        yield 'flags reset inline' => [
+            'pattern' => "/a(?^:\tb)/x",
+            'expected' => "/a(?^:\tb)/x",
+        ];
+        yield 'not a pattern' => [
+            'pattern' => "/a\tb",
+            'expected' => "/a\tb",
+        ];
+    }
 }
