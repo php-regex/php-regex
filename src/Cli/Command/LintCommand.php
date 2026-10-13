@@ -279,9 +279,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             } else {
                 $this->writeReport($output, $format, $formatter->format($emptyReport));
             }
-            $this->writeRequestedFiles($output, $arguments, $format, $formatter, $emptyReport);
-
-            return self::SUCCESS;
+            return $this->writeRequestedFiles($output, $arguments, $format, $formatter, $emptyReport) ? self::SUCCESS : self::INVALID;
         }
 
         // A file read with the tokenizer holds no pattern of its own: it is
@@ -340,7 +338,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $output->write($formatter->formatFooter());
         }
 
-        $this->writeRequestedFiles($output, $arguments, $format, $formatter, $report);
+        if (!$this->writeRequestedFiles($output, $arguments, $format, $formatter, $report)) {
+            return self::INVALID;
+        }
 
         return $report->stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
     }
@@ -348,8 +348,8 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
     /**
      * What makes a file the run is given unusable, checked before the run
      * starts: a path that does not exist, a baseline that is missing, cannot
-     * be read or holds no baseline, a baseline to generate that cannot be
-     * written.
+     * be read or holds no baseline, a baseline to generate or a report file
+     * that cannot be written.
      *
      * @param bool              $pathsGiven whether the paths come from the command line, not from the configuration
      * @param LintBaseline|null $baseline   the baseline, read here once
@@ -382,6 +382,11 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return ['Baseline file not writable: '.$generated, JsonDocument::STAGE_USAGE];
         }
 
+        $report = (string) $arguments->output;
+        if ('' !== $report && !self::canWriteMakingDirectories($report)) {
+            return ['Output file not writable: '.$report, JsonDocument::STAGE_USAGE];
+        }
+
         return null;
     }
 
@@ -398,6 +403,20 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $directory = \dirname($file);
 
         return is_dir($directory) && is_writable($directory);
+    }
+
+    /**
+     * Whether a file can be written once the directories it lacks are made:
+     * the nearest one that exists is a writable directory.
+     */
+    private static function canWriteMakingDirectories(string $file): bool
+    {
+        $directory = \dirname($file);
+        while (!file_exists($directory) && \dirname($directory) !== $directory) {
+            $directory = \dirname($directory);
+        }
+
+        return $directory === \dirname($file) ? self::canWrite($file) : is_dir($directory) && is_writable($directory);
     }
 
     /**
@@ -432,8 +451,10 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
     /**
      * Name the baseline written, and write the report to --output as well.
+     *
+     * @return bool whether the report reached its file, when one is asked for
      */
-    private function writeRequestedFiles(Output $output, LintArguments $arguments, string $format, OutputFormatterInterface $formatter, LintReport $report): void
+    private function writeRequestedFiles(Output $output, LintArguments $arguments, string $format, OutputFormatterInterface $formatter, LintReport $report): bool
     {
         // Only the console report shares stdout with status lines.
         $status = 'console' === $format ? $output->write(...) : $output->writeError(...);
@@ -444,7 +465,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         $outputFile = $arguments->output;
         if (null === $outputFile) {
-            return;
+            return true;
         }
 
         $content = $formatter->format($report);
@@ -452,14 +473,18 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             // Strip ANSI codes for file output
             $content = self::withoutMargin(LibraryPcre::replace('/\e\[[0-9;]*m/', '', $content) ?? $content);
         }
+        // Checked before the run: what fails here changed during it, or ran
+        // out of room.
         $dir = \dirname($outputFile);
-        if (!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) {
-            $output->writeError("Could not create directory: $dir\n");
-        } elseif (false === @file_put_contents($outputFile, $content)) {
-            $output->writeError("Could not write to file: $outputFile\n");
-        } else {
-            $status("Output also written to: {$outputFile}\n");
+        if ((!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) || false === @file_put_contents($outputFile, $content)) {
+            $output->writeError('Error: Could not write the output file: '.$outputFile."\n");
+
+            return false;
         }
+
+        $status("Output also written to: {$outputFile}\n");
+
+        return true;
     }
 
     /**

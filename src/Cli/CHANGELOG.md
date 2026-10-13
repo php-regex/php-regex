@@ -15,6 +15,9 @@ CHANGELOG
    installed from a symlinked path repository runs on the project's
    dependencies; with no autoloader at all it says to run `composer install`
    and exits with 1.
+ * `regex lint --output=<file>` refuses a file it cannot write before the
+   run, with exit code 2 and the JSON stage `usage`, as `--generate-baseline`
+   does; it used to report it on stderr after the run and exit with 0.
  * The help screens list every option each command accepts (`lint`,
    `compare`, `diagram`; `--json` on `analyze`, `debug`, `redos` and
    `transpile`).

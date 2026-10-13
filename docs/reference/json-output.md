@@ -191,7 +191,7 @@ tells the two apart.
 
 | stage | meaning |
 |---|---|
-| `usage` | The command line cannot be used: an unknown command or option, a missing pattern or value, an invalid `--php-version`, a path argument that does not exist, a `--baseline` file that is missing, cannot be read or is not a baseline, a `--generate-baseline` file that cannot be written (an `--output` file that cannot be written is reported on stderr after the run) |
+| `usage` | The command line cannot be used: an unknown command or option, a missing pattern or value, an invalid `--php-version`, a path argument that does not exist, a `--baseline` file that is missing, cannot be read or is not a baseline, a `--generate-baseline` or `--output` file that cannot be written |
 | `config` | The configuration cannot be used: a `regex.json` that is not valid JSON, an unknown or removed key, a path it lists that does not exist |
 | `collect` | `lint` could not read the files or the patterns in them |
 | `pattern` | The command cannot act on the pattern it was given, such as an invalid one |

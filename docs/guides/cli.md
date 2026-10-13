@@ -967,6 +967,7 @@ For `lint`, code 2 also covers the paths it is given:
 | A path listed in `regex.json` that does not exist            | `2`       | `config`     |
 | A `--baseline` file that is missing, cannot be read, or is not a baseline | `2` | `usage` |
 | A `--generate-baseline` file that cannot be written          | `2`       | `usage`      |
+| An `--output` file that cannot be written                    | `2`       | `usage`      |
 | A path that exists but holds no pattern                      | `0`       | none         |
 
 With `--format=json`, a configuration or command-line error is printed on

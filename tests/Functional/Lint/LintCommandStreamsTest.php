@@ -290,16 +290,49 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertMatchesRegularExpression('/^  src\/a\.php:3:/m', $stdout, 'The terminal keeps its margin.');
     }
 
+    /**
+     * An --output file that cannot be written is refused before the run, as
+     * a --generate-baseline file is: a report that never reaches its file
+     * does not pass as a clean run.
+     */
     #[Test]
-    public function test_lint_reports_an_output_file_it_cannot_write_on_stderr(): void
+    #[DataProvider('provideUnwritableOutputFiles')]
+    public function test_lint_refuses_an_output_file_it_cannot_write(string $output): void
     {
         $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => self::PHP_FILE, 'taken' => '']);
 
-        [, , $unwritableDirectory] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos', '--output='.$directory.'/taken/report.json']);
-        [, , $unwritableFile] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos', '--output='.$directory.'/src']);
+        [$jsonExitCode, $stdout] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos', '--output='.$directory.'/'.$output]);
+        [$consoleExitCode, $consoleStdout, $stderr] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos', '--output='.$directory.'/'.$output]);
 
-        $this->assertStringContainsString('Could not create directory: '.$directory.'/taken', $unwritableDirectory);
-        $this->assertStringContainsString('Could not write to file: '.$directory.'/src', $unwritableFile);
+        $this->assertSame(2, $jsonExitCode);
+        $this->assertSame(['error' => 'Output file not writable: '.$directory.'/'.$output, 'stage' => 'usage'], json_decode($stdout, true));
+        $this->assertSame(2, $consoleExitCode);
+        $this->assertSame('Error: Output file not writable: '.$directory.'/'.$output."\n", $stderr);
+        $this->assertStringNotContainsString('Scanning files', $consoleStdout);
+    }
+
+    /**
+     * @return iterable<string, array{output: string}>
+     */
+    public static function provideUnwritableOutputFiles(): iterable
+    {
+        yield 'a file in the way of its directory' => ['output' => 'taken/report.json'];
+        yield 'a file deeper below a file' => ['output' => 'taken/build/report.json'];
+        yield 'a directory' => ['output' => 'src'];
+    }
+
+    /**
+     * The directories of the --output file that do not exist yet are made.
+     */
+    #[Test]
+    public function test_lint_makes_the_missing_directories_of_the_output_file(): void
+    {
+        $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => self::PHP_FILE]);
+
+        [$exitCode, , $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos', '--output='.$directory.'/build/reports/lint/report.json']);
+
+        $this->assertSame(0, $exitCode, $stderr);
+        $this->assertIsArray(json_decode((string) file_get_contents($directory.'/build/reports/lint/report.json'), true));
     }
 
     #[Test]
