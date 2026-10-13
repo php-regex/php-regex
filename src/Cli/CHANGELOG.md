@@ -9,6 +9,8 @@ CHANGELOG
  * `regex lint --verbose` names each file read with the tokenizer because the
    PHP parser could not read it (`Parsed with the tokenizer: <file> (<reason>)`),
    and the JSON report counts them in `stats.parser_fallbacks`.
+ * `regex lint --output=<file>` writes the console report without the
+   terminal's margin: each report starts at the first column of the file.
  * The help screens list every option each command accepts (`lint`,
    `compare`, `diagram`; `--json` on `analyze`, `debug`, `redos` and
    `transpile`).

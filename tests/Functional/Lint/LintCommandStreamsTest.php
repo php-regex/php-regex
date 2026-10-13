@@ -267,8 +267,27 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertStringNotContainsString($written, $stdout, 'The console report is not in colour: nothing to strip.');
         $this->assertStringNotContainsString("\e[", $written);
         $this->assertStringContainsString('src/a.php', $written);
-        $this->assertStringContainsString($written, (string) preg_replace('/\e\[[0-9;]*m/', '', $stdout));
+        $this->assertStringContainsString($written, (string) preg_replace(['/\e\[[0-9;]*m/', '/^  /m'], '', $stdout));
         $this->assertStringContainsString('Output also written to: '.$directory.'/build/report.txt', $stdout);
+    }
+
+    /**
+     * The terminal's two-space margin stays on screen: in the file every
+     * report starts at the first column, and the lines below it keep their
+     * depth relative to it.
+     */
+    #[Test]
+    public function test_lint_writes_a_console_report_to_a_file_without_the_terminal_margin(): void
+    {
+        $directory = $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => "<?php\n\npreg_match('/[aa]/', 'a');\n"]);
+
+        [, $stdout] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos', '--output='.$directory.'/build/report.txt']);
+
+        $written = (string) file_get_contents($directory.'/build/report.txt');
+        $this->assertStringStartsWith('src/a.php:3:', $written);
+        $this->assertMatchesRegularExpression('/^  WARN /m', $written);
+        $this->assertMatchesRegularExpression('/^    → \/\[aa\]\/$/m', $written);
+        $this->assertMatchesRegularExpression('/^  src\/a\.php:3:/m', $stdout, 'The terminal keeps its margin.');
     }
 
     #[Test]

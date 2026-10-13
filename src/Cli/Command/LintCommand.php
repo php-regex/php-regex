@@ -450,7 +450,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $content = $formatter->format($report);
         if ('console' === $format) {
             // Strip ANSI codes for file output
-            $content = LibraryPcre::replace('/\e\[[0-9;]*m/', '', $content);
+            $content = self::withoutMargin(LibraryPcre::replace('/\e\[[0-9;]*m/', '', $content) ?? $content);
         }
         $dir = \dirname($outputFile);
         if (!is_dir($dir) && !@mkdir($dir, 0o777, true) && !is_dir($dir)) {
@@ -460,6 +460,19 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         } else {
             $status("Output also written to: {$outputFile}\n");
         }
+    }
+
+    /**
+     * The console report without the margin it keeps on screen: the
+     * indentation every non-blank line shares goes, so a file starts at the
+     * first column and each line keeps its depth relative to the others.
+     */
+    private static function withoutMargin(string $content): string
+    {
+        LibraryPcre::matchAll('/^ *(?=\S)/m', $content, $indents);
+        $margin = [] === $indents[0] ? 0 : min(array_map(strlen(...), $indents[0]));
+
+        return 0 === $margin ? $content : LibraryPcre::replace('/^ {'.$margin.'}/m', '', $content) ?? $content;
     }
 
     /**
