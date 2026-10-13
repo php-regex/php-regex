@@ -141,8 +141,10 @@ final readonly class LintBaseline
             }
         }
 
+        // Read by position, as the candidates were: a report keyed by file
+        // takes out the same issues as its list.
         $results = [];
-        foreach ($report->results as $r => $result) {
+        foreach (\array_values($report->results) as $r => $result) {
             if (!isset($known[$r])) {
                 $results[] = $result;
 
@@ -151,7 +153,7 @@ final readonly class LintBaseline
 
             $issues = [];
             $removed = [];
-            foreach ($result['issues'] as $i => $issue) {
+            foreach (\array_values($result['issues']) as $i => $issue) {
                 if (isset($known[$r][$i])) {
                     $removed[] = $issue['message'];
                 } else {

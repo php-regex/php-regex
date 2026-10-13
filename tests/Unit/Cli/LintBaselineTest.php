@@ -214,6 +214,35 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * A report may key its results by file and the issues of a result by
+     * anything: the known issue is still the one taken out, and the other
+     * results and issues stay.
+     */
+    #[Test]
+    public function test_filter_takes_out_the_known_issue_whatever_the_keys_of_the_report(): void
+    {
+        $known = self::issue('regex.lint.known', 'Known issue', 'error', 'src/b.php');
+        $unknown = self::issue('regex.lint.unknown', 'Unknown issue', 'warning', 'src/b.php');
+        $other = self::issue('regex.lint.unknown', 'Unknown issue', 'warning');
+        $knownProblem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Known issue');
+        $unknownProblem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Unknown issue');
+
+        $baseline = $this->baselineOf(self::report([self::lintResult([$known], [$knownProblem])]));
+
+        $results = [
+            'src/a.php' => self::lintResult([$other], [$unknownProblem]),
+            'src/b.php' => ['file' => 'src/b.php', 'issues' => [7 => $unknown, 9 => $known]] + self::lintResult([], [$unknownProblem, $knownProblem]),
+        ];
+
+        $filtered = $baseline->filter(new LintReport($results, LintStatsCounter::count($results)));
+
+        $this->assertSame([
+            self::lintResult([$other], [$unknownProblem]),
+            ['file' => 'src/b.php', 'issues' => [$unknown]] + self::lintResult([], [$unknownProblem]),
+        ], $filtered->results);
+    }
+
+    /**
      * With "/" as the working directory there is no prefix to take off: an
      * absolute path is written, and matched, as it is.
      */

@@ -784,26 +784,28 @@ final class AmbiguityFinder
         $links = $this->links();
         $longest = [];
         $best = null;
+        $bestDegree = 0;
         $unwitnessed = null;
         foreach ($links as $targets) {
             foreach ($targets as $to => [$state, $labels, $crosses, $real, $lookaround]) {
                 $degree = 2 + $this->longestChain($to, $links, $longest);
                 $inexact = $crosses || !$real;
                 // An exact pump wins a tie with an approximated one.
-                if (null !== $best && (null !== $best['degree'] && ($degree < $best['degree'] || ($degree === $best['degree'] && ($inexact || !$best['approximated']))))) {
+                if (null !== $best && ($degree < $bestDegree || ($degree === $bestDegree && ($inexact || !$best['approximated'])))) {
                     continue;
                 }
 
                 $witness = $lookaround ? null : $this->witness($state, $this->pumps($labels));
                 if (null !== $witness) {
                     $best = $this->verdict(RedosComplexity::Polynomial, $degree, $witness, $inexact);
+                    $bestDegree = $degree;
                 } elseif (null === $unwitnessed || $degree > $unwitnessed[0]) {
                     $unwitnessed = [$degree, $state];
                 }
             }
         }
 
-        if (null !== $unwitnessed && (null === $best || (null !== $best['degree'] && $unwitnessed[0] > $best['degree']))) {
+        if (null !== $unwitnessed && (null === $best || $unwitnessed[0] > $bestDegree)) {
             return $this->unwitnessed(RedosComplexity::Polynomial, $unwitnessed[0], $unwitnessed[1]);
         }
 

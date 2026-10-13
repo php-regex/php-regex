@@ -56,6 +56,25 @@ final class HighlighterTest extends TestCase
         $this->assertStringNotContainsString('<script>', $highlighted);
     }
 
+    /**
+     * A byte of invalid UTF-8 in a pattern without /u is shown as the
+     * replacement character, never dropped with the token it stands in,
+     * and quotes are written as entities.
+     */
+    public function test_highlight_html_keeps_a_byte_of_invalid_utf8(): void
+    {
+        $highlighted = $this->highlight("/a\xE9b\"'/", 'html');
+
+        $this->assertSame(
+            '<span class="regex-token regex-literal">a</span>'
+            ."<span class=\"regex-token regex-literal\">\u{FFFD}</span>"
+            .'<span class="regex-token regex-literal">b</span>'
+            .'<span class="regex-token regex-literal">&quot;</span>'
+            .'<span class="regex-token regex-literal">&#039;</span>',
+            $highlighted,
+        );
+    }
+
     public function test_highlight_cli_complex_pattern(): void
     {
         $highlighted = $this->highlight('/^[0-9]+(\w+)$/', 'cli');
