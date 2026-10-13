@@ -56,6 +56,49 @@ final class EntryPointAutoloadTest extends TestCase
     }
 
     /**
+     * A path repository installs the package as a symlink, and PHP resolves
+     * it: the script then sits in the package's own checkout, where an
+     * autoloader other than the project's may be found. Composer's proxy
+     * names the project's one, and that one wins.
+     */
+    #[Test]
+    public function test_the_entry_point_loads_the_autoloader_composer_names(): void
+    {
+        $script = $this->root.'/checkout/src/Cli/bin/regex';
+        mkdir(\dirname($script), 0o777, true);
+        copy(\dirname(__DIR__, 3).'/src/Cli/bin/regex', $script);
+        mkdir($this->root.'/checkout/vendor');
+        file_put_contents($this->root.'/checkout/vendor/autoload.php', '<?php fwrite(STDERR, "the checkout\'s autoloader"); exit(3);');
+
+        // What Composer writes in vendor/bin for a PHP binary.
+        $proxy = $this->root.'/vendor/bin/regex';
+        mkdir(\dirname($proxy));
+        file_put_contents($proxy, '<?php $GLOBALS[\'_composer_autoload_path\'] = __DIR__.\'/../autoload.php\'; include '.var_export($script, true).';');
+
+        $output = [];
+        exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($proxy).' --version 2>&1', $output, $code);
+
+        $this->assertSame(0, $code, implode("\n", $output));
+        $this->assertStringContainsString('PHPRegex', implode("\n", $output));
+    }
+
+    #[Test]
+    public function test_an_entry_point_without_autoloader_says_how_to_install(): void
+    {
+        $script = $this->root.'/a/b/c/d/e/bin/regex';
+        mkdir(\dirname($script), 0o777, true);
+        copy(\dirname(__DIR__, 3).'/src/Cli/bin/regex', $script);
+
+        $output = [];
+        exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($script).' --version 2>&1 >/dev/null', $output, $code);
+        $stderr = implode("\n", $output);
+
+        $this->assertSame(1, $code, $stderr);
+        $this->assertStringContainsString('composer install', $stderr);
+        $this->assertStringNotContainsString('Stack trace', $stderr);
+    }
+
+    /**
      * @return iterable<string, array{source: string, installedAt: string, expected: string}>
      */
     public static function provideInstalledEntryPoints(): iterable

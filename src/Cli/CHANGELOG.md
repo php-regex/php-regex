@@ -11,6 +11,10 @@ CHANGELOG
    and the JSON report counts them in `stats.parser_fallbacks`.
  * `regex lint --output=<file>` writes the console report without the
    terminal's margin: each report starts at the first column of the file.
+ * `vendor/bin/regex` loads the autoloader Composer names, so a package
+   installed from a symlinked path repository runs on the project's
+   dependencies; with no autoloader at all it says to run `composer install`
+   and exits with 1.
  * The help screens list every option each command accepts (`lint`,
    `compare`, `diagram`; `--json` on `analyze`, `debug`, `redos` and
    `transpile`).

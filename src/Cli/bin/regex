@@ -21,17 +21,21 @@ if (version_compare('8.2.0', \PHP_VERSION, '>')) {
 gc_disable();
 
 $autoloadPath = null;
-// The monorepo (src/Cli/bin), the php-regex/regex-cli package
+// The project's autoloader, named by the proxy Composer writes in
+// vendor/bin: the only one to trust when a path repository symlinks the
+// package, since this script then sits in the package's own checkout. Then
+// the monorepo (src/Cli/bin), the php-regex/regex-cli package
 // (vendor/php-regex/regex-cli/bin), and the monorepo installed as a
 // dependency (vendor/php-regex/php-regex/src/Cli/bin).
 $autoloadPaths = [
+    $GLOBALS['_composer_autoload_path'] ?? null,
     __DIR__.'/../../../vendor/autoload.php',
     __DIR__.'/../../../autoload.php',
     __DIR__.'/../../../../../autoload.php',
 ];
 
 foreach ($autoloadPaths as $path) {
-    if (file_exists($path)) {
+    if (\is_string($path) && file_exists($path)) {
         $autoloadPath = $path;
 
         break;
@@ -39,7 +43,9 @@ foreach ($autoloadPaths as $path) {
 }
 
 if (null === $autoloadPath) {
-    throw new \RuntimeException('Unable to locate autoload.php file.');
+    fwrite(\STDERR, 'PHPRegex could not find the Composer autoloader.'.\PHP_EOL.'Install the dependencies first: composer install'.\PHP_EOL);
+
+    exit(1);
 }
 
 require_once $autoloadPath;
