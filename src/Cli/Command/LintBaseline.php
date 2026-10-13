@@ -125,8 +125,8 @@ final readonly class LintBaseline
     public function filter(LintReport $report): LintReport
     {
         $candidates = [];
-        foreach ($report->results as $r => $result) {
-            foreach ($result['issues'] as $i => $issue) {
+        foreach (\array_values($report->results) as $r => $result) {
+            foreach (\array_values($result['issues']) as $i => $issue) {
                 $key = $this->keyOf($issue, $result);
                 if (isset($this->lines[$key])) {
                     $candidates[$key][] = [$r, $i, $issue['line']];

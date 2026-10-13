@@ -209,6 +209,7 @@ final class RoutePatternSourceTest extends TestCase
     public function test_extract_with_yaml_resources(): void
     {
         $tempYaml = tempnam(sys_get_temp_dir(), 'routes');
+        $this->assertNotFalse($tempYaml);
         copy(__DIR__.'/../../../../Fixtures/Symfony/test_content.yaml', $tempYaml);
 
         try {
@@ -242,6 +243,8 @@ final class RoutePatternSourceTest extends TestCase
     {
         $tempYaml1 = tempnam(sys_get_temp_dir(), 'routes1');
         $tempYaml2 = tempnam(sys_get_temp_dir(), 'routes2');
+        $this->assertNotFalse($tempYaml1);
+        $this->assertNotFalse($tempYaml2);
         copy(__DIR__.'/../../../../Fixtures/Symfony/test_content1.yaml', $tempYaml1);
         copy(__DIR__.'/../../../../Fixtures/Symfony/test_content2.yaml', $tempYaml2);
 
@@ -276,6 +279,8 @@ final class RoutePatternSourceTest extends TestCase
     {
         $tempPhp = tempnam(sys_get_temp_dir(), 'routes');
         $tempXml = tempnam(sys_get_temp_dir(), 'routes');
+        $this->assertNotFalse($tempPhp);
+        $this->assertNotFalse($tempXml);
         copy(__DIR__.'/../../../../Fixtures/Symfony/test.php', $tempPhp);
         copy(__DIR__.'/../../../../Fixtures/Symfony/routes.xml', $tempXml);
 

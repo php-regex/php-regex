@@ -253,7 +253,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             return null;
         }
 
-        foreach ($node->children as $index => $child) {
+        foreach (\array_values($node->children) as $index => $child) {
             $unwrapped = NodePredicates::unwrapTransparentNode($child);
             if ($unwrapped === $nested) {
                 return ['sequence' => $node, 'index' => $index];

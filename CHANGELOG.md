@@ -86,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - The default cache wrote parsed trees as PHP files under the shared system temp directory and `include`d them: another local user could plant a file there and have it run, or change a verdict. Nothing is written to disk by default any more (the latest 1024 trees are kept in memory), `FilesystemCache` only runs where a directory is named, stores data read back with a class allowlist instead of code, creates its directories for their owner only (`0700`, files `0600`) without touching the process umask, and ignores a directory another user owns or others can write to.
+- The HTML highlighter, the HTML explainer and the SVG railroad diagram escape single and double quotes (`ENT_QUOTES`): a pattern carrying a quote could leave the attribute or text it is rendered in, `Literal ('a')` in a diagram showing as `Literal (&#039;a&#039;)`.
 
 ### Added
 

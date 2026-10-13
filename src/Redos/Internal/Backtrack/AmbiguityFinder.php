@@ -184,7 +184,13 @@ final class AmbiguityFinder
             $longest[$index] = $after + (isset($this->component[$components[$index][0]]) ? 1 : 0);
         }
 
-        return [] === $longest ? 0 : max($longest);
+        if ([] === $longest) {
+            return 0;
+        }
+
+        $bound = \max($longest);
+
+        return \is_int($bound) ? $bound : 0;
     }
 
     /**
@@ -784,7 +790,7 @@ final class AmbiguityFinder
                 $degree = 2 + $this->longestChain($to, $links, $longest);
                 $inexact = $crosses || !$real;
                 // An exact pump wins a tie with an approximated one.
-                if (null !== $best && ($degree < $best['degree'] || ($degree === $best['degree'] && ($inexact || !$best['approximated'])))) {
+                if (null !== $best && (null !== $best['degree'] && ($degree < $best['degree'] || ($degree === $best['degree'] && ($inexact || !$best['approximated']))))) {
                     continue;
                 }
 
@@ -797,7 +803,7 @@ final class AmbiguityFinder
             }
         }
 
-        if (null !== $unwitnessed && (null === $best || $unwitnessed[0] > $best['degree'])) {
+        if (null !== $unwitnessed && (null === $best || (null !== $best['degree'] && $unwitnessed[0] > $best['degree']))) {
             return $this->unwitnessed(RedosComplexity::Polynomial, $unwitnessed[0], $unwitnessed[1]);
         }
 

@@ -129,17 +129,19 @@ final class PythonPrinter extends AbstractTargetPrinter
     public function visitGroup(GroupNode $node): string
     {
         $child = $node->child->accept($this);
+        $name = $node->name ?? '';
+        $flags = $node->flags ?? '';
 
         return match ($node->type) {
             GroupType::Capturing => '('.$child.')',
             GroupType::NonCapturing => '(?:'.$child.')',
-            GroupType::Named => '(?P<'.$node->name.'>'.$child.')',
+            GroupType::Named => '(?P<'.$name.'>'.$child.')',
             GroupType::LookaheadPositive => '(?='.$child.')',
             GroupType::LookaheadNegative => '(?!'.$child.')',
             GroupType::LookbehindPositive => '(?<='.$child.')',
             GroupType::LookbehindNegative => '(?<!'.$child.')',
             GroupType::Atomic => '(?=(?P<tmp>'.$child.'))(?P=tmp)', // Atomic group emulation in Python
-            GroupType::InlineFlags => '(?'.$node->flags.')', // Partially supported if simple
+            GroupType::InlineFlags => '(?'.$flags.')', // Partially supported if simple
             GroupType::BranchReset => $this->unsupported('Branch reset groups are not supported in Python re.', $node),
             GroupType::ScanSubstring => $this->unsupported('Substring scans are not supported in Python re.', $node),
         };

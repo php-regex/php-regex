@@ -2,8 +2,29 @@ includes:
     - src/PHPStan/extension.neon
     - tools/phpstan/vendor/phpstan/phpstan/conf/bleedingEdge.neon
     - tools/phpstan/vendor/phpstan/phpstan-phpunit/extension.neon
+    - tools/phpstan/vendor/phpstan/phpstan-phpunit/rules.neon
     - tools/phpstan/vendor/phpstan/phpstan-symfony/extension.neon
     - tools/phpstan/vendor/phpstan/phpstan-symfony/rules.neon
+    - tools/phpstan/vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - tools/phpstan/vendor/shipmonk/phpstan-rules/rules.neon
+    - tools/phpstan/vendor/spaze/phpstan-disallowed-calls/extension.neon
+    - tools/phpstan/vendor/spaze/phpstan-disallowed-calls/disallowed-loose-calls.neon
+
+# Only the three rules of thecodingmachine/phpstan-strict-rules that fit this
+# codebase are registered, by service: the plugin's full neon also wires
+# MustRethrowRule and the superglobals ban, which fight the boundary catches
+# (\Throwable at a CLI, cache or analysis boundary is this library's
+# documented convention) and the CLI's legitimate $_SERVER reads.
+services:
+    -
+        class: TheCodingMachine\PHPStan\Rules\Exceptions\ThrowMustBundlePreviousExceptionRule
+        tags: [phpstan.rules.rule]
+    -
+        class: TheCodingMachine\PHPStan\Rules\Conditionals\SwitchMustContainDefaultRule
+        tags: [phpstan.rules.rule]
+    -
+        class: TheCodingMachine\PHPStan\Rules\Exceptions\DoNotThrowExceptionBaseClassRule
+        tags: [phpstan.rules.rule]
 
 parameters:
     level: max
@@ -22,6 +43,55 @@ parameters:
     # patterns for the PHP running the analysis, not for the 8.2 floor.
     phpRegex:
         phpVersion: runtime
+
+    # Absolute strictness for local development: the benevolent unions, the
+    # implicit mixed and the too-wide public return shapes level max tolerates
+    # are reported here, so what CI's floor would accept still shows at home.
+    checkBenevolentUnionTypes: true
+    checkImplicitMixed: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+
+    # Opt-in subset of shipmonk/phpstan-rules: each rule is a conscious
+    # choice, the style-flavoured ones (forbidVariableTypeOverwriting,
+    # forbidUnusedClosureParameters) measured as pure idiom on this codebase.
+    # reportInsideIsset stays off: an offset read through "?? null" already
+    # swallows the null key the rule would report.
+    shipmonkRules:
+        enableAllRules: false
+        forbidFetchOnMixed:
+            enabled: true
+        forbidMethodCallOnMixed:
+            enabled: true
+        forbidNullInBinaryOperations:
+            enabled: true
+        forbidUnsafeArrayKey:
+            enabled: true
+            reportInsideIsset: false
+        forbidIncrementDecrementOnNonInteger:
+            enabled: true
+        forbidArithmeticOperationOnNonNumber:
+            enabled: true
+        forbidPhpDocNullabilityMismatchWithNativeTypehint:
+            enabled: true
+
+    # Debug output has no place in a shipped library; the rendering forms
+    # (second argument true) stay allowed, as assertions build messages
+    # with them.
+    disallowedFunctionCalls:
+        -
+            function: 'dump()'
+        -
+            function: 'dd()'
+        -
+            function: 'var_dump()'
+        -
+            function: 'print_r()'
+            allowParamsAnywhere:
+                2: true
+        -
+            function: 'var_export()'
+            allowParamsAnywhere:
+                2: true
 
     paths:
         - bin
@@ -143,6 +213,16 @@ parameters:
         # drop it.
         - identifier: function.alreadyNarrowedType
           path: tests/Unit/ParserExceptionTest.php
+        # ── shipmonk ratchet ────────────────────────────────────────────────
+        # The null-binary findings left in tests build failure messages
+        # ("line " . $error->getLine(), where a null renders as '') and feed
+        # usort comparators whose operands the tests always set: cosmetics,
+        # not defects. Pinned with a count so the number only goes down; the
+        # src/ sites were all fixed (guards, never casts).
+        -
+            identifier: shipmonk.binaryOperationWithNull
+            path: tests/*
+            count: 26
         # The node test hands the constructor the legacy 3-argument int form
         # on purpose: the TypeError it now raises is the pinned contract.
         - message: '#^Call to new PHPRegex\\Parser\\Node\\UnicodePropNode\(\) on a separate line has no effect\.$#'

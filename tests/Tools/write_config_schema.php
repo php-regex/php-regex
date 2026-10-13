@@ -49,7 +49,7 @@ $json = json_encode(
     \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR,
 );
 // Two spaces per level, as the file has always been indented.
-$expected = preg_replace_callback('/^(?: {4})+/m', static fn (array $indent): string => str_repeat(' ', intdiv(\strlen($indent[0]), 2)), $json)."\n";
+$expected = (preg_replace_callback('/^(?: {4})+/m', static fn (array $indent): string => str_repeat(' ', intdiv(\strlen($indent[0]), 2)), $json) ?? '')."\n";
 $current = is_file($path) ? file_get_contents($path) : false;
 
 if ($expected === $current) {

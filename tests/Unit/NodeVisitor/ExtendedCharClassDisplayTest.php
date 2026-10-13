@@ -179,8 +179,8 @@ final class ExtendedCharClassDisplayTest extends TestCase
         $this->assertSame([
             'ExtendedCharClass', 'ClassSetOperation (union)', 'ClassSetOperation', '(symmetric_difference)',
             'ClassSetOperation', '(difference)', 'CharType (\d)', 'ClassSetOperation', '(intersection)',
-            "Literal ('3')", 'ClassSetOperation', '(complement)', "Literal ('a')", 'CharLiteral (\x61)',
-            "Literal ('b')", 'CharClass', 'CharClass', 'CharClass',
+            'Literal (&apos;3&apos;)', 'ClassSetOperation', '(complement)', 'Literal (&apos;a&apos;)', 'CharLiteral (\x61)',
+            'Literal (&apos;b&apos;)', 'CharClass', 'CharClass', 'CharClass',
         ], $labels[1]);
     }
 

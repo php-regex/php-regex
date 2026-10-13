@@ -319,7 +319,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             'Status' => $validationStatus,
         ]);
 
-        if (!$validation->isValid && $validation->error) {
+        if (!$validation->isValid && null !== $validation->error) {
             $output->write('  '.$output->error($validation->error)."\n");
         }
 

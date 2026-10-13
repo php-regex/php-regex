@@ -47,6 +47,6 @@ final class HtmlHighlighter extends AbstractHighlighter
 
     protected function escape(string $string): string
     {
-        return htmlspecialchars($string);
+        return htmlspecialchars($string, \ENT_QUOTES);
     }
 }

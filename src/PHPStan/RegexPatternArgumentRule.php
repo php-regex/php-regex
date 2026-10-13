@@ -103,7 +103,7 @@ final readonly class RegexPatternArgumentRule implements Rule
         foreach (self::markedParameters($variants) as $position => [$parameterName, $variadic]) {
             foreach (self::arguments($args, $position, $parameterName, $variadic) as $argument) {
                 foreach ($scope->getType($argument)->getConstantStrings() as $constantString) {
-                    $errors = [...$errors, ...$this->patternErrors($constantString->getValue(), $node->getLine(), $scope, $source, PatternChecker::literalOffset($argument))];
+                    $errors = [...$errors, ...$this->patternErrors($constantString->getValue(), $node->getStartLine(), $scope, $source, PatternChecker::literalOffset($argument))];
                 }
             }
         }

@@ -207,7 +207,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                 $whenRouteIndent = null;
             }
 
-            if (null !== $currentRoute && $indent <= $routeIndent) {
+            if (null !== $routeIndent && $indent <= $routeIndent) {
                 $currentRoute = null;
                 $routeIndent = null;
                 $requirementsIndent = null;
@@ -220,7 +220,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     $requirementsEntryIndent = null;
                 }
 
-                if (null === $requirementsIndent && 'requirements' === $key && $indent > $routeIndent) {
+                if (null === $requirementsIndent && 'requirements' === $key && null !== $routeIndent && $indent > $routeIndent) {
                     $requirementsIndent = $indent;
                     $requirementsEntryIndent = null;
 

@@ -109,6 +109,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
                         ? 'Polynomial backtracking (proven)'
                         : \sprintf('Polynomial backtracking, degree %d (proven)', $this->degree);
                 case RedosComplexity::Unknown:
+                default:
                     // A proof without a class never says safe: the heuristics speak.
                     break;
             }

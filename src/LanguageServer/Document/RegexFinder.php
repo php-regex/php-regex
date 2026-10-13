@@ -260,7 +260,7 @@ final class RegexFinder
         }
 
         // A declaration, "function grep(" or "function &grep(", is no call.
-        $declaring = null !== $previous && ($previous->is(\T_FUNCTION) || ('&' === $previous->text && ($tokens[$i - 2] ?? null)?->is(\T_FUNCTION)));
+        $declaring = null !== $previous && ($previous->is(\T_FUNCTION) || ('&' === $previous->text && (($tokens[$i - 2] ?? null)?->is(\T_FUNCTION) ?? false)));
         if (null === $next || '(' !== $next->text || $declaring) {
             return [null, 0];
         }

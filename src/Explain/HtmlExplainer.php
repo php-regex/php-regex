@@ -519,7 +519,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
         return \sprintf(
             '<li><span title="%s">%s: <strong>%s</strong></span></li>',
             $this->e($title),
-            htmlspecialchars($node->type->label()),
+            $this->e($node->type->label()),
             $this->e($node->originalRepresentation),
         );
     }

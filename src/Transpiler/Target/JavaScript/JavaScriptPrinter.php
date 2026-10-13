@@ -216,11 +216,12 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
         $child = $node->child->accept($this);
         [$this->caseless, $this->ungreedy] = [$caseless, $ungreedy];
+        $name = $node->name ?? '';
 
         return match ($node->type) {
             GroupType::Capturing => '('.$child.')',
             GroupType::NonCapturing => '(?:'.$child.')',
-            GroupType::Named => '(?<'.$node->name.'>'.$child.')',
+            GroupType::Named => '(?<'.$name.'>'.$child.')',
             GroupType::LookaheadPositive => '(?='.$child.')',
             GroupType::LookaheadNegative => '(?!'.$child.')',
             GroupType::LookbehindPositive => $this->compileLookbehind('(?<=', $child, $node),

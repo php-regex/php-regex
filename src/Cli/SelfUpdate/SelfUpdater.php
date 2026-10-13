@@ -300,7 +300,7 @@ class SelfUpdater
         try {
             new \Phar($path);
         } catch (\Exception $e) {
-            throw new CliException('Downloaded phar is invalid: '.$e->getMessage());
+            throw new CliException('Downloaded phar is invalid: '.$e->getMessage(), 0, $e);
         }
     }
 }

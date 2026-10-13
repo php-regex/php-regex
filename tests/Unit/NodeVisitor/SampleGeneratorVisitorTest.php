@@ -189,7 +189,9 @@ final class SampleGeneratorVisitorTest extends TestCase
         for ($try = 0; $try < 24; $try++) {
             $generator->setSeed($try);
             $sample = $ast->accept($generator);
-            $this->assertSame(1, preg_match('/^'.substr($pattern, 1, strrpos($pattern, '/') - 1).'$/'.substr($pattern, strrpos($pattern, '/') + 1), $sample), bin2hex($sample));
+            $lastSlash = strrpos($pattern, '/');
+            $this->assertNotFalse($lastSlash);
+            $this->assertSame(1, preg_match('/^'.substr($pattern, 1, $lastSlash - 1).'$/'.substr($pattern, $lastSlash + 1), $sample), bin2hex($sample));
             $samples[$sample] = true;
         }
 

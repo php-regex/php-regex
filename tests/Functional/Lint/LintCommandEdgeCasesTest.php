@@ -208,7 +208,9 @@ final class LintCommandEdgeCasesTest extends TestCase
         ]), $output), $exitCode);
 
         $this->assertSame(0, $exitCode);
-        $document = json_decode(substr($buffer, 0, strrpos($buffer, '}') + 1), true);
+        $end = strrpos($buffer, '}');
+        $this->assertNotFalse($end);
+        $document = json_decode(substr($buffer, 0, $end + 1), true);
         $this->assertIsArray($document);
         $this->assertIsArray($document['stats']);
         $this->assertSame(2, $document['stats']['parser_fallbacks'] ?? null);
@@ -258,7 +260,9 @@ final class LintCommandEdgeCasesTest extends TestCase
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([...$paths, '--format=json', '--no-redos', '--no-optimize']), $this->makeOutput()), $exitCode);
 
         $this->assertSame(0, $exitCode);
-        $document = json_decode(substr($buffer, 0, strrpos($buffer, '}') + 1), true);
+        $end = strrpos($buffer, '}');
+        $this->assertNotFalse($end);
+        $document = json_decode(substr($buffer, 0, $end + 1), true);
         $this->assertIsArray($document);
         $this->assertIsArray($document['stats']);
         $this->assertSame(1, $document['stats']['parser_fallbacks'] ?? null);

@@ -215,18 +215,18 @@ final class PsalmRun
 
         $xml = "<?xml version=\"1.0\"?>\n<psalm";
         foreach ($attributes as $name => $value) {
-            $xml .= \sprintf(' %s="%s"', $name, htmlspecialchars($value, \ENT_XML1));
+            $xml .= \sprintf(' %s="%s"', $name, htmlspecialchars($value, \ENT_XML1 | \ENT_QUOTES));
         }
         $xml .= ">\n    <projectFiles>\n";
         foreach ($files as $file) {
-            $xml .= \sprintf("        <file name=\"%s\"/>\n", htmlspecialchars($file, \ENT_XML1));
+            $xml .= \sprintf("        <file name=\"%s\"/>\n", htmlspecialchars($file, \ENT_XML1 | \ENT_QUOTES));
         }
         $xml .= "    </projectFiles>\n";
 
         if (null !== $pluginOptions) {
             $xml .= \sprintf('    <plugins><pluginClass class="%s">', self::PLUGIN);
             foreach ($pluginOptions as $name => $value) {
-                $xml .= \sprintf('<%1$s>%2$s</%1$s>', $name, htmlspecialchars($value, \ENT_XML1));
+                $xml .= \sprintf('<%1$s>%2$s</%1$s>', $name, htmlspecialchars($value, \ENT_XML1 | \ENT_QUOTES));
             }
             $xml .= "</pluginClass></plugins>\n";
         }

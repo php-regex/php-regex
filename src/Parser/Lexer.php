@@ -1486,10 +1486,11 @@ final class Lexer
      * Read the modifiers that follow the "(?" ending at $at, if the group
      * carries any at all.
      *
-     * @return array{0: InlineFlags, 1: bool, 2: int} the modifiers, whether
-     *                                                the group is scoped with
-     *                                                ':', and the offset past
-     *                                                that ':' or ')'
+     * @return array{0: InlineFlags, 1: bool, 2: int}|null the modifiers,
+     *                                                     whether the group
+     *                                                     is scoped with ':',
+     *                                                     and the offset past
+     *                                                     that ':' or ')'
      */
     private function readInlineFlags(int $at): ?array
     {

@@ -1143,7 +1143,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
 
     private function escapeText(string $text): string
     {
-        return htmlspecialchars($text, \ENT_XML1 | \ENT_SUBSTITUTE, 'UTF-8');
+        return htmlspecialchars($text, \ENT_XML1 | \ENT_SUBSTITUTE | \ENT_QUOTES, 'UTF-8');
     }
 
     private function escapeAttribute(string $value): string

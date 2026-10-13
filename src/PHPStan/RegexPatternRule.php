@@ -141,7 +141,7 @@ final class RegexPatternRule implements Rule
         $constantSubject = null !== $subjectArg && $scope->getType($subjectArg)->isConstantValue()->yes();
 
         if ('preg_replace_callback_array' === $functionName) {
-            return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getLine(), $functionName, $constantSubject);
+            return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getStartLine(), $functionName, $constantSubject);
         }
 
         // preg_match($pattern, $subject) alone, its result the only output.
@@ -168,17 +168,17 @@ final class RegexPatternRule implements Rule
             $pattern = (string) $pattern;
             $errors = array_merge(
                 $errors,
-                $this->checker->check($pattern, $node->getLine(), $scope, $this->formatSource($functionName), $constantSubject, $offset),
+                $this->checker->check($pattern, $node->getStartLine(), $scope, $this->formatSource($functionName), $constantSubject, $offset),
             );
 
             if ($plainMatch) {
-                $errors = array_merge($errors, $this->trivialMatch($pattern, $subjectArg, $node->getLine()));
+                $errors = array_merge($errors, $this->trivialMatch($pattern, $subjectArg, $node->getStartLine()));
             }
         }
 
         $replacementArg = 'preg_replace' === $functionName || 'preg_filter' === $functionName ? self::argument($args, 1, 'replacement') : null;
         if (null !== $replacementArg) {
-            $errors = array_merge($errors, $this->undefinedReplacementGroups($scope->getType($patternArg), $scope->getType($replacementArg), $node->getLine(), $functionName));
+            $errors = array_merge($errors, $this->undefinedReplacementGroups($scope->getType($patternArg), $scope->getType($replacementArg), $node->getStartLine(), $functionName));
         }
 
         return $errors;

@@ -55,6 +55,9 @@ final readonly class QuantifierBounds
                 return new self(1, null);
             case '?':
                 return new self(0, 1);
+            default:
+                // "{m,n}" bounds and literals are read below the switch.
+                break;
         }
 
         if (1 !== LibraryPcre::match('/^\{[ \t]*+(\d*)[ \t]*+(?:(,)[ \t]*+(\d*)[ \t]*+)?\}\z/', $base, $m)) {

@@ -577,12 +577,13 @@ final class Validator extends AbstractNodeVisitor
     {
         $previous = $this->previousNode;
         $next = $this->nextNode;
-        $total = \count($node->children);
+        $children = \array_values($node->children);
+        $total = \count($children);
         $last = null;
 
-        foreach ($node->children as $index => $child) {
+        foreach ($children as $index => $child) {
             $this->previousNode = $last;
-            $this->nextNode = $index + 1 < $total ? $node->children[$index + 1] : null;
+            $this->nextNode = $index + 1 < $total ? $children[$index + 1] : null;
             $child->accept($this);
             $last = $child;
         }
@@ -653,7 +654,10 @@ final class Validator extends AbstractNodeVisitor
                 $this->lookbehindDepth--;
                 array_pop($this->lookbehinds);
             }
-            $holdsKeep = $isLookaround && array_pop($this->keepsInLookarounds);
+            $holdsKeep = false;
+            if ($isLookaround) {
+                $holdsKeep = true === array_pop($this->keepsInLookarounds);
+            }
         }
 
         // PCRE refuses the "\K" as it compiles the lookaround, once the whole

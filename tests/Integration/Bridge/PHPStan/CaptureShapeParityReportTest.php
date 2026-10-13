@@ -61,7 +61,7 @@ final class CaptureShapeParityReportTest extends TypeInferenceTestCase
         try {
             $inferred = [];
             foreach (self::gatherAssertTypes($fixture) as $assert) {
-                if (\is_string($assert[3])) {
+                if (\is_string($assert[3]) && \is_int($assert[4])) {
                     $inferred[$assert[4]] = $assert[3];
                 }
             }

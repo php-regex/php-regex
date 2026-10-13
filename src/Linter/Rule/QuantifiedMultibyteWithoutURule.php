@@ -47,7 +47,7 @@ final class QuantifiedMultibyteWithoutURule extends AbstractLintRule
         }
 
         $violations = [];
-        $children = $node->children;
+        $children = \array_values($node->children);
         foreach ($children as $index => $quantifier) {
             if (0 === $index || !$quantifier instanceof QuantifierNode || !$quantifier->node instanceof LiteralNode) {
                 continue;

@@ -393,15 +393,16 @@ final class RedosProfiler extends AbstractNodeVisitor
         $previous = $this->previousNode;
         $next = $this->nextNode;
         $last = null;
-        $total = \count($node->children);
+        $children = \array_values($node->children);
+        $total = \count($children);
 
         if (!$this->inAtomicGroup) {
             $max = $this->maxSeverity($max, $this->analyzeAdjacentQuantifiers($node));
         }
 
-        foreach ($node->children as $index => $child) {
+        foreach ($children as $index => $child) {
             $this->previousNode = $last;
-            $this->nextNode = $index + 1 < $total ? $node->children[$index + 1] : null;
+            $this->nextNode = $index + 1 < $total ? $children[$index + 1] : null;
             $max = $this->maxSeverity($max, $child->accept($this));
             $last = $child;
         }

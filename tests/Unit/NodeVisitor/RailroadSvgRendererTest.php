@@ -355,7 +355,7 @@ final class RailroadSvgRendererTest extends TestCase
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgRenderer());
 
-        $this->assertStringContainsString('Callout (?C="test")', $svg);
+        $this->assertStringContainsString('Callout (?C=&quot;test&quot;)', $svg);
     }
 
     public function test_svg_renders_assertion(): void
@@ -485,7 +485,7 @@ final class RailroadSvgRendererTest extends TestCase
         /** @var string $svg */
         $svg = $ast->accept(new RailroadSvgRenderer());
 
-        $this->assertStringContainsString("Literal ('(empty)')", $svg);
+        $this->assertStringContainsString('Literal (&apos;(empty)&apos;)', $svg);
     }
 
     public function test_svg_renders_flags_with_spaces(): void

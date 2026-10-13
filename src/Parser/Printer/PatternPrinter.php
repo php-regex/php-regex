@@ -290,14 +290,15 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         $flags = $node->flags ?? '';
+        $name = $node->name ?? '';
 
         if ($this->layout) {
             $opening = match ($node->type) {
                 GroupType::Capturing => '(',
                 GroupType::NonCapturing => '(?:',
                 GroupType::Named => $node->usePythonSyntax
-                    ? '(?P<'.$node->name.'>'
-                    : '(?<'.$node->name.'>',
+                    ? '(?P<'.$name.'>'
+                    : '(?<'.$name.'>',
                 GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
                 GroupType::LookaheadNegative => '(?!',
                 GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
@@ -331,8 +332,8 @@ final class PatternPrinter extends AbstractNodeVisitor
             GroupType::Capturing => '(',
             GroupType::NonCapturing => '(?:',
             GroupType::Named => $node->usePythonSyntax
-                ? '(?P<'.$node->name.'>'
-                : '(?<'.$node->name.'>',
+                ? '(?P<'.$name.'>'
+                : '(?<'.$name.'>',
             GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
             GroupType::LookaheadNegative => '(?!',
             GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',

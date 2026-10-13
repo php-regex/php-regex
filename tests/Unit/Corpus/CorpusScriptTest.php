@@ -513,7 +513,14 @@ preg_match('/(b+)+\$/', \$input);
             ? $manifest['repositories']
             : [];
 
-        return array_keys($repositories);
+        $names = [];
+        foreach ($repositories as $name => $configuration) {
+            if (\is_string($name)) {
+                $names[] = $name;
+            }
+        }
+
+        return $names;
     }
 
     private function manifestEntryField(string $repository, string $field): mixed
