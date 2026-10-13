@@ -12,8 +12,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-// Find autoloader
+// Find autoloader: first the project's one, named by the proxy Composer
+// writes in vendor/bin, the only one to trust when a path repository
+// symlinks the package
 $autoloadPaths = [
+    $GLOBALS['_composer_autoload_path'] ?? null,
     __DIR__ . '/../../../vendor/autoload.php',
     __DIR__ . '/../../../autoload.php',
     __DIR__ . '/../../../../../autoload.php',
@@ -21,7 +24,7 @@ $autoloadPaths = [
 
 $autoloaded = false;
 foreach ($autoloadPaths as $autoloadPath) {
-    if (file_exists($autoloadPath)) {
+    if (is_string($autoloadPath) && file_exists($autoloadPath)) {
         require $autoloadPath;
         $autoloaded = true;
         break;

@@ -62,16 +62,17 @@ final class EntryPointAutoloadTest extends TestCase
      * names the project's one, and that one wins.
      */
     #[Test]
-    public function test_the_entry_point_loads_the_autoloader_composer_names(): void
+    #[DataProvider('provideEntryPoints')]
+    public function test_the_entry_point_loads_the_autoloader_composer_names(string $source): void
     {
-        $script = $this->root.'/checkout/src/Cli/bin/regex';
+        $script = $this->root.'/checkout/'.$source;
         mkdir(\dirname($script), 0o777, true);
-        copy(\dirname(__DIR__, 3).'/src/Cli/bin/regex', $script);
+        copy(\dirname(__DIR__, 3).'/'.$source, $script);
         mkdir($this->root.'/checkout/vendor');
         file_put_contents($this->root.'/checkout/vendor/autoload.php', '<?php fwrite(STDERR, "the checkout\'s autoloader"); exit(3);');
 
         // What Composer writes in vendor/bin for a PHP binary.
-        $proxy = $this->root.'/vendor/bin/regex';
+        $proxy = $this->root.'/vendor/bin/'.basename($source);
         mkdir(\dirname($proxy));
         file_put_contents($proxy, '<?php $GLOBALS[\'_composer_autoload_path\'] = __DIR__.\'/../autoload.php\'; include '.var_export($script, true).';');
 
@@ -79,15 +80,16 @@ final class EntryPointAutoloadTest extends TestCase
         exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($proxy).' --version 2>&1', $output, $code);
 
         $this->assertSame(0, $code, implode("\n", $output));
-        $this->assertStringContainsString('PHPRegex', implode("\n", $output));
+        $this->assertStringNotContainsString("the checkout's autoloader", implode("\n", $output));
     }
 
     #[Test]
-    public function test_an_entry_point_without_autoloader_says_how_to_install(): void
+    #[DataProvider('provideEntryPoints')]
+    public function test_an_entry_point_without_autoloader_says_how_to_install(string $source): void
     {
-        $script = $this->root.'/a/b/c/d/e/bin/regex';
+        $script = $this->root.'/a/b/c/d/e/bin/'.basename($source);
         mkdir(\dirname($script), 0o777, true);
-        copy(\dirname(__DIR__, 3).'/src/Cli/bin/regex', $script);
+        copy(\dirname(__DIR__, 3).'/'.$source, $script);
 
         $output = [];
         exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($script).' --version 2>&1 >/dev/null', $output, $code);
@@ -96,6 +98,15 @@ final class EntryPointAutoloadTest extends TestCase
         $this->assertSame(1, $code, $stderr);
         $this->assertStringContainsString('composer install', $stderr);
         $this->assertStringNotContainsString('Stack trace', $stderr);
+    }
+
+    /**
+     * @return iterable<string, array{source: string}>
+     */
+    public static function provideEntryPoints(): iterable
+    {
+        yield 'regex' => ['source' => 'src/Cli/bin/regex'];
+        yield 'regex-lsp' => ['source' => 'src/LanguageServer/bin/regex-lsp'];
     }
 
     /**
