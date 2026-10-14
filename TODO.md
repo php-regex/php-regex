@@ -132,20 +132,19 @@ dead allowance, and either add the four solver verbs or fix the marketing.
 Effort: S for the rules, M with the solver verbs.
 
 **12. De-triplicate the lint commands.** 1,453 lines across three command
-hierarchies (`src/Cli/Command/LintCommand.php` 529, Symfony 471, Laravel
-453), with the literal line `ForkedWorkerPool::canFork() ? (new
-CpuCoreCounter())->count() : 1` copied in all three, each importing
-`Linter\Internal` to guess the job count. Baselines, interop presets and
-rule toggles exist CLI-only because the shared layer (`LintSummary`,
-`ForkedWorkerPool`, `CpuCoreCounter`) is `@internal` under Linter and
-re-hosted per surface. *Fix*: an `AnalysisService::autoWorkers()` plus a
-public runner owning collect → analyze → baseline → stats; each bridge keeps
-its flags and its rendering. Related: C9 (the double parse), E3 (command
-divergence). Effort: M. *Decision*, same item: `src/Cli` also carries its
-own console runtime (Application 397 lines, Output 365, HelpCommand 761,
-SelfUpdater 306) to keep the phar dependency-free; shipping symfony/console
-inside the phar, as phpstan and php-cs-fixer do, deletes most of it. Decide
-before the CLI surface is called final.
+hierarchies (`src/Cli/Command/LintCommand.php`, Symfony, Laravel), each
+importing `Linter\Internal`. Baselines, interop presets and rule toggles exist
+CLI-only because the shared layer (`LintSummary`, `ForkedWorkerPool`) is
+`@internal` under Linter and re-hosted per surface; the default job count is
+already shared (`Linter\Internal\WorkerCount`). `AnalysisService` is itself
+`@internal`. *Decision*: a public runner owning collect → analyze → baseline
+→ stats, each bridge keeping its flags and its rendering, or keep it internal.
+Related: C9 (the double parse), E3 (command divergence). Effort: M.
+*Decision*, same item: `src/Cli` also carries its own console runtime
+(Application 397 lines, Output 365, HelpCommand 761, SelfUpdater 306) to keep
+the phar dependency-free; shipping symfony/console inside the phar, as phpstan
+and php-cs-fixer do, deletes most of it. Decide before the CLI surface is
+called final.
 
 **13. Generator: merge or complete.** The package holds three classes, its
 only consumer outside itself is the facade, and the part that makes samples
@@ -360,11 +359,6 @@ time (`AnalysisService`), and runs as a pass of its own after the lint pass
 where one pass per pattern could do both; the console report takes about 4 s
 to render. *Fix*: share the parse between the two analyses, then one pass.
 Effort: M.
-
-**C10 — The worker count ignores memory.** In a container with a memory limit
-and no CPU quota, `regex lint` starts one worker per host CPU, each a copy of
-the main process. *Fix*: cap the default by the cgroup memory limit over the
-main process's size. Effort: S.
 
 **C12 — One pattern holds `[3/3] Suggesting optimizations` for 11 s.** On
 the 300k-file corpus the step sits at 99 % while one worker proves the

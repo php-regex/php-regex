@@ -25,9 +25,8 @@ use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\Internal\CpuCoreCounter;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\Internal\WorkerCount;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
@@ -126,7 +125,7 @@ final class LintCommand extends Command
 
         $jobs = (int) $this->option('jobs');
         if ($jobs < 1) {
-            $jobs = ForkedWorkerPool::canFork() ? (new CpuCoreCounter())->count() : 1;
+            $jobs = (new WorkerCount())->count();
         }
 
         // The Regex service judges for the running PHP; the lint judges for

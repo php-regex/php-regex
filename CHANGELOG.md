@@ -206,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `regex lint`, and `regex:lint` in Symfony and Laravel, cap their default worker count by the container's memory limit (cgroup v1 or v2), as they cap it by its CPU quota: each worker is a copy of the main process, and one per host CPU could exhaust a memory-limited container with no CPU quota.
 - `regex lint` without a terminal, in a CI log, writes a line every 30 seconds saying where a long step stands (`   7449/24824 (30%) 01:30`): it wrote nothing between the step's name and the report.
 - `regex` run without a command, and `regex --help`, list the commands and the global options, then point at `regex help <command>`: they printed every command's options as well, some 130 lines, while each command's page already lists its own.
 - `new PatternPrinter(pretty: true)` lays a pattern under `x` out with the formatter's rules: a construct that fits stays on one line, where every alternation and group was broken, and nested sequences were indented one level too deep. The suggested rewrite of a pattern under `x` whose source text is not known (a tree from a cache that dropped it, or built by code) is printed this way.

@@ -1251,8 +1251,11 @@ Without `--jobs` (or `"jobs"` in `regex.json`), the lint runs one worker per
 logical CPU the process may use: the CPUs it is pinned to on Linux, else
 `nproc` or `sysctl hw.logicalcpu`, else `/proc/cpuinfo`. Inside a container,
 the cgroup CPU quota (`docker run --cpus=2`) and `KUBERNETES_CPU_LIMIT` cap
-that number, a fraction rounding up. Without the `pcntl` extension, on
-Windows for one, the lint runs in one process. The banner shows the number
+that number, a fraction rounding up, and so does the cgroup memory limit
+(`docker run --memory=1g`): each worker is a copy of the main process, so the
+limit holds the main process and as many workers as fit beside it, at least
+one. `regex:lint` in Symfony and Laravel counts the same way. Without the
+`pcntl` extension, on Windows for one, the lint runs in one process. The banner shows the number
 planned; the `Processes:` line under the report shows the number of workers
 the run started, 1 when it had a single file or pattern to share out.
 
