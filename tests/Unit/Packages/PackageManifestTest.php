@@ -44,6 +44,48 @@ final class PackageManifestTest extends TestCase
         'Transpiler' => 'regex-transpiler',
     ];
 
+    /**
+     * The uses of a sibling's internal classes 2.0 ships with. Siblings always
+     * run at the same version, so these may change in any release; a new entry
+     * here is still a new cross-package dependency on code that promises
+     * nothing: make the class public instead, or keep it. Parser\Hir is
+     * watched the same way: it stays @internal while the analyses move onto
+     * the normalized form.
+     */
+    private const INTERNAL_USES = [
+        // The solver reads the whole normalized form: every class of
+        // it, and the translator that builds the tree.
+        'Automata' => [
+            'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind',
+            'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
+            'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
+            'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
+            'Parser\Hir\RepetitionHir', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StartOptions',
+        ],
+        'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Linter\Internal\WorkerCount', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
+        'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
+        // The library's own regexes run under the PCRE floor in every
+        // package that runs one: the floor helper is the one shared
+        // internal they all use for it.
+        'LanguageServer' => ['Parser\Internal\LibraryPcre'],
+        'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
+        // The lint writes its rewrite of a pattern under x into the
+        // pattern's own layout, as the optimizer does.
+        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
+        'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
+        'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        // The plugin reads the key layout CaptureShape renders for
+        // PHPStan, so both type systems say the same keys.
+        'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
+        'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
+        'Symfony' => ['Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
+        'Toolkit' => ['Parser\Internal\PatternParser'],
+        // The HTML pattern attribute takes no flag: /i is spelled out
+        // with the characters the running PCRE takes for each atom.
+        'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\LibraryPcre'],
+    ];
+
     #[Test]
     public function test_every_directory_under_src_is_a_listed_package(): void
     {
@@ -229,7 +271,9 @@ final class PackageManifestTest extends TestCase
     public function test_deptrac_has_a_layer_and_a_ruleset_per_package(): void
     {
         $config = (string) file_get_contents(self::root().'/deptrac.yaml');
-        preg_match_all("~- name: (\\w+)\\s+collectors:\\s+- type: classLike\\s+value: '\\^PHPRegex\\W+(\\w+)\\W+'~", $config, $layers, \PREG_SET_ORDER);
+        // A package layer leaves out its Internal namespace when a sibling
+        // uses it: that namespace is a layer of its own.
+        preg_match_all("~- name: (\\w+)\\s+collectors:\\s+- type: classLike\\s+value: '\\^PHPRegex\\W+(\\w+)\\W+(?:\\(\\?!Internal\\W+\\))?'~", $config, $layers, \PREG_SET_ORDER);
 
         $byDirectory = [];
         foreach ($layers as [, $layer, $directory]) {
@@ -250,45 +294,7 @@ final class PackageManifestTest extends TestCase
     #[Test]
     public function test_no_new_use_of_another_package_internals(): void
     {
-        // The uses 2.0 ships with. Siblings always run at the same version,
-        // so these may change in any release; a new entry here is still a new
-        // cross-package dependency on code that promises nothing: make the
-        // class public instead, or keep it.
-        // Parser\Hir is watched the same way: it stays @internal while the
-        // analyses move onto the normalized form.
-        $allowed = [
-            // The solver reads the whole normalized form: every class of
-            // it, and the translator that builds the tree.
-            'Automata' => [
-                'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind',
-                'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
-                'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
-                'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
-                'Parser\Hir\RepetitionHir', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StartOptions',
-            ],
-            'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Linter\Internal\WorkerCount', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
-            'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
-            'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
-            // The library's own regexes run under the PCRE floor in every
-            // package that runs one: the floor helper is the one shared
-            // internal they all use for it.
-            'LanguageServer' => ['Parser\Internal\LibraryPcre'],
-            'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
-            // The lint writes its rewrite of a pattern under x into the
-            // pattern's own layout, as the optimizer does.
-            'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
-            'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
-            'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
-            // The plugin reads the key layout CaptureShape renders for
-            // PHPStan, so both type systems say the same keys.
-            'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
-            'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
-            'Symfony' => ['Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
-            'Toolkit' => ['Parser\Internal\PatternParser'],
-            // The HTML pattern attribute takes no flag: /i is spelled out
-            // with the characters the running PCRE takes for each atom.
-            'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\LibraryPcre'],
-        ];
+        $allowed = self::INTERNAL_USES;
 
         $found = [];
         foreach (array_keys(self::PACKAGES) as $directory) {
@@ -322,6 +328,52 @@ final class PackageManifestTest extends TestCase
         }
 
         $this->assertSame($allowed, $found);
+    }
+
+    /**
+     * The architecture rules say the same at the package level: a package may
+     * reach a sibling's Internal layer exactly when it uses a listed class of
+     * it, so a new import of one fails there too.
+     */
+    #[Test]
+    public function test_deptrac_grants_a_sibling_internal_layer_only_to_its_listed_users(): void
+    {
+        $config = (string) file_get_contents(self::root().'/deptrac.yaml');
+        preg_match_all("~- name: (\\w+)\\s+collectors:\\s+- type: classLike\\s+value: '\\^PHPRegex\\W+(\\w+)\\W+(?:\\(\\?!Internal\\W+\\))?'~", $config, $layers, \PREG_SET_ORDER);
+        $directoryOf = [];
+        foreach ($layers as [, $layer, $directory]) {
+            $directoryOf[$layer] = $directory;
+        }
+
+        $ruleset = substr($config, (int) strpos($config, "\n  ruleset:"));
+        preg_match_all('~^    (\\w+): \\[([^\\]]*)\\]$~m', $ruleset, $rules, \PREG_SET_ORDER);
+        $granted = [];
+        foreach ($rules as [, $layer, $targets]) {
+            foreach (array_map(trim(...), explode(',', $targets)) as $target) {
+                if (isset($directoryOf[$layer]) && $directoryOf[$layer].'Internal' !== $target && str_ends_with($target, 'Internal')) {
+                    $granted[$directoryOf[$layer]][] = $target;
+                }
+            }
+        }
+
+        $expected = [];
+        foreach (self::INTERNAL_USES as $directory => $uses) {
+            foreach ($uses as $use) {
+                if (str_contains($use, '\\Internal\\')) {
+                    $expected[$directory][] = strstr($use, '\\', true).'Internal';
+                }
+            }
+        }
+
+        foreach ([&$granted, &$expected] as &$map) {
+            ksort($map);
+            foreach ($map as &$targets) {
+                $targets = array_values(array_unique($targets));
+                sort($targets);
+            }
+        }
+
+        $this->assertSame($expected, $granted, 'deptrac.yaml grants a sibling\'s Internal layer to a package that does not use it, or misses one it uses.');
     }
 
     #[Test]

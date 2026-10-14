@@ -11,20 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**1. The shared kernel under `Parser\Internal`.** 88 files outside
-`src/Parser` import `PHPRegex\Parser\Internal\*`, in 14 of the 15 other
-packages (`LibraryPcre` alone is used by 48 external files). All of it is
-`@internal` ("a minor release may change them"), which makes the marker
-misleading in practice: changing one signature silently breaks half the
-library. deptrac cannot see the problem — its Parser collector matches the
-whole `^PHPRegex\Parser\` prefix, so a new `Internal` import passes
-everywhere. The same leak runs sideways:
-`src/Linter/AnalysisService.php:24` (`Optimizer\Internal\LayoutSplicer`),
-`src/Psalm/Internal/MatchesType.php:19` (`CaptureKey`, `CaptureLayout`).
-*Decision*: promote the load-bearing classes to a named internal-contract
-layer with its own deptrac rules and a frozen allowlist, or publish them in
-the public surface with the same BC promise as the rest. Effort: M.
-
 **2. One traversal engine.** Two coexist: the visitor trio
 (`NodeVisitorInterface` + `AbstractNodeVisitor` + `AbstractTraversingVisitor`,
 ~630 lines, an `accept()` override on every node class, ~330 `->accept(`

@@ -21,8 +21,11 @@ public methods, public properties and public constants. A class marked
 `@internal` is not part of the API: it may change in any release.
 
 Some `@internal` classes and constructors are shared between packages. They
-may change in any release, since siblings always run at the same version. Code
-outside this project must not use them.
+may change in any release, since siblings always run at the same version (each
+package requires its siblings at `self.version`). Code outside this project must
+not use them. Within the project, which package may use which `Internal`
+namespace of a sibling is a closed list, checked on every change: a new
+dependency on one is a decision, not a side effect of an import.
 
 The `PHPRegex\Parser\Hir` classes of `regex-parser` are `@internal` like the
 rest: `regex-automata` and `regex-redos`, which build on them, move with them.
