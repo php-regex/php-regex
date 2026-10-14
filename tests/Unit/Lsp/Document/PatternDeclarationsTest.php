@@ -187,6 +187,29 @@ final class PatternDeclarationsTest extends TestCase
         $this->assertSame(1, $declarations->functionArgument('App\grep'));
     }
 
+    /**
+     * A group import never spells the attribute's namespace in one piece:
+     * an open document, or the text an editor saves, is read all the same,
+     * as the workspace scan reads the file on the disk.
+     */
+    #[Test]
+    public function test_a_group_import_of_the_attribute_is_read(): void
+    {
+        $grouped = "<?php\nnamespace App;\nuse PHPRegex\\{Parser\\Attribute\\RegexPattern};\nfunction grep(string \$subject, #[RegexPattern] string \$regex) {}\n";
+        $nested = "<?php\nnamespace App;\nuse PHPRegex\\Parser\\{Attribute\\RegexPattern};\nfunction find(#[RegexPattern] string \$regex) {}\n";
+
+        $declarations = new PatternDeclarations();
+        $this->assertTrue($declarations->readDocument('untitled:Untitled-1', $grouped));
+        $this->assertTrue($declarations->readDocument('untitled:Untitled-2', $nested));
+        $this->assertSame(1, $declarations->functionArgument('App\grep'));
+        $this->assertSame(0, $declarations->functionArgument('App\find'));
+
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $this->assertTrue($declarations->readFile($this->write('src/Grep.php', self::GREP), $grouped));
+        $this->assertSame(1, $declarations->functionArgument('App\grep'));
+    }
+
     #[Test]
     public function test_a_static_method_is_declared_with_its_class(): void
     {

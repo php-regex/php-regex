@@ -249,7 +249,7 @@ attestation. Decide whether the build moves to CI with provenance.
   the file for a wrapper preset.
 - The language server reads `#[RegexPattern]` under `paths` minus `exclude` and
   never in `vendor/`, while the lint reads `vendor/` and configured paths
-  whatever `exclude` says; group imports of the attribute are missed there.
+  whatever `exclude` says.
 
 ## Upstream PHPStan fixes (fork `php-regex/phpstan-src`)
 
@@ -421,12 +421,6 @@ minus `exclude` and never `vendor/`, while the lint reads `vendor/`, so a
 dependency's pattern is analysed on the command line and invisible in the
 editor. *Verify*: `src/LanguageServer/Server.php:276`. *See also*: "Extraction
 gaps left on purpose". Effort: S.
-
-**D4 — `#[RegexPattern]` behind a group import is missed.** The pre-filter
-looks for the literal `PHPRegex\Parser\Attribute`, which
-`use PHPRegex\{Parser\Attribute\RegexPattern};` never contains.
-*Verify*: read `src/LanguageServer/Document/PatternDeclarations.php:40`.
-*Fix*: normalise the needles. Effort: XS.
 
 **D6 — The diagnostic ranges are approximate.** Every lint rule is reported
 over a single character, and the parse and validation ranges are computed in

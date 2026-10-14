@@ -34,11 +34,6 @@ final class PatternDeclarations
      */
     public const FILE_LIMIT = 20000;
 
-    /**
-     * A file naming neither namespace declares nothing: it is not tokenized.
-     */
-    private const NEEDLES = ['PHPRegex\Parser\Attribute', 'JetBrains\PhpStorm\Language'];
-
     private const TEMPLATE_SUFFIXES = ['.tpl.php', '.blade.php', '.twig.php'];
 
     /**
@@ -214,13 +209,13 @@ final class PatternDeclarations
      */
     private static function scan(string $content): array
     {
-        foreach (self::NEEDLES as $needle) {
-            if (false !== stripos($content, $needle)) {
-                return array_values(array_unique(PatternAttributeScanner::scan($content)));
-            }
+        // The workspace scan's filter: a text holding neither "RegexPattern"
+        // nor PhpStorm's "RegExp", whatever its imports, declares nothing.
+        if (false === stripos($content, 'regexp')) {
+            return [];
         }
 
-        return [];
+        return array_values(array_unique(PatternAttributeScanner::scan($content)));
     }
 
     /**
