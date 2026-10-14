@@ -616,6 +616,9 @@ final class LintCommandTest extends TestCase
         $this->assertSame(0, $status, $display);
         $this->assertMatchesRegularExpression('/^Processes : 1$/m', $display);
         $this->assertMatchesRegularExpression('/\bProcesses: 1$/m', $display);
+        // The workers parse the patterns: a cache count of this process
+        // alone would read almost nothing on a parallel run.
+        $this->assertMatchesRegularExpression('/^  Time: \S+ \| Memory: \S+ MB \| Processes: 1$/m', $display);
     }
 
     /**

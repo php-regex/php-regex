@@ -448,12 +448,6 @@ Symfony while it is the flagship command in Laravel; the short options `-j` and
 `src/Laravel/Command` for the same verb.
 *Fix*: a shared command and flag specification. Effort: M.
 
-**E4 — The bridges' `Cache:` footer counts the main process only.**
-`regex:lint` in Symfony and Laravel prints `Cache: N hits, N misses` from the
-main process's parser cache, while the patterns are parsed in the workers: it
-shows almost nothing on a parallel run. *Fix*: drop the line, as `regex lint`
-did, or sum the workers' counts. Effort: XS.
-
 **E5 — The bridge reports are internal array shapes.** Symfony's report objects
 are readonly but marked `@internal` over phpstan-typed arrays, and Laravel
 builds raw arrays and encodes them. Nothing programmatic can render or consume
@@ -478,10 +472,6 @@ prints `Status: safe (proven)` then `Hotspot: 0-2`, and the JSON carries a
 proof, the findings and hotspots from the heuristic profiler
 (`docs/architecture.md`). *Fix*: hide the hotspot and label the findings as
 hints when the proof says safe, or document that they are. Effort: S.
-
-**G2 — The bridges' lint footers still print a cache count.** The CLI dropped
-it; `src/Symfony/Command/LintCommand.php` and `src/Laravel/Command/LintCommand.php`
-still print `Cache: … hits, … misses`, a count of the run's own process. Effort: XS.
 
 **G4 — Two route-constraint edges in Laravel.** The constraint is judged
 between `/`-family delimiters, where the router uses `{…}`: a constraint with
