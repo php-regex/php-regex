@@ -1,5 +1,208 @@
 # TODO
 
+## Before the tag — contract decisions left open (2026-10-14)
+
+Each item below changes the public API or a cross-package contract, so it is
+only cheap until `v2.0.0` is tagged: after the freeze, every one becomes a BC
+break or a standing contradiction between two pieces of documentation. Work
+them top to bottom, one at a time — settle the decision in writing first,
+then implement test-first. Deferring an item is also a decision; it converts
+the item from cheap to a BC break, so say so when it happens. The validation
+carriers and the Flex recipe stay where they are (E2, G5 below): both are
+additive and lose nothing by waiting past the tag.
+
+**1. The shared kernel under `Parser\Internal`.** 88 files outside
+`src/Parser` import `PHPRegex\Parser\Internal\*`, in 14 of the 15 other
+packages (`LibraryPcre` alone is used by 48 external files). All of it is
+`@internal` ("a minor release may change them"), which makes the marker
+misleading in practice: changing one signature silently breaks half the
+library. deptrac cannot see the problem — its Parser collector matches the
+whole `^PHPRegex\Parser\` prefix, so a new `Internal` import passes
+everywhere. The same leak runs sideways:
+`src/Linter/AnalysisService.php:24` (`Optimizer\Internal\LayoutSplicer`),
+`src/Psalm/Internal/MatchesType.php:19` (`CaptureKey`, `CaptureLayout`).
+*Decision*: promote the load-bearing classes to a named internal-contract
+layer with its own deptrac rules and a frozen allowlist, or publish them in
+the public surface with the same BC promise as the rest. Effort: M.
+
+**2. One traversal engine.** Two coexist: the visitor trio
+(`NodeVisitorInterface` + `AbstractNodeVisitor` + `AbstractTraversingVisitor`,
+~630 lines, an `accept()` override on every node class, ~330 `->accept(`
+call sites) and the closure-based `NodeWalker` (3 call sites in src/
+`NodeFinder` ×2, `Optimizer`); `AbstractTraversingVisitor` has zero
+subclasses in src/. `PatternLinter` (778 lines) reimplements child traversal
+across its ~20 overrides, and its class-keyed dispatch map is the walker's
+enter callback rewritten by hand. Every new PCRE2 construct costs one
+interface method, two base-class methods and one override per consumer.
+*Decision*: keep one public seam — the walker (folds like `PatternPrinter`
+become internal match statements), or the trio (then delete the walker).
+Effort: L.
+
+**3. One capture-group numbering model.** Three walks with three
+vocabularies: `Linter\Rule\GroupIndex` (the richest — branch reset,
+subroutine targets; `@internal`, and one layer too high),
+`Parser\Analysis\GroupNumbering` (thin — numbers and names) and
+`CaptureShapeAnalyzer` (a third participation model). `PatternLinter`
+hand-rolls a fourth instanceof pre-pass on top. *Fix*: one numbering service
+in Parser, the layer that owns the AST, consumed by linter, validator, HIR,
+generator and bridges. Effort: M.
+
+**4. Custom lint rules: promised and withheld.** `docs/extending.md:18`
+lists "Custom lint rules" under what you can extend, and its Pattern 1
+(:412) teaches a bare visitor with no rule id, severity or registration path
+— while `LintRuleInterface`, `LintRuleRegistry` and
+`PatternLinter::withRegistry` are `@internal`, and
+`docs/reference/backward-compatibility.md:137` says lint rules are not
+extension points in 2.0. Two contract documents contradict each other.
+*Decision*: publish the rule contract (interface, one registry entry point,
+a versioned `RuleViolation`), or remove the promise from the guide. Not both
+messages at once. Effort: S to close the doc lie, M to open the seam.
+
+**5. "The library gave up" must not read as "the pattern is invalid".**
+`RegexParser::validate()` catches `ResourceLimitException` and
+`RecursionLimitException` (`RegexParser.php:188`) and funnels both into
+`ValidationErrorCategory::Syntax`: a false verdict about the developer's
+pattern caused by our own budgets. The Psalm bridge re-derives the missing
+distinction by hand at its own boundary (`PregCallAnalyzer.php:797`); the
+Redos package already models it right (`RedosProof::BudgetExceeded`). Both
+limit exceptions also extend `ParserException`, so a documented
+`catch (ParserException)` for grammar errors intercepts budget exhaustion.
+*Fix*: a Limit/Unknown outcome threaded through `validate()`, `LintService`
+and the three lint commands; the limit exceptions move off the grammar
+branch. Effort: S-M.
+
+**6. Suggestions are data, not prose.** "Did you mean" strings are appended
+to messages (`Validator.php:1237`, `getNameSuggestions()`), while the
+structured fields exist end to end (`RegexException::$hint`,
+`ValidationResult::$hint`, `Diagnostic::$suggestion`) and no parser
+suggestion ever reaches the LSP as a quick fix. Related: B8 below (hints
+null on the errors users actually hit). *Fix*: one typed suggestion field
+produced by the parser and projected everywhere. Effort: S.
+
+**7. Share the DFA cache.** The versioned key exists
+(`LanguageSolver::dfaCacheKey`: cache version + `PcreTarget` + engine +
+solver options) but the wiring discards it: `AnalysisService` constructs new
+`PatternLinter` (:359), `RedosAnalyzer` (:415 and :566 — its automata path
+runs with a null cache) and `Optimizer` (:674) per pattern occurrence, and
+the automata lint rules each hold a private `new InMemoryDfaCache()` rebuilt
+per pattern. `InMemoryDfaCache` is unbounded and absent from `StaticCaches`,
+so `clearCaches()` never reaches it. *Fix*: one shared `DfaCacheInterface`
+on `AnalysisService` plus a bounded implementation registered in
+`StaticCaches`. The single highest-performance change available before the
+freeze. Effort: S-M.
+
+**8. A tiered AST cache.** `PsrCacheAdapter::load()` unserializes on every
+hit (`PsrCacheAdapter.php:52`), so a Redis pool turns every parse into a
+network round trip; no front tier exists anywhere in `src/Parser/Cache/`.
+`ArrayCache` bounds by entry count (1024), not bytes. `LanguageQuestions`
+keeps a hidden static parser (`LanguageQuestions.php:62`) detached from the
+judged `PcreTarget` and never cleared. *Fix*: compose a bounded process-wide
+front with the PSR/filesystem back at `RegexParser` construction. Effort:
+S-M.
+
+**9. Byte-level tokens are about to freeze as the contract.** The lexer
+emits one token per literal byte and the parser one node per byte
+(~30 µs/byte measured; a 2000-character literal parses in ~60 ms), and
+`Regex::tokenize()` documents the per-byte offsets as public API. The
+run-length alternative already exists inside the lexer (`GROUP_BODY_TEXT`,
+`Lexer.php:112`). *Decision*: merge literal runs, at least internally,
+before the freeze, or accept per-byte as the forever contract. Effort: M —
+offsets feed printers and diagnostics, so this is the touchiest item here.
+
+**10. One pattern-carrier contract.** `PatternFunctionRegistry`
+(`@internal`, Linter) knows the native `preg_*`, the interop presets
+(composer/pcre, nette/utils, spatie/regex, laravel-str), namespaced drop-ins
+and config customs — while the PHPStan rule hardcodes its own 8-function
+map (`RegexPatternRule.php:71`) and Psalm sees `preg_*` only. A `Preg::match`
+call is linted by `regex lint` and invisible to PHPStan. *Fix*: make the
+registry (plus the presets and the attribute scanner) the one public,
+versioned contract every surface consumes; deptrac already allows
+PHPStan → Linter. Effort: M.
+
+**11. Facade or packages: pick the front door.** `Toolkit\Regex` (637
+lines, 24 verbs) is the wired service everywhere, while deptrac lets every
+bridge reach every package directly — and they do (`OptimizerOptions`,
+`RedosSeverity`, `RegexParser` imported in `src/Symfony`). The README
+headlines equivalence/intersection/subset, but the facade has none of those
+verbs, Toolkit does not require `regex-automata`, and `deptrac.yaml:80`
+grants it an allowance nothing uses: three artifacts tell three stories
+about the library's headline capability. *Decision*: "the packages are the
+contract, the facade is the convenience layer" — write it down, collapse the
+dead allowance, and either add the four solver verbs or fix the marketing.
+Effort: S for the rules, M with the solver verbs.
+
+**12. De-triplicate the lint commands.** 1,453 lines across three command
+hierarchies (`src/Cli/Command/LintCommand.php` 529, Symfony 471, Laravel
+453), with the literal line `ForkedWorkerPool::canFork() ? (new
+CpuCoreCounter())->count() : 1` copied in all three, each importing
+`Linter\Internal` to guess the job count. Baselines, interop presets and
+rule toggles exist CLI-only because the shared layer (`LintSummary`,
+`ForkedWorkerPool`, `CpuCoreCounter`) is `@internal` under Linter and
+re-hosted per surface. *Fix*: an `AnalysisService::autoWorkers()` plus a
+public runner owning collect → analyze → baseline → stats; each bridge keeps
+its flags and its rendering. Related: C9 (the double parse), E3 (command
+divergence). Effort: M. *Decision*, same item: `src/Cli` also carries its
+own console runtime (Application 397 lines, Output 365, HelpCommand 761,
+SelfUpdater 306) to keep the phar dependency-free; shipping symfony/console
+inside the phar, as phpstan and php-cs-fixer do, deletes most of it. Decide
+before the CLI surface is called final.
+
+**13. Generator: merge or complete.** The package holds three classes, its
+only consumer outside itself is the facade, and the part that makes samples
+trustworthy — the 32-attempt verification loop against the real engine —
+lives in `Toolkit\Regex::generate()` (`Regex.php:438`): installed alone,
+regex-generator produces unverified samples. *Decision*: fold Generator into
+Toolkit, or move the verification loop into `SampleGenerator` so the package
+stands alone. Moving the namespace after the freeze is a BC break. Effort:
+S either way.
+
+**14. A machine-readable AST export.** The tree has no serializer beyond
+the cache-private `AstSerializer` (PHP `serialize()`, `@internal`); every
+result object is `JsonSerializable` except the tree itself. A stable JSON
+AST plus a schema (the precedent ships: `regex.schema.json`) serves the
+playground, LSP clients and snapshot testing. Additive and zero BC risk.
+*Decision*: in 2.0 or 2.1 — deferring costs nothing except designing it
+against the frozen node set. Effort: M.
+
+**15. mbstring makes some verdicts platform-relative.** Verdicts are
+stamped with the PCRE2 target, but case-insensitivity analysis folds with
+the host's mbstring tables (`Validator.php:3619`,
+`UselessIFlagRule.php:258`, `OverlappingAlternationRule.php:252`,
+`LastCodeUnit.php:599`), which drift independently of the chosen target:
+two machines can disagree on /i verdicts with no trace. *Fix*: inventory
+which verdicts are host-relative, then stamp the Unicode data in the
+analysis metadata or document the relativism. Effort: S-M.
+
+**16. No deprecation channel exists.** `src/` carries no `@deprecated` tag
+and no runtime deprecation notice, and several items above retire a seam
+that is already load-bearing. Without a channel, nothing accidental can ever
+be retired after the freeze. *Fix*: pick the pattern now (a small helper, or
+plain `trigger_deprecation`), wire it, and mark the seams retired by items
+2, 11 and 13 as its first users. Effort: S.
+
+**17. The split packages have never been installed alone.** Sixteen repos
+are pushed by the split workflow with `self.version` cross-requires, and
+"each package works alone" is checked only by manifest meta-tests: no job
+ever resolves one `php-regex/regex-*` standalone, and the split repos carry
+no CI. A green monorepo can publish an uninstallable package unnoticed.
+*Fix*: one CI job that path-repositories a split checkout and installs
+`php-regex/regex-parser` alone in a bare project — before the first `v2.*`
+tag exists to be uninstallable. Effort: S.
+
+### Checked and refused (do not re-litigate)
+
+- A compile-once `Pattern` handle: parses are already cached per pattern +
+  target; the handle would duplicate the frozen facade surface.
+- nikic-style multi-error recovery: PCRE reports one error (the oracle the
+  library is grounded on) and no internal consumer wants more; if anything,
+  document the tolerant-mode truncation contract (`docs/reference/api.md:254`).
+- One diagnostic god-DTO shared across packages: it couples Parser to lint
+  and LSP vocabulary; keep the small boundary converters.
+- An absolute-latency performance gate in CI: environment noise; keep the
+  asymptotic tripwires already in the suite.
+- "The AST is a dead end": wrong — `$ast->accept(new PatternPrinter())` is
+  public and documented; only the formatting factories are internal.
+
 ## Release 2.0.0
 
 The code is ready; what is left is the maintainer's, in this order.
