@@ -25,6 +25,7 @@ use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\LookbehindLength;
+use PHPRegex\Parser\Internal\NearMiss;
 use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\Internal\VersionCondition;
@@ -1957,14 +1958,8 @@ final class Validator extends AbstractNodeVisitor
 
     private function getNameSuggestions(string $name): string
     {
-        $available = array_keys($this->groupNumbering->namedGroups);
-        $suggestions = [];
-        foreach ($available as $avail) {
-            if (levenshtein($name, $avail) <= 2) {
-                $suggestions[] = $avail;
-            }
-        }
-        if (!empty($suggestions)) {
+        $suggestions = NearMiss::within($name, array_map(strval(...), array_keys($this->groupNumbering->namedGroups)));
+        if ([] !== $suggestions) {
             return ' Did you mean: '.implode(', ', $suggestions).'?';
         }
 

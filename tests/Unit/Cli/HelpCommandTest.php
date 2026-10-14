@@ -219,6 +219,20 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Available Commands', $text);
     }
 
+    #[Test]
+    public function test_help_for_a_mistyped_command_suggests_the_nearest(): void
+    {
+        $output = OutputFactory::create();
+        $input = new Input('help', ['anlyze'], new GlobalOptions(false, null, false, false, null, null), []);
+
+        ob_start();
+        $result = (new HelpCommand())->run($input, $output);
+        ob_end_clean();
+
+        $this->assertSame(2, $result);
+        $this->assertStringContainsString('Unknown command: anlyze. Did you mean "analyze"?', OutputFactory::errors($output));
+    }
+
     public function test_render_command_help_includes_options(): void
     {
         $command = new HelpCommand();

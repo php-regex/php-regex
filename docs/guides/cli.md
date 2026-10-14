@@ -1414,8 +1414,9 @@ vendor/bin/regex highlight '/^your-pattern$/' --format=html
 ### "Unknown command"
 
 Every command name is listed in the [command table](#command-overview). An
-unknown name prints `Unknown command: <name>`, then the help, and exits
-with 2:
+unknown name prints `Unknown command: <name>`, followed by
+`Did you mean "<command>"?` when a command is one or two letters away
+(`anlyze`), then the help, and exits with 2:
 ```bash
 # Wrong
 vendor/bin/regex check '/test/'

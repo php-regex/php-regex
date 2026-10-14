@@ -18,6 +18,7 @@ use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\JsonCommandInterface;
 use PHPRegex\Parser\Internal\IniFlag;
 use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Internal\NearMiss;
 
 /**
  * @internal
@@ -249,7 +250,7 @@ final class Application
                 // An option before the command name: --json analyze /a/.
                 $hint = str_starts_with($commandName, '-') ? ' Options go after the command name.' : '';
 
-                return $this->handleError("Unknown command: {$commandName}.".$hint, true);
+                return $this->handleError("Unknown command: {$commandName}.".($hint ?: $this->didYouMean($commandName)), true);
             }
 
             return $this->handleUnknownCommand($commandName, $options);
@@ -373,10 +374,22 @@ final class Application
 
     private function handleUnknownCommand(string $commandName, GlobalOptions $options): int
     {
-        $this->output->write($this->output->error("Unknown command: {$commandName}\n\n"));
+        $suggestion = $this->didYouMean($commandName);
+        $this->output->write($this->output->error('' === $suggestion ? "Unknown command: {$commandName}\n\n" : "Unknown command: {$commandName}.{$suggestion}\n\n"));
         $this->help()->run(new Input('help', [], $options, []), $this->output);
 
         return CommandInterface::INVALID;
+    }
+
+    /**
+     * " Did you mean "analyze"?" for a near miss of a command or alias,
+     * else the empty string.
+     */
+    private function didYouMean(string $commandName): string
+    {
+        $suggestion = NearMiss::closest($commandName, array_map(strval(...), array_keys($this->commands)));
+
+        return null === $suggestion ? '' : \sprintf(' Did you mean "%s"?', $suggestion);
     }
 
     /**

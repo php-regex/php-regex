@@ -338,11 +338,6 @@ it as a fix suggestion.
 
 ### C. The CLI
 
-**C4 — No "did you mean" for a near miss.** *Verify*:
-`php src/Cli/bin/regex anlyze '/a+/'` — `Unknown command: anlyze` followed by
-the whole help, exit 2. The configuration validator already has a suggester.
-*Fix*: one Levenshtein helper shared by both. Effort: XS.
-
 **C6 — A `jobs` below 1 means four different things.** *Verify*:
 `regex lint src --jobs=0` is a usage error (`LintArgumentParser.php`), as is
 `regex:lint --jobs 0` in Symfony; Laravel's `--jobs=0` means "count the CPUs";

@@ -87,6 +87,21 @@ final class ApplicationTest extends TestCase
         $this->assertStringContainsString('Unknown command', $buffer);
     }
 
+    public function test_run_with_a_mistyped_command_suggests_the_nearest(): void
+    {
+        $output = OutputFactory::create();
+        $help = new DummyCommand('help');
+        $app = new Application(new GlobalOptionsParser(), $output, $help);
+        $app->register(new DummyCommand('analyze'));
+
+        $buffer = '';
+        $exitCode = $this->runApp($app, ['regex', 'anlyze'], $buffer);
+
+        $this->assertSame(2, $exitCode);
+        $this->assertSame(1, $help->runs);
+        $this->assertStringContainsString('Unknown command: anlyze. Did you mean "analyze"?', $buffer);
+    }
+
     public function test_run_with_pattern_uses_highlight_command(): void
     {
         $output = OutputFactory::create();

@@ -18,6 +18,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\NearMiss;
 use PHPRegex\Parser\Internal\PatternParser;
 
 /**
@@ -222,7 +223,8 @@ final class HelpCommand extends AbstractCommand
     {
         $commandData = $this->getCommandData($command);
         if (null === $commandData) {
-            $output->writeError($output->error("Unknown command: {$command}\n\n"));
+            $suggestion = NearMiss::closest($command, $this->commandNames());
+            $output->writeError($output->error(null === $suggestion ? "Unknown command: {$command}\n\n" : \sprintf("Unknown command: %s. Did you mean \"%s\"?\n\n", $command, $suggestion)));
             $this->renderTextSection($output, 'Available Commands', $this->commandNames());
 
             return self::INVALID;
