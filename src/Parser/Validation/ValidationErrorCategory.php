@@ -21,4 +21,10 @@ enum ValidationErrorCategory: string
     case Syntax = 'syntax';
     case Semantic = 'semantic';
     case PcreRuntime = 'pcre-runtime';
+
+    /**
+     * The library stopped at one of its own limits (pattern length, nesting
+     * depth): no verdict on the pattern, which PCRE may well compile.
+     */
+    case Limit = 'limit';
 }

@@ -21,6 +21,7 @@ use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
@@ -731,7 +732,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             $closingDelimiter = PatternParser::closingDelimiter($patternInfo->delimiter);
 
             return $patternInfo->delimiter.$highlightedBody.$closingDelimiter.$patternInfo->flags;
-        } catch (LexerException|ParserException) {
+        } catch (LexerException|LimitException|ParserException) {
             return $pattern;
         }
     }

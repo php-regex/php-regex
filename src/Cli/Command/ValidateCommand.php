@@ -19,6 +19,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
 
@@ -115,6 +116,23 @@ final class ValidateCommand extends AbstractCommand
 
     private function renderErrorResult(ConsoleStyle $style, Output $output, ValidationResult $validation): int
     {
+        // A limit of the library: no verdict, the pattern is not invalid.
+        if (ValidationErrorCategory::Limit === $validation->category) {
+            $style->renderKeyValueBlock([
+                'Status' => $output->warning('NOT ANALYZED'),
+            ]);
+
+            if (null !== $validation->error) {
+                $output->write('  '.$output->warning($validation->error)."\n");
+            }
+
+            if (null !== $validation->hint) {
+                $output->write('  '.$validation->hint."\n");
+            }
+
+            return self::FAILURE;
+        }
+
         $style->renderKeyValueBlock([
             'Status' => $output->error('INVALID'),
         ]);

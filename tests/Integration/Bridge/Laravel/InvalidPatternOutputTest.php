@@ -49,6 +49,28 @@ final class InvalidPatternOutputTest extends TestCase
         yield 'transpile' => ['command' => 'regex:transpile', 'options' => []];
     }
 
+    /**
+     * A pattern past the library's length limit, which PCRE compiles, is
+     * not called invalid: the command says it was not analyzed, and why.
+     *
+     * @param array<string, string> $options
+     */
+    #[Test]
+    #[DataProvider('provideCommands')]
+    public function test_command_says_a_pattern_past_a_limit_was_not_analyzed(string $command, array $options): void
+    {
+        $pattern = '/a(?#'.str_repeat('x', 100_000).')/';
+        $this->assertSame(1, preg_match($pattern, 'a'), 'control: PCRE compiles the pattern');
+
+        $exitCode = Artisan::call($command, ['pattern' => $pattern] + $options);
+        $output = Artisan::output();
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('Pattern not analyzed:', $output);
+        $this->assertStringNotContainsString('Invalid', $output);
+        $this->assertStringContainsString('raise the "max_pattern_length" option', $output);
+    }
+
     #[Test]
     public function test_transpile_json_carries_the_snippet_apart(): void
     {

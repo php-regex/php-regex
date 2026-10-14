@@ -17,6 +17,7 @@ use Illuminate\Console\Command;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
@@ -98,6 +99,10 @@ final class TranspileCommand extends Command
                     JsonDocument::STAGE_PATTERN,
                     ['validation' => $validation],
                 ));
+            } elseif (ValidationErrorCategory::Limit === $validation->category) {
+                $this->warn('Pattern not analyzed:');
+                $this->line((string) $validation->error);
+                $this->line((string) $validation->hint);
             } else {
                 $this->error('Invalid pattern:');
                 $this->line((string) $validation->error);

@@ -19,6 +19,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\Highlighter\HtmlHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 
 /**
@@ -90,7 +91,7 @@ final class HighlightCommand extends AbstractCommand
             } else {
                 $output->write($highlighted."\n");
             }
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error("Error: {$e->getMessage()}")."\n");
 
             return self::FAILURE;

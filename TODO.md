@@ -11,19 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**5. "The library gave up" must not read as "the pattern is invalid".**
-`RegexParser::validate()` catches `ResourceLimitException` and
-`RecursionLimitException` (`RegexParser.php:188`) and funnels both into
-`ValidationErrorCategory::Syntax`: a false verdict about the developer's
-pattern caused by our own budgets. The Psalm bridge re-derives the missing
-distinction by hand at its own boundary (`PregCallAnalyzer.php:797`); the
-Redos package already models it right (`RedosProof::BudgetExceeded`). Both
-limit exceptions also extend `ParserException`, so a documented
-`catch (ParserException)` for grammar errors intercepts budget exhaustion.
-*Fix*: a Limit/Unknown outcome threaded through `validate()`, `LintService`
-and the three lint commands; the limit exceptions move off the grammar
-branch. Effort: S-M.
-
 **6. Suggestions are data, not prose.** "Did you mean" strings are appended
 to messages (`Validator.php:1237`, `getNameSuggestions()`), while the
 structured fields exist end to end (`RegexException::$hint`,

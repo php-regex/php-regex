@@ -22,6 +22,7 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -115,7 +116,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             }
 
             return self::SUCCESS;
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             return $this->handleAnalysisError($output, $parsed['format'], $e->getMessage());
         }
     }

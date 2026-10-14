@@ -100,6 +100,31 @@ final class DiagnosticConverter
     }
 
     /**
+     * A limit of the library met on the pattern: no error in it, the
+     * pattern is not analyzed. Shown as information over the whole body.
+     *
+     * @param Position $start
+     *
+     * @return array<string, mixed>
+     */
+    public function fromLimit(string $message, ErrorCode $code, array $start, int $patternLength): array
+    {
+        return [
+            'range' => [
+                'start' => $start,
+                'end' => [
+                    'line' => $start['line'],
+                    'character' => $start['character'] + $patternLength,
+                ],
+            ],
+            'severity' => self::SEVERITY_INFORMATION,
+            'code' => $code->value,
+            'source' => 'php-regex',
+            'message' => 'Not analyzed: '.$message,
+        ];
+    }
+
+    /**
      * Create a diagnostic for a validation error.
      *
      * @param Position $start

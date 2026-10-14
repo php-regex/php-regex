@@ -280,6 +280,29 @@ final readonly class AnalysisService
 
             $validation = $this->regex->validate($occurrence->pattern);
             $source = $occurrence->source;
+            if (!$validation->isValid && ValidationErrorCategory::Limit === $validation->category) {
+                // The library gave up: a warning that the pattern was not
+                // analyzed, no verdict on a pattern PCRE may compile.
+                $issues[] = [
+                    'type' => 'warning',
+                    'file' => $occurrence->file,
+                    'line' => $occurrence->line,
+                    'column' => $this->resolveColumn($occurrence),
+                    'fileOffset' => $occurrence->fileOffset,
+                    'position' => $validation->offset,
+                    'message' => 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'),
+                    'source' => $source,
+                    'validation' => $validation,
+                    'tip' => $validation->hint,
+                ];
+
+                if (null !== $done) {
+                    $done(1);
+                }
+
+                continue;
+            }
+
             if (!$validation->isValid) {
                 $message = $validation->error ?? 'Invalid regex.';
                 if ($this->ignoreParseErrors && $this->isLikelyPartialRegexError($message)) {

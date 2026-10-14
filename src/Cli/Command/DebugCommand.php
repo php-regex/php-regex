@@ -25,6 +25,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\JsonDocument;
@@ -149,7 +150,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                     $ast = $regex->parse($pattern);
                     $highlightedBody = $ast->accept(new ConsoleHighlighter());
                     $highlightedPattern = $patternInfo->delimiter.$highlightedBody.$patternInfo->delimiter.$patternInfo->flags;
-                } catch (LexerException|ParserException) {
+                } catch (LexerException|LimitException|ParserException) {
                     $highlightedPattern = $pattern;
                 }
             }

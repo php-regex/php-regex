@@ -94,6 +94,80 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * Hovering a pattern past a limit says it was not analyzed, not that it
+     * holds an error.
+     */
+    #[Test]
+    public function test_hovering_a_pattern_past_a_limit_says_it_was_not_analyzed(): void
+    {
+        $handler = new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'max_recursion_depth' => 3]));
+        $this->documents->open('file:///a.php', "<?php\npreg_match('/((((a))))/', \$s);\n");
+
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            $handler->hover(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/hover',
+                id: 1,
+                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 15]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $result = $payload['result'] ?? null;
+        $this->assertIsArray($result);
+        $contents = $result['contents'] ?? null;
+        $this->assertIsArray($contents);
+        $this->assertSame("**Not analyzed**\n\nRecursion limit of 3 exceeded", $contents['value'] ?? null);
+    }
+
+    /**
+     * A limit of the library is no error in the pattern: the editor shows
+     * it as information, the pattern not analyzed, never as an error.
+     */
+    #[Test]
+    public function test_a_pattern_past_a_limit_is_published_as_not_analyzed(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'max_recursion_depth' => 3])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///a.php', 'text' => "<?php\npreg_match('/((((a))))/', \$s);\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $this->assertCount(1, $diagnostics);
+        $this->assertIsArray($diagnostics[0]);
+        $this->assertSame('regex.nesting.too_deep', $diagnostics[0]['code'] ?? null);
+        $this->assertSame(3, $diagnostics[0]['severity'] ?? null, 'Information, not Error.');
+        $this->assertIsString($diagnostics[0]['message'] ?? null);
+        $this->assertStringStartsWith('Not analyzed: ', $diagnostics[0]['message']);
+    }
+
+    /**
      * A pattern that parses yet fails validation is published with the
      * validator's error, and no lint issue beside it.
      *

@@ -17,6 +17,7 @@ use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -823,7 +824,7 @@ final class ParserTest extends TestCase
     #[Test]
     public function test_max_pattern_length(): void
     {
-        $this->expectException(ParserException::class);
+        $this->expectException(ResourceLimitException::class);
         $this->expectExceptionMessage('Regex pattern exceeds maximum length');
 
         // maxPatternLength is now enforced by the Regex class

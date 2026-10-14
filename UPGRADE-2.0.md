@@ -874,7 +874,7 @@ argument:
 | `TokenStream::consume($type, $message)`, `consumeLiteral($value, $message)` | take an `ErrorCode $code` as third argument |
 
 `SyntaxErrorException`, `RecursionLimitException` and `ResourceLimitException`
-follow `ParserException`. `ComplexityException`, `TranspileException` and
+follow `ParserException`'s constructor. `ComplexityException`, `TranspileException` and
 `SampleGenerationException` keep their parameter order and default their code,
 so a call without one keeps working; a call that passed the code as a string
 passes the `ErrorCode` case instead.
@@ -1382,6 +1382,21 @@ which no caller should catch on purpose.
 | `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\CliException` |
 | the sample generator on a call it cannot follow, as `(?R)`, or an empty class built by hand | `\LogicException`, `\RuntimeException` | `SampleGenerationException` |
 | `Regex::generate()` on a pattern that parses but the library judges invalid, as `/(?1)a/` | the visitor exception, or a sample | `SampleGenerationException` (a pattern that does not parse still throws the parser's exception) |
+
+#### A limit of the library is no invalid pattern
+
+`RecursionLimitException` and `ResourceLimitException` no longer extend
+`ParserException`: they extend the new `LimitException`, beside it under
+`RegexException`. A pattern past `max_pattern_length` or `max_recursion_depth`
+is one the library did not read to its end, not one PCRE refuses, so a
+`catch (ParserException)` written for grammar errors no longer takes it.
+Catch `LimitException` (or `RegexException`) where 1.x caught `ParserException`
+to also handle the limits.
+
+`validate()` reports a limit with the new `ValidationErrorCategory::Limit`
+(`limit` in JSON), where 1.x said `syntax`; `isValid` stays `false`, since
+nothing was checked, and `hint` names the option to raise. The lint reports
+it as a warning, `Not analyzed: …`, and no longer as an invalid pattern.
 
 `LintException` and `CliException` extend `\RuntimeException`, so a `catch`
 of that class keeps holding them. `InvalidRegexOptionException` extends

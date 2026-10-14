@@ -20,6 +20,7 @@ use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\FormatResult;
@@ -198,7 +199,7 @@ final readonly class CodeActionHandler
                         break;
                     }
                 }
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
                 return [];
             }
         }
@@ -264,7 +265,7 @@ final readonly class CodeActionHandler
                     ],
                 ];
             }
-        } catch (LexerException|ParserException) {
+        } catch (LexerException|LimitException|ParserException) {
             // Pattern can't be parsed, skip optimization
         }
 
@@ -285,7 +286,7 @@ final readonly class CodeActionHandler
     {
         try {
             $ast = $this->regex->parse($occurrence->pattern);
-        } catch (LexerException|ParserException) {
+        } catch (LexerException|LimitException|ParserException) {
             return [];
         }
 

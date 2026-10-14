@@ -18,6 +18,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
@@ -62,7 +63,7 @@ final class ParseCommand extends AbstractCommand
 
         try {
             return $this->executeParsing($output, $regex, $style, $pattern, $validate);
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             return $this->handleParseError($output, $e->getMessage());
         }
     }

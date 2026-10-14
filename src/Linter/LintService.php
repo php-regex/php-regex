@@ -581,11 +581,15 @@ final readonly class LintService
         $validation = $issue['validation'] ?? null;
         if ($validation instanceof ValidationResult) {
             $message = $issue['message'] ?? ($validation->error ?? 'Invalid regex.');
-            $type = ValidationErrorCategory::Semantic === $validation->category ? DiagnosticType::Semantic : DiagnosticType::Syntax;
+            $type = match ($validation->category) {
+                ValidationErrorCategory::Semantic => DiagnosticType::Semantic,
+                ValidationErrorCategory::Limit => DiagnosticType::Limit,
+                default => DiagnosticType::Syntax,
+            };
 
             return new Diagnostic(
                 $type,
-                LintSeverity::Error,
+                DiagnosticType::Limit === $type ? LintSeverity::Warning : LintSeverity::Error,
                 $message,
                 $validation->errorCode?->value,
                 $validation->offset,

@@ -60,7 +60,7 @@ final class PublicSurface
             'Engine/PcreEngine', 'Engine/PcreError', 'Engine/PcreLimits', 'Engine/PcreMatch',
             'Exception/ExceptionInterface', 'Exception/RegexException', 'Exception/LexerException',
             'Exception/ParserException', 'Exception/SyntaxErrorException', 'Exception/SemanticErrorException',
-            'Exception/RecursionLimitException', 'Exception/ResourceLimitException',
+            'Exception/LimitException', 'Exception/RecursionLimitException', 'Exception/ResourceLimitException',
             'Exception/InvalidRegexOptionException', 'Exception/CacheException', 'Exception/FormattingException', 'Exception/VisualContextInterface',
             'Node/*',
         ],

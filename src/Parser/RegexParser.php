@@ -20,8 +20,8 @@ use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -69,7 +69,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-165705331c680b2702ac0fdd051b8c3d';
+    public const CACHE_VERSION = 'ast-3e078f3f5b10ca9be0ecb402b38ff8da';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -153,6 +153,10 @@ final readonly class RegexParser
     {
         try {
             return new TolerantParseResult($this->doParse($regex));
+        } catch (LimitException $limit) {
+            // The library gave up where it stopped: no earlier error is
+            // looked for, the pattern was not read further.
+            return new TolerantParseResult($this->buildFallbackAstFromException($limit, $regex), [$limit]);
         } catch (LexerException|ParserException $parseException) {
             $fallbackAst = $this->buildFallbackAstFromException($parseException, $regex);
 
@@ -185,8 +189,9 @@ final readonly class RegexParser
             }
 
             return new ValidationResult(true, null, $complexityScore);
-        } catch (ResourceLimitException|RecursionLimitException $e) {
-            // The library's own limits: the pattern is not read further.
+        } catch (LimitException $e) {
+            // The library's own limits: the pattern is not read further,
+            // and no verdict is given on it.
             return $this->buildValidationFailure($e);
         } catch (LexerException|ParserException $e) {
             return $this->buildValidationFailure($this->firstParseError($regex, $e));
@@ -389,7 +394,7 @@ final readonly class RegexParser
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
-            } catch (LexerException|ParserException $syntaxError) {
+            } catch (LexerException|LimitException|ParserException $syntaxError) {
                 $at = $syntaxError->position ?? $position;
                 // A body that never closes is read to the end: an error met
                 // there, other than that ")" missing, comes first.
@@ -467,7 +472,7 @@ final readonly class RegexParser
 
         try {
             $ast = $parser->parse(new TokenStream([...$tokens, new Token(TokenType::Eof, '', $length)], $pattern), $flags, $delimiter, $length);
-        } catch (LexerException|ParserException) {
+        } catch (LexerException|LimitException|ParserException) {
             $read = \array_slice($tokens, 0, $parser->tokensReadWhole());
             $cutAt = [] === $read ? 0 : $read[array_key_last($read)]->end();
 
@@ -484,9 +489,11 @@ final readonly class RegexParser
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
                     ->parse(new TokenStream([...$read, ...$closers, new Token(TokenType::Eof, '', $cutAt)], $pattern), $flags, $delimiter, $length);
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
                 // Not expected: these are the tokens the first parse read
-                // whole, each group they open closed. Kept should one throw.
+                // whole, each group they open closed, no deeper than it went.
+                // Kept should one throw: this runs while an error is being
+                // reported, where nothing may escape.
                 return null;
             }
         }
@@ -591,7 +598,9 @@ final readonly class RegexParser
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
                     ->parse(new TokenStream([...$class, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
+                // A class read alone opens no group, so no limit is met
+                // here today; one would escape the error being reported.
                 continue;
             }
 
@@ -681,7 +690,7 @@ final readonly class RegexParser
                 if (($versionError->position ?? $position) < $position) {
                     return $versionError;
                 }
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
                 continue;
             }
         }
@@ -916,6 +925,22 @@ final readonly class RegexParser
             );
         }
 
+        if ($exception instanceof LimitException) {
+            return new ValidationResult(
+                false,
+                $errorMessage,
+                0,
+                ValidationErrorCategory::Limit,
+                $position,
+                '' !== $visualSnippet ? $visualSnippet : null,
+                \sprintf(
+                    'A limit of this library, not of PCRE: raise the "%s" option to analyze the pattern.',
+                    ErrorCode::PatternTooLong === $exception->errorCode ? 'max_pattern_length' : 'max_recursion_depth',
+                ),
+                $errorCode,
+            );
+        }
+
         return new ValidationResult(
             false,
             $errorMessage,
@@ -931,12 +956,12 @@ final readonly class RegexParser
     /**
      * Build a fallback AST when parsing fails.
      *
-     * @param LexerException|ParserException $exception The parse exception
-     * @param string                         $regex     The original regex
+     * @param LexerException|LimitException|ParserException $exception The parse exception
+     * @param string                                        $regex     The original regex
      *
      * @return RegexNode Fallback AST
      */
-    private function buildFallbackAstFromException(LexerException|ParserException $exception, string $regex): RegexNode
+    private function buildFallbackAstFromException(LexerException|LimitException|ParserException $exception, string $regex): RegexNode
     {
         [$pattern, $flags, $delimiter, $length] = $this->safeExtractPattern($regex);
 

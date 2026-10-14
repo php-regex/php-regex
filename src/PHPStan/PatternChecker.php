@@ -29,6 +29,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
@@ -285,6 +286,12 @@ final class PatternChecker
         $targets = null === $this->targetLabel ? $this->range : [[$this->regex, $this->targetLabel], ...$this->range];
         foreach ($targets as [$parser, $label]) {
             $validation = $parser->validate($pattern);
+            // A limit of the library: the pattern is not analyzed, and
+            // nothing is said about it.
+            if (ValidationErrorCategory::Limit === $validation->category) {
+                return [];
+            }
+
             if (!$validation->isValid) {
                 $reason = $this->firstLine($validation->error ?? 'Invalid regex.');
                 $builder = RuleErrorBuilder::message(\sprintf(

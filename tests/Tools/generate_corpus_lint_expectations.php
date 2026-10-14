@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Toolkit\Regex;
 
@@ -55,7 +56,7 @@ $unreadable = 0;
 foreach ($patterns as $pattern) {
     try {
         $ast = $regex->parse($pattern);
-    } catch (ParserException $e) {
+    } catch (LimitException|ParserException $e) {
         set_error_handler(static fn (): bool => true);
         $pcreAccepts = false !== @preg_match($pattern, '');
         restore_error_handler();

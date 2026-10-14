@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Syntax;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
@@ -2110,7 +2111,7 @@ final class TokenParser
 
                 return $this->parseOperandAt($class, $at, true);
             },
-            fn (LexerException|ParserException $reason, int $at, array $operands): never => throw $this->firstOperandError($operands, $token->position) ?? $reason,
+            fn (LexerException|LimitException|ParserException $reason, int $at, array $operands): never => throw $this->firstOperandError($operands, $token->position) ?? $reason,
             $this->supports(PcreFeature::ErrorOffsetPastTheFault),
             $this->unicodeMode || str_contains($this->flags, 'u'),
             $this->maxRecursionDepth,

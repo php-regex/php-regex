@@ -392,6 +392,14 @@ Line 1: (?<=a+)b
         ^
 ```
 
+**Not analyzed** (a pattern past one of the library's own limits, which PCRE
+may compile: no verdict, exit code 1):
+```
+  Status: NOT ANALYZED
+  Regex pattern exceeds maximum length of 100000 characters.
+  A limit of this library, not of PCRE: raise the "max_pattern_length" option to analyze the pattern.
+```
+
 ---
 
 ### 7. Lint Your Codebase

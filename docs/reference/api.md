@@ -826,8 +826,9 @@ Exception hierarchy (simplified):
     - `LexerException` (tokenization failure)
     - `ParserException`
       - `SyntaxErrorException` (invalid syntax)
+    - `LimitException` (the library stopped at one of its own limits)
       - `RecursionLimitException` (max recursion depth)
-      - `ResourceLimitException` ( resource limits)
+      - `ResourceLimitException` (max pattern length)
     - `SemanticErrorException` (semantic validation failure)
     - `TranspileException` (unsupported target or feature during transpile)
     - `SampleGenerationException` (no sample the pattern matches was found)
@@ -835,11 +836,15 @@ Exception hierarchy (simplified):
 
 `SemanticErrorException` sits beside `ParserException`, not under it: a
 `catch (ParserException)` does not see it — catch `RegexException` to handle
-every parse-time failure.
+every parse-time failure. `LimitException` sits beside it too: a limit of the
+library (`max_pattern_length`, `max_recursion_depth`) is no grammar error, the
+pattern was not read to its end, and `validate()` reports it with the `limit`
+category.
 
 `VisualContextInterface` marks the exceptions that carry the failing pattern
 with a caret under the offending character: `getVisualSnippet(): string` on
-`ParserException` (and its syntax, recursion and resource subclasses),
+`ParserException` and its syntax subclass, `LimitException` (and its recursion
+and resource subclasses),
 `LexerException`, `SemanticErrorException`, `TranspileException` and the
 automata `ComplexityException`. Test for it with `instanceof` to render the
 snippet when the caught exception has one.

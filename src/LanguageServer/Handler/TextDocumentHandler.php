@@ -23,6 +23,7 @@ use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Toolkit\Regex;
 
@@ -210,6 +211,13 @@ final readonly class TextDocumentHandler
                     'end' => $occurrence->end,
                 ],
             ]);
+        } catch (LimitException $e) {
+            Response::success($message->id, [
+                'contents' => [
+                    'kind' => 'markdown',
+                    'value' => "**Not analyzed**\n\n{$e->getMessage()}",
+                ],
+            ]);
         } catch (LexerException|ParserException $e) {
             Response::success($message->id, [
                 'contents' => [
@@ -280,6 +288,8 @@ final readonly class TextDocumentHandler
                         $bodyLength,
                     );
                 }
+            } catch (LimitException $e) {
+                $diagnostics[] = $this->diagnosticConverter->fromLimit($e->getMessage(), $e->errorCode, $bodyStart, $bodyLength);
             } catch (LexerException|ParserException $e) {
                 $diagnostics[] = $this->diagnosticConverter->fromParseError(
                     $e->getMessage(),

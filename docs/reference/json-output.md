@@ -598,7 +598,7 @@ gives these keys, in this order.
 | `is_valid` | bool | Whether PHP accepts the pattern |
 | `error` | string \| null | Why it does not, for people; not frozen |
 | `complexity_score` | int | A rough measure of the pattern's complexity |
-| `category` | string \| null | `syntax`, `semantic` or `pcre-runtime`; an open set |
+| `category` | string \| null | `syntax`, `semantic`, `pcre-runtime` or `limit` (the library stopped at one of its own limits, no verdict on the pattern); an open set |
 | `offset` | int \| null | Where the error lies, 0-based, in bytes from the first byte of the pattern body; `null` without an error or a place |
 | `caret_snippet` | string \| null | The pattern with a caret under the error, as the console shows it; the caret counts raw bytes (see [Strings](#strings-are-written-as-they-are)) |
 | `hint` | string \| null | How to fix it, for people |

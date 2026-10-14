@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -63,6 +64,14 @@ final class ExplainCommand extends Command
 
         // Validate the pattern first
         $validation = $this->regex->validate($pattern);
+        if (ValidationErrorCategory::Limit === $validation->category) {
+            $this->warn('Pattern not analyzed:');
+            $this->line((string) $validation->error);
+            $this->line((string) $validation->hint);
+
+            return self::FAILURE;
+        }
+
         if (!$validation->isValid) {
             $this->error('Invalid regex pattern:');
             $this->line((string) $validation->error);

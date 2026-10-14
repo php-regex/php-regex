@@ -18,6 +18,7 @@ use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Printer\FormatRefusal;
@@ -77,7 +78,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
 
         try {
             $ast = $regex->parse($pattern);
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             if ($json) {
                 $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
             } else {

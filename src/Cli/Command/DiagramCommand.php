@@ -20,6 +20,7 @@ use PHPRegex\Explain\AsciiTreeRenderer;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Explain\RailroadSvgRenderer;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 
 /**
@@ -112,7 +113,7 @@ final class DiagramCommand extends AbstractCommand
             }
 
             $output->write($diagram."\n");
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Diagram failed: '.$e->getMessage())."\n");
 
             return self::FAILURE;
