@@ -38,8 +38,7 @@ final class HelpCommand extends AbstractCommand
     ];
 
     /**
-     * The options LintArgumentParser accepts, listed once for `help lint`
-     * and the overview's Lint Options alike.
+     * The options LintArgumentParser accepts, listed for `help lint`.
      */
     private const LINT_OPTIONS = [
         ['--exclude <path>', 'Paths to exclude (repeatable)'],
@@ -145,67 +144,8 @@ final class HelpCommand extends AbstractCommand
         ];
         $this->renderTableSection($output, 'Global Options', $globalOptions, fn (string $value): string => $this->formatOption($output, $value));
 
-        $this->renderTableSection($output, 'Lint Options', self::LINT_OPTIONS, fn (string $value): string => $this->formatOption($output, $value));
-        $output->write($output->dim('  Config: regex.json or regex.dist.json in the working directory sets lint defaults.')."\n");
-        $output->write($output->dim('  Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.')."\n");
-        $output->write($output->dim('  Inline ignore: // @regex-ignore-next-line or // @regex-ignore')."\n\n");
-
-        $diagramOptions = [
-            ['--format <format>', 'Output format (console, svg)'],
-            ['--output <file>', 'Write output to file'],
-        ];
-        $this->renderTableSection($output, 'Diagram Options', $diagramOptions, fn (string $value): string => $this->formatOption($output, $value));
-
-        $transpileOptions = [
-            ['--target <dialect>', 'Target dialect (js, html, python)'],
-            ['--format <format>', 'Output format (console, json)'],
-            ['--json', 'Same as --format=json'],
-        ];
-        $this->renderTableSection($output, 'Transpile Options', $transpileOptions, fn (string $value): string => $this->formatOption($output, $value));
-
-        $formatOptions = [
-            ['--compact', 'Write the pattern on one line, without x, layout or comments'],
-            ['--width <n>', 'Width a line aims at, indent included (default: 80)'],
-            ['--format <format>', 'Output format (console, json)'],
-            ['--json', 'Same as --format=json'],
-        ];
-        $this->renderTableSection($output, 'Format Options', $formatOptions, fn (string $value): string => $this->formatOption($output, $value));
-
-        $analyzeOptions = [
-            ['--format <format>', 'Output format (console, json)'],
-            ['--json', 'Same as --format=json'],
-            ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
-            ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-        ];
-        $this->renderTableSection($output, 'Analyze Options', $analyzeOptions, fn (string $value): string => $this->formatOption($output, $value));
-
-        $debugOptions = [
-            ['--input <string>', 'Input string to test against the pattern'],
-            ['--format <format>', 'Output format (console, json)'],
-            ['--json', 'Same as --format=json'],
-            ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
-            ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
-        ];
-        $this->renderTableSection($output, 'Debug Options', $debugOptions, fn (string $value): string => $this->formatOption($output, $value));
-
-        $redosOptions = [
-            ['--safe <pattern>', 'Safe pattern to compare against'],
-            ['--input <string>', 'Input string to benchmark (auto-generated when omitted)'],
-            ['--input-file <path>', 'Read input from a file'],
-            ['--repeat <n>', 'Repeat input N times (default: 1)'],
-            ['--prefix <string>', 'Prefix for the input'],
-            ['--suffix <string>', 'Suffix for the input'],
-            ['--iterations <n>', 'Number of iterations (default: 1)'],
-            ['--warmup <n>', 'Warmup iterations (default: 0)'],
-            ['--jit <0|1>', 'Override pcre.jit'],
-            ['--backtrack-limit <n>', 'Override pcre.backtrack_limit'],
-            ['--recursion-limit <n>', 'Override pcre.recursion_limit'],
-            ['--time-limit <n>', 'Set max_execution_time in seconds'],
-            ['--format <format>', 'Output format (console, json)'],
-            ['--json', 'Same as --format=json'],
-            ['--show-input', 'Print full input string'],
-        ];
-        $this->renderTableSection($output, 'ReDoS Benchmark Options', $redosOptions, fn (string $value): string => $this->formatOption($output, $value));
+        // Each command's options are on its own page.
+        $output->write('  Run '.$output->color($binary, Output::BLUE).' '.$this->formatCommand($output, 'help').' '.$output->color('<command>', Output::YELLOW)." for the options of a command.\n\n");
 
         $examples = [
             [[$binary, "'/a+/'"], 'Quick highlight'],

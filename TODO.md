@@ -343,12 +343,6 @@ it as a fix suggestion.
 the whole help, exit 2. The configuration validator already has a suggester.
 *Fix*: one Levenshtein helper shared by both. Effort: XS.
 
-**C5 — The bare invocation dumps every command's options.** *Verify*:
-`php src/Cli/bin/regex | wc -l` — around 125 lines mixing the global options
-with the Lint, Diagram, Transpile, Analyze, Debug and ReDoS blocks, while
-`help <command>` stays correctly scoped and nothing points at it.
-*Fix*: print the command list plus a pointer to `help <command>`. Effort: XS.
-
 **C6 — A `jobs` below 1 means four different things.** *Verify*:
 `regex lint src --jobs=0` is a usage error (`LintArgumentParser.php`), as is
 `regex:lint --jobs 0` in Symfony; Laravel's `--jobs=0` means "count the CPUs";

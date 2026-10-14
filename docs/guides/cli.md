@@ -15,6 +15,10 @@ Once installed, the binary is `vendor/bin/regex`:
 vendor/bin/regex --help
 ```
 
+The overview lists the commands and the options they all take;
+`vendor/bin/regex help <command>` shows the options, notes and examples of one
+command.
+
 **Via PHAR (standalone):**
 
 The PHAR needs no PHP project and no Composer:

@@ -79,7 +79,6 @@ final class LintRedosConsoleTest extends TestCase
     public static function provideHelpScreens(): iterable
     {
         yield 'regex lint --help' => ['arguments' => ['lint']];
-        yield 'regex --help' => ['arguments' => []];
     }
 
     /**
