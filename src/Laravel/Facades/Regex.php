@@ -23,6 +23,7 @@ use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
@@ -51,6 +52,8 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static AnalysisReport                analyze(string $regex)
  * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
  * @method static OptimizationResult            optimize(string $regex, OptimizerOptions|array $options = [])
+ * @method static FormatResult                  format(string $regex, int $width = 80)
+ * @method static FormatResult                  compact(string $regex)
  * @method static TranspileResult               transpile(string $regex, string $target, ?TranspileOptions $options = null)
  * @method static string                        explain(string $regex, string|OutputFormat $format = OutputFormat::Text)
  * @method static string                        highlight(string $regex, string|OutputFormat $format = OutputFormat::Console)

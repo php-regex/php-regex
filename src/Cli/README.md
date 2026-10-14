@@ -60,7 +60,7 @@ Commands
 | `debug` | Deep ReDoS analysis, heatmap | `version` | Display version information |
 | `redos` | Benchmark patterns for ReDoS | `self-update` | Update the phar in place |
 | `diagram` | AST diagram, text or SVG | `help` | Display the help message |
-| `graph` | NFA graph, DOT or Mermaid | | |
+| `graph` | NFA graph, DOT or Mermaid | `format` | Lay a pattern out over lines, or compact it |
 
 Configuration
 -------------

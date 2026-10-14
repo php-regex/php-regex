@@ -31,6 +31,7 @@
     <groups>
         <exclude>
             <group>capture-shape-parity</group>
+            <group>formatter-corpus</group>
         </exclude>
     </groups>
 

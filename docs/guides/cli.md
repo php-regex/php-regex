@@ -51,6 +51,7 @@ PHPRegex CLI provides these commands:
 | `highlight`   | Syntax highlighting (console or HTML)                    |
 | `validate`    | Validate pattern syntax                                  |
 | `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`) |
+| `format`      | Lay a pattern out over lines under `x`, or `--compact` it to one line |
 | `lint`        | Lint entire codebase for regex issues                    |
 | `version`     | Display version information                              |
 | `self-update` | Update PHAR to latest version                            |
@@ -694,6 +695,38 @@ what a replay does and does not prove.
 
 ---
 
+### 10. Format (Lay Out or Compact)
+
+`format` lays a long pattern out over lines under `x`, keeping its comments and
+its spelling; `--compact` writes it back on one line, without `x`, layout or
+comments. A pattern that already fits comes back unchanged:
+
+```bash
+vendor/bin/regex format '/^(?:GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s+(?<path>\/[^\s?]*)(?:\?(?<query>\S*))?\s+HTTP\/(?<version>1\.[01]|2(?:\.0)?)$/'
+```
+
+**Output:**
+```
+/
+    ^
+    (?:GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)
+    \s+
+    (?<path>\/[^\s?]*)
+    (?:\?(?<query>\S*))?
+    \s+HTTP\/
+    (?<version>1\.[01]|2(?:\.0)?)
+    $
+/x
+```
+
+`--width=N` sets the width a line may take (80 by default); `--json` prints
+`{"pattern", "formatted", "changed", "refusal"}`. Where a layout under `x` would
+change what the pattern matches, the pattern is printed unchanged with a note on
+stderr, and the exit code stays 0. See [Formatting patterns](formatting.md) for
+the layout rules, the guarantees and the refusals.
+
+---
+
 ## Symfony and Laravel Commands
 
 The Symfony bundle and the Laravel package expose the same engine as console
@@ -933,6 +966,7 @@ passed.
 | `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
 | `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
 | `transpile`                                  | The pattern is invalid, or cannot be written for the target                        |
+| `format`                                     | The pattern does not parse, or the formatter could not prove its output the same pattern; a refusal leaves 0 |
 | `debug`                                      | The pattern is invalid, a semantic error such as `/(?<=a+)b/` included, in every format |
 | `analyze`, `debug`                           | `--redos-mode=confirmed` reproduces a ReDoS verdict of high severity or more, at or above `--redos-threshold`, on the running PCRE, or proves one it cannot replay because `ini_set()` is disabled |
 | `compare`                                    | The answer is no: the patterns intersect, the first is not a subset of the second, or they differ; or they cannot be compared |

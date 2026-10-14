@@ -33,7 +33,7 @@ final class HelpCommand extends AbstractCommand
      */
     private const DOCUMENTED_COMMANDS = [
         'parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram',
-        'graph', 'highlight', 'validate', 'transpile', 'lint', 'version',
+        'graph', 'highlight', 'validate', 'transpile', 'format', 'lint', 'version',
         'self-update', 'help',
     ];
 
@@ -163,6 +163,14 @@ final class HelpCommand extends AbstractCommand
         ];
         $this->renderTableSection($output, 'Transpile Options', $transpileOptions, fn (string $value): string => $this->formatOption($output, $value));
 
+        $formatOptions = [
+            ['--compact', 'Write the pattern on one line, without x, layout or comments'],
+            ['--width <n>', 'Width a line aims at, indent included (default: 80)'],
+            ['--format <format>', 'Output format (console, json)'],
+            ['--json', 'Same as --format=json'],
+        ];
+        $this->renderTableSection($output, 'Format Options', $formatOptions, fn (string $value): string => $this->formatOption($output, $value));
+
         $analyzeOptions = [
             ['--format <format>', 'Output format (console, json)'],
             ['--json', 'Same as --format=json'],
@@ -208,6 +216,7 @@ final class HelpCommand extends AbstractCommand
             [[$binary, 'diagram', "'/^a+$/'"], 'Text diagram'],
             [[$binary, 'diagram', "'/^a+$/'", '--format=svg'], 'SVG diagram'],
             [[$binary, 'transpile', "'/^a+$/'", '--target=python'], 'Transpile to Python'],
+            [[$binary, 'format', "'/^(?<year>\\d{4})-(?<month>\\d{2})$/'", '--width=24'], 'Lay a pattern out over lines'],
             [[$binary, 'debug', "'/(a+)+$/'"], 'Heatmap + ReDoS details'],
             [[$binary, 'redos', "'/(a+)+$/'", '--safe', "'/a+$/'", '--input', "'a'", '--repeat=50000', "--suffix='!'"], 'Benchmark vulnerable vs safe'],
             [[$binary, 'highlight', "'/a+/'", '--format=html'], 'HTML highlight'],
@@ -463,6 +472,26 @@ final class HelpCommand extends AbstractCommand
                     [[$this->resolveInvocation(), 'transpile', "'/a+/'", '--target=python'], 'Transpile to Python'],
                 ],
             ],
+            'format' => [
+                'description' => 'Lay a pattern out over lines, or compact it to one',
+                'options' => [
+                    ['--compact', 'Write the pattern on one line, without x, layout or comments'],
+                    ['--width <n>', 'Width a line aims at, indent included (default: 80)'],
+                    ['--format <format>', 'Output format (console, json)'],
+                    ['--json', 'Same as --format=json'],
+                    ['--php-version <ver>', 'Target PHP version for validation'],
+                    ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                ],
+                'notes' => [
+                    'Prints the pattern alone, so that it can be piped or pasted back. A pattern that fits the width comes back unchanged.',
+                    'The output matches exactly what the input matches. A pattern it cannot lay out safely comes back as written, with one note on stderr.',
+                ],
+                'examples' => [
+                    [[$this->resolveInvocation(), 'format', "'/^(?<year>\\d{4})-(?<month>\\d{2})$/'", '--width=24'], 'Lay a pattern out over lines'],
+                    [[$this->resolveInvocation(), 'format', '"$(cat pattern.txt)"', '--compact'], 'Compact a laid-out pattern to one line'],
+                    [[$this->resolveInvocation(), 'format', "'/^(?<year>\\d{4})-(?<month>\\d{2})$/'", '--json'], 'JSON output'],
+                ],
+            ],
             'lint' => [
                 'description' => 'Lint regex patterns in PHP source code',
                 'options' => self::LINT_OPTIONS,
@@ -534,7 +563,7 @@ final class HelpCommand extends AbstractCommand
 
         if ('lint' === $command) {
             $usage .= ' '.$output->color('[options]', Output::CYAN).' '.$output->color('<path>', Output::GREEN);
-        } elseif (\in_array($command, ['parse', 'analyze', 'debug', 'redos', 'diagram', 'graph', 'highlight', 'transpile', 'validate', 'explain'], true)) {
+        } elseif (\in_array($command, ['parse', 'analyze', 'debug', 'redos', 'diagram', 'graph', 'highlight', 'transpile', 'format', 'validate', 'explain'], true)) {
             $usage .= ' '.$output->color('[options]', Output::CYAN).' '.$output->color('<pattern>', Output::GREEN);
         } elseif ('compare' === $command) {
             $usage .= ' '.$output->color('[options]', Output::CYAN)
@@ -698,7 +727,7 @@ final class HelpCommand extends AbstractCommand
             return $output->color($token, Output::GREEN);
         }
 
-        if (\in_array($token, ['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'highlight', 'validate', 'transpile', 'lint', 'self-update', 'help'], true)) {
+        if (\in_array($token, ['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'highlight', 'validate', 'transpile', 'format', 'lint', 'self-update', 'help'], true)) {
             return $output->color($token, Output::YELLOW.Output::BOLD);
         }
 

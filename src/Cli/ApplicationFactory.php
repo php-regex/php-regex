@@ -19,6 +19,7 @@ use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\Command\DiagramCommand;
 use PHPRegex\Cli\Command\ExplainCommand;
+use PHPRegex\Cli\Command\FormatCommand;
 use PHPRegex\Cli\Command\GraphCommand;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\HighlightCommand;
@@ -77,6 +78,7 @@ final class ApplicationFactory
             new GraphCommand(),
             new HighlightCommand(),
             new TranspileCommand(),
+            new FormatCommand(),
             new ValidateCommand(),
             new LintCommand(
                 $help,

@@ -116,6 +116,10 @@ final class JsonOutputContractTest extends TestCase
         yield 'redos, quiet' => ['arguments' => ['--quiet', 'redos', '/a+b/', ...self::REDOS], 'address' => 'redos'];
         yield 'transpile' => ['arguments' => ['transpile', '/a+b/i', '--format=json'], 'address' => 'transpile'];
         yield 'transpile, quiet' => ['arguments' => ['--quiet', 'transpile', '/a+b/i', '--format=json'], 'address' => 'transpile'];
+        yield 'format, a long pattern' => ['arguments' => ['format', '/(?:alpha|beta|gamma)(?<n>\\d+)(?:-(?<m>[a-z]+))?/', '--width=24', '--format=json'], 'address' => 'format'];
+        yield 'format, --compact --json' => ['arguments' => ['format', "/\n    a  # one\n    b\n/x", '--compact', '--json'], 'address' => 'format'];
+        yield 'format, a refusal' => ['arguments' => ['format', '/a{ 1,2 }(?:bcdefghij)/', '--width=10', '--json'], 'address' => 'format'];
+        yield 'format, quiet' => ['arguments' => ['--quiet', 'format', '/a+b/', '--format=json'], 'address' => 'format'];
         yield 'lint' => ['arguments' => self::LINT, 'address' => 'lint'];
         yield 'lint, confirmed ReDoS' => ['arguments' => [...self::LINT, '--redos-mode=confirmed'], 'address' => 'lint'];
         yield 'lint, with a baseline' => ['arguments' => [...self::LINT, '--baseline=baseline.json'], 'address' => 'lint'];
@@ -123,6 +127,7 @@ final class JsonOutputContractTest extends TestCase
         yield 'lint, nothing to report' => ['arguments' => ['lint', 'empty', '--format=json', '--jobs=1'], 'address' => 'lint'];
         yield 'error envelope, a usage error' => ['arguments' => ['analyze', '/a/', '--bogus', '--json'], 'address' => 'error'];
         yield 'error envelope, an invalid pattern' => ['arguments' => ['transpile', '/(a/', '--format=json'], 'address' => 'error'];
+        yield 'error envelope, an invalid pattern to format' => ['arguments' => ['format', '/(a/', '--format=json'], 'address' => 'error'];
     }
 
     /**

@@ -18,8 +18,12 @@ use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Printer\FormatResult;
+use PHPRegex\Parser\Printer\PatternFormatter;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -43,7 +47,18 @@ final readonly class CodeActionHandler
         'regex.lint.unicode.quantifiedMultibyteWithoutU',
     ];
 
-    public function __construct(private DocumentManager $documents, private Regex $regex) {}
+    /**
+     * What a continuation line of a formatted pattern gets on top of the
+     * indentation of the line the literal starts on.
+     */
+    private const CONTINUATION_INDENT = '    ';
+
+    private readonly PatternFormatter $formatter;
+
+    public function __construct(private DocumentManager $documents, private Regex $regex)
+    {
+        $this->formatter = new PatternFormatter(target: $regex->target());
+    }
 
     /**
      * Handle textDocument/codeAction request.
@@ -81,6 +96,12 @@ final readonly class CodeActionHandler
             $codeActions = array_merge(
                 $codeActions,
                 $this->getOptimizationActions($occurrence, $uri),
+            );
+
+            // Add layout actions
+            $codeActions = array_merge(
+                $codeActions,
+                $this->getLayoutActions($occurrence, $uri),
             );
         }
 
@@ -245,8 +266,107 @@ final readonly class CodeActionHandler
     }
 
     /**
-     * Add /u flag to a regex pattern.
+     * Get the code actions that lay the pattern out over lines or put it
+     * back on one line.
+     *
+     * Each is offered only when it would change the literal's text: a
+     * literal the format action wrote carries the extra indentation of its
+     * continuation lines, so the formatter alone would call it changed.
+     *
+     * @return array<array<string, mixed>>
      */
+    private function getLayoutActions(RegexOccurrence $occurrence, string $uri): array
+    {
+        try {
+            $ast = $this->regex->parse($occurrence->pattern);
+        } catch (LexerException|ParserException) {
+            return [];
+        }
+
+        $actions = [];
+
+        $formatted = $this->layout(fn (RegexNode $ast): FormatResult => $this->formatter->format($ast), $ast);
+        if (null !== $formatted) {
+            // Every line break of a formatted pattern is layout, so shifting
+            // the continuation lines does not change what it matches. A blank
+            // line stays blank.
+            $indent = $this->lineIndentation($occurrence, $uri).self::CONTINUATION_INDENT;
+            $lines = explode("\n", $formatted);
+            foreach ($lines as $i => $line) {
+                if ($i > 0 && '' !== $line) {
+                    $lines[$i] = $indent.$line;
+                }
+            }
+            $formatted = implode("\n", $lines);
+            if ($formatted !== $occurrence->pattern) {
+                $actions[] = $this->rewriteAction('Format pattern over lines', $occurrence, $uri, $formatted);
+            }
+        }
+
+        $compacted = $this->layout(fn (RegexNode $ast): FormatResult => $this->formatter->compact($ast), $ast);
+        if (null !== $compacted && $compacted !== $occurrence->pattern) {
+            $actions[] = $this->rewriteAction('Compact pattern to one line', $occurrence, $uri, $compacted);
+        }
+
+        return $actions;
+    }
+
+    /**
+     * The pattern the formatter writes, or null when it refuses to or
+     * cannot write one that reads back as the same pattern.
+     *
+     * @param \Closure(RegexNode): FormatResult $layout
+     */
+    private function layout(\Closure $layout, RegexNode $ast): ?string
+    {
+        try {
+            $result = $layout($ast);
+        } catch (FormattingException) {
+            return null;
+        }
+
+        return null === $result->refusal ? $result->pattern : null;
+    }
+
+    /**
+     * The spaces and tabs the literal's first line starts with, as written.
+     */
+    private function lineIndentation(RegexOccurrence $occurrence, string $uri): string
+    {
+        $content = $this->documents->getContent($uri) ?? '';
+        $before = substr($content, 0, $occurrence->byteOffset);
+        // Behind a leading line break, the last one sits where the line starts.
+        $lineStart = (int) strrpos("\n".$before, "\n");
+
+        return substr($before, $lineStart, strspn($before, " \t", $lineStart));
+    }
+
+    /**
+     * A refactor.rewrite action replacing the literal with the pattern.
+     *
+     * @return array<string, mixed>
+     */
+    private function rewriteAction(string $title, RegexOccurrence $occurrence, string $uri, string $pattern): array
+    {
+        return [
+            'title' => $title,
+            'kind' => 'refactor.rewrite',
+            'edit' => [
+                'changes' => [
+                    $uri => [
+                        [
+                            'range' => [
+                                'start' => $occurrence->start,
+                                'end' => $occurrence->end,
+                            ],
+                            'newText' => $this->asPhpString($pattern),
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
     /**
      * The pattern as a PHP string literal, ready to replace the one in the
      * source.
@@ -260,6 +380,9 @@ final readonly class CodeActionHandler
         return var_export($pattern, true);
     }
 
+    /**
+     * Add /u flag to a regex pattern.
+     */
     private function addUnicodeFlag(string $pattern): ?string
     {
         if (\strlen($pattern) < 2) {

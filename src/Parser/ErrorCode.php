@@ -241,6 +241,11 @@ enum ErrorCode: string
     case FlagUnknown = 'regex.flag.unknown';
 
     /**
+     * The formatter wrote a pattern that does not read back as the one it was given.
+     */
+    case FormattingUnsafe = 'regex.formatting.unsafe';
+
+    /**
      * No sample the pattern matches was found.
      */
     case GenerateNoMatch = 'regex.generate.no_match';

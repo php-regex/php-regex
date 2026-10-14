@@ -34,6 +34,8 @@
       url: /guides/regex-in-php/
     - title: ReDoS guide
       url: /guides/redos/
+    - title: Formatting patterns
+      url: /guides/formatting/
     - title: Cookbook
       url: /cookbook/
     - title: Troubleshooting

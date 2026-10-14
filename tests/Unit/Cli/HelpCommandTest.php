@@ -121,6 +121,7 @@ final class HelpCommandTest extends TestCase
                 '--php-version', '--pcre-version', '--json',
             ],
             'transpile' => ['--target', '--format', '--json'],
+            'format' => ['--compact', '--width', '--format', '--json'],
         ];
 
         foreach ($accepted as $command => $options) {
@@ -161,6 +162,7 @@ final class HelpCommandTest extends TestCase
         yield 'analyze' => ['command' => 'analyze', 'section' => 'Analyze Options'];
         yield 'debug' => ['command' => 'debug', 'section' => 'Debug Options'];
         yield 'redos' => ['command' => 'redos', 'section' => 'ReDoS Benchmark Options'];
+        yield 'format' => ['command' => 'format', 'section' => 'Format Options'];
     }
 
     /**
@@ -225,6 +227,7 @@ final class HelpCommandTest extends TestCase
         yield 'debug' => ['command' => 'debug', 'section' => 'Debug Options'];
         yield 'redos' => ['command' => 'redos', 'section' => 'ReDoS Benchmark Options'];
         yield 'transpile' => ['command' => 'transpile', 'section' => 'Transpile Options'];
+        yield 'format' => ['command' => 'format', 'section' => 'Format Options'];
     }
 
     public function test_render_command_help_returns_zero_for_valid_command(): void
@@ -467,6 +470,57 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
+     * The format page says what the command prints, and its examples, like
+     * the one the overview shows, each run the binary the help was invoked
+     * as.
+     */
+    #[Test]
+    public function test_format_help_shows_its_notes_and_its_examples_under_the_invocation(): void
+    {
+        $originalArgv = $_SERVER['argv'] ?? null;
+        $_SERVER['argv'] = ['bin/regex'];
+
+        try {
+            $page = self::commandHelp('format');
+            $overview = self::commandHelp(null);
+        } finally {
+            if (null === $originalArgv) {
+                unset($_SERVER['argv']);
+            } else {
+                $_SERVER['argv'] = $originalArgv;
+            }
+        }
+
+        $this->assertStringContainsString(
+            "  Prints the pattern alone, so that it can be piped or pasted back. A pattern that fits the width comes back unchanged.\n"
+            ."  The output matches exactly what the input matches. A pattern it cannot lay out safely comes back as written, with one note on stderr.\n",
+            $page,
+        );
+        $this->assertSame([
+            "bin/regex format '/^(?<year>\\d{4})-(?<month>\\d{2})$/' --width=24" => '# Lay a pattern out over lines',
+            'bin/regex format "$(cat pattern.txt)" --compact' => '# Compact a laid-out pattern to one line',
+            "bin/regex format '/^(?<year>\\d{4})-(?<month>\\d{2})$/' --json" => '# JSON output',
+        ], self::section($page, 'Examples'));
+        $this->assertSame('# Lay a pattern out over lines', self::section($overview, 'Examples')["bin/regex format '/^(?<year>\\d{4})-(?<month>\\d{2})$/' --width=24"] ?? null);
+    }
+
+    /**
+     * In an example, the command name is colored as a command, as it is in
+     * the usage line.
+     */
+    #[Test]
+    public function test_format_help_colors_the_command_name_in_its_examples(): void
+    {
+        ob_start();
+        (new HelpCommand())->run(new Input('help', ['format'], new GlobalOptions(false, null, false, false, null, null), []), OutputFactory::create(ansi: true));
+        $text = (string) ob_get_clean();
+
+        $examples = array_values(array_filter(explode("\n", $text), static fn (string $line): bool => str_contains($line, '--width=24')));
+        $this->assertCount(1, $examples);
+        $this->assertStringContainsString(' '.Output::YELLOW.Output::BOLD.'format'.Output::RESET.' ', $examples[0]);
+    }
+
+    /**
      * `transpile --target=html` writes an HTML pattern attribute: the page
      * and the overview name the three targets, each one the command takes.
      */
@@ -536,7 +590,7 @@ final class HelpCommandTest extends TestCase
     public function test_no_help_page_claims_a_1_x_behaviour(): void
     {
         $pages = [self::commandHelp(null)];
-        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'version', 'help'] as $command) {
+        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'format', 'version', 'help'] as $command) {
             $pages[] = self::commandHelp($command);
         }
 

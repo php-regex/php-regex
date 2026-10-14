@@ -174,9 +174,13 @@ echo $pattern;  // '/foo/i'
 ```
 
 `new PatternPrinter(pretty: true)` normalizes the escapes and, under `x`
-only, lays the pattern out over lines. Without `x` the newlines and indents
-would change what the pattern matches, so it stays on one line: the output
-is always the same pattern.
+only, lays the pattern out over lines with the rules of
+[the formatter](../guides/formatting.md): a construct that fits the line stays
+on it, a broken group indents its body, and a broken alternation hangs its
+`| ` in the indent. Without `x` the newlines and indents would change what the
+pattern matches, so it stays on one line: the output is always the same
+pattern. To keep the author's spelling, add `x` where it is missing, and be
+told when a layout would be unsafe, use `PatternFormatter` instead.
 
 **Use Cases:**
 - Normalize patterns (remove unnecessary whitespace, standardize escapes)

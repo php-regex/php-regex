@@ -63,7 +63,7 @@ final class ExitCodeContractTest extends TestCase
         yield 'the removed clear-cache' => [['clear-cache']];
         yield 'the removed cache:clear' => [['cache:clear']];
 
-        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph'] as $command) {
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
             yield $command.' without a pattern' => [[$command]];
             yield $command.' with an unknown option' => [[$command, '/a/', '--bogus']];
             yield $command.' with an invalid --php-version' => [['--php-version=abc', $command, '/a/']];
@@ -80,11 +80,11 @@ final class ExitCodeContractTest extends TestCase
         yield 'help with an unknown option' => [['help', '--bogus']];
         yield 'help with a second argument' => [['help', 'analyze', 'extra']];
 
-        foreach (['analyze', 'debug', 'diagram', 'highlight', 'explain', 'transpile', 'redos', 'graph'] as $command) {
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
             yield $command.' with an unknown --format' => [[$command, '/a/', '--format=xml']];
         }
 
-        foreach (['analyze', 'debug', 'diagram', 'highlight', 'explain', 'redos'] as $command) {
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'explain', 'redos', 'format'] as $command) {
             yield $command.' with --format and no value' => [[$command, '/a/', '--format']];
         }
 
@@ -100,6 +100,8 @@ final class ExitCodeContractTest extends TestCase
         yield 'redos with both --input and --input-file' => [['redos', '/a/', '--input=a', '--input-file=a.txt']];
         yield 'redos with an --input-file it cannot read' => [['redos', '/a/', '--input-file=missing.txt']];
         yield 'transpile with an unknown --target' => [['transpile', '/a/', '--target=perl']];
+        yield 'format with --width=0' => [['format', '/a/', '--width=0']];
+        yield 'format with a --width that is not a number' => [['format', '/a/', '--width=abc']];
         // Each prints its one rendering: --format is not an option of theirs.
         yield 'parse with --format' => [['parse', '/a/', '--format=console']];
         yield 'validate with --format' => [['validate', '/a/', '--format=console']];
@@ -159,7 +161,7 @@ final class ExitCodeContractTest extends TestCase
      */
     public static function providePatternProblems(): iterable
     {
-        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph'] as $command) {
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
             yield $command.' on a pattern that does not parse' => [[$command, '/(/']];
         }
 
@@ -178,6 +180,7 @@ final class ExitCodeContractTest extends TestCase
         yield 'analyze on a pattern that does not parse, as JSON' => [['analyze', '/(/', '--format=json']];
         yield 'debug on a pattern without delimiters, as JSON' => [['debug', '[unclosed', '--format=json']];
         yield 'transpile on a pattern that does not parse, as JSON' => [['transpile', '/(/', '--format=json']];
+        yield 'format on a pattern that does not parse, as JSON' => [['format', '/(/', '--format=json']];
         yield 'compare on a pattern with a backreference' => [['compare', '/(a)\\1/', '/a/']];
         yield 'compare --method=subset on a pattern that is no subset' => [['compare', '/a|b/', '/a/', '--method=subset']];
         yield 'graph on a pattern it cannot draw' => [['graph', '/a\\1/']];
@@ -200,7 +203,7 @@ final class ExitCodeContractTest extends TestCase
      */
     public static function provideSuccesses(): iterable
     {
-        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph'] as $command) {
+        foreach (['analyze', 'debug', 'diagram', 'highlight', 'parse', 'validate', 'explain', 'transpile', 'redos', 'graph', 'format'] as $command) {
             yield $command.' on a valid pattern' => [[$command, '/a/']];
         }
 
@@ -221,6 +224,10 @@ final class ExitCodeContractTest extends TestCase
         yield 'diagram written to a file' => [['diagram', '/a/', '--output=a.txt']];
         yield 'graph written to a file' => [['graph', '/a/', '--output=a.dot']];
         yield 'transpile as JSON' => [['transpile', '/a/', '--format=json']];
+        yield 'format as JSON' => [['format', '/a/', '--format=json']];
+        yield 'format --compact' => [['format', '/a/', '--compact']];
+        // A refusal is an answer, not a problem with the pattern.
+        yield 'format on a pattern it refuses' => [['format', '/a{ 1,2 }(?:bcdefghij)/', '--width=10']];
         // A byte that is not UTF-8 is a valid pattern byte without the u
         // flag, and the JSON report spells it \xNN.
         yield 'analyze on a pattern with a byte that is not UTF-8, as JSON' => [['analyze', "/\xff/", '--format=json']];

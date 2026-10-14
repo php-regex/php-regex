@@ -558,6 +558,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.extended_class.unmatched_close` | `ExtendedClassUnmatchedClose` | A ")" in an extended class closes no open parenthesis. |
 | `regex.flag.removed_e` | `FlagRemovedE` | The "e" modifier was removed in PHP 7.0. |
 | `regex.flag.unknown` | `FlagUnknown` | A modifier after the closing delimiter is not one PHP knows. |
+| `regex.formatting.unsafe` | `FormattingUnsafe` | The formatter wrote a pattern that does not read back as the one it was given. |
 | `regex.generate.no_match` | `GenerateNoMatch` | No sample the pattern matches was found. |
 | `regex.group.duplicate_name` | `GroupDuplicateName` | Two groups share a name, which needs the "J" modifier or "(?J)". |
 | `regex.group.name_conflict` | `GroupNameConflict` | Groups of the same number in a branch reset have different names. |

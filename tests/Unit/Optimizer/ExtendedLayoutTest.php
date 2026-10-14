@@ -109,7 +109,7 @@ final class ExtendedLayoutTest extends TestCase
 
         $result = (new Optimizer(RegexParser::create(['cache' => $cache])))->optimize("/a{1}  # c\n/x");
 
-        $this->assertSame("/a# c\n/x", $result->optimized);
+        $this->assertSame("/\n    a  # c\n/x", $result->optimized);
     }
 
     #[Test]

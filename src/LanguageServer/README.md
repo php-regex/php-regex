@@ -31,7 +31,7 @@ Features
 - Diagnostics on open and on change: every pattern of the file is parsed, validated and linted, and the findings are published to the editor; a pattern PCRE refuses gets that error alone.
 - Hovers in plain English: hold the pointer on a pattern to read what it matches, token by token.
 - Completions inside patterns: shorthands after a backslash, Unicode properties after `\p{`, POSIX classes after `[:`, groups after `(?`, flags after the closing delimiter.
-- Code actions: one action adds the `u` flag a Unicode pattern lacks, one applies the optimizer's rewrite — `/[0-9]{1,}/` becomes `/\d+/`.
+- Code actions: one action adds the `u` flag a Unicode pattern lacks, one applies the optimizer's rewrite — `/[0-9]{1,}/` becomes `/\d+/` — and two lay a long pattern out over lines under `x` or compact it back to one line.
 - Functions marked `#[RegexPattern]` (or PhpStorm's `#[Language('RegExp')]`): their calls are checked at that argument, the declarations read from the workspace's PHP files at start-up (under `paths`, out of `exclude` in `regex.json`) and from the open documents as you type.
 - One target per workspace: patterns are judged for one PHP and PCRE2 pair, resolved from the editor settings, `regex.json`, `composer.json` or the running PHP.
 
@@ -89,6 +89,7 @@ Code actions are offered on the pattern they fix:
 
 * `/\p{L}+/` without the `u` flag gets "Add /u flag for Unicode support", rewriting the literal to `'/\p{L}+/u'`.
 * `/[0-9]{1,}/` gets "Apply regex optimization", rewriting the literal to `'/\d+/'`.
+* A pattern too long for its line gets "Format pattern over lines", which lays it out under `x`, its continuation lines indented four spaces past the literal's line; a laid-out pattern gets "Compact pattern to one line". Each is offered only when it changes the literal.
 
 Integration
 -----------

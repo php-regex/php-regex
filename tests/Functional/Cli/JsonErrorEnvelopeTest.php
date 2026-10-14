@@ -31,7 +31,7 @@ final class JsonErrorEnvelopeTest extends TestCase
     use RunsRegexCli;
     use TemporaryProject;
 
-    private const PATTERN_COMMANDS = ['analyze', 'debug', 'redos', 'transpile'];
+    private const PATTERN_COMMANDS = ['analyze', 'debug', 'redos', 'transpile', 'format'];
 
     /**
      * @param list<string> $arguments
@@ -77,6 +77,8 @@ final class JsonErrorEnvelopeTest extends TestCase
         yield 'redos, --input-file that does not exist, --json last' => ['arguments' => ['redos', '/a/', '--input-file=missing.txt', '--json']];
         yield 'redos, --input-file that is a directory, --format=json' => ['arguments' => ['redos', '/a/', '--input-file=src', '--format=json']];
         yield 'transpile, unknown --target, --json last' => ['arguments' => ['transpile', '/a/', '--target=perl', '--json']];
+        yield 'format, --width=0, --json last' => ['arguments' => ['format', '/a/', '--width=0', '--json']];
+        yield 'format, --width that is not a number, --format=json before it' => ['arguments' => ['format', '--format=json', '/a/', '--width=abc']];
 
         yield 'lint, unknown option, --format=json before it' => ['arguments' => ['lint', '--format=json', '--bogus']];
         yield 'lint, unknown option, --json last' => ['arguments' => ['lint', '--bogus', '--json']];
