@@ -270,6 +270,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex.lint.charclass.backrefAsOctal` counts the groups of a branch reset as PCRE numbers them: `/(?|(a)|(b))[\2]/` holds no group 2, so `\2` there is no longer reported as a backreference to one.
 - Under an inline `(?xx)`, a space or a tab is skipped anywhere in a character class, as PCRE2 skips it: `(?xx)[a b]` is `[ab]`, `(?xx)[a - c]` the range `a-c`, and `(?xx)[\d -z]` is refused as PCRE2 refuses `[\d-z]`. Only those before the first member were skipped.
 - `RegexParser::clearCaches()` and `Regex::clearCaches()` also drop the parser the lint rules that ask the automata solver keep for the process.
 - The language server reads `checks.lint.rules` in the workspace's `regex.json`, as `regex lint` does: it ran every rule at its default, so a rule turned off still showed in the editor, and one turned on never did.

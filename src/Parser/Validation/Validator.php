@@ -15,7 +15,6 @@ namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupNumbering;
-use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
@@ -1596,8 +1595,8 @@ final class Validator extends AbstractNodeVisitor
         $this->unicodeFlag = str_contains($node->flags, 'u');
         $this->unicodeMode = $this->unicodeFlag
             || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
-        $this->groupNumbering = (new GroupNumberingCollector())->collect($node);
         $this->groups = GroupIndex::of($node->pattern);
+        $this->groupNumbering = $this->groups->numbering();
         $this->lookbehindBranchMeasures = 0;
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindLength = $this->measuring($this->groups);

@@ -11,15 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**3. One capture-group numbering model.** Three walks with three
-vocabularies: `Linter\Rule\GroupIndex` (the richest — branch reset,
-subroutine targets; `@internal`, and one layer too high),
-`Parser\Analysis\GroupNumbering` (thin — numbers and names) and
-`CaptureShapeAnalyzer` (a third participation model). `PatternLinter`
-hand-rolls a fourth instanceof pre-pass on top. *Fix*: one numbering service
-in Parser, the layer that owns the AST, consumed by linter, validator, HIR,
-generator and bridges. Effort: M.
-
 **4. Custom lint rules: promised and withheld.** `docs/extending.md:18`
 lists "Custom lint rules" under what you can extend, and its Pattern 1
 (:412) teaches a bare visitor with no rule id, severity or registration path

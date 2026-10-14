@@ -65,8 +65,8 @@ final class PatternInfoAnalyzer
 
     public function analyze(RegexNode $ast): PatternInfo
     {
-        $numbering = (new GroupNumberingCollector())->collect($ast);
         $groups = GroupIndex::of($ast->pattern);
+        $numbering = $groups->numbering();
         $unicode = $ast->isUnicode();
 
         $names = [];
