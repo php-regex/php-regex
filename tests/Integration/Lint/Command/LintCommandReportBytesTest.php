@@ -183,9 +183,10 @@ final class LintCommandReportBytesTest extends TestCase
         $report = $stdout.$stderr;
         if ($ansi) {
             // The colors the report asked for are the only escape sequences.
-            // The colours and the progress bar's own line redraws ("\r"
-            // then the bar) are the report's layout, not the file name.
-            $report = (string) preg_replace(['/\x1B\[[0-9;]*m/', '/\r(?!\n)/'], ['', "\n"], $report);
+            // The colours and the progress bar's own line redraws ("\r",
+            // erase the line, move up one) are the report's layout, not the
+            // file name, whose "\x1B[2J" stays caught.
+            $report = (string) preg_replace(['/\x1B\[[0-9;]*m|\x1B\[2K|\x1B\[1A/', '/\r(?!\n)/'], ['', "\n"], $report);
         }
 
         $this->assertSame(1, $exitCode, $report);
