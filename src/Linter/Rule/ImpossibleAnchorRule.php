@@ -223,7 +223,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return null;
         }
 
-        if (true === LanguageQuestions::isSubset($atomPattern, $wordPattern, $context->dfas)) {
+        if (true === LanguageQuestions::isSubset($atomPattern, $wordPattern, $context->dfas, $context->target)) {
             return $this->wordKinds[$atomPattern] = true;
         }
 
@@ -231,7 +231,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return null;
         }
 
-        return $this->wordKinds[$atomPattern] = true === LanguageQuestions::areDisjoint($atomPattern, $wordPattern, $context->dfas) ? false : null;
+        return $this->wordKinds[$atomPattern] = true === LanguageQuestions::areDisjoint($atomPattern, $wordPattern, $context->dfas, $context->target) ? false : null;
     }
 
     /**

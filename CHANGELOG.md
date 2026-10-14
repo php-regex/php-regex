@@ -208,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A parser given a `FilesystemCache`, a `PsrCacheAdapter` or a `PsrSimpleCacheAdapter` keeps in memory the trees it read or wrote in the process, under the same key, in front of that cache: a pattern parsed again no longer reaches a Redis pool or the disk, nor unserializes its tree again. `clearCaches()` empties that memory; `getCacheStats()` counts its hits; a `CacheInterface` the application writes is still asked every time.
 - `regex lint`, and `regex:lint` in Symfony and Laravel, build each automaton once per run: the lint rules that ask the automata and the optimizer's equivalence check share one DFA cache, where each rule kept its own for one pattern and each suggestion started empty. On a project repeating its patterns, the automata rules run about three times faster. `InMemoryDfaCache` is bounded (1000 automata, the older half dropped when full) and `clearCaches()` empties it.
 - `regex lint`, and `regex:lint` in Symfony and Laravel, cap their default worker count by the container's memory limit (cgroup v1 or v2), as they cap it by its CPU quota: each worker is a copy of the main process, and one per host CPU could exhaust a memory-limited container with no CPU quota.
 - `regex lint` without a terminal, in a CI log, writes a line every 30 seconds saying where a long step stands (`   7449/24824 (30%) 01:30`): it wrote nothing between the step's name and the report.
@@ -272,6 +273,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The lint rules that ask the automata read their questions for the PHP and PCRE2 judged, not for the running ones: judged for PCRE2 10.42, `/(?=a\{)a{,2}$/` was reported as an impossible lookahead, reading `a{,2}` as the quantifier it is from 10.43, where it is the text `a{,2}`.
 - A "Did you mean" is data as well as prose: the near miss of a group name (`\k<nam>` for `name`) and the short form of a long property name (`\p{Letter}` gets `Did you mean \p{L}?`) are in `hint`, the message keeping them. The property suggestion never reached the message: it looked the name up with its `p` still on.
 - The language server puts an invalid pattern's `hint` on the line under its error, where only the error was published.
 - `validate()` fills `hint` with a fix for the mistakes users make most, where it was null: an unclosed class, a quantifier with nothing to repeat, reversed counts (`{2,1}` gets `Write the smaller count first: "{1,2}".`), a count over 65535, a reversed range, a missing delimiter, an invalid or duplicate group name, a call to a missing named group and an unknown Unicode property. `regex validate` prints the hint under the caret, and the lint console under an invalid pattern, where both left it out.

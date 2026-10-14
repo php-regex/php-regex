@@ -14,8 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Cache\PsrCacheAdapter;
+use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
@@ -69,7 +73,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-442b5bd81c5982f3d336e0c27d0cd4b3';
+    public const CACHE_VERSION = 'ast-0514ac9a3170121f4a3e71af3661947a';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -114,6 +118,11 @@ final readonly class RegexParser
     ];
 
     /**
+     * The trees a persistent cache gave or took in this process.
+     */
+    private ?ArrayCache $front;
+
+    /**
      * @param int            $maxPatternLength      Maximum allowed pattern length
      * @param int            $maxLookbehindLength   Maximum length of a variable-length lookbehind
      * @param CacheInterface $cache                 Cache for parsed trees
@@ -130,7 +139,15 @@ final readonly class RegexParser
         private int $maxRecursionDepth,
         private PcreTarget $target,
         private PcreEngine $engine = new PcreEngine(),
-    ) {}
+    ) {
+        // A directory or a PSR pool answers a tree it fetches and
+        // unserializes: the trees read or written in this process stay in
+        // memory in front of it, under the same key. A cache the application
+        // writes keeps its own policy.
+        $this->front = $cache instanceof FilesystemCache || $cache instanceof PsrCacheAdapter || $cache instanceof PsrSimpleCacheAdapter
+            ? new ArrayCache()
+            : null;
+    }
 
     /**
      * @param OptionsArray $options The options Regex::create() takes
@@ -269,11 +286,13 @@ final readonly class RegexParser
      */
     public function getCacheStats(): array
     {
-        if (!$this->cache instanceof RemovableCacheInterface) {
-            return ['hits' => 0, 'misses' => 0];
+        $stats = $this->cache instanceof RemovableCacheInterface ? $this->cache->getStats() : ['hits' => 0, 'misses' => 0];
+        if (null !== $this->front) {
+            // A tree found in memory never reached the persistent cache.
+            $stats['hits'] += $this->front->getStats()['hits'];
         }
 
-        return $this->cache->getStats();
+        return $stats;
     }
 
     /**
@@ -286,6 +305,7 @@ final readonly class RegexParser
     {
         Validator::clearCaches();
         StaticCaches::clear();
+        $this->front?->clear();
     }
 
     /**
@@ -826,9 +846,18 @@ final readonly class RegexParser
         // always an option, and it is never the pattern's fault.
         try {
             $cacheKey = $this->cache->generateKey($this->getCacheSeed($regex));
+            $cachedResult = $this->front?->load($cacheKey);
+            if (null !== $cachedResult) {
+                return [$cachedResult, $cacheKey];
+            }
+
             $cachedResult = $this->cache->load($cacheKey);
         } catch (\Throwable) {
             return [null, null];
+        }
+
+        if (null !== $cachedResult) {
+            $this->front?->write($cacheKey, $cachedResult);
         }
 
         return [$cachedResult, $cacheKey];
@@ -850,6 +879,8 @@ final readonly class RegexParser
         if (null === $cacheKey) {
             return;
         }
+
+        $this->front?->write($cacheKey, $ast);
 
         try {
             $this->cache->write($cacheKey, $ast);

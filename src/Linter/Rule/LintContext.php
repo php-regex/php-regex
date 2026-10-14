@@ -33,6 +33,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Per-run lint context: immutable pattern facts plus the mutable traversal
@@ -57,6 +58,12 @@ final class LintContext
     public readonly DfaCacheInterface $dfas;
 
     /**
+     * The PHP and PCRE2 the pattern is judged for: the rules' questions are
+     * read as that release reads them.
+     */
+    public readonly PcreTarget $target;
+
+    /**
      * @var list<NodeInterface>
      */
     private array $parentStack = [];
@@ -78,9 +85,11 @@ final class LintContext
         public readonly CharSetAnalyzer $charSetAnalyzer,
         private readonly ?\Closure $ruleEnabled = null,
         ?DfaCacheInterface $dfas = null,
+        ?PcreTarget $target = null,
     ) {
         $this->activeFlags = $pattern->flags;
         $this->dfas = $dfas ?? LanguageQuestions::dfas();
+        $this->target = $target ?? PcreTarget::runtime();
     }
 
     /**

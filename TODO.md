@@ -11,17 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**8. A tiered AST cache.** `PsrCacheAdapter::load()` unserializes on every
-hit (`PsrCacheAdapter.php:52`), so a Redis pool turns every parse into a
-network round trip; no front tier exists anywhere in `src/Parser/Cache/`.
-`ArrayCache` bounds by entry count (1024), not bytes. `LanguageQuestions`
-keeps a static parser (now emptied by `clearCaches()`) built for the running
-PHP, detached from the judged `PcreTarget`: `PatternLinter` never learns the
-target, so following it means a target parameter on the linter. *Decision*:
-compose a bounded process-wide front with the PSR/filesystem back at
-`RegexParser` construction (automatically, or as a public `TieredCache`),
-and whether the linter takes the target. Effort: S-M.
-
 **9. Byte-level tokens are about to freeze as the contract.** The lexer
 emits one token per literal byte and the parser one node per byte
 (~30 µs/byte measured; a 2000-character literal parses in ~60 ms), and

@@ -385,7 +385,7 @@ final readonly class AnalysisService
 
             // Run linter if enabled
             if ($this->lintEnabled) {
-                $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas());
+                $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
                 $ast->accept($linter);
                 $code = null;
 

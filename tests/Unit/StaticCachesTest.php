@@ -62,19 +62,20 @@ final class StaticCachesTest extends TestCase
     }
 
     /**
-     * The lint rules that ask the solver keep one parser for the process:
-     * clearCaches() drops it with the rest.
+     * The lint rules that ask the solver keep one parser per PCRE2 release
+     * judged: clearCaches() drops them with the rest.
      */
     #[Test]
-    public function test_clear_caches_drops_the_parser_of_the_lint_questions(): void
+    public function test_clear_caches_drops_the_parsers_of_the_lint_questions(): void
     {
-        $parser = new \ReflectionProperty(LanguageQuestions::class, 'parser');
+        $parsers = new \ReflectionProperty(LanguageQuestions::class, 'parsers');
         $this->assertNotNull(LanguageQuestions::matchesNothing('/a/'));
-        $this->assertInstanceOf(RegexParser::class, $parser->getValue());
+        $this->assertContainsOnlyInstancesOf(RegexParser::class, (array) $parsers->getValue());
+        $this->assertNotSame([], $parsers->getValue());
 
         RegexParser::create(['cache' => new NullCache()])->clearCaches();
 
-        $this->assertNull($parser->getValue());
+        $this->assertSame([], $parsers->getValue());
     }
 
     /**

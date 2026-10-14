@@ -96,7 +96,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         }
 
         $pattern = $this->continuationPattern($node, $context);
-        if (null === $pattern || !$this->questions->allows($context) || true !== LanguageQuestions::matchesNothing($pattern, $context->dfas)) {
+        if (null === $pattern || !$this->questions->allows($context) || true !== LanguageQuestions::matchesNothing($pattern, $context->dfas, $context->target)) {
             return [];
         }
 

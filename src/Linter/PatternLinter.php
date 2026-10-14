@@ -49,6 +49,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
@@ -130,6 +131,8 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     private ?DfaCacheInterface $dfaCache = null;
 
+    private ?PcreTarget $target = null;
+
     /**
      * @param array<string, bool> $enabledRules the rules to turn on or off by id; the others keep their default
      */
@@ -158,16 +161,18 @@ final class PatternLinter extends AbstractNodeVisitor
 
     /**
      * A linter keeping the DFAs its rules' questions build in the cache
-     * given, for a run that judges many patterns.
+     * given, for a run that judges many patterns, and reading those
+     * questions as the PHP and PCRE2 judged read them.
      *
-     * @internal the DFA cache of a run is the analysis service's business
+     * @internal the DFA cache and the target of a run are the analysis service's business
      *
      * @param array<string, bool> $enabledRules
      */
-    public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache): self
+    public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache, ?PcreTarget $target = null): self
     {
         $linter = new self($enabledRules);
         $linter->dfaCache = $dfaCache;
+        $linter->target = $target;
 
         return $linter;
     }
@@ -452,6 +457,7 @@ final class PatternLinter extends AbstractNodeVisitor
             $this->charSetAnalyzer,
             $this->isRuleEnabled(...),
             $this->dfaCache,
+            $this->target,
         );
     }
 

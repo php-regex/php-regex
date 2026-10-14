@@ -240,7 +240,7 @@ gives the one a facade uses.
 
 ## Caching and Limits
 
-PHPRegex can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. You can disable caching with `cache => null` in `Regex::create()` options.
+PHPRegex can cache ASTs via `CacheInterface`. By default it keeps the latest 1024 trees in memory (`ArrayCache`); nothing is written to disk unless a directory is named with `cache => '/path'` or a `FilesystemCache`. A filesystem cache stores data, never code, in a directory it creates for its owner only (`0700`), and ignores a directory another user owns or others can write to. Shared caches go through the PSR-6 and PSR-16 adapters. In front of a directory or a PSR pool, the parser keeps in memory the trees it read or wrote in the process (the latest 1024, under the same key), so a pattern parsed again neither reaches the pool nor unserializes its tree twice; `clearCaches()` empties that memory, and a `CacheInterface` the application writes is asked every time. You can disable caching with `cache => null` in `Regex::create()` options.
 
 Limits are enforced in `ParserOptions`:
 

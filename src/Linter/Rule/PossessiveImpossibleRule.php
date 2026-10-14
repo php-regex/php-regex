@@ -94,7 +94,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
 
             $takenPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($taken, $context), $context->flagsAt($taken, $child, $flagsAtChild[$index]), $spelled);
             $nextPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($next, $context), $context->flagsAt($next, $children[$nextIndex], $flagsAtChild[$nextIndex]), $spelled);
-            if (!$this->questions->allows($context) || true !== LanguageQuestions::isSubset($nextPattern, $takenPattern, $context->dfas)) {
+            if (!$this->questions->allows($context) || true !== LanguageQuestions::isSubset($nextPattern, $takenPattern, $context->dfas, $context->target)) {
                 continue;
             }
 
