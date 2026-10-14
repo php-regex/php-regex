@@ -517,15 +517,6 @@ Effort: XS.
 
 ### H. Left by the formatter's second round (2026-10-14)
 
-**H1 — The parser keeps a class's spaces under an inline `(?xx)`.** PCRE2
-skips an unescaped space or tab inside a class while `(?xx)` is in force:
-`preg_match('/(?xx)[a b]/', ' ')` is 0 (PHP 8.4, PCRE2 10.49). The parser
-reads the space as a member, so `explain`, the linter and the formatter's
-self-check see a class the engine does not compile. The PHP modifier `xx`
-does not exist (`/[a b]/xx` is `x`, the space counts), only the inline form.
-*Fix*: in the lexer, drop space and tab between `[` and `]` while `(?xx)` is
-in force, as `InlineFlags::extendedMoreInForce()` already tells. Effort: S.
-
 **H2 — `\c\` before an escaped delimiter or bracket.** PHP pairs the
 backslashes of `\c\\Q{` as `\c`, `\\`, `Q`, while PCRE reads `\c\` as 0x1C
 then `\Q`. The delimiter counting of the printer follows PHP's pairing:
