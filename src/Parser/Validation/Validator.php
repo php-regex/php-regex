@@ -733,6 +733,7 @@ final class Validator extends AbstractNodeVisitor
                 \sprintf('Invalid quantifier range "%s": min > max.', $node->quantifier),
                 $maxEnd,
                 ErrorCode::QuantifierInvalidRange,
+                \sprintf('Write the smaller count first: "{%d,%d}".', $max, $min),
             );
         }
     }
@@ -1223,6 +1224,7 @@ final class Validator extends AbstractNodeVisitor
                     \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', ltrim($key, '\\'), $needs, $this->target->pcreVersion),
                     $node->getEndPosition(),
                     ErrorCode::UnicodePropertyInvalid,
+                    \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
                 );
             }
 
@@ -1334,6 +1336,7 @@ final class Validator extends AbstractNodeVisitor
                         \sprintf('Recursion condition to non-existent named group: "%s".', substr($ref, 2)),
                         $this->missingReferenceOffset($node->condition),
                         ErrorCode::SubroutineMissingNamedGroup,
+                        \sprintf('Name a group "%s" with (?<%1$s>...), or test a group the pattern names.', substr($ref, 2)),
                     );
                 }
             } else {
@@ -1727,6 +1730,7 @@ final class Validator extends AbstractNodeVisitor
                 \sprintf('Subroutine call to non-existent named group: "%s".', $ref),
                 $this->missingReferenceOffset($node),
                 ErrorCode::SubroutineMissingNamedGroup,
+                \sprintf('Name a group "%s" with (?<%1$s>...), or call a group the pattern names.', $ref),
             );
         }
     }
@@ -3805,9 +3809,9 @@ final class Validator extends AbstractNodeVisitor
         $this->lateErrors[1] ??= $error;
     }
 
-    private function raiseMissingReference(string $message, int $position, ErrorCode $code): void
+    private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null): void
     {
-        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern);
+        $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, null, $hint);
 
         if (!$this->walkingPattern || $this->measuringLookbehind) {
             throw $error;

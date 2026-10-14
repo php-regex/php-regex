@@ -34,8 +34,8 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Under an issue the console prints its hint, the fix. A lint rule at Error
- * fails the run and still needs its fix; only an invalid pattern goes
- * without one, its message and caret saying it all.
+ * fails the run and still needs its fix; an invalid pattern shows the fix
+ * its validation names, never a tip guessed from the message.
  */
 final class ConsoleHintVisibilityTest extends TestCase
 {
@@ -93,20 +93,36 @@ final class ConsoleHintVisibilityTest extends TestCase
     }
 
     /**
-     * The guard itself: an invalid pattern's issue that carries a hint keeps
-     * it to itself, while the same hint on a lint error is printed.
+     * The guard itself: an invalid pattern's issue prints the hint of its
+     * validation, not the issue's own, while a lint error prints its own.
      */
     #[Test]
     #[DataProvider('provideFormatters')]
-    public function test_a_hint_is_hidden_only_on_an_invalid_pattern(string $formatter): void
+    public function test_an_invalid_pattern_shows_the_hint_of_its_validation(string $formatter): void
     {
-        $validation = new ValidationResult(false, 'Expected ) at end of input (found eof)', 0, null, 9);
+        $validation = new ValidationResult(false, 'Expected ) at end of input (found eof)', 0, null, 9, null, 'Close the group with ")".');
 
         $invalid = self::plain(self::formatter($formatter)->format(self::reportWithHint($validation)));
         $lintError = self::plain(self::formatter($formatter)->format(self::reportWithHint(null)));
 
         $this->assertStringNotContainsString('Close the group.', $invalid);
+        $this->assertStringContainsString('↳ Close the group with ")".', $invalid);
         $this->assertStringContainsString('↳ Close the group.', $lintError);
+    }
+
+    #[Test]
+    #[DataProvider('provideFormatters')]
+    public function test_a_common_mistake_shows_its_fix(string $formatter): void
+    {
+        // Oracle: PCRE refuses "{2,1}" and compiles "{1,2}".
+        $mistake = self::reversedCounts();
+        $this->assertFalse(@preg_match($mistake, ''));
+        $this->assertSame(1, preg_match('/a{1,2}/', 'a'));
+
+        $output = self::plain(self::formatter($formatter)->format(self::lint($mistake)));
+
+        $this->assertMatchesRegularExpression('/^\s*FAIL\b/m', $output);
+        $this->assertStringContainsString('↳ Write the smaller count first: "{1,2}".', $output);
     }
 
     private static function formatter(string $name): OutputFormatterInterface
@@ -180,5 +196,13 @@ final class ConsoleHintVisibilityTest extends TestCase
     private static function unclosedPattern(): string
     {
         return '#foo';
+    }
+
+    /**
+     * Counts in the wrong order, which PCRE refuses.
+     */
+    private static function reversedCounts(): string
+    {
+        return '/a{2,1}/';
     }
 }

@@ -690,7 +690,7 @@ if (!$result->isValid) {
     echo $result->errorCode->value;   // "regex.charclass.unclosed"
     echo $result->offset;             // 9
     echo $result->caretSnippet;       // "Line 1: [unclosed\n                 ^"
-    echo $result->hint;               // null: no hint for this one
+    echo $result->hint;               // "Close the class with \"]\", or write \"\\[\" ..."
     echo $result->category->value;    // "syntax"
 }
 ```

@@ -234,16 +234,6 @@ LSP diagnostic build). Effort: S.
 theoretical mode and accepts no threshold, while `redos()` has four
 parameters. *Verify*: read `src/Toolkit/Regex.php:168-233`. Effort: XS.
 
-**B8 — `hint` is null on the errors users actually hit.** Ten common mistakes
-(an unclosed class, a lone quantifier, `{2,1}`, an over-long quantifier, a bad
-range, a missing delimiter, a bad group name, a duplicate name, a non-existent
-subroutine call, an unknown Unicode property) all returned `hint === null`; the
-field is populated on two `Validator` paths only. The API reference advertises
-it as a fix suggestion.
-*Verify*: loop `validate()` over those patterns and print `$v->hint`;
-`grep -n 'hint' src/Parser/Validation/Validator.php`.
-*Fix*: populate the hints, or stop advertising the field. Effort: M.
-
 ### C. The CLI
 
 **C6 — A `jobs` below 1 means four different things.** *Verify*:

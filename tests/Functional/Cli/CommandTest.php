@@ -638,6 +638,25 @@ final class CommandTest extends TestCase
     }
 
     /**
+     * Under the caret, the fix: "{1,2}" compiles where "{2,1}" does not.
+     */
+    public function test_validate_command_prints_the_fix_under_the_caret(): void
+    {
+        $mistake = self::reversedCounts();
+        $this->assertFalse(@preg_match($mistake, ''));
+        $this->assertSame(1, preg_match('/a{1,2}/', 'a'));
+
+        $command = new ValidateCommand();
+        $output = OutputFactory::create();
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput('validate', [$mistake]), $output), $exitCode, $output);
+
+        $this->assertSame(1, $exitCode);
+        $this->assertMatchesRegularExpression('/\^\n  Write the smaller count first: "\{1,2\}"\.\n/', $buffer);
+    }
+
+    /**
      * The message and the caret snippet under it: the snippet no longer
      * rides inside the message, so each command prints it.
      *
@@ -1035,5 +1054,13 @@ final class CommandTest extends TestCase
 
             throw $e;
         }
+    }
+
+    /**
+     * Counts in the wrong order, which PCRE refuses.
+     */
+    private static function reversedCounts(): string
+    {
+        return '/a{2,1}/';
     }
 }

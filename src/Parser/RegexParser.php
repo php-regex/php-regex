@@ -69,7 +69,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-3e078f3f5b10ca9be0ecb402b38ff8da';
+    public const CACHE_VERSION = 'ast-d1e5a528f3a8692169cdab74723f67a4';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -95,6 +95,23 @@ final readonly class RegexParser
     // Cache seed patterns
     private const CACHE_VERSION_PREFIX = '#cache=';
     private const TARGET_PREFIX = '#target=';
+
+    /**
+     * The fix for the mistakes users make most, by error code, when the
+     * error carries none of its own.
+     */
+    private const COMMON_HINTS = [
+        ErrorCode::CharclassUnclosed->value => 'Close the class with "]", or write "\\[" to match a literal "[".',
+        ErrorCode::QuantifierNothingToRepeat->value => 'Put the quantifier after the item it repeats, or escape it with a backslash to match it literally.',
+        ErrorCode::QuantifierInvalidRange->value => 'Write the smaller count first.',
+        ErrorCode::QuantifierTooBig->value => 'PCRE counts at most 65535 repetitions: lower the count, or use "*" or "+" for an open-ended repeat.',
+        ErrorCode::RangeReversed->value => 'Write the lower end of the range first, or escape the "-" as "\\-" to match it literally.',
+        ErrorCode::DelimiterInvalid->value => 'Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".',
+        ErrorCode::GroupNameInvalid->value => 'Start a group name with a letter or "_", then use letters, digits and "_" only.',
+        ErrorCode::GroupDuplicateName->value => 'Rename one of the groups, or allow duplicate names with (?J).',
+        ErrorCode::SubroutineMissingNamedGroup->value => 'Name the group the call reaches, or call a group the pattern names.',
+        ErrorCode::UnicodePropertyInvalid->value => 'Use a property PCRE2 knows, such as \\p{L}, \\p{Lu}, \\p{N} or a script such as \\p{Greek}.',
+    ];
 
     /**
      * @param int            $maxPatternLength      Maximum allowed pattern length
@@ -912,6 +929,10 @@ final readonly class RegexParser
             $hint = $exception->hint;
         }
 
+        if (null !== $errorCode) {
+            $hint ??= self::COMMON_HINTS[$errorCode->value] ?? null;
+        }
+
         if ($exception instanceof SemanticErrorException) {
             return new ValidationResult(
                 false,
@@ -948,7 +969,7 @@ final readonly class RegexParser
             ValidationErrorCategory::Syntax,
             $position,
             '' !== $visualSnippet ? $visualSnippet : null,
-            null,
+            $hint,
             $errorCode,
         );
     }
