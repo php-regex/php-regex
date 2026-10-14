@@ -550,12 +550,12 @@ vendor/bin/regex lint src/ --redos
 
   src/Example.php:4:12
       → /^(a+)+$/
-    WARN Nested quantifiers can cause catastrophic backtracking.
-         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
-    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
-         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
     WARN Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
          ↳ Attack: "a" x n . "!" Unbounded quantifier detected. May cause backtracking on non-matching input. ...
+    INFO Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
+         ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+    WARN Nested quantifiers can cause catastrophic backtracking.
+         ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
   FAIL 1 invalid patterns, 2 warnings, 1 infos found, 0 optimizations.
 ```

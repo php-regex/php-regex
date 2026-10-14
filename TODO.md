@@ -179,6 +179,19 @@ progress is not drawn, so a long `regex lint` prints nothing until the report.
 *Fix*: a line every 30 s or so in a log ("Analyzing patterns: 7449/24824").
 Effort: XS.
 
+**C12 — One pattern holds `[3/3] Suggesting optimizations` for 11 s.** On
+the 300k-file corpus the step sits at 99 % while one worker proves the
+rewrite of craftcms's mobile user-agent alternation
+(`src/web/Request.php:877`, about 1,600 bytes, a few hundred branches)
+equivalent: `Optimizer::optimize()` takes 0.14 s without
+`verifyWithAutomata` and 11.06 s with it, for 36 bytes saved. Next,
+PrestaShop's bot list (`classes/Connection.php:126`) takes 3.2 s. Smaller
+chunks do not help: the tail is the same with 16 or 64 chunks per worker.
+*Fix*: find where the equivalence check spends its time on a wide
+alternation of literals (the two sides differ only by factorized
+prefixes), or give it a budget past which the suggestion is dropped as
+unverified. Effort: M.
+
 ### D. The language server
 
 **D1 — The language server ignores the rules configured in `regex.json`.**
