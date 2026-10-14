@@ -133,21 +133,6 @@ down, and either add the four solver verbs (requiring `regex-automata` and
 granting it back) or point the README at `LanguageSolver`. Effort: S for the
 rules, M with the solver verbs.
 
-**12. De-triplicate the lint commands.** 1,453 lines across three command
-hierarchies (`src/Cli/Command/LintCommand.php`, Symfony, Laravel), each
-importing `Linter\Internal`. Baselines, interop presets and rule toggles exist
-CLI-only because the shared layer (`LintSummary`, `ForkedWorkerPool`) is
-`@internal` under Linter and re-hosted per surface; the default job count is
-already shared (`Linter\Internal\WorkerCount`). `AnalysisService` is itself
-`@internal`. *Decision*: a public runner owning collect → analyze → baseline
-→ stats, each bridge keeping its flags and its rendering, or keep it internal.
-Related: C9 (the double parse), E3 (command divergence). Effort: M.
-*Decision*, same item: `src/Cli` also carries its own console runtime
-(Application 397 lines, Output 365, HelpCommand 761, SelfUpdater 306) to keep
-the phar dependency-free; shipping symfony/console inside the phar, as phpstan
-and php-cs-fixer do, deletes most of it. Decide before the CLI surface is
-called final.
-
 **13. Generator: merge or complete.** The package holds three classes, its
 only consumer outside itself is the facade, and the part that makes samples
 trustworthy — the 32-attempt verification loop against the real engine —
