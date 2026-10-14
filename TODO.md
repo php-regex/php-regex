@@ -219,15 +219,6 @@ The code is ready; what is left is the maintainer's, in this order.
 release with its SHA-256 checksum: no CI-built artifact, no signing, no
 attestation. Decide whether the build moves to CI with provenance.
 
-## Extraction gaps left on purpose
-
-- `f(...$args, pattern: '/x/')`: PHP uses `/x/`, both extractors read nothing.
-- An alias written with a tab, a newline or a comment before `as` does not open
-  the file for a wrapper preset.
-- The language server reads `#[RegexPattern]` under `paths` minus `exclude` and
-  never in `vendor/`, while the lint reads `vendor/` and configured paths
-  whatever `exclude` says.
-
 ## Upstream PHPStan fixes (fork `php-regex/phpstan-src`)
 
 PHPStan types `preg_match()` `$matches` with its own Hoa grammar
@@ -356,12 +347,6 @@ catastrophic pattern looks harmless.
 *Verify*: read `src/LanguageServer/Handler/TextDocumentHandler.php:240-266`.
 *Fix*: optional analysis behind an initialization option. Effort: L.
 *Decision*: worth the cost on large files, or not.
-
-**D3 — `vendor/` is invisible to the language server.** The scan reads `paths`
-minus `exclude` and never `vendor/`, while the lint reads `vendor/`, so a
-dependency's pattern is analysed on the command line and invisible in the
-editor. *Verify*: `src/LanguageServer/Server.php:276`. *See also*: "Extraction
-gaps left on purpose". Effort: S.
 
 **D6 — The diagnostic ranges are approximate.** Every lint rule is reported
 over a single character, and the parse and validation ranges are computed in
