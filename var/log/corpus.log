@@ -41,7 +41,7 @@ corpus/Automattic/jetpack/projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/A
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/Automattic/jetpack/projects/packages/connection/src/class-manager.php:2328:4
+corpus/Automattic/jetpack/projects/packages/connection/src/class-manager.php:2335:4
     → #(https?://[^?/]+)(/?.*)?$#
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
@@ -135,7 +135,7 @@ corpus/Automattic/jetpack/projects/packages/jetpack-mu-wpcom/src/features/custom
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/Automattic/jetpack/projects/packages/jetpack-mu-wpcom/src/features/newspack-blocks/synced-newspack-blocks/class-newspack-blocks.php:1686:42
+corpus/Automattic/jetpack/projects/packages/jetpack-mu-wpcom/src/features/newspack-blocks/synced-newspack-blocks/class-newspack-blocks.php:1837:42
     → / \/ ?.*/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
@@ -314,7 +314,7 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:250
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/Automattic/jetpack/projects/plugins/jetpack/class.jetpack.php:1904:18
+corpus/Automattic/jetpack/projects/plugins/jetpack/class.jetpack.php:1905:18
     → /^\d+(\.\d+)+$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -2498,17 +2498,17 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:3269:34
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:4975:23
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:4957:23
     → |^(https?:)?//[^/]+(/?.*)|i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:5185:65
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:5167:65
     → |^([a-zA-Z0-9-\.])+$|
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6430:19
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6412:19
     → |^#([A-Fa-f0-9]{3}){1,2}$|
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -2824,7 +2824,7 @@ corpus/beberlei/assert/bin/MethodDocGenerator.php:163:21
        - /```php\n<\?php\nuse Assert\\Assertion;\n\nAssertion::.*?```/sim
        + /```php\n<\?php\nuse Assert\\Assertion;\n\nAssertion::.*?```/si
 
-corpus/bobthecow/psysh/scoper.inc.php:144:17
+corpus/bobthecow/psysh/scoper.inc.php:146:17
     → /'(PhpParser\\.+(?:\\)?)'/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -2857,27 +2857,27 @@ corpus/bobthecow/psysh/src/Readline/Interactive/Suggestion/WordExtractor.php:29:
        - /(?:\$)?[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*/u
        + /\$?[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*/u
 
-corpus/bobthecow/psysh/src/Util/Docblock.php:514:29
+corpus/bobthecow/psysh/src/Util/Docblock.php:547:29
     → /^&?[\w_]+\s*\(/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/bobthecow/psysh/src/Util/Docblock.php:523:33
+corpus/bobthecow/psysh/src/Util/Docblock.php:556:33
     → /^&?[\w_]+$/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/bobthecow/psysh/src/Util/Docblock.php:533:29
+corpus/bobthecow/psysh/src/Util/Docblock.php:566:29
     → /^&?[\w_]+/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/bobthecow/psysh/src/Util/Docblock.php:555:25
+corpus/bobthecow/psysh/src/Util/Docblock.php:588:25
     → /^([\w_]+)\s*(?:\(([^\)]*)\))?/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/bobthecow/psysh/src/Util/Docblock.php:615:29
+corpus/bobthecow/psysh/src/Util/Docblock.php:648:29
     → /^[\w_]+$/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
@@ -4110,7 +4110,7 @@ corpus/elementor/elementor/modules/atomic-widgets/props-resolver/custom-icon-svg
        - /<!DOCTYPE[^>]*>/si
        + /<!DOCTYPE[^>]*>/i
 
-corpus/elementor/elementor/modules/mcp/abilities/appliers/v3-node-bridge.php:272:26
+corpus/elementor/elementor/modules/mcp/abilities/appliers/v3-node-bridge.php:270:26
     → /^\s*[^{}]+\{\s*[\s\S]*\}\s*$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
@@ -6704,7 +6704,7 @@ corpus/matthiasmullie/minify/src/JS.php:441:33
        - /;(\}|$)/s
        + /;(\}|$)/
 
-corpus/mautic/mautic/app/bundles/CoreBundle/Form/Type/ConfigType.php:218:54
+corpus/mautic/mautic/app/bundles/CoreBundle/Form/Type/ConfigType.php:215:54
     → /^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]{1,1}\.)*(xn--)?([a-z0-9][a-z0-9\-]{0,60}|[a-z0-9-]{1,30}\.[a-z]{2,})$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -9900,27 +9900,27 @@ corpus/nette/tester/src/Framework/Helpers.php:119:18
     → #^[ \t*]*@(\w+)([^\w\r\n].*)?#mi
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/nette/tracy/src/Tracy/BlueScreen/BlueScreen.php:512:4
+corpus/nette/tracy/src/Tracy/BlueScreen/BlueScreen.php:536:4
     → #'\S(?:[^']|\\')*\S'|"\S(?:[^"]|\\")*\S"#
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-corpus/nette/tracy/src/Tracy/Helpers.php:441:21
+corpus/nette/tracy/src/Tracy/Helpers.php:453:4
     → #^Content-Security-Policy(?:-Report-Only)?:.*\sscript-src(?:-elem)?\s+(?:[^;]+\s)?'nonce-([\w+/]+=*)'#mi
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
 
-corpus/nette/tracy/src/Tracy/Helpers.php:608:4
+corpus/nette/tracy/src/Tracy/Helpers.php:623:4
     → ( (?: (^|[-+\([{}=,:;!%^&*|?~]|/(?![/*])|return|throw) (?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* (/(?![/*])(?:\\[^\n]|[^[\n/\\]|\[(?:\\[^\n]|[^]])++)+/) |(^ |'(?:\\.|[^\n'\\])*' |"(?:\\.|[^\n"\\])*" |([0-9A-Za-z_$]+) |([-+]+) |. ) )(?:\s|//[^\n]*+\n|/\*(?:[^*]|\*(?!/))*+\*/)* ())sx
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-corpus/nette/tracy/src/Tracy/Logger/Logger.php:164:17
+corpus/nette/tracy/src/Tracy/Logger/Logger.php:167:17
     → #\s*\r?\n\s*#
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/nette/tracy/src/Tracy/Session/FileSession.php:55:19
+corpus/nette/tracy/src/Tracy/Session/FileSession.php:54:19
     → #^\w{10}\z#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -11034,24 +11034,7 @@ corpus/phpunit/phpunit/src/Util/Color.php:206:17
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:191:17
-    → /'(?:\\.|''|[^'])*'/s
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
-corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:192:17
-    → /"(?:\\.|""|[^"])*"/s
-   WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
-
-corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:193:17
-    → /`[^`]*`/s
-   WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   TIP 
-       - /`[^`]*`/s
-       + /`[^`]*`/
-
-corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:200:42
+corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:184:42
     → /\s+/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -11133,7 +11116,7 @@ corpus/pimcore/pimcore/models/DataObject/ClassDefinition/Helper/Dao.php:100:25
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/pimcore/pimcore/models/Element/Service.php:553:28
+corpus/pimcore/pimcore/models/Element/Service.php:560:28
     → /_copy(|_\d*)$/
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -12652,7 +12635,7 @@ corpus/shopware/shopware/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigB
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 corpus/shopware/shopware/src/Core/DevOps/Test/AnnotationTagTester.php:190:58
-    → /^(?:[A-Z]+(_[A-Z]+)*)+$/
+    → /^(?:[A-Z]+(_[A-Z]+)*)+$/D
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -12666,7 +12649,7 @@ corpus/shopware/shopware/src/Core/Test/FixtureLoader.php:57:48
        + /"{.*}"/U
 
 corpus/shopware/shopware/src/Core/Test/PHPUnit/Extension/FeatureFlag/FeatureFlagExtension.php:44:24
-    → /^[_a-zA-Z][_a-zA-Z0-9]*(\\[_a-zA-Z][_a-zA-Z0-9]*)*\\$/
+    → /^[_a-zA-Z][_a-zA-Z0-9]*(\\[_a-zA-Z][_a-zA-Z0-9]*)*\\$/D
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
