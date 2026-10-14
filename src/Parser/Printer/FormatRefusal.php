@@ -43,4 +43,11 @@ enum FormatRefusal: string
      * layout, and re-indenting it would change the name.
      */
     case LineBreakInName = 'line_break_in_name';
+
+    /**
+     * Compacting, under a "(" delimiter: a "#" comment holds the ")" that
+     * balances a bracket no backslash can go before, "((*MARK:()a # )\n)x",
+     * and no "(?#...)" can hold a ")".
+     */
+    case ParenthesisInComment = 'parenthesis_in_comment';
 }

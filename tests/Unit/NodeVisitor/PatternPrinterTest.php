@@ -291,6 +291,148 @@ final class PatternPrinterTest extends TestCase
         yield 'an empty (?-x:) before an escaped space at the end' => ['pattern' => '/a2(?-x:)\ /xu', 'subjects' => ["a2\x20" => 1, 'a2' => 0]];
     }
 
+    /**
+     * PHP pairs bracket delimiters by nesting, and counts the bracket in a
+     * comment: in "{a(?#{)b}c}" the "}" after "b" is a literal that the
+     * comment's "{" balances. Escaping it unbalances the body, and
+     * "{a(?#{)b\}c}" does not compile. Pretty printing keeps the balance:
+     * a literal bracket whose partner it writes stays unescaped.
+     *
+     * @param array<string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('providePrettyBracketDelimiterBalances')]
+    public function test_pretty_mode_keeps_the_balance_of_a_bracket_delimiter(string $pattern, string $expected, array $subjects): void
+    {
+        $pretty = $this->compilePretty($pattern);
+
+        $this->assertNotFalse(@preg_match($pretty, ''), \sprintf('%s does not compile: %s', $pretty, preg_last_error_msg()));
+        $this->assertSame($expected, $pretty);
+        foreach ($subjects as $subject => $matches) {
+            $this->assertSame($matches, preg_match($pattern, (string) $subject), 'The oracle on the input, '.json_encode((string) $subject));
+            $this->assertSame($matches, preg_match($pretty, (string) $subject), $pretty.' on '.json_encode((string) $subject));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, subjects: array<string, int>}>
+     */
+    public static function providePrettyBracketDelimiterBalances(): iterable
+    {
+        yield 'braces' => ['pattern' => '{a(?#{)b}c}', 'expected' => '{a(?#{)b}c}', 'subjects' => ['ab}c' => 1, 'abc' => 0]];
+        yield 'square brackets' => ['pattern' => '[a(?#[)b]c]', 'expected' => '[a(?#[)b]c]', 'subjects' => ['ab]c' => 1, 'abc' => 0]];
+        // A class nested in "(?[...])" reads a brace as any class does.
+        yield 'a brace in a class of an extended class, balanced by a name' => ['pattern' => '{(?[ [{a] ])(*MARK:})}', 'expected' => '{(?[[{a]])(*MARK:})}', 'subjects' => ['{' => 1, 'a' => 1, 'b' => 0]];
+        yield 'angle brackets' => ['pattern' => '<a(?#<)b>c>', 'expected' => '<a(?#<)b>c>', 'subjects' => ['ab>c' => 1, 'abc' => 0]];
+        yield 'braces under x' => ['pattern' => '{a(?#{)b}c}x', 'expected' => '{a(?#{)b}c}x', 'subjects' => ['ab}c' => 1, 'abc' => 0]];
+        // An escaped bracket PHP does not count stays escaped: unescaped, it
+        // would be counted, and the body would end before its end.
+        yield 'an escaped brace a comment does not balance' => ['pattern' => '{(?#{)\}b(?#})}', 'expected' => '{(?#{)\}b(?#})}', 'subjects' => ['}b' => 1, 'b' => 0]];
+        yield 'an escaped angle bracket between two mark names' => ['pattern' => '<(*MARK:<)\<(*MARK:>)>', 'expected' => '<(*MARK:<)\<(*MARK:>)>', 'subjects' => ['<' => 1, 'a' => 0]];
+        yield 'an escaped angle bracket in a class after a lookbehind' => ['pattern' => '<(?<!b)[\>](*MARK:>)>', 'expected' => '<(?<!b)[\>](*MARK:>)>', 'subjects' => ['>' => 1, 'b>' => 0]];
+        yield 'an escaped brace between two mark names, a quantifier after' => ['pattern' => '{(*MARK:{)\{(a)(*MARK:})\d{1,2}b}', 'expected' => '{(*MARK:{)\{(a)(*MARK:})\d{1,2}b}', 'subjects' => ['{a1b' => 1, '{a12b' => 1, '{a123b' => 0]];
+        // A literal bracket that pairs with a mark name's stays counted:
+        // unescaped where it means itself, quoted where it would open
+        // something else.
+        yield 'a brace a mark name balances, before a letter' => ['pattern' => '{\Q{a\E(*MARK:})}', 'expected' => '{{a(*MARK:})}', 'subjects' => ['{a' => 1, 'a' => 0]];
+        yield 'a brace a mark name balances, after two letters' => ['pattern' => '{ab\Q{c\E(*MARK:})}', 'expected' => '{ab{c(*MARK:})}', 'subjects' => ['ab{c' => 1, 'abc' => 0]];
+        // After an escape letter the brace is quoted, whatever the letter:
+        // after "\x", "\o", "\p" or "\N" an unescaped "{" would open the
+        // escape's braces, and "/\x{a/" does not compile (PCRE2 10.49).
+        yield 'a brace a mark name balances, after an escape' => ['pattern' => '{\d\Q{a\E(*MARK:})}', 'expected' => '{\d\Q{\Ea(*MARK:})}', 'subjects' => ['1{a' => 1, '1a' => 0]];
+        // Before "2" and a closing brace of the delimiter, the brace is
+        // quoted: both unescaped, "{2}" would read as a repeat.
+        yield 'a brace a mark name balances, before a count' => ['pattern' => '{\Q{2\E\}(*MARK:})}', 'expected' => '{\Q{\E2\}(*MARK:})}', 'subjects' => ['{2}' => 1, '2}' => 0]];
+        yield 'a square bracket a mark name balances' => ['pattern' => '[\Q[\Ea(*MARK:])]', 'expected' => '[\Q[\Ea(*MARK:])]', 'subjects' => ['[a' => 1, 'a' => 0]];
+        yield 'two square brackets two mark names balance' => ['pattern' => '[\Q[[\E(*MARK:])(*MARK:])]', 'expected' => '[\Q[\E\Q[\E(*MARK:])(*MARK:])]', 'subjects' => ['[[' => 1, '[' => 0]];
+        // In a class, a "[" before ":", "." or "=" would open a POSIX class
+        // or a collating element, which PCRE2 rejects here.
+        yield 'a square bracket in a class, before a range from a colon' => ['pattern' => '[[\Q[\E:-;:](?#])]', 'expected' => '[[\Q[\E:-;:](?#])]', 'subjects' => ['[' => 1, ';' => 1, 'a' => 0]];
+        yield 'a square bracket in a class, before a range from a dot' => ['pattern' => '[[\Q[\E.-/.](?#])]', 'expected' => '[[\Q[\E.-/.](?#])]', 'subjects' => ['[' => 1, '/' => 1, 'a' => 0]];
+        yield 'a square bracket in a class, before a range from an equals sign' => ['pattern' => '[[\Q[\E=->=](?#])]', 'expected' => '[[\Q[\E=->=](?#])]', 'subjects' => ['[' => 1, '>' => 1, 'a' => 0]];
+        yield 'a square bracket closing the members of a class' => ['pattern' => '[[a[](?#])]', 'expected' => '[[a[](?#])]', 'subjects' => ['[' => 1, 'a' => 1, 'b' => 0]];
+        // Nothing balances these: they stay escaped.
+        yield 'an escaped square bracket closing the members of a class' => ['pattern' => '[[a\[]]', 'expected' => '[[a\[]]', 'subjects' => ['[' => 1, 'a' => 1, 'b' => 0]];
+        yield 'an escaped square bracket opening a range' => ['pattern' => '[[a\[-c]]', 'expected' => '[[a\[-c]]', 'subjects' => ['[' => 1, 'b' => 1, 'Z' => 0, 'd' => 0]];
+        yield 'an escaped square bracket before a colon, then an escaped closing one' => ['pattern' => '[[\[:]\]]', 'expected' => '[[\[:]\]]', 'subjects' => ['[]' => 1, ':]' => 1, ']' => 0]];
+        yield 'an escaped brace ending the body' => ['pattern' => '{\}a\{}', 'expected' => '{\}a\{}', 'subjects' => ['}a{' => 1, 'a' => 0]];
+        // The comment's brace balances the first closing brace only.
+        yield 'two closing braces after a comment brace' => ['pattern' => '{(?#{)}\}}', 'expected' => '{(?#{)}\}}', 'subjects' => ['}}' => 1, '}' => 0]];
+        yield 'an escaped star after a comment brace' => ['pattern' => '{(?#{)\*}}', 'expected' => '{(?#{)\*}}', 'subjects' => ['*}' => 1, '}' => 0]];
+        // Raw control bytes in a comment are written as they are: the
+        // printer's own mark for a bracket is none of them.
+        yield 'a control byte in a comment' => ['pattern' => "{a(?#\x03b)}", 'expected' => "{a(?#\x03b)}", 'subjects' => ['a' => 1, 'b' => 0]];
+        $bytes = implode('', array_map(\chr(...), [...range(0x03, 0x08), ...range(0x0E, 0x1F)]));
+        yield 'a comment holding every control byte but the last' => ['pattern' => '{a(?#{'.substr($bytes, 0, -1).')b}c}', 'expected' => '{a(?#{'.substr($bytes, 0, -1).')b}c}', 'subjects' => ['ab}c' => 1, 'abc' => 0]];
+        yield 'a comment holding every control byte' => ['pattern' => '{a(?#{'.$bytes.')b}c}', 'expected' => '{a(?#{'.$bytes.')b}c}', 'subjects' => ['ab}c' => 1, 'abc' => 0]];
+    }
+
+    /**
+     * Pretty printing writes a "[" in a class unescaped, except before
+     * ":", "." or "=", where it would open a POSIX class: "[a\[:]" holds
+     * "a", "[" and ":" (PCRE2 10.49).
+     *
+     * @param array<string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('providePrettySquareBracketsInAClass')]
+    public function test_pretty_mode_escapes_a_square_bracket_in_a_class_only_before_a_posix_opener(string $pattern, string $expected, array $subjects): void
+    {
+        $pretty = $this->compilePretty($pattern);
+
+        $this->assertSame($expected, $pretty);
+        foreach ($subjects as $subject => $matches) {
+            $this->assertSame($matches, preg_match($pattern, (string) $subject), 'The oracle on the input, '.json_encode((string) $subject));
+            $this->assertSame($matches, preg_match($pretty, (string) $subject), $pretty.' on '.json_encode((string) $subject));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, subjects: array<string, int>}>
+     */
+    public static function providePrettySquareBracketsInAClass(): iterable
+    {
+        yield 'before a letter' => ['pattern' => '/[a[b]/', 'expected' => '/[a[b]/', 'subjects' => ['[' => 1, 'b' => 1, 'c' => 0]];
+        yield 'before a colon' => ['pattern' => '/[a\[:]/', 'expected' => '/[a\[:]/', 'subjects' => ['[' => 1, ':' => 1, 'c' => 0]];
+    }
+
+    /**
+     * Pretty printing escapes some literals, "{" or "[" among them, which
+     * PHP then no longer counts: where a comment holds the partner of such
+     * a bracket, the output must still be one pattern PHP reads whole, and
+     * match as the input does (PCRE2 10.49: "{a{1(?#})}" matches "a{1").
+     *
+     * @param array<string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('providePrettyBracketsACommentBalances')]
+    public function test_pretty_mode_writes_a_pattern_that_compiles_where_a_comment_balances_a_bracket(string $pattern, array $subjects): void
+    {
+        $pretty = $this->compilePretty($pattern);
+
+        $this->assertNotFalse(@preg_match($pretty, ''), \sprintf('%s does not compile: %s', json_encode($pretty), preg_last_error_msg()));
+        foreach ($subjects as $subject => $matches) {
+            $this->assertSame($matches, preg_match($pattern, (string) $subject), 'The oracle on the input, '.json_encode((string) $subject));
+            $this->assertSame($matches, preg_match($pretty, (string) $subject), json_encode($pretty).' on '.json_encode((string) $subject));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: array<string, int>}>
+     */
+    public static function providePrettyBracketsACommentBalances(): iterable
+    {
+        yield 'a literal brace before a digit' => ['pattern' => '{a{1(?#})}', 'subjects' => ['a{1' => 1, 'a' => 0]];
+        yield 'a class opening on the delimiter, holding it' => ['pattern' => '[[[](?#])]', 'subjects' => ['[' => 1, 'a' => 0]];
+        yield 'a class of several members holding the delimiter' => ['pattern' => '[[a[](?#])]', 'subjects' => ['[' => 1, 'a' => 1, 'b' => 0]];
+        yield 'a class holding a range from the delimiter' => ['pattern' => '[[a[-c](?#])]', 'subjects' => ['b' => 1, '[' => 1, 'a' => 1, 'Z' => 0, 'd' => 0]];
+        yield 'a negated class holding the delimiter' => ['pattern' => '[[^[](?#])]', 'subjects' => ['a' => 1, '[' => 0]];
+        yield 'a class holding the delimiter in a lookbehind' => ['pattern' => '[(?<=[[])(?#])a]', 'subjects' => ['[a' => 1, 'a' => 0]];
+        // Raw control bytes the printer escapes, 0x1B as "\e" among them.
+        $bytes = implode('', array_map(\chr(...), [...range(0x03, 0x08), ...range(0x0E, 0x1F)]));
+        yield 'a brace after raw control bytes' => ['pattern' => '{a(?#{)b}c'.$bytes.'}', 'subjects' => ['ab}c'.$bytes => 1, 'abc'.$bytes => 0]];
+    }
+
     #[Test]
     public function test_compile_keeps_the_short_spelling_of_a_mark_name(): void
     {

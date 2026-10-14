@@ -28,10 +28,11 @@ use PHPRegex\Parser\RegexParser;
  *
  * A pattern that fits the width and nests at most two groups comes back
  * byte for byte. Anything else is laid out: each group on lines of its own,
- * runs of atoms together, one branch per line with its "|" hanging in the
- * indent, comments kept and aligned. The author's spelling is kept, except
- * where x would skip a character or read a comment. Formatting a formatted
- * pattern gives it back unchanged.
+ * a run of atoms on its line when it fits, broken after its anchors and its
+ * white space and filled up to the width when it does not, one branch per
+ * line with its "|" hanging in the indent, comments kept and aligned. The
+ * author's spelling is kept, except where x would skip a character or read
+ * a comment. Formatting a formatted pattern gives it back unchanged.
  *
  * Both operations read their own output back, for the PHP and PCRE2 they
  * are given, and throw rather than return a pattern that is not the one they

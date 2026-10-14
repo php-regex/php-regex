@@ -288,6 +288,7 @@ final class FormatCommandTest extends TestCase
         yield 'a spaced quantifier read for PCRE2 10.40' => ['arguments' => [self::SPACED_QUANTIFIER, '--pcre-version=10.40'], 'named' => 'a{ 1,2 }'];
         yield 'a spaced quantifier under x, compacted, read for PCRE2 10.40' => ['arguments' => ['/(?:(?:(?:a)))b{ 1,2 }/x', '--compact', '--pcre-version=10.40'], 'named' => 'x is added or dropped'];
         yield 'a line break in a verb name' => ['arguments' => ["/(*MARK:a\nb)c/"], 'named' => 'line break inside a name'];
+        yield 'a closing parenthesis only a # comment holds, compacted' => ['arguments' => ["((*MARK:()a # )\n)x", '--compact'], 'named' => '# comment holds the ")"'];
     }
 
     /**

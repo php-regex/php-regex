@@ -27,7 +27,8 @@ use PHPRegex\Parser\Node\SequenceNode;
  * What a pattern means as a tree, with what a layout may change taken out:
  * comments, positions, how a run of literal text is split into nodes and
  * spelled ("\x41", "\101" or "A"), nested sequences, an unquantified "(?:)"
- * (which matches the empty string and changes nothing), and the x flag.
+ * or "(?:...)" holding only comments (which matches the empty string and
+ * changes nothing), and the x flag.
  * Two patterns with the same fingerprint are the same pattern.
  *
  * @internal
@@ -49,12 +50,6 @@ final class StructuralFingerprint
     {
         if ($node instanceof SequenceNode) {
             return self::canonicalSequence($node, $unicode);
-        }
-
-        // An empty group matches the empty string wherever it stands, the
-        // whole pattern or the body of a group as much as in a sequence.
-        if (self::isEmptyGroup($node)) {
-            return ['literal', false, ''];
         }
 
         if (($node instanceof CharLiteralNode && ($unicode || $node->codePoint < 256)) || $node instanceof ControlCharNode) {
@@ -83,22 +78,31 @@ final class StructuralFingerprint
             };
         }
 
+        // A "(?:...)" whose body matches nothing but the empty string, "(?:)"
+        // or one holding only comments, is empty wherever it stands, the
+        // whole pattern or the body of a group as much as in a sequence. Its
+        // body was read first, so nested groups cost one pass.
+        if ($node instanceof GroupNode && GroupType::NonCapturing === $node->type && self::isEmptyLiteral($canonical['child'] ?? null)) {
+            return ['literal', false, ''];
+        }
+
         return $canonical;
     }
 
     /**
-     * A sequence flattened, without its comments and empty groups, its
-     * neighbouring literals joined; a sequence of one item is that item.
+     * A sequence flattened, without what matches only the empty string (its
+     * comments and empty groups), its neighbouring literals joined; a
+     * sequence of one item is that item.
      */
     private static function canonicalSequence(SequenceNode $sequence, bool $unicode): mixed
     {
         $items = [];
         foreach (self::flatten($sequence) as $child) {
-            if ($child instanceof CommentNode || self::isEmptyGroup($child)) {
+            $item = self::canonical($child, $unicode);
+            if (self::isEmptyLiteral($item)) {
                 continue;
             }
 
-            $item = self::canonical($child, $unicode);
             $last = array_key_last($items);
             if (null !== $last && self::isLiteral($item) && self::isLiteral($items[$last]) && $item[1] === $items[$last][1]) {
                 $items[$last] = ['literal', $item[1], $items[$last][2].$item[2]];
@@ -141,11 +145,8 @@ final class StructuralFingerprint
         return \is_array($item) && 'literal' === ($item[0] ?? null) && \is_bool($item[1] ?? null) && \is_string($item[2] ?? null);
     }
 
-    private static function isEmptyGroup(NodeInterface $node): bool
+    private static function isEmptyLiteral(mixed $item): bool
     {
-        return $node instanceof GroupNode
-            && GroupType::NonCapturing === $node->type
-            && (($node->child instanceof LiteralNode && '' === $node->child->value)
-                || ($node->child instanceof SequenceNode && [] === $node->child->children));
+        return self::isLiteral($item) && '' === $item[2];
     }
 }
