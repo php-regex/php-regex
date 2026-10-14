@@ -119,6 +119,8 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         yield 'php version id as a string' => ["phpVersion: '80400'", ['phpVersion'], '80400'];
         yield 'pcre version as PCRE_VERSION spells it' => ["pcreVersion: '10.44 2024-06-07'", ['pcreVersion'], '10.44 2024-06-07'];
         yield 'pcre pre-release' => ["pcreVersion: '10.45-RC1'", ['pcreVersion'], '10.45-RC1'];
+        yield 'interop presets' => ['interop: [composer-pcre, nette-utils]', ['interop'], ['composer-pcre', 'nette-utils']];
+        yield 'no interop preset' => ['interop: []', ['interop'], []];
     }
 
     /**

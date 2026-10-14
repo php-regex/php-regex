@@ -11,16 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**10. One pattern-carrier contract.** `PatternFunctionRegistry`
-(`@internal`, Linter) knows the native `preg_*`, the interop presets
-(composer/pcre, nette/utils, spatie/regex, laravel-str), namespaced drop-ins
-and config customs — while the PHPStan rule hardcodes its own 8-function
-map (`RegexPatternRule.php:71`) and Psalm sees `preg_*` only. A `Preg::match`
-call is linted by `regex lint` and invisible to PHPStan. *Fix*: make the
-registry (plus the presets and the attribute scanner) the one public,
-versioned contract every surface consumes; deptrac already allows
-PHPStan → Linter. Effort: M.
-
 **11. Facade or packages: pick the front door.** `Toolkit\Regex` (637
 lines, 25 public methods) is the wired service everywhere, while deptrac lets
 every bridge reach every package directly — and they do (`OptimizerOptions`,

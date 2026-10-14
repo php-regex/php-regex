@@ -18,11 +18,17 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrayItem;
+use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\PrettyPrinter\Standard;
 use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Linter\Extraction\PatternFunction;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Exception\ExceptionInterface;
@@ -42,7 +48,7 @@ use PHPStan\Type\Type;
  *
  * @phpstan-import-type GroupReference from ReplacementReferences
  *
- * @implements Rule<FuncCall>
+ * @implements Rule<CallLike>
  */
 final class RegexPatternRule implements Rule
 {
@@ -86,11 +92,20 @@ final class RegexPatternRule implements Rule
 
     private readonly PatternChecker $checker;
 
+    /**
+     * The calls carrying a pattern, as `regex lint` reads them: the native
+     * functions, their namespaced drop-ins and the static methods of the
+     * wrapper libraries the "interop" parameter names.
+     */
+    private readonly PatternFunctionRegistry $registry;
+
     private ?TrivialMatchClassifier $trivialMatches = null;
 
     /**
-     * @param array<string, mixed> $config          the "phpRegex" parameter: "phpVersion", "pcreVersion" and
-     *                                              "checks" ("lint", "redos", "optimizations"), every key optional
+     * @param array<string, mixed> $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
+     *                                              "interop" (the wrapper libraries read, composer/pcre when
+     *                                              null) and "checks" ("lint", "redos", "optimizations"),
+     *                                              every key optional
      * @param PhpVersion|null      $phpVersion      the PHP version PHPStan analyses the project for: patterns are
      *                                              judged for it, with the PCRE2 it bundles, unless "phpVersion"
      *                                              is "runtime" or names a version, and "pcreVersion" a release
@@ -103,11 +118,15 @@ final class RegexPatternRule implements Rule
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null, mixed $phpVersionRange = null)
     {
         $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange);
+        $interop = $config['interop'] ?? null;
+        $this->registry = PatternFunctionRegistry::native()->withPresets(
+            \is_array($interop) ? array_values(array_filter($interop, \is_string(...))) : InteropPresets::DEFAULT_PRESETS,
+        );
     }
 
     public function getNodeType(): string
     {
-        return FuncCall::class;
+        return CallLike::class;
     }
 
     /**
@@ -115,15 +134,17 @@ final class RegexPatternRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (!$node instanceof FuncCall) {
+        if ($node instanceof StaticCall) {
+            return $this->processStaticCall($node, $scope);
+        }
+
+        if (!$node instanceof FuncCall || !$node->name instanceof Name) {
             return [];
         }
 
-        if (!$node->name instanceof Name) {
-            return [];
-        }
-
-        $functionName = $node->name->toLowerString();
+        // Safe\preg_match() and the other drop-ins read as the function
+        // they stand for.
+        $functionName = $this->registry->lookupFunction($node->name->toString())->label ?? '';
         if (!isset(self::PREG_FUNCTION_MAP[$functionName])) {
             return [];
         }
@@ -190,6 +211,95 @@ final class RegexPatternRule implements Rule
     public function isOptimizationFormatSafe(string $original, string $optimized): bool
     {
         return $this->checker->isOptimizationFormatSafe($original, $optimized);
+    }
+
+    /**
+     * A static method of a wrapper library, judged as `regex lint` judges
+     * it: the pattern at the argument the library takes it, the keys of a
+     * map where the library reads them. The subject is not told apart, so
+     * a constant one does not quiet the ReDoS report.
+     *
+     * @return array<IdentifierRuleError>
+     */
+    private function processStaticCall(StaticCall $node, Scope $scope): array
+    {
+        if (!$node->class instanceof Name || !$node->name instanceof Identifier || $node->isFirstClassCallable()) {
+            return [];
+        }
+
+        $function = $this->registry->lookupMethod($scope->resolveName($node->class), $node->name->toString());
+        if (null === $function) {
+            return [];
+        }
+
+        $args = $node->getArgs();
+        $errors = [];
+        foreach ($function->eachArgument() as $carrier) {
+            $patternArg = self::patternArgument($args, $carrier->argumentIndex);
+            if (null === $patternArg) {
+                continue;
+            }
+
+            $patternType = $scope->getType($patternArg);
+            $patterns = array_fill_keys(self::constantStrings($patternType), PatternChecker::literalOffset($patternArg));
+            $keys = $carrier->keysArePatterns && $this->keysArePatterns($carrier, $args, $scope);
+            foreach ($patternType->getConstantArrays() as $patternArray) {
+                // Where a replacement decides, a list holds its patterns in
+                // its values: the keys are patterns when the first is a string.
+                $readKeys = $keys && (null === $carrier->replacementIndex || ($patternArray->getKeyTypes()[0] ?? null)?->isString()->yes() === true);
+                foreach ($readKeys ? $patternArray->getKeyTypes() : $patternArray->getValueTypes() as $patternValue) {
+                    $patterns += array_fill_keys(self::constantStrings($patternValue), null);
+                }
+            }
+
+            foreach ($patterns as $pattern => $offset) {
+                $errors = array_merge(
+                    $errors,
+                    $this->checker->check((string) $pattern, $node->getStartLine(), $scope, $this->formatSource($function->label), false, $offset),
+                );
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Whether a map passed to a function reading keys holds its patterns
+     * in the keys: always, unless a replacement decides, as for nette's
+     * Strings::replace(), where a callable replacement makes the values
+     * the patterns.
+     *
+     * @param array<Arg> $args
+     */
+    private function keysArePatterns(PatternFunction $function, array $args, Scope $scope): bool
+    {
+        if (null === $function->replacementIndex) {
+            return true;
+        }
+
+        $replacement = self::argument($args, $function->replacementIndex, 'replacement');
+
+        return null === $replacement || $scope->getType($replacement)->isCallable()->no();
+    }
+
+    /**
+     * The pattern argument of a wrapper: by one of the names a pattern
+     * parameter takes when the call names its arguments, by position
+     * otherwise.
+     *
+     * @param array<Arg> $args
+     */
+    private static function patternArgument(array $args, int $position): ?Expr
+    {
+        foreach (PatternFunction::PATTERN_PARAMETER_NAMES as $name) {
+            foreach ($args as $arg) {
+                if (null !== $arg->name && $name === $arg->name->toLowerString()) {
+                    return $arg->value;
+                }
+            }
+        }
+
+        return self::argument($args, $position, '');
     }
 
     /**
