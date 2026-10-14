@@ -508,15 +508,3 @@ Laravel's `analysis.warning_threshold` reaches the analysis, but their
 `regex:lint` never turns the complexity report on, as `regex lint` does under
 `checks.complexity`. *Fix*: an `analysis` switch beside the threshold.
 Effort: XS.
-
-### H. Left by the formatter's second round (2026-10-14)
-
-**H2 — `\c\` before an escaped delimiter or bracket.** PHP pairs the
-backslashes of `\c\\Q{` as `\c`, `\\`, `Q`, while PCRE reads `\c\` as 0x1C
-then `\Q`. The delimiter counting of the printer follows PHP's pairing:
-`compact` throws `FormattingException` on `{\c\\Q{}}`, `((?:\c\ ))x` and
-`/a\c\ \/b/x`, and the pretty printer writes `{\c\{}` as `{\c\\{}`, which
-does not compile. Loud, never a wrong pattern. *Fix*: count `\c` and the
-byte after it as one unit wherever brackets are counted, as
-`isUnescapedAt` does, and never write `\c\` right before a backslash.
-Effort: S.
