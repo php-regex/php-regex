@@ -397,12 +397,6 @@ them without depending on internals.
 `src/Laravel/Command/RoutesCommand.php:112`.
 *Fix*: stable typed objects, or a documented JSON schema. Effort: M.
 
-### F. Documentation
-
-**F1 — No local playground or REPL.** The documentation home sends readers to
-regex101 for exploration; nothing in the repository runs a pattern
-interactively. *Verify*: `docs/README.md`. Effort: M, optional.
-
 ### G. Left by the audit before the tag (2026-10-12)
 
 Each item was verified at the tag candidate and is additive.
