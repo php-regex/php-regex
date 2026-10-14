@@ -1279,6 +1279,11 @@ analyses the patterns, step 3 suggests the optimizations; with
 `--no-optimize` the run has two steps. Without a terminal, in a CI log, the
 bar is not drawn: a line every 30 seconds says where a long step stands,
 such as `   7449/24824 (30%) 01:30` under `[2/3] Analyzing patterns`.
+When no worker has reported for 10 seconds, the run names the file it is
+held on, the first file of the oldest share still being worked on
+(`Still on src/web/Request.php`): above the bar in a terminal until the next
+file is done, on a line of its own in a log. `regex:lint` in Symfony and
+Laravel does the same.
 
 A worker that fails or exits, a PHP fatal error or the system killing it for
 memory, stops the run with exit code 1 and a message naming the files it was

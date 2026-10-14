@@ -65,5 +65,12 @@ interface LintProgress
      */
     public function workers(int $count): void;
 
+    /**
+     * No worker reported for $seconds seconds: the run is held on $file,
+     * the first file of the oldest chunk in flight. Told once until the
+     * next advance.
+     */
+    public function stalled(string $file, int $seconds): void;
+
     public function finish(): void;
 }

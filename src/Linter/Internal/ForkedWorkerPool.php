@@ -99,10 +99,25 @@ final class ForkedWorkerPool
 
     private int $nextChunk = 0;
 
+    /**
+     * When a worker last reported progress.
+     */
+    private float $reportedAt = 0.0;
+
+    /**
+     * Whether the progress was told which file the run is held on since
+     * the last report.
+     */
+    private bool $stallNamed = false;
+
+    /**
+     * @param float $stallAfter the seconds without a report after which the progress is told which file holds the run
+     */
     public function __construct(
         private readonly int $chunkFactor = 16,
         private readonly int $maxChunkSize = 2000,
         private readonly float $reportInterval = 0.1,
+        private readonly float $stallAfter = 10.0,
     ) {}
 
     /**
@@ -174,6 +189,9 @@ final class ForkedWorkerPool
                 // that would come back on every wait.
                 if (0 === (int) @stream_select($read, $write, $except, $seconds, $microseconds)) {
                     $progress?->tick();
+                    if (null !== $progress) {
+                        $this->nameStall($progress, $chunks, $describe);
+                    }
 
                     continue;
                 }
@@ -183,6 +201,8 @@ final class ForkedWorkerPool
 
                     while (null !== ($line = $this->nextLine($worker))) {
                         if (str_starts_with($line, 'p ')) {
+                            $this->reportedAt = microtime(true);
+                            $this->stallNamed = false;
                             $progress?->advance((int) substr($line, 2));
                         } elseif (str_starts_with($line, 'd ')) {
                             $this->dispatch($worker, \count($chunks));
@@ -216,6 +236,29 @@ final class ForkedWorkerPool
         $this->stopping = [];
         $this->handedBack = [];
         $this->nextChunk = 0;
+        $this->reportedAt = microtime(true);
+        $this->stallNamed = false;
+    }
+
+    /**
+     * No worker reported for $stallAfter seconds: the progress is told,
+     * once until the next report, the first file of the chunk in flight
+     * the longest, the lowest index, as the chunks go out in order.
+     *
+     * @template T
+     *
+     * @param list<list<T>>       $chunks
+     * @param \Closure(T): string $describe
+     */
+    private function nameStall(LintProgress $progress, array $chunks, \Closure $describe): void
+    {
+        $silent = microtime(true) - $this->reportedAt;
+        if ($this->stallNamed || $silent < $this->stallAfter || [] === $this->inFlight) {
+            return;
+        }
+
+        $this->stallNamed = true;
+        $progress->stalled($describe($chunks[min($this->inFlight)][0]), (int) $silent);
     }
 
     /**

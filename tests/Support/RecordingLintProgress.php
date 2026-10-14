@@ -62,6 +62,11 @@ final class RecordingLintProgress implements LintProgress
         $this->calls[] = ['workers', [$count]];
     }
 
+    public function stalled(string $file, int $seconds): void
+    {
+        $this->calls[] = ['stalled', [$file, $seconds]];
+    }
+
     public function finish(): void
     {
         $this->calls[] = ['finish', []];

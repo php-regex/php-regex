@@ -165,6 +165,25 @@ final class LintProgressBar implements LintProgress
         $this->workersStarted = max($this->workersStarted, $count);
     }
 
+    /**
+     * On a terminal the file stands beside the count until the next
+     * advance; a log gets it on a line of its own, under the bar's.
+     */
+    public function stalled(string $file, int $seconds): void
+    {
+        if (!$this->running) {
+            return;
+        }
+
+        if ($this->stream->isDecorated()) {
+            $this->bar->setMessage($this->message().'  still on '.$file);
+            $this->bar->display();
+        } else {
+            // The bar's line stays open: its next frame starts a line.
+            $this->stream->write("\n   Still on ".$file);
+        }
+    }
+
     public function finish(): void
     {
         if (self::STEP_FILES === $this->step) {

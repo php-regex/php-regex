@@ -187,6 +187,56 @@ final class LintProgressBarTest extends TestCase
     }
 
     /**
+     * A worker silent for a while: the bar names the file it is held on,
+     * on a terminal beside the count until the next advance, in a log on
+     * a line of its own.
+     */
+    #[Test]
+    public function test_decorated_stall_names_the_file_beside_the_count(): void
+    {
+        $progress = $this->progress(decorated: true);
+        $progress->step(LintProgress::STEP_ANALYSIS, 3);
+        $progress->advance();
+        $before = $this->written();
+
+        $progress->stalled('src/web/Request.php', 10);
+        $stall = substr($this->written(), \strlen($before));
+        $progress->advance();
+        $next = substr($this->written(), \strlen($before) + \strlen($stall));
+
+        $this->assertStringContainsString('still on src/web/Request.php', $stall);
+        $this->assertStringContainsString('1/3', $stall);
+        $this->assertStringNotContainsString('still on', $next);
+    }
+
+    #[Test]
+    public function test_undecorated_stall_writes_the_file_on_a_line(): void
+    {
+        $progress = $this->progress(decorated: false);
+        $progress->step(LintProgress::STEP_ANALYSIS, 3);
+        $progress->advance();
+        $before = $this->written();
+
+        $progress->stalled('src/web/Request.php', 10);
+        $progress->advance();
+        $progress->advance();
+        $progress->finish();
+
+        $this->assertMatchesRegularExpression('/^\n   Still on src\/web\/Request\.php\n +3\/3 \[/', substr($this->written(), \strlen($before)));
+    }
+
+    #[Test]
+    public function test_stall_without_a_running_bar_writes_nothing(): void
+    {
+        $progress = $this->progress(decorated: true);
+        $before = $this->written();
+
+        $progress->stalled('src/web/Request.php', 10);
+
+        $this->assertSame($before, $this->written());
+    }
+
+    /**
      * A tick before any step, or once the step has finished, draws
      * nothing: no bar is running.
      */

@@ -57,6 +57,11 @@ final class Output
     private ?string $progressLabel = null;
 
     /**
+     * A passing note shown in the label's place until the next advance.
+     */
+    private ?string $progressNote = null;
+
+    /**
      * The name standing on the line above the bar, once drawn.
      */
     private ?string $progressLabelDrawn = null;
@@ -223,7 +228,23 @@ final class Output
         if (null !== $this->progressTotal) {
             $this->progressCurrent = min($this->progressTotal, $this->progressCurrent);
         }
+        $this->progressNote = null;
         $this->showProgress();
+    }
+
+    /**
+     * A note on what the progress waits on: on a terminal it stands on the
+     * line above the bar until the next advance, in a log on a line of its
+     * own.
+     */
+    public function progressNote(string $note): void
+    {
+        if ($this->progressPlain) {
+            $this->writeProgress('   '.$note."\n");
+        } elseif ($this->progressActive) {
+            $this->progressNote = $note;
+            $this->renderProgress();
+        }
     }
 
     /**
@@ -245,6 +266,7 @@ final class Output
         }
 
         $this->progressPlain = false;
+        $this->progressNote = null;
         $this->progressLabel = null;
         $this->progressLabelDrawn = null;
     }
@@ -261,6 +283,7 @@ final class Output
         }
 
         $this->progressPlain = false;
+        $this->progressNote = null;
         $this->progressLabel = null;
         $this->progressLabelDrawn = null;
     }
@@ -280,6 +303,7 @@ final class Output
         $this->progressCurrent = 0;
         $this->progressActive = $this->ansi;
         $this->progressPlain = !$this->ansi;
+        $this->progressNote = null;
         $this->progressStartedAt = $this->now();
         $this->plainProgressWrittenAt = $this->progressStartedAt;
 
@@ -337,12 +361,13 @@ final class Output
         // bar starts where an unnamed step's does. A new name erases the
         // bar's line, goes up to erase the last name's, and draws both.
         $head = '';
-        if ($this->progressLabel !== $this->progressLabelDrawn) {
+        $label = $this->progressNote ?? $this->progressLabel;
+        if ($label !== $this->progressLabelDrawn) {
             $head = null === $this->progressLabelDrawn ? "\r\033[2K" : "\r\033[2K\033[1A\r\033[2K";
-            if (null !== $this->progressLabel) {
-                $head .= '   '.$this->progressLabel."\n";
+            if (null !== $label) {
+                $head .= '   '.$label."\n";
             }
-            $this->progressLabelDrawn = $this->progressLabel;
+            $this->progressLabelDrawn = $label;
             $this->progressLineWidth = 0;
         }
 

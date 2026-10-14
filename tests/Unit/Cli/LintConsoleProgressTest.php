@@ -65,6 +65,54 @@ final class LintConsoleProgressTest extends TestCase
     }
 
     /**
+     * A worker silent for a while: on a terminal the file it is held on is
+     * named on the line above the bar until the next advance erases it.
+     */
+    #[Test]
+    public function test_stall_names_the_file_above_the_bar_until_the_next_advance(): void
+    {
+        $progress = $this->progress(ansi: true, show: true);
+        $progress->step(LintProgress::STEP_ANALYSIS, 3);
+        $progress->advance();
+        $before = $this->errors();
+
+        $progress->stalled('src/web/Request.php', 10);
+        $stall = substr($this->errors(), \strlen($before));
+        $progress->advance();
+        $next = substr($this->errors(), \strlen($before) + \strlen($stall));
+
+        $this->assertMatchesRegularExpression('/^\r\033\[2K   Still on src\/web\/Request\.php\n\r +1\/3 /', $stall);
+        $this->assertMatchesRegularExpression('/^\r\033\[2K\033\[1A\r\033\[2K\r +2\/3 /', $next, 'The advance erases the name.');
+    }
+
+    /**
+     * Without a terminal the file is written on a line of its own, once.
+     */
+    #[Test]
+    public function test_stall_without_a_terminal_writes_the_file_on_a_line(): void
+    {
+        $progress = $this->progress(ansi: false, show: true);
+        $progress->step(LintProgress::STEP_ANALYSIS, 3);
+        $progress->advance();
+        $before = $this->errors();
+
+        $progress->stalled('src/web/Request.php', 10);
+        $progress->tick();
+
+        $this->assertSame("   Still on src/web/Request.php\n", substr($this->errors(), \strlen($before)));
+    }
+
+    #[Test]
+    public function test_stall_writes_nothing_when_the_steps_are_not_shown(): void
+    {
+        $progress = $this->progress(ansi: true, show: false);
+        $progress->step(LintProgress::STEP_ANALYSIS, 3);
+        $progress->stalled('src/web/Request.php', 10);
+
+        $this->assertSame('', $this->errors());
+    }
+
+    /**
      * Steps not shown draw nothing, a tick included: the progress never
      * started.
      */

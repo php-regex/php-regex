@@ -349,10 +349,6 @@ honours `// @regex-lint-ignore` next to the documented `@regex-ignore` and
 `@regex-ignore-next-line`; the help and the docs never name it. *Fix*: drop it
 or document it. Effort: XS.
 
-**C8 — Nothing names a worker stuck on one file.** A worker alive but stuck on
-one pattern leaves the bar still while the clock runs. *Fix*: after N seconds
-without progress, name the first file of the oldest chunk in flight. Effort: S.
-
 **C9 — The lint run leaves time on the table.** Measured on a 300k-file
 corpus with 10 workers: `suggestOptimizations` parses every pattern a second
 time (`AnalysisService`), and runs as a pass of its own after the lint pass
