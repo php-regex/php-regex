@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule\Support;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\PatternParser;
@@ -38,8 +39,8 @@ use PHPRegex\Parser\RegexParser;
  * flags, the inline flags in force spelled out. The work is capped below
  * the solver's own defaults, so that a lint run stays quick; past the cap,
  * or outside the regular subset, there is no answer and the rule stays
- * silent. A rule passes the DFA cache it keeps for its own questions: a
- * pattern repeats its atoms, and nothing is kept past the rule.
+ * silent. A rule passes the run's DFA cache (LintContext::$dfas): a pattern
+ * repeats its atoms, and a project repeats its patterns.
  *
  * @internal
  */
@@ -63,7 +64,22 @@ final class LanguageQuestions
      */
     private static ?RegexParser $parser = null;
 
+    /**
+     * The DFAs kept for every run of the process that brings no cache of
+     * its own; bounded, and emptied with the library's other caches.
+     */
+    private static ?InMemoryDfaCache $dfas = null;
+
     private function __construct() {}
+
+    /**
+     * The process's DFA cache, shared by the lint rules and the optimizer's
+     * checks of a run that brings none.
+     */
+    public static function dfas(): DfaCacheInterface
+    {
+        return self::$dfas ??= new InMemoryDfaCache();
+    }
 
     /**
      * The options every question runs under: a few hundred states at most.

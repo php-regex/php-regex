@@ -208,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `regex lint`, and `regex:lint` in Symfony and Laravel, build each automaton once per run: the lint rules that ask the automata and the optimizer's equivalence check share one DFA cache, where each rule kept its own for one pattern and each suggestion started empty. On a project repeating its patterns, the automata rules run about three times faster. `InMemoryDfaCache` is bounded (1000 automata, the older half dropped when full) and `clearCaches()` empties it.
 - `regex lint`, and `regex:lint` in Symfony and Laravel, cap their default worker count by the container's memory limit (cgroup v1 or v2), as they cap it by its CPU quota: each worker is a copy of the main process, and one per host CPU could exhaust a memory-limited container with no CPU quota.
 - `regex lint` without a terminal, in a CI log, writes a line every 30 seconds saying where a long step stands (`   7449/24824 (30%) 01:30`): it wrote nothing between the step's name and the report.
 - `regex` run without a command, and `regex --help`, list the commands and the global options, then point at `regex help <command>`: they printed every command's options as well, some 130 lines, while each command's page already lists its own.

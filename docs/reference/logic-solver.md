@@ -239,6 +239,9 @@ use PHPRegex\Parser\RegexParser;
 $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), new InMemoryDfaCache());
 ```
 
+`InMemoryDfaCache` keeps 1000 automata and drops the older half when full, as the library's other caches do, and
+`clearCaches()` empties it with them. Any `DfaCacheInterface` (a PSR-backed one, say) can take its place.
+
 A pattern outside the regular subset (backreferences, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong. The next section lists every reason.
 

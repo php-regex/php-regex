@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
@@ -21,6 +22,7 @@ use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
+use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
@@ -77,13 +79,15 @@ final readonly class AnalysisService
     private RedosMode $redosMode;
 
     /**
-     * @param string              $redosThreshold       the lowest severity reported: low, medium, high or
-     *                                                  critical, in any case
-     * @param array<string>       $ignoredPatterns
-     * @param array<string>       $redosIgnoredPatterns
-     * @param array<string, bool> $lintRules
-     * @param list<RegexParser>   $range                the parsers of the PHP versions after the floor a
-     *                                                  pattern is validated at too (ProjectTarget::rangeParsers())
+     * @param string                 $redosThreshold       the lowest severity reported: low, medium, high or
+     *                                                     critical, in any case
+     * @param array<string>          $ignoredPatterns
+     * @param array<string>          $redosIgnoredPatterns
+     * @param array<string, bool>    $lintRules
+     * @param list<RegexParser>      $range                the parsers of the PHP versions after the floor a
+     *                                                     pattern is validated at too (ProjectTarget::rangeParsers())
+     * @param DfaCacheInterface|null $dfaCache             keeps the DFAs the lint rules and the optimizer's checks
+     *                                                     build, for the whole run; the process's cache when null
      *
      * @throws InvalidRegexOptionException when the threshold names no severity
      */
@@ -101,6 +105,7 @@ final readonly class AnalysisService
         private bool $lintEnabled = true,
         private array $lintRules = [],
         private array $range = [],
+        private ?DfaCacheInterface $dfaCache = null,
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
         $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
@@ -147,6 +152,7 @@ final readonly class AnalysisService
             $this->lintEnabled,
             $this->lintRules,
             $range,
+            $this->dfaCache,
         );
     }
 
@@ -379,7 +385,7 @@ final readonly class AnalysisService
 
             // Run linter if enabled
             if ($this->lintEnabled) {
-                $linter = new PatternLinter($this->lintRules);
+                $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas());
                 $ast->accept($linter);
                 $code = null;
 
@@ -694,7 +700,7 @@ final readonly class AnalysisService
 
                 $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
             } else {
-                $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
+                $optimization = (new Optimizer($this->regex, $this->dfas()))->optimize($occurrence->pattern, $options);
             }
         } catch (\Throwable) {
             return null;
@@ -1158,12 +1164,20 @@ final readonly class AnalysisService
     }
 
     /**
+     * The DFAs kept for the run: the one given, else the process's.
+     */
+    private function dfas(): DfaCacheInterface
+    {
+        return $this->dfaCache ?? LanguageQuestions::dfas();
+    }
+
+    /**
      * @return bool|null true when equivalent, false when not, null when unsupported
      */
     private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new LanguageSolver($this->regex);
+            $solver = new LanguageSolver($this->regex, $this->dfas());
             $result = $solver->equivalent($original, $optimized);
 
             return $result->isEquivalent;

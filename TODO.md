@@ -11,18 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**7. Share the DFA cache.** The versioned key exists
-(`LanguageSolver::dfaCacheKey`: cache version + `PcreTarget` + engine +
-solver options) but the wiring discards it: `AnalysisService` constructs new
-`PatternLinter` (:359), `RedosAnalyzer` (:415 and :566 — its automata path
-runs with a null cache) and `Optimizer` (:674) per pattern occurrence, and
-the automata lint rules each hold a private `new InMemoryDfaCache()` rebuilt
-per pattern. `InMemoryDfaCache` is unbounded and absent from `StaticCaches`,
-so `clearCaches()` never reaches it. *Fix*: one shared `DfaCacheInterface`
-on `AnalysisService` plus a bounded implementation registered in
-`StaticCaches`. The single highest-performance change available before the
-freeze. Effort: S-M.
-
 **8. A tiered AST cache.** `PsrCacheAdapter::load()` unserializes on every
 hit (`PsrCacheAdapter.php:52`), so a Redis pool turns every parse into a
 network round trip; no front tier exists anywhere in `src/Parser/Cache/`.

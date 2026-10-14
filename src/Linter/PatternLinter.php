@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\LintRuleInterface;
@@ -125,6 +126,11 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $dispatchMap = [];
 
     /**
+     * Where the rules' DFAs are kept: the process's cache when none is given.
+     */
+    private ?DfaCacheInterface $dfaCache = null;
+
+    /**
      * @param array<string, bool> $enabledRules the rules to turn on or off by id; the others keep their default
      */
     public function __construct(private array $enabledRules = [])
@@ -146,6 +152,22 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $linter = new self($enabledRules);
         $linter->useRules($registry);
+
+        return $linter;
+    }
+
+    /**
+     * A linter keeping the DFAs its rules' questions build in the cache
+     * given, for a run that judges many patterns.
+     *
+     * @internal the DFA cache of a run is the analysis service's business
+     *
+     * @param array<string, bool> $enabledRules
+     */
+    public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache): self
+    {
+        $linter = new self($enabledRules);
+        $linter->dfaCache = $dfaCache;
 
         return $linter;
     }
@@ -429,6 +451,7 @@ final class PatternLinter extends AbstractNodeVisitor
             ),
             $this->charSetAnalyzer,
             $this->isRuleEnabled(...),
+            $this->dfaCache,
         );
     }
 
