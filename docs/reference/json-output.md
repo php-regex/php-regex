@@ -572,7 +572,7 @@ message naming the error code `regex.formatting.unsafe`.
 | `pattern` | string | The pattern given, delimiters and flags included |
 | `formatted` | string | The pattern laid out or compacted; the pattern given, as it was written, when it already fits (and holds no raw line break) or was refused |
 | `changed` | bool | Whether `formatted` differs from `pattern` |
-| `refusal` | string \| null | Why the pattern was given back as it was written: `newline_convention`, `spaced_quantifier`, `extended_mode_switched_off` or `line_break_in_name`; an open set. `null` when it was not refused |
+| `refusal` | string \| null | Why the pattern was given back as it was written: `newline_convention`, `spaced_quantifier`, `extended_mode_switched_off`, `line_break_in_name` or `parenthesis_in_comment`; an open set. `null` when it was not refused |
 
 ## Shared Objects
 

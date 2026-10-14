@@ -515,43 +515,23 @@ Laravel's `analysis.warning_threshold` reaches the analysis, but their
 `checks.complexity`. *Fix*: an `analysis` switch beside the threshold.
 Effort: XS.
 
-### H. Left by the formatter (2026-10-14)
+### H. Left by the formatter's second round (2026-10-14)
 
-All of these fail loudly or change no meaning; none gives a wrong pattern.
+**H1 — The parser keeps a class's spaces under an inline `(?xx)`.** PCRE2
+skips an unescaped space or tab inside a class while `(?xx)` is in force:
+`preg_match('/(?xx)[a b]/', ' ')` is 0 (PHP 8.4, PCRE2 10.49). The parser
+reads the space as a member, so `explain`, the linter and the formatter's
+self-check see a class the engine does not compile. The PHP modifier `xx`
+does not exist (`/[a b]/xx` is `x`, the space counts), only the inline form.
+*Fix*: in the lexer, drop space and tab between `[` and `]` while `(?xx)` is
+in force, as `InlineFlags::extendedMoreInForce()` already tells. Effort: S.
 
-**H1 — A `#` comment holding the bracket a name needs.** Under x, with a
-bracket delimiter, `{(*MARK:{)a # }\n}x`: `compact` keeps only `(?#…)`
-comments for the delimiter's balance, so it throws `FormattingException`.
-*Fix*: rewrite that comment as `(?#…)` when its text holds no `)`, refuse
-otherwise. Effort: S.
-
-**H2 — Other brackets that take no backslash.** `compact` throws
-`FormattingException` on `<(?<=a)(?#>)>` (it escapes the `<` of `(?<=`),
-on `[[[](?#])]` (the class's opening `[`) and on `{\Q{\E(*MARK:})}` /
-`{(*MARK:{)\Q}\E}` (the respelled quote no longer counts for PHP).
-*Fix*: treat these brackets as name brackets when choosing which comment to
-keep, or keep `\Q…\E` as written when it holds a delimiter bracket.
+**H2 — `\c\` before an escaped delimiter or bracket.** PHP pairs the
+backslashes of `\c\\Q{` as `\c`, `\\`, `Q`, while PCRE reads `\c\` as 0x1C
+then `\Q`. The delimiter counting of the printer follows PHP's pairing:
+`compact` throws `FormattingException` on `{\c\\Q{}}`, `((?:\c\ ))x` and
+`/a\c\ \/b/x`, and the pretty printer writes `{\c\{}` as `{\c\\{}`, which
+does not compile. Loud, never a wrong pattern. *Fix*: count `\c` and the
+byte after it as one unit wherever brackets are counted, as
+`isUnescapedAt` does, and never write `\c\` right before a backslash.
 Effort: S.
-
-**H3 — A raw line feed inside `(?#…)` on one line.** A short pattern without
-x that comes back on one line keeps the line feed of a `(?#…)` comment as
-written, so not every line break of the output is layout. Effort: XS.
-
-**H4 — `(?C{\Q})` comes back as `(?C"\Q")`.** Same callout, other spelling;
-the formatter otherwise keeps the author's vocabulary. Effort: XS.
-
-**H5 — The pretty printer with bracket delimiters.** `new
-PatternPrinter(pretty: true)` writes `{a(?#{)b}c}` as `{a(?#{)b\}c}`:
-the balance the comment held is not followed. Effort: S.
-
-**H6 — A group holding only a comment compacts to `(?:(?:))`.**
-`/a(?:#c\n)b/x` gives `/a(?:(?:))b/`; `(?:)` would read better, but the
-test equivalence helper tells an empty-bodied group from an empty one.
-*Fix*: canonicalise both the same in `tests/Support/PatternEquivalence.php`,
-then write `(?:)`. Effort: XS.
-
-**H7 — Unverified: the 10.40 target may accept spaces in escape braces.**
-Under `pcre_version: 10.40` the parser reads `\x{ 41 }` and `\N{ 1,2 }`;
-PCRE2 before 10.43 may reject both. *Check*: run them on a real 10.40
-engine (`docker run php:8.2-cli`), then align the parser for that target.
-Effort: XS to check.

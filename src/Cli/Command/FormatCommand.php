@@ -152,6 +152,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
             FormatRefusal::SpacedQuantifier => 'left as written: a quantifier written with spaces, such as a{ 1,2 }, means something else before PCRE2 10.43 once x is added or dropped.',
             FormatRefusal::ExtendedModeSwitchedOff => 'left as written: (?-x) or (?^) turns x off at the top level, where a line break would be a literal.',
             FormatRefusal::LineBreakInName => 'left as written: a line break inside a name, such as (*MARK:…), has no escape, so it could not be told from layout.',
+            FormatRefusal::ParenthesisInComment => 'left as written: a # comment holds the ")" that balances the delimiter, and no (?#…) comment can hold it.',
         };
     }
 }

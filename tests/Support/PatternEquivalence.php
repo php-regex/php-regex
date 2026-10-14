@@ -30,9 +30,10 @@ use PHPRegex\Parser\Node\SequenceNode;
  *
  * The structure is the tree with what a layout may change taken out:
  * comments, positions, how a run of literal text is split into nodes,
- * nested sequences, and an unquantified "(?:)", which matches the empty
- * string and changes nothing. Flags are compared by the caller: laying a
- * pattern out adds "x", compacting it drops it.
+ * nested sequences, and an unquantified "(?:)" or "(?:...)" holding only
+ * comments, which matches the empty string and changes nothing. Flags are
+ * compared by the caller: laying a pattern out adds "x", compacting it
+ * drops it.
  *
  * The engine run is what PCRE itself does with a subject: every match, every
  * group with its offset, every name, hashed.
@@ -221,11 +222,32 @@ final class PatternEquivalence
         };
     }
 
+    /**
+     * "(?:)", and a "(?:...)" whose body holds nothing but comments and such
+     * groups: each matches the empty string and sets nothing. A quantifier
+     * on one stays in the structure, as its own node.
+     */
     private static function isEmptyNonCapturingGroup(NodeInterface $node): bool
     {
         return $node instanceof GroupNode
             && GroupType::NonCapturing === $node->type
-            && (($node->child instanceof LiteralNode && '' === $node->child->value)
-                || ($node->child instanceof SequenceNode && [] === $node->child->children));
+            && self::holdsNothing($node->child);
+    }
+
+    private static function holdsNothing(NodeInterface $node): bool
+    {
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!self::holdsNothing($child)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return $node instanceof CommentNode
+            || ($node instanceof LiteralNode && '' === $node->value)
+            || self::isEmptyNonCapturingGroup($node);
     }
 }

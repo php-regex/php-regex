@@ -56,9 +56,23 @@ In an editor, the [language server](lsp.md) offers both as code actions on a reg
 
 ## The layout rules
 
-- **A construct stays on one line** when it fits the width (80 by default, `--width=N`), holds no `#` comment, and nests at most two groups. Otherwise it breaks. Lookarounds, conditionals, `(?|`, atomic groups and `(?(DEFINE)` count as groups; character classes do not.
+- **A construct stays on one line** when it fits the width (80 by default, `--width=N`), holds no `#` comment nor a `(?#…)` comment written over several lines, and nests at most two groups. Otherwise it breaks. Lookarounds, conditionals, `(?|`, atomic groups and `(?(DEFINE)` count as groups; character classes do not.
 - **A broken group** opens on its own line, indents its body by four spaces, and closes on its own line with its quantifier: `)?`, `){2,}`.
-- **Inside a broken group**, each group gets its own line, and runs of plain atoms (literals, classes, escapes, anchors) stay together.
+- **Inside a broken group**, each group gets its own line, and a run of plain atoms (literals, classes, escapes, anchors) stays on one line when it fits.
+- **A run that does not fit** breaks into fields. A leading `^` and a trailing `$` take their own lines; the run then breaks after each white space it matches (`\s`, `\h`, `\R`, a space, a tab, however spelled), which ends its field's line. A field still too wide is filled up to the width, never splitting a word of literal characters, an escape, a class or an atom from its quantifier:
+
+  ```
+  /
+      ^
+      \[[0-9]{4}-[01][0-9]-[0-3][0-9]\s
+      [0-2][0-9]:[0-5][0-9]:[0-5][0-9]\.[0-9]{3,6}\]\s
+      \[[A-Z]{3,8}\]\s
+      [0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\s
+      [a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}
+      $
+  /x
+  ```
+
 - **A broken alternation** puts one branch per line, with `| ` hanging in the indent so every branch starts in the same column:
 
   ```
@@ -76,16 +90,18 @@ In an editor, the [language server](lsp.md) offers both as code actions on a reg
 
 Comments stay where the author put them. A comment written after an item stays on that item's line. Trailing comments on consecutive lines align on one column, the way `gofmt` aligns them. One blank line the author left between items is kept; two become one. A `(?#…)` comment written over several lines keeps its line breaks, and each of its lines starts at the indent of the line it opens on.
 
-`compact` drops every comment, `#` and `(?#…)` alike. The one exception is a `(?#…)` comment holding the bracket that balances a bracket delimiter in a verb name or a callout string, as in `{(*MARK:{)(?#})a}`: a name has no escape, so the comment stays.
+`compact` drops every comment, `#` and `(?#…)` alike. The one exception is a comment holding the bracket that balances a bracket delimiter where no backslash can go: in a verb name or a callout string, as in `{(*MARK:{)(?#})a}`, in a lookbehind's `(?<`, or as a class's opening `[`. That comment stays, a `#` one written as `(?#…)` holding only its brackets, less any left pairing with nothing; where one of them is a `)`, the pattern is refused (`parenthesis_in_comment`, below). A group left holding nothing once its comments are gone goes too, unless it is quantified.
 
 ## Spelling
 
-The formatter changes the layout, never the vocabulary. Escapes, group-name syntax (`(?<n>`, `(?'n'`, `(?P<n>`), backreference syntax and quantifier text come back as written. A `\Q…\E` run is the exception: its text is written with escapes, `\Qa.b\E` as `a\.b`. Only what `x` would otherwise swallow is respelled:
+The formatter changes the layout, never the vocabulary. Escapes, group-name syntax (`(?<n>`, `(?'n'`, `(?P<n>`), backreference syntax and quantifier text come back as written. A `\Q…\E` run is the exception: its text is written with escapes, `\Qa.b\E` as `a\.b`, unless it holds a bracket the delimiter needs. A callout string keeps the delimiter it was written with. Only what `x` would otherwise swallow is respelled:
 
 - a space becomes `\ ` (`\x20` at the end of a line, where an editor might strip it), and `#` becomes `\#`;
 - a raw tab, line break, vertical tab or form feed becomes its escape, so every line break in the output is layout;
 - under `u`, the characters PCRE also skips under `x` (NEL, LRM, RLM, LS, PS) become `\x{…}`; without `u`, a raw byte 0x85 is escaped, with the rest of its UTF-8 sequence when it is part of one (`Å` becomes `\xC3\x85`), so the output stays valid UTF-8;
-- a no-break space, which `x` skips under a locale that counts it as a space, is escaped too when `x` is added.
+- a no-break space, which `x` skips under a locale that counts it as a space, is escaped too when `x` is added;
+- a `\E` or `\Q\E` written to part a reference from a digit, `\1\E0`, becomes the space `x` reads as nothing there, `\1 0`;
+- under an inline `(?xx)`, a space a `\Q…\E` run puts in a class is escaped, as `(?xx)` skips a bare one there.
 
 `compact` only removes things. Where removing a comment or layout would fuse two tokens, it writes an empty group `(?:)` between them: `a{(?#c),2}` becomes `a{(?:),2}`, because `a{,2}` is a quantifier on PCRE2 10.43 and later.
 
@@ -107,6 +123,7 @@ In a few cases, laying the pattern out under `x`, or dropping `x`, would change 
 | `spaced_quantifier` | a pattern without `x` writes a quantifier with spaces, like `a{ 1,2 }`, outside a `(?-x:…)` group, whatever the PCRE2 target | it is a quantifier on PCRE2 10.43 and later, a literal before: no single layout means the same on both |
 | `extended_mode_switched_off` | a top-level `(?-x)` or `(?^)` | after it, a line break is a literal |
 | `line_break_in_name` | a raw line break inside a verb name such as `(*MARK:…)` or a callout string | no escape can spell it there, so it could not be told from layout |
+| `parenthesis_in_comment` | `compact`, under a `(` delimiter: a `#` comment holds the `)` that balances a `(` written where no backslash can go, in a verb name such as `(*MARK:()` | dropped, the comment would leave PHP a `(` it pairs elsewhere, and no `(?#…)` can hold a `)` |
 
 `compact` refuses a pattern under `x` that spells a quantifier with spaces where `x` is on, for the same reason as `spaced_quantifier`, and a pattern holding a line break in a name.
 
