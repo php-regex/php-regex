@@ -52,6 +52,11 @@ final class Output
     private ?string $progressLabel = null;
 
     /**
+     * The name standing on the line above the bar, once drawn.
+     */
+    private ?string $progressLabelDrawn = null;
+
+    /**
      * The width of the line last drawn, which the next one overwrites.
      */
     private int $progressLineWidth = 0;
@@ -185,8 +190,8 @@ final class Output
     }
 
     /**
-     * Names what the line counts from its next frame on, until the progress
-     * finishes.
+     * Names what the bar counts, on the line above it, from its next frame
+     * on until the progress finishes.
      */
     public function progressLabel(string $label): void
     {
@@ -227,6 +232,7 @@ final class Output
         }
 
         $this->progressLabel = null;
+        $this->progressLabelDrawn = null;
     }
 
     /**
@@ -241,6 +247,7 @@ final class Output
         }
 
         $this->progressLabel = null;
+        $this->progressLabelDrawn = null;
     }
 
     private function shouldSkipProgress(?int $total): bool
@@ -274,8 +281,17 @@ final class Output
             $line = \sprintf(' %s [%s] %3d%% %8s', $this->formatProgressStatus($this->progressTotal), $this->buildProgressBar($this->progressTotal), $this->calculateProgressPercent($this->progressTotal), $elapsed);
         }
 
-        if (null !== $this->progressLabel) {
-            $line = '   '.str_pad($this->progressLabel, 13).$line;
+        // The name stands on a line of its own above the bar, so that the
+        // bar starts where an unnamed step's does. A new name erases the
+        // bar's line, goes up to erase the last name's, and draws both.
+        $head = '';
+        if ($this->progressLabel !== $this->progressLabelDrawn) {
+            $head = null === $this->progressLabelDrawn ? "\r\033[2K" : "\r\033[2K\033[1A\r\033[2K";
+            if (null !== $this->progressLabel) {
+                $head .= '   '.$this->progressLabel."\n";
+            }
+            $this->progressLabelDrawn = $this->progressLabel;
+            $this->progressLineWidth = 0;
         }
 
         // A shorter line than the one it replaces clears what is left of it.
@@ -283,7 +299,7 @@ final class Output
         $line .= str_repeat(' ', max(0, $this->progressLineWidth - $width));
         $this->progressLineWidth = $width;
 
-        $this->writeProgress("\r".$line.($finish ? "\n\n" : ''));
+        $this->writeProgress($head."\r".$line.($finish ? "\n\n" : ''));
     }
 
     private function buildProgressBar(int $total): string

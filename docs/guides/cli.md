@@ -1226,10 +1226,12 @@ format shows each step and its progress on stderr, so that
 
 ```text
   [1/3] Scanning files
-   Patterns           1240/4510 [▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░]  27%    00:04
+   Patterns
+       1240/4510 [▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░]  27%    00:04
 ```
 
-Step 1 names what it reads: `Finding files`, then `Declarations` (the files
+Step 1 names what it reads on a line above its bar, so that its bar lines up
+with those of the next steps: `Finding files`, then `Declarations` (the files
 read for the `#[RegexPattern]` functions they declare, see [Patterns Behind a Wrapper](#patterns-behind-a-wrapper)),
 `Functions` when namespaced functions are read too, then `Patterns`. Step 2
 analyses the patterns, step 3 suggests the optimizations; with

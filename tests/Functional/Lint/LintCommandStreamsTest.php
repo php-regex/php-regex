@@ -158,7 +158,7 @@ final class LintCommandStreamsTest extends TestCase
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=console', '--jobs=4', '--no-redos'], ansi: true);
 
         $this->assertSame(0, $exitCode);
-        $this->assertMatchesRegularExpression('/Finding files +0 found +\d{2}:\d{2}\n/', $stderr);
+        $this->assertMatchesRegularExpression('/Finding files\n[^\e]*\r +0 found +\d{2}:\d{2}\n/', $stderr);
         $this->assertStringEndsWith("\n", $stderr, 'The scan\'s line is left open: '.json_encode($stderr));
         $this->assertStringNotContainsString('Analyzing patterns', $stderr);
         $this->assertStringNotContainsString("\r", $stdout);

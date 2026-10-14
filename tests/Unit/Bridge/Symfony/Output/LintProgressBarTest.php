@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Output;
 
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Symfony\Output\LintProgressBar;
+use PHPRegex\Tests\Support\TerminalScreen;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,8 +28,9 @@ use Symfony\Component\Console\Output\StreamOutput;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * The lint progress on console progress bars: the scan's sub-steps on one
- * line redrawn in place on a terminal, a line each in a log, and the clock
+ * The lint progress on console progress bars: the scan's sub-steps on a
+ * name line and a bar line redrawn in place on a terminal, a name line and
+ * bar lines each in a log, and the clock
  * redrawn while the run waits on a terminal only.
  *
  * The clock is a fake one, set as the bars' elapsed placeholder: it moves
@@ -71,25 +73,27 @@ final class LintProgressBarTest extends TestCase
     }
 
     /**
-     * On a terminal the scan's sub-steps take one line over in turn: the
-     * line is cleared before the next is drawn, and no line ends until the
-     * scan does.
+     * On a terminal the scan's sub-steps take two lines over in turn, the
+     * name above the count: both are cleared before the next is drawn, and
+     * the scan ends them once.
      */
     #[Test]
-    public function test_decorated_scan_redraws_its_sub_steps_on_one_line(): void
+    public function test_decorated_scan_redraws_its_sub_steps_on_a_name_line_and_a_bar_line(): void
     {
         $progress = $this->progress(decorated: true);
 
         self::scan($progress, files: 3, declarations: 2, functions: 1, patterns: 4);
         $line = $this->written();
         $progress->endLine();
+        $screen = TerminalScreen::render($this->written());
 
-        $this->assertStringNotContainsString("\n", $line, 'A sub-step starts a line of its own on a terminal: '.json_encode($line));
-        $this->assertStringEndsWith("\n", $this->written(), 'The scan\'s line is not ended.');
-        $this->assertMatchesRegularExpression('/Finding files +3 found clock\d+/', $line);
-        $this->assertMatchesRegularExpression('/Declarations +2\/2 \[/', $line);
-        $this->assertMatchesRegularExpression('/Functions +1\/1 \[/', $line);
-        $this->assertMatchesRegularExpression('/Patterns +4\/4 \[/', $line);
+        $this->assertStringEndsWith("\n", $this->written(), 'The scan\'s lines are not ended.');
+        $this->assertSame('   Patterns', $screen[0], (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $this->assertMatchesRegularExpression('/^ +4\/4 \[[^\]]+\] 100% clock\d+$/u', $screen[1]);
+        $this->assertSame([''], \array_slice($screen, 2));
+        $this->assertMatchesRegularExpression('/Finding files\n +3 found clock\d+/', $line);
+        $this->assertMatchesRegularExpression('/Declarations\n +2\/2 \[/', $line);
+        $this->assertMatchesRegularExpression('/Functions\n +1\/1 \[/', $line);
         $previous = 0;
         foreach (['Finding files', 'Declarations', 'Functions', 'Patterns'] as $label) {
             $position = strpos($line, $label, $previous);
@@ -102,11 +106,12 @@ final class LintProgressBarTest extends TestCase
     }
 
     /**
-     * In a log each sub-step with a total starts a line of its own, and the
-     * walk's counter, redrawn batch after batch, is not drawn at all.
+     * In a log each sub-step with a total writes its name once on a line
+     * of its own, then its bar, and the walk's counter, redrawn batch after
+     * batch, is not drawn at all.
      */
     #[Test]
-    public function test_undecorated_scan_writes_a_line_per_sub_step(): void
+    public function test_undecorated_scan_writes_a_name_line_and_bar_lines_per_sub_step(): void
     {
         $progress = $this->progress(decorated: false);
 
@@ -116,7 +121,32 @@ final class LintProgressBarTest extends TestCase
 
         $this->assertStringNotContainsString('found', $written);
         $this->assertStringNotContainsString("\x1b[", $written);
-        $this->assertMatchesRegularExpression('/^ *Declarations +2\/2 \[[^\n]*\n *Functions +1\/1 \[[^\n]*\n *Patterns +4\/4 \[[^\n]*\n$/', self::lastFrames($written));
+        $this->assertSame(1, substr_count($written, 'Declarations'));
+        $this->assertMatchesRegularExpression('/^   Declarations\n(?: +\d\/2 \[[^\n]*\n)+   Functions\n(?: +\d\/1 \[[^\n]*\n)+   Patterns\n(?: +\d\/4 \[[^\n]*\n)+$/', $written);
+        $this->assertMatchesRegularExpression('/ 4\/4 \[[^\n]*\n$/', $written);
+    }
+
+    /**
+     * The three steps' bars start in the same column on a terminal: the
+     * scan's names stand above its bar, not in front of it.
+     */
+    #[Test]
+    public function test_the_bars_of_the_three_steps_line_up(): void
+    {
+        $progress = $this->progress(decorated: true);
+
+        self::scan($progress, files: 300, declarations: 300, functions: 0, patterns: 300);
+        foreach ([LintProgress::STEP_ANALYSIS, LintProgress::STEP_OPTIMIZATIONS] as $step) {
+            $progress->step($step, 25);
+            $progress->advance(25);
+            $progress->finish();
+        }
+        $screen = TerminalScreen::render($this->written());
+
+        $bars = array_values(array_filter($screen, static fn (string $line): bool => str_contains($line, '] 100%')));
+        $this->assertCount(3, $bars, (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $columns = array_map(static fn (string $line): int|false => mb_strpos($line, '['), $bars);
+        $this->assertSame([$columns[0], $columns[0], $columns[0]], $columns, implode("\n", $screen));
     }
 
     /**
@@ -404,23 +434,6 @@ final class LintProgressBarTest extends TestCase
             $progress->advance($total);
             $progress->finish();
         }
-    }
-
-    /**
-     * The last frame of each line: a log may hold a frame per redraw.
-     */
-    private static function lastFrames(string $written): string
-    {
-        $frames = [];
-        foreach (explode("\n", rtrim($written, "\n")) as $line) {
-            if ('' === trim($line)) {
-                continue;
-            }
-            $label = (string) preg_replace('/^ *(\w+).*$/s', '$1', $line);
-            $frames[$label] = $line;
-        }
-
-        return implode("\n", $frames)."\n";
     }
 
     private function written(): string

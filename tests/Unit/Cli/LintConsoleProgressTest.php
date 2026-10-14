@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Cli;
 use PHPRegex\Cli\Command\LintConsoleProgress;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Tests\Support\TerminalScreen;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -81,33 +82,59 @@ final class LintConsoleProgressTest extends TestCase
     }
 
     /**
-     * The scan's sub-steps share one line under the step's status line:
-     * each takes the line over in place, and the scan ends it once.
+     * The scan's sub-steps share two lines under the step's status line,
+     * the name above the count: each takes them over in place, and the
+     * scan ends them once.
      */
     #[Test]
-    public function test_scan_sub_steps_share_one_line(): void
+    public function test_scan_sub_steps_share_a_name_line_and_a_bar_line(): void
     {
         $progress = $this->progress(ansi: true, show: true);
 
         $this->scan($progress, files: 3, declarations: 2, functions: 1, patterns: 4);
         $progress->endScan();
-        $errors = self::withoutColours($this->errors());
+        $errors = $this->errors();
+        $screen = TerminalScreen::render($errors);
 
-        $this->assertStringStartsWith("  [1/3] Scanning files\n\r", $errors);
-        $this->assertStringEndsWith("\n\n", $errors);
-        $line = substr($errors, \strlen("  [1/3] Scanning files\n"), -2);
-        $this->assertStringNotContainsString("\n", $line, 'A sub-step starts a line of its own: '.json_encode($errors));
         $this->assertSame(1, substr_count($errors, 'Scanning files'));
-        $this->assertMatchesRegularExpression('/\r   Finding files +3 found +\d{2}:\d{2}/', $line);
-        $this->assertMatchesRegularExpression('/\r   Declarations +2\/2 \[#{28}\] 100%/', $line);
-        $this->assertMatchesRegularExpression('/\r   Functions +1\/1 \[#{28}\] 100%/', $line);
-        $this->assertMatchesRegularExpression('/\r   Patterns +4\/4 \[#{28}\] 100%/', $line);
-        $positions = array_map(static fn (string $label): int|false => strpos($line, $label), ['Finding files', 'Declarations', 'Functions', 'Patterns']);
-        $this->assertNotContains(false, $positions, 'A sub-step label is missing from the line.');
+        $this->assertSame('  [1/3] Scanning files', $screen[0], (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $this->assertSame('   Patterns', $screen[1]);
+        $this->assertMatchesRegularExpression('/^ +4\/4 \[#{28}\] 100% +\d{2}:\d{2}$/', $screen[2]);
+        $this->assertSame(['', ''], \array_slice($screen, 3), 'The scan ends its lines with a blank one.');
+        $frames = self::withoutColours($errors);
+        $this->assertMatchesRegularExpression('/   Finding files\n[^\e]*\r +3 found +\d{2}:\d{2}/', $frames);
+        $this->assertMatchesRegularExpression('/   Declarations\n[^\e]*\r +2\/2 \[#{28}\] 100%/', $frames);
+        $this->assertMatchesRegularExpression('/   Functions\n[^\e]*\r +1\/1 \[#{28}\] 100%/', $frames);
+        $positions = array_map(static fn (string $label): int|false => strpos($frames, $label), ['Finding files', 'Declarations', 'Functions', 'Patterns']);
+        $this->assertNotContains(false, $positions, 'A sub-step name is missing.');
         $order = array_map(intval(...), $positions);
         $sorted = $order;
         sort($sorted);
         $this->assertSame($sorted, $order, 'The sub-steps are drawn out of order.');
+    }
+
+    /**
+     * The three steps' bars start in the same column: the scan's names
+     * stand above its bar, not in front of it.
+     */
+    #[Test]
+    public function test_the_bars_of_the_three_steps_line_up(): void
+    {
+        $progress = $this->progress(ansi: true, show: true);
+
+        $this->scan($progress, files: 300, declarations: 300, functions: 0, patterns: 300);
+        $progress->endScan();
+        foreach ([LintProgress::STEP_ANALYSIS, LintProgress::STEP_OPTIMIZATIONS] as $step) {
+            $progress->step($step, 25);
+            $progress->advance(25);
+            $progress->finish();
+        }
+        $screen = TerminalScreen::render($this->errors());
+
+        $bars = array_values(array_filter($screen, static fn (string $line): bool => str_contains($line, '] 100%')));
+        $this->assertCount(3, $bars, (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $columns = array_map(static fn (string $line): int|false => strpos($line, '['), $bars);
+        $this->assertSame([$columns[0], $columns[0], $columns[0]], $columns, implode("\n", $screen));
     }
 
     /**
@@ -188,9 +215,12 @@ final class LintConsoleProgressTest extends TestCase
 
         $this->scan($progress, files: 0, declarations: 0, functions: 0, patterns: 0);
         $progress->endScan();
-        $errors = self::withoutColours($this->errors());
+        $screen = TerminalScreen::render($this->errors());
 
-        $this->assertMatchesRegularExpression('/^  \[1\/3\] Scanning files\n(?:\r   Finding files +0 found +\d{2}:\d{2})+\n\n$/', $errors);
+        $this->assertSame('  [1/3] Scanning files', $screen[0], (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $this->assertSame('   Finding files', $screen[1]);
+        $this->assertMatchesRegularExpression('/^ +0 found +\d{2}:\d{2}$/', $screen[2]);
+        $this->assertSame(['', ''], \array_slice($screen, 3));
         $this->assertSame(0, $progress->files());
     }
 

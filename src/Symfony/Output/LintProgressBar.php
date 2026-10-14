@@ -19,15 +19,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * The lint progress drawn with console progress bars: a bar per step, the
- * scanning sub-steps on one status line. The clock is redrawn between two
- * advances on a terminal only, so a log gets no line per tick.
+ * scanning sub-steps named on a line above theirs, so that every bar starts
+ * in the same column. The clock is redrawn between two advances on a
+ * terminal only, so a log gets no line per tick.
  *
  * @internal
  */
 final class LintProgressBar implements LintProgress
 {
     private const BAR_WIDTH = 28;
-    private const LABEL_PAD_LENGTH = 13;
     private const MESSAGE_PAD_LENGTH = 15;
 
     private const LABELS = [
@@ -96,14 +96,19 @@ final class LintProgressBar implements LintProgress
             return;
         }
 
-        // The scanning sub-steps share one status line: on a terminal the
-        // next replaces the last, in a log it starts a line of its own.
+        // The scanning sub-steps share their lines: on a terminal the next
+        // replaces the last, name and bar, in a log it starts lines of its own.
         if (!$main && null !== $this->line) {
             if ($this->decorated) {
                 $this->line->clear();
             } else {
                 $this->errors->newLine();
             }
+        }
+
+        // A log gets the name once, a terminal with each frame of the bar.
+        if (!$this->decorated && isset(self::LABELS[$step])) {
+            $this->errors->writeln('   '.self::LABELS[$step]);
         }
 
         $this->bar = $this->createBar($total);
@@ -181,7 +186,13 @@ final class LintProgressBar implements LintProgress
     private function createBar(?int $total): ProgressBar
     {
         $bar = $this->io->createProgressBar($total ?? 0);
-        $bar->setFormat(null === $total ? ' %message% %elapsed:6s%' : ' %message% [%bar%] %percent:3s%% %elapsed:6s%');
+        $format = null === $total ? ' %message% %elapsed:6s%' : ' %message% [%bar%] %percent:3s%% %elapsed:6s%';
+        // The name stands above the bar, redrawn with it.
+        if ($this->decorated && isset(self::LABELS[$this->step])) {
+            $format = "   %label%\n".$format;
+            $bar->setMessage(self::LABELS[$this->step], 'label');
+        }
+        $bar->setFormat($format);
         $bar->setBarWidth(self::BAR_WIDTH);
         $bar->setProgressCharacter('▓');
         $bar->setEmptyBarCharacter('░');
@@ -193,9 +204,7 @@ final class LintProgressBar implements LintProgress
 
     private function message(): string
     {
-        $count = str_pad(null === $this->total ? $this->count.' found' : $this->count.'/'.$this->total, self::MESSAGE_PAD_LENGTH, ' ', \STR_PAD_LEFT);
-
-        return isset(self::LABELS[$this->step]) ? str_pad(self::LABELS[$this->step], self::LABEL_PAD_LENGTH).$count : $count;
+        return str_pad(null === $this->total ? $this->count.' found' : $this->count.'/'.$this->total, self::MESSAGE_PAD_LENGTH, ' ', \STR_PAD_LEFT);
     }
 
     private function stepNumber(int $step): string

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Laravel\Output;
 use Illuminate\Console\OutputStyle;
 use PHPRegex\Laravel\Output\LintProgressBar;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Tests\Support\TerminalScreen;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,8 @@ use Symfony\Component\Console\Output\StreamOutput;
 
 /**
  * regex:lint's progress on a console progress bar: the scan's sub-steps on
- * one line redrawn in place on a terminal, a line each in a log, and the
+ * a name line and a bar line redrawn in place on a terminal, a name line
+ * and bar lines each in a log, and the
  * clock redrawn while the run waits on a terminal only.
  *
  * The clock is a fake one, set as the bars' elapsed placeholder: it moves
@@ -69,25 +71,27 @@ final class LintProgressBarTest extends TestCase
     }
 
     /**
-     * On a terminal the scan's sub-steps take one line over in turn: the
-     * line is cleared before the next is drawn, and no line ends until the
-     * scan does.
+     * On a terminal the scan's sub-steps take two lines over in turn, the
+     * name above the count: both are cleared before the next is drawn, and
+     * the scan ends them once.
      */
     #[Test]
-    public function test_decorated_scan_redraws_its_sub_steps_on_one_line(): void
+    public function test_decorated_scan_redraws_its_sub_steps_on_a_name_line_and_a_bar_line(): void
     {
         $progress = $this->progress(decorated: true);
 
         self::scan($progress, files: 3, declarations: 2, functions: 1, patterns: 4);
         $line = self::read($this->stream);
         $progress->close();
+        $screen = TerminalScreen::render(self::read($this->stream));
 
-        $this->assertStringNotContainsString("\n", $line, 'A sub-step starts a line of its own on a terminal: '.json_encode($line));
-        $this->assertStringEndsWith("\n", self::read($this->stream), 'The scan\'s line is not ended.');
-        $this->assertMatchesRegularExpression('/Finding files +3 found clock\d+/', $line);
-        $this->assertMatchesRegularExpression('/Declarations +2\/2 \[/', $line);
-        $this->assertMatchesRegularExpression('/Functions +1\/1 \[/', $line);
-        $this->assertMatchesRegularExpression('/Patterns +4\/4 \[/', $line);
+        $this->assertStringEndsWith("\n", self::read($this->stream), 'The scan\'s lines are not ended.');
+        $this->assertSame('   Patterns', $screen[0], (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $this->assertMatchesRegularExpression('/^ +4\/4 \[[^\]]+\] 100% clock\d+$/u', $screen[1]);
+        $this->assertSame([''], \array_slice($screen, 2));
+        $this->assertMatchesRegularExpression('/Finding files\n +3 found clock\d+/', $line);
+        $this->assertMatchesRegularExpression('/Declarations\n +2\/2 \[/', $line);
+        $this->assertMatchesRegularExpression('/Functions\n +1\/1 \[/', $line);
         $previous = 0;
         foreach (['Finding files', 'Declarations', 'Functions', 'Patterns'] as $label) {
             $position = strpos($line, $label, $previous);
@@ -100,11 +104,36 @@ final class LintProgressBarTest extends TestCase
     }
 
     /**
-     * In a log each sub-step with a total starts a line of its own, in
-     * the order the scan runs them, with no escape sequence.
+     * The three steps' bars start in the same column on a terminal: the
+     * scan's names stand above its bar, not in front of it.
      */
     #[Test]
-    public function test_undecorated_scan_writes_a_line_per_sub_step(): void
+    public function test_the_bars_of_the_three_steps_line_up(): void
+    {
+        $progress = $this->progress(decorated: true);
+
+        self::scan($progress, files: 300, declarations: 300, functions: 0, patterns: 300);
+        foreach ([LintProgress::STEP_ANALYSIS, LintProgress::STEP_OPTIMIZATIONS] as $step) {
+            $progress->step($step, 25);
+            $progress->advance(25);
+            $progress->finish();
+        }
+        $progress->close();
+        $screen = TerminalScreen::render(self::read($this->stream));
+
+        $bars = array_values(array_filter($screen, static fn (string $line): bool => str_contains($line, '] 100%')));
+        $this->assertCount(3, $bars, (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $columns = array_map(static fn (string $line): int|false => mb_strpos($line, '['), $bars);
+        $this->assertSame([$columns[0], $columns[0], $columns[0]], $columns, implode("\n", $screen));
+    }
+
+    /**
+     * In a log each sub-step with a total writes its name once on a line
+     * of its own, then its bar, in the order the scan runs them, with no
+     * escape sequence.
+     */
+    #[Test]
+    public function test_undecorated_scan_writes_a_name_line_and_bar_lines_per_sub_step(): void
     {
         $progress = $this->progress(decorated: false);
 
@@ -113,9 +142,9 @@ final class LintProgressBarTest extends TestCase
         $written = self::read($this->stream);
 
         $this->assertStringNotContainsString("\x1b[", $written);
-        $this->assertMatchesRegularExpression('/^ *Declarations +2\/2 \[[^\n]*$/m', $written);
-        $this->assertMatchesRegularExpression('/^ *Functions +1\/1 \[[^\n]*$/m', $written);
-        $this->assertMatchesRegularExpression('/^ *Patterns +4\/4 \[[^\n]*$/m', $written);
+        $this->assertSame(1, substr_count($written, 'Declarations'));
+        $this->assertMatchesRegularExpression('/^   Declarations\n(?: +\d\/2 \[[^\n]*\n)+   Functions\n(?: +\d\/1 \[[^\n]*\n)+   Patterns\n(?: +\d\/4 \[[^\n]*\n)+$/', $written);
+        $this->assertMatchesRegularExpression('/ 4\/4 \[[^\n]*\n$/', $written);
         $this->assertLessThan(strpos($written, 'Functions'), strpos($written, 'Declarations'));
         $this->assertLessThan(strpos($written, 'Patterns'), strpos($written, 'Functions'));
     }
@@ -158,7 +187,7 @@ final class LintProgressBarTest extends TestCase
         $progress->finish();
         $written = self::read($this->stream);
 
-        $this->assertMatchesRegularExpression('/Finding files +1234 found clock\d+/', $written);
+        $this->assertMatchesRegularExpression('/Finding files\n +1234 found clock\d+/', $written);
         $this->assertStringNotContainsString('%', $written);
         $this->assertStringNotContainsString('[', str_replace("\x1b[", '', $written));
         $this->assertSame(1234, $progress->filesFound());
@@ -347,9 +376,9 @@ final class LintProgressBarTest extends TestCase
         fclose($errors);
 
         $this->assertStringContainsString('[2/3] Analyzing patterns', $standard);
-        $this->assertStringNotContainsString('Patterns ', $standard);
+        $this->assertStringNotContainsString('Patterns', $standard);
         $this->assertStringNotContainsString('1/1', $standard);
-        $this->assertStringContainsString('Patterns ', $error);
+        $this->assertStringContainsString('Patterns', $error);
         $this->assertStringContainsString('1/1', $error);
         $this->assertStringNotContainsString('Analyzing patterns', $error);
     }

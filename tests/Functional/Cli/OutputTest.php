@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Cli;
 
 use PHPRegex\Cli\Output;
+use PHPRegex\Tests\Support\TerminalScreen;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -179,33 +180,65 @@ final class OutputTest extends TestCase
         });
         $progress = $this->readStream($errors);
 
-        $this->assertMatchesRegularExpression('/Finding files\s+1234 found\s+\d{2}:\d{2}/', $progress);
+        $this->assertMatchesRegularExpression('/Finding files\n[^\e]*\r +1234 found +\d{2}:\d{2}/', $progress);
         $this->assertStringContainsString('1000 found', $progress);
         $this->assertStringNotContainsString('%', $progress);
-        $this->assertStringNotContainsString('[', $progress);
+        $this->assertStringNotContainsString('[', implode("\n", TerminalScreen::render($progress)), 'No bar.');
         $this->assertStringNotContainsString('/', $progress, 'No total: no "current/total" count.');
         $this->assertSame('', $buffer);
     }
 
     /**
-     * The sub-step's name leads the line, padded so that the counts of the
-     * successive sub-steps line up.
+     * The sub-step's name stands on a line of its own above the bar, so
+     * that the bar starts where an unnamed step's does.
      */
     #[Test]
-    public function test_progress_label_leads_the_line(): void
+    public function test_progress_label_stands_above_the_bar(): void
+    {
+        [$output, $errors] = $this->outputWithErrorStream(true, false);
+        [$unnamed, $unnamedErrors] = $this->outputWithErrorStream(true, false);
+
+        $this->captureOutput(static function () use ($output, $unnamed): void {
+            $output->progressStart(10);
+            $output->progressLabel('Patterns');
+            $output->progressAdvance(3);
+            $unnamed->progressStart(10);
+            $unnamed->progressAdvance(3);
+        });
+        $screen = TerminalScreen::render($this->readStream($errors));
+        $unnamedScreen = TerminalScreen::render($this->readStream($unnamedErrors));
+
+        $this->assertCount(2, $screen, (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $this->assertSame('   Patterns', $screen[0]);
+        $this->assertStringStartsWith(' '.str_pad('3/10', 15, ' ', \STR_PAD_LEFT).' [########--------------------]  30% ', $screen[1]);
+        $this->assertSame($unnamedScreen[0], $screen[1], 'The named bar starts where the unnamed one does.');
+    }
+
+    /**
+     * A new sub-step takes over both lines in place: its name replaces the
+     * last one, above a bar of its own.
+     */
+    #[Test]
+    public function test_progress_new_label_replaces_the_last_one_above_the_bar(): void
     {
         [$output, $errors] = $this->outputWithErrorStream(true, false);
 
         $this->captureOutput(static function () use ($output): void {
-            $output->progressStart(10);
+            $output->progressLabel('Declarations');
+            $output->progressStart(2);
+            $output->progressAdvance(2);
             $output->progressLabel('Patterns');
-            $output->progressAdvance(3);
+            $output->progressStart(4);
+            $output->progressAdvance(1);
+            $output->progressFinish();
         });
+        $stream = $this->readStream($errors);
+        $screen = TerminalScreen::render($stream);
 
-        $this->assertStringContainsString(
-            "\r   ".str_pad('Patterns', 13).' '.str_pad('3/10', 15, ' ', \STR_PAD_LEFT).' [########--------------------]  30% ',
-            $this->readStream($errors),
-        );
+        $this->assertStringContainsString('Declarations', $stream);
+        $this->assertSame('   Patterns', $screen[0], (string) json_encode($screen, \JSON_UNESCAPED_UNICODE));
+        $this->assertStringStartsWith(' '.str_pad('4/4', 15, ' ', \STR_PAD_LEFT).' [############################] 100% ', $screen[1]);
+        $this->assertSame(['', ''], \array_slice($screen, 2), 'The finished progress is followed by a blank line.');
     }
 
     /**

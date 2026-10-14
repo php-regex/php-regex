@@ -22,8 +22,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 /**
  * The progress of regex:lint, drawn with a console progress bar.
  *
- * The scan steps (files found, declarations, functions, patterns) share one
- * status line, redrawn in place on a terminal; the analysis and the
+ * The scan steps (files found, declarations, functions, patterns) share a
+ * bar named on the line above it, both redrawn in place on a terminal, so
+ * that every bar starts in the same column; the analysis and the
  * optimizations each get a heading and a bar of their own. The clock is
  * redrawn while the run waits on a terminal only: a log gets no line more.
  *
@@ -33,7 +34,6 @@ final class LintProgressBar implements LintProgress
 {
     private const BAR_WIDTH = 28;
     private const COUNT_PAD_LENGTH = 15;
-    private const LABEL_PAD_LENGTH = 13;
     private const FORMAT_BAR = ' %message% [%bar%] %percent:3s%% %elapsed:6s%';
     private const FORMAT_COUNTER = ' %message% %elapsed:6s%';
 
@@ -124,7 +124,18 @@ final class LintProgressBar implements LintProgress
             return;
         }
 
-        $this->bar->setFormat(null === $total ? self::FORMAT_COUNTER : self::FORMAT_BAR);
+        // The name stands above the bar: in a log written once, on a
+        // terminal redrawn with each frame.
+        $format = null === $total ? self::FORMAT_COUNTER : self::FORMAT_BAR;
+        if ('' !== $this->label) {
+            if ($this->stream->isDecorated()) {
+                $format = "   %label%\n".$format;
+                $this->bar->setMessage($this->label, 'label');
+            } else {
+                $this->stream->writeln('   '.$this->label);
+            }
+        }
+        $this->bar->setFormat($format);
         $this->bar->setMessage($this->message());
         $this->bar->start($total ?? 0);
         $this->running = true;
@@ -210,8 +221,7 @@ final class LintProgressBar implements LintProgress
     private function message(): string
     {
         $count = null === $this->total ? $this->count.' found' : $this->count.'/'.$this->total;
-        $count = str_pad($count, self::COUNT_PAD_LENGTH, ' ', \STR_PAD_LEFT);
 
-        return '' === $this->label ? $count : str_pad($this->label, self::LABEL_PAD_LENGTH).$count;
+        return str_pad($count, self::COUNT_PAD_LENGTH, ' ', \STR_PAD_LEFT);
     }
 }
