@@ -29,7 +29,7 @@ Features
 * The full PCRE2 pattern syntax, parsed into an AST of 29 node types: groups, quantifiers, character classes, conditionals, subroutines, callouts, backreferences, verb controls — every node a readonly value object carrying its offsets into the pattern.
 * Validation answers as PHP's PCRE2 would for a chosen release — a PHP version with the PCRE2 it bundles, or a PCRE2 release on its own — with an error code, an offset and a caret snippet.
 * `parseTolerant()` returns a best-effort AST plus the parse errors instead of throwing on broken input.
-* Visitors walk the tree: implement `NodeVisitorInterface`, query with `NodeFinder`, or walk with `NodeWalker`.
+* Visitors walk the tree: extend `AbstractTraversingVisitor` or `AbstractNodeVisitor`, or query it with `NodeFinder`.
 * The AST cache sits behind one interface: in memory by default, a directory on disk, or a PSR-6 / PSR-16 pool.
 * Small AST analyses: group numbering, complexity score, literal extraction, length ranges, and the literals every match holds, for a `str_contains()` prefilter.
 * Capture shapes: which groups a match always sets, may leave unset or never sets, the strings each can hold, and the `$matches` array `preg_match()` fills, written as a PHPStan type for static analysers.

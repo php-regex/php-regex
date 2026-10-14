@@ -11,19 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**2. One traversal engine.** Two coexist: the visitor trio
-(`NodeVisitorInterface` + `AbstractNodeVisitor` + `AbstractTraversingVisitor`,
-~630 lines, an `accept()` override on every node class, ~330 `->accept(`
-call sites) and the closure-based `NodeWalker` (3 call sites in src/
-`NodeFinder` ×2, `Optimizer`); `AbstractTraversingVisitor` has zero
-subclasses in src/. `PatternLinter` (778 lines) reimplements child traversal
-across its ~20 overrides, and its class-keyed dispatch map is the walker's
-enter callback rewritten by hand. Every new PCRE2 construct costs one
-interface method, two base-class methods and one override per consumer.
-*Decision*: keep one public seam — the walker (folds like `PatternPrinter`
-become internal match statements), or the trio (then delete the walker).
-Effort: L.
-
 **3. One capture-group numbering model.** Three walks with three
 vocabularies: `Linter\Rule\GroupIndex` (the richest — branch reset,
 subroutine targets; `@internal`, and one layer too high),

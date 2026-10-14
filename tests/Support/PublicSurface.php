@@ -44,7 +44,7 @@ final class PublicSurface
         'Parser' => [
             'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
             'TolerantParseResult', 'NodeVisitorInterface', 'AbstractNodeVisitor', 'AbstractTraversingVisitor',
-            'NodeWalker', 'NodeFinder', 'TraversalAction',
+            'NodeFinder',
             'Token/Token', 'Token/TokenType',
             'Validation/ValidationResult', 'Validation/ValidationErrorCategory',
             'Printer/PatternPrinter', 'Printer/NodeDumper', 'Printer/PatternFormatter', 'Printer/FormatResult', 'Printer/FormatRefusal',

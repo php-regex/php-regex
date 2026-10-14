@@ -14,31 +14,28 @@ Visitors walk the AST using `accept()` on each node. Each node dispatches to the
 
 ## Base Classes and Interfaces
 
-### Walking a tree without a visitor
+### Finding nodes without a visitor
 
 Most tools only need to look at some nodes: every backreference, every
-quantifier, the groups around a node. `NodeFinder` and `NodeWalker` do that
-for any tree, without a method for each kind of node:
+quantifier, the first lookbehind. `NodeFinder` does that for any tree,
+without a method for each kind of node:
 
 ```php
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\NodeFinder;
-use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\TraversalAction;
 
 $tree = RegexParser::create()->parse('/(a)(b)\\2\\1/');
 
 NodeFinder::findInstanceOf($tree, BackrefNode::class);            // both references, in order
-
-NodeWalker::walk($tree, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
-    // $ancestors: the nodes from the root down to $node's parent
-    return null;  // or TraversalAction::SkipChildren, or TraversalAction::Stop
-});
+NodeFinder::findFirst($tree, static fn (NodeInterface $node): bool => $node instanceof QuantifierNode);  // null: none
 ```
 
 Every node gives its children in pattern order through `getChildren()`.
+Anything more — the groups around a node, a depth, a rewrite — is a visitor:
+extend one of the two base classes below.
 
 ### NodeVisitorInterface
 
