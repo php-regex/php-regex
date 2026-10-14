@@ -122,16 +122,16 @@ versioned contract every surface consumes; deptrac already allows
 PHPStan → Linter. Effort: M.
 
 **11. Facade or packages: pick the front door.** `Toolkit\Regex` (637
-lines, 24 verbs) is the wired service everywhere, while deptrac lets every
-bridge reach every package directly — and they do (`OptimizerOptions`,
+lines, 25 public methods) is the wired service everywhere, while deptrac lets
+every bridge reach every package directly — and they do (`OptimizerOptions`,
 `RedosSeverity`, `RegexParser` imported in `src/Symfony`). The README
 headlines equivalence/intersection/subset, but the facade has none of those
-verbs, Toolkit does not require `regex-automata`, and `deptrac.yaml:80`
-grants it an allowance nothing uses: three artifacts tell three stories
-about the library's headline capability. *Decision*: "the packages are the
-contract, the facade is the convenience layer" — write it down, collapse the
-dead allowance, and either add the four solver verbs or fix the marketing.
-Effort: S for the rules, M with the solver verbs.
+verbs, and Toolkit reaches `regex-automata` only through its other
+requirements (deptrac no longer grants it the solver). *Decision*: "the
+packages are the contract, the facade is the convenience layer" — write it
+down, and either add the four solver verbs (requiring `regex-automata` and
+granting it back) or point the README at `LanguageSolver`. Effort: S for the
+rules, M with the solver verbs.
 
 **12. De-triplicate the lint commands.** 1,453 lines across three command
 hierarchies (`src/Cli/Command/LintCommand.php`, Symfony, Laravel), each

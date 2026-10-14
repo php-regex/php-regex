@@ -77,7 +77,7 @@ deptrac:
     ReDoS: [Parser]
     Transpiler: [Parser]
     Linter: [Parser, Explain, ReDoS, Automata, Optimizer]
-    Toolkit: [Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
+    Toolkit: [Parser, Explain, Optimizer, Generator, ReDoS, Transpiler, Linter]
     Cli: [Toolkit, Parser, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter]
     LanguageServer: [Toolkit, Parser, Explain, Optimizer, Linter]
     PHPStan: [Parser, Linter, ReDoS, Automata, Optimizer]
