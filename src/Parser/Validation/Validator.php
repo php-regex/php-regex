@@ -1054,11 +1054,12 @@ final class Validator extends AbstractNodeVisitor
             $name = $matches['name'];
             $this->guardByteModeName($node, $name, ErrorCode::GroupNameUnterminated);
             if (!$this->groupNumbering->hasNamedGroup($name)) {
-                $suggestions = $this->getNameSuggestions($name);
+                $suggestion = $this->getNameSuggestions($name);
                 $this->raiseMissingReference(
-                    \sprintf('Backreference to non-existent named group: "%s".', $name).$suggestions,
+                    \sprintf('Backreference to non-existent named group: "%s".', $name).(null === $suggestion ? '' : ' '.$suggestion),
                     $this->missingReferenceOffset($node),
                     ErrorCode::BackrefMissingNamedGroup,
+                    $suggestion,
                 );
             }
 
@@ -1068,11 +1069,12 @@ final class Validator extends AbstractNodeVisitor
         // Bare name validation (conditionals)
         if ($this->isBareNamedBackref($ref)) {
             if (!$this->groupNumbering->hasNamedGroup($ref)) {
-                $suggestions = $this->getNameSuggestions($ref);
+                $suggestion = $this->getNameSuggestions($ref);
                 $this->raiseMissingReference(
-                    \sprintf('Backreference to non-existent named group: "%s".', $ref).$suggestions,
+                    \sprintf('Backreference to non-existent named group: "%s".', $ref).(null === $suggestion ? '' : ' '.$suggestion),
                     $node->startPosition,
                     ErrorCode::BackrefMissingNamedGroup,
+                    $suggestion,
                 );
             }
 
@@ -1234,15 +1236,13 @@ final class Validator extends AbstractNodeVisitor
         if (false === self::$unicodePropCache[$key]) {
             $propertyKey = $this->extractUnicodePropertyKey($key);
             $suggestion = $this->suggestUnicodeProperty($propertyKey);
-            $message = \sprintf('Invalid or unsupported Unicode property: \\%s.', $key);
-            if (null !== $suggestion) {
-                $message .= " Did you mean \\{$suggestion}?";
-            }
+            $hint = null === $suggestion ? null : "Did you mean \\{$suggestion}?";
             // PCRE reads the whole escape before it looks the name up.
             $this->raiseSemanticError(
-                $message,
+                \sprintf('Invalid or unsupported Unicode property: \\%s.', $key).(null === $hint ? '' : ' '.$hint),
                 $node->getEndPosition(),
                 ErrorCode::UnicodePropertyInvalid,
+                $hint,
             );
         }
     }
@@ -1305,6 +1305,7 @@ final class Validator extends AbstractNodeVisitor
                     \sprintf('Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE). The pattern has no group named "%s".', $ref),
                     $this->missingReferenceOffset($node->condition),
                     ErrorCode::ConditionalMissingGroup,
+                    $this->getNameSuggestions($ref),
                 );
             }
             // Now validate the backreference itself
@@ -1889,9 +1890,10 @@ final class Validator extends AbstractNodeVisitor
 
     private function extractUnicodePropertyKey(string $key): string
     {
-        // Strip \p or \P prefix
-        if (str_starts_with($key, '\\p') || str_starts_with($key, '\\P')) {
-            $key = substr($key, 2);
+        // Strip the "p" or "P" the key opens with, after a backslash or not.
+        $key = ltrim($key, '\\');
+        if (str_starts_with($key, 'p') || str_starts_with($key, 'P')) {
+            $key = substr($key, 1);
         }
         if (str_starts_with($key, '{') && str_ends_with($key, '}')) {
             return substr($key, 1, -1);
@@ -1959,14 +1961,14 @@ final class Validator extends AbstractNodeVisitor
         return '{'.$inner.'}';
     }
 
-    private function getNameSuggestions(string $name): string
+    /**
+     * "Did you mean: name?" for the group names near $name, or null.
+     */
+    private function getNameSuggestions(string $name): ?string
     {
         $suggestions = NearMiss::within($name, array_map(strval(...), array_keys($this->groupNumbering->namedGroups)));
-        if ([] !== $suggestions) {
-            return ' Did you mean: '.implode(', ', $suggestions).'?';
-        }
 
-        return '';
+        return [] === $suggestions ? null : 'Did you mean: '.implode(', ', $suggestions).'?';
     }
 
     private function isBareNamedBackref(string $ref): bool

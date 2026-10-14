@@ -264,6 +264,7 @@ final readonly class TextDocumentHandler
                         $bodyStart,
                         $bodyLength,
                         $validation->offset,
+                        $validation->hint,
                     );
 
                     continue;
@@ -297,6 +298,8 @@ final readonly class TextDocumentHandler
                     $bodyStart,
                     $bodyLength,
                     $e->position,
+                    // The fix comes with the validation's verdict on the same error.
+                    $this->regex->validate($occurrence->pattern)->hint,
                 );
             }
         }

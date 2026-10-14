@@ -271,6 +271,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A "Did you mean" is data as well as prose: the near miss of a group name (`\k<nam>` for `name`) and the short form of a long property name (`\p{Letter}` gets `Did you mean \p{L}?`) are in `hint`, the message keeping them. The property suggestion never reached the message: it looked the name up with its `p` still on.
+- The language server puts an invalid pattern's `hint` on the line under its error, where only the error was published.
 - `validate()` fills `hint` with a fix for the mistakes users make most, where it was null: an unclosed class, a quantifier with nothing to repeat, reversed counts (`{2,1}` gets `Write the smaller count first: "{1,2}".`), a count over 65535, a reversed range, a missing delimiter, an invalid or duplicate group name, a call to a missing named group and an unknown Unicode property. `regex validate` prints the hint under the caret, and the lint console under an invalid pattern, where both left it out.
 - `regex.lint.charclass.backrefAsOctal` counts the groups of a branch reset as PCRE numbers them: `/(?|(a)|(b))[\2]/` holds no group 2, so `\2` there is no longer reported as a backreference to one.
 - Under an inline `(?xx)`, a space or a tab is skipped anywhere in a character class, as PCRE2 skips it: `(?xx)[a b]` is `[ab]`, `(?xx)[a - c]` the range `a-c`, and `(?xx)[\d -z]` is refused as PCRE2 refuses `[\d-z]`. Only those before the first member were skipped.

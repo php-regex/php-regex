@@ -11,14 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**6. Suggestions are data, not prose.** "Did you mean" strings are appended
-to messages (`Validator.php:1237`, `getNameSuggestions()`), while the
-structured fields exist end to end (`RegexException::$hint`,
-`ValidationResult::$hint`, `Diagnostic::$suggestion`) and no parser
-suggestion ever reaches the LSP as a quick fix. Related: B8 below (hints
-null on the errors users actually hit). *Fix*: one typed suggestion field
-produced by the parser and projected everywhere. Effort: S.
-
 **7. Share the DFA cache.** The versioned key exists
 (`LanguageSolver::dfaCacheKey`: cache version + `PcreTarget` + engine +
 solver options) but the wiring discards it: `AnalysisService` constructs new

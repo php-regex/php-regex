@@ -135,6 +135,60 @@ final class ValidationHintTest extends TestCase
         $this->assertSame('Target a PHP whose PCRE2 is 10.43 or later, or use another property.', $result->hint);
     }
 
+    /**
+     * A near miss is data: the message keeps its "Did you mean", and the
+     * hint carries it alone.
+     *
+     * @return iterable<string, array{pattern: string, error: string, hint: string, fixed: string}>
+     */
+    public static function provideNearMisses(): iterable
+    {
+        yield 'group name' => [
+            'pattern' => '/(?<name>a)\\k<nam>/',
+            'error' => 'Backreference to non-existent named group: "nam". Did you mean: name?',
+            'hint' => 'Did you mean: name?',
+            'fixed' => '/(?<name>a)\\k<name>/',
+        ];
+        yield 'group name in a Python reference' => [
+            'pattern' => '/(?<name>a)(?P=nam)/',
+            'error' => 'Backreference to non-existent named group: "nam". Did you mean: name?',
+            'hint' => 'Did you mean: name?',
+            'fixed' => '/(?<name>a)(?P=name)/',
+        ];
+        yield 'group name in a braced \\g reference' => [
+            'pattern' => '/(?<name>a)\\g{nam}/',
+            'error' => 'Backreference to non-existent named group: "nam". Did you mean: name?',
+            'hint' => 'Did you mean: name?',
+            'fixed' => '/(?<name>a)\\g{name}/',
+        ];
+        yield 'group name in a condition' => [
+            'pattern' => '/(?<name>a)(?(nam)b)/',
+            'error' => 'Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE). The pattern has no group named "nam".',
+            'hint' => 'Did you mean: name?',
+            'fixed' => '/(?<name>a)(?(name)b)/',
+        ];
+        yield 'long property name' => [
+            'pattern' => '/\\p{Letter}/u',
+            'error' => 'Invalid or unsupported Unicode property: \\p{Letter}. Did you mean \\p{L}?',
+            'hint' => 'Did you mean \\p{L}?',
+            'fixed' => '/\\p{L}/u',
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideNearMisses')]
+    public function test_a_near_miss_is_suggested_in_the_hint(string $pattern, string $error, string $hint, string $fixed): void
+    {
+        // Oracle: the engine refuses the near miss and compiles the name meant.
+        $this->assertFalse(@preg_match($pattern, ''));
+        $this->assertNotFalse(@preg_match($fixed, ''));
+
+        $result = RegexParser::create(['cache' => null])->validate($pattern);
+
+        $this->assertSame($error, $result->error);
+        $this->assertSame($hint, $result->hint);
+    }
+
     #[Test]
     public function test_the_reversed_bounds_are_swapped_in_the_hint(): void
     {

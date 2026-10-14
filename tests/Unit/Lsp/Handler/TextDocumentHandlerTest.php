@@ -216,6 +216,51 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * The fix the validation names reads on the line under the error, once:
+     * a near miss the message already suggests is not repeated.
+     *
+     * @return iterable<string, array{pattern: string, message: string}>
+     */
+    public static function provideMistakesWithAFix(): iterable
+    {
+        yield 'parse error' => ['pattern' => '/[abc/', 'message' => "Unclosed character class \"]\" at end of input.\nClose the class with \"]\", or write \"\\[\" to match a literal \"[\"."];
+        yield 'validation error' => ['pattern' => '/a{2,1}/', 'message' => "Invalid quantifier range \"{2,1}\": min > max.\nWrite the smaller count first: \"{1,2}\"."];
+        yield 'near miss already suggested' => ['pattern' => '/(?<name>a)\\k<nam>/', 'message' => 'Backreference to non-existent named group: "nam". Did you mean: name?'];
+    }
+
+    #[Test]
+    #[DataProvider('provideMistakesWithAFix')]
+    public function test_an_invalid_pattern_is_published_with_its_fix(string $pattern, string $message): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///fix.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $this->assertCount(1, $diagnostics);
+        $this->assertIsArray($diagnostics[0]);
+        $this->assertSame($message, $diagnostics[0]['message'] ?? null);
+    }
+
+    /**
      * Offsets count from the pattern body: the diagnostic starts on the
      * character at fault, past the quote and the opening delimiter.
      */

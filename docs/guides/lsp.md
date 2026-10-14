@@ -60,6 +60,14 @@ Error: Without the /u flag, Unicode property "\p{L}" only covers the first 256 c
 Error: Unicode escape "\x{100}" requires /u flag for code points > U+FF.
 ```
 
+An invalid pattern's diagnostic gives its fix on the line under the error, as
+the `hint` of `validate()` does:
+
+```
+Error: Invalid quantifier range "{2,1}": min > max.
+       Write the smaller count first: "{1,2}".
+```
+
 ### Hover Information
 
 Hover over any regex pattern to see:

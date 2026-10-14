@@ -77,7 +77,7 @@ final class DiagnosticConverter
      *
      * @return array<string, mixed>
      */
-    public function fromParseError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null): array
+    public function fromParseError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null, ?string $hint = null): array
     {
         $errorOffset = $offset ?? 0;
 
@@ -95,7 +95,7 @@ final class DiagnosticConverter
             'severity' => self::SEVERITY_ERROR,
             'code' => $code->value,
             'source' => 'php-regex',
-            'message' => $message,
+            'message' => self::withHint($message, $hint),
         ];
     }
 
@@ -131,7 +131,7 @@ final class DiagnosticConverter
      *
      * @return array<string, mixed>
      */
-    public function fromValidationError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null): array
+    public function fromValidationError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null, ?string $hint = null): array
     {
         $errorOffset = $offset ?? 0;
 
@@ -149,8 +149,17 @@ final class DiagnosticConverter
             'severity' => self::SEVERITY_ERROR,
             'code' => $code->value,
             'source' => 'php-regex',
-            'message' => $message,
+            'message' => self::withHint($message, $hint),
         ];
+    }
+
+    /**
+     * The fix on the line under the error, unless the message already
+     * suggests it.
+     */
+    private static function withHint(string $message, ?string $hint): string
+    {
+        return null === $hint || '' === $hint || str_contains($message, $hint) ? $message : $message."\n".$hint;
     }
 
     private function mapSeverity(LintSeverity $severity): int
