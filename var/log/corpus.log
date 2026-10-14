@@ -655,7 +655,7 @@ corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Sanitizer/BrowserHtmlSani
        - #<style\b[^>]*/?>#is
        + #<style\b[^>]*/?>#i
 
-corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2361:20
+corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/UpdatePatcher.php:2365:20
     → /{%.?block content.?%}((.*?\n)+){%.?endblock.?%}/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -4029,7 +4029,7 @@ corpus/drupal/drupal/core/modules/filter/src/Plugin/Filter/FilterUrl.php:151:52
     → /(<.+?>)/is
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/drupal/drupal/core/modules/link/src/AttributeXss.php:130:36
+corpus/drupal/drupal/core/modules/link/src/AttributeXss.php:132:36
     → / ^ ( "[^"]*("|$) | '[^']*('|$)| | \S )* \s*/x
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -10297,7 +10297,7 @@ corpus/phan/phan/src/Phan/CLI.php:2443:40
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Config.php:1621:35
+corpus/phan/phan/src/Phan/Config.php:1632:35
     → @^(\./)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
