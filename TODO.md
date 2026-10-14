@@ -366,11 +366,6 @@ and no CPU quota, `regex lint` starts one worker per host CPU, each a copy of
 the main process. *Fix*: cap the default by the cgroup memory limit over the
 main process's size. Effort: S.
 
-**C11 — A CI log shows nothing during a long lint.** Without a terminal the
-progress is not drawn, so a long `regex lint` prints nothing until the report.
-*Fix*: a line every 30 s or so in a log ("Analyzing patterns: 7449/24824").
-Effort: XS.
-
 **C12 — One pattern holds `[3/3] Suggesting optimizations` for 11 s.** On
 the 300k-file corpus the step sits at 99 % while one worker proves the
 rewrite of craftcms's mobile user-agent alternation

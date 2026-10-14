@@ -1274,7 +1274,8 @@ read for the `#[RegexPattern]` functions they declare, see [Patterns Behind a Wr
 `Functions` when namespaced functions are read too, then `Patterns`. Step 2
 analyses the patterns, step 3 suggests the optimizations; with
 `--no-optimize` the run has two steps. Without a terminal, in a CI log, the
-progress is not drawn.
+bar is not drawn: a line every 30 seconds says where a long step stands,
+such as `   7449/24824 (30%) 01:30` under `[2/3] Analyzing patterns`.
 
 A worker that fails or exits, a PHP fatal error or the system killing it for
 memory, stops the run with exit code 1 and a message naming the files it was

@@ -39,6 +39,11 @@ final class Output
     private const PROGRESS_BAR_WIDTH = 28;
 
     /**
+     * Without a terminal, the seconds between two lines of progress.
+     */
+    private const PLAIN_PROGRESS_INTERVAL = 30;
+
+    /**
      * Null while the total is not known.
      */
     private ?int $progressTotal = 0;
@@ -61,10 +66,19 @@ final class Output
      */
     private int $progressLineWidth = 0;
 
+    /**
+     * Whether the progress runs without a terminal: no bar is drawn, a
+     * plain line is written every PLAIN_PROGRESS_INTERVAL seconds.
+     */
+    private bool $progressPlain = false;
+
+    private float $plainProgressWrittenAt = 0.0;
+
     private bool $documentWritten = false;
 
     /**
-     * @param resource|null $errorStream where writeError() and the progress write; STDERR by default
+     * @param resource|null            $errorStream where writeError() and the progress write; STDERR by default
+     * @param (\Closure(): float)|null $clock       the time in seconds, microtime(true) by default
      */
     public function __construct(
         private bool $ansi,
@@ -72,6 +86,7 @@ final class Output
         private readonly string $progressBarFull = '#',
         private readonly string $progressBarEmpty = '-',
         private $errorStream = null,
+        private readonly ?\Closure $clock = null,
     ) {}
 
     public function isAnsi(): bool
@@ -200,7 +215,7 @@ final class Output
 
     public function progressAdvance(int $step = 1): void
     {
-        if (!$this->progressActive) {
+        if (!$this->progressActive && !$this->progressPlain) {
             return;
         }
 
@@ -208,7 +223,7 @@ final class Output
         if (null !== $this->progressTotal) {
             $this->progressCurrent = min($this->progressTotal, $this->progressCurrent);
         }
-        $this->renderProgress();
+        $this->showProgress();
     }
 
     /**
@@ -216,9 +231,7 @@ final class Output
      */
     public function progressTick(): void
     {
-        if ($this->progressActive) {
-            $this->renderProgress();
-        }
+        $this->showProgress();
     }
 
     public function progressFinish(): void
@@ -231,6 +244,7 @@ final class Output
             $this->progressActive = false;
         }
 
+        $this->progressPlain = false;
         $this->progressLabel = null;
         $this->progressLabelDrawn = null;
     }
@@ -246,6 +260,7 @@ final class Output
             $this->progressActive = false;
         }
 
+        $this->progressPlain = false;
         $this->progressLabel = null;
         $this->progressLabelDrawn = null;
     }
@@ -264,16 +279,53 @@ final class Output
         $this->progressTotal = $total;
         $this->progressCurrent = 0;
         $this->progressActive = $this->ansi;
-        $this->progressStartedAt = microtime(true);
+        $this->progressPlain = !$this->ansi;
+        $this->progressStartedAt = $this->now();
+        $this->plainProgressWrittenAt = $this->progressStartedAt;
 
         if ($this->progressActive) {
             $this->renderProgress();
         }
     }
 
+    private function showProgress(): void
+    {
+        if ($this->progressActive) {
+            $this->renderProgress();
+        } elseif ($this->progressPlain) {
+            $this->writePlainProgress();
+        }
+    }
+
+    /**
+     * Without a terminal, a CI log for one, a line every
+     * PLAIN_PROGRESS_INTERVAL seconds says where the step stands, so that a
+     * long one does not read as stuck.
+     */
+    private function writePlainProgress(): void
+    {
+        $now = $this->now();
+        if ($now - $this->plainProgressWrittenAt < self::PLAIN_PROGRESS_INTERVAL) {
+            return;
+        }
+
+        $this->plainProgressWrittenAt = $now;
+        $elapsed = $this->formatElapsed((int) ($now - $this->progressStartedAt));
+        $count = null === $this->progressTotal
+            ? $this->progressCurrent.' found'
+            : \sprintf('%d/%d (%d%%)', min($this->progressCurrent, $this->progressTotal), $this->progressTotal, $this->calculateProgressPercent($this->progressTotal));
+
+        $this->writeProgress('   '.(null === $this->progressLabel ? '' : $this->progressLabel.': ').$count.' '.$elapsed."\n");
+    }
+
+    private function now(): float
+    {
+        return null === $this->clock ? microtime(true) : ($this->clock)();
+    }
+
     private function renderProgress(bool $finish = false): void
     {
-        $elapsed = $this->formatElapsed((int) (microtime(true) - $this->progressStartedAt));
+        $elapsed = $this->formatElapsed((int) ($this->now() - $this->progressStartedAt));
 
         if (null === $this->progressTotal) {
             $line = \sprintf(' %s %8s', str_pad($this->progressCurrent.' found', 15, ' ', \STR_PAD_LEFT), $elapsed);
