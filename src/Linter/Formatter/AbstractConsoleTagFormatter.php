@@ -146,13 +146,12 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
         return $output;
     }
 
+    /**
+     * A route requirement, a pattern body with no delimiter, is shown as
+     * written, as the CLI shows it: it does not highlight.
+     */
     private function safelyHighlightPattern(string $pattern): string
     {
-        // Wrap with / / if no delimiter
-        if (!LibraryPcre::match('/^[^a-zA-Z0-9\\\\]/', $pattern)) {
-            $pattern = '/'.$pattern.'/';
-        }
-
         // Always escape control characters to prevent layout issues
         $escapedPattern = DisplayEscaper::escape($pattern);
 

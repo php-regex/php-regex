@@ -266,6 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Under an inline `(?xx)`, a space or a tab is skipped anywhere in a character class, as PCRE2 skips it: `(?xx)[a b]` is `[ab]`, `(?xx)[a - c]` the range `a-c`, and `(?xx)[\d -z]` is refused as PCRE2 refuses `[\d-z]`. Only those before the first member were skipped.
+- `regex:lint` in Symfony and Laravel shows a route requirement as written in its console report, as `regex lint` does: one starting with a letter, a digit or a backslash was wrapped in slashes, so `\d+` read `/\d+/` while `[a-z]+` read as typed.
 - The language server answers a request sent after `shutdown`, a second `shutdown` included, with Invalid Request (-32600), as the protocol asks: it gave no answer, and a client waiting on one hung until its timeout.
 - Every printer and the formatter write a pattern PHP reads to its end when a control backslash `\c\` stands before a backslash or a delimiter: PHP pairs the backslashes of `{\c\\Q{}}` as `\c`, `\\`, `Q` where PCRE reads `\c\` then `\Q`, so `PatternPrinter` wrote `{\c\\{\}}` (and `regex parse` showed it as recompiled), the pretty printer `((?:\c\))x` for `((?:\c\ ))x`, and `compact()` threw `FormattingException`. The control character is spelled `\x1C` there.
 - `new PatternPrinter(pretty: true)` and the normalizing printers keep an escaped space after an empty `(?-x:)`, as in `/(?:a(?-x:)\ b)/x`: the scoped group switched `x` off for the rest of the pattern, and the space was written raw, so the output no longer matched `a b`.
