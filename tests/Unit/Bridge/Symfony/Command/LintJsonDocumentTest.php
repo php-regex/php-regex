@@ -23,7 +23,9 @@ use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -36,6 +38,16 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class LintJsonDocumentTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
+    protected function tearDown(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
     /**
      * @param list<PatternOccurrence> $patterns
      */
@@ -127,6 +139,46 @@ final class LintJsonDocumentTest extends TestCase
 
         $this->assertSame(1, $status);
         $this->assertSame(['error' => 'Failed to collect patterns: boom', 'stage' => 'collect'], $this->decodeDocument($tester->getDisplay()));
+    }
+
+    /**
+     * A worker that ends without its results stops the analysis: the
+     * envelope names the stage analyze. The pids handed back are ones no
+     * system gives out, so no worker runs and its channel is closed from
+     * the start, as when a worker is killed.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_analysis_failure_prints_the_envelope(): void
+    {
+        LintFunctionOverrides::queuePcntlForkResult(2_000_000_001);
+        LintFunctionOverrides::queuePcntlForkResult(2_000_000_002);
+        $patterns = [
+            new PatternOccurrence('/foo/', 'test.php', 12, 'php:preg_match()'),
+            new PatternOccurrence('/bar/', 'test.php', 13, 'php:preg_match()'),
+        ];
+        $tester = new CommandTester($this->createCommand($this->sourceOf($patterns)));
+
+        $async = pcntl_async_signals(true);
+        pcntl_signal(\SIGALRM, static function (): never {
+            throw new \RuntimeException('The lint did not end within 30 seconds: it waits for a worker that is gone.');
+        });
+        pcntl_alarm(30);
+
+        try {
+            $status = $tester->execute(['paths' => ['.'], '--format' => 'json', '--jobs' => '2'], ['verbosity' => OutputInterface::VERBOSITY_QUIET]);
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(\SIGALRM, \SIG_DFL);
+            pcntl_async_signals($async);
+        }
+
+        $document = $this->decodeDocument($tester->getDisplay());
+        $this->assertSame(1, $status);
+        $this->assertSame(['error', 'stage'], array_keys($document));
+        $this->assertSame('analyze', $document['stage']);
+        $this->assertIsString($document['error']);
+        $this->assertStringContainsString('Parallel analysis failed: a worker exited unexpectedly while reading test.php', (string) $document['error']);
     }
 
     #[Test]

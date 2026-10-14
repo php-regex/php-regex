@@ -57,7 +57,8 @@ final class LintServiceEdgeCasesTest extends TestCase
             'file' => __FILE__,
             'line' => 1,
         ];
-        $this->assertFalse($method->invoke($service, $issue));
+        $noLinesRead = [];
+        $this->assertFalse($method->invokeArgs($service, [$issue, &$noLinesRead]));
 
         $tempFile = tempnam(sys_get_temp_dir(), 'regex-lint');
         if (false === $tempFile) {
@@ -71,7 +72,8 @@ final class LintServiceEdgeCasesTest extends TestCase
                 'file' => $tempFile,
                 'line' => 3,
             ];
-            $this->assertFalse($method->invoke($service, $issue));
+            $noLinesRead = [];
+            $this->assertFalse($method->invokeArgs($service, [$issue, &$noLinesRead]));
         } finally {
             chmod($tempFile, 0o600);
             @unlink($tempFile);

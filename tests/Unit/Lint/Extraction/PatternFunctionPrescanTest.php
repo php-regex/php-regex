@@ -19,9 +19,11 @@ use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
@@ -92,7 +94,9 @@ final class PatternFunctionPrescanTest extends TestCase
     }
 
     /**
-     * The console's run: workers, and a progress bar.
+     * The console's run: workers, and a progress. The steps come in order,
+     * each finished before the next starts, each advanced by every file it
+     * covers; each parallel step names the workers it started.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
@@ -102,24 +106,30 @@ final class PatternFunctionPrescanTest extends TestCase
     public function test_an_attribute_declared_in_another_file_is_read_with_workers_and_progress(\Closure $strategy): void
     {
         $project = $this->makeProject(['lib/a_helper.php' => self::HELPER, 'lib/b_caller.php' => self::CALLER]);
-        $calls = [];
+        $progress = new RecordingLintProgress();
 
-        $occurrences = (new PatternExtractor($strategy()))->extract(
-            [$project.'/lib'],
-            [],
-            static function (int $current, int $total) use (&$calls): void {
-                $calls[] = [$current, $total];
-            },
-            4,
-        );
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], $progress, 4);
 
         $this->assertSame(['/b02(/'], self::patterns($occurrences));
-        $this->assertSame([[0, 2], [1, 2], [2, 2]], $calls);
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null],
+            [LintProgress::STEP_DECLARATIONS, 2],
+            [LintProgress::STEP_PATTERNS, 2],
+        ], $progress->steps());
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 2],
+            [LintProgress::STEP_DECLARATIONS, 2, 2],
+            [LintProgress::STEP_PATTERNS, 2, 2],
+        ], $progress->stepSums());
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_DECLARATIONS, LintProgress::STEP_PATTERNS], $progress->finishedSteps());
+        $this->assertSame([2], $progress->workerCountsIn(LintProgress::STEP_DECLARATIONS));
+        $this->assertSame([2], $progress->workerCountsIn(LintProgress::STEP_PATTERNS));
     }
 
     /**
-     * The declarations the workers read back are kept when no worker can
-     * be started for the extraction, which then runs in the parent.
+     * The declarations the workers read back are kept when the extraction
+     * then runs in the parent: one linted file, two files read for
+     * declarations.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
@@ -131,26 +141,52 @@ final class PatternFunctionPrescanTest extends TestCase
         $project = $this->makeProject([
             'lib/a_helper.php' => self::HELPER,
             'lib/b_caller.php' => self::CALLER,
-            'payload/a' => serialize(['ok' => true, 'result' => ['App\grep#0']]),
-            'payload/b' => serialize(['ok' => true, 'result' => 'not a list']),
         ]);
-        // The two children of the scan "write" these payloads; the first
-        // child of the extraction cannot be forked.
-        LintFunctionOverrides::queueTempnam($project.'/payload/a');
-        LintFunctionOverrides::queueTempnam($project.'/payload/b');
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::queuePcntlForkResult(222);
-        LintFunctionOverrides::queuePcntlForkResult(-1);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
+        $progress = new RecordingLintProgress();
 
-        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], null, 2);
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib/b_caller.php'], [], $progress, 2, [$project.'/lib']);
 
         $this->assertSame(['/b02(/'], self::patterns($occurrences));
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 1],
+            [LintProgress::STEP_DECLARATIONS, 2, 2],
+            [LintProgress::STEP_PATTERNS, 1, 1],
+        ], $progress->stepSums());
+        $this->assertSame([2], $progress->workerCountsIn(LintProgress::STEP_DECLARATIONS));
+        $this->assertSame([], $progress->workerCountsIn(LintProgress::STEP_PATTERNS));
+    }
+
+    /**
+     * The declarations two workers read back are kept when no worker can
+     * be forked for the extraction, which then runs in the parent with
+     * every file advanced.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_the_declarations_read_on_workers_survive_an_extraction_that_falls_back_to_the_parent(\Closure $strategy): void
+    {
+        $project = $this->makeProject(['lib/a_helper.php' => self::HELPER, 'lib/b_caller.php' => self::CALLER]);
+        LintFunctionOverrides::$pcntlForkFailAfter = 2;
+        $progress = new RecordingLintProgress();
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], $progress, 2);
+
+        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+        $this->assertSame(2, LintFunctionOverrides::$pcntlForkRealCount, 'The scan ran on two workers.');
+        $this->assertSame([2], $progress->workerCountsIn(LintProgress::STEP_DECLARATIONS));
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 2],
+            [LintProgress::STEP_DECLARATIONS, 2, 2],
+            [LintProgress::STEP_PATTERNS, 2, 2],
+        ], $progress->stepSums());
     }
 
     /**
      * When no child can be forked to read the declarations, the parent
-     * reads them itself.
+     * reads them itself, with the same steps and every file advanced.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
@@ -161,67 +197,101 @@ final class PatternFunctionPrescanTest extends TestCase
     {
         $project = $this->makeProject(['lib/a_helper.php' => self::HELPER, 'lib/b_caller.php' => self::CALLER]);
         LintFunctionOverrides::queuePcntlForkResult(-1);
+        $progress = new RecordingLintProgress();
 
-        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], null, 2);
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], $progress, 2);
 
         $this->assertSame(['/b02(/'], self::patterns($occurrences));
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 2],
+            [LintProgress::STEP_DECLARATIONS, 2, 2],
+            [LintProgress::STEP_PATTERNS, 2, 2],
+        ], $progress->stepSums());
     }
 
     /**
-     * A child of the scan that fails is reported once every child is waited
-     * for and every payload file removed.
+     * A worker of the collection that fails is reported with the file it
+     * was reading, once every worker is reaped and no payload file is
+     * left; the declarations were read on workers before it.
      */
     #[Test]
     #[RequiresFunction('pcntl_fork')]
-    public function test_a_failing_scan_worker_is_reported_after_every_worker_is_cleaned_up(): void
+    public function test_a_failing_collection_worker_is_reported_after_every_worker_is_cleaned_up(): void
     {
         $project = $this->makeProject([
             'lib/a_helper.php' => self::HELPER,
             'lib/b_caller.php' => self::CALLER,
-            'payload/a' => serialize(['ok' => false, 'error' => ['message' => 'Boom', 'class' => \RuntimeException::class]]),
-            'payload/b' => serialize(['ok' => true, 'result' => []]),
         ]);
-        LintFunctionOverrides::queueTempnam($project.'/payload/a');
-        LintFunctionOverrides::queueTempnam($project.'/payload/b');
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::queuePcntlForkResult(222);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
+        $failing = $project.'/lib/b_caller.php';
+        $extractor = new class($failing) implements ExtractorInterface, PatternFunctionAwareInterface {
+            public function __construct(private readonly string $failing) {}
+
+            public function withPatternFunctions(array $specs, array $plain = []): static
+            {
+                return $this;
+            }
+
+            public function customGlobalFunctions(): array
+            {
+                return [];
+            }
+
+            public function extract(array $files): array
+            {
+                if (\in_array($this->failing, $files, true)) {
+                    throw new \RuntimeException('Boom');
+                }
+
+                return [];
+            }
+        };
+        $progress = new RecordingLintProgress();
+        $before = self::payloadFiles();
+        $payloads = $this->makeProject();
+        LintFunctionOverrides::$tempnamDirectory = $payloads;
 
         try {
-            (new PatternExtractor(new TokenBasedExtractionStrategy()))->extract([$project.'/lib'], [], null, 2);
+            (new PatternExtractor($extractor))->extract([$project.'/lib'], [], $progress, 2);
             $this->fail('The failure of the child is reported.');
         } catch (LintException $e) {
-            $this->assertSame('Parallel collection failed: RuntimeException: Boom', $e->getMessage());
+            $this->assertSame('Parallel collection failed: RuntimeException: Boom (in '.$failing.')', $e->getMessage());
         }
 
-        $this->assertFileDoesNotExist($project.'/payload/a');
-        $this->assertFileDoesNotExist($project.'/payload/b');
+        $this->assertSame([], array_values(array_diff(scandir($payloads) ?: [], ['.', '..'])));
+        $this->assertSame([], array_values(array_diff(self::payloadFiles(), $before)));
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_DECLARATIONS, LintProgress::STEP_PATTERNS], array_column($progress->steps(), 0));
     }
 
     /**
-     * The progress starts, at zero of the files to lint, before the
-     * declarations are read: a large vendor/ does not leave the progress
-     * unshown.
+     * The progress starts before the declarations are read: a large vendor/
+     * does not leave the progress unshown. The declarations step is
+     * advanced by the time the extractor is given the declarations, and
+     * the patterns step starts before the first file is extracted.
      */
     #[Test]
     public function test_the_progress_starts_before_the_declarations_are_read(): void
     {
         $project = $this->makeProject(['lib/caller.php' => self::CALLER]);
-        $calls = new \ArrayObject();
-        $extractor = new class($calls) implements ExtractorInterface, PatternFunctionAwareInterface {
+        $progress = new RecordingLintProgress();
+        $extractor = new class($progress) implements ExtractorInterface, PatternFunctionAwareInterface {
             /**
-             * @var array<int, array{int, int}>|null
+             * @var list<array{string, ?int}>|null
              */
-            public ?array $callsWhenGiven = null;
+            public ?array $stepsWhenGiven = null;
+
+            public ?int $declarationsAdvancedWhenGiven = null;
 
             /**
-             * @param \ArrayObject<int, array{int, int}> $calls
+             * @var list<array{string, ?int}>|null
              */
-            public function __construct(private readonly \ArrayObject $calls) {}
+            public ?array $stepsWhenFirstExtracting = null;
+
+            public function __construct(private readonly RecordingLintProgress $progress) {}
 
             public function withPatternFunctions(array $specs, array $plain = []): static
             {
-                $this->callsWhenGiven = $this->calls->getArrayCopy();
+                $this->stepsWhenGiven = $this->progress->steps();
+                $this->declarationsAdvancedWhenGiven = $this->progress->advancedIn(LintProgress::STEP_DECLARATIONS);
 
                 return $this;
             }
@@ -233,20 +303,27 @@ final class PatternFunctionPrescanTest extends TestCase
 
             public function extract(array $files): array
             {
+                $this->stepsWhenFirstExtracting ??= $this->progress->steps();
+
                 return [];
             }
         };
 
-        (new PatternExtractor($extractor))->extract([$project.'/lib'], [], static function (int $current, int $total) use ($calls): void {
-            $calls[] = [$current, $total];
-        });
+        (new PatternExtractor($extractor))->extract([$project.'/lib'], [], $progress);
 
-        $this->assertSame([[0, 1]], $extractor->callsWhenGiven);
-        $this->assertSame([[0, 1], [1, 1]], $calls->getArrayCopy());
+        $this->assertSame([[LintProgress::STEP_FILES, null], [LintProgress::STEP_DECLARATIONS, 1]], $extractor->stepsWhenGiven);
+        $this->assertSame(1, $extractor->declarationsAdvancedWhenGiven);
+        $this->assertSame([[LintProgress::STEP_FILES, null], [LintProgress::STEP_DECLARATIONS, 1], [LintProgress::STEP_PATTERNS, 1]], $extractor->stepsWhenFirstExtracting);
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 1],
+            [LintProgress::STEP_DECLARATIONS, 1, 1],
+            [LintProgress::STEP_PATTERNS, 1, 1],
+        ], $progress->stepSums());
     }
 
     /**
-     * A progress callback has the files extracted one at a time.
+     * In the parent alone, the steps are the same, each advanced by every
+     * file it covers.
      *
      * @param \Closure(): ExtractorInterface $strategy
      */
@@ -255,18 +332,108 @@ final class PatternFunctionPrescanTest extends TestCase
     public function test_an_attribute_declared_in_another_file_is_read_with_progress(\Closure $strategy): void
     {
         $project = $this->makeProject(['lib/a_helper.php' => self::HELPER, 'lib/b_caller.php' => self::CALLER]);
-        $calls = [];
+        $progress = new RecordingLintProgress();
 
-        $occurrences = (new PatternExtractor($strategy()))->extract(
-            [$project.'/lib'],
-            [],
-            static function (int $current, int $total) use (&$calls): void {
-                $calls[] = [$current, $total];
-            },
-        );
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/lib'], [], $progress);
 
         $this->assertSame(['/b02(/'], self::patterns($occurrences));
-        $this->assertSame([[0, 2], [1, 2], [2, 2]], $calls);
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 2],
+            [LintProgress::STEP_DECLARATIONS, 2, 2],
+            [LintProgress::STEP_PATTERNS, 2, 2],
+        ], $progress->stepSums());
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_DECLARATIONS, LintProgress::STEP_PATTERNS], $progress->finishedSteps());
+        $this->assertSame([], $progress->workerCounts());
+    }
+
+    /**
+     * The declarations step covers the project files and the vendor files
+     * in one total.
+     */
+    #[Test]
+    public function test_the_declarations_step_counts_the_project_and_the_vendor_files(): void
+    {
+        $project = $this->makeProject([
+            'lib/caller.php' => self::CALLER,
+            'vendor/acmé/grep/helper.php' => self::HELPER,
+            'vendor/acme/other/unrelated.php' => "<?php\n",
+        ]);
+        $progress = new RecordingLintProgress();
+
+        $occurrences = (new PatternExtractor(new TokenBasedExtractionStrategy()))->extract([$project.'/lib'], ['vendor'], $progress, vendorPaths: [$project.'/vendor']);
+
+        $this->assertSame(['/b02(/'], self::patterns($occurrences));
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 1],
+            [LintProgress::STEP_DECLARATIONS, 3, 3],
+            [LintProgress::STEP_PATTERNS, 1, 1],
+        ], $progress->stepSums());
+    }
+
+    /**
+     * The namespaced functions are read, when a global pattern function is
+     * configured or declared, under a step of their own, between the
+     * declarations and the patterns.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategiesConfiguringGrep')]
+    public function test_the_namespaced_function_pass_is_a_step_of_its_own(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'app/own.php' => "<?php\nnamespace App;\nfunction grep(string \$haystack) {}\n",
+            'app/caller.php' => "<?php\nnamespace App;\ngrep('a(b');\n",
+            'app/Other/elsewhere.php' => "<?php\nnamespace App\\Other;\ngrep('/c(/');\n",
+        ]);
+        $progress = new RecordingLintProgress();
+
+        $occurrences = (new PatternExtractor($strategy()))->extract([$project.'/app'], [], $progress);
+
+        $this->assertSame(['/c(/'], self::patterns($occurrences));
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 3],
+            [LintProgress::STEP_DECLARATIONS, 3, 3],
+            [LintProgress::STEP_FUNCTIONS, 3, 3],
+            [LintProgress::STEP_PATTERNS, 3, 3],
+        ], $progress->stepSums());
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_DECLARATIONS, LintProgress::STEP_FUNCTIONS, LintProgress::STEP_PATTERNS], $progress->finishedSteps());
+    }
+
+    /**
+     * On workers or in the parent alone, the steps and what each advanced
+     * are the same, the namespaced-function pass and vendor/ included.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategiesConfiguringGrep')]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_the_steps_are_the_same_in_the_parent_and_on_workers(\Closure $strategy): void
+    {
+        $project = $this->makeProject([
+            'app/own.php' => "<?php\nnamespace App;\nfunction grep(string \$haystack) {}\n",
+            'app/caller.php' => "<?php\nnamespace App;\ngrep('a(b');\n",
+            'app/Other/elsewhere.php' => "<?php\nnamespace App\\Other;\ngrep('/c(/');\n",
+            'app/Other/more.php' => "<?php\nnamespace App\\Other;\n\\App\\grep('x');\n",
+            'vendor/acme/helper.php' => self::HELPER,
+            'vendor/acme/other.php' => "<?php\n",
+        ]);
+        $serialProgress = new RecordingLintProgress();
+        $parallelProgress = new RecordingLintProgress();
+
+        $serial = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], $serialProgress, 1, vendorPaths: [$project.'/vendor']);
+        $parallel = (new PatternExtractor($strategy()))->extract([$project.'/app'], ['vendor'], $parallelProgress, 4, vendorPaths: [$project.'/vendor']);
+
+        $this->assertEquals($serial, $parallel);
+        $this->assertSame($serialProgress->stepSums(), $parallelProgress->stepSums());
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 4],
+            [LintProgress::STEP_DECLARATIONS, 6, 6],
+            [LintProgress::STEP_FUNCTIONS, 6, 6],
+            [LintProgress::STEP_PATTERNS, 4, 4],
+        ], $parallelProgress->stepSums());
+        $this->assertSame($serialProgress->finishedSteps(), $parallelProgress->finishedSteps());
     }
 
     /**
@@ -818,5 +985,16 @@ final class PatternFunctionPrescanTest extends TestCase
     private static function patterns(array $occurrences): array
     {
         return array_values(array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * The payload files a run of workers could leave in the temporary
+     * directory.
+     *
+     * @return list<string>
+     */
+    private static function payloadFiles(): array
+    {
+        return array_values(array_filter(glob(sys_get_temp_dir().'/regexparser_*') ?: [], is_file(...)));
     }
 }

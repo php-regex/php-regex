@@ -58,7 +58,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | --- | --- | --- |
 | `paths`, `exclude` | working directory, `vendor` | Directories or files to scan, and paths to skip |
 | `phpVersion`, `pcreVersion` | from composer.json | The PHP (`"8.3"`, `80300`, `"runtime"`) and PCRE2 (`"10.44"`) releases the patterns are judged for |
-| `jobs` | CPU cores | Parallel workers |
+| `jobs` | logical CPUs | Parallel workers: the CPUs the process may use, within a container's CPU quota; 1 without `pcntl` |
 | `format` | `console` | `console`, `json`, `github`, `checkstyle` or `junit` |
 | `ide` | none | `phpstorm`, `vscode`, others, or a URL template — for clickable links |
 | `extraction.interop` | `["composer-pcre"]` | Wrapper presets to read: `composer-pcre`, `nette-utils`, `spatie-regex`, `laravel-str` |

@@ -51,7 +51,7 @@ final class JsonOutputReferenceTest extends TestCase
 {
     private const PAGE = __DIR__.'/../../docs/reference/json-output.md';
 
-    private const STAGES = ['usage', 'config', 'collect', 'pattern', 'internal'];
+    private const STAGES = ['usage', 'config', 'collect', 'analyze', 'pattern', 'internal'];
 
     #[Test]
     public function test_json_reference_page_exists(): void
@@ -109,7 +109,8 @@ final class JsonOutputReferenceTest extends TestCase
     {
         $this->assertFileExists(self::PAGE);
 
-        $this->assertStringContainsString('`'.$stage.'`', (string) file_get_contents(self::PAGE));
+        // A row of the stage table: `analyze` also names a command on the page.
+        $this->assertStringContainsString("\n| `".$stage.'` |', (string) file_get_contents(self::PAGE));
     }
 
     /**

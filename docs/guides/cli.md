@@ -519,13 +519,14 @@ Backtrack     : 1000000
 Recursion     : 100000
 Configuration : regex.dist.json
 
-  [1/2] Scanning files
+  [1/3] Scanning files
   Scanned 1 files, found 1 patterns.
 
-  [2/2] Analyzing patterns
+  [2/3] Analyzing patterns
+  [3/3] Suggesting optimizations
 
   PASS No issues found, 0 optimizations available.
-  Time: 0.02s  Memory: 8 MB  Processes: 10
+  Time: 0.02s  Memory: 8 MB  Processes: 1
   If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex
 ```
 
@@ -536,10 +537,11 @@ vendor/bin/regex lint src/ --redos
 ```
 
 ```
-  [1/2] Scanning files
+  [1/3] Scanning files
   Scanned 1 files, found 2 patterns.
 
-  [2/2] Analyzing patterns
+  [2/3] Analyzing patterns
+  [3/3] Suggesting optimizations
   src/Example.php:3:12
       → /(?<=a+)b/
     FAIL Lookbehind is unbounded. PCRE requires a bounded maximum length.
@@ -749,7 +751,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `paths`                         | array or string  | Paths to scan (default: the working directory)           |
 | `exclude`                       | array or string  | Paths to exclude (default: `vendor`)                     |
 | `format`                        | string           | Output format (console, json, github, checkstyle, junit) |
-| `jobs`                          | int              | Number of parallel workers (at least 1)                  |
+| `jobs`                          | int              | Number of parallel workers, at least 1 (default: the logical CPUs the process may use, see [Parallel workers](#parallel-workers)) |
 | `ide`                           | string           | IDE for clickable links                                  |
 | `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
@@ -926,7 +928,7 @@ passed.
 
 | Command                                      | Exits with 1 when                                                                  |
 |----------------------------------------------|------------------------------------------------------------------------------------|
-| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read |
+| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read; or a worker fails or exits |
 | `validate`, `parse --validate`, `analyze`    | The pattern is invalid                                                             |
 | `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse                                                         |
 | `graph`                                      | The pattern does not parse, or cannot be drawn as an automaton                     |
@@ -974,7 +976,7 @@ With `--format=json`, a configuration or command-line error is printed on
 stdout as the error envelope, `{"error": "...", "stage": "config"}` (stage
 `usage` for the command line, a path argument that does not exist included,
 `config` for a path in `regex.json` that does not exist, `collect` when the
-files cannot be read), so that stdout always holds one JSON document; with
+files cannot be read, `analyze` when a worker fails or exits), so that stdout always holds one JSON document; with
 the other formats it is printed on stderr. See
 [the error envelope](../reference/json-output.md#the-error-envelope).
 
@@ -1162,7 +1164,7 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 |---------------------|----------------------------------------------------|
 | `--exclude <path>`  | Exclude path (repeatable)                          |
 | `--min-savings <n>` | Minimum optimization savings                       |
-| `-j, --jobs <n>`    | Parallel workers                                   |
+| `-j, --jobs <n>`    | Parallel workers (default: the logical CPUs, see [Parallel workers](#parallel-workers)) |
 | `--format <format>` | Output format (console, json, github, checkstyle, junit) |
 | `--json`            | Same as `--format=json`                            |
 | `--output <file>`   | Also write the report to a file                    |
@@ -1204,6 +1206,47 @@ files in `stats.parser_fallbacks` of the JSON report, never as an error, and
 
 Outside the console format, that line goes to stderr, so that stdout holds
 the report alone.
+
+### Parallel workers
+
+Without `--jobs` (or `"jobs"` in `regex.json`), the lint runs one worker per
+logical CPU the process may use: the CPUs it is pinned to on Linux, else
+`nproc` or `sysctl hw.logicalcpu`, else `/proc/cpuinfo`. Inside a container,
+the cgroup CPU quota (`docker run --cpus=2`) and `KUBERNETES_CPU_LIMIT` cap
+that number, a fraction rounding up. Without the `pcntl` extension, on
+Windows for one, the lint runs in one process. The banner shows the number
+planned; the `Processes:` line under the report shows the number of workers
+the run started, 1 when it had a single file or pattern to share out.
+
+The workers take the files, then the patterns, a few at a time, as each one
+finishes the last, and report as they go: the progress moves with the work
+and its clock keeps running while the run waits. In a terminal the console
+format shows each step and its progress on stderr, so that
+`vendor/bin/regex lint src/ > report.txt` keeps the report alone:
+
+```text
+  [1/3] Scanning files
+   Patterns           1240/4510 [▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░]  27%    00:04
+```
+
+Step 1 names what it reads: `Finding files`, then `Declarations` (the files
+read for the `#[RegexPattern]` functions they declare, see [Patterns Behind a Wrapper](#patterns-behind-a-wrapper)),
+`Functions` when namespaced functions are read too, then `Patterns`. Step 2
+analyses the patterns, step 3 suggests the optimizations; with
+`--no-optimize` the run has two steps. Without a terminal, in a CI log, the
+progress is not drawn.
+
+A worker that fails or exits, a PHP fatal error or the system killing it for
+memory, stops the run with exit code 1 and a message naming the files it was
+reading:
+
+```text
+Error: Parallel analysis failed: a worker exited unexpectedly while reading src/Huge.php and 41 more
+```
+
+With `--format=json` the error envelope says `"stage": "analyze"` (see
+[JSON output](../reference/json-output.md)). `--jobs=1` runs everything in
+one process.
 
 ### Baseline
 

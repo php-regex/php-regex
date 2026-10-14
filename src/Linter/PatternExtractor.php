@@ -33,6 +33,11 @@ final readonly class PatternExtractor
         PatternOccurrence::class,
     ];
 
+    /**
+     * How many files found make one advance of the progress.
+     */
+    private const FOUND_BATCH = 1000;
+
     private const SUPPRESSION_MARKERS = [
         '@regex-ignore-next-line' => 'next',
         '@regex-ignore' => 'same',
@@ -52,47 +57,39 @@ final readonly class PatternExtractor
 
     public static function supportsParallel(): bool
     {
-        return \PHP_SAPI === 'cli'
-            && \function_exists('pcntl_fork')
-            && \function_exists('pcntl_waitpid');
+        return ForkedWorkerPool::canFork();
     }
 
     /**
      * Extract regex patterns from the given paths.
      *
-     * @param array<string>                 $paths            Paths to scan for PHP files
-     * @param array<string>|null            $excludePaths     Optional paths to exclude (falls back to ['vendor'])
-     * @param callable(int, int): void|null $progress         Reports collection progress as (current, total)
-     * @param int                           $workers          Number of worker processes to use when supported
-     * @param array<string>                 $declarationPaths Project paths read, besides the linted files, for the
-     *                                                        functions a parameter marked #[RegexPattern] makes pattern
-     *                                                        functions; what they hold is not linted
-     * @param array<string>                 $vendorPaths      Library paths (vendor/) read the same way; a project
-     *                                                        declaration wins over a copy found there
+     * The progress goes through the steps of the collection: the files found
+     * (no total), the files read for declarations when the extractor is told
+     * about pattern functions, the namespaced functions when that pass runs,
+     * then the files read for their patterns.
+     *
+     * @param array<string>      $paths            Paths to scan for PHP files
+     * @param array<string>|null $excludePaths     Optional paths to exclude (falls back to ['vendor'])
+     * @param int                $workers          Number of worker processes to use when supported
+     * @param array<string>      $declarationPaths Project paths read, besides the linted files, for the
+     *                                             functions a parameter marked #[RegexPattern] makes pattern
+     *                                             functions; what they hold is not linted
+     * @param array<string>      $vendorPaths      Library paths (vendor/) read the same way; a project
+     *                                             declaration wins over a copy found there
      *
      * @return array<PatternOccurrence>
      */
-    public function extract(array $paths, ?array $excludePaths = null, ?callable $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
+    public function extract(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
     {
         $excludePaths ??= ['vendor'];
-        $phpFiles = $this->collectPhpFiles($paths, $excludePaths);
+        $progress?->step(LintProgress::STEP_FILES, null);
+        $phpFiles = $this->collectPhpFiles($paths, $excludePaths, $progress);
 
-        $total = \count($phpFiles);
-        if (0 === $total) {
-            if (null !== $progress) {
-                $progress(0, 0);
-            }
+        if ([] === $phpFiles) {
+            $progress?->finish();
 
             return [];
         }
-
-        // The progress starts before the declarations are read, which a
-        // large vendor/ makes long.
-        if (null !== $progress) {
-            $progress(0, $total);
-        }
-
-        $parallel = $workers > 1 && self::supportsParallel();
 
         // The declarations are read once, before the files are shared out:
         // a call and the declaration it needs may land in two chunks, or the
@@ -100,80 +97,23 @@ final readonly class PatternExtractor
         $extractor = $this->extractor;
         if ($extractor instanceof PatternFunctionAwareInterface) {
             $projectFiles = $this->collectDeclarationFiles($paths, $phpFiles, $declarationPaths);
-            $extractor = $this->withDeclarations($extractor, $projectFiles, $this->walkDeclarationPaths($vendorPaths), $parallel ? $workers : 1);
+            $vendorFiles = $this->walkDeclarationPaths($vendorPaths);
+            $progress?->finish();
+            $extractor = $this->withDeclarations($extractor, $projectFiles, $vendorFiles, $workers, $progress);
+        } else {
+            $progress?->finish();
         }
 
-        if ($parallel && $total > 1) {
-            return $this->applyInlineIgnores($this->extractParallel($phpFiles, $workers, $progress, $extractor));
-        }
-
-        return $this->applyInlineIgnores($this->extractSerial($phpFiles, $progress, $extractor));
-    }
-
-    /**
-     * @param array<string>                 $phpFiles
-     * @param callable(int, int): void|null $progress
-     *
-     * @return array<PatternOccurrence>
-     */
-    private function extractSerial(array $phpFiles, ?callable $progress, ExtractorInterface $extractor): array
-    {
-        if (null === $progress) {
-            return $extractor->extract($phpFiles);
-        }
-
-        $total = \count($phpFiles);
-
+        // The inline markers are read where the file is extracted: a file
+        // never spans two chunks.
+        $progress?->step(LintProgress::STEP_PATTERNS, \count($phpFiles));
         $occurrences = [];
-        $current = 0;
-
-        foreach ($phpFiles as $file) {
-            foreach ($extractor->extract([$file]) as $occurrence) {
-                $occurrences[] = $occurrence;
-            }
-            $current++;
-            $progress($current, $total);
+        foreach ($this->readEach($phpFiles, $workers, fn (string $file): array => $this->applyInlineIgnores($extractor->extract([$file])), $progress) as $fileOccurrences) {
+            array_push($occurrences, ...$fileOccurrences);
         }
+        $progress?->finish();
 
         return $occurrences;
-    }
-
-    /**
-     * @param array<string>                 $phpFiles
-     * @param callable(int, int): void|null $progress
-     *
-     * @return array<PatternOccurrence>
-     */
-    private function extractParallel(array $phpFiles, int $workers, ?callable $progress, ExtractorInterface $extractor): array
-    {
-        $total = \count($phpFiles);
-        $processed = 0;
-        $resultsByIndex = $this->runInWorkers(
-            $phpFiles,
-            $workers,
-            static fn (array $chunk): array => $extractor->extract($chunk),
-            static function (int $count) use (&$processed, $total, $progress): void {
-                if (null !== $progress) {
-                    $processed += $count;
-                    $progress($processed, $total);
-                }
-            },
-        );
-
-        if (null === $resultsByIndex) {
-            return $this->extractSerial($phpFiles, $progress, $extractor);
-        }
-
-        /** @var array<PatternOccurrence> $results */
-        $results = [];
-        foreach ($resultsByIndex as $chunkResults) {
-            /** @var PatternOccurrence $item */
-            foreach (\is_array($chunkResults) ? $chunkResults : [] as $item) {
-                $results[] = $item;
-            }
-        }
-
-        return $results;
     }
 
     /**
@@ -187,15 +127,20 @@ final readonly class PatternExtractor
      * the parameters they mark. Neither the order of the paths nor the
      * number of workers changes the result.
      *
-     * @param array<string> $projectFiles
-     * @param array<string> $vendorFiles
+     * @param list<string> $projectFiles
+     * @param list<string> $vendorFiles
      */
-    private function withDeclarations(ExtractorInterface&PatternFunctionAwareInterface $extractor, array $projectFiles, array $vendorFiles, int $workers): ExtractorInterface
+    private function withDeclarations(ExtractorInterface&PatternFunctionAwareInterface $extractor, array $projectFiles, array $vendorFiles, int $workers, ?LintProgress $progress): ExtractorInterface
     {
-        $scan = static fn (array $chunk): array => PatternAttributeScanner::specs($chunk);
-        $specs = $this->scanInWorkers($projectFiles, $workers, $scan);
+        $files = [...$projectFiles, ...$vendorFiles];
+        $progress?->step(LintProgress::STEP_DECLARATIONS, \count($files));
+        $read = $this->readEach($files, $workers, static fn (string $file): array => PatternAttributeScanner::specs([$file]), $progress);
+        $progress?->finish();
+
+        $projectCount = \count($projectFiles);
+        $specs = array_values(array_unique(array_merge([], ...\array_slice($read, 0, $projectCount))));
         $declared = array_fill_keys(array_map(self::specName(...), $specs), true);
-        foreach ($this->scanInWorkers($vendorFiles, $workers, $scan) as $spec) {
+        foreach (array_unique(array_merge([], ...\array_slice($read, $projectCount))) as $spec) {
             if (!isset($declared[self::specName($spec)])) {
                 $specs[] = $spec;
             }
@@ -208,11 +153,18 @@ final readonly class PatternExtractor
         // too.
         $declaredGlobals = array_filter(array_map(self::specName(...), $specs), static fn (string $name): bool => !str_contains($name, '\\') && !str_contains($name, ':'));
         $globals = array_values(array_unique([...$extractor->customGlobalFunctions(), ...$declaredGlobals]));
-        $plain = [] === $globals ? [] : $this->scanInWorkers(
-            [...$projectFiles, ...$vendorFiles],
-            $workers,
-            static fn (array $chunk): array => PatternAttributeScanner::namespacedFunctions($chunk, $globals),
-        );
+        $plain = [];
+        if ([] !== $globals) {
+            $progress?->step(LintProgress::STEP_FUNCTIONS, \count($files));
+            // A name read twice is kept once: the registry keys them.
+            $plain = array_merge([], ...$this->readEach(
+                $files,
+                $workers,
+                static fn (string $file): array => PatternAttributeScanner::namespacedFunctions([$file], $globals),
+                $progress,
+            ));
+            $progress?->finish();
+        }
         sort($plain);
 
         return $extractor->withPatternFunctions($specs, $plain);
@@ -229,120 +181,49 @@ final readonly class PatternExtractor
     }
 
     /**
-     * What the scan gives for the files, run on the workers when there are
-     * several.
+     * What the read gives for each file, in the order of the files, run on
+     * the workers when there are several; each file read advances the
+     * progress.
      *
-     * @param array<string>                         $files
-     * @param \Closure(array<string>): list<string> $scan
+     * @template R
      *
-     * @return list<string>
+     * @param list<string>        $files
+     * @param \Closure(string): R $read
+     *
+     * @throws LintException when a worker fails
+     *
+     * @return list<R>
      */
-    private function scanInWorkers(array $files, int $workers, \Closure $scan): array
+    private function readEach(array $files, int $workers, \Closure $read, ?LintProgress $progress): array
     {
-        $resultsByIndex = $workers > 1 && \count($files) > 1 ? $this->runInWorkers($files, $workers, $scan) : null;
-
-        if (null === $resultsByIndex) {
-            return array_values(array_unique($scan($files)));
-        }
-
-        $found = [];
-        foreach ($resultsByIndex as $chunkResults) {
-            foreach (\is_array($chunkResults) ? $chunkResults : [] as $item) {
-                if (\is_string($item)) {
-                    $found[] = $item;
+        $work = static function (array $chunk, ?\Closure $done) use ($read): array {
+            $results = [];
+            foreach ($chunk as $file) {
+                $results[] = $read($file);
+                if (null !== $done) {
+                    $done(1);
                 }
             }
-        }
 
-        return array_values(array_unique($found));
-    }
+            return $results;
+        };
 
-    /**
-     * Shares the files out between forked children, each running the work
-     * on its chunk.
-     *
-     * @param array<string>                  $files
-     * @param \Closure(array<string>): mixed $work
-     * @param (\Closure(int): void)|null     $chunkDone called with the number of files of each chunk read back
-     *
-     * @return array<int, mixed>|null what the work gave for each chunk, in order; null when a child could not be started
-     */
-    private function runInWorkers(array $files, int $workers, \Closure $work, ?\Closure $chunkDone = null): ?array
-    {
-        $total = \count($files);
-        $workerCount = max(1, min($workers, $total));
-        $chunkSize = max(1, (int) ceil($total / $workerCount));
-        $chunks = array_chunk($files, $chunkSize);
-        $children = [];
-        $failed = false;
-
-        foreach ($chunks as $index => $chunk) {
-            $tmpFile = tempnam(sys_get_temp_dir(), 'regexparser_extract_');
-            if (false === $tmpFile) {
-                $failed = true;
-
-                break;
-            }
-
-            $pid = (new ForkedWorkerPool())->fork(
-                static fn (): mixed => $work($chunk),
-                $tmpFile,
+        if ($workers > 1 && \count($files) > 1 && ForkedWorkerPool::canFork()) {
+            $results = (new ForkedWorkerPool())->run(
+                $files,
+                $workers,
+                $work,
+                $progress,
+                'Parallel collection failed',
+                self::WORKER_ALLOWED_CLASSES,
+                static fn (string $file): string => $file,
             );
-            if (-1 === $pid) {
-                @unlink($tmpFile);
-                $failed = true;
-
-                break;
-            }
-
-            $children[$pid] = [
-                'file' => $tmpFile,
-                'index' => $index,
-                'count' => \count($chunk),
-            ];
-        }
-
-        if ($failed) {
-            foreach ($children as $pid => $meta) {
-                pcntl_waitpid($pid, $status);
-                @unlink($meta['file']);
-            }
-
-            return null;
-        }
-
-        $resultsByIndex = [];
-        $failure = null;
-
-        // Every child is waited for and its payload file removed before a
-        // failure is reported.
-        foreach ($children as $pid => $meta) {
-            pcntl_waitpid($pid, $status);
-            $payload = $this->readWorkerPayload($meta['file']);
-            @unlink($meta['file']);
-
-            if (!($payload['ok'] ?? false)) {
-                $error = $payload['error'] ?? ['message' => 'Unknown worker failure.', 'class' => \RuntimeException::class];
-                $errorClass = isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
-                $errorMessage = isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
-                $failure ??= new LintException(\sprintf('Parallel collection failed: %s: %s', $errorClass, $errorMessage));
-
-                continue;
-            }
-
-            $resultsByIndex[$meta['index']] = $payload['result'] ?? [];
-            if (null !== $chunkDone) {
-                $chunkDone($meta['count']);
+            if (null !== $results) {
+                return $results;
             }
         }
 
-        if (null !== $failure) {
-            throw $failure;
-        }
-
-        ksort($resultsByIndex);
-
-        return $resultsByIndex;
+        return $work($files, $progress instanceof LintProgress ? $progress->advance(...) : null);
     }
 
     /**
@@ -453,12 +334,15 @@ final readonly class PatternExtractor
     }
 
     /**
+     * The progress, when given, advances by batches of files found, and by
+     * the rest at the end.
+     *
      * @param array<string> $paths
      * @param array<string> $excludePaths
      *
-     * @return array<string>
+     * @return list<string>
      */
-    private function collectPhpFiles(array $paths, array $excludePaths): array
+    private function collectPhpFiles(array $paths, array $excludePaths, ?LintProgress $progress = null): array
     {
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
@@ -476,6 +360,7 @@ final readonly class PatternExtractor
 
             if (is_file($path) && str_ends_with($path, '.php') && !$this->isTemplateFile($path)) {
                 $files[] = $path;
+                self::reportFound($progress, \count($files));
 
                 continue;
             }
@@ -513,65 +398,24 @@ final readonly class PatternExtractor
 
                 if (!$excluded) {
                     $files[] = $filePath;
+                    self::reportFound($progress, \count($files));
                 }
             }
+        }
+
+        $rest = \count($files) % self::FOUND_BATCH;
+        if (null !== $progress && 0 !== $rest) {
+            $progress->advance($rest);
         }
 
         return $files;
     }
 
-    /**
-     * @return array{ok: bool, result?: mixed, error?: array{message: string, class: string}}
-     */
-    private function readWorkerPayload(string $path): array
+    private static function reportFound(?LintProgress $progress, int $found): void
     {
-        $data = @file_get_contents($path);
-        if (false === $data) {
-            return [
-                'ok' => false,
-                'error' => [
-                    'message' => 'Failed to read worker output.',
-                    'class' => \RuntimeException::class,
-                ],
-            ];
+        if (null !== $progress && 0 === $found % self::FOUND_BATCH) {
+            $progress->advance(self::FOUND_BATCH);
         }
-
-        $payload = @unserialize($data, ['allowed_classes' => self::WORKER_ALLOWED_CLASSES]);
-        if (!\is_array($payload) || !\array_key_exists('ok', $payload) || !\is_bool($payload['ok'])) {
-            return [
-                'ok' => false,
-                'error' => [
-                    'message' => 'Invalid worker output.',
-                    'class' => \RuntimeException::class,
-                ],
-            ];
-        }
-
-        if (false === $payload['ok']) {
-            $error = $payload['error'] ?? null;
-            if (!\is_array($error) || !isset($error['message'], $error['class']) || !\is_string($error['message']) || !\is_string($error['class'])) {
-                return [
-                    'ok' => false,
-                    'error' => [
-                        'message' => 'Invalid worker error payload.',
-                        'class' => \RuntimeException::class,
-                    ],
-                ];
-            }
-
-            return [
-                'ok' => false,
-                'error' => [
-                    'message' => $error['message'],
-                    'class' => $error['class'],
-                ],
-            ];
-        }
-
-        return [
-            'ok' => true,
-            'result' => $payload['result'] ?? null,
-        ];
     }
 
     /**

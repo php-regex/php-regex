@@ -6,6 +6,16 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The progress and the steps of `regex lint` go to stderr, so that a report
+   redirected to a file holds no progress frames; the run has a third step,
+   `[3/3] Suggesting optimizations`, and its clock keeps running while the
+   workers work.
+ * The default `--jobs` is the number of logical CPUs the process may use,
+   within a container's CPU quota; `swoole_cpu_num()`, `hw.ncpu` and `wmic`
+   are no longer read, and without `pcntl` the run uses one process.
+ * A worker that fails or exits stops `regex lint` with exit code 1 and names
+   the files it was reading; `--format=json` prints the envelope with stage
+   `analyze`.
  * `regex lint --verbose` names each file read with the tokenizer because the
    PHP parser could not read it (`Parsed with the tokenizer: <file> (<reason>)`),
    and the JSON report counts them in `stats.parser_fallbacks`.

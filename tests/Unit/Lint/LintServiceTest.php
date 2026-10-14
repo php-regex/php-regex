@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternLinter;
@@ -24,6 +25,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
+use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -416,15 +418,12 @@ final class LintServiceTest extends TestCase
             new PatternOccurrence('/abc/', 'test.php', 1, 'preg_match'),
         ];
 
-        $progressCalls = 0;
-        $progressCallback = static function () use (&$progressCalls): void {
-            $progressCalls++;
-        };
+        $progress = new RecordingLintProgress();
 
         $service = new LintService($this->analysis, $this->sources);
-        $service->analyze($patterns, $request, $progressCallback);
+        $service->analyze($patterns, $request, $progress);
 
-        $this->assertGreaterThanOrEqual(0, $progressCalls); // Progress may be called during analysis
+        $this->assertSame(1, $progress->advancedIn(LintProgress::STEP_ANALYSIS));
     }
 
     #[Test]

@@ -17,6 +17,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
+use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPUnit\Framework\TestCase;
 
 final class PhpFilePatternSourceTest extends TestCase
@@ -60,16 +61,13 @@ final class PhpFilePatternSourceTest extends TestCase
 
     public function test_extract_with_progress_callback(): void
     {
-        $progressCalled = false;
-        $progressCallback = static function () use (&$progressCalled): void {
-            $progressCalled = true;
-        };
+        $progress = new RecordingLintProgress();
 
         $context = new PatternSourceContext(
             ['src/'],
             [],
             [],
-            $progressCallback,
+            $progress,
         );
 
         $source = new PhpFilePatternSource($this->extractor);

@@ -26,6 +26,7 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -345,13 +346,11 @@ final class ParserFallbackTest extends TestCase
         $service = new AnalysisService(RegexParser::create(['cache' => null]));
         $fallback = [PatternOccurrence::parserFallback('/x.php', 'Syntax error, unexpected EOF on line 3')];
 
-        $steps = 0;
-        $issues = $service->lint($fallback, static function () use (&$steps): void {
-            $steps++;
-        });
+        $progress = new RecordingLintProgress();
+        $issues = $service->lint($fallback, $progress);
 
         $this->assertSame([], $issues);
-        $this->assertSame(1, $steps);
+        $this->assertSame(1, $progress->advancedTotal());
         $this->assertSame([], $service->suggestOptimizations($fallback, 1));
         $this->assertSame([], $service->analyzeRedos($fallback, RedosSeverity::Low));
     }

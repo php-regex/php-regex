@@ -146,6 +146,39 @@ with the Lint, Diagram, Transpile, Analyze, Debug and ReDoS blocks, while
 `help <command>` stays correctly scoped and nothing points at it.
 *Fix*: print the command list plus a pointer to `help <command>`. Effort: XS.
 
+**C6 — A `jobs` below 1 means four different things.** *Verify*:
+`regex lint src --jobs=0` is a usage error (`LintArgumentParser.php`), as is
+`regex:lint --jobs 0` in Symfony; Laravel's `--jobs=0` means "count the CPUs";
+`"jobs": 0` in `regex.json` silently becomes "count the CPUs"
+(`LintArguments.php`) though the schema says `minimum: 1`. *Fix*: refuse it
+everywhere, or document "0 = auto" everywhere. Effort: S.
+
+**C7 — An undocumented ignore marker.** `LintService::shouldIgnoreIssue`
+honours `// @regex-lint-ignore` next to the documented `@regex-ignore` and
+`@regex-ignore-next-line`; the help and the docs never name it. *Fix*: drop it
+or document it. Effort: XS.
+
+**C8 — Nothing names a worker stuck on one file.** A worker alive but stuck on
+one pattern leaves the bar still while the clock runs. *Fix*: after N seconds
+without progress, name the first file of the oldest chunk in flight. Effort: S.
+
+**C9 — The lint run leaves time on the table.** Measured on a 300k-file
+corpus with 10 workers: `suggestOptimizations` parses every pattern a second
+time (`AnalysisService`), and runs as a pass of its own after the lint pass
+where one pass per pattern could do both; the console report takes about 4 s
+to render. *Fix*: share the parse between the two analyses, then one pass.
+Effort: M.
+
+**C10 — The worker count ignores memory.** In a container with a memory limit
+and no CPU quota, `regex lint` starts one worker per host CPU, each a copy of
+the main process. *Fix*: cap the default by the cgroup memory limit over the
+main process's size. Effort: S.
+
+**C11 — A CI log shows nothing during a long lint.** Without a terminal the
+progress is not drawn, so a long `regex lint` prints nothing until the report.
+*Fix*: a line every 30 s or so in a log ("Analyzing patterns: 7449/24824").
+Effort: XS.
+
 ### D. The language server
 
 **D1 — The language server ignores the rules configured in `regex.json`.**
@@ -205,13 +238,11 @@ Symfony while it is the flagship command in Laravel; the short options `-j` and
 `src/Laravel/Command` for the same verb.
 *Fix*: a shared command and flag specification. Effort: M.
 
-**E4 — Dead CPU-detection tail in the Laravel lint command.** Linux gets a
-real worker count today: `/proc/cpuinfo` is parsed
-(`src/Laravel/Command/LintCommand.php:506-515`). What remains is the dead
-tail at `:517-537` — it reads the `/usr/bin/nproc` binary without executing
-it and trims `/proc/self/status` without parsing it, then returns 1 only when
-cpuinfo is unreadable. Remove the tail and align the fallback with the
-Symfony/CLI equivalents. Effort: XS.
+**E4 — The bridges' `Cache:` footer counts the main process only.**
+`regex:lint` in Symfony and Laravel prints `Cache: N hits, N misses` from the
+main process's parser cache, while the patterns are parsed in the workers: it
+shows almost nothing on a parallel run. *Fix*: drop the line, as `regex lint`
+did, or sum the workers' counts. Effort: XS.
 
 **E5 — The bridge reports are internal array shapes.** Symfony's report objects
 are readonly but marked `@internal` over phpstan-typed arrays, and Laravel

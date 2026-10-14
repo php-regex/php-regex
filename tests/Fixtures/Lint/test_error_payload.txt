@@ -1,1 +1,0 @@
-a:2:{s:2:"ok";b:0;s:5:"error";a:2:{s:7:"message";s:10:"Test error";s:5:"class";s:9:"Exception";}}

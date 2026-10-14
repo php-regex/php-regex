@@ -48,6 +48,51 @@ final class LintFunctionOverrides
 
     public static string|false|null $mbConvertEncodingResult = null;
 
+    /**
+     * Functions reported missing by function_exists() in the linter's
+     * internal namespace.
+     *
+     * @var list<string>
+     */
+    public static array $missingFunctions = [];
+
+    /**
+     * What the next stream_socket_pair() calls give instead of a pair.
+     *
+     * @var list<false>
+     */
+    public static array $streamSocketPairSequence = [];
+
+    /**
+     * Once this many real forks happened, every further pcntl_fork() gives
+     * -1 (the queued values above still come first).
+     */
+    public static ?int $pcntlForkFailAfter = null;
+
+    public static int $pcntlForkRealCount = 0;
+
+    /**
+     * When set, tempnam() creates its files in this directory instead of
+     * the one it is asked for: a test then sees every file the code under
+     * test left behind, and only those.
+     */
+    public static ?string $tempnamDirectory = null;
+
+    /**
+     * How long tempnam() waits once it has created its file, as a slow disk
+     * would: the file exists before the code under test can name it.
+     */
+    public static int $tempnamDelayMicroseconds = 0;
+
+    public static bool $countFileGetContents = false;
+
+    /**
+     * How many times each path was read while counting is on.
+     *
+     * @var array<string, int>
+     */
+    public static array $fileGetContentsCalls = [];
+
     public static function reset(): void
     {
         self::$pcntlForkResult = null;
@@ -59,6 +104,19 @@ final class LintFunctionOverrides
         self::$microtimeSequence = [];
         self::$mbCheckEncodingResult = null;
         self::$mbConvertEncodingResult = null;
+        self::$missingFunctions = [];
+        self::$streamSocketPairSequence = [];
+        self::$pcntlForkFailAfter = null;
+        self::$pcntlForkRealCount = 0;
+        self::$tempnamDirectory = null;
+        self::$tempnamDelayMicroseconds = 0;
+        self::$countFileGetContents = false;
+        self::$fileGetContentsCalls = [];
+    }
+
+    public static function queueStreamSocketPair(false $result): void
+    {
+        self::$streamSocketPairSequence[] = $result;
     }
 
     public static function queuePcntlForkResult(int $result): void
@@ -96,7 +154,49 @@ final class LintFunctionOverrides
             return self::$pcntlForkResult;
         }
 
+        if (null !== self::$pcntlForkFailAfter) {
+            if (self::$pcntlForkRealCount >= self::$pcntlForkFailAfter) {
+                return -1;
+            }
+
+            self::$pcntlForkRealCount++;
+        }
+
         return pcntl_fork();
+    }
+
+    public static function functionExists(string $function): bool
+    {
+        if (\in_array(strtolower(ltrim($function, '\\')), self::$missingFunctions, true)) {
+            return false;
+        }
+
+        return \function_exists($function);
+    }
+
+    /**
+     * @return array<resource>|false
+     */
+    public static function streamSocketPair(int $domain, int $type, int $protocol): array|false
+    {
+        if ([] !== self::$streamSocketPairSequence) {
+            return array_shift(self::$streamSocketPairSequence);
+        }
+
+        return stream_socket_pair($domain, $type, $protocol);
+    }
+
+    /**
+     * @param resource|null    $context
+     * @param int<0, max>|null $length
+     */
+    public static function fileGetContents(string $filename, bool $useIncludePath = false, $context = null, int $offset = 0, ?int $length = null): string|false
+    {
+        if (self::$countFileGetContents) {
+            self::$fileGetContentsCalls[$filename] = (self::$fileGetContentsCalls[$filename] ?? 0) + 1;
+        }
+
+        return file_get_contents($filename, $useIncludePath, $context, $offset, $length);
     }
 
     /**
@@ -137,7 +237,12 @@ final class LintFunctionOverrides
             return $path;
         }
 
-        return tempnam($dir, $prefix);
+        $path = tempnam(self::$tempnamDirectory ?? $dir, $prefix);
+        if (self::$tempnamDelayMicroseconds > 0) {
+            usleep(self::$tempnamDelayMicroseconds);
+        }
+
+        return $path;
     }
 
     public static function classExists(string $class, bool $autoload = true): bool
@@ -197,10 +302,6 @@ function pcntl_fork(): int
     return LintFunctionOverrides::pcntlFork();
 }
 
-namespace PHPRegex\Linter;
-
-use PHPRegex\Tests\Support\LintFunctionOverrides;
-
 /**
  * @param ?array<int|string, mixed> $rusage
  *
@@ -215,6 +316,23 @@ function tempnam(string $dir, string $prefix): string|false
 {
     return LintFunctionOverrides::tempnam($dir, $prefix);
 }
+
+function function_exists(string $function): bool
+{
+    return LintFunctionOverrides::functionExists($function);
+}
+
+/**
+ * @return array<resource>|false
+ */
+function stream_socket_pair(int $domain, int $type, int $protocol): array|false
+{
+    return LintFunctionOverrides::streamSocketPair($domain, $type, $protocol);
+}
+
+namespace PHPRegex\Linter;
+
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 
 function mb_check_encoding(string $string, string $encoding): bool
 {
@@ -226,29 +344,18 @@ function mb_convert_encoding(string $string, string $toEncoding, string $fromEnc
     return LintFunctionOverrides::mbConvertEncoding($string, $toEncoding, $fromEncoding);
 }
 
+/**
+ * @param resource|null    $context
+ * @param int<0, max>|null $length
+ */
+function file_get_contents(string $filename, bool $use_include_path = false, $context = null, int $offset = 0, ?int $length = null): string|false
+{
+    return LintFunctionOverrides::fileGetContents($filename, $use_include_path, $context, $offset, $length);
+}
+
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Tests\Support\LintFunctionOverrides;
-
-function pcntl_fork(): int
-{
-    return LintFunctionOverrides::pcntlFork();
-}
-
-/**
- * @param ?array<int|string, mixed> $rusage
- *
- * @param-out int|null $status
- */
-function pcntl_waitpid(int $pid, ?int &$status = null, int $options = 0, ?array &$rusage = null): int
-{
-    return LintFunctionOverrides::pcntlWaitpid($pid, $status, $options, $rusage);
-}
-
-function tempnam(string $dir, string $prefix): string|false
-{
-    return LintFunctionOverrides::tempnam($dir, $prefix);
-}
 
 function mb_check_encoding(string $string, string $encoding): bool
 {

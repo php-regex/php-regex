@@ -38,18 +38,28 @@ final class Output
 
     private const PROGRESS_BAR_WIDTH = 28;
 
-    private int $progressTotal = 0;
+    /**
+     * Null while the total is not known.
+     */
+    private ?int $progressTotal = 0;
 
     private int $progressCurrent = 0;
 
     private bool $progressActive = false;
 
-    private int $progressStartedAt = 0;
+    private float $progressStartedAt = 0.0;
+
+    private ?string $progressLabel = null;
+
+    /**
+     * The width of the line last drawn, which the next one overwrites.
+     */
+    private int $progressLineWidth = 0;
 
     private bool $documentWritten = false;
 
     /**
-     * @param resource|null $errorStream where writeError() writes; STDERR by default
+     * @param resource|null $errorStream where writeError() and the progress write; STDERR by default
      */
     public function __construct(
         private bool $ansi,
@@ -110,7 +120,7 @@ final class Output
      */
     public function writeError(string $text): void
     {
-        $stream = $this->errorStream ?? (\defined('STDERR') ? \STDERR : null);
+        $stream = $this->errorStream();
         if (\is_resource($stream)) {
             fwrite($stream, $text);
         }
@@ -160,7 +170,12 @@ final class Output
         return $this->color(' '.$text.' ', $bg.$fg.self::BOLD);
     }
 
-    public function progressStart(int $total): void
+    /**
+     * Starts a progress line, drawn on the error stream; a null total is
+     * not known yet: the line counts what was found, with no bar. Started
+     * while another is drawn, it takes that line over.
+     */
+    public function progressStart(?int $total): void
     {
         if ($this->shouldSkipProgress($total)) {
             return;
@@ -169,38 +184,80 @@ final class Output
         $this->initializeProgress($total);
     }
 
+    /**
+     * Names what the line counts from its next frame on, until the progress
+     * finishes.
+     */
+    public function progressLabel(string $label): void
+    {
+        $this->progressLabel = $label;
+    }
+
     public function progressAdvance(int $step = 1): void
     {
         if (!$this->progressActive) {
             return;
         }
 
-        $this->progressCurrent = min($this->progressTotal, $this->progressCurrent + $step);
+        $this->progressCurrent += $step;
+        if (null !== $this->progressTotal) {
+            $this->progressCurrent = min($this->progressTotal, $this->progressCurrent);
+        }
         $this->renderProgress();
+    }
+
+    /**
+     * Redraws the time spent, the count unchanged.
+     */
+    public function progressTick(): void
+    {
+        if ($this->progressActive) {
+            $this->renderProgress();
+        }
     }
 
     public function progressFinish(): void
     {
-        if (!$this->progressActive) {
-            return;
+        if ($this->progressActive) {
+            if (null !== $this->progressTotal) {
+                $this->progressCurrent = $this->progressTotal;
+            }
+            $this->renderProgress(true);
+            $this->progressActive = false;
         }
 
-        $this->progressCurrent = $this->progressTotal;
-        $this->renderProgress(true);
-        $this->progressActive = false;
+        $this->progressLabel = null;
     }
 
-    private function shouldSkipProgress(int $total): bool
+    /**
+     * Ends the line where the progress stopped, the work not done: what is
+     * written next starts a line of its own.
+     */
+    public function progressAbandon(): void
     {
-        return $total <= 0 || $this->quiet;
+        if ($this->progressActive) {
+            $this->writeProgress("\n");
+            $this->progressActive = false;
+        }
+
+        $this->progressLabel = null;
     }
 
-    private function initializeProgress(int $total): void
+    private function shouldSkipProgress(?int $total): bool
     {
+        return (null !== $total && $total <= 0) || $this->quiet;
+    }
+
+    private function initializeProgress(?int $total): void
+    {
+        if (!$this->progressActive) {
+            $this->progressLineWidth = 0;
+        }
+
         $this->progressTotal = $total;
         $this->progressCurrent = 0;
         $this->progressActive = $this->ansi;
-        $this->progressStartedAt = (int) time();
+        $this->progressStartedAt = microtime(true);
 
         if ($this->progressActive) {
             $this->renderProgress();
@@ -209,25 +266,29 @@ final class Output
 
     private function renderProgress(bool $finish = false): void
     {
-        $bar = $this->buildProgressBar();
-        $percent = $this->calculateProgressPercent();
-        $elapsed = $this->formatElapsed((int) (time() - $this->progressStartedAt));
-        $status = $this->formatProgressStatus();
+        $elapsed = $this->formatElapsed((int) (microtime(true) - $this->progressStartedAt));
 
-        $line = \sprintf(' %s [%s] %3d%% %8s', $status, $bar, $percent, $elapsed);
-
-        $this->write("\r".$line);
-
-        if ($finish) {
-            $this->write("\n\n");
+        if (null === $this->progressTotal) {
+            $line = \sprintf(' %s %8s', str_pad($this->progressCurrent.' found', 15, ' ', \STR_PAD_LEFT), $elapsed);
+        } else {
+            $line = \sprintf(' %s [%s] %3d%% %8s', $this->formatProgressStatus($this->progressTotal), $this->buildProgressBar($this->progressTotal), $this->calculateProgressPercent($this->progressTotal), $elapsed);
         }
 
-        $this->flushOutput();
+        if (null !== $this->progressLabel) {
+            $line = '   '.str_pad($this->progressLabel, 13).$line;
+        }
+
+        // A shorter line than the one it replaces clears what is left of it.
+        $width = mb_strlen($line);
+        $line .= str_repeat(' ', max(0, $this->progressLineWidth - $width));
+        $this->progressLineWidth = $width;
+
+        $this->writeProgress("\r".$line.($finish ? "\n\n" : ''));
     }
 
-    private function buildProgressBar(): string
+    private function buildProgressBar(int $total): string
     {
-        $total = max(1, $this->progressTotal);
+        $total = max(1, $total);
         $current = min($this->progressCurrent, $total);
         $filled = (int) floor(($current / $total) * self::PROGRESS_BAR_WIDTH);
 
@@ -235,27 +296,41 @@ final class Output
             .str_repeat($this->progressBarEmpty, self::PROGRESS_BAR_WIDTH - $filled);
     }
 
-    private function calculateProgressPercent(): int
+    private function calculateProgressPercent(int $total): int
     {
-        $total = max(1, $this->progressTotal);
+        $total = max(1, $total);
         $current = min($this->progressCurrent, $total);
 
         return (int) round(($current / $total) * 100);
     }
 
-    private function formatProgressStatus(): string
+    private function formatProgressStatus(int $total): string
     {
-        $total = max(1, $this->progressTotal);
+        $total = max(1, $total);
         $current = min($this->progressCurrent, $total);
 
         return str_pad($current.'/'.$total, 15, ' ', \STR_PAD_LEFT);
     }
 
-    private function flushOutput(): void
+    /**
+     * The progress shares the error stream with the status lines: stdout
+     * keeps the report alone.
+     */
+    private function writeProgress(string $text): void
     {
-        if (\function_exists('fflush')) {
-            fflush(\STDOUT);
+        $stream = $this->errorStream();
+        if (\is_resource($stream)) {
+            fwrite($stream, $text);
+            fflush($stream);
         }
+    }
+
+    /**
+     * @return resource|null
+     */
+    private function errorStream()
+    {
+        return $this->errorStream ?? (\defined('STDERR') ? \STDERR : null);
     }
 
     private function formatElapsed(int $seconds): string

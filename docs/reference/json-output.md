@@ -194,6 +194,7 @@ tells the two apart.
 | `usage` | The command line cannot be used: an unknown command or option, a missing pattern or value, an invalid `--php-version`, a path argument that does not exist, a `--baseline` file that is missing, cannot be read or is not a baseline, a `--generate-baseline` or `--output` file that cannot be written |
 | `config` | The configuration cannot be used: a `regex.json` that is not valid JSON, an unknown or removed key, a path it lists that does not exist |
 | `collect` | `lint` could not read the files or the patterns in them |
+| `analyze` | `lint` read the patterns but could not analyse them: a worker process failed or exited, named with the files it was reading; exit code 1 |
 | `pattern` | The command cannot act on the pattern it was given, such as an invalid one |
 | `internal` | The command failed for another reason, a PHP fatal error included; exit code 1. Apart from a time limit you set, this is a bug worth reporting |
 

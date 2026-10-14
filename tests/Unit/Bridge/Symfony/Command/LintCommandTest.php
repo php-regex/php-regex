@@ -16,15 +16,20 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Command;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -35,6 +40,25 @@ use Symfony\Component\Routing\RouterInterface;
 
 final class LintCommandTest extends TestCase
 {
+    /**
+     * Process ids no system hands out (above the largest pid_max, 2^22 on
+     * Linux, 99998 on macOS): a fork that "gives" one started no worker, so
+     * the worker's channel is closed from the start, as when a worker is
+     * killed. Waiting for such a pid fails at once, signalling it does
+     * nothing.
+     */
+    private const GONE_WORKER_PIDS = [2_000_000_001, 2_000_000_002];
+
+    protected function setUp(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
+    protected function tearDown(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
     #[Test]
     public function test_command_succeeds_by_default_with_no_patterns(): void
     {
@@ -263,10 +287,16 @@ final class LintCommandTest extends TestCase
         $this->assertStringContainsString('positive integer', (string) $tester->getDisplay());
     }
 
+    /**
+     * A source reporting through the run's progress, a step with nothing to
+     * do included, leaves the run to end as usual.
+     */
     #[Test]
     public function test_execute_progress_callback_handles_empty_totals(): void
     {
         $progressSource = new class implements PatternSourceInterface {
+            public mixed $progress = null;
+
             public function getName(): string
             {
                 return 'progress';
@@ -279,11 +309,15 @@ final class LintCommandTest extends TestCase
 
             public function extract(PatternSourceContext $context): array
             {
-                if (\is_callable($context->progress)) {
-                    ($context->progress)(0, 0);
-                    ($context->progress)(0, 2);
-                    ($context->progress)(1, 2);
-                    ($context->progress)(2, 2);
+                $this->progress = $context->progress;
+                if ($context->progress instanceof LintProgress) {
+                    $context->progress->step(LintProgress::STEP_PATTERNS, 0);
+                    $context->progress->finish();
+                    $context->progress->step(LintProgress::STEP_PATTERNS, 2);
+                    $context->progress->advance();
+                    $context->progress->tick();
+                    $context->progress->advance();
+                    $context->progress->finish();
                 }
 
                 return [];
@@ -297,6 +331,7 @@ final class LintCommandTest extends TestCase
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
+        $this->assertInstanceOf(LintProgress::class, $progressSource->progress, 'The console run hands the sources its progress.');
     }
 
     #[Test]
@@ -519,6 +554,180 @@ final class LintCommandTest extends TestCase
         $this->assertStringNotContainsString('TIP', $display);
     }
 
+    /**
+     * The run names its three steps, the optimizations a step of their own.
+     */
+    #[Test]
+    public function test_execute_names_the_three_steps(): void
+    {
+        $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/')]));
+
+        $status = $tester->execute(['paths' => ['.'], '--jobs' => '1']);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status, $display);
+        $scanning = strpos($display, '[1/3] Scanning files');
+        $analyzing = strpos($display, '[2/3] Analyzing patterns');
+        $suggesting = strpos($display, '[3/3] Suggesting optimizations');
+        $this->assertNotFalse($scanning, $display);
+        $this->assertNotFalse($analyzing, $display);
+        $this->assertNotFalse($suggesting, $display);
+        $this->assertLessThan($analyzing, $scanning);
+        $this->assertLessThan($suggesting, $analyzing);
+        $this->assertStringNotContainsString('[1/2]', $display);
+        $this->assertStringNotContainsString('[2/2]', $display);
+    }
+
+    /**
+     * A worker that ends without its results (a fatal error, out of memory,
+     * killed) stops the run with exit code 1 and says so, naming the file
+     * it was reading.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_execute_fails_when_a_worker_is_lost_during_the_analysis(): void
+    {
+        foreach (self::GONE_WORKER_PIDS as $pid) {
+            LintFunctionOverrides::queuePcntlForkResult($pid);
+        }
+        $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/', '/bar/')]));
+
+        $status = self::withinTimeLimit(static fn (): int => $tester->execute(['paths' => ['.'], '--jobs' => '2']));
+        $display = preg_replace('/\s+/', ' ', $tester->getDisplay()) ?? '';
+
+        $this->assertSame(1, $status, $display);
+        $this->assertStringContainsString('Parallel analysis failed: a worker exited unexpectedly while reading test.php', $display);
+        $this->assertStringNotContainsString('Time:', $display, 'No footer: the run did not end.');
+    }
+
+    /**
+     * Without pcntl no worker can start: the default the banner and the
+     * footer show is one process, whatever the machine counts.
+     */
+    #[Test]
+    public function test_execute_defaults_to_one_process_without_pcntl(): void
+    {
+        LintFunctionOverrides::$missingFunctions = ['pcntl_fork'];
+        $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/', '/bar/')]));
+
+        $status = $tester->execute(['paths' => ['.']]);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status, $display);
+        $this->assertMatchesRegularExpression('/^Processes : 1$/m', $display);
+        $this->assertMatchesRegularExpression('/\bProcesses: 1$/m', $display);
+    }
+
+    /**
+     * The footer counts the workers the run started, at most --jobs: one
+     * pattern is analysed in this process alone, whatever --jobs allows.
+     */
+    #[Test]
+    public function test_execute_footer_counts_the_workers_started(): void
+    {
+        $tester = new CommandTester($this->createCommandWithSources([self::sourceOf('/foo/')]));
+
+        $status = $tester->execute(['paths' => ['.'], '--jobs' => '2']);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status, $display);
+        $this->assertMatchesRegularExpression('/^Processes : 2$/m', $display, 'The banner shows what the run planned.');
+        $this->assertMatchesRegularExpression('/\bProcesses: 1$/m', $display);
+    }
+
+    /**
+     * Undecorated output (a CI log) gets no new line while the run waits:
+     * the clock is redrawn only on a terminal. Each worker here waits 1.2 s
+     * before its first pattern, so a bar redrawn while it waits would print
+     * its "0/2" line again once the elapsed time reads one second
+     * ("1 s" on recent Symfony releases, "1 sec" on older ones).
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_execute_adds_no_line_while_waiting_on_an_undecorated_output(): void
+    {
+        $marker = sys_get_temp_dir().'/php-regex-slow-worker-'.bin2hex(random_bytes(6));
+        $command = $this->createCommandWithSources(
+            [self::sourceOf('/foo/', '/bar/')],
+            ['cache' => self::cacheSlowInWorkers($marker, 1_200_000)],
+        );
+        $tester = new CommandTester($command);
+
+        try {
+            $startedAt = microtime(true);
+            $status = $tester->execute(['paths' => ['.'], '--jobs' => '2'], ['decorated' => false]);
+            $duration = microtime(true) - $startedAt;
+        } finally {
+            @unlink($marker);
+        }
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status, $display);
+        $this->assertGreaterThanOrEqual(1.2, $duration, 'The workers did not wait: nothing was tested.');
+        $this->assertStringContainsString('[2/3] Analyzing patterns', $display);
+        $this->assertDoesNotMatchRegularExpression('/\b0\/2\b.*(?:\b[1-9]\d* (?:s|secs?|min)\b|\b\d\d:0[1-9]\b)/', $display, $display);
+    }
+
+    /**
+     * A parse cache that, in a forked worker only, waits before its first
+     * answer, then always misses. The marker file keeps the wait to the
+     * first step that forks.
+     */
+    private static function cacheSlowInWorkers(string $marker, int $microseconds): CacheInterface
+    {
+        return new class(getmypid(), $marker, $microseconds) implements CacheInterface {
+            public function __construct(
+                private readonly int|false $parent,
+                private readonly string $marker,
+                private readonly int $microseconds,
+            ) {}
+
+            public function generateKey(string $seed): string
+            {
+                return hash('xxh128', $seed);
+            }
+
+            public function write(string $key, RegexNode $ast): void {}
+
+            public function load(string $key): ?RegexNode
+            {
+                if (getmypid() !== $this->parent && !file_exists($this->marker)) {
+                    usleep($this->microseconds);
+                    @touch($this->marker);
+                }
+
+                return null;
+            }
+        };
+    }
+
+    /**
+     * Runs the command, failing instead of hanging when it waits for a
+     * worker that never answers.
+     *
+     * @template T
+     *
+     * @param \Closure(): T $run
+     *
+     * @return T
+     */
+    private static function withinTimeLimit(\Closure $run): mixed
+    {
+        $async = pcntl_async_signals(true);
+        pcntl_signal(\SIGALRM, static function (): never {
+            throw new \RuntimeException('The lint did not end within 30 seconds: it waits for a worker that is gone.');
+        });
+        pcntl_alarm(30);
+
+        try {
+            return $run();
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(\SIGALRM, \SIG_DFL);
+            pcntl_async_signals($async);
+        }
+    }
+
     private function createCommand(): LintCommand
     {
         $analysis = new AnalysisService(RegexParser::create());
@@ -550,10 +759,13 @@ final class LintCommandTest extends TestCase
         return $data['results'][0]['issues'][0];
     }
 
-    private static function sourceOf(string $pattern): PatternSourceInterface
+    private static function sourceOf(string ...$patterns): PatternSourceInterface
     {
-        return new class($pattern) implements PatternSourceInterface {
-            public function __construct(private readonly string $pattern) {}
+        return new class(array_values($patterns)) implements PatternSourceInterface {
+            /**
+             * @param list<string> $patterns
+             */
+            public function __construct(private readonly array $patterns) {}
 
             public function getName(): string
             {
@@ -567,15 +779,20 @@ final class LintCommandTest extends TestCase
 
             public function extract(PatternSourceContext $context): array
             {
-                return [new PatternOccurrence($this->pattern, 'test.php', 12, 'php:preg_match()')];
+                return array_map(
+                    static fn (string $pattern, int $index): PatternOccurrence => new PatternOccurrence($pattern, 'test.php', 12 + $index, 'php:preg_match()'),
+                    $this->patterns,
+                    array_keys($this->patterns),
+                );
             }
         };
     }
 
     /**
      * @param array<int, PatternSourceInterface> $sources
+     * @param array<string, mixed>               $regexOptions
      */
-    private function createCommandWithSources(array $sources): LintCommand
+    private function createCommandWithSources(array $sources, array $regexOptions = []): LintCommand
     {
         $analysis = new AnalysisService(RegexParser::create());
         $lint = new LintService(
@@ -588,6 +805,7 @@ final class LintCommandTest extends TestCase
             analysis: $analysis,
             formatterRegistry: new FormatterRegistry(),
             editorUrl: null,
+            regexOptions: $regexOptions,
         );
     }
 }

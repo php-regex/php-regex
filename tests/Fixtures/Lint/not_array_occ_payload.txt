@@ -1,1 +1,0 @@
-a:2:{s:2:"ok";b:1;s:6:"result";s:9:"not-array";}

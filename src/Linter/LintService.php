@@ -72,11 +72,11 @@ final readonly class LintService
     }
 
     /**
-     * @param callable(int, int): void|null $progress
+     * @throws LintException when a worker fails
      *
      * @return array<PatternOccurrence>
      */
-    public function collectPatterns(LintRequest $request, ?callable $progress = null): array
+    public function collectPatterns(LintRequest $request, ?LintProgress $progress = null): array
     {
         $context = new PatternSourceContext(
             $request->paths,
@@ -92,19 +92,29 @@ final readonly class LintService
     }
 
     /**
+     * The progress goes through the analysis step, then the optimizations
+     * step when the request asks for them.
+     *
      * @param array<PatternOccurrence> $patterns
+     *
+     * @throws LintException when a worker fails
      */
-    public function analyze(array $patterns, LintRequest $request, ?callable $progress = null): LintReport
+    public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null): LintReport
     {
+        $progress?->step(LintProgress::STEP_ANALYSIS, \count($patterns));
         $issues = $this->analysis->lint($patterns, $progress, $request->analysisWorkers);
+        $progress?->finish();
         $issues = $this->filterLintIssues($issues);
         $issues = $this->filterIssuesByRequest($issues, $request);
         $issues = $this->deduplicateIssues($issues);
 
         /** @var array<array{file: string, line: int, optimization: OptimizationResult, savings: int, source?: string}> $optimizations */
-        $optimizations = $request->checkOptimizations
-            ? $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers)), $request->minSavings)
-            : [];
+        $optimizations = [];
+        if ($request->checkOptimizations) {
+            $progress?->step(LintProgress::STEP_OPTIMIZATIONS, \count($patterns));
+            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress)), $request->minSavings);
+            $progress?->finish();
+        }
 
         $results = $this->combineResults($issues, $optimizations, $patterns);
 
@@ -446,8 +456,11 @@ final readonly class LintService
      */
     private function addIssuesToResults(array $issues, array $patternMap, array &$results): void
     {
+        // Each file is read once for its ignore comments, whatever the
+        // number of its issues.
+        $ignoredLines = [];
         foreach ($issues as $issue) {
-            if ($this->shouldIgnoreIssue($issue)) {
+            if ($this->shouldIgnoreIssue($issue, $ignoredLines)) {
                 continue;
             }
 
@@ -501,9 +514,12 @@ final readonly class LintService
     }
 
     /**
+     * @param array<string, array<int, true>> $ignoredLines by file, the lines a comment on the line above
+     *                                                      ignores, filled as the files are read
+     *
      * @phpstan-param LintIssue $issue
      */
-    private function shouldIgnoreIssue(array $issue): bool
+    private function shouldIgnoreIssue(array $issue, array &$ignoredLines): bool
     {
         $source = $issue['source'] ?? '';
         if (str_starts_with($source, 'route:') || str_starts_with($source, 'validator:')) {
@@ -520,16 +536,20 @@ final readonly class LintService
             return false;
         }
 
-        $content = @file_get_contents($file);
-        if (false === $content) {
-            return false;
+        if (!isset($ignoredLines[$file])) {
+            $ignoredLines[$file] = [];
+            $content = @file_get_contents($file);
+            if (false !== $content) {
+                foreach (explode("\n", $content) as $index => $text) {
+                    if (str_contains($text, '// @regex-lint-ignore')) {
+                        // A comment ignores the line below its own.
+                        $ignoredLines[$file][$index + 2] = true;
+                    }
+                }
+            }
         }
 
-        $lines = explode("\n", $content);
-        $prevLineIndex = $line - 2;
-
-        return isset($lines[$prevLineIndex])
-            && str_contains($lines[$prevLineIndex], '// @regex-lint-ignore');
+        return isset($ignoredLines[$file][$line]);
     }
 
     /**

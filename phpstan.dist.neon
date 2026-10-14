@@ -139,6 +139,16 @@ parameters:
             - greaterOrEqual.alwaysFalse
           paths:
             - tests/Unit/Support/PcreGatesTest.php
+        # The worker pool test hands run() a chunk result that is not a list on
+        # purpose: it is the only way to reach the guard that refuses one.
+        - message: '#^Unable to resolve the template type R in call to method PHPRegex\\Linter\\Internal\\ForkedWorkerPool::run\(\)$#'
+          identifier: argument.templateType
+          path: tests/Unit/Lint/ForkedWorkerPoolTest.php
+          count: 1
+        - message: '#^Parameter \#3 \$work of method PHPRegex\\Linter\\Internal\\ForkedWorkerPool::run\(\) expects .+ ''not a list'' given\.$#'
+          identifier: argument.type
+          path: tests/Unit/Lint/ForkedWorkerPoolTest.php
+          count: 1
         # The memory reserve of a JSON run is only ever freed, when PHP stops
         # the run: holding it is its whole use.
         - message: '#^Static property PHPRegex\\Cli\\Application::\$memoryReserve is never read, only written\.$#'

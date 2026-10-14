@@ -22,8 +22,12 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\After;
+use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -34,6 +38,18 @@ use PHPUnit\Framework\Attributes\Test;
 final class LintJsonDocumentTest extends TestCase
 {
     use TemporaryProject;
+
+    #[Before]
+    protected function resetLintFunctions(): void
+    {
+        LintFunctionOverrides::reset();
+    }
+
+    #[After]
+    protected function restoreLintFunctions(): void
+    {
+        LintFunctionOverrides::reset();
+    }
 
     /**
      * @param array<string, string> $files
@@ -160,6 +176,43 @@ final class LintJsonDocumentTest extends TestCase
 
         $this->assertSame(1, $status);
         $this->assertSame(['error' => 'Failed to collect patterns: boom', 'stage' => 'collect'], $this->decodeDocument(Artisan::output()));
+    }
+
+    /**
+     * A worker that ends without its results stops the analysis: the
+     * envelope names the stage analyze. The pids handed back are ones no
+     * system gives out (above the largest pid_max): no worker runs, and its
+     * channel is closed from the start, as when a worker is killed.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_analysis_failure_prints_the_envelope(): void
+    {
+        $project = $this->makeProject(['src/Patterns.php' => "<?php\n\npreg_match('/^[a-z]+$/', \$subject);\npreg_match('/^[0-9]+$/', \$subject);\n"]);
+        LintFunctionOverrides::queuePcntlForkResult(2_000_000_001);
+        LintFunctionOverrides::queuePcntlForkResult(2_000_000_002);
+
+        $async = pcntl_async_signals(true);
+        pcntl_signal(\SIGALRM, static function (): never {
+            throw new \RuntimeException('The lint did not end within 30 seconds: it waits for a worker that is gone.');
+        });
+        pcntl_alarm(30);
+
+        try {
+            $status = Artisan::call('regex:lint', ['--jobs' => '2', '--quiet' => true] + $this->arguments($project.'/src'));
+        } finally {
+            pcntl_alarm(0);
+            pcntl_signal(\SIGALRM, \SIG_DFL);
+            pcntl_async_signals($async);
+        }
+
+        $document = $this->decodeDocument(Artisan::output());
+        $this->assertSame(1, $status);
+        $this->assertSame(['error', 'stage'], array_keys($document));
+        $this->assertSame('analyze', $document['stage']);
+        $this->assertIsString($document['error']);
+        $this->assertStringContainsString('Parallel analysis failed: a worker exited unexpectedly while reading ', $document['error']);
+        $this->assertStringContainsString('Patterns.php', $document['error']);
     }
 
     /**

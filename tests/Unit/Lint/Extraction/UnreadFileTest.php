@@ -20,6 +20,7 @@ use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -112,15 +113,13 @@ final class UnreadFileTest extends TestCase
     #[Test]
     public function test_an_unread_file_counts_as_one_step_of_progress(): void
     {
-        $steps = 0;
+        $progress = new RecordingLintProgress();
         (new AnalysisService(RegexParser::create(['cache' => null])))->lint(
             [PatternOccurrence::unread('/x.php', 'Not linted.')],
-            static function () use (&$steps): void {
-                $steps++;
-            },
+            $progress,
         );
 
-        $this->assertSame(1, $steps);
+        $this->assertSame(1, $progress->advancedTotal());
     }
 
     #[Test]

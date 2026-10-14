@@ -36,12 +36,10 @@ final readonly class PhpFilePatternSource implements PatternSourceInterface
 
     public function extract(PatternSourceContext $context): array
     {
-        $progress = \is_callable($context->progress) ? $context->progress : null;
-
         return $this->extractor->extract(
             $context->paths,
             $context->excludePaths,
-            $progress,
+            $context->progress,
             $context->workers,
             $context->declarationPaths,
             $context->vendorPaths,

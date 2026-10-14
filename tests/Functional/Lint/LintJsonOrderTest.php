@@ -17,6 +17,7 @@ use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -82,6 +83,53 @@ final class LintJsonOrderTest extends TestCase
 
         $this->assertSame($first, $second);
         $this->assertSame($first, $serial);
+    }
+
+    /**
+     * More files than workers and several issues to a file, inline markers
+     * among them: the report of four workers is the serial report, byte for
+     * byte. The workers pick their chunks in whatever order they finish, and
+     * read the markers where they extract the file. The ReDoS verdicts here
+     * are theoretical, the default: the confirmed ones depend on the clock.
+     *
+     * @param list<string> $options
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    #[DataProvider('provideDeterministicRuns')]
+    public function test_lint_json_is_the_same_bytes_on_one_and_four_workers(array $options): void
+    {
+        $this->enterProject(self::manyFiles());
+
+        [$serialExit, $serial, $serialErrors] = $this->runRegexProcess(['lint', 'src', '--format=json', '--jobs=1', ...$options]);
+        [$parallelExit, $parallel, $parallelErrors] = $this->runRegexProcess(['lint', 'src', '--format=json', '--jobs=4', ...$options]);
+
+        $this->assertSame(1, $serialExit, $serial.$serialErrors);
+        $this->assertSame(1, $parallelExit, $parallel.$parallelErrors);
+        $this->assertSame($serial, $parallel);
+        // The fixture holds what it claims: several results to a file, and
+        // the patterns its markers ignore left out.
+        $results = self::rows(JsonContract::decodeDocument($serial)['results'] ?? null);
+        $this->assertCount(12, self::files($results));
+        $this->assertGreaterThanOrEqual(5 * 12, \count($results));
+        $patterns = array_column($results, 'pattern');
+        $this->assertNotContains('/(b+)+$/', $patterns, '@regex-ignore-next-line is not applied.');
+        $this->assertNotContains('/(c/', $patterns, '@regex-ignore is not applied.');
+        foreach ($results as $result) {
+            if ('/y{1}/' === $result['pattern']) {
+                $this->assertSame([], $result['issues'] ?? null, '@regex-lint-ignore is not applied.');
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{options: list<string>}>
+     */
+    public static function provideDeterministicRuns(): iterable
+    {
+        yield 'default checks' => ['options' => []];
+        yield 'with the ReDoS analysis' => ['options' => ['--redos']];
+        yield 'without the optimizations' => ['options' => ['--no-optimize']];
     }
 
     #[Test]
@@ -206,6 +254,40 @@ final class LintJsonOrderTest extends TestCase
     {
         yield 'absolute' => ['paths' => ['{project}/src']];
         yield 'relative, up a directory' => ['paths' => ['../src']];
+    }
+
+    /**
+     * Twelve files, two of them sorting apart (a capital, a subdirectory),
+     * each with several issues, an optimization, and the three inline
+     * markers: the next line, the same line, the issues of the next line.
+     *
+     * @return array<string, string>
+     */
+    private static function manyFiles(): array
+    {
+        $files = [];
+        foreach (range(1, 12) as $index) {
+            $name = match ($index) {
+                11 => 'src/sub/f11.php',
+                12 => 'src/Z12.php',
+                default => \sprintf('src/f%02d.php', $index),
+            };
+            $files[$name] = <<<PHP
+                <?php
+
+                preg_match('/(a{$index}+)+\$/', \$s); preg_match('/x{1}/', \$s); preg_match('/[aa]/', \$s);
+                // @regex-ignore-next-line
+                preg_match('/(b+)+\$/', \$s);
+                preg_match('/(c/', \$s); // @regex-ignore
+                preg_match('/[a-zA-Z0-9_]+/', \$s);
+                // @regex-lint-ignore
+                preg_match('/y{1}/', \$s);
+                preg_match('/(?<=a+)b/', \$s); preg_match('/(d+)+\$/', \$s);
+
+                PHP;
+        }
+
+        return $files;
     }
 
     /**

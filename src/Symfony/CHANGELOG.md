@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` shows the progress as the workers make it, in three steps
+   (`[3/3] Suggesting optimizations`), counts the workers it started under
+   `Processes`, and defaults to the logical CPUs the process may use, within a
+   container's CPU quota. A worker that fails or exits stops it with exit code
+   1, naming the files it was reading; JSON says stage `analyze`.
  * `regex:lint` leaves the files the PHP parser could not read, read with the
    tokenizer instead, out of the number of patterns found; its JSON report
    counts them in `stats.parser_fallbacks`.

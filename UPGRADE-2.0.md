@@ -1103,7 +1103,7 @@ prints one error envelope. The
 | baseline entry | `type` | `severity` |
 | `runtime.jit` (`analyze`, `debug`, `redos`) | the `pcre.jit` string, as `"1"` | a bool |
 | `confirmation.jit_setting` | a string | a bool |
-| an error | `{"error": "..."}`, or `{"error": "...", "stage": "analyze"}` and `"debug"` | `{"error": "...", "stage": "..."}`, stage `usage`, `config`, `collect`, `pattern` or `internal` |
+| an error | `{"error": "..."}`, or `{"error": "...", "stage": "analyze"}` and `"debug"` | `{"error": "...", "stage": "..."}`, stage `usage`, `config`, `collect`, `analyze`, `pattern` or `internal`; `analyze` now names the step of `lint` that analyses the patterns, a worker that failed or exited, never the `analyze` command |
 
 The rest of the lint `validation` object (`error`, `category`, `offset`,
 `hint`) and the keys of the ReDoS analysis keep their names; only
@@ -1150,7 +1150,7 @@ not change.
   accepted them, then failed with exit code 1. They are an unknown target
   now, a usage error with exit code 2, stage `usage` in JSON.
 - Symfony's and Laravel's `regex:lint` print a failure in JSON as the
-  envelope with its stage (`usage`, `config` or `collect`), where they
+  envelope with its stage (`usage`, `config`, `collect` or `analyze`), where they
   printed `{"error": "..."}`, or a text error for an option Symfony could not
   use.
 - A usage error is printed as the envelope, stage `usage`, as soon as

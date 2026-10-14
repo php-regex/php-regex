@@ -167,20 +167,19 @@ final readonly class AnalysisService
 
     /**
      * @param array<PatternOccurrence> $patterns
-     * @param callable(): void|null    $progress called once per analysed pattern, with no arguments
+     * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
+     *                                           ones included
+     *
+     * @throws LintException when a worker fails
      *
      * @return array<LintIssue>
      */
-    public function lint(array $patterns, ?callable $progress = null, int $workers = 1): array
+    public function lint(array $patterns, ?LintProgress $progress = null, int $workers = 1): array
     {
-        if ($workers <= 1 || \count($patterns) <= 1 || !$this->canRunInParallel()) {
-            return $this->lintChunk($patterns, $progress);
-        }
-
-        return $this->runInParallel(
+        return $this->runOnWorkers(
             $patterns,
             $workers,
-            fn (array $chunk): array => $this->lintChunk($chunk),
+            fn (array $chunk, ?\Closure $done): array => $this->lintChunk($chunk, $done),
             $progress,
         );
     }
@@ -188,18 +187,17 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
+     * @throws LintException when a worker fails
+     *
      * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
      */
     public function analyzeRedos(array $patterns, RedosSeverity $threshold, int $workers = 1): array
     {
-        if ($workers <= 1 || \count($patterns) <= 1 || !$this->canRunInParallel()) {
-            return $this->analyzeRedosChunk($patterns, $threshold);
-        }
-
-        return $this->runInParallel(
+        return $this->runOnWorkers(
             $patterns,
             $workers,
             fn (array $chunk): array => $this->analyzeRedosChunk($chunk, $threshold),
+            null,
         );
     }
 
@@ -207,21 +205,22 @@ final readonly class AnalysisService
      * @param array<PatternOccurrence> $patterns
      * @param OptimizerOptions|null    $options  what an optimization may rewrite; by default, what lint
      *                                           allows, every rewrite checked with the automata
+     * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
+     *                                           ones included
+     *
+     * @throws LintException when a worker fails
      *
      * @return array<OptimizationEntry>
      */
-    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1): array
+    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1, ?LintProgress $progress = null): array
     {
         $options ??= new OptimizerOptions(verifyWithAutomata: true);
 
-        if ($workers <= 1 || \count($patterns) <= 1 || !$this->canRunInParallel()) {
-            return $this->suggestOptimizationsChunk($patterns, $minSavings, $options);
-        }
-
-        return $this->runInParallel(
+        return $this->runOnWorkers(
             $patterns,
             $workers,
-            fn (array $chunk): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options),
+            fn (array $chunk, ?\Closure $done): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options, $done),
+            $progress,
         );
     }
 
@@ -240,11 +239,12 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<PatternOccurrence> $patterns
+     * @param array<PatternOccurrence>   $patterns
+     * @param (\Closure(int): void)|null $done     told of each pattern analysed
      *
-     * @phpstan-return array<LintIssue>
+     * @phpstan-return list<LintIssue>
      */
-    private function lintChunk(array $patterns, ?callable $progress = null): array
+    private function lintChunk(array $patterns, ?\Closure $done = null): array
     {
         $issues = [];
 
@@ -252,8 +252,8 @@ final readonly class AnalysisService
             // A file read with the tokenizer instead of the PHP parser is
             // counted in the stats, never reported.
             if ($occurrence->isIgnored || null !== $occurrence->parserFallback) {
-                if ($progress) {
-                    $progress();
+                if (null !== $done) {
+                    $done(1);
                 }
 
                 continue;
@@ -271,8 +271,8 @@ final readonly class AnalysisService
                     'source' => $occurrence->source,
                 ];
 
-                if ($progress) {
-                    $progress();
+                if (null !== $done) {
+                    $done(1);
                 }
 
                 continue;
@@ -283,8 +283,8 @@ final readonly class AnalysisService
             if (!$validation->isValid) {
                 $message = $validation->error ?? 'Invalid regex.';
                 if ($this->ignoreParseErrors && $this->isLikelyPartialRegexError($message)) {
-                    if ($progress) {
-                        $progress();
+                    if (null !== $done) {
+                        $done(1);
                     }
 
                     continue;
@@ -303,8 +303,8 @@ final readonly class AnalysisService
                     'tip' => $this->getTipForValidationError($message, $occurrence->pattern, $validation),
                 ];
 
-                if ($progress) {
-                    $progress();
+                if (null !== $done) {
+                    $done(1);
                 }
 
                 continue;
@@ -463,8 +463,8 @@ final readonly class AnalysisService
 
             array_push($issues, ...$lintIssues, ...$riskIssues);
 
-            if ($progress) {
-                $progress();
+            if (null !== $done) {
+                $done(1);
             }
         }
 
@@ -547,7 +547,7 @@ final readonly class AnalysisService
     /**
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
+     * @return list<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
      */
     private function analyzeRedosChunk(array $patterns, RedosSeverity $threshold): array
     {
@@ -587,265 +587,157 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<PatternOccurrence> $patterns
+     * @param array<PatternOccurrence>   $patterns
+     * @param (\Closure(int): void)|null $done     told of each pattern looked at
      *
-     * @return array<OptimizationEntry>
+     * @return list<OptimizationEntry>
      */
-    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options): array
+    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options, ?\Closure $done = null): array
     {
         $suggestions = [];
-        $verifyWithAutomata = $options->verifyWithAutomata;
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
-                continue;
+            $suggestion = $this->suggestOptimization($occurrence, $minSavings, $options);
+            if (null !== $suggestion) {
+                $suggestions[] = $suggestion;
             }
 
-            $validation = $this->regex->validate($occurrence->pattern);
-            $source = $occurrence->source;
-            if (!$validation->isValid) {
-                continue;
+            if (null !== $done) {
+                $done(1);
             }
-
-            $isExtended = $this->usesExtendedMode($occurrence->pattern);
-
-            try {
-                if ($isExtended) {
-                    // Under /x, factorizing alternatives would reflow what the
-                    // author laid out: it stays off whatever the options say.
-                    $optimizer = new Rewriter(
-                        optimizeDigits: $options->digits,
-                        optimizeWord: $options->word,
-                        ranges: $options->ranges,
-                        canonicalizeCharClasses: $options->canonicalizeCharClasses,
-                        possessive: $options->possessive,
-                        factorize: false,
-                        minQuantifierCount: $options->minQuantifierCount,
-                    );
-
-                    $ast = $this->regex->parse($occurrence->pattern);
-                    $optimizedAst = $ast->accept($optimizer);
-
-                    // The rewrite is written into the pattern as laid out,
-                    // only its changed parts printed again; a tree without
-                    // that text is pretty-printed on both sides instead.
-                    $splicer = new LayoutSplicer($this->regex);
-                    $baseline = $splicer->splice($ast, $ast);
-                    $optimizedPattern = $optimizedAst instanceof RegexNode ? $splicer->splice($ast, $optimizedAst) : null;
-                    if (null === $baseline || null === $optimizedPattern) {
-                        $pretty = str_contains($ast->flags, 'x');
-                        $baseline = $ast->accept(new PatternPrinter($pretty));
-                        $optimizedPattern = $optimizedAst->accept(new PatternPrinter($pretty));
-                    }
-
-                    if ($baseline === $optimizedPattern) {
-                        continue;
-                    }
-
-                    if ($verifyWithAutomata) {
-                        $isEquivalent = $this->verifyOptimizationWithAutomata($baseline, $optimizedPattern);
-                        if (false === $isEquivalent) {
-                            continue;
-                        }
-                    }
-
-                    $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
-                } else {
-                    $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
-                }
-            } catch (\Throwable) {
-                continue;
-            }
-
-            if (!$optimization->isChanged()) {
-                continue;
-            }
-
-            $savings = \strlen($optimization->original) - \strlen($optimization->optimized);
-            if ($savings < $minSavings) {
-                continue;
-            }
-
-            $suggestions[] = [
-                'file' => $occurrence->file,
-                'line' => $occurrence->line,
-                'column' => $this->resolveColumn($occurrence),
-                'fileOffset' => $occurrence->fileOffset,
-                'optimization' => $optimization,
-                'savings' => $savings,
-                'source' => $source,
-            ];
         }
 
         return $suggestions;
     }
 
     /**
-     * @template T
-     *
-     * @param array<PatternOccurrence>                    $patterns
-     * @param callable(array<PatternOccurrence>):array<T> $worker
-     *
-     * @return array<T>
+     * @return OptimizationEntry|null
      */
-    private function runInParallel(array $patterns, int $workers, callable $worker, ?callable $progress = null): array
+    private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options): ?array
     {
-        $patternCount = \count($patterns);
-        if (0 === $patternCount) {
-            return [];
+        $verifyWithAutomata = $options->verifyWithAutomata;
+
+        if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
+            return null;
         }
 
-        $workerCount = max(1, min($workers, $patternCount));
-        $chunkSize = max(1, (int) ceil($patternCount / $workerCount));
-        $chunks = array_chunk($patterns, $chunkSize);
-        $children = [];
-        $failed = false;
-
-        foreach ($chunks as $index => $chunk) {
-            $tmpFile = tempnam(sys_get_temp_dir(), 'regexparser_');
-            if (false === $tmpFile) {
-                $failed = true;
-
-                break;
-            }
-
-            $pid = (new ForkedWorkerPool())->fork(
-                static fn (): array => $worker($chunk),
-                $tmpFile,
-            );
-            if (-1 === $pid) {
-                $failed = true;
-
-                break;
-            }
-
-            $children[$pid] = [
-                'file' => $tmpFile,
-                'index' => $index,
-                'count' => \count($chunk),
-            ];
+        $validation = $this->regex->validate($occurrence->pattern);
+        $source = $occurrence->source;
+        if (!$validation->isValid) {
+            return null;
         }
 
-        if ($failed) {
-            foreach ($children as $pid => $meta) {
-                pcntl_waitpid($pid, $status);
-                @unlink($meta['file']);
-            }
+        $isExtended = $this->usesExtendedMode($occurrence->pattern);
 
-            $results = $worker($patterns);
-            if ($progress) {
-                for ($i = 0; $i < $patternCount; $i++) {
-                    $progress();
+        try {
+            if ($isExtended) {
+                // Under /x, factorizing alternatives would reflow what the
+                // author laid out: it stays off whatever the options say.
+                $optimizer = new Rewriter(
+                    optimizeDigits: $options->digits,
+                    optimizeWord: $options->word,
+                    ranges: $options->ranges,
+                    canonicalizeCharClasses: $options->canonicalizeCharClasses,
+                    possessive: $options->possessive,
+                    factorize: false,
+                    minQuantifierCount: $options->minQuantifierCount,
+                );
+
+                $ast = $this->regex->parse($occurrence->pattern);
+                $optimizedAst = $ast->accept($optimizer);
+
+                // The rewrite is written into the pattern as laid out,
+                // only its changed parts printed again; a tree without
+                // that text is pretty-printed on both sides instead.
+                $splicer = new LayoutSplicer($this->regex);
+                $baseline = $splicer->splice($ast, $ast);
+                $optimizedPattern = $optimizedAst instanceof RegexNode ? $splicer->splice($ast, $optimizedAst) : null;
+                if (null === $baseline || null === $optimizedPattern) {
+                    $pretty = str_contains($ast->flags, 'x');
+                    $baseline = $ast->accept(new PatternPrinter($pretty));
+                    $optimizedPattern = $optimizedAst->accept(new PatternPrinter($pretty));
                 }
-            }
 
-            return $results;
-        }
-
-        $resultsByIndex = [];
-        foreach ($children as $pid => $meta) {
-            pcntl_waitpid($pid, $status);
-            $payload = $this->readWorkerPayload($meta['file']);
-            @unlink($meta['file']);
-
-            if (!($payload['ok'] ?? false)) {
-                $error = $payload['error'] ?? ['message' => 'Unknown worker failure.', 'class' => \RuntimeException::class];
-                $errorClass = isset($error['class']) && \is_string($error['class']) ? $error['class'] : \RuntimeException::class;
-                $errorMessage = isset($error['message']) && \is_string($error['message']) ? $error['message'] : 'Unknown worker failure.';
-
-                throw new LintException(\sprintf('Parallel analysis failed: %s: %s', $errorClass, $errorMessage));
-            }
-
-            $resultsByIndex[$meta['index']] = $payload['result'] ?? [];
-            if ($progress) {
-                for ($i = 0; $i < $meta['count']; $i++) {
-                    $progress();
+                if ($baseline === $optimizedPattern) {
+                    return null;
                 }
+
+                if ($verifyWithAutomata) {
+                    $isEquivalent = $this->verifyOptimizationWithAutomata($baseline, $optimizedPattern);
+                    if (false === $isEquivalent) {
+                        return null;
+                    }
+                }
+
+                $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
+            } else {
+                $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
             }
+        } catch (\Throwable) {
+            return null;
         }
 
-        ksort($resultsByIndex);
-        $results = [];
-        foreach ($resultsByIndex as $chunkResults) {
-            if (!\is_array($chunkResults)) {
-                continue;
-            }
-
-            foreach ($chunkResults as $item) {
-                $results[] = $item;
-            }
+        if (!$optimization->isChanged()) {
+            return null;
         }
 
-        return $results;
-    }
-
-    private function canRunInParallel(): bool
-    {
-        return \PHP_SAPI === 'cli'
-            && \function_exists('pcntl_fork')
-            && \function_exists('pcntl_waitpid');
-    }
-
-    /**
-     * @return array{ok: bool, result?: mixed, error?: array{message: string, class: string}}
-     */
-    private function readWorkerPayload(string $path): array
-    {
-        $data = @file_get_contents($path);
-        if (false === $data) {
-            return [
-                'ok' => false,
-                'error' => [
-                    'message' => 'Failed to read worker output.',
-                    'class' => \RuntimeException::class,
-                ],
-            ];
-        }
-
-        $payload = @unserialize($data, ['allowed_classes' => self::allowedWorkerClasses()]);
-        if (!\is_array($payload) || !\array_key_exists('ok', $payload) || !\is_bool($payload['ok'])) {
-            return [
-                'ok' => false,
-                'error' => [
-                    'message' => 'Invalid worker output.',
-                    'class' => \RuntimeException::class,
-                ],
-            ];
-        }
-
-        if (false === $payload['ok']) {
-            $error = $payload['error'] ?? null;
-            if (!\is_array($error) || !isset($error['message'], $error['class']) || !\is_string($error['message']) || !\is_string($error['class'])) {
-                return [
-                    'ok' => false,
-                    'error' => [
-                        'message' => 'Invalid worker error payload.',
-                        'class' => \RuntimeException::class,
-                    ],
-                ];
-            }
-
-            return [
-                'ok' => false,
-                'error' => [
-                    'message' => $error['message'],
-                    'class' => $error['class'],
-                ],
-            ];
+        $savings = \strlen($optimization->original) - \strlen($optimization->optimized);
+        if ($savings < $minSavings) {
+            return null;
         }
 
         return [
-            'ok' => true,
-            'result' => $payload['result'] ?? null,
+            'file' => $occurrence->file,
+            'line' => $occurrence->line,
+            'column' => $this->resolveColumn($occurrence),
+            'fileOffset' => $occurrence->fileOffset,
+            'optimization' => $optimization,
+            'savings' => $savings,
+            'source' => $source,
         ];
     }
 
     /**
-     * @return array<string>
+     * The work run on the patterns, on the workers when there are several;
+     * in the parent, it advances the progress itself.
+     *
+     * @template R
+     *
+     * @param array<PatternOccurrence>                                               $patterns
+     * @param \Closure(list<PatternOccurrence>, (\Closure(int): void)|null): list<R> $work
+     *
+     * @throws LintException when a worker fails
+     *
+     * @return list<R>
+     */
+    private function runOnWorkers(array $patterns, int $workers, \Closure $work, ?LintProgress $progress): array
+    {
+        $patterns = array_values($patterns);
+
+        if ($workers > 1 && \count($patterns) > 1 && ForkedWorkerPool::canFork()) {
+            $results = (new ForkedWorkerPool())->run(
+                $patterns,
+                $workers,
+                $work,
+                $progress,
+                'Parallel analysis failed',
+                self::allowedWorkerClasses(),
+                static fn (PatternOccurrence $occurrence): string => $occurrence->file,
+            );
+            if (null !== $results) {
+                return $results;
+            }
+        }
+
+        return $work($patterns, $progress instanceof LintProgress ? $progress->advance(...) : null);
+    }
+
+    /**
+     * @return list<class-string>
      */
     private static function allowedWorkerClasses(): array
     {
-        /** @var array<string>|null $allowed */
+        /** @var list<class-string>|null $allowed */
         static $allowed = null;
         if (null !== $allowed) {
             return $allowed;
@@ -872,11 +764,12 @@ final readonly class AnalysisService
     }
 
     /**
-     * The classes under the directory and namespace of $class, subdirectories included.
+     * The classes under the directory and namespace of $class, subdirectories
+     * included; loaded in the parent, before any worker is forked.
      *
      * @param class-string $class
      *
-     * @return array<string>
+     * @return list<class-string>
      */
     private static function classNamesBeside(string $class): array
     {
@@ -891,7 +784,11 @@ final readonly class AnalysisService
             }
 
             $relative = substr($path->getPathname(), \strlen($dir) + 1, -4);
-            $classes[] = $namespace.str_replace(\DIRECTORY_SEPARATOR, '\\', $relative);
+            $name = $namespace.str_replace(\DIRECTORY_SEPARATOR, '\\', $relative);
+            // An interface is never unserialized.
+            if (class_exists($name)) {
+                $classes[] = $name;
+            }
         }
 
         return $classes;

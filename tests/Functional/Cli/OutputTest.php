@@ -111,18 +111,137 @@ final class OutputTest extends TestCase
         $this->assertFalse($output->hasWrittenDocument());
     }
 
+    /**
+     * The progress is drawn on stderr: stdout keeps the report alone, so a
+     * report redirected to a file holds no progress frame.
+     */
     public function test_progress_outputs_when_ansi_enabled(): void
     {
-        $output = new Output(true, false);
+        [$output, $errors] = $this->outputWithErrorStream(true, false);
 
         $buffer = $this->captureOutput(static function () use ($output): void {
             $output->progressStart(3);
             $output->progressAdvance();
             $output->progressFinish();
         });
+        $progress = $this->readStream($errors);
 
-        $this->assertStringContainsString('1/3', $buffer);
-        $this->assertStringContainsString('3/3', $buffer);
+        $this->assertStringContainsString('1/3', $progress);
+        $this->assertStringContainsString('3/3', $progress);
+        $this->assertSame('', $buffer, 'The progress is not drawn on stdout.');
+    }
+
+    /**
+     * A tick redraws the line with the time spent, the count unchanged: the
+     * clock moves while the run waits on its workers.
+     */
+    #[Test]
+    public function test_progress_tick_redraws_the_elapsed_time_without_changing_the_count(): void
+    {
+        [$output, $errors] = $this->outputWithErrorStream(true, false);
+
+        $buffer = $this->captureOutput(static function () use ($output): void {
+            $output->progressStart(3);
+            $output->progressAdvance();
+        });
+        $beforeTick = $this->readStream($errors);
+
+        // Past the first second: the elapsed column reads 00:01 at least,
+        // whatever the precision the clock is measured with.
+        usleep(1_100_000);
+        $buffer .= $this->captureOutput(static function () use ($output): void {
+            $output->progressTick();
+        });
+        $tick = substr($this->readStream($errors), \strlen($beforeTick));
+
+        $this->assertMatchesRegularExpression('/ 1\/3 \[#{9}-{19}\]  33%    00:00$/', $beforeTick);
+        $this->assertMatchesRegularExpression('/^\r {13}1\/3 \[#{9}-{19}\]  33%    00:0[1-9]$/', $tick);
+        $this->assertStringNotContainsString('2/3', $tick);
+        $this->assertSame('', $buffer);
+    }
+
+    /**
+     * A step whose total is unknown, the walk that finds the files, shows a
+     * counter: what was found so far, with no bar and no percentage.
+     */
+    #[Test]
+    public function test_progress_without_a_total_counts_what_was_found(): void
+    {
+        [$output, $errors] = $this->outputWithErrorStream(true, false);
+
+        $buffer = $this->captureOutput(static function () use ($output): void {
+            $output->progressStart(null);
+            $output->progressLabel('Finding files');
+            $output->progressAdvance(1000);
+            $output->progressAdvance(234);
+            $output->progressTick();
+            $output->progressFinish();
+        });
+        $progress = $this->readStream($errors);
+
+        $this->assertMatchesRegularExpression('/Finding files\s+1234 found\s+\d{2}:\d{2}/', $progress);
+        $this->assertStringContainsString('1000 found', $progress);
+        $this->assertStringNotContainsString('%', $progress);
+        $this->assertStringNotContainsString('[', $progress);
+        $this->assertStringNotContainsString('/', $progress, 'No total: no "current/total" count.');
+        $this->assertSame('', $buffer);
+    }
+
+    /**
+     * The sub-step's name leads the line, padded so that the counts of the
+     * successive sub-steps line up.
+     */
+    #[Test]
+    public function test_progress_label_leads_the_line(): void
+    {
+        [$output, $errors] = $this->outputWithErrorStream(true, false);
+
+        $this->captureOutput(static function () use ($output): void {
+            $output->progressStart(10);
+            $output->progressLabel('Patterns');
+            $output->progressAdvance(3);
+        });
+
+        $this->assertStringContainsString(
+            "\r   ".str_pad('Patterns', 13).' '.str_pad('3/10', 15, ' ', \STR_PAD_LEFT).' [########--------------------]  30% ',
+            $this->readStream($errors),
+        );
+    }
+
+    /**
+     * Without ANSI (a log, a pipe) or under quiet, no progress at all, on
+     * either stream: neither the frames nor a line per tick.
+     */
+    #[Test]
+    #[DataProvider('provideSilentProgress')]
+    public function test_progress_writes_nothing_when_not_ansi_or_quiet(bool $ansi, bool $quiet, ?int $total): void
+    {
+        [$output, $errors] = $this->outputWithErrorStream($ansi, $quiet);
+
+        $buffer = $this->captureOutput(static function () use ($output, $total): void {
+            $output->progressStart($total);
+            $output->progressLabel('Declarations');
+            $output->progressAdvance();
+            $output->progressTick();
+            $output->progressAdvance(2);
+            $output->progressTick();
+            $output->progressFinish();
+        });
+
+        $this->assertSame('', $buffer);
+        $this->assertSame('', $this->readStream($errors));
+    }
+
+    /**
+     * @return iterable<string, array{ansi: bool, quiet: bool, total: int|null}>
+     */
+    public static function provideSilentProgress(): iterable
+    {
+        yield 'not ansi, with a total' => ['ansi' => false, 'quiet' => false, 'total' => 5];
+        yield 'not ansi, total unknown' => ['ansi' => false, 'quiet' => false, 'total' => null];
+        yield 'quiet with ansi, with a total' => ['ansi' => true, 'quiet' => true, 'total' => 5];
+        yield 'quiet with ansi, total unknown' => ['ansi' => true, 'quiet' => true, 'total' => null];
+        yield 'quiet without ansi' => ['ansi' => false, 'quiet' => true, 'total' => 5];
     }
 
     public function test_format_elapsed_handles_hours_and_minutes(): void
@@ -169,11 +288,44 @@ final class OutputTest extends TestCase
         return (bool) $property->getValue($output);
     }
 
+    /**
+     * An output whose error stream, where the progress is drawn, is kept in
+     * memory.
+     *
+     * @return array{Output, resource}
+     */
+    private function outputWithErrorStream(bool $ansi, bool $quiet): array
+    {
+        $errors = fopen('php://memory', 'w+');
+        $this->assertIsResource($errors);
+
+        return [new Output($ansi, $quiet, '#', '-', $errors), $errors];
+    }
+
+    /**
+     * Everything written to the stream so far.
+     *
+     * @param resource $stream
+     */
+    private function readStream($stream): string
+    {
+        rewind($stream);
+        $content = (string) stream_get_contents($stream);
+        fseek($stream, 0, \SEEK_END);
+
+        return $content;
+    }
+
     private function captureOutput(callable $callback): string
     {
         ob_start();
-        $callback();
 
-        return (string) ob_get_clean();
+        try {
+            $callback();
+        } finally {
+            $buffer = (string) ob_get_clean();
+        }
+
+        return $buffer;
     }
 }

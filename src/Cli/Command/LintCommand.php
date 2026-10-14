@@ -31,7 +31,10 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Internal\CpuCoreCounter;
+use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -151,8 +154,8 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $checkOptimizations = $arguments->checkOptimizations;
         $jobs = (int) $arguments->jobs;
         if (-1 === $jobs) {
-            // Auto-detect optimal number of jobs
-            $jobs = self::detectCpuCount();
+            // One process per core the run may use, when it can fork at all.
+            $jobs = ForkedWorkerPool::canFork() ? (new CpuCoreCounter())->count() : 1;
         } elseif ($jobs < 1) {
             $jobs = 1; // Minimum 1 job
         }
@@ -218,37 +221,11 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $output->write($this->outputRenderer->renderBanner($output, $target, $jobs, $lintConfigFiles));
         }
 
-        $collectionProgress = null;
         $startTime = (float) microtime(true);
-        $fileCount = 0;
 
-        if ('console' === $format && $config->shouldShowProgress()) {
-            $output->write('  '.$output->dim('[1/2] Scanning files')."\n");
-            $collectionStarted = false;
-            $lastCount = 0;
-            $collectionProgress = static function (int $current, int $total) use (&$collectionStarted, &$lastCount, $output, &$fileCount): void {
-                if ($total <= 0) {
-                    return;
-                }
-
-                $fileCount = $total;
-
-                if (!$collectionStarted) {
-                    $output->progressStart($total);
-                    $collectionStarted = true;
-                }
-
-                $advance = $current - $lastCount;
-                if ($advance > 0) {
-                    $output->progressAdvance($advance);
-                    $lastCount = $current;
-                }
-
-                if ($current >= $total) {
-                    $output->progressFinish();
-                }
-            };
-        }
+        // The steps and their progress go to stderr: stdout keeps the report.
+        $showSteps = 'console' === $format && $config->shouldShowProgress() && !$output->isQuiet();
+        $progress = 'console' === $format ? new LintConsoleProgress($output, $showSteps, $checkOptimizations) : null;
 
         try {
             $request = new LintRequest(
@@ -264,10 +241,14 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 vendorPaths: [(getcwd() ?: '.').'/vendor'],
                 checkComplexity: $arguments->checkComplexity,
             );
-            $patterns = $lint->collectPatterns($request, $collectionProgress);
+            $patterns = $lint->collectPatterns($request, $progress);
         } catch (\Throwable $e) {
+            $progress?->abandon();
+
             return $this->fail($output, $json, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, self::FAILURE);
         }
+
+        $progress?->endScan();
 
         if ([] === $patterns) {
             $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -279,6 +260,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             } else {
                 $this->writeReport($output, $format, $formatter->format($emptyReport));
             }
+
             return $this->writeRequestedFiles($output, $arguments, $format, $formatter, $emptyReport) ? self::SUCCESS : self::INVALID;
         }
 
@@ -295,22 +277,17 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             }
         }
 
-        if ('console' === $format) {
+        if (null !== $progress && $showSteps) {
             $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
-            $output->write('  '.$output->dim("Scanned {$fileCount} files, found {$patternCount} patterns.\n\n"));
+            $output->writeError('  '.$output->dim("Scanned {$progress->files()} files, found {$patternCount} patterns.")."\n\n");
         }
 
-        $progressCallback = null;
-        if ('console' === $format && $config->shouldShowProgress()) {
-            $output->write('  '.$output->dim('[2/2] Analyzing patterns')."\n");
-            $output->progressStart(\count($patterns));
-            $progressCallback = static fn () => $output->progressAdvance();
-        }
+        try {
+            $report = $lint->analyze($patterns, $request, $progress);
+        } catch (LintException $e) {
+            $progress?->abandon();
 
-        $report = $lint->analyze($patterns, $request, $progressCallback);
-
-        if (null !== $progressCallback) {
-            $output->progressFinish();
+            return $this->fail($output, $json, $e->getMessage(), JsonDocument::STAGE_ANALYZE, self::FAILURE);
         }
 
         // A generated baseline must cover the FULL report, before any
@@ -332,7 +309,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $peakMemory = memory_get_peak_usage(true);
             $timeStr = round($elapsed, 2).'s';
             $memoryStr = round($peakMemory / 1024 / 1024, 2).' MB';
-            $processesStr = (string) $jobs;
+            $processesStr = (string) ($progress?->processes() ?? 1);
             // No cache line: the binary keeps no cache between runs.
             $output->write('  '.$output->dim('Time: ').$output->warning($timeStr).'  '.$output->dim('Memory: ').$output->warning($memoryStr).'  '.$output->dim('Processes: ').$output->warning($processesStr)."\n");
             $output->write($formatter->formatFooter());
@@ -547,53 +524,5 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $paths = \is_array($configured) ? array_values(array_filter($configured, static fn (mixed $path): bool => \is_string($path) && '' !== $path)) : [];
 
         return [] === $paths ? array_values($linted) : $paths;
-    }
-
-    /**
-     * Detect the number of available CPU cores for optimal parallel processing.
-     */
-    private static function detectCpuCount(): int
-    {
-        // Try Swoole extension first (fastest)
-        if (\function_exists('swoole_cpu_num')) {
-            return swoole_cpu_num();
-        }
-
-        // Unix-like systems
-        if (\DIRECTORY_SEPARATOR === '/') {
-            // Linux
-            // Linux only: no test on another system reads /proc/cpuinfo.
-            if (\is_readable('/proc/cpuinfo')) {
-                $cpuinfo = \file_get_contents('/proc/cpuinfo');
-                if (false !== $cpuinfo) {
-                    $matches = [];
-                    LibraryPcre::matchAll('/^processor\s*:/m', $cpuinfo, $matches);
-                    if (!empty($matches[0])) {
-                        return \count($matches[0]);
-                    }
-                }
-            }
-
-            // macOS/BSD
-            $result = \shell_exec('sysctl -n hw.ncpu 2>/dev/null');
-            if (null !== $result) {
-                $cpu = (int) \trim((string) $result);
-                if ($cpu > 0) {
-                    return $cpu;
-                }
-            }
-        } else {
-            // Windows
-            $result = \shell_exec('wmic cpu get NumberOfCores 2>nul | findstr /r /v "^$" | findstr /v "NumberOfCores"');
-            if (null !== $result) {
-                $cpu = (int) \trim((string) $result);
-                if ($cpu > 0) {
-                    return $cpu;
-                }
-            }
-        }
-
-        // Fallback
-        return 1;
     }
 }

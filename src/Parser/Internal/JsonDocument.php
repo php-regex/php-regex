@@ -42,6 +42,8 @@ final class JsonDocument
 
     public const STAGE_PATTERN = 'pattern';
 
+    public const STAGE_ANALYZE = 'analyze';
+
     public const STAGE_INTERNAL = 'internal';
 
     private const FLAGS = \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR;

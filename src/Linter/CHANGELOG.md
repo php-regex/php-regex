@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The workers take the files and the patterns a few at a time, as each one
+   finishes, and report their progress as they go; the inline ignore markers
+   are read by the workers, and a file's source is read once for all its
+   issues.
  * A PHP file the lint cannot read, or that does not fit in `memory_limit`,
    is reported as `regex.lint.source.unreadable`, an error, instead of being
    left out.

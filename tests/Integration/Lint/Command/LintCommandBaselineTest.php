@@ -155,10 +155,14 @@ final class LintCommandBaselineTest extends TestCase
         $baselineFile = $dir.'/empty.json';
         file_put_contents($baselineFile, '[]');
 
+        $errors = fopen('php://memory', 'w+');
+        $this->assertIsResource($errors);
         $exitCode = 0;
-        $this->captureOutput(fn (): int => $this->makeLintCommand()->run($this->makeInput([$file, '--baseline='.$baselineFile]), new Output(true, true)), $exitCode);
+        $this->captureOutput(fn (): int => $this->makeLintCommand()->run($this->makeInput([$file, '--baseline='.$baselineFile]), new Output(true, true, '#', '-', $errors)), $exitCode);
+        rewind($errors);
 
         $this->assertSame(2, $exitCode);
+        $this->assertStringContainsString('is not a lint baseline', (string) stream_get_contents($errors));
     }
 
     private function makeLintCommand(): LintCommand

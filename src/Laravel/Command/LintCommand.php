@@ -16,6 +16,7 @@ namespace PHPRegex\Laravel\Command;
 use Illuminate\Console\Command;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
+use PHPRegex\Laravel\Output\LintProgressBar;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Diagnostic;
@@ -24,7 +25,10 @@ use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\Internal\CpuCoreCounter;
+use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintSeverity;
@@ -32,9 +36,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Toolkit\Regex;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -47,8 +49,6 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class LintCommand extends Command
 {
-    private const PROGRESS_BAR_WIDTH = 28;
-    private const MESSAGE_PAD_LENGTH = 15;
     private const FORMAT_CONSOLE = 'console';
 
     /**
@@ -126,7 +126,7 @@ final class LintCommand extends Command
 
         $jobs = (int) $this->option('jobs');
         if ($jobs < 1) {
-            $jobs = $this->detectCpuCount();
+            $jobs = ForkedWorkerPool::canFork() ? (new CpuCoreCounter())->count() : 1;
         }
 
         // The Regex service judges for the running PHP; the lint judges for
@@ -164,41 +164,7 @@ final class LintCommand extends Command
 
         $startTime = (float) microtime(true);
         $showProgress = self::FORMAT_CONSOLE === $format && !$this->option('quiet');
-        $collectionBar = null;
-        $collectionFinished = false;
-        $lastCount = 0;
-        $fileCount = 0;
-
-        if ($showProgress) {
-            $this->line('  <fg=gray>[1/2] Scanning files</>');
-            $collectionProgress = function (int $current, int $total) use (&$collectionBar, &$collectionFinished, &$lastCount, &$fileCount): void {
-                if ($collectionFinished || $total <= 0) {
-                    return;
-                }
-
-                $fileCount = $total;
-
-                if (null === $collectionBar) {
-                    $collectionBar = $this->createProgressBar($total);
-                }
-
-                $status = str_pad($current.'/'.$total, self::MESSAGE_PAD_LENGTH, ' ', \STR_PAD_LEFT);
-                $collectionBar->setMessage($status);
-                $advance = $current - $lastCount;
-                if ($advance > 0) {
-                    $collectionBar->advance($advance);
-                    $lastCount = $current;
-                }
-
-                if ($current >= $total) {
-                    $collectionBar->setMessage(str_pad($total.'/'.$total, self::MESSAGE_PAD_LENGTH, ' ', \STR_PAD_LEFT));
-                    $collectionBar->finish();
-                    $collectionFinished = true;
-                }
-            };
-        } else {
-            $collectionProgress = null;
-        }
+        $progress = null;
 
         $defaultOptimizations = $this->normalizeOptimizations(config('php-regex.optimizations', []));
 
@@ -221,8 +187,18 @@ final class LintCommand extends Command
                 declarationPaths: $this->declarationPaths($paths),
                 vendorPaths: [base_path('vendor')],
             );
-            $patterns = $lint->collectPatterns($request, $collectionProgress);
+
+            if ($showProgress) {
+                // The optimizations are a step of their own when they run.
+                $steps = $request->checkOptimizations ? 3 : 2;
+                $progress = new LintProgressBar($this->output, $steps);
+                $this->line('  <fg=gray>[1/'.$steps.'] Scanning files</>');
+            }
+
+            $patterns = $lint->collectPatterns($request, $progress);
         } catch (\Throwable $e) {
+            $progress?->close();
+
             return $this->renderFailure($format, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, self::FAILURE);
         }
 
@@ -231,9 +207,9 @@ final class LintCommand extends Command
         // A file read with the tokenizer holds no pattern of its own: it is
         // counted in the stats only.
         $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
-        if ($showProgress) {
-            $this->newLine();
-            $this->line('  <fg=gray>Scanned '.$fileCount.' files, found '.$patternCount.' patterns.</>');
+        if (null !== $progress) {
+            $progress->close();
+            $this->line('  <fg=gray>Scanned '.$progress->filesFound().' files, found '.$patternCount.' patterns.</>');
             $this->newLine();
         }
 
@@ -241,28 +217,18 @@ final class LintCommand extends Command
             return $this->renderEmptyResults($format);
         }
 
-        $analysisBar = null;
-        $currentAnalysis = 0;
-        if ($showProgress) {
-            $this->newLine();
-            $this->line('  <fg=gray>[2/2] Analyzing patterns</>');
-            $totalPatterns = \count($patterns);
-            $analysisBar = $this->createProgressBar($totalPatterns);
-            $progressCallback = static function () use ($analysisBar, &$currentAnalysis, $totalPatterns): void {
-                $currentAnalysis++;
-                $analysisBar->setMessage(str_pad($currentAnalysis.'/'.$totalPatterns, self::MESSAGE_PAD_LENGTH, ' ', \STR_PAD_LEFT));
-                $analysisBar->advance();
-            };
-        } else {
-            $progressCallback = null;
+        try {
+            $report = $lint->analyze($patterns, $request, $progress);
+        } catch (LintException $e) {
+            // A worker lost: the run stops, naming the files it was reading.
+            $progress?->close();
+
+            return $this->renderFailure($format, $e->getMessage(), JsonDocument::STAGE_ANALYZE, self::FAILURE);
         }
 
-        $report = $lint->analyze($patterns, $request, $progressCallback);
-
-        if (null !== $analysisBar) {
-            $analysisBar->setMessage(str_pad(\count($patterns).'/'.\count($patterns), 15, ' ', \STR_PAD_LEFT));
-            $analysisBar->finish();
-            $this->newLine(2);
+        if (null !== $progress) {
+            $progress->close();
+            $this->newLine();
         }
 
         $results = [...$report->results, ...$unreadFiles];
@@ -279,7 +245,7 @@ final class LintCommand extends Command
             $elapsed = (float) microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
             $cacheStats = $parser->getCacheStats();
-            $this->line('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Cache:</> <fg=yellow>'.$cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses</> | <options=bold>Processes:</> <fg=yellow>'.$jobs.'</>');
+            $this->line('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Cache:</> <fg=yellow>'.$cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
             $this->newLine();
         }
 
@@ -439,67 +405,6 @@ final class LintCommand extends Command
         $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $this->line('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
         $this->newLine();
-    }
-
-    private function createProgressBar(int $total): ProgressBar
-    {
-        $bar = $this->output->createProgressBar($total);
-        $bar->setFormat(' %message% [%bar%] %percent:3s%% %elapsed:6s%');
-        $bar->setBarWidth(self::PROGRESS_BAR_WIDTH);
-        $bar->setProgressCharacter('▓');
-        $bar->setEmptyBarCharacter('░');
-        $bar->setMessage(str_pad('0/'.$total, self::MESSAGE_PAD_LENGTH, ' ', \STR_PAD_LEFT));
-        $bar->start();
-
-        return $bar;
-    }
-
-    /**
-     * Detect the number of available CPU cores.
-     */
-    private function detectCpuCount(): int
-    {
-        // Try Swoole extension first (fastest)
-        if (\function_exists('swoole_cpu_num')) {
-            return swoole_cpu_num();
-        }
-
-        // Unix-like systems
-        if (\DIRECTORY_SEPARATOR === '/') {
-            // Linux
-            // Linux only: no test on another system reads /proc/cpuinfo.
-            if (\is_readable('/proc/cpuinfo')) {
-                $cpuinfo = \file_get_contents('/proc/cpuinfo');
-                if (false !== $cpuinfo) {
-                    $matches = [];
-                    LibraryPcre::matchAll('/^processor\s*:/m', $cpuinfo, $matches);
-                    if (!empty($matches[0])) {
-                        return \count($matches[0]);
-                    }
-                }
-            }
-
-            // macOS/BSD - use nproc command or fallback
-            $nproc = false !== @\file_get_contents('/usr/bin/nproc') ? \trim((string) @\file_get_contents('/proc/self/status')) : null;
-            if (null === $nproc) {
-                // Try reading sysctl output via proc
-                $sysctlPath = '/usr/sbin/sysctl';
-                if (\is_executable($sysctlPath)) {
-                    $output = [];
-                    $returnCode = 0;
-                    @\exec($sysctlPath.' -n hw.ncpu 2>/dev/null', $output, $returnCode);
-                    if (0 === $returnCode && !empty($output[0])) {
-                        $cpu = (int) \trim($output[0]);
-                        if ($cpu > 0) {
-                            return $cpu;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Fallback
-        return 1;
     }
 
     /**

@@ -201,10 +201,11 @@ vendor/bin/regex lint app/ --no-ansi
 
 **Output (trimmed):**
 ```
-  [1/2] Scanning files
+  [1/3] Scanning files
   Scanned 1 files, found 1 patterns.
 
-  [2/2] Analyzing patterns
+  [2/3] Analyzing patterns
+  [3/3] Suggesting optimizations
   app/Service/Validator.php:9:33
       → /^(?:[0-9]+\s?)+$/
     WARN Nested quantifiers can cause catastrophic backtracking.

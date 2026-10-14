@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Cache\CacheInterface;
@@ -23,17 +22,22 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\Internal\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
-use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\RecordingLintProgress;
+use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
 
 final class AnalysisServiceTest extends TestCase
 {
+    use TemporaryProject;
+
     private AnalysisService $analysis;
 
     protected function setUp(): void
@@ -112,6 +116,20 @@ final class AnalysisServiceTest extends TestCase
     {
         $patterns = [
             new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
+        ];
+
+        $result = $this->analysis->suggestOptimizations($patterns, 0);
+
+        $this->assertSame([], $result);
+    }
+
+    public function test_suggest_optimizations_skips_a_pattern_that_parses_but_pcre_rejects(): void
+    {
+        // PCRE refuses a reference to a group the pattern does not have
+        // (preg_match('/[0-9]+\2/', '') is false), though the tree builds
+        // and the optimizer would rewrite it to /\d+\2/.
+        $patterns = [
+            new PatternOccurrence('/[0-9]+\2/', 'test.php', 1, 'preg_match'),
         ];
 
         $result = $this->analysis->suggestOptimizations($patterns, 0);
@@ -207,10 +225,16 @@ final class AnalysisServiceTest extends TestCase
             new PatternOccurrence('/foo/', 'test.php', 3, 'preg_match'),
         ];
 
-        $sequential = $this->analysis->lint($patterns);
-        $parallel = $this->analysis->lint($patterns, null, 2);
+        $sequentialProgress = new RecordingLintProgress();
+        $parallelProgress = new RecordingLintProgress();
+
+        $sequential = $this->analysis->lint($patterns, $sequentialProgress);
+        $parallel = $this->analysis->lint($patterns, $parallelProgress, 2);
 
         $this->assertEquals($sequential, $parallel);
+        $this->assertSame(3, $sequentialProgress->advancedTotal());
+        $this->assertSame(3, $parallelProgress->advancedTotal());
+        $this->assertSame([2], $parallelProgress->workerCounts());
     }
 
     public function test_scan_delegates_to_extractor(): void
@@ -257,12 +281,10 @@ final class AnalysisServiceTest extends TestCase
             new PatternOccurrence('/ignored/', 'test.php', 1, 'preg_match', null, null, true),
         ];
 
-        $calls = 0;
-        $this->analysis->lint($patterns, static function () use (&$calls): void {
-            $calls++;
-        });
+        $progress = new RecordingLintProgress();
+        $this->analysis->lint($patterns, $progress);
 
-        $this->assertSame(1, $calls);
+        $this->assertSame(1, $progress->advancedTotal());
     }
 
     public function test_lint_progress_with_ignore_parse_errors(): void
@@ -272,13 +294,11 @@ final class AnalysisServiceTest extends TestCase
             new PatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
         ];
 
-        $calls = 0;
-        $issues = $analysis->lint($patterns, static function () use (&$calls): void {
-            $calls++;
-        });
+        $progress = new RecordingLintProgress();
+        $issues = $analysis->lint($patterns, $progress);
 
         $this->assertSame([], $issues);
-        $this->assertSame(1, $calls);
+        $this->assertSame(1, $progress->advancedTotal());
     }
 
     public function test_lint_progress_for_invalid_pattern(): void
@@ -287,13 +307,11 @@ final class AnalysisServiceTest extends TestCase
             new PatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
         ];
 
-        $calls = 0;
-        $issues = $this->analysis->lint($patterns, static function () use (&$calls): void {
-            $calls++;
-        });
+        $progress = new RecordingLintProgress();
+        $issues = $this->analysis->lint($patterns, $progress);
 
         $this->assertNotEmpty($issues);
-        $this->assertSame(1, $calls);
+        $this->assertSame(1, $progress->advancedTotal());
     }
 
     public function test_analyze_redos_skips_ignored_patterns(): void
@@ -423,256 +441,215 @@ final class AnalysisServiceTest extends TestCase
         $this->assertEquals($sequential, $parallel);
     }
 
+    /**
+     * On workers, the optimizations are the serial ones, and every pattern
+     * advances the progress once: the ignored and the invalid ones too.
+     */
+    #[RequiresFunction('pcntl_fork')]
     public function test_suggest_optimizations_can_run_in_parallel(): void
     {
-        if (!\function_exists('pcntl_fork')) {
-            $this->markTestSkipped('pcntl is not available.');
-        }
-
         $patterns = [
-            new PatternOccurrence('/a{2}/', 'test.php', 1, 'preg_match'),
-            new PatternOccurrence('/b{3}/', 'test.php', 2, 'preg_match'),
+            new PatternOccurrence('/a{1}/', 'a.php', 1, 'preg_match'),
+            new PatternOccurrence('/[0-9]/', 'b.php', 2, 'preg_match'),
+            new PatternOccurrence('/c{1}/', 'c.php', 3, 'preg_match', null, null, true),
+            new PatternOccurrence('/[d/', 'd.php', 4, 'preg_match'),
         ];
+        $sequentialProgress = new RecordingLintProgress();
+        $parallelProgress = new RecordingLintProgress();
 
-        $sequential = $this->analysis->suggestOptimizations($patterns, 0, null, 1);
-        $parallel = $this->analysis->suggestOptimizations($patterns, 0, null, 2);
+        $sequential = $this->analysis->suggestOptimizations($patterns, 0, null, 1, $sequentialProgress);
+        $parallel = $this->analysis->suggestOptimizations($patterns, 0, null, 2, $parallelProgress);
 
         $this->assertEquals($sequential, $parallel);
-    }
-
-    public function test_run_in_parallel_handles_empty_patterns(): void
-    {
-        $result = $this->invokePrivate('runInParallel', [], 2, static fn (array $chunk): array => $chunk);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_run_in_parallel_falls_back_when_worker_setup_fails(): void
-    {
-        $path1 = sys_get_temp_dir().'/regexparser_parallel_'.uniqid('', true);
-        $path2 = sys_get_temp_dir().'/regexparser_parallel_'.uniqid('', true);
-
-        LintFunctionOverrides::queueTempnam($path1);
-        LintFunctionOverrides::queueTempnam($path2);
-        LintFunctionOverrides::queuePcntlForkResult(1234);
-        LintFunctionOverrides::queuePcntlForkResult(-1);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $patterns = [
-            new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
-            new PatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
-        ];
-
-        $progressCalls = 0;
-        $worker =
-
-            static fn (array $chunk): array => array_map(static fn (mixed $occurrence): string => $occurrence instanceof PatternOccurrence ? $occurrence->pattern : '', $chunk);
-
-        $result = $this->invokePrivate(
-            'runInParallel',
-            $patterns,
-            2,
-            $worker,
-            static function () use (&$progressCalls): void {
-                $progressCalls++;
-            },
-        );
-
-        $this->assertSame(['/a+/', '/b+/'], $result);
-        $this->assertSame(2, $progressCalls);
-
-        @unlink($path2);
-    }
-
-    public function test_run_in_parallel_falls_back_when_tempnam_fails(): void
-    {
-        LintFunctionOverrides::queueTempnam(false);
-
-        $patterns = [
-            new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
-            new PatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
-        ];
-
-        $progressCalls = 0;
-        $worker =
-
-            static fn (array $chunk): array => array_map(static fn (mixed $occurrence): string => $occurrence instanceof PatternOccurrence ? $occurrence->pattern : '', $chunk);
-
-        $result = $this->invokePrivate(
-            'runInParallel',
-            $patterns,
-            2,
-            $worker,
-            static function () use (&$progressCalls): void {
-                $progressCalls++;
-            },
-        );
-
-        $this->assertSame(['/a+/', '/b+/'], $result);
-        $this->assertSame(2, $progressCalls);
-    }
-
-    public function test_run_in_parallel_throws_for_worker_error_payload(): void
-    {
-        $path = sys_get_temp_dir().'/regexparser_parallel_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/error_payload.txt', $path);
-
-        LintFunctionOverrides::queueTempnam($path);
-        LintFunctionOverrides::queuePcntlForkResult(1234);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $this->expectException(LintException::class);
-        $this->expectExceptionMessage('Parallel analysis failed: RuntimeException: Boom');
-
-        $this->invokePrivate(
-            'runInParallel',
-            [new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match')],
-            1,
-            static fn (array $chunk): array => $chunk,
-        );
-
-        @unlink($path);
-    }
-
-    public function test_run_in_parallel_merges_results_and_reports_progress(): void
-    {
-        $path1 = sys_get_temp_dir().'/regexparser_parallel_'.uniqid('', true);
-        $path2 = sys_get_temp_dir().'/regexparser_parallel_'.uniqid('', true);
-
-        copy(__DIR__.'/../../Fixtures/Lint/first_payload.txt', $path1);
-        copy(__DIR__.'/../../Fixtures/Lint/second_payload.txt', $path2);
-
-        LintFunctionOverrides::queueTempnam($path1);
-        LintFunctionOverrides::queueTempnam($path2);
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::queuePcntlForkResult(222);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $patterns = [
-            new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match'),
-            new PatternOccurrence('/b+/', 'test.php', 2, 'preg_match'),
-        ];
-
-        $progressCalls = 0;
-        $result = $this->invokePrivate(
-            'runInParallel',
-            $patterns,
-            2,
-            static fn (array $chunk): array => $chunk,
-            static function () use (&$progressCalls): void {
-                $progressCalls++;
-            },
-        );
-
-        $this->assertSame(['first', 'second'], $result);
-        $this->assertSame(2, $progressCalls);
-    }
-
-    public function test_run_in_parallel_skips_non_array_results(): void
-    {
-        $path = sys_get_temp_dir().'/regexparser_parallel_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/not_array_payload.txt', $path);
-
-        LintFunctionOverrides::queueTempnam($path);
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $result = $this->invokePrivate(
-            'runInParallel',
-            [new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match')],
-            1,
-            static fn (array $chunk): array => $chunk,
-        );
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_worker_payload_round_trips_a_redos_analysis_with_its_culprit_node(): void
-    {
-        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/');
-        $this->assertInstanceOf(NodeInterface::class, $analysis->culpritNode);
-
-        $file = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        file_put_contents($file, serialize(['ok' => true, 'result' => [$analysis]]));
-        $payload = (new \ReflectionMethod($this->analysis, 'readWorkerPayload'))->invoke($this->analysis, $file);
-        @unlink($file);
-
-        $this->assertIsArray($payload);
-        $this->assertTrue($payload['ok']);
-        $this->assertIsArray($payload['result']);
-        $read = $payload['result'][0];
-        $this->assertInstanceOf(RedosAnalysis::class, $read);
-        $this->assertInstanceOf(NodeInterface::class, $read->culpritNode);
-        $this->assertSame($analysis->severity, $read->severity);
-        $this->assertCount(\count($analysis->findings), $read->findings);
-        $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));
-    }
-
-    public function test_worker_payload_helpers_cover_error_branches(): void
-    {
-        $readMethod = new \ReflectionMethod($this->analysis, 'readWorkerPayload');
-
-        $tempFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        (new ForkedWorkerPool())->runChild(static fn (): array => ['ok'], $tempFile);
-        $payload = $readMethod->invoke($this->analysis, $tempFile);
-        $this->assertIsArray($payload);
-        $this->assertArrayHasKey('ok', $payload);
-        $this->assertTrue((bool) $payload['ok']);
-
-        @unlink($tempFile);
-
-        $missingPayload = $readMethod->invoke($this->analysis, $tempFile);
-        $this->assertIsArray($missingPayload);
-        $this->assertArrayHasKey('ok', $missingPayload);
-        $this->assertFalse((bool) $missingPayload['ok']);
-
-        $invalidFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/not_serialized.txt', $invalidFile);
-        $invalidPayload = $readMethod->invoke($this->analysis, $invalidFile);
-        $this->assertIsArray($invalidPayload);
-        $this->assertArrayHasKey('ok', $invalidPayload);
-        $this->assertFalse((bool) $invalidPayload['ok']);
-        @unlink($invalidFile);
-
-        $badErrorFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/bad_error_payload.txt', $badErrorFile);
-        $badError = $readMethod->invoke($this->analysis, $badErrorFile);
-        $this->assertIsArray($badError);
-        $this->assertArrayHasKey('ok', $badError);
-        $this->assertFalse((bool) $badError['ok']);
-        @unlink($badErrorFile);
-
-        $validErrorFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/valid_error_payload.txt', $validErrorFile);
-        $validError = $readMethod->invoke($this->analysis, $validErrorFile);
-        $this->assertIsArray($validError);
-        $this->assertArrayHasKey('ok', $validError);
-        $this->assertFalse((bool) $validError['ok']);
-        $this->assertArrayHasKey('error', $validError);
-        $this->assertIsArray($validError['error']);
-        $this->assertSame('fail', $validError['error']['message'] ?? null);
-        @unlink($validErrorFile);
+        $this->assertSame(['a.php', 'b.php'], array_column($parallel, 'file'));
+        $this->assertSame(4, $sequentialProgress->advancedTotal());
+        $this->assertSame(4, $parallelProgress->advancedTotal());
+        $this->assertSame([], $sequentialProgress->workerCounts());
+        $this->assertSame([2], $parallelProgress->workerCounts());
     }
 
     /**
-     * What a child writes, the parent reads back: the result of the work,
-     * or the failure it threw.
+     * No pattern: nothing found, nothing advanced, no worker started.
      */
-    public function test_worker_payload_round_trips_what_a_child_writes(): void
+    public function test_lint_with_no_patterns_on_workers_gives_nothing_and_advances_nothing(): void
     {
-        $readMethod = new \ReflectionMethod($this->analysis, 'readWorkerPayload');
-        $pool = new ForkedWorkerPool();
-        $tempFile = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
+        $lintProgress = new RecordingLintProgress();
+        $optimizationProgress = new RecordingLintProgress();
 
-        $pool->runChild(static fn (): array => [['file' => 'test.php', 'line' => 1]], $tempFile);
-        $result = $readMethod->invoke($this->analysis, $tempFile);
+        $this->assertSame([], $this->analysis->lint([], $lintProgress, 2));
+        $this->assertSame([], $this->analysis->suggestOptimizations([], 0, null, 2, $optimizationProgress));
+        $this->assertSame([], $this->analysis->analyzeRedos([], RedosSeverity::Low, 2));
+        $this->assertSame(0, $lintProgress->advancedTotal());
+        $this->assertSame(0, $optimizationProgress->advancedTotal());
+        $this->assertSame([], $lintProgress->workerCounts());
+        $this->assertSame([], $optimizationProgress->workerCounts());
+    }
 
-        $pool->runChild(static fn (): never => throw new \UnexpectedValueException('No chunk'), $tempFile);
-        $failure = $readMethod->invoke($this->analysis, $tempFile);
-        @unlink($tempFile);
+    /**
+     * One pattern is not worth a worker: it is analysed in the parent,
+     * whatever the number of jobs.
+     */
+    public function test_lint_with_one_pattern_on_workers_stays_in_the_parent(): void
+    {
+        $patterns = [new PatternOccurrence('/a{1}/', 'a.php', 1, 'preg_match')];
+        $lintProgress = new RecordingLintProgress();
+        $optimizationProgress = new RecordingLintProgress();
 
-        $this->assertSame(['ok' => true, 'result' => [['file' => 'test.php', 'line' => 1]]], $result);
-        $this->assertSame(['ok' => false, 'error' => ['message' => 'No chunk', 'class' => \UnexpectedValueException::class]], $failure);
+        $this->assertEquals($this->analysis->lint($patterns), $this->analysis->lint($patterns, $lintProgress, 4));
+        $this->assertEquals($this->analysis->suggestOptimizations($patterns, 0), $this->analysis->suggestOptimizations($patterns, 0, null, 4, $optimizationProgress));
+        $this->assertSame(1, $lintProgress->advancedTotal());
+        $this->assertSame(1, $optimizationProgress->advancedTotal());
+        $this->assertSame([], $lintProgress->workerCounts());
+        $this->assertSame([], $optimizationProgress->workerCounts());
+    }
+
+    /**
+     * When no worker can be forked, the lint runs in the parent: the same
+     * issues, every pattern advanced.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_lint_falls_back_to_serial_with_full_progress_when_no_worker_can_be_forked(): void
+    {
+        $patterns = [
+            new PatternOccurrence('/a+/', 'a.php', 1, 'preg_match'),
+            new PatternOccurrence('/(b+)+/', 'b.php', 2, 'preg_match'),
+        ];
+        $serial = $this->analysis->lint($patterns);
+        LintFunctionOverrides::queuePcntlForkResult(-1);
+        $progress = new RecordingLintProgress();
+
+        $fallback = $this->analysis->lint($patterns, $progress, 2);
+
+        $this->assertSame([], LintFunctionOverrides::$pcntlForkSequence, 'The run tried to fork.');
+        $this->assertEquals($serial, $fallback);
+        $this->assertSame(2, $progress->advancedTotal());
+    }
+
+    /**
+     * When no worker can be forked, the optimizations are looked for in the
+     * parent: the same ones, every pattern advanced.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_suggest_optimizations_falls_back_to_serial_with_full_progress_when_no_worker_can_be_forked(): void
+    {
+        $patterns = [
+            new PatternOccurrence('/a{1}/', 'a.php', 1, 'preg_match'),
+            new PatternOccurrence('/[0-9]/', 'b.php', 2, 'preg_match'),
+        ];
+        $serial = $this->analysis->suggestOptimizations($patterns, 0);
+        LintFunctionOverrides::queuePcntlForkResult(-1);
+        $progress = new RecordingLintProgress();
+
+        $fallback = $this->analysis->suggestOptimizations($patterns, 0, null, 2, $progress);
+
+        $this->assertSame([], LintFunctionOverrides::$pcntlForkSequence, 'The run tried to fork.');
+        $this->assertEquals($serial, $fallback);
+        $this->assertSame(2, $progress->advancedTotal());
+    }
+
+    /**
+     * A worker that throws fails the lint with the class and message it
+     * threw, and the file of the pattern it was analysing; no payload file
+     * is left. The throw comes from the source read for the
+     * invisible-character rule, through a stream wrapper.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_lint_on_workers_reports_a_failing_worker_with_its_file(): void
+    {
+        $wrapper = new class {
+            public mixed $context = null;
+
+            public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
+            {
+                throw new \RuntimeException('Boom');
+            }
+
+            public function url_stat(string $path, int $flags): false
+            {
+                return false;
+            }
+        };
+        $this->assertTrue(stream_wrapper_register('regexparser-boom', $wrapper::class));
+        $analysis = new AnalysisService(RegexParser::create());
+        $patterns = [
+            // A raw tab in the pattern: the rule reads the source to see how
+            // the PHP literal spells it.
+            new PatternOccurrence("/a\tb/", 'regexparser-boom://one.php', 3, 'preg_match', null, null, false, 1, 10),
+            new PatternOccurrence('/c/', 'two.php', 1, 'preg_match'),
+        ];
+        $before = self::payloadFiles();
+        $payloads = $this->makeProject();
+        LintFunctionOverrides::$tempnamDirectory = $payloads;
+
+        try {
+            $analysis->lint($patterns, new RecordingLintProgress(), 2);
+            $this->fail('The failure of the worker is reported.');
+        } catch (LintException $e) {
+            $this->assertSame('Parallel analysis failed: RuntimeException: Boom (in regexparser-boom://one.php)', $e->getMessage());
+        } finally {
+            stream_wrapper_unregister('regexparser-boom');
+        }
+
+        $this->assertSame([], array_values(array_diff(scandir($payloads) ?: [], ['.', '..'])));
+        $this->assertSame([], array_values(array_diff(self::payloadFiles(), $before)));
+    }
+
+    /**
+     * The issues the workers find come back in the serial order, every
+     * pattern advanced once, the workers started announced once.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_lint_on_workers_gives_the_serial_issues_in_order_and_progress(): void
+    {
+        $patterns = [
+            new PatternOccurrence('/(a+)+/', 'a.php', 1, 'preg_match'),
+            new PatternOccurrence('/[b/', 'b.php', 2, 'preg_match'),
+            new PatternOccurrence('/c/', 'c.php', 3, 'preg_match', null, null, true),
+            new PatternOccurrence('/(d+)+$/', 'd.php', 4, 'preg_match'),
+            new PatternOccurrence('/e{1}/', 'e.php', 5, 'preg_match'),
+        ];
+        $serialProgress = new RecordingLintProgress();
+        $parallelProgress = new RecordingLintProgress();
+
+        $serial = $this->analysis->lint($patterns, $serialProgress, 1);
+        $parallel = $this->analysis->lint($patterns, $parallelProgress, 2);
+
+        $this->assertNotEmpty($serial);
+        $this->assertEquals($serial, $parallel);
+        $this->assertSame(array_column($serial, 'file'), array_column($parallel, 'file'));
+        $this->assertSame(5, $serialProgress->advancedTotal());
+        $this->assertSame(5, $parallelProgress->advancedTotal());
+        $this->assertSame([], $serialProgress->workerCounts());
+        $this->assertSame([2], $parallelProgress->workerCounts());
+    }
+
+    /**
+     * A ReDoS analysis found on a worker comes back whole: its culprit
+     * node, its severity, its findings, no incomplete class.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_lint_on_workers_round_trips_a_redos_analysis_with_its_culprit_node(): void
+    {
+        $patterns = [
+            new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match'),
+            new PatternOccurrence('/foo/', 'test.php', 2, 'preg_match'),
+        ];
+
+        $serial = self::redosAnalyses($this->analysis->lint($patterns));
+        $parallel = self::redosAnalyses($this->analysis->lint($patterns, new RecordingLintProgress(), 2));
+        $redos = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low, 2);
+
+        $this->assertCount(1, $serial);
+        $this->assertCount(1, $parallel);
+        $this->assertInstanceOf(NodeInterface::class, $serial[0]->culpritNode);
+        $read = $parallel[0];
+        $this->assertInstanceOf(RedosAnalysis::class, $read);
+        $this->assertInstanceOf(NodeInterface::class, $read->culpritNode);
+        $this->assertSame($serial[0]->severity, $read->severity);
+        $this->assertCount(\count($serial[0]->findings), $read->findings);
+        $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));
+        $this->assertCount(1, $redos);
+        $this->assertInstanceOf(NodeInterface::class, $redos[0]['analysis']->culpritNode);
     }
 
     public function test_skip_risk_analysis_helpers(): void
@@ -692,6 +669,16 @@ final class AnalysisServiceTest extends TestCase
     {
         $this->assertFalse($this->invokePrivate('usesExtendedMode', ''));
         $this->assertFalse($this->invokePrivate('usesExtendedMode', '/'));
+    }
+
+    public function test_worker_results_may_carry_a_class_from_a_subdirectory(): void
+    {
+        $allowed = $this->invokePrivate('allowedWorkerClasses');
+
+        $this->assertIsArray($allowed);
+        $this->assertContains(ProofResult::class, $allowed);
+        $this->assertContains(RedosAnalysis::class, $allowed);
+        $this->assertNotContains(NodeInterface::class, $allowed);
     }
 
     public function test_validation_tip_helpers(): void
@@ -833,6 +820,36 @@ final class AnalysisServiceTest extends TestCase
     public function test_is_likely_partial_regex_error_returns_false(): void
     {
         $this->assertFalse($this->invokePrivate('isLikelyPartialRegexError', 'Completely unrelated'));
+    }
+
+    /**
+     * The ReDoS analyses the issues carry, on the ReDoS issue.
+     *
+     * @param array<array<string, mixed>> $issues
+     *
+     * @return list<RedosAnalysis>
+     */
+    private static function redosAnalyses(array $issues): array
+    {
+        $analyses = [];
+        foreach ($issues as $issue) {
+            if ('regex.lint.redos' === ($issue['issueId'] ?? null) && ($issue['analysis'] ?? null) instanceof RedosAnalysis) {
+                $analyses[] = $issue['analysis'];
+            }
+        }
+
+        return $analyses;
+    }
+
+    /**
+     * The payload files a run of workers could leave in the temporary
+     * directory.
+     *
+     * @return list<string>
+     */
+    private static function payloadFiles(): array
+    {
+        return array_values(array_filter(glob(sys_get_temp_dir().'/regexparser_*') ?: [], is_file(...)));
     }
 
     private function invokePrivate(string $method, mixed ...$args): mixed

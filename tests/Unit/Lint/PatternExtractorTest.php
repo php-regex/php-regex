@@ -14,16 +14,24 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\ExtractorInterface;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\RecordingLintProgress;
+use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 final class PatternExtractorTest extends TestCase
 {
+    use TemporaryProject;
+
     private ExtractorInterface&Stub $extractor;
 
     private PatternExtractor $patternExtractor;
@@ -73,81 +81,72 @@ final class PatternExtractorTest extends TestCase
         $this->assertSame([], $result);
     }
 
-    public function test_extract_with_progress_callback(): void
+    /**
+     * The file walk is a step of its own, with no total, then the files are
+     * extracted under a step whose total is the number found. An extractor
+     * that is not told about pattern functions has no declarations step.
+     */
+    public function test_extract_progress_reports_the_files_step_then_the_patterns_step(): void
     {
         $file1 = $this->createTempPhpFile();
         $file2 = $this->createTempPhpFile();
+        $progress = new RecordingLintProgress();
 
         try {
-            $occurrences = [
-                $file1 => new PatternOccurrence('/test1/', 'file1.php', 1, 'source1'),
-                $file2 => new PatternOccurrence('/test2/', 'file2.php', 2, 'source2'),
-            ];
+            $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
 
-            $this->extractor->method('extract')->willReturnCallback(
-                static function (array $files) use ($occurrences): array {
-                    if (
-                        1 === \count($files)
-                        && isset($files[0])
-                        && \is_string($files[0])
-                        && isset($occurrences[$files[0]])
-                    ) {
-                        return [$occurrences[$files[0]]];
-                    }
-
-                    return array_values($occurrences);
-                },
-            );
-
-            $progressCalls = [];
-            $result = $this->patternExtractor->extract(
-                [$file1, $file2],
-                null,
-                static function (int $current, int $total) use (&$progressCalls): void {
-                    $progressCalls[] = ['current' => $current, 'total' => $total];
-                },
-            );
+            $result = $this->patternExtractor->extract([$file1, $file2], null, $progress);
         } finally {
             @unlink($file1);
             @unlink($file2);
         }
 
         $this->assertCount(2, $result);
-        $this->assertCount(3, $progressCalls);
+        $this->assertSame([[LintProgress::STEP_FILES, null], [LintProgress::STEP_PATTERNS, 2]], $progress->steps());
+        $this->assertSame(2, $progress->advancedIn(LintProgress::STEP_FILES));
+        $this->assertSame(2, $progress->advancedIn(LintProgress::STEP_PATTERNS));
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_PATTERNS], $progress->finishedSteps());
+        $this->assertSame(2, $progress->finishedCount());
+        $this->assertSame(0, $progress->advancedOutsideSteps());
+        $this->assertSame([], $progress->workerCounts());
     }
 
-    public function test_extract_with_empty_result_reports_progress(): void
+    /**
+     * On a real tree of more than a thousand files, the files step counts
+     * every file found, in batches or not, and the patterns step extracts
+     * that many.
+     */
+    public function test_extract_progress_extracts_as_many_files_as_the_files_step_found(): void
     {
         $this->extractor->method('extract')->willReturn([]);
+        $progress = new RecordingLintProgress();
 
-        $progressCalls = [];
-        $result = $this->patternExtractor->extract(
-            ['src/'],
-            null,
-            static function (int $current, int $total) use (&$progressCalls): void {
-                $progressCalls[] = ['current' => $current, 'total' => $total];
-            },
-        );
+        $result = $this->patternExtractor->extract(['src/', 'tests/'], null, $progress);
 
         $this->assertSame([], $result);
-        $this->assertNotEmpty($progressCalls);
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_PATTERNS], array_column($progress->steps(), 0));
+        $found = $progress->advancedIn(LintProgress::STEP_FILES);
+        $this->assertGreaterThan(1000, $found);
+        $this->assertSame($found, $progress->steps()[1][1]);
+        $this->assertSame($found, $progress->advancedIn(LintProgress::STEP_PATTERNS));
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_PATTERNS], $progress->finishedSteps());
     }
 
-    public function test_extract_reports_progress_with_no_files(): void
+    /**
+     * With no file found, the files step is started and finished, and
+     * nothing else: there is nothing to extract.
+     */
+    public function test_extract_with_no_files_reports_only_the_files_step(): void
     {
         $this->extractor->method('extract')->willReturn([]);
+        $progress = new RecordingLintProgress();
 
-        $progressCalls = [];
-        $result = $this->patternExtractor->extract(
-            [],
-            null,
-            static function (int $current, int $total) use (&$progressCalls): void {
-                $progressCalls[] = [$current, $total];
-            },
-        );
+        $result = $this->patternExtractor->extract([], null, $progress);
 
         $this->assertSame([], $result);
-        $this->assertSame([[0, 0]], $progressCalls);
+        $this->assertSame([[LintProgress::STEP_FILES, null]], $progress->steps());
+        $this->assertSame([LintProgress::STEP_FILES], $progress->finishedSteps());
+        $this->assertSame(0, $progress->advancedTotal());
     }
 
     public function test_extract_with_workers_greater_than_one(): void
@@ -166,57 +165,35 @@ final class PatternExtractorTest extends TestCase
         $this->assertCount(1, $result);
     }
 
-    public function test_extract_parallel_falls_back_on_fork_failure(): void
+    /**
+     * When no worker can be forked, the extraction runs in the parent: the
+     * same occurrences, the same steps, every file advanced.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_extract_falls_back_to_serial_with_full_progress_when_no_worker_can_be_forked(): void
     {
         $file1 = $this->createTempPhpFile();
         $file2 = $this->createTempPhpFile();
-        $path1 = sys_get_temp_dir().'/regexparser_extract_'.uniqid('', true);
-        $path2 = sys_get_temp_dir().'/regexparser_extract_'.uniqid('', true);
-
-        LintFunctionOverrides::queueTempnam($path1);
-        LintFunctionOverrides::queueTempnam($path2);
-        LintFunctionOverrides::queuePcntlForkResult(1234);
-        LintFunctionOverrides::queuePcntlForkResult(-1);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
+        $serialProgress = new RecordingLintProgress();
+        $fallbackProgress = new RecordingLintProgress();
 
         try {
-            $occurrences = [
-                $file1 => new PatternOccurrence('/test1/', $file1, 1, 'source1'),
-                $file2 => new PatternOccurrence('/test2/', $file2, 2, 'source2'),
-            ];
+            $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+            $serial = $this->patternExtractor->extract([$file1, $file2], null, $serialProgress);
 
-            $this->extractor->method('extract')->willReturnCallback(
-                static function (array $files) use ($occurrences): array {
-                    if (
-                        1 === \count($files)
-                        && isset($files[0])
-                        && \is_string($files[0])
-                        && isset($occurrences[$files[0]])
-                    ) {
-                        return [$occurrences[$files[0]]];
-                    }
-
-                    return array_values($occurrences);
-                },
-            );
-
-            $progressCalls = [];
-            $result = $this->patternExtractor->extract(
-                [$file1, $file2],
-                null,
-                static function (int $current, int $total) use (&$progressCalls): void {
-                    $progressCalls[] = [$current, $total];
-                },
-                2,
-            );
+            LintFunctionOverrides::queuePcntlForkResult(-1);
+            $fallback = $this->patternExtractor->extract([$file1, $file2], null, $fallbackProgress, 2);
         } finally {
             @unlink($file1);
             @unlink($file2);
-            @unlink($path2);
         }
 
-        $this->assertCount(2, $result);
-        $this->assertNotEmpty($progressCalls);
+        $this->assertSame([], LintFunctionOverrides::$pcntlForkSequence, 'The run tried to fork.');
+        $this->assertCount(2, $fallback);
+        $this->assertEquals($serial, $fallback);
+        $this->assertSame([[LintProgress::STEP_FILES, null, 2], [LintProgress::STEP_PATTERNS, 2, 2]], $fallbackProgress->stepSums());
+        $this->assertSame($serialProgress->stepSums(), $fallbackProgress->stepSums());
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_PATTERNS], $fallbackProgress->finishedSteps());
     }
 
     public function test_extract_marks_inline_ignored_patterns(): void
@@ -236,142 +213,139 @@ final class PatternExtractorTest extends TestCase
         $this->assertTrue($result[0]->isIgnored);
     }
 
-    public function test_write_worker_payload_creates_serialized_file(): void
+    /**
+     * Three files on three workers: the occurrences come back whole and in
+     * the serial order, the steps are the serial ones with the same sums,
+     * and the workers started are announced once.
+     */
+    #[RequiresFunction('pcntl_fork')]
+    public function test_extract_on_workers_gives_the_serial_occurrences_and_progress(): void
     {
-        $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
-        $payload = ['ok' => true];
+        $project = $this->makeProject(['a.php' => "<?php\n", 'b.php' => "<?php\n", 'c.php' => "<?php\n"]);
+        $files = [$project.'/a.php', $project.'/b.php', $project.'/c.php'];
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+        $serialProgress = new RecordingLintProgress();
+        $parallelProgress = new RecordingLintProgress();
 
-        (new ForkedWorkerPool())->runChild(static fn (): array => ['test'], $tmpFile);
+        $serial = $this->patternExtractor->extract($files, null, $serialProgress, 1);
+        $parallel = $this->patternExtractor->extract($files, null, $parallelProgress, 3);
 
-        $this->assertFileExists($tmpFile);
-        $content = file_get_contents($tmpFile);
-        $this->assertIsString($content);
-        $unserialized = unserialize($content);
-        $this->assertIsArray($unserialized);
-        /* @var array{ok: bool, result: array<int, string>} $unserialized */
-        $this->assertSame($payload['ok'], $unserialized['ok']);
-
-        @unlink($tmpFile);
+        $this->assertCount(3, $parallel);
+        $this->assertContainsOnlyInstancesOf(PatternOccurrence::class, $parallel);
+        $this->assertEquals($serial, $parallel);
+        $this->assertSame($files, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $parallel));
+        $this->assertSame($serialProgress->stepSums(), $parallelProgress->stepSums());
+        $this->assertSame([[LintProgress::STEP_FILES, null, 3], [LintProgress::STEP_PATTERNS, 3, 3]], $parallelProgress->stepSums());
+        $this->assertSame([3], $parallelProgress->workerCountsIn(LintProgress::STEP_PATTERNS));
+        $this->assertSame([], $serialProgress->workerCounts());
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_PATTERNS], $parallelProgress->finishedSteps());
+        $this->assertSame(0, $parallelProgress->advancedOutsideSteps());
     }
 
     /**
-     * The occurrences a child collects come back to the parent whole.
+     * A worker that throws fails the extraction with the class and message
+     * it threw, and the file it was reading, its UTF-8 name kept; no
+     * payload file is left.
      */
-    public function test_worker_payload_round_trips_the_occurrences_a_child_writes(): void
+    #[DataProvider('provideWorkerFailures')]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_extract_on_workers_reports_a_failing_worker_with_its_file(\Throwable $failure, string $expected): void
     {
-        $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
-        $occurrence = new PatternOccurrence('/a+/', 'test.php', 3, 'preg_match');
+        $project = $this->makeProject(['a.php' => "<?php\n", 'défaillant.php' => "<?php\n"]);
+        $failing = $project.'/défaillant.php';
+        $this->extractor->method('extract')->willReturnCallback(
+            static function (array $files) use ($failing, $failure): array {
+                self::assertContainsOnlyString($files);
+                if (\in_array($failing, $files, true)) {
+                    throw $failure;
+                }
 
-        (new ForkedWorkerPool())->runChild(static fn (): array => [$occurrence], $tmpFile);
-        $result = (new \ReflectionMethod($this->patternExtractor, 'readWorkerPayload'))->invoke($this->patternExtractor, $tmpFile);
-        @unlink($tmpFile);
+                return self::onePerFile($files);
+            },
+        );
+        $before = self::payloadFiles();
+        $payloads = $this->makeProject();
+        LintFunctionOverrides::$tempnamDirectory = $payloads;
 
-        $this->assertIsArray($result);
-        $this->assertTrue($result['ok']);
-        $this->assertEquals(['ok' => true, 'result' => [$occurrence]], $result);
+        try {
+            $this->patternExtractor->extract([$project.'/a.php', $failing], null, new RecordingLintProgress(), 2);
+            $this->fail('The failure of the worker is reported.');
+        } catch (LintException $e) {
+            $this->assertSame(\sprintf($expected, $failing), $e->getMessage());
+        }
+
+        $this->assertSame([], array_values(array_diff(scandir($payloads) ?: [], ['.', '..'])));
+        $this->assertSame([], array_values(array_diff(self::payloadFiles(), $before)));
     }
 
-    public function test_worker_payload_round_trips_the_failure_a_child_writes(): void
+    /**
+     * @return iterable<string, array{failure: \Throwable, expected: string}>
+     */
+    public static function provideWorkerFailures(): iterable
     {
-        $tmpFile = sys_get_temp_dir().'/test_payload_'.uniqid();
-
-        (new ForkedWorkerPool())->runChild(static fn (): never => throw new \LogicException('Broken chunk'), $tmpFile);
-        $result = (new \ReflectionMethod($this->patternExtractor, 'readWorkerPayload'))->invoke($this->patternExtractor, $tmpFile);
-        @unlink($tmpFile);
-
-        $this->assertSame(['ok' => false, 'error' => ['message' => 'Broken chunk', 'class' => \LogicException::class]], $result);
+        yield 'runtime exception' => [
+            'failure' => new \RuntimeException('Boom'),
+            'expected' => 'Parallel collection failed: RuntimeException: Boom (in %s)',
+        ];
+        yield 'logic exception' => [
+            'failure' => new \LogicException('Broken chunk'),
+            'expected' => 'Parallel collection failed: LogicException: Broken chunk (in %s)',
+        ];
     }
 
-    public function test_read_worker_payload_reads_valid_payload(): void
+    /**
+     * The inline markers are applied where the file is extracted: on the
+     * workers they silence the same occurrences as in the parent.
+     *
+     * @param \Closure(): ExtractorInterface $strategy
+     */
+    #[DataProvider('provideStrategies')]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_extract_inline_ignores_are_the_same_in_serial_and_on_workers(\Closure $strategy): void
     {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $method = $reflection->getMethod('readWorkerPayload');
+        $project = $this->makeProject([
+            'a.php' => "<?php\n// @regex-ignore-next-line\npreg_match('/a1(/', \$s);\npreg_match('/a2(/', \$s);\n",
+            'b.php' => "<?php\npreg_match('/b1(/', \$s); // @regex-ignore\npreg_match('/b2(/', \$s);\n/* @regex-suppress */ preg_match('/b3(/', \$s);\n",
+            'c.php' => "<?php\npreg_match('/c1(/', \$s);\n",
+            'd.php' => "<?php\n/**\n * @regex-ignore-next-line\n */\npreg_match('/d1(/', \$s);\npreg_match('/d2(/', \$s);\n",
+            'e.php' => "<?php\npreg_match('/e1(/', \$s);\n// @regex-ignore-next-line\n",
+        ]);
+        $extractor = new PatternExtractor($strategy());
+        $serialProgress = new RecordingLintProgress();
+        $parallelProgress = new RecordingLintProgress();
 
-        $tmpFile = sys_get_temp_dir().'/test_read_payload_'.uniqid();
-        copy(__DIR__.'/../../Fixtures/Lint/valid_result_payload.txt', $tmpFile);
+        $serial = $extractor->extract([$project], [], $serialProgress, 1);
+        $parallel = $extractor->extract([$project], [], $parallelProgress, 3);
 
-        $result = $method->invoke($this->patternExtractor, $tmpFile);
-        $this->assertIsArray($result);
-        /* @var array{ok: bool, result: array<int, string>} $result */
-
-        $this->assertTrue($result['ok']);
-        $this->assertSame(['test'], $result['result']);
-
-        @unlink($tmpFile);
+        $this->assertEquals($serial, $parallel);
+        $this->assertSame(self::summary($serial), self::summary($parallel));
+        $this->assertSame([
+            'a.php:3:/a1(/:ignored',
+            'a.php:4:/a2(/:kept',
+            'b.php:2:/b1(/:ignored',
+            'b.php:3:/b2(/:kept',
+            'b.php:4:/b3(/:ignored',
+            'c.php:2:/c1(/:kept',
+            'd.php:5:/d1(/:ignored',
+            'd.php:6:/d2(/:kept',
+            'e.php:2:/e1(/:kept',
+        ], self::summary($parallel));
+        $this->assertSame($serialProgress->stepSums(), $parallelProgress->stepSums());
+        $this->assertSame([
+            [LintProgress::STEP_FILES, null, 5],
+            [LintProgress::STEP_DECLARATIONS, 5, 5],
+            [LintProgress::STEP_PATTERNS, 5, 5],
+        ], $parallelProgress->stepSums());
+        $this->assertSame([LintProgress::STEP_FILES, LintProgress::STEP_DECLARATIONS, LintProgress::STEP_PATTERNS], $parallelProgress->finishedSteps());
     }
 
-    public function test_read_worker_payload_handles_missing_file(): void
+    /**
+     * @return iterable<string, array{strategy: \Closure(): ExtractorInterface}>
+     */
+    public static function provideStrategies(): iterable
     {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $method = $reflection->getMethod('readWorkerPayload');
-
-        $nonExistentFile = sys_get_temp_dir().'/non_existent_'.uniqid();
-
-        $result = $method->invoke($this->patternExtractor, $nonExistentFile);
-        $this->assertIsArray($result);
-        /* @var array{ok: bool, error?: mixed} $result */
-
-        $this->assertFalse($result['ok']);
-        $this->assertArrayHasKey('error', $result);
-    }
-
-    public function test_read_worker_payload_handles_invalid_serialization(): void
-    {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $method = $reflection->getMethod('readWorkerPayload');
-
-        $tmpFile = sys_get_temp_dir().'/test_invalid_payload_'.uniqid();
-        copy(__DIR__.'/../../Fixtures/Lint/invalid_serialized.txt', $tmpFile);
-
-        $result = $method->invoke($this->patternExtractor, $tmpFile);
-        $this->assertIsArray($result);
-        /* @var array{ok: bool, error?: mixed} $result */
-
-        $this->assertFalse($result['ok']);
-        $this->assertArrayHasKey('error', $result);
-
-        @unlink($tmpFile);
-    }
-
-    public function test_read_worker_payload_handles_ok_false(): void
-    {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $method = $reflection->getMethod('readWorkerPayload');
-
-        $tmpFile = sys_get_temp_dir().'/test_error_payload_'.uniqid();
-        copy(__DIR__.'/../../Fixtures/Lint/test_error_payload.txt', $tmpFile);
-
-        $result = $method->invoke($this->patternExtractor, $tmpFile);
-        $this->assertIsArray($result);
-        /* @var array{ok: bool, error?: array{message?: string, class?: string}} $result */
-
-        $this->assertFalse($result['ok']);
-        $this->assertArrayHasKey('error', $result);
-        $this->assertIsArray($result['error']);
-        /* @var array{message?: string, class?: string} $error */
-        $error = $result['error'];
-        $this->assertSame('Test error', $error['message']);
-        $this->assertSame('Exception', $error['class']);
-
-        @unlink($tmpFile);
-    }
-
-    public function test_read_worker_payload_handles_invalid_error_payload(): void
-    {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $method = $reflection->getMethod('readWorkerPayload');
-
-        $tmpFile = sys_get_temp_dir().'/test_bad_error_payload_'.uniqid();
-        copy(__DIR__.'/../../Fixtures/Lint/invalid_error_payload.txt', $tmpFile);
-
-        $result = $method->invoke($this->patternExtractor, $tmpFile);
-        $this->assertIsArray($result);
-        /* @var array{ok: bool, error?: mixed} $result */
-
-        $this->assertFalse($result['ok']);
-        $this->assertArrayHasKey('error', $result);
-
-        @unlink($tmpFile);
+        yield 'tokens' => ['strategy' => static fn (): TokenBasedExtractionStrategy => new TokenBasedExtractionStrategy()];
+        yield 'php-parser' => ['strategy' => static fn (): PhpParserExtractionStrategy => new PhpParserExtractionStrategy()];
     }
 
     public function test_is_template_file_identifies_blade(): void
@@ -451,73 +425,43 @@ final class PatternExtractorTest extends TestCase
         $this->assertNotContains($vendorFile, $files);
     }
 
-    public function test_extract_parallel_handles_tempnam_failure(): void
+    /**
+     * One occurrence per file, named after it.
+     *
+     * @param array<string> $files
+     *
+     * @return list<PatternOccurrence>
+     */
+    private static function onePerFile(array $files): array
     {
-        LintFunctionOverrides::queueTempnam(false);
-        $this->extractor->method('extract')->willReturn([]);
-
-        $result = $this->invokePrivate('extractParallel', ['a.php', 'b.php'], 2, null, $this->extractor);
-
-        $this->assertSame([], $result);
+        return array_values(array_map(static fn (string $file): PatternOccurrence => new PatternOccurrence('/'.basename($file, '.php').'/', $file, 1, 'preg_match'), $files));
     }
 
-    public function test_extract_parallel_merges_results_and_reports_progress(): void
+    /**
+     * @param array<PatternOccurrence> $occurrences
+     *
+     * @return list<string> "file:line:pattern:ignored|kept", sorted
+     */
+    private static function summary(array $occurrences): array
     {
-        $path1 = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        $path2 = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
+        $summary = array_values(array_map(
+            static fn (PatternOccurrence $occurrence): string => \sprintf('%s:%d:%s:%s', basename($occurrence->file), $occurrence->line, $occurrence->pattern, $occurrence->isIgnored ? 'ignored' : 'kept'),
+            $occurrences,
+        ));
+        sort($summary);
 
-        copy(__DIR__.'/../../Fixtures/Lint/occ_a_payload.txt', $path1);
-        copy(__DIR__.'/../../Fixtures/Lint/occ_b_payload.txt', $path2);
-
-        LintFunctionOverrides::queueTempnam($path1);
-        LintFunctionOverrides::queueTempnam($path2);
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::queuePcntlForkResult(222);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $progressCalls = [];
-        $result = $this->invokePrivate(
-            'extractParallel',
-            ['a.php', 'b.php'],
-            2,
-            static function (int $current, int $total) use (&$progressCalls): void {
-                $progressCalls[] = [$current, $total];
-            },
-            $this->extractor,
-        );
-
-        $this->assertIsArray($result);
-        $this->assertCount(2, $result);
-        $this->assertNotEmpty($progressCalls);
+        return $summary;
     }
 
-    public function test_extract_parallel_throws_on_worker_error_payload(): void
+    /**
+     * The payload files a run of workers could leave in the temporary
+     * directory (the .php files are this test's own inputs).
+     *
+     * @return list<string>
+     */
+    private static function payloadFiles(): array
     {
-        $path = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/error_payload.txt', $path);
-
-        LintFunctionOverrides::queueTempnam($path);
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $this->expectException(LintException::class);
-        $this->expectExceptionMessage('Parallel collection failed: RuntimeException: Boom');
-
-        $this->invokePrivate('extractParallel', ['a.php'], 1, null, $this->extractor);
-    }
-
-    public function test_extract_parallel_skips_non_array_results(): void
-    {
-        $path = sys_get_temp_dir().'/regexparser_payload_'.uniqid('', true);
-        copy(__DIR__.'/../../Fixtures/Lint/not_array_result_payload.txt', $path);
-
-        LintFunctionOverrides::queueTempnam($path);
-        LintFunctionOverrides::queuePcntlForkResult(111);
-        LintFunctionOverrides::$pcntlWaitpidResult = 0;
-
-        $result = $this->invokePrivate('extractParallel', ['a.php'], 1, null, $this->extractor);
-
-        $this->assertSame([], $result);
+        return array_values(array_filter(glob(sys_get_temp_dir().'/regexparser_*') ?: [], static fn (string $path): bool => !str_ends_with($path, '.php') && is_file($path)));
     }
 
     private function createTempPhpFile(string $fixture = 'default.php'): string
@@ -526,13 +470,5 @@ final class PatternExtractorTest extends TestCase
         copy(__DIR__.'/../../Fixtures/Lint/'.$fixture, $path);
 
         return $path;
-    }
-
-    private function invokePrivate(string $method, mixed ...$args): mixed
-    {
-        $reflection = new \ReflectionClass($this->patternExtractor);
-        $refMethod = $reflection->getMethod($method);
-
-        return $refMethod->invoke($this->patternExtractor, ...$args);
     }
 }
