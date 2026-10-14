@@ -57,20 +57,20 @@ $regex = Regex::fromOptions(ParserOptions::fromArray(['php_version' => '8.2']));
 
 ### tokenize(string $regex): list<Token>
 
-Lexes a regex into its tokens, as the parser reads them for the instance's target. Useful for custom analysis or debugging. Each `Token` exposes its `type`, its `value`, its `position` in the pattern body and `end()`, the offset just past it; the end-of-pattern token comes last.
+Lexes a regex into its tokens, as the parser reads them for the instance's target. Useful for custom analysis or debugging. Each `Token` exposes its `type`, its `value`, its `position` in the pattern body and `end()`, the byte offset just past it. The tokens come in source order, each one starting where the one before it ends, so together they cover the pattern body; the end-of-pattern token comes last, at the body's length.
+
+How many characters one token covers is not part of the contract: `tokenize()` reads a literal character as one token today, and a later release may read a run of literal characters as one token. Rely on the positions, not on a count of tokens.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
 foreach (Regex::create()->tokenize('/foo|bar/i') as $token) {
-    echo "Type: {$token->type->value}, Value: '{$token->value}'\n";
-    echo "Position: {$token->position} - {$token->end()}\n";
+    echo "{$token->type->value} '{$token->value}' at {$token->position}-{$token->end()}\n";
 }
-// Type: literal, Value: 'f'
-// Position: 0 - 1
-// Type: literal, Value: 'o'
-// Position: 1 - 2
-// ... the same for 'o', '|', 'b', 'a', 'r', then the eof token
+// literal 'f' at 0-1
+// literal 'o' at 1-2
+// ...
+// eof '' at 7-7
 ```
 
 ---

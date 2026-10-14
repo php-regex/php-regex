@@ -41,6 +41,23 @@ final class DocumentationExperienceTest extends TestCase
         $this->assertStringContainsString('reference/backward-compatibility.md', $extending);
     }
 
+    /**
+     * tokenize() promises tokens in order that cover the pattern body, not
+     * one token per character: the API reference must not teach a
+     * per-character split, and the compatibility policy must say a minor
+     * release may group characters differently.
+     */
+    #[Test]
+    public function test_the_token_granularity_is_not_promised(): void
+    {
+        $api = (string) file_get_contents(__DIR__.'/../../docs/reference/api.md');
+        $policy = (string) file_get_contents(__DIR__.'/../../docs/reference/backward-compatibility.md');
+
+        $this->assertDoesNotMatchRegularExpression("/the same for 'o', '\\|'/", $api);
+        $this->assertMatchesRegularExpression('/tokenize\(\)[^\n]*(one token|group)/', $api);
+        $this->assertMatchesRegularExpression('/\*\*How a pattern splits into tokens\*\*/', $policy);
+    }
+
     #[Test]
     public function test_the_landing_page_keeps_its_first_visit_short(): void
     {

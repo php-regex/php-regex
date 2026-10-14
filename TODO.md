@@ -11,15 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**9. Byte-level tokens are about to freeze as the contract.** The lexer
-emits one token per literal byte and the parser one node per byte
-(~30 µs/byte measured; a 2000-character literal parses in ~60 ms), and
-`Regex::tokenize()` documents the per-byte offsets as public API. The
-run-length alternative already exists inside the lexer (`GROUP_BODY_TEXT`,
-`Lexer.php:112`). *Decision*: merge literal runs, at least internally,
-before the freeze, or accept per-byte as the forever contract. Effort: M —
-offsets feed printers and diagnostics, so this is the touchiest item here.
-
 **10. One pattern-carrier contract.** `PatternFunctionRegistry`
 (`@internal`, Linter) knows the native `preg_*`, the interop presets
 (composer/pcre, nette/utils, spatie/regex, laravel-str), namespaced drop-ins

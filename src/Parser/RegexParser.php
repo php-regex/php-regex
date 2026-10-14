@@ -254,8 +254,10 @@ final readonly class RegexParser
     }
 
     /**
-     * The tokens of a regex as the parser reads them for this target, each
-     * with its offset in the pattern body, the end-of-pattern token last.
+     * The tokens of a regex as the parser reads them for this target, in
+     * source order and covering the pattern body, each with its byte
+     * offsets, the end-of-pattern token last. How many characters one token
+     * covers is not promised.
      *
      * @return list<Token>
      */

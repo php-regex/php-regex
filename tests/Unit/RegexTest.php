@@ -359,6 +359,45 @@ final class RegexTest extends TestCase
         $this->assertSame(['Literal', 'Literal', 'Eof'], $types);
     }
 
+    /**
+     * What tokenize() promises: the tokens follow each other in source
+     * order, each covering the bytes from its position to its end, so
+     * together they cover the pattern body, the end-of-pattern token last.
+     * How many characters one token covers is not promised.
+     */
+    #[DataProvider('provideTokenizedPatterns')]
+    public function test_tokenize_covers_the_pattern_body_in_order(string $regex, string $body): void
+    {
+        $tokens = Regex::create()->tokenize($regex);
+
+        $offset = 0;
+        $covered = '';
+        $last = null;
+        foreach ($tokens as $token) {
+            $this->assertSame($offset, $token->position, 'Each token starts where the one before it ends.');
+            $covered .= substr($body, $token->position, $token->end() - $token->position);
+            $offset = $token->end();
+            $last = $token;
+        }
+
+        $this->assertInstanceOf(Token::class, $last);
+        $this->assertSame($body, $covered);
+        $this->assertSame('Eof', $last->type->name);
+        $this->assertSame(\strlen($body), $last->position);
+    }
+
+    /**
+     * @return iterable<string, array{regex: string, body: string}>
+     */
+    public static function provideTokenizedPatterns(): iterable
+    {
+        yield 'literals and flags' => ['regex' => '/foo|bar/i', 'body' => 'foo|bar'];
+        yield 'escapes, a named group, a class and a quoted run' => ['regex' => '/\d+(?<n>x)[a-z]\Q.*\E/', 'body' => '\d+(?<n>x)[a-z]\Q.*\E'];
+        yield 'extended whitespace and a comment' => ['regex' => "/a b # c\nd/x", 'body' => "a b # c\nd"];
+        yield 'an inline comment and a lazy quantifier' => ['regex' => '/(?#note)a{2,3}?/', 'body' => '(?#note)a{2,3}?'];
+        yield 'multibyte characters' => ['regex' => '/é\x{41}/u', 'body' => 'é\x{41}'];
+    }
+
     public function test_build_visual_snippet_truncates_and_marks_caret(): void
     {
         $regex = Regex::create();

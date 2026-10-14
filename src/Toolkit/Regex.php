@@ -502,9 +502,11 @@ final readonly class Regex
 
     /**
      * The tokens of a regex as the parser reads them for this instance's
-     * target: the same lexer the parser uses, literal characters,
-     * whitespace and comment markers included, each tagged with its byte
-     * offset in the pattern body, the end-of-pattern token last.
+     * target: the same lexer the parser uses, whitespace and comment
+     * markers included. They come in source order and cover the pattern
+     * body, each tagged with its byte offsets, the end-of-pattern token
+     * last. How many characters one token covers is not promised: a run of
+     * literal characters may become one token in a later release.
      *
      * @return list<Token>
      */

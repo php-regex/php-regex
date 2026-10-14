@@ -157,6 +157,10 @@ add one to yet.
   instance reuses the DFAs its equivalence checks compiled, and without it a
   fresh in-memory cache is used, as before.
 - **New classes, methods and options**, and new keys in a configuration file.
+- **How a pattern splits into tokens**: `tokenize()` promises tokens in source
+  order that cover the pattern body, each with its type, its text and its byte
+  offsets, the end-of-pattern token last. A run of literal characters, one
+  token per character today, may become one token.
 - **New keys and values in the JSON output**: a key in any JSON document the
   `regex` command prints, an optional key in its error envelope, and a value
   of an open enum field, such as `stage` or `severity`. The
