@@ -207,6 +207,8 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('TIP', $output);
         $this->assertStringContainsString('original', $output);
         $this->assertStringContainsString('optimized', $output);
+        // Black on cyan, as WARN is black on yellow.
+        $this->assertStringContainsString('<bg=cyan;fg=black;options=bold> TIP </>', $output);
     }
 
     public function test_format_with_issue_suggested_pattern_tip(): void

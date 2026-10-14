@@ -220,7 +220,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
         foreach ($optimizations as $opt) {
             $parts[] = \sprintf('    %s'.\PHP_EOL,
-                $this->badge('TIP', self::WHITE, self::BG_CYAN),
+                $this->badge('TIP', self::BLACK, self::BG_CYAN),
             );
 
             $optimization = $opt['optimization'];

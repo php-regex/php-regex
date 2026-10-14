@@ -309,6 +309,25 @@ final class ConsoleFormatterTest extends TestCase
         $this->assertStringContainsString('+ /a++/', $output);
     }
 
+    public function test_format_writes_the_tip_badge_black_on_cyan_as_warn_is_black_on_yellow(): void
+    {
+        $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: true));
+        $optimization = new OptimizationResult('/a+/', '/a++/', ['Made possessive']);
+        $result = [
+            'file' => 'test.php',
+            'line' => 10,
+            'pattern' => '/a+/',
+            'issues' => [],
+            'optimizations' => [['file' => 'test.php', 'line' => 10, 'optimization' => $optimization, 'savings' => 1]],
+            'problems' => [],
+        ];
+
+        $output = $formatter->format(new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]));
+
+        // Background, then foreground: cyan (46) behind black (30), bold.
+        $this->assertStringContainsString("\033[46m\033[30m\033[1m TIP ", $output);
+    }
+
     public function test_format_with_issue_suggested_pattern_tip(): void
     {
         $config = new OutputConfiguration(ansi: false);

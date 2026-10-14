@@ -221,7 +221,7 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
         $parts = [];
 
         foreach ($optimizations as $opt) {
-            $parts[] = '    <bg=cyan;fg=white;options=bold> TIP </>'.\PHP_EOL;
+            $parts[] = '    <bg=cyan;fg=black;options=bold> TIP </>'.\PHP_EOL;
 
             $optimization = $opt['optimization'];
             if (!$optimization instanceof OptimizationResult) {
