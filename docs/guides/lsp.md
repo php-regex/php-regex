@@ -411,7 +411,7 @@ Add to your settings:
 |--------|-------------|
 | `initialize` | Server capabilities negotiation |
 | `initialized` | Initialization complete |
-| `shutdown` | Graceful shutdown request: nothing else is served until `exit` |
+| `shutdown` | Graceful shutdown request: nothing else is served until `exit`, and a request sent in between, a second `shutdown` included, is answered Invalid Request (-32600) |
 | `exit` | Server exit: code 0 after `shutdown`, 1 without it |
 | `textDocument/didOpen` | Document opened |
 | `textDocument/didChange` | Document changed |

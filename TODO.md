@@ -483,10 +483,6 @@ hints when the proof says safe, or document that they are. Effort: S.
 it; `src/Symfony/Command/LintCommand.php` and `src/Laravel/Command/LintCommand.php`
 still print `Cache: … hits, … misses`, a count of the run's own process. Effort: XS.
 
-**G3 — A request after `shutdown` gets no answer from the language server.**
-The protocol asks for -32600 Invalid Request; `ServerTest::test_shutdown_stops_the_loop`
-pins the silence today. Effort: XS.
-
 **G4 — Two route-constraint edges in Laravel.** The constraint is judged
 between `/`-family delimiters, where the router uses `{…}`: a constraint with
 an unbalanced brace, as `[{]`, passes the lint and fails the router. A

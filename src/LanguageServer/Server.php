@@ -175,16 +175,6 @@ final class Server
             return;
         }
 
-        // Special handling for shutdown
-        if ('shutdown' === $method) {
-            $this->shutdown = true;
-            if (null !== $message->id) {
-                Response::success($message->id, null);
-            }
-
-            return;
-        }
-
         // Exit notification: the protocol's code, the binary exits with it.
         if ('exit' === $method) {
             $this->exitCode = $this->shutdown ? 0 : 1;
@@ -192,8 +182,22 @@ final class Server
             return;
         }
 
-        // Shut down: nothing is served until "exit".
+        // Shut down: nothing is served until "exit", a request, a second
+        // shutdown included, is answered Invalid Request.
         if ($this->shutdown) {
+            if (null !== $message->id) {
+                Response::error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is shut down');
+            }
+
+            return;
+        }
+
+        if ('shutdown' === $method) {
+            $this->shutdown = true;
+            if (null !== $message->id) {
+                Response::success($message->id, null);
+            }
+
             return;
         }
 
