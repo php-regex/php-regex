@@ -58,6 +58,7 @@ final class AstFingerprint
         'src/Parser/Internal/InlineFlags.php',
         'src/Parser/Internal/LibraryPcre.php',
         'src/Parser/Internal/LookbehindLength.php',
+        'src/Parser/Internal/NearMiss.php',
         'src/Parser/Internal/NoJit.php',
         'src/Parser/Internal/PatternParser.php',
         'src/Parser/Internal/PcreVerb.php',
