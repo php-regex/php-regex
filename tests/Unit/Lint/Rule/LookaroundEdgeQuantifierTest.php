@@ -73,6 +73,12 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     #[DataProvider('provideCheckedQuantifiers')]
     public function test_a_quantifier_whose_count_matters_is_not_reported(string $pattern, string $rewrite): void
     {
+        // Every lookbehind here has a variable length, which compiles from
+        // PCRE2 10.43 on: before, both sides fail alike and prove nothing.
+        if (str_contains($pattern, '(?<')) {
+            $this->requiresPcre2('10.43', $pattern);
+        }
+
         // Under the JIT, which PHP runs by default. PCRE2's interpreter reads
         // the end of the subject in a variable-length lookbehind at the real
         // end, as a fixed-length one does: there /(?<=b{1,2}\z)a/ and
