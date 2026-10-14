@@ -136,6 +136,12 @@ final class PatternEquivalence
             return self::canonicalSequence($node, $unicode);
         }
 
+        // An unquantified "(?:)" matches the empty string wherever it stands,
+        // a whole pattern or a branch as much as an item of a sequence.
+        if (self::isEmptyNonCapturingGroup($node)) {
+            return ['LiteralNode', false, ''];
+        }
+
         if ($node instanceof CharLiteralNode && ($unicode || $node->codePoint < 256)) {
             return ['LiteralNode', false, $unicode ? mb_chr($node->codePoint, 'UTF-8') : \chr($node->codePoint)];
         }

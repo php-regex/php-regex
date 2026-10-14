@@ -281,14 +281,15 @@ final readonly class Regex
 
     /**
      * Lay a pattern out over lines under x when it does not fit the width,
-     * the way a code formatter does; a pattern that fits comes back as written.
+     * the way a code formatter does; a pattern that fits comes back as written,
+     * unless it holds a raw line break, which is respelled as an escape.
      *
      * @throws InvalidRegexOptionException when the width is below 1
      * @throws FormattingException         when the result would not read back as the same pattern
      */
     public function format(string $regex, int $width = 80): FormatResult
     {
-        $formatter = new PatternFormatter($width);
+        $formatter = new PatternFormatter($width, $this->parser->target());
 
         return $formatter->format($this->parser->parse($regex));
     }
@@ -300,7 +301,7 @@ final readonly class Regex
      */
     public function compact(string $regex): FormatResult
     {
-        return (new PatternFormatter())->compact($this->parser->parse($regex));
+        return (new PatternFormatter(target: $this->parser->target()))->compact($this->parser->parse($regex));
     }
 
     /**

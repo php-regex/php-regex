@@ -36,4 +36,11 @@ enum FormatRefusal: string
      * line break after it would be a literal.
      */
     case ExtendedModeSwitchedOff = 'extended_mode_switched_off';
+
+    /**
+     * A verb name, "(*MARK:a\nb)", or a callout string holds a raw line break
+     * that no escape can spell: a line break of the output would then not be
+     * layout, and re-indenting it would change the name.
+     */
+    case LineBreakInName = 'line_break_in_name';
 }

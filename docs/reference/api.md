@@ -764,7 +764,7 @@ Returned by `format()` and `compact()`.
 |---|---|---|
 | `pattern` | `string` | the result; the input itself when nothing changed or the layout was refused |
 | `changed` | `bool` | whether `pattern` differs from the input |
-| `refusal` | `?FormatRefusal` | why `format()` left the pattern as it was: `NewlineConvention`, `SpacedQuantifier` or `ExtendedModeSwitchedOff`; `null` otherwise |
+| `refusal` | `?FormatRefusal` | why `format()` or `compact()` left the pattern as it was: `NewlineConvention`, `SpacedQuantifier`, `ExtendedModeSwitchedOff` or `LineBreakInName`; `null` otherwise |
 
 ---
 

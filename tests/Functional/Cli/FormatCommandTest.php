@@ -13,9 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Tests\Support\JsonContract;
+use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Tests\Support\RunsRegexCli;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -119,6 +122,43 @@ final class FormatCommandTest extends TestCase
         $this->assertSame(self::DATE_AT_24."\n", $stdout);
     }
 
+    /**
+     * --pcre-version names the PCRE2 the pattern is read for, and the output
+     * is read back for it too: for 10.40, "{,2}" is literal text, a
+     * quantifier from 10.43 on.
+     *
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideRunsForAnOlderTarget')]
+    public function test_format_reads_its_output_back_for_the_pcre_version_asked_for(array $arguments, ?string $expected): void
+    {
+        $this->enterProject();
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['format', '/b{,2}/', '--pcre-version=10.40', ...$arguments]);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        if (null !== $expected) {
+            $this->assertSame($expected, $stdout);
+        }
+        $older = Regex::create(['cache' => new NullCache(), 'pcre_version' => '10.40']);
+        $this->assertSame(
+            PatternEquivalence::structure($older->parse('/b{,2}/')),
+            PatternEquivalence::structure($older->parse(substr($stdout, 0, -1))),
+            'Read for 10.40, the output is the input.',
+        );
+    }
+
+    /**
+     * @return iterable<string, array{arguments: list<string>, expected: ?string}>
+     */
+    public static function provideRunsForAnOlderTarget(): iterable
+    {
+        yield 'it fits' => ['arguments' => [], 'expected' => "/b{,2}/\n"];
+        yield 'laid out' => ['arguments' => ['--width=1'], 'expected' => null];
+        yield 'compacted' => ['arguments' => ['--compact'], 'expected' => null];
+    }
+
     #[Test]
     public function test_format_accepts_a_width_of_one(): void
     {
@@ -196,6 +236,10 @@ final class FormatCommandTest extends TestCase
             'arguments' => [self::SPACED_QUANTIFIER, '--json'],
             'expected' => ['pattern' => self::SPACED_QUANTIFIER, 'formatted' => self::SPACED_QUANTIFIER, 'changed' => false, 'refusal' => 'spaced_quantifier'],
         ];
+        yield 'a refused pattern read for PCRE2 10.40, --json' => [
+            'arguments' => [self::SPACED_QUANTIFIER, '--pcre-version=10.40', '--json'],
+            'expected' => ['pattern' => self::SPACED_QUANTIFIER, 'formatted' => self::SPACED_QUANTIFIER, 'changed' => false, 'refusal' => 'spaced_quantifier'],
+        ];
     }
 
     #[Test]
@@ -238,6 +282,12 @@ final class FormatCommandTest extends TestCase
         yield 'a # comment under (*CR)' => ['arguments' => ["/(*CR)a # c\nb/x"], 'named' => '(*CR)'];
         yield 'x turned off at the top level' => ['arguments' => ['/(?-x)abcdefghijklmnop(?:q)/x', '--width=10'], 'named' => '(?-x)'];
         yield 'a spaced quantifier' => ['arguments' => [self::SPACED_QUANTIFIER], 'named' => 'a{ 1,2 }'];
+        yield 'a spaced quantifier under x, compacted' => ['arguments' => ['/(?:(?:(?:a)))b{ 1,2 }/x', '--compact'], 'named' => 'x is added or dropped'];
+        // Whether the braces repeat depends on the PCRE2 that runs the
+        // pattern, not on the one it is read for: the refusal stands.
+        yield 'a spaced quantifier read for PCRE2 10.40' => ['arguments' => [self::SPACED_QUANTIFIER, '--pcre-version=10.40'], 'named' => 'a{ 1,2 }'];
+        yield 'a spaced quantifier under x, compacted, read for PCRE2 10.40' => ['arguments' => ['/(?:(?:(?:a)))b{ 1,2 }/x', '--compact', '--pcre-version=10.40'], 'named' => 'x is added or dropped'];
+        yield 'a line break in a verb name' => ['arguments' => ["/(*MARK:a\nb)c/"], 'named' => 'line break inside a name'];
     }
 
     /**
@@ -275,6 +325,45 @@ final class FormatCommandTest extends TestCase
     public static function providePatternsThatDoNotParse(): iterable
     {
         yield 'an unclosed group' => ['pattern' => '/(a/'];
+    }
+
+    /**
+     * What the parser refuses and what the lexer refuses, a class left open,
+     * fail alike: the error on one line of stderr, nothing on stdout.
+     */
+    #[Test]
+    #[DataProvider('provideParseErrors')]
+    public function test_format_writes_the_parse_error_alone_on_one_line_of_stderr(string $pattern, string $message): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'PCRE refuses the pattern too.');
+        $this->enterProject();
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['format', $pattern]);
+
+        $this->assertSame(1, $exitCode, $stdout.$stderr);
+        $this->assertSame('', $stdout);
+        $this->assertSame('Error: '.$message."\n", $stderr);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, message: string}>
+     */
+    public static function provideParseErrors(): iterable
+    {
+        yield 'an unclosed group' => ['pattern' => '/(a/', 'message' => 'Expected ) at end of input (found eof)'];
+        yield 'an unclosed class' => ['pattern' => '/[a/', 'message' => 'Unclosed character class "]" at end of input.'];
+    }
+
+    #[Test]
+    public function test_format_writes_the_refusal_note_as_one_line_of_stderr(): void
+    {
+        $this->enterProject();
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['format', self::SPACED_QUANTIFIER]);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertSame(self::SPACED_QUANTIFIER."\n", $stdout);
+        $this->assertSame("Note: left as written: a quantifier written with spaces, such as a{ 1,2 }, means something else before PCRE2 10.43 once x is added or dropped.\n", $stderr);
     }
 
     #[Test]

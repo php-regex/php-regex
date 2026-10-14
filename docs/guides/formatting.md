@@ -74,36 +74,41 @@ In an editor, the [language server](lsp.md) offers both as code actions on a reg
 
 ## Comments
 
-Comments stay where the author put them. A comment written after an item stays on that item's line. Trailing comments on consecutive lines align on one column, the way `gofmt` aligns them. One blank line the author left between items is kept; two become one.
+Comments stay where the author put them. A comment written after an item stays on that item's line. Trailing comments on consecutive lines align on one column, the way `gofmt` aligns them. One blank line the author left between items is kept; two become one. A `(?#…)` comment written over several lines keeps its line breaks, and each of its lines starts at the indent of the line it opens on.
 
-`compact` drops every comment, `#` and `(?#…)` alike.
+`compact` drops every comment, `#` and `(?#…)` alike. The one exception is a `(?#…)` comment holding the bracket that balances a bracket delimiter in a verb name or a callout string, as in `{(*MARK:{)(?#})a}`: a name has no escape, so the comment stays.
 
 ## Spelling
 
-The formatter changes the layout, never the vocabulary. Escapes, group-name syntax (`(?<n>`, `(?'n'`, `(?P<n>`), backreference syntax and quantifier text come back as written. Only what `x` would otherwise swallow is respelled:
+The formatter changes the layout, never the vocabulary. Escapes, group-name syntax (`(?<n>`, `(?'n'`, `(?P<n>`), backreference syntax and quantifier text come back as written. A `\Q…\E` run is the exception: its text is written with escapes, `\Qa.b\E` as `a\.b`. Only what `x` would otherwise swallow is respelled:
 
 - a space becomes `\ ` (`\x20` at the end of a line, where an editor might strip it), and `#` becomes `\#`;
 - a raw tab, line break, vertical tab or form feed becomes its escape, so every line break in the output is layout;
-- under `u`, the characters PCRE also skips under `x` (NEL, LRM, RLM, LS, PS) become `\x{…}`; without `u`, a raw byte 0x85 becomes `\x85`.
+- under `u`, the characters PCRE also skips under `x` (NEL, LRM, RLM, LS, PS) become `\x{…}`; without `u`, a raw byte 0x85 is escaped, with the rest of its UTF-8 sequence when it is part of one (`Å` becomes `\xC3\x85`), so the output stays valid UTF-8;
+- a no-break space, which `x` skips under a locale that counts it as a space, is escaped too when `x` is added.
 
 `compact` only removes things. Where removing a comment or layout would fuse two tokens, it writes an empty group `(?:)` between them: `a{(?#c),2}` becomes `a{(?:),2}`, because `a{,2}` is a quantifier on PCRE2 10.43 and later.
 
 ## Guarantees
 
-- **A pattern that already fits comes back byte for byte.** A short pattern is left alone.
+- **A pattern that already fits comes back byte for byte.** A short pattern is left alone, unless it holds a raw line break, which is respelled `\n` so that every line break of the output is layout.
 - **Formatting is idempotent.** Formatting the output again changes nothing.
-- **The result is the same pattern.** Before it returns, the formatter parses its own output and compares the tree with the input's. If they differ, it throws `FormattingException` (code `regex.formatting.unsafe`) instead of handing back a wrong pattern. That would be a bug: please report it with the pattern.
-- **The output does not depend on the PCRE version.** The same input gives the same output on every supported PHP.
+- **The result is the same pattern**, under PHP's default `C` locale. Under another `LC_CTYPE`, PHP lets PCRE2 read the locale's spaces, and `x` then skips a no-break space too: a pattern under `x` holding one raw already means something else there.
+- **It checks itself.** Before it returns, the formatter parses its own output and compares the tree with the input's. If they differ, it throws `FormattingException` (code `regex.formatting.unsafe`) instead of handing back a wrong pattern. That would be a bug: please report it with the pattern.
+- **The formatter never asks the running engine.** It reads the pattern for the PCRE2 target of the `Regex` instance (or the `PcreTarget` given to `PatternFormatter`), and checks its output for that same target. Where a layout would mean one thing on one PCRE2 release and another thing on the next, it refuses rather than pick one.
 
 ## When it refuses
 
-In three cases, laying the pattern out under `x` would change what it matches. `format` then returns the pattern unchanged, with `refusal` set (the CLI prints a note on stderr and exits 0):
+In a few cases, laying the pattern out under `x`, or dropping `x`, would change what it matches. The pattern then comes back unchanged, with `refusal` set (the CLI prints a note on stderr and exits 0):
 
 | refusal | when | why |
 |---|---|---|
 | `newline_convention` | the pattern holds `#` comments under `(*CR)`, `(*CRLF)` or `(*NUL)` | under those conventions a `#` comment does not end at a line feed |
-| `spaced_quantifier` | a pattern without `x` writes a quantifier with spaces, like `a{ 1,2 }` | it is a quantifier on PCRE2 10.43 and later, a literal before: no single layout means the same on both |
+| `spaced_quantifier` | a pattern without `x` writes a quantifier with spaces, like `a{ 1,2 }`, outside a `(?-x:…)` group, whatever the PCRE2 target | it is a quantifier on PCRE2 10.43 and later, a literal before: no single layout means the same on both |
 | `extended_mode_switched_off` | a top-level `(?-x)` or `(?^)` | after it, a line break is a literal |
+| `line_break_in_name` | a raw line break inside a verb name such as `(*MARK:…)` or a callout string | no escape can spell it there, so it could not be told from layout |
+
+`compact` refuses a pattern under `x` that spells a quantifier with spaces where `x` is on, for the same reason as `spaced_quantifier`, and a pattern holding a line break in a name.
 
 ## The pretty printer
 

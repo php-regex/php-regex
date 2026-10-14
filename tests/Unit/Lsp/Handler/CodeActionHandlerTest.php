@@ -19,10 +19,13 @@ use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -315,6 +318,62 @@ final class CodeActionHandlerTest extends TestCase
     }
 
     /**
+     * The literal's own indentation comes first, tabs included, then the
+     * four spaces of a continuation line. On the first line of a document,
+     * behind the indentation of a template's "<?php", that indentation is
+     * the line's too.
+     */
+    #[Test]
+    #[DataProvider('provideLiteralLines')]
+    public function test_format_action_shifts_continuation_lines_by_the_literal_line_indentation_then_four_spaces(string $source, string $indent): void
+    {
+        $format = self::action($this->codeActionsOnLiteral($source), self::FORMAT);
+        $this->assertNotNull($format);
+
+        $pattern = eval('return '.self::singleEdit($format)['newText'].';');
+
+        $this->assertSame(str_replace("\n", "\n".$indent.'    ', self::URL_FORMATTED), $pattern);
+        $subject = 'https://bob:secret@[::1]:8080/a/b?x=1#frag';
+        $this->assertSame(1, preg_match(self::URL, $subject, $before));
+        $this->assertSame(1, preg_match((string) $pattern, $subject, $after), 'The engine agrees the shift is only layout.');
+        $this->assertSame($before, $after);
+    }
+
+    /**
+     * @return iterable<string, array{source: string, indent: string}>
+     */
+    public static function provideLiteralLines(): iterable
+    {
+        $call = 'preg_match('.var_export(self::URL, true).', $s);';
+
+        yield 'a line indented with a tab' => ['source' => "<?php\n\n\t{$call}\n", 'indent' => "\t"];
+        yield 'a line indented with spaces, then a tab' => ['source' => "<?php\n\n  \t{$call}\n", 'indent' => "  \t"];
+        yield 'the first line of the document' => ['source' => "  <?php {$call}\n", 'indent' => '  '];
+    }
+
+    /**
+     * A literal laid out over lines another way than the format action lays
+     * it out gets both actions, the format action first.
+     */
+    #[Test]
+    public function test_both_layout_actions_are_offered_for_a_literal_laid_out_another_way(): void
+    {
+        $pattern = str_replace('    ', '  ', self::URL_FORMATTED);
+        $subject = 'https://bob:secret@[::1]:8080/a/b?x=1#frag';
+        $this->assertSame(1, preg_match(self::URL, $subject, $expected));
+        $this->assertSame(1, preg_match($pattern, $subject, $matches), 'The oracle on the input.');
+        $this->assertSame($expected, $matches);
+
+        $actions = $this->codeActionsOnLiteral(self::source($pattern, 0));
+
+        $layout = array_values(array_filter(self::titles($actions), static fn (string $title): bool => \in_array($title, [self::FORMAT, self::COMPACT], true)));
+        $this->assertSame([self::FORMAT, self::COMPACT], $layout);
+        $compact = self::action($actions, self::COMPACT);
+        $this->assertNotNull($compact);
+        $this->assertSame(self::URL, eval('return '.self::singleEdit($compact)['newText'].';'));
+    }
+
+    /**
      * Once the format action is applied, the literal is what the action
      * would write: it is not offered again, and compact takes it back to
      * the pattern it came from.
@@ -428,6 +487,152 @@ final class CodeActionHandlerTest extends TestCase
         yield 'a pattern format refuses' => ['pattern' => self::SPACED_QUANTIFIER, 'engine' => 0];
         // PCRE refuses it too.
         yield 'a pattern that does not parse' => ['pattern' => '/(a/', 'engine' => false];
+        // The lexer refuses it before the parser does.
+        yield 'a pattern with a class left open' => ['pattern' => '/[a/', 'engine' => false];
+    }
+
+    /**
+     * A raw line break in a pattern that is not under x where it stands is
+     * a literal, not layout: shifted to the literal's indentation, it would
+     * carry spaces into the pattern. A layout action is either not offered
+     * or keeps what the literal matches, subject for subject.
+     *
+     * @param array<string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideLiteralsHoldingARawLineBreak')]
+    public function test_no_layout_action_changes_what_a_literal_holding_a_raw_line_break_matches(string $pattern, array $subjects): void
+    {
+        foreach ($subjects as $subject => $expected) {
+            $this->assertSame($expected, preg_match($pattern, (string) $subject), 'The oracle on the input, '.json_encode((string) $subject));
+        }
+
+        $actions = $this->codeActionsOnLiteral(self::source($pattern, 8));
+
+        foreach ([self::FORMAT, self::COMPACT] as $title) {
+            $action = self::action($actions, $title);
+            if (null === $action) {
+                continue;
+            }
+
+            $rewritten = eval('return '.self::singleEdit($action)['newText'].';');
+            $this->assertIsString($rewritten);
+            foreach ($subjects as $subject => $expected) {
+                $this->assertSame($expected, preg_match($rewritten, (string) $subject), $title.': '.json_encode($rewritten).' on '.json_encode((string) $subject));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: array<string, int>}>
+     */
+    public static function provideLiteralsHoldingARawLineBreak(): iterable
+    {
+        $shifted = "\n".str_repeat(' ', 12);
+
+        yield 'a short pattern without x' => ['pattern' => "/a\nb/", 'subjects' => ["a\nb" => 1, "a{$shifted}b" => 0, 'ab' => 0]];
+        yield 'after (?-x) in a group of an x pattern' => ['pattern' => "/(?:(?-x)a\nb)(c)(d)/x", 'subjects' => ["a\nbcd" => 1, "a{$shifted}bcd" => 0, 'abcd' => 0]];
+    }
+
+    /**
+     * A blank line the formatter keeps stays empty once the continuation
+     * lines are shifted: no line of the edit is indentation alone.
+     */
+    #[Test]
+    public function test_format_action_writes_no_line_of_indentation_only(): void
+    {
+        $pattern = "/^a # one\n\n b # two\n\n\n c\$/x";
+        $this->assertSame(1, preg_match($pattern, 'abc'), 'The oracle on the input.');
+
+        $actions = $this->codeActionsOnLiteral(self::source($pattern, 8));
+        $format = self::action($actions, self::FORMAT);
+        $this->assertNotNull($format, 'No "'.self::FORMAT.'" action among: '.implode(', ', self::titles($actions)));
+
+        $rewritten = eval('return '.self::singleEdit($format)['newText'].';');
+        $this->assertIsString($rewritten);
+        foreach (explode("\n", $rewritten) as $number => $line) {
+            $this->assertDoesNotMatchRegularExpression('/^[ \t]+$/', $line, \sprintf('Line %d of %s', $number + 1, json_encode($rewritten)));
+        }
+        $this->assertStringContainsString("\n\n", (string) $rewritten, 'The blank line the author left is kept.');
+        $this->assertSame(1, preg_match($rewritten, 'abc'));
+    }
+
+    /**
+     * The handler formats for the target its Regex reads for: for PCRE2
+     * 10.40 "{,2}" is literal text, a quantifier from 10.43 on. The action
+     * is offered, and its pattern is the literal's for that target.
+     */
+    #[Test]
+    public function test_format_action_is_offered_for_the_target_the_handler_reads_for(): void
+    {
+        // The oracle: "/^b{,2}$/" matches "b{,2}" only before 10.43.
+        $this->assertSame(PcreTarget::runtime()->pcreAtLeast('10.43') ? 0 : 1, preg_match('/^b{,2}$/', 'b{,2}'));
+        $regex = Regex::create(['cache' => new NullCache(), 'pcre_version' => '10.40']);
+        $this->handler = new CodeActionHandler($this->documents, $regex);
+        $pattern = '/'.str_repeat('(?:ab)', 14).'b{,2}/';
+
+        $actions = $this->codeActionsOnLiteral(self::source($pattern, 8));
+        $format = self::action($actions, self::FORMAT);
+
+        $this->assertNotNull($format, 'No "'.self::FORMAT.'" action among: '.implode(', ', self::titles($actions)));
+        $rewritten = eval('return '.self::singleEdit($format)['newText'].';');
+        $this->assertIsString($rewritten);
+        $this->assertSame(PatternEquivalence::structure($regex->parse($pattern)), PatternEquivalence::structure($regex->parse($rewritten)));
+    }
+
+    /**
+     * The line breaks inside a "(?#...)" comment are layout too: once the
+     * format action is applied, the literal is what the action writes, so
+     * applying it again changes nothing, however far the continuation lines
+     * were shifted. A comment matches nothing: PCRE reads the result as the
+     * input.
+     */
+    #[Test]
+    public function test_format_action_applied_twice_leaves_a_comment_group_holding_a_line_feed_where_the_first_put_it(): void
+    {
+        $pattern = "/^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})(?#the date,\n   then the time)T(?<hour>\\d{2}):(?<minute>\\d{2})\$/";
+        $subject = '2026-10-14T09:30';
+        $this->assertSame(1, preg_match($pattern, $subject, $expected), 'The oracle on the input.');
+        // A literal holding a raw line break, single-quoted as an editor has it.
+        $source = "<?php\n\n        preg_match('".$pattern."', \$s);\n";
+
+        $first = self::action($this->codeActionsOnLiteral($source), self::FORMAT);
+        $this->assertNotNull($first, 'No "'.self::FORMAT.'" action on the literal.');
+        $once = self::applyEdit($source, $first);
+
+        $second = self::action($this->codeActionsOnLiteral($once), self::FORMAT);
+        $twice = null === $second ? $once : self::applyEdit($once, $second);
+
+        $this->assertSame($once, $twice, 'A second format action moved the comment.');
+        $rewritten = eval('return '.self::singleEdit($first)['newText'].';');
+        $this->assertIsString($rewritten);
+        $this->assertSame(1, preg_match($rewritten, $subject, $matches), json_encode($rewritten, \JSON_THROW_ON_ERROR));
+        $this->assertSame($expected, $matches);
+    }
+
+    /**
+     * The format action is withheld from a pattern the formatter refuses
+     * for its spaced quantifier, whatever PCRE2 the handler reads for.
+     */
+    #[Test]
+    #[DataProvider('provideTargets')]
+    public function test_format_action_is_not_offered_for_a_spaced_quantifier_whatever_the_target(?string $pcreVersion): void
+    {
+        $this->assertSame(0, preg_match(self::SPACED_QUANTIFIER, ''), 'The pattern compiles.');
+        $this->handler = new CodeActionHandler($this->documents, Regex::create(null === $pcreVersion ? ['cache' => new NullCache()] : ['cache' => new NullCache(), 'pcre_version' => $pcreVersion]));
+
+        $actions = $this->codeActionsOnLiteral(self::source(self::SPACED_QUANTIFIER, 8));
+
+        $this->assertNull(self::action($actions, self::FORMAT), 'Offered: '.implode(', ', self::titles($actions)));
+    }
+
+    /**
+     * @return iterable<string, array{pcreVersion: ?string}>
+     */
+    public static function provideTargets(): iterable
+    {
+        yield 'the running engine' => ['pcreVersion' => null];
+        yield 'PCRE2 10.40' => ['pcreVersion' => '10.40'];
     }
 
     /**

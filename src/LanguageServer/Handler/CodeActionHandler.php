@@ -53,11 +53,11 @@ final readonly class CodeActionHandler
      */
     private const CONTINUATION_INDENT = '    ';
 
-    private PatternFormatter $formatter;
+    private readonly PatternFormatter $formatter;
 
     public function __construct(private DocumentManager $documents, private Regex $regex)
     {
-        $this->formatter = new PatternFormatter();
+        $this->formatter = new PatternFormatter(target: $regex->target());
     }
 
     /**
@@ -288,8 +288,16 @@ final readonly class CodeActionHandler
         $formatted = $this->layout(fn (RegexNode $ast): FormatResult => $this->formatter->format($ast), $ast);
         if (null !== $formatted) {
             // Every line break of a formatted pattern is layout, so shifting
-            // the continuation lines does not change what it matches.
-            $formatted = str_replace("\n", "\n".$this->lineIndentation($occurrence, $uri).self::CONTINUATION_INDENT, $formatted);
+            // the continuation lines does not change what it matches. A blank
+            // line stays blank.
+            $indent = $this->lineIndentation($occurrence, $uri).self::CONTINUATION_INDENT;
+            $lines = explode("\n", $formatted);
+            foreach ($lines as $i => $line) {
+                if ($i > 0 && '' !== $line) {
+                    $lines[$i] = $indent.$line;
+                }
+            }
+            $formatted = implode("\n", $lines);
             if ($formatted !== $occurrence->pattern) {
                 $actions[] = $this->rewriteAction('Format pattern over lines', $occurrence, $uri, $formatted);
             }

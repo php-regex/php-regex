@@ -51,6 +51,12 @@ final class StructuralFingerprint
             return self::canonicalSequence($node, $unicode);
         }
 
+        // An empty group matches the empty string wherever it stands, the
+        // whole pattern or the body of a group as much as in a sequence.
+        if (self::isEmptyGroup($node)) {
+            return ['literal', false, ''];
+        }
+
         if (($node instanceof CharLiteralNode && ($unicode || $node->codePoint < 256)) || $node instanceof ControlCharNode) {
             return ['literal', false, $unicode ? mb_chr($node->codePoint, 'UTF-8') : \chr($node->codePoint)];
         }
