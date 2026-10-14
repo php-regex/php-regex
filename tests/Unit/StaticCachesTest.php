@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Generator\SampleGenerator;
+use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Parser\Analysis\ComplexityScorer;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Hir\CharSet;
@@ -58,6 +59,22 @@ final class StaticCachesTest extends TestCase
         foreach (self::caches() as [$class, $property]) {
             $this->assertSame([], $this->read($class, $property), 'Not cleared: '.$class.'::$'.$property);
         }
+    }
+
+    /**
+     * The lint rules that ask the solver keep one parser for the process:
+     * clearCaches() drops it with the rest.
+     */
+    #[Test]
+    public function test_clear_caches_drops_the_parser_of_the_lint_questions(): void
+    {
+        $parser = new \ReflectionProperty(LanguageQuestions::class, 'parser');
+        $this->assertNotNull(LanguageQuestions::matchesNothing('/a/'));
+        $this->assertInstanceOf(RegexParser::class, $parser->getValue());
+
+        RegexParser::create(['cache' => new NullCache()])->clearCaches();
+
+        $this->assertNull($parser->getValue());
     }
 
     /**

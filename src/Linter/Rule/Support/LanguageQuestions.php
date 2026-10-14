@@ -20,6 +20,7 @@ use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -57,7 +58,8 @@ final class LanguageQuestions
     private const CASELESS_RESTRICT = 'r';
 
     /**
-     * The parser the solver reads the questions with.
+     * The parser the solver reads the questions with, until the library's
+     * caches are cleared.
      */
     private static ?RegexParser $parser = null;
 
@@ -281,13 +283,25 @@ final class LanguageQuestions
         }
     }
 
+    private static function parser(): RegexParser
+    {
+        if (null === self::$parser) {
+            StaticCaches::register(self::class, static function (): void {
+                self::$parser = null;
+            });
+            self::$parser = RegexParser::create();
+        }
+
+        return self::$parser;
+    }
+
     /**
      * @param \Closure(LanguageSolver): bool $question
      */
     private static function ask(\Closure $question, ?DfaCacheInterface $dfas): ?bool
     {
         try {
-            return $question(new LanguageSolver(self::$parser ??= RegexParser::create(), $dfas));
+            return $question(new LanguageSolver(self::parser(), $dfas));
         } catch (RegexException) {
             // Outside the regular subset, past the cap, or a pattern the
             // parser refuses: no answer.

@@ -95,10 +95,12 @@ freeze. Effort: S-M.
 hit (`PsrCacheAdapter.php:52`), so a Redis pool turns every parse into a
 network round trip; no front tier exists anywhere in `src/Parser/Cache/`.
 `ArrayCache` bounds by entry count (1024), not bytes. `LanguageQuestions`
-keeps a hidden static parser (`LanguageQuestions.php:62`) detached from the
-judged `PcreTarget` and never cleared. *Fix*: compose a bounded process-wide
-front with the PSR/filesystem back at `RegexParser` construction. Effort:
-S-M.
+keeps a static parser (now emptied by `clearCaches()`) built for the running
+PHP, detached from the judged `PcreTarget`: `PatternLinter` never learns the
+target, so following it means a target parameter on the linter. *Decision*:
+compose a bounded process-wide front with the PSR/filesystem back at
+`RegexParser` construction (automatically, or as a public `TieredCache`),
+and whether the linter takes the target. Effort: S-M.
 
 **9. Byte-level tokens are about to freeze as the contract.** The lexer
 emits one token per literal byte and the parser one node per byte
