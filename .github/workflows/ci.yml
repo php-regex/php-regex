@@ -100,6 +100,12 @@ jobs:
           chown -R tester "$GITHUB_WORKSPACE"
           su tester --shell /bin/sh --command 'php -d phar.readonly=0 tools/phpunit/vendor/bin/phpunit --colors=always'
 
+      - name: Prove the formatter on this engine
+        # Formatted and compacted patterns must match exactly what the input
+        # matches, on every engine the library supports, the 10.40 floor
+        # included. Too slow for the default suite.
+        run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group formatter-corpus'
+
   engines-latest:
     # Every supported PHP on the latest PCRE2: on macOS, PHP links Homebrew's.
     name: Tests (PHP ${{ matrix.php }}, latest PCRE2)

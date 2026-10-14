@@ -35,6 +35,7 @@ use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -43,6 +44,8 @@ use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Printer\FormatResult;
+use PHPRegex\Parser\Printer\PatternFormatter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
@@ -274,6 +277,30 @@ final readonly class Regex
     public function optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
     {
         return (new Optimizer($this->parser))->optimize($regex, $options);
+    }
+
+    /**
+     * Lay a pattern out over lines under x when it does not fit the width,
+     * the way a code formatter does; a pattern that fits comes back as written.
+     *
+     * @throws InvalidRegexOptionException when the width is below 1
+     * @throws FormattingException         when the result would not read back as the same pattern
+     */
+    public function format(string $regex, int $width = 80): FormatResult
+    {
+        $formatter = new PatternFormatter($width);
+
+        return $formatter->format($this->parser->parse($regex));
+    }
+
+    /**
+     * Write a pattern on one line, without x, layout or comments.
+     *
+     * @throws FormattingException when the result would not read back as the same pattern
+     */
+    public function compact(string $regex): FormatResult
+    {
+        return (new PatternFormatter())->compact($this->parser->parse($regex));
     }
 
     /**

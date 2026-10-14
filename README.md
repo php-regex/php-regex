@@ -105,6 +105,7 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
 - 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
 - 📖 **Explanation:** Explain patterns in plain English.
+- 📐 **Formatter:** Lay a long pattern out over lines under `x`, or compact it to one line, and prove the result matches exactly what the input matched.
 - 🔧 **Visitor API:** A flexible API for building custom regex tooling.
 
 ## Philosophy & Accuracy
@@ -230,6 +231,9 @@ vendor/bin/regex analyze '/(a+)+$/'
 # Colorize pattern for better readability
 vendor/bin/regex highlight '/\d+/'
 
+# Lay a long pattern out over lines, or back on one with --compact
+vendor/bin/regex format '/^(?<user>[\w.+-]+)@(?<domain>(?:[a-z0-9-]+\.)+[a-z]{2,})$/i' --width=40
+
 # Lint your entire codebase
 vendor/bin/regex lint src/
 ```
@@ -267,6 +271,10 @@ echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical'; // 'confirmed'
 
 // Get human-readable explanation
 echo $regex->explain('/\d{4}-\d{2}-\d{2}/');
+
+// Lay a long pattern out over lines under x, or compact it back to one
+$laidOut = $regex->format('/^(?<user>[\w.+-]+)@(?<domain>(?:[a-z0-9-]+\.)+[a-z]{2,})$/i', 40)->pattern;
+echo $regex->compact($laidOut)->pattern; // the one-line pattern again
 ```
 
 ## Integrations

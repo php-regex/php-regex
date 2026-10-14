@@ -22,7 +22,7 @@ use PHPUnit\Framework\Assert;
  * against it, so the two cannot drift apart.
  *
  * An address is the document kind for its top level (lint, analyze, debug,
- * redos, transpile, error for the error envelope, baseline for a baseline
+ * redos, transpile, format, error for the error envelope, baseline for a baseline
  * file), then ".key" for a nested object and "[]" for the elements of a list.
  * An object several documents embed has an address of its own (runtime,
  * validation, redos_analysis, benchmark) and is described once.
@@ -95,6 +95,9 @@ final class JsonContract
 
         // regex transpile --format=json, and the Symfony and Laravel commands
         'transpile' => ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes'],
+
+        // regex format --format=json
+        'format' => ['pattern', 'formatted', 'changed', 'refusal'],
 
         // regex lint --generate-baseline
         'baseline' => ['version', 'issues'],

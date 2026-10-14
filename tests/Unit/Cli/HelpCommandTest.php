@@ -121,6 +121,7 @@ final class HelpCommandTest extends TestCase
                 '--php-version', '--pcre-version', '--json',
             ],
             'transpile' => ['--target', '--format', '--json'],
+            'format' => ['--compact', '--width', '--format', '--json'],
         ];
 
         foreach ($accepted as $command => $options) {
@@ -161,6 +162,7 @@ final class HelpCommandTest extends TestCase
         yield 'analyze' => ['command' => 'analyze', 'section' => 'Analyze Options'];
         yield 'debug' => ['command' => 'debug', 'section' => 'Debug Options'];
         yield 'redos' => ['command' => 'redos', 'section' => 'ReDoS Benchmark Options'];
+        yield 'format' => ['command' => 'format', 'section' => 'Format Options'];
     }
 
     /**
@@ -225,6 +227,7 @@ final class HelpCommandTest extends TestCase
         yield 'debug' => ['command' => 'debug', 'section' => 'Debug Options'];
         yield 'redos' => ['command' => 'redos', 'section' => 'ReDoS Benchmark Options'];
         yield 'transpile' => ['command' => 'transpile', 'section' => 'Transpile Options'];
+        yield 'format' => ['command' => 'format', 'section' => 'Format Options'];
     }
 
     public function test_render_command_help_returns_zero_for_valid_command(): void
@@ -536,7 +539,7 @@ final class HelpCommandTest extends TestCase
     public function test_no_help_page_claims_a_1_x_behaviour(): void
     {
         $pages = [self::commandHelp(null)];
-        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'version', 'help'] as $command) {
+        foreach (['lint', 'compare', 'analyze', 'debug', 'redos', 'diagram', 'explain', 'parse', 'transpile', 'validate', 'highlight', 'graph', 'format', 'version', 'help'] as $command) {
             $pages[] = self::commandHelp($command);
         }
 

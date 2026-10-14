@@ -515,8 +515,8 @@ final class TokenParser
 
     /**
      * Skip extended-mode (/x) whitespace and comments *without* producing
-     * nodes. This is used where the parser needs to see through trivia,
-     * for example between an atom and its following quantifier.
+     * nodes. This is used where the parser needs to see through trivia it
+     * does not keep, as in a conditional's opening.
      */
     private function skipExtendedModeContent(): int
     {
@@ -554,6 +554,26 @@ final class TokenParser
             }
 
             break;
+        }
+
+        return $skipped;
+    }
+
+    /**
+     * Skip extended-mode (/x) whitespace only. A line comment is left to the
+     * sequence, which keeps it as a node: "a # c\n +" is "a+" to PCRE, and
+     * the quantifier after the comment goes on the item before it.
+     */
+    private function skipExtendedWhitespace(): int
+    {
+        if (!$this->extendedMode || $this->inQuoteMode) {
+            return 0;
+        }
+
+        $skipped = 0;
+        while (!$this->stream->isAtEnd() && TokenType::Literal === $this->stream->current()->type && $this->isExtendedWhitespace($this->stream->current()->value)) {
+            $this->stream->advance();
+            $skipped++;
         }
 
         return $skipped;
@@ -718,7 +738,7 @@ final class TokenParser
             return $node;
         }
 
-        $skipped = $this->skipExtendedModeContent();
+        $skipped = $this->skipExtendedWhitespace();
 
         if ($this->stream->match(TokenType::Quantifier)) {
             $token = $this->stream->previous();
@@ -768,9 +788,11 @@ final class TokenParser
         $endPosition = $token->position + \strlen($token->value);
 
         // In extended (/x) mode, whitespace may separate a quantifier from
-        // its lazy/possessive modifier: "a* +" means "a*+" to PCRE.
+        // its lazy/possessive modifier: "a* +" means "a*+" to PCRE. A line
+        // comment there is kept by the sequence, which then applies the
+        // modifier after it to this quantifier.
         if (QuantifierType::Greedy === $type && $this->extendedMode && !$this->inQuoteMode) {
-            $skippedModifier = $this->skipExtendedModeContent();
+            $skippedModifier = $this->skipExtendedWhitespace();
             if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['+', '?'], true)) {
                 $modifier = $this->stream->current()->value;
                 $type = '+' === $modifier ? QuantifierType::Possessive : QuantifierType::Lazy;

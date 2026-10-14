@@ -102,11 +102,13 @@ final class CompilerAssertionRoundTripTest extends TestCase
      */
     public static function providePrettyAssertions(): iterable
     {
-        yield 'non-atomic lookahead' => ['pattern' => '/(*napla:ab)/x', 'compiled' => "/(?*\nab\n)/x"];
-        yield 'non-atomic lookbehind' => ['pattern' => '/(?<*ab)c/x', 'compiled' => "/(?<*\nab\n)c/x"];
-        yield 'atomic lookahead' => ['pattern' => '/(?=ab)/x', 'compiled' => "/(?=\nab\n)/x"];
-        yield 'atomic lookbehind' => ['pattern' => '/(?<=ab)c/x', 'compiled' => "/(?<=\nab\n)c/x"];
-        yield 'callout before a lookahead condition' => ['pattern' => '/(?(?C25)(?=abc)abcd|xyz)/x', 'compiled' => "/(?(?C25)(?=\nabc\n)\nabcd\n|xyz\n)/x"];
+        // Each fits the width: the layout keeps it on one line.
+        yield 'non-atomic lookahead' => ['pattern' => '/(*napla:ab)/x', 'compiled' => '/(?*ab)/x'];
+        yield 'non-atomic lookbehind' => ['pattern' => '/(?<*ab)c/x', 'compiled' => '/(?<*ab)c/x'];
+        yield 'atomic lookahead' => ['pattern' => '/(?=ab)/x', 'compiled' => '/(?=ab)/x'];
+        yield 'atomic lookbehind' => ['pattern' => '/(?<=ab)c/x', 'compiled' => '/(?<=ab)c/x'];
+        yield 'callout before a lookahead condition' => ['pattern' => '/(?(?C25)(?=abc)abcd|xyz)/x', 'compiled' => '/(?(?C25)(?=abc)abcd|xyz)/x'];
+        yield 'past the width' => ['pattern' => '/(?='.str_repeat('a', 80).')b/x', 'compiled' => "/\n    (?=\n        ".str_repeat('a', 80)."\n    )\n    b\n/x"];
     }
 
     private function compile(string $pattern): string

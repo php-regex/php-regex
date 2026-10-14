@@ -1,5 +1,5 @@
 ---
-description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile — frozen for all of 2.x."
+description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format — frozen for all of 2.x."
 ---
 
 # JSON Output
@@ -22,6 +22,7 @@ This page lists every key of every document.
 | `regex debug` | the [debug document](#debug) |
 | `regex redos` | the [benchmark document](#redos) |
 | `regex transpile` | the [transpile document](#transpile) |
+| `regex format` | the [format document](#format) |
 
 Symfony's and Laravel's `regex:lint` print the same lint report, and their
 `regex:transpile` the same transpile document, with the same error envelope —
@@ -217,7 +218,8 @@ print the envelope with stage `pattern`, carrying the same `validation`
 object, and exit with 1. `redos` judges the pattern given with `--safe` the
 same way: an invalid one stops it with the envelope, stage `pattern`. `redos`
 stops so in JSON only: its console output still measures a pattern PHP
-refuses.
+refuses. `format` prints the envelope with stage `pattern` too, without a
+`validation` key, for a pattern that does not parse.
 
 ## Lint Report
 
@@ -539,6 +541,37 @@ no equivalent for stops it with the envelope too, stage `pattern`, without a
 | `constructor` | string | Code that builds the pattern in the target language, as `new RegExp("a+b", "i")` |
 | `warnings` | list of strings | Where the target matches differently from PCRE |
 | `notes` | list of strings | What was rewritten on the way, matching the same |
+
+## Format
+
+`regex format <pattern> --format=json` lays a pattern out over lines under
+`x`, or compacts it to one line with `--compact`. `--json` is short for
+`--format=json`. With `--width=24`, a short date pattern breaks:
+
+```json
+{
+    "pattern": "/^(?<year>\\d{4})-(?<month>\\d{2})$/",
+    "formatted": "/\n    ^\n    (?<year>\\d{4})\n    -\n    (?<month>\\d{2})\n    $\n/x",
+    "changed": true,
+    "refusal": null
+}
+```
+
+A pattern that does not parse stops the command with the envelope, stage
+`pattern`, and exits with 1. A `--width` that is not a whole number of 1 or
+more is a usage error, stage `usage`, exit code 2. A pattern the formatter
+writes back as a different pattern is a bug: the command never prints that
+output, and stops with the envelope, stage `internal`, exit code 1, its
+message naming the error code `regex.formatting.unsafe`.
+
+### Format: `format`
+
+| key | type | meaning |
+|---|---|---|
+| `pattern` | string | The pattern given, delimiters and flags included |
+| `formatted` | string | The pattern laid out or compacted; the pattern given, as it was written, when it already fits or was refused |
+| `changed` | bool | Whether `formatted` differs from `pattern` |
+| `refusal` | string \| null | Why the pattern was given back as it was written: `newline_convention`, `spaced_quantifier` or `extended_mode_switched_off`; an open set. `null` when it was not refused |
 
 ## Shared Objects
 

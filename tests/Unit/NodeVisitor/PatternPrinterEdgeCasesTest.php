@@ -82,7 +82,7 @@ final class PatternPrinterEdgeCasesTest extends TestCase
         $this->assertSame('/(?#...)/x', $regex->accept($visitor));
     }
 
-    public function test_pretty_inline_comment_multiline_formats_lines(): void
+    public function test_pretty_inline_comment_multiline_stays_a_comment_group(): void
     {
         $visitor = new PatternPrinter(true);
         $comment = new CommentNode("line1\nline2\n", 0, 0);
@@ -90,23 +90,24 @@ final class PatternPrinterEdgeCasesTest extends TestCase
 
         $compiled = $regex->accept($visitor);
 
-        $this->assertStringContainsString('# line1', $compiled);
-        $this->assertStringContainsString('# line2', $compiled);
+        $this->assertStringContainsString('(?#line1', $compiled);
+        $this->assertStringContainsString("line2\n)", $compiled);
     }
 
-    public function test_pretty_inline_comment_hash_is_indented(): void
+    public function test_pretty_inline_comment_starting_with_a_hash_stays_a_comment_group(): void
     {
         $visitor = new PatternPrinter(true);
         $comment = new CommentNode('# note', 0, 0);
         $regex = new RegexNode($comment, 'x', '/', 0, 0);
 
-        $this->assertSame('/# note/x', $regex->accept($visitor));
+        $this->assertSame('/(?## note)/x', $regex->accept($visitor));
     }
 
     public function test_pretty_define_block_includes_newlines(): void
     {
+        // A block only breaks under x, past the width.
         $visitor = new PatternPrinter(true);
-        $define = new DefineNode(new LiteralNode('a', 0, 0), 0, 0);
+        $define = new RegexNode(new DefineNode(new LiteralNode(str_repeat('a', 80), 0, 0), 0, 0), 'x', '/', 0, 0);
 
         $compiled = $define->accept($visitor);
 

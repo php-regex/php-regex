@@ -492,6 +492,47 @@ supported regular subset. Unsupported patterns fall back to the original behavio
 
 ---
 
+### format(string $regex, int $width = 80): FormatResult
+
+Lays the pattern out over lines under `x` when it does not fit the width, keeping its comments and its spelling.
+A pattern that fits comes back byte for byte. A width below 1 throws `InvalidRegexOptionException`.
+
+```php
+use PHPRegex\Toolkit\Regex;
+
+$result = Regex::create()->format('/^(?<user>[\w.+-]+)@(?<domain>(?:[a-z0-9-]+\.)+[a-z]{2,})$/i', 40);
+
+echo $result->pattern;
+// /
+//     ^
+//     (?<user>[\w.+-]+)
+//     @
+//     (?<domain>
+//         (?:[a-z0-9-]+\.)+
+//         [a-z]{2,}
+//     )
+//     $
+// /ix
+```
+
+The formatter parses its own output before returning it; if the tree differs from the input's, it throws
+`FormattingException` (code `regex.formatting.unsafe`) instead of returning a different pattern. See
+[Formatting patterns](../guides/formatting.md) for the layout rules and the refusals.
+
+---
+
+### compact(string $regex): FormatResult
+
+Writes the pattern on one line: no `x`, no layout, no comments. Where removing them would fuse two tokens, an
+empty `(?:)` separates them.
+
+```php
+echo Regex::create()->compact("/\n    (?<year>\d{4})   # year\n    -\n    (?<month>\d{2})  # month\n/x")->pattern;
+// /(?<year>\d{4})-(?<month>\d{2})/
+```
+
+---
+
 ### transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
 
 Transpiles a PCRE literal to another regex dialect: JavaScript, the HTML `pattern` attribute, or Python.
@@ -712,6 +753,18 @@ foreach ($result->changes as $change) {
 // Output:
 // - Optimized pattern.
 ```
+
+---
+
+### FormatResult
+
+Returned by `format()` and `compact()`.
+
+| property | type | meaning |
+|---|---|---|
+| `pattern` | `string` | the result; the input itself when nothing changed or the layout was refused |
+| `changed` | `bool` | whether `pattern` differs from the input |
+| `refusal` | `?FormatRefusal` | why `format()` left the pattern as it was: `NewlineConvention`, `SpacedQuantifier` or `ExtendedModeSwitchedOff`; `null` otherwise |
 
 ---
 

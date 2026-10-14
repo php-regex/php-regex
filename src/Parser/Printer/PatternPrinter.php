@@ -17,6 +17,7 @@ use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -67,6 +68,50 @@ final class PatternPrinter extends AbstractNodeVisitor
      * The flags a non-atomic lookaround carries: "(?*...)" and "(?<*...)".
      */
     private const NON_ATOMIC_FLAG = '*';
+
+    /**
+     * The pattern as the tree and its source spell it, on the lines it was
+     * written on: what the library prints everywhere else.
+     */
+    private const MODE_OFF = 'off';
+
+    /**
+     * Laid out over lines under x, in the author's spelling.
+     */
+    private const MODE_FORMAT = 'format';
+
+    /**
+     * On one line, without the global x, its layout or its comments.
+     */
+    private const MODE_COMPACT = 'compact';
+
+    /**
+     * Laid out like the formatter does, in the normalized spelling, and only
+     * under an x the pattern already has.
+     */
+    private const MODE_PRETTY = 'pretty';
+
+    private const PRETTY_WIDTH = 80;
+
+    private const INDENT = '    ';
+
+    /**
+     * Where a trailing comment starts on a line, until the comments of
+     * consecutive lines are aligned on one column.
+     */
+    private const TRAIL = "\x01TRAILING-COMMENT\x01";
+
+    /**
+     * Past this many indent levels the rest of a construct stays on one line:
+     * a deep nest laid out one group per line would grow past the length the
+     * parser reads back.
+     */
+    private const MAX_INDENT = 10;
+
+    /**
+     * A construct nesting more groups than this breaks, even when it fits.
+     */
+    private const MAX_DEPTH = 2;
 
     // Optimized meta-character sets for fast lookups
     private const META_CHARACTERS = [
@@ -130,9 +175,10 @@ final class PatternPrinter extends AbstractNodeVisitor
     private int $indentLevel;
 
     /**
-     * Whether the pattern is laid out over lines: in pretty mode, under x
-     * only, where newlines and indents are ignored. Without x the layout
-     * would change what the pattern matches.
+     * Whether the node being visited may break over lines: while the
+     * formatter or pretty printing lays a pattern out under x, where
+     * newlines and indents are ignored. Without x the layout would change
+     * what the pattern matches.
      */
     private bool $layout;
 
@@ -142,11 +188,49 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private int $capturesOpened = 0;
 
+    /**
+     * One of the MODE_* constants.
+     */
+    private string $mode;
+
+    /**
+     * The width a laid-out line aims at, indent included.
+     */
+    private int $width = self::PRETTY_WIDTH;
+
+    /**
+     * Whether widths count code points (u, or a leading (*UTF)) or bytes.
+     */
+    private bool $countsCodePoints = false;
+
+    /**
+     * Whether the last rendering wrote a "#" comment, which ends its line.
+     */
+    private bool $sawLineComment = false;
+
+    /**
+     * Why the last pattern formatted was left as written, if it was.
+     */
+    private ?FormatRefusal $refusal = null;
+
+    /**
+     * Whether the sequence about to be visited is the body of a construct
+     * that already broke: it breaks too, rather than trying one line again.
+     */
+    private bool $parentBroke = false;
+
+    /**
+     * A comment already written as the trailing comment of the line before,
+     * which its own place in the tree must not write again.
+     */
+    private ?NodeInterface $skipNode = null;
+
     public function __construct(
         /**
          * When true, escapes are normalized and, under x only, the pattern
-         * is laid out over lines; without x it is written on one line, as
-         * newlines and indents would change what it matches.
+         * is laid out over lines as the formatter lays it out, at a width
+         * of 80; without x it is written on one line, as newlines and
+         * indents would change what it matches.
          */
         private readonly bool $pretty = false,
         /**
@@ -163,7 +247,48 @@ final class PatternPrinter extends AbstractNodeVisitor
         private readonly bool $preserveSpelling = true
     ) {
         $this->indentLevel = 0;
-        $this->layout = $this->pretty;
+        $this->layout = false;
+        $this->mode = $this->pretty ? self::MODE_PRETTY : self::MODE_OFF;
+    }
+
+    /**
+     * A printer that lays a pattern out over lines under x, in its author's
+     * spelling, when it does not fit the width.
+     *
+     * @internal PatternFormatter lays patterns out through it
+     */
+    public static function forFormatting(int $width): self
+    {
+        $printer = new self();
+        $printer->mode = self::MODE_FORMAT;
+        $printer->width = $width;
+
+        return $printer;
+    }
+
+    /**
+     * A printer that writes a pattern on one line, without the global x, its
+     * layout or its comments.
+     *
+     * @internal PatternFormatter compacts patterns through it
+     */
+    public static function forCompacting(): self
+    {
+        $printer = new self();
+        $printer->mode = self::MODE_COMPACT;
+
+        return $printer;
+    }
+
+    /**
+     * Why the last pattern formatted was given back as written, or null when
+     * it was not refused.
+     *
+     * @internal PatternFormatter reports it
+     */
+    public function refusal(): ?FormatRefusal
+    {
+        return $this->refusal;
     }
 
     /**
@@ -181,18 +306,27 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->indentLevel = 0;
         $this->source = null;
         $this->quotedSpans = null;
+        $this->layout = false;
+        $this->countsCodePoints = false;
+        $this->sawLineComment = false;
+        $this->refusal = null;
+        $this->parentBroke = false;
+        $this->skipNode = null;
     }
 
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
+        if (self::MODE_OFF !== $this->mode) {
+            return $this->formatRegex($node);
+        }
+
         $this->capturesOpened = 0;
-        $this->layout = $this->pretty && str_contains($node->flags, 'x');
         $this->delimiter = $node->delimiter;
         $this->flags = $node->flags;
         $this->utfVerb = self::startsWithUtfVerb($node->pattern);
         $this->closingDelimiter = $this->getClosingDelimiter($node->delimiter);
-        $this->source = $this->pretty || $this->collapseExtendedComments || !$this->preserveSpelling
+        $this->source = $this->collapseExtendedComments || !$this->preserveSpelling
             ? null
             : $node->source;
         $this->quotedSpans = null;
@@ -226,15 +360,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         if ($this->layout) {
-            $result = $alternatives[0]->accept($this);
-            for ($i = 1, $count = \count($alternatives); $i < $count; $i++) {
-                $this->indentLevel++;
-                $alt = $alternatives[$i]->accept($this);
-                $this->indentLevel--;
-                $result .= "\n".str_repeat(' ', $this->indentLevel * 4).'| '.$alt;
-            }
-
-            return $result;
+            return $this->layoutAlternation($alternatives);
         }
 
         $separator = '|';
@@ -264,6 +390,10 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $this->compileCharClassMembers($children);
         }
 
+        if ($this->layout) {
+            return $this->layoutSequence($node);
+        }
+
         $result = $this->ignorableText($node->getStartPosition(), $children[0]->getStartPosition());
         $result .= $children[0]->accept($this);
 
@@ -285,41 +415,14 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $written;
         }
 
-        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-            $this->capturesOpened++;
+        $flags = $node->flags ?? '';
+
+        if ($this->layout && !self::isEmpty($node->child)) {
+            return $this->layoutGroup($node, $flags);
         }
 
-        $flags = $node->flags ?? '';
-        $name = $node->name ?? '';
-
-        if ($this->layout) {
-            $opening = match ($node->type) {
-                GroupType::Capturing => '(',
-                GroupType::NonCapturing => '(?:',
-                GroupType::Named => $node->usePythonSyntax
-                    ? '(?P<'.$name.'>'
-                    : '(?<'.$name.'>',
-                GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
-                GroupType::LookaheadNegative => '(?!',
-                GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
-                GroupType::LookbehindNegative => '(?<!',
-                GroupType::Atomic => '(?>',
-                GroupType::BranchReset => '(?|',
-                GroupType::InlineFlags => '(?'.$flags.':',
-                GroupType::ScanSubstring => $this->scanSubstringOpening($node),
-            };
-            $closing = ')';
-            $this->indentLevel++;
-            $child = $this->compileGroupChild($node, $flags);
-            $this->indentLevel--;
-            $indent = str_repeat(' ', $this->indentLevel * 4);
-
-            // "(?i)" covers what follows it, not a group of its own.
-            if ($this->isUnscopedSetting($node, $flags, $child)) {
-                return $indent.'(?'.$flags.')';
-            }
-
-            return $indent.$opening."\n".$child."\n".$indent.$closing;
+        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
+            $this->capturesOpened++;
         }
 
         $child = $this->compileGroupChild($node, $flags);
@@ -328,23 +431,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return '(?'.$flags.')';
         }
 
-        $opening = match ($node->type) {
-            GroupType::Capturing => '(',
-            GroupType::NonCapturing => '(?:',
-            GroupType::Named => $node->usePythonSyntax
-                ? '(?P<'.$name.'>'
-                : '(?<'.$name.'>',
-            GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
-            GroupType::LookaheadNegative => '(?!',
-            GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
-            GroupType::LookbehindNegative => '(?<!',
-            GroupType::Atomic => '(?>',
-            GroupType::BranchReset => '(?|',
-            GroupType::InlineFlags => '(?'.$flags.':',
-            GroupType::ScanSubstring => $this->scanSubstringOpening($node),
-        };
-
-        $opening = $this->openingAsWritten($node, $opening);
+        $opening = $this->openingAsWritten($node, $this->groupOpening($node, $flags));
 
         // Whitespace hugging the parentheses belongs to no node, so it is read
         // back from the source like any other /x filler.
@@ -558,6 +645,12 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitControlChar(ControlCharNode $node): string
     {
+        // "\c " is control-space under x too, and a line ending in it would
+        // end in a space an editor strips: it is spelled as its code point.
+        if ($this->laysOut() && !$this->inCharClass && str_contains($this->flags, 'x') && 1 === LibraryPcre::match('/[\s#]/', $node->char)) {
+            return \sprintf('\\x%02X', $node->codePoint);
+        }
+
         return '\\c'.$node->char;
     }
 
@@ -622,6 +715,18 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitComment(CommentNode $node): string
     {
+        if (self::MODE_COMPACT === $this->mode || $node === $this->skipNode) {
+            return '';
+        }
+
+        // A "#" comment ends its line: a laid-out line writes it without the
+        // line break, which the layout puts back.
+        if ($this->laysOut() && $node->extended) {
+            $this->sawLineComment = true;
+
+            return $this->layout ? rtrim($node->comment, "\n") : $node->comment;
+        }
+
         // A comment written as "# ..." is extended-mode whatever the pattern
         // flags say: /x can also be turned on inline with "(?x)".
         $isExtended = $node->extended || str_contains($this->flags, 'x');
@@ -634,47 +739,12 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         // Extended (/x) mode line comments (starting with '#') should be
-        // preserved as real /x comments, not rewritten into (?#...) blocks.
-        // We still indent them when pretty-printing so they line up with
-        // surrounding constructs, but we keep the original "# ..." text and
-        // trailing newline intact.
+        // preserved as real /x comments, not rewritten into (?#...) blocks,
+        // with their trailing newline.
         // An inline "(?##c)" keeps its parentheses: printed as "#c" it would
         // run to the end of the line and swallow what follows.
         if ($isExtended && $node->extended) {
-            if ($this->layout) {
-                $indent = str_repeat(' ', $this->indentLevel * 4);
-                $lines = explode("\n", rtrim($node->comment, "\n"));
-                $formatted = [];
-                foreach ($lines as $line) {
-                    $formatted[] = $indent.$line;
-                }
-
-                return implode("\n", $formatted)."\n";
-            }
-
             return $node->comment;
-        }
-
-        // Multi-line inline comments from (?# ... ) are rendered as a block of
-        // "# "-prefixed lines for readability when pretty-printing. This is
-        // only used outside of extended mode so we don't change semantics.
-        if ($this->layout && str_contains($node->comment, "\n")) {
-            $indent = str_repeat(' ', $this->indentLevel * 4);
-            $lines = explode("\n", rtrim($node->comment, "\n"));
-            $formatted = [];
-            foreach ($lines as $line) {
-                $formatted[] = $indent.'# '.$line;
-            }
-
-            return implode("\n", $formatted)."\n";
-        }
-
-        // Single-line inline comments that already start with '#' can be
-        // indented in pretty mode for nicer alignment.
-        if ($this->layout && str_starts_with($node->comment, '#')) {
-            $indent = str_repeat(' ', $this->indentLevel * 4);
-
-            return $indent.$node->comment;
         }
 
         // Inline comments (?#...) keep their original content without the
@@ -685,32 +755,13 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node): string
     {
-        if ($node->condition instanceof BackrefNode) {
-            $cond = $node->condition->ref;
-        } elseif ($node->condition instanceof SubroutineNode) {
-            // "(?(R)...)" asks whether the pattern is recursing; it is not a
-            // call, so the reference is written on its own. Compiling it as
-            // "(?((?R))...)" gives a pattern PCRE refuses.
-            $cond = $node->condition->reference;
-        } else {
-            $cond = $node->condition->accept($this);
+        if ($this->layout) {
+            return $this->layoutConditional($node);
         }
 
+        $condition = $this->conditionText($node);
         $yes = $node->yes->accept($this);
         $no = $node->no->accept($this);
-
-        // An assertion condition brings its own parentheses: PCRE spells it
-        // "(?(?<!x)yes|no)", not "(?((?<!x))yes|no)".
-        $condition = $this->isAssertionCondition($node->condition) ? $cond : '('.$cond.')';
-
-        if ($this->layout) {
-            $indent = str_repeat(' ', $this->indentLevel * 4);
-            if ('' === $no) {
-                return $indent.'(?'.$condition."\n".$yes."\n".$indent.')';
-            }
-
-            return $indent.'(?'.$condition."\n".$yes."\n".$indent.'|'.$no."\n".$indent.')';
-        }
 
         if ('' === $no) {
             return '(?'.$condition.$yes.')';
@@ -723,6 +774,15 @@ final class PatternPrinter extends AbstractNodeVisitor
     public function visitSubroutine(SubroutineNode $node): string
     {
         $returned = [] === $node->returnedGroups ? '' : '('.implode(',', $node->returnedGroups).')';
+
+        // "\g'n'" is "\g<n>" written with quotes; the formatter keeps them.
+        if ('g' === $node->syntax && self::MODE_OFF !== $this->mode) {
+            $written = $this->writtenText($node);
+            $quoted = preg_quote($node->reference, '/');
+            if (null !== $written && 1 === LibraryPcre::match('/^\\\\g(?:<'.$quoted.'>|\''.$quoted.'\')$/', $written)) {
+                return $written;
+            }
+        }
 
         return match ($node->syntax) {
             '&' => '(?&'.$node->reference.$returned.')',
@@ -751,12 +811,19 @@ final class PatternPrinter extends AbstractNodeVisitor
     public function visitDefine(DefineNode $node): string
     {
         if ($this->layout) {
-            $this->indentLevel++;
-            $content = $node->content->accept($this);
-            $this->indentLevel--;
-            $indent = str_repeat(' ', $this->indentLevel * 4);
+            $inline = $this->tryInline($node);
+            if (null !== $inline) {
+                return $inline;
+            }
 
-            return $indent."(?(DEFINE)\n".$content."\n".$indent.')';
+            $level = $this->indentLevel;
+            $this->indentLevel++;
+            $this->parentBroke = true;
+            $content = $node->content->accept($this);
+            $this->parentBroke = false;
+            $this->indentLevel--;
+
+            return '(?(DEFINE)'.$this->bodyLine($content, $level + 1).$content."\n".self::indent($level).')';
         }
 
         return '(?(DEFINE)'.$node->content->accept($this).')';
@@ -858,6 +925,57 @@ final class PatternPrinter extends AbstractNodeVisitor
         return '(*'.($node->name ?? 'scan_substring').':('.implode(',', $node->scannedGroups).')';
     }
 
+    /**
+     * The text that opens a group, as the tree spells it.
+     */
+    private function groupOpening(GroupNode $node, string $flags): string
+    {
+        $name = $node->name ?? '';
+
+        return match ($node->type) {
+            GroupType::Capturing => '(',
+            GroupType::NonCapturing => '(?:',
+            GroupType::Named => $node->usePythonSyntax
+                ? '(?P<'.$name.'>'
+                : '(?<'.$name.'>',
+            GroupType::LookaheadPositive => self::NON_ATOMIC_FLAG === $flags ? '(?*' : '(?=',
+            GroupType::LookaheadNegative => '(?!',
+            GroupType::LookbehindPositive => self::NON_ATOMIC_FLAG === $flags ? '(?<*' : '(?<=',
+            GroupType::LookbehindNegative => '(?<!',
+            GroupType::Atomic => '(?>',
+            GroupType::BranchReset => '(?|',
+            GroupType::InlineFlags => '(?'.$flags.':',
+            GroupType::ScanSubstring => $this->scanSubstringOpening($node),
+        };
+    }
+
+    /**
+     * The condition of a conditional with its parentheses, "(1)" or
+     * "(?=a)". The formatter keeps "(<n>)" and "('n')" as written.
+     */
+    private function conditionText(ConditionalNode $node): string
+    {
+        $condition = $node->condition;
+        if ($condition instanceof BackrefNode) {
+            $text = $condition->ref;
+            $written = self::MODE_OFF === $this->mode ? null : $this->writtenText($condition);
+            if ('<'.$text.'>' === $written || "'".$text."'" === $written) {
+                $text = $written;
+            }
+        } elseif ($condition instanceof SubroutineNode) {
+            // "(?(R)...)" asks whether the pattern is recursing; it is not a
+            // call, so the reference is written on its own. Compiling it as
+            // "(?((?R))...)" gives a pattern PCRE refuses.
+            $text = $condition->reference;
+        } else {
+            $text = $condition->accept($this);
+        }
+
+        // An assertion condition brings its own parentheses: PCRE spells it
+        // "(?(?<!x)yes|no)", not "(?((?<!x))yes|no)".
+        return $this->isAssertionCondition($condition) ? $text : '('.$text.')';
+    }
+
     private function openingAsWritten(GroupNode $node, string $opening): string
     {
         // Under "n", "(...)" does not capture: it is read as "(?:...)" and
@@ -881,6 +999,12 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         $written = substr($this->source, $start, $length);
         $quoted = preg_quote($node->name, '/');
+
+        // A rewritten pattern lays out anew the whitespace x skipped after
+        // the name, so only the opening itself is taken back.
+        if (self::MODE_OFF !== $this->mode) {
+            return 1 === LibraryPcre::match('/^\(\?P?(?:<'.$quoted.'>|\''.$quoted.'\'|"'.$quoted.'")/', $written, $matches) ? $matches[0] : $opening;
+        }
 
         // Only a spelling of this very name is taken back; anything else means
         // the offsets no longer line up with the source.
@@ -952,7 +1076,41 @@ final class PatternPrinter extends AbstractNodeVisitor
             }
         }
 
-        return substr($this->source, $start, $length);
+        $written = substr($this->source, $start, $length);
+
+        return self::MODE_OFF === $this->mode || !$this->isSkippedByX($written) ? $written : null;
+    }
+
+    /**
+     * Whether written text holds what x would skip or read as a comment
+     * where the formatter writes it: such text is spelled from the tree
+     * instead, with escapes. In a laid-out pattern every line break is
+     * layout, so a raw one written in a class or a quoted run is spelled as
+     * an escape too.
+     */
+    private function isSkippedByX(string $written): bool
+    {
+        if (!str_contains($this->flags, 'x')) {
+            return false;
+        }
+
+        if (self::MODE_FORMAT === $this->mode && false !== strpbrk($written, "\n\r\t\v\f")) {
+            return true;
+        }
+
+        if ($this->inCharClass || $this->inExtendedClass) {
+            return false;
+        }
+
+        if (1 === LibraryPcre::match('/[\s#]/', $written)) {
+            return true;
+        }
+
+        // Under UTF, x also skips NEL, LRM, RLM, LS and PS; in byte mode it
+        // skips byte 0x85 too, even inside a UTF-8 sequence such as "Å".
+        return $this->utfVerb || str_contains($this->flags, 'u')
+            ? 1 === LibraryPcre::match('/[\x{85}\x{200E}\x{200F}\x{2028}\x{2029}]/u', $written)
+            : str_contains($written, "\x85");
     }
 
     /**
@@ -1076,7 +1234,8 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function ignorableTextAroundSeparator(NodeInterface $left, NodeInterface $right): array
     {
-        if (null === $this->source) {
+        // A rewritten pattern lays its whitespace out anew.
+        if (null === $this->source || self::MODE_OFF !== $this->mode) {
             return ['', ''];
         }
 
@@ -1107,14 +1266,28 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $compiled.$between.$next;
         }
 
+        // Under x a rewritten pattern separates the two with a space, which
+        // reads as nothing: "\1 0" is the reference, then "0".
         if (self::takesMoreDigits($compiled, $next[0])) {
             $between = $this->writtenSeparator($left->getEndPosition(), $right->getStartPosition())
-                ?? ($this->inCharClass ? '\\E' : '(?:)');
+                ?? ($this->inCharClass ? '\\E' : (self::MODE_OFF !== $this->mode && str_contains($this->flags, 'x') ? ' ' : '(?:)'));
         } elseif ($this->opensConstruct($compiled, $next[0])) {
-            $between = $this->writtenSeparator($left->getEndPosition(), $right->getStartPosition()) ?? '';
+            $between = $this->writtenSeparator($left->getEndPosition(), $right->getStartPosition())
+                ?? ($this->separatesDroppedText($left, $right) ? '(?:)' : '');
         }
 
         return $compiled.$between.$next;
+    }
+
+    /**
+     * Whether a rewritten pattern dropped something between two items, a
+     * comment or the whitespace x skipped: "a{(?#c),2}" without its comment
+     * would read "{,2}" as a repeat, which PCRE2 does from 10.43 on.
+     */
+    private function separatesDroppedText(NodeInterface $left, NodeInterface $right): bool
+    {
+        return self::MODE_OFF !== $this->mode && !$this->inCharClass
+            && ($right->getStartPosition() > $left->getEndPosition() || $left instanceof CommentNode);
     }
 
     /**
@@ -1167,6 +1340,12 @@ final class PatternPrinter extends AbstractNodeVisitor
             return null;
         }
 
+        // A rewritten pattern keeps the "\E" alone: the whitespace around it
+        // is a literal once x is dropped, and layout where x is kept.
+        if (self::MODE_OFF !== $this->mode) {
+            $text = strtr($text, [' ' => '', "\t" => '', "\n" => '', "\r" => '', "\v" => '', "\f" => '']);
+        }
+
         return str_contains($text, '\\') ? $text : null;
     }
 
@@ -1186,7 +1365,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function ignorableText(int $start, ?int $end): string
     {
-        if (null === $this->source) {
+        if (null === $this->source || self::MODE_OFF !== $this->mode) {
             return '';
         }
 
@@ -1248,6 +1427,11 @@ final class PatternPrinter extends AbstractNodeVisitor
 
     private function normalizeQuantifier(string $quantifier): string
     {
+        // The formatter keeps the quantifier as its author wrote it.
+        if (self::MODE_FORMAT === $this->mode || self::MODE_COMPACT === $this->mode) {
+            return $quantifier;
+        }
+
         return LibraryPcre::replace('/\\s+/', '', $quantifier) ?? $quantifier;
     }
 
@@ -1385,5 +1569,687 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return \in_array($next->value, [':', '.', '='], true);
+    }
+
+    /**
+     * Format, compact or pretty-print a whole pattern.
+     *
+     * A pattern that fits the width and nests at most two groups stays on
+     * one line: as written when the formatter has its source, otherwise
+     * written from the tree. Anything else is laid out under x, unless a
+     * line break would change what it matches; the formatter then gives it
+     * back as written with the reason, pretty printing writes it on one
+     * line.
+     */
+    private function formatRegex(RegexNode $node): string
+    {
+        $this->refusal = null;
+        $this->skipNode = null;
+        $this->delimiter = $node->delimiter;
+        $this->closingDelimiter = $this->getClosingDelimiter($node->delimiter);
+        // Pretty printing normalizes the spelling: it writes from the tree.
+        $this->source = self::MODE_PRETTY === $this->mode ? null : $node->source;
+        $this->quotedSpans = null;
+        $options = self::startOptions($node->pattern);
+        $this->utfVerb = \in_array('UTF', $options, true) || \in_array('UTF8', $options, true);
+        $this->countsCodePoints = $this->utfVerb || str_contains($node->flags, 'u');
+
+        if (self::MODE_COMPACT === $this->mode) {
+            return $this->renderRoot($node, str_replace('x', '', $node->flags), false);
+        }
+
+        $shallow = self::groupDepth($node->pattern) <= self::MAX_DEPTH;
+        $written = null === $this->source ? null : $node->delimiter.$this->source.$this->closingDelimiter.$node->flags;
+        if (null !== $written && !str_contains($written, "\n") && $shallow && $this->columns($written) <= $this->width) {
+            return $written;
+        }
+
+        $inline = $this->renderRoot($node, $node->flags, false);
+        $hasLineComment = $this->sawLineComment;
+        if (!$hasLineComment && $shallow && $this->columns($inline) <= $this->width) {
+            return $inline;
+        }
+
+        // Nothing past the start options: no line would hold anything.
+        $bare = substr($inline, \strlen($node->delimiter), -\strlen($this->closingDelimiter.$node->flags));
+        if ($bare === StartOptions::of($bare)) {
+            return $written ?? $inline;
+        }
+
+        // Pretty printing never adds x: without it, a line break is a literal.
+        if (self::MODE_PRETTY === $this->mode && !str_contains($node->flags, 'x')) {
+            return $inline;
+        }
+
+        $flags = str_contains($node->flags, 'x') ? $node->flags : $node->flags.'x';
+        $refusal = self::refusalFor($node, $flags, $hasLineComment, $options);
+        if (null !== $refusal) {
+            if (self::MODE_PRETTY === $this->mode) {
+                return $inline;
+            }
+
+            $this->refusal = $refusal;
+
+            return $written ?? $inline;
+        }
+
+        return $this->finishLines($this->renderRoot($node, $flags, true));
+    }
+
+    /**
+     * Why laying the pattern out under x would change what it matches, if
+     * it would.
+     *
+     * A "#" comment runs on past LF under (*CR), (*CRLF) and (*NUL). Before
+     * PCRE2 10.43 "a{ 1,2 }" is a literal that an added x would turn into a
+     * quantifier. After a top-level "(?-x)" or "(?^)" a line break is a
+     * literal.
+     *
+     * @param list<string> $options the start-of-pattern options
+     */
+    private static function refusalFor(RegexNode $node, string $flags, bool $hasLineComment, array $options): ?FormatRefusal
+    {
+        $newline = 'LF';
+        foreach ($options as $option) {
+            if (\in_array($option, ['CR', 'LF', 'CRLF', 'ANYCRLF', 'ANY', 'NUL'], true)) {
+                $newline = $option;
+            }
+        }
+
+        return match (true) {
+            !str_contains($node->flags, 'x') && self::hasSpacedQuantifier($node->pattern) => FormatRefusal::SpacedQuantifier,
+            $hasLineComment && \in_array($newline, ['CR', 'CRLF', 'NUL'], true) => FormatRefusal::NewlineConvention,
+            self::switchesExtendedOffAtTop($node->pattern, $flags) => FormatRefusal::ExtendedModeSwitchedOff,
+            default => null,
+        };
+    }
+
+    /**
+     * The verbs a pattern opens with, "(*UTF)" or "(*CR)", as their names;
+     * under a top-level alternation they open its first branch.
+     *
+     * @return list<string>
+     */
+    private static function startOptions(NodeInterface $pattern): array
+    {
+        while ($pattern instanceof AlternationNode && [] !== $pattern->alternatives) {
+            $pattern = array_values($pattern->alternatives)[0];
+        }
+
+        $options = [];
+        foreach ($pattern instanceof SequenceNode ? $pattern->children : [$pattern] as $node) {
+            if ($node instanceof LimitMatchNode) {
+                continue;
+            }
+
+            if (!$node instanceof PcreVerbNode) {
+                break;
+            }
+
+            $options[] = $node->verb;
+        }
+
+        return $options;
+    }
+
+    private static function switchesExtendedOffAtTop(NodeInterface $node, string $flags): bool
+    {
+        foreach ($node instanceof AlternationNode ? $node->alternatives : [$node] as $branch) {
+            foreach ($branch instanceof SequenceNode ? $branch->children : [$branch] as $item) {
+                if ($item instanceof GroupNode && GroupType::InlineFlags === $item->type && self::isEmpty($item->child)
+                    && !str_contains(self::applyInlineFlags($flags, $item->flags ?? ''), 'x')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static function applyInlineFlags(string $current, string $inline): string
+    {
+        $flags = InlineFlags::read(InlineFlags::withoutAsciiOptions($inline), InlineFlags::LETTERS.'r');
+
+        return $flags?->applyTo($current) ?? $current;
+    }
+
+    private static function hasSpacedQuantifier(NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode && 1 === LibraryPcre::match('/\s/', $node->quantifier)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::hasSpacedQuantifier($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * How many groups the deepest path through a node nests. Lookarounds,
+     * conditionals, "(?|", atomic groups and DEFINE count; a setting such as
+     * "(?i)" and a class do not.
+     */
+    private static function groupDepth(NodeInterface $node): int
+    {
+        if ($node instanceof CharClassNode || $node instanceof ExtendedCharClassNode) {
+            return 0;
+        }
+
+        $own = ($node instanceof GroupNode && !(GroupType::InlineFlags === $node->type && self::isEmpty($node->child)))
+            || $node instanceof ConditionalNode || $node instanceof DefineNode ? 1 : 0;
+
+        $deepest = 0;
+        foreach ($node->getChildren() as $child) {
+            $deepest = max($deepest, self::groupDepth($child));
+        }
+
+        return $own + $deepest;
+    }
+
+    /**
+     * Render the whole pattern, on one line or laid out from the first
+     * indent level on.
+     */
+    private function renderRoot(RegexNode $node, string $flags, bool $layout): string
+    {
+        $this->capturesOpened = 0;
+        $this->flags = $flags;
+        $this->sawLineComment = false;
+        $this->layout = $layout;
+        $this->indentLevel = $layout ? 1 : 0;
+        $this->parentBroke = $layout;
+
+        try {
+            $body = $node->pattern->accept($this);
+        } finally {
+            $this->layout = false;
+            $this->parentBroke = false;
+        }
+
+        $tail = '';
+        if ($layout) {
+            // PCRE reads start-of-pattern options at offset 0 only: they stay
+            // on the line of the opening delimiter.
+            $options = StartOptions::of($body);
+            if ('' !== $options) {
+                $rest = substr($body, \strlen($options));
+                $body = $options."\n".self::INDENT.(str_starts_with($rest, "\n".self::INDENT) ? substr($rest, 1 + \strlen(self::INDENT)) : $rest);
+            } elseif (!str_starts_with($body, "\n")) {
+                $body = "\n".self::INDENT.$body;
+            }
+
+            $tail = str_contains($this->flags, 'x') ? "\n" : '';
+        }
+
+        $body = $node->delimiter.$body;
+        if (1 === (\strlen($body) - \strlen(rtrim($body, '\\'))) % 2) {
+            $body .= '\\E';
+        }
+
+        return $body.$tail.$this->closingDelimiter.$flags;
+    }
+
+    /**
+     * A node on one line, when it fits from the current indent, holds no
+     * "#" comment and nests at most two groups; past the indent cap, on one
+     * line whatever its width. Null when it has to break.
+     */
+    private function tryInline(NodeInterface $node): ?string
+    {
+        [$captures, $flags, $sawLineComment] = [$this->capturesOpened, $this->flags, $this->sawLineComment];
+        $this->sawLineComment = false;
+        $text = $this->forceInline($node);
+
+        if (!$this->sawLineComment && (self::MAX_INDENT <= $this->indentLevel
+            || (!str_contains($text, "\n") && $this->fits($text) && self::groupDepth($node) <= self::MAX_DEPTH))) {
+            $this->sawLineComment = $sawLineComment;
+
+            return $text;
+        }
+
+        [$this->capturesOpened, $this->flags, $this->sawLineComment] = [$captures, $flags, $sawLineComment];
+
+        return null;
+    }
+
+    /**
+     * Whether a line holding $text fits the width from the current indent.
+     * An escaped space ending it counts as "\x20", the spelling it takes at
+     * the end of a line.
+     */
+    private function fits(string $text): bool
+    {
+        $endsInEscapedSpace = 1 === LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\ \z/', $text);
+
+        return \strlen(self::INDENT) * $this->indentLevel + $this->columns($text) + ($endsInEscapedSpace ? 2 : 0) <= $this->width;
+    }
+
+    /**
+     * A node on one line, whatever its width.
+     *
+     * @phpstan-impure
+     */
+    private function forceInline(NodeInterface $node): string
+    {
+        $this->layout = false;
+
+        try {
+            return $node->accept($this);
+        } finally {
+            $this->layout = true;
+        }
+    }
+
+    /**
+     * Items on one line, one after the other.
+     *
+     * @param non-empty-list<NodeInterface> $items
+     *
+     * @phpstan-impure
+     */
+    private function inlineRun(array $items): string
+    {
+        $this->layout = false;
+
+        try {
+            $text = $items[0]->accept($this);
+            for ($i = 1, $count = \count($items); $i < $count; $i++) {
+                $text = $this->joinItems($text, $items[$i - 1], $items[$i], $items[$i]->accept($this));
+            }
+
+            return $text;
+        } finally {
+            $this->layout = true;
+        }
+    }
+
+    /**
+     * Whether a node takes lines of its own once its parent breaks: a group
+     * with a body, a conditional, DEFINE, quantified or not.
+     */
+    private static function isBlock(NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode) {
+            return self::isBlock($node->node);
+        }
+
+        if ($node instanceof GroupNode) {
+            return !self::isEmpty($node->child);
+        }
+
+        return $node instanceof ConditionalNode || $node instanceof DefineNode;
+    }
+
+    /**
+     * @param array<NodeInterface> $alternatives
+     */
+    private function layoutAlternation(array $alternatives): string
+    {
+        $alternatives = array_values($alternatives);
+        $this->parentBroke = false;
+        // "| " hangs in the indent, so every branch starts in one column.
+        $bar = str_repeat(' ', max(0, $this->indentLevel * \strlen(self::INDENT) - 2)).'|';
+        $result = $alternatives[0]->accept($this);
+
+        for ($i = 1, $count = \count($alternatives); $i < $count; $i++) {
+            // Once x is off, the rest of the group stays on its line.
+            if (!str_contains($this->flags, 'x')) {
+                $result .= '|'.$alternatives[$i]->accept($this);
+
+                continue;
+            }
+
+            $previous = $alternatives[$i - 1];
+            $separator = "\n".$bar;
+
+            // A comment written after "|" trails the branch before it.
+            $lead = $this->leadingSameLineComment($alternatives[$i], $previous->getEndPosition());
+            $previousLast = $previous instanceof SequenceNode ? ($previous->children[\count($previous->children) - 1] ?? null) : $previous;
+            if (null !== $lead && !$previousLast instanceof CommentNode && !str_ends_with(rtrim($result), "\n")
+                && !str_contains(substr($result, (int) strrpos($result, "\n")), self::TRAIL)) {
+                $this->skipNode = $lead;
+                $result .= self::TRAIL.rtrim($lead->comment, "\n");
+            }
+
+            $first = $alternatives[$i] instanceof SequenceNode ? ($alternatives[$i]->children[0] ?? null) : $alternatives[$i];
+            if (substr_count($this->gap($previous, $alternatives[$i]), "\n") >= 2 && $first !== $this->skipNode) {
+                $separator = "\n".$separator;
+            }
+
+            $alternative = $alternatives[$i]->accept($this);
+            $this->skipNode = null;
+            $result .= $separator.('' === $alternative ? '' : ' '.$alternative);
+        }
+
+        return $result;
+    }
+
+    /**
+     * A broken sequence: runs of atoms together on a line, each group on
+     * lines of its own, each "#" comment where its author put it.
+     */
+    private function layoutSequence(SequenceNode $node): string
+    {
+        $broke = $this->parentBroke;
+        $this->parentBroke = false;
+        if (!$broke) {
+            $inline = $this->tryInline($node) ?? $this->inlineWithTrailingComment($node);
+            if (null !== $inline) {
+                return $inline;
+            }
+        }
+
+        $lines = [];
+        $current = '';
+        $previous = null;
+        $glued = false;
+        foreach ($node->children as $child) {
+            if ($child === $this->skipNode) {
+                $this->skipNode = null;
+                $previous = $child;
+
+                continue;
+            }
+
+            // Once x is off, nothing may be split any more.
+            if ($glued || !str_contains($this->flags, 'x')) {
+                $glued = true;
+                $text = $this->forceInline($child);
+                $current = '' === $current || null === $previous ? $text : $this->joinItems($current, $previous, $child, $text);
+                $previous = $child;
+
+                continue;
+            }
+
+            $gap = null === $previous ? '' : $this->gap($previous, $child);
+            $blank = null !== $previous && substr_count($gap, "\n") + ($previous instanceof CommentNode && str_ends_with($previous->comment, "\n") ? 1 : 0) >= 2;
+
+            if ($child instanceof CommentNode && $child->extended) {
+                $text = $child->accept($this);
+                $trailing = null !== $previous && !$previous instanceof CommentNode && !str_contains($gap, "\n");
+                if ('' !== $current) {
+                    $lines[] = $current;
+                    $current = '';
+                }
+
+                if ($blank && [] !== $lines) {
+                    $lines[] = '';
+                }
+
+                if ($trailing && [] !== $lines && '' !== $lines[\count($lines) - 1]) {
+                    $lines[\count($lines) - 1] .= self::TRAIL.$text;
+                } else {
+                    $lines[] = $text;
+                }
+
+                $previous = $child;
+
+                continue;
+            }
+
+            $isBlock = self::isBlock($child);
+            if ($isBlock || $blank || ($previous instanceof CommentNode && '' === $current)) {
+                if ('' !== $current) {
+                    $lines[] = $current;
+                    $current = '';
+                }
+
+                if ($blank && [] !== $lines) {
+                    $lines[] = '';
+                }
+
+                if ($isBlock) {
+                    $lines[] = $child->accept($this);
+                    $previous = $child;
+
+                    continue;
+                }
+            }
+
+            $text = $this->forceInline($child);
+            $current = '' === $current || null === $previous ? $text : $this->joinItems($current, $previous, $child, $text);
+            $previous = $child;
+        }
+
+        if ('' !== $current) {
+            $lines[] = $current;
+        }
+
+        $indent = self::indent($this->indentLevel);
+        $out = '';
+        foreach ($lines as $i => $line) {
+            $out .= 0 === $i ? $line : ('' === $line ? "\n" : "\n".$indent.$line);
+        }
+
+        return $out;
+    }
+
+    /**
+     * A sequence whose only comment closes it, on the line of what precedes
+     * it: the rest stays on one line when it fits, the comment trailing it.
+     */
+    private function inlineWithTrailingComment(SequenceNode $node): ?string
+    {
+        $children = array_values($node->children);
+        $last = $children[\count($children) - 1] ?? null;
+        if (!$last instanceof CommentNode || !$last->extended || \count($children) < 2 || $last === $this->skipNode) {
+            return null;
+        }
+
+        $rest = array_values(array_filter(\array_slice($children, 0, -1), fn (NodeInterface $child): bool => $child !== $this->skipNode));
+        if ([] === $rest || str_contains($this->gap($rest[\count($rest) - 1], $last), "\n")) {
+            return null;
+        }
+
+        $deepest = 0;
+        foreach ($rest as $child) {
+            if ($child instanceof CommentNode) {
+                return null;
+            }
+
+            $deepest = max($deepest, self::groupDepth($child));
+        }
+
+        [$captures, $flags, $sawLineComment] = [$this->capturesOpened, $this->flags, $this->sawLineComment];
+        $this->sawLineComment = false;
+        $text = $this->inlineRun($rest);
+
+        if (!$this->sawLineComment && !str_contains($text, "\n") && $this->fits($text) && $deepest <= self::MAX_DEPTH) {
+            $this->sawLineComment = true;
+
+            return $text.self::TRAIL.rtrim($last->comment, "\n");
+        }
+
+        [$this->capturesOpened, $this->flags, $this->sawLineComment] = [$captures, $flags, $sawLineComment];
+
+        return null;
+    }
+
+    /**
+     * A group that does not fit on one line: its opening on a line, its body
+     * indented, its ")" and quantifier on a line of their own.
+     */
+    private function layoutGroup(GroupNode $node, string $flags): string
+    {
+        $inline = $this->tryInline($node);
+        if (null !== $inline) {
+            return $inline;
+        }
+
+        // Without x inside, a line break would be a literal.
+        $inner = GroupType::InlineFlags === $node->type ? $this->withInlineFlags($this->flags, $flags) : $this->flags;
+        if (!str_contains($inner, 'x')) {
+            return $this->forceInline($node);
+        }
+
+        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
+            $this->capturesOpened++;
+        }
+
+        $opening = $this->openingAsWritten($node, $this->groupOpening($node, $flags));
+        $level = $this->indentLevel;
+        $outer = $this->flags;
+        $this->flags = $inner;
+
+        // A comment written on the opening line trails it.
+        $trailing = '';
+        $lead = $this->leadingSameLineComment($node->child, $node->getStartPosition() + \strlen($opening));
+        if (null !== $lead) {
+            $this->skipNode = $lead;
+            $trailing = self::TRAIL.rtrim($lead->comment, "\n");
+        }
+
+        $this->indentLevel++;
+        $this->parentBroke = true;
+        $child = $node->child->accept($this);
+        $this->parentBroke = false;
+        $this->indentLevel--;
+        $this->skipNode = null;
+        $closing = str_contains($this->flags, 'x') ? "\n".self::indent($level).')' : ')';
+        $this->flags = $outer;
+
+        return $opening.$trailing.$this->bodyLine($child, $level + 1).$child.$closing;
+    }
+
+    private function layoutConditional(ConditionalNode $node): string
+    {
+        $inline = $this->tryInline($node);
+        if (null !== $inline) {
+            return $inline;
+        }
+
+        $this->layout = false;
+        $condition = $this->conditionText($node);
+        $this->layout = true;
+
+        $level = $this->indentLevel;
+        $this->indentLevel++;
+        $yes = $node->yes->accept($this);
+        $hasNo = !($node->no instanceof LiteralNode && '' === $node->no->value);
+        $no = $node->no->accept($this);
+        $this->indentLevel--;
+
+        $text = '(?'.$condition.$this->bodyLine($yes, $level + 1).$yes;
+        if ('' !== $no || $hasNo) {
+            $text .= "\n".str_repeat(' ', ($level + 1) * \strlen(self::INDENT) - 2).'|'.('' === $no ? '' : ' '.$no);
+        }
+
+        return $text.(str_contains($this->flags, 'x') ? "\n".self::indent($level) : '').')';
+    }
+
+    /**
+     * What goes between an opening and its body: nothing when the body is
+     * empty or starts on a line of its own already (an empty first branch),
+     * as an empty branch gets no line.
+     */
+    private function bodyLine(string $body, int $level): string
+    {
+        return '' === $body || str_starts_with($body, "\n") ? '' : "\n".self::indent($level);
+    }
+
+    private static function indent(int $level): string
+    {
+        return str_repeat(self::INDENT, $level);
+    }
+
+    /**
+     * The source text between two nodes, or '' without a source.
+     */
+    private function gap(NodeInterface $left, NodeInterface $right): string
+    {
+        if (null === $this->source) {
+            return '';
+        }
+
+        $start = $left->getEndPosition();
+        $length = $right->getStartPosition() - $start;
+
+        return $length > 0 ? substr($this->source, $start, $length) : '';
+    }
+
+    /**
+     * The comment a node starts with, when the source writes it on the line
+     * of what comes before: it trails that line in the output too.
+     */
+    private function leadingSameLineComment(NodeInterface $node, int $after): ?CommentNode
+    {
+        $first = $node;
+        while ($first instanceof AlternationNode || $first instanceof SequenceNode) {
+            $children = $first instanceof AlternationNode ? $first->alternatives : $first->children;
+            $first = array_values($children)[0] ?? null;
+        }
+
+        if (!$first instanceof CommentNode || !$first->extended || $first === $node || null === $this->source) {
+            return null;
+        }
+
+        $length = $first->getStartPosition() - $after;
+        if ($length < 0 || str_contains(substr($this->source, $after, $length), "\n")) {
+            return null;
+        }
+
+        return $first;
+    }
+
+    private static function isEmpty(NodeInterface $node): bool
+    {
+        return ($node instanceof LiteralNode && '' === $node->value) || ($node instanceof SequenceNode && [] === $node->children);
+    }
+
+    /**
+     * The last pass over a laid-out pattern. Trailing comments on
+     * consecutive lines line up on one column, the way gofmt aligns them.
+     * A line ending in an escaped space ends in "\x20" instead, which an
+     * editor stripping trailing spaces leaves alone.
+     */
+    private function finishLines(string $text): string
+    {
+        $lines = explode("\n", $text);
+        $count = \count($lines);
+        for ($i = 0; $i < $count; $i++) {
+            if (!str_contains($lines[$i], self::TRAIL)) {
+                if (1 === LibraryPcre::match('/(?<!\\\\)(?:\\\\\\\\)*+\\\\ \z/', $lines[$i])) {
+                    $lines[$i] = substr($lines[$i], 0, -2).'\\x20';
+                }
+
+                continue;
+            }
+
+            $column = 0;
+            for ($j = $i; $j < $count && str_contains($lines[$j], self::TRAIL); $j++) {
+                $column = max($column, $this->columns(explode(self::TRAIL, $lines[$j], 2)[0]));
+            }
+
+            for ($k = $i; $k < $j; $k++) {
+                [$code, $comment] = explode(self::TRAIL, $lines[$k], 2) + [1 => ''];
+                $lines[$k] = $code.str_repeat(' ', $column - $this->columns($code) + 2).$comment;
+            }
+
+            $i = $j - 1;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The width of a piece of pattern: code points under UTF, bytes
+     * otherwise.
+     */
+    private function columns(string $text): int
+    {
+        return $this->countsCodePoints ? mb_strlen($text, 'UTF-8') : \strlen($text);
+    }
+
+    /**
+     * Whether the printer lays patterns out: the formatter, and pretty
+     * printing.
+     */
+    private function laysOut(): bool
+    {
+        return self::MODE_FORMAT === $this->mode || self::MODE_PRETTY === $this->mode;
     }
 }

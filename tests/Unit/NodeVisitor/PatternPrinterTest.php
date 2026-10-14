@@ -13,10 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -224,7 +228,48 @@ final class PatternPrinterTest extends TestCase
         $this->assertStringContainsString('(?i)', $compiled);
         $this->assertStringNotContainsString('(?i:', $compiled);
         // Nested, it keeps the indentation of its level.
-        $this->assertSame("/(?:\n    (?i)a\n)/x", $this->compilePretty('/(?:(?i)a)/x'));
+        $this->assertSame("/\n    (?:\n        (?i)a\n        (?:b(?:c))\n    )\n/x", $this->compilePretty('/(?:(?i)a(?:b(?:c)))/x'));
+    }
+
+    /**
+     * Pretty printing lays an x pattern out as the formatter does, over the
+     * normalized spelling, at a width of 80; it never adds x, and a pattern
+     * without x stays on one line.
+     */
+    #[Test]
+    #[DataProvider('providePrettyLayouts')]
+    public function test_pretty_mode_lays_out_an_x_pattern_like_the_formatter_with_normalized_spelling(string $pattern, string $expected): void
+    {
+        $this->assertSame($expected, $this->compilePretty($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function providePrettyLayouts(): iterable
+    {
+        $url = '#^(?<scheme>https?)://(?:(?<user>[^:@/]+)(?::(?<pass>[^@/]*))?@)?(?<host>\[[0-9a-f:.]+\]|[^:/?\#]+)(?::(?<port>\d+))?(?<path>/[^?\#]*)?(?:\?(?<query>[^\#]*))?(?:\#(?<fragment>.*))?$#';
+
+        yield 'a long x pattern breaks' => ['pattern' => $url.'ix', 'expected' => implode("\n", ['#', '    ^', '    (?<scheme>https?)', '    ://', '    (?:', '        (?<user>[^:@/]+)', '        (?::(?<pass>[^@/]*))?', '        @', '    )?', '    (?<host>\[[0-9a-f:.]+]|[^:/?\#]+)', '    (?::(?<port>\d+))?', '    (?<path>/[^?\#]*)?', '    (?:\?(?<query>[^\#]*))?', '    (?:\#(?<fragment>.*))?', '    $', '#ix'])];
+        yield 'the same pattern without x stays on one line' => ['pattern' => $url.'i', 'expected' => '#^(?<scheme>https?)://(?:(?<user>[^:@/]+)(?::(?<pass>[^@/]*))?@)?(?<host>\[[0-9a-f:.]+]|[^:/?\#]+)(?::(?<port>\d+))?(?<path>/[^?\#]*)?(?:\?(?<query>[^\#]*))?(?:\#(?<fragment>.*))?$#i'];
+        yield 'a comment breaks a short x pattern' => ['pattern' => "/^(?P<n>a)\\k{n} # the first\n|(?P<m>b)(?P=m)\\x41\\101\$/x", 'expected' => implode("\n", ['/', '    ^(?P<n>a)\k{n}  # the first', '  | (?P<m>b)\k<m>\x41\101$', '/x'])];
+        yield 'a short x pattern stays on one line' => ['pattern' => '/^(?:a|b)c$/x', 'expected' => '/^(?:a|b)c$/x'];
+        yield 'a laid-out x pattern that fits joins one line' => ['pattern' => '/^ (?: a | b ) c $/x', 'expected' => '/^(?:a|b)c$/x'];
+        // Where the formatter would refuse, pretty printing writes one line.
+        yield 'a long x pattern turning x off at the top level stays on one line' => ['pattern' => '/(?-x)a(?:b'.str_repeat('b', 70).')/x', 'expected' => '/(?-x)a(?:b'.str_repeat('b', 70).')/x'];
+    }
+
+    /**
+     * Inside the lint and the optimizer, pretty printing never checks its
+     * output: a tree that disagrees with itself (the spelling "\x41" with
+     * the code point of B) is printed, not refused.
+     */
+    #[Test]
+    public function test_pretty_mode_never_checks_its_output(): void
+    {
+        $sequence = new SequenceNode([new CharLiteralNode('\x41', 0x42, CharLiteralType::Unicode, 0, 4), new LiteralNode('b', 4, 5)], 0, 5);
+
+        $this->assertSame('/\x41b/x', (new RegexNode($sequence, 'x', '/', 0, 5))->accept(new PatternPrinter(pretty: true)));
     }
 
     public function test_compile_escaped_literal_metacharacters(): void

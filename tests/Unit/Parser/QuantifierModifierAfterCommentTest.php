@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -51,6 +52,52 @@ final class QuantifierModifierAfterCommentTest extends TestCase
         $this->assertSame($type, $quantified->type);
 
         $this->assertContainsOnlyInstancesOf(CommentNode::class, \array_slice($sequence->children, 1));
+    }
+
+    /**
+     * A /x line comment between an item and its quantifier, or between a
+     * quantifier and its modifier, is kept as a comment node right after the
+     * quantified item, as a "(?#...)" comment is: "a # c\n +" is "a+" to
+     * PCRE (preg_match('/^a # c\n +$/x', 'aa') === 1), and the comment text
+     * survives a rewrite of the pattern.
+     *
+     * @param class-string                           $quantified
+     * @param list<array{0: string, 1: int, 2: int}> $comments   the text, start and end of each comment
+     */
+    #[Test]
+    #[DataProvider('provideLineCommentsBeforeAQuantifier')]
+    public function test_a_line_comment_before_a_quantifier_is_kept_after_the_quantified_item(string $pattern, string $quantified, string $quantifier, QuantifierType $type, array $comments): void
+    {
+        $sequence = Regex::create()->parse($pattern)->pattern;
+
+        $this->assertInstanceOf(SequenceNode::class, $sequence);
+        $this->assertCount(1 + \count($comments), $sequence->children);
+
+        $item = $sequence->children[0];
+        $this->assertInstanceOf(QuantifierNode::class, $item);
+        $this->assertInstanceOf($quantified, $item->node);
+        $this->assertSame($quantifier, $item->quantifier);
+        $this->assertSame($type, $item->type);
+
+        foreach ($comments as $index => [$text, $start, $end]) {
+            $comment = $sequence->children[$index + 1];
+            $this->assertInstanceOf(CommentNode::class, $comment);
+            $this->assertSame($text, $comment->comment);
+            $this->assertTrue($comment->extended);
+            $this->assertSame($start, $comment->getStartPosition());
+            $this->assertSame($end, $comment->getEndPosition());
+        }
+    }
+
+    /**
+     * The printer writes the comment after the quantified item, and the
+     * pattern it writes is the same: preg_match('/^a+# c\n$/x', 'aa') === 1.
+     */
+    #[Test]
+    #[DataProvider('providePrintedLineComments')]
+    public function test_the_printer_writes_a_line_comment_after_the_item_it_quantifies(string $pattern, string $expected): void
+    {
+        $this->assertSame($expected, Regex::create()->parse($pattern)->accept(new PatternPrinter()));
     }
 
     /**
@@ -102,6 +149,29 @@ final class QuantifierModifierAfterCommentTest extends TestCase
         yield 'extended: modifier after spaces' => ['pattern' => '/a(?#c) * +/x', 'quantifier' => '*', 'type' => QuantifierType::Possessive];
         yield 'extended: line comments before a lazy star' => ['pattern' => "/a (?#c)\n #d\n *?/x", 'quantifier' => '*', 'type' => QuantifierType::Lazy];
         yield 'extended: modifier after a comment and a space' => ['pattern' => '/a*(?#c) +/x', 'quantifier' => '*', 'type' => QuantifierType::Possessive];
+        yield 'extended: line comment between an atom and its quantifier' => ['pattern' => "/a # c\n +/x", 'quantifier' => '+', 'type' => QuantifierType::Greedy];
+        yield 'extended: line comment between a quantifier and its lazy modifier' => ['pattern' => "/a+ # c\n ?/x", 'quantifier' => '+', 'type' => QuantifierType::Lazy];
+        yield 'extended: line comment between a quantifier and its possessive modifier' => ['pattern' => "/a* # c\n +/x", 'quantifier' => '*', 'type' => QuantifierType::Possessive];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, quantified: class-string, quantifier: string, type: QuantifierType, comments: list<array{0: string, 1: int, 2: int}>}>
+     */
+    public static function provideLineCommentsBeforeAQuantifier(): iterable
+    {
+        yield 'between an atom and its quantifier' => ['pattern' => "/a # c\n +/x", 'quantified' => LiteralNode::class, 'quantifier' => '+', 'type' => QuantifierType::Greedy, 'comments' => [["# c\n", 2, 6]]];
+        yield 'between a quantifier and its lazy modifier' => ['pattern' => "/a+ # c\n ?/x", 'quantified' => LiteralNode::class, 'quantifier' => '+', 'type' => QuantifierType::Lazy, 'comments' => [["# c\n", 3, 7]]];
+        yield 'two comments, in order' => ['pattern' => "/a # c\n # d\n +/x", 'quantified' => LiteralNode::class, 'quantifier' => '+', 'type' => QuantifierType::Greedy, 'comments' => [["# c\n", 2, 6], ["# d\n", 7, 11]]];
+        yield 'between a group and its quantifier' => ['pattern' => "/(?:ab) # c\n */x", 'quantified' => GroupNode::class, 'quantifier' => '*', 'type' => QuantifierType::Greedy, 'comments' => [["# c\n", 7, 11]]];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function providePrintedLineComments(): iterable
+    {
+        yield 'between an atom and its quantifier' => ['pattern' => "/a # c\n +/x", 'expected' => "/a+# c\n/x"];
+        yield 'between a quantifier and its lazy modifier' => ['pattern' => "/a+ # c\n ?/x", 'expected' => "/a+?# c\n/x"];
     }
 
     /**
@@ -118,6 +188,9 @@ final class QuantifierModifierAfterCommentTest extends TestCase
         yield 'extended: /^a #c\\n*$/x' => ['pattern' => "/^a #c\n*$/x", 'subjects' => ['', 'a', 'aaa', 'b']];
         yield 'extended: /^a(?#c)#d\\n*$/x' => ['pattern' => "/^a(?#c)#d\n*$/x", 'subjects' => ['', 'a', 'aaa']];
         yield 'extended: /^a(?#c)* b$/x' => ['pattern' => '/^a(?#c)* b$/x', 'subjects' => ['b', 'ab', 'aab', 'a']];
+        yield 'extended: /^a # c\\n +$/x' => ['pattern' => "/^a # c\n +\$/x", 'subjects' => ['', 'a', 'aa', 'b']];
+        yield 'extended: /^a+ # c\\n ?/x' => ['pattern' => "/^a+ # c\n ?/x", 'subjects' => ['a', 'aa', 'b']];
+        yield 'extended: /^(?:ab) # c\\n *$/x' => ['pattern' => "/^(?:ab) # c\n *\$/x", 'subjects' => ['', 'ab', 'abab', 'a']];
     }
 
     /**
@@ -147,5 +220,7 @@ final class QuantifierModifierAfterCommentTest extends TestCase
         yield 'extended: /^#c\\n*/x' => ['pattern' => "/^#c\n*/x", 'offset' => 5];
         yield 'extended: /(?x)#c\\n*/' => ['pattern' => "/(?x)#c\n*/", 'offset' => 8];
         yield 'extended: /a*(?#c)+ +/x' => ['pattern' => '/a*(?#c)+ +/x', 'offset' => 10];
+        yield 'extended: /a* # c\\n */x' => ['pattern' => "/a* # c\n */x", 'offset' => 9];
+        yield 'extended: /a* # c\\n {2}/x' => ['pattern' => "/a* # c\n {2}/x", 'offset' => 11];
     }
 }

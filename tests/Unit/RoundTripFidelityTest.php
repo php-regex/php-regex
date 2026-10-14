@@ -104,10 +104,11 @@ final class RoundTripFidelityTest extends TestCase
     #[Test]
     public function test_pretty_printing_lays_out_a_pattern_under_x(): void
     {
-        $printed = Regex::create()->parse('/^(?:a|b)c$/x')->accept(new PatternPrinter(pretty: true));
+        // Three nested groups break, whatever the width.
+        $printed = Regex::create()->parse('/^(?:a|(?:b|(?:c|d)))e$/x')->accept(new PatternPrinter(pretty: true));
 
         $this->assertStringContainsString("\n", $printed);
-        $this->assertSame(1, preg_match($printed, 'bc'), $printed);
+        $this->assertSame(1, preg_match($printed, 'de'), $printed);
     }
 
     #[Test]

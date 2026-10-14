@@ -942,6 +942,16 @@ hand (PHPStan reports each remaining call).
 case) and throws `InvalidRegexOptionException` on anything else, `text`
 included; 1.x wrote console output for every format but `html`.
 
+#### `PatternPrinter(pretty: true)` lays out like the formatter
+
+`new PatternPrinter(pretty: true)` still normalizes escapes, still lays a
+pattern out only under `x`, and never adds `x`; its layout now follows the
+rules of [the formatter](docs/guides/formatting.md). A construct that fits the
+line stays on one line, where every group and alternation was broken, and a
+`#` comment trails the line it was written on. Code that compares its output
+with a stored string needs that string written again. To format a pattern for
+a reader, keeping its spelling, use `Regex::format()` or `PatternFormatter`.
+
 #### `LiteralExtractionResult::$confidence` is an enum
 
 `Regex::literals()` gives its confidence as `LiteralConfidence::High`,
