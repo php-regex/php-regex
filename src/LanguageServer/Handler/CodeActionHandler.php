@@ -55,8 +55,14 @@ final readonly class CodeActionHandler
 
     private readonly PatternFormatter $formatter;
 
-    public function __construct(private DocumentManager $documents, private Regex $regex)
-    {
+    /**
+     * @param array<string, bool> $lintRules the lint rules regex.json turns on or off, by id
+     */
+    public function __construct(
+        private DocumentManager $documents,
+        private Regex $regex,
+        private array $lintRules = []
+    ) {
         $this->formatter = new PatternFormatter(target: $regex->target());
     }
 
@@ -182,7 +188,7 @@ final readonly class CodeActionHandler
             // Also check by running the linter
             try {
                 $ast = $this->regex->parse($occurrence->pattern);
-                $linter = new PatternLinter();
+                $linter = new PatternLinter($this->lintRules);
                 $ast->accept($linter);
 
                 foreach ($linter->getIssues() as $issue) {

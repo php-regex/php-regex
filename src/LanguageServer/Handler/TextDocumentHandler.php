@@ -40,8 +40,14 @@ final readonly class TextDocumentHandler
 
     private DiagnosticConverter $diagnosticConverter;
 
-    public function __construct(private DocumentManager $documents, private Regex $regex)
-    {
+    /**
+     * @param array<string, bool> $lintRules the lint rules regex.json turns on or off, by id
+     */
+    public function __construct(
+        private DocumentManager $documents,
+        private Regex $regex,
+        private array $lintRules = []
+    ) {
         $this->diagnosticConverter = new DiagnosticConverter();
     }
 
@@ -256,7 +262,7 @@ final readonly class TextDocumentHandler
                 }
 
                 // Run linter
-                $linter = new PatternLinter();
+                $linter = new PatternLinter($this->lintRules);
                 $ast->accept($linter);
 
                 foreach ($linter->getIssues() as $issue) {

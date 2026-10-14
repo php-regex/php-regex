@@ -568,6 +568,9 @@ Each lint rule's severity is sent as the LSP diagnostic severity: `critical` and
 as Error, `warning` as Warning, and `style`, `perf` and `info` as Information, the same
 mapping as `regex lint` (see [Severity in Each Format](../reference/diagnostics.md#severity-in-each-format)).
 No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
+The rules `checks.lint.rules` in the workspace's `regex.json` turns on or off
+(`{"checks": {"lint": {"rules": {"quantifier.nested": false}}}}`) are read at
+`initialize`, so the editor reports what `regex lint` reports.
 
 | Code | Severity | Description |
 |------|----------|-------------|

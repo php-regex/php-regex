@@ -23,7 +23,9 @@ use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
@@ -245,10 +247,13 @@ final class Server
         $params = $message->params ?? [];
         $root = self::rootDirectory($params);
         $config = null === $root ? [] : self::loadConfig($root);
+        // The lint rules regex.json turns on or off, as `regex lint` reads them.
+        $lintRules = LintArguments::fromDefaults((new LintDefaultsBuilder())->build($config))->lintRules;
 
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
+            $this->judgeWith($this->givenRegex, $lintRules);
         } else {
             $target = $this->resolveTarget($params, $root, $config);
             foreach ($target->notices() as $notice) {
@@ -256,7 +261,7 @@ final class Server
             }
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()));
 
-            $this->judgeWith(Regex::create($target->regexOptions()));
+            $this->judgeWith(Regex::create($target->regexOptions()), $lintRules);
         }
 
         if (null !== $root) {
@@ -393,10 +398,13 @@ final class Server
         return is_dir($path) ? $path : null;
     }
 
-    private function judgeWith(Regex $regex): void
+    /**
+     * @param array<string, bool> $lintRules the lint rules turned on or off by id
+     */
+    private function judgeWith(Regex $regex, array $lintRules = []): void
     {
-        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex);
-        $this->codeActionHandler = new CodeActionHandler($this->documents, $regex);
+        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex, $lintRules);
+        $this->codeActionHandler = new CodeActionHandler($this->documents, $regex, $lintRules);
     }
 
     private static function log(int $type, string $message): void

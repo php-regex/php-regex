@@ -371,17 +371,6 @@ unverified. Effort: M.
 
 ### D. The language server
 
-**D1 — The language server ignores the rules configured in `regex.json`.**
-`TextDocumentHandler` builds `new PatternLinter()` with no configuration, so
-`checks.lint.rules` is never read and the editor disagrees with `regex lint`; a
-noisy rule cannot be turned off in the IDE at all.
-*Verify*: read `src/LanguageServer/Handler/TextDocumentHandler.php:257` and
-`src/LanguageServer/Handler/CodeActionHandler.php:161`;
-`grep -rn 'LintConfig' src/LanguageServer/` finds the target lookup only
-(`Server.php:257`). A live run with `checks.lint.rules` in the workspace root
-reported no difference.
-*Fix*: load the rules at initialize and hand them to the linter. Effort: S.
-
 **D2 — No ReDoS signal in the editor.** The pipeline is parse, validate, lint:
 `/(a+)+$/` in a document yields the two lint findings and nothing critical. The
 documentation says so, and the editor is then the only surface where a

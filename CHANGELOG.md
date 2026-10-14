@@ -271,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Under an inline `(?xx)`, a space or a tab is skipped anywhere in a character class, as PCRE2 skips it: `(?xx)[a b]` is `[ab]`, `(?xx)[a - c]` the range `a-c`, and `(?xx)[\d -z]` is refused as PCRE2 refuses `[\d-z]`. Only those before the first member were skipped.
+- The language server reads `checks.lint.rules` in the workspace's `regex.json`, as `regex lint` does: it ran every rule at its default, so a rule turned off still showed in the editor, and one turned on never did.
 - `regex:lint` in Symfony and Laravel no longer ends on `Cache: N hits, N misses`, as `regex lint` no longer does: the count was the main process's, while the workers parse the patterns, so a parallel run showed almost nothing.
 - `regex:lint` in Symfony and Laravel shows a route requirement as written in its console report, as `regex lint` does: one starting with a letter, a digit or a backslash was wrapped in slashes, so `\d+` read `/\d+/` while `[a-z]+` read as typed.
 - The language server answers a request sent after `shutdown`, a second `shutdown` included, with Invalid Request (-32600), as the protocol asks: it gave no answer, and a client waiting on one hung until its timeout.
