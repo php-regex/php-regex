@@ -265,6 +265,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Under an inline `(?xx)`, a space or a tab is skipped anywhere in a character class, as PCRE2 skips it: `(?xx)[a b]` is `[ab]`, `(?xx)[a - c]` the range `a-c`, and `(?xx)[\d -z]` is refused as PCRE2 refuses `[\d-z]`. Only those before the first member were skipped.
 - `new PatternPrinter(pretty: true)` and the normalizing printers keep an escaped space after an empty `(?-x:)`, as in `/(?:a(?-x:)\ b)/x`: the scoped group switched `x` off for the rest of the pattern, and the space was written raw, so the output no longer matched `a b`.
 - A `#` comment under `x` written between an item and its quantifier, as in `a # one or more\n +`, or between a quantifier and its `?` or `+`, is kept in the tree after the quantified item, as `(?#...)` already was: every printer, the lint's rewrite included, dropped it.
 - The PHPStan extension judges each pattern of an array given to `preg_replace()`, `preg_replace_callback()` or `preg_filter()`, as the Psalm plugin does: only the replacement references of such an array were checked, so `preg_replace(['/(a+)+$/'], 'x', $input)` passed without a lint or ReDoS finding. The keys of a `preg_replace_callback_array()` map are read from its type, so a map held in a variable or a constant is judged too, where only a map written in the call was.

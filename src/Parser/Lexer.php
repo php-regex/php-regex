@@ -644,12 +644,11 @@ final class Lexer
             return true;
         }
 
-        // Under "(?xx)" PCRE skips spaces and tabs before the first member of
-        // a class, so "(?xx)[ ]]" holds "]". They carry no meaning there and
-        // are not given a token.
+        // Under "(?xx)" PCRE skips spaces and tabs anywhere in a class:
+        // "(?xx)[ ]]" holds "]", "(?xx)[a - c]" is the range "a-c". They
+        // carry no meaning there and are not given a token.
         if ($this->extendedMoreMode && $this->inCharClass
-            && \in_array($this->pattern[$this->position], [' ', "\t"], true)
-            && null !== $this->readCharClassPrefix($tokens)) {
+            && \in_array($this->pattern[$this->position], [' ', "\t"], true)) {
             $this->position++;
 
             return true;
