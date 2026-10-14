@@ -11,17 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**4. Custom lint rules: promised and withheld.** `docs/extending.md:18`
-lists "Custom lint rules" under what you can extend, and its Pattern 1
-(:412) teaches a bare visitor with no rule id, severity or registration path
-— while `LintRuleInterface`, `LintRuleRegistry` and
-`PatternLinter::withRegistry` are `@internal`, and
-`docs/reference/backward-compatibility.md:137` says lint rules are not
-extension points in 2.0. Two contract documents contradict each other.
-*Decision*: publish the rule contract (interface, one registry entry point,
-a versioned `RuleViolation`), or remove the promise from the guide. Not both
-messages at once. Effort: S to close the doc lie, M to open the seam.
-
 **5. "The library gave up" must not read as "the pattern is invalid".**
 `RegexParser::validate()` catches `ResourceLimitException` and
 `RecursionLimitException` (`RegexParser.php:188`) and funnels both into

@@ -26,6 +26,21 @@ final class DocumentationExperienceTest extends TestCase
 
     private const QUICK_START = __DIR__.'/../../docs/quick-start.md';
 
+    private const EXTENDING = __DIR__.'/../../docs/extending.md';
+
+    /**
+     * Lint rules have no public registry in 2.0 (backward-compatibility.md):
+     * the extending guide must not offer one as an extension point.
+     */
+    #[Test]
+    public function test_the_extending_guide_offers_no_custom_lint_rule(): void
+    {
+        $extending = (string) file_get_contents(self::EXTENDING);
+
+        $this->assertDoesNotMatchRegularExpression('/custom lint rule/i', $extending);
+        $this->assertStringContainsString('reference/backward-compatibility.md', $extending);
+    }
+
     #[Test]
     public function test_the_landing_page_keeps_its_first_visit_short(): void
     {

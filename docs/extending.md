@@ -15,9 +15,14 @@ This guide shows how to add new PCRE features, build custom visitors, and integr
 
 - New AST nodes for new syntax
 - New visitors for analysis or transformation
-- Custom lint rules
 - Framework integrations
 - CLI commands
+
+Lint rules are not an extension point in 2.0: the rule contract and its
+registry are internal, and there is no public registry to add a rule to (see
+[Backward Compatibility](reference/backward-compatibility.md#using-the-api-call-extend-implement)).
+To check a pattern for something of your own, write an analysis visitor, as in
+Pattern 1 below.
 
 ---
 
@@ -409,29 +414,40 @@ Add your new feature to:
 
 ## Common Extension Patterns
 
-### Pattern 1: Custom Lint Rule
+### Pattern 1: Analysis Visitor
+
+An analysis visitor walks the tree and collects what it finds.
+`AbstractTraversingVisitor` visits every child for you: override the nodes you
+check and call the parent method to keep descending.
 
 ```php
-class YourLinterRule extends AbstractNodeVisitor
-{
-    /** @var array<int, string> */
-    private array $issues = [];
+use PHPRegex\Parser\AbstractTraversingVisitor;
+use PHPRegex\Parser\Node\QuantifierNode;
 
-    public function visitQuantifier(QuantifierNode $node): void
+class UnboundedStarFinder extends AbstractTraversingVisitor
+{
+    /** @var list<string> */
+    private array $findings = [];
+
+    public function visitQuantifier(QuantifierNode $node)
     {
-        if ($node->quantifier === '*') {
-            $this->issues[] = "Avoid * quantifier - use + or bounded {0,n}";
+        if ('*' === $node->quantifier) {
+            $this->findings[] = sprintf('Unbounded "*" at offset %d.', $node->startPosition);
         }
 
-        $node->node->accept($this);
+        return parent::visitQuantifier($node);
     }
 
-    public function getIssues(): array
+    /** @return list<string> */
+    public function getFindings(): array
     {
-        return $this->issues;
+        return $this->findings;
     }
 }
 ```
+
+Its findings are yours to report: they carry no rule id, and `regex lint`
+does not run them.
 
 ### Pattern 2: Pattern Transformation
 
