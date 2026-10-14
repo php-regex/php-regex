@@ -591,6 +591,21 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertIsArray(json_decode((string) file_get_contents($directory.'/build/reports/lint/report.json'), true));
     }
 
+    /**
+     * A writable file that is not a regular one, a device or a pipe, takes
+     * the report as a file does: /dev/null throws it away.
+     */
+    #[Test]
+    public function test_lint_writes_the_output_to_a_device(): void
+    {
+        $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => self::PHP_FILE]);
+
+        [$exitCode, , $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos', '--output=/dev/null']);
+
+        $this->assertSame(0, $exitCode, $stderr);
+        $this->assertSame("Output also written to: /dev/null\n", $stderr);
+    }
+
     #[Test]
     public function test_lint_reports_a_collection_failure_as_json(): void
     {

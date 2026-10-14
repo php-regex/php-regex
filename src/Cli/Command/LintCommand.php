@@ -368,13 +368,14 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * Whether a file can be written: an existing file that is writable, or a
-     * new one in a writable directory.
+     * Whether a file can be written: an existing file that is writable, a
+     * device or a pipe as much as a regular one, or a new one in a writable
+     * directory.
      */
     private static function canWrite(string $file): bool
     {
         if (file_exists($file)) {
-            return is_file($file) && is_writable($file);
+            return !is_dir($file) && is_writable($file);
         }
 
         $directory = \dirname($file);
