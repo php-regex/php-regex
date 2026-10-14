@@ -245,6 +245,47 @@ jobs:
       - name: Run PHPLint
         run: tools/phplint/vendor/bin/phplint
 
+  standalone:
+    # Each package as Packagist serves it: its directory alone, required in a
+    # bare project, its php-regex siblings reached through path repositories
+    # at the branch's version. A requirement the monorepo's root composer.json
+    # hides, a sibling missing from its require or an autoload path that
+    # leaves the package directory fails here, before a tag publishes it.
+    name: Install ${{ matrix.package }} alone
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, PHPStan, Psalm, Rector, Symfony, Laravel ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+
+      - name: Install the package in a bare project
+        run: |
+          project="$(mktemp -d)"
+          php -r '
+              $repositories = [];
+              foreach (glob("src/*/composer.json") as $manifest) {
+                  $repositories[] = ["type" => "path", "url" => realpath(dirname($manifest)), "options" => ["symlink" => false, "versions" => [json_decode(file_get_contents($manifest), true)["name"] => "2.x-dev"]]];
+              }
+              $name = json_decode(file_get_contents("src/".$argv[1]."/composer.json"), true)["name"];
+              file_put_contents($argv[2]."/composer.json", json_encode(["repositories" => $repositories, "require" => [$name => "2.x-dev"], "minimum-stability" => "dev", "prefer-stable" => true], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+          ' "${{ matrix.package }}" "$project"
+          composer install -d "$project" --no-interaction --no-progress
+          echo "project=$project" >> "$GITHUB_ENV"
+
+      - name: Validate a pattern with what it installed
+        run: |
+          php -r 'require $argv[1]."/vendor/autoload.php"; exit(PHPRegex\Parser\RegexParser::create()->validate("/a+/")->isValid ? 0 : 1);' "$project"
+
   deptrac:
     # One layer per future package: the core depends on nothing, the
     # libraries on the core, the applications and bridges on the libraries.

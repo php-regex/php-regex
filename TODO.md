@@ -181,15 +181,6 @@ be retired after the freeze. *Fix*: pick the pattern now (a small helper, or
 plain `trigger_deprecation`), wire it, and mark the seams retired by items
 2, 11 and 13 as its first users. Effort: S.
 
-**17. The split packages have never been installed alone.** Sixteen repos
-are pushed by the split workflow with `self.version` cross-requires, and
-"each package works alone" is checked only by manifest meta-tests: no job
-ever resolves one `php-regex/regex-*` standalone, and the split repos carry
-no CI. A green monorepo can publish an uninstallable package unnoticed.
-*Fix*: one CI job that path-repositories a split checkout and installs
-`php-regex/regex-parser` alone in a bare project — before the first `v2.*`
-tag exists to be uninstallable. Effort: S.
-
 ### Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +
