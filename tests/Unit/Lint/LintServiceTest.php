@@ -25,6 +25,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -596,16 +597,13 @@ final class LintServiceTest extends TestCase
         $this->assertSame(RedosComplexity::Exponential, $verdict->complexity);
 
         // Oracle: the engine exhausts a limit of 1 000 000 steps on 24 "\n".
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
         ini_set('pcre.backtrack_limit', '1000000');
 
         try {
-            $result = @preg_match('/(*NO_START_OPT)x(?s)|(?:.*\n.*\n)+x/', str_repeat("\n", 24));
+            $result = @preg_match(PcreInterpreter::pattern('/(*NO_START_OPT)x(?s)|(?:.*\n.*\n)+x/'), str_repeat("\n", 24));
             $error = preg_last_error();
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
         $this->assertFalse($result);
@@ -638,16 +636,13 @@ final class LintServiceTest extends TestCase
     public function test_analysis_reports_a_loop_under_an_s_set_in_an_earlier_alternative(string $pattern, string $unit, string $heuristic): void
     {
         // Oracle: the engine exhausts a limit of 1 000 000 steps on 24 units.
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
         ini_set('pcre.backtrack_limit', '1000000');
 
         try {
-            $this->assertFalse(@preg_match('/(*NO_START_OPT)'.substr($pattern, 1), str_repeat($unit, 24).'!'));
+            $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(*NO_START_OPT)'.substr($pattern, 1)), str_repeat($unit, 24).'!'));
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
 
@@ -817,15 +812,13 @@ final class LintServiceTest extends TestCase
 
     /**
      * The smallest backtrack limit the match attempt runs under: the
-     * engine's count of steps for one start, JIT off, start optimizations
-     * off.
+     * engine's count of steps for one start, in the interpreter, start
+     * optimizations off.
      */
     private static function steps(string $pattern, string $subject): int
     {
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
-        $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
 
         try {
             $low = 1;
@@ -842,7 +835,6 @@ final class LintServiceTest extends TestCase
 
             return $low;
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
     }

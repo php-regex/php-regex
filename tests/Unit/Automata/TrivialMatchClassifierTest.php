@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Automata\TrivialMatchKind;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,17 +60,10 @@ final class TrivialMatchClassifierTest extends TestCase
     #[Test]
     public function test_a_limit_verb_can_fail_where_a_string_function_answers(): void
     {
-        // Without the JIT, a one-step match limit set in the pattern fails
-        // the call (false), where str_contains() answers: a pattern that
-        // sets its own limits is no string function.
-        $jit = (string) \ini_get('pcre.jit');
-        ini_set('pcre.jit', '0');
-
-        try {
-            $this->assertFalse(preg_match('/(*LIMIT_MATCH=1)limit/', str_repeat('x', 100).'limit'));
-        } finally {
-            ini_set('pcre.jit', $jit);
-        }
+        // In the interpreter, a one-step match limit set in the pattern
+        // fails the call (false), where str_contains() answers: a pattern
+        // that sets its own limits is no string function.
+        $this->assertFalse(preg_match(PcreInterpreter::pattern('/(*LIMIT_MATCH=1)limit/'), str_repeat('x', 100).'limit'));
 
         $this->assertNull((new TrivialMatchClassifier())->classify('/(*LIMIT_MATCH=1)limit/'));
         $this->assertNull((new TrivialMatchClassifier())->matchedLiteral('/(*LIMIT_MATCH=1)limit/'));

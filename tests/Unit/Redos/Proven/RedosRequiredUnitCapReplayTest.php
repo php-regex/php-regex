@@ -22,6 +22,7 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -31,8 +32,8 @@ use PHPUnit\Framework\TestCase;
  * witness without that unit is rejected at once below, and backtracks
  * past it. The replay goes past it too.
  *
- * Engine: PHP 8.4.26 / PCRE2 10.49, pcre.jit 0, pcre.backtrack_limit
- * 100000 (the confirmation's default).
+ * Engine: PHP 8.4.26 / PCRE2 10.49, the interpreter ("(*NO_JIT)"),
+ * pcre.backtrack_limit 100000 (the confirmation's default).
  */
 final class RedosRequiredUnitCapReplayTest extends TestCase
 {
@@ -40,23 +41,16 @@ final class RedosRequiredUnitCapReplayTest extends TestCase
 
     private string|false $backtrackLimit = false;
 
-    private string|false $jit = false;
-
     protected function setUp(): void
     {
         $this->backtrackLimit = ini_get('pcre.backtrack_limit');
-        $this->jit = ini_get('pcre.jit');
         ini_set('pcre.backtrack_limit', '100000');
-        ini_set('pcre.jit', '0');
     }
 
     protected function tearDown(): void
     {
         if (false !== $this->backtrackLimit) {
             ini_set('pcre.backtrack_limit', $this->backtrackLimit);
-        }
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
         }
     }
 
@@ -68,8 +62,8 @@ final class RedosRequiredUnitCapReplayTest extends TestCase
 
         // "<IFRAME" . "\"\"\"\"" x n . "!<iframe": 4,999 bytes at n = 1,246,
         // no ">" in it: rejected before any backtracking; 5,003 at 1,247.
-        $this->assertSame(0, @preg_match(self::PATTERN, $witness->build(1246)));
-        $this->assertFalse(@preg_match(self::PATTERN, $witness->build(1247)));
+        $this->assertSame(0, @preg_match(PcreInterpreter::pattern(self::PATTERN), $witness->build(1246)));
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern(self::PATTERN), $witness->build(1247)));
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
     }
 

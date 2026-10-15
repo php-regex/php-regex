@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Regression;
 
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -143,16 +144,13 @@ final class RealWorldCasesTest extends TestCase
     public function test_trailing_nested_quantifiers_are_not_reported(string $pattern): void
     {
         $letter = $pattern[2];
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
         ini_set('pcre.backtrack_limit', '1000');
 
         try {
-            $unoptimized = '/(*NO_START_OPT)'.substr($pattern, 1);
+            $unoptimized = PcreInterpreter::pattern('/(*NO_START_OPT)'.substr($pattern, 1));
             $this->assertNotFalse(@preg_match($unoptimized, str_repeat($letter, 28).'!'), $pattern);
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
 
@@ -197,10 +195,8 @@ final class RealWorldCasesTest extends TestCase
      */
     private static function steps(string $pattern, string $subject): int
     {
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
-        $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
 
         try {
             $low = 1;
@@ -217,7 +213,6 @@ final class RealWorldCasesTest extends TestCase
 
             return $low;
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
     }

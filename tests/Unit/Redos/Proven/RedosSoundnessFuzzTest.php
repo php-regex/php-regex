@@ -20,6 +20,7 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -46,14 +47,14 @@ use PHPUnit\Framework\TestCase;
  * the unicode caseless folds) and the attacker with it: the fold pairs
  * k/KELVIN SIGN, s/LONG S and a-ring/ANGSTROM SIGN fold under /iu while
  * the Turkish DOTLESS I folds with nothing (premises pinned below on the
- * engine, pcre.jit 0), the suffixes include ones that satisfy a
+ * interpreter), the suffixes include ones that satisfy a
  * lookbehind ("b", "ab") and those fold bytes, and the fold attacks run to
  * 2,000 bytes of input. A family sets every inline option letter in
  * every position PCRE reads it from. Every fifth pattern the analyzer proves safe in
  * the repository corpus is attacked with the same pump machinery, so real
  * shapes, not only generated ones, hold the guarantee.
  *
- * Engine: pcre.jit 0, pcre.backtrack_limit 1000000 for the attacks; the
+ * Engine: the interpreter, pcre.backtrack_limit 1000000 for the attacks; the
  * replay's own limit (the confirmation's) for the witnesses. PHP has no
  * call without $matches at a non-zero offset: a named offset argument
  * passes $matches implicitly (preg_match('/a+\K|\G\B(b+)+c/', 'a'.str_repeat('b', 25),
@@ -183,24 +184,17 @@ final class RedosSoundnessFuzzTest extends TestCase
 
     private string|false $backtrackLimit = false;
 
-    private string|false $jit = false;
-
     protected function setUp(): void
     {
         $this->state = self::SEED;
         $this->backtrackLimit = ini_get('pcre.backtrack_limit');
-        $this->jit = ini_get('pcre.jit');
         ini_set('pcre.backtrack_limit', '1000000');
-        ini_set('pcre.jit', '0');
     }
 
     protected function tearDown(): void
     {
         if (false !== $this->backtrackLimit) {
             ini_set('pcre.backtrack_limit', $this->backtrackLimit);
-        }
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
         }
     }
 
@@ -307,14 +301,14 @@ final class RedosSoundnessFuzzTest extends TestCase
     #[Test]
     public function test_caseless_unicode_fold_shapes_proven_safe_survive_fold_attacks(): void
     {
-        // The premises of the attack alphabet, pinned on the engine with
-        // pcre.jit 0 (PHP 8.4.26, PCRE2 10.49): the Kelvin sign, the long s
+        // The premises of the attack alphabet, pinned on the interpreter
+        // (PHP 8.4.26, PCRE2 10.49): the Kelvin sign, the long s
         // and the angstrom sign fold under /iu, the Turkish dotless i folds
         // with nothing.
-        $this->assertSame(1, preg_match('/k/iu', self::KELVIN_SIGN));
-        $this->assertSame(1, preg_match('/s/iu', self::LONG_S));
-        $this->assertSame(1, preg_match('/\x{E5}/iu', self::ANGSTROM_SIGN));
-        $this->assertSame(0, preg_match('/i/ui', self::DOTLESS_I));
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern('/k/iu'), self::KELVIN_SIGN));
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern('/s/iu'), self::LONG_S));
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern('/\x{E5}/iu'), self::ANGSTROM_SIGN));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern('/i/ui'), self::DOTLESS_I));
 
         // The long s at 1,000 repetitions is 2,000 bytes, the Kelvin sign
         // at 666 is 1,998: the family attacks proven-safe patterns with
@@ -351,7 +345,7 @@ final class RedosSoundnessFuzzTest extends TestCase
      * the family proven safe exhausts the limit. Engine facts the attack
      * rests on: "/x(?i)|^(?:a|A)*$/" needs 65 -> 1 025 -> 16 385 steps on
      * "a"{4, 8, 12}."!", "/^(?:z(?-r)|k|\x{212A})*$/iur" 95 -> 1 535 ->
-     * 24 575 on the Kelvin sign (pcre.jit 0, "(*NO_START_OPT)").
+     * 24 575 on the Kelvin sign ("(*NO_JIT)", "(*NO_START_OPT)").
      */
     #[Test]
     public function test_inline_option_shapes_proven_safe_survive_the_pump_attacks(): void
@@ -475,7 +469,7 @@ final class RedosSoundnessFuzzTest extends TestCase
             $reproduced = false;
             for ($n = 1; !$reproduced && $n <= self::MAX_PUMPS; $n++) {
                 $subject = $analysis->witness->build($n);
-                $result = $withoutMatches ? @preg_match($pattern, $subject) : @preg_match($pattern, $subject, $matches);
+                $result = $withoutMatches ? @preg_match(PcreInterpreter::pattern($pattern), $subject) : @preg_match(PcreInterpreter::pattern($pattern), $subject, $matches);
                 $reproduced = false === $result && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error();
             }
             ini_set('pcre.backtrack_limit', '1000000');
@@ -535,6 +529,7 @@ final class RedosSoundnessFuzzTest extends TestCase
         int $maxLength = self::MAX_INPUT_LENGTH,
         int $offset = 0,
     ): ?string {
+        $interpreted = PcreInterpreter::pattern($pattern);
         foreach ($prefixes as $prefix) {
             foreach ($pumps as $pump) {
                 foreach ($suffixes as $suffix) {
@@ -543,10 +538,10 @@ final class RedosSoundnessFuzzTest extends TestCase
                         if (\strlen($input) > $maxLength) {
                             continue;
                         }
-                        if (false === @preg_match($pattern, $input, $matches, 0, $offset) && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error()) {
+                        if (false === @preg_match($interpreted, $input, $matches, 0, $offset) && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error()) {
                             return self::describe($prefix, $pump, $suffix, $count, 0 === $offset ? 'with $matches' : 'with $matches, offset '.$offset);
                         }
-                        if (0 === $offset && false === @preg_match($pattern, $input) && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error()) {
+                        if (0 === $offset && false === @preg_match($interpreted, $input) && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error()) {
                             return self::describe($prefix, $pump, $suffix, $count, 'without $matches');
                         }
                     }

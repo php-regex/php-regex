@@ -35,9 +35,9 @@ use PHPUnit\Framework\TestCase;
  * yes branch holding in its no branch.
  *
  * The oracle for every answer: full-match membership on the running engine
- * (pcre.jit 0) of every string of one or two characters over an alphabet
- * that holds the characters each option moves: k, K, the Kelvin sign,
- * U+0663, U+00A0, U+00E9, U+00AA, U+0085, ASCII digits, letters and spaces.
+ * of every string of one or two characters over an alphabet that holds
+ * the characters each option moves: k, K, the Kelvin sign, U+0663, U+00A0,
+ * U+00E9, U+00AA, U+0085, ASCII digits, letters and spaces.
  * Engine: PHP 8.4.26, PCRE2 10.49. PCRE2 before 10.43 refuses "(?r)" and
  * the ASCII options, and PHP before 8.4 refuses the "r" modifier: a row
  * it cannot compile says so and stops.
@@ -50,21 +50,6 @@ final class SolverInlineOptionsTest extends TestCase
         'a', 'A', 'b', 'B', 'c', 'k', 'K', "\u{212A}", 'x', 'y', '_', '0', '3', "\u{0663}", "\u{0660}",
         ' ', "\t", "\n", "\u{A0}", "\u{85}", "\u{E9}", "\u{AA}", '!',
     ];
-
-    private string|false $jit = false;
-
-    protected function setUp(): void
-    {
-        $this->jit = ini_get('pcre.jit');
-        ini_set('pcre.jit', '0');
-    }
-
-    protected function tearDown(): void
-    {
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
-        }
-    }
 
     /**
      * A solver blind to the ASCII options answers "not equivalent" on the

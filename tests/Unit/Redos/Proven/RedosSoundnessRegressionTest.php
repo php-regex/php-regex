@@ -20,6 +20,7 @@ use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,7 +29,7 @@ use PHPUnit\Framework\TestCase;
  * Counterexamples to a "safe (proven)" verdict: for each pattern, one input
  * makes a single preg_match() call exhaust the backtrack limit.
  *
- * Engine: PHP 8.4.26 / PCRE2 10.49, pcre.jit 0, pcre.backtrack_limit
+ * Engine: PHP 8.4.26 / PCRE2 10.49, the interpreter, pcre.backtrack_limit
  * 1000000. Every row is called as written in the row: with a $matches
  * argument, or without one when the row says so. Each comment quotes what
  * the engine answered under those conditions.
@@ -44,23 +45,16 @@ final class RedosSoundnessRegressionTest extends TestCase
 
     private string|false $backtrackLimit = false;
 
-    private string|false $jit = false;
-
     protected function setUp(): void
     {
         $this->backtrackLimit = ini_get('pcre.backtrack_limit');
-        $this->jit = ini_get('pcre.jit');
         ini_set('pcre.backtrack_limit', '1000000');
-        ini_set('pcre.jit', '0');
     }
 
     protected function tearDown(): void
     {
         if (false !== $this->backtrackLimit) {
             ini_set('pcre.backtrack_limit', $this->backtrackLimit);
-        }
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
         }
     }
 
@@ -83,7 +77,7 @@ final class RedosSoundnessRegressionTest extends TestCase
         // PHP has no call without $matches at a non-zero offset: a named
         // offset argument passes $matches implicitly.
         $this->assertTrue($withMatches || 0 === $offset, 'a row without $matches runs at offset 0');
-        $result = $withMatches ? @preg_match($pattern, $input, $matches, 0, $offset) : @preg_match($pattern, $input);
+        $result = $withMatches ? @preg_match(PcreInterpreter::pattern($pattern), $input, $matches, 0, $offset) : @preg_match(PcreInterpreter::pattern($pattern), $input);
 
         $this->assertFalse($result, $pattern.' on '.self::describe($input));
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error(), $pattern.' on '.self::describe($input));
@@ -98,8 +92,8 @@ final class RedosSoundnessRegressionTest extends TestCase
     #[DataProvider('provideEmptyMatchRetryCounterexamples')]
     public function test_engine_fact_the_matches_argument_changes_the_outcome(string $pattern, string $input): void
     {
-        $this->assertSame(1, preg_match($pattern, $input, $matches), $pattern.' with $matches');
-        $this->assertFalse(@preg_match($pattern, $input), $pattern.' without $matches');
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern($pattern), $input, $matches), $pattern.' with $matches');
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern($pattern), $input), $pattern.' without $matches');
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
     }
 
@@ -232,8 +226,8 @@ final class RedosSoundnessRegressionTest extends TestCase
     #[Test]
     public function test_engine_fact_abandoned_branch_loops_exhaust_the_limit_at_two_hundred(): void
     {
-        $this->assertSame(1, preg_match('/(?:a(?:a*a*\Bb)?)+/', str_repeat('a', 150), $matches));
-        $this->assertFalse(@preg_match('/(?:a(?:a*a*\Bb)?)+/', str_repeat('a', 200), $matches));
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern('/(?:a(?:a*a*\Bb)?)+/'), str_repeat('a', 150), $matches));
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(?:a(?:a*a*\Bb)?)+/'), str_repeat('a', 200), $matches));
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
     }
 
@@ -264,13 +258,14 @@ final class RedosSoundnessRegressionTest extends TestCase
     #[DataProvider('provideBoundedRepeatAbstractions')]
     public function test_engine_fact_bounded_repeat_abstraction_never_fails(string $pattern): void
     {
+        $interpreted = PcreInterpreter::pattern($pattern);
         foreach (['', '1', 'a', 'x', str_repeat('a', 12), '1111'] as $prefix) {
             foreach (['1', '12', 'a', 'ax', 'x', '1.', ':', 'aac', '0'] as $pump) {
                 foreach (['', '!', ':', ':1!', 'x', 'c', 'cd', 'xz', '!x'] as $suffix) {
                     foreach ([4, 8, 12, 16, 24, 32, 64, 200] as $count) {
                         $input = $prefix.str_repeat($pump, $count).$suffix;
-                        $this->assertNotFalse(@preg_match($pattern, $input, $matches), $pattern.' on '.self::describe($input));
-                        $this->assertNotFalse(@preg_match($pattern, $input), $pattern.' on '.self::describe($input).' without $matches');
+                        $this->assertNotFalse(@preg_match($interpreted, $input, $matches), $pattern.' on '.self::describe($input));
+                        $this->assertNotFalse(@preg_match($interpreted, $input), $pattern.' on '.self::describe($input).' without $matches');
                     }
                 }
             }
@@ -308,7 +303,7 @@ final class RedosSoundnessRegressionTest extends TestCase
 
         $this->assertSame(RedosProof::Proven, $analysis->proof);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
-        $this->assertFalse(@preg_match('/(a{1,20})+$/', str_repeat('a', 20).'!', $matches));
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(a{1,20})+$/'), str_repeat('a', 20).'!', $matches));
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
     }
 
@@ -372,7 +367,7 @@ final class RedosSoundnessRegressionTest extends TestCase
         ini_set('pcre.backtrack_limit', (string) $limit);
         $reproduced = false;
         for ($n = 1; !$reproduced && $n <= self::MAX_PUMPS; $n++) {
-            $reproduced = false === @preg_match($pattern, $witness->build($n), $matches)
+            $reproduced = false === @preg_match(PcreInterpreter::pattern($pattern), $witness->build($n), $matches)
                 && \PREG_BACKTRACK_LIMIT_ERROR === preg_last_error();
         }
         $this->assertTrue($reproduced, $pattern.': '.$witness->render().' does not reproduce');
@@ -390,11 +385,11 @@ final class RedosSoundnessRegressionTest extends TestCase
     #[Test]
     public function test_engine_fact_multiline_caret_blows_up_only_through_a_newline(): void
     {
-        $this->assertFalse(@preg_match('/(?:\s^|\s)+\z/m', str_repeat("\n", 20).'!', $matches));
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(?:\s^|\s)+\z/m'), str_repeat("\n", 20).'!', $matches));
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
-        $this->assertSame(0, preg_match('/(?:\s^|\s)+\z/m', str_repeat(' ', 40).'!', $matches));
-        $this->assertSame(0, preg_match('/(?:^a|a)+\z/m', str_repeat('a', 40).'!', $matches));
-        $this->assertSame(0, preg_match('/(?:^\w+\n?)+!/m', str_repeat("a\n", 40), $matches));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern('/(?:\s^|\s)+\z/m'), str_repeat(' ', 40).'!', $matches));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern('/(?:^a|a)+\z/m'), str_repeat('a', 40).'!', $matches));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern('/(?:^\w+\n?)+!/m'), str_repeat("a\n", 40), $matches));
     }
 
     /**

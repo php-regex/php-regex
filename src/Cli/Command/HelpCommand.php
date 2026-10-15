@@ -256,26 +256,24 @@ final class HelpCommand extends AbstractCommand
      */
     private function getCommandData(string $command): ?array
     {
-        /** @var CommandHelp|null $data */
-        // @phpstan-ignore varTag.nativeType (PHPStan generalizes this large constant array; each match arm follows the documented shape.)
-        $data = match ($command) {
-            'parse' => [
-                'description' => 'Parse and recompile a regex pattern',
-                'options' => [
+        return match ($command) {
+            'parse' => self::commandHelp(
+                description: 'Parse and recompile a regex pattern',
+                options: [
                     ['--validate', 'Validate the pattern after parsing'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'parse', "'/a+/'"], 'Basic parsing'],
                     [[$this->resolveInvocation(), 'parse', "'/a+/'", '--validate'], 'Parse with validation'],
                     [[$this->resolveInvocation(), 'parse', "'/a+/'", '--php-version=8.1'], 'Parse for specific PHP version'],
                 ],
-            ],
-            'analyze' => [
-                'description' => 'Parse, validate, and analyze ReDoS risk',
-                'options' => [
+            ),
+            'analyze' => self::commandHelp(
+                description: 'Parse, validate, and analyze ReDoS risk',
+                options: [
                     ['--format <format>', 'Output format (console, json)'],
                     ['--json', 'Same as --format=json'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
@@ -283,43 +281,43 @@ final class HelpCommand extends AbstractCommand
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'analyze', "'/a+/'"], 'Analyze a simple pattern'],
                     [[$this->resolveInvocation(), 'analyze', "'/(a+)+$/'"], 'Analyze a potentially risky pattern'],
                     [[$this->resolveInvocation(), 'analyze', "'/(a+)+$/'", '--format=json'], 'Analyze with JSON output'],
                 ],
-            ],
-            'compare' => [
-                'description' => 'Compare two regex patterns using automata logic',
-                'options' => [
+            ),
+            'compare' => self::commandHelp(
+                description: 'Compare two regex patterns using automata logic',
+                options: [
                     ['--method <method>', 'intersection (default), subset, or equivalence'],
                     ['--determinizer <algo>', 'subset-indexed (default) or subset'],
                     ['--minimizer <algo>', 'hopcroft (default) or moore'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => ['Compares the regular subset: lookarounds, \b and anchors are read; backreferences, recursion and atomic groups are refused.'],
-                'examples' => [
+                notes: ['Compares the regular subset: lookarounds, \b and anchors are read; backreferences, recursion and atomic groups are refused.'],
+                examples: [
                     [[$this->resolveInvocation(), 'compare', "'/[a-z]+/'", "'/edit/'"], 'Check intersection'],
                     [[$this->resolveInvocation(), 'compare', "'/edit/'", "'/[a-z]+/'", '--method=subset'], 'Check subset'],
                     [[$this->resolveInvocation(), 'compare', "'/(a|b)c/'", "'/ac|bc/'", '--method=equivalence'], 'Check equivalence'],
                 ],
-            ],
-            'explain' => [
-                'description' => 'Explain a regex pattern in plain language',
-                'options' => [
+            ),
+            'explain' => self::commandHelp(
+                description: 'Explain a regex pattern in plain language',
+                options: [
                     ['--format <format>', 'Output format (console, html)'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'explain', "'/a+/'"], 'Explain a simple pattern'],
                     [[$this->resolveInvocation(), 'explain', "'/\\d{4}-\\d{2}-\\d{2}/'"], 'Explain a date pattern'],
                 ],
-            ],
-            'debug' => [
-                'description' => 'Deep ReDoS analysis with heatmap output',
-                'options' => [
+            ),
+            'debug' => self::commandHelp(
+                description: 'Deep ReDoS analysis with heatmap output',
+                options: [
                     ['--input <string>', 'Input string to test against the pattern'],
                     ['--format <format>', 'Output format (console, json)'],
                     ['--json', 'Same as --format=json'],
@@ -328,15 +326,15 @@ final class HelpCommand extends AbstractCommand
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => ['Provides detailed ReDoS analysis including attack vectors and complexity heatmaps.'],
-                'examples' => [
+                notes: ['Provides detailed ReDoS analysis including attack vectors and complexity heatmaps.'],
+                examples: [
                     [[$this->resolveInvocation(), 'debug', "'/(a+)+$/'"], 'Debug a pattern with potential ReDoS risk'],
                     [[$this->resolveInvocation(), 'debug', "'/(a+)+$/'", '--input=aaaaaaaa'], 'Debug with specific input'],
                 ],
-            ],
-            'redos' => [
-                'description' => 'Benchmark regex patterns for ReDoS behavior',
-                'options' => [
+            ),
+            'redos' => self::commandHelp(
+                description: 'Benchmark regex patterns for ReDoS behavior',
+                options: [
                     ['--safe <pattern>', 'Safe pattern to compare against'],
                     ['--input <string>', 'Input string to benchmark (auto-generated when omitted)'],
                     ['--input-file <path>', 'Read input from a file'],
@@ -355,68 +353,68 @@ final class HelpCommand extends AbstractCommand
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => ['Use the same input for both patterns to compare timing and resource usage.'],
-                'examples' => [
+                notes: ['Use the same input for both patterns to compare timing and resource usage.'],
+                examples: [
                     [[$this->resolveInvocation(), 'redos', "'/(a+)+$/'", '--safe', "'/a+$/'", '--input', "'a'", '--repeat=50000', "--suffix='!'"], 'Benchmark vulnerable vs safe'],
                     [[$this->resolveInvocation(), 'redos', "'/(a+)+$/'", '--input', "'aaaaa!'"], 'Benchmark a single pattern'],
                     [[$this->resolveInvocation(), 'redos', "'/(a+)+$/'", '--format=json', '--input', "'a!'"], 'JSON output'],
                 ],
-            ],
-            'diagram' => [
-                'description' => 'Render a diagram of the AST (text or SVG)',
-                'options' => [
+            ),
+            'diagram' => self::commandHelp(
+                description: 'Render a diagram of the AST (text or SVG)',
+                options: [
                     ['--format <format>', 'Output format (console, svg)'],
                     ['--output <file>', 'Write output to file'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'diagram', "'/^a+$/'"], 'Basic diagram'],
                     [[$this->resolveInvocation(), 'diagram', "'/(a|b)*c/'"], 'Diagram with alternation'],
                 ],
-            ],
-            'highlight' => [
-                'description' => 'Highlight a regex for display',
-                'options' => [
+            ),
+            'highlight' => self::commandHelp(
+                description: 'Highlight a regex for display',
+                options: [
                     ['--format <format>', 'Output format (auto, console, html)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'highlight', "'/a+/'"], 'Console highlighting'],
                     [[$this->resolveInvocation(), 'highlight', "'/a+/'", '--format=html'], 'HTML highlighting'],
                 ],
-            ],
-            'validate' => [
-                'description' => 'Validate a regex pattern',
-                'options' => [
+            ),
+            'validate' => self::commandHelp(
+                description: 'Validate a regex pattern',
+                options: [
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'validate', "'/a+/'"], 'Validate a pattern'],
                     [[$this->resolveInvocation(), 'validate', "'/a+/'", '--php-version=8.0'], 'Validate for PHP 8.0'],
                 ],
-            ],
-            'transpile' => [
-                'description' => 'Transpile PCRE regex to other dialects',
-                'options' => [
+            ),
+            'transpile' => self::commandHelp(
+                description: 'Transpile PCRE regex to other dialects',
+                options: [
                     ['--target <dialect>', 'Target dialect (js, html, python)'],
                     ['--format <format>', 'Output format (console, json)'],
                     ['--json', 'Same as --format=json'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'transpile', "'/a+/'", '--target=js'], 'Transpile to JavaScript'],
                     [[$this->resolveInvocation(), 'transpile', "'/a+/'", '--target=python'], 'Transpile to Python'],
                 ],
-            ],
-            'format' => [
-                'description' => 'Lay a pattern out over lines, or compact it to one',
-                'options' => [
+            ),
+            'format' => self::commandHelp(
+                description: 'Lay a pattern out over lines, or compact it to one',
+                options: [
                     ['--compact', 'Write the pattern on one line, without x, layout or comments'],
                     ['--width <n>', 'Width a line aims at, indent included (default: 80)'],
                     ['--format <format>', 'Output format (console, json)'],
@@ -424,26 +422,26 @@ final class HelpCommand extends AbstractCommand
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
                 ],
-                'notes' => [
+                notes: [
                     'Prints the pattern alone, so that it can be piped or pasted back. A pattern that fits the width comes back unchanged.',
                     'The output matches exactly what the input matches. A pattern it cannot lay out safely comes back as written, with one note on stderr.',
                 ],
-                'examples' => [
+                examples: [
                     [[$this->resolveInvocation(), 'format', "'/^(?<year>\\d{4})-(?<month>\\d{2})$/'", '--width=24'], 'Lay a pattern out over lines'],
                     [[$this->resolveInvocation(), 'format', '"$(cat pattern.txt)"', '--compact'], 'Compact a laid-out pattern to one line'],
                     [[$this->resolveInvocation(), 'format', "'/^(?<year>\\d{4})-(?<month>\\d{2})$/'", '--json'], 'JSON output'],
                 ],
-            ],
-            'lint' => [
-                'description' => 'Lint regex patterns in PHP source code',
-                'options' => self::LINT_OPTIONS,
-                'notes' => [
+            ),
+            'lint' => self::commandHelp(
+                description: 'Lint regex patterns in PHP source code',
+                options: self::LINT_OPTIONS,
+                notes: [
                     'Config: regex.json or regex.dist.json in the working directory sets lint defaults.',
                     'Target: --php-version, else regex.json phpVersion, else the lowest PHP composer.json allows, else the running PHP.',
                     'Exit codes: 0 clean, 1 errors found, 2 unusable configuration or command line.',
                     'Inline ignore: // @regex-ignore-next-line or // @regex-ignore',
                 ],
-                'examples' => [
+                examples: [
                     [[$this->resolveInvocation(), 'lint', 'src/'], 'Lint the src/ directory'],
                     [[$this->resolveInvocation(), 'lint', 'src/', '--exclude=vendor'], 'Lint excluding vendor/'],
                     [[$this->resolveInvocation(), 'lint', 'src/', '--format=json'], 'JSON output format'],
@@ -453,50 +451,60 @@ final class HelpCommand extends AbstractCommand
                     [[$this->resolveInvocation(), 'lint', 'src/', '--min-savings=10'], 'Only show optimizations saving 10+ chars'],
                     [[$this->resolveInvocation(), 'lint', 'file.php'], 'Lint a single file'],
                 ],
-            ],
-            'graph' => [
-                'description' => 'Generate a graph diagram (DOT/Mermaid) of the NFA',
-                'options' => [
+            ),
+            'graph' => self::commandHelp(
+                description: 'Generate a graph diagram (DOT/Mermaid) of the NFA',
+                options: [
                     ['--format <format>', 'Output format (dot, mermaid)'],
                     ['--output <file>', 'Write the diagram to a file'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'graph', "'/a+b/'"], 'Render the automaton as DOT'],
                     [[$this->resolveInvocation(), 'graph', "'/a+b/'", '--format=mermaid'], 'Render it as Mermaid'],
                 ],
-            ],
-            'version' => [
-                'description' => 'Display version information',
-                'options' => [],
-                'notes' => [],
-                'examples' => [
+            ),
+            'version' => self::commandHelp(
+                description: 'Display version information',
+                options: [],
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), 'version'], 'Show the installed version'],
                 ],
-            ],
-            'self-update' => [
-                'description' => 'Update the CLI phar to the latest release',
-                'options' => [],
-                'notes' => ['Updates the installed phar file to the latest version.'],
-                'examples' => [
+            ),
+            'self-update' => self::commandHelp(
+                description: 'Update the CLI phar to the latest release',
+                options: [],
+                notes: ['Updates the installed phar file to the latest version.'],
+                examples: [
                     [[$this->resolveInvocation(), 'self-update'], 'Update to latest version'],
                 ],
-            ],
-            'help' => [
-                'description' => 'Display this help message',
-                'options' => [
+            ),
+            'help' => self::commandHelp(
+                description: 'Display this help message',
+                options: [
                     ['<command>', 'Show help for specific command'],
                 ],
-                'notes' => [],
-                'examples' => [
+                notes: [],
+                examples: [
                     [[$this->resolveInvocation(), '--help'], 'Show general help'],
                     [[$this->resolveInvocation(), 'lint', '--help'], 'Show lint command help'],
                 ],
-            ],
+            ),
             default => null,
         };
+    }
 
-        return $data;
+    /**
+     * @param list<array{string, string}>       $options
+     * @param list<string>                      $notes
+     * @param list<array{list<string>, string}> $examples
+     *
+     * @return CommandHelp
+     */
+    private static function commandHelp(string $description, array $options, array $notes, array $examples): array
+    {
+        return ['description' => $description, 'options' => $options, 'notes' => $notes, 'examples' => $examples];
     }
 
     private function formatCommandUsage(Output $output, string $binary, string $command): string

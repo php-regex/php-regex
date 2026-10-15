@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -28,9 +29,10 @@ use PHPUnit\Framework\TestCase;
  * the required "b". The replay must append a character outside the pumped
  * class and the required literal, and publish that witness.
  *
- * Engine (PCRE2 10.49, JIT off, pcre.backtrack_limit 100000, the default of
- * the confirmed replay): str_repeat('a', 30).'!b' fails with "Backtrack
- * limit exhausted"; str_repeat('a', 30) and str_repeat('a', 64) do not.
+ * Engine (PCRE2 10.49, the interpreter, pcre.backtrack_limit 100000, the
+ * default of the confirmed replay): str_repeat('a', 30).'!b' fails with
+ * "Backtrack limit exhausted"; str_repeat('a', 30) and str_repeat('a', 64)
+ * do not.
  */
 final class RedosEmptySuffixReplayTest extends TestCase
 {
@@ -40,23 +42,16 @@ final class RedosEmptySuffixReplayTest extends TestCase
 
     private string|false $backtrackLimit = false;
 
-    private string|false $jit = false;
-
     protected function setUp(): void
     {
         $this->backtrackLimit = ini_get('pcre.backtrack_limit');
-        $this->jit = ini_get('pcre.jit');
         ini_set('pcre.backtrack_limit', '100000');
-        ini_set('pcre.jit', '0');
     }
 
     protected function tearDown(): void
     {
         if (false !== $this->backtrackLimit) {
             ini_set('pcre.backtrack_limit', $this->backtrackLimit);
-        }
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
         }
     }
 
@@ -74,7 +69,7 @@ final class RedosEmptySuffixReplayTest extends TestCase
         $this->assertInstanceOf(RedosWitness::class, $witness);
         $reproduced = false;
         for ($n = 1; !$reproduced && \strlen($witness->build($n)) <= self::MAX_INPUT_LENGTH; $n++) {
-            $reproduced = false === @preg_match(self::PATTERN, $witness->build($n));
+            $reproduced = false === @preg_match(PcreInterpreter::pattern(self::PATTERN), $witness->build($n));
         }
         $this->assertTrue($reproduced, $witness->render().' does not reproduce');
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
@@ -83,9 +78,9 @@ final class RedosEmptySuffixReplayTest extends TestCase
     #[Test]
     public function test_engine_fact_the_bare_witness_does_not_reproduce(): void
     {
-        $this->assertSame(0, preg_match(self::PATTERN, str_repeat('a', 30)));
-        $this->assertSame(0, preg_match(self::PATTERN, str_repeat('a', self::MAX_INPUT_LENGTH)));
-        $this->assertFalse(@preg_match(self::PATTERN, str_repeat('a', 30).'!b'));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern(self::PATTERN), str_repeat('a', 30)));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern(self::PATTERN), str_repeat('a', self::MAX_INPUT_LENGTH)));
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern(self::PATTERN), str_repeat('a', 30).'!b'));
         $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
     }
 }

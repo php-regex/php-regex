@@ -5,9 +5,15 @@ on:
     branches: [ 2.x ]
   pull_request:
     branches: [ 2.x ]
+  schedule:
+    # Every Monday: the mutation run over the parser, and every other job
+    # against the week's tool releases, which no lock file pins.
+    - cron: '0 4 * * 1'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -109,6 +115,13 @@ jobs:
         # included. Too slow for the default suite.
         run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group formatter-corpus'
 
+      - name: Compare the capture shapes with PHPStan
+        # The type PHPStan infers for $matches next to the shape PHPRegex
+        # writes, for every case of the capture shape corpus, written to
+        # var/capture-shape-parity.md. It fails only when a shape refuses a
+        # $matches this engine writes. Left out of the default suite.
+        run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group capture-shape-parity'
+
   engines-latest:
     # Every supported PHP on the latest PCRE2: on macOS, PHP links Homebrew's.
     name: Tests (PHP ${{ matrix.php }}, latest PCRE2)
@@ -145,6 +158,98 @@ jobs:
 
       - name: Run Test Suite
         run: tools/phpunit/vendor/bin/phpunit --colors=always
+
+  benchmarks:
+    # Every benchmark subject once, each variant one revolution: a subject
+    # that throws, or one that runs for minutes, fails here before anyone
+    # compares numbers. No timing is asserted: shared runners are too noisy.
+    name: Benchmarks (one run of each)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+
+      - name: Install Dependencies
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
+
+      - name: Run Every Subject Once
+        run: tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
+
+  coverage:
+    # The suite under PCOV on one engine: line coverage must not drop below
+    # the percentage in .github/coverage-threshold, raised by hand as the
+    # coverage grows. The mutations run on that same coverage: those of the
+    # lines a pull request or a push changes, and every Monday those of the
+    # parser, each held to the scores infection.json.dist declares.
+    name: Coverage and Mutations
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          # The whole history: the changed lines are read against the base.
+          fetch-depth: 0
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+          ini-values: phar.readonly=0
+          coverage: pcov
+
+      - name: Install Dependencies
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress
+          # Without --prefer-dist: tools/phpunit/composer.json installs
+          # orchestra/canvas and canvas-core from git, as GitHub serves no
+          # archive of some of the commits their tags name.
+          composer install -d tools/phpunit --no-interaction --no-progress
+          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
+          composer install -d tools/infection --prefer-dist --no-interaction --no-progress
+
+      - name: Run Test Suite with Coverage
+        # The XML report and the JUnit log are what the mutation runs read
+        # instead of running the suite again.
+        run: >
+          tools/phpunit/vendor/bin/phpunit --colors=always
+          --coverage-clover var/coverage/clover.xml
+          --coverage-xml var/coverage/coverage-xml
+          --log-junit var/coverage/junit.xml
+
+      - name: Check the Line Coverage
+        run: php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-threshold
+
+      - name: Mutate the Changed Lines
+        if: github.event_name != 'schedule'
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: >
+          tools/infection/vendor/bin/infection
+          --coverage=var/coverage --skip-initial-tests
+          --git-diff-lines --git-diff-base="$BASE"
+          --ignore-msi-with-no-mutations
+          --only-covering-test-cases --threads=max
+
+      - name: Mutate the Parser
+        if: github.event_name == 'schedule'
+        run: >
+          tools/infection/vendor/bin/infection
+          --coverage=var/coverage --skip-initial-tests
+          --filter=src/Parser/
+          --only-covering-test-cases --threads=max
 
   phpstan:
     name: PHPStan (PHP ${{ matrix.php }}, ${{ matrix.dependency }})

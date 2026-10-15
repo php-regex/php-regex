@@ -100,8 +100,23 @@ constant and the code disagree, and `php tests/Tools/update_cache_version.php
 The fingerprint covers the code alone, comments and formatting stripped, so
 rewording a docblock costs nobody their cache.
 
-Mutation testing is deliberately not part of CI: it belongs on your machine,
-pointed at what you are working on. Run it with `composer infection`.
+## Coverage and mutations
+
+CI runs the suite under PCOV on one engine and fails when the line coverage
+drops below the percentage in `.github/coverage-threshold`. The number is
+raised by hand when a change raises the coverage; a drop is answered with a
+test, not a lower number. To read a report the same way:
+
+```bash
+php -d pcov.enabled=1 tools/phpunit/vendor/bin/phpunit --coverage-clover var/coverage/clover.xml
+php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-threshold
+```
+
+On that same coverage, CI mutates the lines a pull request or a push changes,
+held to the scores `infection.json.dist` declares, and every Monday the whole
+parser. Run mutation testing on your machine with `composer infection`,
+pointed at what you are working on (`--filter=src/Parser/Lexer.php`, or
+`--git-diff-lines --git-diff-base=origin/2.x` for your branch).
 
 ## Submitting Changes
 

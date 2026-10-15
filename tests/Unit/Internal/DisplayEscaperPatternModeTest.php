@@ -739,15 +739,13 @@ final class DisplayEscaperPatternModeTest extends TestCase
     }
 
     /**
-     * What preg_match() captures, JIT off, an empty list when it does not
-     * match; a compilation failure or an engine error is its message.
+     * What preg_match() captures, an empty list when it does not match; a
+     * compilation failure or an engine error is its message.
      *
      * @return array<array-key, string>|string
      */
     private static function captures(string $pattern, string $subject): array|string
     {
-        $jit = (string) \ini_get('pcre.jit');
-        \ini_set('pcre.jit', '0');
         $warning = null;
         set_error_handler(static function (int $errno, string $message) use (&$warning): bool {
             $warning = $message;
@@ -759,20 +757,17 @@ final class DisplayEscaperPatternModeTest extends TestCase
             $result = preg_match($pattern, $subject, $groups);
         } finally {
             restore_error_handler();
-            \ini_set('pcre.jit', $jit);
         }
 
         return false === $result ? 'error: '.($warning ?? preg_last_error_msg()) : $groups;
     }
 
     /**
-     * What preg_match() answers, JIT off; a compilation failure or an engine
-     * error is its message.
+     * What preg_match() answers; a compilation failure or an engine error is
+     * its message.
      */
     private static function oracle(string $pattern, string $subject): int|string
     {
-        $jit = (string) \ini_get('pcre.jit');
-        \ini_set('pcre.jit', '0');
         $warning = null;
         set_error_handler(static function (int $errno, string $message) use (&$warning): bool {
             $warning = $message;
@@ -784,7 +779,6 @@ final class DisplayEscaperPatternModeTest extends TestCase
             $result = preg_match($pattern, $subject);
         } finally {
             restore_error_handler();
-            \ini_set('pcre.jit', $jit);
         }
 
         return false === $result ? 'error: '.($warning ?? preg_last_error_msg()) : $result;
