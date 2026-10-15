@@ -131,6 +131,54 @@ final class ParserCacheFrontTest extends TestCase
 
         $this->assertSame(2, $cache->loads, 'A cache the application writes keeps its own policy: nothing is put in front of it.');
     }
+
+    /**
+     * A tree built in another process (a lint worker) is handed to the
+     * parser that parses the pattern next: it is kept in memory, not
+     * written to the persistent cache again.
+     */
+    #[Test]
+    public function test_a_remembered_tree_is_parsed_from_memory(): void
+    {
+        $pool = new CountingSimpleCache();
+        $tree = RegexParser::create()->parse('/a+b/');
+
+        $parser = RegexParser::create(['cache' => new PsrSimpleCacheAdapter($pool)]);
+        $parser->remember('/a+b/', $tree);
+
+        $this->assertSame($tree, $parser->parse('/a+b/'));
+        $this->assertSame(0, $pool->gets);
+        $this->assertSame([], $pool->stored, 'The persistent cache is not written again.');
+    }
+
+    #[Test]
+    public function test_a_tree_is_remembered_nowhere_without_a_cache_or_with_one_that_fails(): void
+    {
+        $tree = RegexParser::create()->parse('/a+b/');
+
+        $uncached = RegexParser::create(['cache' => null]);
+        $uncached->remember('/a+b/', $tree);
+        $this->assertNotSame($tree, $uncached->parse('/a+b/'), 'Without a cache every parse reads the pattern.');
+
+        $failing = RegexParser::create(['cache' => new class implements CacheInterface {
+            public function generateKey(string $seed): string
+            {
+                return hash('sha256', $seed);
+            }
+
+            public function write(string $key, RegexNode $ast): void
+            {
+                throw new \RuntimeException('The cache is full.');
+            }
+
+            public function load(string $key): ?RegexNode
+            {
+                return null;
+            }
+        }]);
+        $failing->remember('/a+b/', $tree);
+        $this->assertEquals($tree, $failing->parse('/a+b/'), 'A cache that cannot store leaves the parse to the parser.');
+    }
 }
 
 /**

@@ -102,7 +102,11 @@ final readonly class LintService
     public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null): LintReport
     {
         $progress?->step(LintProgress::STEP_ANALYSIS, \count($patterns));
-        $issues = $this->analysis->lint($patterns, $progress, $request->analysisWorkers);
+        // The optimizations take what the analysis read: no pattern is
+        // parsed or validated twice.
+        [$issues, $analyzed] = $request->checkOptimizations
+            ? $this->analysis->lintForSuggestions($patterns, $progress, $request->analysisWorkers)
+            : [$this->analysis->lint($patterns, $progress, $request->analysisWorkers), null];
         $progress?->finish();
         $issues = $this->filterLintIssues($issues);
         $issues = $this->filterIssuesByRequest($issues, $request);
@@ -112,7 +116,7 @@ final readonly class LintService
         $optimizations = [];
         if ($request->checkOptimizations) {
             $progress?->step(LintProgress::STEP_OPTIMIZATIONS, \count($patterns));
-            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress)), $request->minSavings);
+            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress, $analyzed)), $request->minSavings);
             $progress?->finish();
         }
 

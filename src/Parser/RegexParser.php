@@ -73,7 +73,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-0514ac9a3170121f4a3e71af3661947a';
+    public const CACHE_VERSION = 'ast-dd028a5cfd8214f6c37c3d1ee4b505ff';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -308,6 +308,26 @@ final readonly class RegexParser
         Validator::clearCaches();
         StaticCaches::clear();
         $this->front?->clear();
+    }
+
+    /**
+     * Keeps a tree this parser built for $regex, in another process or
+     * earlier, where the next parse() of $regex looks first: in memory when
+     * a persistent cache stands behind it, never written to disk again.
+     *
+     * @internal
+     */
+    public function remember(string $regex, RegexNode $ast): void
+    {
+        if ($this->cache instanceof NullCache) {
+            return;
+        }
+
+        try {
+            ($this->front ?? $this->cache)->write($this->cache->generateKey($this->getCacheSeed($regex)), $ast);
+        } catch (\Throwable) {
+            // A cache that cannot store leaves the next parse() to parse.
+        }
     }
 
     /**

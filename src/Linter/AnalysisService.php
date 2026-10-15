@@ -19,6 +19,7 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\Internal\AnalyzedPatterns;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
@@ -28,6 +29,7 @@ use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -191,6 +193,47 @@ final readonly class AnalysisService
     }
 
     /**
+     * The lint, and what it read of each pattern for suggestOptimizations()
+     * to take instead of parsing and validating it again: the workers send
+     * it back with their findings.
+     *
+     * @param array<PatternOccurrence> $patterns
+     * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
+     *                                           ones included
+     *
+     * @throws LintException when a worker fails
+     *
+     * @return array{0: list<LintIssue>, 1: AnalyzedPatterns}
+     */
+    public function lintForSuggestions(array $patterns, ?LintProgress $progress = null, int $workers = 1): array
+    {
+        $results = $this->runOnWorkers(
+            $patterns,
+            $workers,
+            function (array $chunk, ?\Closure $done): array {
+                $analyzed = [];
+                $results = $this->lintChunk($chunk, $done, $analyzed);
+                $results[] = new AnalyzedPatterns($analyzed);
+
+                return $results;
+            },
+            $progress,
+        );
+
+        $issues = [];
+        $analyzed = [];
+        foreach ($results as $result) {
+            if ($result instanceof AnalyzedPatterns) {
+                $analyzed += $result->byPattern;
+            } else {
+                $issues[] = $result;
+            }
+        }
+
+        return [$issues, new AnalyzedPatterns($analyzed)];
+    }
+
+    /**
      * @param array<PatternOccurrence> $patterns
      *
      * @throws LintException when a worker fails
@@ -213,19 +256,22 @@ final readonly class AnalysisService
      *                                           allows, every rewrite checked with the automata
      * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
      *                                           ones included
+     * @param AnalyzedPatterns|null    $analyzed what lintForSuggestions() read of the same patterns,
+     *                                           taken instead of parsing and validating them again
      *
      * @throws LintException when a worker fails
      *
      * @return array<OptimizationEntry>
      */
-    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1, ?LintProgress $progress = null): array
+    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1, ?LintProgress $progress = null, ?AnalyzedPatterns $analyzed = null): array
     {
         $options ??= new OptimizerOptions(verifyWithAutomata: true);
+        $byPattern = $analyzed->byPattern ?? [];
 
         return $this->runOnWorkers(
             $patterns,
             $workers,
-            fn (array $chunk, ?\Closure $done): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options, $done),
+            fn (array $chunk, ?\Closure $done): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options, $byPattern, $done),
             $progress,
         );
     }
@@ -245,12 +291,17 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<PatternOccurrence>   $patterns
-     * @param (\Closure(int): void)|null $done     told of each pattern analysed
+     * @param array<PatternOccurrence>                                       $patterns
+     * @param (\Closure(int): void)|null                                     $done     told of each pattern analysed
+     * @param array<string, array{0: ValidationResult, 1: string|null}>|null $analyzed given, what was read of each
+     *                                                                                 pattern: its validation, the
+     *                                                                                 serialized tree of a valid one
+     *
+     * @param-out ($analyzed is null ? null : array<string, array{0: ValidationResult, 1: string|null}>) $analyzed
      *
      * @phpstan-return list<LintIssue>
      */
-    private function lintChunk(array $patterns, ?\Closure $done = null): array
+    private function lintChunk(array $patterns, ?\Closure $done = null, ?array &$analyzed = null): array
     {
         $issues = [];
 
@@ -285,6 +336,9 @@ final readonly class AnalysisService
             }
 
             $validation = $this->regex->validate($occurrence->pattern);
+            if (null !== $analyzed && !$validation->isValid) {
+                $analyzed[$occurrence->pattern] = [$validation, null];
+            }
             $source = $occurrence->source;
             if (!$validation->isValid && ValidationErrorCategory::Limit === $validation->category) {
                 // The library gave up: a warning that the pattern was not
@@ -361,6 +415,9 @@ final readonly class AnalysisService
             }
 
             $ast = $this->regex->parse($occurrence->pattern);
+            if (null !== $analyzed) {
+                $analyzed[$occurrence->pattern] = [$validation, AstSerializer::serialize($ast)];
+            }
 
             // Accepted everywhere, the pattern may still read otherwise on a
             // later PHP: the same text, another tree.
@@ -616,17 +673,18 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<PatternOccurrence>   $patterns
-     * @param (\Closure(int): void)|null $done     told of each pattern looked at
+     * @param array<PatternOccurrence>                                  $patterns
+     * @param array<string, array{0: ValidationResult, 1: string|null}> $analyzed what the analysis read of each pattern
+     * @param (\Closure(int): void)|null                                $done     told of each pattern looked at
      *
      * @return list<OptimizationEntry>
      */
-    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options, ?\Closure $done = null): array
+    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options, array $analyzed, ?\Closure $done = null): array
     {
         $suggestions = [];
 
         foreach ($patterns as $occurrence) {
-            $suggestion = $this->suggestOptimization($occurrence, $minSavings, $options);
+            $suggestion = $this->suggestOptimization($occurrence, $minSavings, $options, $analyzed[$occurrence->pattern] ?? null);
             if (null !== $suggestion) {
                 $suggestions[] = $suggestion;
             }
@@ -640,9 +698,11 @@ final readonly class AnalysisService
     }
 
     /**
+     * @param array{0: ValidationResult, 1: string|null}|null $analyzed what the analysis read of the pattern
+     *
      * @return OptimizationEntry|null
      */
-    private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options): ?array
+    private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options, ?array $analyzed = null): ?array
     {
         $verifyWithAutomata = $options->verifyWithAutomata;
 
@@ -650,10 +710,17 @@ final readonly class AnalysisService
             return null;
         }
 
-        $validation = $this->regex->validate($occurrence->pattern);
+        [$validation, $tree] = $analyzed ?? [$this->regex->validate($occurrence->pattern), null];
         $source = $occurrence->source;
         if (!$validation->isValid) {
             return null;
+        }
+
+        // The tree the analysis built, where every parse of the pattern
+        // below looks first: the rewrite and its checks parse it again.
+        $ast = null === $tree ? null : AstSerializer::unserialize($tree);
+        if (null !== $ast) {
+            $this->regex->remember($occurrence->pattern, $ast);
         }
 
         $isExtended = $this->usesExtendedMode($occurrence->pattern);
@@ -773,6 +840,7 @@ final readonly class AnalysisService
         }
 
         $allowed = [
+            AnalyzedPatterns::class,
             ValidationResult::class,
             ValidationErrorCategory::class,
             OptimizationResult::class,

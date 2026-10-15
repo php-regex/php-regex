@@ -127,13 +127,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### C. The CLI
 
-**C9 — The lint run leaves time on the table.** Measured on a 300k-file
-corpus with 10 workers: `suggestOptimizations` parses every pattern a second
-time (`AnalysisService`), and runs as a pass of its own after the lint pass
-where one pass per pattern could do both; the console report takes about 4 s
-to render. *Fix*: share the parse between the two analyses, then one pass.
-Effort: M.
-
 **C12 — One pattern holds `[3/3] Suggesting optimizations` for 11 s.** On
 the 300k-file corpus the step sits at 99 % while one worker proves the
 rewrite of craftcms's mobile user-agent alternation
