@@ -81,6 +81,13 @@ final class SubsetConstruction implements DeterminizationAlgorithmInterface, Wor
             $stateRanges = [];
 
             foreach ($alphabetRanges as [$start, $end]) {
+                // Each range writes a transition of the table: with the
+                // hundreds of ranges a Unicode class splits the alphabet
+                // into, the table outgrows the moves of the NFA.
+                if (null !== $this->budget) {
+                    $this->budget->consume();
+                }
+
                 $symbol = $start;
                 $moveSet = $this->move($currentSet, $symbol, $nfa);
                 $targetSet = $this->epsilonClosure($moveSet, $nfa);

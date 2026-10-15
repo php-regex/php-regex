@@ -15,6 +15,7 @@ namespace PHPRegex\Linter;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\ProjectTarget;
@@ -62,6 +63,14 @@ use PHPRegex\Redos\RedosSeverity;
 final readonly class AnalysisService
 {
     private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
+
+    /**
+     * The transitions the language check of a rewrite under /x may process,
+     * as the optimizer's own check: a Unicode class splits the alphabet into
+     * hundreds of ranges, a transition each for every DFA state, and at the
+     * solver's default budget one pattern's table took hundreds of megabytes.
+     */
+    private const REWRITE_CHECK_WORK = 200_000;
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
 
     private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
@@ -1245,7 +1254,7 @@ final readonly class AnalysisService
     {
         try {
             $solver = new LanguageSolver($this->regex, $this->dfas());
-            $result = $solver->equivalent($original, $optimized);
+            $result = $solver->equivalent($original, $optimized, new SolverOptions(maxTransitionsProcessed: self::REWRITE_CHECK_WORK));
 
             return $result->isEquivalent;
         } catch (ComplexityException $e) {

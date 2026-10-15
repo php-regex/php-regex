@@ -68,7 +68,9 @@ the same options in camelCase (`OptimizerOptions::fromCamelCaseArray()`).
 possessive quantifier change what the pattern matches, and factorization makes
 an `/x` pattern harder to read. `verify_with_automata` is off by default too:
 the proof builds automata for both patterns, which costs time on large ones,
-and a rewrite it disproves is withdrawn, the original pattern returned.
+and a rewrite it disproves is withdrawn, the original pattern returned. The
+proof works within a budget of its own: a check that runs out of it proves
+nothing, and the rewrite is withdrawn as well.
 
 Under `/x` the rewrite keeps the pattern as its author laid it out: only the
 parts it changes are written again, in place, and the newlines, indents and

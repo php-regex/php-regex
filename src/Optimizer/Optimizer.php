@@ -62,6 +62,17 @@ final readonly class Optimizer
      */
     private const MATCH_CHECK_WORK = 200_000;
 
+    /**
+     * The transitions the language check of a rewrite may process. Each DFA
+     * state writes a transition per range of the alphabet, and a Unicode
+     * class such as \pL splits it into hundreds of ranges: at the solver's
+     * default budget, one pattern's table took hundreds of megabytes before
+     * the check gave up. A check that runs out proves nothing, so the
+     * rewrite is not offered. The lint's check of a rewrite under /x spends
+     * the same.
+     */
+    private const LANGUAGE_CHECK_WORK = 200_000;
+
     private readonly LanguageSolver $solver;
 
     public function __construct(private RegexParser $parser, private ?DfaCacheInterface $dfaCache = null)
@@ -233,12 +244,12 @@ final readonly class Optimizer
             // strings must agree.
         }
 
-        // The default options bound the states and the transition work. A
-        // check that ran out of them proves nothing: the rewrite is not
-        // offered unproven. Only a pattern the automata cannot read at all
-        // keeps its rewrite on trust.
+        // The options bound the states and the transition work. A check
+        // that ran out of them proves nothing: the rewrite is not offered
+        // unproven. Only a pattern the automata cannot read at all keeps its
+        // rewrite on trust.
         try {
-            $result = $this->solver->equivalent($original, $optimized, new SolverOptions());
+            $result = $this->solver->equivalent($original, $optimized, new SolverOptions(maxTransitionsProcessed: self::LANGUAGE_CHECK_WORK));
 
             return $result->isEquivalent;
         } catch (ComplexityException $e) {

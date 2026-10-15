@@ -487,6 +487,10 @@ Large patterns can cause determinization or minimization to grow quickly, and
 character. You can enforce a hard work budget using
 `SolverOptions::maxTransitionsProcessed`: it counts the transitions of the
 determinization and the minimization, and the threads the match solver steps.
+The determinization counts each transition it writes, one per range of the
+alphabet for every state: a Unicode class such as `\pL` splits the alphabet
+into hundreds of ranges, so a pattern with a few hundred states reaches the
+budget, and the memory its table would take stays bounded.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;

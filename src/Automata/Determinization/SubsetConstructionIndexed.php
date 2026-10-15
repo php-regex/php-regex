@@ -97,6 +97,13 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
             }
 
             foreach ($alphabetRanges as $rangeIndex => [$start, $end]) {
+                // Each range writes a transition of the table: with the
+                // hundreds of ranges a Unicode class splits the alphabet
+                // into, the table outgrows the moves of the NFA.
+                if (null !== $this->budget) {
+                    $this->budget->consume();
+                }
+
                 $targets = $targetsByRange[$rangeIndex] ?? [];
                 /** @var array<int> $moveSet */
                 $moveSet = [] === $targets ? [] : \array_keys($targets);
