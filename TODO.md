@@ -127,13 +127,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### C. The CLI
 
-**C6 — A `jobs` below 1 means four different things.** *Verify*:
-`regex lint src --jobs=0` is a usage error (`LintArgumentParser.php`), as is
-`regex:lint --jobs 0` in Symfony; Laravel's `--jobs=0` means "count the CPUs";
-`"jobs": 0` in `regex.json` silently becomes "count the CPUs"
-(`LintArguments.php`) though the schema says `minimum: 1`. *Fix*: refuse it
-everywhere, or document "0 = auto" everywhere. Effort: S.
-
 **C7 — An undocumented ignore marker.** `LintService::shouldIgnoreIssue`
 honours `// @regex-lint-ignore` next to the documented `@regex-ignore` and
 `@regex-ignore-next-line`; the help and the docs never name it. *Fix*: drop it

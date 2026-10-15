@@ -48,6 +48,26 @@ final class UsageErrorExitCodeTest extends TestCase
         yield 'regex:compare with an unknown --minimizer' => ['regex:compare', ['pattern1' => '/a/', 'pattern2' => '/b/', '--minimizer' => 'nosuch']];
         yield 'regex:compare with an unknown --determinizer, before judging the patterns' => ['regex:compare', ['pattern1' => '/(/', 'pattern2' => '/b/', '--determinizer' => 'nosuch']];
         yield 'regex:lint with an unknown --format' => ['regex:lint', ['paths' => ['.'], '--format' => 'xml']];
+        yield 'regex:lint with --jobs=0' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '0']];
+        yield 'regex:lint with a negative --jobs' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '-3']];
+        yield 'regex:lint with a --jobs that is not a number' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => 'many']];
+        yield 'regex:lint with a fractional --jobs' => ['regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '1.5']];
+    }
+
+    /**
+     * A --jobs the lint cannot use is refused with the message the Symfony
+     * command gives, in the console and in the JSON document alike.
+     */
+    #[Test]
+    public function test_a_jobs_below_one_is_refused_with_a_message(): void
+    {
+        $this->assertSame(2, Artisan::call('regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '0']));
+        $this->assertStringContainsString('The --jobs value must be a positive integer.', Artisan::output());
+
+        $this->assertSame(2, Artisan::call('regex:lint', ['paths' => ['app'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '0', '--format' => 'json']));
+        $document = json_decode(Artisan::output(), true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertStringContainsString('The --jobs value must be a positive integer.', json_encode($document, \JSON_THROW_ON_ERROR));
     }
 
     #[Test]

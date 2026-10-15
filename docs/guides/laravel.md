@@ -182,6 +182,11 @@ Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
 
+`regex:lint --jobs=N` runs the analysis in `N` worker processes; left out,
+the count follows the CPUs (and the container's memory limit). A `--jobs`
+that is not a whole number of 1 or more is refused with exit code 2, as
+`regex lint` and Symfony's `regex:lint` refuse it.
+
 `regex:routes` lists the routes that have a constraint. `--show-constraints`
 prints each constraint, and `--validate` compiles each one as the router
 matches it, marking it `✓` or `✗` with the error: without `--validate` a

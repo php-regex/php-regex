@@ -280,6 +280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Laravel `regex:lint` refuses a `--jobs` that is not a whole number of 1 or more (`The --jobs value must be a positive integer.`, exit code 2), as `regex lint` and Symfony's `regex:lint` do: `--jobs=0`, a negative value or `--jobs=many` silently meant "count the CPUs".
 - The lint rules that ask the automata read their questions for the PHP and PCRE2 judged, not for the running ones: judged for PCRE2 10.42, `/(?=a\{)a{,2}$/` was reported as an impossible lookahead, reading `a{,2}` as the quantifier it is from 10.43, where it is the text `a{,2}`.
 - A "Did you mean" is data as well as prose: the near miss of a group name (`\k<nam>` for `name`) and the short form of a long property name (`\p{Letter}` gets `Did you mean \p{L}?`) are in `hint`, the message keeping them. The property suggestion never reached the message: it looked the name up with its `p` still on.
 - The language server puts an invalid pattern's `hint` on the line under its error, where only the error was published.

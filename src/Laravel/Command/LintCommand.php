@@ -64,7 +64,7 @@ final class LintCommand extends Command
         {paths?* : The paths to analyze}
         {--exclude=* : Paths to exclude}
         {--min-savings=1 : Minimum optimization savings in characters}
-        {--jobs=-1 : Parallel workers for analysis (auto-detected if not specified)}
+        {--jobs= : Parallel workers for analysis (auto-detected if not specified)}
         {--no-routes : Skip route validation}
         {--no-validators : Skip validator validation}
         {--format=console : Output format (console, json, github, checkstyle, junit)}';
@@ -123,9 +123,14 @@ final class LintCommand extends Command
             return self::INVALID;
         }
 
-        $jobs = (int) $this->option('jobs');
-        if ($jobs < 1) {
+        $jobs = $this->option('jobs');
+        if (null === $jobs) {
             $jobs = (new WorkerCount())->count();
+        } else {
+            $jobs = filter_var($jobs, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if (false === $jobs) {
+                return $this->renderFailure($format, 'The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, self::INVALID);
+            }
         }
 
         // The Regex service judges for the running PHP; the lint judges for
