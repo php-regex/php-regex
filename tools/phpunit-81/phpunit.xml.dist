@@ -9,7 +9,7 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          backupGlobals="false"
          colors="true"
-         bootstrap="bootstrap.php"
+         bootstrap="../../tests/bootstrap.php"
          cacheDirectory="../../.cache/phpunit-81/"
          executionOrder="random"
          displayDetailsOnIncompleteTests="true"

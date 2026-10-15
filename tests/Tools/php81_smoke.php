@@ -12,16 +12,15 @@ declare(strict_types=1);
  */
 
 /*
- * Runs each package that supports PHP 8.1 once, end to end, on the PHP that
- * runs the script: parse, validate, ReDoS, optimize, explain, generate,
+ * Runs the packages once, end to end, on the PHP that runs the script: parse, validate, ReDoS, optimize, explain, generate,
  * transpile, the lint of a directory through the CLI, and, given a PHPStan
  * binary, the PHPStan rule on a file.
  *
  *     php tests/Tools/php81_smoke.php [--phpstan=path/to/phpstan]
  *
- * The monorepo's autoloader checks for PHP 8.2, the floor of its Symfony and
- * Laravel bridges: the classes are loaded from the sources, as each package's
- * own autoloader would. Exits 1 on the first check that fails.
+ * The classes are loaded from the sources, as each package's own autoloader
+ * would, with no Composer install of the repository. Exits 1 on the first
+ * check that fails.
  */
 
 namespace PHPRegex\Tests\Tools;
@@ -108,7 +107,7 @@ if (null !== $phpstan) {
     file_put_contents($directory.'/phpstan.neon', "includes:\n    - ".$root."/src/PHPStan/extension.neon\n    - ".$root."/src/PHPStan/rules.neon\nparameters:\n    level: 0\n    tmpDir: ".$directory."/cache\n");
     file_put_contents($directory.'/redos.php', "<?php\n\npreg_match('/^(a+)+$/', \$subject);\n");
     // Run from the temporary directory: PHPStan loads the autoloader of the
-    // project it starts in, and the monorepo's refuses PHP 8.1.
+    // project it starts in, and the rule must load from the sources alone.
     $command = 'cd '.escapeshellarg($directory).' && XDEBUG_MODE=off '.escapeshellarg(\PHP_BINARY).' -d memory_limit=-1 '.escapeshellarg($phpstan).' analyse --no-progress --error-format=json -a autoload.php -c phpstan.neon redos.php fine.php';
     $output = trim((string) shell_exec($command.' 2>/dev/null'));
     $lines = explode("\n", $output);
