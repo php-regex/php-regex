@@ -11,13 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**16. No deprecation channel exists.** `src/` carries no `@deprecated` tag
-and no runtime deprecation notice, and several items above retire a seam
-that is already load-bearing. Without a channel, nothing accidental can ever
-be retired after the freeze. *Fix*: pick the pattern now (a small helper, or
-plain `trigger_deprecation`), wire it, and mark the seams retired by items
-2, 11 and 13 as its first users. Effort: S.
-
 ### Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +

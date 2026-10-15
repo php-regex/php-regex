@@ -225,7 +225,14 @@ add one to yet.
   its analysis reads a case it missed, and the CHANGELOG names the rule. A
   patch only removes a false positive.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
-  with the replacement named.
+  with the replacement named. A deprecated class, method, option or
+  configuration key carries `@deprecated since <package> <version>, use <replacement>`
+  and raises a silenced `E_USER_DEPRECATED` notice when it is used, worded as
+  Symfony's `trigger_deprecation()` words one:
+  `Since php-regex/regex-parser 2.1: … use … instead.` It keeps working for the
+  rest of 2.x. Symfony's deprecation handler and PHPUnit's
+  `--display-deprecations` list these notices, so a project finds them before
+  3.0 removes the element.
 
 ## What stays for all of 2.x
 
