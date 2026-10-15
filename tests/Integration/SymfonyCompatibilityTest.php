@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration;
 
-use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\CallLike;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
@@ -139,8 +139,8 @@ final class SymfonyCompatibilityTest extends TestCase
     {
         $rule = new RegexPatternRule(config: []);
 
-        // Complete patterns should be validated
-        $this->assertSame(FuncCall::class, $rule->getNodeType());
+        // Function and static calls alike: a wrapper library's Preg::match() is judged too
+        $this->assertSame(CallLike::class, $rule->getNodeType());
     }
 
     public function test_complex_symfony_routing_pattern(): void
