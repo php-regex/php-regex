@@ -12,6 +12,8 @@ CHANGELOG
  * `regex analyze` and `regex debug` show no hotspot for a pattern proven
    safe, and `debug` lists its findings under `Heuristic hints`: the proof
    overrides the heuristics they come from.
+ * `regex debug` names no culprit or trigger and generates no attack subject
+   for a pattern proven safe; a subject given with `--input` is still shown.
  * The progress and the steps of `regex lint` go to stderr, so that a report
    redirected to a file holds no progress frames; the run has a third step,
    `[3/3] Suggesting optimizations`, and its clock keeps running while the

@@ -107,10 +107,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Seen on the way, not yet verified to the end; each is small and additive.
 
-- **`regex debug` keeps heuristic leftovers on a proven-safe pattern.** The
-  hotspot is gone, but `regex debug '/a+/'` still prints `Culprit: a+`,
-  `Trigger: quantifier +` and an attack `Input: "aaaaaaaaaa!" (auto)` under a
-  proof of safety. Hide them, or label them as hints, as the findings are.
 - **Conditionals without a backslash are not resolved.**
   `GroupIndex::groupsReferencedBy()` (`src/Parser/Internal/GroupIndex.php`)
   leaves `(?(+1)…)` and `(?(1)…)` out; `JsonDumper` works around it. Fold the

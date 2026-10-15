@@ -460,6 +460,10 @@ and the exit code is 1.
 | `value` | string \| null | The subject given with `--input`, or one generated from the verdict; `null` when there is neither |
 | `source` | string \| null | `user` for `--input`, `auto` for a generated subject, `null` without one; an open set |
 
+No subject is generated for a pattern proven safe: with no `--input`, both
+keys are `null`. The analysis still carries `vulnerable_part` and `trigger`,
+as hints the proof overrides.
+
 ## Redos
 
 `regex redos <pattern> --format=json` times the pattern against a subject,
@@ -898,7 +902,8 @@ verdict from the proof when there is one. They are hints, not verdicts: next
 to `"proof": "proven"` and `"complexity": "linear"` they may still name a
 `medium` construct, as `/a+/` does, and the proof overrides them. The console
 of `analyze` and `debug` shows no hotspot for such a verdict, and `debug` lists
-its findings as heuristic hints.
+its findings as heuristic hints, names no culprit or trigger, and builds no
+attack subject.
 
 | key | type | meaning |
 |---|---|---|
