@@ -459,7 +459,7 @@ final class PackageManifestTest extends TestCase
 
     /**
      * Symfony 6.4, the LTS that runs on PHP 8.1, then the supported 7.4 and
-     * 8; Laravel 10, which runs on PHP 8.1, to 13.
+     * 8; Laravel 10.37, the first the tests run on PHP 8.1, to 13.
      */
     #[Test]
     #[DataProvider('provideFrameworkBridges')]
@@ -483,7 +483,7 @@ final class PackageManifestTest extends TestCase
     {
         yield 'Symfony bundle' => ['directory' => 'Symfony', 'prefix' => 'symfony/', 'constraint' => '^6.4|^7.4|^8.0'];
         yield 'Laravel on Symfony Console' => ['directory' => 'Laravel', 'prefix' => 'symfony/', 'constraint' => '^6.4|^7.4|^8.0'];
-        yield 'Laravel' => ['directory' => 'Laravel', 'prefix' => 'illuminate/', 'constraint' => '^10.0|^11.0|^12.0|^13.0'];
+        yield 'Laravel' => ['directory' => 'Laravel', 'prefix' => 'illuminate/', 'constraint' => '^10.37|^11.0|^12.0|^13.0'];
     }
 
     #[Test]

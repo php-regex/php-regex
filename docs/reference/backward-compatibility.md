@@ -288,7 +288,7 @@ add one to yet.
   message changes.
 - The **PHP floor**, PHP 8.1, for every package: no 2.x release raises it.
   The Symfony bundle supports Symfony 6.4, 7.4 and 8, the Laravel integration
-  Laravel 10 to 13; a minor release may drop a framework release its
+  Laravel 10.37 to 13; a minor release may drop a framework release its
   maintainers no longer support.
 
 ## What a patch release may change

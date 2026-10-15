@@ -25,8 +25,8 @@ The other packages (`regex-explain`, `regex-optimizer`, `regex-generator`,
 the toolkit, or alone when only that part is needed.
 
 Every package runs on PHP 8.1 or later, `php-regex/php-regex` included:
-`regex-symfony` on Symfony 6.4, 7.4 and 8, `regex-laravel` on Laravel 10 to
-13.
+`regex-symfony` on Symfony 6.4, 7.4 and 8, `regex-laravel` on Laravel 10.37
+to 13.
 
 ### Names
 
