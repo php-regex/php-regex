@@ -85,7 +85,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     public function visitAlternation(AlternationNode $node): string
     {
         $this->addLine('Alternation');
-        $this->visitChildren(array_values($node->alternatives));
+        $this->visitChildren($node->alternatives);
 
         return '';
     }
@@ -94,7 +94,7 @@ final class AsciiTreeRenderer extends AbstractNodeVisitor
     public function visitSequence(SequenceNode $node): string
     {
         $this->addLine('Sequence');
-        $this->visitChildren(array_values($node->children));
+        $this->visitChildren($node->children);
 
         return '';
     }

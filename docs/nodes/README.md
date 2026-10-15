@@ -65,7 +65,7 @@ $newFlags = $ast->flags . 's';
 **Fields:**
 | Field | Type | Description |
 |-------|------|-------------|
-| `children` | array | Array of child nodes in order |
+| `children` | list | The child nodes in order; the constructor renumbers the array it is given, in the order given |
 
 **Example:**
 ```php
@@ -105,7 +105,7 @@ plus the start and end offsets of that value in the source pattern.
 
 | Field          | Type  | Description                                                   |
 |----------------|-------|---------------------------------------------------------------|
-| `alternatives` | array | The alternative nodes: a multi-item branch is a `SequenceNode`, a single atom stands bare |
+| `alternatives` | list | The alternative nodes: a multi-item branch is a `SequenceNode`, a single atom stands bare; the constructor renumbers the array it is given, in the order given |
 
 **Example:**
 ```php

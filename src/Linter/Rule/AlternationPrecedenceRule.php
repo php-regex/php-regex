@@ -78,7 +78,7 @@ final class AlternationPrecedenceRule extends AbstractLintRule
             return [];
         }
 
-        $alternatives = array_values($node->alternatives);
+        $alternatives = $node->alternatives;
         $first = $alternatives[0];
         $last = $alternatives[\count($alternatives) - 1];
         // An alternative that is the anchor alone, as in "a|$", means "or
@@ -318,7 +318,7 @@ final class AlternationPrecedenceRule extends AbstractLintRule
      */
     private static function branchText(NodeInterface $alternative, ?array $anchor, bool $start, string $source, array $quotes): string
     {
-        $children = $alternative instanceof SequenceNode ? array_values($alternative->children) : [$alternative];
+        $children = $alternative instanceof SequenceNode ? $alternative->children : [$alternative];
         $hole = null;
         if (null !== $anchor) {
             [, $hole] = $anchor;

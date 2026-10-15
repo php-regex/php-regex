@@ -21,14 +21,20 @@ use PHPRegex\Parser\NodeVisitorInterface;
 final readonly class AlternationNode extends AbstractNode
 {
     /**
-     * @param array<NodeInterface> $alternatives
+     * @var list<NodeInterface>
+     */
+    public array $alternatives;
+
+    /**
+     * @param array<NodeInterface> $alternatives Renumbered in the order given
      */
     public function __construct(
-        public array $alternatives,
+        array $alternatives,
         int $startPosition,
         int $endPosition
     ) {
         parent::__construct($startPosition, $endPosition);
+        $this->alternatives = array_values($alternatives);
     }
 
     public function accept(NodeVisitorInterface $visitor)
@@ -39,6 +45,6 @@ final readonly class AlternationNode extends AbstractNode
     #[\Override]
     public function getChildren(): array
     {
-        return array_values($this->alternatives);
+        return $this->alternatives;
     }
 }

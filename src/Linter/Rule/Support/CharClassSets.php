@@ -39,11 +39,11 @@ final class CharClassSets
     public static function collectParts(NodeInterface $node): array
     {
         if ($node instanceof AlternationNode) {
-            return array_values($node->alternatives);
+            return $node->alternatives;
         }
 
         if ($node instanceof SequenceNode) {
-            return array_values($node->children);
+            return $node->children;
         }
 
         return [$node];

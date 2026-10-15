@@ -158,7 +158,7 @@ final class NodePredicates
         }
 
         if ($node instanceof SequenceNode) {
-            return self::sequenceCanBeEmpty(array_values($node->children));
+            return self::sequenceCanBeEmpty($node->children);
         }
 
         if ($node instanceof AlternationNode) {
@@ -601,7 +601,7 @@ final class NodePredicates
         }
 
         if ($node instanceof SequenceNode) {
-            return self::tailCanMatchNewline(array_values($node->children), $analyzer, $dotAll, $newline);
+            return self::tailCanMatchNewline($node->children, $analyzer, $dotAll, $newline);
         }
 
         if ($node instanceof ConditionalNode) {
@@ -744,7 +744,7 @@ final class NodePredicates
         }
 
         if ($node instanceof SequenceNode) {
-            return self::alwaysMatchesEmpty(array_values($node->children), $atEnd);
+            return self::alwaysMatchesEmpty($node->children, $atEnd);
         }
 
         if ($node instanceof ConditionalNode) {

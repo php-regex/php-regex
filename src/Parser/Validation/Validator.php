@@ -570,7 +570,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $previous = $this->previousNode;
         $next = $this->nextNode;
-        $children = \array_values($node->children);
+        $children = $node->children;
         $total = \count($children);
         $last = null;
 

@@ -287,7 +287,7 @@ final class PnfaBuilder
             $flags = $this->flagsAfter($child, $flags);
         }
 
-        [$children, $states] = $this->normalized(array_values($node->children), $states);
+        [$children, $states] = $this->normalized($node->children, $states);
         for ($index = \count($children) - 1; $index >= 0; $index--) {
             $next = $this->node($children[$index], $next, $states[$index], $pnfa, $search);
         }

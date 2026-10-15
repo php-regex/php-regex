@@ -85,7 +85,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         }
 
         $issues = [];
-        $children = array_values($node->children);
+        $children = $node->children;
         $count = \count($children);
         $flagsAtChild = null;
         $spelled = false;
@@ -101,7 +101,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
                 if (!$skipForMultiline) {
                     $anchorLabel = NodePredicates::anchorDisplay($child);
-                    $prefix = array_values(array_slice($children, 0, $i));
+                    $prefix = array_slice($children, 0, $i);
                     if ([] !== $prefix && !NodePredicates::sequenceCanBeEmpty($prefix)) {
                         $issues[] = new RuleViolation(
                             'regex.lint.anchor.impossible.start',
@@ -118,7 +118,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
             if (NodePredicates::isEndAnchorNode($child)) {
                 $anchorLabel = NodePredicates::anchorDisplay($child);
-                $tail = array_values(array_slice($children, $i + 1));
+                $tail = array_slice($children, $i + 1);
                 if ([] !== $tail
                     && !NodePredicates::sequenceCanBeEmpty($tail)
                     && !$this->tailCanContinueEndOfLine($child, $tail, $flags, $node, $context)
@@ -352,7 +352,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 $index = array_search($child, $parent->children, true);
 
                 if (false !== $index) {
-                    $followers = array_values(array_slice($parent->children, (int) $index + 1));
+                    $followers = array_slice($parent->children, (int) $index + 1);
                     if (!NodePredicates::alwaysMatchesEmpty($followers, true)) {
                         return false;
                     }

@@ -170,7 +170,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         $budget = self::MAX_CONTINUATION_LENGTH;
         foreach (array_reverse($parents) as $parent) {
             if ($parent instanceof SequenceNode) {
-                $children = array_values($parent->children);
+                $children = $parent->children;
                 $index = array_search($child, $children, true);
                 if (!\is_int($index)) {
                     return null; // never taken: each parent on the stack holds the node walked before it

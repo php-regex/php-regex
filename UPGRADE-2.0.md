@@ -836,6 +836,15 @@ others returns them, in pattern order. Custom visitors should extend
 `AbstractNodeVisitor`, never implement `NodeVisitorInterface` directly: a
 new kind of node adds a method to the interface.
 
+#### Sequences and alternations hold lists
+
+`SequenceNode::$children` and `AlternationNode::$alternatives` are
+`list<NodeInterface>`: both constructors renumber the array they are given,
+in the order given, so `new SequenceNode(['x' => $a, 'y' => $b], 0, 2)` holds
+`[$a, $b]`. 1.x kept the keys. An extension that kept a key across
+`array_filter()` and read it back on the node it built from the result reads
+by position instead: `$node->children[0]` for the first child kept.
+
 #### The cache stores trees, in memory by default
 
 `CacheInterface` now takes and gives back the tree itself:
@@ -848,7 +857,9 @@ public function load(string $key): ?RegexNode;
 `getTimestamp()` is gone, and so are `CachePayloadDecoder`,
 `FilesystemCache::defaultDirectory()` and the file extension argument of
 `FilesystemCache`. A custom cache stores the tree as it likes and returns
-`null` for anything that is not one.
+`null` for anything that is not one. A tree it returns must be one the
+library built, stored and read back as is: a tree put together without the
+node constructors is not held to the lists above.
 
 Without a `cache` option, `Regex::create()` keeps the latest 1024 trees in
 memory (`ArrayCache`) instead of writing files under the system temp
