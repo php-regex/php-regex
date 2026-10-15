@@ -259,7 +259,7 @@ final class LintCommandEdgeCasesTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(fn (): int => $command->run($this->makeInput([...$paths, '--format=json', '--no-redos', '--no-optimize']), $this->makeOutput()), $exitCode);
 
-        $this->assertSame(0, $exitCode);
+        $this->assertSame(0, $exitCode, $buffer);
         $end = strrpos($buffer, '}');
         $this->assertNotFalse($end);
         $document = json_decode(substr($buffer, 0, $end + 1), true);
