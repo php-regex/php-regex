@@ -48,6 +48,8 @@ final class ResultPropertiesTest extends TestCase
     public static function provideResults(): iterable
     {
         yield 'AnalysisReport' => ['class' => AnalysisReport::class, 'methods' => ['__construct']];
-        yield 'ValidationResult' => ['class' => ValidationResult::class, 'methods' => ['__construct', 'jsonSerialize']];
+        // render() composes the properties into the text a console prints;
+        // it repeats none of them.
+        yield 'ValidationResult' => ['class' => ValidationResult::class, 'methods' => ['__construct', 'jsonSerialize', 'render']];
     }
 }
