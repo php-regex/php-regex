@@ -154,6 +154,38 @@ final class DiagnosticConverter
     }
 
     /**
+     * A ReDoS verdict, as `regex lint` reports it: over the risky part of
+     * the body when the analysis names one, over the whole body otherwise.
+     *
+     * @param list<string> $evidence the lines under the verdict: the attack, its replay
+     * @param Position     $start
+     *
+     * @return array<string, mixed>
+     */
+    public function fromRedos(string $code, string $message, array $evidence, bool $error, array $start, int $patternLength, ?int $from = null, ?int $to = null): array
+    {
+        $from = null === $from ? 0 : min(max($from, 0), $patternLength);
+        $to = null === $to || $to <= $from ? $patternLength : min($to, $patternLength);
+
+        return [
+            'range' => [
+                'start' => [
+                    'line' => $start['line'],
+                    'character' => $start['character'] + $from,
+                ],
+                'end' => [
+                    'line' => $start['line'],
+                    'character' => $start['character'] + $to,
+                ],
+            ],
+            'severity' => $error ? self::SEVERITY_ERROR : self::SEVERITY_WARNING,
+            'code' => $code,
+            'source' => 'php-regex',
+            'message' => implode("\n", [$message, ...$evidence]),
+        ];
+    }
+
+    /**
      * The fix on the line under the error, unless the message already
      * suggests it.
      */

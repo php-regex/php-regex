@@ -125,14 +125,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### D. The language server
 
-**D2 — No ReDoS signal in the editor.** The pipeline is parse, validate, lint:
-`/(a+)+$/` in a document yields the two lint findings and nothing critical. The
-documentation says so, and the editor is then the only surface where a
-catastrophic pattern looks harmless.
-*Verify*: read `src/LanguageServer/Handler/TextDocumentHandler.php:240-266`.
-*Fix*: optional analysis behind an initialization option. Effort: L.
-*Decision*: worth the cost on large files, or not.
-
 **D6 — The diagnostic ranges are approximate.** Every lint rule is reported
 over a single character, and the parse and validation ranges are computed in
 file coordinates with an offset that runs past the closing delimiter, the

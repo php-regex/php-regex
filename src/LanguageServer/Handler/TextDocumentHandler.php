@@ -20,11 +20,15 @@ use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -42,12 +46,16 @@ final readonly class TextDocumentHandler
     private DiagnosticConverter $diagnosticConverter;
 
     /**
-     * @param array<string, bool> $lintRules the lint rules regex.json turns on or off, by id
+     * @param array<string, bool> $lintRules      the lint rules regex.json turns on or off, by id
+     * @param RedosMode           $redosMode      the ReDoS analysis to run, none by default
+     * @param RedosSeverity       $redosThreshold the lowest ReDoS severity reported
      */
     public function __construct(
         private DocumentManager $documents,
         private Regex $regex,
-        private array $lintRules = []
+        private array $lintRules = [],
+        private RedosMode $redosMode = RedosMode::Off,
+        private RedosSeverity $redosThreshold = RedosSeverity::High,
     ) {
         $this->diagnosticConverter = new DiagnosticConverter();
     }
@@ -274,7 +282,15 @@ final readonly class TextDocumentHandler
                 $linter = new PatternLinter($this->lintRules);
                 $ast->accept($linter);
 
+                $redos = RedosMode::Off === $this->redosMode ? null : $this->regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
+
                 foreach ($linter->getIssues() as $issue) {
+                    // The heuristic rules guess what the analysis just proved:
+                    // once it shows the pattern linear, their warnings go.
+                    if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
+                        continue;
+                    }
+
                     // A raw character the literal spells with an escape, as
                     // a double-quoted "\t", is no raw character in the source.
                     if (InvisibleCharacterRule::ID === $issue->id
@@ -288,6 +304,10 @@ final readonly class TextDocumentHandler
                         $bodyStart,
                         $bodyLength,
                     );
+                }
+
+                if (null !== $redos) {
+                    array_push($diagnostics, ...$this->redosDiagnostics($redos, $bodyStart, $bodyLength));
                 }
             } catch (LimitException $e) {
                 $diagnostics[] = $this->diagnosticConverter->fromLimit($e->getMessage(), $e->errorCode, $bodyStart, $bodyLength);
@@ -308,5 +328,50 @@ final readonly class TextDocumentHandler
             'uri' => $uri,
             'diagnostics' => $diagnostics,
         ]);
+    }
+
+    /**
+     * The verdict and the search cost `regex lint` reports for the analysis,
+     * under the same ids, severities and words.
+     *
+     * @param array{line: int, character: int} $bodyStart
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function redosDiagnostics(RedosAnalysis $redos, array $bodyStart, int $bodyLength): array
+    {
+        $diagnostics = [];
+
+        if (RedosVerdict::reported($redos, $this->redosThreshold, $this->redosMode)) {
+            $hotspot = $redos->primaryHotspot();
+            $diagnostics[] = $this->diagnosticConverter->fromRedos(
+                RedosVerdict::ISSUE_ID,
+                RedosVerdict::message($redos),
+                RedosVerdict::evidence($redos),
+                RedosVerdict::isError($redos),
+                $bodyStart,
+                $bodyLength,
+                $hotspot?->start,
+                $hotspot?->end,
+            );
+        }
+
+        // One attempt proven linear, the search retrying it is not.
+        $searchCost = $redos->searchCost;
+        if (null !== $searchCost
+            && false !== ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
+            && false !== ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null)
+            && RedosVerdict::searchSeverity($searchCost)->rank() >= $this->redosThreshold->rank()) {
+            $diagnostics[] = $this->diagnosticConverter->fromRedos(
+                RedosVerdict::SEARCH_ISSUE_ID,
+                RedosVerdict::searchMessage($searchCost),
+                RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion),
+                false,
+                $bodyStart,
+                $bodyLength,
+            );
+        }
+
+        return $diagnostics;
     }
 }

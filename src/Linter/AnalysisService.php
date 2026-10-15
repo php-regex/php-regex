@@ -47,7 +47,6 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
-use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
@@ -64,14 +63,8 @@ final readonly class AnalysisService
 {
     private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
-    private const ISSUE_ID_REDOS = 'regex.lint.redos';
 
     private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
-    private const RISK_LINT_ISSUE_IDS = [
-        'regex.lint.quantifier.nested' => true,
-        'regex.lint.dotstar.nested' => true,
-        'regex.lint.overlap.charset' => true,
-    ];
 
     private RedosSeverity $redosSeverityThreshold;
 
@@ -449,7 +442,7 @@ final readonly class AnalysisService
                 $code = null;
 
                 foreach ($linter->getIssues() as $issue) {
-                    if ($skipRiskAnalysis && isset(self::RISK_LINT_ISSUE_IDS[$issue->id])) {
+                    if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
                         continue;
                     }
 
@@ -512,19 +505,19 @@ final readonly class AnalysisService
                 if ($redos->isProvenSafe()) {
                     $lintIssues = array_values(array_filter(
                         $lintIssues,
-                        static fn (array $issue): bool => !isset(self::RISK_LINT_ISSUE_IDS[$issue['issueId']]),
+                        static fn (array $issue): bool => !isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue['issueId']]),
                     ));
                 }
 
-                if ($this->shouldReportRedos($redos, $this->redosSeverityThreshold)) {
+                if (RedosVerdict::reported($redos, $this->redosSeverityThreshold, $this->redosMode)) {
                     $riskIssues[] = [
-                        'type' => $this->resolveRedosIssueType($redos),
+                        'type' => RedosVerdict::isError($redos) ? 'error' : 'warning',
                         'file' => $occurrence->file,
                         'line' => $occurrence->line,
                         'column' => $this->resolveColumn($occurrence),
                         'fileOffset' => $occurrence->fileOffset,
-                        'issueId' => self::ISSUE_ID_REDOS,
-                        'message' => $this->formatRedosMessage($redos),
+                        'issueId' => RedosVerdict::ISSUE_ID,
+                        'message' => RedosVerdict::message($redos),
                         'hint' => $this->getReDoSHint($redos, $occurrence->pattern),
                         'source' => $source,
                         'analysis' => $redos,
@@ -658,7 +651,7 @@ final readonly class AnalysisService
                 $this->redosConfirmOptions,
             );
 
-            if (!$this->shouldReportRedos($analysis, $threshold)) {
+            if (!RedosVerdict::reported($analysis, $threshold, $this->redosMode)) {
                 continue;
             }
 
@@ -1306,42 +1299,6 @@ final readonly class AnalysisService
             LintSeverity::Warning => 'warning',
             LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'info',
         };
-    }
-
-    private function resolveRedosIssueType(RedosAnalysis $analysis): string
-    {
-        if (RedosVerdict::standsConfirmed($analysis) && $analysis->exceedsThreshold(RedosSeverity::High)) {
-            return 'error';
-        }
-
-        return 'warning';
-    }
-
-    private function formatRedosMessage(RedosAnalysis $analysis): string
-    {
-        return RedosVerdict::message($analysis);
-    }
-
-    /**
-     * Whether a verdict is reported: at or above the threshold, and in
-     * confirmed mode only when the engine confirmed it, except a verdict the
-     * engine could not replay, a proof reported as a confirmed one and a
-     * heuristic verdict as a warning, and a polynomial verdict, which is
-     * never replayed and is reported as it stands.
-     */
-    private function shouldReportRedos(RedosAnalysis $analysis, RedosSeverity $threshold): bool
-    {
-        if (!$analysis->exceedsThreshold($threshold)) {
-            return false;
-        }
-
-        if (RedosMode::Confirmed !== $this->redosMode
-            || RedosVerdict::standsConfirmed($analysis)
-            || RedosVerdict::replaySkipped($analysis)) {
-            return true;
-        }
-
-        return RedosComplexity::Polynomial === $analysis->complexity && null === $analysis->replayed;
     }
 
     /**
