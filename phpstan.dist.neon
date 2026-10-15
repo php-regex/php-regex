@@ -128,22 +128,18 @@ parameters:
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
 
     ignoreErrors:
-        # The gate self-test asserts every skip message verbatim by catching
-        # the skip — the class is PHPUnit-internal, its message is the very
-        # contract under test — and its sentinel comparisons read the floor
-        # every runner must meet, which the analyser folds against the
-        # composer floor of the machine it happens to run on.
-        - identifiers:
-            - catch.internalClass
-            - greaterOrEqual.alwaysTrue
-            - greaterOrEqual.alwaysFalse
-          paths:
-            - tests/Unit/Support/PcreGatesTest.php
+        # The test of the engine version skips asserts every skip message
+        # verbatim by catching the skip: the class is PHPUnit-internal, its
+        # message is the very contract under test.
+        - identifier: catch.internalClass
+          path: tests/Unit/Support/PcreGatesTest.php
         # Symfony 8.1 validates through validateInContext(); the bundle also
         # supports 7.4, which has no such method, so the test drives the
-        # validator through initialize() and validate() there.
+        # validator through initialize() and validate() there. Symfony 7.4,
+        # the one PHP 8.2 and 8.3 install, deprecates neither.
         - identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
+          reportUnmatched: false
         # The worker pool test hands run() a chunk result that is not a list on
         # purpose: it is the only way to reach the guard that refuses one.
         - message: '#^Unable to resolve the template type R in call to method PHPRegex\\Linter\\Internal\\ForkedWorkerPool::run\(\)$#'
@@ -161,9 +157,6 @@ parameters:
           path: src/Cli/Application.php
         - identifiers:
             - classConstant.internalClass
-            # Unicode lint rules are style warnings - too noisy for our codebase
-            # Many patterns intentionally use ASCII-only matching
-            - regex.lint.unicode.shorthandWithoutU
             # PHPUnit assertions that PHPStan considers redundant
             - method.alreadyNarrowedType
         # The bare (?flags) predicate does real work beyond the type it
@@ -178,9 +171,11 @@ parameters:
         # added, as (?[...]), (*scs:...), (?^i) or a \K inside a lookbehind,
         # and only match with it when it compiles: the analysis, run on an
         # older PCRE2, cannot compile them. Revisit once PHPStan's own regexp
-        # rule learns to read the engine version instead of refusing.
+        # rule learns to read the engine version instead of refusing. On a
+        # recent PCRE2 every pattern compiles and nothing is left to ignore.
         - identifiers:
             - regexp.pattern
+          reportUnmatched: false
           paths:
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleExtensionNeonRangeTest.php
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupEdgeTest.php
@@ -288,4 +283,4 @@ parameters:
           path: src/Psalm/Internal/PregCallAnalyzer.php
           count: 5
 
-    reportUnmatchedIgnoredErrors: false
+    reportUnmatchedIgnoredErrors: true

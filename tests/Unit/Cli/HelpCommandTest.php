@@ -936,7 +936,6 @@ final class HelpCommandTest extends TestCase
         } finally {
             /** @var array<int, string>|null $originalArgv */
             if (null === $originalArgv) {
-                /* @phpstan-ignore-next-line */
                 unset($_SERVER['argv']);
             } else {
                 $_SERVER['argv'] = $originalArgv;
