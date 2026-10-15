@@ -49,4 +49,19 @@ final class RedosAnalysisSurfaceTest extends TestCase
         $this->assertFalse((new \ReflectionClass(RedosAnalysis::class))->hasMethod('getCulpritNode'));
         $this->assertFalse((new \ReflectionClass(RedosAnalysis::class))->hasMethod('getPrimaryHotspot'));
     }
+
+    /**
+     * Under "iu" the proof pairs a character with its other case through
+     * the running PHP's mbstring tables, which follow the PHP release, not
+     * the PCRE2 one: the verdict names both.
+     */
+    #[Test]
+    public function test_the_verdict_names_the_php_whose_case_tables_it_read(): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/iu');
+
+        $this->assertSame(\PHP_VERSION, $analysis->phpVersion);
+        $this->assertSame(\PHP_VERSION, $analysis->jsonSerialize()['php_version']);
+        $this->assertSame(\PHP_VERSION, (new RedosAnalysis(RedosSeverity::Safe, 0))->phpVersion);
+    }
 }

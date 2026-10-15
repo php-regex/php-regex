@@ -100,6 +100,27 @@ the answer for another target), the samples `generate()` checks, the ReDoS
 confirmation run, and `runtime_pcre_validation`, which compiles with the
 running PHP and is refused with a target that is not that engine.
 
+#### Verdicts that depend on the running PHP
+
+Case folding is not read from PCRE2. Where a verdict needs a character's
+other case under `iu`, it asks the running PHP's mbstring, whose Unicode
+tables ship with the PHP release, not with the target's PCRE2:
+
+- `regex.lint.flag.useless.i`: whether a letter has another case at all;
+- `regex.lint.alternation.overlap`: two branches compared caseless under `u`;
+- the ReDoS search-cost witness (`search_cost`): the other case a class may
+  read under `iu`;
+- the floor of the compiled size behind "Regular expression is too large": a
+  class of two case variants counts as one caseless character.
+
+PHP and PCRE2 update their Unicode data on their own schedules, so for a
+character a recent Unicode version added, two machines may disagree on one of
+these verdicts. The JSON outputs name the running PHP: `php_version` in a
+ReDoS verdict, beside `pcre_version`, and `host` in the lint report. A
+`\N{name}` is read with ICU when intl is loaded, but PCRE2 refuses
+`\N{name}` (only `\N{U+hhhh}` compiles), so that only shapes the message of a
+pattern the engine refuses.
+
 Error offsets follow the same rule. PCRE2 10.47 reports most syntax errors past
 the character at fault rather than on it (`/+/` at offset 1 rather than 0,
 `\y` at 2 rather than 1), and 10.45 moved a few (an unknown POSIX class is

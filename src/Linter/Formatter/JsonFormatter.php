@@ -51,6 +51,9 @@ final class JsonFormatter extends AbstractOutputFormatter
     {
         $data = null === $this->target ? [] : ['target' => $this->target];
         $data += [
+            // What ran the judgement: the PCRE2 that compiled the patterns
+            // and the PHP whose mbstring tables fold their case under "iu".
+            'host' => ['php' => \PHP_VERSION, 'pcre' => explode(' ', \PCRE_VERSION)[0]],
             // A report reader finds every key on every run, the optional
             // counts included.
             'stats' => [

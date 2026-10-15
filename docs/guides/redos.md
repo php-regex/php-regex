@@ -377,6 +377,7 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 "replayed": true,
 "abstractions": [],
 "pcre_version": "10.49",
+"php_version": "8.4.26",
 "analysis_version": "1",
 "search_cost": null
 ```

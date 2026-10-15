@@ -47,7 +47,7 @@ final class JsonContract
             'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part',
             'trigger', 'false_positive_risk', 'suggested_rewrite', 'recommendations', 'error', 'findings',
             'hotspots', 'confirmation', 'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions',
-            'pcre_version', 'analysis_version', 'search_cost',
+            'pcre_version', 'php_version', 'analysis_version', 'search_cost',
         ],
         'redos_analysis.findings[]' => ['severity', 'message', 'pattern', 'trigger', 'suggested_rewrite', 'confidence', 'false_positive_risk'],
         'redos_analysis.hotspots[]' => ['start', 'end', 'severity', 'pattern', 'trigger'],
@@ -65,7 +65,8 @@ final class JsonContract
         'error' => ['error', 'stage', 'validation'],
 
         // regex lint --format=json
-        'lint' => ['target', 'stats', 'results'],
+        'lint' => ['target', 'host', 'stats', 'results'],
+        'lint.host' => ['php', 'pcre'],
         'lint.target' => ['php', 'pcre', 'source', 'range'],
         'lint.target.range[]' => ['php', 'pcre'],
         'lint.stats' => ['errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks'],

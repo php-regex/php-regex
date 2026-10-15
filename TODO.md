@@ -11,15 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**15. mbstring makes some verdicts platform-relative.** Verdicts are
-stamped with the PCRE2 target, but case-insensitivity analysis folds with
-the host's mbstring tables (`Validator.php:3619`,
-`UselessIFlagRule.php:258`, `OverlappingAlternationRule.php:252`,
-`LastCodeUnit.php:599`), which drift independently of the chosen target:
-two machines can disagree on /i verdicts with no trace. *Fix*: inventory
-which verdicts are host-relative, then stamp the Unicode data in the
-analysis metadata or document the relativism. Effort: S-M.
-
 **16. No deprecation channel exists.** `src/` carries no `@deprecated` tag
 and no runtime deprecation notice, and several items above retire a seam
 that is already load-bearing. Without a channel, nothing accidental can ever

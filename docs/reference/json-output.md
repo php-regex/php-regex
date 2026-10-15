@@ -235,6 +235,7 @@ short for `--format=json`.
         "source": "composer.json require.php",
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
+    "host": {"php": "8.4.26", "pcre": "10.49"},
     "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0},
     "results": [
         {
@@ -283,6 +284,7 @@ short for `--format=json`.
 | key | type | meaning |
 |---|---|---|
 | `target` | object | The PHP and PCRE2 the patterns were judged for, and every PHP and PCRE2 they were validated at |
+| `host` | object | The PHP and PCRE2 that ran the lint |
 | `stats` | object | The counts of the run |
 | `results` | list of objects | One entry per pattern with at least one issue or optimization; `[]` when there is nothing to report |
 
@@ -304,6 +306,17 @@ OR constraint above the floor (`~8.3.0 || >=8.5.3` adds `8.5.3`), with the
 PCRE2 that PHP bundles, or with the release `--pcre-version` or `pcreVersion`
 names. See
 [Several PHP versions](../guides/cli.md#several-php-versions).
+
+### Host: `lint.host`
+
+| key | type | meaning |
+|---|---|---|
+| `php` | string | The running PHP, as `PHP_VERSION` spells it (`8.4.26`): under `iu` its mbstring tables give a character's other case |
+| `pcre` | string | The PCRE2 release the running PHP links, as `10.49`: it compiles the patterns and answers what only the engine knows |
+
+The host is not the target: a lint for PHP 8.2 may run on 8.4. It says
+which Unicode data a caseless verdict was computed with, see
+[Verdicts that depend on the running PHP](../concepts/pcre.md#verdicts-that-depend-on-the-running-php).
 
 ### Target range entry: `lint.target.range[]`
 
@@ -633,6 +646,7 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `replayed` | bool \| null | Whether the witness made the running PCRE fail; `null` when it was not replayed |
 | `abstractions` | list of strings | What the model analysed differently from the pattern as written |
 | `pcre_version` | string | The PCRE2 release the verdict was computed for, as `10.49` |
+| `php_version` | string | The PHP release that ran the analysis, as `8.4.26`: under `iu` the proof reads a character's other case from its mbstring tables |
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
 
