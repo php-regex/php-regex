@@ -65,6 +65,7 @@ final class QuantifiedMultibyteWithoutURule extends AbstractLintRule
                 $quantifier->getStartPosition(),
                 \sprintf('Add the /u flag, or group the character: (?:%s)%s.', $character, $quantifier->quantifier),
                 LintSeverity::Error,
+                end: $quantifier->getEndPosition(),
             );
         }
 

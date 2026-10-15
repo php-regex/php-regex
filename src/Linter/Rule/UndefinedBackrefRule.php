@@ -63,6 +63,7 @@ final class UndefinedBackrefRule extends AbstractLintRule
                     'regex.lint.backref.undefined',
                     "Backreference \\{$num} refers to a non-existent capturing group.",
                     $node->startPosition,
+                    end: $node->getEndPosition(),
                 )];
             }
 
@@ -75,6 +76,7 @@ final class UndefinedBackrefRule extends AbstractLintRule
                 'regex.lint.backref.undefined',
                 "Backreference \\k<{$name}> refers to a non-existent named group.",
                 $node->startPosition,
+                end: $node->getEndPosition(),
             )];
         }
 

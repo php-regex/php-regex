@@ -52,6 +52,7 @@ final class ShorthandWithoutURule extends AbstractLintRule
             $node->startPosition,
             'Add /u flag for Unicode support, or use \\p{L} for letters.',
             LintSeverity::Style,
+            end: $node->getEndPosition(),
         )];
     }
 }

@@ -118,6 +118,7 @@ final class LazyToClassRule extends AbstractLintRule
             $start,
             \sprintf('Write "%s" instead.', $suggested),
             LintSeverity::Perf,
+            $end,
         )];
     }
 }

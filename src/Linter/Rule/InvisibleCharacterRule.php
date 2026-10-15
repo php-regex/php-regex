@@ -162,6 +162,7 @@ final class InvisibleCharacterRule extends AbstractLintRule
                 \sprintf('The pattern holds a raw %s U+%04X, which does not show where the pattern is read.', self::kind($character), mb_ord($character, 'UTF-8')),
                 $offset,
                 $quoted ? \sprintf('Write "\E%s\Q" in its place.', $escape) : \sprintf('Write "%s".', $escape),
+                end: $start + $i,
             );
         }
 

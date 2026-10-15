@@ -97,6 +97,7 @@ final class UselessLazyRule extends AbstractLintRule
             $start,
             'Drop the "?".',
             LintSeverity::Style,
+            $end,
         )];
     }
 }

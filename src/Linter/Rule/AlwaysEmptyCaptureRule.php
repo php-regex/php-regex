@@ -95,6 +95,7 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
             \sprintf('Capturing group "%s" never captures any text: it is empty or unset wherever the pattern matches.', LanguageQuestions::text($node, $context)),
             $node->getStartPosition(),
             'Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.',
+            end: $node->getEndPosition(),
         )];
     }
 

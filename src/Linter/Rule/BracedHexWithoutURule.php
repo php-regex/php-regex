@@ -57,6 +57,7 @@ final class BracedHexWithoutURule extends AbstractLintRule
                 $node->startPosition,
                 'Add /u flag or use byte-level encoding.',
                 LintSeverity::Error,
+                end: $node->getEndPosition(),
             )];
         }
 

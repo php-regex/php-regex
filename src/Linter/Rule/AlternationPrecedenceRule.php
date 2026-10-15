@@ -142,6 +142,7 @@ final class AlternationPrecedenceRule extends AbstractLintRule
             \sprintf('An anchor holds for its own alternative only: "%s" matches anywhere in the subject.', self::branchText($bare, null, true, $source, $quotes)),
             $node->getStartPosition(),
             \sprintf('If the anchors are meant for every alternative, group them: "%s".', $grouped),
+            end: $node->getEndPosition(),
         )];
     }
 

@@ -82,6 +82,7 @@ final class BackrefAsOctalInCharClassRule extends AbstractLintRule
                     .'If you intended to match the same text as group %d, move the check outside the class.',
                     $num,
                 ),
+                end: $part->getEndPosition(),
             )];
         }
 

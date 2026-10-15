@@ -46,6 +46,42 @@ final class PhpStringLiteral
     }
 
     /**
+     * Where the literal token spells each byte PHP reads from it: entry i
+     * is the offset in the token at which the spelling of byte i starts,
+     * every byte an escape makes pointing at the escape, and one more entry,
+     * the offset of the closing quote, ends the list. Null for any other
+     * token.
+     *
+     * @return list<int>|null
+     */
+    public static function spellingOffsets(string $token): ?array
+    {
+        $quote = $token[0] ?? '';
+        if (\strlen($token) < 2 || ("'" !== $quote && '"' !== $quote) || $quote !== $token[-1]) {
+            return null;
+        }
+
+        $body = substr($token, 1, -1);
+        $offsets = [];
+        if ('"' === $quote) {
+            self::decodeDoubleQuoted($body, true, $offsets);
+        } else {
+            $length = \strlen($body);
+            for ($i = 0; $i < $length; $i++) {
+                $offsets[] = $i;
+                // "\\" and "\'" read as one byte; any other backslash stays.
+                if ('\\' === $body[$i] && ('\\' === ($body[$i + 1] ?? '') || "'" === ($body[$i + 1] ?? ''))) {
+                    $i++;
+                }
+            }
+        }
+
+        $offsets[] = \strlen($body);
+
+        return array_map(static fn (int $offset): int => $offset + 1, $offsets);
+    }
+
+    /**
      * The value of a heredoc or nowdoc, from its opening token, its raw body
      * and its closing token: the newline before the closing marker is
      * dropped, the marker's indentation leaves every line, then a heredoc
@@ -119,38 +155,47 @@ final class PhpStringLiteral
     }
 
     /**
-     * @param bool $quoteEscape whether \" is an escape: in double quotes, not in a heredoc
+     * @param bool           $quoteEscape whether \" is an escape: in double quotes, not in a heredoc
+     * @param list<int>|null $offsets     filled, when given, with where the body spells each byte read
      */
-    private static function decodeDoubleQuoted(string $body, bool $quoteEscape): string
+    private static function decodeDoubleQuoted(string $body, bool $quoteEscape, ?array &$offsets = null): string
     {
         $result = '';
         $length = \strlen($body);
         for ($i = 0; $i < $length;) {
+            $from = $i;
             $next = $body[$i + 1] ?? '';
             if ('\\' !== $body[$i] || '' === $next) {
-                $result .= $body[$i++];
-
-                continue;
-            }
-
-            if (isset(self::SIMPLE[$next]) && ($quoteEscape || '"' !== $next)) {
-                $result .= self::SIMPLE[$next];
+                $read = $body[$i++];
+            } elseif (isset(self::SIMPLE[$next]) && ($quoteEscape || '"' !== $next)) {
+                $read = self::SIMPLE[$next];
                 $i += 2;
             } elseif ($next >= '0' && $next <= '7') {
                 $digits = self::run($body, $i + 1, 3, static fn (string $char): bool => $char >= '0' && $char <= '7');
                 // PHP keeps the low byte of \400 and above.
-                $result .= \chr((int) octdec($digits) & 0xFF);
+                $read = \chr((int) octdec($digits) & 0xFF);
                 $i += 1 + \strlen($digits);
             } elseif (('x' === $next || 'X' === $next) && '' !== ($digits = self::run($body, $i + 2, 2, Ascii::isHexDigit(...)))) {
-                $result .= \chr((int) hexdec($digits));
+                $read = \chr((int) hexdec($digits));
                 $i += 2 + \strlen($digits);
             } elseif ('u' === $next && null !== ($codepoint = self::unicode($body, $i + 2))) {
-                $result .= self::utf8((int) hexdec($codepoint));
+                $read = self::utf8((int) hexdec($codepoint));
                 $i += 4 + \strlen($codepoint);
             } else {
-                // An unknown escape, \d or \/ in a pattern, is kept.
-                $result .= '\\'.$next;
+                // An unknown escape, \d or \/ in a pattern, is kept: each
+                // of its two bytes is spelled where it stands.
+                $result .= '\\';
+                if (null !== $offsets) {
+                    $offsets[] = $i;
+                }
+                $read = $next;
+                $from = $i + 1;
                 $i += 2;
+            }
+
+            $result .= $read;
+            if (null !== $offsets) {
+                array_push($offsets, ...array_fill(0, \strlen($read), $from));
             }
         }
 

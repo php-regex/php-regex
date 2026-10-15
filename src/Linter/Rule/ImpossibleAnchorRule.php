@@ -110,6 +110,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                                 $anchorLabel,
                             ),
                             $child->getStartPosition(),
+                            end: $child->getEndPosition(),
                         );
                     }
                 }
@@ -129,6 +130,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                             $anchorLabel,
                         ),
                         $child->getStartPosition(),
+                        end: $child->getEndPosition(),
                     );
                 }
             }
@@ -180,6 +182,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 : "Non-boundary '\\B' sits between a word and a non-word character, so it can never match.",
             $boundary->getStartPosition(),
             'b' === $boundary->value ? 'Remove the boundary, or fix the characters around it.' : 'Use \\b, or fix the characters around it.',
+            end: $boundary->getEndPosition(),
         );
     }
 

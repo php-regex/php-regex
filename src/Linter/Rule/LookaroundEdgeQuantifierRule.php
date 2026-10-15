@@ -161,6 +161,7 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
             $start,
             \sprintf('Write "%s".', $asserted),
             LintSeverity::Perf,
+            $end,
         );
     }
 

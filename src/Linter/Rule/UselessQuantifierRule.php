@@ -54,6 +54,7 @@ final class UselessQuantifierRule extends AbstractLintRule
             'Quantifier is redundant; it matches exactly once.',
             $node->startPosition,
             'Remove the {1} quantifier; it does not change the match.',
+            end: $node->getEndPosition(),
         )];
     }
 }

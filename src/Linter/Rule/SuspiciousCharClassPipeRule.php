@@ -78,6 +78,7 @@ final class SuspiciousCharClassPipeRule extends AbstractLintRule
                 'Character class contains "|" which is literal inside []. It looks like an alternation typo.',
                 $node->startPosition,
                 'Did you mean an alternation like "(error|failure)" instead of a character class?',
+                end: $node->getEndPosition(),
             )];
         }
 

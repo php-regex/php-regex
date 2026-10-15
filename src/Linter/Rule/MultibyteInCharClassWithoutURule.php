@@ -60,6 +60,7 @@ final class MultibyteInCharClassWithoutURule extends AbstractLintRule
             $literal->getStartPosition(),
             'Add the /u flag; write the bytes as \x escapes if bytes are meant.',
             LintSeverity::Error,
+            end: $literal->getEndPosition(),
         )];
     }
 

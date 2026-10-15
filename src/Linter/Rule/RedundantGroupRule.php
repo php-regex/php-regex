@@ -78,6 +78,7 @@ final class RedundantGroupRule extends AbstractLintRule
             'regex.lint.group.redundant',
             'Redundant non-capturing group; it can be removed without changing behavior.',
             $node->startPosition,
+            end: $node->getEndPosition(),
         )];
     }
 

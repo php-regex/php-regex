@@ -285,6 +285,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The language server places its diagnostics on the text at fault: a lint issue underlines the whole construct it names (`[aa]`, `(a+)+`) instead of its first character; an error underlines the character PCRE reports it at, no longer running over the modifiers and the quote; columns count UTF-16 code units through the literal as written, where they counted bytes of the decoded pattern, so text before the error in `'/é(a/u'`, an escape in `"/\t(a/"` or an emoji moved every range. `RuleViolation` gains the `end` of the node a rule reports.
 - With `verifyWithAutomata`, a rewrite the language check gave up on for its budget is no longer suggested unproven: `/^[0-9]*0[0-9]{14}$/` needs 2^15 DFA states, and its `\d` rewrite was offered as checked. A rewrite of a pattern the automata do not read at all (a backreference) is still offered, as before.
 - Laravel `regex:lint` refuses a `--jobs` that is not a whole number of 1 or more (`The --jobs value must be a positive integer.`, exit code 2), as `regex lint` and Symfony's `regex:lint` do: `--jobs=0`, a negative value or `--jobs=many` silently meant "count the CPUs".
 - The lint rules that ask the automata read their questions for the PHP and PCRE2 judged, not for the running ones: judged for PCRE2 10.42, `/(?=a\{)a{,2}$/` was reported as an impossible lookahead, reading `a{,2}` as the quantifier it is from 10.43, where it is the text `a{,2}`.

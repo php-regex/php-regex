@@ -123,16 +123,6 @@ Parked, too large for upstream review: local branches
 Each item below was verified against the code (2026-10-10, PHP 8.4.26 with
 PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
-### D. The language server
-
-**D6 — The diagnostic ranges are approximate.** Every lint rule is reported
-over a single character, and the parse and validation ranges are computed in
-file coordinates with an offset that runs past the closing delimiter, the
-quote and the comma. *Verify*: read
-`src/LanguageServer/Converter/DiagnosticConverter.php:41-50` and
-`src/LanguageServer/Handler/TextDocumentHandler.php:233-237`, or run the server
-and publish a document. Effort: S.
-
 ### E. The Symfony and Laravel bridges
 
 **E2 — No ready-made rule for a pattern a user submits.** There is no Symfony

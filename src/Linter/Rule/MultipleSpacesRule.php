@@ -106,6 +106,7 @@ final class MultipleSpacesRule extends AbstractLintRule
             $run[0]->getStartPosition(),
             \sprintf('Write " %s" instead.', $repeat),
             LintSeverity::Style,
+            end: $run[0]->getEndPosition(),
         )];
     }
 

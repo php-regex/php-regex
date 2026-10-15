@@ -170,6 +170,7 @@ final class RegexFinder
                         start: $startPos,
                         end: $endPos,
                         byteOffset: $byteOffset,
+                        literal: $tokenValue,
                     );
                 }
                 $expectingPattern = false;
@@ -225,6 +226,7 @@ final class RegexFinder
                         start: $positions->offsetToPosition($literal->pos),
                         end: $positions->offsetToPosition($literal->pos + \strlen($literal->text)),
                         byteOffset: $literal->pos,
+                        literal: $literal->text,
                     );
                 }
             }

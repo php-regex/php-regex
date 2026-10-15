@@ -109,6 +109,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
                 : \sprintf('Negative lookahead "%s" forbids whatever the pattern after it reads: the pattern can never match through here.', $written),
             $node->getStartPosition(),
             'Fix the lookahead or what follows it, or remove the branch.',
+            end: $node->getEndPosition(),
         )];
     }
 

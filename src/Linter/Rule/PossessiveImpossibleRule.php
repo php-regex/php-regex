@@ -109,6 +109,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
                 \sprintf('"%s" never gives back a character, and takes every one "%s" could read: %s.', LanguageQuestions::text($child, $context), LanguageQuestions::text($children[$nextIndex], $context), $outcome),
                 $child->getStartPosition(),
                 'Make the repeat greedy, or exclude from it what must follow.',
+                end: $child->getEndPosition(),
             );
         }
 

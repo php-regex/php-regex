@@ -18,6 +18,8 @@ use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -303,6 +305,81 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * What the editor underlines, read back from the line in UTF-16 code
+     * units: an error marks the character `regex validate` puts its caret
+     * under (the closing delimiter when the input ended), a lint issue the
+     * whole node it names, a limit the whole body, a ReDoS verdict the risky
+     * part. Offsets go through the literal's escapes and multibyte text.
+     *
+     * @return iterable<string, array{line: string, code: string, underlined: string, options?: array{max_recursion_depth?: int}}>
+     */
+    public static function provideUnderlinedText(): iterable
+    {
+        yield 'a ")" PCRE2 reports past itself' => ['line' => "preg_match('/abc)/i', \$s);", 'code' => 'regex.group.unmatched_close', 'underlined' => '/'];
+        yield 'a reversed quantifier range' => ['line' => "preg_match('/a{2,1}/', \$s);", 'code' => 'regex.quantifier.invalid_range', 'underlined' => '}'];
+        yield 'multibyte text before the error' => ['line' => "preg_match('/é(a/u', \$s);", 'code' => 'regex.group.unclosed', 'underlined' => '/'];
+        yield 'an escape the literal spells' => ['line' => 'preg_match("/\t(a/", $s);', 'code' => 'regex.group.unclosed', 'underlined' => '/'];
+        yield 'a surrogate pair before and in the pattern' => ['line' => "\$e = '😀'; preg_match('/😀ab)/u', \$s);", 'code' => 'regex.group.unmatched_close', 'underlined' => '/'];
+        yield 'a lint issue over its node' => ['line' => "preg_match('/x[aa]/', \$s);", 'code' => 'regex.lint.charclass.redundant', 'underlined' => '[aa]'];
+        yield 'a lint issue over a node an escape opens' => ['line' => 'preg_match("/x\x5baa]/", $s);', 'code' => 'regex.lint.charclass.redundant', 'underlined' => '\x5baa]'];
+        yield 'a nested quantifier' => ['line' => "preg_match('/(a+)+\$/', \$s);", 'code' => 'regex.lint.quantifier.nested', 'underlined' => '(a+)+'];
+        yield 'an error on a multibyte character, whole' => ['line' => "preg_match('/a)é/u', \$s);", 'code' => 'regex.group.unmatched_close', 'underlined' => 'é'];
+        yield 'a node starting inside a character, without u' => ['line' => "preg_match('/é+/', \$s);", 'code' => 'regex.lint.unicode.quantifiedMultibyteWithoutU', 'underlined' => 'é+'];
+        yield 'a limit over the body' => ['line' => "preg_match('/((((a))))/i', \$s);", 'code' => 'regex.nesting.too_deep', 'underlined' => '((((a))))', 'options' => ['max_recursion_depth' => 3]];
+    }
+
+    /**
+     * @param array{max_recursion_depth?: int} $options
+     */
+    #[Test]
+    #[DataProvider('provideUnderlinedText')]
+    public function test_a_diagnostic_underlines_the_text_at_fault(string $line, string $code, string $underlined, array $options = []): void
+    {
+        $diagnostic = null;
+        foreach ($this->publish($line, $options) as $published) {
+            if (\is_array($published) && $code === ($published['code'] ?? null)) {
+                $diagnostic = $published;
+            }
+        }
+
+        $this->assertIsArray($diagnostic, 'No '.$code.' diagnostic was published.');
+        $this->assertSame($underlined, self::underlined($line, $diagnostic));
+    }
+
+    #[Test]
+    public function test_a_redos_verdict_underlines_the_risky_part(): void
+    {
+        $line = "preg_match('/x(a+)+\$/', \$s);";
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///r.php', 'text' => "<?php\n".$line."\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $redos = array_values(array_filter($diagnostics, static fn (mixed $diagnostic): bool => \is_array($diagnostic) && 'regex.lint.redos' === ($diagnostic['code'] ?? null)));
+        $this->assertCount(1, $redos);
+        $this->assertIsArray($redos[0]);
+        $this->assertSame('a+', self::underlined($line, $redos[0]));
+    }
+
+    /**
      * A lint issue is placed from the body too: "[aa]" starts at offset 1
      * of the body "x[aa]".
      */
@@ -334,12 +411,12 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertIsArray($diagnostics);
         $this->assertIsArray($diagnostics[0] ?? null);
 
-        // The body starts at 13: "x" at 13, "[" at 14, marked alone.
+        // The body starts at 13: "x" at 13, "[aa]" from 14 to 18.
         $this->assertSame('regex.lint.charclass.redundant', $diagnostics[0]['code'] ?? null);
         $range = $diagnostics[0]['range'] ?? null;
         $this->assertIsArray($range);
         $this->assertSame(['line' => 1, 'character' => 14], $range['start'] ?? null);
-        $this->assertSame(['line' => 1, 'character' => 15], $range['end'] ?? null);
+        $this->assertSame(['line' => 1, 'character' => 18], $range['end'] ?? null);
     }
 
     /**
@@ -386,5 +463,66 @@ final class TextDocumentHandlerTest extends TestCase
 
         $codes = array_map(static fn (mixed $diagnostic): mixed => \is_array($diagnostic) ? ($diagnostic['code'] ?? null) : null, $diagnostics);
         $this->assertSame($reported, \in_array('regex.lint.literal.invisible', $codes, true));
+    }
+
+    /**
+     * The diagnostics published for a document holding the line after
+     * "<?php".
+     *
+     * @param array{max_recursion_depth?: int} $options
+     *
+     * @return array<mixed>
+     */
+    private function publish(string $line, array $options = []): array
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49', ...$options])))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///u.php', 'text' => "<?php\n".$line."\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+
+        return $diagnostics;
+    }
+
+    /**
+     * The text a diagnostic's range covers on the line, the columns read
+     * as UTF-16 code units as the protocol counts them.
+     *
+     * @param array<mixed> $diagnostic
+     */
+    private static function underlined(string $line, array $diagnostic): string
+    {
+        $range = $diagnostic['range'] ?? null;
+        self::assertIsArray($range);
+        $start = $range['start'] ?? null;
+        $end = $range['end'] ?? null;
+        self::assertIsArray($start);
+        self::assertIsArray($end);
+        self::assertSame(1, $start['line'] ?? null);
+        self::assertSame(1, $end['line'] ?? null);
+        self::assertIsInt($start['character'] ?? null);
+        self::assertIsInt($end['character'] ?? null);
+
+        $units = mb_convert_encoding($line, 'UTF-16LE', 'UTF-8');
+
+        return mb_convert_encoding(substr($units, 2 * $start['character'], 2 * ($end['character'] - $start['character'])), 'UTF-8', 'UTF-16LE');
     }
 }

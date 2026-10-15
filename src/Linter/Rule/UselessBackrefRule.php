@@ -77,6 +77,7 @@ final class UselessBackrefRule extends AbstractLintRule
                 'Backreference refers to a group that has not been closed yet.',
                 $node->startPosition,
                 'Move the backreference after the capturing group or rewrite the pattern.',
+                end: $node->getEndPosition(),
             )];
         }
 
@@ -86,6 +87,7 @@ final class UselessBackrefRule extends AbstractLintRule
                 'Backreference refers to a group in a different alternative.',
                 $node->startPosition,
                 'Place the backreference in the same alternative as its capturing group.',
+                end: $node->getEndPosition(),
             )];
         }
 
@@ -95,6 +97,7 @@ final class UselessBackrefRule extends AbstractLintRule
                 'Backreference refers to a capturing group that always matches an empty string.',
                 $node->startPosition,
                 'Remove the backreference or replace the capturing group with literal text.',
+                end: $node->getEndPosition(),
             )];
         }
 

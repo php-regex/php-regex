@@ -69,6 +69,17 @@ Error: Invalid quantifier range "{2,1}": min > max.
        Write the smaller count first: "{1,2}".
 ```
 
+What each diagnostic underlines:
+
+- an error, the character `regex validate` puts its caret under, where PCRE
+  reports it: the closing delimiter when the pattern ends too early;
+- a lint issue, the whole construct it names, as `[aa]` or `(a+)+`;
+- a ReDoS verdict, the part of the pattern at risk, else the whole body;
+- a pattern not analyzed for a limit, the whole body.
+
+Columns count UTF-16 code units, as the protocol does, and follow the literal
+as written: in `"/\t(a/"` an offset past the tab lands past the `\t` escape.
+
 ### Hover Information
 
 Hover over any regex pattern to see:

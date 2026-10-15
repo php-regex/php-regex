@@ -95,6 +95,7 @@ final class DuplicateCharClassElementsRule extends AbstractLintRule
                     'Character class contains duplicate elements that do not add new matches.',
                     $entry['node']->getStartPosition(),
                     'Remove the redundant character class element.',
+                    end: $entry['node']->getEndPosition(),
                 )];
             }
         }

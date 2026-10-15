@@ -21,6 +21,9 @@ use PHPRegex\Linter\LintSeverity;
 final readonly class RuleViolation
 {
     /**
+     * @param int|null $offset where the reported text starts in the pattern body, in bytes
+     * @param int|null $end    where it ends, exclusive: the end of the node the rule names
+     *
      * @internal built by the lint rules PatternLinter runs, read through PatternLinter::getIssues()
      */
     public function __construct(
@@ -29,5 +32,6 @@ final readonly class RuleViolation
         public ?int $offset = null,
         public ?string $hint = null,
         public LintSeverity $severity = LintSeverity::Warning,
+        public ?int $end = null,
     ) {}
 }

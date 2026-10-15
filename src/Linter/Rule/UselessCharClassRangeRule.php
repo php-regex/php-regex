@@ -78,6 +78,7 @@ final class UselessCharClassRangeRule extends AbstractLintRule
                 'Character range is unnecessary; list the characters explicitly.',
                 $part->startPosition,
                 $hint,
+                end: $part->getEndPosition(),
             );
         }
 

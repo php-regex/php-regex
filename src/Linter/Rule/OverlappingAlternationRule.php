@@ -71,6 +71,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 'Alternation (.|\n) is an anti-pattern for matching any character including newlines.',
                 $node->startPosition,
                 $hint,
+                end: $node->getEndPosition(),
             );
         }
 
@@ -112,6 +113,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                                 \sprintf('Alternation branches "%s" and "%s" overlap.', self::spell($a, $context), self::spell($b, $context)),
                                 $node->startPosition,
                                 'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
+                                end: $node->getEndPosition(),
                             );
 
                             // A literal overlap suppresses the semantic charset check.
@@ -161,6 +163,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                         'Alternation branches have overlapping character sets, which may cause unnecessary backtracking.',
                         $node->startPosition,
                         'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
+                        end: $node->getEndPosition(),
                     );
                 }
             }

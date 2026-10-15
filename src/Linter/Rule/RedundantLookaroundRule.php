@@ -119,6 +119,7 @@ final class RedundantLookaroundRule extends AbstractLintRule
             $inner->getStartPosition(),
             \sprintf('Write "%s".', $rewrite),
             LintSeverity::Style,
+            end: $inner->getEndPosition(),
         );
     }
 

@@ -82,6 +82,7 @@ final class SuspiciousCharClassRangeRule extends AbstractLintRule
                     ),
                     $part->startPosition,
                     'Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).',
+                    end: $part->getEndPosition(),
                 )];
             }
         }
