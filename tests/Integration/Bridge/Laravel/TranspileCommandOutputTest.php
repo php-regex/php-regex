@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Tests\Support\ResetsShellVerbosity;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -25,6 +26,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class TranspileCommandOutputTest extends TestCase
 {
+    use ResetsShellVerbosity;
+
     #[Test]
     public function test_console_reports_a_construct_the_target_lacks(): void
     {

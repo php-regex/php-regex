@@ -24,6 +24,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\ResetsShellVerbosity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,6 +39,8 @@ use Symfony\Component\Console\Tester\CommandTester;
  */
 final class LintJsonDocumentTest extends TestCase
 {
+    use ResetsShellVerbosity;
+
     protected function setUp(): void
     {
         LintFunctionOverrides::reset();

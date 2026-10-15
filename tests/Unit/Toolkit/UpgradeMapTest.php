@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Toolkit;
 
-use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\UpgradeGuide;
 use PHPRegex\Toolkit\Upgrade\UpgradeMap;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,8 +25,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class UpgradeMapTest extends TestCase
 {
-    use PcreGates;
-
     #[Test]
     #[DataProvider('provideClassesOf13')]
     public function test_every_class_of_1_3_has_a_2_0_name_or_a_replacement(string $class): void
@@ -49,8 +46,6 @@ final class UpgradeMapTest extends TestCase
     #[Test]
     public function test_every_2_0_name_exists(): void
     {
-        $this->requiresPhp('8.2', 'The Symfony bundle\'s classes', 'installs no Symfony 7.4');
-
         $missing = [];
         foreach (UpgradeMap::RENAMED as $new) {
             if (!class_exists($new) && !interface_exists($new) && !enum_exists($new) && !trait_exists($new)) {

@@ -23,6 +23,7 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Tests\Support\ResetsShellVerbosity;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Before;
@@ -37,6 +38,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class LintJsonDocumentTest extends TestCase
 {
+    use ResetsShellVerbosity;
+
     use TemporaryProject;
 
     #[Before]

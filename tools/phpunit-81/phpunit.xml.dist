@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     The suite on PHP 8.1, where PHPUnit 12 does not run: PHPUnit 10.5 runs it,
-    all but the Symfony and Laravel bridges. A row PHP 8.1 cannot run, such as
-    a pattern with the n modifier or a NUL byte, is gated on PHP 8.2.
+    the Symfony bridge on Symfony 6.4 and the Laravel one on Laravel 10. A row
+    PHP 8.1 cannot run, such as a pattern with the n modifier or a NUL byte,
+    is gated on PHP 8.2.
 -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
@@ -28,13 +29,6 @@
     <testsuites>
         <testsuite name="PHPRegex on PHP 8.1">
             <directory>../../tests</directory>
-            <!-- Laravel 12 and Symfony 7.4 need PHP 8.2, as their bridges do. -->
-            <exclude>../../tests/Integration/Bridge/Laravel</exclude>
-            <exclude>../../tests/Integration/Bridge/Symfony</exclude>
-            <exclude>../../tests/Unit/Bridge/Laravel</exclude>
-            <exclude>../../tests/Unit/Bridge/Symfony</exclude>
-            <exclude>../../tests/Integration/SymfonyCompatibilityTest.php</exclude>
-            <exclude>../../tests/Integration/SymfonyIntegrationTest.php</exclude>
             <!-- The benchmarks run under phpbench, not PHPUnit. -->
             <exclude>../../tests/Benchmark</exclude>
         </testsuite>
