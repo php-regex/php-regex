@@ -103,16 +103,6 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Found while emptying this file (2026-10-15)
-
-Seen on the way, not yet verified to the end; each is small and additive.
-
-- **Three places still resolve a condition's group themselves.**
-  `GroupIndex::groupsReferencedBy()` now reads `(?(1)…)`, `(?(+1)…)` and
-  `(?(name)…)`, but `Validator.php:1024`, `PatternInfoAnalyzer.php:165` and
-  `Linter/Rule/Support/BackrefTarget.php:32` keep their own reading: one
-  numbering model means they ask the index.
-
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +

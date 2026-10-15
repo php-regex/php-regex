@@ -18,6 +18,12 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 /**
  * Parses backreference syntax into a numeric or named target.
  *
+ * It reads the target as written, not the groups it resolves to: the rules
+ * report a reference to a missing group by its number or name, and read
+ * "\11" as an octal escape when no group bears 11, where the group index
+ * finds no group either way. A condition and a relative reference are left
+ * out on purpose.
+ *
  * @internal
  */
 final class BackrefTarget

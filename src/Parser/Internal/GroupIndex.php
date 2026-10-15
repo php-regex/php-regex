@@ -62,14 +62,6 @@ final class GroupIndex
     private array $nextNumberAt = [];
 
     /**
-     * @var array<int, int> how many capturing groups open before each call
-     *                      or reference, by node
-     */
-    private array $captureIndexAt = [];
-
-    private int $capturesIndexed = 0;
-
-    /**
      * @var array<int, true> the groups a branch reset holds, by node
      */
     private array $inBranchReset = [];
@@ -188,14 +180,6 @@ final class GroupIndex
     }
 
     /**
-     * How many capturing groups open before the call or reference.
-     */
-    public function captureIndexAt(NodeInterface $node): ?int
-    {
-        return $this->captureIndexAt[spl_object_id($node)] ?? null;
-    }
-
-    /**
      * The numbers of the groups bearing the name, ascending.
      *
      * @return list<int>
@@ -291,7 +275,6 @@ final class GroupIndex
     {
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             $this->nextNumberAt[spl_object_id($node)] = $nextGroupNumber;
-            $this->captureIndexAt[spl_object_id($node)] = $this->capturesIndexed;
             if ($node instanceof SubroutineNode && !isset($this->recursionTests[spl_object_id($node)])) {
                 $this->calls[] = $node;
             }
@@ -327,7 +310,6 @@ final class GroupIndex
             }
 
             if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-                $this->capturesIndexed++;
                 $this->captureSequence[] = $nextGroupNumber;
                 $this->numberOf[spl_object_id($node)] = $nextGroupNumber;
                 $this->byNumber[$nextGroupNumber++][] = $node;

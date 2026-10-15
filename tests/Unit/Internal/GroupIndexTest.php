@@ -128,18 +128,21 @@ final class GroupIndexTest extends TestCase
         yield 'condition, bare name' => ['pattern' => '/(?<n>a)(?(n)b)/', 'expected' => ['(?<n>a)']];
         yield 'condition, every group of a branch reset' => ['pattern' => '/(?|(a)|(bc))(?(1)d)/', 'expected' => ['(a)', '(bc)']];
         yield 'condition, every group of a name shared under J' => ['pattern' => '/(?J)(?<n>a)|(?<n>bc)(?(n)d)/', 'expected' => ['(?<n>a)', '(?<n>bc)']];
+        yield 'relative, back into a branch reset' => ['pattern' => '/(?|(a)|(bc))\g{-1}/', 'expected' => ['(a)', '(bc)']];
+        yield 'relative, back past a branch reset' => ['pattern' => '/(?|(a)|(bc))\g{-2}/', 'expected' => []];
+        yield 'condition, relative, forward past a branch reset' => ['pattern' => '/(?(+2)x)(?|(a)|(bc))(d)/', 'expected' => ['(d)']];
+        yield 'condition, relative, forward to no group' => ['pattern' => '/(?(+2)x)(?|(a)|(bc))/', 'expected' => []];
     }
 
     #[Test]
     public function test_where_a_reference_sits_in_the_count(): void
     {
         // Three groups open before the reference, all numbered 1: the next
-        // group would be 2.
+        // group would be 2, not 4.
         $regex = $this->parse('/(?|(a)|(b)|(c))\1/');
         $index = GroupIndex::of($regex->pattern);
         $reference = NodeFinder::findInstanceOf($regex, BackrefNode::class)[0];
 
-        $this->assertSame(3, $index->captureIndexAt($reference));
         $this->assertSame(2, $index->nextNumberAt($reference));
         $this->assertNull($index->nextNumberAt($regex->pattern));
         $this->assertNull(GroupIndex::empty()->nextNumberAt($reference));

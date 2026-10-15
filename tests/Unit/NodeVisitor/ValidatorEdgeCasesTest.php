@@ -260,17 +260,6 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    public function test_subroutine_relative_recursion_reference_returns(): void
-    {
-        $validator = new Validator();
-        $this->setPrivateProperty($validator, 'groupNumbering', new GroupNumbering(1, [1], []));
-        $this->setPrivateProperty($validator, 'captureSequence', [1]);
-        $this->setPrivateProperty($validator, 'captureIndex', 1);
-
-        (new SubroutineNode('R-1', 'R-1', 0, 0))->accept($validator);
-        $this->expectNotToPerformAssertions();
-    }
-
     public function test_subroutine_relative_reference_hits_branch(): void
     {
         $validator = new Validator();
