@@ -44,8 +44,10 @@ use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
 use PHPRegex\Symfony\Security\SecurityPatternNormalizer;
+use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Validator\ConstraintValidator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -234,6 +236,14 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$defaultRedosThreshold', param('php_regex.redos.threshold'))
         ->tag('console.command')
         ->public();
+
+    // The ValidRegex constraint judges with the service above; the
+    // validator finds it under its class name.
+    if (class_exists(ConstraintValidator::class)) {
+        $services->set(ValidRegexValidator::class)
+            ->arg('$regex', service('php_regex.regex'))
+            ->tag('validator.constraint_validator');
+    }
 
     $services->set('php_regex.command.transpile', TranspileCommand::class)
         ->arg('$regex', service('php_regex.regex'))

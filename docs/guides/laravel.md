@@ -126,6 +126,32 @@ One of those bypasses the configured singleton: `Regex::create()` returns a fres
 Type-hinting
 `PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
 
+## Validating a pattern a user submits
+
+The `ValidRegex` rule accepts a value that PCRE compiles, written as
+`preg_match()` takes it: delimiters and flags included. The verdict is the one
+`regex validate` gives, judged by the `Regex` service with the limits of
+`config/php-regex.php`, so a pattern longer than `max_pattern_length` is
+refused too:
+
+```php
+use PHPRegex\Laravel\Rules\ValidRegex;
+
+$request->validate([
+    'pattern' => ['required', new ValidRegex()],
+    'route_pattern' => ['required', new ValidRegex(redos: true)],
+]);
+```
+
+- An invalid pattern fails with the library's message: `The pattern field must
+  be a valid regular expression: Unmatched closing parenthesis at position 4.`
+  for `/abc)/`. A value that is no string fails as `must be a string`.
+- `redos: true` also refuses a pattern whose [ReDoS](redos.md) severity reaches
+  `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
+  string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
+  `/a*a*$/` (`medium`) passes. An invalid pattern is never analysed for ReDoS.
+- Like every rule, it leaves an empty value to `required`.
+
 ## The service and the lint judge for different targets
 
 The `Regex` service runs in your application: it judges patterns for the PHP

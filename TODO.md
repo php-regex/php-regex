@@ -7,9 +7,9 @@ only cheap until `v2.0.0` is tagged: after the freeze, every one becomes a BC
 break or a standing contradiction between two pieces of documentation. Work
 them top to bottom, one at a time — settle the decision in writing first,
 then implement test-first. Deferring an item is also a decision; it converts
-the item from cheap to a BC break, so say so when it happens. The validation
-carriers and the Flex recipe stay where they are (E2, G5 below): both are
-additive and lose nothing by waiting past the tag.
+the item from cheap to a BC break, so say so when it happens. The Flex recipe
+stays where it is (G5 below): it is additive and loses nothing by waiting past
+the tag.
 
 ### Checked and refused (do not re-litigate)
 
@@ -124,12 +124,6 @@ Each item below was verified against the code (2026-10-10, PHP 8.4.26 with
 PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### E. The Symfony and Laravel bridges
-
-**E2 — No ready-made rule for a pattern a user submits.** There is no Symfony
-`Constraint` and no Laravel `Rule` anywhere; the existing extractor only reads
-the native `Regex` constraint for linting. *Verify*:
-`grep -rn 'extends Constraint\|implements Rule' src/` — nothing;
-`src/Symfony/Extractor/ValidatorPatternSource.php:20`. Effort: M.
 
 **E3 — The command surfaces diverge between bridges.** `compare` takes
 `--method intersection|subset|equivalence` on the CLI and Symfony, and Laravel

@@ -27,6 +27,7 @@ Features
 --------
 
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
+* A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
 * Six console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare` and `regex:transpile`
 * `regex:lint` reads your PHP files, your route requirements and your validator constraints in one pass
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
@@ -40,7 +41,7 @@ Installation
 composer require php-regex/regex-symfony
 ```
 
-Requires PHP 8.2+ and Symfony 7.4+ or 8.0+. `symfony/routing`, `symfony/validator` and `nikic/php-parser` are optional and widen what `regex:lint` reads.
+Requires PHP 8.2+ and Symfony 7.4+ or 8.0+. `symfony/routing`, `symfony/validator` and `nikic/php-parser` are optional and widen what `regex:lint` reads; `symfony/validator` also brings the `ValidRegex` constraint.
 
 Configuration
 -------------
@@ -101,6 +102,18 @@ echo $transpiled->constructor; // new RegExp("^[a-z]+(?=\\d)$", "i")
 ```
 
 The service also exposes `parse`, `parseTolerant`, `analyze`, `explain`, `highlight`, `literals`, `generate` and `parsePattern`.
+
+Validate a pattern your users submit with the `ValidRegex` constraint (`symfony/validator`), judged by the same service:
+
+```php
+use PHPRegex\Symfony\Validator\Constraints\ValidRegex;
+
+#[ValidRegex]                  // "/abc)/": This value is not a valid regular expression: Unmatched closing parenthesis at position 4.
+public string $pattern;
+
+#[ValidRegex(redos: true)]     // also refuses a ReDoS severity of high or more ("redosThreshold")
+public string $routePattern;
+```
 
 Integration
 -----------

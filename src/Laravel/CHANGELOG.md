@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The `ValidRegex` rule validates a pattern a user submits, with the
+   application's `Regex` service and the library's message; with
+   `redos: true` a ReDoS severity from `redosThreshold` (`high`) up is
+   refused too.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

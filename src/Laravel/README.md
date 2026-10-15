@@ -29,6 +29,7 @@ Features
 --------
 
 * A `Regex` service and a `Regex` facade, registered by package discovery on install
+* A `ValidRegex` rule for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
 * Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`
 * `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass, a route constraint
   anchored and flagged as the router matches it
@@ -118,6 +119,17 @@ The facade mirrors the whole service: `create`, `fromOptions`, `parse`, `parseTo
 
 One of those calls bypasses the configured singleton: `Regex::create()` returns a fresh instance, so the cache
 store and the ReDoS ignore-list from `config/php-regex.php` do not apply to it.
+
+Validate a pattern your users submit with the `ValidRegex` rule, judged by the same service:
+
+```php
+use PHPRegex\Laravel\Rules\ValidRegex;
+
+$request->validate([
+    'pattern' => ['required', new ValidRegex()],                  // "/abc)/" fails with "Unmatched closing parenthesis at position 4."
+    'route_pattern' => ['required', new ValidRegex(redos: true)], // also refuses a ReDoS severity of high or more ("redosThreshold")
+]);
+```
 
 `optimize()` and `transpile()` can throw the parse and lexer exception families — on a pattern that does not
 parse or does not tokenize, on an option `optimize()` does not know (`InvalidRegexOptionException`), or on an

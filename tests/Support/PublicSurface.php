@@ -38,7 +38,7 @@ final class PublicSurface
         ],
         'Generator' => ['SampleGenerator', 'TestCaseGenerator', 'SampleGenerationException'],
         'LanguageServer' => [],
-        'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex'],
+        'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
         'Linter' => ['PatternLinter', 'LintSeverity', 'LintException', 'Rule/RuleViolation'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
@@ -73,7 +73,7 @@ final class PublicSurface
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
             'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
         ],
-        'Symfony' => ['PHPRegexBundle'],
+        'Symfony' => ['PHPRegexBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'OutputFormat'],
         'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'TranspileException'],
     ];

@@ -84,8 +84,8 @@ In short, the public surface is:
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-psalm` | `Plugin` |
 | `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `Set\RegexSetList` |
-| `regex-symfony` | `PHPRegexBundle` |
-| `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex` |
+| `regex-symfony` | `PHPRegexBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |
+| `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
 | `regex-language-server` | no PHP class is public |
 
@@ -124,12 +124,13 @@ The bridges and tools carry more than their classes:
   configuration, and `RegexSetList::STRING_FUNCTIONS` and
   `RegexSetList::PCRE_UPGRADE` name the sets that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.
-- `regex-symfony`: the `php_regex` configuration, and the commands' names and
-  options.
+- `regex-symfony`: the `php_regex` configuration, the commands' names and
+  options, and the `ValidRegex` constraint's options, message parameters and
+  error codes.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
   mirror every public method of `Regex`, so a signature that changes in the
-  code changes there in the same release — the `php-regex` configuration, and
-  the commands' names and options.
+  code changes there in the same release — the `php-regex` configuration, the
+  commands' names and options, and the `ValidRegex` rule's options.
 - `regex-cli`: the `regex` command, with its commands, options, exit codes and
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.

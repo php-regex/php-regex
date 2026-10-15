@@ -111,6 +111,40 @@ final class PatternSupport
 method of the service — `parse`, `explain`, `redos`, `optimize`, `transpile`
 and the rest.
 
+## Validating a pattern a user submits
+
+The `ValidRegex` constraint accepts a value that PCRE compiles, written as
+`preg_match()` takes it: delimiters and flags included. It needs
+`symfony/validator`. The verdict is the one `regex validate` gives, judged by
+the bundle's `Regex` service with its limits, so a pattern longer than
+`max_pattern_length` is refused too:
+
+```php
+use PHPRegex\Symfony\Validator\Constraints\ValidRegex;
+
+final class SearchFilter
+{
+    #[ValidRegex]
+    public string $pattern = '';
+
+    #[ValidRegex(redos: true)]
+    public string $routePattern = '';
+}
+```
+
+- `message` (default `This value is not a valid regular expression: {{ error }}`)
+  takes `{{ value }}`, `{{ error }}` (the library's message, `Unmatched closing
+  parenthesis at position 4.` for `/abc)/`) and `{{ hint }}` (how to fix it,
+  or an empty string). The code is `ValidRegex::INVALID_ERROR`.
+- `redos: true` also refuses a pattern whose [ReDoS](redos.md) severity reaches
+  `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
+  string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
+  `/a*a*$/` (`medium`) passes. `redosMessage` takes `{{ value }}` and
+  `{{ severity }}`; the code is `ValidRegex::REDOS_ERROR`. An invalid pattern
+  is never analysed for ReDoS.
+- Null and the empty string are valid, as for every Symfony constraint: add
+  `NotBlank` to refuse them.
+
 ## How route requirements and security patterns are read
 
 Each one is read as the pattern Symfony runs:
