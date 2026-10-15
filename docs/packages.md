@@ -22,7 +22,7 @@ The first two commands run once in the consuming project: they allow the prerele
 | You need… | Install | Why this package |
 |-----------|---------|------------------|
 | Only the lexer, parser, AST, validator, or capture-shape analyzer | `php-regex/regex-parser` | The smallest foundation; it needs `mbstring`, while source extraction does not run here. |
-| One facade for common application calls | `php-regex/regex-toolkit` | Parses, validates, explains, optimizes, generates, transpiles, and analyzes ReDoS through one configured parser. |
+| One facade for common application calls | `php-regex/regex-toolkit` | Parses, validates, explains, optimizes, generates, transpiles, and analyzes ReDoS through one configured parser: a convenience layer over those packages, which stay the contract. |
 | The terminal binary | `php-regex/regex-cli` | Adds `vendor/bin/regex` for parsing, explanations, diagrams, linting, ReDoS, comparison, and transpilation. |
 | PHPStan findings | `php-regex/regex-phpstan` | Reports invalid patterns and optional lint, ReDoS, and optimization findings during static analysis. |
 | Psalm types and findings | `php-regex/regex-psalm` | Types `$matches` from the pattern and reports patterns the target PHP refuses. |
@@ -35,7 +35,7 @@ The focused analysis libraries remain available for tools that compose them dire
 
 - `php-regex/regex-explain` for explanations, highlighting, and diagrams.
 - `php-regex/regex-generator` for sample strings and test cases.
-- `php-regex/regex-automata` for equivalence, intersection, and subset questions.
+- `php-regex/regex-automata` for equivalence, intersection, and subset questions (`LanguageSolver`; the facade does not wrap it).
 - `php-regex/regex-redos` for backtracking analysis and witnesses.
 - `php-regex/regex-transpiler` for JavaScript, HTML `pattern`, and Python targets.
 - `php-regex/regex-linter` for source extraction and lint rules.

@@ -11,18 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**11. Facade or packages: pick the front door.** `Toolkit\Regex` (637
-lines, 25 public methods) is the wired service everywhere, while deptrac lets
-every bridge reach every package directly — and they do (`OptimizerOptions`,
-`RedosSeverity`, `RegexParser` imported in `src/Symfony`). The README
-headlines equivalence/intersection/subset, but the facade has none of those
-verbs, and Toolkit reaches `regex-automata` only through its other
-requirements (deptrac no longer grants it the solver). *Decision*: "the
-packages are the contract, the facade is the convenience layer" — write it
-down, and either add the four solver verbs (requiring `regex-automata` and
-granting it back) or point the README at `LanguageSolver`. Effort: S for the
-rules, M with the solver verbs.
-
 **13. Generator: merge or complete.** The package holds three classes, its
 only consumer outside itself is the facade, and the part that makes samples
 trustworthy — the 32-attempt verification loop against the real engine —

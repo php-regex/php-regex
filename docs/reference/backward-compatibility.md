@@ -57,6 +57,17 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
 (now `Transform\HirToNfaTransformer`); [UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
 maps every removed name.
 
+## Packages and the facade
+
+The packages are the contract: each one's public classes, listed below, are
+what this promise covers. `PHPRegex\Toolkit\Regex` is a convenience layer over
+seven of them (parser, explain, generator, linter, optimizer, ReDoS and
+transpiler): its methods are public and covered like any other, but it gives
+the calls an application needs most, not everything the packages offer. Reach
+for a package directly when the facade has no method for it; to compare two
+patterns, for instance, use `LanguageSolver` from `regex-automata`, which the
+facade does not wrap.
+
 In short, the public surface is:
 
 | package | public |

@@ -58,6 +58,23 @@ final class DocumentationExperienceTest extends TestCase
         $this->assertMatchesRegularExpression('/\*\*How a pattern splits into tokens\*\*/', $policy);
     }
 
+    /**
+     * The packages are the contract and the Regex facade a convenience layer
+     * over seven of them: the policy says so, and the README neither claims
+     * the facade covers every package nor sells the solver without naming
+     * where it lives.
+     */
+    #[Test]
+    public function test_the_facade_is_described_as_a_convenience_layer(): void
+    {
+        $readme = (string) file_get_contents(__DIR__.'/../../README.md');
+        $policy = (string) file_get_contents(__DIR__.'/../../docs/reference/backward-compatibility.md');
+
+        $this->assertStringContainsString('The packages are the contract', $policy);
+        $this->assertStringNotContainsString('every library below in one call', $readme);
+        $this->assertMatchesRegularExpression('/\*\*Logic Solver:\*\*[^\n]*LanguageSolver/', $readme);
+    }
+
     #[Test]
     public function test_the_landing_page_keeps_its_first_visit_short(): void
     {
