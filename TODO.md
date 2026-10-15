@@ -49,20 +49,23 @@ The code is ready; what is left is the maintainer's, in this order.
    - `tests/Documentation/PackageSelectionDocumentationTest.php` pins the
      prerelease commands: it moves with them.
 3. Push 2.x, wait for CI to pass, then `bin/release --dry-run 2.0.0` and
-   `bin/release 2.0.0`: it drafts the GitHub release with the phar and its
-   checksum, pushes the tag, then publishes the draft; the split workflow tags
-   the sixteen packages.
+   `bin/release 2.0.0`: it drafts the GitHub release and pushes the tag; the
+   phar workflow builds and attests the phar, attaches it and its checksum,
+   then publishes the draft; the split workflow tags the sixteen packages.
 4. After the tag: `bin/status` and Packagist show `v2.0.0` for all sixteen
    packages (they require each other at `self.version`: one missing tag
    leaves the others uninstallable), and the "Latest" release carries the
    2.0 `regex.phar`, which `self-update` and `releases/latest` serve.
 5. `bin/bump --next 2.0.1`.
 
-## Give the phar a build provenance
+## Phar provenance: the GitHub side
 
-`bin/release` builds `bin/regex.phar` locally and attaches it to the GitHub
-release with its SHA-256 checksum: no CI-built artifact, no signing, no
-attestation. Decide whether the build moves to CI with provenance.
+`.github/workflows/phar.yml` builds, attests and attaches the phar on a
+version tag. By hand: if Settings → Actions → General restricts the actions
+allowed, allow `actions/attest-build-provenance` and `shivammathur/setup-php`.
+After the 2.0.0 tag, check that the release went from draft to published
+with both assets, and that `gh attestation verify regex.phar --repo
+php-regex/php-regex` passes on the downloaded phar.
 
 ## Upstream PHPStan fixes (fork `php-regex/phpstan-src`)
 

@@ -48,6 +48,10 @@ curl -Ls https://github.com/php-regex/php-regex/releases/latest/download/regex.p
 regex self-update
 ```
 
+The phar is built from the release tag by a GitHub Actions workflow and
+attested: `gh attestation verify ~/.local/bin/regex --repo php-regex/php-regex`
+checks that yours is that build.
+
 Commands
 --------
 

@@ -34,6 +34,18 @@ regex --help
 ```
 {: data-copy="" }
 
+Every release's PHAR is built from its tag by a GitHub Actions workflow, which
+attests where it was built. With the [GitHub CLI](https://cli.github.com),
+check that the file you downloaded is that build:
+
+```bash
+gh attestation verify ~/.local/bin/regex --repo php-regex/php-regex
+```
+{: data-copy="" }
+
+The release also carries `regex.phar.sha256`, which `regex self-update`
+checks before it replaces the PHAR.
+
 > **Note:** Replace `vendor/bin/regex` with `regex` in all examples below if using the PHAR.
 
 ---

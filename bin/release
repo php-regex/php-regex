@@ -7,17 +7,17 @@
 # For the full copyright and license information, please view the LICENSE
 # file that was distributed with this source code.
 #
-# Releases a version: checks the tree is ready, builds the phar, drafts the
-# GitHub release with the phar and its checksum attached, tags the monorepo
-# and publishes the draft. The split workflow then pushes the tag to every
-# php-regex/regex-* repository.
+# Releases a version: checks the tree is ready, drafts the GitHub release and
+# tags the monorepo. The tag starts two workflows: the phar workflow builds
+# regex.phar, attests its build provenance, attaches it and its checksum to
+# the draft and publishes the release; the split workflow pushes the tag to
+# every php-regex/regex-* repository.
 #
 # Usage:
-#   bin/release [--dry-run] [--skip-ci] [--skip-phar] [--branch <name>] [--root <dir>] <version>
+#   bin/release [--dry-run] [--skip-ci] [--branch <name>] [--root <dir>] <version>
 #
 #   --dry-run    run every check, say what would happen, tag nothing
 #   --skip-ci    do not ask GitHub whether CI passed on HEAD
-#   --skip-phar  do not build the phar (the release then has no phar)
 #   --branch     the branch to release from (default: 2.x)
 #   --root       the monorepo checkout to release (default: the one holding this script)
 #
@@ -26,7 +26,6 @@ set -euo pipefail
 
 dry_run=0
 skip_ci=0
-skip_phar=0
 branch=2.x
 root="$(cd "$(dirname "$0")/.." && pwd)"
 version=""
@@ -34,7 +33,6 @@ while [ $# -gt 0 ]; do
     case "$1" in
         -n|--dry-run) dry_run=1 ;;
         --skip-ci) skip_ci=1 ;;
-        --skip-phar) skip_phar=1 ;;
         --branch) branch=${2:?--branch needs a name}; shift ;;
         --root) root=${2:?--root needs a directory}; shift ;;
         -h|--help) sed -n '10,/^set -/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; exit 0 ;;
@@ -109,32 +107,24 @@ fi
 
 if [ "$dry_run" -eq 1 ]; then
     echo "Ready to release $version."
-    [ "$skip_phar" -eq 0 ] && echo "  would build bin/regex.phar with phar/build, and its SHA-256 checksum"
-    echo "  would publish the GitHub release $tag as a draft$([ "$pre_release" -eq 1 ] && echo ' pre-release')$([ "$skip_phar" -eq 0 ] && echo ', with regex.phar and its checksum')"
-    echo "  would tag $tag on $(git rev-parse --short HEAD) and push it (the split workflow tags every package), then publish the draft"
+    echo "  would create the GitHub release $tag as a draft$([ "$pre_release" -eq 1 ] && echo ' pre-release')"
+    echo "  would tag $tag on $(git rev-parse --short HEAD) and push it: the split workflow tags every package, and phar.yml builds and attests regex.phar, attaches it and its checksum, then publishes the draft"
     echo "  release notes: $notes_kind"
     [ "$notes_kind" = "the CHANGELOG section" ] || sed 's/^/    /' "$notes"
     exit 0
 fi
 
-assets=()
-if [ "$skip_phar" -eq 0 ]; then
-    phar/build
-    reported=$(php bin/regex.phar --version 2>/dev/null | head -1)
-    printf '%s' "$reported" | grep -qF "$version" || { echo "bin/regex.phar reports \"$reported\", not $version." >&2; exit 1; }
-    php -r 'echo hash_file("sha256", "bin/regex.phar"), "  regex.phar\n";' > bin/regex.phar.sha256
-    assets+=(bin/regex.phar bin/regex.phar.sha256)
-fi
-
 # The release is created as a draft first: GitHub refuses it before anything
-# is tagged, and a tag pushed cannot be taken back.
+# is tagged, and a tag pushed cannot be taken back. It stays a draft until
+# the phar workflow has attached the phar, so the latest release always
+# carries one.
 flags=(--title "PHPRegex $version" --notes-file "$notes" --draft --target "$(git rev-parse HEAD)")
 [ "$pre_release" -eq 1 ] && flags+=(--prerelease)
-gh release create "$tag" ${assets[@]+"${assets[@]}"} "${flags[@]}"
+gh release create "$tag" "${flags[@]}"
 
 git tag -a "$tag" -m "PHPRegex $version"
 git push origin "$tag"
 
-gh release edit "$tag" --draft=false
-
-echo "Released $version. Next: bin/bump --next <version>, and check bin/status once the split has run."
+echo "Tagged $version. phar.yml now builds and attests regex.phar, attaches it and publishes the release:"
+echo "  gh run watch \$(gh run list --workflow phar.yml --branch $tag --limit 1 --json databaseId --jq '.[0].databaseId')"
+echo "Then: bin/bump --next <version>, and check bin/status once the split has run."

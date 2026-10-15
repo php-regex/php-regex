@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.phar` is built from the release tag by a GitHub Actions workflow
+   and carries a build provenance attestation:
+   `gh attestation verify regex.phar --repo php-regex/php-regex` checks it.
  * `regex analyze` and `regex debug` show no hotspot for a pattern proven
    safe, and `debug` lists its findings under `Heuristic hints`: the proof
    overrides the heuristics they come from.
