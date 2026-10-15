@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class UselessDAndXFlagTest extends TestCase
 {
+    use PcreGates;
+
     private const SUBJECTS = ['', 'a', "a\n", 'a$', 'ab', "ab\n", 'a b', 'abc', ' ', '#', "a\u{2028}b"];
 
     #[Test]
@@ -66,6 +69,8 @@ final class UselessDAndXFlagTest extends TestCase
     #[DataProvider('provideUsefulFlags')]
     public function test_a_flag_that_changes_the_match_is_not_reported(string $pattern, string $flag, string $subject): void
     {
+        $this->requiresPhpReading($pattern);
+
         // Without the flag a pattern may not compile at all: false.
         $this->assertNotSame(
             @preg_match($this->withoutFlag($pattern, $flag), $subject),

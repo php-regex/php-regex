@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class EngineReplayTest extends TestCase
 {
+    use PcreGates;
+
     private const SPLIT = "\n-----\n";
 
     private const SUBJECTS = ['', "\n", "\r\n", "\xff", "\x80", "\0", 'x', ',', ',,', 'foo', 'FOO', 'GET', 'POST', 'aaa', "foo\n", 'it\'s', 'a$b'];
@@ -34,6 +37,8 @@ final class EngineReplayTest extends TestCase
     #[DataProvider('provideRewrites')]
     public function test_rewrite_answers_as_the_call_it_replaces(string $fixture): void
     {
+        $this->requiresPhpReadingCode((string) file_get_contents($fixture));
+
         $content = (string) file_get_contents($fixture);
         [$before, $after] = explode(self::SPLIT, $content, 2);
         $this->assertNotSame($before, $after, $fixture.' rewrites nothing.');

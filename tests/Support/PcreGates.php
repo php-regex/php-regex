@@ -64,6 +64,35 @@ trait PcreGates
     }
 
     /**
+     * Skip a row PHP 8.1 refuses and PHP 8.2 reads: a pattern with the n
+     * modifier, or with a NUL byte anywhere.
+     */
+    private function requiresPhpReading(string $pattern): void
+    {
+        $subject = addcslashes($pattern, "\0..\37");
+        if (str_contains($pattern, "\0")) {
+            $this->requiresPhp('8.2', $subject, 'refuses a NUL byte in a pattern');
+        }
+
+        // The modifiers are the letters past the closing delimiter.
+        if (1 === \preg_match('/[A-Za-z]*+$/', $pattern, $modifiers) && str_contains($modifiers[0], 'n') && 1 !== \preg_match('/^\s*+[A-Za-z]/', $pattern)) {
+            $this->requiresPhp('8.2', $subject, 'does not read the n modifier');
+        }
+    }
+
+    /**
+     * The gate above for every pattern PHP code passes to a preg_* call as
+     * a string literal.
+     */
+    private function requiresPhpReadingCode(string $code): void
+    {
+        \preg_match_all('/\bpreg_\w+\(\s*+(?:\'((?:[^\'\\\\]|\\\\.)*+)\'|"((?:[^"\\\\]|\\\\.)*+)")/s', $code, $calls, \PREG_SET_ORDER);
+        foreach ($calls as $call) {
+            $this->requiresPhpReading(isset($call[2]) ? stripcslashes($call[2]) : str_replace(['\\\\', "\\'"], ['\\', "'"], $call[1] ?? ''));
+        }
+    }
+
+    /**
      * Skip when the running engine refuses to compile the pattern — the
      * probe, never a release: engines diverge where no table says so. The
      * label, when given, names the family the pattern stands for, beside

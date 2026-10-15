@@ -58,8 +58,11 @@ final class RedosWitnessReplayTest extends TestCase
         $this->assertInstanceOf(RedosWitness::class, $witness, $pattern);
 
         $failingLength = null;
+        $error = \PREG_NO_ERROR;
         for ($n = 1; \strlen($witness->build($n)) <= self::MAX_INPUT_LENGTH; $n++) {
             if (false === @preg_match($pattern, $witness->build($n))) {
+                // Read before any assertion: PHPUnit 10 runs regexes of its own.
+                $error = preg_last_error();
                 $failingLength = \strlen($witness->build($n));
 
                 break;
@@ -67,7 +70,7 @@ final class RedosWitnessReplayTest extends TestCase
         }
 
         $this->assertNotNull($failingLength, \sprintf('%s: no witness up to %d bytes makes preg_match() fail', $pattern, self::MAX_INPUT_LENGTH));
-        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error(), $pattern);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $error, $pattern);
     }
 
     /**

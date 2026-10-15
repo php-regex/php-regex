@@ -68,6 +68,8 @@ final class PsalmPluginTargetTest extends TestCase
         // where 10.43 runs.
         if (isset($options['phpVersion']) && 'runtime' === $options['phpVersion']) {
             $this->requiresPcre2('10.43', self::ASCII);
+            // PHP 8.1 refuses the n modifier, and the row would report it.
+            $this->requiresPhpReading(self::NO_AUTO_CAPTURE);
         }
 
         $issues = PsalmRun::inFile(PsalmRun::issues([self::FILE], $phpVersion, $options), self::FILE);

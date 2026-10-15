@@ -20,6 +20,7 @@ use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\StringListAssertions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosVerdictClassTest extends TestCase
 {
+    use StringListAssertions;
+
     #[Test]
     #[DataProvider('provideExponentialPatterns')]
     public function test_proven_verdict_exponential_patterns(string $pattern): void
@@ -204,7 +207,7 @@ final class RedosVerdictClassTest extends TestCase
         $this->assertSame(RedosProof::Proven, $analysis->proof);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertCount(1, $analysis->abstractions);
-        $this->assertContainsOnlyString($analysis->abstractions);
+        self::assertOnlyStrings($analysis->abstractions);
     }
 
     #[Test]

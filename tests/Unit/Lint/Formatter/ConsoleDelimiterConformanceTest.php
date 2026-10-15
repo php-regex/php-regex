@@ -19,6 +19,7 @@ use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ConsoleDelimiterConformanceTest extends TestCase
 {
+    use PcreGates;
+
     private const LINE_DIFF_MARKER = "\n         ---\n";
 
     /**
@@ -68,6 +71,8 @@ final class ConsoleDelimiterConformanceTest extends TestCase
     #[Test]
     public function test_a_pattern_behind_a_nul_byte_has_no_flags(): void
     {
+        $this->requiresPhp('8.2', 'A pattern behind a NUL byte', 'refuses a NUL byte in a pattern before it reads the delimiter');
+
         $original = self::nulByte()."/a{1}\n b/x";
         $optimized = self::nulByte()."/a\n b/x";
 

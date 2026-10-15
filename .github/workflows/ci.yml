@@ -86,8 +86,7 @@ jobs:
         run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit-81/vendor/bin/phpstan
 
       - name: Run Test Suite
-        # The directories that hold on PHP 8.1, the PHPStan rule's among them;
-        # tools/phpunit-81/phpunit.xml.dist says what the rest needs.
+        # The whole tree but the Symfony and Laravel bridges, which need 8.2.
         run: tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist --colors=always
 
   engines-bundled:

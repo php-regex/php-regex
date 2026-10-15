@@ -296,4 +296,75 @@ final class PcreGatesTest extends TestCase
         yield 'a patch level' => ['version' => '8.4.25'];
         yield 'one part only' => ['version' => '8'];
     }
+
+    /**
+     * PHP 8.1 refuses the n modifier and a NUL byte anywhere in a pattern,
+     * which PHP 8.2 reads: a row that writes either runs from PHP 8.2.
+     */
+    #[Test]
+    #[DataProvider('providePatternsPhp82Reads')]
+    public function test_a_pattern_php_8_1_refuses_runs_from_php_8_2(string $pattern, string $reason): void
+    {
+        try {
+            $this->requiresPhpReading($pattern);
+            $this->assertGreaterThanOrEqual(80200, \PHP_VERSION_ID, 'PHP 8.1 refuses the pattern, so the gate must skip.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertLessThan(80200, \PHP_VERSION_ID);
+            $this->assertSame(
+                \sprintf('%s is verified against PHP 8.2 and later; PHP %s %s.', addcslashes($pattern, "\0..\37"), \PHP_VERSION, $reason),
+                $skip->getMessage(),
+            );
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, reason: string}>
+     */
+    public static function providePatternsPhp82Reads(): iterable
+    {
+        yield 'the n modifier' => ['pattern' => '/(a)/n', 'reason' => 'does not read the n modifier'];
+        yield 'the n modifier among others' => ['pattern' => '#(a)#xni', 'reason' => 'does not read the n modifier'];
+        yield 'a NUL byte in the body' => ['pattern' => "/a\0b/", 'reason' => 'refuses a NUL byte in a pattern'];
+        yield 'a NUL delimiter' => ['pattern' => "\0a\0", 'reason' => 'refuses a NUL byte in a pattern'];
+    }
+
+    #[Test]
+    #[DataProvider('providePatternsEveryPhpReads')]
+    public function test_a_pattern_every_php_reads_does_not_skip(string $pattern): void
+    {
+        $this->requiresPhpReading($pattern);
+
+        $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePatternsEveryPhpReads(): iterable
+    {
+        yield 'no modifier' => ['pattern' => '/(a)/'];
+        yield 'an n in the body' => ['pattern' => '/n/'];
+        yield 'other modifiers' => ['pattern' => '/(a)/imsx'];
+        yield 'a NUL escape' => ['pattern' => '/a\\0b/'];
+    }
+
+    #[Test]
+    public function test_the_patterns_of_a_preg_call_in_code_are_gated_as_patterns(): void
+    {
+        $this->requiresPhpReadingCode("<?php preg_match('/abc/', \$s); preg_replace(\"/a\\\\.b/\", '', \$s);");
+
+        try {
+            $this->requiresPhpReadingCode("<?php preg_match('/abc/', \$s); preg_match(\"/a\\0b/\", \$s);");
+            $this->assertGreaterThanOrEqual(80200, \PHP_VERSION_ID, 'PHP 8.1 refuses a NUL byte, so the gate must skip.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertStringContainsString('refuses a NUL byte in a pattern', $skip->getMessage());
+        }
+
+        try {
+            $this->requiresPhpReadingCode("<?php preg_match('/abc/n', \$s);");
+            $this->assertGreaterThanOrEqual(80200, \PHP_VERSION_ID, 'PHP 8.1 refuses the n modifier, so the gate must skip.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertStringContainsString('does not read the n modifier', $skip->getMessage());
+        }
+    }
 }

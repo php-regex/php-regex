@@ -37,6 +37,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\OutputFormat;
 use PHPRegex\Toolkit\Regex;
@@ -46,6 +47,8 @@ use PHPUnit\Framework\TestCase;
 
 final class RegexTest extends TestCase
 {
+    use PcreGates;
+
     private Regex $regexService;
 
     protected function setUp(): void
@@ -137,6 +140,8 @@ final class RegexTest extends TestCase
     #[DataProvider('provideInvalidRegexForParsing')]
     public function test_parse_method_with_invalid_regex_parsing(string $pattern, string $exceptionMessage): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->expectException(ParserException::class);
         $this->expectExceptionMessage($exceptionMessage);
         $this->regexService->parse($pattern);

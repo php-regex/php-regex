@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Unit\Parser\CaptureShapeAnalyzerTest;
 use PHPStan\PhpDoc\TypeStringResolver;
 use PHPStan\Testing\PHPStanTestCase;
@@ -36,6 +37,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
 {
+    use PcreGates;
+
     private const FLAG_SETS = [0, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
 
     /**
@@ -45,6 +48,8 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     #[DataProviderExternal(CaptureShapeAnalyzerTest::class, 'provideEngineRows')]
     public function test_the_shape_phpstan_reads_holds_what_the_engine_writes(string $pattern, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 
@@ -130,6 +135,8 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     #[DataProviderExternal(CaptureShapeAnalyzerTest::class, 'provideMatchAllShapes')]
     public function test_the_match_all_shape_is_a_type_phpstan_reads(string $pattern, int $flags, string $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
         $type = $resolver->resolve($expected);
 

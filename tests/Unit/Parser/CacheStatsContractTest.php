@@ -18,6 +18,7 @@ use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,6 +39,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CacheStatsContractTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_cache_interface_exports_the_cache_stats_alias(): void
     {
@@ -79,6 +82,8 @@ final class CacheStatsContractTest extends TestCase
     #[Test]
     public function test_facade_mirror_keeps_the_inline_shape(): void
     {
+        $this->requiresPhp('8.2', 'The Laravel facade', 'installs no Laravel 12');
+
         $docblock = (string) (new \ReflectionClass(LaravelRegex::class))->getDocComment();
 
         $this->assertSame(

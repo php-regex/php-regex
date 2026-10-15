@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class NulByteBeforePhp82Test extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('providePatternsHoldingANul')]
     public function test_php_8_1_refuses_a_nul_byte_anywhere_in_the_pattern(string $pattern, int $offset): void
@@ -53,6 +56,8 @@ final class NulByteBeforePhp82Test extends TestCase
     #[Test]
     public function test_php_8_2_reads_a_nul_byte_in_the_body(): void
     {
+        $this->requiresPhp('8.2', 'A NUL byte in the body', 'refuses a NUL byte in a pattern');
+
         $this->assertSame(1, preg_match("/a\0b/", "a\0b"));
 
         $this->assertTrue(RegexParser::create(['php_version' => '8.2'])->validate("/a\0b/")->isValid);

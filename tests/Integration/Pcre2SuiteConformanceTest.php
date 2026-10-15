@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\Pcre2CaseRunner;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,6 +40,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class Pcre2SuiteConformanceTest extends TestCase
 {
+    use PcreGates;
+
     private const SUITE_JSON = __DIR__.'/../Fixtures/Pcre2/suite-cases.json';
 
     private const BASELINE_JSON = __DIR__.'/../Fixtures/Pcre2/conformance-baseline.json';
@@ -71,6 +74,8 @@ final class Pcre2SuiteConformanceTest extends TestCase
     #[DataProvider('provideSuiteCases')]
     public function test_case_agrees_with_the_pinned_pcre2_output(array $case): void
     {
+        $this->requiresPhpReading($case['delimiter'].$case['pattern'].$case['delimiter'].$case['flags']);
+
         $id = $case['id'];
         $baseline = self::baseline();
 

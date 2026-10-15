@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,12 +28,18 @@ use Psalm\Internal\Analyzer\IssueData;
  */
 final class PsalmPluginTypesTest extends TestCase
 {
+    use PcreGates;
+
     private const DIRECTORY = 'Types';
 
     #[Test]
     #[DataProvider('provideTypeChecks')]
     public function test_plugin_types_matches_as_the_fixture_checks(string $file, int $from, int $to, string $variable, string $expected): void
     {
+        // The patterns the check reads, from the function it stands in.
+        $lines = file(PsalmRun::FIXTURES.'/'.$file) ?: [];
+        $this->requiresPhpReadingCode(implode('', \array_slice($lines, max(0, $from - 6), $to - $from + 7)));
+
         $issues = array_values(array_filter(
             PsalmRun::inFile(self::issues(), $file),
             static fn (IssueData $issue): bool => $issue->line_from >= $from && $issue->line_from <= $to + 1,
@@ -47,6 +54,10 @@ final class PsalmPluginTypesTest extends TestCase
     #[Test]
     public function test_plugin_types_fixtures_raise_no_other_issue(): void
     {
+        foreach (PsalmRun::filesIn(self::DIRECTORY) as $file) {
+            $this->requiresPhpReadingCode((string) file_get_contents(PsalmRun::FIXTURES.'/'.$file));
+        }
+
         $others = array_values(array_filter(self::issues(), static fn (IssueData $issue): bool => !\in_array($issue->type, ['Trace', 'CheckType'], true)));
 
         $this->assertSame([], array_map(static fn (IssueData $issue): string => basename($issue->file_path).' '.PsalmRun::describe($issue), $others));

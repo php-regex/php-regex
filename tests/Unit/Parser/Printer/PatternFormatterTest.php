@@ -109,6 +109,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideDelimiters')]
     public function test_format_keeps_the_delimiter_and_the_flags_and_appends_x(string $pattern, int $width, string $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertFormatsTo($pattern, $width, $expected);
     }
 
@@ -209,6 +211,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideEveryFormattedPattern')]
     public function test_format_is_idempotent(string $pattern, int $width): void
     {
+        $this->requiresPhpReading($pattern);
+
         $formatter = new PatternFormatter($width);
         $once = $formatter->format($this->parse($pattern))->pattern;
         $twice = $formatter->format($this->parse($once));
@@ -226,6 +230,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideEveryFormattedPattern')]
     public function test_compact_undoes_the_layout_up_to_spelling(string $pattern, int $width): void
     {
+        $this->requiresPhpReading($pattern);
+
         $compactOfFormat = (new PatternFormatter())->compact($this->parse((new PatternFormatter($width))->format($this->parse($pattern))->pattern))->pattern;
         $compact = (new PatternFormatter())->compact($this->parse($pattern))->pattern;
 
@@ -242,6 +248,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideWhitespaceAtLineEnds')]
     public function test_format_ends_no_line_in_significant_whitespace(string $pattern, int $width): void
     {
+        $this->requiresPhpReading($pattern);
+
         $formatted = (new PatternFormatter($width))->format($this->parse($pattern))->pattern;
         $stripped = implode("\n", array_map(rtrim(...), explode("\n", $formatted)));
 
@@ -256,6 +264,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideEveryFormattedPattern')]
     public function test_format_output_survives_a_reindentation(string $pattern, int $width): void
     {
+        $this->requiresPhpReading($pattern);
+
         $formatted = (new PatternFormatter($width))->format($this->parse($pattern))->pattern;
         $reindented = str_replace("\n", "\n        ", $formatted);
 
@@ -286,6 +296,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideEveryCompactedPattern')]
     public function test_compact_is_idempotent(string $pattern): void
     {
+        $this->requiresPhpReading($pattern);
+
         $formatter = new PatternFormatter();
         $once = $formatter->compact($this->parse($pattern))->pattern;
         $twice = $formatter->compact($this->parse($once));
@@ -664,6 +676,8 @@ final class PatternFormatterTest extends TestCase
     #[DataProvider('provideEveryFormattedPattern')]
     public function test_format_writes_no_line_of_indentation_only(string $pattern, int $width): void
     {
+        $this->requiresPhpReading($pattern);
+
         $formatted = (new PatternFormatter($width))->format($this->parse($pattern))->pattern;
 
         foreach (explode("\n", $formatted) as $number => $line) {

@@ -22,6 +22,7 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
+use PHPRegex\Tests\Support\StringListAssertions;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
 
 final class PatternExtractorTest extends TestCase
 {
+    use StringListAssertions;
+
     use TemporaryProject;
 
     private ExtractorInterface&Stub $extractor;
@@ -255,7 +258,7 @@ final class PatternExtractorTest extends TestCase
         $failing = $project.'/défaillant.php';
         $this->extractor->method('extract')->willReturnCallback(
             static function (array $files) use ($failing, $failure): array {
-                self::assertContainsOnlyString($files);
+                self::assertOnlyStrings($files);
                 if (\in_array($failing, $files, true)) {
                     throw $failure;
                 }

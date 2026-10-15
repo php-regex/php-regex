@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\AbstractTraversingVisitor;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +44,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class VisitorGenericDefaultTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The identifier of the wall this change takes down, and of the guidance
      * it puts in its place.
@@ -81,6 +84,8 @@ final class VisitorGenericDefaultTest extends TestCase
     #[Test]
     public function test_unbound_collector_visitor_passes_analysis(): void
     {
+        $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
+
         $errors = self::fixtureErrors();
 
         $onCollector = array_values(array_filter(
@@ -101,6 +106,8 @@ final class VisitorGenericDefaultTest extends TestCase
     #[Test]
     public function test_empty_body_override_is_told_to_return_null(): void
     {
+        $this->requiresPhp('8.3', 'The repository\'s PHPStan run', 'cannot load PHPUnit 12, which its configuration bootstraps');
+
         $errors = self::fixtureErrors();
 
         $genericsWall = array_values(array_filter(
