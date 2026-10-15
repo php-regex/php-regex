@@ -50,6 +50,46 @@ jobs:
         # documentation tests are not left to rot outside of CI.
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
+  tests-php81:
+    # Every package but the Symfony and Laravel bridges runs on PHP 8.1, the
+    # PHPStan, Psalm and Rector integrations among them. PHPUnit 12 needs
+    # PHP 8.3: PHPUnit 10.5, from tools/phpunit-81, runs the suite here.
+    name: Tests (PHP 8.1)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+          ini-values: phar.readonly=0
+
+      - name: Lint the packages that run on PHP 8.1
+        # PHP 8.1 lints one file per call.
+        shell: bash
+        run: |
+          find src -name '*.php' -not -path 'src/Laravel/*' -not -path 'src/Symfony/*' -print0 \
+            | xargs -0 -n1 php -l | (grep -v '^No syntax errors detected' || true)
+
+      - name: Install Dependencies
+        # php-regex/php-regex installs the Symfony and Laravel bridges, which
+        # need PHP 8.2: its autoloader is generated without that check.
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress --ignore-platform-req=php
+          composer install -d tools/phpunit-81 --prefer-dist --no-interaction --no-progress
+
+      - name: Smoke test
+        run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit-81/vendor/bin/phpstan
+
+      - name: Run Test Suite
+        # The directories that hold on PHP 8.1, the PHPStan rule's among them;
+        # tools/phpunit-81/phpunit.xml.dist says what the rest needs.
+        run: tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist --colors=always
+
   engines-bundled:
     # Patterns are judged for a PHP version and the PCRE2 it runs, and part of
     # the suite asks the running engine. The official images build PHP with the
