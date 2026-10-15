@@ -11,6 +11,10 @@ CHANGELOG
    method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.
  * `regex:explain` no longer stops with an error on a pattern the optimizer
    shortens.
+ * A route constraint is judged as the router compiles it: between braces,
+   in a group named after the parameter, its own groups non-capturing.
+   `[{]`, `a\$` and `(a)(b)\2`, which break the route, are invalid.
+ * `regex:compare` prints its example quoted and escaped, as the CLI does.
  * The `regex:routes` and `regex:compare --format=json` reports are part of
    the backward compatibility promise, listed key by key in the JSON output
    reference: one document ending with a newline, Unicode and slashes

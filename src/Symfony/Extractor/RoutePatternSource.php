@@ -77,7 +77,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     continue;
                 }
 
-                $normalized = $this->patternNormalizer->normalize($pattern, (bool) $route->getOption('utf8'));
+                $normalized = $this->patternNormalizer->normalize($pattern, (string) $parameter, (bool) $route->getOption('utf8'), $this->isHostParameter($route, (string) $parameter));
                 $patterns[] = new PatternOccurrence(
                     $normalized,
                     $file,
@@ -106,7 +106,7 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     if (null === $route || $route->hasRequirement($parameter)) {
                         continue;
                     }
-                    $normalized = $this->patternNormalizer->normalize($value, (bool) $route->getOption('utf8'));
+                    $normalized = $this->patternNormalizer->normalize($value, (string) $parameter, (bool) $route->getOption('utf8'), $this->isHostParameter($route, (string) $parameter));
                     $patterns[] = new PatternOccurrence(
                         $normalized,
                         $yamlFile,
@@ -311,5 +311,19 @@ final readonly class RoutePatternSource implements PatternSourceInterface
         }
 
         return \sprintf('Route "%s" (%s, controller: %s)', $name, $sourceLabel, $controller);
+    }
+
+    /**
+     * A parameter of the host and not of the path is matched by the host
+     * pattern, which the route compiler reads case-insensitively.
+     */
+    private function isHostParameter(Route $route, string $parameter): bool
+    {
+        return $this->namesParameter($route->getHost(), $parameter) && !$this->namesParameter($route->getPath(), $parameter);
+    }
+
+    private function namesParameter(string $template, string $parameter): bool
+    {
+        return str_contains($template, '{'.$parameter.'}') || str_contains($template, '{!'.$parameter.'}');
     }
 }

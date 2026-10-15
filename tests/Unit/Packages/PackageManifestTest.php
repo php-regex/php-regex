@@ -70,7 +70,7 @@ final class PackageManifestTest extends TestCase
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
         'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\LibraryPcre'],
-        'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
+        'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         // The lint writes its rewrite of a pattern under x into the
         // pattern's own layout, as the optimizer does.
         'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],

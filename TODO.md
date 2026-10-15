@@ -127,13 +127,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 Each item was verified at the tag candidate and is additive.
 
-**G4 — Two route-constraint edges in Laravel.** The constraint is judged
-between `/`-family delimiters, where the router uses `{…}`: a constraint with
-an unbalanced brace, as `[{]`, passes the lint and fails the router. A
-constraint ending in an escaped `\$` is cut as Symfony's sanitizer cuts it,
-but may compile where the route does not. `regex:compare` prints its
-counterexample unescaped. Effort: S.
-
 **G5 — No Symfony Flex recipe.** Flex guesses `PHPRegexSymfonyBundle` or
 `SymfonyBundle`, never `PHPRegexBundle`, so `composer require
 php-regex/regex-symfony` registers nothing (the guide says so). *Fix*: a

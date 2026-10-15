@@ -20,6 +20,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
@@ -151,7 +152,7 @@ final class CompareCommand extends Command
                 [$label, $example] = $outcome['example'];
                 $this->newLine();
                 $this->line('<fg=white;options=bold>'.$label.':</>');
-                $this->line('  <fg=yellow>'.OutputFormatter::escape($example).'</>');
+                $this->line('  <fg=yellow>'.OutputFormatter::escape(DisplayEscaper::quote($example)).'</>');
 
                 // Show which pattern matches
                 $engine = new PcreEngine();

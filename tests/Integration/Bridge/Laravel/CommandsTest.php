@@ -85,6 +85,29 @@ final class CommandsTest extends TestCase
             ->expectsOutputToContain('Counterexample');
     }
 
+    /**
+     * The example is spelled as the CLI spells it: quoted, a tab written
+     * as \t, the empty string named.
+     */
+    public function test_compare_command_quotes_and_escapes_the_example(): void
+    {
+        $this->artisan('regex:compare', [
+            'pattern1' => '/^\t$/',
+            'pattern2' => '/^a$/',
+            '--method' => 'subset',
+        ])
+            ->assertFailed()
+            ->expectsOutputToContain('"\t"');
+
+        $this->artisan('regex:compare', [
+            'pattern1' => '/^$/',
+            'pattern2' => '/^a$/',
+            '--method' => 'subset',
+        ])
+            ->assertFailed()
+            ->expectsOutputToContain('"" (empty string)');
+    }
+
     public function test_compare_command_json_output(): void
     {
         $this->artisan('regex:compare', [
