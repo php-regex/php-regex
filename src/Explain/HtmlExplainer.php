@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain;
 
+use PHPRegex\Explain\Internal\InlineSetting;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -112,9 +113,16 @@ final class HtmlExplainer extends AbstractNodeVisitor
         'sc' => 'A currency symbol',
     ];
 
+    /**
+     * How many groups stand around the node being explained: a bare "(?i)"
+     * holds to the end of the innermost one, or of the pattern.
+     */
+    private int $groupDepth = 0;
+
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
+        $this->groupDepth = 0;
         $patternExplain = $node->pattern->accept($this);
         $flags = $node->flags ? $this->e(' (with flags: '.$node->flags.')') : '';
 
@@ -151,7 +159,13 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): string
     {
-        $childExplain = $node->child->accept($this);
+        if (InlineSetting::is($node)) {
+            $setting = $this->e(InlineSetting::describe($node, $this->groupDepth > 0));
+
+            return \sprintf('<li><span title="%s">%s</span></li>', $setting, $setting);
+        }
+
+        $childExplain = $this->explainInGroup($node->child);
         $type = match ($node->type) {
             GroupType::Capturing => 'Start Capturing Group',
             GroupType::NonCapturing => 'Start Non-Capturing Group',
@@ -387,7 +401,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
             return \sprintf('<li><strong>%s</strong>: every character from one script</li>', $title);
         }
 
-        return \sprintf("<li><strong>%s</strong>: every character from one script\n<ul>%s</ul>\n</li>", $title, $node->content->accept($this));
+        return \sprintf("<li><strong>%s</strong>: every character from one script\n<ul>%s</ul>\n</li>", $title, $this->explainInGroup($node->content));
     }
 
     #[\Override]
@@ -413,12 +427,12 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node): string
     {
-        $cond = $node->condition->accept($this);
-        $yes = $node->yes->accept($this);
+        $cond = $this->explainInGroup($node->condition);
+        $yes = $this->explainInGroup($node->yes);
 
         // Check if the 'no' branch is an empty literal node
         $hasElseBranch = !($node->no instanceof LiteralNode && '' === $node->no->value);
-        $no = $hasElseBranch ? $node->no->accept($this) : '';
+        $no = $hasElseBranch ? $this->explainInGroup($node->no) : '';
 
         // Condition node will be a <li>, just need its text
         $condText = trim(strip_tags((string) $cond));
@@ -468,7 +482,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitDefine(DefineNode $node): string
     {
-        $content = $node->content->accept($this);
+        $content = $this->explainInGroup($node->content);
 
         return \sprintf(
             "<li><strong>DEFINE Block</strong> (defines subpatterns without matching):\n<ul>%s</ul>\n</li>",
@@ -558,9 +572,21 @@ final class HtmlExplainer extends AbstractNodeVisitor
         return $desc;
     }
 
+    private function explainInGroup(NodeInterface $node): string
+    {
+        $this->groupDepth++;
+
+        try {
+            return (string) $node->accept($this);
+        } finally {
+            $this->groupDepth--;
+        }
+    }
+
     private function explainLiteral(string $value): string
     {
         return match ($value) {
+            '' => "'' (empty string)",
             ' ' => "' ' (space)",
             "\t" => "'\\t' (tab)",
             "\n" => "'\\n' (newline)",

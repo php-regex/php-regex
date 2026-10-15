@@ -107,12 +107,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Seen on the way, not yet verified to the end; each is small and additive.
 
-- **`explain` prints `'\x00'` under an inline flag.** `regex explain
-  '/(?i)a/'` shows `Inline flags 'i'` over a `'\x00'` line, then `'a'`
-  outside the group: the empty literal child is explained as a NUL byte, and
-  nothing says the flag reaches the rest of the pattern. `(?i:a)` is right.
-  *Verify*: `src/Explain/TextExplainer.php` `visitLiteral()` /
-  `explainLiteral('')`.
 - **`regex debug` keeps heuristic leftovers on a proven-safe pattern.** The
   hotspot is gone, but `regex debug '/a+/'` still prints `Culprit: a+`,
   `Trigger: quantifier +` and an attack `Input: "aaaaaaaaaa!" (auto)` under a

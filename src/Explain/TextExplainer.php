@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain;
 
+use PHPRegex\Explain\Internal\InlineSetting;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -124,10 +125,17 @@ final class TextExplainer extends AbstractNodeVisitor
      */
     private ?\WeakMap $explained = null;
 
+    /**
+     * How many groups stand around the node being explained: a bare "(?i)"
+     * holds to the end of the innermost one, or of the pattern.
+     */
+    private int $groupDepth = 0;
+
     #[\Override]
     public function visitRegex(RegexNode $node): string
     {
         $this->indentLevel = 0;
+        $this->groupDepth = 0;
         $flags = $node->flags ? ' (with flags: '.$node->flags.')' : '';
         $header = $this->line('Regex matches'.$flags);
         $this->indentLevel++;
@@ -166,8 +174,14 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitGroup(GroupNode $node): string
     {
+        if (InlineSetting::is($node)) {
+            return $this->line(InlineSetting::describe($node, $this->groupDepth > 0));
+        }
+
         $this->indentLevel++;
+        $this->groupDepth++;
         $childExplain = $node->child->accept($this);
+        $this->groupDepth--;
         $this->indentLevel--;
 
         $type = match ($node->type) {
@@ -320,7 +334,9 @@ final class TextExplainer extends AbstractNodeVisitor
         }
 
         $this->indentLevel++;
+        $this->groupDepth++;
         $content = $node->content->accept($this);
+        $this->groupDepth--;
         $this->indentLevel--;
 
         return implode("\n", [$this->line($title), $content, $this->line('End script run')]);
@@ -391,6 +407,7 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitConditional(ConditionalNode $node): string
     {
         $this->indentLevel++;
+        $this->groupDepth++;
         $cond = $node->condition->accept($this);
         $yes = $node->yes->accept($this);
 
@@ -398,6 +415,7 @@ final class TextExplainer extends AbstractNodeVisitor
         $hasElseBranch = !($node->no instanceof LiteralNode && '' === $node->no->value);
         $no = $hasElseBranch ? $node->no->accept($this) : '';
 
+        $this->groupDepth--;
         $this->indentLevel--;
 
         if ('' === $no) {
@@ -436,7 +454,9 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitDefine(DefineNode $node): string
     {
         $this->indentLevel++;
+        $this->groupDepth++;
         $content = $node->content->accept($this);
+        $this->groupDepth--;
         $this->indentLevel--;
 
         return implode("\n", [
@@ -496,6 +516,7 @@ final class TextExplainer extends AbstractNodeVisitor
     private function explainLiteral(string $value): string
     {
         return match ($value) {
+            '' => "'' (empty string)",
             ' ' => "' ' (space)",
             "\t" => "'\\t' (tab)",
             "\n" => "'\\n' (newline)",
