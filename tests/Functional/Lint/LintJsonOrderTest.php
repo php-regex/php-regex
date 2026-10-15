@@ -115,11 +115,7 @@ final class LintJsonOrderTest extends TestCase
         $patterns = array_column($results, 'pattern');
         $this->assertNotContains('/(b+)+$/', $patterns, '@regex-ignore-next-line is not applied.');
         $this->assertNotContains('/(c/', $patterns, '@regex-ignore is not applied.');
-        foreach ($results as $result) {
-            if ('/y{1}/' === $result['pattern']) {
-                $this->assertSame([], $result['issues'] ?? null, '@regex-lint-ignore is not applied.');
-            }
-        }
+        $this->assertNotContains('/y{1}/', $patterns, '@regex-ignore-next-line above its line is not applied.');
     }
 
     /**
@@ -280,7 +276,7 @@ final class LintJsonOrderTest extends TestCase
                 preg_match('/(b+)+\$/', \$s);
                 preg_match('/(c/', \$s); // @regex-ignore
                 preg_match('/[a-zA-Z0-9_]+/', \$s);
-                // @regex-lint-ignore
+                // @regex-ignore-next-line
                 preg_match('/y{1}/', \$s);
                 preg_match('/(?<=a+)b/', \$s); preg_match('/(d+)+\$/', \$s);
 

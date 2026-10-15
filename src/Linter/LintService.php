@@ -456,14 +456,7 @@ final readonly class LintService
      */
     private function addIssuesToResults(array $issues, array $patternMap, array &$results): void
     {
-        // Each file is read once for its ignore comments, whatever the
-        // number of its issues.
-        $ignoredLines = [];
         foreach ($issues as $issue) {
-            if ($this->shouldIgnoreIssue($issue, $ignoredLines)) {
-                continue;
-            }
-
             $key = $this->createPatternKey(
                 $issue['file'],
                 $issue['line'],
@@ -511,45 +504,6 @@ final readonly class LintService
             $results[$key]['optimizations'][] = $opt;
             $results[$key]['problems'][] = $this->createProblemFromOptimization($opt);
         }
-    }
-
-    /**
-     * @param array<string, array<int, true>> $ignoredLines by file, the lines a comment on the line above
-     *                                                      ignores, filled as the files are read
-     *
-     * @phpstan-param LintIssue $issue
-     */
-    private function shouldIgnoreIssue(array $issue, array &$ignoredLines): bool
-    {
-        $source = $issue['source'] ?? '';
-        if (str_starts_with($source, 'route:') || str_starts_with($source, 'validator:')) {
-            return false;
-        }
-
-        $file = $issue['file'];
-        if ('' === $file || !is_file($file)) {
-            return false;
-        }
-
-        $line = $issue['line'];
-        if ($line < 2) {
-            return false;
-        }
-
-        if (!isset($ignoredLines[$file])) {
-            $ignoredLines[$file] = [];
-            $content = @file_get_contents($file);
-            if (false !== $content) {
-                foreach (explode("\n", $content) as $index => $text) {
-                    if (str_contains($text, '// @regex-lint-ignore')) {
-                        // A comment ignores the line below its own.
-                        $ignoredLines[$file][$index + 2] = true;
-                    }
-                }
-            }
-        }
-
-        return isset($ignoredLines[$file][$line]);
     }
 
     /**

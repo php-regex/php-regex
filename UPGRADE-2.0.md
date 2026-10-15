@@ -468,6 +468,18 @@ A baseline file that is missing or is not a baseline is now a usage error
 (exit code 2), where 1.x went on with no baseline. See
 [the CLI guide](docs/guides/cli.md#baseline).
 
+### `// @regex-lint-ignore`
+
+The 1.x comment `// @regex-lint-ignore` on the line above a pattern no longer
+hides its issues. Write `// @regex-ignore-next-line` there instead (or
+`// @regex-ignore` at the end of the pattern's own line), the markers the
+documentation names:
+
+```php
+// @regex-ignore-next-line
+preg_match('/(a+)+$/', $input);
+```
+
 ### Breaking Changes
 
 #### One way to do each thing on the facade

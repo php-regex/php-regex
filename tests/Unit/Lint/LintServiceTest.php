@@ -290,8 +290,12 @@ final class LintServiceTest extends TestCase
         $this->assertArrayHasKey('optimizations', $result->results[0]);
     }
 
+    /**
+     * The 1.x marker "// @regex-lint-ignore" is gone: the line above a
+     * pattern takes "// @regex-ignore-next-line", which the extraction reads.
+     */
     #[Test]
-    public function test_analyze_ignores_issues_with_ignore_comment(): void
+    public function test_analyze_reports_an_issue_below_the_1x_lint_ignore_comment(): void
     {
         $file = __DIR__.'/../../Fixtures/Extractor/regex_lint_ignore.php';
 
@@ -303,8 +307,8 @@ final class LintServiceTest extends TestCase
         $service = new LintService($this->analysis, $this->sources);
         $result = $service->analyze($patterns, $request, null);
 
-        // The issue should be ignored due to the comment on the previous line
-        $this->assertCount(0, $result->results);
+        $this->assertCount(1, $result->results);
+        $this->assertSame(3, $result->results[0]['line']);
     }
 
     #[Test]

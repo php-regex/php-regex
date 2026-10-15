@@ -127,11 +127,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### C. The CLI
 
-**C7 — An undocumented ignore marker.** `LintService::shouldIgnoreIssue`
-honours `// @regex-lint-ignore` next to the documented `@regex-ignore` and
-`@regex-ignore-next-line`; the help and the docs never name it. *Fix*: drop it
-or document it. Effort: XS.
-
 **C9 — The lint run leaves time on the table.** Measured on a 300k-file
 corpus with 10 workers: `suggestOptimizations` parses every pattern a second
 time (`AnalysisService`), and runs as a pass of its own after the lint pass
