@@ -62,7 +62,7 @@ the same options in camelCase (`OptimizerOptions::fromCamelCaseArray()`).
 | `possessive`                | bool | `false` | a quantifier becomes possessive where nothing after it can take the match back |
 | `factorize`                 | bool | `false` | alternatives sharing a prefix share it                                      |
 | `min_quantifier_count`      | int  | `4`     | how many repetitions of an item become a quantifier, at least 2             |
-| `verify_with_automata`      | bool | `false` | a rewrite is only offered when the automata prove it matches the same strings |
+| `verify_with_automata`      | bool | `false` | a rewrite is only offered when the automata prove it writes the same `$matches`, or, where the match solver does not read it, matches the same strings |
 
 `possessive` and `factorize` are off by default: a backreference can make a
 possessive quantifier change what the pattern matches, and factorization makes

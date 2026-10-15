@@ -13,9 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
-use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
-use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\ProjectTarget;
@@ -27,6 +25,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
+use PHPRegex\Optimizer\Internal\RewriteCheck;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -63,14 +62,6 @@ use PHPRegex\Redos\RedosSeverity;
 final readonly class AnalysisService
 {
     private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
-
-    /**
-     * The transitions the language check of a rewrite under /x may process,
-     * as the optimizer's own check: a Unicode class splits the alphabet into
-     * hundreds of ranges, a transition each for every DFA state, and at the
-     * solver's default budget one pattern's table took hundreds of megabytes.
-     */
-    private const REWRITE_CHECK_WORK = 200_000;
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
 
     private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
@@ -1246,20 +1237,17 @@ final readonly class AnalysisService
     }
 
     /**
-     * @return bool|null true when equivalent, false when not or when the
+     * The optimizer's verdict on a rewrite: the $matches first, then the
+     * strings matched.
+     *
+     * @return bool|null true when proven, false when disproven or when the
      *                   check gave up on its budget, null when the automata
      *                   do not read the pattern
      */
     private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new LanguageSolver($this->regex, $this->dfas());
-            $result = $solver->equivalent($original, $optimized, new SolverOptions(maxTransitionsProcessed: self::REWRITE_CHECK_WORK));
-
-            return $result->isEquivalent;
-        } catch (ComplexityException $e) {
-            // Out of budget proves nothing: the rewrite is not offered.
-            return isset($e->getDiagnostic()['limit']) ? false : null;
+            return (new RewriteCheck(new LanguageSolver($this->regex, $this->dfas())))->verify($original, $optimized);
         } catch (ExceptionInterface) {
             return null;
         }

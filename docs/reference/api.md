@@ -493,9 +493,11 @@ echo $result->optimized;   // '/\d+/'
 echo $result->changes[0];  // 'Optimized pattern.'
 ```
 
-When `verifyWithAutomata` is enabled, PHPRegex validates that the optimization is language-equivalent for the
-supported regular subset. Unsupported patterns fall back to the original behavior. The check works within a
-budget of its own: one it runs out of proves nothing, and the original pattern is returned.
+When `verifyWithAutomata` is enabled, PHPRegex validates that the optimization writes the same `$matches` as the
+pattern on every subject (`LanguageSolver::matchEquivalent()`), and, where the match solver does not read the
+pattern, that it matches the same strings, for the supported regular subset. Unsupported patterns fall back to the
+original behavior. The check works within a budget of its own: one it runs out of proves nothing, and the original
+pattern is returned.
 
 ---
 

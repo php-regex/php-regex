@@ -118,6 +118,21 @@ and `\K`; an end anchor followed by more of the pattern; and two patterns of whi
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
 write different `$matches`.
 
+Neither question answers the other. The same `$matches` on every subject is the same
+answer on every subject, so the two patterns find a match in the same subjects; it is not
+the same set of whole strings, which is what `equivalent()` compares by default.
+`/a|ab/` and `/a/` write the same `$matches` everywhere, as `ab` is never reached, yet
+`equivalent()` says they differ, and they do once spliced into `/^(?:…)$/`. The other
+way, `equivalent()` calls `/a$/` and `/a\z/` equivalent, as both match the whole string
+`a` only, while `preg_match()` finds `a` in `"a\n"` with the first and nothing with the
+second.
+
+The optimizer, with `verify_with_automata`, and the lint's suggestions put a rewrite to
+`matchEquivalent()` first: a rewrite it proves is offered, one it disproves is not. Where
+the match solver does not read a pattern, or gives up on its budget, `equivalent()`
+decides. Both questions work within a budget of their own there (200,000 units of work),
+and one that runs out proves nothing: the rewrite is not offered.
+
 ## Use Case 5: Live Input Validation (The "Prefix" Problem)
 
 A form field checks a date as it is typed. `preg_match()` says `0` for `2026`
