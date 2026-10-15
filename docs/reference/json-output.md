@@ -877,8 +877,8 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `suggested_rewrite` | string \| null | A rewrite to try, for people; verify it |
 | `recommendations` | list of strings | Advice, for people |
 | `error` | string \| null | Why the analysis could not finish |
-| `findings` | list of objects | Each problem found |
-| `hotspots` | list of objects | Each span of the pattern at fault |
+| `findings` | list of objects | Each problem the structural heuristics found; hints, see below |
+| `hotspots` | list of objects | Each span the structural heuristics point at; hints, see below |
 | `confirmation` | object \| null | The replay in confirmed mode; `null` otherwise |
 | `complexity` | string | `linear`, `polynomial`, `exponential` or `unknown`; an open set |
 | `degree` | int \| null | The degree of a polynomial verdict, 2 or more; `null` otherwise |
@@ -892,6 +892,13 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
 
 ### Finding: `redos_analysis.findings[]`
+
+The findings and the hotspots come from the structural heuristics, the
+verdict from the proof when there is one. They are hints, not verdicts: next
+to `"proof": "proven"` and `"complexity": "linear"` they may still name a
+`medium` construct, as `/a+/` does, and the proof overrides them. The console
+of `analyze` and `debug` shows no hotspot for such a verdict, and `debug` lists
+its findings as heuristic hints.
 
 | key | type | meaning |
 |---|---|---|

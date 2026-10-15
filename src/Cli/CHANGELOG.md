@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex analyze` and `regex debug` show no hotspot for a pattern proven
+   safe, and `debug` lists its findings under `Heuristic hints`: the proof
+   overrides the heuristics they come from.
  * The progress and the steps of `regex lint` go to stderr, so that a report
    redirected to a file holds no progress frames; the run has a third step,
    `[3/3] Suggesting optimizations`, and its clock keeps running while the

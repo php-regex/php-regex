@@ -289,7 +289,9 @@ vendor/bin/regex debug '/(a+)+$/'
       Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).
 ```
 
-The carets under the pattern mark the hotspot. With
+The carets under the pattern mark the hotspot. A pattern proven safe, as
+`/a+/`, gets no carets and no `Hotspots:` line, and its findings are listed
+under `Heuristic hints`: the proof overrides them. With
 `--redos-mode=confirmed`, the `Replayed on …` or `Not reproduced on …` line
 follows the attack, a `[2/3] Confirmation` step follows the heatmap, and the
 exit code follows the same rule as `analyze`.

@@ -351,7 +351,9 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             $output->write('  '.$output->error('ReDoS error: '.$analysis->error)."\n");
         }
 
-        $hotspot = $analysis->primaryHotspot();
+        // The hotspot is the profiler's guess; a proof of a linear attempt
+        // overrides it.
+        $hotspot = $analysis->isProvenSafe() ? null : $analysis->primaryHotspot();
         if (null !== $hotspot) {
             $output->write('  Hotspot:   '.$hotspot->start.'-'.$hotspot->end."\n");
         }

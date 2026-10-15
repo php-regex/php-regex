@@ -127,13 +127,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 Each item was verified at the tag candidate and is additive.
 
-**G1 — A proven-safe pattern shows a heuristic hotspot.** `regex analyze '/a+/'`
-prints `Status: safe (proven)` then `Hotspot: 0-2`, and the JSON carries a
-`medium` finding next to `"severity": "safe"`: the severity comes from the
-proof, the findings and hotspots from the heuristic profiler
-(`docs/architecture.md`). *Fix*: hide the hotspot and label the findings as
-hints when the proof says safe, or document that they are. Effort: S.
-
 **G4 — Two route-constraint edges in Laravel.** The constraint is judged
 between `/`-family delimiters, where the router uses `{…}`: a constraint with
 an unbalanced brace, as `[{]`, passes the lint and fails the router. A
