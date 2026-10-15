@@ -125,10 +125,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### B. The PHP API
 
-**B6 — `analyze()` takes no options.** It always runs the ReDoS analysis in
-theoretical mode and accepts no threshold, while `redos()` has four
-parameters. *Verify*: read `src/Toolkit/Regex.php:168-233`. Effort: XS.
-
 ### C. The CLI
 
 **C6 — A `jobs` below 1 means four different things.** *Verify*:

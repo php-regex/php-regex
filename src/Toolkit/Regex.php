@@ -176,12 +176,20 @@ final readonly class Regex
     /**
      * Perform comprehensive analysis of a regex pattern.
      *
-     * @param string $regex The regular expression to analyze
+     * The ReDoS part takes the options redos() takes, and gives what
+     * redos() gives with them.
+     *
+     * @param string             $regex     The regular expression to analyze
+     * @param RedosSeverity|null $threshold Minimum severity level to report
      *
      * @return AnalysisReport Complete analysis report
      */
-    public function analyze(string $regex): AnalysisReport
-    {
+    public function analyze(
+        string $regex,
+        ?RedosSeverity $threshold = null,
+        RedosMode $mode = RedosMode::Theoretical,
+        ?ConfirmationOptions $confirmOptions = null,
+    ): AnalysisReport {
         $errors = [];
         $isValid = true;
 
@@ -198,7 +206,7 @@ final readonly class Regex
         $explain = '';
         $optimizations = new OptimizationResult($regex, $regex, []);
 
-        $redos = $this->redos($regex);
+        $redos = $this->redos($regex, $threshold, $mode, $confirmOptions);
 
         if ($isValid) {
             // Only what the pattern itself can cause is reported as an error:

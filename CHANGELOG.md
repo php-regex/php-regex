@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Regex::analyze()` takes the `$threshold`, `$mode` and `$confirmOptions` of `Regex::redos()` and hands them to the ReDoS part of its report, which ran in theoretical mode with the default threshold whatever the caller needed.
 - `ValidationResult::render()` writes an invalid pattern's message, the caret line under the fault and the hint (`Hint: …`) as one block of plain text, an empty string for a valid pattern. Symfony `regex:transpile` and Laravel `regex:transpile` and `regex:explain` print it, so a refused pattern now shows its hint there too.
 - A deprecation is raised the way Symfony's `trigger_deprecation()` does, as a silenced `E_USER_DEPRECATED` notice starting `Since php-regex/<package> <version>:`, so Symfony's deprecation handler and PHPUnit's `--display-deprecations` report it; no new dependency. Nothing is deprecated in 2.0.0; [the compatibility promise](docs/reference/backward-compatibility.md#what-a-minor-release-may-change) states how a 2.x minor deprecates.
 - The JSON outputs name the PHP that ran the analysis, whose mbstring tables give a character's other case under `iu`: `RedosAnalysis::$phpVersion` (`php_version`, beside `pcre_version`) and `host` (`php`, `pcre`) in the `regex lint --format=json` report. The PCRE guide lists the verdicts that depend on the running PHP rather than on the target's PCRE2.

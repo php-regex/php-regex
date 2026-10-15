@@ -306,9 +306,11 @@ empty string for a valid pattern.
 
 ---
 
-### analyze(string $regex): AnalysisReport
+### analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): AnalysisReport
 
 Aggregates validation, lint, ReDoS analysis, optimization, and explanation into a single report.
+The three optional arguments are those of `redos()`, below, and
+`$report->redos` is what `redos()` returns with them.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -898,7 +900,7 @@ try {
 | `parse($pattern)`       | RegexNode               | Parse to AST      |
 | `parseTolerant($pattern)` | TolerantParseResult   | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |
-| `analyze($regex)`       | AnalysisReport          | Analysis report   |
+| `analyze($regex, ...)`  | AnalysisReport          | Analysis report   |
 | `redos($regex)`         | RedosAnalysis           | ReDoS check       |
 | `captureShape($regex)`  | CaptureShape            | Shape of `$matches` |
 | `info($regex)`          | PatternInfo             | PCRE2 facts, lengths, anchors |
