@@ -101,14 +101,10 @@ final class TranspileCommand extends Command
                 ));
             } elseif (ValidationErrorCategory::Limit === $validation->category) {
                 $this->warn('Pattern not analyzed:');
-                $this->line((string) $validation->error);
-                $this->line((string) $validation->hint);
+                $this->line($validation->render());
             } else {
                 $this->error('Invalid pattern:');
-                $this->line((string) $validation->error);
-                if (null !== $validation->caretSnippet) {
-                    $this->line($validation->caretSnippet);
-                }
+                $this->line($validation->render());
             }
 
             return self::FAILURE;

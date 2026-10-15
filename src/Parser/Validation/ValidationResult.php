@@ -35,6 +35,32 @@ final readonly class ValidationResult implements \JsonSerializable
     ) {}
 
     /**
+     * The result as plain text, as a console prints it: the message, the
+     * line of the pattern with a caret under the fault, then the hint
+     * ("Hint: …"), each part left out when the result does not carry it.
+     * An empty string for a valid pattern. No colour, no trailing newline.
+     */
+    public function render(): string
+    {
+        if ($this->isValid) {
+            return '';
+        }
+
+        $lines = [];
+        foreach ([$this->error, $this->caretSnippet] as $part) {
+            if (null !== $part && '' !== $part) {
+                $lines[] = $part;
+            }
+        }
+
+        if (null !== $this->hint && '' !== $this->hint) {
+            $lines[] = 'Hint: '.$this->hint;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * @return array{is_valid: bool, error: string|null, complexity_score: int, category: string|null, offset: int|null, caret_snippet: string|null, hint: string|null, error_code: string|null}
      */
     public function jsonSerialize(): array

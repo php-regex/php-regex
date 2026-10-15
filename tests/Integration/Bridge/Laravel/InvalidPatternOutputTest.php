@@ -20,8 +20,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * An Artisan command refusing a pattern prints the message and, under it,
- * the caret snippet that points at the fault.
+ * An Artisan command refusing a pattern prints the message, under it the
+ * caret snippet that points at the fault, then the hint.
  */
 final class InvalidPatternOutputTest extends TestCase
 {
@@ -38,6 +38,7 @@ final class InvalidPatternOutputTest extends TestCase
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString("Lookbehind is unbounded. PCRE requires a bounded maximum length.\nLine 1: (?<=a+)b\n", $output);
         $this->assertMatchesRegularExpression('/^ {8}\^$/m', $output);
+        $this->assertStringContainsString("\nHint: Use a bounded quantifier instead of \"+\".\n", $output);
     }
 
     /**

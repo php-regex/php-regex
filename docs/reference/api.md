@@ -300,6 +300,10 @@ var_dump($result->category);       // NULL: no error, no category
 | `complexityScore` | int                     | Pattern complexity       |
 | `category`        | ValidationErrorCategory\|null | Error category, `null` when valid |
 
+`render()` gives the message, the caret snippet and the hint (`Hint: …`) as
+one block of plain text, each on its own line and left out when absent; an
+empty string for a valid pattern.
+
 ---
 
 ### analyze(string $regex): AnalysisReport
@@ -692,6 +696,10 @@ if (!$result->isValid) {
     echo $result->caretSnippet;       // "Line 1: [unclosed\n                 ^"
     echo $result->hint;               // "Close the class with \"]\", or write \"\\[\" ..."
     echo $result->category->value;    // "syntax"
+
+    // The same parts as one block of plain text, as a console prints it:
+    // the message, the caret line, then "Hint: ...". Empty when valid.
+    echo $result->render();
 }
 ```
 

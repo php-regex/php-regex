@@ -89,7 +89,7 @@ final class TranspileCommand extends Command
                 return Command::FAILURE;
             }
 
-            $io->error(null === $validation->caretSnippet ? $message : [$message, $validation->caretSnippet]);
+            $io->error(explode("\n", $validation->render()));
 
             return Command::FAILURE;
         }

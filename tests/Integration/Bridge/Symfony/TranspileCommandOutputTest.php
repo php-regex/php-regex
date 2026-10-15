@@ -113,6 +113,7 @@ final class TranspileCommandOutputTest extends TestCase
         $this->assertSame(1, $status);
         $this->assertStringContainsString('Lookbehind is unbounded. PCRE requires a bounded maximum length.', $display);
         $this->assertStringContainsString('Line 1: (?<=a+)b', $display);
+        $this->assertStringContainsString('Hint: Use a bounded quantifier instead of "+".', $display);
     }
 
     #[Test]

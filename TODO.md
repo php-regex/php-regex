@@ -125,16 +125,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### B. The PHP API
 
-**B2 — A validation result has no human rendering.** The message, the offset,
-the caret snippet and the hint are separate fields; the caller stitches them
-together, and the CLI ships its own renderer marked `@internal`.
-*Verify*: `grep -n 'function render\|function format\|__toString'
-src/Parser/Validation/ValidationResult.php` — nothing.
-*Fix*: one `render()`/`__toString()`, reused by the CLI and the bridges, so the
-message stops being assembled in the eight-plus call sites that stitch it
-today (three CLI commands, three bridge commands, the console formatter, the
-LSP diagnostic build). Effort: S.
-
 **B6 — `analyze()` takes no options.** It always runs the ReDoS analysis in
 theoretical mode and accepts no threshold, while `redos()` has four
 parameters. *Verify*: read `src/Toolkit/Regex.php:168-233`. Effort: XS.
