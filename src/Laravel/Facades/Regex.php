@@ -49,7 +49,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static TolerantParseResult           parseTolerant(string $regex)
  * @method static ValidationResult              validate(string $regex)
  * @method static RegexNode                     parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
- * @method static AnalysisReport                analyze(string $regex)
+ * @method static AnalysisReport                analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
  * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
  * @method static OptimizationResult            optimize(string $regex, OptimizerOptions|array $options = [])
  * @method static FormatResult                  format(string $regex, int $width = 80)

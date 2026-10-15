@@ -63,6 +63,21 @@ final class FacadeParityTest extends TestCase
         );
     }
 
+    /**
+     * analyze() takes the optional parameters of redos(), so a facade caller
+     * can set the threshold and the mode of the ReDoS part of the report.
+     */
+    #[Test]
+    public function test_facade_analyze_takes_the_optional_parameters_of_redos(): void
+    {
+        $tags = self::facadeMethodTags();
+
+        $this->assertSame(
+            \array_slice($tags['redos']['params'], 1),
+            \array_slice($tags['analyze']['params'], 1),
+        );
+    }
+
     #[Test]
     public function test_every_facade_method_tag_is_marked_static(): void
     {
