@@ -49,11 +49,11 @@ final class ProjectTargetEdgeCasesTest extends TestCase
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertSame(80200, $resolved->target()->phpVersionId);
+        $this->assertSame(80100, $resolved->target()->phpVersionId);
         $this->assertSame('composer.json config.platform.php', $resolved->source());
         $this->assertStringContainsString('PHP 7.4', implode("\n", $resolved->notices()));
         $this->assertSame(
-            ['composer.json config.platform.php allows PHP 7.4, older than the PHP 8.2 this library supports: judging for PHP 8.2.'],
+            ['composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
             $resolved->notices(),
         );
     }

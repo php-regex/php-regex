@@ -41,11 +41,12 @@ final class CompatibilityCheckerTest extends TestCase
     use PcreGates;
 
     /**
-     * The PHP versions a rule changes at: the 8.2 floor, the PCRE2 that 8.3
+     * The PHP versions a rule changes at: the 8.1 floor, 8.2 (its PCRE2
+     * 10.40, the "n" modifier, a NUL byte in a pattern), the PCRE2 that 8.3
      * and 8.4 bundle, "r" (8.4), \C under "u" (8.4.25, 8.5.10), \K in a
      * lookaround (8.5).
      */
-    private const PHP_POINTS = [80200, 80300, 80400, 80425, 80500, 80510];
+    private const PHP_POINTS = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
 
     #[Test]
     public function test_verdicts_run_every_php_point_then_every_pcre2_release(): void
@@ -140,10 +141,18 @@ final class CompatibilityCheckerTest extends TestCase
      */
     public static function provideRows(): iterable
     {
-        yield 'n modifier, valid from the 8.2 floor' => [
+        yield 'n modifier, valid from PHP 8.2' => [
             'regex' => '/(a)/n',
-            'valid' => static fn (int $php, int $pcre): bool => true,
-            'errorCode' => null,
+            'valid' => static fn (int $php, int $pcre): bool => $php >= 80200,
+            'errorCode' => 'regex.flag.unknown',
+        ];
+        // PCRE2 10.39, which PHP 8.1 bundles, knows a script by its exact
+        // name only (preg_match() on PHP 8.1.34 / PCRE2 10.39: unknown
+        // property name at offset 9).
+        yield 'a script in lower case, from PCRE2 10.40' => [
+            'regex' => '/\\p{greek}/u',
+            'valid' => static fn (int $php, int $pcre): bool => $pcre >= 40,
+            'errorCode' => 'regex.unicode.property_invalid',
         ];
         yield 'valid everywhere' => [
             'regex' => '/[a-z]+\d*/i',
@@ -228,6 +237,7 @@ final class CompatibilityCheckerTest extends TestCase
 
         $count = \count(self::releases());
         $this->assertSame([
+            80100 => array_fill(0, $count, 0),
             80200 => array_fill(0, $count, 0),
             80300 => array_fill(0, $count, 0),
             80400 => array_fill(0, $count, 0),
@@ -278,7 +288,7 @@ final class CompatibilityCheckerTest extends TestCase
      * The verdict whose target judges the running engine: the highest PHP
      * point at or below the running PHP, with the running PCRE2 release,
      * clamped to the releases the library knows (an older one is judged
-     * with the 10.40 rules, a newer one with the newest).
+     * with the 10.39 rules, a newer one with the newest).
      */
     private static function runningEngineVerdict(PatternCompatibility $compatibility): TargetVerdict
     {
@@ -298,18 +308,18 @@ final class CompatibilityCheckerTest extends TestCase
     }
 
     /**
-     * 10.40 up to the newest release a PcreFeature names.
+     * 10.39 up to the newest release a PcreFeature names.
      *
      * @return list<string>
      */
     private static function releases(): array
     {
-        $newest = 40;
+        $newest = 39;
         foreach (PcreFeature::cases() as $feature) {
             $newest = max($newest, self::minor($feature->release()));
         }
 
-        return array_map(static fn (int $minor): string => '10.'.$minor, range(40, $newest));
+        return array_map(static fn (int $minor): string => '10.'.$minor, range(39, $newest));
     }
 
     private static function minor(string $release): int

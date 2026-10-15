@@ -122,11 +122,12 @@ final class PsalmPluginTargetTest extends TestCase
             'reported' => [self::ASCII => 'PHP 8.2 with PCRE2 10.40'],
             'narrowed' => [self::KEEP, self::NO_AUTO_CAPTURE],
         ];
-        // Judged as 8.2, the floor; PHP 8.1 refuses the n modifier, so its pattern is not narrowed.
-        yield 'Psalm on PHP 8.1, judged as 8.2' => [
+        // Judged as 8.1 with its PCRE2 10.39; PHP 8.1 refuses the n
+        // modifier, so its pattern is reported and not narrowed.
+        yield 'Psalm on PHP 8.1, judged as 8.1' => [
             'phpVersion' => '8.1',
             'options' => [],
-            'reported' => [self::ASCII => 'PHP 8.2 with PCRE2 10.40'],
+            'reported' => [self::ASCII => 'PHP 8.1 with PCRE2 10.39', self::NO_AUTO_CAPTURE => 'PHP 8.1 with PCRE2 10.39'],
             'narrowed' => [self::KEEP],
         ];
         yield 'phpVersion option over Psalm\'s' => [

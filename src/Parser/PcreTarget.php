@@ -24,7 +24,7 @@ use PHPRegex\Parser\Internal\PhpVersionGates;
  * releases; a few rules belong to PHP itself. The engine that runs the
  * analysis need not be the one that will run the pattern, so the target
  * is named once and read everywhere a rule depends on it. Releases older
- * than 10.40 are judged with the 10.40 rules, newer ones than the library
+ * than 10.39 are judged with the 10.39 rules, newer ones than the library
  * knows with the newest rules it has.
  */
 final class PcreTarget
@@ -75,15 +75,18 @@ final class PcreTarget
     }
 
     /**
-     * A PHP version with the PCRE2 its sources bundle: 10.40 for 8.2, 10.42
-     * for 8.3, 10.44 for 8.4 and 8.5.
+     * A PHP version with the PCRE2 its sources bundle: 10.39 for 8.1, 10.40
+     * for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5. PHP 8.1.0 bundled 10.37,
+     * and older PHP versions older releases: they get 10.39, the oldest the
+     * library knows the rules of.
      */
     public static function bundledWith(int $phpVersionId): self
     {
         $release = match (true) {
             $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_44 => '10.44',
             $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_42 => '10.42',
-            default => '10.40',
+            $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_40 => '10.40',
+            default => '10.39',
         };
 
         return new self($phpVersionId, $release);

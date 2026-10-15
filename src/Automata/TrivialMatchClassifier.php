@@ -88,7 +88,7 @@ final class TrivialMatchClassifier
             return null;
         }
 
-        $hir = (new HirTranslator())->translate($ast);
+        $hir = (new HirTranslator(($this->parser ?? RegexParser::create())->target()))->translate($ast);
         $parts = $hir instanceof ConcatHir ? $hir->parts : [$hir];
 
         $first = $parts[0] ?? null;
@@ -132,7 +132,7 @@ final class TrivialMatchClassifier
             return null;
         }
 
-        $literal = self::literal((new HirTranslator())->translate($ast));
+        $literal = self::literal((new HirTranslator(($this->parser ?? RegexParser::create())->target()))->translate($ast));
         if (null === $literal || '' === $literal) {
             return null;
         }

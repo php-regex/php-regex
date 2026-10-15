@@ -51,9 +51,12 @@ final class PcreTargetTest extends TestCase
         yield 'PHP 8.3' => ['phpVersionId' => 80300, 'release' => '10.42'];
         yield 'PHP 8.4' => ['phpVersionId' => 80400, 'release' => '10.44'];
         yield 'PHP 8.5' => ['phpVersionId' => 80500, 'release' => '10.44'];
-        // Older PHP versions are judged with the oldest rules the library knows.
-        yield 'PHP 8.1' => ['phpVersionId' => 80100, 'release' => '10.40'];
-        yield 'PHP 7.4' => ['phpVersionId' => 70400, 'release' => '10.40'];
+        // PHP 8.1.1 to 8.1.34 bundle 10.39; 8.1.0 bundled 10.37, judged as
+        // 10.39. Older PHP versions are judged with the oldest rules the
+        // library knows.
+        yield 'PHP 8.1' => ['phpVersionId' => 80100, 'release' => '10.39'];
+        yield 'PHP 8.1 patch' => ['phpVersionId' => 80134, 'release' => '10.39'];
+        yield 'PHP 7.4' => ['phpVersionId' => 70400, 'release' => '10.39'];
     }
 
     #[Test]
@@ -163,6 +166,6 @@ final class PcreTargetTest extends TestCase
         // The floor, the PHP versions that bundle a newer PCRE2 (8.3, 8.4),
         // and the ones where a rule starts: \C under u refused from 8.4.25
         // and 8.5.10, \K in a lookaround refused from 8.5.
-        $this->assertSame([80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
+        $this->assertSame([80100, 80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
     }
 }

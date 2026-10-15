@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * The gate in front of the automata solver: the flags it reads, the
@@ -39,15 +40,18 @@ final class RegularSubsetValidator
      * Whether the solver can answer for the pattern, and the normalized
      * form it can answer from.
      *
+     * @param PcreTarget|null $target the PHP and PCRE2 the pattern is read for,
+     *                                the running engine when null
+     *
      * @throws ComplexityException
      */
-    public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options): Hir
+    public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options, ?PcreTarget $target = null): Hir
     {
         $this->pattern = $pattern;
         $this->assertSupportedFlags($regex->flags);
         $this->assertNewlineConvention($regex);
 
-        $hir = (new HirTranslator())->translate($regex);
+        $hir = (new HirTranslator($target))->translate($regex);
         (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex)))
             ->assertTranslatable($hir, $options);
 

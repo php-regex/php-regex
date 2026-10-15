@@ -399,11 +399,11 @@ final class LintCommandStreamsTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString(
-            "\n".self::bannerRow('Target', 'PHP 8.2, PCRE2 10.40 (composer.json require.php)'),
+            "\n".self::bannerRow('Target', 'PHP 8.1, PCRE2 10.39 (composer.json require.php)'),
             $stdout,
         );
         $this->assertStringContainsString(
-            'Note: composer.json require.php allows PHP 7.4, older than the PHP 8.2 this library supports: judging for PHP 8.2.',
+            'Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.',
             $stdout,
         );
         $this->assertStringNotContainsString('Note:', $stderr);

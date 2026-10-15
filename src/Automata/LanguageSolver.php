@@ -249,7 +249,7 @@ final class LanguageSolver
             throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
         }
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator())->translate($ast), $ast->isUnicode());
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser()->target()))->translate($ast), $ast->isUnicode());
     }
 
     private function parser(): RegexParser
@@ -291,7 +291,7 @@ final class LanguageSolver
         }
 
         $ast = $this->parser()->parse($pattern);
-        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options);
+        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser()->target());
 
         $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
         $nfa = $transformer->transform($hir, $options);

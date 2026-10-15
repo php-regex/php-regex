@@ -219,7 +219,7 @@ lookaround, and stops refusing `\C` under `u` until 8.5.10:
 ```php
 use PHPRegex\Parser\PcreTarget;
 
-PcreTarget::phpVersionBoundaries(); // [80200, 80300, 80400, 80425, 80500, 80510]
+PcreTarget::phpVersionBoundaries(); // [80100, 80200, 80300, 80400, 80425, 80500, 80510]
 ```
 
 Judging a range of PHP versions at these points judges all of it:

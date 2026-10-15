@@ -28,6 +28,7 @@ use PHPRegex\Parser\Internal\LookbehindLength;
 use PHPRegex\Parser\Internal\NearMiss;
 use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Internal\PhpVersionGates;
+use PHPRegex\Parser\Internal\PropertyNames;
 use PHPRegex\Parser\Internal\VersionCondition;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -1183,6 +1184,14 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): void
     {
+        // Before PCRE2 10.40, a name is looked up as written in a table of
+        // its own: no running engine since then answers for it.
+        if (null !== $this->source && !$this->supports(PcreFeature::LoosePropertyNames)) {
+            $this->validateExactPropertyName($node, $this->source);
+
+            return;
+        }
+
         if ($node->hasBraces && null !== $this->source) {
             $malformedAt = $this->malformedPropertyNameEnd($this->source, $node->startPosition + 2);
             if (null !== $malformedAt) {
@@ -1733,6 +1742,52 @@ final class Validator extends AbstractNodeVisitor
                 \sprintf('Name a group "%s" with (?<%1$s>...), or call a group the pattern names.', $ref),
             );
         }
+    }
+
+    /**
+     * "\p" and "\P" as PCRE2 10.39 reads them: one letter, or a braced name
+     * of at most 31 characters after an optional "^", spelled exactly as its
+     * table holds it. Longer, the sequence is malformed where PCRE stops
+     * reading; unknown, it is refused past its "}".
+     */
+    private function validateExactPropertyName(UnicodePropNode $node, string $source): void
+    {
+        $letter = $source[$node->startPosition + 1] ?? 'p';
+        $at = $node->startPosition + 2;
+        $negated = false;
+        if ('{' !== ($source[$at] ?? '')) {
+            $name = $source[$at] ?? '';
+            $end = $at + 1;
+        } else {
+            $at++;
+            if ('^' === ($source[$at] ?? '')) {
+                $negated = true;
+                $at++;
+            }
+
+            $close = strpos($source, '}', $at);
+            if (false === $close || $close - $at >= PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40) {
+                $this->raiseMalformedPropertyAt($letter, min(\strlen($source), $at + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40));
+            }
+
+            $name = substr($source, $at, $close - $at);
+            $end = $close + 1;
+        }
+
+        if (PropertyNames::knownBefore1040($name)) {
+            return;
+        }
+
+        $unprefixed = LibraryPcre::replace('/^\s*+(?:sc|script|scx|script[\s_-]*+extensions)\s*+[:=]/i', '', $name) ?? $name;
+        $spelling = PropertyNames::spellingBefore1040($unprefixed);
+        $this->raiseSemanticError(
+            \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
+            $end,
+            ErrorCode::UnicodePropertyInvalid,
+            null === $spelling
+                ? 'Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.'
+                : \sprintf('Write \\%s{%s%s}.', $letter, $negated ? '^' : '', $spelling),
+        );
     }
 
     /**

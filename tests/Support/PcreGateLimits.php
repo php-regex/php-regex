@@ -22,9 +22,9 @@ final class PcreGateLimits
 {
     public const MAX_KNOWN_RELEASE = '10.49';
 
-    public const KNOWN_RELEASES = ['10.40', '10.41', '10.42', '10.43', '10.44', '10.45', '10.46', '10.47', '10.48', '10.49'];
+    public const KNOWN_RELEASES = ['10.39', '10.40', '10.41', '10.42', '10.43', '10.44', '10.45', '10.46', '10.47', '10.48', '10.49'];
 
-    public const KNOWN_PHP_VERSIONS = ['8.2', '8.3', '8.4', '8.5'];
+    public const KNOWN_PHP_VERSIONS = ['8.1', '8.2', '8.3', '8.4', '8.5'];
 
     private function __construct() {}
 }

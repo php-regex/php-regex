@@ -63,7 +63,7 @@ final class PcreGateCallSitesTest extends TestCase
         // suite runs on: the silent direction.
         yield 'a release above the ceiling' => ['method' => 'requiresPcre2', 'argument' => '10.50'];
         yield 'a release far above the ceiling' => ['method' => 'requiresPcre2', 'argument' => '10.99'];
-        yield 'a release the library never knew' => ['method' => 'requiresPcre2', 'argument' => '10.39'];
+        yield 'a release the library never knew' => ['method' => 'requiresPcre2', 'argument' => '10.38'];
         // "10.4" reads as 10.04, a minor PCRE2 always spells with two digits.
         yield 'a misspelled minor' => ['method' => 'requiresPcre2', 'argument' => '10.4'];
         yield 'a php floor above every php' => ['method' => 'requiresPhp', 'argument' => '99.0'];

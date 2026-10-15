@@ -21,6 +21,11 @@ namespace PHPRegex\Parser;
 enum PcreFeature
 {
     /**
+     * "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions.
+     */
+    case LoosePropertyNames;
+
+    /**
      * "{,2}" and a count padded with spaces, as "{ 2 }", repeat instead of matching as text.
      */
     case OpenAndPaddedRepeatCounts;
@@ -176,6 +181,7 @@ enum PcreFeature
     public function release(): string
     {
         return match ($this) {
+            self::LoosePropertyNames => '10.40',
             self::OpenAndPaddedRepeatCounts,
             self::PaddedBracedEscapes,
             self::VariableLengthLookbehind,

@@ -299,9 +299,9 @@ Configuration
 -------------
 
 Patterns are judged for the PHP version Psalm analyses for (`phpVersion` in
-`psalm.xml`, `--php-version`, or your `composer.json`), 8.2 at least, with the
-PCRE2 release that PHP bundles: 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and
-8.5. The plugin's options override it:
+`psalm.xml`, `--php-version`, or your `composer.json`), 8.1 at least, with the
+PCRE2 release that PHP bundles: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
+10.44 for 8.4 and 8.5. The plugin's options override it:
 
 ```xml
 <plugins>
@@ -336,7 +336,7 @@ ERROR: InvalidRegexPattern - app/numbers.php:5:29 - Regex pattern is invalid for
 ```
 
 On a project analysed below PHP 8.2, a pattern using the `n` modifier, which
-PHP reads from 8.2 only, is not typed.
+PHP reads from 8.2 only, is not typed, and is reported as `InvalidRegexPattern`.
 
 ### The `InvalidRegexPattern` issue
 

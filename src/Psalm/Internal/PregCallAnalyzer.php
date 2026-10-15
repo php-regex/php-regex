@@ -59,6 +59,7 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -117,9 +118,9 @@ use Psalm\Type\Union;
 final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 {
     /**
-     * The lowest PHP the library judges, and the first that reads the n modifier.
+     * The first PHP that reads the n modifier.
      */
-    private const PHP_FLOOR = 80200;
+    private const NO_AUTO_CAPTURE_FLOOR = 80200;
 
     /**
      * The parameters of each function, in order: PHP binds the arguments to
@@ -259,7 +260,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         try {
             $pattern = self::literal($arguments['pattern'], $nodeTypes) ?? self::patternAroundQuotes($arguments['pattern'], $source, $codebase, $parser);
             $verdict = null === $pattern ? null : self::verdict($parser, $pattern);
-            if (null === $pattern || null === $verdict || null !== $verdict['error'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR)) {
+            if (null === $pattern || null === $verdict || null !== $verdict['error'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::NO_AUTO_CAPTURE_FLOOR)) {
                 return null;
             }
 
@@ -304,7 +305,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         [$pattern, $verdict] = $judged;
         // PHP refuses the n modifier below 8.2: such a pattern does not compile there.
-        if (null === $verdict['shape'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR)) {
+        if (null === $verdict['shape'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::NO_AUTO_CAPTURE_FLOOR)) {
             return;
         }
 
@@ -411,7 +412,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $verdict = self::verdict($parser, $pattern);
         $matches = $arguments['matches'] ?? null;
         // Never reported: the pattern stands for the groups, not for what the call compiles.
-        if (null !== $verdict['error'] || null === $verdict['shape'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::PHP_FLOOR) || !$matches instanceof Variable) {
+        if (null !== $verdict['error'] || null === $verdict['shape'] || ($verdict['noAutoCapture'] && $codebase->analysis_php_version_id < self::NO_AUTO_CAPTURE_FLOOR) || !$matches instanceof Variable) {
             return;
         }
 
@@ -770,12 +771,13 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * The parser judging patterns for max(the PHP Psalm analyses for, 8.2)
-     * with the PCRE2 it bundles, or for what the options name.
+     * The parser judging patterns for the PHP Psalm analyses for, or the
+     * oldest the library judges, with the PCRE2 it bundles, or for what the
+     * options name.
      */
     private static function parser(Codebase $codebase): RegexParser
     {
-        $options = ['php_version' => self::$phpVersion ?? max($codebase->analysis_php_version_id, self::PHP_FLOOR)];
+        $options = ['php_version' => self::$phpVersion ?? max($codebase->analysis_php_version_id, PcreTarget::phpVersionBoundaries()[0])];
         if (null !== self::$pcreVersion) {
             $options['pcre_version'] = self::$pcreVersion;
         }

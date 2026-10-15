@@ -889,14 +889,14 @@ the command and the PCRE2 it links, as PHPStan's `phpVersion` does: a project
 that lints for its floor can still ask what the engine at hand says.
 
 Each version is chosen on its own. Without a PCRE2 release, the command uses
-the one the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44 for
-8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
+the one the target PHP bundles (10.39 for PHP 8.1, 10.40 for 8.2, 10.42 for
+8.3, 10.44 for 8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
 PHP.
 
 The lowest PHP is the one that matters because a library, or an application
 deployed on several servers, runs on every version its constraint allows: a
 pattern that only compiles on a newer PCRE2 fails on the oldest one. A floor
-below PHP 8.2 is judged as PHP 8.2, the oldest this library judges, and the
+below PHP 8.1 is judged as PHP 8.1, the oldest this library judges, and the
 command says so. A constraint the command cannot read (`*`, `<9`, a branch
 name) falls back to the running PHP, with a note naming it; reading
 `composer.json` never stops a run.
