@@ -45,17 +45,31 @@ jobs:
           composer install -d tools/phpstan --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
           composer install -d tools/phpbench --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
 
+      - name: Lower Symfony in the PHPUnit Tooling
+        # The lowest Symfony the latest Laravel takes: 7.4.0, with the
+        # components Laravel does not hold at 6.4.0. The tooling's PHPUnit
+        # stays what this PHP runs; Symfony 6.4 with Laravel 10 is the PHP 8.1
+        # job's lowest row.
+        if: matrix.dependency == 'prefer-lowest'
+        run: |
+          composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }} 'symfony/*'
+
       - name: Run Test Suite
         # The whole tests/ tree, so that the functional, regression and
         # documentation tests are not left to rot outside of CI.
         run: tools/phpunit/vendor/bin/phpunit --colors=always
 
   tests-php81:
-    # Every package but the Symfony and Laravel bridges runs on PHP 8.1, the
-    # PHPStan, Psalm and Rector integrations among them. PHPUnit 12 needs
-    # PHP 8.3: PHPUnit 10.5, from tools/phpunit-81, runs the suite here.
-    name: Tests (PHP 8.1)
+    # PHPUnit 12 needs PHP 8.3: PHPUnit 10.5, from tools/phpunit-81, runs the
+    # suite on PHP 8.1. The lowest row runs Symfony 6.4.0, Laravel 10.37.3
+    # (the first Laravel 10 that Testbench 8.18, the first with the attributes
+    # the tests use, takes) and PHPUnit 10.5.0.
+    name: Tests (PHP 8.1, ${{ matrix.dependency }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        dependency: [ prefer-lowest, prefer-stable ]
 
     steps:
       - name: Checkout Code
@@ -68,25 +82,22 @@ jobs:
           extensions: mbstring, intl, pcre, tokenizer, xml
           ini-values: phar.readonly=0
 
-      - name: Lint the packages that run on PHP 8.1
+      - name: Lint for PHP 8.1
         # PHP 8.1 lints one file per call.
         shell: bash
         run: |
-          find src -name '*.php' -not -path 'src/Laravel/*' -not -path 'src/Symfony/*' -print0 \
+          find src -name '*.php' -print0 \
             | xargs -0 -n1 php -l | (grep -v '^No syntax errors detected' || true)
 
-      - name: Install Dependencies
-        # php-regex/php-regex installs the Symfony and Laravel bridges, which
-        # need PHP 8.2: its autoloader is generated without that check.
+      - name: Install Dependencies (${{ matrix.dependency }})
         run: |
-          composer install --prefer-dist --no-interaction --no-progress --ignore-platform-req=php
-          composer install -d tools/phpunit-81 --prefer-dist --no-interaction --no-progress
+          composer install --prefer-dist --no-interaction --no-progress
+          composer update -d tools/phpunit-81 --${{ matrix.dependency }} --prefer-stable --no-interaction --no-progress
 
       - name: Smoke test
         run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit-81/vendor/bin/phpstan
 
       - name: Run Test Suite
-        # The whole tree but the Symfony and Laravel bridges, which need 8.2.
         run: tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist --colors=always
 
   engines-bundled:
