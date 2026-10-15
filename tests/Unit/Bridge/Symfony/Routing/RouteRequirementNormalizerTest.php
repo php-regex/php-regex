@@ -106,6 +106,23 @@ final class RouteRequirementNormalizerTest extends TestCase
         }
     }
 
+    /**
+     * A requirement read back from a Route was sanitized when it was set:
+     * the compiler takes it as held, so its anchors are not stripped again.
+     * normalize() strips one at each end, as setting the requirement does.
+     */
+    #[Test]
+    public function test_normalize_held_takes_the_requirement_a_route_holds_as_is(): void
+    {
+        $route = new Route('/a/{x}', [], ['x' => '^^a$$']);
+        $held = (string) $route->getRequirement('x');
+
+        $this->assertSame('^a$', $held);
+        $this->assertSame(str_replace('{^/a/', '{^', $route->compile()->getRegex()), $this->normalizer->normalizeHeld($held, 'x'));
+        $this->assertSame('{^(?P<x>^a$)$}sDiu', $this->normalizer->normalizeHeld($held, 'x', true, true));
+        $this->assertSame('{^(?P<x>^a$)$}sD', $this->normalizer->normalize('^^a$$', 'x'));
+    }
+
     #[Test]
     public function test_normalize_adds_u_under_the_utf8_option(): void
     {

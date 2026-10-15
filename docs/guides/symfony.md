@@ -151,18 +151,18 @@ final class SearchFilter
 Each one is read as the pattern Symfony runs:
 
 - A route requirement is a fragment of the compiled route. Its leading `^`
-  or `\A` and its trailing `$` or `\z` are stripped as
-  `Route::sanitizeRequirement()` does, its groups are made non-capturing,
-  and it is matched in a group named after the parameter with
-  `{^...$}sD`, plus `i` for a host parameter and `u` when the route sets
-  its `utf8` option: `\d+` on `{id}` is linted as `{^(?P<id>\d+)$}sD`. A
-  requirement that starts with `/` or `#` is no delimited regex there
-  either. A requirement that compiles alone but breaks the route is
-  invalid: `[{]` leaves the router's braces unbalanced, `a\$` loses its
-  `$` and escapes the group's `)`. What the router adds is not the
-  requirement's to change: a useless `s` or `D`, a rewrite that only
-  drops a flag, and a repeated unnamed group (the router makes it
-  non-capturing) are not reported.
+  or `\A` and its trailing `$` or `\z` are stripped once, as
+  `Route::sanitizeRequirement()` does (`^^a` keeps one `^`), its groups
+  are made non-capturing, and it is matched in a group named after the
+  parameter with `{^...$}sD`, plus `i` for a host parameter and `u` when
+  the route sets its `utf8` option: `\d+` on `{id}` is linted as
+  `{^(?P<id>\d+)$}sD`. A requirement that starts with `/` or `#` is no
+  delimited regex there either. A requirement that compiles alone but
+  breaks the route is invalid: `[{]` leaves the router's braces
+  unbalanced, `a\$` loses its `$` and escapes the group's `)`. What the
+  router adds is not the requirement's to change: a useless `s` or `D`, a
+  rewrite that only drops a flag, and a repeated unnamed group (the router
+  makes it non-capturing) are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, without anchors:
   `path: /api` matches `/v1/api` too.

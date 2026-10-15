@@ -33,9 +33,21 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  */
 final readonly class RouteRequirementNormalizer
 {
+    /**
+     * A requirement as written, sanitized as setting it on a Route does.
+     */
     public function normalize(string $requirement, string $parameter, bool $utf8 = false, bool $host = false): string
     {
-        return '{^'.$this->group($parameter, $this->nonCapturing($this->sanitize($requirement))).'$}sD'.($host ? 'i' : '').($utf8 ? 'u' : '');
+        return $this->normalizeHeld($this->sanitize($requirement), $parameter, $utf8, $host);
+    }
+
+    /**
+     * A requirement as a Route holds it: sanitized when it was set, so the
+     * compiler takes it as is and a doubled anchor keeps its second copy.
+     */
+    public function normalizeHeld(string $requirement, string $parameter, bool $utf8 = false, bool $host = false): string
+    {
+        return '{^'.$this->group($parameter, $this->nonCapturing($requirement)).'$}sD'.($host ? 'i' : '').($utf8 ? 'u' : '');
     }
 
     /**

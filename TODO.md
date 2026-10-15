@@ -107,9 +107,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Seen on the way, not yet verified to the end; each is small and additive.
 
-- **Route anchors stripped twice in Symfony.** `RoutePatternSource` normalizes
-  `Route::getRequirements()`, which the router has already sanitized, so a
-  doubled anchor (`^^a`, `a$$`) loses one more than the router takes off.
 - **`@regex-suppress` is undocumented.** `src/Linter/PatternExtractor.php`
   honours it beside the documented comments; document it or drop it before
   someone relies on it.
