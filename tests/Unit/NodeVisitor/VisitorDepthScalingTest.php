@@ -29,6 +29,7 @@ use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Redos\RedosProfiler;
@@ -72,6 +73,7 @@ final class VisitorDepthScalingTest extends TestCase
         yield 'ComplexityScorer' => [new ComplexityScorer()];
         yield 'ConsoleHighlighter' => [new ConsoleHighlighter()];
         yield 'NodeDumper' => [new NodeDumper()];
+        yield 'JsonDumper' => [new JsonDumper()];
         yield 'TextExplainer' => [new TextExplainer()];
         yield 'HtmlExplainer' => [new HtmlExplainer()];
         yield 'HtmlHighlighter' => [new HtmlHighlighter()];

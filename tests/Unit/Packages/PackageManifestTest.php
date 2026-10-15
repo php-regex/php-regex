@@ -204,6 +204,8 @@ final class PackageManifestTest extends TestCase
         $this->assertFileExists(self::root().'/src/PHPStan/rules.neon');
         // The linter reads regex.json, so it ships the file's schema.
         $this->assertFileExists(self::root().'/src/Linter/regex.schema.json');
+        // The parser exports trees as JSON, so it ships the document's schema.
+        $this->assertFileExists(self::root().'/src/Parser/ast.schema.json');
 
         foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));

@@ -11,14 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**14. A machine-readable AST export.** The tree has no serializer beyond
-the cache-private `AstSerializer` (PHP `serialize()`, `@internal`); every
-result object is `JsonSerializable` except the tree itself. A stable JSON
-AST plus a schema (the precedent ships: `regex.schema.json`) serves the
-playground, LSP clients and snapshot testing. Additive and zero BC risk.
-*Decision*: in 2.0 or 2.1 — deferring costs nothing except designing it
-against the frozen node set. Effort: M.
-
 **15. mbstring makes some verdicts platform-relative.** Verdicts are
 stamped with the PCRE2 target, but case-insensitivity analysis folds with
 the host's mbstring tables (`Validator.php:3619`,

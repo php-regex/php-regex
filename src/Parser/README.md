@@ -78,6 +78,9 @@ Quantifier(quant: +, type: greedy)
   Literal('a')
 ```
 
+`JsonDumper` exports the same tree as data for `json_encode()`, described by
+`ast.schema.json`, shipped with this package.
+
 Validate a pattern — the result says where it breaks and why:
 
 ```php

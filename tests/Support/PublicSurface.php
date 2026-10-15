@@ -47,7 +47,7 @@ final class PublicSurface
             'NodeFinder',
             'Token/Token', 'Token/TokenType',
             'Validation/ValidationResult', 'Validation/ValidationErrorCategory',
-            'Printer/PatternPrinter', 'Printer/NodeDumper', 'Printer/PatternFormatter', 'Printer/FormatResult', 'Printer/FormatRefusal',
+            'Printer/PatternPrinter', 'Printer/NodeDumper', 'Printer/JsonDumper', 'Printer/PatternFormatter', 'Printer/FormatResult', 'Printer/FormatRefusal',
             'Analysis/ComplexityScorer', 'Analysis/GroupNumbering', 'Analysis/GroupNumberingCollector',
             'Analysis/LengthRangeCalculator', 'Analysis/LiteralExtractor', 'Analysis/LiteralExtractionResult',
             'Analysis/LiteralConfidence', 'Analysis/LiteralSet', 'Analysis/MetricsCollector',
