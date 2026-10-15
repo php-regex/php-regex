@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -30,6 +31,7 @@ use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Cache\AstSerializer;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -770,6 +772,8 @@ final readonly class AnalysisService
                 $optimization = (new Optimizer($this->regex, $this->dfas()))->optimize($occurrence->pattern, $options);
             }
         } catch (\Throwable) {
+            // A suggestion is optional: whatever stops one pattern's rewrite,
+            // the run goes on without it.
             return null;
         }
 
@@ -1240,7 +1244,9 @@ final readonly class AnalysisService
     }
 
     /**
-     * @return bool|null true when equivalent, false when not, null when unsupported
+     * @return bool|null true when equivalent, false when not or when the
+     *                   check gave up on its budget, null when the automata
+     *                   do not read the pattern
      */
     private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
     {
@@ -1249,7 +1255,10 @@ final readonly class AnalysisService
             $result = $solver->equivalent($original, $optimized);
 
             return $result->isEquivalent;
-        } catch (\Throwable) {
+        } catch (ComplexityException $e) {
+            // Out of budget proves nothing: the rewrite is not offered.
+            return isset($e->getDiagnostic()['limit']) ? false : null;
+        } catch (ExceptionInterface) {
             return null;
         }
     }

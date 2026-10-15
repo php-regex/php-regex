@@ -61,7 +61,7 @@ Every question takes an optional `SolverOptions` object as its last argument.
 | `determinizationAlgorithm` | `DeterminizationAlgorithm::SubsetIndexed`, `::Subset` | `SubsetIndexed` |
 | `maxTransitionsProcessed` | int, `null` to disable the guard | `1000000` |
 
-Reaching a limit throws the same `ComplexityException` as an unsupported construct. The solver constructor also accepts a `DfaCacheInterface` (`InMemoryDfaCache` ships with the package) to reuse compiled DFAs across questions.
+Reaching a limit throws the same `ComplexityException` as an unsupported construct; only a limit names it in `getDiagnostic()['limit']`. `maxTransitionsProcessed` also bounds the threads `matchEquivalent()` steps. The solver constructor also accepts a `DfaCacheInterface` (`InMemoryDfaCache` ships with the package) to reuse compiled DFAs across questions.
 
 Usage
 -----

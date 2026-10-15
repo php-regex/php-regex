@@ -482,8 +482,11 @@ second run of the corpus' equivalence questions; a single pass is unchanged.
 
 ## Safety Limits & Work Budget
 
-Large patterns can cause determinization or minimization to grow quickly. You can enforce a hard work budget using
-`SolverOptions::maxTransitionsProcessed`.
+Large patterns can cause determinization or minimization to grow quickly, and
+`matchEquivalent()` steps one thread per branch of a wide alternation at every
+character. You can enforce a hard work budget using
+`SolverOptions::maxTransitionsProcessed`: it counts the transitions of the
+determinization and the minimization, and the threads the match solver steps.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
@@ -503,12 +506,18 @@ try {
 
 When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic payload:
 
-- `phase`: `determinize` or `minimize`
+- `phase`: `determinize`, `minimize` or `match exploration`
 - `states`: number of DFA states seen so far
 - `transitions`: NFA/DFA transition count at the time of failure
 - `alphabet`: effective alphabet size
 - `consumed`: work units consumed
 - `limit`: configured budget
+
+A state cap reached (`maxNfaStates`, `maxDfaStates`, the match solver's
+configurations) carries a `phase` and the `limit` too. A construct the
+automata do not read (a backreference, a lookaround the solver refuses)
+carries no `limit`: the diagnostic tells "too costly to answer" from "outside
+what the solver reads".
 
 Use this to surface safe failure messages in CI or tooling.
 

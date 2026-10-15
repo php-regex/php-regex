@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Match;
 
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Parser\Hir\CharSet;
 
 /**
@@ -43,12 +44,22 @@ final class MatchExplorer
      */
     private array $symbols = [];
 
+    private readonly WorkBudget $budget;
+
+    /**
+     * @param int|null $maxTransitions the threads the search may step in all,
+     *                                 null for no bound: a configuration of a
+     *                                 wide alternation holds one per branch
+     */
     public function __construct(
         private readonly PriorityNfa $left,
         private readonly PriorityNfa $right,
         private readonly int $maxConfigurations,
         private readonly string $pattern,
-    ) {}
+        ?int $maxTransitions = null,
+    ) {
+        $this->budget = new WorkBudget($maxTransitions, 'match exploration', \count($left->kinds) + \count($right->kinds), 0, 0);
+    }
 
     /**
      * The shortest subject preg_match() treats differently, or null when
@@ -104,7 +115,7 @@ final class MatchExplorer
                 }
 
                 if (\count($previous) >= $this->maxConfigurations) {
-                    throw new ComplexityException(\sprintf('The match solver explored more than %d configurations for these patterns.', $this->maxConfigurations), 0, $this->pattern);
+                    throw new ComplexityException(\sprintf('The match solver explored more than %d configurations for these patterns.', $this->maxConfigurations), 0, $this->pattern, diagnostic: ['phase' => 'match exploration', 'limit' => $this->maxConfigurations]);
                 }
 
                 $previous[$nextKey] = [$key, $symbol];
@@ -206,6 +217,8 @@ final class MatchExplorer
      */
     private function step(PriorityNfa $nfa, array $side, int $symbol, int $fresh): array
     {
+        $this->budget->consume(\count($side['t']) + 1);
+
         $threads = [];
         $visited = [];
         foreach ($side['t'] as [$state, $registers, $waiting]) {

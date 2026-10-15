@@ -112,6 +112,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
                     if ($newId >= $options->maxDfaStates) {
                         throw new ComplexityException(
                             \sprintf('DFA state limit exceeded (%d).', $options->maxDfaStates),
+                            diagnostic: ['phase' => 'determinization', 'limit' => $options->maxDfaStates],
                         );
                     }
                     $stateMap[$targetKey] = $newId;

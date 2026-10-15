@@ -59,6 +59,7 @@ final class NfaBuilder
         if ($stateId >= $this->maxStates) {
             throw new ComplexityException(
                 \sprintf('NFA state limit exceeded (%d).', $this->maxStates),
+                diagnostic: ['phase' => 'nfa construction', 'limit' => $this->maxStates],
             );
         }
 
