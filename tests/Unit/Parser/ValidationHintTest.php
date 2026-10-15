@@ -138,6 +138,14 @@ final class ValidationHintTest extends TestCase
 
         $this->assertSame(ErrorCode::UnicodePropertyInvalid, $result->errorCode);
         $this->assertSame('Target a PHP whose PCRE2 is 10.43 or later, or use another property.', $result->hint);
+
+        // A running engine older than the property gives the same hint.
+        if (!PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $result = RegexParser::create(['cache' => null])->validate('/\p{Kawi}/u');
+
+            $this->assertSame(ErrorCode::UnicodePropertyInvalid, $result->errorCode);
+            $this->assertSame('Target a PHP whose PCRE2 is 10.43 or later, or use another property.', $result->hint);
+        }
     }
 
     /**

@@ -1223,6 +1223,17 @@ final class Validator extends AbstractNodeVisitor
         }
 
         if (false === self::$unicodePropCache[$key]) {
+            // A name a later release added: the running engine is that old.
+            $needs = $this->releaseAddingProperty($node);
+            if (null !== $needs && !$this->target->pcreAtLeast($needs)) {
+                $this->raiseSemanticError(
+                    \sprintf('Invalid or unsupported Unicode property: \\%s.', $key),
+                    $node->getEndPosition(),
+                    ErrorCode::UnicodePropertyInvalid,
+                    \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
+                );
+            }
+
             $propertyKey = $this->extractUnicodePropertyKey($key);
             $suggestion = $this->suggestUnicodeProperty($propertyKey);
             $hint = null === $suggestion ? null : "Did you mean \\{$suggestion}?";
