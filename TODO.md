@@ -107,8 +107,11 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Seen on the way, not yet verified to the end; each is small and additive.
 
-- **`Parser\Internal\Deprecation` has no caller yet.** Kept for the first
-  public seam to retire; delete it if 2.0.0 ships without one.
+- **Three places still resolve a condition's group themselves.**
+  `GroupIndex::groupsReferencedBy()` now reads `(?(1)…)`, `(?(+1)…)` and
+  `(?(name)…)`, but `Validator.php:1024`, `PatternInfoAnalyzer.php:165` and
+  `Linter/Rule/Support/BackrefTarget.php:32` keep their own reading: one
+  numbering model means they ask the index.
 
 ## Checked and refused (do not re-litigate)
 
