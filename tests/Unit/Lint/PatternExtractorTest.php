@@ -305,7 +305,7 @@ final class PatternExtractorTest extends TestCase
     {
         $project = $this->makeProject([
             'a.php' => "<?php\n// @regex-ignore-next-line\npreg_match('/a1(/', \$s);\npreg_match('/a2(/', \$s);\n",
-            'b.php' => "<?php\npreg_match('/b1(/', \$s); // @regex-ignore\npreg_match('/b2(/', \$s);\n/* @regex-suppress */ preg_match('/b3(/', \$s);\n",
+            'b.php' => "<?php\npreg_match('/b1(/', \$s); // @regex-ignore\npreg_match('/b2(/', \$s);\n/* @regex-ignore */ preg_match('/b3(/', \$s);\n/* @regex-suppress */ preg_match('/b4(/', \$s);\n",
             'c.php' => "<?php\npreg_match('/c1(/', \$s);\n",
             'd.php' => "<?php\n/**\n * @regex-ignore-next-line\n */\npreg_match('/d1(/', \$s);\npreg_match('/d2(/', \$s);\n",
             'e.php' => "<?php\npreg_match('/e1(/', \$s);\n// @regex-ignore-next-line\n",
@@ -325,6 +325,7 @@ final class PatternExtractorTest extends TestCase
             'b.php:2:/b1(/:ignored',
             'b.php:3:/b2(/:kept',
             'b.php:4:/b3(/:ignored',
+            'b.php:5:/b4(/:kept',
             'c.php:2:/c1(/:kept',
             'd.php:5:/d1(/:ignored',
             'd.php:6:/d2(/:kept',

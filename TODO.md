@@ -107,9 +107,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Seen on the way, not yet verified to the end; each is small and additive.
 
-- **`@regex-suppress` is undocumented.** `src/Linter/PatternExtractor.php`
-  honours it beside the documented comments; document it or drop it before
-  someone relies on it.
 - **`Parser\Internal\Deprecation` has no caller yet.** Kept for the first
   public seam to retire; delete it if 2.0.0 ships without one.
 

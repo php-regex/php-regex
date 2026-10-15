@@ -41,7 +41,6 @@ final readonly class PatternExtractor
     private const SUPPRESSION_MARKERS = [
         '@regex-ignore-next-line' => 'next',
         '@regex-ignore' => 'same',
-        '@regex-suppress' => 'same',
     ];
     /**
      * Template file suffixes to exclude by default.

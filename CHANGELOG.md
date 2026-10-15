@@ -288,6 +288,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reading a 1.x lint baseline, a plain JSON list: the file is refused like any non-baseline — exit code 2, `stage: "usage"`, nothing scanned or written, `--generate-baseline` on the same run included. Regenerate it once. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - The `REGEX_PARSER_IDE` env var, read by the 1.x Laravel config: `PHP_REGEX_IDE` replaces it, `APP_EDITOR` staying the fallback. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - The undocumented 1.x comment `// @regex-lint-ignore`: write `// @regex-ignore-next-line` on the line above the pattern instead. The lint no longer reads each PHP file a second time to look for it. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
+- The undocumented 1.x comment `@regex-suppress`, a second spelling of `@regex-ignore`: write `@regex-ignore` instead. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 - Every runtime trace of 1.x configuration: the `config/regex-parser.php` deprecation trigger of the Laravel provider, the stale-key warnings of Laravel's `regex:lint`, and the 1.x key tables of the Symfony bundle, `regex.json` and `OptimizerOptions`. An old key is now either silently ignored (Laravel config) or refused by the same generic unknown-key error as a typo (Symfony bundle, `regex.json`, optimizer options) — none of them carries a message of its own. See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 
 ### Fixed

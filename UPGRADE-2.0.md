@@ -480,6 +480,16 @@ documentation names:
 preg_match('/(a+)+$/', $input);
 ```
 
+### `@regex-suppress`
+
+The 1.x comment `@regex-suppress`, an undocumented second spelling of
+`@regex-ignore`, no longer hides the issues of a pattern on its line. Write
+`@regex-ignore` instead:
+
+```php
+preg_match('/(a+)+$/', $input); // @regex-ignore
+```
+
 ### Breaking Changes
 
 #### One way to do each thing on the facade
