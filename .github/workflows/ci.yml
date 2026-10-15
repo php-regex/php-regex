@@ -89,8 +89,8 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           composer install --prefer-dist --no-interaction --no-progress
           # Without --prefer-dist: tools/phpunit/composer.json installs
-          # orchestra/canvas-core from git, as GitHub serves no archive of
-          # the commit its v11.0.0 tag names.
+          # orchestra/canvas and canvas-core from git, as GitHub serves no
+          # archive of some of the commits their tags name.
           composer install -d tools/phpunit --no-interaction --no-progress
           composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
           composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
@@ -137,8 +137,8 @@ jobs:
         run: |
           composer install --prefer-dist --no-interaction --no-progress
           # Without --prefer-dist: tools/phpunit/composer.json installs
-          # orchestra/canvas-core from git, as GitHub serves no archive of
-          # the commit its v11.0.0 tag names.
+          # orchestra/canvas and canvas-core from git, as GitHub serves no
+          # archive of some of the commits their tags name.
           composer install -d tools/phpunit --no-interaction --no-progress
           composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
           composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress

@@ -24,7 +24,7 @@
     },
     "config": {
         "preferred-install": {
-            "orchestra/canvas-core": "source",
+            "orchestra/canvas*": "source",
             "*": "dist"
         }
     }
