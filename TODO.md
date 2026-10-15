@@ -94,6 +94,78 @@ Parked, too large for upstream review: local branches
 `regex-negative-lookaround-groups`, `regex-quoted-sequence`,
 `regex-extended-mode`.
 
+## Declared-type tightening (shapes where keys are knowable)
+
+Audited 2026-10-15: of the 214 `mixed` occurrences in `src/`, ~71 are real
+narrowing; the rest are honest boundaries that stay (decode fronts, host
+contracts, validator inputs, protocol slots). Four units, in order:
+
+1. Before the 2.0.0 tag — the native signatures that cannot move after it:
+   drop the native `: mixed` on `CalloutNode::accept()` and
+   `DefineNode::accept()` (every other node class is untyped and inherits
+   `@return T` from the interface); narrow `$phpVersionRange` from `mixed`
+   to `int|array|null` on the four constructors (`PatternChecker` ×2,
+   `RegexPatternRule`, `RegexPatternArgumentRule`); the Lexer matches
+   docblocks at `Lexer.php:1230/1280/1753` become
+   `array<int|string, string|null>` (what `LibraryPcre`'s `@param-out`
+   already guarantees) plus the dead inline ignore at `:1764` goes;
+   `Heatmap.php:31` becomes `array<Hotspot>`; the dead public surface
+   (`Message::$result`/`$error`, `Response::error()`'s `$data`,
+   `sortResults`) is removed once verified unreferenced.
+2. Consumer shapes: `OptimizerOptionsArray` on the public `optimize()`
+   entry points; the `phpRegex` neon parameter typed once and imported
+   across the PHPStan bridge; the explicit `regexOptions` subsets on the
+   Symfony lint command and the Laravel provider; lift the stale
+   `src/Laravel/*` analysis exclusion (illuminate is installed in
+   `tools/phpunit/vendor`).
+3. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
+   handler-entry params, the nine unapplied Linter aliases,
+   `LintDefaultsBuilder::build()`'s return shape (pays the CLI, LintArguments
+   and LSP lines at once), the Symfony JSON report and Laravel compare
+   literals.
+4. Deferred unless wanted: JsonDumper leaf shapes transcribed from
+   `ast.schema.json`.
+
+Never type the validator inputs (`ParserOptions::fromArray` and friends):
+their runtime checks and rotten-data tolerance are the contract. A
+`noNewMixed` rule in the shipped plugin (flag off by default, baseline
+frozen by reason code, counting meta-test) lands with unit 2.
+
+## PHP 8.6 closeout and 8.7 canary
+
+PHP 8.6 GA is scheduled 2026-11-19 (RC3 was 2026-10-08, RC4 is due
+2026-10-22). The core is already covered: the required 8.6 CI rows run the
+whole tree, and GA 8.6 bundles PCRE2 10.44, which `PcreTarget` already
+maps. What is left:
+
+1. Before the 2.0.0 tag: `phpstan.dist.neon` analysis range
+   `max: 80599` → `80699` — the comment two lines above already claims
+   "8.2 through 8.6".
+2. `engines-bundled`: a `{ php: '8.6-rc', pcre: '10.44' }` row (the
+   rolling docker alias exists; no stable tag yet) plus the conditional
+   `--ignore-platform-req=php+` on its tool installs — without the flag the
+   row dies before judging any engine. `engines-latest`: add 8.6 on macOS
+   the same way.
+3. `preg_grep()` returns `false` on PCRE error in 8.6: widen the modeled
+   return to `array|false` in the PHPStan and Psalm bridges. The 8.6-gated
+   regression test and the `KNOWN_PHP_VERSIONS` extension land in one
+   commit, or the gate meta-test goes red.
+4. Walk the trim family for the new default `\f` stripping (66 files; the
+   sharpest is `ParserOptions:265`, which trims the user-supplied
+   `php_version`), then sweep the 8.6 deprecations (return-in-finally,
+   `let`/`is`/`_` identifiers, `__debugInfo` array|null, and the rest).
+5. Decide the deprecation policy before GA: documented display-only, or a
+   listener failing only `E_DEPRECATED` whose frame lands under `src/`.
+   Never native `failOnDeprecation`: the weekly-re-resolved bridge vendors
+   deprecate for reasons that are not this library's.
+6. A scheduled-only 8.7 canary (never gating PRs; no analysis and no
+   coverage — both impossible on 8.7 today), with `pcre.jit=0` as the
+   known workaround if the JIT crash fires.
+7. On GA day itself: rename the `8.6-rc` row to `'8.6'` (the `-rc` docker
+   aliases vanish that day, an unrenamed row breaks CI), re-verify the
+   bundle stayed 10.44. Until then, watch `ext/pcre/pcre2lib` on the 8.6
+   branch and master: a late bump would reopen the engine maps.
+
 ---
 
 ## Symfony Flex recipe
