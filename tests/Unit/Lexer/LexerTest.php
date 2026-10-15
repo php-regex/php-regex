@@ -340,6 +340,29 @@ final class LexerTest extends TestCase
         $this->assertSame('alnum', $tokens[1]->value);
     }
 
+    /**
+     * The value of a POSIX class token is its name, a caret first when it
+     * is negated. Oracle: PCRE2 compiles "/[[:^digit:]x]/" and
+     * "/[a[:upper:]-]/".
+     */
+    #[DataProvider('providePosixClassValues')]
+    public function test_tokenize_posix_class_value_is_its_name(string $pattern, int $index, string $expected): void
+    {
+        $tokens = (new Lexer())->tokenize($pattern)->getTokens();
+
+        $this->assertSame(TokenType::PosixClass, $tokens[$index]->type);
+        $this->assertSame($expected, $tokens[$index]->value);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, index: int, expected: string}>
+     */
+    public static function providePosixClassValues(): iterable
+    {
+        yield 'a negated class' => ['pattern' => '[[:^digit:]x]', 'index' => 1, 'expected' => '^digit'];
+        yield 'a class after a literal' => ['pattern' => '[a[:upper:]-]', 'index' => 2, 'expected' => 'upper'];
+    }
+
     public function test_tokenize_unclosed_char_class_error_with_end_of_input(): void
     {
         $this->expectException(LexerException::class);

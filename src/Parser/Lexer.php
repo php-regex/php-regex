@@ -1761,8 +1761,7 @@ final class Lexer
             TokenType::Assertion, TokenType::CharType, TokenType::Keep => substr($matchedValue, self::OFFSET_BACKSLASH),
             TokenType::Backref => $matchedValue,
             TokenType::OctalLegacy => substr($matchedValue, self::OFFSET_BACKSLASH),
-            /* @phpstan-ignore cast.string */
-            TokenType::PosixClass => (string) ($matches['v_posix'] ?? ''),
+            TokenType::PosixClass => \is_string($matches['v_posix'] ?? null) ? $matches['v_posix'] : '',
             TokenType::Unicode => $this->parseUnicodeEscape($matchedValue),
             TokenType::UnicodeProp => $this->normalizeUnicodeProp($matchedValue),
             TokenType::UnicodeNamed => substr($matchedValue, self::OFFSET_UNICODE_NAMED_START, self::OFFSET_UNICODE_NAMED_END),
