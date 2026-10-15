@@ -62,14 +62,6 @@ final class GroupIndex
     private array $nextNumberAt = [];
 
     /**
-     * @var array<int, int> how many capturing groups open before each call
-     *                      or reference, by node
-     */
-    private array $captureIndexAt = [];
-
-    private int $capturesIndexed = 0;
-
-    /**
      * @var array<int, true> the groups a branch reset holds, by node
      */
     private array $inBranchReset = [];
@@ -188,14 +180,6 @@ final class GroupIndex
     }
 
     /**
-     * How many capturing groups open before the call or reference.
-     */
-    public function captureIndexAt(NodeInterface $node): ?int
-    {
-        return $this->captureIndexAt[spl_object_id($node)] ?? null;
-    }
-
-    /**
      * The numbers of the groups bearing the name, ascending.
      *
      * @return list<int>
@@ -246,7 +230,10 @@ final class GroupIndex
     }
 
     /**
-     * The groups a back reference written with a backslash may point to.
+     * The groups a back reference may point to: one written with a
+     * backslash, or the group a condition tests, which the parser keeps as
+     * written between the parentheses, without its brackets or quotes:
+     * "(?(1)", "(?(+1)", "(?(<n>)", "(?('n')", "(?(n)".
      *
      * @return list<GroupNode>
      */
@@ -255,7 +242,7 @@ final class GroupIndex
         $ref = $node->ref;
 
         // "\g'1'" calls the group: the parser makes it no back reference.
-        if (1 === LibraryPcre::match('/^\\\\g(?|\{([+-]\d++)\}|([+-]\d++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(?|\\\\g\{([+-]\d++)\}|\\\\g([+-]\d++)|([+-]\d++))$/', $ref, $matches)) {
             $next = $this->nextNumberAt($node);
             $offset = (int) $matches[1];
 
@@ -267,11 +254,11 @@ final class GroupIndex
             return $this->byNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [];
         }
 
-        if (1 === LibraryPcre::match('/^\\\\(?|g\{(\d++)\}|g?(\d++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(?|\\\\g\{(\d++)\}|\\\\g?(\d++)|(\d++))$/', $ref, $matches)) {
             return $this->byNumber[(int) $matches[1]] ?? [];
         }
 
-        if (1 === LibraryPcre::match('/^\\\\k[<{\']('.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(?|\\\\k[<{\']('.self::GROUP_NAME.')[>}\']|('.self::GROUP_NAME.'))$/u', $ref, $matches)) {
             return $this->byName[$matches[1]] ?? [];
         }
 
@@ -288,7 +275,6 @@ final class GroupIndex
     {
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             $this->nextNumberAt[spl_object_id($node)] = $nextGroupNumber;
-            $this->captureIndexAt[spl_object_id($node)] = $this->capturesIndexed;
             if ($node instanceof SubroutineNode && !isset($this->recursionTests[spl_object_id($node)])) {
                 $this->calls[] = $node;
             }
@@ -324,7 +310,6 @@ final class GroupIndex
             }
 
             if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-                $this->capturesIndexed++;
                 $this->captureSequence[] = $nextGroupNumber;
                 $this->numberOf[spl_object_id($node)] = $nextGroupNumber;
                 $this->byNumber[$nextGroupNumber++][] = $node;

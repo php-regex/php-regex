@@ -24,7 +24,6 @@ use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\RepetitionHir;
 use PHPRegex\Parser\Internal\GroupIndex;
-use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\LookbehindLength;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\NewlineConvention;
@@ -60,8 +59,6 @@ final class PatternInfoAnalyzer
      * tighter length range or a proven anchor it did not have.
      */
     public const ANALYSIS_VERSION = '1';
-
-    private const GROUP_NAME = '[_\p{L}][_\p{L}\p{Nd}]*+';
 
     public function analyze(RegexNode $ast): PatternInfo
     {
@@ -152,36 +149,19 @@ final class PatternInfoAnalyzer
     }
 
     /**
-     * The groups a back reference, or a condition naming a group, may
-     * point to: "\1", "\g1", "\g{-1}", "\g-1", "\k<n>", or a condition's bare
-     * "2", "+1", "n". "\g'1'" calls the group: it is no reference.
+     * The numbers of the groups a back reference, or a condition naming a
+     * group, may point to; none for a reference that names no group.
      *
      * @return list<int>
      */
     private function referencedNumbers(BackrefNode $node, GroupIndex $groups): array
     {
-        $ref = $node->ref;
-
-        if (1 === LibraryPcre::match('/^(?|\\\\g\{([+-]\d++)\}|\\\\g([+-]\d++)|([+-]\d++))$/', $ref, $matches)) {
-            // A relative zero names no group: PCRE refuses it.
-            $offset = (int) $matches[1];
-            $next = $groups->nextNumberAt($node) ?? 1;
-            $number = $offset < 0 ? $next + $offset : $next + $offset - 1;
-
-            return 0 !== $offset && $number > 0 ? [$number] : [];
+        $numbers = [];
+        foreach ($groups->groupsReferencedBy($node) as $group) {
+            $numbers[] = (int) $groups->numberOf($group);
         }
 
-        if (1 === LibraryPcre::match('/^(?|\\\\g\{(\d++)\}|\\\\g?(\d++)|(\d++))$/', $ref, $matches)) {
-            return [(int) $matches[1]];
-        }
-
-        if (1 === LibraryPcre::match('/^(?|\\\\k[<{\']('.self::GROUP_NAME.')[>}\']|('.self::GROUP_NAME.'))$/u', $ref, $matches)) {
-            return $groups->numbersNamed($matches[1]);
-        }
-
-        // Unreachable from a parsed pattern: the parser spells a reference
-        // one of the ways above. It guards a hand-built one.
-        return [];
+        return $numbers;
     }
 
     /**

@@ -197,6 +197,11 @@ final class PatternInfoAnalyzerTest extends TestCase
         yield 'relative zero' => ['pattern' => '/(a)\g{-0}(b)/', 'expected' => 0];
         yield 'named recursion condition, unknown name' => ['pattern' => '/(?(R&zz)a|b)/', 'expected' => 0];
         yield 'unknown name beside a known group' => ['pattern' => '/(a)(b)\2\k<zz>/', 'expected' => 2];
+        yield 'numbered, past the last group' => ['pattern' => '/(a)\2/', 'expected' => 0];
+        yield 'numbered condition, past the last group' => ['pattern' => '/(a)(?(2)b)/', 'expected' => 0];
+        yield 'relative, forward past the last group' => ['pattern' => '/(a)\g{+1}/', 'expected' => 0];
+        yield 'relative condition, forward past the last group' => ['pattern' => '/(a)(?(+1)b)/', 'expected' => 0];
+        yield 'relative, back past a branch reset' => ['pattern' => '/(?|(a)|(b))\g{-2}/', 'expected' => 0];
     }
 
     #[Test]

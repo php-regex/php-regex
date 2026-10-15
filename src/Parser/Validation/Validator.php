@@ -403,13 +403,6 @@ final class Validator extends AbstractNodeVisitor
 
     private GroupNumbering $groupNumbering;
 
-    /**
-     * @var array<int>
-     */
-    private array $captureSequence = [];
-
-    private int $captureIndex = 0;
-
     private ?NodeInterface $previousNode = null;
 
     private ?NodeInterface $nextNode = null;
@@ -611,10 +604,6 @@ final class Validator extends AbstractNodeVisitor
         );
         if ($isLookbehind) {
             $this->measureLookbehind($node);
-        }
-
-        if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-            $this->captureIndex++;
         }
 
         $this->previousNode = null;
@@ -1022,7 +1011,7 @@ final class Validator extends AbstractNodeVisitor
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
         // from where they stand.
         if (LibraryPcre::match('/^[+-]\d++$/', $ref)) {
-            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition');
+            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition', $node);
 
             return;
         }
@@ -1109,7 +1098,7 @@ final class Validator extends AbstractNodeVisitor
 
             if (str_starts_with($numStr, '+') || str_starts_with($numStr, '-')) {
                 $offset = (int) $numStr;
-                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Backreference');
+                $this->assertRelativeReferenceExists($offset, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Backreference', $node);
 
                 return;
             }
@@ -1604,8 +1593,6 @@ final class Validator extends AbstractNodeVisitor
         $this->lookbehindBranchMeasures = 0;
         // A measure of its own: what an earlier pattern measured is gone.
         $this->lookbehindLength = $this->measuring($this->groups);
-        $this->captureSequence = $this->groupNumbering->captureSequence;
-        $this->captureIndex = 0;
 
         $this->previousNode = null;
         $this->nextNode = null;
@@ -1716,7 +1703,7 @@ final class Validator extends AbstractNodeVisitor
                 return; // (?0) is an alias for (?R)
             }
             if (str_starts_with($ref, '+') || str_starts_with($ref, '-')) {
-                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRelativeMissing, 'Subroutine call');
+                $this->assertRelativeReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineRelativeMissing, 'Subroutine call', $node);
             } else {
                 $this->assertAbsoluteReferenceExists($num, $this->missingReferenceOffset($node), ErrorCode::SubroutineMissingGroup, 'Subroutine call');
             }
@@ -2417,14 +2404,7 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        $captureIndex = $this->captureIndex;
-        $this->captureIndex = $this->groups->captureIndexAt($node) ?? $captureIndex;
-
-        try {
-            $node->accept($this);
-        } finally {
-            $this->captureIndex = $captureIndex;
-        }
+        $node->accept($this);
     }
 
     /**
@@ -2795,7 +2775,7 @@ final class Validator extends AbstractNodeVisitor
         }
     }
 
-    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context): void
+    private function assertRelativeReferenceExists(int $offset, int $position, ErrorCode $code, string $context, BackrefNode|SubroutineNode|null $node = null): void
     {
         if (0 === $offset) {
             $this->raiseSemanticError(
@@ -2805,11 +2785,13 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        $index = $offset > 0 ? $this->captureIndex + $offset - 1 : $this->captureIndex + $offset;
+        if ($this->relativeTargetExists($node)) {
+            return;
+        }
 
         // A reference forward names a group PCRE has not read yet: it is
         // resolved with the references by number, once the pattern is read.
-        if ($offset > 0 && $index >= \count($this->captureSequence)) {
+        if ($offset > 0) {
             $this->raiseMissingReference(
                 \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
                 $position,
@@ -2819,14 +2801,27 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        if ($index < 0 || $index >= \count($this->captureSequence)) {
-            $this->raiseSemanticError(
-                \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
-                $position,
-                $code,
-                'Check group numbering or remove the relative reference.',
-            );
-        }
+        $this->raiseSemanticError(
+            \sprintf('%s relative reference %d is outside the range of available capture groups.', $context, $offset),
+            $position,
+            $code,
+            'Check group numbering or remove the relative reference.',
+        );
+    }
+
+    /**
+     * Whether a group bears the number a relative reference counts to. The
+     * index counts group numbers, as PCRE does: every branch of a branch
+     * reset numbers its groups from the same number. A node of no indexed
+     * tree names no group, nor does "(?(R-1)", which PCRE refuses to read.
+     */
+    private function relativeTargetExists(BackrefNode|SubroutineNode|null $node): bool
+    {
+        return match (true) {
+            $node instanceof BackrefNode => [] !== $this->groups->groupsReferencedBy($node),
+            $node instanceof SubroutineNode => [] !== $this->groups->groupsCalledBy($node),
+            default => false,
+        };
     }
 
     private function assertSubroutineReferenceExists(int $num, int $position, ErrorCode $code, string $context): void
@@ -3858,8 +3853,6 @@ final class Validator extends AbstractNodeVisitor
     {
         if (!isset($this->groupNumbering)) {
             $this->groupNumbering = new GroupNumbering(0, [], []);
-            $this->captureSequence = [];
-            $this->captureIndex = 0;
         }
     }
 }

@@ -17,6 +17,7 @@ use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPRegex\Tests\Support\SymfonyExtractorFunctionOverrides;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Config\Resource\ResourceInterface;
@@ -383,6 +384,43 @@ final class RoutePatternSourceTest extends TestCase
 
         $this->assertCount(1, $result);
         $this->assertSame('{^(?P<slug>[\w-]+)$}sD', $result[0]->pattern);
+    }
+
+    /**
+     * A Route holds its requirement already sanitized, so the compiled
+     * route reads it as held: a doubled anchor keeps its second copy, and
+     * spaces around it stay where they are.
+     */
+    #[DataProvider('provideHeldRequirements')]
+    public function test_extract_reads_a_requirement_as_the_route_holds_it(string $requirement): void
+    {
+        $route = new Route('/a/{x}', [], ['x' => $requirement]);
+        $collection = new RouteCollection();
+        $collection->add('route', $route);
+        $router = $this->createStub(RouterInterface::class);
+        $router->method('getRouteCollection')->willReturn($collection);
+
+        $result = (new RoutePatternSource($this->normalizer, $router))->extract(new PatternSourceContext(['.'], []));
+
+        $this->assertCount(1, $result);
+        $this->assertSame(str_replace('{^/a/', '{^', $route->compile()->getRegex()), $result[0]->pattern);
+    }
+
+    /**
+     * @return iterable<string, array{requirement: string}>
+     */
+    public static function provideHeldRequirements(): iterable
+    {
+        yield 'doubled caret' => ['requirement' => '^^a'];
+        yield 'doubled dollar' => ['requirement' => 'a$$'];
+        yield 'doubled \A' => ['requirement' => '\A\Aa'];
+        yield 'caret then \A' => ['requirement' => '^\Aa'];
+        yield 'both anchors' => ['requirement' => '^a$'];
+        yield 'escaped dollar' => ['requirement' => 'a\$'];
+        yield 'escaped caret' => ['requirement' => '\^a'];
+        yield 'doubled \z' => ['requirement' => 'a\z\z'];
+        yield 'spaces around' => ['requirement' => ' a '];
+        yield 'escaped trailing space' => ['requirement' => 'a\ '];
     }
 
     public function test_extract_with_yaml_route_definitions(): void

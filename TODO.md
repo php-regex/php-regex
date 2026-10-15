@@ -103,33 +103,6 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Found while emptying this file (2026-10-15)
-
-Seen on the way, not yet verified to the end; each is small and additive.
-
-- **`explain` prints `'\x00'` under an inline flag.** `regex explain
-  '/(?i)a/'` shows `Inline flags 'i'` over a `'\x00'` line, then `'a'`
-  outside the group: the empty literal child is explained as a NUL byte, and
-  nothing says the flag reaches the rest of the pattern. `(?i:a)` is right.
-  *Verify*: `src/Explain/TextExplainer.php` `visitLiteral()` /
-  `explainLiteral('')`.
-- **`regex debug` keeps heuristic leftovers on a proven-safe pattern.** The
-  hotspot is gone, but `regex debug '/a+/'` still prints `Culprit: a+`,
-  `Trigger: quantifier +` and an attack `Input: "aaaaaaaaaa!" (auto)` under a
-  proof of safety. Hide them, or label them as hints, as the findings are.
-- **Conditionals without a backslash are not resolved.**
-  `GroupIndex::groupsReferencedBy()` (`src/Parser/Internal/GroupIndex.php`)
-  leaves `(?(+1)…)` and `(?(1)…)` out; `JsonDumper` works around it. Fold the
-  workaround back into the index.
-- **Route anchors stripped twice in Symfony.** `RoutePatternSource` normalizes
-  `Route::getRequirements()`, which the router has already sanitized, so a
-  doubled anchor (`^^a`, `a$$`) loses one more than the router takes off.
-- **`@regex-suppress` is undocumented.** `src/Linter/PatternExtractor.php`
-  honours it beside the documented comments; document it or drop it before
-  someone relies on it.
-- **`Parser\Internal\Deprecation` has no caller yet.** Kept for the first
-  public seam to retire; delete it if 2.0.0 ships without one.
-
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +

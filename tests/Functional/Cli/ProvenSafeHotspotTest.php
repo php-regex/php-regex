@@ -88,6 +88,81 @@ final class ProvenSafeHotspotTest extends TestCase
     }
 
     /**
+     * The culprit, its trigger and an attack input built for it are the
+     * profiler's guess too: under a proof of safety there is nothing to
+     * blame and no input to try.
+     */
+    #[Test]
+    public function test_debug_blames_nothing_and_builds_no_attack_for_a_proven_safe_pattern(): void
+    {
+        $buffer = $this->runCommand(new DebugCommand(), 'debug', [self::PROVEN_SAFE]);
+
+        $this->assertStringContainsString('safe (proven)', $buffer);
+        $this->assertStringNotContainsString('Culprit:', $buffer);
+        $this->assertStringNotContainsString('Trigger:', $buffer);
+        $this->assertStringNotContainsString('Input:', $buffer);
+    }
+
+    #[Test]
+    public function test_debug_blames_the_culprit_and_builds_an_attack_for_a_vulnerable_pattern(): void
+    {
+        $buffer = $this->runCommand(new DebugCommand(), 'debug', [self::VULNERABLE]);
+
+        $this->assertStringContainsString('Culprit:    a+', $buffer);
+        $this->assertStringContainsString('Trigger:', $buffer);
+        $this->assertMatchesRegularExpression('/^  Input:      "a+!" \(auto\)$/m', $buffer);
+    }
+
+    #[Test]
+    public function test_debug_still_shows_the_input_given_for_a_proven_safe_pattern(): void
+    {
+        $buffer = $this->runCommand(new DebugCommand(), 'debug', [self::PROVEN_SAFE, '--input=xyz']);
+
+        $this->assertStringContainsString("  Input:      \"xyz\"\n", $buffer);
+    }
+
+    #[Test]
+    public function test_debug_json_carries_no_attack_input_for_a_proven_safe_pattern(): void
+    {
+        $document = $this->runJson([self::PROVEN_SAFE]);
+
+        $this->assertSame('safe', $document['severity']);
+        $this->assertSame(['value' => null, 'source' => null], $document['input']);
+    }
+
+    #[Test]
+    public function test_debug_json_carries_the_input_given_for_a_proven_safe_pattern(): void
+    {
+        $document = $this->runJson([self::PROVEN_SAFE, '--input=xyz']);
+
+        $this->assertSame(['value' => 'xyz', 'source' => 'user'], $document['input']);
+    }
+
+    #[Test]
+    public function test_debug_json_carries_the_attack_input_of_a_vulnerable_pattern(): void
+    {
+        $document = $this->runJson([self::VULNERABLE]);
+
+        $this->assertSame('auto', $document['input']['source'] ?? null);
+        $this->assertIsString($document['input']['value'] ?? null);
+    }
+
+    /**
+     * @param list<string> $arguments
+     *
+     * @return array{severity: mixed, input: array<mixed>}
+     */
+    private function runJson(array $arguments): array
+    {
+        $document = json_decode($this->runCommand(new DebugCommand(), 'debug', [...$arguments, '--format=json']), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertIsArray($document['analysis'] ?? null);
+        $this->assertIsArray($document['input'] ?? null);
+
+        return ['severity' => $document['analysis']['severity'] ?? null, 'input' => $document['input']];
+    }
+
+    /**
      * @param list<string> $arguments
      */
     private function runCommand(AnalyzeCommand|DebugCommand $command, string $name, array $arguments): string

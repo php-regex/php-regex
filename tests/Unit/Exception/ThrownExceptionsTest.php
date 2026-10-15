@@ -17,6 +17,8 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Validator\Exception\UnexpectedTypeException;
+use Symfony\Component\Validator\Exception\UnexpectedValueException;
 
 /**
  * What the library throws says whose mistake it is. The caller's mistake
@@ -34,8 +36,8 @@ final class ThrownExceptionsTest extends TestCase
      */
     private const FRAMEWORK_CONTRACT = [
         'src/Symfony/Validator/Constraints/ValidRegexValidator.php' => [
-            'Symfony\Component\Validator\Exception\UnexpectedTypeException',
-            'Symfony\Component\Validator\Exception\UnexpectedValueException',
+            UnexpectedTypeException::class,
+            UnexpectedValueException::class,
         ],
     ];
 

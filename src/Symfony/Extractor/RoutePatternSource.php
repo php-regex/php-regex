@@ -77,7 +77,9 @@ final readonly class RoutePatternSource implements PatternSourceInterface
                     continue;
                 }
 
-                $normalized = $this->patternNormalizer->normalize($pattern, (string) $parameter, (bool) $route->getOption('utf8'), $this->isHostParameter($route, (string) $parameter));
+                // The route holds the requirement sanitized and compiles it
+                // as held, spaces included.
+                $normalized = $this->patternNormalizer->normalizeHeld((string) $requirement, (string) $parameter, (bool) $route->getOption('utf8'), $this->isHostParameter($route, (string) $parameter));
                 $patterns[] = new PatternOccurrence(
                     $normalized,
                     $file,

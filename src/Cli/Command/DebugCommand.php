@@ -159,8 +159,10 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 }
             }
 
+            // An attack built from the profiler's culprit has nothing to
+            // attack once the proof says every attempt is linear.
             $inputSource = '';
-            if (null === $inputValue && null !== $analysis->culpritNode) {
+            if (null === $inputValue && !$provenSafe && null !== $analysis->culpritNode) {
                 $inputValue = (new InputGenerator())->generate(
                     $analysis->culpritNode,
                     $patternInfo->flags,
@@ -228,11 +230,11 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $output->write('  Mode:      '.strtoupper($analysis->mode->value)."\n");
             $output->write('  Confidence: '.strtoupper($analysis->confidence->value)."\n");
 
-            if (null !== $analysis->vulnerablePart) {
+            if (!$provenSafe && null !== $analysis->vulnerablePart) {
                 $output->write('  Culprit:    '.$analysis->vulnerablePart."\n");
             }
 
-            if (null !== $analysis->trigger && '' !== $analysis->trigger) {
+            if (!$provenSafe && null !== $analysis->trigger && '' !== $analysis->trigger) {
                 $output->write('  Trigger:    '.$analysis->trigger."\n");
             }
 
