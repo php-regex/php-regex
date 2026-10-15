@@ -82,7 +82,7 @@ final class LazyToClassRule extends AbstractLintRule
             return [];
         }
 
-        $children = array_values($sequence->children);
+        $children = $sequence->children;
         $index = array_search($node, $children, true);
         $closing = \is_int($index) ? ($children[$index + 1] ?? null) : null;
         if (!$closing instanceof LiteralNode

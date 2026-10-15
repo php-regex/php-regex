@@ -68,7 +68,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
             return []; // never taken: getNodeTypes() dispatches sequences only
         }
 
-        $children = array_values($node->children);
+        $children = $node->children;
         $flagsAtChild = array_values($context->flagsAtEachChild($node));
         $issues = [];
         $spelled = null;

@@ -178,7 +178,7 @@ final class LastCodeUnit
      */
     private static function alternatives(NodeInterface $node): array
     {
-        return $node instanceof AlternationNode ? array_values($node->alternatives) : [$node];
+        return $node instanceof AlternationNode ? $node->alternatives : [$node];
     }
 
     /**
@@ -541,7 +541,7 @@ final class LastCodeUnit
             return null;
         }
 
-        [$first, $second] = array_map($this->characterOf(...), array_values($node->expression->alternatives));
+        [$first, $second] = array_map($this->characterOf(...), $node->expression->alternatives);
         if (null === $first || null === $second || $first === $second || $this->otherCase($first) !== $second) {
             return null;
         }

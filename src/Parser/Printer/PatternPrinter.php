@@ -1978,11 +1978,10 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * @param non-empty-array<NodeInterface> $members
+     * @param non-empty-list<NodeInterface> $members
      */
     private function compileCharClassMembers(array $members): string
     {
-        $members = array_values($members);
         $result = $this->compileCharClassNode($members[0], $members[1] ?? null);
         for ($i = 1, $count = \count($members); $i < $count; $i++) {
             $next = $this->compileCharClassNode($members[$i], $members[$i + 1] ?? null);
@@ -2180,7 +2179,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     private static function startOptions(NodeInterface $pattern): array
     {
         while ($pattern instanceof AlternationNode && [] !== $pattern->alternatives) {
-            $pattern = array_values($pattern->alternatives)[0];
+            $pattern = $pattern->alternatives[0];
         }
 
         $options = [];
@@ -2474,11 +2473,10 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<NodeInterface> $alternatives
+     * @param list<NodeInterface> $alternatives
      */
     private function layoutAlternation(array $alternatives): string
     {
-        $alternatives = array_values($alternatives);
         $this->parentBroke = false;
         // "| " hangs in the indent, so every branch starts in one column.
         $bar = str_repeat(' ', max(0, $this->indentLevel * \strlen(self::INDENT) - 2)).'|';
@@ -2958,7 +2956,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function inlineWithTrailingComment(SequenceNode $node): ?string
     {
-        $children = array_values($node->children);
+        $children = $node->children;
         $last = $children[\count($children) - 1] ?? null;
         if (!$last instanceof CommentNode || !$last->extended || \count($children) < 2 || $last === $this->skipNode) {
             return null;
@@ -3120,7 +3118,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $first = $node;
         while ($first instanceof AlternationNode || $first instanceof SequenceNode) {
             $children = $first instanceof AlternationNode ? $first->alternatives : $first->children;
-            $first = array_values($children)[0] ?? null;
+            $first = $children[0] ?? null;
         }
 
         if (!$first instanceof CommentNode || !$first->extended || $first === $node || null === $this->source) {

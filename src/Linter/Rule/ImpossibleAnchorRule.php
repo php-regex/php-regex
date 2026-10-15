@@ -85,7 +85,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         }
 
         $issues = [];
-        $children = array_values($node->children);
+        $children = $node->children;
         $count = \count($children);
         $flagsAtChild = null;
         $spelled = false;

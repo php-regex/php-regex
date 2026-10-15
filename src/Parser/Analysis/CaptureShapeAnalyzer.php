@@ -316,7 +316,7 @@ final class CaptureShapeAnalyzer
 
         // Any other node on the path is a sequence or a group that neither captures nor repeats.
         return match (true) {
-            $node instanceof SequenceNode => new SequenceNode(array_values(array_filter(array_map($this->rebuild(...), $node->children), static fn (?NodeInterface $child): bool => null !== $child)), $node->startPosition, $node->endPosition),
+            $node instanceof SequenceNode => new SequenceNode(array_filter(array_map($this->rebuild(...), $node->children), static fn (?NodeInterface $child): bool => null !== $child), $node->startPosition, $node->endPosition),
             $node instanceof GroupNode => new GroupNode($this->rebuild($node->child) ?? self::nothing($node->child), $node->type, $node->name, $node->flags, $node->startPosition, $node->endPosition, $node->usePythonSyntax, $node->scannedGroups),
             default => $node,
         };

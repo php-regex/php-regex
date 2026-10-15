@@ -286,7 +286,7 @@ final class PatternLinter extends AbstractNodeVisitor
 
         $this->context->pushParent($node);
         $altKey = $this->alternationKey($node);
-        foreach (\array_values($node->alternatives) as $index => $alt) {
+        foreach ($node->alternatives as $index => $alt) {
             $this->context->pushAlternationBranch($altKey, $index);
             $alt->accept($this);
             $this->context->popAlternationBranch();
@@ -553,7 +553,7 @@ final class PatternLinter extends AbstractNodeVisitor
 
         if ($node instanceof AlternationNode) {
             $key = $this->alternationKey($node);
-            foreach (\array_values($node->alternatives) as $index => $alt) {
+            foreach ($node->alternatives as $index => $alt) {
                 $nextAlternation = $alternation;
                 $nextAlternation[$key] = $index;
                 $this->collectCapturingGroupInfo($alt, $nextAlternation);

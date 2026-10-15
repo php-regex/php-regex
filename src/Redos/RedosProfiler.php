@@ -393,7 +393,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $previous = $this->previousNode;
         $next = $this->nextNode;
         $last = null;
-        $children = \array_values($node->children);
+        $children = $node->children;
         $total = \count($children);
 
         if (!$this->inAtomicGroup) {
