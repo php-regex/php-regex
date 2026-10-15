@@ -19,6 +19,7 @@ use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +32,7 @@ use PHPUnit\Framework\TestCase;
  * the ASCII options; "(?-a)" clears every ASCII option.
  *
  * Each row carries its engine fact, measured in the same test: the number
- * of steps one match attempt needs (pcre.jit 0, "(*NO_START_OPT)", the
+ * of steps one match attempt needs ("(*NO_JIT)", "(*NO_START_OPT)", the
  * smallest pcre.backtrack_limit the call passes under) on 4 then 8 pump
  * units and the suffix. Exponential rows grow 16 times or more (64 -> 1 024,
  * 95 -> 1 535, 25 -> 385, 68 -> 3 194), linear ones less than twice (12 ->
@@ -515,15 +516,13 @@ final class RedosInlineOptionsTest extends TestCase
     }
 
     /**
-     * The smallest backtrack limit one match attempt runs under: JIT off,
-     * start optimizations off.
+     * The smallest backtrack limit one match attempt runs under: in the
+     * interpreter, start optimizations off.
      */
     private static function steps(string $pattern, string $subject): int
     {
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
-        $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
 
         try {
             $low = 1;
@@ -540,7 +539,6 @@ final class RedosInlineOptionsTest extends TestCase
 
             return $low;
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
     }

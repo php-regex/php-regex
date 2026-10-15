@@ -17,6 +17,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,28 +26,13 @@ use PHPUnit\Framework\TestCase;
  * A witness through a lookaround the model leaves undecided, checked on the
  * engine before it proves a superlinear class.
  *
- * Engine: PHP 8.4.26 / PCRE2 10.49, pcre.jit 0. The timings quoted are
+ * Engine: PHP 8.4.26 / PCRE2 10.49, the interpreter. The timings quoted are
  * preg_match() on the witness, and stay flat past both of PCRE2's caps on
  * its required code unit search (5,000 code units anchored, 5,000,000
  * unanchored) where a row says linear.
  */
 final class RedosLookaroundWitnessTest extends TestCase
 {
-    private string|false $jit = false;
-
-    protected function setUp(): void
-    {
-        $this->jit = ini_get('pcre.jit');
-        ini_set('pcre.jit', '0');
-    }
-
-    protected function tearDown(): void
-    {
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
-        }
-    }
-
     #[Test]
     #[DataProvider('provideWitnessesTheEngineMatches')]
     public function test_lookaround_witness_the_engine_matches_proves_no_superlinear_class(string $pattern, string $subject): void
@@ -63,7 +49,7 @@ final class RedosLookaroundWitnessTest extends TestCase
     #[DataProvider('provideWitnessesTheEngineMatches')]
     public function test_engine_fact_the_former_witness_matches(string $pattern, string $subject): void
     {
-        $this->assertSame(1, preg_match($pattern, $subject), $pattern);
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern($pattern), $subject), $pattern);
     }
 
     /**
@@ -268,6 +254,6 @@ final class RedosLookaroundWitnessTest extends TestCase
 
         $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertSame('"0" x n . "\\"!"', $witness->render());
-        $this->assertSame(0, preg_match('/(?<!a)\w+\w+!/', $witness->build(3)), $witness->render());
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern('/(?<!a)\w+\w+!/'), $witness->build(3)), $witness->render());
     }
 }

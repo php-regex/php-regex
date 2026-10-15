@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -673,15 +674,13 @@ final class NestedLoopEdgeCaseTest extends TestCase
 
     /**
      * The smallest backtrack limit the match attempt runs under: the
-     * engine's count of steps for one start, JIT off, start optimizations
-     * off.
+     * engine's count of steps for one start, in the interpreter, start
+     * optimizations off.
      */
     private static function steps(string $pattern, string $subject): int
     {
-        $jit = ini_get('pcre.jit');
         $limit = ini_get('pcre.backtrack_limit');
-        ini_set('pcre.jit', '0');
-        $unoptimized = $pattern[0].'(*NO_START_OPT)'.substr($pattern, 1);
+        $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
 
         try {
             $low = 1;
@@ -698,7 +697,6 @@ final class NestedLoopEdgeCaseTest extends TestCase
 
             return $low;
         } finally {
-            ini_set('pcre.jit', false === $jit ? '1' : $jit);
             ini_set('pcre.backtrack_limit', false === $limit ? '1000000' : $limit);
         }
     }

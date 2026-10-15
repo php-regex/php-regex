@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,7 +26,7 @@ use PHPUnit\Framework\TestCase;
  * the dot takes, so in (?:.*\n)+ both ".*" and "\n" can consume it and the
  * loop backtracks exponentially, as it does under /s.
  *
- * Engine (PHP 8.4.26 / PCRE2 10.49, pcre.jit 0, (*NO_START_OPT), subject
+ * Engine (PHP 8.4.26 / PCRE2 10.49, (*NO_JIT), (*NO_START_OPT), subject
  * "a" followed by n "\n"): the least pcre.backtrack_limit that lets the
  * call finish is 513 at n = 8 and 131073 at n = 16 for every convention
  * that is not LF, and for /s; 11 and 19 under LF (the default, (*LF),
@@ -35,13 +36,9 @@ final class RedosNewlineConventionSoundnessTest extends TestCase
 {
     private string|false $backtrackLimit = false;
 
-    private string|false $jit = false;
-
     protected function setUp(): void
     {
         $this->backtrackLimit = ini_get('pcre.backtrack_limit');
-        $this->jit = ini_get('pcre.jit');
-        ini_set('pcre.jit', '0');
     }
 
     protected function tearDown(): void
@@ -49,16 +46,13 @@ final class RedosNewlineConventionSoundnessTest extends TestCase
         if (false !== $this->backtrackLimit) {
             ini_set('pcre.backtrack_limit', $this->backtrackLimit);
         }
-        if (false !== $this->jit) {
-            ini_set('pcre.jit', $this->jit);
-        }
     }
 
     #[Test]
     #[DataProvider('provideNewlineConventions')]
     public function test_redos_newline_convention_decides_whether_the_dot_crosses_a_line_feed(string $pattern, bool $vulnerable): void
     {
-        $engine = '/(*NO_START_OPT)'.substr($pattern, 1);
+        $engine = PcreInterpreter::pattern('/(*NO_START_OPT)'.substr($pattern, 1));
         $growth = self::steps($engine, 16) / self::steps($engine, 8);
         $this->assertSame($vulnerable, $growth > 3, \sprintf('%s: steps grow x%.1f when n doubles', $engine, $growth));
 

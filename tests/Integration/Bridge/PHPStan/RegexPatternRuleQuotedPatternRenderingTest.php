@@ -423,20 +423,17 @@ final class RegexPatternRuleQuotedPatternRenderingTest extends RuleTestCase
     }
 
     /**
-     * What preg_match() answers, JIT off; a compilation failure or an engine
-     * error is its message.
+     * What preg_match() answers; a compilation failure or an engine error is
+     * its message.
      */
     private static function oracle(string $pattern, string $subject): int|string
     {
-        $jit = (string) \ini_get('pcre.jit');
-        \ini_set('pcre.jit', '0');
         set_error_handler(static fn (): bool => true);
 
         try {
             $result = preg_match($pattern, $subject);
         } finally {
             restore_error_handler();
-            \ini_set('pcre.jit', $jit);
         }
 
         return false === $result ? 'error: '.preg_last_error_msg() : $result;

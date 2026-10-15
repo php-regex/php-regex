@@ -27,11 +27,11 @@ use PHPUnit\Framework\TestCase;
  * already reach the floor, and a raise PHP refuses leaves the call under
  * the caller's limits, as before the floor existed.
  *
- * Engine facts (PHP 8.4.26, PCRE2 10.49, pcre.jit 0): "/abc/" on "abc"
- * fails with PREG_BACKTRACK_LIMIT_ERROR under a backtrack limit of 0 or 1;
- * "/(?:a|b)*c/" on "ab" x 10 . "c" fails under 19; a limit of -1 is
- * unlimited; "/(a)(b)c/" on "abc" fails with PREG_RECURSION_LIMIT_ERROR
- * under a recursion limit of 2.
+ * Engine facts (PHP 8.4.26, PCRE2 10.49, the interpreter: "(*NO_JIT)"):
+ * "/abc/" on "abc" fails with PREG_BACKTRACK_LIMIT_ERROR under a backtrack
+ * limit of 0 or 1; "/(?:a|b)*c/" on "ab" x 10 . "c" fails under 19; a limit
+ * of -1 is unlimited; "/(a)(b)c/" on "abc" fails with
+ * PREG_RECURSION_LIMIT_ERROR under a recursion limit of 2.
  *
  * PHPUnit runs regexes of its own to report a failure: under a limit of 2
  * a failing assertSame() reports a pass. Every assertion here runs after
@@ -53,10 +53,9 @@ final class LibraryPcreTest extends TestCase
 
     protected function setUp(): void
     {
-        foreach (['pcre.backtrack_limit', 'pcre.recursion_limit', 'pcre.jit'] as $key) {
+        foreach (['pcre.backtrack_limit', 'pcre.recursion_limit'] as $key) {
             $this->saved[$key] = ini_get($key);
         }
-        ini_set('pcre.jit', '0');
         self::restoreDefaults();
         self::resetSeam();
     }
@@ -198,7 +197,7 @@ final class LibraryPcreTest extends TestCase
     public function test_a_refused_raise_leaves_the_call_under_the_callers_limits(): void
     {
         $subject = str_repeat('ab', 10).'c';
-        $bare = self::underLimits('19', '100000', static fn (): array => [@preg_match(self::PROBE, $subject), preg_last_error()]);
+        $bare = self::underLimits('19', '100000', static fn (): array => [@preg_match(self::NO_JIT_PROBE, $subject), preg_last_error()]);
 
         $attempts = 0;
         LibraryPcre::useIniSetter(static function () use (&$attempts): false {
@@ -208,7 +207,7 @@ final class LibraryPcreTest extends TestCase
         });
 
         [$refused, $after] = self::underLimits('19', '100000', static fn (): array => [
-            [LibraryPcre::match(self::PROBE, $subject), preg_last_error()],
+            [LibraryPcre::match(self::NO_JIT_PROBE, $subject), preg_last_error()],
             ini_get('pcre.backtrack_limit'),
         ]);
 
@@ -278,7 +277,7 @@ final class LibraryPcreTest extends TestCase
         ];
 
         [$bare, $actual, $after] = self::underLimits('19', '100000', static fn (): array => [
-            @preg_match(self::PROBE, $subject),
+            @preg_match(self::NO_JIT_PROBE, $subject),
             [
                 'match' => [LibraryPcre::match(self::PROBE, $subject, $matches, \PREG_OFFSET_CAPTURE, 1), $matches],
                 'matchAll' => [LibraryPcre::matchAll(self::PROBE, $subject, $all), $all],

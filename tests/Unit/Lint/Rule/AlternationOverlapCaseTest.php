@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,8 +23,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * Under i a literal branch reads its letters in either case: "a" and "A"
  * overlap, and repeated they backtrack exponentially. PHP 8.4.26 / PCRE2
- * 10.49, JIT off: each overlapping row exhausts the backtrack limit on 30
- * letters then "!".
+ * 10.49, the interpreter: each overlapping row exhausts the backtrack limit
+ * on 30 letters then "!".
  */
 final class AlternationOverlapCaseTest extends TestCase
 {
@@ -33,14 +34,7 @@ final class AlternationOverlapCaseTest extends TestCase
     #[DataProvider('provideCaselessOverlaps')]
     public function test_literal_branches_that_overlap_in_another_case_are_reported(string $pattern, string $letter): void
     {
-        $jit = ini_get('pcre.jit');
-        ini_set('pcre.jit', '0');
-
-        try {
-            $this->assertFalse(@preg_match($pattern, str_repeat($letter, 30).'!'), $pattern);
-        } finally {
-            ini_set('pcre.jit', (string) $jit);
-        }
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern($pattern), str_repeat($letter, 30).'!'), $pattern);
 
         $this->assertContains(self::RULE, $this->ids($pattern), $pattern);
     }

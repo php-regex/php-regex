@@ -23,6 +23,7 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -341,7 +342,7 @@ final class RedosCallerPcreLimitsTest extends TestCase
             return true;
         }
 
-        return '0' === ini_get('pcre.jit') && false === @preg_match('/(a)(b)c/', 'abc');
+        return '0' === ini_get('pcre.jit') && false === @preg_match(PcreInterpreter::pattern('/(a)(b)c/'), 'abc');
     }
 
     /**
