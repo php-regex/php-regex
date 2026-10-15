@@ -64,7 +64,7 @@ final class LintCommand extends Command
         {paths?* : The paths to analyze}
         {--exclude=* : Paths to exclude}
         {--min-savings=1 : Minimum optimization savings in characters}
-        {--jobs= : Parallel workers for analysis (auto-detected if not specified)}
+        {--j|jobs= : Parallel workers for analysis (auto-detected if not specified)}
         {--no-routes : Skip route validation}
         {--no-validators : Skip validator validation}
         {--format=console : Output format (console, json, github, checkstyle, junit)}';

@@ -125,16 +125,6 @@ PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
 ### E. The Symfony and Laravel bridges
 
-**E3 — The command surfaces diverge between bridges.** `compare` takes
-`--method intersection|subset|equivalence` on the CLI and Symfony, and Laravel
-hardwires equivalence and offers `--format=json` instead; `analyze` and
-`security` exist only in Symfony; `regex:routes` is `setHidden(true)` in
-Symfony while it is the flagship command in Laravel; the short options `-j` and
-`-t` are missing in Laravel.
-*Verify*: compare `src/Cli/Command`, `src/Symfony/Command` and
-`src/Laravel/Command` for the same verb.
-*Fix*: a shared command and flag specification. Effort: M.
-
 **E5 — The bridge reports are internal array shapes.** Symfony's report objects
 are readonly but marked `@internal` over phpstan-typed arrays, and Laravel
 builds raw arrays and encodes them. Nothing programmatic can render or consume

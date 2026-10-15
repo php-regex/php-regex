@@ -28,6 +28,7 @@ use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
 use PHPRegex\Symfony\Command\AnalyzeCommand;
 use PHPRegex\Symfony\Command\CompareCommand;
+use PHPRegex\Symfony\Command\ExplainCommand;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\Command\RoutesCommand;
 use PHPRegex\Symfony\Command\SecurityCommand;
@@ -244,6 +245,11 @@ return static function (ContainerConfigurator $container): void {
             ->arg('$regex', service('php_regex.regex'))
             ->tag('validator.constraint_validator');
     }
+
+    $services->set('php_regex.command.explain', ExplainCommand::class)
+        ->arg('$regex', service('php_regex.regex'))
+        ->tag('console.command')
+        ->public();
 
     $services->set('php_regex.command.transpile', TranspileCommand::class)
         ->arg('$regex', service('php_regex.regex'))

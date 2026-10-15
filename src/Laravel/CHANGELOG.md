@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:compare --method intersection|subset|equivalence`, defaulting to
+   `intersection` as the CLI and Symfony do; the JSON report names the
+   method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.
+ * `regex:explain` no longer stops with an error on a pattern the optimizer
+   shortens.
  * The `ValidRegex` rule validates a pattern a user submits, with the
    application's `Regex` service and the library's message; with
    `redos: true` a ReDoS severity from `redosThreshold` (`high`) up is

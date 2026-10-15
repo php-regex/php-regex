@@ -165,7 +165,7 @@ final class LaravelTargetConfigTest extends TestCase
     #[WithConfig('php-regex.automata.determinization_algorithm', 'subset')]
     public function test_the_automata_settings_are_the_compare_command_defaults(): void
     {
-        $status = Artisan::call('regex:compare', ['pattern1' => '/[0-9]+/', 'pattern2' => '/\d+/', '--format' => 'json']);
+        $status = Artisan::call('regex:compare', ['pattern1' => '/[0-9]+/', 'pattern2' => '/\d+/', '--method' => 'equivalence', '--format' => 'json']);
         $json = json_decode(Artisan::output(), true);
 
         $this->assertSame(0, $status);

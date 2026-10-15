@@ -75,8 +75,6 @@ final class SecurityCommand extends Command
 
     protected function configure(): void
     {
-        $this->setHidden(true);
-
         $this
             ->addOption('show-overlaps', null, InputOption::VALUE_NONE, 'Include partial overlaps in the report.')
             ->addOption(

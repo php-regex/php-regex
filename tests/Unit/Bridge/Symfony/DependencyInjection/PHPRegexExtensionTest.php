@@ -79,6 +79,25 @@ final class PHPRegexExtensionTest extends TestCase
     }
 
     /**
+     * regex:explain is a console command of the bundle, built with its
+     * Regex service, as the Laravel command is.
+     */
+    public function test_load_registers_the_explain_command(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', false);
+
+        (new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension())->load([[]], $container);
+
+        $definition = $container->getDefinition('php_regex.command.explain');
+        $this->assertSame(\PHPRegex\Symfony\Command\ExplainCommand::class, $definition->getClass());
+        $this->assertTrue($definition->hasTag('console.command'));
+        $regex = $definition->getArgument('$regex');
+        $this->assertInstanceOf(Reference::class, $regex);
+        $this->assertSame('php_regex.regex', (string) $regex);
+    }
+
+    /**
      * The ValidRegex constraint is judged with the bundle's Regex service,
      * found by the validator under the validator's class name.
      */

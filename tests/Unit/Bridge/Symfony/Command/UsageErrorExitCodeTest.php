@@ -20,6 +20,7 @@ use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Command\AnalyzeCommand;
 use PHPRegex\Symfony\Command\CompareCommand;
+use PHPRegex\Symfony\Command\ExplainCommand;
 use PHPRegex\Symfony\Command\SecurityCommand;
 use PHPRegex\Symfony\Command\TranspileCommand;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
@@ -70,6 +71,8 @@ final class UsageErrorExitCodeTest extends TestCase
         yield 'regex:security with an unknown --redos-threshold' => [$security, ['--redos-threshold' => 'severe']];
         yield 'regex:security with --config files that do not exist' => [$security, ['--config' => ['missing/security.yaml']]];
         yield 'regex:transpile with an unknown --target' => [$transpile, ['pattern' => '/a/', '--target' => 'perl']];
+        yield 'regex:explain with an unknown --format' => [static fn (): Command => new ExplainCommand(Regex::create()), ['pattern' => '/a/', '--format' => 'text']];
+        yield 'regex:explain with a pattern that is not a string' => [static fn (): Command => new ExplainCommand(Regex::create()), ['pattern' => ['/a/']]];
         yield 'regex:compare with an unknown --method' => [$compare, ['pattern1' => '/a/', 'pattern2' => '/b/', '--method' => 'nosuch']];
         yield 'regex:compare with an unknown --minimizer' => [$compare, ['pattern1' => '/a/', 'pattern2' => '/b/', '--minimizer' => 'nosuch']];
         yield 'regex:compare with an unknown --determinizer' => [$compare, ['pattern1' => '/a/', 'pattern2' => '/b/', '--determinizer' => 'nosuch']];

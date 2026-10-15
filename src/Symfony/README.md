@@ -19,7 +19,7 @@
 PHPRegex Symfony
 ================
 
-Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare and regex:transpile commands.
+Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare, regex:explain and regex:transpile commands.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Symfony guide](https://php-regex.com/guides/symfony/) walks the bundle end to end.
 
@@ -28,7 +28,7 @@ Features
 
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
 * A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
-* Six console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare` and `regex:transpile`
+* Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`, with the options of the same commands in the CLI and the Laravel package
 * `regex:lint` reads your PHP files, your route requirements and your validator constraints in one pass
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
@@ -135,12 +135,14 @@ Code that injects `PHPRegex\Toolkit\Regex` needs the bundle in every environment
 | `regex:security`  | Analyze `access_control` ordering and firewall regexes |
 | `regex:analyze`   | Run the routes and security analyzers in one pass      |
 | `regex:compare`   | Compare two patterns with automata logic               |
+| `regex:explain`   | Explain a pattern in plain English                     |
 | `regex:transpile` | Translate a pattern for another regex engine           |
 
 ```bash
 bin/console regex:lint src/ --format=json
 bin/console regex:routes --show-overlaps
 bin/console regex:analyze --only=routes --redos-threshold=medium
+bin/console regex:compare '/[a-z]+/' '/edit/' --method=subset
 bin/console regex:transpile '/^\d{4}$/' --target=python
 ```
 

@@ -201,17 +201,35 @@ whether an older PHP accepts a pattern: the lint never uses it.
 ```bash
 php artisan regex:lint
 php artisan regex:lint app/ --format=json
-php artisan regex:compare '/[0-9]+/' '/\d+/'
+php artisan regex:compare '/[a-z]+/' '/edit/'
+php artisan regex:compare '/[0-9]+/' '/\d+/' --method=equivalence
+php artisan regex:transpile '/^[a-z]+$/' -t python
 ```
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
 
-`regex:lint --jobs=N` runs the analysis in `N` worker processes; left out,
+`regex:compare --method` takes the methods of `regex compare` and Symfony's
+`regex:compare`, with the same default: `intersection` (do the two patterns
+share a string?), `subset` (is every string of the first one a string of
+the second?) and `equivalence` (do they match the same strings?). A failed
+check prints the string that proves it. `--format=json` writes the verdict
+under a key named for the method: `disjoint` and `example`, `subset` and
+`counterexample`, or `equivalent`, `counterexample`, `leftOnlyExample` and
+`rightOnlyExample`.
+
+`regex:lint --jobs=N` (or `-j N`) runs the analysis in `N` worker processes; left out,
 the count follows the CPUs (and the container's memory limit). A `--jobs`
 that is not a whole number of 1 or more is refused with exit code 2, as
 `regex lint` and Symfony's `regex:lint` refuse it.
+
+The commands take the options of the same command in the CLI and in the
+Symfony bundle, under the same names and short forms (`-j` for `--jobs`, `-t`
+for `--target`). What stays Laravel's own: `regex:routes` lists and
+validates route constraints, where Symfony's analyzes the conflicts between
+routes, and there is no `regex:security` or `regex:analyze`, which read
+Symfony's router and `security.yaml`.
 
 `regex:routes` lists the routes that have a constraint. `--show-constraints`
 prints each constraint, and `--validate` compiles each one as the router

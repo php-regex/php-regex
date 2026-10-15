@@ -107,7 +107,7 @@ final class ExplainCommand extends Command
             if ($analysis->optimization->original !== $analysis->optimization->optimized) {
                 $this->line('<fg=white;options=bold>Optimization Suggestion:</>');
                 $this->line('  <fg=red>-</> '.$analysis->optimization->original);
-                $this->line('  <fg=green>+</> '.$analysis->optimizations->optimized);
+                $this->line('  <fg=green>+</> '.$analysis->optimization->optimized);
                 $this->newLine();
             }
 

@@ -214,6 +214,7 @@ bundle says.
 |------------------|------------------------------------------------------|
 | `regex:lint`     | Lint the regex patterns of your PHP code             |
 | `regex:compare`  | Compare two patterns with automata                   |
+| `regex:explain`  | Explain a pattern in plain English                   |
 | `regex:routes`   | Detect route conflicts and overlaps                  |
 | `regex:security` | Analyze access control ordering and firewall regexes |
 | `regex:analyze`  | Run the routes and security analyzers                |
@@ -226,6 +227,16 @@ bin/console regex:analyze --redos-threshold=medium
 ```
 
 `--redos-threshold` takes the same values as `redos.threshold`, in any case.
+
+Every command is listed by `bin/console list`. They take the options of the
+same command in the CLI and in the Laravel package, under the same names and
+short forms (`-j` for `--jobs`, `-t` for `--target`): `regex:compare
+--method` takes `intersection` (the default), `subset` or `equivalence`, and
+`regex:explain` takes `--format=console|html` and `--highlight`, and prints
+the optimization, the ReDoS risk, the lint issues and a sample beside the
+explanation. What stays the bundle's own: `regex:routes`, `regex:security`
+and `regex:analyze` read Symfony's router and `security.yaml`, where
+Laravel's `regex:routes` lists and validates route constraints.
 
 `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
 `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, and

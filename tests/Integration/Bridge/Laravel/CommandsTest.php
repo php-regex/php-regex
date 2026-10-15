@@ -57,6 +57,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[0-9]+/',
             'pattern2' => '/\\d+/',
+            '--method' => 'equivalence',
         ])
             ->assertSuccessful()
             ->expectsOutputToContain('EQUIVALENT');
@@ -67,6 +68,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[a-z]+/',
             'pattern2' => '/[A-Z]+/',
+            '--method' => 'equivalence',
         ])
             ->assertFailed()
             ->expectsOutputToContain('NOT EQUIVALENT');
@@ -77,6 +79,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[a-z]+/',
             'pattern2' => '/[A-Z]+/',
+            '--method' => 'equivalence',
         ])
             ->assertFailed()
             ->expectsOutputToContain('Counterexample');
@@ -87,6 +90,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[0-9]+/',
             'pattern2' => '/\\d+/',
+            '--method' => 'equivalence',
             '--format' => 'json',
         ])
             ->assertSuccessful()

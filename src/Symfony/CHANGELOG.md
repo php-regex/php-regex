@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:explain` explains a pattern, with `--format=console|html` and
+   `--highlight` as in the Laravel package and the CLI, and the optimization,
+   the ReDoS risk, the lint issues and a sample beside it.
+ * `regex:routes` and `regex:security` are listed by `bin/console list`,
+   where they were hidden.
  * The `ValidRegex` constraint validates a pattern a user submits, with the
    bundle's `Regex` service: the library's message and hint as `{{ error }}`
    and `{{ hint }}`, and with `redos: true` a ReDoS severity from

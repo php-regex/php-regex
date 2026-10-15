@@ -45,6 +45,7 @@ final class UsageErrorExitCodeTest extends TestCase
     {
         yield 'regex:explain with an unknown --format' => ['regex:explain', ['pattern' => '/a/', '--format' => 'xml']];
         yield 'regex:transpile with an unknown --target' => ['regex:transpile', ['pattern' => '/a/', '--target' => 'perl']];
+        yield 'regex:compare with an unknown --method' => ['regex:compare', ['pattern1' => '/a/', 'pattern2' => '/b/', '--method' => 'union']];
         yield 'regex:compare with an unknown --minimizer' => ['regex:compare', ['pattern1' => '/a/', 'pattern2' => '/b/', '--minimizer' => 'nosuch']];
         yield 'regex:compare with an unknown --determinizer, before judging the patterns' => ['regex:compare', ['pattern1' => '/(/', 'pattern2' => '/b/', '--determinizer' => 'nosuch']];
         yield 'regex:lint with an unknown --format' => ['regex:lint', ['paths' => ['.'], '--format' => 'xml']];
@@ -104,7 +105,8 @@ final class UsageErrorExitCodeTest extends TestCase
     {
         yield 'regex:explain on an invalid pattern' => ['regex:explain', ['pattern' => '/(/']];
         yield 'regex:transpile on an invalid pattern' => ['regex:transpile', ['pattern' => '/(/']];
-        yield 'regex:compare on patterns that differ' => ['regex:compare', ['pattern1' => '/a/', 'pattern2' => '/b/']];
+        yield 'regex:compare on patterns that differ' => ['regex:compare', ['pattern1' => '/a/', 'pattern2' => '/b/', '--method' => 'equivalence']];
+        yield 'regex:compare on patterns that share a string' => ['regex:compare', ['pattern1' => '/[ab]/', 'pattern2' => '/a/']];
     }
 
     /**

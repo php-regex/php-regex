@@ -30,7 +30,7 @@ Features
 
 * A `Regex` service and a `Regex` facade, registered by package discovery on install
 * A `ValidRegex` rule for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
-* Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`
+* Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`, with the options of the same commands in the CLI and the Symfony bundle
 * `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass, a route constraint
   anchored and flagged as the router matches it
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
@@ -150,6 +150,7 @@ Artisan commands
 php artisan regex:lint
 php artisan regex:lint app/ tests/ --format=json
 php artisan regex:routes --validate
+php artisan regex:compare '/[0-9]+/' '/\d+/' --method=equivalence
 ```
 
 Exit codes: 0 when nothing is wrong, 1 when the judged patterns or files have a problem, 2 when an option or the configuration cannot be used.
