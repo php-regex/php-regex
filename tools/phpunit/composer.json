@@ -21,5 +21,11 @@
         "orchestra/testbench": "^10.0|^11.0",
         "rector/rector": "^2.4",
         "vimeo/psalm": "^6.19"
+    },
+    "config": {
+        "preferred-install": {
+            "orchestra/canvas-core": "source",
+            "*": "dist"
+        }
     }
 }
