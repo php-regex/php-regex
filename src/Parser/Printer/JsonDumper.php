@@ -15,7 +15,6 @@ namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\GroupIndex;
-use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -443,24 +442,7 @@ final class JsonDumper extends AbstractNodeVisitor
             return [];
         }
 
-        if (str_starts_with($node->ref, '\\')) {
-            return $this->numbers($this->groups->groupsReferencedBy($node));
-        }
-
-        // A conditional's reference, written without a backslash: "1", "+1",
-        // "-1" or a name.
-        $highest = $this->groups->numbering()->maxGroupNumber;
-        if (1 === LibraryPcre::match('/^[+-]\d++$/', $node->ref)) {
-            $next = $this->groups->nextNumberAt($node);
-            $offset = (int) $node->ref;
-            $number = null === $next ? 0 : ($offset < 0 ? $next + $offset : $next + $offset - 1);
-        } elseif (1 === LibraryPcre::match('/^\d++$/', $node->ref)) {
-            $number = (int) $node->ref;
-        } else {
-            return $this->groups->numbersNamed($node->ref);
-        }
-
-        return $number >= 1 && $number <= $highest ? [$number] : [];
+        return $this->numbers($this->groups->groupsReferencedBy($node));
     }
 
     /**

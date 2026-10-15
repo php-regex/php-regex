@@ -117,6 +117,17 @@ final class GroupIndexTest extends TestCase
         yield 'no such name' => ['pattern' => '/(?<n>a)\k<m>/', 'expected' => []];
         // A group inside a script run is numbered like any other.
         yield 'group inside a script run' => ['pattern' => '/(*sr:(ab))(c)\2/', 'expected' => ['(c)']];
+        // A condition tests a group without a backslash: "(?(1)", "(?(+1)",
+        // "(?(<n>)", "(?('n')" or "(?(n)".
+        yield 'condition, numbered' => ['pattern' => '/(a)(b)(?(2)c)/', 'expected' => ['(b)']];
+        yield 'condition, relative' => ['pattern' => '/(a)(b)(?(-1)c)/', 'expected' => ['(b)']];
+        yield 'condition, relative, forward' => ['pattern' => '/(a)(?(+1)b)(c)/', 'expected' => ['(c)']];
+        yield 'condition, relative, forward two' => ['pattern' => '/(a)(?(+2)b)(c)(d)/', 'expected' => ['(d)']];
+        yield 'condition, named in angle brackets' => ['pattern' => '/(?<n>a)(?(<n>)b)/', 'expected' => ['(?<n>a)']];
+        yield 'condition, named in quotes' => ['pattern' => "/(?<n>a)(?('n')b)/", 'expected' => ['(?<n>a)']];
+        yield 'condition, bare name' => ['pattern' => '/(?<n>a)(?(n)b)/', 'expected' => ['(?<n>a)']];
+        yield 'condition, every group of a branch reset' => ['pattern' => '/(?|(a)|(bc))(?(1)d)/', 'expected' => ['(a)', '(bc)']];
+        yield 'condition, every group of a name shared under J' => ['pattern' => '/(?J)(?<n>a)|(?<n>bc)(?(n)d)/', 'expected' => ['(?<n>a)', '(?<n>bc)']];
     }
 
     #[Test]

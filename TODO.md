@@ -107,10 +107,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Seen on the way, not yet verified to the end; each is small and additive.
 
-- **Conditionals without a backslash are not resolved.**
-  `GroupIndex::groupsReferencedBy()` (`src/Parser/Internal/GroupIndex.php`)
-  leaves `(?(+1)…)` and `(?(1)…)` out; `JsonDumper` works around it. Fold the
-  workaround back into the index.
 - **Route anchors stripped twice in Symfony.** `RoutePatternSource` normalizes
   `Route::getRequirements()`, which the router has already sanitized, so a
   doubled anchor (`^^a`, `a$$`) loses one more than the router takes off.

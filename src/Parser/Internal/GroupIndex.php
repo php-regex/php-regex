@@ -246,7 +246,10 @@ final class GroupIndex
     }
 
     /**
-     * The groups a back reference written with a backslash may point to.
+     * The groups a back reference may point to: one written with a
+     * backslash, or the group a condition tests, which the parser keeps as
+     * written between the parentheses, without its brackets or quotes:
+     * "(?(1)", "(?(+1)", "(?(<n>)", "(?('n')", "(?(n)".
      *
      * @return list<GroupNode>
      */
@@ -255,7 +258,7 @@ final class GroupIndex
         $ref = $node->ref;
 
         // "\g'1'" calls the group: the parser makes it no back reference.
-        if (1 === LibraryPcre::match('/^\\\\g(?|\{([+-]\d++)\}|([+-]\d++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(?|\\\\g\{([+-]\d++)\}|\\\\g([+-]\d++)|([+-]\d++))$/', $ref, $matches)) {
             $next = $this->nextNumberAt($node);
             $offset = (int) $matches[1];
 
@@ -267,11 +270,11 @@ final class GroupIndex
             return $this->byNumber[$offset < 0 ? $next + $offset : $next + $offset - 1] ?? [];
         }
 
-        if (1 === LibraryPcre::match('/^\\\\(?|g\{(\d++)\}|g?(\d++))$/', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(?|\\\\g\{(\d++)\}|\\\\g?(\d++)|(\d++))$/', $ref, $matches)) {
             return $this->byNumber[(int) $matches[1]] ?? [];
         }
 
-        if (1 === LibraryPcre::match('/^\\\\k[<{\']('.self::GROUP_NAME.')[>}\']$/u', $ref, $matches)) {
+        if (1 === LibraryPcre::match('/^(?|\\\\k[<{\']('.self::GROUP_NAME.')[>}\']|('.self::GROUP_NAME.'))$/u', $ref, $matches)) {
             return $this->byName[$matches[1]] ?? [];
         }
 
