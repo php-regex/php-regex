@@ -62,11 +62,16 @@ final class ValidRegexValidatorTest extends ConstraintValidatorTestCase
     #[Test]
     public function test_an_invalid_pattern_carries_the_library_message(): void
     {
+        // The offset PCRE2 gives depends on its release: the message is the
+        // library's own for the running engine.
+        $error = (string) Regex::create()->validate('/abc)/')->error;
+        $this->assertStringStartsWith('Unmatched closing parenthesis at position ', $error);
+
         $this->check('/abc)/', new ValidRegex());
 
         $this->buildViolation('This value is not a valid regular expression: {{ error }}')
             ->setParameter('{{ value }}', '"/abc)/"')
-            ->setParameter('{{ error }}', 'Unmatched closing parenthesis at position 4.')
+            ->setParameter('{{ error }}', $error)
             ->setParameter('{{ hint }}', '')
             ->setInvalidValue('/abc)/')
             ->setCode(ValidRegex::INVALID_ERROR)

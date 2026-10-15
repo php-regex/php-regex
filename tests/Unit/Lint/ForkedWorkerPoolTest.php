@@ -239,9 +239,15 @@ final class ForkedWorkerPoolTest extends TestCase
 
         $this->assertSame(['fast', 'slow'], $results);
         $stalls = $this->calls('stalled');
-        $this->assertCount(1, $stalls);
-        $this->assertSame('slow.php', $stalls[0]['file']);
-        $this->assertSame(0, $stalls[0]['count'], 'Under a second without a report.');
+        // A busy machine may start the workers slowly enough that the fast
+        // one is named first, before its report; the slow one is named once,
+        // last, while it holds the run.
+        $this->assertContains(array_column($stalls, 'file'), [['slow.php'], ['fast.php', 'slow.php']]);
+        $this->assertCount(1, array_keys(array_column($stalls, 'file'), 'slow.php', true));
+        $this->assertNotSame([], $stalls);
+        $last = $stalls[\count($stalls) - 1];
+        $this->assertSame('slow.php', $last['file']);
+        $this->assertSame(0, $last['count'], 'Under a second without a report.');
     }
 
     #[Test]

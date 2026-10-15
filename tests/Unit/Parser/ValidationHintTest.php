@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -126,8 +127,12 @@ final class ValidationHintTest extends TestCase
     #[Test]
     public function test_a_property_newer_than_the_target_names_the_release_it_needs(): void
     {
-        // Oracle: the running PCRE2 knows the Kawi script, which 10.43 added.
-        $this->assertNotFalse(@preg_match('/\p{Kawi}/u', ''));
+        // Oracle, where the running PCRE2 can give it: the Kawi script is
+        // known from 10.43. The verdict below reads the library's own table
+        // for the target, whatever the host runs.
+        if (PcreTarget::runtime()->pcreAtLeast('10.43')) {
+            $this->assertNotFalse(@preg_match('/\p{Kawi}/u', ''));
+        }
 
         $result = RegexParser::create(['cache' => null, 'pcre_version' => '10.42'])->validate('/\p{Kawi}/u');
 

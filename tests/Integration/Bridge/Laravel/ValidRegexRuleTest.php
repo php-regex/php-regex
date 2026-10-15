@@ -51,8 +51,13 @@ final class ValidRegexRuleTest extends TestCase
     #[Test]
     public function test_an_invalid_pattern_carries_the_library_message(): void
     {
+        // The offset PCRE2 gives depends on its release: the message is the
+        // library's own for the running engine.
+        $error = (string) Regex::create()->validate('/abc)/')->error;
+        $this->assertStringStartsWith('Unmatched closing parenthesis at position ', $error);
+
         $this->assertSame(
-            ['The pattern field must be a valid regular expression: Unmatched closing parenthesis at position 4.'],
+            ['The pattern field must be a valid regular expression: '.$error],
             $this->errors('/abc)/', new ValidRegex()),
         );
     }
@@ -165,7 +170,6 @@ final class ValidRegexRuleTest extends TestCase
         $factory = $this->app->make('validator');
         $validator = $factory->make(['pattern' => $value], ['pattern' => \is_array($rules) ? $rules : [$rules]]);
 
-        /** @var list<string> */
         return $validator->errors()->get('pattern');
     }
 }

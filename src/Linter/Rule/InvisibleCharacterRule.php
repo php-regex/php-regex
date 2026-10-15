@@ -223,7 +223,7 @@ final class InvisibleCharacterRule extends AbstractLintRule
      */
     private static function kind(string $character): string
     {
-        $lead = \ord($character);
+        $lead = \ord($character[0]);
         if ($lead < 0x80 || (0xC2 === $lead && \ord(substr($character, 1, 1)) < 0xA0)) {
             return 'control character';
         }

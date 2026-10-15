@@ -19,6 +19,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
 
 final class PatternPrinterTest extends TestCase
 {
+    use PcreGates;
+
     public function test_compile_simple(): void
     {
         $this->assertSame('/foo/', $this->compile('/foo/'));
@@ -304,6 +307,9 @@ final class PatternPrinterTest extends TestCase
     #[DataProvider('providePrettyBracketDelimiterBalances')]
     public function test_pretty_mode_keeps_the_balance_of_a_bracket_delimiter(string $pattern, string $expected, array $subjects): void
     {
+        // The engine is the oracle here, and (?[...]) needs one that has it.
+        $this->requiresCompile($pattern);
+
         $pretty = $this->compilePretty($pattern);
 
         $this->assertNotFalse(@preg_match($pretty, ''), \sprintf('%s does not compile: %s', $pretty, preg_last_error_msg()));
