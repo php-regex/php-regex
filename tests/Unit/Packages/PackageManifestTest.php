@@ -45,11 +45,10 @@ final class PackageManifestTest extends TestCase
     ];
 
     /**
-     * The PHP each package runs on. The bridges to Laravel 12 and Symfony 7.4
-     * need what their frameworks need; everything else, the PHPStan, Psalm
-     * and Rector bridges included, runs on PHP 8.1 like the tools it plugs
-     * into. The monorepo package installs every bridge, so it takes the
-     * highest floor of them.
+     * The PHP each package runs on: 8.1 for all of them, the PHPStan, Psalm
+     * and Rector bridges like the tools they plug into, the Symfony and
+     * Laravel bridges on Symfony 6.4 and Laravel 10. The monorepo package
+     * installs every bridge, so it takes the highest floor of them.
      */
     private const PHP_FLOORS = [
         'Automata' => '>=8.1',
@@ -57,7 +56,7 @@ final class PackageManifestTest extends TestCase
         'Explain' => '>=8.1',
         'Generator' => '>=8.1',
         'LanguageServer' => '>=8.1',
-        'Laravel' => '>=8.2',
+        'Laravel' => '>=8.1',
         'Linter' => '>=8.1',
         'Optimizer' => '>=8.1',
         'Parser' => '>=8.1',
@@ -65,7 +64,7 @@ final class PackageManifestTest extends TestCase
         'Psalm' => '>=8.1',
         'Rector' => '>=8.1',
         'Redos' => '>=8.1',
-        'Symfony' => '>=8.2',
+        'Symfony' => '>=8.1',
         'Toolkit' => '>=8.1',
         'Transpiler' => '>=8.1',
     ];
@@ -458,13 +457,44 @@ final class PackageManifestTest extends TestCase
         $this->assertStringContainsString('requires PHP >= '.$floor[1].'.0.', $script);
     }
 
+    /**
+     * Symfony 6.4, the LTS that runs on PHP 8.1, then the supported 7.4 and
+     * 8; Laravel 10, which runs on PHP 8.1, to 13.
+     */
+    #[Test]
+    #[DataProvider('provideFrameworkBridges')]
+    public function test_a_bridge_takes_every_supported_release_of_its_framework(string $directory, string $prefix, string $constraint): void
+    {
+        $found = 0;
+        foreach (self::strings(self::dig(self::manifest($directory), 'require')) as $package => $required) {
+            if (str_starts_with($package, $prefix)) {
+                $this->assertSame($constraint, $required, $package);
+                $found++;
+            }
+        }
+
+        $this->assertGreaterThan(0, $found, $directory.' requires no '.$prefix.' package.');
+    }
+
+    /**
+     * @return iterable<string, array{directory: string, prefix: string, constraint: string}>
+     */
+    public static function provideFrameworkBridges(): iterable
+    {
+        yield 'Symfony bundle' => ['directory' => 'Symfony', 'prefix' => 'symfony/', 'constraint' => '^6.4|^7.4|^8.0'];
+        yield 'Laravel on Symfony Console' => ['directory' => 'Laravel', 'prefix' => 'symfony/', 'constraint' => '^6.4|^7.4|^8.0'];
+        yield 'Laravel' => ['directory' => 'Laravel', 'prefix' => 'illuminate/', 'constraint' => '^10.0|^11.0|^12.0|^13.0'];
+    }
+
     #[Test]
     public function test_the_monorepo_package_takes_the_highest_php_floor_of_its_packages(): void
     {
         $floors = array_map(self::floor(...), self::PHP_FLOORS);
+        $root = self::dig(self::decode(self::root().'/composer.json'), 'require', 'php');
 
-        $this->assertSame('>=8.2', self::dig(self::decode(self::root().'/composer.json'), 'require', 'php'));
-        $this->assertSame(self::floor('>=8.2'), max($floors));
+        $this->assertIsString($root);
+        $this->assertSame(max($floors), self::floor($root));
+        $this->assertSame('>=8.1', $root);
     }
 
     #[Test]
