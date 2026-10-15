@@ -1,6 +1,6 @@
 release: 2.x
 version_label: 2.x pre-release
-php_floor: '8.2'
+php_floor: '8.1'
 corpus_codebases: 170+
 license: MIT
 demo_runtime: PHP 8.4

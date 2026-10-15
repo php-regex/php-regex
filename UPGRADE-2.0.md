@@ -24,10 +24,9 @@ The other packages (`regex-explain`, `regex-optimizer`, `regex-generator`,
 `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`) come with
 the toolkit, or alone when only that part is needed.
 
-Every package runs on PHP 8.1 or later, except `regex-symfony` and
-`regex-laravel`, which need PHP 8.2 as Symfony 7.4 and Laravel 12 do;
-`php-regex/php-regex`, which installs every package, needs PHP 8.2 too. On
-PHP 8.1, require the packages you use rather than `php-regex/php-regex`.
+Every package runs on PHP 8.1 or later, `php-regex/php-regex` included:
+`regex-symfony` on Symfony 6.4, 7.4 and 8, `regex-laravel` on Laravel 10 to
+13.
 
 ### Names
 

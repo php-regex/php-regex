@@ -1504,8 +1504,8 @@ for the recursive `(?R)` calls some fixes keep working.
 
 ### Supported PHP Versions
 
-- **PHP 8.2** and above
-- Uses readonly classes and enum features
+- **PHP 8.1** and above
+- Uses readonly properties and enum features
 - Needs the `mbstring` extension. `intl` is optional: it only lets a lint message name the character a `\N{name}` escape spells, an escape PCRE refuses anyway; every verdict and every other lint result is the same without it
 - Reads digits, letters and spaces in ASCII, as PCRE does: the locale of the process changes no verdict
 

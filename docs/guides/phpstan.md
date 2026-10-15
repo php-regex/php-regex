@@ -16,7 +16,7 @@ analysis are there too, off until you ask for them.
 
 {% include install-prerelease.html package="php-regex/regex-phpstan" dev=true %}
 
-The extension runs on PHP 8.2 or later and PHPStan 2.x
+The extension runs on PHP 8.1 or later and PHPStan 2.x
 (`phpstan/phpstan ^2.0`); reading a parameter attribute needs PHPStan
 2.1.31 at least ([Pattern parameters](#pattern-parameters)).
 

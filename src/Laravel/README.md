@@ -21,7 +21,7 @@ PHPRegex Laravel
 
 Laravel integration for PHPRegex: the Regex service and facade, and the regex:lint, regex:routes, regex:explain, regex:compare and regex:transpile commands.
 
-Requires PHP 8.2+, Laravel 12 or 13 (13 needs PHP 8.3), as Laravel does: the other PHPRegex packages run on PHP 8.1.
+Requires PHP 8.1+ and Laravel 10, 11, 12 or 13 (11 and 12 need PHP 8.2, 13 needs PHP 8.3).
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Laravel guide](https://php-regex.com/guides/laravel/) walks the integration end to end.
 
