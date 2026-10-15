@@ -135,6 +135,27 @@ final class InvisibleCharacterTest extends TestCase
     }
 
     /**
+     * A character of several bytes is sorted by its first byte, read alone:
+     * PHP 8.5 deprecates ord() on a longer string.
+     */
+    #[Test]
+    public function test_a_character_of_several_bytes_is_sorted_without_a_notice(): void
+    {
+        set_error_handler(static function (int $level, string $message): never {
+            throw new \ErrorException($message, 0, $level);
+        });
+
+        try {
+            $issues = [...$this->issues("/a\u{85}b/u"), ...$this->issues("/a\u{200B}b/u")];
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertStringContainsString('control character U+0085', $issues[0]->message);
+        $this->assertStringContainsString('format character U+200B', $issues[1]->message);
+    }
+
+    /**
      * @return list<RuleViolation>
      */
     private function issues(string $pattern): array
