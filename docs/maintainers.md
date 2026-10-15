@@ -530,7 +530,8 @@ tools/phpunit/vendor/bin/phpunit --group capture-shape-parity
 
 The report lists the rows where either type refuses a `$matches` the engine writes,
 and compares the two types (equal, narrower, wider or incomparable). It fails only when
-PHPRegex's shape refuses one; what PHPStan infers is recorded, never asserted.
+PHPRegex's shape refuses one; what PHPStan infers is recorded, never asserted. CI runs
+it on each PHP of the bundled PCRE2 job, after the formatter corpus.
 
 The time to read a shape from the pattern string, over that corpus and over the lint
 corpus:
@@ -593,6 +594,14 @@ every benchmark process. Where the local `php.ini` loads extensions that
 make each PHP process slow to start, `--php-disable-ini` runs the processes
 without it, provided `php -n -m` still lists `mbstring`. Compare numbers from
 the same machine only.
+
+CI runs every subject once, each variant for one revolution, and fails on a
+subject that throws or on a run past its time limit; it compares no timing,
+as shared runners are too noisy for that. The same run, locally:
+
+```bash
+tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
+```
 
 `tests/Unit/Benchmark/BenchmarkDataTest.php` checks every case file: the real
 PCRE engine compiles each pattern (or refuses it, for a case marked
