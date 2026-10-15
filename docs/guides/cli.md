@@ -5,7 +5,7 @@ description: "Install the PHPRegex CLI and drive it end to end: parse, explain, 
 # CLI Guide
 
 This guide covers PHPRegex's command-line tool and the workflows it enables.
-The binary requires PHP 8.2 or later.
+The binary requires PHP 8.1 or later.
 
 {% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
 
@@ -896,7 +896,7 @@ PHP.
 The lowest PHP is the one that matters because a library, or an application
 deployed on several servers, runs on every version its constraint allows: a
 pattern that only compiles on a newer PCRE2 fails on the oldest one. A floor
-below PHP 8.2 is judged as PHP 8.2, the oldest this library supports, and the
+below PHP 8.2 is judged as PHP 8.2, the oldest this library judges, and the
 command says so. A constraint the command cannot read (`*`, `<9`, a branch
 name) falls back to the running PHP, with a note naming it; reading
 `composer.json` never stops a run.

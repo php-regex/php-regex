@@ -37,7 +37,7 @@ use PHPRegex\Toolkit\Regex;
 $shape = Regex::create()->captureShape('/(GET|POST) (\S+)/');
 ```
 
-A static analysis extension needs only `php-regex/regex-parser` (PHP 8.2+ with
+A static analysis extension needs only `php-regex/regex-parser` (PHP 8.1+ with
 `ext-mbstring`): the analyzer and its results live there. The facade, in
 `php-regex/regex-toolkit`, is for applications. Until the 2.0.0 tag publishes
 the split packages, install through the monorepo — see the

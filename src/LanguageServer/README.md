@@ -42,7 +42,7 @@ Installation
 composer require --dev php-regex/regex-language-server
 ```
 
-Requires PHP 8.2+ with the `tokenizer` extension. The binary is installed as `vendor/bin/regex-lsp`; `--help` prints its options, `--version` the release it was built from.
+Requires PHP 8.1+ with the `tokenizer` extension. The binary is installed as `vendor/bin/regex-lsp`; `--help` prints its options, `--version` the release it was built from.
 
 Configuration
 -------------

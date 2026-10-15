@@ -21,7 +21,7 @@ The PHPRegex LSP server provides:
 
 ## Quick Start
 
-The server requires PHP 8.2 or later.
+The server requires PHP 8.1 or later.
 
 {% include install-prerelease.html package="php-regex/regex-language-server" dev=true %}
 

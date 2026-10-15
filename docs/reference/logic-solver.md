@@ -6,7 +6,7 @@ description: "Compare two patterns as languages — intersection, subset, equiva
 
 {% include install-prerelease.html package="php-regex/regex-automata" %}
 
-The `vendor/bin/regex` commands on this page come from the CLI (`composer require --dev php-regex/regex-cli`), while the PHP API lives in `php-regex/regex-automata`, PHP 8.2+ with `ext-mbstring`.
+The `vendor/bin/regex` commands on this page come from the CLI (`composer require --dev php-regex/regex-cli`), while the PHP API lives in `php-regex/regex-automata`, PHP 8.1+ with `ext-mbstring`.
 
 ## The Concept
 

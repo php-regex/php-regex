@@ -7,7 +7,7 @@ redirect_from:
 
 This guide is for framework maintainers, library maintainers, and tooling authors who want to integrate PHPRegex as a first-class analysis component. Whether you're building a PHPStan rule, a Symfony bundle, or a custom CLI tool, this guide covers everything you need.
 
-The PHP snippets below use the `Regex` facade, which ships in `regex-toolkit`. It needs PHP 8.2 or later and the `mbstring` extension (PCRE ships with PHP); the [Quick Start](quick-start.md) covers the first steps if you are new here.
+The PHP snippets below use the `Regex` facade, which ships in `regex-toolkit`. It needs PHP 8.1 or later and the `mbstring` extension (PCRE ships with PHP); the [Quick Start](quick-start.md) covers the first steps if you are new here.
 
 {% include install-prerelease.html package="php-regex/regex-toolkit" %}
 

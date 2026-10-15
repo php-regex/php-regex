@@ -25,7 +25,7 @@ $info->anchoredStart;  // true
 $info->anchoredEnd;    // true
 ```
 
-A static analysis extension needs only `php-regex/regex-parser` (PHP 8.2+ with
+A static analysis extension needs only `php-regex/regex-parser` (PHP 8.1+ with
 `ext-mbstring`): the analyzer and its result live there. Until the 2.0.0 tag
 publishes the split packages, install through the monorepo — see the
 [Quick Start](../quick-start.md). It reads a tree the parser built:

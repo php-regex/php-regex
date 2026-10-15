@@ -21,7 +21,7 @@ PHPRegex PHPStan
 
 PHPStan extension that reports the regex patterns your target PHP refuses, and, opt-in, lint, ReDoS and optimization findings.
 
-Requires PHP 8.2+ and PHPStan 2.x. MIT licensed.
+Requires PHP 8.1+ and PHPStan 2.x. MIT licensed.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [PHPStan guide](https://php-regex.com/guides/phpstan/) is where the extension is documented in depth.
 

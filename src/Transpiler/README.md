@@ -39,7 +39,7 @@ Installation
 composer require php-regex/regex-transpiler
 ```
 
-PHP 8.2 or newer. `php-regex/regex-parser` is pulled in automatically.
+PHP 8.1 or newer. `php-regex/regex-parser` is pulled in automatically.
 
 Configuration
 -------------
