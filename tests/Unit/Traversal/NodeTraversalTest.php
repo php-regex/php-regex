@@ -89,6 +89,26 @@ final class NodeTraversalTest extends TestCase
         $this->assertSame([$a, $b], (new AlternationNode([3 => $a, 7 => $b], 0, 2))->getChildren());
     }
 
+    /**
+     * The constructor renumbers the array it is given, in insertion order,
+     * so the property itself is a list a reader can index by position.
+     */
+    #[Test]
+    public function test_the_children_property_is_a_list_whatever_the_keys(): void
+    {
+        $a = new LiteralNode('a', 0, 1);
+        $b = new LiteralNode('b', 1, 2);
+
+        $this->assertSame([$a, $b], (new SequenceNode(['x' => $a, 'y' => $b], 0, 2))->children);
+        $this->assertSame([$a, $b], (new AlternationNode([3 => $a, 7 => $b], 0, 2))->alternatives);
+        $this->assertSame([$b, $a], (new SequenceNode([1 => $b, 0 => $a], 0, 2))->children);
+        $this->assertSame([$b, $a], (new AlternationNode([1 => $b, 0 => $a], 0, 2))->alternatives);
+        $this->assertSame([], (new SequenceNode([], 0, 0))->children);
+        $this->assertSame([], (new AlternationNode([], 0, 0))->alternatives);
+        $this->assertSame([$a], (new SequenceNode([5 => $a], 0, 1))->children);
+        $this->assertSame([$a], (new AlternationNode([5 => $a], 0, 1))->alternatives);
+    }
+
     #[Test]
     public function test_the_walk_stops_on_the_way_out(): void
     {
