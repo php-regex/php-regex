@@ -11,15 +11,6 @@ the item from cheap to a BC break, so say so when it happens. The validation
 carriers and the Flex recipe stay where they are (E2, G5 below): both are
 additive and lose nothing by waiting past the tag.
 
-**13. Generator: merge or complete.** The package holds three classes, its
-only consumer outside itself is the facade, and the part that makes samples
-trustworthy — the 32-attempt verification loop against the real engine —
-lives in `Toolkit\Regex::generate()` (`Regex.php:438`): installed alone,
-regex-generator produces unverified samples. *Decision*: fold Generator into
-Toolkit, or move the verification loop into `SampleGenerator` so the package
-stands alone. Moving the namespace after the freeze is a BC break. Effort:
-S either way.
-
 **14. A machine-readable AST export.** The tree has no serializer beyond
 the cache-private `AstSerializer` (PHP `serialize()`, `@internal`); every
 result object is `JsonSerializable` except the tree itself. A stable JSON

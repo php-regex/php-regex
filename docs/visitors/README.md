@@ -449,6 +449,17 @@ $sample = $ast->accept(new SampleGenerator());
 echo $sample;  // e.g., "Word12"
 ```
 
+Visiting the tree draws a sample from the tree alone: an assertion, a condition or a
+backreference can make it one the engine does not match (`/(?!^)a/` draws `a`). `generate()`
+draws again and checks each sample with the running engine, as `Regex::generate()` does, and
+throws `SampleGenerationException` when none matches:
+
+```php
+use PHPRegex\Generator\SampleGenerator;
+
+echo (new SampleGenerator())->generate('/(?!^)a/');  // "aa"
+```
+
 ---
 
 ### TestCaseGenerator

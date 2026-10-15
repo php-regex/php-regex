@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `SampleGenerator::generate($regex, ?RegexParser $parser = null)` gives a sample the running engine matches, checked and drawn again as `Regex::generate()` does, which now calls it: installed alone, `php-regex/regex-generator` gave only the unchecked sample of a tree visit. Visiting the tree with `accept()` still draws from the tree alone.
 - The PHPStan extension judges the patterns passed to the static methods of the wrapper libraries `regex lint` reads, as it judges those of `preg_*()`: `Composer\Pcre\Preg::match()` and the rest of composer/pcre by default, nette/utils, spatie/regex and Laravel's `Str` with the new `phpRegex.interop` parameter, which takes the preset names of `extraction.interop`. A namespaced drop-in such as `Safe\preg_match()` is read as the function it stands for. Both read the one list the lint reads, where the extension kept its own.
 - `regex lint`, and `regex:lint` in Symfony and Laravel, name the file a run is held on when no worker has reported for 10 seconds (`Still on src/web/Request.php`): the bar stood still while the clock ran, with nothing to say which pattern held it.
 - `regex` names the command a mistyped one most likely meant, `Unknown command: anlyze. Did you mean "analyze"?`, on the console, in the JSON error and under `regex help <command>`; `regex.json` does the same for a mistyped key (`pths`), where it only caught another case or snake_case.
