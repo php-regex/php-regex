@@ -20,12 +20,12 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * @internal
  */
-final readonly class PatternSourceCollection
+final class PatternSourceCollection
 {
     /**
      * @param iterable<PatternSourceInterface> $sources
      */
-    public function __construct(private iterable $sources) {}
+    public function __construct(private readonly iterable $sources) {}
 
     /**
      * @return array<PatternOccurrence>

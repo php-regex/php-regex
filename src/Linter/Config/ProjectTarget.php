@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -45,17 +46,17 @@ use PHPRegex\Parser\RegexParser;
  *
  * @phpstan-type TargetDescription array{php: string, pcre: string}
  */
-final readonly class ProjectTarget
+final class ProjectTarget
 {
     /**
      * @param list<string>     $notices
      * @param list<PcreTarget> $range   the target first
      */
     private function __construct(
-        private PcreTarget $target,
-        private string $source,
-        private array $notices,
-        private array $range,
+        private readonly PcreTarget $target,
+        private readonly string $source,
+        private readonly array $notices,
+        private readonly array $range,
     ) {}
 
     /**
@@ -110,7 +111,7 @@ final readonly class ProjectTarget
 
             // "runtime", as PHPStan's phpVersion takes it: the PHP running
             // the command, with the PCRE2 it links.
-            if (\is_string($version) && 'runtime' === strtolower(trim($version))) {
+            if (\is_string($version) && 'runtime' === Ascii::lower(trim($version))) {
                 [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, $name.' (running PHP)', true];
 
                 break;

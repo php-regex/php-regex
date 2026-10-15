@@ -22,12 +22,12 @@ use PHPRegex\Parser\Node\NodeInterface;
  *
  * @internal
  */
-final readonly class OpaqueHir extends Hir
+final class OpaqueHir extends Hir
 {
     public function __construct(
-        public NodeInterface $node,
+        public readonly NodeInterface $node,
         Properties $properties,
-        public ?Hir $body = null,
+        public readonly ?Hir $body = null,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

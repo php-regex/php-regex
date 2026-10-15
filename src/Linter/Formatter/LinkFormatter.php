@@ -18,7 +18,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 /**
  * @internal
  */
-final readonly class LinkFormatter
+final class LinkFormatter
 {
     private const IDE_LINK_FORMATS = [
         'textmate' => 'txmt://open?url=file://%f&line=%l',
@@ -30,9 +30,9 @@ final readonly class LinkFormatter
         'vscode' => 'vscode://file/%f:%l',
     ];
 
-    private bool $supportsHyperlinks;
+    private readonly bool $supportsHyperlinks;
 
-    public function __construct(private ?string $editorUrlTemplate, private RelativePathHelper $relativePathHelper)
+    public function __construct(private readonly ?string $editorUrlTemplate, private readonly RelativePathHelper $relativePathHelper)
     {
         $this->supportsHyperlinks = $this->detectHyperlinkSupport();
     }

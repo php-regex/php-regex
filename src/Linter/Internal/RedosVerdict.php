@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Internal;
 
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosComplexity;
@@ -92,8 +93,8 @@ final class RedosVerdict
     public static function message(RedosAnalysis $analysis): string
     {
         $details = [
-            'severity: '.strtoupper($analysis->severity->value),
-            'confidence: '.strtoupper($analysis->confidence->value),
+            'severity: '.Ascii::upper($analysis->severity->value),
+            'confidence: '.Ascii::upper($analysis->confidence->value),
         ];
 
         if (RedosProof::BudgetExceeded === $analysis->proof && RedosSeverity::Safe !== $analysis->severity) {
@@ -114,7 +115,7 @@ final class RedosVerdict
             $details[] = 'error: '.$analysis->error;
         }
 
-        return \sprintf('%s. %s.', $analysis->headline(), ucfirst(implode(', ', $details)));
+        return \sprintf('%s. %s.', $analysis->headline(), Ascii::upperFirst(implode(', ', $details)));
     }
 
     /**
@@ -180,7 +181,7 @@ final class RedosVerdict
     {
         return \sprintf(
             "Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: %s.",
-            strtoupper(self::searchSeverity($cost)->value),
+            Ascii::upper(self::searchSeverity($cost)->value),
         );
     }
 

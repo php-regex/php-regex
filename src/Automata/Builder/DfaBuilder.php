@@ -31,13 +31,13 @@ use PHPRegex\Automata\Support\WorkBudget;
  *
  * @internal
  */
-final readonly class DfaBuilder
+final class DfaBuilder
 {
     public function __construct(
-        private ?DfaMinimizer $minimizer = null,
-        private ?MinimizationAlgorithmFactory $minimizationFactory = null,
-        private ?DeterminizationAlgorithmInterface $determinizer = null,
-        private ?DeterminizationAlgorithmFactory $determinizationFactory = null,
+        private readonly ?DfaMinimizer $minimizer = null,
+        private readonly ?MinimizationAlgorithmFactory $minimizationFactory = null,
+        private readonly ?DeterminizationAlgorithmInterface $determinizer = null,
+        private readonly ?DeterminizationAlgorithmFactory $determinizationFactory = null,
     ) {}
 
     /**

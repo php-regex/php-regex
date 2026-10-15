@@ -17,7 +17,6 @@ use Rector\PHPUnit\CodeQuality\Rector\ClassMethod\AddInstanceofAssertForNullable
 use Rector\PHPUnit\Set\PHPUnitSetList;
 use Rector\Privatization\Rector\Class_\FinalizeTestCaseClassRector;
 use Rector\Set\ValueObject\LevelSetList;
-use Rector\Set\ValueObject\SetList;
 use Rector\ValueObject\PhpVersion;
 
 return static function (RectorConfig $rectorConfig): void {
@@ -27,7 +26,9 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/bin',
     ]);
 
-    $rectorConfig->phpVersion(PhpVersion::PHP_82);
+    // The core packages and the PHPStan, Psalm and Rector bridges run on
+    // PHP 8.1: no rule may write syntax newer than it.
+    $rectorConfig->phpVersion(PhpVersion::PHP_81);
     $rectorConfig->importNames();
     $rectorConfig->importShortClasses(false);
     $rectorConfig->removeUnusedImports();
@@ -37,10 +38,7 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->editorUrl('phpstorm://open?file=%file%&line=%line%');
 
     $rectorConfig->sets([
-        LevelSetList::UP_TO_PHP_82,
-        SetList::PHP_82,
-
-        // Rector\Set\ValueObject\DowngradeLevelSetList::DOWN_TO_PHP_82,
+        LevelSetList::UP_TO_PHP_81,
 
         // rector-phpunit dropped its per-version sets: COMPOSER_BASED reads
         // the installed PHPUnit and applies what suits it.

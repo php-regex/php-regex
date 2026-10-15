@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * @api
@@ -76,7 +77,7 @@ enum RedosSeverity: string
      */
     public static function fromConfig(string $value): self
     {
-        $severity = self::tryFrom(strtolower($value));
+        $severity = self::tryFrom(Ascii::lower($value));
 
         if (null === $severity || self::Safe === $severity || self::Unknown === $severity) {
             throw new InvalidRegexOptionException(\sprintf(

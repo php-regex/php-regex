@@ -21,6 +21,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\LookbehindLength;
@@ -1748,7 +1749,7 @@ final class Validator extends AbstractNodeVisitor
 
         // Loose matching: case, spaces, hyphens and underscores are ignored,
         // and "sc=", "scx:" and their long forms only name the table.
-        $name = strtolower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
+        $name = Ascii::lower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
         $name = LibraryPcre::replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
 
         return '' !== $matches[1] && '' !== $matches[2] ? '10.45' : (self::UNICODE_NAMES_SINCE[$name] ?? null);
@@ -1801,7 +1802,7 @@ final class Validator extends AbstractNodeVisitor
     private function validateLimitValue(string $digits, int $start): void
     {
         $value = 0;
-        foreach (str_split($digits) as $index => $digit) {
+        foreach (Bytes::split($digits) as $index => $digit) {
             if ($value > self::MAX_LIMIT_VALUE_BEFORE_DIGIT) {
                 $this->raiseSemanticError(
                     \sprintf('The value %s is too large for a (*LIMIT_...) setting: PCRE takes at most 4294967289.', $digits),
@@ -1826,7 +1827,7 @@ final class Validator extends AbstractNodeVisitor
             : (string) $node->identifier; // Unreachable from a parsed pattern: only a hand-built callout has no source.
 
         $number = 0;
-        foreach (str_split($digits) as $index => $digit) {
+        foreach (Bytes::split($digits) as $index => $digit) {
             $number = $number * 10 + (int) $digit;
             if ($number > 255) {
                 return $node->startPosition + 4 + $index;
@@ -1876,7 +1877,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $value = 0;
-        foreach (str_split($digits) as $index => $digit) {
+        foreach (Bytes::split($digits) as $index => $digit) {
             $value = $value * 10 + (int) $digit;
             if ($value > 65535) {
                 return $index + 1;
@@ -2134,7 +2135,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $negation = $matches[1];
-        $property = strtolower($matches[2]);
+        $property = Ascii::lower($matches[2]);
         $aliases = [
             'javalowercase' => 'Ll',
             'javauppercase' => 'Lu',

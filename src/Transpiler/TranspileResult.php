@@ -16,7 +16,7 @@ namespace PHPRegex\Transpiler;
 /**
  * Captures transpilation output for a target regex dialect.
  */
-final readonly class TranspileResult implements \JsonSerializable
+final class TranspileResult implements \JsonSerializable
 {
     /**
      * @internal built by Transpiler::transpile() and Regex::transpile()
@@ -25,14 +25,14 @@ final readonly class TranspileResult implements \JsonSerializable
      * @param array<int, string> $notes
      */
     public function __construct(
-        public string $source,
-        public string $target,
-        public string $pattern,
-        public string $flags,
-        public string $literal,
-        public string $constructor,
-        public array $warnings = [],
-        public array $notes = [],
+        public readonly string $source,
+        public readonly string $target,
+        public readonly string $pattern,
+        public readonly string $flags,
+        public readonly string $literal,
+        public readonly string $constructor,
+        public readonly array $warnings = [],
+        public readonly array $notes = [],
     ) {}
 
     public function hasWarnings(): bool

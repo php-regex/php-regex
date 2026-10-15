@@ -28,6 +28,7 @@ use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
@@ -52,7 +53,7 @@ use PHPRegex\Parser\RegexParser;
  * patterns that reach one string along two paths: "(?:a|a){20}b" makes the
  * engine try both branches at every step and fail on its backtrack limit.
  */
-final readonly class TrivialMatchClassifier
+final class TrivialMatchClassifier
 {
     /**
      * The most paths through the pattern the classifier reads, one per
@@ -74,7 +75,7 @@ final readonly class TrivialMatchClassifier
      */
     private const SHORTHANDS = ['d', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V'];
 
-    public function __construct(private ?RegexParser $parser = null, private ?LanguageSolver $solver = null) {}
+    public function __construct(private readonly ?RegexParser $parser = null, private readonly ?LanguageSolver $solver = null) {}
 
     /**
      * The string function the pattern behaves as under preg_match(), or null
@@ -257,7 +258,7 @@ final readonly class TrivialMatchClassifier
      */
     private static function quote(string $literal): string
     {
-        return implode('', array_map(static fn (string $byte): string => \sprintf('\x%02x', \ord($byte)), str_split($literal)));
+        return implode('', array_map(static fn (string $byte): string => \sprintf('\x%02x', \ord($byte)), Bytes::split($literal)));
     }
 
     /**

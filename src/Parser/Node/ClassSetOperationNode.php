@@ -19,17 +19,17 @@ use PHPRegex\Parser\NodeVisitorInterface;
  * A set operation in a Perl extended class "(?[...])": "\d - [3]", or
  * "!\n" with no left operand.
  */
-final readonly class ClassSetOperationNode extends AbstractNode
+final class ClassSetOperationNode extends AbstractNode
 {
     /**
      * @param NodeInterface|null $left   the left operand; null for the complement
      * @param string             $symbol the operator as written: "+", "|", "&", "-", "^" or "!"
      */
     public function __construct(
-        public ClassSetOperator $operator,
-        public ?NodeInterface $left,
-        public NodeInterface $right,
-        public string $symbol,
+        public readonly ClassSetOperator $operator,
+        public readonly ?NodeInterface $left,
+        public readonly NodeInterface $right,
+        public readonly string $symbol,
         int $startPosition,
         int $endPosition,
     ) {

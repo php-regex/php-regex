@@ -564,7 +564,7 @@ final class AnalysisServiceTest extends TestCase
                 throw new \RuntimeException('Boom');
             }
 
-            public function url_stat(string $path, int $flags): false
+            public function url_stat(string $path, int $flags): bool
             {
                 return false;
             }

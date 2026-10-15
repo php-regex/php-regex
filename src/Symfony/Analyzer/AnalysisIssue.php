@@ -16,17 +16,17 @@ namespace PHPRegex\Symfony\Analyzer;
 /**
  * @internal
  */
-final readonly class AnalysisIssue
+final class AnalysisIssue
 {
     /**
      * @param array<int, IssueDetail> $details
      * @param array<int, string>      $notes
      */
     public function __construct(
-        public string $kind,
-        public CheckOutcome $severity,
-        public string $title,
-        public array $details = [],
-        public array $notes = [],
+        public readonly string $kind,
+        public readonly CheckOutcome $severity,
+        public readonly string $title,
+        public readonly array $details = [],
+        public readonly array $notes = [],
     ) {}
 }

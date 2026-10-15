@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Analyzer;
 /**
  * @internal
  */
-final readonly class AnalysisNotice
+final class AnalysisNotice
 {
-    public function __construct(public CheckOutcome $severity, public string $message) {}
+    public function __construct(public readonly CheckOutcome $severity, public readonly string $message) {}
 }

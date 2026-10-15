@@ -16,6 +16,7 @@ namespace PHPRegex\LanguageServer\Document;
 use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\Linter\Extraction\NameResolutionContext;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -151,7 +152,7 @@ final class RegexFinder
 
             // Track wrapper calls such as Preg::match(). Reserved words are
             // valid method names, so any identifier token is considered.
-            if ($isStaticMember && \in_array(strtolower($tokenValue), self::WRAPPER_METHODS, true)) {
+            if ($isStaticMember && \in_array(Ascii::lower($tokenValue), self::WRAPPER_METHODS, true)) {
                 $expectingPattern = true;
 
                 continue;

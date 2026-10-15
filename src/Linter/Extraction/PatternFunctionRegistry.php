@@ -25,7 +25,7 @@ use PHPRegex\Parser\Internal\Ascii;
  *
  * @internal
  */
-final readonly class PatternFunctionRegistry
+final class PatternFunctionRegistry
 {
     /**
      * Native functions taking the pattern as their first argument.
@@ -53,12 +53,12 @@ final readonly class PatternFunctionRegistry
      *                                                         read those of its own files again
      */
     private function __construct(
-        private array $functions,
-        private array $methods,
-        private array $needles,
-        private array $dropIns = [],
-        private array $plain = [],
-        private bool $declarationsRead = false,
+        private readonly array $functions,
+        private readonly array $methods,
+        private readonly array $needles,
+        private readonly array $dropIns = [],
+        private readonly array $plain = [],
+        private readonly bool $declarationsRead = false,
     ) {}
 
     /**
@@ -203,7 +203,7 @@ final readonly class PatternFunctionRegistry
 
         $plainFunctions = $this->plain;
         foreach ($plain as $name) {
-            $plainFunctions[strtolower(ltrim($name, '\\'))] = true;
+            $plainFunctions[Ascii::lower(ltrim($name, '\\'))] = true;
         }
 
         return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $plainFunctions, $this->declarationsRead);
@@ -251,7 +251,7 @@ final readonly class PatternFunctionRegistry
     {
         if (null !== $namespaced) {
             $function = $this->lookupFunction($namespaced);
-            if (null !== $function || isset($this->plain[strtolower(ltrim($namespaced, '\\'))])) {
+            if (null !== $function || isset($this->plain[Ascii::lower(ltrim($namespaced, '\\'))])) {
                 return $function;
             }
         }
@@ -261,7 +261,7 @@ final readonly class PatternFunctionRegistry
 
     public function lookupFunction(string $name): ?PatternFunction
     {
-        $key = strtolower(ltrim($name, '\\'));
+        $key = Ascii::lower(ltrim($name, '\\'));
 
         if (isset($this->functions[$key])) {
             return $this->functions[$key];
@@ -283,7 +283,7 @@ final readonly class PatternFunctionRegistry
 
     public function lookupMethod(string $class, string $method): ?PatternFunction
     {
-        return $this->methods[strtolower(ltrim($class, '\\').'::'.$method)] ?? null;
+        return $this->methods[Ascii::lower(ltrim($class, '\\').'::'.$method)] ?? null;
     }
 
     /**
@@ -291,8 +291,9 @@ final readonly class PatternFunctionRegistry
      */
     public function matchesContent(string $content): bool
     {
+        $lowered = Ascii::lower($content);
         foreach ($this->needles as $needle) {
-            if (false !== stripos($content, $needle)) {
+            if (str_contains($lowered, Ascii::lower($needle))) {
                 return true;
             }
         }
@@ -318,7 +319,7 @@ final readonly class PatternFunctionRegistry
             $suffix = substr($spec, $hash + 1);
             $spec = substr($spec, 0, $hash);
 
-            if (str_ends_with(strtolower($suffix), ':keys')) {
+            if (str_ends_with(Ascii::lower($suffix), ':keys')) {
                 $keysArePatterns = true;
                 $suffix = substr($suffix, 0, -5);
             }
@@ -338,7 +339,7 @@ final readonly class PatternFunctionRegistry
         }
 
         $isMethod = str_contains($name, '::');
-        $key = strtolower($name);
+        $key = Ascii::lower($name);
 
         if ($isMethod) {
             [$class, $method] = explode('::', $name, 2);
@@ -352,7 +353,7 @@ final readonly class PatternFunctionRegistry
             // An aliased import hides `Re::` but spells `Re as`, the class
             // global or namespaced, in a group use or not. One space only:
             // `Re\tas` or `Re /* */ as` does not open the file.
-            $needle = strtolower($shortClass);
+            $needle = Ascii::lower($shortClass);
 
             return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns), [$needle.'::', $needle.' as']];
         }
@@ -360,7 +361,7 @@ final readonly class PatternFunctionRegistry
         $separator = strrpos($name, '\\');
         $shortName = false === $separator ? $name : substr($name, $separator + 1);
 
-        return [$key, false, new PatternFunction($shortName, $argumentIndex, $keysArePatterns), [strtolower($shortName)]];
+        return [$key, false, new PatternFunction($shortName, $argumentIndex, $keysArePatterns), [Ascii::lower($shortName)]];
     }
 
     /**
@@ -373,7 +374,7 @@ final readonly class PatternFunctionRegistry
      */
     private static function pruneNeedles(array $needles): array
     {
-        $needles = array_values(array_unique(array_map(strtolower(...), $needles)));
+        $needles = array_values(array_unique(array_map(Ascii::lower(...), $needles)));
         usort($needles, static fn (string $a, string $b): int => \strlen($a) <=> \strlen($b));
 
         $pruned = [];

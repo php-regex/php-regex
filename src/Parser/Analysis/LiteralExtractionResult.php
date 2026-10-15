@@ -16,7 +16,7 @@ namespace PHPRegex\Parser\Analysis;
 /**
  * Structured literal extraction output for fast prefilters.
  */
-final readonly class LiteralExtractionResult
+final class LiteralExtractionResult
 {
     /**
      * @internal built by Regex::literals()
@@ -25,9 +25,9 @@ final readonly class LiteralExtractionResult
      * @param array<string> $patterns
      */
     public function __construct(
-        public array $literals,
-        public array $patterns,
-        public LiteralConfidence $confidence,
-        public LiteralSet $literalSet,
+        public readonly array $literals,
+        public readonly array $patterns,
+        public readonly LiteralConfidence $confidence,
+        public readonly LiteralSet $literalSet,
     ) {}
 }

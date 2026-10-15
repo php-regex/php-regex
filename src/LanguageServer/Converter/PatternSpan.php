@@ -27,7 +27,7 @@ use PHPRegex\Linter\Extraction\PhpStringLiteral;
  *
  * @internal
  */
-final readonly class PatternSpan
+final class PatternSpan
 {
     private const CLOSING = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 
@@ -35,11 +35,11 @@ final readonly class PatternSpan
      * @param list<int> $spelling where the literal spells each byte of the pattern, then its closing quote
      */
     private function __construct(
-        private PositionConverter $positions,
-        private int $literalOffset,
-        private array $spelling,
-        private string $pattern,
-        private int $bodyLength,
+        private readonly PositionConverter $positions,
+        private readonly int $literalOffset,
+        private readonly array $spelling,
+        private readonly string $pattern,
+        private readonly int $bodyLength,
     ) {}
 
     public static function of(RegexOccurrence $occurrence, PositionConverter $positions): self

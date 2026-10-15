@@ -23,10 +23,10 @@ use PHPRegex\Parser\Validation\ValidationResult;
  *
  * @internal
  */
-final readonly class AnalyzedPatterns
+final class AnalyzedPatterns
 {
     /**
      * @param array<string, array{0: ValidationResult, 1: string|null}> $byPattern
      */
-    public function __construct(public array $byPattern) {}
+    public function __construct(public readonly array $byPattern) {}
 }

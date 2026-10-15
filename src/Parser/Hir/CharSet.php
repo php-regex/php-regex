@@ -19,7 +19,7 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class CharSet
+final class CharSet
 {
     private const FIRST_PRINTABLE = 0x21;
 
@@ -30,7 +30,7 @@ final readonly class CharSet
     /**
      * @param list<array{int, int}> $ranges
      */
-    private function __construct(public array $ranges) {}
+    private function __construct(public readonly array $ranges) {}
 
     public static function empty(): self
     {

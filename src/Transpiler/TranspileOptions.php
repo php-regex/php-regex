@@ -16,7 +16,7 @@ namespace PHPRegex\Transpiler;
 /**
  * Configuration for regex transpilation.
  */
-final readonly class TranspileOptions
+final class TranspileOptions
 {
-    public function __construct(public bool $allowLookbehind = true) {}
+    public function __construct(public readonly bool $allowLookbehind = true) {}
 }

@@ -25,7 +25,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  *
  * @internal
  */
-final readonly class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
     /**
      * @return TreeBuilder<'array'> the tree builder instance

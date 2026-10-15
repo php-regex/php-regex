@@ -28,9 +28,9 @@ use Symfony\Component\Routing\RouterInterface;
  *
  * @internal
  */
-final readonly class RoutePatternSource implements PatternSourceInterface
+final class RoutePatternSource implements PatternSourceInterface
 {
-    public function __construct(private RouteRequirementNormalizer $patternNormalizer, private ?RouterInterface $router = null) {}
+    public function __construct(private readonly RouteRequirementNormalizer $patternNormalizer, private readonly ?RouterInterface $router = null) {}
 
     public function getName(): string
     {

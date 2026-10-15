@@ -122,6 +122,6 @@ final class CodePointReader
             return self::UNKNOWN;
         }
 
-        return \ord(strtoupper($char)) ^ 64;
+        return \ord(Ascii::upper($char)) ^ 64;
     }
 }

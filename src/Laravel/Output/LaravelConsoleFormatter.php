@@ -22,4 +22,4 @@ use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
  *
  * @internal
  */
-final readonly class LaravelConsoleFormatter extends AbstractConsoleTagFormatter {}
+final class LaravelConsoleFormatter extends AbstractConsoleTagFormatter {}

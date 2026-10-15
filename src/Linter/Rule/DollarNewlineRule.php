@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -91,7 +92,7 @@ final class DollarNewlineRule extends AbstractLintRule
             return [];
         }
 
-        foreach (str_split($newlineEnds) as $newlineEnd) {
+        foreach (Bytes::split($newlineEnds) as $newlineEnd) {
             if ($before->intersects(ByteCharSet::fromChar($newlineEnd))) {
                 return [];
             }

@@ -31,7 +31,7 @@ final class IniFlag
 
     public static function isOn(string $setting): bool
     {
-        if (\in_array(strtolower($setting), ['true', 'yes', 'on'], true)) {
+        if (\in_array(Ascii::lower($setting), ['true', 'yes', 'on'], true)) {
             return true;
         }
 
@@ -46,7 +46,7 @@ final class IniFlag
      */
     public static function displaysErrors(string $setting): bool
     {
-        if (\in_array(strtolower($setting), ['true', 'yes', 'on', 'stderr', 'stdout'], true)) {
+        if (\in_array(Ascii::lower($setting), ['true', 'yes', 'on', 'stderr', 'stdout'], true)) {
             return true;
         }
 

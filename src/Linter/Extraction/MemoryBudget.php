@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * Whether a source file fits in the memory left for analysing it.
  *
@@ -82,7 +84,7 @@ final class MemoryBudget
         }
 
         $limit = trim($limit);
-        $unit = strtolower($limit[\strlen($limit) - 1]);
+        $unit = Ascii::lower($limit[\strlen($limit) - 1]);
         $value = (int) $limit;
 
         return match ($unit) {

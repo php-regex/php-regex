@@ -21,7 +21,7 @@ namespace PHPRegex\LanguageServer\Document;
  *
  * @internal
  */
-final readonly class RegexOccurrence
+final class RegexOccurrence
 {
     /**
      * @param string   $pattern    the pattern, as PHP reads the literal
@@ -31,11 +31,11 @@ final readonly class RegexOccurrence
      * @param string   $literal    the literal as the document spells it, quotes included
      */
     public function __construct(
-        public string $pattern,
-        public array $start,
-        public array $end,
-        public int $byteOffset,
-        public string $literal,
+        public readonly string $pattern,
+        public readonly array $start,
+        public readonly array $end,
+        public readonly int $byteOffset,
+        public readonly string $literal,
     ) {}
 
     /**

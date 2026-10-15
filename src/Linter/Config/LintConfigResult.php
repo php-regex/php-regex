@@ -16,15 +16,15 @@ namespace PHPRegex\Linter\Config;
 /**
  * @internal
  */
-final readonly class LintConfigResult
+final class LintConfigResult
 {
     /**
      * @param array<string, mixed> $config
      * @param array<int, string>   $files
      */
     public function __construct(
-        public array $config,
-        public array $files,
-        public ?string $error = null,
+        public readonly array $config,
+        public readonly array $files,
+        public readonly ?string $error = null,
     ) {}
 }

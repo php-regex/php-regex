@@ -40,7 +40,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *     requestMatcher: ?string,
  * }
  */
-final readonly class SecurityConfigExtractor
+final class SecurityConfigExtractor
 {
     /**
      * @return array{accessControl: array<AccessControlRule>, firewalls: array<FirewallRule>}

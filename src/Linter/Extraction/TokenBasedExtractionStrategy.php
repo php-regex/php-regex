@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -24,7 +25,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
+final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
 {
     private const IGNORABLE_TOKENS = [
         \T_WHITESPACE => true,
@@ -39,7 +40,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      */
     private const IDENTIFIER_PATTERN = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
 
-    private PatternFunctionRegistry $registry;
+    private readonly PatternFunctionRegistry $registry;
 
     /**
      * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
@@ -564,7 +565,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
                     }
 
                     $position++;
-                } elseif (null !== $argument && null === $named && \in_array(strtolower((string) $argument['name']), $names, true)) {
+                } elseif (null !== $argument && null === $named && \in_array(Ascii::lower((string) $argument['name']), $names, true)) {
                     $named = [$argument['valueStart'], $i];
                 }
 
@@ -630,7 +631,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      * replacement: a closure, an arrow function, a first-class callable, an
      * array, a new object, $this, an (object) or (array) cast, a clone, or
      * Closure::fromCallable(). Each counts only when it is the whole
-     * argument: $cb ?? strtoupper(...) is not one.
+     * argument: $cb ?? Ascii::upper(...) is not one.
      *
      * Read in place with the bracket map, so a closure holding the next call
      * is not read again.
@@ -749,7 +750,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
 
     /**
      * Whether $tokens[$from..$to] is a variable, a name or a member chain on
-     * them, with nothing else: $a, $this->b['c'], Foo::$d, strtoupper(...).
+     * them, with nothing else: $a, $this->b['c'], Foo::$d, Ascii::upper(...).
      *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $closers
@@ -824,14 +825,14 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     private function isClosureFromCallable(array $tokens, int $first, int $next, int $last, array $closers, NameResolutionContext $context): bool
     {
         $class = $this->readNameToken($tokens[$first]);
-        if (null === $class || 'closure' !== strtolower($context->resolveClass($class)) || !$this->isDoubleColonToken($tokens[$next] ?? '')) {
+        if (null === $class || 'closure' !== Ascii::lower($context->resolveClass($class)) || !$this->isDoubleColonToken($tokens[$next] ?? '')) {
             return false;
         }
 
         $method = $this->nextSignificantTokenIndex($tokens, $next + 1, $last + 1) ?? $last;
         $open = $this->nextSignificantTokenIndex($tokens, $method + 1, $last + 1) ?? $last;
 
-        return 'fromcallable' === strtolower($this->readIdentifierToken($tokens[$method]) ?? '')
+        return 'fromcallable' === Ascii::lower($this->readIdentifierToken($tokens[$method]) ?? '')
             && '(' === $tokens[$open] && ($closers[$open] ?? null) === $last;
     }
 
@@ -1033,7 +1034,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         $scalar = $significant[$sign] ?? null;
         if (\is_array($scalar) && $sign + 1 === \count($significant)) {
             $isNumber = \T_LNUMBER === $scalar[0] || \T_DNUMBER === $scalar[0];
-            $isBool = 0 === $sign && null !== $this->readNameToken($scalar) && \in_array(strtolower(ltrim($scalar[1], '\\')), ['true', 'false'], true);
+            $isBool = 0 === $sign && null !== $this->readNameToken($scalar) && \in_array(Ascii::lower(ltrim($scalar[1], '\\')), ['true', 'false'], true);
             if ($isNumber || $isBool) {
                 return false;
             }
@@ -1302,7 +1303,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      */
     private function decodeStringToken(string $token): string
     {
-        if ('b' === strtolower($token[0] ?? '')) {
+        if ('b' === Ascii::lower($token[0] ?? '')) {
             $token = substr($token, 1);
         }
 

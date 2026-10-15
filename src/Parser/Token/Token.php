@@ -22,12 +22,12 @@ namespace PHPRegex\Parser\Token;
  * of "\N{LATIN SMALL LETTER A}". Whoever needs the text as it was written
  * reads it back from the pattern rather than guessing it from the value.
  */
-final readonly class Token
+final class Token
 {
     /**
      * Bytes of the pattern this token was cut from.
      */
-    public int $sourceLength;
+    public readonly int $sourceLength;
 
     /**
      * @internal the lexer builds the tokens
@@ -37,9 +37,9 @@ final readonly class Token
      *                               rewrite
      */
     public function __construct(
-        public TokenType $type,
-        public string $value,
-        public int $position,
+        public readonly TokenType $type,
+        public readonly string $value,
+        public readonly int $position,
         ?int $sourceLength = null,
     ) {
         $this->sourceLength = $sourceLength ?? \strlen($value);

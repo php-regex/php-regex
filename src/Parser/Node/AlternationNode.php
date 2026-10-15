@@ -18,13 +18,13 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents an alternation in a regular expression.
  */
-final readonly class AlternationNode extends AbstractNode
+final class AlternationNode extends AbstractNode
 {
     /**
      * @param array<NodeInterface> $alternatives
      */
     public function __construct(
-        public array $alternatives,
+        public readonly array $alternatives,
         int $startPosition,
         int $endPosition
     ) {

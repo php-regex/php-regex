@@ -35,11 +35,11 @@ use PHPRegex\Toolkit\Regex;
  * offset equal to the floor's passes too (outcome "pass-either-offset");
  * any other offset is an offset defect on both engines.
  */
-final readonly class Pcre2CaseRunner
+final class Pcre2CaseRunner
 {
     private const BRACKET_CLOSERS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 
-    private Regex $regex;
+    private readonly Regex $regex;
 
     public function __construct()
     {

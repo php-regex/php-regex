@@ -22,6 +22,7 @@ use PHPRegex\Explain\RailroadSvgRenderer;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * @internal
@@ -52,7 +53,7 @@ final class DiagramCommand extends AbstractCommand
         }
 
         $pattern = $arguments['pattern'];
-        $format = strtolower((string) ($arguments['options']['--format'] ?? 'console'));
+        $format = Ascii::lower((string) ($arguments['options']['--format'] ?? 'console'));
         $outputPath = $arguments['options']['--output'] ?? null;
         $outputPath = \is_string($outputPath) ? $outputPath : null;
         if (!\in_array($format, ['console', 'svg'], true)) {

@@ -24,7 +24,7 @@ namespace PHPRegex\Parser\Internal;
  *
  * @internal
  */
-final readonly class InlineFlags
+final class InlineFlags
 {
     /**
      * The modifiers PCRE lets a group carry, "r" excepted: it arrived in
@@ -44,11 +44,11 @@ final readonly class InlineFlags
         /**
          * Modifiers the group turns on.
          */
-        public string $set,
+        public readonly string $set,
         /**
          * Modifiers the group turns off, including the ones "^" reset.
          */
-        public string $unset,
+        public readonly string $unset,
     ) {}
 
     /**
@@ -77,13 +77,13 @@ final readonly class InlineFlags
         }
 
         // PCRE reads the letters in order: "(?i-i)" turns "i" on, then off.
-        $set = implode('', array_diff(str_split($set), str_split($unset)));
+        $set = implode('', array_diff(Bytes::split($set), Bytes::split($unset)));
 
         if ($resetsOthers) {
             // "(?^im)" turns on what it lists and turns off the rest of the
             // options "^" resets; "U" and "J" stay as they are.
-            $reset = array_intersect(str_split($letters), str_split(self::RESET_BY_CARET));
-            $unset = implode('', array_diff($reset, str_split($set))).$unset;
+            $reset = array_intersect(Bytes::split($letters), Bytes::split(self::RESET_BY_CARET));
+            $unset = implode('', array_diff($reset, Bytes::split($set))).$unset;
         }
 
         return new self($set, $unset);
@@ -139,11 +139,11 @@ final readonly class InlineFlags
      */
     public function applyTo(string $flags): string
     {
-        foreach (str_split($this->unset) as $flag) {
+        foreach (Bytes::split($this->unset) as $flag) {
             $flags = str_replace($flag, '', $flags);
         }
 
-        foreach (str_split($this->set) as $flag) {
+        foreach (Bytes::split($this->set) as $flag) {
             if ('' !== $flag && !str_contains($flags, $flag)) {
                 $flags .= $flag;
             }

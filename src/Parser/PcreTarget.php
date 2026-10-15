@@ -27,11 +27,11 @@ use PHPRegex\Parser\Internal\PhpVersionGates;
  * than 10.40 are judged with the 10.40 rules, newer ones than the library
  * knows with the newest rules it has.
  */
-final readonly class PcreTarget
+final class PcreTarget
 {
-    public string $pcreVersion;
+    public readonly string $pcreVersion;
 
-    private int $release;
+    private readonly int $release;
 
     /**
      * @param int    $phpVersionId a PHP_VERSION_ID, 80400 for PHP 8.4
@@ -40,7 +40,7 @@ final readonly class PcreTarget
      *
      * @throws InvalidRegexOptionException when $pcreVersion names no release
      */
-    public function __construct(public int $phpVersionId, string $pcreVersion)
+    public function __construct(public readonly int $phpVersionId, string $pcreVersion)
     {
         [$major, $minor] = self::releaseParts($pcreVersion)
             ?? throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion));

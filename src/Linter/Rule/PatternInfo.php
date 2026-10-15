@@ -18,17 +18,17 @@ namespace PHPRegex\Linter\Rule;
  *
  * @internal
  */
-final readonly class PatternInfo
+final class PatternInfo
 {
     public function __construct(
-        public string $flags,
-        public string $delimiter,
-        public string $patternValue,
-        public bool $unicodeMode,
+        public readonly string $flags,
+        public readonly string $delimiter,
+        public readonly string $patternValue,
+        public readonly bool $unicodeMode,
         /**
          * The body as written, which node positions point into.
          */
-        public string $source = '',
+        public readonly string $source = '',
     ) {}
 
     public function hasFlag(string $flag): bool

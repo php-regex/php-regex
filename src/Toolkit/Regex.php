@@ -69,7 +69,7 @@ use PHPRegex\Transpiler\TranspileResult;
  *
  * @phpstan-import-type OptionsArray from ParserOptions
  */
-final readonly class Regex
+final class Regex
 {
     public const VERSION = '2.0.0-DEV';
     public const VERSION_ID = 20000;
@@ -100,9 +100,9 @@ final readonly class Regex
      * @param PcreEngine    $engine               Runs the pattern to check the samples
      */
     private function __construct(
-        private RegexParser $parser,
-        private array $redosIgnoredPatterns,
-        private PcreEngine $engine = new PcreEngine(),
+        private readonly RegexParser $parser,
+        private readonly array $redosIgnoredPatterns,
+        private readonly PcreEngine $engine = new PcreEngine(),
     ) {}
 
     /**

@@ -21,10 +21,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
  * This verb imposes a limit on the number of internal matches that can occur.
  * It's a safeguard against catastrophic backtracking on certain patterns.
  */
-final readonly class LimitMatchNode extends AbstractNode
+final class LimitMatchNode extends AbstractNode
 {
     public function __construct(
-        public int $limit,
+        public readonly int $limit,
         int $startPosition,
         int $endPosition,
     ) {

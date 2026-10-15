@@ -106,18 +106,6 @@ final class HirTranslator
 
     private const SURROGATE_LAST = 0xDFFF;
 
-    /**
-     * The options a pattern may open with, "(*UTF)" or "(*CR)" among them:
-     * they match nothing, and change what a class, a dot or "\R" matches.
-     * The limits take a value, "(*LIMIT_MATCH=10)".
-     */
-    private const LOOKAROUNDS = [
-        GroupType::LookaheadPositive->value => LookKind::Ahead,
-        GroupType::LookaheadNegative->value => LookKind::NegativeAhead,
-        GroupType::LookbehindPositive->value => LookKind::Behind,
-        GroupType::LookbehindNegative->value => LookKind::NegativeBehind,
-    ];
-
     private bool $unicode = false;
 
     private bool $unicodeFlag = false;
@@ -229,9 +217,16 @@ final class HirTranslator
         $start = $node->getStartPosition();
         $end = $node->getEndPosition();
 
-        if (isset(self::LOOKAROUNDS[$node->type->value])) {
+        $look = match ($node->type) {
+            GroupType::LookaheadPositive => LookKind::Ahead,
+            GroupType::LookaheadNegative => LookKind::NegativeAhead,
+            GroupType::LookbehindPositive => LookKind::Behind,
+            GroupType::LookbehindNegative => LookKind::NegativeBehind,
+            default => null,
+        };
+        if (null !== $look) {
             // "(*napla:...)" and its kind backtrack into their body.
-            return new LookHir($this->node($node->child, $flags), self::LOOKAROUNDS[$node->type->value], '*' !== $node->flags, $start, $end);
+            return new LookHir($this->node($node->child, $flags), $look, '*' !== $node->flags, $start, $end);
         }
 
         return match ($node->type) {

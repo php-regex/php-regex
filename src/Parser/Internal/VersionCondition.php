@@ -22,7 +22,7 @@ namespace PHPRegex\Parser\Internal;
  *
  * @internal
  */
-final readonly class VersionCondition
+final class VersionCondition
 {
     /**
      * The comparisons that may follow "VERSION", longest first so that ">="
@@ -33,7 +33,7 @@ final readonly class VersionCondition
      */
     private const OPERATORS = ['>=', '<=', '==', '!=', '>', '<', '='];
 
-    private function __construct(public string $operator, public string $version) {}
+    private function __construct(public readonly string $operator, public readonly string $version) {}
 
     /**
      * Read "VERSION>=10.4", or null when the text says something else.

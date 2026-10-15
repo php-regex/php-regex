@@ -455,7 +455,7 @@ final class CpuCoreCounterTest extends TestCase
 
                 return self::NPROC === $command ? '6' : null;
             },
-            static fn (string $name): false => false,
+            static fn (string $name): bool => false,
         );
 
         $first = $counter->count();
@@ -482,7 +482,7 @@ final class CpuCoreCounterTest extends TestCase
         $counter = new CpuCoreCounter(
             static fn (string $path): ?string => null,
             null,
-            static fn (string $name): false => false,
+            static fn (string $name): bool => false,
         );
 
         $this->assertSame(1, $counter->count());
@@ -509,7 +509,7 @@ final class CpuCoreCounterTest extends TestCase
         $counter = new CpuCoreCounter(
             static fn (string $path): ?string => null,
             null,
-            static fn (string $name): false => false,
+            static fn (string $name): bool => false,
         );
 
         $this->assertSame($expected, $counter->count());

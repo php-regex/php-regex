@@ -20,7 +20,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
  *
  * @internal
  */
-final readonly class LintRequest
+final class LintRequest
 {
     /**
      * @param array<string>       $paths
@@ -37,20 +37,20 @@ final readonly class LintRequest
      *                                              of the analysis
      */
     public function __construct(
-        public array $paths,
-        public array $excludePaths,
-        public int $minSavings,
-        private array $disabledSources = [],
-        public bool $checkValidation = true,
-        public bool $checkRedos = false,
-        public bool $checkOptimizations = true,
-        public bool $checkLint = true,
-        public int $analysisWorkers = 1,
-        public OptimizerOptions $optimizations = new OptimizerOptions(verifyWithAutomata: true),
-        public array $lintRules = [],
-        public array $declarationPaths = [],
-        public array $vendorPaths = [],
-        public bool $checkComplexity = false,
+        public readonly array $paths,
+        public readonly array $excludePaths,
+        public readonly int $minSavings,
+        private readonly array $disabledSources = [],
+        public readonly bool $checkValidation = true,
+        public readonly bool $checkRedos = false,
+        public readonly bool $checkOptimizations = true,
+        public readonly bool $checkLint = true,
+        public readonly int $analysisWorkers = 1,
+        public readonly OptimizerOptions $optimizations = new OptimizerOptions(verifyWithAutomata: true),
+        public readonly array $lintRules = [],
+        public readonly array $declarationPaths = [],
+        public readonly array $vendorPaths = [],
+        public readonly bool $checkComplexity = false,
     ) {}
 
     /**

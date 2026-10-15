@@ -23,9 +23,9 @@ use PHPRegex\Toolkit\Regex;
  * @phpstan-import-type FirewallFinding from SecurityFirewallReport
  * @phpstan-import-type FirewallSkip from SecurityFirewallReport
  */
-final readonly class SecurityFirewallAnalyzer
+final class SecurityFirewallAnalyzer
 {
-    public function __construct(private Regex $regex, private SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer()) {}
+    public function __construct(private readonly Regex $regex, private readonly SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer()) {}
 
     /**
      * @param array<FirewallRule> $firewalls

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * Known regex wrappers shipped by third-party libraries.
  *
@@ -140,7 +142,7 @@ final class InteropPresets
         $entries = [];
 
         foreach ($methods as $method) {
-            $entries[strtolower($class.'::'.$method)] = new PatternFunction($shortClass.'::'.$method);
+            $entries[Ascii::lower($class.'::'.$method)] = new PatternFunction($shortClass.'::'.$method);
         }
 
         return $entries;

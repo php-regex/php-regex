@@ -16,17 +16,17 @@ namespace PHPRegex\Redos;
 /**
  * Captures one confirmation probe sample.
  */
-final readonly class ConfirmationSample implements \JsonSerializable
+final class ConfirmationSample implements \JsonSerializable
 {
     /**
      * @internal built by ConfirmationRunner::confirm(), for Confirmation::$samples
      */
     public function __construct(
-        public int $inputLength,
-        public float $durationMs,
-        public ?string $inputPreview = null,
-        public ?int $pregErrorCode = null,
-        public ?string $pregError = null,
+        public readonly int $inputLength,
+        public readonly float $durationMs,
+        public readonly ?string $inputPreview = null,
+        public readonly ?int $pregErrorCode = null,
+        public readonly ?string $pregError = null,
     ) {}
 
     /**

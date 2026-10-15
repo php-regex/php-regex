@@ -26,6 +26,7 @@ use PhpParser\Node\Name;
 use PHPRegex\Parser\Attribute\RegexPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\AttributeReflection;
@@ -48,7 +49,7 @@ use PHPStan\Type\TypeCombinator;
  *
  * @implements Rule<CallLike>
  */
-final readonly class RegexPatternArgumentRule implements Rule
+final class RegexPatternArgumentRule implements Rule
 {
     /**
      * A pattern the engine running PHPStan refuses: the identifier PHPStan
@@ -58,7 +59,7 @@ final readonly class RegexPatternArgumentRule implements Rule
 
     private const PHPSTORM_LANGUAGE = 'jetbrains\phpstorm\language';
 
-    private PatternChecker $checker;
+    private readonly PatternChecker $checker;
 
     /**
      * @param array<string, mixed> $config          the "phpRegex" parameter, as RegexPatternRule reads it
@@ -68,7 +69,7 @@ final readonly class RegexPatternArgumentRule implements Rule
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      */
     public function __construct(
-        private ReflectionProvider $reflectionProvider,
+        private readonly ReflectionProvider $reflectionProvider,
         array $config = [],
         ?PhpVersion $phpVersion = null,
         mixed $phpVersionRange = null,
@@ -240,8 +241,8 @@ final readonly class RegexPatternArgumentRule implements Rule
      */
     private static function marksRegex(AttributeReflection $attribute): bool
     {
-        $name = strtolower(ltrim($attribute->getName(), '\\'));
-        if (strtolower(RegexPattern::class) === $name) {
+        $name = Ascii::lower(ltrim($attribute->getName(), '\\'));
+        if (Ascii::lower(RegexPattern::class) === $name) {
             return true;
         }
 
@@ -251,7 +252,7 @@ final readonly class RegexPatternArgumentRule implements Rule
 
         foreach ($attribute->getArgumentTypes() as $type) {
             foreach ($type->getConstantStrings() as $constantString) {
-                if ('regexp' === strtolower($constantString->getValue())) {
+                if ('regexp' === Ascii::lower($constantString->getValue())) {
                     return true;
                 }
             }

@@ -29,9 +29,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * @internal
  */
-final readonly class ValidatorPatternSource implements PatternSourceInterface
+final class ValidatorPatternSource implements PatternSourceInterface
 {
-    public function __construct(private ?ValidatorInterface $validator = null, private ?LoaderInterface $validatorLoader = null) {}
+    public function __construct(private readonly ?ValidatorInterface $validator = null, private readonly ?LoaderInterface $validatorLoader = null) {}
 
     public function getName(): string
     {

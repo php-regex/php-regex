@@ -21,11 +21,11 @@ use PHPRegex\Transpiler\Target\TargetRegistry;
 /**
  * Transpiles PCRE regex literals to other target dialects.
  */
-final readonly class Transpiler
+final class Transpiler
 {
-    private TargetRegistry $targets;
+    private readonly TargetRegistry $targets;
 
-    public function __construct(private RegexParser $parser)
+    public function __construct(private readonly RegexParser $parser)
     {
         $this->targets = new TargetRegistry();
     }

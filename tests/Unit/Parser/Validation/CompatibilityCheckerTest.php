@@ -282,7 +282,8 @@ final class CompatibilityCheckerTest extends TestCase
      */
     private static function runningEngineVerdict(PatternCompatibility $compatibility): TargetVerdict
     {
-        $php = max(array_filter(self::PHP_POINTS, static fn (int $point): bool => $point <= \PHP_VERSION_ID));
+        // Below the lowest point, the lowest judges.
+        $php = max([self::PHP_POINTS[0], ...array_filter(self::PHP_POINTS, static fn (int $point): bool => $point <= \PHP_VERSION_ID)]);
         $releases = self::releases();
         $running = self::minor(PcreTarget::runtime()->pcreVersion);
         $release = '10.'.max(self::minor($releases[0]), min($running, self::minor($releases[\count($releases) - 1])));

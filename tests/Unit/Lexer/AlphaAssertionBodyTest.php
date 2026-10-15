@@ -513,7 +513,7 @@ final class AlphaAssertionBodyTest extends TestCase
         ini_set('pcre.jit', '0');
         $saved = (string) ini_get('pcre.backtrack_limit');
         $caught = null;
-        LibraryPcre::useIniSetter(static fn (): false => false);
+        LibraryPcre::useIniSetter(static fn (): bool => false);
 
         try {
             ini_set('pcre.backtrack_limit', '10');

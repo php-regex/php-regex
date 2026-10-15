@@ -16,16 +16,16 @@ namespace PHPRegex\Cli;
 /**
  * @internal
  */
-final readonly class Input
+final class Input
 {
     /**
      * @param array<int, string>   $args
      * @param array<string, mixed> $regexOptions
      */
     public function __construct(
-        public string $command,
-        public array $args,
-        public GlobalOptions $globalOptions,
-        public array $regexOptions,
+        public readonly string $command,
+        public readonly array $args,
+        public readonly GlobalOptions $globalOptions,
+        public readonly array $regexOptions,
     ) {}
 }

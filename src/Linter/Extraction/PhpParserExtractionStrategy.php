@@ -42,6 +42,7 @@ use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * PhpParser-based regex pattern extraction strategy.
@@ -58,11 +59,11 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * @internal
  */
-final readonly class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
+final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
 {
-    private ?Parser $parser;
+    private readonly ?Parser $parser;
 
-    private PatternFunctionRegistry $registry;
+    private readonly PatternFunctionRegistry $registry;
 
     /**
      * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')
@@ -367,7 +368,7 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
                 continue;
             }
 
-            if (\in_array(strtolower($arg->name->toString()), $names, true)) {
+            if (\in_array(Ascii::lower($arg->name->toString()), $names, true)) {
                 return $arg;
             }
         }

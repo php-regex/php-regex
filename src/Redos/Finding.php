@@ -16,19 +16,19 @@ namespace PHPRegex\Redos;
 /**
  * Describes a specific ReDoS risk detection.
  */
-final readonly class Finding implements \JsonSerializable
+final class Finding implements \JsonSerializable
 {
     /**
      * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$findings
      */
     public function __construct(
-        public RedosSeverity $severity,
-        public string $message,
-        public string $pattern,
-        public ?string $trigger = null,
-        public ?string $suggestedRewrite = null,
-        public RedosConfidence $confidence = RedosConfidence::Medium,
-        public ?string $falsePositiveRisk = null,
+        public readonly RedosSeverity $severity,
+        public readonly string $message,
+        public readonly string $pattern,
+        public readonly ?string $trigger = null,
+        public readonly ?string $suggestedRewrite = null,
+        public readonly RedosConfidence $confidence = RedosConfidence::Medium,
+        public readonly ?string $falsePositiveRisk = null,
     ) {}
 
     /**

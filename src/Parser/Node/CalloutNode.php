@@ -15,11 +15,11 @@ namespace PHPRegex\Parser\Node;
 
 use PHPRegex\Parser\NodeVisitorInterface;
 
-final readonly class CalloutNode extends AbstractNode
+final class CalloutNode extends AbstractNode
 {
     public function __construct(
-        public int|string|null $identifier,
-        public bool $isStringIdentifier,
+        public readonly int|string|null $identifier,
+        public readonly bool $isStringIdentifier,
         int $startPosition,
         int $endPosition,
     ) {

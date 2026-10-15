@@ -23,7 +23,7 @@ namespace PHPRegex\Parser\Analysis;
  * business. A fact is true only when every match proves it, false when the
  * pattern alone does not, and false for a group no match sets.
  */
-final readonly class CaptureGroupShape
+final class CaptureGroupShape
 {
     /**
      * @internal built by CaptureShapeAnalyzer::analyze(), for CaptureShape::$whole and CaptureShape::$groups
@@ -33,13 +33,13 @@ final readonly class CaptureGroupShape
      * @param bool              $digitsOnly every value satisfies ctype_digit(): a non-empty run of ASCII 0-9
      */
     public function __construct(
-        public int $number,
-        public ?string $name,
-        public Participation $participation,
-        public int $minLength,
-        public ?int $maxLength,
-        public ?array $values,
-        public bool $nonFalsy = false,
-        public bool $digitsOnly = false,
+        public readonly int $number,
+        public readonly ?string $name,
+        public readonly Participation $participation,
+        public readonly int $minLength,
+        public readonly ?int $maxLength,
+        public readonly ?array $values,
+        public readonly bool $nonFalsy = false,
+        public readonly bool $digitsOnly = false,
     ) {}
 }

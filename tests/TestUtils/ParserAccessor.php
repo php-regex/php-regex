@@ -25,14 +25,14 @@ use PHPRegex\Parser\Token\TokenType;
  * Navigating the tokens is no longer one of them: the cursor lives on
  * TokenStream, which is public, and stream() hands it over.
  */
-final readonly class ParserAccessor
+final class ParserAccessor
 {
     /**
      * @var \ReflectionClass<TokenParser>
      */
-    private \ReflectionClass $reflection;
+    private readonly \ReflectionClass $reflection;
 
-    public function __construct(private TokenParser $parser)
+    public function __construct(private readonly TokenParser $parser)
     {
         $this->reflection = new \ReflectionClass($this->parser);
     }

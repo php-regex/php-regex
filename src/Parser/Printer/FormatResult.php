@@ -16,21 +16,21 @@ namespace PHPRegex\Parser\Printer;
 /**
  * What formatting or compacting a pattern gave.
  */
-final readonly class FormatResult
+final class FormatResult
 {
     public function __construct(
         /**
          * The pattern, delimiters and flags included: laid out, compacted,
          * or the input as it was written.
          */
-        public string $pattern,
+        public readonly string $pattern,
         /**
          * Whether the pattern differs from the input.
          */
-        public bool $changed,
+        public readonly bool $changed,
         /**
          * Why the input was given back as it was, when it was refused.
          */
-        public ?FormatRefusal $refusal = null,
+        public readonly ?FormatRefusal $refusal = null,
     ) {}
 }

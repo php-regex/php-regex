@@ -20,6 +20,7 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\RegexException;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Internal\StaticCaches;
@@ -146,7 +147,7 @@ final class LanguageQuestions
     {
         $on = '';
         $off = '';
-        foreach (str_split($spelled) as $flag) {
+        foreach (Bytes::split($spelled) as $flag) {
             if (str_contains($flags, $flag)) {
                 $on .= $flag;
             } else {

@@ -32,7 +32,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class RouteConstraintNormalizer
+final class RouteConstraintNormalizer
 {
     public function normalize(Route $route, string $parameter, string $constraint): string
     {

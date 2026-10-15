@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a POSIX character class.
  */
-final readonly class PosixClassNode extends AbstractNode
+final class PosixClassNode extends AbstractNode
 {
     public function __construct(
-        public string $class,
+        public readonly string $class,
         int $startPosition,
         int $endPosition
     ) {

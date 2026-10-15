@@ -26,7 +26,7 @@ use PHPRegex\Parser\Internal\CaptureLayout;
  * pattern, $cases holds shapes whose union covers every match, each more
  * precise than the merged view.
  */
-final readonly class CaptureShape
+final class CaptureShape
 {
     /**
      * Mirrors PHPStan's ConstantArrayTypeBuilder::ARRAY_COUNT_LIMIT: past this many value types, nested arrays included, PHPStan generalises a union of array shapes.
@@ -41,10 +41,10 @@ final readonly class CaptureShape
      * @param list<self>                            $cases  shapes whose union covers every match, empty when the pattern is not split; a case shares no index with the alternatives of the pattern
      */
     public function __construct(
-        public CaptureGroupShape $whole,
-        public array $groups,
-        public array $marks,
-        public array $cases = [],
+        public readonly CaptureGroupShape $whole,
+        public readonly array $groups,
+        public readonly array $marks,
+        public readonly array $cases = [],
     ) {}
 
     /**

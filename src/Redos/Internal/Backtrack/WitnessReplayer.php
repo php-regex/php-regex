@@ -34,7 +34,7 @@ use PHPRegex\Redos\RedosWitness;
  *
  * @internal
  */
-final readonly class WitnessReplayer
+final class WitnessReplayer
 {
     /**
      * The JIT setting every replay runs under: the engine turns it off.
@@ -62,7 +62,7 @@ final readonly class WitnessReplayer
      */
     private const MAX_WORK = 4_000_000_000;
 
-    public function __construct(private PcreEngine $engine = new PcreEngine()) {}
+    public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
 
     /**
      * The confirmation of the first candidate the engine gives up on, with

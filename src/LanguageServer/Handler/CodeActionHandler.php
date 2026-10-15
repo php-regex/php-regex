@@ -35,7 +35,7 @@ use PHPRegex\Toolkit\Regex;
  *
  * @internal
  */
-final readonly class CodeActionHandler
+final class CodeActionHandler
 {
     /**
      * Unicode-related lint IDs that can be fixed by adding /u flag.
@@ -60,9 +60,9 @@ final readonly class CodeActionHandler
      * @param array<string, bool> $lintRules the lint rules regex.json turns on or off, by id
      */
     public function __construct(
-        private DocumentManager $documents,
-        private Regex $regex,
-        private array $lintRules = []
+        private readonly DocumentManager $documents,
+        private readonly Regex $regex,
+        private readonly array $lintRules = []
     ) {
         $this->formatter = new PatternFormatter(target: $regex->target());
     }

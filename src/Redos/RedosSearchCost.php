@@ -35,7 +35,7 @@ use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
  *
  * @phpstan-type SearchCostArray array{degree: int, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
  */
-final readonly class RedosSearchCost
+final class RedosSearchCost
 {
     /**
      * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$searchCost
@@ -45,12 +45,12 @@ final readonly class RedosSearchCost
      * @param bool|null $replayed whether the engine replay, without the JIT, counted attempts growing with the rest of the run; null when no replay was made
      */
     public function __construct(
-        public int $degree,
-        public string $prefix,
-        public string $run,
-        public string $breaker,
-        public bool $unicode,
-        public ?bool $replayed = null,
+        public readonly int $degree,
+        public readonly string $prefix,
+        public readonly string $run,
+        public readonly string $breaker,
+        public readonly bool $unicode,
+        public readonly ?bool $replayed = null,
     ) {}
 
     /**

@@ -20,9 +20,9 @@ use PHPRegex\Linter\PatternExtractor;
  *
  * @internal
  */
-final readonly class PhpFilePatternSource implements PatternSourceInterface
+final class PhpFilePatternSource implements PatternSourceInterface
 {
-    public function __construct(private PatternExtractor $extractor) {}
+    public function __construct(private readonly PatternExtractor $extractor) {}
 
     public function getName(): string
     {

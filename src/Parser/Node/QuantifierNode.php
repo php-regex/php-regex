@@ -18,12 +18,12 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a quantifier.
  */
-final readonly class QuantifierNode extends AbstractNode
+final class QuantifierNode extends AbstractNode
 {
     public function __construct(
-        public NodeInterface $node,
-        public string $quantifier,
-        public QuantifierType $type,
+        public readonly NodeInterface $node,
+        public readonly string $quantifier,
+        public readonly QuantifierType $type,
         int $startPosition,
         int $endPosition
     ) {

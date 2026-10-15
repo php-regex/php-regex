@@ -20,7 +20,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
  * as Regex::create() and the Symfony and Laravel configs are; regex.json and
  * the PHPStan parameters spell the same names in camelCase.
  */
-final readonly class OptimizerOptions
+final class OptimizerOptions
 {
     /**
      * The snake_case key of each option, by the camelCase one.
@@ -52,14 +52,14 @@ final readonly class OptimizerOptions
      *                                      the same strings
      */
     public function __construct(
-        public bool $digits = true,
-        public bool $word = true,
-        public bool $ranges = true,
-        public bool $canonicalizeCharClasses = true,
-        public bool $possessive = false,
-        public bool $factorize = false,
-        public int $minQuantifierCount = 4,
-        public bool $verifyWithAutomata = false,
+        public readonly bool $digits = true,
+        public readonly bool $word = true,
+        public readonly bool $ranges = true,
+        public readonly bool $canonicalizeCharClasses = true,
+        public readonly bool $possessive = false,
+        public readonly bool $factorize = false,
+        public readonly int $minQuantifierCount = 4,
+        public readonly bool $verifyWithAutomata = false,
     ) {
         if ($minQuantifierCount < 2) {
             throw new InvalidRegexOptionException(\sprintf('Optimizer option "min_quantifier_count" must be an integer of at least 2, %d given.', $minQuantifierCount));

@@ -20,7 +20,7 @@ use Symfony\Component\Routing\Route;
  *
  * @internal
  */
-final readonly class RouteControllerFileResolver
+final class RouteControllerFileResolver
 {
     public function resolve(Route $route): ?string
     {

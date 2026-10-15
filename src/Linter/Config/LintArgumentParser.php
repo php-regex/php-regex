@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Config;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 
@@ -836,7 +837,7 @@ final class LintArgumentParser
      */
     private function redosMode(string $value): RedosMode|string
     {
-        $mode = RedosMode::tryFrom(strtolower($value));
+        $mode = RedosMode::tryFrom(Ascii::lower($value));
 
         return match ($mode) {
             null => 'Invalid value for --redos-mode: expected theoretical or confirmed.',
@@ -913,7 +914,7 @@ final class LintArgumentParser
      */
     private function parseInteropValue(string $value): ?array
     {
-        $names = array_values(array_filter(array_map(trim(...), explode(',', strtolower($value))), static fn (string $name): bool => '' !== $name));
+        $names = array_values(array_filter(array_map(trim(...), explode(',', Ascii::lower($value))), static fn (string $name): bool => '' !== $name));
 
         if (['none'] === $names || [] === $names) {
             return [];

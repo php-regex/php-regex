@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -53,7 +54,7 @@ final class PatternAttributeScanner
             // imports (a group, a parent namespace), declares none. One
             // search covers both.
             $content = self::read($file);
-            if (null !== $content && false !== stripos($content, 'regexp')) {
+            if (null !== $content && str_contains(Ascii::lower($content), 'regexp')) {
                 array_push($specs, ...self::scan($content));
             }
         }
@@ -76,7 +77,7 @@ final class PatternAttributeScanner
         // Only identifiers name a function, and none holds a character a
         // pattern reads apart: they go into the search as written.
         $identifiers = array_filter($names, static fn (string $name): bool => 1 === LibraryPcre::match(self::IDENTIFIER, $name));
-        $wanted = array_fill_keys(array_map(strtolower(...), $identifiers), true);
+        $wanted = array_fill_keys(array_map(Ascii::lower(...), $identifiers), true);
 
         // A file is tokenized only when it declares a function of one of the
         // names, which a search tells far more cheaply. Only whitespace may
@@ -87,12 +88,12 @@ final class PatternAttributeScanner
         $functions = [];
         foreach ($files as $file) {
             $content = self::read($file);
-            if (null === $content || false === stripos($content, 'namespace') || 1 !== LibraryPcre::match($declares, $content)) {
+            if (null === $content || !str_contains(Ascii::lower($content), 'namespace') || 1 !== LibraryPcre::match($declares, $content)) {
                 continue;
             }
 
             foreach (self::declarations($content)[1] as $function) {
-                if (isset($wanted[strtolower(substr($function, (int) strrpos($function, '\\') + 1))])) {
+                if (isset($wanted[Ascii::lower(substr($function, (int) strrpos($function, '\\') + 1))])) {
                     $functions[] = $function;
                 }
             }
@@ -233,7 +234,7 @@ final class PatternAttributeScanner
             } elseif (\in_array($text, [',', ';', '}'], true)) {
                 if (null !== $name) {
                     $full = '' === $prefix ? $name : $prefix.'\\'.$name;
-                    $uses[strtolower($alias ?? substr($full, (int) strrpos('\\'.$full, '\\')))] = $full;
+                    $uses[Ascii::lower($alias ?? substr($full, (int) strrpos('\\'.$full, '\\')))] = $full;
                 }
                 $name = null;
                 $alias = null;
@@ -285,7 +286,7 @@ final class PatternAttributeScanner
                 $index++;
             } elseif ($inAttribute === $nesting && $inAttribute > 0
                 && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
-                $name = strtolower(self::resolve($token, $namespace, $uses));
+                $name = Ascii::lower(self::resolve($token, $namespace, $uses));
                 if (self::ATTRIBUTE === $name || (self::PHPSTORM_LANGUAGE === $name && self::namesRegExp($tokens, $i + 1))) {
                     return $index;
                 }
@@ -308,7 +309,7 @@ final class PatternAttributeScanner
         }
 
         for ($i++; isset($tokens[$i]) && ')' !== $tokens[$i]->text; $i++) {
-            if ($tokens[$i]->is(\T_CONSTANT_ENCAPSED_STRING) && 'regexp' === strtolower(substr($tokens[$i]->text, 1, -1))) {
+            if ($tokens[$i]->is(\T_CONSTANT_ENCAPSED_STRING) && 'regexp' === Ascii::lower(substr($tokens[$i]->text, 1, -1))) {
                 return true;
             }
         }
@@ -329,7 +330,7 @@ final class PatternAttributeScanner
             return ltrim($namespace.'\\'.substr($name->text, \strlen('namespace\\')), '\\');
         }
 
-        $first = strtolower(explode('\\', $name->text, 2)[0]);
+        $first = Ascii::lower(explode('\\', $name->text, 2)[0]);
         if (isset($uses[$first])) {
             return $uses[$first].substr($name->text, \strlen($first));
         }

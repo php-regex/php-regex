@@ -21,7 +21,7 @@ namespace PHPRegex\Symfony\Security;
  *
  * @internal
  */
-final readonly class SecurityPatternNormalizer
+final class SecurityPatternNormalizer
 {
     public function normalize(string $pattern, bool $host = false): string
     {

@@ -20,7 +20,7 @@ use Psr\SimpleCache\CacheInterface;
  * Keeps trees in a PSR-16 cache, as serialized strings the adapter reads
  * back itself: the store never has to rebuild an object.
  */
-final readonly class PsrSimpleCacheAdapter implements RemovableCacheInterface
+final class PsrSimpleCacheAdapter implements RemovableCacheInterface
 {
     /**
      * @param (\Closure(string): mixed)|null $keyFactory receives the seed generateKey() gets and
@@ -28,9 +28,9 @@ final readonly class PsrSimpleCacheAdapter implements RemovableCacheInterface
      *                                                   anything else is serialized and sha256-hashed
      */
     public function __construct(
-        private CacheInterface $cache,
-        private string $prefix = 'regex_',
-        private ?\Closure $keyFactory = null
+        private readonly CacheInterface $cache,
+        private readonly string $prefix = 'regex_',
+        private readonly ?\Closure $keyFactory = null
     ) {}
 
     public function generateKey(string $seed): string

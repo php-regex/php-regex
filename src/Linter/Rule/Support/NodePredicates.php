@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule\Support;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -327,19 +328,19 @@ final class NodePredicates
             : [$inlineFlags, ''];
 
         $flags = [];
-        foreach (str_split($baseFlags) as $flag) {
+        foreach (Bytes::split($baseFlags) as $flag) {
             if ('' !== $flag) {
                 $flags[$flag] = true;
             }
         }
 
-        foreach (str_split($setFlags) as $flag) {
+        foreach (Bytes::split($setFlags) as $flag) {
             if ('' !== $flag) {
                 $flags[$flag] = true;
             }
         }
 
-        foreach (str_split($unsetFlags) as $flag) {
+        foreach (Bytes::split($unsetFlags) as $flag) {
             if ('' !== $flag) {
                 unset($flags[$flag]);
             }
@@ -438,7 +439,7 @@ final class NodePredicates
     {
         // A newline of several kinds starts with any of the characters given.
         $newlineSet = ByteCharSet::empty();
-        foreach (str_split($newline) as $character) {
+        foreach (Bytes::split($newline) as $character) {
             $newlineSet = $newlineSet->union(ByteCharSet::fromChar($character));
         }
 

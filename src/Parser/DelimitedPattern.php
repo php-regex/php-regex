@@ -18,12 +18,12 @@ use PHPRegex\Parser\Internal\PatternParser;
 /**
  * Represents a regex pattern with its components.
  */
-final readonly class DelimitedPattern implements \Stringable
+final class DelimitedPattern implements \Stringable
 {
     public function __construct(
-        public string $pattern,
-        public string $flags = '',
-        public string $delimiter = '/',
+        public readonly string $pattern,
+        public readonly string $flags = '',
+        public readonly string $delimiter = '/',
     ) {}
 
     /**

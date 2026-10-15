@@ -31,7 +31,7 @@ use PHPRegex\Redos\RedosAnalysis;
  * @phpstan-type LintResult array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, pattern: string|null, location?: string|null, issues: array<LintIssue>, optimizations: array<OptimizationEntry>, problems: array<Diagnostic>}
  * @phpstan-type LintStats array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, parserFallbacks?: int}
  */
-final readonly class LintReport
+final class LintReport
 {
     /**
      * @param array<LintResult> $results
@@ -41,10 +41,10 @@ final readonly class LintReport
         /**
          * @var array<LintResult>
          */
-        public array $results,
+        public readonly array $results,
         /**
          * @var LintStats
          */
-        public array $stats,
+        public readonly array $stats,
     ) {}
 }

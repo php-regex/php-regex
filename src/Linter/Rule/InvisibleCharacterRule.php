@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -250,7 +251,7 @@ final class InvisibleCharacterRule extends AbstractLintRule
         }
 
         $bytes = '';
-        foreach (str_split($character) as $byte) {
+        foreach (Bytes::split($character) as $byte) {
             $bytes .= \sprintf('\x%02X', \ord($byte));
         }
 

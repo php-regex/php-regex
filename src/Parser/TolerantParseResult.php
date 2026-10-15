@@ -19,14 +19,14 @@ use PHPRegex\Parser\Node\RegexNode;
 /**
  * Outcome of a tolerant parse attempt.
  */
-final readonly class TolerantParseResult
+final class TolerantParseResult
 {
     /**
      * @internal built by RegexParser::parseTolerant() and Regex::parseTolerant()
      *
      * @param list<RegexException> $errors what a strict parse would have thrown, the first error PCRE meets
      */
-    public function __construct(public RegexNode $ast, public array $errors = []) {}
+    public function __construct(public readonly RegexNode $ast, public readonly array $errors = []) {}
 
     public function hasErrors(): bool
     {

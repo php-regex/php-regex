@@ -19,7 +19,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Root node of the regex AST.
  */
-final readonly class RegexNode extends AbstractNode
+final class RegexNode extends AbstractNode
 {
     /**
      * @param string|null $source the pattern body the AST was parsed from,
@@ -27,12 +27,12 @@ final readonly class RegexNode extends AbstractNode
      *                            makes ignorable and that no node carries
      */
     public function __construct(
-        public NodeInterface $pattern,
-        public string $flags,
-        public string $delimiter,
+        public readonly NodeInterface $pattern,
+        public readonly string $flags,
+        public readonly string $delimiter,
         int $startPosition,
         int $endPosition,
-        public ?string $source = null
+        public readonly ?string $source = null
     ) {
         parent::__construct($startPosition, $endPosition);
     }

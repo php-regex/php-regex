@@ -54,9 +54,9 @@ final class Str
     }
 }
 
-final readonly class Matcher
+final class Matcher
 {
-    public function __construct(#[RegexPattern] public string $regex) {}
+    public function __construct(#[RegexPattern] public readonly string $regex) {}
 }
 
 final class Calls

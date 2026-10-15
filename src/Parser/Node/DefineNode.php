@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a DEFINE block in a regular expression.
  */
-final readonly class DefineNode extends AbstractNode
+final class DefineNode extends AbstractNode
 {
     public function __construct(
-        public NodeInterface $content,
+        public readonly NodeInterface $content,
         int $startPosition,
         int $endPosition
     ) {

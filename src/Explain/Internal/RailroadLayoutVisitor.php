@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Explain\Internal;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -410,7 +412,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             ? strspn($written, self::HEX_DIGITS, 2) === $length - 2 && 1 === strspn($spelled, self::HEX_DIGITS, 0, 1)
             : strspn($written, self::DIGITS, 1) === $length - 1 && 1 === strspn($spelled, self::DIGITS, 0, 1));
 
-        return ($readsOn ? '\x{'.strtoupper(dechex($escape->codePoint)).'}' : DisplayEscaper::escape($written)).$spelled;
+        return ($readsOn ? '\x{'.Ascii::upper(dechex($escape->codePoint)).'}' : DisplayEscaper::escape($written)).$spelled;
     }
 
     /**
@@ -1165,7 +1167,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         }
 
         if ($preserveWhitespace) {
-            return str_split($label, self::MAX_LABEL_CHARS);
+            return Bytes::split($label, self::MAX_LABEL_CHARS);
         }
 
         $label = trim($label);
@@ -1196,7 +1198,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
                 continue;
             }
 
-            $chunks = str_split($word, self::MAX_LABEL_CHARS);
+            $chunks = Bytes::split($word, self::MAX_LABEL_CHARS);
             $lastIndex = \count($chunks) - 1;
             foreach ($chunks as $index => $chunk) {
                 if ($index === $lastIndex) {

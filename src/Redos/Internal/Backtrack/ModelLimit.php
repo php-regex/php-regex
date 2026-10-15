@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos\Internal\Backtrack;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * Stops the proof: the pattern holds a construct the model leaves out, or
@@ -40,7 +41,7 @@ final class ModelLimit extends \RuntimeException implements ExceptionInterface
     {
         $entry = \sprintf('ambiguity without witness at offset %d', $offset);
 
-        return new self(ucfirst($entry), false, true, $entry);
+        return new self(Ascii::upperFirst($entry), false, true, $entry);
     }
 
     public static function outOfModel(string $construct): self

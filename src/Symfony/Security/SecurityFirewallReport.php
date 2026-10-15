@@ -30,7 +30,7 @@ namespace PHPRegex\Symfony\Security;
  * }
  * @phpstan-type FirewallSkip array{name: string, file: string, line: int, reason: string}
  */
-final readonly class SecurityFirewallReport
+final class SecurityFirewallReport
 {
     /**
      * @param array<FirewallFinding> $findings
@@ -38,8 +38,8 @@ final readonly class SecurityFirewallReport
      * @param array<string, int>     $stats
      */
     public function __construct(
-        public array $findings,
-        public array $skippedFirewalls,
-        public array $stats,
+        public readonly array $findings,
+        public readonly array $skippedFirewalls,
+        public readonly array $stats,
     ) {}
 }

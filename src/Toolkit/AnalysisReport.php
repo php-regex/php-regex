@@ -20,7 +20,7 @@ use PHPRegex\Redos\RedosAnalysis;
 /**
  * Analysis report for a regex pattern.
  */
-final readonly class AnalysisReport
+final class AnalysisReport
 {
     /**
      * @internal built by Regex::analyze()
@@ -29,12 +29,12 @@ final readonly class AnalysisReport
      * @param list<RuleViolation> $lintIssues what the pattern linter reported
      */
     public function __construct(
-        public bool $isValid,
-        public array $errors,
-        public array $lintIssues,
-        public RedosAnalysis $redos,
-        public OptimizationResult $optimization,
-        public string $explanation,
-        public string $highlighted,
+        public readonly bool $isValid,
+        public readonly array $errors,
+        public readonly array $lintIssues,
+        public readonly RedosAnalysis $redos,
+        public readonly OptimizationResult $optimization,
+        public readonly string $explanation,
+        public readonly string $highlighted,
     ) {}
 }

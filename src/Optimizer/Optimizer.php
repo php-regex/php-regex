@@ -45,7 +45,7 @@ use PHPRegex\Parser\TraversalAction;
  * lifetime, with a DFA cache, so a later run — another pattern of the same
  * batch, the same pattern again — reuses the automata already built.
  */
-final readonly class Optimizer
+final class Optimizer
 {
     /**
      * The configurations the match check of a rewrite may explore: a few
@@ -64,7 +64,7 @@ final readonly class Optimizer
 
     private readonly LanguageSolver $solver;
 
-    public function __construct(private RegexParser $parser, private ?DfaCacheInterface $dfaCache = null)
+    public function __construct(private readonly RegexParser $parser, private readonly ?DfaCacheInterface $dfaCache = null)
     {
         $this->solver = new LanguageSolver($parser, $dfaCache ?? new InMemoryDfaCache());
     }

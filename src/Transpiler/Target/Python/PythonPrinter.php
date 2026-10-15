@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\Python;
 
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -271,7 +272,7 @@ final class PythonPrinter extends AbstractTargetPrinter
     #[\Override]
     public function visitControlChar(ControlCharNode $node): string
     {
-        $ord = \ord(strtoupper($node->char)) - 64;
+        $ord = \ord(Ascii::upper($node->char)) - 64;
 
         return $this->formatCodePoint($ord);
     }
@@ -374,7 +375,7 @@ final class PythonPrinter extends AbstractTargetPrinter
                     10 => '\\n',
                     13 => '\\r',
                     12 => '\\f',
-                    default => '\\x'.strtoupper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
+                    default => '\\x'.Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
                 };
             } else {
                 $result .= $char;
@@ -392,13 +393,13 @@ final class PythonPrinter extends AbstractTargetPrinter
     private function formatCodePoint(int $codePoint): string
     {
         if ($codePoint <= 0xFF) {
-            return '\\x'.strtoupper(str_pad(dechex($codePoint), 2, '0', \STR_PAD_LEFT));
+            return '\\x'.Ascii::upper(str_pad(dechex($codePoint), 2, '0', \STR_PAD_LEFT));
         }
         if ($codePoint <= 0xFFFF) {
-            return '\\u'.strtoupper(str_pad(dechex($codePoint), 4, '0', \STR_PAD_LEFT));
+            return '\\u'.Ascii::upper(str_pad(dechex($codePoint), 4, '0', \STR_PAD_LEFT));
         }
 
-        return '\\U'.strtoupper(str_pad(dechex($codePoint), 8, '0', \STR_PAD_LEFT));
+        return '\\U'.Ascii::upper(str_pad(dechex($codePoint), 8, '0', \STR_PAD_LEFT));
     }
 
     private function normalizeBackreference(string $ref, int $position): string

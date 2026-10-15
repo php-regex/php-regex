@@ -74,7 +74,9 @@ final class PackageManifestTest extends TestCase
      * The uses of a sibling's internal classes 2.0 ships with. Siblings always
      * run at the same version, so these may change in any release; a new entry
      * here is still a new cross-package dependency on code that promises
-     * nothing: make the class public instead, or keep it. Parser\Hir is
+     * nothing: make the class public instead, or keep it. Ascii and Bytes
+     * map case and split strings the same way on every PHP the packages
+     * run on. Parser\Hir is
      * watched the same way: it stays @internal while the analyses move onto
      * the normalized form.
      */
@@ -82,35 +84,35 @@ final class PackageManifestTest extends TestCase
         // The solver reads the whole normalized form: every class of
         // it, and the translator that builds the tree.
         'Automata' => [
-            'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind',
-            'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
-            'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
-            'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
-            'Parser\Hir\RepetitionHir', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StartOptions',
-            'Parser\Internal\StaticCaches',
+            'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind', 'Parser\Hir\AtomicHir',
+            'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir',
+            'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
+            'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind',
+            'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre',
+            'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches',
         ],
         'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Linter\Internal\WorkerCount', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
-        'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
-        'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
+        'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
-        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\LibraryPcre'],
+        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre'],
         'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         // The lint writes its rewrite of a pattern under x into the
         // pattern's own layout, as the optimizer does.
-        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
+        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
         'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
-        'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        'PHPStan' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
-        'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
-        'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
+        'Psalm' => ['Parser\Internal\Ascii', 'Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
+        'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
         'Symfony' => ['Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         'Toolkit' => ['Parser\Internal\PatternParser'],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
-        'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\LibraryPcre'],
+        'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre'],
     ];
 
     #[Test]

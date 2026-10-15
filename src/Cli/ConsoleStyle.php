@@ -18,13 +18,13 @@ use PHPRegex\Toolkit\Regex;
 /**
  * @internal
  */
-final readonly class ConsoleStyle
+final class ConsoleStyle
 {
     private const INDENT = '  ';
     private const PATTERN_INDENT = '      ';
     private const ARROW = "\xE2\x86\x92";
 
-    public function __construct(private Output $output, private bool $visuals = true) {}
+    public function __construct(private readonly Output $output, private readonly bool $visuals = true) {}
 
     public function visualsEnabled(): bool
     {

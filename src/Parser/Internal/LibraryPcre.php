@@ -321,9 +321,32 @@ final class LibraryPcre
      */
     private static function isBelow(string $value, int $floor): bool
     {
-        $limit = (string) (int) $value === $value ? (int) $value : self::quietly(static fn (): int => ini_parse_quantity($value));
+        $limit = (string) (int) $value === $value ? (int) $value : self::quantity($value);
 
         return ($limit & 0xFFFFFFFF) < $floor;
+    }
+
+    /**
+     * An integer setting with a unit, "1M", read as the running PHP reads
+     * it: ini_parse_quantity() from PHP 8.2; before it, strtol() in base 0,
+     * shifted by the "k", "m" or "g" the value ends with, as zend_atol() does.
+     */
+    private static function quantity(string $value): int
+    {
+        if (\function_exists('ini_parse_quantity')) {
+            $quantity = self::quietly(static fn (): mixed => ini_parse_quantity($value));
+
+            return \is_int($quantity) ? $quantity : 0;
+        }
+
+        $shift = match (Ascii::lower(substr($value, -1))) {
+            'g' => 30,
+            'm' => 20,
+            'k' => 10,
+            default => 0,
+        };
+
+        return \intval($value, 0) << $shift;
     }
 
     /**

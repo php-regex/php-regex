@@ -114,7 +114,10 @@ final class LintFunctionOverrides
         self::$fileGetContentsCalls = [];
     }
 
-    public static function queueStreamSocketPair(false $result): void
+    /**
+     * @param false $result
+     */
+    public static function queueStreamSocketPair(bool $result): void
     {
         self::$streamSocketPairSequence[] = $result;
     }

@@ -19,6 +19,7 @@ use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
@@ -134,7 +135,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             }
 
             if (!$stopParsing && str_starts_with($arg, '--target=')) {
-                $target = strtolower(substr($arg, \strlen('--target=')));
+                $target = Ascii::lower(substr($arg, \strlen('--target=')));
 
                 continue;
             }
@@ -144,14 +145,14 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
                 if ('' === $value || str_starts_with($value, '-')) {
                     return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing value for --target.'];
                 }
-                $target = strtolower($value);
+                $target = Ascii::lower($value);
                 $i++;
 
                 continue;
             }
 
             if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = strtolower(substr($arg, \strlen('--format=')));
+                $format = Ascii::lower(substr($arg, \strlen('--format=')));
 
                 continue;
             }
@@ -161,7 +162,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
                 if ('' === $value || str_starts_with($value, '-')) {
                     return ['pattern' => '', 'target' => '', 'format' => '', 'error' => 'Missing value for --format.'];
                 }
-                $format = strtolower($value);
+                $format = Ascii::lower($value);
                 $i++;
 
                 continue;
@@ -207,7 +208,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         $style->renderSection('Transpilation Result', 1, 1);
 
         $style->renderKeyValueBlock([
-            'Target' => $output->success(strtoupper($result->target)),
+            'Target' => $output->success(Ascii::upper($result->target)),
             'Source' => $result->source,
         ]);
 

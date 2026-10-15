@@ -20,7 +20,7 @@ namespace PHPRegex\Automata\Model;
  *
  * @phpstan-type AlphabetRange array{0: int, 1: int}
  */
-final readonly class Dfa
+final class Dfa
 {
     /**
      * @internal the solver builds the automata
@@ -29,11 +29,11 @@ final readonly class Dfa
      * @param array<int, AlphabetRange> $alphabetRanges
      */
     public function __construct(
-        public int $startState,
-        public array $states,
-        public array $alphabetRanges = [],
-        public int $minCodePoint = 0,
-        public int $maxCodePoint = 255,
+        public readonly int $startState,
+        public readonly array $states,
+        public readonly array $alphabetRanges = [],
+        public readonly int $minCodePoint = 0,
+        public readonly int $maxCodePoint = 255,
     ) {}
 
     public function getState(int $stateId): DfaState

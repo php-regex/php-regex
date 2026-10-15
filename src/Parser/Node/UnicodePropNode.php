@@ -18,17 +18,17 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a Unicode property match.
  */
-final readonly class UnicodePropNode extends AbstractNode
+final class UnicodePropNode extends AbstractNode
 {
     public function __construct(
-        public string $prop,
-        public bool $hasBraces,
+        public readonly string $prop,
+        public readonly bool $hasBraces,
         int $startPosition,
         ?int $endPosition = null,
         /**
          * Whether the source used the \P negated syntax (vs \p{^...}).
          */
-        public bool $negatedSyntax = false,
+        public readonly bool $negatedSyntax = false,
     ) {
         parent::__construct($startPosition, $endPosition ?? $startPosition);
     }

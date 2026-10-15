@@ -18,7 +18,7 @@ namespace PHPRegex\Parser\Engine;
  * pattern as the caller wrote it: "reference to non-existent subpattern at
  * offset 3", "Unknown modifier 'Q'".
  */
-final readonly class PcreError
+final class PcreError
 {
     /**
      * @internal built by PcreEngine::compile()
@@ -26,5 +26,5 @@ final readonly class PcreError
      * @param string   $message the message, without the function name and without "Compilation failed: "
      * @param int|null $offset  the byte offset in the pattern body the message names, null when it names none
      */
-    public function __construct(public string $message, public ?int $offset = null) {}
+    public function __construct(public readonly string $message, public readonly ?int $offset = null) {}
 }

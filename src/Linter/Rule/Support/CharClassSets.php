@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule\Support;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -118,7 +119,7 @@ final class CharClassSets
     public static function fromPosixClass(string $class): ?ByteCharSet
     {
         $negated = str_starts_with($class, '^');
-        $normalized = strtolower(ltrim($class, '^'));
+        $normalized = Ascii::lower(ltrim($class, '^'));
 
         $set = match ($normalized) {
             'digit' => ByteCharSet::fromRange(\ord('0'), \ord('9')),

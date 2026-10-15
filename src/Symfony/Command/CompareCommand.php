@@ -44,8 +44,8 @@ final class CompareCommand extends Command
 
     public function __construct(
         private readonly Regex $regex,
-        private readonly string $defaultMinimizer = MinimizationAlgorithm::Hopcroft->value,
-        private readonly string $defaultDeterminizer = DeterminizationAlgorithm::SubsetIndexed->value,
+        private readonly string $defaultMinimizer = 'hopcroft',
+        private readonly string $defaultDeterminizer = 'subset-indexed',
     ) {
         parent::__construct();
     }

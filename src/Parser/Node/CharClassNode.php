@@ -18,11 +18,11 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a character class in a regular expression.
  */
-final readonly class CharClassNode extends AbstractNode
+final class CharClassNode extends AbstractNode
 {
     public function __construct(
-        public NodeInterface $expression,
-        public bool $isNegated,
+        public readonly NodeInterface $expression,
+        public readonly bool $isNegated,
         int $startPosition,
         int $endPosition
     ) {

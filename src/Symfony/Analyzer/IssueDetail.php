@@ -16,11 +16,11 @@ namespace PHPRegex\Symfony\Analyzer;
 /**
  * @internal
  */
-final readonly class IssueDetail
+final class IssueDetail
 {
     public function __construct(
-        public string $label,
-        public string $value,
-        public string $kind = 'text',
+        public readonly string $label,
+        public readonly string $value,
+        public readonly string $kind = 'text',
     ) {}
 }

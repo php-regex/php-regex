@@ -18,20 +18,20 @@ use PHPRegex\Parser\ErrorCode;
 /**
  * Outcome of a regex validation check.
  */
-final readonly class ValidationResult implements \JsonSerializable
+final class ValidationResult implements \JsonSerializable
 {
     /**
      * @internal built by RegexParser::validate() and Regex::validate()
      */
     public function __construct(
-        public bool $isValid,
-        public ?string $error = null,
-        public int $complexityScore = 0,
-        public ?ValidationErrorCategory $category = null,
-        public ?int $offset = null,
-        public ?string $caretSnippet = null,
-        public ?string $hint = null,
-        public ?ErrorCode $errorCode = null,
+        public readonly bool $isValid,
+        public readonly ?string $error = null,
+        public readonly int $complexityScore = 0,
+        public readonly ?ValidationErrorCategory $category = null,
+        public readonly ?int $offset = null,
+        public readonly ?string $caretSnippet = null,
+        public readonly ?string $hint = null,
+        public readonly ?ErrorCode $errorCode = null,
     ) {}
 
     /**

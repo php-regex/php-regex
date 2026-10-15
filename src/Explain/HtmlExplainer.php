@@ -15,6 +15,7 @@ namespace PHPRegex\Explain;
 
 use PHPRegex\Explain\Internal\InlineSetting;
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -338,7 +339,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
         $isNegated = str_starts_with($inner, '^');
         $prop = ltrim($inner, '^');
         $prefix = $isNegated ? 'P' : 'p';
-        $key = strtolower($prop);
+        $key = Ascii::lower($prop);
 
         if (isset(self::UNICODE_PROPERTY_MAP[$key])) {
             $description = self::UNICODE_PROPERTY_MAP[$key];
@@ -346,7 +347,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
                 if ('ingreek' === $key) {
                     $description = 'Any character except one in the Greek block (block)';
                 } else {
-                    $description = 'Any character except '.lcfirst($description);
+                    $description = 'Any character except '.Ascii::lowerFirst($description);
                 }
             }
         } else {
@@ -606,7 +607,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
 
         // Handle control characters and extended ASCII as hex codes
         if ($ord < 32 || 127 === $ord || $ord >= 128) {
-            return "'\\x".strtoupper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT))."'";
+            return "'\\x".Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT))."'";
         }
 
         // Printable characters
@@ -617,22 +618,22 @@ final class HtmlExplainer extends AbstractNodeVisitor
     {
         $rep = $node->originalRepresentation;
         if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $matches)) {
-            return strtoupper($matches[1]);
+            return Ascii::upper($matches[1]);
         }
 
         if (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $matches)) {
-            return strtoupper($matches[1]);
+            return Ascii::upper($matches[1]);
         }
 
         if (LibraryPcre::match('/^\\\\[xu]\\{([0-9a-fA-F]+)\\}$/', $rep, $matches)) {
-            return strtoupper($matches[1]);
+            return Ascii::upper($matches[1]);
         }
 
         if (1 === \strlen($rep)) {
-            return strtoupper(str_pad(dechex(\ord($rep)), 2, '0', \STR_PAD_LEFT));
+            return Ascii::upper(str_pad(dechex(\ord($rep)), 2, '0', \STR_PAD_LEFT));
         }
 
-        return strtoupper($rep);
+        return Ascii::upper($rep);
     }
 
     private function formatOctalValue(CharLiteralNode $node): string

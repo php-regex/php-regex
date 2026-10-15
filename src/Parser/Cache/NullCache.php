@@ -15,7 +15,7 @@ namespace PHPRegex\Parser\Cache;
 
 use PHPRegex\Parser\Node\RegexNode;
 
-final readonly class NullCache implements RemovableCacheInterface
+final class NullCache implements RemovableCacheInterface
 {
     #[\Override]
     public function generateKey(string $seed): string

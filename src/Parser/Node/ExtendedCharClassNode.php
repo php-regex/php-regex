@@ -20,17 +20,17 @@ use PHPRegex\Parser\NodeVisitorInterface;
  * character of the set its expression builds from classes, types,
  * properties, escaped characters and set operations.
  */
-final readonly class ExtendedCharClassNode extends AbstractNode
+final class ExtendedCharClassNode extends AbstractNode
 {
     /**
      * @param string $text the class as written, "(?[" to "])"; empty for a
      *                     class built without a pattern
      */
     public function __construct(
-        public NodeInterface $expression,
+        public readonly NodeInterface $expression,
         int $startPosition,
         int $endPosition,
-        public string $text = '',
+        public readonly string $text = '',
     ) {
         parent::__construct($startPosition, $endPosition);
     }

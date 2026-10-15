@@ -18,18 +18,18 @@ namespace PHPRegex\Linter;
  *
  * @internal
  */
-final readonly class Diagnostic
+final class Diagnostic
 {
     public function __construct(
-        public DiagnosticType $type,
-        public LintSeverity $severity,
-        public string $message,
-        public ?string $code = null,
-        public ?int $position = null,
-        public ?string $snippet = null,
-        public ?string $suggestion = null,
-        public ?string $docsAnchor = null,
-        public ?string $tip = null,
+        public readonly DiagnosticType $type,
+        public readonly LintSeverity $severity,
+        public readonly string $message,
+        public readonly ?string $code = null,
+        public readonly ?int $position = null,
+        public readonly ?string $snippet = null,
+        public readonly ?string $suggestion = null,
+        public readonly ?string $docsAnchor = null,
+        public readonly ?string $tip = null,
     ) {}
 
     /**

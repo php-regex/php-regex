@@ -476,9 +476,9 @@ final class ErrorCodeSpecificityTest extends TestCase
      * Every suite rejection the running PHP refuses too, with the message
      * and offset PHP reports.
      *
-     * @return iterable<string, array{id: string, pattern: string, message: string, offset: int|null}>
+     * @return \Generator<string, array{id: string, pattern: string, message: string, offset: int|null}>
      */
-    public static function provideSuiteRejectionsWithTheirMessage(): iterable
+    public static function provideSuiteRejectionsWithTheirMessage(): \Generator
     {
         $runner = new Pcre2CaseRunner();
 
@@ -591,9 +591,9 @@ final class ErrorCodeSpecificityTest extends TestCase
      * Every case the pinned PCRE2 suite records as refused in PHP, run for
      * the release the fixture was extracted from.
      *
-     * @return iterable<string, array{case: Pcre2Case, pin: string}>
+     * @return \Generator<string, array{case: Pcre2Case, pin: string}>
      */
-    public static function provideSuiteRejectedCases(): iterable
+    public static function provideSuiteRejectedCases(): \Generator
     {
         $raw = file_get_contents(self::SUITE_JSON);
 

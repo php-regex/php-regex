@@ -22,9 +22,9 @@ use PHPRegex\Automata\Support\WorkBudget;
  *
  * @internal
  */
-final readonly class DfaMinimizer
+final class DfaMinimizer
 {
-    public function __construct(private ?MinimizationAlgorithmInterface $algorithm = null) {}
+    public function __construct(private readonly ?MinimizationAlgorithmInterface $algorithm = null) {}
 
     public function minimize(Dfa $dfa, ?SolverOptions $options = null): Dfa
     {

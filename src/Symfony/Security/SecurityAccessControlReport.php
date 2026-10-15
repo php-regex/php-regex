@@ -29,7 +29,7 @@ namespace PHPRegex\Symfony\Security;
  * }
  * @phpstan-type AccessSkip array{index: int, file: string, line: int, reason: string}
  */
-final readonly class SecurityAccessControlReport
+final class SecurityAccessControlReport
 {
     /**
      * @param array<AccessConflict> $conflicts
@@ -41,12 +41,12 @@ final readonly class SecurityAccessControlReport
      * @param array<int, int>       $rulesWithUnsupportedHosts
      */
     public function __construct(
-        public array $conflicts,
-        public array $skippedRules,
-        public array $stats,
-        public array $rulesWithAllowIf,
-        public array $rulesWithIps,
-        public array $rulesWithNoPath,
-        public array $rulesWithUnsupportedHosts,
+        public readonly array $conflicts,
+        public readonly array $skippedRules,
+        public readonly array $stats,
+        public readonly array $rulesWithAllowIf,
+        public readonly array $rulesWithIps,
+        public readonly array $rulesWithNoPath,
+        public readonly array $rulesWithUnsupportedHosts,
     ) {}
 }

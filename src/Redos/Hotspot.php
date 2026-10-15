@@ -16,17 +16,17 @@ namespace PHPRegex\Redos;
 /**
  * Identifies a vulnerable span within the pattern for heatmap rendering.
  */
-final readonly class Hotspot implements \JsonSerializable
+final class Hotspot implements \JsonSerializable
 {
     /**
      * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$hotspots
      */
     public function __construct(
-        public int $start,
-        public int $end,
-        public RedosSeverity $severity,
-        public string $pattern,
-        public ?string $trigger = null,
+        public readonly int $start,
+        public readonly int $end,
+        public readonly RedosSeverity $severity,
+        public readonly string $pattern,
+        public readonly ?string $trigger = null,
     ) {}
 
     /**

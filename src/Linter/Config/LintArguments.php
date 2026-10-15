@@ -20,7 +20,7 @@ use PHPRegex\Parser\Internal\Ascii;
 /**
  * @internal
  */
-final readonly class LintArguments
+final class LintArguments
 {
     /**
      * @param array<int, string>                 $paths
@@ -34,29 +34,29 @@ final readonly class LintArguments
      *                                                                reported, once checkComplexity turns it on
      */
     public function __construct(
-        public array $paths,
-        public array $exclude,
-        public int $minSavings,
-        public string $verbosity,
-        public string $format,
-        public bool $quiet,
-        public bool $checkRedos,
-        public bool $checkValidation,
-        public bool $checkOptimizations,
-        public bool $checkLint,
-        public int $jobs,
-        public ?string $output = null,
-        public ?string $baseline = null,
-        public ?string $generateBaseline = null,
-        public string $ide = '',
-        public array $optimizations = [],
-        public string $redosMode = 'theoretical',
-        public ?string $redosThreshold = null,
-        public array $lintRules = [],
-        public array $interop = InteropPresets::DEFAULT_PRESETS,
-        public array $patternFunctions = [],
-        public bool $checkComplexity = false,
-        public int $complexityThreshold = 50,
+        public readonly array $paths,
+        public readonly array $exclude,
+        public readonly int $minSavings,
+        public readonly string $verbosity,
+        public readonly string $format,
+        public readonly bool $quiet,
+        public readonly bool $checkRedos,
+        public readonly bool $checkValidation,
+        public readonly bool $checkOptimizations,
+        public readonly bool $checkLint,
+        public readonly int $jobs,
+        public readonly ?string $output = null,
+        public readonly ?string $baseline = null,
+        public readonly ?string $generateBaseline = null,
+        public readonly string $ide = '',
+        public readonly array $optimizations = [],
+        public readonly string $redosMode = 'theoretical',
+        public readonly ?string $redosThreshold = null,
+        public readonly array $lintRules = [],
+        public readonly array $interop = InteropPresets::DEFAULT_PRESETS,
+        public readonly array $patternFunctions = [],
+        public readonly bool $checkComplexity = false,
+        public readonly int $complexityThreshold = 50,
     ) {}
 
     /**
@@ -182,13 +182,13 @@ final readonly class LintArguments
         if (!\is_string($redosMode) || '' === $redosMode) {
             $redosMode = 'theoretical';
         }
-        $redosMode = strtolower($redosMode);
+        $redosMode = Ascii::lower($redosMode);
 
         $redosThreshold = $defaults['redosThreshold'] ?? null;
         if (!\is_string($redosThreshold) || '' === $redosThreshold) {
             $redosThreshold = null;
         } else {
-            $redosThreshold = strtolower($redosThreshold);
+            $redosThreshold = Ascii::lower($redosThreshold);
         }
 
         $optimizations = $defaults['optimizations'] ?? [];

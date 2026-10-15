@@ -16,15 +16,15 @@ namespace PHPRegex\Cli;
 /**
  * @internal
  */
-final readonly class GlobalOptions
+final class GlobalOptions
 {
     public function __construct(
-        public bool $quiet,
-        public ?bool $ansi,
-        public bool $help,
-        public bool $visuals,
-        public ?string $phpVersion,
-        public ?string $error,
-        public ?string $pcreVersion = null,
+        public readonly bool $quiet,
+        public readonly ?bool $ansi,
+        public readonly bool $help,
+        public readonly bool $visuals,
+        public readonly ?string $phpVersion,
+        public readonly ?string $error,
+        public readonly ?string $pcreVersion = null,
     ) {}
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CommentNode;
@@ -33,7 +34,7 @@ use PHPRegex\Transpiler\TranspileException;
  *
  * @internal
  */
-final readonly class HtmlPatternTarget implements TargetInterface
+final class HtmlPatternTarget implements TargetInterface
 {
     private const PADDING = '[\s\S]*';
 
@@ -75,7 +76,7 @@ final readonly class HtmlPatternTarget implements TargetInterface
     {
         // The v flag reads code points, as /u does; a value holds no line
         // break for /s, /m or /D to matter; /i is spelled out by the printer.
-        $unsupported = array_diff(str_split($flags), ['', 'i', 'u', 'D', 's', 'm', 'x', 'S', 'U']);
+        $unsupported = array_diff(Bytes::split($flags), ['', 'i', 'u', 'D', 's', 'm', 'x', 'S', 'U']);
         if (str_contains($flags, 'x')) {
             $context->addNote('Applied /x (extended mode): whitespace and comments were removed during compilation.');
         }

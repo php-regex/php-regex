@@ -22,7 +22,7 @@ use PHPRegex\Parser\Node\GroupNode;
  *
  * @internal
  */
-final readonly class GroupIndex
+final class GroupIndex
 {
     /**
      * @param array<string, bool>                           $definedNamedGroups
@@ -32,13 +32,13 @@ final readonly class GroupIndex
      * @param bool                                          $recurses              whether the pattern calls itself whole: (?R), (?0), \g<0>
      */
     public function __construct(
-        public int $maxCapturingGroup,
-        public array $definedNamedGroups,
-        public array $capturingGroups,
-        public array $capturingGroupsByName,
-        public bool $containsBranchReset,
-        public array $subroutineTargets = [],
-        public bool $recurses = false,
+        public readonly int $maxCapturingGroup,
+        public readonly array $definedNamedGroups,
+        public readonly array $capturingGroups,
+        public readonly array $capturingGroupsByName,
+        public readonly bool $containsBranchReset,
+        public readonly array $subroutineTargets = [],
+        public readonly bool $recurses = false,
     ) {}
 
     /**

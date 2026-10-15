@@ -24,6 +24,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Confirmation;
@@ -151,7 +152,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             }
 
             if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = strtolower(substr($arg, \strlen('--format=')));
+                $format = Ascii::lower(substr($arg, \strlen('--format=')));
 
                 continue;
             }
@@ -161,14 +162,14 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Missing value for --format.');
                 }
-                $format = strtolower($value);
+                $format = Ascii::lower($value);
                 $i++;
 
                 continue;
             }
 
             if (!$stopParsing && str_starts_with($arg, '--redos-mode=')) {
-                $value = strtolower(substr($arg, \strlen('--redos-mode=')));
+                $value = Ascii::lower(substr($arg, \strlen('--redos-mode=')));
                 $mode = RedosMode::tryFrom($value);
                 if (null === $mode) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-mode.');
@@ -183,7 +184,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Missing value for --redos-mode.');
                 }
-                $mode = RedosMode::tryFrom(strtolower($value));
+                $mode = RedosMode::tryFrom(Ascii::lower($value));
                 if (null === $mode) {
                     return $this->errorResult($format, $redosMode, $redosThreshold, 'Invalid value for --redos-mode.');
                 }
@@ -339,8 +340,8 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         $style->renderKeyValueBlock([
             'Status' => $status,
             'Severity' => $severityOutput.' (score '.$analysis->score.')',
-            'Mode' => strtoupper($analysis->mode->value),
-            'Confidence' => strtoupper($analysis->confidence->value),
+            'Mode' => Ascii::upper($analysis->mode->value),
+            'Confidence' => Ascii::upper($analysis->confidence->value),
         ]);
 
         foreach ($this->redosVerdictLines($analysis) as $line) {
@@ -422,7 +423,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
 
     private function formatRedosSeverity(RedosAnalysis $analysis, Output $output): string
     {
-        $label = strtoupper($analysis->severity->value);
+        $label = Ascii::upper($analysis->severity->value);
 
         $color = match ($analysis->severity) {
             RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),

@@ -46,6 +46,7 @@ use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -676,7 +677,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             default => $name->toString(),
         };
 
-        $function = null === $function ? null : strtolower(ltrim($function, '\\'));
+        $function = null === $function ? null : Ascii::lower(ltrim($function, '\\'));
 
         return null !== $function && isset(self::PARAMETERS[$function]) ? $function : null;
     }
@@ -691,6 +692,8 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             return true; // Only on a Psalm release that moved these: none the tests run has.
         }
 
+        // Psalm keys its functions by strtolower(), locale and all: the name
+        // is lowered the same way to be found.
         return $codebase->functions->functionExists($source, strtolower($function));
     }
 

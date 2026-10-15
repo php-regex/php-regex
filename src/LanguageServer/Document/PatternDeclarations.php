@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\LanguageServer\Document;
 
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * The functions and static methods that declare a parameter with
@@ -179,7 +180,7 @@ final class PatternDeclarations
      */
     public function functionArgument(string $name): ?int
     {
-        return $this->index()['functions'][strtolower(ltrim($name, '\\'))] ?? null;
+        return $this->index()['functions'][Ascii::lower(ltrim($name, '\\'))] ?? null;
     }
 
     /**
@@ -188,7 +189,7 @@ final class PatternDeclarations
      */
     public function methodArgument(string $class, string $method): ?int
     {
-        return $this->index()['methods'][strtolower(ltrim($class, '\\').'::'.$method)] ?? null;
+        return $this->index()['methods'][Ascii::lower(ltrim($class, '\\').'::'.$method)] ?? null;
     }
 
     /**
@@ -211,7 +212,7 @@ final class PatternDeclarations
     {
         // The workspace scan's filter: a text holding neither "RegexPattern"
         // nor PhpStorm's "RegExp", whatever its imports, declares nothing.
-        if (false === stripos($content, 'regexp')) {
+        if (!str_contains(Ascii::lower($content), 'regexp')) {
             return [];
         }
 
@@ -267,12 +268,12 @@ final class PatternDeclarations
 
     private function isPhpFile(string $path): bool
     {
-        if (!str_ends_with(strtolower($path), '.php')) {
+        if (!str_ends_with(Ascii::lower($path), '.php')) {
             return false;
         }
 
         foreach (self::TEMPLATE_SUFFIXES as $suffix) {
-            if (str_ends_with(strtolower($path), $suffix)) {
+            if (str_ends_with(Ascii::lower($path), $suffix)) {
                 return false;
             }
         }
@@ -309,7 +310,7 @@ final class PatternDeclarations
         foreach ($this->current() as $spec) {
             // The scanner writes every spec "name#index".
             $hash = (int) strrpos($spec, '#');
-            $name = strtolower(substr($spec, 0, $hash));
+            $name = Ascii::lower(substr($spec, 0, $hash));
             $index[str_contains($name, '::') ? 'methods' : 'functions'][$name] = (int) substr($spec, $hash + 1);
         }
 

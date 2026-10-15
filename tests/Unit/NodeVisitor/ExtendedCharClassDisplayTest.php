@@ -113,7 +113,7 @@ final class ExtendedCharClassDisplayTest extends TestCase
 
         $tree = Regex::create(['cache' => null, 'pcre_version' => '10.45'])->parse($pattern);
         $saved = ['pcre.jit' => ini_get('pcre.jit'), 'pcre.backtrack_limit' => ini_get('pcre.backtrack_limit')];
-        LibraryPcre::useIniSetter(static fn (): false => false);
+        LibraryPcre::useIniSetter(static fn (): bool => false);
 
         try {
             ini_set('pcre.jit', '0');

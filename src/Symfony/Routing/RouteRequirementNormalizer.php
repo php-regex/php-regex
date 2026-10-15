@@ -31,7 +31,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class RouteRequirementNormalizer
+final class RouteRequirementNormalizer
 {
     /**
      * A requirement as written, sanitized as setting it on a Route does.

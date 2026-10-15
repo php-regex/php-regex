@@ -41,7 +41,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
  * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type LintResult from LintReport
  */
-final readonly class LintBaseline
+final class LintBaseline
 {
     public const VERSION = 1;
 
@@ -54,7 +54,7 @@ final readonly class LintBaseline
     /**
      * @param array<string, array<int, int>> $lines the line of each entry, by key
      */
-    private function __construct(private array $lines) {}
+    private function __construct(private readonly array $lines) {}
 
     /**
      * @throws CliException when the file is missing, unreadable, or holds no baseline

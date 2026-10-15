@@ -81,9 +81,9 @@ final class NoLegacyTokenNamesTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{page: string}>
+     * @return \Generator<string, array{page: string}>
      */
-    public static function provideDocumentationPages(): iterable
+    public static function provideDocumentationPages(): \Generator
     {
         foreach (DocumentationPages::all() as $page) {
             yield $page => ['page' => $page];

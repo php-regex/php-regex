@@ -31,7 +31,7 @@ use PHPRegex\Parser\Analysis\Participation;
  *
  * @internal
  */
-final readonly class CaptureLayout
+final class CaptureLayout
 {
     /**
      * Past this many values, a group's literals say less than its facts.
@@ -43,7 +43,7 @@ final readonly class CaptureLayout
     /**
      * @param list<CaptureKey> $keys
      */
-    private function __construct(public array $keys) {}
+    private function __construct(public readonly array $keys) {}
 
     /**
      * Whether a type writes the values as a union of literal strings: there

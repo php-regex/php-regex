@@ -18,13 +18,13 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class AlternationHir extends Hir
+final class AlternationHir extends Hir
 {
     /**
      * @param non-empty-list<Hir> $branches
      */
     public function __construct(
-        public array $branches,
+        public readonly array $branches,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

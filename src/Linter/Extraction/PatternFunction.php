@@ -22,7 +22,7 @@ namespace PHPRegex\Linter\Extraction;
  *
  * @internal
  */
-final readonly class PatternFunction
+final class PatternFunction
 {
     /**
      * Parameter names a call may pass the pattern under, compared in
@@ -57,11 +57,11 @@ final readonly class PatternFunction
      *                                       declarations of one function mark several
      */
     public function __construct(
-        public string $label,
-        public int $argumentIndex = 0,
-        public bool $keysArePatterns = false,
-        public ?int $replacementIndex = null,
-        public array $moreArgumentIndexes = [],
+        public readonly string $label,
+        public readonly int $argumentIndex = 0,
+        public readonly bool $keysArePatterns = false,
+        public readonly ?int $replacementIndex = null,
+        public readonly array $moreArgumentIndexes = [],
     ) {}
 
     /**

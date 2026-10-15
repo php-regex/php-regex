@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target;
 
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Transpiler\Target\JavaScript\HtmlPatternTarget;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
 use PHPRegex\Transpiler\Target\Python\PythonTarget;
@@ -55,7 +56,7 @@ final class TargetRegistry
 
     public function get(string $name): TargetInterface
     {
-        $key = strtolower(trim($name));
+        $key = Ascii::lower(trim($name));
 
         if (isset($this->targets[$key])) {
             return $this->targets[$key];

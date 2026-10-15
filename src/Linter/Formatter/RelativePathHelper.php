@@ -16,9 +16,9 @@ namespace PHPRegex\Linter\Formatter;
 /**
  * @internal
  */
-final readonly class RelativePathHelper
+final class RelativePathHelper
 {
-    private ?string $basePath;
+    private readonly ?string $basePath;
 
     public function __construct(?string $basePath = null)
     {

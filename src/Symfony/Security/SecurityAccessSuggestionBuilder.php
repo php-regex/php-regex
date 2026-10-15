@@ -18,7 +18,7 @@ namespace PHPRegex\Symfony\Security;
  *
  * @phpstan-import-type AccessConflict from SecurityAccessControlReport
  */
-final readonly class SecurityAccessSuggestionBuilder
+final class SecurityAccessSuggestionBuilder
 {
     /**
      * @param (callable(string, int): string)|null $formatLocation

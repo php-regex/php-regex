@@ -21,6 +21,7 @@ use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\CodePointReader;
 use PHPRegex\Parser\Internal\ExtendedClassReader;
 use PHPRegex\Parser\Internal\GroupNameReader;
@@ -2111,7 +2112,9 @@ final class TokenParser
 
                 return $this->parseOperandAt($class, $at, true);
             },
-            fn (LexerException|LimitException|ParserException $reason, int $at, array $operands): never => throw $this->firstOperandError($operands, $token->position) ?? $reason,
+            function (LexerException|LimitException|ParserException $reason, int $at, array $operands) use ($token): never {
+                throw $this->firstOperandError($operands, $token->position) ?? $reason;
+            },
             $this->supports(PcreFeature::ErrorOffsetPastTheFault),
             $this->unicodeMode || str_contains($this->flags, 'u'),
             $this->maxRecursionDepth,
@@ -3818,7 +3821,7 @@ final class TokenParser
     private function numberTooBigOffset(string $digits, int $at): ?int
     {
         $value = 0;
-        foreach (str_split($digits) as $read => $digit) {
+        foreach (Bytes::split($digits) as $read => $digit) {
             $value = $value * 10 + (int) $digit;
             if ($value > 65535) {
                 return $at + ($this->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $read + 1);

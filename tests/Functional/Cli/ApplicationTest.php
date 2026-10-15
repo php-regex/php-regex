@@ -473,9 +473,9 @@ final class DisplayErrorsProbeCommand implements JsonCommandInterface
  * A command with a JSON mode that throws what it is given, after printing
  * its document when asked to.
  */
-final readonly class FailingJsonCommand implements JsonCommandInterface
+final class FailingJsonCommand implements JsonCommandInterface
 {
-    public function __construct(private \RuntimeException $failure, private bool $writesDocumentFirst = false) {}
+    public function __construct(private readonly \RuntimeException $failure, private readonly bool $writesDocumentFirst = false) {}
 
     public function getName(): string
     {

@@ -489,7 +489,7 @@ final class PatternFormatterTest extends TestCase
         $this->assertSame('/a/', $result->pattern);
         $this->assertFalse($result->changed);
         $this->assertNull($result->refusal);
-        $this->assertTrue((new \ReflectionClass(FormatResult::class))->isReadOnly());
+        $this->assertTrue(self::everyPropertyIsReadonly(FormatResult::class));
         $this->assertSame(FormatRefusal::SpacedQuantifier, (new FormatResult('/a{ 1}/', false, FormatRefusal::SpacedQuantifier))->refusal);
     }
 
@@ -2874,5 +2874,19 @@ final class PatternFormatterTest extends TestCase
     private function parse(string $pattern): RegexNode
     {
         return Regex::create(['cache' => new NullCache()])->parse($pattern);
+    }
+
+    /**
+     * @param class-string $class
+     */
+    private static function everyPropertyIsReadonly(string $class): bool
+    {
+        foreach ((new \ReflectionClass($class))->getProperties() as $property) {
+            if (!$property->isReadOnly()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -44,14 +44,14 @@ use PHPRegex\Redos\RedosProof;
  *
  *     (new RedosRepairer())->repair('/^(?:a+)+$/')[0]->pattern; // "/^a+$/"
  */
-final readonly class RedosRepairer
+final class RedosRepairer
 {
     private const FLATTENABLE = [GroupType::NonCapturing, GroupType::Capturing, GroupType::Named];
 
     public function __construct(
-        private ?RegexParser $parser = null,
-        private ?RedosAnalyzer $analyzer = null,
-        private ?LanguageSolver $solver = null,
+        private readonly ?RegexParser $parser = null,
+        private readonly ?RedosAnalyzer $analyzer = null,
+        private readonly ?LanguageSolver $solver = null,
     ) {}
 
     /**

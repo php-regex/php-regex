@@ -24,21 +24,21 @@ use PHPRegex\Redos\RedosComplexity;
  *
  * @internal
  */
-final readonly class ProofResult
+final class ProofResult
 {
     /**
      * @param list<string> $otherSuffixes
      * @param list<string> $abstractions
      */
     public function __construct(
-        public RedosComplexity $complexity,
-        public ?int $degree,
-        public ?string $prefix,
-        public ?string $pump,
-        public ?string $suffix,
-        public array $otherSuffixes,
-        public bool $unicode,
-        public array $abstractions,
-        public bool $withoutMatches = false,
+        public readonly RedosComplexity $complexity,
+        public readonly ?int $degree,
+        public readonly ?string $prefix,
+        public readonly ?string $pump,
+        public readonly ?string $suffix,
+        public readonly array $otherSuffixes,
+        public readonly bool $unicode,
+        public readonly array $abstractions,
+        public readonly bool $withoutMatches = false,
     ) {}
 }

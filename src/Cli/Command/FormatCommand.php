@@ -134,8 +134,10 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
     /**
      * The width a --width value asks for: a whole number of 1 or more, null
      * for anything else.
+     *
+     * @param string|true $value
      */
-    private static function width(string|true $value): ?int
+    private static function width(string|bool $value): ?int
     {
         if (true === $value || '' === $value || \strlen($value) !== strspn($value, '0123456789')) {
             return null;

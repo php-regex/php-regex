@@ -15,6 +15,7 @@ namespace PHPRegex\Cli\SelfUpdate;
 
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -106,7 +107,7 @@ class SelfUpdater
             throw new CliException('Unable to hash the downloaded phar.');
         }
 
-        if (strtolower($hash) !== strtolower($expectedChecksum)) {
+        if (Ascii::lower($hash) !== Ascii::lower($expectedChecksum)) {
             @unlink($tempPath);
 
             throw new CliException('Checksum verification failed.');
@@ -286,7 +287,7 @@ class SelfUpdater
     {
         $line = trim($contents);
         $first = (LibraryPcre::split('/\s+/', $line) ?: [])[0] ?? '';
-        $checksum = strtolower($first);
+        $checksum = Ascii::lower($first);
 
         if (!LibraryPcre::match('/^[a-f0-9]{64}$/', $checksum)) {
             throw new CliException('Invalid checksum format.');

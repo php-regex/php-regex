@@ -36,19 +36,19 @@ use Symfony\Component\Routing\RouteCollection;
  * @phpstan-import-type RouteConflict from RouteConflictReport
  * @phpstan-import-type RouteSkip from RouteConflictReport
  */
-final readonly class RouteConflictAnalyzer
+final class RouteConflictAnalyzer
 {
     private const SUPPORTED_FLAGS = ['i', 's', 'u'];
 
     private const IGNORED_FLAGS = ['D'];
 
-    private LanguageSolver $solver;
+    private readonly LanguageSolver $solver;
 
     public function __construct(
-        private Regex $regex,
-        private string $minimizationAlgorithm = MinimizationAlgorithm::Hopcroft->value,
+        private readonly Regex $regex,
+        private readonly string $minimizationAlgorithm = 'hopcroft',
         ?LanguageSolver $solver = null,
-        private string $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed->value,
+        private readonly string $determinizationAlgorithm = 'subset-indexed',
     ) {
         $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
     }

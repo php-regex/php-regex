@@ -113,9 +113,9 @@ final class UpgradeMapTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return \Generator<string, array{string}>
      */
-    public static function provideClassesOf13(): iterable
+    public static function provideClassesOf13(): \Generator
     {
         $lines = file(\dirname(__DIR__, 2).'/Fixtures/Upgrade/v1.3.0-classes.txt', \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES) ?: [];
         foreach ($lines as $class) {

@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -61,7 +62,7 @@ final class RegularSubsetValidator
         $unsupported = [];
         // Flags the tree already reads, or that change nothing a language says.
         $allowed = ['i', 's', 'u', 'D', 'm', 'x', 'U', 'n', 'J', 'S', 'X', 'r'];
-        foreach (\str_split($flags) as $flag) {
+        foreach (Bytes::split($flags) as $flag) {
             if (!\in_array($flag, $allowed, true)) {
                 $unsupported[] = $flag;
             }

@@ -18,13 +18,13 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a sequence of atoms.
  */
-final readonly class SequenceNode extends AbstractNode
+final class SequenceNode extends AbstractNode
 {
     /**
      * @param array<NodeInterface> $children
      */
     public function __construct(
-        public array $children,
+        public readonly array $children,
         int $startPosition,
         int $endPosition
     ) {

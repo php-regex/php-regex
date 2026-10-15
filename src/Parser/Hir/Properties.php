@@ -26,7 +26,7 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class Properties
+final class Properties
 {
     /**
      * Literals longer than this are cut: a prefix a few hundred characters
@@ -50,17 +50,17 @@ final readonly class Properties
      * @param bool           $accepts      whether a "(*ACCEPT)" inside may end the match there
      */
     public function __construct(
-        public int $minLength,
-        public ?int $maxLength,
-        public ?bool $nullable,
-        public ?CharSet $first,
-        public ?CharSet $last,
-        public ?array $literal,
-        public array $prefix,
-        public array $suffix,
-        public int $captureCount,
-        public bool $regular,
-        public bool $accepts,
+        public readonly int $minLength,
+        public readonly ?int $maxLength,
+        public readonly ?bool $nullable,
+        public readonly ?CharSet $first,
+        public readonly ?CharSet $last,
+        public readonly ?array $literal,
+        public readonly array $prefix,
+        public readonly array $suffix,
+        public readonly int $captureCount,
+        public readonly bool $regular,
+        public readonly bool $accepts,
     ) {}
 
     public static function empty(): self

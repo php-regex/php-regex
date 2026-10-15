@@ -19,13 +19,13 @@ use PHPRegex\Parser\Internal\IniFlag;
 /**
  * @internal
  */
-final readonly class PcreRuntimeInfo implements \JsonSerializable
+final class PcreRuntimeInfo implements \JsonSerializable
 {
     public function __construct(
-        public string $version,
-        public ?string $jitSetting,
-        public ?int $backtrackLimit,
-        public ?int $recursionLimit,
+        public readonly string $version,
+        public readonly ?string $jitSetting,
+        public readonly ?int $backtrackLimit,
+        public readonly ?int $recursionLimit,
     ) {}
 
     public static function fromIni(): self

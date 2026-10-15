@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a PCRE verb.
  */
-final readonly class PcreVerbNode extends AbstractNode
+final class PcreVerbNode extends AbstractNode
 {
     public function __construct(
-        public string $verb,
+        public readonly string $verb,
         int $startPosition,
         int $endPosition
     ) {

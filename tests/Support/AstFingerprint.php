@@ -51,6 +51,7 @@ final class AstFingerprint
         'src/Parser/Analysis/GroupNumbering.php',
         'src/Parser/Analysis/GroupNumberingCollector.php',
         'src/Parser/Internal/Ascii.php',
+        'src/Parser/Internal/Bytes.php',
         'src/Parser/Internal/CodePointReader.php',
         'src/Parser/Internal/ExtendedClassReader.php',
         'src/Parser/Internal/GroupIndex.php',

@@ -59,21 +59,21 @@ use PHPRegex\Redos\RedosSeverity;
  * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type OptimizationEntry from LintReport
  */
-final readonly class AnalysisService
+final class AnalysisService
 {
     private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
 
     private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
 
-    private RedosSeverity $redosSeverityThreshold;
+    private readonly RedosSeverity $redosSeverityThreshold;
 
     /**
      * @var array<string>
      */
-    private array $ignoredPatterns;
+    private readonly array $ignoredPatterns;
 
-    private RedosMode $redosMode;
+    private readonly RedosMode $redosMode;
 
     /**
      * @param string                 $redosThreshold       the lowest severity reported: low, medium, high or
@@ -89,20 +89,20 @@ final readonly class AnalysisService
      * @throws InvalidRegexOptionException when the threshold names no severity
      */
     public function __construct(
-        private RegexParser $regex,
-        private ?PatternExtractor $extractor = null,
-        private int $warningThreshold = 50,
-        string $redosThreshold = RedosSeverity::High->value,
+        private readonly RegexParser $regex,
+        private readonly ?PatternExtractor $extractor = null,
+        private readonly int $warningThreshold = 50,
+        string $redosThreshold = 'high',
         array $ignoredPatterns = [],
         array $redosIgnoredPatterns = [],
-        private bool $ignoreParseErrors = false,
+        private readonly bool $ignoreParseErrors = false,
         RedosMode|string $redosMode = RedosMode::Theoretical,
-        private ?ConfirmationOptions $redosConfirmOptions = null,
+        private readonly ?ConfirmationOptions $redosConfirmOptions = null,
         bool $redosEnabled = false,
-        private bool $lintEnabled = true,
-        private array $lintRules = [],
-        private array $range = [],
-        private ?DfaCacheInterface $dfaCache = null,
+        private readonly bool $lintEnabled = true,
+        private readonly array $lintRules = [],
+        private readonly array $range = [],
+        private readonly ?DfaCacheInterface $dfaCache = null,
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
         $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
@@ -113,7 +113,7 @@ final readonly class AnalysisService
         } else {
             $this->redosMode = $redosMode instanceof RedosMode
                 ? $redosMode
-                : (RedosMode::tryFrom(strtolower((string) $redosMode)) ?? RedosMode::Theoretical);
+                : (RedosMode::tryFrom(Ascii::lower((string) $redosMode)) ?? RedosMode::Theoretical);
         }
     }
 
@@ -1327,7 +1327,7 @@ final readonly class AnalysisService
         ];
 
         foreach ($indicators as $indicator) {
-            if (false !== stripos($errorMessage, (string) $indicator)) {
+            if (str_contains(Ascii::lower($errorMessage), Ascii::lower((string) $indicator))) {
                 return true;
             }
         }

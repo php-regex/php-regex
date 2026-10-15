@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Generator;
 
+use PHPRegex\Generator\Internal\MersenneTwister;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
@@ -57,8 +58,6 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
-use Random\Engine\Mt19937;
-use Random\Randomizer;
 
 /**
  * A visitor that generates a random sample string that matches the AST.
@@ -92,7 +91,7 @@ final class SampleGenerator extends AbstractNodeVisitor
 
     private ?int $seed = null;
 
-    private Randomizer $randomizer;
+    private MersenneTwister $randomizer;
 
     /**
      * Stores generated text from capturing groups.
@@ -684,7 +683,7 @@ final class SampleGenerator extends AbstractNodeVisitor
             return $this->getRandomChar($samples);
         }
 
-        return match (strtolower($node->class)) {
+        return match (Ascii::lower($node->class)) {
             'alpha' => $this->getRandomChar(['a', 'b', 'C', 'Z']),
             'alnum' => $this->getRandomChar(['a', 'Z', '1', '9']),
             'digit' => $this->getRandomChar(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']),
@@ -1286,7 +1285,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         }
 
         try {
-            return $this->randomizer->getInt($min, $max);
+            return $this->randomizer->between($min, $max);
         } catch (\Throwable) {
             return $min;
         }
@@ -1547,7 +1546,6 @@ final class SampleGenerator extends AbstractNodeVisitor
 
     private function resetRandomizer(?int $seed = null): void
     {
-        $engine = null === $seed ? new Mt19937() : new Mt19937($seed);
-        $this->randomizer = new Randomizer($engine);
+        $this->randomizer = new MersenneTwister($seed);
     }
 }

@@ -26,12 +26,12 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal the form may change while the analyses move onto it
  */
-abstract readonly class Hir
+abstract class Hir
 {
     public function __construct(
-        public Properties $properties,
-        public int $startPosition,
-        public int $endPosition,
+        public readonly Properties $properties,
+        public readonly int $startPosition,
+        public readonly int $endPosition,
     ) {}
 
     /**

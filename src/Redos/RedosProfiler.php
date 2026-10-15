@@ -15,6 +15,7 @@ namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -682,7 +683,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             return false;
         }
 
-        $verbName = strtoupper(explode(':', $verbNode->verb, 2)[0]);
+        $verbName = Ascii::upper(explode(':', $verbNode->verb, 2)[0]);
 
         return \in_array($verbName, ['COMMIT', 'PRUNE', 'SKIP'], true);
     }

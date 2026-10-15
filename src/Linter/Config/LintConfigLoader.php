@@ -23,11 +23,11 @@ namespace PHPRegex\Linter\Config;
  *
  * @internal
  */
-final readonly class LintConfigLoader
+final class LintConfigLoader
 {
     public const FILES = ['regex.dist.json', 'regex.json'];
 
-    private LintConfigValidator $validator;
+    private readonly LintConfigValidator $validator;
 
     public function __construct()
     {

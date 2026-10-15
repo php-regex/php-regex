@@ -18,13 +18,13 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class LiteralHir extends Hir
+final class LiteralHir extends Hir
 {
     /**
      * @param list<int> $codePoints
      */
     public function __construct(
-        public array $codePoints,
+        public readonly array $codePoints,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {
