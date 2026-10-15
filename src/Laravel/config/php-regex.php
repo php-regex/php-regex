@@ -124,7 +124,14 @@ return [
     */
     'analysis' => [
         /*
-        | Complexity score above which a warning is emitted.
+        | Whether regex:lint reports the patterns whose complexity score
+        | reaches the threshold below.
+        */
+        'complexity' => false,
+
+        /*
+        | Complexity score from which regex:lint reports a pattern, once
+        | "complexity" is on.
         */
         'warning_threshold' => 50,
     ],

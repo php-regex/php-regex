@@ -78,6 +78,7 @@ final class PublishedConfigTest extends TestCase
         $this->assertSame('high', config('php-regex.redos.threshold'));
         $this->assertSame([], config('php-regex.redos.ignored_patterns'));
         $this->assertSame(50, config('php-regex.analysis.warning_threshold'));
+        $this->assertFalse(config('php-regex.analysis.complexity'));
         $this->assertSame('subset-indexed', config('php-regex.automata.determinization_algorithm'));
         $this->assertSame('regex_', config('php-regex.cache.prefix'));
         $this->assertTrue(config('php-regex.optimizations.word'));

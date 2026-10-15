@@ -58,6 +58,7 @@ final class PHPRegexExtensionTest extends TestCase
         $cacheConfig = (array) $container->getParameter('php_regex.cache');
         $this->assertSame('/tmp/cache', $cacheConfig['directory']);
         $this->assertSame(1, $container->getParameter('php_regex.analysis.warning_threshold'));
+        $this->assertFalse($container->getParameter('php_regex.analysis.complexity'));
         // 2.0 has one ignore list, and no complexity score named after ReDoS.
         $this->assertFalse($container->hasParameter('php_regex.analysis.redos_threshold'));
         $this->assertSame(['foo'], $container->getParameter('php_regex.redos.ignored_patterns'));

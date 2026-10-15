@@ -47,6 +47,7 @@ return [
         'ignored_patterns' => [],
     ],
     'analysis' => [
+        'complexity' => false, // regex:lint reports complex patterns
         'warning_threshold' => 50,
     ],
     'automata' => [

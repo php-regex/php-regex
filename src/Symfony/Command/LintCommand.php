@@ -96,6 +96,7 @@ final class LintCommand extends Command
         private readonly ?string $pcreVersion = null,
         private readonly ?string $projectDir = null,
         private readonly bool $checkRedos = false,
+        private readonly bool $checkComplexity = false,
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -242,6 +243,7 @@ final class LintCommand extends Command
                 analysisWorkers: $jobs,
                 optimizations: $this->defaultOptimizations,
                 checkRedos: $this->checkRedos,
+                checkComplexity: $this->checkComplexity,
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths and in vendor/, whatever paths are linted.
                 declarationPaths: $this->defaultPaths,

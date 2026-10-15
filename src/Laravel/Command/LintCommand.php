@@ -184,6 +184,7 @@ final class LintCommand extends Command
                 analysisWorkers: $jobs,
                 optimizations: $defaultOptimizations,
                 checkRedos: true === config('php-regex.redos.enabled'),
+                checkComplexity: true === config('php-regex.analysis.complexity'),
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths, the linted ones when none are, as
                 // `regex lint` reads them, and in vendor/, whatever paths are

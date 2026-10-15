@@ -35,6 +35,7 @@ final class ConfigurationTest extends TestCase
          *     },
          *     extractor_service: string|null,
          *     analysis: array{
+         *         complexity: bool,
          *         warning_threshold: int,
          *     },
          *     redos: array{
@@ -94,6 +95,7 @@ final class ConfigurationTest extends TestCase
          *     },
          *     extractor_service: string|null,
          *     analysis: array{
+         *         complexity: bool,
          *         warning_threshold: int,
          *     },
          *     redos: array{
@@ -149,6 +151,7 @@ final class ConfigurationTest extends TestCase
          *     cache: string|null,
          *     extractor_service: string|null,
          *     analysis: array{
+         *         complexity: bool,
          *         warning_threshold: int,
          *     }
          * } $config

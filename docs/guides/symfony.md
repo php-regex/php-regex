@@ -61,6 +61,7 @@ php_regex:
         threshold: high    # low, medium, high or critical, in any case
         ignored_patterns: []
     analysis:
+        complexity: false  # regex:lint reports complex patterns
         warning_threshold: 50
     automata:
         minimization_algorithm: hopcroft         # hopcroft or moore

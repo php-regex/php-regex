@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `analysis.complexity`, off by default, makes `regex:lint` report the
+   patterns whose complexity score reaches `analysis.warning_threshold`,
+   as `regex lint` does under `checks.complexity`.
  * `regex:compare --method intersection|subset|equivalence`, defaulting to
    `intersection` as the CLI and Symfony do; the JSON report names the
    method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.

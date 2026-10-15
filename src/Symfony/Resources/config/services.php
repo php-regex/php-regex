@@ -151,6 +151,7 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$pcreVersion', param('php_regex.pcre_version'))
         ->arg('$projectDir', param('php_regex.project_dir'))
         ->arg('$checkRedos', param('php_regex.redos.enabled'))
+        ->arg('$checkComplexity', param('php_regex.analysis.complexity'))
         ->tag('console.command')
         ->public();
 
