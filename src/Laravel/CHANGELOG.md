@@ -11,6 +11,14 @@ CHANGELOG
    method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.
  * `regex:explain` no longer stops with an error on a pattern the optimizer
    shortens.
+ * The `regex:routes` and `regex:compare --format=json` reports are part of
+   the backward compatibility promise, listed key by key in the JSON output
+   reference: one document ending with a newline, Unicode and slashes
+   unescaped, a byte that is not valid UTF-8 written `\xNN`. `regex:compare`
+   prints every key whatever the method (`left_only_example` and
+   `right_only_example` in snake_case), and a failure as the error envelope:
+   stage `usage` for an option, `pattern` for an invalid pattern (with its
+   `validation`) or one the automata cannot read.
  * The `ValidRegex` rule validates a pattern a user submits, with the
    application's `Regex` service and the library's message; with
    `redos: true` a ReDoS severity from `redosThreshold` (`high`) up is

@@ -123,16 +123,6 @@ Parked, too large for upstream review: local branches
 Each item below was verified against the code (2026-10-10, PHP 8.4.26 with
 PCRE2 10.49) and is additive: none changes a 2.0 contract.
 
-### E. The Symfony and Laravel bridges
-
-**E5 — The bridge reports are internal array shapes.** Symfony's report objects
-are readonly but marked `@internal` over phpstan-typed arrays, and Laravel
-builds raw arrays and encodes them. Nothing programmatic can render or consume
-them without depending on internals.
-*Verify*: `grep -rn '@internal' src/Symfony/Analyzer/`;
-`src/Laravel/Command/RoutesCommand.php:112`.
-*Fix*: stable typed objects, or a documented JSON schema. Effort: M.
-
 ### G. Left by the audit before the tag (2026-10-12)
 
 Each item was verified at the tag candidate and is additive.

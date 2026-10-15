@@ -1175,6 +1175,15 @@ not change.
   envelope with its stage (`usage`, `config`, `collect` or `analyze`), where they
   printed `{"error": "..."}`, or a text error for an option Symfony could not
   use.
+- Symfony's `regex:analyze --format=json` writes a section's `meta` and
+  `debug` as lists of `{"label": ..., "value": ...}` rows, where they were
+  objects keyed by the label, as `{"Routes": 2}`: read
+  `array_column($section['meta'], 'value', 'label')` for the 1.x object. An
+  option it cannot use prints the envelope, stage `usage`, where it printed a
+  text error, and the report is written with Unicode and slashes unescaped,
+  ending with one newline. The
+  [JSON output reference](docs/reference/json-output.md#symfony-analyze)
+  lists every key.
 - A usage error is printed as the envelope, stage `usage`, as soon as
   `--format=json` or `--json` is on the command line, wherever it sits.
   `--format` values are case-insensitive, and the last `--format` or

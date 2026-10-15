@@ -216,8 +216,8 @@ share a string?), `subset` (is every string of the first one a string of
 the second?) and `equivalence` (do they match the same strings?). A failed
 check prints the string that proves it. `--format=json` writes the verdict
 under a key named for the method: `disjoint` and `example`, `subset` and
-`counterexample`, or `equivalent`, `counterexample`, `leftOnlyExample` and
-`rightOnlyExample`.
+`counterexample`, or `equivalent`, `counterexample`, `left_only_example` and
+`right_only_example`; the keys of the other methods are there too, `null`.
 
 `regex:lint --jobs=N` (or `-j N`) runs the analysis in `N` worker processes; left out,
 the count follows the CPUs (and the container's memory limit). A `--jobs`
@@ -235,6 +235,8 @@ Symfony's router and `security.yaml`.
 prints each constraint, and `--validate` compiles each one as the router
 matches it, marking it `✓` or `✗` with the error: without `--validate` a
 constraint gets no mark, and its `valid` key in the JSON report is `null`.
+The [JSON output reference](../reference/json-output.md#laravel-routes) lists
+every key of the `regex:routes` and `regex:compare` reports.
 
 `regex:compare`, `regex:transpile` and `regex:explain --highlight` colour a
 pattern only on a terminal: piped, or under `--no-ansi`, it is printed as

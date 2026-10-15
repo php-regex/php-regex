@@ -154,6 +154,7 @@ Documentation
 * [The Symfony guide](https://php-regex.com/guides/symfony/) — configuration, lint targets, the commands, upgrading from 1.x
 * [The CLI guide](https://php-regex.com/guides/cli/) — `regex:lint` in depth, exit codes
 * [The ReDoS guide](https://php-regex.com/guides/redos/) — how the risk analysis reaches its verdicts
+* [JSON output](https://php-regex.com/reference/json-output/) — every key of the `regex:lint`, `regex:transpile` and `regex:analyze` reports
 * [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources

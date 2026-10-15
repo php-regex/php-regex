@@ -193,7 +193,8 @@ final class AnalyzeCommandTest extends TestCase
         $this->assertIsArray($sections);
         $this->assertIsArray($sections[0]);
         $this->assertIsArray($sections[0]['debug']);
-        $this->assertArrayHasKey('Duration', $sections[0]['debug']);
-        $this->assertSame(1, $sections[0]['debug']['Pairs total']);
+        $debug = array_column($sections[0]['debug'], 'value', 'label');
+        $this->assertArrayHasKey('Duration', $debug);
+        $this->assertSame(1, $debug['Pairs total']);
     }
 }

@@ -161,6 +161,7 @@ Documentation
 * [The Laravel guide](https://php-regex.com/guides/laravel/) — configuration, lint targets, the commands, upgrading from 1.x
 * [Quick start](https://php-regex.com/quick-start/) — first steps with the `Regex` service
 * [The ReDoS guide](https://php-regex.com/guides/redos/) — how the risk analysis reaches its verdicts
+* [JSON output](https://php-regex.com/reference/json-output/) — every key of the `regex:lint`, `regex:transpile`, `regex:routes` and `regex:compare` reports
 * [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources

@@ -297,7 +297,7 @@ under PHP's default limits. `regex:analyze` prints the same finding as
     "severity": "critical",
     "title": "api (config/packages/security.yaml:4)",
     "details": [
-        {"label": "CheckOutcome", "value": "CRITICAL", "kind": "text"},
+        {"label": "Severity", "value": "CRITICAL", "kind": "text"},
         {"label": "Verdict", "value": "Exponential backtracking (proven)", "kind": "text"},
         {"label": "Score", "value": "10", "kind": "text"},
         {"label": "Pattern", "value": "^/api/(\\w+/?)+$", "kind": "pattern"},
@@ -307,7 +307,9 @@ under PHP's default limits. `regex:analyze` prints the same finding as
 }
 ```
 
-The [ReDoS guide](redos.md) explains the verdicts and the attack.
+The [ReDoS guide](redos.md) explains the verdicts and the attack, and the
+[JSON output reference](../reference/json-output.md#symfony-analyze) lists
+every key of the `regex:analyze` report.
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration

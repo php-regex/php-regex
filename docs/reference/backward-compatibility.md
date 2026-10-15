@@ -125,12 +125,15 @@ The bridges and tools carry more than their classes:
   `RegexSetList::PCRE_UPGRADE` name the sets that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.
 - `regex-symfony`: the `php_regex` configuration, the commands' names and
-  options, and the `ValidRegex` constraint's options, message parameters and
-  error codes.
+  options, the `regex:analyze` JSON report ([every key](json-output.md#symfony-analyze)),
+  and the `ValidRegex` constraint's options, message parameters and error
+  codes.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
   mirror every public method of `Regex`, so a signature that changes in the
   code changes there in the same release — the `php-regex` configuration, the
-  commands' names and options, and the `ValidRegex` rule's options.
+  commands' names and options, the `regex:routes` and `regex:compare` JSON
+  reports ([every key](json-output.md#laravel-routes)), and the `ValidRegex`
+  rule's options.
 - `regex-cli`: the `regex` command, with its commands, options, exit codes and
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
@@ -174,9 +177,9 @@ add one to yet.
   offsets, the end-of-pattern token last. A run of literal characters, one
   token per character today, may become one token.
 - **New keys and values in the JSON output**: a key in any JSON document the
-  `regex` command prints, an optional key in its error envelope, and a value
-  of an open enum field, such as `stage` or `severity`. The
-  [JSON output reference](json-output.md#what-a-minor-release-may-change)
+  `regex` command or a bridge command prints, an optional key in the error
+  envelope, and a value of an open enum field, such as `stage` or `severity`.
+  The [JSON output reference](json-output.md#what-a-minor-release-may-change)
   lists what may change and which fields are open.
 - **Message texts**: an error or lint message may be reworded, in the console
   and in JSON alike; the CHANGELOG says so. Match on the error code, the

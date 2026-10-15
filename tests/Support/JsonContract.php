@@ -16,14 +16,17 @@ namespace PHPRegex\Tests\Support;
 use PHPUnit\Framework\Assert;
 
 /**
- * The JSON the regex command prints, written down once: every object of
- * every document, by address, with its exact keys. The CLI tests check real
- * documents against it and the documentation test checks the reference page
- * against it, so the two cannot drift apart.
+ * The JSON the regex command and the Symfony and Laravel commands print,
+ * written down once: every object of every document, by address, with its
+ * exact keys. The command tests check real documents against it and the
+ * documentation test checks the reference page against it, so the two cannot
+ * drift apart.
  *
  * An address is the document kind for its top level (lint, analyze, debug,
- * redos, transpile, format, error for the error envelope, baseline for a baseline
- * file), then ".key" for a nested object and "[]" for the elements of a list.
+ * redos, transpile, format, error for the error envelope, baseline for a
+ * baseline file, symfony_analyze, laravel_routes and laravel_compare for the
+ * bridges' own reports), then ".key" for a nested object and "[]" for the
+ * elements of a list.
  * An object several documents embed has an address of its own (runtime,
  * validation, redos_analysis, benchmark) and is described once.
  */
@@ -103,6 +106,28 @@ final class JsonContract
         // regex lint --generate-baseline
         'baseline' => ['version', 'issues'],
         'baseline.issues[]' => ['file', 'line', 'column', 'issue_id', 'message', 'severity', 'pattern', 'pattern_hash'],
+
+        // Symfony's regex:analyze --format=json
+        'symfony_analyze' => ['sections'],
+        'symfony_analyze.sections[]' => ['id', 'title', 'meta', 'summary', 'warnings', 'issues', 'suggestions', 'debug'],
+        'symfony_analyze.sections[].meta[]' => ['label', 'value'],
+        'symfony_analyze.sections[].summary[]' => ['severity', 'message'],
+        'symfony_analyze.sections[].issues[]' => ['kind', 'severity', 'title', 'details', 'notes'],
+        'symfony_analyze.sections[].issues[].details[]' => ['label', 'value', 'kind'],
+
+        // Laravel's regex:routes --format=json
+        'laravel_routes' => ['routes', 'issues', 'summary'],
+        'laravel_routes.routes[]' => ['name', 'uri', 'methods', 'action', 'constraints'],
+        'laravel_routes.routes[].constraints[]' => ['parameter', 'pattern', 'valid', 'error'],
+        'laravel_routes.issues[]' => ['route', 'parameter', 'pattern', 'error'],
+        'laravel_routes.summary' => ['total_routes', 'routes_with_constraints', 'total_issues'],
+
+        // Laravel's regex:compare --format=json
+        'laravel_compare' => [
+            'pattern1', 'pattern2', 'method', 'disjoint', 'subset', 'equivalent', 'example', 'counterexample',
+            'left_only_example', 'right_only_example', 'algorithms', 'elapsed_ms',
+        ],
+        'laravel_compare.algorithms' => ['minimizer', 'determinizer'],
     ];
 
     /**
@@ -112,6 +137,7 @@ final class JsonContract
     public const OPTIONAL_KEYS = [
         'error' => ['validation'],
         'redos.bench' => ['safe'],
+        'symfony_analyze.sections[]' => ['debug'],
     ];
 
     /**
@@ -130,6 +156,10 @@ final class JsonContract
         'lint.results[].issues[].analysis' => 'redos_analysis',
         'redos.bench.vuln' => 'benchmark',
         'redos.bench.safe' => 'benchmark',
+        // Symfony's regex:analyze writes its warnings as its summary, and
+        // its debug rows as its meta rows.
+        'symfony_analyze.sections[].warnings[]' => 'symfony_analyze.sections[].summary[]',
+        'symfony_analyze.sections[].debug[]' => 'symfony_analyze.sections[].meta[]',
     ];
 
     /**

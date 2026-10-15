@@ -25,7 +25,7 @@ This section freezes behavior you build against: diagnostics, output shapes, com
 ## Use the data
 
 - [API reference](api.md): entry points, result objects, and exceptions.
-- [JSON output](json-output.md): every key the CLI prints.
+- [JSON output](json-output.md): every key the CLI and the Symfony and Laravel reports print.
 - [Capture shapes](capture-shapes.md): what `preg_match()` writes into `$matches`.
 - [Pattern info](pattern-info.md): capture count, lengths, limits, and target compatibility.
 - [Prefilters](prefilters.md): when a string function can answer before `preg_match()`.

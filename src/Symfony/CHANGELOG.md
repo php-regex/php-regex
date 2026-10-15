@@ -11,6 +11,11 @@ CHANGELOG
    the ReDoS risk, the lint issues and a sample beside it.
  * `regex:routes` and `regex:security` are listed by `bin/console list`,
    where they were hidden.
+ * The `regex:analyze --format=json` report is part of the backward
+   compatibility promise, listed key by key in the JSON output reference: a
+   section's `meta` and `debug` are `{label, value}` rows, a usage error is
+   the error envelope, stage `usage`, and Unicode and slashes are written
+   unescaped. The firewall finding labels its ReDoS severity `Severity`.
  * The `ValidRegex` constraint validates a pattern a user submits, with the
    bundle's `Regex` service: the library's message and hint as `{{ error }}`
    and `{{ hint }}`, and with `redos: true` a ReDoS severity from

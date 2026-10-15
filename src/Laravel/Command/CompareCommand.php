@@ -15,12 +15,16 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Compare two regex patterns: whether they share a string, whether the
@@ -67,40 +71,26 @@ final class CompareCommand extends Command
         $method = strtolower((string) $this->option('method'));
         $format = strtolower((string) $this->option('format'));
 
+        $json = 'json' === $format;
+
         // A command line it cannot use is reported before the patterns.
         if (!\in_array($method, ['intersection', 'subset', 'equivalence'], true)) {
-            $this->error("Invalid method '{$method}'. Supported: intersection, subset, equivalence");
-
-            return self::INVALID;
+            return $this->refuse($json, "Invalid method '{$method}'. Supported: intersection, subset, equivalence", JsonDocument::STAGE_USAGE, self::INVALID);
         }
 
         if (!\in_array($minimizer, ['hopcroft', 'moore'], true)) {
-            $this->error("Invalid minimizer '{$minimizer}'. Supported: hopcroft, moore");
-
-            return self::INVALID;
+            return $this->refuse($json, "Invalid minimizer '{$minimizer}'. Supported: hopcroft, moore", JsonDocument::STAGE_USAGE, self::INVALID);
         }
 
         if (!\in_array($determinizer, ['subset', 'subset-indexed'], true)) {
-            $this->error("Invalid determinizer '{$determinizer}'. Supported: subset, subset-indexed");
-
-            return self::INVALID;
+            return $this->refuse($json, "Invalid determinizer '{$determinizer}'. Supported: subset, subset-indexed", JsonDocument::STAGE_USAGE, self::INVALID);
         }
 
-        // Validate patterns
-        $validation1 = $this->regex->validate($pattern1);
-        if (!$validation1->isValid) {
-            $this->error('Invalid first pattern:');
-            $this->line((string) $validation1->error);
-
-            return self::FAILURE;
-        }
-
-        $validation2 = $this->regex->validate($pattern2);
-        if (!$validation2->isValid) {
-            $this->error('Invalid second pattern:');
-            $this->line((string) $validation2->error);
-
-            return self::FAILURE;
+        foreach (['first' => $pattern1, 'second' => $pattern2] as $which => $pattern) {
+            $validation = $this->regex->validate($pattern);
+            if (!$validation->isValid) {
+                return $this->invalidPattern($json, $which, $validation);
+            }
         }
 
         $startTime = microtime(true);
@@ -119,18 +109,26 @@ final class CompareCommand extends Command
             };
             $elapsed = microtime(true) - $startTime;
 
-            if ('json' === $format) {
-                $this->output->writeln((string) json_encode([
+            if ($json) {
+                // Every key whatever the method, in the same order, null
+                // where the method fills none.
+                $this->writeDocument(JsonDocument::encode(array_replace([
                     'pattern1' => $pattern1,
                     'pattern2' => $pattern2,
                     'method' => $method,
-                ] + $outcome['json'] + [
+                    'disjoint' => null,
+                    'subset' => null,
+                    'equivalent' => null,
+                    'example' => null,
+                    'counterexample' => null,
+                    'left_only_example' => null,
+                    'right_only_example' => null,
                     'algorithms' => [
                         'minimizer' => $minimizer,
                         'determinizer' => $determinizer,
                     ],
                     'elapsed_ms' => round($elapsed * 1000, 2),
-                ], \JSON_PRETTY_PRINT));
+                ], $outcome['json'])));
 
                 return $outcome['passed'] ? self::SUCCESS : self::FAILURE;
             }
@@ -169,19 +167,58 @@ final class CompareCommand extends Command
             $this->newLine();
 
             return $outcome['passed'] ? self::SUCCESS : self::FAILURE;
+        } catch (ComplexityException $e) {
+            // A valid pattern the automata cannot read, a backreference say.
+            return $this->refuse($json, $json ? $e->getMessage() : 'Comparison failed: '.$e->getMessage(), JsonDocument::STAGE_PATTERN, self::FAILURE);
         } catch (\Throwable $e) {
-            if ('json' === $format) {
-                $this->output->writeln((string) json_encode([
-                    'error' => $e->getMessage(),
-                    'pattern1' => $pattern1,
-                    'pattern2' => $pattern2,
-                ], \JSON_PRETTY_PRINT));
-            } else {
-                $this->error('Comparison failed: '.$e->getMessage());
-            }
-
-            return self::FAILURE;
+            // Not reached by a pattern the validation let through: a bug of
+            // the solver, which the command reports as the envelope says.
+            return $this->refuse($json, $json ? $e->getMessage() : 'Comparison failed: '.$e->getMessage(), JsonDocument::STAGE_INTERNAL, self::FAILURE);
         }
+    }
+
+    /**
+     * A comparison that cannot be made: the error envelope in JSON mode, an
+     * error line otherwise.
+     */
+    private function refuse(bool $json, string $message, string $stage, int $exitCode): int
+    {
+        if ($json) {
+            $this->writeDocument(JsonDocument::error($message, $stage));
+        } else {
+            $this->error($message);
+        }
+
+        return $exitCode;
+    }
+
+    /**
+     * An invalid pattern stops the comparison, with everything the
+     * validation found.
+     */
+    private function invalidPattern(bool $json, string $which, ValidationResult $validation): int
+    {
+        if ($json) {
+            $this->writeDocument(JsonDocument::error(
+                $validation->error ?? 'Invalid pattern.',
+                JsonDocument::STAGE_PATTERN,
+                ['validation' => $validation],
+            ));
+        } else {
+            $this->error('Invalid '.$which.' pattern:');
+            $this->line((string) $validation->error);
+        }
+
+        return self::FAILURE;
+    }
+
+    /**
+     * The document as it is, never read for console tags, and written even
+     * under --quiet: it is the output asked for, not a status line.
+     */
+    private function writeDocument(string $document): void
+    {
+        $this->output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 
     /**
@@ -235,8 +272,8 @@ final class CompareCommand extends Command
             'json' => [
                 'equivalent' => $result->isEquivalent,
                 'counterexample' => $counterexample,
-                'leftOnlyExample' => $result->leftOnlyExample,
-                'rightOnlyExample' => $result->rightOnlyExample,
+                'left_only_example' => $result->leftOnlyExample,
+                'right_only_example' => $result->rightOnlyExample,
             ],
         ];
     }
