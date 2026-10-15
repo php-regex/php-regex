@@ -22,7 +22,7 @@
         }
     ],
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.1",
         "phpstan/phpstan": "^2.0",
         "php-regex/regex-automata": "self.version",
         "php-regex/regex-linter": "self.version",

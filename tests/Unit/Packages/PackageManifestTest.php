@@ -45,6 +45,32 @@ final class PackageManifestTest extends TestCase
     ];
 
     /**
+     * The PHP each package runs on. The bridges to Laravel 12 and Symfony 7.4
+     * need what their frameworks need; everything else, the PHPStan, Psalm
+     * and Rector bridges included, runs on PHP 8.1 like the tools it plugs
+     * into. The monorepo package installs every bridge, so it takes the
+     * highest floor of them.
+     */
+    private const PHP_FLOORS = [
+        'Automata' => '>=8.1',
+        'Cli' => '>=8.1',
+        'Explain' => '>=8.1',
+        'Generator' => '>=8.1',
+        'LanguageServer' => '>=8.1',
+        'Laravel' => '>=8.2',
+        'Linter' => '>=8.1',
+        'Optimizer' => '>=8.1',
+        'Parser' => '>=8.1',
+        'PHPStan' => '>=8.1',
+        'Psalm' => '>=8.1',
+        'Rector' => '>=8.1',
+        'Redos' => '>=8.1',
+        'Symfony' => '>=8.2',
+        'Toolkit' => '>=8.1',
+        'Transpiler' => '>=8.1',
+    ];
+
+    /**
      * The uses of a sibling's internal classes 2.0 ships with. Siblings always
      * run at the same version, so these may change in any release; a new entry
      * here is still a new cross-package dependency on code that promises
@@ -107,7 +133,7 @@ final class PackageManifestTest extends TestCase
         $this->assertSame('php-regex/'.$name, self::dig($manifest, 'name'));
         $this->assertSame('MIT', self::dig($manifest, 'license'));
         $this->assertSame(['PHPRegex\\'.$directory.'\\' => ''], self::dig($manifest, 'autoload', 'psr-4'));
-        $this->assertSame('>=8.2', self::dig($manifest, 'require', 'php'));
+        $this->assertSame(self::PHP_FLOORS[$directory], self::dig($manifest, 'require', 'php'), $directory);
         $this->assertSame(['dev-2.x' => '2.x-dev'], self::dig($manifest, 'extra', 'branch-alias'));
     }
 
@@ -409,6 +435,37 @@ final class PackageManifestTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideDirectories')]
+    public function test_a_package_runs_on_every_php_its_siblings_run_on(string $directory): void
+    {
+        foreach (self::strings(self::dig(self::manifest($directory), 'require')) as $package => $constraint) {
+            $sibling = array_search(substr($package, \strlen('php-regex/')), self::PACKAGES, true);
+            if (str_starts_with($package, 'php-regex/') && \is_string($sibling)) {
+                $this->assertLessThanOrEqual(self::floor(self::PHP_FLOORS[$directory]), self::floor(self::PHP_FLOORS[$sibling]), $directory.' requires '.$package);
+            }
+        }
+    }
+
+    #[Test]
+    public function test_the_cli_binary_refuses_the_php_its_package_refuses(): void
+    {
+        $script = (string) file_get_contents(self::root().'/src/Cli/bin/regex');
+
+        $this->assertSame(1, preg_match("~version_compare\\('(\\d+\\.\\d+)\\.0', \\\\PHP_VERSION, '>'\\)~", $script, $floor));
+        $this->assertSame(self::floor(self::PHP_FLOORS['Cli']), $floor[1]);
+        $this->assertStringContainsString('requires PHP >= '.$floor[1].'.0.', $script);
+    }
+
+    #[Test]
+    public function test_the_monorepo_package_takes_the_highest_php_floor_of_its_packages(): void
+    {
+        $floors = array_map(self::floor(...), self::PHP_FLOORS);
+
+        $this->assertSame('>=8.2', self::dig(self::decode(self::root().'/composer.json'), 'require', 'php'));
+        $this->assertSame(self::floor('>=8.2'), max($floors));
+    }
+
+    #[Test]
     public function test_the_root_package_replaces_every_package(): void
     {
         $root = self::decode(self::root().'/composer.json');
@@ -440,6 +497,11 @@ final class PackageManifestTest extends TestCase
         foreach (array_keys(self::PACKAGES) as $directory) {
             yield $directory => [$directory];
         }
+    }
+
+    private static function floor(string $constraint): string
+    {
+        return substr($constraint, \strlen('>='));
     }
 
     /**
