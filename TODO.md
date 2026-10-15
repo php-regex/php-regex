@@ -1,30 +1,5 @@
 # TODO
 
-## Before the tag — contract decisions left open (2026-10-14)
-
-Each item below changes the public API or a cross-package contract, so it is
-only cheap until `v2.0.0` is tagged: after the freeze, every one becomes a BC
-break or a standing contradiction between two pieces of documentation. Work
-them top to bottom, one at a time — settle the decision in writing first,
-then implement test-first. Deferring an item is also a decision; it converts
-the item from cheap to a BC break, so say so when it happens. The Flex recipe
-stays where it is (G5 below): it is additive and loses nothing by waiting past
-the tag.
-
-### Checked and refused (do not re-litigate)
-
-- A compile-once `Pattern` handle: parses are already cached per pattern +
-  target; the handle would duplicate the frozen facade surface.
-- nikic-style multi-error recovery: PCRE reports one error (the oracle the
-  library is grounded on) and no internal consumer wants more; if anything,
-  document the tolerant-mode truncation contract (`docs/reference/api.md:254`).
-- One diagnostic god-DTO shared across packages: it couples Parser to lint
-  and LSP vocabulary; keep the small boundary converters.
-- An absolute-latency performance gate in CI: environment noise; keep the
-  asymptotic tripwires already in the suite.
-- "The AST is a dead end": wrong — `$ast->accept(new PatternPrinter())` is
-  public and documented; only the formatting factories are internal.
-
 ## Release 2.0.0
 
 The code is ready; what is left is the maintainer's, in this order.
@@ -121,16 +96,23 @@ Parked, too large for upstream review: local branches
 
 ---
 
-## After 2.0 — verified UX findings
+## Symfony Flex recipe
 
-Each item below was verified against the code (2026-10-10, PHP 8.4.26 with
-PCRE2 10.49) and is additive: none changes a 2.0 contract.
+Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
+`PHPRegexBundle`, so `composer require php-regex/regex-symfony` registers
+nothing (the guide says so). By hand: open a recipe PR on
+symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-### G. Left by the audit before the tag (2026-10-12)
+## Checked and refused (do not re-litigate)
 
-Each item was verified at the tag candidate and is additive.
-
-**G5 — No Symfony Flex recipe.** Flex guesses `PHPRegexSymfonyBundle` or
-`SymfonyBundle`, never `PHPRegexBundle`, so `composer require
-php-regex/regex-symfony` registers nothing (the guide says so). *Fix*: a
-recipe in symfony/recipes-contrib. Effort: S.
+- A compile-once `Pattern` handle: parses are already cached per pattern +
+  target; the handle would duplicate the frozen facade surface.
+- nikic-style multi-error recovery: PCRE reports one error (the oracle the
+  library is grounded on) and no internal consumer wants more; if anything,
+  document the tolerant-mode truncation contract (`docs/reference/api.md:254`).
+- One diagnostic god-DTO shared across packages: it couples Parser to lint
+  and LSP vocabulary; keep the small boundary converters.
+- An absolute-latency performance gate in CI: environment noise; keep the
+  asymptotic tripwires already in the suite.
+- "The AST is a dead end": wrong — `$ast->accept(new PatternPrinter())` is
+  public and documented; only the formatting factories are internal.
