@@ -198,7 +198,9 @@ parameters:
             - tests/Unit/NodeVisitor/SampleGeneratorVisitorTest.php
             - tests/Unit/Parser/ExtendedCharClassTest.php
             - tests/Unit/Parser/GroupNameLengthReleaseTest.php
+            - tests/Unit/Parser/Printer/PatternFormatterTest.php
             - tests/Unit/Parser/ScanSubstringTest.php
+            - tests/Unit/Parser/ValidationHintTest.php
             - tests/Unit/Redos/Proven/RedosInlineOptionsTest.php
         # Two tests hand preg_match() flags outside its stub on purpose: a bit
         # PHP refuses (PREG_SET_ORDER and the like) and one it ignores (1024).
