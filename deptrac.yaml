@@ -99,7 +99,7 @@ deptrac:
     LinterInternal: [Linter, Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer]
     Toolkit: [Parser, ParserInternal, Explain, Optimizer, Generator, ReDoS, Transpiler, Linter]
     Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, RedosInternal, Transpiler, Linter, LinterInternal]
-    LanguageServer: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Linter]
+    LanguageServer: [Toolkit, Parser, ParserInternal, Explain, Optimizer, ReDoS, Linter, LinterInternal]
     PHPStan: [Parser, ParserInternal, Linter, ReDoS, Automata, Optimizer]
     Psalm: [Parser, ParserInternal, Automata]
     Rector: [Parser, Automata]
