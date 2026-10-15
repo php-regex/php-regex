@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Tests\Support\PatternEquivalence;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExtendedMoreClassSpaceTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param array<int|string, int> $subjects
      */
@@ -91,12 +94,14 @@ final class ExtendedMoreClassSpaceTest extends TestCase
 
     /**
      * "[\d -z]" is "[\d-z]" there: a range that starts at a class escape,
-     * which PCRE2 refuses.
+     * which PCRE2 refuses. PCRE2 10.44 still compiled it; 10.48 refuses it.
      */
     #[Test]
     #[DataProvider('provideRangesTheSpacesHid')]
     public function test_a_range_its_spaces_hid_is_refused_as_pcre_refuses_it(string $pattern): void
     {
+        $this->requiresPcre2('10.48', $pattern);
+
         $this->assertFalse(@preg_match($pattern, ''), 'The oracle: PCRE2 refuses the pattern.');
 
         $this->assertFalse(Regex::create(['cache' => null])->validate($pattern)->isValid);

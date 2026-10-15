@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
 final class LimitOutcomeTest extends TestCase
 {
     /**
-     * @return iterable<string, array{options: array{max_pattern_length?: int, max_recursion_depth?: int}, regex: string, exception: class-string<LimitException>, code: ErrorCode, option: string}>
+     * @return iterable<string, array{options: array{max_pattern_length?: int, max_recursion_depth?: int, pcre_version?: string}, regex: string, exception: class-string<LimitException>, code: ErrorCode, option: string}>
      */
     public static function provideLimits(): iterable
     {
@@ -56,9 +56,10 @@ final class LimitOutcomeTest extends TestCase
         ];
 
         // Read through the extended class reader, which hands the limit to
-        // the parser's own error ordering.
+        // the parser's own error ordering. (?[...]) is read for the PCRE2
+        // that has it, whatever the host runs.
         yield 'extended class operations' => [
-            'options' => ['max_recursion_depth' => 5],
+            'options' => ['max_recursion_depth' => 5, 'pcre_version' => '10.49'],
             'regex' => '/(?['.implode(' | ', array_fill(0, 12, '[a]')).'])/',
             'exception' => RecursionLimitException::class,
             'code' => ErrorCode::ExtendedClassTooComplex,
@@ -74,8 +75,8 @@ final class LimitOutcomeTest extends TestCase
     }
 
     /**
-     * @param array{max_pattern_length?: int, max_recursion_depth?: int} $options
-     * @param class-string<LimitException>                               $exception
+     * @param array{max_pattern_length?: int, max_recursion_depth?: int, pcre_version?: string} $options
+     * @param class-string<LimitException>                                                      $exception
      */
     #[Test]
     #[DataProvider('provideLimits')]
@@ -92,8 +93,8 @@ final class LimitOutcomeTest extends TestCase
     }
 
     /**
-     * @param array{max_pattern_length?: int, max_recursion_depth?: int} $options
-     * @param class-string<LimitException>                               $exception
+     * @param array{max_pattern_length?: int, max_recursion_depth?: int, pcre_version?: string} $options
+     * @param class-string<LimitException>                                                      $exception
      */
     #[Test]
     #[DataProvider('provideLimits')]
@@ -117,8 +118,8 @@ final class LimitOutcomeTest extends TestCase
     }
 
     /**
-     * @param array{max_pattern_length?: int, max_recursion_depth?: int} $options
-     * @param class-string<LimitException>                               $exception
+     * @param array{max_pattern_length?: int, max_recursion_depth?: int, pcre_version?: string} $options
+     * @param class-string<LimitException>                                                      $exception
      */
     #[Test]
     #[DataProvider('provideLimits')]
@@ -180,10 +181,13 @@ final class LimitOutcomeTest extends TestCase
     #[DataProvider('provideLimitsBeforeAnError')]
     public function test_a_limit_met_before_an_error_is_the_verdict(string $regex, ErrorCode $code): void
     {
-        $result = RegexParser::create(['max_recursion_depth' => 3])->validate($regex);
+        // The rows hold (?[...]) and (*scs:...): they are read for the PCRE2
+        // that has them, whatever the host runs.
+        $options = ['max_recursion_depth' => 3, 'pcre_version' => '10.49'];
+        $result = RegexParser::create($options)->validate($regex);
 
         $this->assertSame(ValidationErrorCategory::Limit, $result->category);
         $this->assertSame($code, $result->errorCode);
-        $this->assertNotInstanceOf(ParserException::class, RegexParser::create(['max_recursion_depth' => 3])->parseTolerant($regex)->errors[0]);
+        $this->assertNotInstanceOf(ParserException::class, RegexParser::create($options)->parseTolerant($regex)->errors[0]);
     }
 }

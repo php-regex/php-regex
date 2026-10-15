@@ -396,11 +396,15 @@ final class JsonDumperTest extends TestCase
     }
 
     /**
+     * The corpus holds the newest syntax, as (?[...]) and (*scs:...): the
+     * tree is read for the newest PCRE2 the library knows, whatever the host
+     * runs, as the export does not depend on the engine.
+     *
      * @return array<string, mixed>
      */
     private static function export(string $pattern): array
     {
-        return RegexParser::create()->parse($pattern)->accept(new JsonDumper());
+        return RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse($pattern)->accept(new JsonDumper());
     }
 
     /**
