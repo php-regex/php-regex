@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,10 +33,16 @@ use PHPUnit\Framework\TestCase;
  */
 final class AnchorsAnywhereTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_the_automaton_accepts_what_the_engine_matches(string $pattern): void
     {
+        if (str_contains(substr($pattern, (int) strrpos($pattern, '/')), 'n')) {
+            $this->requiresPhp('8.2', $pattern, 'refuses the n modifier');
+        }
+
         $dfa = (new LanguageSolver())->compile($pattern, new SolverOptions(matchMode: MatchMode::Partial));
 
         foreach (self::subjects("ab\n,", 5) as $subject) {
@@ -101,7 +108,8 @@ final class AnchorsAnywhereTest extends TestCase
     private static function accepts(Dfa $dfa, string $subject): bool
     {
         $state = $dfa->startState;
-        foreach (str_split($subject) as $byte) {
+        // str_split('') is [''] on PHP 8.1.
+        foreach ('' === $subject ? [] : str_split($subject) as $byte) {
             $next = $dfa->getState($state)->transitionFor(\ord($byte));
             if (null === $next) {
                 return false;
