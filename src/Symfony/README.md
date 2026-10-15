@@ -19,7 +19,7 @@
 PHPRegex Symfony
 ================
 
-Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare and regex:transpile commands.
+Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare, regex:explain and regex:transpile commands.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [Symfony guide](https://php-regex.com/guides/symfony/) walks the bundle end to end.
 
@@ -27,7 +27,8 @@ Features
 --------
 
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
-* Six console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare` and `regex:transpile`
+* A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
+* Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`, with the options of the same commands in the CLI and the Laravel package
 * `regex:lint` reads your PHP files, your route requirements and your validator constraints in one pass
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
@@ -40,7 +41,7 @@ Installation
 composer require php-regex/regex-symfony
 ```
 
-Requires PHP 8.2+ and Symfony 7.4+ or 8.0+. `symfony/routing`, `symfony/validator` and `nikic/php-parser` are optional and widen what `regex:lint` reads.
+Requires PHP 8.2+ and Symfony 7.4+ or 8.0+. `symfony/routing`, `symfony/validator` and `nikic/php-parser` are optional and widen what `regex:lint` reads; `symfony/validator` also brings the `ValidRegex` constraint.
 
 Configuration
 -------------
@@ -55,7 +56,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `cache.pool`, `cache.directory`, `cache.prefix` | `null`, `'%kernel.cache_dir%/php_regex'`, `'regex_'` | Cache for parsed ASTs: a PSR-6 pool, else this directory |
 | `extractor_service` | `null` | Service id of a custom pattern extractor |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported, patterns skipped |
-| `analysis.warning_threshold` | `50` | Complexity score from which a pattern counts as complex; `regex:lint` does not report it yet (`regex lint` does, under `checks.complexity`) |
+| `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind the automata comparisons |
 | `optimizations.*` | `digits`, `word`, `ranges`, `canonicalize_char_classes` `true`; `possessive`, `factorize` `false`; `min_quantifier_count` `4` | Default optimization switches for `regex:lint` |
 | `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips |
@@ -102,6 +103,18 @@ echo $transpiled->constructor; // new RegExp("^[a-z]+(?=\\d)$", "i")
 
 The service also exposes `parse`, `parseTolerant`, `analyze`, `explain`, `highlight`, `literals`, `generate` and `parsePattern`.
 
+Validate a pattern your users submit with the `ValidRegex` constraint (`symfony/validator`), judged by the same service:
+
+```php
+use PHPRegex\Symfony\Validator\Constraints\ValidRegex;
+
+#[ValidRegex]                  // "/abc)/": This value is not a valid regular expression: Unmatched closing parenthesis at position 4.
+public string $pattern;
+
+#[ValidRegex(redos: true)]     // also refuses a ReDoS severity of high or more ("redosThreshold")
+public string $routePattern;
+```
+
 Integration
 -----------
 
@@ -122,12 +135,14 @@ Code that injects `PHPRegex\Toolkit\Regex` needs the bundle in every environment
 | `regex:security`  | Analyze `access_control` ordering and firewall regexes |
 | `regex:analyze`   | Run the routes and security analyzers in one pass      |
 | `regex:compare`   | Compare two patterns with automata logic               |
+| `regex:explain`   | Explain a pattern in plain English                     |
 | `regex:transpile` | Translate a pattern for another regex engine           |
 
 ```bash
 bin/console regex:lint src/ --format=json
 bin/console regex:routes --show-overlaps
 bin/console regex:analyze --only=routes --redos-threshold=medium
+bin/console regex:compare '/[a-z]+/' '/edit/' --method=subset
 bin/console regex:transpile '/^\d{4}$/' --target=python
 ```
 
@@ -139,6 +154,7 @@ Documentation
 * [The Symfony guide](https://php-regex.com/guides/symfony/) — configuration, lint targets, the commands, upgrading from 1.x
 * [The CLI guide](https://php-regex.com/guides/cli/) — `regex:lint` in depth, exit codes
 * [The ReDoS guide](https://php-regex.com/guides/redos/) — how the risk analysis reaches its verdicts
+* [JSON output](https://php-regex.com/reference/json-output/) — every key of the `regex:lint`, `regex:transpile` and `regex:analyze` reports
 * [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources

@@ -6,6 +6,27 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `analysis.complexity`, off by default, makes `regex:lint` report the
+   patterns whose complexity score reaches `analysis.warning_threshold`,
+   as `regex lint` does under `checks.complexity`.
+ * `regex:explain` explains a pattern, with `--format=console|html` and
+   `--highlight` as in the Laravel package and the CLI, and the optimization,
+   the ReDoS risk, the lint issues and a sample beside it.
+ * `regex:routes` and `regex:security` are listed by `bin/console list`,
+   where they were hidden.
+ * A route requirement is judged as the router compiles it: in a group
+   named after the parameter, its own groups non-capturing, under `i` for
+   a host parameter. `[{]` and `(a)(b)\2`, which break the route, are
+   invalid.
+ * The `regex:analyze --format=json` report is part of the backward
+   compatibility promise, listed key by key in the JSON output reference: a
+   section's `meta` and `debug` are `{label, value}` rows, a usage error is
+   the error envelope, stage `usage`, and Unicode and slashes are written
+   unescaped. The firewall finding labels its ReDoS severity `Severity`.
+ * The `ValidRegex` constraint validates a pattern a user submits, with the
+   bundle's `Regex` service: the library's message and hint as `{{ error }}`
+   and `{{ hint }}`, and with `redos: true` a ReDoS severity from
+   `redosThreshold` (`high`) up refused too. Needs `symfony/validator`.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

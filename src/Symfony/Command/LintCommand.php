@@ -19,8 +19,7 @@ use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\Internal\CpuCoreCounter;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Linter\Internal\WorkerCount;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
@@ -97,6 +96,7 @@ final class LintCommand extends Command
         private readonly ?string $pcreVersion = null,
         private readonly ?string $projectDir = null,
         private readonly bool $checkRedos = false,
+        private readonly bool $checkComplexity = false,
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -215,7 +215,7 @@ final class LintCommand extends Command
             }
         } else {
             // Without pcntl no worker can start.
-            $jobs = ForkedWorkerPool::canFork() ? (new CpuCoreCounter())->count() : 1;
+            $jobs = (new WorkerCount())->count();
         }
 
         if (self::FORMAT_CONSOLE === $format) {
@@ -243,6 +243,7 @@ final class LintCommand extends Command
                 analysisWorkers: $jobs,
                 optimizations: $this->defaultOptimizations,
                 checkRedos: $this->checkRedos,
+                checkComplexity: $this->checkComplexity,
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths and in vendor/, whatever paths are linted.
                 declarationPaths: $this->defaultPaths,
@@ -292,8 +293,8 @@ final class LintCommand extends Command
         if (self::FORMAT_CONSOLE === $format) {
             $elapsed = (float) microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
-            $cacheStats = $parser->getCacheStats();
-            $io->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Cache:</> <fg=yellow>'.$cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
+            // No cache count: the workers parse the patterns, not this process.
+            $io->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
             $io->newLine();
         }
 

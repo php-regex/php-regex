@@ -22,6 +22,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  *
  * The walk keeps its own stack, so a pattern nested as deep as the parser
  * allows does not exhaust PHP's.
+ *
+ * The public way to walk a tree is a visitor, and to look for nodes,
+ * NodeFinder.
+ *
+ * @internal
  */
 final class NodeWalker
 {

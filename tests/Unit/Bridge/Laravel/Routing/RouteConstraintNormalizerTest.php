@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Laravel\Routing;
 
 use Illuminate\Routing\Route;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,9 +23,10 @@ use PHPUnit\Framework\TestCase;
 /**
  * Laravel compiles a route through Symfony's RouteCompiler, always with the
  * utf8 option: the constraint loses a leading ^ or \A and a trailing $ or
- * \z, sits in a group of its own, and the path is matched with
- * "{^...$}sDu", the domain with "{^...$}sDiu". The normalized pattern is
- * read by the engine as the compiled route reads the constraint.
+ * \z, its own groups stop capturing, it sits in a group named after the
+ * parameter, and the path is matched with "{^...$}sDu", the domain with
+ * "{^...$}sDiu". The normalized pattern is that pattern without the text of
+ * the path around the parameter.
  */
 final class RouteConstraintNormalizerTest extends TestCase
 {
@@ -47,26 +49,83 @@ final class RouteConstraintNormalizerTest extends TestCase
      */
     public static function provideConstraints(): iterable
     {
-        yield 'digits' => ['constraint' => '\d+', 'expected' => '/^\d+$/sDu'];
-        yield 'nested quantifier' => ['constraint' => '(a+)+', 'expected' => '/^(a+)+$/sDu'];
-        yield 'both anchors' => ['constraint' => '^[a-z]+$', 'expected' => '/^[a-z]+$/sDu'];
-        yield 'string anchors' => ['constraint' => '\A[a-z]+\z', 'expected' => '/^[a-z]+$/sDu'];
-        yield 'top-level alternation' => ['constraint' => 'en|fr|de', 'expected' => '/^(?:en|fr|de)$/sDu'];
-        yield 'alternation in a group' => ['constraint' => '(en|fr)', 'expected' => '/^(en|fr)$/sDu'];
-        yield 'bar in a class' => ['constraint' => '[a|b]x', 'expected' => '/^[a|b]x$/sDu'];
-        yield 'quoted bar' => ['constraint' => '\Qa|b\E', 'expected' => '/^\Qa|b\E$/sDu'];
+        yield 'digits' => ['constraint' => '\d+', 'expected' => '{^(?P<v>\d+)$}sDu'];
+        yield 'nested quantifier' => ['constraint' => '(a+)+', 'expected' => '{^(?P<v>(?:a+)+)$}sDu'];
+        yield 'both anchors' => ['constraint' => '^[a-z]+$', 'expected' => '{^(?P<v>[a-z]+)$}sDu'];
+        yield 'string anchors' => ['constraint' => '\A[a-z]+\z', 'expected' => '{^(?P<v>[a-z]+)$}sDu'];
+        yield 'top-level alternation' => ['constraint' => 'en|fr|de', 'expected' => '{^(?P<v>en|fr|de)$}sDu'];
+        yield 'alternation in a group' => ['constraint' => '(en|fr)', 'expected' => '{^(?P<v>(?:en|fr))$}sDu'];
+        yield 'named group kept' => ['constraint' => '(?<l>en|fr)', 'expected' => '{^(?P<v>(?<l>en|fr))$}sDu'];
+        yield 'bar in a class' => ['constraint' => '[a|b]x', 'expected' => '{^(?P<v>[a|b]x)$}sDu'];
+        yield 'quoted bar' => ['constraint' => '\Qa|b\E', 'expected' => '{^(?P<v>\Qa|b\E)$}sDu'];
         // A constraint is a fragment, never a delimited pattern: the router
         // compiles "/foo/" to (?P<v>/foo/), slashes included.
-        yield 'slashes' => ['constraint' => '/foo/', 'expected' => '#^/foo/$#sDu'];
-        yield 'catch-all' => ['constraint' => '.*', 'expected' => '/^.*$/sDu'];
-        yield 'escaped slash' => ['constraint' => 'a\/b', 'expected' => '#^a\/b$#sDu'];
-        yield 'slash in a quote' => ['constraint' => '\Q/\E', 'expected' => '#^\Q/\E$#sDu'];
-        // Every candidate delimiter in the constraint: the bare ones are
-        // escaped, an escaped one is left as it is.
-        yield 'every delimiter' => ['constraint' => '/#~!@%`\/', 'expected' => '/^\/#~!@%`\/$/sDu'];
-        // A constraint that does not parse is left ungrouped: the error is
-        // the lint's to report.
-        yield 'unclosed group' => ['constraint' => '(a|b', 'expected' => '/^(a|b$/sDu'];
+        yield 'slashes' => ['constraint' => '/foo/', 'expected' => '{^(?P<v>/foo/)$}sDu'];
+        yield 'catch-all' => ['constraint' => '.*', 'expected' => '{^(?P<v>.*)$}sDu'];
+        yield 'escaped slash' => ['constraint' => 'a\/b', 'expected' => '{^(?P<v>a\/b)$}sDu'];
+        yield 'unclosed group' => ['constraint' => '(a|b', 'expected' => '{^(?P<v>(?:a|b)$}sDu'];
+        // The braces stand in the pattern as the router writes them.
+        yield 'brace in a class' => ['constraint' => '[{]', 'expected' => '{^(?P<v>[{])$}sDu'];
+        yield 'counted repeat' => ['constraint' => '\d{2,4}', 'expected' => '{^(?P<v>\d{2,4})$}sDu'];
+        // sanitizeRequirement() strips a trailing $ even escaped: the
+        // backslash left escapes the ) of the parameter's group.
+        yield 'escaped dollar' => ['constraint' => 'a\$', 'expected' => '{^(?P<v>a\)$}sDu'];
+        // The router inserts ?: after every ( no backslash escapes, in a
+        // class too.
+        yield 'parenthesis in a class' => ['constraint' => '[(]a', 'expected' => '{^(?P<v>[(?:]a)$}sDu'];
+    }
+
+    /**
+     * The router's own regex, the text of the path around the parameter
+     * taken out, is the normalized pattern.
+     */
+    #[Test]
+    #[DataProvider('provideRouterConstraints')]
+    public function test_normalize_is_the_regex_the_router_compiles(string $constraint): void
+    {
+        $route = (new Route(['GET'], 'x/{v}', static fn (): string => ''))->where('v', $constraint);
+        $compiled = $route->toSymfonyRoute()->compile()->getRegex();
+
+        $this->assertSame(str_replace('{^/x/', '{^', $compiled), $this->normalizer->normalize($route, 'v', $constraint));
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string}>
+     */
+    public static function provideRouterConstraints(): iterable
+    {
+        foreach (self::provideConstraints() as $name => $row) {
+            yield $name => ['constraint' => $row['constraint']];
+        }
+    }
+
+    /**
+     * Oracle, PHP 8.4.26 / PCRE2 10.49, and Laravel's router: each of these
+     * passes between slashes, and the compiled route does not compile.
+     */
+    #[Test]
+    #[DataProvider('provideConstraintsTheRouterRefuses')]
+    public function test_a_constraint_the_router_cannot_compile_is_invalid(string $constraint): void
+    {
+        $normalized = $this->normalizer->normalize($this->route(), 'v', $constraint);
+        $route = (new Route(['GET'], 'x/{v}', static fn (): string => ''))->where('v', $constraint);
+
+        $this->assertNotFalse(@preg_match('/'.addcslashes($constraint, '/').'/u', ''), 'control');
+        $this->assertFalse(@preg_match($route->toSymfonyRoute()->compile()->getRegex(), ''), 'oracle');
+        $this->assertFalse(@preg_match($normalized, ''));
+        $this->assertFalse(Regex::create()->validate($normalized)->isValid);
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string}>
+     */
+    public static function provideConstraintsTheRouterRefuses(): iterable
+    {
+        yield 'unbalanced brace in a class' => ['constraint' => '[{]'];
+        yield 'unbalanced closing brace' => ['constraint' => 'a}'];
+        yield 'escaped dollar' => ['constraint' => 'a\$'];
+        // The second group no longer captures: \2 names no group.
+        yield 'backreference to a group that stops capturing' => ['constraint' => '(a)(b)\2'];
     }
 
     #[Test]
@@ -75,8 +134,22 @@ final class RouteConstraintNormalizerTest extends TestCase
         $route = new Route(['GET'], '/x/{v}', static fn (): string => '');
         $route->domain('{account}.example.com');
 
-        $this->assertSame('/^[a-z]+$/sDiu', $this->normalizer->normalize($route, 'account', '[a-z]+'));
-        $this->assertSame('/^[a-z]+$/sDu', $this->normalizer->normalize($route, 'v', '[a-z]+'));
+        $this->assertSame('{^(?P<account>[a-z]+)$}sDiu', $this->normalizer->normalize($route, 'account', '[a-z]+'));
+        $this->assertSame('{^(?P<v>[a-z]+)$}sDu', $this->normalizer->normalize($route, 'v', '[a-z]+'));
+    }
+
+    /**
+     * A constraint on a parameter the path never names is not compiled by
+     * the router: it is read in a group all the same, unnamed where the
+     * name is none PCRE takes.
+     */
+    #[Test]
+    public function test_a_parameter_that_is_no_group_name_gets_an_unnamed_group(): void
+    {
+        $this->assertSame('{^(\d+)$}sDu', $this->normalizer->normalize($this->route(), 'my-id', '\d+'));
+        $this->assertSame('{^(\d+)$}sDu', $this->normalizer->normalize($this->route(), '1st', '\d+'));
+        $this->assertSame('{^(\d+)$}sDu', $this->normalizer->normalize($this->route(), str_repeat('a', 33), '\d+'));
+        $this->assertSame('{^(?P<'.str_repeat('a', 32).'>\d+)$}sDu', $this->normalizer->normalize($this->route(), str_repeat('a', 32), '\d+'));
     }
 
     /**
@@ -106,7 +179,7 @@ final class RouteConstraintNormalizerTest extends TestCase
         // u: a class reads characters, not bytes.
         yield 'multibyte class' => ['constraint' => '[é]', 'subject' => 'é', 'matches' => true];
         yield 'slash in a quote' => ['constraint' => '\Q/\E', 'subject' => '/', 'matches' => true];
-        yield 'escaped delimiters' => ['constraint' => '/#~!@%`\/', 'subject' => '/#~!@%`/', 'matches' => true];
+        yield 'escaped brace' => ['constraint' => '\{', 'subject' => '{', 'matches' => true];
     }
 
     /**

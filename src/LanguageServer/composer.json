@@ -28,6 +28,7 @@
         "php-regex/regex-explain": "self.version",
         "php-regex/regex-linter": "self.version",
         "php-regex/regex-parser": "self.version",
+        "php-regex/regex-redos": "self.version",
         "php-regex/regex-toolkit": "self.version"
     },
     "autoload": {

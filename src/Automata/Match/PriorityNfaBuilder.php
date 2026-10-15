@@ -78,7 +78,7 @@ final class PriorityNfaBuilder
     private function state(Hir $hir, int $next): int
     {
         if (\count($this->nfa->kinds) > $this->maxStates) {
-            throw new ComplexityException(\sprintf('The match solver needs more than %d states for this pattern.', $this->maxStates), 0, $this->pattern);
+            throw new ComplexityException(\sprintf('The match solver needs more than %d states for this pattern.', $this->maxStates), 0, $this->pattern, diagnostic: ['phase' => 'match automaton', 'limit' => $this->maxStates]);
         }
 
         return match (true) {

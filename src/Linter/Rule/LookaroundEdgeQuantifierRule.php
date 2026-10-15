@@ -142,7 +142,7 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
         $closure = static fn (string $part): string => LanguageQuestions::pattern($context, $behind ? '(?s:.*)(?:'.$part.')' : '(?:'.$part.')(?s:.*)', $flags, $spelled);
         $written = $closure($body);
         $minimal = $closure($shortened);
-        if (true !== LanguageQuestions::isSubset($written, $minimal) || true !== LanguageQuestions::isSubset($minimal, $written)) {
+        if (true !== LanguageQuestions::isSubset($written, $minimal, $context->dfas, $context->target) || true !== LanguageQuestions::isSubset($minimal, $written, $context->dfas, $context->target)) {
             return null;
         }
 
@@ -161,6 +161,7 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
             $start,
             \sprintf('Write "%s".', $asserted),
             LintSeverity::Perf,
+            $end,
         );
     }
 

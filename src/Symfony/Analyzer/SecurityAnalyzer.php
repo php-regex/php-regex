@@ -384,7 +384,7 @@ final readonly class SecurityAnalyzer implements AnalyzerInterface
         $title = \sprintf('%s (%s)', $finding['name'], $location);
 
         $details = [
-            new IssueDetail('CheckOutcome', strtoupper($finding['severity'])),
+            new IssueDetail('Severity', strtoupper($finding['severity'])),
             new IssueDetail('Verdict', $finding['verdict']),
             new IssueDetail('Score', (string) $finding['score']),
             new IssueDetail('Pattern', $finding['pattern'], 'pattern'),

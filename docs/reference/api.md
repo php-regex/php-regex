@@ -57,20 +57,20 @@ $regex = Regex::fromOptions(ParserOptions::fromArray(['php_version' => '8.2']));
 
 ### tokenize(string $regex): list<Token>
 
-Lexes a regex into its tokens, as the parser reads them for the instance's target. Useful for custom analysis or debugging. Each `Token` exposes its `type`, its `value`, its `position` in the pattern body and `end()`, the offset just past it; the end-of-pattern token comes last.
+Lexes a regex into its tokens, as the parser reads them for the instance's target. Useful for custom analysis or debugging. Each `Token` exposes its `type`, its `value`, its `position` in the pattern body and `end()`, the byte offset just past it. The tokens come in source order, each one starting where the one before it ends, so together they cover the pattern body; the end-of-pattern token comes last, at the body's length.
+
+How many characters one token covers is not part of the contract: `tokenize()` reads a literal character as one token today, and a later release may read a run of literal characters as one token. Rely on the positions, not on a count of tokens.
 
 ```php
 use PHPRegex\Toolkit\Regex;
 
 foreach (Regex::create()->tokenize('/foo|bar/i') as $token) {
-    echo "Type: {$token->type->value}, Value: '{$token->value}'\n";
-    echo "Position: {$token->position} - {$token->end()}\n";
+    echo "{$token->type->value} '{$token->value}' at {$token->position}-{$token->end()}\n";
 }
-// Type: literal, Value: 'f'
-// Position: 0 - 1
-// Type: literal, Value: 'o'
-// Position: 1 - 2
-// ... the same for 'o', '|', 'b', 'a', 'r', then the eof token
+// literal 'f' at 0-1
+// literal 'o' at 1-2
+// ...
+// eof '' at 7-7
 ```
 
 ---
@@ -300,11 +300,17 @@ var_dump($result->category);       // NULL: no error, no category
 | `complexityScore` | int                     | Pattern complexity       |
 | `category`        | ValidationErrorCategory\|null | Error category, `null` when valid |
 
+`render()` gives the message, the caret snippet and the hint (`Hint: …`) as
+one block of plain text, each on its own line and left out when absent; an
+empty string for a valid pattern.
+
 ---
 
-### analyze(string $regex): AnalysisReport
+### analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): AnalysisReport
 
 Aggregates validation, lint, ReDoS analysis, optimization, and explanation into a single report.
+The three optional arguments are those of `redos()`, below, and
+`$report->redos` is what `redos()` returns with them.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -690,8 +696,12 @@ if (!$result->isValid) {
     echo $result->errorCode->value;   // "regex.charclass.unclosed"
     echo $result->offset;             // 9
     echo $result->caretSnippet;       // "Line 1: [unclosed\n                 ^"
-    echo $result->hint;               // null: no hint for this one
+    echo $result->hint;               // "Close the class with \"]\", or write \"\\[\" ..."
     echo $result->category->value;    // "syntax"
+
+    // The same parts as one block of plain text, as a console prints it:
+    // the message, the caret line, then "Hint: ...". Empty when valid.
+    echo $result->render();
 }
 ```
 
@@ -826,8 +836,9 @@ Exception hierarchy (simplified):
     - `LexerException` (tokenization failure)
     - `ParserException`
       - `SyntaxErrorException` (invalid syntax)
+    - `LimitException` (the library stopped at one of its own limits)
       - `RecursionLimitException` (max recursion depth)
-      - `ResourceLimitException` ( resource limits)
+      - `ResourceLimitException` (max pattern length)
     - `SemanticErrorException` (semantic validation failure)
     - `TranspileException` (unsupported target or feature during transpile)
     - `SampleGenerationException` (no sample the pattern matches was found)
@@ -835,11 +846,15 @@ Exception hierarchy (simplified):
 
 `SemanticErrorException` sits beside `ParserException`, not under it: a
 `catch (ParserException)` does not see it — catch `RegexException` to handle
-every parse-time failure.
+every parse-time failure. `LimitException` sits beside it too: a limit of the
+library (`max_pattern_length`, `max_recursion_depth`) is no grammar error, the
+pattern was not read to its end, and `validate()` reports it with the `limit`
+category.
 
 `VisualContextInterface` marks the exceptions that carry the failing pattern
 with a caret under the offending character: `getVisualSnippet(): string` on
-`ParserException` (and its syntax, recursion and resource subclasses),
+`ParserException` and its syntax subclass, `LimitException` (and its recursion
+and resource subclasses),
 `LexerException`, `SemanticErrorException`, `TranspileException` and the
 automata `ComplexityException`. Test for it with `instanceof` to render the
 snippet when the caught exception has one.
@@ -885,7 +900,7 @@ try {
 | `parse($pattern)`       | RegexNode               | Parse to AST      |
 | `parseTolerant($pattern)` | TolerantParseResult   | Parse with errors |
 | `validate($regex)`      | ValidationResult        | Check validity    |
-| `analyze($regex)`       | AnalysisReport          | Analysis report   |
+| `analyze($regex, ...)`  | AnalysisReport          | Analysis report   |
 | `redos($regex)`         | RedosAnalysis           | ReDoS check       |
 | `captureShape($regex)`  | CaptureShape            | Shape of `$matches` |
 | `info($regex)`          | PatternInfo             | PCRE2 facts, lengths, anchors |

@@ -15,15 +15,22 @@ namespace PHPRegex\LanguageServer\Handler;
 
 use PHPRegex\Explain\TextExplainer;
 use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
+use PHPRegex\LanguageServer\Converter\PatternSpan;
+use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
+use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -40,8 +47,18 @@ final readonly class TextDocumentHandler
 
     private DiagnosticConverter $diagnosticConverter;
 
-    public function __construct(private DocumentManager $documents, private Regex $regex)
-    {
+    /**
+     * @param array<string, bool> $lintRules      the lint rules regex.json turns on or off, by id
+     * @param RedosMode           $redosMode      the ReDoS analysis to run, none by default
+     * @param RedosSeverity       $redosThreshold the lowest ReDoS severity reported
+     */
+    public function __construct(
+        private DocumentManager $documents,
+        private Regex $regex,
+        private array $lintRules = [],
+        private RedosMode $redosMode = RedosMode::Off,
+        private RedosSeverity $redosThreshold = RedosSeverity::High,
+    ) {
         $this->diagnosticConverter = new DiagnosticConverter();
     }
 
@@ -204,6 +221,13 @@ final readonly class TextDocumentHandler
                     'end' => $occurrence->end,
                 ],
             ]);
+        } catch (LimitException $e) {
+            Response::success($message->id, [
+                'contents' => [
+                    'kind' => 'markdown',
+                    'value' => "**Not analyzed**\n\n{$e->getMessage()}",
+                ],
+            ]);
         } catch (LexerException|ParserException $e) {
             Response::success($message->id, [
                 'contents' => [
@@ -227,16 +251,13 @@ final readonly class TextDocumentHandler
     private function publishDocument(string $uri): void
     {
         $diagnostics = [];
+        $content = $this->documents->getContent($uri) ?? '';
+        $positions = new PositionConverter($content);
 
         foreach ($this->documents->getOccurrences($uri) as $occurrence) {
-            // Offsets count from the pattern body: past the quote and the
-            // delimiter the finder's patterns open with. The body runs to
-            // the end of the pattern, modifiers included.
-            $bodyStart = [
-                'line' => $occurrence->start['line'],
-                'character' => $occurrence->start['character'] + 2,
-            ];
-            $bodyLength = \strlen($occurrence->pattern) - 1;
+            // Offsets count in bytes of the pattern body; the span places
+            // them through the literal's escapes, in UTF-16 columns.
+            $span = PatternSpan::of($occurrence, $positions);
 
             try {
                 $ast = $this->regex->parse($occurrence->pattern);
@@ -247,40 +268,51 @@ final readonly class TextDocumentHandler
                     $diagnostics[] = $this->diagnosticConverter->fromValidationError(
                         $validation->error ?? 'Invalid regex.',
                         $validation->errorCode,
-                        $bodyStart,
-                        $bodyLength,
+                        $span,
                         $validation->offset,
+                        $validation->hint,
                     );
 
                     continue;
                 }
 
                 // Run linter
-                $linter = new PatternLinter();
+                $linter = new PatternLinter($this->lintRules);
                 $ast->accept($linter);
 
+                $redos = RedosMode::Off === $this->redosMode ? null : $this->regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
+
                 foreach ($linter->getIssues() as $issue) {
+                    // The heuristic rules guess what the analysis just proved:
+                    // once it shows the pattern linear, their warnings go.
+                    if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
+                        continue;
+                    }
+
                     // A raw character the literal spells with an escape, as
                     // a double-quoted "\t", is no raw character in the source.
                     if (InvisibleCharacterRule::ID === $issue->id
-                        && !LiteralSpelling::holdsRaw($this->documents->getContent($uri) ?? '', $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))
+                        && !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))
                     ) {
                         continue;
                     }
 
-                    $diagnostics[] = $this->diagnosticConverter->convert(
-                        $issue,
-                        $bodyStart,
-                        $bodyLength,
-                    );
+                    $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);
                 }
+
+                if (null !== $redos) {
+                    array_push($diagnostics, ...$this->redosDiagnostics($redos, $span));
+                }
+            } catch (LimitException $e) {
+                $diagnostics[] = $this->diagnosticConverter->fromLimit($e->getMessage(), $e->errorCode, $span);
             } catch (LexerException|ParserException $e) {
                 $diagnostics[] = $this->diagnosticConverter->fromParseError(
                     $e->getMessage(),
                     $e->errorCode,
-                    $bodyStart,
-                    $bodyLength,
+                    $span,
                     $e->position,
+                    // The fix comes with the validation's verdict on the same error.
+                    $this->regex->validate($occurrence->pattern)->hint,
                 );
             }
         }
@@ -289,5 +321,46 @@ final readonly class TextDocumentHandler
             'uri' => $uri,
             'diagnostics' => $diagnostics,
         ]);
+    }
+
+    /**
+     * The verdict and the search cost `regex lint` reports for the analysis,
+     * under the same ids, severities and words.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function redosDiagnostics(RedosAnalysis $redos, PatternSpan $span): array
+    {
+        $diagnostics = [];
+
+        if (RedosVerdict::reported($redos, $this->redosThreshold, $this->redosMode)) {
+            $hotspot = $redos->primaryHotspot();
+            $diagnostics[] = $this->diagnosticConverter->fromRedos(
+                RedosVerdict::ISSUE_ID,
+                RedosVerdict::message($redos),
+                RedosVerdict::evidence($redos),
+                RedosVerdict::isError($redos),
+                $span,
+                $hotspot?->start,
+                $hotspot?->end,
+            );
+        }
+
+        // One attempt proven linear, the search retrying it is not.
+        $searchCost = $redos->searchCost;
+        if (null !== $searchCost
+            && false !== ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
+            && false !== ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null)
+            && RedosVerdict::searchSeverity($searchCost)->rank() >= $this->redosThreshold->rank()) {
+            $diagnostics[] = $this->diagnosticConverter->fromRedos(
+                RedosVerdict::SEARCH_ISSUE_ID,
+                RedosVerdict::searchMessage($searchCost),
+                RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion),
+                false,
+                $span,
+            );
+        }
+
+        return $diagnostics;
     }
 }

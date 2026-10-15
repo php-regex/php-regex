@@ -92,17 +92,30 @@ final class ServerTest extends TestCase
         $this->assertSame([], $this->answerTo(3)['result']);
     }
 
+    /**
+     * After shutdown the protocol serves nothing until "exit": a request,
+     * a second shutdown included, is answered Invalid Request, and a
+     * notification gets no answer, as ever.
+     */
     #[Test]
-    public function test_shutdown_stops_the_loop(): void
+    public function test_a_request_after_shutdown_is_answered_invalid_request(): void
     {
         $this->serve([
             ['id' => 1, 'method' => 'initialize', 'params' => []],
             ['method' => 'initialized'],
             ['id' => 2, 'method' => 'shutdown'],
+            ['method' => 'textDocument/didOpen', 'params' => [
+                'textDocument' => ['uri' => 'file:///a.php', 'languageId' => 'php', 'version' => 1, 'text' => "<?php preg_match('/(a+)+$/', \$s);"],
+            ]],
             ['id' => 3, 'method' => 'initialize', 'params' => []],
+            ['id' => 4, 'method' => 'shutdown'],
         ]);
 
-        $this->assertNull($this->findAnswer(3), 'The server kept reading after shutdown.');
+        $this->assertNull($this->answerTo(2)['result'] ?? null);
+        $this->assertArrayNotHasKey('error', $this->answerTo(2));
+        $this->assertSame(-32600, $this->errorCodeOf(3));
+        $this->assertSame(-32600, $this->errorCodeOf(4));
+        $this->assertStringNotContainsString('publishDiagnostics', $this->written(), 'A notification after shutdown was served.');
     }
 
     #[Test]

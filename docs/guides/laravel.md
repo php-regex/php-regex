@@ -47,6 +47,7 @@ return [
         'ignored_patterns' => [],
     ],
     'analysis' => [
+        'complexity' => false, // regex:lint reports complex patterns
         'warning_threshold' => 50,
     ],
     'automata' => [
@@ -126,6 +127,32 @@ One of those bypasses the configured singleton: `Regex::create()` returns a fres
 Type-hinting
 `PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
 
+## Validating a pattern a user submits
+
+The `ValidRegex` rule accepts a value that PCRE compiles, written as
+`preg_match()` takes it: delimiters and flags included. The verdict is the one
+`regex validate` gives, judged by the `Regex` service with the limits of
+`config/php-regex.php`, so a pattern longer than `max_pattern_length` is
+refused too:
+
+```php
+use PHPRegex\Laravel\Rules\ValidRegex;
+
+$request->validate([
+    'pattern' => ['required', new ValidRegex()],
+    'route_pattern' => ['required', new ValidRegex(redos: true)],
+]);
+```
+
+- An invalid pattern fails with the library's message: `The pattern field must
+  be a valid regular expression: Unmatched closing parenthesis at position 4.`
+  for `/abc)/`. A value that is no string fails as `must be a string`.
+- `redos: true` also refuses a pattern whose [ReDoS](redos.md) severity reaches
+  `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
+  string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
+  `/a*a*$/` (`medium`) passes. An invalid pattern is never analysed for ReDoS.
+- Like every rule, it leaves an empty value to `required`.
+
 ## The service and the lint judge for different targets
 
 The `Regex` service runs in your application: it judges patterns for the PHP
@@ -175,17 +202,42 @@ whether an older PHP accepts a pattern: the lint never uses it.
 ```bash
 php artisan regex:lint
 php artisan regex:lint app/ --format=json
-php artisan regex:compare '/[0-9]+/' '/\d+/'
+php artisan regex:compare '/[a-z]+/' '/edit/'
+php artisan regex:compare '/[0-9]+/' '/\d+/' --method=equivalence
+php artisan regex:transpile '/^[a-z]+$/' -t python
 ```
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).
 
+`regex:compare --method` takes the methods of `regex compare` and Symfony's
+`regex:compare`, with the same default: `intersection` (do the two patterns
+share a string?), `subset` (is every string of the first one a string of
+the second?) and `equivalence` (do they match the same strings?). A failed
+check prints the string that proves it. `--format=json` writes the verdict
+under a key named for the method: `disjoint` and `example`, `subset` and
+`counterexample`, or `equivalent`, `counterexample`, `left_only_example` and
+`right_only_example`; the keys of the other methods are there too, `null`.
+
+`regex:lint --jobs=N` (or `-j N`) runs the analysis in `N` worker processes; left out,
+the count follows the CPUs (and the container's memory limit). A `--jobs`
+that is not a whole number of 1 or more is refused with exit code 2, as
+`regex lint` and Symfony's `regex:lint` refuse it.
+
+The commands take the options of the same command in the CLI and in the
+Symfony bundle, under the same names and short forms (`-j` for `--jobs`, `-t`
+for `--target`). What stays Laravel's own: `regex:routes` lists and
+validates route constraints, where Symfony's analyzes the conflicts between
+routes, and there is no `regex:security` or `regex:analyze`, which read
+Symfony's router and `security.yaml`.
+
 `regex:routes` lists the routes that have a constraint. `--show-constraints`
 prints each constraint, and `--validate` compiles each one as the router
 matches it, marking it `✓` or `✗` with the error: without `--validate` a
 constraint gets no mark, and its `valid` key in the JSON report is `null`.
+The [JSON output reference](../reference/json-output.md#laravel-routes) lists
+every key of the `regex:routes` and `regex:compare` reports.
 
 `regex:compare`, `regex:transpile` and `regex:explain --highlight` colour a
 pattern only on a terminal: piped, or under `--no-ansi`, it is printed as
@@ -199,11 +251,16 @@ whatever `exclude` says; a project declaration wins over a copy in
 [the CLI guide](cli.md#patterns-behind-a-wrapper)); every rule it can report
 is catalogued in [Lint rules](../reference/rules.md).
 
-A route constraint is judged as the router matches it: anchored at both
-ends, under the `s`, `D` and `u` flags Laravel's route compiler adds (and
-`i` for a domain parameter). `->where('v', '(a+)+')` is linted as
-`/^(a+)+$/sDu`, so its backtracking is reported; the flags the router adds
-are never a finding, since the constraint cannot remove them.
+A route constraint is judged as the router compiles it: stripped of a
+leading `^` or `\A` and a trailing `$` or `\z`, its groups made
+non-capturing, in a group named after the parameter, between braces and
+under the `s`, `D` and `u` flags Laravel's route compiler adds (and `i` for
+a domain parameter). `->where('v', '(a+)+')` is linted as
+`{^(?P<v>(?:a+)+)$}sDu`, so its backtracking is reported; the flags the
+router adds are never a finding, since the constraint cannot remove them.
+A constraint that compiles alone but breaks the route is invalid: `[{]`
+leaves the router's braces unbalanced, `a\$` loses its `$` and escapes the
+group's `)`, and `(a)(b)\2` refers to a group that no longer captures.
 
 ## ReDoS findings
 

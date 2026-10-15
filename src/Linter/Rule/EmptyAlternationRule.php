@@ -48,6 +48,7 @@ final class EmptyAlternationRule extends AbstractLintRule
                     'Alternation contains an empty alternative.',
                     $alt->getStartPosition(),
                     'Use a quantifier (e.g., "?") if the empty string should be allowed.',
+                    end: $alt->getEndPosition(),
                 );
             }
         }

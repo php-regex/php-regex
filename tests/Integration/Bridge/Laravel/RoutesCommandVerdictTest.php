@@ -52,6 +52,24 @@ final class RoutesCommandVerdictTest extends TestCase
         $this->assertStringContainsString('✓ id = \d+', $output);
     }
 
+    /**
+     * Each of these compiles between slashes, and the router, which writes
+     * the constraint between braces in a group of its own, cannot compile
+     * the route.
+     */
+    #[Test]
+    public function test_a_constraint_the_router_cannot_compile_is_invalid(): void
+    {
+        Route::get('/x/{v}', static fn (): string => '')->where('v', '[{]')->name('brace');
+        Route::get('/y/{w}', static fn (): string => '')->where('w', 'a\$')->name('dollar');
+
+        $this->assertSame(1, Artisan::call('regex:routes', ['--show-constraints' => true, '--validate' => true]));
+        $output = Artisan::output();
+
+        $this->assertStringContainsString('✗ v = [{]', $output);
+        $this->assertStringContainsString('✗ w = a\$', $output);
+    }
+
     #[Test]
     public function test_json_without_validate_gives_no_verdict(): void
     {

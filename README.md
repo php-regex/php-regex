@@ -79,7 +79,7 @@ with one version number. Install the one you need; the
 
 | package | what it holds |
 |---|---|
-| [`php-regex/regex-toolkit`](src/Toolkit) | the `Regex` facade: every library below in one call |
+| [`php-regex/regex-toolkit`](src/Toolkit) | the `Regex` facade, a convenience layer over the parser, explain, generator, linter, optimizer, ReDoS and transpiler packages |
 | [`php-regex/regex-parser`](src/Parser) | lexer, parser, immutable AST, validator, PCRE2 release targeting, AST cache |
 | [`php-regex/regex-explain`](src/Explain) | explanations, highlighting, ASCII tree, Mermaid and railroad diagrams |
 | [`php-regex/regex-optimizer`](src/Optimizer) | shorter equivalent patterns, modernized syntax |
@@ -101,7 +101,7 @@ Coming from 1.x (`yoeunes/regex-parser`)? See [UPGRADE-2.0.md](UPGRADE-2.0.md).
 ## What PHPRegex provides
 
 - 🏗️ **Deep Parsing:** Parse `/pattern/flags` into a structured, typed AST.
-- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset). Works for patterns in the [regular subset](https://php-regex.com/architecture/) it supports — every character set asked from the running PCRE2 — and refuses the rest with the reason named.
+- 🧠 **Logic Solver:** Compare two regexes using NFA/DFA transformation (intersection, equivalence, subset) with `LanguageSolver` from `php-regex/regex-automata`: `(new LanguageSolver())->equivalent('/a+/', '/aa*/')->isEquivalent` is `true`. Works for patterns in the [regular subset](https://php-regex.com/architecture/) it supports — every character set asked from the running PCRE2 — and refuses the rest with the reason named.
 - 🛡️ **ReDoS Analysis:** Prove the backtracking cost of a pattern — linear, polynomial or exponential — with the attack input when it is vulnerable, and replay that attack on the running PCRE. Outside the modelled subset, structural heuristics decide and say so.
 - 🧹 **Linter:** Detect useless flags, redundant groups, and common mistakes via the CLI.
 - 📖 **Explanation:** Explain patterns in plain English.

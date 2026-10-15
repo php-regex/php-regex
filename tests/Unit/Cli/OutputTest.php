@@ -52,4 +52,80 @@ final class OutputTest extends TestCase
         $this->assertSame('', $stdout);
         $this->assertSame('failure', stream_get_contents($stream));
     }
+
+    /**
+     * Without a terminal, a CI log for one, the bar is not drawn: a plain
+     * line says where the run stands every 30 seconds, so a long step does
+     * not look stuck, and nothing else is written.
+     */
+    public function test_without_ansi_the_progress_writes_a_line_every_thirty_seconds(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $now = 1000.0;
+        $output = new Output(false, false, errorStream: $stream, clock: static function () use (&$now): float {
+            return $now;
+        });
+
+        $output->progressStart(200);
+        $output->progressAdvance(10);
+        $now += 29;
+        $output->progressAdvance(10);
+        $now += 2;
+        $output->progressAdvance(40);
+        $now += 10;
+        $output->progressTick();
+        $now += 25;
+        $output->progressTick();
+        $output->progressFinish();
+
+        $output->progressLabel('Declarations');
+        $output->progressStart(null);
+        $now += 31;
+        $output->progressAdvance(7);
+        $output->progressFinish();
+
+        rewind($stream);
+        $this->assertSame(
+            "   60/200 (30%) 00:31\n   60/200 (30%) 01:06\n   Declarations: 7 found 00:31\n",
+            stream_get_contents($stream),
+        );
+    }
+
+    public function test_without_ansi_and_quiet_the_progress_writes_nothing(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $now = 0.0;
+        $output = new Output(false, true, errorStream: $stream, clock: static function () use (&$now): float {
+            return $now;
+        });
+
+        $output->progressStart(10);
+        $now += 60;
+        $output->progressAdvance(5);
+        $output->progressFinish();
+
+        rewind($stream);
+        $this->assertSame('', stream_get_contents($stream));
+    }
+
+    public function test_without_ansi_an_abandoned_progress_writes_no_more_lines(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $now = 0.0;
+        $output = new Output(false, false, errorStream: $stream, clock: static function () use (&$now): float {
+            return $now;
+        });
+
+        $output->progressStart(10);
+        $output->progressAbandon();
+        $now += 60;
+        $output->progressAdvance(5);
+        $output->progressTick();
+
+        rewind($stream);
+        $this->assertSame('', stream_get_contents($stream));
+    }
 }

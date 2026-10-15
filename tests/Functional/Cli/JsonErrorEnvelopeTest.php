@@ -159,7 +159,8 @@ final class JsonErrorEnvelopeTest extends TestCase
      */
     public static function provideNamedUsageErrors(): iterable
     {
-        yield 'unknown command' => ['arguments' => ['lnt', 'src', '--json'], 'error' => 'Unknown command: lnt.'];
+        yield 'unknown command' => ['arguments' => ['frobnicate', 'src', '--json'], 'error' => 'Unknown command: frobnicate.'];
+        yield 'a mistyped command' => ['arguments' => ['lnt', 'src', '--json'], 'error' => 'Unknown command: lnt. Did you mean "lint"?'];
         yield 'an option before the command' => ['arguments' => ['--json', 'analyze', '/a/'], 'error' => 'Unknown command: --json. Options go after the command name.'];
         yield 'lint, path argument that does not exist' => ['arguments' => ['lint', 'missing', '--jobs=1', '--json'], 'error' => 'Path not found: missing'];
         yield 'lint, --baseline not readable' => ['arguments' => ['lint', 'src', '--jobs=1', '--json', '--baseline=src'], 'error' => 'Baseline file not readable: src'];

@@ -13,19 +13,25 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\Internal\AnalyzedPatterns;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
+use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
+use PHPRegex\Parser\Cache\AstSerializer;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -41,7 +47,6 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
-use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
@@ -58,14 +63,8 @@ final readonly class AnalysisService
 {
     private const PATTERN_DELIMITERS = ['/', '#', '~', '%'];
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
-    private const ISSUE_ID_REDOS = 'regex.lint.redos';
 
     private const ISSUE_ID_MEANING_CHANGES = 'regex.lint.compat.meaningChanges';
-    private const RISK_LINT_ISSUE_IDS = [
-        'regex.lint.quantifier.nested' => true,
-        'regex.lint.dotstar.nested' => true,
-        'regex.lint.overlap.charset' => true,
-    ];
 
     private RedosSeverity $redosSeverityThreshold;
 
@@ -77,13 +76,15 @@ final readonly class AnalysisService
     private RedosMode $redosMode;
 
     /**
-     * @param string              $redosThreshold       the lowest severity reported: low, medium, high or
-     *                                                  critical, in any case
-     * @param array<string>       $ignoredPatterns
-     * @param array<string>       $redosIgnoredPatterns
-     * @param array<string, bool> $lintRules
-     * @param list<RegexParser>   $range                the parsers of the PHP versions after the floor a
-     *                                                  pattern is validated at too (ProjectTarget::rangeParsers())
+     * @param string                 $redosThreshold       the lowest severity reported: low, medium, high or
+     *                                                     critical, in any case
+     * @param array<string>          $ignoredPatterns
+     * @param array<string>          $redosIgnoredPatterns
+     * @param array<string, bool>    $lintRules
+     * @param list<RegexParser>      $range                the parsers of the PHP versions after the floor a
+     *                                                     pattern is validated at too (ProjectTarget::rangeParsers())
+     * @param DfaCacheInterface|null $dfaCache             keeps the DFAs the lint rules and the optimizer's checks
+     *                                                     build, for the whole run; the process's cache when null
      *
      * @throws InvalidRegexOptionException when the threshold names no severity
      */
@@ -101,6 +102,7 @@ final readonly class AnalysisService
         private bool $lintEnabled = true,
         private array $lintRules = [],
         private array $range = [],
+        private ?DfaCacheInterface $dfaCache = null,
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
         $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
@@ -147,6 +149,7 @@ final readonly class AnalysisService
             $this->lintEnabled,
             $this->lintRules,
             $range,
+            $this->dfaCache,
         );
     }
 
@@ -185,6 +188,47 @@ final readonly class AnalysisService
     }
 
     /**
+     * The lint, and what it read of each pattern for suggestOptimizations()
+     * to take instead of parsing and validating it again: the workers send
+     * it back with their findings.
+     *
+     * @param array<PatternOccurrence> $patterns
+     * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
+     *                                           ones included
+     *
+     * @throws LintException when a worker fails
+     *
+     * @return array{0: list<LintIssue>, 1: AnalyzedPatterns}
+     */
+    public function lintForSuggestions(array $patterns, ?LintProgress $progress = null, int $workers = 1): array
+    {
+        $results = $this->runOnWorkers(
+            $patterns,
+            $workers,
+            function (array $chunk, ?\Closure $done): array {
+                $analyzed = [];
+                $results = $this->lintChunk($chunk, $done, $analyzed);
+                $results[] = new AnalyzedPatterns($analyzed);
+
+                return $results;
+            },
+            $progress,
+        );
+
+        $issues = [];
+        $analyzed = [];
+        foreach ($results as $result) {
+            if ($result instanceof AnalyzedPatterns) {
+                $analyzed += $result->byPattern;
+            } else {
+                $issues[] = $result;
+            }
+        }
+
+        return [$issues, new AnalyzedPatterns($analyzed)];
+    }
+
+    /**
      * @param array<PatternOccurrence> $patterns
      *
      * @throws LintException when a worker fails
@@ -207,19 +251,22 @@ final readonly class AnalysisService
      *                                           allows, every rewrite checked with the automata
      * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
      *                                           ones included
+     * @param AnalyzedPatterns|null    $analyzed what lintForSuggestions() read of the same patterns,
+     *                                           taken instead of parsing and validating them again
      *
      * @throws LintException when a worker fails
      *
      * @return array<OptimizationEntry>
      */
-    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1, ?LintProgress $progress = null): array
+    public function suggestOptimizations(array $patterns, int $minSavings, ?OptimizerOptions $options = null, int $workers = 1, ?LintProgress $progress = null, ?AnalyzedPatterns $analyzed = null): array
     {
         $options ??= new OptimizerOptions(verifyWithAutomata: true);
+        $byPattern = $analyzed->byPattern ?? [];
 
         return $this->runOnWorkers(
             $patterns,
             $workers,
-            fn (array $chunk, ?\Closure $done): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options, $done),
+            fn (array $chunk, ?\Closure $done): array => $this->suggestOptimizationsChunk($chunk, $minSavings, $options, $byPattern, $done),
             $progress,
         );
     }
@@ -239,12 +286,17 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<PatternOccurrence>   $patterns
-     * @param (\Closure(int): void)|null $done     told of each pattern analysed
+     * @param array<PatternOccurrence>                                       $patterns
+     * @param (\Closure(int): void)|null                                     $done     told of each pattern analysed
+     * @param array<string, array{0: ValidationResult, 1: string|null}>|null $analyzed given, what was read of each
+     *                                                                                 pattern: its validation, the
+     *                                                                                 serialized tree of a valid one
+     *
+     * @param-out ($analyzed is null ? null : array<string, array{0: ValidationResult, 1: string|null}>) $analyzed
      *
      * @phpstan-return list<LintIssue>
      */
-    private function lintChunk(array $patterns, ?\Closure $done = null): array
+    private function lintChunk(array $patterns, ?\Closure $done = null, ?array &$analyzed = null): array
     {
         $issues = [];
 
@@ -279,7 +331,33 @@ final readonly class AnalysisService
             }
 
             $validation = $this->regex->validate($occurrence->pattern);
+            if (null !== $analyzed && !$validation->isValid) {
+                $analyzed[$occurrence->pattern] = [$validation, null];
+            }
             $source = $occurrence->source;
+            if (!$validation->isValid && ValidationErrorCategory::Limit === $validation->category) {
+                // The library gave up: a warning that the pattern was not
+                // analyzed, no verdict on a pattern PCRE may compile.
+                $issues[] = [
+                    'type' => 'warning',
+                    'file' => $occurrence->file,
+                    'line' => $occurrence->line,
+                    'column' => $this->resolveColumn($occurrence),
+                    'fileOffset' => $occurrence->fileOffset,
+                    'position' => $validation->offset,
+                    'message' => 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'),
+                    'source' => $source,
+                    'validation' => $validation,
+                    'tip' => $validation->hint,
+                ];
+
+                if (null !== $done) {
+                    $done(1);
+                }
+
+                continue;
+            }
+
             if (!$validation->isValid) {
                 $message = $validation->error ?? 'Invalid regex.';
                 if ($this->ignoreParseErrors && $this->isLikelyPartialRegexError($message)) {
@@ -332,6 +410,9 @@ final readonly class AnalysisService
             }
 
             $ast = $this->regex->parse($occurrence->pattern);
+            if (null !== $analyzed) {
+                $analyzed[$occurrence->pattern] = [$validation, AstSerializer::serialize($ast)];
+            }
 
             // Accepted everywhere, the pattern may still read otherwise on a
             // later PHP: the same text, another tree.
@@ -356,12 +437,12 @@ final readonly class AnalysisService
 
             // Run linter if enabled
             if ($this->lintEnabled) {
-                $linter = new PatternLinter($this->lintRules);
+                $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
                 $ast->accept($linter);
                 $code = null;
 
                 foreach ($linter->getIssues() as $issue) {
-                    if ($skipRiskAnalysis && isset(self::RISK_LINT_ISSUE_IDS[$issue->id])) {
+                    if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
                         continue;
                     }
 
@@ -424,19 +505,19 @@ final readonly class AnalysisService
                 if ($redos->isProvenSafe()) {
                     $lintIssues = array_values(array_filter(
                         $lintIssues,
-                        static fn (array $issue): bool => !isset(self::RISK_LINT_ISSUE_IDS[$issue['issueId']]),
+                        static fn (array $issue): bool => !isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue['issueId']]),
                     ));
                 }
 
-                if ($this->shouldReportRedos($redos, $this->redosSeverityThreshold)) {
+                if (RedosVerdict::reported($redos, $this->redosSeverityThreshold, $this->redosMode)) {
                     $riskIssues[] = [
-                        'type' => $this->resolveRedosIssueType($redos),
+                        'type' => RedosVerdict::isError($redos) ? 'error' : 'warning',
                         'file' => $occurrence->file,
                         'line' => $occurrence->line,
                         'column' => $this->resolveColumn($occurrence),
                         'fileOffset' => $occurrence->fileOffset,
-                        'issueId' => self::ISSUE_ID_REDOS,
-                        'message' => $this->formatRedosMessage($redos),
+                        'issueId' => RedosVerdict::ISSUE_ID,
+                        'message' => RedosVerdict::message($redos),
                         'hint' => $this->getReDoSHint($redos, $occurrence->pattern),
                         'source' => $source,
                         'analysis' => $redos,
@@ -570,7 +651,7 @@ final readonly class AnalysisService
                 $this->redosConfirmOptions,
             );
 
-            if (!$this->shouldReportRedos($analysis, $threshold)) {
+            if (!RedosVerdict::reported($analysis, $threshold, $this->redosMode)) {
                 continue;
             }
 
@@ -587,17 +668,18 @@ final readonly class AnalysisService
     }
 
     /**
-     * @param array<PatternOccurrence>   $patterns
-     * @param (\Closure(int): void)|null $done     told of each pattern looked at
+     * @param array<PatternOccurrence>                                  $patterns
+     * @param array<string, array{0: ValidationResult, 1: string|null}> $analyzed what the analysis read of each pattern
+     * @param (\Closure(int): void)|null                                $done     told of each pattern looked at
      *
      * @return list<OptimizationEntry>
      */
-    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options, ?\Closure $done = null): array
+    private function suggestOptimizationsChunk(array $patterns, int $minSavings, OptimizerOptions $options, array $analyzed, ?\Closure $done = null): array
     {
         $suggestions = [];
 
         foreach ($patterns as $occurrence) {
-            $suggestion = $this->suggestOptimization($occurrence, $minSavings, $options);
+            $suggestion = $this->suggestOptimization($occurrence, $minSavings, $options, $analyzed[$occurrence->pattern] ?? null);
             if (null !== $suggestion) {
                 $suggestions[] = $suggestion;
             }
@@ -611,9 +693,11 @@ final readonly class AnalysisService
     }
 
     /**
+     * @param array{0: ValidationResult, 1: string|null}|null $analyzed what the analysis read of the pattern
+     *
      * @return OptimizationEntry|null
      */
-    private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options): ?array
+    private function suggestOptimization(PatternOccurrence $occurrence, int $minSavings, OptimizerOptions $options, ?array $analyzed = null): ?array
     {
         $verifyWithAutomata = $options->verifyWithAutomata;
 
@@ -621,10 +705,17 @@ final readonly class AnalysisService
             return null;
         }
 
-        $validation = $this->regex->validate($occurrence->pattern);
+        [$validation, $tree] = $analyzed ?? [$this->regex->validate($occurrence->pattern), null];
         $source = $occurrence->source;
         if (!$validation->isValid) {
             return null;
+        }
+
+        // The tree the analysis built, where every parse of the pattern
+        // below looks first: the rewrite and its checks parse it again.
+        $ast = null === $tree ? null : AstSerializer::unserialize($tree);
+        if (null !== $ast) {
+            $this->regex->remember($occurrence->pattern, $ast);
         }
 
         $isExtended = $this->usesExtendedMode($occurrence->pattern);
@@ -671,9 +762,11 @@ final readonly class AnalysisService
 
                 $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
             } else {
-                $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
+                $optimization = (new Optimizer($this->regex, $this->dfas()))->optimize($occurrence->pattern, $options);
             }
         } catch (\Throwable) {
+            // A suggestion is optional: whatever stops one pattern's rewrite,
+            // the run goes on without it.
             return null;
         }
 
@@ -744,6 +837,7 @@ final readonly class AnalysisService
         }
 
         $allowed = [
+            AnalyzedPatterns::class,
             ValidationResult::class,
             ValidationErrorCategory::class,
             OptimizationResult::class,
@@ -1135,16 +1229,29 @@ final readonly class AnalysisService
     }
 
     /**
-     * @return bool|null true when equivalent, false when not, null when unsupported
+     * The DFAs kept for the run: the one given, else the process's.
+     */
+    private function dfas(): DfaCacheInterface
+    {
+        return $this->dfaCache ?? LanguageQuestions::dfas();
+    }
+
+    /**
+     * @return bool|null true when equivalent, false when not or when the
+     *                   check gave up on its budget, null when the automata
+     *                   do not read the pattern
      */
     private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new LanguageSolver($this->regex);
+            $solver = new LanguageSolver($this->regex, $this->dfas());
             $result = $solver->equivalent($original, $optimized);
 
             return $result->isEquivalent;
-        } catch (\Throwable) {
+        } catch (ComplexityException $e) {
+            // Out of budget proves nothing: the rewrite is not offered.
+            return isset($e->getDiagnostic()['limit']) ? false : null;
+        } catch (ExceptionInterface) {
             return null;
         }
     }
@@ -1192,42 +1299,6 @@ final readonly class AnalysisService
             LintSeverity::Warning => 'warning',
             LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'info',
         };
-    }
-
-    private function resolveRedosIssueType(RedosAnalysis $analysis): string
-    {
-        if (RedosVerdict::standsConfirmed($analysis) && $analysis->exceedsThreshold(RedosSeverity::High)) {
-            return 'error';
-        }
-
-        return 'warning';
-    }
-
-    private function formatRedosMessage(RedosAnalysis $analysis): string
-    {
-        return RedosVerdict::message($analysis);
-    }
-
-    /**
-     * Whether a verdict is reported: at or above the threshold, and in
-     * confirmed mode only when the engine confirmed it, except a verdict the
-     * engine could not replay, a proof reported as a confirmed one and a
-     * heuristic verdict as a warning, and a polynomial verdict, which is
-     * never replayed and is reported as it stands.
-     */
-    private function shouldReportRedos(RedosAnalysis $analysis, RedosSeverity $threshold): bool
-    {
-        if (!$analysis->exceedsThreshold($threshold)) {
-            return false;
-        }
-
-        if (RedosMode::Confirmed !== $this->redosMode
-            || RedosVerdict::standsConfirmed($analysis)
-            || RedosVerdict::replaySkipped($analysis)) {
-            return true;
-        }
-
-        return RedosComplexity::Polynomial === $analysis->complexity && null === $analysis->replayed;
     }
 
     /**

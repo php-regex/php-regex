@@ -353,6 +353,8 @@ Next to `severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendati
 | `analysisVersion` | `string` | `RedosAnalyzer::ANALYSIS_VERSION`, raised when the model changes |
 | `searchCost` | `?RedosSearchCost` | the witness of a quadratic unanchored search, looked for when one attempt is proven linear; `null` when none was found, never a proof of a linear search |
 
+`findings` and `hotspots` come from the structural heuristics, `severity` from the proof when there is one: they are hints, and a proof overrides them. `/a+/` is `safe (proven)` with a `medium` finding on its `a+`; `analyze` and `debug` print no hotspot for a verdict proven safe, and `debug` lists its findings under `Heuristic hints`.
+
 `isSafe()` keeps its meaning (`safe` or `low`); `isProvenSafe()` is true only for a proven linear verdict:
 
 ```php
@@ -377,6 +379,7 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 "replayed": true,
 "abstractions": [],
 "pcre_version": "10.49",
+"php_version": "8.4.26",
 "analysis_version": "1",
 "search_cost": null
 ```

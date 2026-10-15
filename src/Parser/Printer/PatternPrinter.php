@@ -441,10 +441,13 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->quotedSpans = null;
         $this->sourcePattern = $node->pattern;
 
-        $body = $node->delimiter
-            .$this->ignorableText(0, $node->pattern->getStartPosition())
+        $body = $node->delimiter.self::controlBackslashesSpelled(
+            $this->ignorableText(0, $node->pattern->getStartPosition())
             .$node->pattern->accept($this)
-            .$this->ignorableText($node->pattern->getEndPosition(), null);
+            .$this->ignorableText($node->pattern->getEndPosition(), null),
+            $node->delimiter,
+            $this->closingDelimiter,
+        );
 
         // A body ending in an odd run of backslashes, "\c\" for one, would
         // escape the closing delimiter: PHP pairs backslashes as it looks for
@@ -2372,7 +2375,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             $body = self::balancedBrackets($body, $node->delimiter, $this->closingDelimiter);
         }
 
-        $body = $node->delimiter.$body;
+        $body = $node->delimiter.self::controlBackslashesSpelled($body, $node->delimiter, $this->closingDelimiter);
         if (1 === (\strlen($body) - \strlen(rtrim($body, '\\'))) % 2) {
             $body .= '\\E';
         }
@@ -3524,7 +3527,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         for ($i = 0; $i < $length; $i++) {
             $character = $body[$i];
             if ('\\' === $character) {
-                $i++;
+                $i += self::escapeLength($body, $i) - 1;
             } elseif ($closing === $character) {
                 if ([] === $open) {
                     $unpaired[] = $i;
@@ -3543,6 +3546,83 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return $body;
+    }
+
+    /**
+     * The length of the escape a backslash at $offset opens, as PCRE reads
+     * it: two characters, or three for "\c", which takes the next one, a
+     * backslash included.
+     */
+    private static function escapeLength(string $body, int $offset): int
+    {
+        return 'c' === ($body[$offset + 1] ?? '') ? 3 : 2;
+    }
+
+    /**
+     * PHP finds the end of a pattern pairing each backslash with the
+     * character after it, where PCRE reads "\c\" as one control character:
+     * after it, PHP reads "\\" where PCRE reads a backslash escaping the
+     * next character, and "\)" where PCRE reads ")". When the two readings
+     * disagree on where the pattern ends, each "\c\" before a backslash or
+     * a delimiter is spelled "\x1C", and a delimiter that would then end
+     * the pattern is escaped, as PCRE read it as a literal.
+     */
+    private static function controlBackslashesSpelled(string $body, string $opening, string $closing): string
+    {
+        if (self::endsWhereWritten($body, $opening, $closing)) {
+            return $body;
+        }
+
+        $spelled = '';
+        $length = \strlen($body);
+        for ($i = 0; $i < $length; $i++) {
+            if ('\\' !== $body[$i]) {
+                $spelled .= $body[$i];
+
+                continue;
+            }
+
+            $next = $body[$i + 3] ?? '';
+            if ('c' === ($body[$i + 1] ?? '') && '\\' === ($body[$i + 2] ?? '') && '' !== $next && str_contains('\\'.$opening.$closing, $next)) {
+                $spelled .= '\\x1C'.($opening === $closing && '\\' !== $next ? '\\' : '');
+                $i += 2;
+
+                continue;
+            }
+
+            $escape = self::escapeLength($body, $i);
+            $spelled .= substr($body, $i, $escape);
+            $i += $escape - 1;
+        }
+
+        return $spelled;
+    }
+
+    /**
+     * Whether PHP, pairing each backslash with the character after it, reads
+     * the whole body before the closing delimiter: no closing delimiter
+     * stands bare in it, or, for brackets, every one pairs.
+     */
+    private static function endsWhereWritten(string $body, string $opening, string $closing): bool
+    {
+        $depth = 0;
+        $length = \strlen($body);
+        for ($i = 0; $i < $length; $i++) {
+            $character = $body[$i];
+            if ('\\' === $character) {
+                $i++;
+            } elseif ($closing === $character) {
+                if ($opening === $closing || 0 === $depth) {
+                    return false;
+                }
+
+                $depth--;
+            } elseif ($opening === $character) {
+                $depth++;
+            }
+        }
+
+        return 0 === $depth;
     }
 
     /**
@@ -3603,7 +3683,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             // A backslash and the character it escapes are one step.
             $character = $body[$i];
             if ('\\' === $character) {
-                $i += 2;
+                $i += self::escapeLength($body, $i);
 
                 continue;
             }

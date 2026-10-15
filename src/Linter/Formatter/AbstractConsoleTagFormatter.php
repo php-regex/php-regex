@@ -146,13 +146,12 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
         return $output;
     }
 
+    /**
+     * A route requirement, a pattern body with no delimiter, is shown as
+     * written, as the CLI shows it: it does not highlight.
+     */
     private function safelyHighlightPattern(string $pattern): string
     {
-        // Wrap with / / if no delimiter
-        if (!LibraryPcre::match('/^[^a-zA-Z0-9\\\\]/', $pattern)) {
-            $pattern = '/'.$pattern.'/';
-        }
-
         // Always escape control characters to prevent layout issues
         $escapedPattern = DisplayEscaper::escape($pattern);
 
@@ -187,11 +186,11 @@ abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterIn
             $badge = $this->getIssueBadge($issueType);
             $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue, $pattern));
 
-            // An invalid pattern says it all in its message and caret; a
-            // ReDoS error still needs its hint, which opens on the evidence,
-            // and a lint rule at Error its fix.
-            $hint = $issue['hint'] ?? null;
-            if (!isset($issue['validation']) && \is_string($hint) && '' !== $hint) {
+            // An invalid pattern shows the fix its validation names; a ReDoS
+            // error its hint, which opens on the evidence, and a lint rule
+            // at Error its fix.
+            $hint = isset($issue['validation']) ? $issue['validation']->hint : ($issue['hint'] ?? null);
+            if (\is_string($hint) && '' !== $hint) {
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     self::ARROW_LABEL,

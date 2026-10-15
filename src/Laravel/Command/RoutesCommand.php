@@ -17,7 +17,9 @@ use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Lists the Laravel routes that have a regex constraint, and validates the
@@ -127,7 +129,9 @@ final class RoutesCommand extends Command
         }
 
         if ('json' === $format) {
-            $this->output->writeln((string) json_encode([
+            // The document as it is, never read for console tags, and
+            // written even under --quiet.
+            $this->output->write(JsonDocument::encode([
                 'routes' => $routeData,
                 'issues' => $issues,
                 'summary' => [
@@ -135,7 +139,7 @@ final class RoutesCommand extends Command
                     'routes_with_constraints' => \count(array_filter($routeData, static fn (array $r): bool => !empty($r['constraints']))),
                     'total_issues' => \count($issues),
                 ],
-            ], \JSON_PRETTY_PRINT));
+            ]), false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
 
             return \count($issues) > 0 ? self::FAILURE : self::SUCCESS;
         }

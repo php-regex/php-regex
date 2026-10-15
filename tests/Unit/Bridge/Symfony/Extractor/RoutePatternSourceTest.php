@@ -110,7 +110,7 @@ final class RoutePatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('{^\d+$}sD', $result[0]->pattern);
+        $this->assertSame('{^(?P<id>\d+)$}sD', $result[0]->pattern);
         $this->assertSame('Symfony routes', $result[0]->file);
         $this->assertSame('route:test_route:id', $result[0]->source);
         $this->assertSame('\d+', $result[0]->displayPattern);
@@ -179,8 +179,8 @@ final class RoutePatternSourceTest extends TestCase
 
         $this->assertCount(2, $result);
         $patterns = array_map(static fn ($occurrence) => $occurrence->pattern, $result);
-        $this->assertContains('{^\d+$}sD', $patterns);
-        $this->assertContains('{^[a-z-]+$}sD', $patterns);
+        $this->assertContains('{^(?P<id>\d+)$}sD', $patterns);
+        $this->assertContains('{^(?P<slug>[a-z-]+)$}sD', $patterns);
     }
 
     public function test_extract_ignores_empty_requirements(): void
@@ -203,7 +203,7 @@ final class RoutePatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('{^\d+$}sD', $result[0]->pattern);
+        $this->assertSame('{^(?P<id>\d+)$}sD', $result[0]->pattern);
     }
 
     public function test_extract_with_yaml_resources(): void
@@ -233,7 +233,7 @@ final class RoutePatternSourceTest extends TestCase
 
             $this->assertCount(1, $result);
             // Should extract the pattern
-            $this->assertSame('{^\d+$}sD', $result[0]->pattern);
+            $this->assertSame('{^(?P<id>\d+)$}sD', $result[0]->pattern);
         } finally {
             unlink($tempYaml);
         }
@@ -325,7 +325,23 @@ final class RoutePatternSourceTest extends TestCase
 
         $result = (new RoutePatternSource($this->normalizer, $router))->extract(new PatternSourceContext(['.'], []));
 
-        $this->assertSame(['{^[äöü]+$}sDu', '{^[a-z]+$}sD'], array_map(static fn ($occurrence): string => $occurrence->pattern, $result));
+        $this->assertSame(['{^(?P<name>[äöü]+)$}sDu', '{^(?P<name>[a-z]+)$}sD'], array_map(static fn ($occurrence): string => $occurrence->pattern, $result));
+    }
+
+    /**
+     * The route compiler matches the host case-insensitively: a parameter
+     * of the host, and not of the path, is read under i.
+     */
+    public function test_extract_reads_a_host_requirement_under_i(): void
+    {
+        $router = $this->createStub(RouterInterface::class);
+        $collection = new RouteCollection();
+        $collection->add('host_route', new Route('/{id}', [], ['sub' => '[a-z]+', 'id' => '\d+'], [], '{sub}.example.com'));
+        $router->method('getRouteCollection')->willReturn($collection);
+
+        $result = (new RoutePatternSource($this->normalizer, $router))->extract(new PatternSourceContext(['.'], []));
+
+        $this->assertSame(['{^(?P<sub>[a-z]+)$}sDi', '{^(?P<id>\d+)$}sD'], array_map(static fn ($occurrence): string => $occurrence->pattern, $result));
     }
 
     public function test_extract_reads_a_requirement_starting_with_a_slash_as_a_fragment(): void
@@ -346,7 +362,7 @@ final class RoutePatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('{^/\d+/$}sD', $result[0]->pattern);
+        $this->assertSame('{^(?P<id>/\d+/)$}sD', $result[0]->pattern);
     }
 
     public function test_extract_with_anchor_patterns(): void
@@ -366,7 +382,7 @@ final class RoutePatternSourceTest extends TestCase
         $result = $source->extract($context);
 
         $this->assertCount(1, $result);
-        $this->assertSame('{^[\w-]+$}sD', $result[0]->pattern);
+        $this->assertSame('{^(?P<slug>[\w-]+)$}sD', $result[0]->pattern);
     }
 
     public function test_extract_with_yaml_route_definitions(): void
@@ -396,8 +412,8 @@ final class RoutePatternSourceTest extends TestCase
             // Should extract patterns from YAML
             $this->assertGreaterThanOrEqual(2, \count($result));
             $patterns = array_map(static fn ($occurrence) => $occurrence->pattern, $result);
-            $this->assertContains('{^\d+$}sD', $patterns);
-            $this->assertContains('{^[a-z-]+$}sD', $patterns);
+            $this->assertContains('{^(?P<id>\d+)$}sD', $patterns);
+            $this->assertContains('{^(?P<slug>[a-z-]+)$}sD', $patterns);
         } finally {
             unlink($tempYaml);
         }
@@ -423,8 +439,8 @@ final class RoutePatternSourceTest extends TestCase
 
             $this->assertSame(
                 [
-                    ['route:test_route:id', '{^\d+$}sD', 4],
-                    ['route:test_route:slug', '{^[a-z-]+$}sD', 5],
+                    ['route:test_route:id', '{^(?P<id>\d+)$}sD', 4],
+                    ['route:test_route:slug', '{^(?P<slug>[a-z-]+)$}sD', 5],
                 ],
                 array_map(static fn ($occurrence): array => [$occurrence->source, $occurrence->pattern, $occurrence->line], $result),
             );
@@ -620,7 +636,7 @@ final class RoutePatternSourceTest extends TestCase
             // Should extract patterns from YAML, handling when@ conditions
             $this->assertGreaterThanOrEqual(1, \count($result));
             $patterns = array_map(static fn ($occurrence) => $occurrence->pattern, $result);
-            $this->assertContains('{^[a-z0-9_-]+$}sD', $patterns);
+            $this->assertContains('{^(?P<slug>[a-z0-9_-]+)$}sD', $patterns);
         } finally {
             unlink($tempYaml);
         }

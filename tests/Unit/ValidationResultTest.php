@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPUnit\Framework\TestCase;
@@ -219,5 +220,51 @@ final class ValidationResultTest extends TestCase
         $this->assertSame('', $result->hint);
         // An error code is an enum case now, never an empty string.
         $this->assertSame(ErrorCode::PatternEmpty, $result->errorCode);
+    }
+
+    /**
+     * The message, the line of the pattern with its caret, then the hint:
+     * the block every surface prints, written once.
+     */
+    public function test_render_writes_the_message_the_caret_and_the_hint(): void
+    {
+        $result = RegexParser::create()->validate('/a{2,1}/');
+
+        $this->assertSame(
+            "Invalid quantifier range \"{2,1}\": min > max.\n"
+            ."Line 1: a{2,1}\n"
+            ."             ^\n"
+            .'Hint: Write the smaller count first: "{1,2}".',
+            $result->render(),
+        );
+    }
+
+    public function test_render_writes_nothing_for_a_valid_pattern(): void
+    {
+        $this->assertSame('', RegexParser::create()->validate('/a+/')->render());
+    }
+
+    /**
+     * Each part the result does not carry is left out, with its line.
+     */
+    public function test_render_leaves_out_what_the_result_does_not_carry(): void
+    {
+        $this->assertSame('Bare message.', (new ValidationResult(false, 'Bare message.'))->render());
+        $this->assertSame("Bare message.\nHint: Do this.", (new ValidationResult(false, 'Bare message.', hint: 'Do this.'))->render());
+        $this->assertSame("Line 1: a(\n         ^", (new ValidationResult(false, caretSnippet: "Line 1: a(\n         ^"))->render());
+    }
+
+    /**
+     * A limit of the library reads as one too: the message says what was
+     * exceeded, the hint which option to raise.
+     */
+    public function test_render_a_limit_names_the_option_to_raise(): void
+    {
+        $result = RegexParser::create(['max_pattern_length' => 5])->validate('/abcdefghij/');
+
+        $this->assertSame(ValidationErrorCategory::Limit, $result->category);
+        $this->assertNotNull($result->hint);
+        $this->assertStringStartsWith("Regex pattern exceeds maximum length of 5 characters.\nLine 1: /abcdefghij/\n", $result->render());
+        $this->assertStringEndsWith("\nHint: ".$result->hint, $result->render());
     }
 }

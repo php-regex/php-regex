@@ -13,15 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Converter;
 
-use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
 
 /**
- * Converts PHPRegex diagnostics to LSP diagnostic format.
- *
- * @phpstan-import-type Position from RegexOccurrence
+ * Converts PHPRegex diagnostics to LSP diagnostic format, each placed on
+ * the document through the span of its pattern.
  *
  * @internal
  */
@@ -33,36 +31,15 @@ final class DiagnosticConverter
     private const SEVERITY_INFORMATION = 3;
 
     /**
-     * Convert a LintIssue to LSP diagnostic format.
-     *
-     * @param Position $start Position where the pattern starts in the file
+     * A lint issue, over the node its rule names: from its offset to its
+     * end, or one character when the rule gives no end.
      *
      * @return array<string, mixed>
      */
-    public function convert(RuleViolation $issue, array $start, int $patternLength): array
+    public function convert(RuleViolation $issue, PatternSpan $span): array
     {
-        $offset = $issue->offset ?? 0;
-        $endOffset = $offset + 1;
-
-        // Clamp to pattern bounds
-        if ($offset > $patternLength) {
-            $offset = $patternLength;
-        }
-        if ($endOffset > $patternLength) {
-            $endOffset = $patternLength;
-        }
-
         return [
-            'range' => [
-                'start' => [
-                    'line' => $start['line'],
-                    'character' => $start['character'] + $offset,
-                ],
-                'end' => [
-                    'line' => $start['line'],
-                    'character' => $start['character'] + $endOffset,
-                ],
-            ],
+            'range' => $span->range($issue->offset ?? 0, $issue->end),
             'severity' => $this->mapSeverity($issue->severity),
             'code' => $issue->id,
             'source' => 'php-regex',
@@ -71,61 +48,82 @@ final class DiagnosticConverter
     }
 
     /**
-     * Create a diagnostic for a parse error.
-     *
-     * @param Position $start
+     * A parse error, on the character `regex validate` puts its caret
+     * under: where PCRE reports the error.
      *
      * @return array<string, mixed>
      */
-    public function fromParseError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null): array
+    public function fromParseError(string $message, ErrorCode $code, PatternSpan $span, ?int $offset = null, ?string $hint = null): array
     {
-        $errorOffset = $offset ?? 0;
-
         return [
-            'range' => [
-                'start' => [
-                    'line' => $start['line'],
-                    'character' => $start['character'] + $errorOffset,
-                ],
-                'end' => [
-                    'line' => $start['line'],
-                    'character' => $start['character'] + $patternLength,
-                ],
-            ],
+            'range' => $span->range($offset ?? 0),
             'severity' => self::SEVERITY_ERROR,
             'code' => $code->value,
             'source' => 'php-regex',
-            'message' => $message,
+            'message' => self::withHint($message, $hint),
         ];
     }
 
     /**
-     * Create a diagnostic for a validation error.
-     *
-     * @param Position $start
+     * A limit of the library met on the pattern: no error in it, the
+     * pattern is not analyzed. Shown as information over the whole body.
      *
      * @return array<string, mixed>
      */
-    public function fromValidationError(string $message, ErrorCode $code, array $start, int $patternLength, ?int $offset = null): array
+    public function fromLimit(string $message, ErrorCode $code, PatternSpan $span): array
     {
-        $errorOffset = $offset ?? 0;
-
         return [
-            'range' => [
-                'start' => [
-                    'line' => $start['line'],
-                    'character' => $start['character'] + $errorOffset,
-                ],
-                'end' => [
-                    'line' => $start['line'],
-                    'character' => $start['character'] + $patternLength,
-                ],
-            ],
+            'range' => $span->range(0, $span->bodyLength()),
+            'severity' => self::SEVERITY_INFORMATION,
+            'code' => $code->value,
+            'source' => 'php-regex',
+            'message' => 'Not analyzed: '.$message,
+        ];
+    }
+
+    /**
+     * A validation error, on the character `regex validate` puts its caret
+     * under, as a parse error.
+     *
+     * @return array<string, mixed>
+     */
+    public function fromValidationError(string $message, ErrorCode $code, PatternSpan $span, ?int $offset = null, ?string $hint = null): array
+    {
+        return [
+            'range' => $span->range($offset ?? 0),
             'severity' => self::SEVERITY_ERROR,
             'code' => $code->value,
             'source' => 'php-regex',
-            'message' => $message,
+            'message' => self::withHint($message, $hint),
         ];
+    }
+
+    /**
+     * A ReDoS verdict, as `regex lint` reports it: over the risky part of
+     * the body when the analysis names one, over the whole body otherwise.
+     *
+     * @param list<string> $evidence the lines under the verdict: the attack, its replay
+     *
+     * @return array<string, mixed>
+     */
+    public function fromRedos(string $code, string $message, array $evidence, bool $error, PatternSpan $span, ?int $from = null, ?int $to = null): array
+    {
+        return [
+            'range' => null === $from ? $span->range(0, $span->bodyLength()) : $span->range($from, $to),
+            'severity' => $error ? self::SEVERITY_ERROR : self::SEVERITY_WARNING,
+            'code' => $code,
+            'source' => 'php-regex',
+            'message' => implode("\n", [$message, ...$evidence]),
+        ];
+    }
+
+    /**
+     * The fix on the line under the error, unless the message already
+     * suggests it.
+     */
+    private static function withHint(string $message, ?string $hint): string
+    {
+        return null === $hint || '' === $hint || str_contains($message, $hint) ? $message : $message."\n".$hint;
     }
 
     private function mapSeverity(LintSeverity $severity): int

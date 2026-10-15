@@ -119,6 +119,41 @@ final class PhpStringLiteralTest extends TestCase
     }
 
     /**
+     * Each byte PHP reads from a literal, by where its spelling starts in
+     * the token: an escape gives its first byte for every byte it makes,
+     * and the list ends on the closing quote.
+     *
+     * @return iterable<string, array{literal: string, offsets: list<int>}>
+     */
+    public static function provideSpellingOffsets(): iterable
+    {
+        yield 'single-quoted escapes' => ['literal' => "'a\\\\b\\'c'", 'offsets' => [1, 2, 4, 5, 7, 8]];
+        yield 'raw multibyte' => ['literal' => "'é'", 'offsets' => [1, 2, 3]];
+        yield 'tab escape' => ['literal' => '"\t(a"', 'offsets' => [1, 3, 4, 5]];
+        yield 'unicode escape' => ['literal' => '"\u{e9}x"', 'offsets' => [1, 1, 7, 8]];
+        yield 'hexadecimal then a kept escape' => ['literal' => '"\x5b\d"', 'offsets' => [1, 5, 6, 7]];
+        yield 'octal escape' => ['literal' => '"\101"', 'offsets' => [1, 5]];
+        yield 'empty' => ['literal' => "''", 'offsets' => [1]];
+    }
+
+    /**
+     * @param list<int> $offsets
+     */
+    #[Test]
+    #[DataProvider('provideSpellingOffsets')]
+    public function test_each_byte_read_maps_to_where_the_literal_spells_it(string $literal, array $offsets): void
+    {
+        $this->assertSame($offsets, PhpStringLiteral::spellingOffsets($literal));
+        $this->assertCount(\strlen((string) PhpStringLiteral::decode($literal)) + 1, $offsets);
+    }
+
+    #[Test]
+    public function test_a_token_that_is_no_quoted_literal_has_no_spelling_offsets(): void
+    {
+        $this->assertNull(PhpStringLiteral::spellingOffsets('abc'));
+    }
+
+    /**
      * The opening token, raw body and closing token of a heredoc, as the
      * tokenizer gives them.
      *

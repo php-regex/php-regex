@@ -130,7 +130,7 @@ bin/bump 2.1.0                 # Regex::VERSION and VERSION_ID, and the CHANGELO
 git commit -am "Release 2.1.0"
 git push origin 2.x            # wait for CI to pass
 bin/release --dry-run 2.1.0    # every check, nothing tagged
-bin/release 2.1.0              # the phar, a draft release, the tag, then the release
+bin/release 2.1.0              # a draft release and the tag; the phar workflow publishes it
 bin/bump --next 2.1.1          # 2.1.1-DEV and a new Unreleased section
 ```
 
@@ -142,10 +142,16 @@ waits until it passes. Run it on an idle machine: the times are wall-clock.
 
 `bin/release` creates the GitHub release as a draft before it pushes the
 tag, so a release GitHub refuses leaves nothing tagged; a tag cannot be moved
-or deleted once pushed. The release carries `regex.phar` and its SHA-256
-checksum, and the CHANGELOG section as its notes, or the section's opening
-words and a link to the CHANGELOG when the section is longer than GitHub
-takes.
+or deleted once pushed. Its notes are the CHANGELOG section, or the section's
+opening words and a link to the CHANGELOG when the section is longer than
+GitHub takes.
+
+The tag starts the phar workflow (`.github/workflows/phar.yml`): it builds
+`regex.phar` from the tag, attests its build provenance, attaches it and its
+SHA-256 checksum to the draft, and only then publishes the release, so the
+latest release never goes without its phar. If that run fails, the release
+stays a draft: fix the cause, then run the workflow by hand on the tag with
+"publish" set. Run by hand without "publish", it only builds the phar.
 
 The tag triggers the split workflow, which tags every `php-regex/regex-*`
 repository; Packagist picks the versions up from there. A pre-release

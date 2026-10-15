@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Analyzer\AnalysisContext;
 use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;
@@ -119,6 +120,7 @@ final class AnalyzeCommand extends Command
         if (null === $format) {
             return Command::INVALID;
         }
+        $json = self::FORMAT_JSON === $format;
 
         $onlyOption = $input->getOption('only');
         $only = $this->normalizeLowercaseList(\is_array($onlyOption) ? $onlyOption : []);
@@ -126,9 +128,7 @@ final class AnalyzeCommand extends Command
         if ([] !== $only) {
             $unknown = array_diff($only, $available);
             if ([] !== $unknown) {
-                $io->error('Unknown analyzer ids: '.implode(', ', $unknown).'.');
-
-                return Command::INVALID;
+                return $this->refuse($output, $io, $json, 'Unknown analyzer ids: '.implode(', ', $unknown).'.');
             }
         }
 
@@ -138,19 +138,18 @@ final class AnalyzeCommand extends Command
             if ([] !== $available) {
                 $message .= ' Available: '.implode(', ', $available).'.';
             }
-            $io->error($message);
 
-            return Command::INVALID;
+            return $this->refuse($output, $io, $json, $message);
         }
 
-        $failOn = $this->resolveFailOn($input, $io);
-        if (null === $failOn) {
-            return Command::INVALID;
+        $failOn = $this->resolveFailOn($input);
+        if (\is_string($failOn)) {
+            return $this->refuse($output, $io, $json, $failOn);
         }
 
-        $threshold = $this->resolveThreshold($input, $io);
-        if (null === $threshold) {
-            return Command::INVALID;
+        $threshold = $this->resolveThreshold($input);
+        if (\is_string($threshold)) {
+            return $this->refuse($output, $io, $json, $threshold);
         }
 
         $debug = (bool) $input->getOption('debug') || $output->isVerbose();
@@ -218,8 +217,8 @@ final class AnalyzeCommand extends Command
             $io->newLine();
         }
 
-        if (self::FORMAT_JSON === $format) {
-            $output->writeln($this->jsonFormatter->format($report, $debug));
+        if ($json) {
+            $this->writeDocument($output, $this->jsonFormatter->format($report, $debug));
         } else {
             $this->consoleFormatter->render($report, $io, !$renderBanner, $debug);
             if ($renderBanner) {
@@ -249,9 +248,33 @@ final class AnalyzeCommand extends Command
     }
 
     /**
-     * @return array<int, string>|null
+     * A command line it cannot use: the error envelope in JSON mode, an
+     * error block otherwise.
      */
-    private function resolveFailOn(InputInterface $input, SymfonyStyle $io): ?array
+    private function refuse(OutputInterface $output, SymfonyStyle $io, bool $json, string $message): int
+    {
+        if ($json) {
+            $this->writeDocument($output, JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+        } else {
+            $io->error($message);
+        }
+
+        return Command::INVALID;
+    }
+
+    /**
+     * The document as it is, never read for console tags, and written even
+     * under --quiet: it is the output asked for, not a status line.
+     */
+    private function writeDocument(OutputInterface $output, string $document): void
+    {
+        $output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
+    }
+
+    /**
+     * @return array<int, string>|string the kinds, or why they cannot be used
+     */
+    private function resolveFailOn(InputInterface $input): array|string
     {
         $failOnOption = $input->getOption('fail-on');
         $failOn = $this->normalizeLowercaseList(\is_array($failOnOption) ? $failOnOption : []);
@@ -263,9 +286,7 @@ final class AnalyzeCommand extends Command
         $invalid = array_diff($failOn, $allowed);
 
         if ([] !== $invalid) {
-            $io->error('The --fail-on values must be one of: shadowed, overlap, redos, critical, any, none.');
-
-            return null;
+            return 'The --fail-on values must be one of: shadowed, overlap, redos, critical, any, none.';
         }
 
         if (\in_array('none', $failOn, true)) {
@@ -275,7 +296,10 @@ final class AnalyzeCommand extends Command
         return array_values(array_unique($failOn));
     }
 
-    private function resolveThreshold(InputInterface $input, SymfonyStyle $io): ?RedosSeverity
+    /**
+     * @return RedosSeverity|string the threshold, or why it cannot be used
+     */
+    private function resolveThreshold(InputInterface $input): RedosSeverity|string
     {
         $thresholdValue = $input->getOption('redos-threshold');
         $threshold = \is_string($thresholdValue) ? trim($thresholdValue) : '';
@@ -283,9 +307,7 @@ final class AnalyzeCommand extends Command
         try {
             return RedosSeverity::fromConfig('' === $threshold ? $this->defaultRedosThreshold : $threshold);
         } catch (InvalidRegexOptionException $e) {
-            $io->error('Invalid value for --redos-threshold: '.$e->getMessage());
-
-            return null;
+            return 'Invalid value for --redos-threshold: '.$e->getMessage();
         }
     }
 

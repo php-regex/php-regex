@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
@@ -31,6 +33,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Per-run lint context: immutable pattern facts plus the mutable traversal
@@ -47,6 +50,18 @@ final class LintContext
      * Groups after which nothing more is matched once their child is.
      */
     private const GROUPS_ENDING_WITH_THEIR_CHILD = [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags];
+
+    /**
+     * The DFAs the automata build for the rules' questions, kept for the
+     * run: the process's cache unless the run brings its own.
+     */
+    public readonly DfaCacheInterface $dfas;
+
+    /**
+     * The PHP and PCRE2 the pattern is judged for: the rules' questions are
+     * read as that release reads them.
+     */
+    public readonly PcreTarget $target;
 
     /**
      * @var list<NodeInterface>
@@ -69,8 +84,12 @@ final class LintContext
         public readonly GroupIndex $groups,
         public readonly CharSetAnalyzer $charSetAnalyzer,
         private readonly ?\Closure $ruleEnabled = null,
+        ?DfaCacheInterface $dfas = null,
+        ?PcreTarget $target = null,
     ) {
         $this->activeFlags = $pattern->flags;
+        $this->dfas = $dfas ?? LanguageQuestions::dfas();
+        $this->target = $target ?? PcreTarget::runtime();
     }
 
     /**

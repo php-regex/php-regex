@@ -103,6 +103,14 @@ final class LintConsoleProgress implements LintProgress
     }
 
     /**
+     * A step not shown never started the output's progress: nothing is drawn.
+     */
+    public function stalled(string $file, int $seconds): void
+    {
+        $this->output->progressNote('Still on '.$file);
+    }
+
+    /**
      * The scan's steps leave their line to the next one: the scan ends it.
      */
     public function finish(): void

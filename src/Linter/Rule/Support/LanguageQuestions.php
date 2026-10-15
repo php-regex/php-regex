@@ -16,10 +16,13 @@ namespace PHPRegex\Linter\Rule\Support;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\LintContext;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -29,6 +32,8 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 
 /**
@@ -37,8 +42,8 @@ use PHPRegex\Parser\RegexParser;
  * flags, the inline flags in force spelled out. The work is capped below
  * the solver's own defaults, so that a lint run stays quick; past the cap,
  * or outside the regular subset, there is no answer and the rule stays
- * silent. A rule passes the DFA cache it keeps for its own questions: a
- * pattern repeats its atoms, and nothing is kept past the rule.
+ * silent. A rule passes the run's DFA cache (LintContext::$dfas): a pattern
+ * repeats its atoms, and a project repeats its patterns.
  *
  * @internal
  */
@@ -57,11 +62,29 @@ final class LanguageQuestions
     private const CASELESS_RESTRICT = 'r';
 
     /**
-     * The parser the solver reads the questions with.
+     * The parsers the solver reads the questions with, one per PHP and
+     * PCRE2 judged, until the library's caches are cleared.
+     *
+     * @var array<string, RegexParser>
      */
-    private static ?RegexParser $parser = null;
+    private static array $parsers = [];
+
+    /**
+     * The DFAs kept for every run of the process that brings no cache of
+     * its own; bounded, and emptied with the library's other caches.
+     */
+    private static ?InMemoryDfaCache $dfas = null;
 
     private function __construct() {}
+
+    /**
+     * The process's DFA cache, shared by the lint rules and the optimizer's
+     * checks of a run that brings none.
+     */
+    public static function dfas(): DfaCacheInterface
+    {
+        return self::$dfas ??= new InMemoryDfaCache();
+    }
 
     /**
      * The options every question runs under: a few hundred states at most.
@@ -171,38 +194,38 @@ final class LanguageQuestions
      * Whether every string the left pattern matches whole, the right one
      * matches whole; null when the automata cannot say.
      */
-    public static function isSubset(string $left, string $right, ?DfaCacheInterface $dfas = null): ?bool
+    public static function isSubset(string $left, string $right, ?DfaCacheInterface $dfas = null, ?PcreTarget $target = null): ?bool
     {
-        return self::ask(static fn (LanguageSolver $solver): bool => $solver->subsetOf($left, $right, self::options())->isSubset, $dfas);
+        return self::ask(static fn (LanguageSolver $solver): bool => $solver->subsetOf($left, $right, self::options())->isSubset, $dfas, $target);
     }
 
     /**
      * Whether no string matches both patterns whole; null when the
      * automata cannot say.
      */
-    public static function areDisjoint(string $left, string $right, ?DfaCacheInterface $dfas = null): ?bool
+    public static function areDisjoint(string $left, string $right, ?DfaCacheInterface $dfas = null, ?PcreTarget $target = null): ?bool
     {
-        return self::ask(static fn (LanguageSolver $solver): bool => $solver->intersection($left, $right, self::options())->isEmpty, $dfas);
+        return self::ask(static fn (LanguageSolver $solver): bool => $solver->intersection($left, $right, self::options())->isEmpty, $dfas, $target);
     }
 
     /**
      * Whether the pattern matches no string whole; null when the automata
      * cannot say.
      */
-    public static function matchesNothing(string $pattern, ?DfaCacheInterface $dfas = null): ?bool
+    public static function matchesNothing(string $pattern, ?DfaCacheInterface $dfas = null, ?PcreTarget $target = null): ?bool
     {
         // The search for a common string walks the alphabet's ranges, where
         // the language's own emptiness check reads every code point.
-        return self::ask(static fn (LanguageSolver $solver): bool => $solver->intersection($pattern, $pattern, self::options())->isEmpty, $dfas);
+        return self::ask(static fn (LanguageSolver $solver): bool => $solver->intersection($pattern, $pattern, self::options())->isEmpty, $dfas, $target);
     }
 
     /**
      * Whether preg_match() writes the same $matches for both patterns on
      * every subject; null when the automata cannot say.
      */
-    public static function matchTheSame(string $left, string $right, ?DfaCacheInterface $dfas = null): ?bool
+    public static function matchTheSame(string $left, string $right, ?DfaCacheInterface $dfas = null, ?PcreTarget $target = null): ?bool
     {
-        return self::ask(static fn (LanguageSolver $solver): bool => $solver->matchEquivalent($left, $right, self::options())->isEquivalent, $dfas);
+        return self::ask(static fn (LanguageSolver $solver): bool => $solver->matchEquivalent($left, $right, self::options())->isEquivalent, $dfas, $target);
     }
 
     /**
@@ -220,7 +243,7 @@ final class LanguageQuestions
         $wrap = static fn (string $body): string => $pattern->delimiter.$body.PatternParser::closingDelimiter($pattern->delimiter).$pattern->flags;
         $edit = [$start, $end, $replacement];
 
-        $same = self::matchTheSame($wrap($pattern->source), $wrap(self::spliced($pattern->source, [$edit])));
+        $same = self::matchTheSame($wrap($pattern->source), $wrap(self::spliced($pattern->source, [$edit])), $context->dfas, $context->target);
         $root = $context->parents()[0] ?? null;
         if (true !== $same || null === $root || !NodePredicates::holdsAStartAnchor($root)) {
             return $same;
@@ -232,7 +255,7 @@ final class LanguageQuestions
         }
         $outside = array_values(array_filter($anchors, static fn (array $anchor): bool => $anchor[1] <= $start || $anchor[0] >= $end));
 
-        return self::matchTheSame($wrap(self::spliced($pattern->source, $anchors)), $wrap(self::spliced($pattern->source, [...$outside, $edit])));
+        return self::matchTheSame($wrap(self::spliced($pattern->source, $anchors)), $wrap(self::spliced($pattern->source, [...$outside, $edit])), $context->dfas, $context->target);
     }
 
     /**
@@ -282,12 +305,31 @@ final class LanguageQuestions
     }
 
     /**
+     * The parser that reads a question as the release judged reads it:
+     * "a{,2}" repeats from PCRE2 10.43 and is text before.
+     */
+    private static function parser(?PcreTarget $target): RegexParser
+    {
+        $target ??= PcreTarget::runtime();
+        $key = $target->cacheKey();
+        if (!isset(self::$parsers[$key])) {
+            StaticCaches::register(self::class, static function (): void {
+                self::$parsers = [];
+            });
+            $defaults = ParserOptions::fromArray([]);
+            self::$parsers[$key] = RegexParser::fromOptions(new ParserOptions($defaults->maxPatternLength, $defaults->maxLookbehindLength, new ArrayCache(), target: $target));
+        }
+
+        return self::$parsers[$key];
+    }
+
+    /**
      * @param \Closure(LanguageSolver): bool $question
      */
-    private static function ask(\Closure $question, ?DfaCacheInterface $dfas): ?bool
+    private static function ask(\Closure $question, ?DfaCacheInterface $dfas, ?PcreTarget $target): ?bool
     {
         try {
-            return $question(new LanguageSolver(self::$parser ??= RegexParser::create(), $dfas));
+            return $question(new LanguageSolver(self::parser($target), $dfas));
         } catch (RegexException) {
             // Outside the regular subset, past the cap, or a pattern the
             // parser refuses: no answer.

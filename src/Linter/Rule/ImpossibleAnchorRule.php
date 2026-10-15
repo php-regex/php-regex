@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
@@ -54,17 +53,10 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      */
     private array $wordKinds = [];
 
-    /**
-     * The DFAs the automata built for this rule's questions, kept for the
-     * ones that read the same pattern again.
-     */
-    private readonly InMemoryDfaCache $dfas;
-
     private readonly QuestionBudget $questions;
 
     public function __construct()
     {
-        $this->dfas = new InMemoryDfaCache();
         $this->questions = new QuestionBudget();
     }
 
@@ -118,6 +110,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                                 $anchorLabel,
                             ),
                             $child->getStartPosition(),
+                            end: $child->getEndPosition(),
                         );
                     }
                 }
@@ -137,6 +130,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                             $anchorLabel,
                         ),
                         $child->getStartPosition(),
+                        end: $child->getEndPosition(),
                     );
                 }
             }
@@ -188,6 +182,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 : "Non-boundary '\\B' sits between a word and a non-word character, so it can never match.",
             $boundary->getStartPosition(),
             'b' === $boundary->value ? 'Remove the boundary, or fix the characters around it.' : 'Use \\b, or fix the characters around it.',
+            end: $boundary->getEndPosition(),
         );
     }
 
@@ -231,7 +226,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return null;
         }
 
-        if (true === LanguageQuestions::isSubset($atomPattern, $wordPattern, $this->dfas)) {
+        if (true === LanguageQuestions::isSubset($atomPattern, $wordPattern, $context->dfas, $context->target)) {
             return $this->wordKinds[$atomPattern] = true;
         }
 
@@ -239,7 +234,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return null;
         }
 
-        return $this->wordKinds[$atomPattern] = true === LanguageQuestions::areDisjoint($atomPattern, $wordPattern, $this->dfas) ? false : null;
+        return $this->wordKinds[$atomPattern] = true === LanguageQuestions::areDisjoint($atomPattern, $wordPattern, $context->dfas, $context->target) ? false : null;
     }
 
     /**

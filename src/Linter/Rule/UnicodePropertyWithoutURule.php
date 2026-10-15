@@ -53,6 +53,7 @@ final class UnicodePropertyWithoutURule extends AbstractLintRule
             $node->startPosition,
             'Add the /u flag to match beyond the first 256 code points.',
             LintSeverity::Error,
+            end: $node->getEndPosition(),
         )];
     }
 }

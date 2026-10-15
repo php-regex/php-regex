@@ -17,6 +17,7 @@ use Illuminate\Console\Command;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
@@ -38,7 +39,7 @@ final class TranspileCommand extends Command
      */
     protected $signature = 'regex:transpile
         {pattern : The regex pattern to transpile}
-        {--target=javascript : Target dialect (javascript, js, html-pattern, html, python, py)}
+        {--t|target=javascript : Target dialect (javascript, js, html-pattern, html, python, py)}
         {--format=console : Output format (console, json)}';
 
     /**
@@ -98,12 +99,12 @@ final class TranspileCommand extends Command
                     JsonDocument::STAGE_PATTERN,
                     ['validation' => $validation],
                 ));
+            } elseif (ValidationErrorCategory::Limit === $validation->category) {
+                $this->warn('Pattern not analyzed:');
+                $this->line($validation->render());
             } else {
                 $this->error('Invalid pattern:');
-                $this->line((string) $validation->error);
-                if (null !== $validation->caretSnippet) {
-                    $this->line($validation->caretSnippet);
-                }
+                $this->line($validation->render());
             }
 
             return self::FAILURE;

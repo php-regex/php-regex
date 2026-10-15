@@ -18,6 +18,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 
 /**
@@ -87,7 +88,7 @@ final class ExplainCommand extends AbstractCommand
             }
 
             $output->write($explanation."\n");
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             $output->write('  '.$output->badge('FAIL', Output::WHITE, Output::BG_RED).' '.$output->error('Explain failed: '.$e->getMessage())."\n");
 
             return self::FAILURE;

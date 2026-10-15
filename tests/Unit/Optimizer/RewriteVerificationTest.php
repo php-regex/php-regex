@@ -36,6 +36,51 @@ final class RewriteVerificationTest extends TestCase
     }
 
     /**
+     * Hundreds of short branches, as in a user-agent list: the match check
+     * steps a thread per branch for every character class, so it gives up on
+     * its work budget, not after hundreds of configurations, and the
+     * language check settles the rewrite. It took seconds.
+     */
+    #[Test]
+    public function test_a_wide_alternation_is_judged_without_a_long_match_search(): void
+    {
+        $letters = range('a', 'z');
+        $branches = [];
+        for ($i = 0; $i < 340; $i++) {
+            $branches[] = 0 === $i % 5
+                ? $letters[$i % 26].$letters[intdiv($i, 26) % 26].'('.$letters[($i * 7) % 26].'|'.$letters[($i * 11) % 26].')'
+                : $letters[$i % 26].$letters[intdiv($i, 26) % 26].$letters[($i * 7) % 26].$letters[($i * 3) % 26];
+        }
+        $original = '/'.implode('|', $branches).'/';
+        $optimizer = new Optimizer(RegexParser::create());
+        $rewrite = $optimizer->optimize($original)->optimized;
+        $this->assertNotSame($original, $rewrite, 'The pattern has something to rewrite.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+        $start = hrtime(true);
+        $verdict = $verify->invoke($optimizer, $original, $rewrite);
+        $seconds = (hrtime(true) - $start) / 1e9;
+
+        $this->assertTrue($verdict);
+        $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
+    }
+
+    /**
+     * The match check gives up on its configurations and the language check
+     * on its DFA states (2^14 for the last fourteen letters): the rewrite is
+     * unproven, and only a rewrite the automata cannot read at all is kept
+     * on trust.
+     */
+    #[Test]
+    public function test_a_rewrite_both_solvers_give_up_on_is_not_offered(): void
+    {
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+
+        $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/')->optimized, 'Unchecked, the rewrite is made.');
+        $this->assertSame('/^(a|b)*a(a|b){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/', ['verify_with_automata' => true])->optimized);
+    }
+
+    /**
      * @return iterable<string, array{original: string, rewrite: string, verdict: bool|null}>
      */
     public static function provideRewrites(): iterable

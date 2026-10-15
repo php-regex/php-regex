@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\LintRuleInterface;
@@ -23,7 +24,7 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Node;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -48,6 +49,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
@@ -84,12 +86,10 @@ final class PatternLinter extends AbstractNodeVisitor
 
     private ?string $patternValue = null;
 
-    private int $maxCapturingGroup = 0;
-
     /**
-     * @var array<string, bool>
+     * The capturing groups numbered as PCRE numbers them, and the calls.
      */
-    private array $definedNamedGroups = [];
+    private PcreGroups $groups;
 
     /**
      * @var array<int, CapturingGroupInfo>
@@ -101,37 +101,7 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     private array $capturingGroupsByName = [];
 
-    private int $nextCapturingGroupNumber = 1;
-
     private bool $skipUselessBackref = false;
-
-    /**
-     * Groups numbered so far by the subroutine pre-pass, branch resets
-     * included.
-     */
-    private int $openedGroups = 0;
-
-    /**
-     * @var array<int, GroupNode> the first group holding each number
-     */
-    private array $firstGroupByNumber = [];
-
-    /**
-     * @var array<string, GroupNode> the first group holding each name
-     */
-    private array $firstGroupByName = [];
-
-    /**
-     * @var list<int|string> the group each call targets, by number or by name
-     */
-    private array $subroutineCalls = [];
-
-    /**
-     * @var array<int, GroupNode>
-     */
-    private array $subroutineTargets = [];
-
-    private bool $recurses = false;
 
     private CharSetAnalyzer $charSetAnalyzer;
 
@@ -157,11 +127,19 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $dispatchMap = [];
 
     /**
+     * Where the rules' DFAs are kept: the process's cache when none is given.
+     */
+    private ?DfaCacheInterface $dfaCache = null;
+
+    private ?PcreTarget $target = null;
+
+    /**
      * @param array<string, bool> $enabledRules the rules to turn on or off by id; the others keep their default
      */
     public function __construct(private array $enabledRules = [])
     {
         $this->charSetAnalyzer = new CharSetAnalyzer();
+        $this->groups = PcreGroups::empty();
         $this->useRules(new LintRuleRegistry());
         $this->context = $this->createContext();
     }
@@ -177,6 +155,24 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $linter = new self($enabledRules);
         $linter->useRules($registry);
+
+        return $linter;
+    }
+
+    /**
+     * A linter keeping the DFAs its rules' questions build in the cache
+     * given, for a run that judges many patterns, and reading those
+     * questions as the PHP and PCRE2 judged read them.
+     *
+     * @internal the DFA cache and the target of a run are the analysis service's business
+     *
+     * @param array<string, bool> $enabledRules
+     */
+    public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache, ?PcreTarget $target = null): self
+    {
+        $linter = new self($enabledRules);
+        $linter->dfaCache = $dfaCache;
+        $linter->target = $target;
 
         return $linter;
     }
@@ -198,22 +194,16 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->source = $node->source ?? '';
         $this->charSetAnalyzer = CharSetAnalyzer::forRegex($node);
         $this->issues = [];
-        $this->maxCapturingGroup = 0;
-        $this->definedNamedGroups = [];
         $this->capturingGroups = [];
         $this->capturingGroupsByName = [];
-        $this->nextCapturingGroupNumber = 1;
         $this->skipUselessBackref = false;
 
         // Use a simple visitor to compile the pattern string for diagnostics
         $compiler = new PatternPrinter();
         $this->patternValue = $node->pattern->accept($compiler);
 
+        $this->groups = PcreGroups::of($node->pattern);
         $this->collectCapturingGroupInfo($node->pattern);
-        $this->collectSubroutineTargets($node->pattern);
-
-        // First pass: count capturing groups
-        $this->countCapturingGroups($node->pattern);
 
         $this->context = $this->createContext();
         foreach ($this->rules as $rule) {
@@ -445,6 +435,8 @@ final class PatternLinter extends AbstractNodeVisitor
 
     private function createContext(): LintContext
     {
+        $numbering = $this->groups->numbering();
+
         return new LintContext(
             new PatternInfo(
                 $this->flags,
@@ -454,16 +446,18 @@ final class PatternLinter extends AbstractNodeVisitor
                 $this->source,
             ),
             new GroupIndex(
-                $this->maxCapturingGroup,
-                $this->definedNamedGroups,
+                $numbering->maxGroupNumber,
+                array_fill_keys(array_keys($numbering->namedGroups), true),
                 $this->capturingGroups,
                 $this->capturingGroupsByName,
                 $this->skipUselessBackref,
-                $this->subroutineTargets,
-                $this->recurses,
+                $this->groups->subroutineTargets(),
+                $this->groups->recursesWhole(),
             ),
             $this->charSetAnalyzer,
             $this->isRuleEnabled(...),
+            $this->dfaCache,
+            $this->target,
         );
     }
 
@@ -516,40 +510,6 @@ final class PatternLinter extends AbstractNodeVisitor
         return true;
     }
 
-    private function countCapturingGroups(NodeInterface $node): void
-    {
-        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
-            $this->maxCapturingGroup++;
-            if (null !== $node->name) {
-                $this->definedNamedGroups[$node->name] = true;
-            }
-        }
-
-        // Recursively count in children
-        if ($node instanceof GroupNode) {
-            $this->countCapturingGroups($node->child);
-        } elseif ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alt) {
-                $this->countCapturingGroups($alt);
-            }
-        } elseif ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $this->countCapturingGroups($child);
-            }
-        } elseif ($node instanceof QuantifierNode) {
-            $this->countCapturingGroups($node->node);
-        } elseif ($node instanceof ConditionalNode) {
-            $this->countCapturingGroups($node->condition);
-            $this->countCapturingGroups($node->yes);
-            $this->countCapturingGroups($node->no);
-        } elseif ($node instanceof DefineNode) {
-            $this->countCapturingGroups($node->content);
-        } elseif ($node instanceof CharClassNode) {
-            $this->countCapturingGroups($node->expression);
-        }
-        // Other node types don't contain groups
-    }
-
     /**
      * @param array<string, int> $alternation
      */
@@ -567,7 +527,6 @@ final class PatternLinter extends AbstractNodeVisitor
             }
 
             if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
-                $number = $this->nextCapturingGroupNumber++;
                 $info = [
                     'node' => $node,
                     'start' => $node->getStartPosition(),
@@ -576,7 +535,11 @@ final class PatternLinter extends AbstractNodeVisitor
                     'alwaysEmpty' => $this->nodeIsAlwaysEmpty($node->child),
                 ];
 
-                $this->capturingGroups[$number] = $info;
+                // Every capturing group of the tree has its number.
+                $number = $this->groups->numberOf($node);
+                if (null !== $number) {
+                    $this->capturingGroups[$number] = $info;
+                }
 
                 if (GroupType::Named === $node->type && null !== $node->name) {
                     $this->capturingGroupsByName[$node->name][] = $info;
@@ -637,118 +600,6 @@ final class PatternLinter extends AbstractNodeVisitor
             $this->collectCapturingGroupInfo($node->start, $alternation);
             $this->collectCapturingGroupInfo($node->end, $alternation);
         }
-    }
-
-    /**
-     * Collects the groups a subroutine call runs again, and whether the
-     * pattern recurses into itself whole. A call by number reaches the first
-     * group holding that number, which inside a branch reset is the one in
-     * the earliest alternative; a call by name reaches the first group so
-     * named.
-     */
-    private function collectSubroutineTargets(NodeInterface $pattern): void
-    {
-        $this->openedGroups = 0;
-        $this->firstGroupByNumber = [];
-        $this->firstGroupByName = [];
-        $this->subroutineCalls = [];
-        $this->subroutineTargets = [];
-        $this->recurses = false;
-
-        $this->collectSubroutineCalls($pattern);
-
-        foreach ($this->subroutineCalls as $target) {
-            if (0 === $target) {
-                $this->recurses = true;
-
-                continue;
-            }
-
-            $group = \is_int($target) ? ($this->firstGroupByNumber[$target] ?? null) : ($this->firstGroupByName[$target] ?? null);
-            if (null !== $group) {
-                $this->subroutineTargets[spl_object_id($group)] = $group;
-            }
-        }
-    }
-
-    private function collectSubroutineCalls(NodeInterface $node): void
-    {
-        if ($node instanceof SubroutineNode) {
-            $target = $this->subroutineTarget($node);
-            if (null !== $target) {
-                $this->subroutineCalls[] = $target;
-            }
-
-            return;
-        }
-
-        if ($node instanceof ConditionalNode) {
-            // A recursion test such as (?(R1)...) reads where the match
-            // stands; it calls nothing.
-            if (!$node->condition instanceof SubroutineNode) {
-                $this->collectSubroutineCalls($node->condition);
-            }
-            $this->collectSubroutineCalls($node->yes);
-            $this->collectSubroutineCalls($node->no);
-
-            return;
-        }
-
-        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
-            $this->firstGroupByNumber[++$this->openedGroups] ??= $node;
-            if (null !== $node->name) {
-                $this->firstGroupByName[$node->name] ??= $node;
-            }
-        }
-
-        if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
-            // Each alternative numbers its groups from the same start; the
-            // count after the reset is the highest any alternative reached.
-            $start = $this->openedGroups;
-            $end = $start;
-            $alternatives = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
-            foreach ($alternatives as $alternative) {
-                $this->openedGroups = $start;
-                $this->collectSubroutineCalls($alternative);
-                $end = max($end, $this->openedGroups);
-            }
-            $this->openedGroups = $end;
-
-            return;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            $this->collectSubroutineCalls($child);
-        }
-    }
-
-    /**
-     * The group a call targets: a number (0 for the whole pattern), relative
-     * numbers resolved against the groups opened before the call, or a name;
-     * null for a relative call that reaches before the first group, which
-     * PCRE refuses.
-     */
-    private function subroutineTarget(SubroutineNode $node): int|string|null
-    {
-        $reference = $node->reference;
-        if ('R' === $reference) {
-            return 0;
-        }
-
-        $sign = $reference[0] ?? '';
-        $relative = '+' === $sign || '-' === $sign;
-        if (!Ascii::isDigit($relative ? substr($reference, 1) : $reference)) {
-            return $reference;
-        }
-
-        $number = (int) $reference;
-        if ($relative) {
-            $number += $this->openedGroups + ('-' === $sign ? 1 : 0);
-
-            return $number > 0 ? $number : null;
-        }
-
-        return $number;
     }
 
     private function nodeIsAlwaysEmpty(NodeInterface $node): bool

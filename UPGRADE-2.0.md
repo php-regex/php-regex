@@ -468,6 +468,18 @@ A baseline file that is missing or is not a baseline is now a usage error
 (exit code 2), where 1.x went on with no baseline. See
 [the CLI guide](docs/guides/cli.md#baseline).
 
+### `// @regex-lint-ignore`
+
+The 1.x comment `// @regex-lint-ignore` on the line above a pattern no longer
+hides its issues. Write `// @regex-ignore-next-line` there instead (or
+`// @regex-ignore` at the end of the pattern's own line), the markers the
+documentation names:
+
+```php
+// @regex-ignore-next-line
+preg_match('/(a+)+$/', $input);
+```
+
 ### Breaking Changes
 
 #### One way to do each thing on the facade
@@ -874,7 +886,7 @@ argument:
 | `TokenStream::consume($type, $message)`, `consumeLiteral($value, $message)` | take an `ErrorCode $code` as third argument |
 
 `SyntaxErrorException`, `RecursionLimitException` and `ResourceLimitException`
-follow `ParserException`. `ComplexityException`, `TranspileException` and
+follow `ParserException`'s constructor. `ComplexityException`, `TranspileException` and
 `SampleGenerationException` keep their parameter order and default their code,
 so a call without one keeps working; a call that passed the code as a string
 passes the `ErrorCode` case instead.
@@ -1163,6 +1175,15 @@ not change.
   envelope with its stage (`usage`, `config`, `collect` or `analyze`), where they
   printed `{"error": "..."}`, or a text error for an option Symfony could not
   use.
+- Symfony's `regex:analyze --format=json` writes a section's `meta` and
+  `debug` as lists of `{"label": ..., "value": ...}` rows, where they were
+  objects keyed by the label, as `{"Routes": 2}`: read
+  `array_column($section['meta'], 'value', 'label')` for the 1.x object. An
+  option it cannot use prints the envelope, stage `usage`, where it printed a
+  text error, and the report is written with Unicode and slashes unescaped,
+  ending with one newline. The
+  [JSON output reference](docs/reference/json-output.md#symfony-analyze)
+  lists every key.
 - A usage error is printed as the envelope, stage `usage`, as soon as
   `--format=json` or `--json` is on the command line, wherever it sits.
   `--format` values are case-insensitive, and the last `--format` or
@@ -1382,6 +1403,21 @@ which no caller should catch on purpose.
 | `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\CliException` |
 | the sample generator on a call it cannot follow, as `(?R)`, or an empty class built by hand | `\LogicException`, `\RuntimeException` | `SampleGenerationException` |
 | `Regex::generate()` on a pattern that parses but the library judges invalid, as `/(?1)a/` | the visitor exception, or a sample | `SampleGenerationException` (a pattern that does not parse still throws the parser's exception) |
+
+#### A limit of the library is no invalid pattern
+
+`RecursionLimitException` and `ResourceLimitException` no longer extend
+`ParserException`: they extend the new `LimitException`, beside it under
+`RegexException`. A pattern past `max_pattern_length` or `max_recursion_depth`
+is one the library did not read to its end, not one PCRE refuses, so a
+`catch (ParserException)` written for grammar errors no longer takes it.
+Catch `LimitException` (or `RegexException`) where 1.x caught `ParserException`
+to also handle the limits.
+
+`validate()` reports a limit with the new `ValidationErrorCategory::Limit`
+(`limit` in JSON), where 1.x said `syntax`; `isValid` stays `false`, since
+nothing was checked, and `hint` names the option to raise. The lint reports
+it as a warning, `Not analyzed: …`, and no longer as an invalid pattern.
 
 `LintException` and `CliException` extend `\RuntimeException`, so a `catch`
 of that class keeps holding them. `InvalidRegexOptionException` extends

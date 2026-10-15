@@ -637,6 +637,9 @@ final class PatternLinterTest extends TestCase
         yield 'backref \1 outside class is fine' => ['/(a)\1/', false];
         yield 'backref \7 with enough groups' => ['/(a)(b)(c)(d)(e)(f)(g)[\7]/', true];
         yield 'high digit without enough groups' => ['/(a)[\9]/', false];
+        // Two groups, one number: a branch reset numbers both 1, so no group 2 exists.
+        yield 'branch reset groups share a number' => ['/(?|(a)|(b))[\2]/', false];
+        yield 'group after a branch reset' => ['/(?|(a)|(b))(c)[\2]/', true];
     }
 
     // ---------------------------------------------------------------

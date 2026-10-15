@@ -25,9 +25,8 @@ use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\Internal\CpuCoreCounter;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\Internal\WorkerCount;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
@@ -65,7 +64,7 @@ final class LintCommand extends Command
         {paths?* : The paths to analyze}
         {--exclude=* : Paths to exclude}
         {--min-savings=1 : Minimum optimization savings in characters}
-        {--jobs=-1 : Parallel workers for analysis (auto-detected if not specified)}
+        {--j|jobs= : Parallel workers for analysis (auto-detected if not specified)}
         {--no-routes : Skip route validation}
         {--no-validators : Skip validator validation}
         {--format=console : Output format (console, json, github, checkstyle, junit)}';
@@ -124,9 +123,14 @@ final class LintCommand extends Command
             return self::INVALID;
         }
 
-        $jobs = (int) $this->option('jobs');
-        if ($jobs < 1) {
-            $jobs = ForkedWorkerPool::canFork() ? (new CpuCoreCounter())->count() : 1;
+        $jobs = $this->option('jobs');
+        if (null === $jobs) {
+            $jobs = (new WorkerCount())->count();
+        } else {
+            $jobs = filter_var($jobs, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if (false === $jobs) {
+                return $this->renderFailure($format, 'The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, self::INVALID);
+            }
         }
 
         // The Regex service judges for the running PHP; the lint judges for
@@ -180,6 +184,7 @@ final class LintCommand extends Command
                 analysisWorkers: $jobs,
                 optimizations: $defaultOptimizations,
                 checkRedos: true === config('php-regex.redos.enabled'),
+                checkComplexity: true === config('php-regex.analysis.complexity'),
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths, the linted ones when none are, as
                 // `regex lint` reads them, and in vendor/, whatever paths are
@@ -244,8 +249,8 @@ final class LintCommand extends Command
         if (self::FORMAT_CONSOLE === $format) {
             $elapsed = (float) microtime(true) - $startTime;
             $peakMemory = memory_get_peak_usage(true);
-            $cacheStats = $parser->getCacheStats();
-            $this->line('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Cache:</> <fg=yellow>'.$cacheStats['hits'].' hits, '.$cacheStats['misses'].' misses</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
+            // No cache count: the workers parse the patterns, not this process.
+            $this->line('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
             $this->newLine();
         }
 

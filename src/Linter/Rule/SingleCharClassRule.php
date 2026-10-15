@@ -90,6 +90,7 @@ final class SingleCharClassRule extends AbstractLintRule
             $node->getStartPosition(),
             \sprintf('Write "%s" instead.', $written),
             LintSeverity::Style,
+            end: $node->getEndPosition(),
         )];
     }
 

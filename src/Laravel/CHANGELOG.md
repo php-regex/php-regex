@@ -6,6 +6,30 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `analysis.complexity`, off by default, makes `regex:lint` report the
+   patterns whose complexity score reaches `analysis.warning_threshold`,
+   as `regex lint` does under `checks.complexity`.
+ * `regex:compare --method intersection|subset|equivalence`, defaulting to
+   `intersection` as the CLI and Symfony do; the JSON report names the
+   method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.
+ * `regex:explain` no longer stops with an error on a pattern the optimizer
+   shortens.
+ * A route constraint is judged as the router compiles it: between braces,
+   in a group named after the parameter, its own groups non-capturing.
+   `[{]`, `a\$` and `(a)(b)\2`, which break the route, are invalid.
+ * `regex:compare` prints its example quoted and escaped, as the CLI does.
+ * The `regex:routes` and `regex:compare --format=json` reports are part of
+   the backward compatibility promise, listed key by key in the JSON output
+   reference: one document ending with a newline, Unicode and slashes
+   unescaped, a byte that is not valid UTF-8 written `\xNN`. `regex:compare`
+   prints every key whatever the method (`left_only_example` and
+   `right_only_example` in snake_case), and a failure as the error envelope:
+   stage `usage` for an option, `pattern` for an invalid pattern (with its
+   `validation`) or one the automata cannot read.
+ * The `ValidRegex` rule validates a pattern a user submits, with the
+   application's `Regex` service and the library's message; with
+   `redos: true` a ReDoS severity from `redosThreshold` (`high`) up is
+   refused too.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

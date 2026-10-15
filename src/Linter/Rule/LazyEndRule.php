@@ -71,6 +71,7 @@ final class LazyEndRule extends AbstractLintRule
             0 === $bounds->min
                 ? 'Remove the quantified item, make the quantifier greedy, or anchor what must follow it.'
                 : 'Write the minimum count, make the quantifier greedy, or anchor what must follow it.',
+            end: $node->getEndPosition(),
         )];
     }
 }

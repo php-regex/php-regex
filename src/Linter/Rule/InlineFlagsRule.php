@@ -79,6 +79,7 @@ final class InlineFlagsRule extends AbstractLintRule
                         $this->originOf($flag, $context, $resetAll),
                     ),
                     $node->startPosition,
+                    end: $node->getEndPosition(),
                 );
             }
         }
@@ -94,6 +95,7 @@ final class InlineFlagsRule extends AbstractLintRule
                     \sprintf("Inline flag '-%s' is redundant; the flag is not set at this position.", $flag),
                     $node->startPosition,
                     \sprintf("Remove '-%s' from the inline flag group; it has no effect unless the flag is enabled first.", $flag),
+                    end: $node->getEndPosition(),
                 );
             } else {
                 $issues[] = new RuleViolation(
@@ -105,6 +107,7 @@ final class InlineFlagsRule extends AbstractLintRule
                     ),
                     $node->startPosition,
                     'Consider removing the outer flag or limiting it to specific groups.',
+                    end: $node->getEndPosition(),
                 );
             }
         }

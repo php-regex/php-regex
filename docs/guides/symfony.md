@@ -61,6 +61,7 @@ php_regex:
         threshold: high    # low, medium, high or critical, in any case
         ignored_patterns: []
     analysis:
+        complexity: false  # regex:lint reports complex patterns
         warning_threshold: 50
     automata:
         minimization_algorithm: hopcroft         # hopcroft or moore
@@ -111,16 +112,54 @@ final class PatternSupport
 method of the service — `parse`, `explain`, `redos`, `optimize`, `transpile`
 and the rest.
 
+## Validating a pattern a user submits
+
+The `ValidRegex` constraint accepts a value that PCRE compiles, written as
+`preg_match()` takes it: delimiters and flags included. It needs
+`symfony/validator`. The verdict is the one `regex validate` gives, judged by
+the bundle's `Regex` service with its limits, so a pattern longer than
+`max_pattern_length` is refused too:
+
+```php
+use PHPRegex\Symfony\Validator\Constraints\ValidRegex;
+
+final class SearchFilter
+{
+    #[ValidRegex]
+    public string $pattern = '';
+
+    #[ValidRegex(redos: true)]
+    public string $routePattern = '';
+}
+```
+
+- `message` (default `This value is not a valid regular expression: {{ error }}`)
+  takes `{{ value }}`, `{{ error }}` (the library's message, `Unmatched closing
+  parenthesis at position 4.` for `/abc)/`) and `{{ hint }}` (how to fix it,
+  or an empty string). The code is `ValidRegex::INVALID_ERROR`.
+- `redos: true` also refuses a pattern whose [ReDoS](redos.md) severity reaches
+  `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
+  string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
+  `/a*a*$/` (`medium`) passes. `redosMessage` takes `{{ value }}` and
+  `{{ severity }}`; the code is `ValidRegex::REDOS_ERROR`. An invalid pattern
+  is never analysed for ReDoS.
+- Null and the empty string are valid, as for every Symfony constraint: add
+  `NotBlank` to refuse them.
+
 ## How route requirements and security patterns are read
 
 Each one is read as the pattern Symfony runs:
 
 - A route requirement is a fragment of the compiled route. Its leading `^`
   or `\A` and its trailing `$` or `\z` are stripped as
-  `Route::sanitizeRequirement()` does, and it is matched with
-  `{^...$}sD`, plus `u` when the route sets its `utf8` option: `\d+`
-  is linted as `{^\d+$}sD`. A requirement that starts with `/` or `#` is
-  no delimited regex there either. What the router adds is not the
+  `Route::sanitizeRequirement()` does, its groups are made non-capturing,
+  and it is matched in a group named after the parameter with
+  `{^...$}sD`, plus `i` for a host parameter and `u` when the route sets
+  its `utf8` option: `\d+` on `{id}` is linted as `{^(?P<id>\d+)$}sD`. A
+  requirement that starts with `/` or `#` is no delimited regex there
+  either. A requirement that compiles alone but breaks the route is
+  invalid: `[{]` leaves the router's braces unbalanced, `a\$` loses its
+  `$` and escapes the group's `)`. What the router adds is not the
   requirement's to change: a useless `s` or `D`, a rewrite that only
   drops a flag, and a repeated unnamed group (the router makes it
   non-capturing) are not reported.
@@ -180,6 +219,7 @@ bundle says.
 |------------------|------------------------------------------------------|
 | `regex:lint`     | Lint the regex patterns of your PHP code             |
 | `regex:compare`  | Compare two patterns with automata                   |
+| `regex:explain`  | Explain a pattern in plain English                   |
 | `regex:routes`   | Detect route conflicts and overlaps                  |
 | `regex:security` | Analyze access control ordering and firewall regexes |
 | `regex:analyze`  | Run the routes and security analyzers                |
@@ -192,6 +232,16 @@ bin/console regex:analyze --redos-threshold=medium
 ```
 
 `--redos-threshold` takes the same values as `redos.threshold`, in any case.
+
+Every command is listed by `bin/console list`. They take the options of the
+same command in the CLI and in the Laravel package, under the same names and
+short forms (`-j` for `--jobs`, `-t` for `--target`): `regex:compare
+--method` takes `intersection` (the default), `subset` or `equivalence`, and
+`regex:explain` takes `--format=console|html` and `--highlight`, and prints
+the optimization, the ReDoS risk, the lint issues and a sample beside the
+explanation. What stays the bundle's own: `regex:routes`, `regex:security`
+and `regex:analyze` read Symfony's router and `security.yaml`, where
+Laravel's `regex:routes` lists and validates route constraints.
 
 `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
 `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, and
@@ -252,7 +302,7 @@ under PHP's default limits. `regex:analyze` prints the same finding as
     "severity": "critical",
     "title": "api (config/packages/security.yaml:4)",
     "details": [
-        {"label": "CheckOutcome", "value": "CRITICAL", "kind": "text"},
+        {"label": "Severity", "value": "CRITICAL", "kind": "text"},
         {"label": "Verdict", "value": "Exponential backtracking (proven)", "kind": "text"},
         {"label": "Score", "value": "10", "kind": "text"},
         {"label": "Pattern", "value": "^/api/(\\w+/?)+$", "kind": "pattern"},
@@ -262,7 +312,9 @@ under PHP's default limits. `regex:analyze` prints the same finding as
 }
 ```
 
-The [ReDoS guide](redos.md) explains the verdicts and the attack.
+The [ReDoS guide](redos.md) explains the verdicts and the attack, and the
+[JSON output reference](../reference/json-output.md#symfony-analyze) lists
+every key of the `regex:analyze` report.
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration

@@ -126,6 +126,7 @@ final class RedundantCharClassRule extends AbstractLintRule
                 'Redundant elements detected in character class.',
                 $node->startPosition,
                 $this->formatRedundantCharClassHint($redundantNotes, $redundantOverflow),
+                end: $node->getEndPosition(),
             )];
         }
 

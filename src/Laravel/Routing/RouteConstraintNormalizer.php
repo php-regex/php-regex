@@ -14,46 +14,31 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Routing;
 
 use Illuminate\Routing\Route;
-use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Node\AlternationNode;
-use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * The pattern Laravel's router matches a route constraint with. A route
  * compiles through Symfony's RouteCompiler, always under the utf8 option:
  * the constraint loses a leading ^ or \A and a trailing $ or \z, as
- * Route::sanitizeRequirement() does, sits in a group of its own, and the
- * path is matched with "{^...$}sDu", the domain with "{^...$}sDiu".
+ * Route::sanitizeRequirement() does, gets ?: after every ( no backslash
+ * escapes, sits in a group named after the parameter, and the path is
+ * matched with "{^...$}sDu", the domain with "{^...$}sDiu".
  *
- * A top-level alternation is grouped here, so that every alternative stays
- * anchored. A constraint is a fragment, never a delimited pattern: the
- * delimiter is one the constraint does not contain, so that nothing in it
- * needs escaping.
+ * The normalized pattern is the compiled one without the text of the path
+ * around the parameter, so the engine and the lint read the constraint as
+ * the compiled route reads it: a brace the compiled route's delimiters do
+ * not balance, or a backslash left before the group's ), fails here as it
+ * fails there.
  *
  * @internal
  */
 final readonly class RouteConstraintNormalizer
 {
-    private const DELIMITERS = ['/', '#', '~', '!', '@', '%', '`'];
-
-    private RegexParser $parser;
-
-    public function __construct(?RegexParser $parser = null)
-    {
-        $this->parser = $parser ?? RegexParser::create();
-    }
-
     public function normalize(Route $route, string $parameter, string $constraint): string
     {
         $flags = $this->isDomainParameter($route, $parameter) ? 'sDiu' : 'sDu';
-        $delimiter = $this->delimiterFor($constraint);
-        $body = $this->escapeDelimiter($this->sanitize($constraint), $delimiter);
 
-        if ($this->hasTopLevelAlternation($body, $delimiter, $flags)) {
-            $body = '(?:'.$body.')';
-        }
-
-        return $delimiter.'^'.$body.'$'.$delimiter.$flags;
+        return '{^'.$this->group($parameter, $this->nonCapturing($this->sanitize($constraint))).'$}'.$flags;
     }
 
     /**
@@ -80,6 +65,51 @@ final readonly class RouteConstraintNormalizer
     }
 
     /**
+     * The constraint as RouteCompiler::transformCapturingGroupsToNonCapturings()
+     * leaves it: ?: goes after every ( no backslash escapes and no * or ?
+     * follows, whether it opens a group or stands in a class or a comment.
+     */
+    private function nonCapturing(string $constraint): string
+    {
+        for ($i = 0; $i < \strlen($constraint); $i++) {
+            if ('\\' === $constraint[$i]) {
+                $i++;
+
+                continue;
+            }
+
+            if ('(' !== $constraint[$i] || !isset($constraint[$i + 2])) {
+                continue;
+            }
+
+            if ('*' === $constraint[++$i] || '?' === $constraint[$i]) {
+                $i++;
+
+                continue;
+            }
+
+            $constraint = substr_replace($constraint, '?:', $i, 0);
+            $i++;
+        }
+
+        return $constraint;
+    }
+
+    /**
+     * The group the compiler names after the parameter. A constraint on a
+     * parameter the path never names is never compiled: its group goes
+     * unnamed where the name is none PCRE takes.
+     */
+    private function group(string $parameter, string $body): string
+    {
+        if (1 === LibraryPcre::match('/^[a-zA-Z_]\w{0,31}$/D', $parameter)) {
+            return '(?P<'.$parameter.'>'.$body.')';
+        }
+
+        return '('.$body.')';
+    }
+
+    /**
      * A parameter of the domain and not of the path is matched by the host
      * pattern, which the route compiler reads case-insensitively.
      */
@@ -93,52 +123,5 @@ final readonly class RouteConstraintNormalizer
     private function namesParameter(string $template, string $parameter): bool
     {
         return str_contains($template, '{'.$parameter.'}') || str_contains($template, '{'.$parameter.'?}');
-    }
-
-    private function delimiterFor(string $constraint): string
-    {
-        foreach (self::DELIMITERS as $delimiter) {
-            if (!str_contains($constraint, $delimiter)) {
-                return $delimiter;
-            }
-        }
-
-        return self::DELIMITERS[0];
-    }
-
-    /**
-     * Escapes the delimiter where it stands bare; one a backslash already
-     * escapes is left as it is.
-     */
-    private function escapeDelimiter(string $body, string $delimiter): string
-    {
-        $escaped = '';
-        $length = \strlen($body);
-
-        for ($i = 0; $i < $length; $i++) {
-            if ('\\' === $body[$i] && $i + 1 < $length) {
-                $escaped .= $body[$i].$body[++$i];
-            } elseif ($delimiter === $body[$i]) {
-                $escaped .= '\\'.$delimiter;
-            } else {
-                $escaped .= $body[$i];
-            }
-        }
-
-        return $escaped;
-    }
-
-    /**
-     * Whether the body is an alternation at its top level, as the parser
-     * reads it. A body that does not parse is left as it is: the error is
-     * the lint's to report.
-     */
-    private function hasTopLevelAlternation(string $body, string $delimiter, string $flags): bool
-    {
-        try {
-            return $this->parser->parsePattern($body, $flags, $delimiter)->pattern instanceof AlternationNode;
-        } catch (ExceptionInterface) {
-            return false;
-        }
     }
 }

@@ -25,6 +25,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\JsonDocument;
@@ -138,8 +139,12 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $hasConfirmation = RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation;
             // One number per section printed: Heatmap, then Confirmation and Findings when there are any.
             $steps = 1 + ($hasConfirmation ? 1 : 0) + ([] !== $analysis->findings ? 1 : 0);
+            // The hotspots are the profiler's guess; a proof of a linear
+            // attempt overrides them, and the findings are only hints.
+            $provenSafe = $analysis->isProvenSafe();
+            $hotspots = $provenSafe ? [] : $analysis->hotspots;
             $heatmap = new Heatmap();
-            $heatmapBody = $heatmap->highlight($patternInfo->pattern, $analysis->hotspots, $output->isAnsi());
+            $heatmapBody = $heatmap->highlight($patternInfo->pattern, $hotspots, $output->isAnsi());
             $heatmapPattern = $patternInfo->delimiter.$heatmapBody.$patternInfo->delimiter.$patternInfo->flags;
             $highlightedPattern = $pattern;
             $showSyntaxPattern = $output->isAnsi() && $style->visualsEnabled();
@@ -149,7 +154,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                     $ast = $regex->parse($pattern);
                     $highlightedBody = $ast->accept(new ConsoleHighlighter());
                     $highlightedPattern = $patternInfo->delimiter.$highlightedBody.$patternInfo->delimiter.$patternInfo->flags;
-                } catch (LexerException|ParserException) {
+                } catch (LexerException|LimitException|ParserException) {
                     $highlightedPattern = $pattern;
                 }
             }
@@ -188,14 +193,14 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 $style->renderPattern($highlightedPattern);
             }
 
-            $showHeatmapLine = [] !== $analysis->hotspots || !$showSyntaxPattern;
+            $showHeatmapLine = [] !== $hotspots || !$showSyntaxPattern;
             if ($showHeatmapLine) {
                 $label = $showSyntaxPattern ? 'Heatmap' : 'Pattern';
                 $heatmapPrefix = '  '.$label.':    ';
                 $output->write($heatmapPrefix.$heatmapPattern."\n");
 
                 // The caret marks the primary hotspot on the line right above it.
-                $hotspot = $analysis->primaryHotspot();
+                $hotspot = $provenSafe ? null : $analysis->primaryHotspot();
                 if (null !== $hotspot) {
                     $start = max(0, $hotspot->start);
                     $length = max(1, $hotspot->end - $hotspot->start);
@@ -231,8 +236,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 $output->write('  Trigger:    '.$analysis->trigger."\n");
             }
 
-            if ([] !== $analysis->hotspots) {
-                $output->write('  Hotspots:   '.\count($analysis->hotspots)."\n");
+            if ([] !== $hotspots) {
+                $output->write('  Hotspots:   '.\count($hotspots)."\n");
             }
 
             foreach ($this->redosVerdictLines($analysis) as $line) {
@@ -272,7 +277,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
             if ([] !== $analysis->findings) {
                 $output->write("\n");
-                $style->renderSection('Findings', $steps, $steps);
+                $style->renderSection($provenSafe ? 'Heuristic hints' : 'Findings', $steps, $steps);
                 foreach ($analysis->findings as $finding) {
                     $findingSeverity = $this->formatRedosSeverity($analysis, $output, $finding->severity);
                     $output->write('  - ['.$findingSeverity.'] '.$finding->message."\n");

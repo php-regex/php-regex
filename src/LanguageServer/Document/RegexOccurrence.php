@@ -24,14 +24,18 @@ namespace PHPRegex\LanguageServer\Document;
 final readonly class RegexOccurrence
 {
     /**
+     * @param string   $pattern    the pattern, as PHP reads the literal
      * @param Position $start
      * @param Position $end
+     * @param int      $byteOffset where the literal starts in the document
+     * @param string   $literal    the literal as the document spells it, quotes included
      */
     public function __construct(
         public string $pattern,
         public array $start,
         public array $end,
         public int $byteOffset,
+        public string $literal,
     ) {}
 
     /**

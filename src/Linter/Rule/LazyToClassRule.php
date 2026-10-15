@@ -105,7 +105,7 @@ final class LazyToClassRule extends AbstractLintRule
         $end = $node->getEndPosition();
         $original = $pattern->delimiter.$pattern->source.$delimiters[1].$pattern->flags;
         $rewritten = $pattern->delimiter.substr($pattern->source, 0, $start).$class.substr($pattern->source, $end).$delimiters[1].$pattern->flags;
-        if (!$this->questions->allows($context) || true !== LanguageQuestions::matchTheSame($original, $rewritten)) {
+        if (!$this->questions->allows($context) || true !== LanguageQuestions::matchTheSame($original, $rewritten, $context->dfas, $context->target)) {
             return [];
         }
 
@@ -118,6 +118,7 @@ final class LazyToClassRule extends AbstractLintRule
             $start,
             \sprintf('Write "%s" instead.', $suggested),
             LintSeverity::Perf,
+            $end,
         )];
     }
 }

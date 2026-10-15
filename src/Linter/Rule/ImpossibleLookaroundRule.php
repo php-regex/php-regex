@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
@@ -67,17 +66,10 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
      */
     private const MAX_LOOKAHEAD_LENGTH = 32;
 
-    /**
-     * The DFAs the automata built for this rule's questions, kept for the
-     * ones that read the same pattern again.
-     */
-    private readonly InMemoryDfaCache $dfas;
-
     private readonly QuestionBudget $questions;
 
     public function __construct()
     {
-        $this->dfas = new InMemoryDfaCache();
         $this->questions = new QuestionBudget();
     }
 
@@ -104,7 +96,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         }
 
         $pattern = $this->continuationPattern($node, $context);
-        if (null === $pattern || !$this->questions->allows($context) || true !== LanguageQuestions::matchesNothing($pattern, $this->dfas)) {
+        if (null === $pattern || !$this->questions->allows($context) || true !== LanguageQuestions::matchesNothing($pattern, $context->dfas, $context->target)) {
             return [];
         }
 
@@ -117,6 +109,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
                 : \sprintf('Negative lookahead "%s" forbids whatever the pattern after it reads: the pattern can never match through here.', $written),
             $node->getStartPosition(),
             'Fix the lookahead or what follows it, or remove the branch.',
+            end: $node->getEndPosition(),
         )];
     }
 

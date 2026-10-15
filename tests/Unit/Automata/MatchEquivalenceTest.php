@@ -104,6 +104,27 @@ final class MatchEquivalenceTest extends TestCase
         (new LanguageSolver())->matchEquivalent('/(a|b)+c/', '/(?:a|b)+c/', new SolverOptions(maxDfaStates: 2));
     }
 
+    /**
+     * A configuration of a wide alternation holds a thread per branch, so a
+     * few hundred of them are already a lot of work: the transition budget
+     * bounds the threads stepped, as it bounds the determinization.
+     */
+    #[Test]
+    public function test_the_search_stops_at_its_transition_budget(): void
+    {
+        $branches = implode('|', array_map(static fn (int $i): string => 'x'.\chr(0x61 + $i % 26).\chr(0x61 + intdiv($i, 26)), range(0, 59)));
+
+        try {
+            (new LanguageSolver())->matchEquivalent('/(?:'.$branches.')/', '/(?:'.$branches.'|zz)/', new SolverOptions(maxTransitionsProcessed: 100));
+            $this->fail('The search went past its transition budget.');
+        } catch (ComplexityException $e) {
+            $this->assertSame('match exploration', $e->getDiagnostic()['phase'] ?? null);
+            $this->assertSame(100, $e->getDiagnostic()['limit'] ?? null);
+        }
+
+        $this->assertFalse((new LanguageSolver())->matchEquivalent('/(?:'.$branches.')/', '/(?:'.$branches.'|zz)/')->isEquivalent, 'The default budget settles it.');
+    }
+
     #[Test]
     public function test_the_automaton_stops_at_its_budget(): void
     {

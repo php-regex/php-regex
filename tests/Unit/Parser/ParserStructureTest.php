@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -27,7 +28,7 @@ final class ParserStructureTest extends TestCase
         // On configure une limite très basse pour le test
         $regex = Regex::create(['max_pattern_length' => 10]);
 
-        $this->expectException(ParserException::class);
+        $this->expectException(ResourceLimitException::class);
         $this->expectExceptionMessage('Regex pattern exceeds maximum length');
 
         $regex->parse('/this_is_too_long/');

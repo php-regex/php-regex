@@ -139,6 +139,11 @@ parameters:
             - greaterOrEqual.alwaysFalse
           paths:
             - tests/Unit/Support/PcreGatesTest.php
+        # Symfony 8.1 validates through validateInContext(); the bundle also
+        # supports 7.4, which has no such method, so the test drives the
+        # validator through initialize() and validate() there.
+        - identifier: method.deprecated
+          path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
         # The worker pool test hands run() a chunk result that is not a list on
         # purpose: it is the only way to reach the guard that refuses one.
         - message: '#^Unable to resolve the template type R in call to method PHPRegex\\Linter\\Internal\\ForkedWorkerPool::run\(\)$#'

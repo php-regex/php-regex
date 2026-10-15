@@ -22,6 +22,7 @@ use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -115,7 +116,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             }
 
             return self::SUCCESS;
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             return $this->handleAnalysisError($output, $parsed['format'], $e->getMessage());
         }
     }
@@ -350,7 +351,9 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             $output->write('  '.$output->error('ReDoS error: '.$analysis->error)."\n");
         }
 
-        $hotspot = $analysis->primaryHotspot();
+        // The hotspot is the profiler's guess; a proof of a linear attempt
+        // overrides it.
+        $hotspot = $analysis->isProvenSafe() ? null : $analysis->primaryHotspot();
         if (null !== $hotspot) {
             $output->write('  Hotspot:   '.$hotspot->start.'-'.$hotspot->end."\n");
         }

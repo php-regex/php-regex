@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\NearMiss;
 
 /**
  * Checks a decoded regex.json against LintConfigSchema::definition().
@@ -108,7 +109,7 @@ final readonly class LintConfigValidator
                 continue;
             }
 
-            $suggestion = $this->suggest($name, array_map(strval(...), array_keys($properties)));
+            $suggestion = NearMiss::closest($name, array_map(strval(...), array_keys($properties)));
             $hint = null === $suggestion ? '' : \sprintf(' Did you mean "%s"?', $suggestion);
 
             $errors[] = 'checks.lint.rules' === $path
@@ -222,24 +223,6 @@ final readonly class LintConfigValidator
         $types = \is_array($types) ? $types : [$types];
 
         return implode(' or ', array_filter($words, static fn (string $type): bool => \in_array($type, $types, true), \ARRAY_FILTER_USE_KEY));
-    }
-
-    /**
-     * The known key the unknown one most likely meant: the same letters
-     * with another case, or snake_case for camelCase.
-     *
-     * @param list<string> $known
-     */
-    private function suggest(string $name, array $known): ?string
-    {
-        $wanted = strtolower(str_replace('_', '', $name));
-        foreach ($known as $candidate) {
-            if (strtolower($candidate) === $wanted) {
-                return $candidate;
-            }
-        }
-
-        return null;
     }
 
     /**

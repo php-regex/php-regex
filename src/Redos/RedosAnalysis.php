@@ -32,6 +32,13 @@ final readonly class RedosAnalysis implements \JsonSerializable
     public string $pcreVersion;
 
     /**
+     * The PHP release that ran the analysis: under "iu" the proof pairs a
+     * character with its other case through its mbstring tables, which
+     * follow the PHP release, not the PCRE2 one.
+     */
+    public string $phpVersion;
+
+    /**
      * @internal built by RedosAnalyzer::analyze() and Regex::redos()
      *
      * @param array<string>        $recommendations
@@ -71,6 +78,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
         public ?RedosSearchCost $searchCost = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
+        $this->phpVersion = \PHP_VERSION;
     }
 
     public function isSafe(): bool
@@ -156,7 +164,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, analysis_version: string, search_cost: SearchCostArray|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null}
      */
     public function jsonSerialize(): array
     {
@@ -182,6 +190,7 @@ final readonly class RedosAnalysis implements \JsonSerializable
             'replayed' => $this->replayed,
             'abstractions' => $this->abstractions,
             'pcre_version' => $this->pcreVersion,
+            'php_version' => $this->phpVersion,
             'analysis_version' => $this->analysisVersion,
             'search_cost' => $this->searchCost?->toArray(),
         ];

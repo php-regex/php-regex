@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -63,12 +64,16 @@ final class ExplainCommand extends Command
 
         // Validate the pattern first
         $validation = $this->regex->validate($pattern);
+        if (ValidationErrorCategory::Limit === $validation->category) {
+            $this->warn('Pattern not analyzed:');
+            $this->line($validation->render());
+
+            return self::FAILURE;
+        }
+
         if (!$validation->isValid) {
             $this->error('Invalid regex pattern:');
-            $this->line((string) $validation->error);
-            if (null !== $validation->caretSnippet) {
-                $this->line($validation->caretSnippet);
-            }
+            $this->line($validation->render());
 
             return self::FAILURE;
         }
@@ -102,7 +107,7 @@ final class ExplainCommand extends Command
             if ($analysis->optimization->original !== $analysis->optimization->optimized) {
                 $this->line('<fg=white;options=bold>Optimization Suggestion:</>');
                 $this->line('  <fg=red>-</> '.$analysis->optimization->original);
-                $this->line('  <fg=green>+</> '.$analysis->optimizations->optimized);
+                $this->line('  <fg=green>+</> '.$analysis->optimization->optimized);
                 $this->newLine();
             }
 

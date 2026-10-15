@@ -6,8 +6,10 @@ description: "Install the PHPRegex PHPStan extension: the invalid-for-target che
 The PHPStan extension reads the regex patterns passed to `preg_*` functions
 (each pattern of an array given to `preg_replace()`, `preg_replace_callback()`
 or `preg_filter()`, and each key of the map given to
-`preg_replace_callback_array()`, included), and to your own functions and
-methods that mark a parameter as a pattern,
+`preg_replace_callback_array()`, included), to their namespaced drop-ins
+(`Safe\preg_match()`), to the static methods of the wrapper libraries
+`regex lint` reads ([Wrapper libraries](#wrapper-libraries)), and to your own
+functions and methods that mark a parameter as a pattern,
 and reports what PHPStan itself cannot see: a pattern the PHP your project
 targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
 analysis are there too, off until you ask for them.
@@ -304,6 +306,10 @@ parameters:
         # The PCRE2 release, like '10.42', for a PHP that links another one
         # than it bundles; null for the bundled one.
         pcreVersion: null
+        # The wrapper libraries whose static methods carry a pattern:
+        # composer-pcre, nette-utils, spatie-regex, laravel-str; null for
+        # composer-pcre, [] for the native functions only.
+        interop: null
         checks:
             lint:
                 enabled: false
@@ -337,6 +343,27 @@ on, a pattern whose complexity score, the `complexityScore` of
 with the message `regex lint` prints, `Pattern is complex (score: 56).`; it
 needs neither `lint` nor `redos`. A `threshold` below 1 stops the analysis when
 it starts, even while `complexity` is off.
+
+### Wrapper libraries
+
+A pattern passed to a static method of a wrapper library is judged as one
+passed to `preg_*()`, at the argument the library takes it, as `regex lint`
+reads it under `extraction.interop` ([CLI guide](cli.md)): `Preg::match()` of
+composer/pcre by default, and with `interop`, `Strings::match()` of
+nette/utils (the pattern second), `Regex::match()` of spatie/regex and
+`Str::isMatch()` of Laravel. The class is resolved as PHP resolves it, an
+aliased import included; a method of another class with the same name is not
+read. The subject of such a call is not told apart, so a constant subject
+does not quiet a ReDoS report as it does in `preg_match()`.
+
+```neon
+parameters:
+    phpRegex:
+        interop: [composer-pcre, nette-utils]
+```
+{: data-file="phpstan.neon" }
+
+A name the library does not know is passed over.
 
 A `phpVersion` or `pcreVersion` that names no release stops the analysis when
 it starts, not on the first file. So does a `threshold` that is not `low`,

@@ -23,4 +23,10 @@ enum DiagnosticType: string
     case Lint = 'lint';
     case Security = 'security';
     case Optimization = 'optimization';
+
+    /**
+     * The pattern was not analyzed: the library stopped at one of its own
+     * limits, with no verdict on the pattern.
+     */
+    case Limit = 'limit';
 }

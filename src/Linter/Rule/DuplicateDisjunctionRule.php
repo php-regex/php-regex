@@ -76,6 +76,7 @@ final class DuplicateDisjunctionRule extends AbstractLintRule
                     \sprintf('Duplicate alternation branch "%s".', $display),
                     $alt->getStartPosition(),
                     'Remove the redundant alternative.',
+                    end: $alt->getEndPosition(),
                 )];
             }
 

@@ -47,6 +47,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
                 'regex.lint.escape.suspicious',
                 \sprintf('Suspicious Unicode escape "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition,
+                end: $node->getEndPosition(),
             )];
         }
 
@@ -56,6 +57,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
                 'regex.lint.escape.suspicious',
                 \sprintf('Suspicious octal escape "%s" (out of range).', $node->originalRepresentation),
                 $node->startPosition,
+                end: $node->getEndPosition(),
             )];
         }
 
@@ -69,6 +71,7 @@ final class SuspiciousEscapeRule extends AbstractLintRule
                         'regex.lint.escape.suspicious',
                         \sprintf('Unknown Unicode character name "%s".', $matches[1]),
                         $node->startPosition,
+                        end: $node->getEndPosition(),
                     )];
                 }
             }

@@ -103,6 +103,7 @@ final class DollarNewlineRule extends AbstractLintRule
             $node->getStartPosition(),
             'Write \z to match at the very end only, or add the D modifier.',
             LintSeverity::Info,
+            end: $node->getEndPosition(),
         )];
     }
 

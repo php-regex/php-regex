@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Internal;
 
+use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\ConditionalNode;
@@ -75,6 +76,23 @@ final class GroupIndex
 
     private bool $hasBranchReset = false;
 
+    /**
+     * @var list<int> the number of each capturing group, in pattern order
+     */
+    private array $captureSequence = [];
+
+    private int $highestNumber = 0;
+
+    /**
+     * @var list<SubroutineNode> the calls, recursion tests left out
+     */
+    private array $calls = [];
+
+    /**
+     * @var array<int, true> the "(?(R1)" recursion tests, by node
+     */
+    private array $recursionTests = [];
+
     private function __construct() {}
 
     public static function of(NodeInterface $pattern): self
@@ -82,6 +100,7 @@ final class GroupIndex
         $index = new self();
         $nextGroupNumber = 1;
         $index->index($pattern, $nextGroupNumber);
+        $index->highestNumber = $nextGroupNumber - 1;
 
         return $index;
     }
@@ -94,6 +113,64 @@ final class GroupIndex
     public function hasBranchReset(): bool
     {
         return $this->hasBranchReset;
+    }
+
+    /**
+     * The numbering the public API reports: the highest number, the number
+     * of each capturing group in pattern order, and the numbers of each
+     * name as met.
+     */
+    public function numbering(): GroupNumbering
+    {
+        $named = [];
+        foreach ($this->byName as $name => $groups) {
+            $numbers = [];
+            foreach ($groups as $group) {
+                $numbers[] = $this->numberOf[spl_object_id($group)];
+            }
+            $named[$name] = array_values(array_unique($numbers));
+        }
+
+        return new GroupNumbering($this->highestNumber, $this->captureSequence, $named);
+    }
+
+    /**
+     * The number of a capturing group of the tree, or null.
+     */
+    public function numberOf(GroupNode $group): ?int
+    {
+        return $this->numberOf[spl_object_id($group)] ?? null;
+    }
+
+    /**
+     * The groups a subroutine call runs again, keyed by object id.
+     *
+     * @return array<int, GroupNode>
+     */
+    public function subroutineTargets(): array
+    {
+        $targets = [];
+        foreach ($this->calls as $call) {
+            foreach ($this->groupsCalledBy($call) as $group) {
+                $targets[spl_object_id($group)] = $group;
+            }
+        }
+
+        return $targets;
+    }
+
+    /**
+     * Whether the pattern calls itself whole: "(?R)", "(?0)", "\g<0>".
+     */
+    public function recursesWhole(): bool
+    {
+        foreach ($this->calls as $call) {
+            if ('R' === $call->reference || '0' === $call->reference) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isInBranchReset(GroupNode $group): bool
@@ -212,8 +289,17 @@ final class GroupIndex
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             $this->nextNumberAt[spl_object_id($node)] = $nextGroupNumber;
             $this->captureIndexAt[spl_object_id($node)] = $this->capturesIndexed;
+            if ($node instanceof SubroutineNode && !isset($this->recursionTests[spl_object_id($node)])) {
+                $this->calls[] = $node;
+            }
 
             return;
+        }
+
+        // A recursion test such as "(?(R1)" reads where the match stands; it
+        // calls nothing.
+        if ($node instanceof ConditionalNode && $node->condition instanceof SubroutineNode) {
+            $this->recursionTests[spl_object_id($node->condition)] = true;
         }
 
         if ($node instanceof GroupNode && GroupType::BranchReset === $node->type) {
@@ -239,6 +325,7 @@ final class GroupIndex
 
             if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
                 $this->capturesIndexed++;
+                $this->captureSequence[] = $nextGroupNumber;
                 $this->numberOf[spl_object_id($node)] = $nextGroupNumber;
                 $this->byNumber[$nextGroupNumber++][] = $node;
                 if (null !== $node->name) {

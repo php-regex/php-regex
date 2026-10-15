@@ -87,6 +87,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             'Nested quantifiers can cause catastrophic backtracking.',
             $node->startPosition,
             'Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.',
+            end: $node->getEndPosition(),
         )];
     }
 

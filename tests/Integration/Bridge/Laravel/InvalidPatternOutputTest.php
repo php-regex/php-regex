@@ -20,8 +20,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * An Artisan command refusing a pattern prints the message and, under it,
- * the caret snippet that points at the fault.
+ * An Artisan command refusing a pattern prints the message, under it the
+ * caret snippet that points at the fault, then the hint.
  */
 final class InvalidPatternOutputTest extends TestCase
 {
@@ -38,6 +38,7 @@ final class InvalidPatternOutputTest extends TestCase
         $this->assertSame(1, $exitCode);
         $this->assertStringContainsString("Lookbehind is unbounded. PCRE requires a bounded maximum length.\nLine 1: (?<=a+)b\n", $output);
         $this->assertMatchesRegularExpression('/^ {8}\^$/m', $output);
+        $this->assertStringContainsString("\nHint: Use a bounded quantifier instead of \"+\".\n", $output);
     }
 
     /**
@@ -47,6 +48,28 @@ final class InvalidPatternOutputTest extends TestCase
     {
         yield 'explain' => ['command' => 'regex:explain', 'options' => []];
         yield 'transpile' => ['command' => 'regex:transpile', 'options' => []];
+    }
+
+    /**
+     * A pattern past the library's length limit, which PCRE compiles, is
+     * not called invalid: the command says it was not analyzed, and why.
+     *
+     * @param array<string, string> $options
+     */
+    #[Test]
+    #[DataProvider('provideCommands')]
+    public function test_command_says_a_pattern_past_a_limit_was_not_analyzed(string $command, array $options): void
+    {
+        $pattern = '/a(?#'.str_repeat('x', 100_000).')/';
+        $this->assertSame(1, preg_match($pattern, 'a'), 'control: PCRE compiles the pattern');
+
+        $exitCode = Artisan::call($command, ['pattern' => $pattern] + $options);
+        $output = Artisan::output();
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('Pattern not analyzed:', $output);
+        $this->assertStringNotContainsString('Invalid', $output);
+        $this->assertStringContainsString('raise the "max_pattern_length" option', $output);
     }
 
     #[Test]

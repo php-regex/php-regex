@@ -57,6 +57,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[0-9]+/',
             'pattern2' => '/\\d+/',
+            '--method' => 'equivalence',
         ])
             ->assertSuccessful()
             ->expectsOutputToContain('EQUIVALENT');
@@ -67,6 +68,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[a-z]+/',
             'pattern2' => '/[A-Z]+/',
+            '--method' => 'equivalence',
         ])
             ->assertFailed()
             ->expectsOutputToContain('NOT EQUIVALENT');
@@ -77,9 +79,33 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[a-z]+/',
             'pattern2' => '/[A-Z]+/',
+            '--method' => 'equivalence',
         ])
             ->assertFailed()
             ->expectsOutputToContain('Counterexample');
+    }
+
+    /**
+     * The example is spelled as the CLI spells it: quoted, a tab written
+     * as \t, the empty string named.
+     */
+    public function test_compare_command_quotes_and_escapes_the_example(): void
+    {
+        $this->artisan('regex:compare', [
+            'pattern1' => '/^\t$/',
+            'pattern2' => '/^a$/',
+            '--method' => 'subset',
+        ])
+            ->assertFailed()
+            ->expectsOutputToContain('"\t"');
+
+        $this->artisan('regex:compare', [
+            'pattern1' => '/^$/',
+            'pattern2' => '/^a$/',
+            '--method' => 'subset',
+        ])
+            ->assertFailed()
+            ->expectsOutputToContain('"" (empty string)');
     }
 
     public function test_compare_command_json_output(): void
@@ -87,6 +113,7 @@ final class CommandsTest extends TestCase
         $this->artisan('regex:compare', [
             'pattern1' => '/[0-9]+/',
             'pattern2' => '/\\d+/',
+            '--method' => 'equivalence',
             '--format' => 'json',
         ])
             ->assertSuccessful()

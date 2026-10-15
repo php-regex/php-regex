@@ -64,6 +64,7 @@ final class QuantifiedAssertionRule extends AbstractLintRule
                 \sprintf('Quantifier "%s" lets the match skip the assertion, so it constrains nothing.', $node->quantifier),
                 $node->getStartPosition(),
                 'Remove the quantifier to require the assertion, or remove the assertion.',
+                end: $node->getEndPosition(),
             )];
         }
 
@@ -72,6 +73,7 @@ final class QuantifiedAssertionRule extends AbstractLintRule
             \sprintf('Quantifier "%s" on an assertion changes nothing: PCRE checks it once.', $node->quantifier),
             $node->getStartPosition(),
             'Remove the quantifier.',
+            end: $node->getEndPosition(),
         )];
     }
 

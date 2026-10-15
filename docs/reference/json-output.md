@@ -1,5 +1,5 @@
 ---
-description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format — frozen for all of 2.x."
+description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format — and of the Symfony and Laravel reports, frozen for all of 2.x."
 ---
 
 # JSON Output
@@ -27,7 +27,15 @@ This page lists every key of every document.
 Symfony's and Laravel's `regex:lint` print the same lint report, and their
 `regex:transpile` the same transpile document, with the same error envelope —
 the commands come with their bundles ([Symfony](../guides/symfony.md),
-[Laravel](../guides/laravel.md)).
+[Laravel](../guides/laravel.md)). Three bridge commands print a report of
+their own, under the same rules and the same promise:
+
+| command | document |
+|---|---|
+| Symfony's `regex:analyze` | the [Symfony analyze report](#symfony-analyze) |
+| Laravel's `regex:routes` | the [Laravel routes report](#laravel-routes) |
+| Laravel's `regex:compare` | the [Laravel compare document](#laravel-compare) |
+
 An argument error their console framework catches before the command runs,
 such as an unknown option or a missing argument, is reported by the framework
 in its own form, not as the envelope.
@@ -235,6 +243,7 @@ short for `--format=json`.
         "source": "composer.json require.php",
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
+    "host": {"php": "8.4.26", "pcre": "10.49"},
     "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0},
     "results": [
         {
@@ -283,6 +292,7 @@ short for `--format=json`.
 | key | type | meaning |
 |---|---|---|
 | `target` | object | The PHP and PCRE2 the patterns were judged for, and every PHP and PCRE2 they were validated at |
+| `host` | object | The PHP and PCRE2 that ran the lint |
 | `stats` | object | The counts of the run |
 | `results` | list of objects | One entry per pattern with at least one issue or optimization; `[]` when there is nothing to report |
 
@@ -304,6 +314,17 @@ OR constraint above the floor (`~8.3.0 || >=8.5.3` adds `8.5.3`), with the
 PCRE2 that PHP bundles, or with the release `--pcre-version` or `pcreVersion`
 names. See
 [Several PHP versions](../guides/cli.md#several-php-versions).
+
+### Host: `lint.host`
+
+| key | type | meaning |
+|---|---|---|
+| `php` | string | The running PHP, as `PHP_VERSION` spells it (`8.4.26`): under `iu` its mbstring tables give a character's other case |
+| `pcre` | string | The PCRE2 release the running PHP links, as `10.49`: it compiles the patterns and answers what only the engine knows |
+
+The host is not the target: a lint for PHP 8.2 may run on 8.4. It says
+which Unicode data a caseless verdict was computed with, see
+[Verdicts that depend on the running PHP](../concepts/pcre.md#verdicts-that-depend-on-the-running-php).
 
 ### Target range entry: `lint.target.range[]`
 
@@ -574,6 +595,239 @@ message naming the error code `regex.formatting.unsafe`.
 | `changed` | bool | Whether `formatted` differs from `pattern` |
 | `refusal` | string \| null | Why the pattern was given back as it was written: `newline_convention`, `spaced_quantifier`, `extended_mode_switched_off`, `line_break_in_name` or `parenthesis_in_comment`; an open set. `null` when it was not refused |
 
+## Symfony Analyze
+
+Symfony's `bin/console regex:analyze --format=json` runs the bundle's
+analyzers, the route conflicts and the `security.yaml` checks, and prints
+one report. It ships in `php-regex/regex-symfony` ([Symfony guide](../guides/symfony.md)).
+Each analyzer writes one or more sections; a section's facts are labels for
+people, written as `{label, value}` rows rather than as keys:
+
+```json
+{
+    "sections": [
+        {
+            "id": "routes",
+            "title": "Routes",
+            "meta": [
+                {"label": "Routes", "value": 2},
+                {"label": "Mode", "value": "Shadowed only"},
+                {"label": "Shadowed", "value": 1},
+                {"label": "Overlaps", "value": 0}
+            ],
+            "summary": [
+                {"severity": "fail", "message": "1 shadowed routes detected."}
+            ],
+            "warnings": [],
+            "issues": [
+                {
+                    "kind": "shadowed",
+                    "severity": "fail",
+                    "title": "api_user_show (#1) ↳ api_user_list (#2)",
+                    "details": [
+                        {"label": "Route", "value": "/users/{id}", "kind": "text"},
+                        {"label": "Conflict", "value": "/users/list", "kind": "text"},
+                        {"label": "Scope", "value": "any", "kind": "text"},
+                        {"label": "Example", "value": "/users/list", "kind": "example"}
+                    ],
+                    "notes": ["Less specific route declared BEFORE more specific route."]
+                }
+            ],
+            "suggestions": [
+                "Reorder routes: move \"api_user_list\" before \"api_user_show\".",
+                "Add a requirement for {id} in \"api_user_show\" (e.g. \"\\d+\")."
+            ]
+        }
+    ]
+}
+```
+
+The exit code is 1 when an issue of a kind `--fail-on` names was found, 0
+otherwise. An option it cannot use (an unknown `--only` analyzer, `--fail-on`
+kind or `--redos-threshold`) prints the [error envelope](#the-error-envelope),
+stage `usage`, and exits with 2.
+
+### Symfony analyze: `symfony_analyze`
+
+| key | type | meaning |
+|---|---|---|
+| `sections` | list | The sections, in the order the analyzers ran, the objects below |
+
+### Section: `symfony_analyze.sections[]`
+
+| key | type | meaning |
+|---|---|---|
+| `id` | string | What the section checks: `routes`, `security_access` or `security_firewall`; an open set |
+| `title` | string | The section's title, for people |
+| `meta` | list | The section's facts, as the rows below: what was read and counted |
+| `summary` | list | The section's verdicts, as the notices below |
+| `warnings` | list | What the section could not check, as the notices below, such as a firewall without a pattern |
+| `issues` | list | The conflicts and findings, the objects below |
+| `suggestions` | list of strings | What to change, for people |
+| `debug` | list, optional | Present under `--debug` or `-v`: timings and solver counts, as rows like `meta`'s |
+
+### Fact: `symfony_analyze.sections[].meta[]`
+
+The rows of `meta` and of `debug`.
+
+| key | type | meaning |
+|---|---|---|
+| `label` | string | What the value counts or names, for people, such as `Routes` or `ReDoS >=` |
+| `value` | int \| string | The count or the setting |
+
+### Notice: `symfony_analyze.sections[].summary[]`
+
+The entries of `summary` and of `warnings`.
+
+| key | type | meaning |
+|---|---|---|
+| `severity` | string | `pass`, `warn`, `fail` or `critical`; an open set |
+| `message` | string | The verdict, for people |
+
+### Issue: `symfony_analyze.sections[].issues[]`
+
+| key | type | meaning |
+|---|---|---|
+| `kind` | string | `shadowed` (a rule or route another one before it always takes), `overlap` (one it sometimes takes, under `--show-overlaps`) or `redos` (a firewall pattern at or above `--redos-threshold`); an open set, and what `--fail-on` names |
+| `severity` | string | `warn`, `fail` or `critical`; an open set |
+| `title` | string | The routes, rules or firewall the issue is about, with their places, for people |
+| `details` | list | What the issue rests on, the objects below |
+| `notes` | list of strings | Context, for people |
+
+### Detail: `symfony_analyze.sections[].issues[].details[]`
+
+| key | type | meaning |
+|---|---|---|
+| `label` | string | What the value is, for people, such as `Route`, `Example`, `Severity` or `Attack` |
+| `value` | string | The value |
+| `kind` | string | How to show it: `text`, `pattern` (a regex) or `example` (a string that triggers the issue); an open set |
+
+## Laravel Routes
+
+Laravel's `php artisan regex:routes --format=json` lists the routes that have
+a regex constraint, with `--validate` a verdict on each. It ships in
+`php-regex/regex-laravel` ([Laravel guide](../guides/laravel.md)). With
+`--validate`, the exit code is 1 when a constraint is invalid:
+
+```json
+{
+    "routes": [
+        {
+            "name": "users.show",
+            "uri": "users/{id}",
+            "methods": ["GET", "HEAD"],
+            "action": "App\\Http\\Controllers\\UserController@show",
+            "constraints": [
+                {"parameter": "id", "pattern": "[0-9]+", "valid": true, "error": null}
+            ]
+        }
+    ],
+    "issues": [],
+    "summary": {"total_routes": 1, "routes_with_constraints": 1, "total_issues": 0}
+}
+```
+
+### Laravel routes: `laravel_routes`
+
+| key | type | meaning |
+|---|---|---|
+| `routes` | list | Every route of the application, the objects below |
+| `issues` | list | One entry per invalid constraint, the objects below; empty without `--validate` |
+| `summary` | object | The counts below |
+
+### Route: `laravel_routes.routes[]`
+
+| key | type | meaning |
+|---|---|---|
+| `name` | string | The route's name, or its URI when it has none |
+| `uri` | string | The route's URI, as Laravel writes it |
+| `methods` | list of strings | The HTTP methods the route answers |
+| `action` | string | The controller action, `Closure`, or `Unknown` |
+| `constraints` | list | The route's regex constraints, the objects below |
+
+### Constraint: `laravel_routes.routes[].constraints[]`
+
+| key | type | meaning |
+|---|---|---|
+| `parameter` | string | The route parameter the constraint applies to |
+| `pattern` | string | The constraint as written in `where()` |
+| `valid` | bool \| null | Whether it compiles as the router matches it; `null` without `--validate` |
+| `error` | string \| null | Why it does not, for people; `null` when it does or was not validated |
+
+### Invalid constraint: `laravel_routes.issues[]`
+
+| key | type | meaning |
+|---|---|---|
+| `route` | string | The route's name, or its URI |
+| `parameter` | string | The route parameter |
+| `pattern` | string | The constraint as written |
+| `error` | string | Why it does not compile, for people |
+
+### Route counts: `laravel_routes.summary`
+
+| key | type | meaning |
+|---|---|---|
+| `total_routes` | int | The routes listed |
+| `routes_with_constraints` | int | The routes that have a regex constraint |
+| `total_issues` | int | The invalid constraints |
+
+## Laravel Compare
+
+Laravel's `php artisan regex:compare <pattern1> <pattern2> --format=json`
+compares two patterns as languages: `--method=intersection` (the default)
+asks whether they share a string, `subset` whether every string of the first
+is one of the second, `equivalence` whether they match the same strings.
+Every key is printed whatever the method, `null` where the method fills none.
+The exit code is 0 when the check passes (disjoint, a subset, equivalent)
+and 1 when it fails:
+
+```json
+{
+    "pattern1": "/ab?/",
+    "pattern2": "/a/",
+    "method": "equivalence",
+    "disjoint": null,
+    "subset": null,
+    "equivalent": false,
+    "example": null,
+    "counterexample": "ab",
+    "left_only_example": "ab",
+    "right_only_example": null,
+    "algorithms": {"minimizer": "hopcroft", "determinizer": "subset-indexed"},
+    "elapsed_ms": 1.52
+}
+```
+
+An unknown `--method`, `--minimizer` or `--determinizer` prints the
+[error envelope](#the-error-envelope), stage `usage`, exit code 2. An invalid
+pattern prints it with stage `pattern` and a `validation` object, exit code 1;
+so does a valid pattern the automata cannot read, such as one with a
+backreference, without `validation`.
+
+### Laravel compare: `laravel_compare`
+
+| key | type | meaning |
+|---|---|---|
+| `pattern1` | string | The first pattern given |
+| `pattern2` | string | The second pattern given |
+| `method` | string | `intersection`, `subset` or `equivalence` |
+| `disjoint` | bool \| null | Under `intersection`: whether no string matches both; `null` otherwise |
+| `subset` | bool \| null | Under `subset`: whether every string of `pattern1` matches `pattern2`; `null` otherwise |
+| `equivalent` | bool \| null | Under `equivalence`: whether they match the same strings; `null` otherwise |
+| `example` | string \| null | Under `intersection`: a string both match; `null` when they are disjoint or under another method |
+| `counterexample` | string \| null | Under `subset` and `equivalence`: a string that proves the check fails; `null` when it passes or under `intersection` |
+| `left_only_example` | string \| null | Under `equivalence`: a string only `pattern1` matches, or `null` |
+| `right_only_example` | string \| null | Under `equivalence`: a string only `pattern2` matches, or `null` |
+| `algorithms` | object | The automata algorithms used, below |
+| `elapsed_ms` | float | How long the comparison took; differs between two runs |
+
+### Algorithms: `laravel_compare.algorithms`
+
+| key | type | meaning |
+|---|---|---|
+| `minimizer` | string | `hopcroft` or `moore` |
+| `determinizer` | string | `subset` or `subset-indexed` |
+
 ## Shared Objects
 
 ### Runtime: `runtime`
@@ -598,7 +852,7 @@ gives these keys, in this order.
 | `is_valid` | bool | Whether PHP accepts the pattern |
 | `error` | string \| null | Why it does not, for people; not frozen |
 | `complexity_score` | int | A rough measure of the pattern's complexity |
-| `category` | string \| null | `syntax`, `semantic` or `pcre-runtime`; an open set |
+| `category` | string \| null | `syntax`, `semantic`, `pcre-runtime` or `limit` (the library stopped at one of its own limits, no verdict on the pattern); an open set |
 | `offset` | int \| null | Where the error lies, 0-based, in bytes from the first byte of the pattern body; `null` without an error or a place |
 | `caret_snippet` | string \| null | The pattern with a caret under the error, as the console shows it; the caret counts raw bytes (see [Strings](#strings-are-written-as-they-are)) |
 | `hint` | string \| null | How to fix it, for people |
@@ -623,8 +877,8 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `suggested_rewrite` | string \| null | A rewrite to try, for people; verify it |
 | `recommendations` | list of strings | Advice, for people |
 | `error` | string \| null | Why the analysis could not finish |
-| `findings` | list of objects | Each problem found |
-| `hotspots` | list of objects | Each span of the pattern at fault |
+| `findings` | list of objects | Each problem the structural heuristics found; hints, see below |
+| `hotspots` | list of objects | Each span the structural heuristics point at; hints, see below |
 | `confirmation` | object \| null | The replay in confirmed mode; `null` otherwise |
 | `complexity` | string | `linear`, `polynomial`, `exponential` or `unknown`; an open set |
 | `degree` | int \| null | The degree of a polynomial verdict, 2 or more; `null` otherwise |
@@ -633,10 +887,18 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `replayed` | bool \| null | Whether the witness made the running PCRE fail; `null` when it was not replayed |
 | `abstractions` | list of strings | What the model analysed differently from the pattern as written |
 | `pcre_version` | string | The PCRE2 release the verdict was computed for, as `10.49` |
+| `php_version` | string | The PHP release that ran the analysis, as `8.4.26`: under `iu` the proof reads a character's other case from its mbstring tables |
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
 
 ### Finding: `redos_analysis.findings[]`
+
+The findings and the hotspots come from the structural heuristics, the
+verdict from the proof when there is one. They are hints, not verdicts: next
+to `"proof": "proven"` and `"complexity": "linear"` they may still name a
+`medium` construct, as `/a+/` does, and the proof overrides them. The console
+of `analyze` and `debug` shows no hotspot for such a verdict, and `debug` lists
+its findings as heuristic hints.
 
 | key | type | meaning |
 |---|---|---|

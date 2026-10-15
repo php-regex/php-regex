@@ -29,7 +29,8 @@ Features
 --------
 
 * A `Regex` service and a `Regex` facade, registered by package discovery on install
-* Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`
+* A `ValidRegex` rule for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
+* Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`, with the options of the same commands in the CLI and the Symfony bundle
 * `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass, a route constraint
   anchored and flagged as the router matches it
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
@@ -61,7 +62,7 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
 | `cache.store`, `cache.directory`, `cache.prefix` | `null`, `'{storage_path}/framework/cache/php-regex'`, `'regex_'` | Cache for parsed patterns: a Laravel store, else this directory |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported (`low` to `critical`), patterns skipped |
-| `analysis.warning_threshold` | `50` | Complexity score from which a pattern counts as complex; `regex:lint` does not report it yet (`regex lint` does, under `checks.complexity`) |
+| `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind `regex:compare` |
 | `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
 | `paths`, `exclude`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, and the editor behind its clickable links |
@@ -119,6 +120,17 @@ The facade mirrors the whole service: `create`, `fromOptions`, `parse`, `parseTo
 One of those calls bypasses the configured singleton: `Regex::create()` returns a fresh instance, so the cache
 store and the ReDoS ignore-list from `config/php-regex.php` do not apply to it.
 
+Validate a pattern your users submit with the `ValidRegex` rule, judged by the same service:
+
+```php
+use PHPRegex\Laravel\Rules\ValidRegex;
+
+$request->validate([
+    'pattern' => ['required', new ValidRegex()],                  // "/abc)/" fails with "Unmatched closing parenthesis at position 4."
+    'route_pattern' => ['required', new ValidRegex(redos: true)], // also refuses a ReDoS severity of high or more ("redosThreshold")
+]);
+```
+
 `optimize()` and `transpile()` can throw the parse and lexer exception families — on a pattern that does not
 parse or does not tokenize, on an option `optimize()` does not know (`InvalidRegexOptionException`), or on an
 unknown target or a construct the target cannot express (`TranspileException`).
@@ -138,6 +150,7 @@ Artisan commands
 php artisan regex:lint
 php artisan regex:lint app/ tests/ --format=json
 php artisan regex:routes --validate
+php artisan regex:compare '/[0-9]+/' '/\d+/' --method=equivalence
 ```
 
 Exit codes: 0 when nothing is wrong, 1 when the judged patterns or files have a problem, 2 when an option or the configuration cannot be used.
@@ -148,6 +161,7 @@ Documentation
 * [The Laravel guide](https://php-regex.com/guides/laravel/) — configuration, lint targets, the commands, upgrading from 1.x
 * [Quick start](https://php-regex.com/quick-start/) — first steps with the `Regex` service
 * [The ReDoS guide](https://php-regex.com/guides/redos/) — how the risk analysis reaches its verdicts
+* [JSON output](https://php-regex.com/reference/json-output/) — every key of the `regex:lint`, `regex:transpile`, `regex:routes` and `regex:compare` reports
 * [Backward compatibility promise](https://php-regex.com/reference/backward-compatibility/) — what stays stable across releases
 
 Resources

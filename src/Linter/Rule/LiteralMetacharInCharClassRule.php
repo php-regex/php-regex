@@ -104,6 +104,7 @@ final class LiteralMetacharInCharClassRule extends AbstractLintRule
                 $meta->value,
                 $meta->value,
             ),
+            end: $meta->getEndPosition(),
         )];
     }
 }

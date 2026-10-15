@@ -14,31 +14,28 @@ Visitors walk the AST using `accept()` on each node. Each node dispatches to the
 
 ## Base Classes and Interfaces
 
-### Walking a tree without a visitor
+### Finding nodes without a visitor
 
 Most tools only need to look at some nodes: every backreference, every
-quantifier, the groups around a node. `NodeFinder` and `NodeWalker` do that
-for any tree, without a method for each kind of node:
+quantifier, the first lookbehind. `NodeFinder` does that for any tree,
+without a method for each kind of node:
 
 ```php
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\NodeFinder;
-use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\TraversalAction;
 
 $tree = RegexParser::create()->parse('/(a)(b)\\2\\1/');
 
 NodeFinder::findInstanceOf($tree, BackrefNode::class);            // both references, in order
-
-NodeWalker::walk($tree, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
-    // $ancestors: the nodes from the root down to $node's parent
-    return null;  // or TraversalAction::SkipChildren, or TraversalAction::Stop
-});
+NodeFinder::findFirst($tree, static fn (NodeInterface $node): bool => $node instanceof QuantifierNode);  // null: none
 ```
 
 Every node gives its children in pattern order through `getChildren()`.
+Anything more — the groups around a node, a depth, a rewrite — is a visitor:
+extend one of the two base classes below.
 
 ### NodeVisitorInterface
 
@@ -452,6 +449,17 @@ $sample = $ast->accept(new SampleGenerator());
 echo $sample;  // e.g., "Word12"
 ```
 
+Visiting the tree draws a sample from the tree alone: an assertion, a condition or a
+backreference can make it one the engine does not match (`/(?!^)a/` draws `a`). `generate()`
+draws again and checks each sample with the running engine, as `Regex::generate()` does, and
+throws `SampleGenerationException` when none matches:
+
+```php
+use PHPRegex\Generator\SampleGenerator;
+
+echo (new SampleGenerator())->generate('/(?!^)a/');  // "aa"
+```
+
 ---
 
 ### TestCaseGenerator
@@ -541,6 +549,31 @@ Regex(delimiter: /, flags: )
     Literal('o')
 */
 ```
+
+---
+
+### JsonDumper
+
+**Purpose:** Exports the tree as data, for a playground, an editor client or a snapshot test. The result is an array ready for `json_encode()`; [`ast.schema.json`](https://github.com/php-regex/php-regex/blob/2.x/src/Parser/ast.schema.json), shipped with `php-regex/regex-parser`, describes it.
+
+```php
+use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\Printer\JsonDumper;
+
+$ast = Regex::create()->parse('/(a)+\1/i');
+
+echo json_encode($ast->accept(new JsonDumper()), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+```
+
+The document carries the format's `version`, the `delimiter`, the `flags`, the `source` between the delimiters and the tree under `pattern`. Each node gives its kind under `type`, a stable name such as `group`, `quantifier` or `char_class` rather than a class name, its byte offsets in the pattern under `start` and `end`, and its own fields:
+
+```json
+{"type": "quantifier", "start": 0, "end": 4, "min": 1, "max": null, "mode": "greedy",
+ "child": {"type": "group", "start": 0, "end": 3, "kind": "capturing", "name": null, "flags": null,
+           "number": 1, "scanned_groups": [], "child": {"type": "literal", "start": 1, "end": 2, "value": "a"}}}
+```
+
+Group numbers, and the groups a back reference or a call resolves to (`groups`), come from the whole pattern: a subtree exported alone has none. Every string is valid UTF-8; a literal holding bytes that are not gives them in hexadecimal under `bytes`. A minor release may add keys and node kinds; `version` changes only when a key is renamed, removed or given another meaning.
 
 ---
 
@@ -794,6 +827,7 @@ Presentation and visualization:
 - `TextExplainer` provides plain-text explanations.
 - `HtmlExplainer` provides HTML explanations.
 - `NodeDumper` dumps the AST for debugging.
+- `JsonDumper` exports the AST as data, described by `ast.schema.json`.
 - `MermaidRenderer` builds Mermaid diagrams.
 - `AsciiTreeRenderer` prints an ASCII tree.
 - `RailroadSvgRenderer` renders railroad SVGs.

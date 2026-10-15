@@ -64,6 +64,7 @@ final class EmptyGroupRule extends AbstractLintRule
             \sprintf('Empty group "%s" matches nothing and changes nothing.', $written),
             $node->getStartPosition(),
             'Remove the group.',
+            end: $node->getEndPosition(),
         )];
     }
 

@@ -13,20 +13,23 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Analyzer\Formatter;
 
+use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
 
 /**
+ * The document regex:analyze --format=json prints, as the JSON output
+ * reference describes it. A section's facts and debug rows are labels for
+ * people: they are written as {label, value} rows, never as keys.
+ *
  * @internal
  */
 final readonly class JsonReportFormatter
 {
     public function format(SecurityReport $report, bool $debug = false): string
     {
-        $payload = [
+        return JsonDocument::encode([
             'sections' => $this->normalizeSections($report, $debug),
-        ];
-
-        return (string) json_encode($payload, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES);
+        ]);
     }
 
     /**
@@ -70,7 +73,7 @@ final readonly class JsonReportFormatter
             $payload = [
                 'id' => $section->id,
                 'title' => $section->title,
-                'meta' => $section->meta,
+                'meta' => $this->rows($section->meta),
                 'summary' => $summary,
                 'warnings' => $warnings,
                 'issues' => $issues,
@@ -78,12 +81,27 @@ final readonly class JsonReportFormatter
             ];
 
             if ($debug && [] !== $section->debug) {
-                $payload['debug'] = $section->debug;
+                $payload['debug'] = $this->rows($section->debug);
             }
 
             $sections[] = $payload;
         }
 
         return $sections;
+    }
+
+    /**
+     * @param array<string, int|string> $facts
+     *
+     * @return list<array{label: string, value: int|string}>
+     */
+    private function rows(array $facts): array
+    {
+        $rows = [];
+        foreach ($facts as $label => $value) {
+            $rows[] = ['label' => (string) $label, 'value' => $value];
+        }
+
+        return $rows;
     }
 }

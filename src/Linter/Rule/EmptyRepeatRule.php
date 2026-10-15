@@ -94,6 +94,7 @@ final class EmptyRepeatRule extends AbstractLintRule
                 self::ID,
                 \sprintf('Quantifier "%s" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to "".', $node->quantifier),
                 $node->getStartPosition(),
+                end: $node->getEndPosition(),
             )];
         }
 
@@ -104,6 +105,7 @@ final class EmptyRepeatRule extends AbstractLintRule
             \sprintf('Quantifier "%s" repeats an item that can match the empty string: an empty iteration matches nothing more.', $node->quantifier),
             $node->getStartPosition(),
             null === $rewrite ? null : \sprintf('Write "%s" instead.', $rewrite),
+            end: $node->getEndPosition(),
         )];
     }
 

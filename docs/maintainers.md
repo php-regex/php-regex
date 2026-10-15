@@ -153,6 +153,7 @@ Exception hierarchy (simplified):
     - `LexerException`
     - `ParserException`
       - `SyntaxErrorException`
+    - `LimitException`
       - `RecursionLimitException`
       - `ResourceLimitException`
     - `SemanticErrorException`
@@ -169,6 +170,8 @@ Specific catches:
 
 Note that `SemanticErrorException` sits beside `ParserException`, directly
 under `RegexException`: a `catch (ParserException)` block does not intercept it.
+Neither does it intercept a `LimitException`: a limit of the library is no
+grammar error, and `validate()` reports it with the `limit` category.
 
 ### Exception Handling Examples
 
@@ -215,8 +218,9 @@ try {
 | `ParserException`             | AST construction fails    | Missing delimiter, unbalanced groups        |
 | `SyntaxErrorException`        | Invalid syntax            | Unrecognized token                          |
 | `SemanticErrorException`      | Invalid semantics         | Unbounded lookbehind, invalid backreference |
+| `LimitException`              | A limit of the library    | Parent of the two below: no verdict         |
 | `RecursionLimitException`     | Parser recursion too deep | Nested patterns exceed limit                |
-| `ResourceLimitException`      | Resource limits exceeded  | Pattern too long, too many tokens           |
+| `ResourceLimitException`      | Resource limits exceeded  | Pattern too long                            |
 | `InvalidRegexOptionException` | Invalid `create()` option | Unknown key, wrong type                     |
 
 ---

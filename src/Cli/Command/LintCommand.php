@@ -31,9 +31,8 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\Internal\CpuCoreCounter;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\Internal\WorkerCount;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
@@ -155,7 +154,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $jobs = (int) $arguments->jobs;
         if (-1 === $jobs) {
             // One process per core the run may use, when it can fork at all.
-            $jobs = ForkedWorkerPool::canFork() ? (new CpuCoreCounter())->count() : 1;
+            $jobs = (new WorkerCount())->count();
         } elseif ($jobs < 1) {
             $jobs = 1; // Minimum 1 job
         }

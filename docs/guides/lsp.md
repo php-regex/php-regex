@@ -50,7 +50,8 @@ The LSP server analyzes PHP files and reports regex issues as you type:
 | Validation Errors | PCRE compatibility issues |
 | Unicode Errors | Missing `/u` flag: a property or an escape above U+FF fails as an error |
 | Style Issues | Anti-patterns and best practice violations, as ASCII-only shorthands without `/u` — information level, off by default |
-| Performance Hints | Lint warnings on shapes that backtrack, as nested quantifiers; the ReDoS verdict itself comes from `regex analyze`, `regex lint --redos` or PHPStan |
+| Performance Hints | Lint warnings on shapes that backtrack, as nested quantifiers |
+| ReDoS | The verdict of the ReDoS analysis, when it is [turned on](#redos-analysis) (off by default) |
 
 **Example diagnostics:**
 
@@ -59,6 +60,25 @@ Info: Shorthand "\w" matches only ASCII without /u flag.
 Error: Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
 Error: Unicode escape "\x{100}" requires /u flag for code points > U+FF.
 ```
+
+An invalid pattern's diagnostic gives its fix on the line under the error, as
+the `hint` of `validate()` does:
+
+```
+Error: Invalid quantifier range "{2,1}": min > max.
+       Write the smaller count first: "{1,2}".
+```
+
+What each diagnostic underlines:
+
+- an error, the character `regex validate` puts its caret under, where PCRE
+  reports it: the closing delimiter when the pattern ends too early;
+- a lint issue, the whole construct it names, as `[aa]` or `(a+)+`;
+- a ReDoS verdict, the part of the pattern at risk, else the whole body;
+- a pattern not analyzed for a limit, the whole body.
+
+Columns count UTF-16 code units, as the protocol does, and follow the literal
+as written: in `"/\t(a/"` an offset past the tab lands past the `\t` escape.
 
 ### Hover Information
 
@@ -154,6 +174,56 @@ Target: PHP 8.2, PCRE2 10.40 (initializationOptions)
 What it noticed on the way, such as a `composer.json` without `require.php`,
 comes in messages of its own. Changing the target takes a restart of the
 server.
+
+## ReDoS Analysis
+
+The server can run the ReDoS analysis `regex lint` runs under
+`checks.redos`, and publish its verdict on each pattern. It is off by
+default: the analysis costs more than the lint, on every change. It is on
+when the editor sends `initializationOptions.redos`:
+
+```json
+{
+  "initializationOptions": {
+    "redos": true
+  }
+}
+```
+
+else when `checks.redos.enabled` is `true` in the workspace's `regex.json`,
+the switch `regex lint` reads; `"redos": false` turns it off for the editor
+whatever `regex.json` says. The mode and the threshold are those of
+`checks.redos` in `regex.json`, `theoretical` and `high` when unset, as for
+`regex lint`:
+
+```json
+{
+  "checks": {
+    "redos": {
+      "enabled": true,
+      "threshold": "medium"
+    }
+  }
+}
+```
+
+The verdict is published as `regex lint` reports it: `regex.lint.redos`, an
+Error when it is confirmed at high severity or above, a Warning otherwise,
+over the risky part of the pattern, with the attack the analysis found on
+the line under it:
+
+```
+Warning: Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDIUM.
+         Attack: "a" x n . "!"
+```
+
+The quadratic cost of an unanchored search whose every attempt is linear
+is `regex.lint.redos.search`, a Warning, at a threshold of `medium` or
+`low`. Once the analysis proves a pattern linear, the lint warnings that
+guess at backtracking (`quantifier.nested`, `dotstar.nested`,
+`overlap.charset`) are no longer published for it. The analysis is bounded
+as on the command line: a pattern past its budget says so in the verdict.
+Changing the setting takes a restart of the server.
 
 ---
 
@@ -411,7 +481,7 @@ Add to your settings:
 |--------|-------------|
 | `initialize` | Server capabilities negotiation |
 | `initialized` | Initialization complete |
-| `shutdown` | Graceful shutdown request: nothing else is served until `exit` |
+| `shutdown` | Graceful shutdown request: nothing else is served until `exit`, and a request sent in between, a second `shutdown` included, is answered Invalid Request (-32600) |
 | `exit` | Server exit: code 0 after `shutdown`, 1 without it |
 | `textDocument/didOpen` | Document opened |
 | `textDocument/didChange` | Document changed |
@@ -568,6 +638,9 @@ Each lint rule's severity is sent as the LSP diagnostic severity: `critical` and
 as Error, `warning` as Warning, and `style`, `perf` and `info` as Information, the same
 mapping as `regex lint` (see [Severity in Each Format](../reference/diagnostics.md#severity-in-each-format)).
 No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
+The rules `checks.lint.rules` in the workspace's `regex.json` turns on or off
+(`{"checks": {"lint": {"rules": {"quantifier.nested": false}}}}`) are read at
+`initialize`, so the editor reports what `regex lint` reports.
 
 | Code | Severity | Description |
 |------|----------|-------------|
@@ -587,6 +660,8 @@ No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
 | `regex.lint.lookaround.edgeQuantifier` | Information | `(?=a{2,6})` asserts what `(?=a{2})` asserts (perf, off by default) |
 | `regex.lint.lookaround.redundant` | Information | `(?=a(?=b))` asserts what `(?=ab)` asserts (style, off by default) |
 | `regex.lint.quantifier.lazyToClass` | Information | `".*?"` where `"[^"\n]*"` reads the run at once (perf, off by default) |
+| `regex.lint.redos` | Error when confirmed at high severity or above, else Warning | The verdict of the [ReDoS analysis](#redos-analysis), when it is on |
+| `regex.lint.redos.search` | Warning | The quadratic cost of an unanchored search, when the analysis is on |
 | other `regex.lint.*` | Warning | The [lint rules](../reference/rules.md#quick-reference-table) |
 
 ---

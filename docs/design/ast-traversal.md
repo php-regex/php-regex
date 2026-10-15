@@ -285,29 +285,11 @@ foreach ($node->alternatives as $index => $alternative) {
 
 ## Performance Considerations
 
-For large patterns or adversarial input, bound the depth of the walk. With
-`NodeWalker`, the callback receives the ancestors of every node, so the depth
-check is one `count()`:
-
-```php
-use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\NodeWalker;
-use PHPRegex\Parser\TraversalAction;
-
-NodeWalker::walk($ast, static function (NodeInterface $node, array $ancestors): ?TraversalAction {
-    // $ancestors holds the nodes from the root down to $node's parent:
-    // its length is the depth of $node.
-    if (count($ancestors) > 100) {
-        return TraversalAction::Stop;  // abandon the walk, keep what was collected
-    }
-
-    return null;  // keep walking; SkipChildren would prune this subtree
-});
-```
-
-Inside a visitor, the same guard is a depth counter maintained in an
-overridden `visitX()` that calls the parent method — the shape
-`DepthTrackingVisitor` uses above.
+For large patterns or adversarial input, bound the depth of the walk: a
+depth counter maintained in an overridden `visitX()` that calls the parent
+method — the shape `DepthTrackingVisitor` uses above — and a check that stops
+descending past a limit. The parser already refuses a pattern nested deeper
+than its recursion limit, so a visitor never meets a tree deeper than that.
 
 ## Related Documentation
 

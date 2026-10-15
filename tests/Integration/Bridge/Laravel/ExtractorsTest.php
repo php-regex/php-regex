@@ -92,8 +92,8 @@ final class ExtractorsTest extends TestCase
         }
 
         $this->assertNotNull($testPattern);
-        // Pattern should be normalized with delimiters
-        $this->assertMatchesRegularExpression('/^[\/\#\~\!\@\%\`]/', $testPattern->pattern);
+        // The pattern the router compiles, without the text of the path.
+        $this->assertSame('{^(?P<id>[0-9]+)$}sDu', $testPattern->pattern);
     }
 
     public function test_route_extractor_includes_context_info(): void

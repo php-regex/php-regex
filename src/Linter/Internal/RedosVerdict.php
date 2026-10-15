@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Internal;
 
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
@@ -36,6 +37,52 @@ final class RedosVerdict
      * The issue of a search cost, beside the per-attempt regex.lint.redos.
      */
     public const SEARCH_ISSUE_ID = 'regex.lint.redos.search';
+
+    /**
+     * The issue of a per-attempt verdict.
+     */
+    public const ISSUE_ID = 'regex.lint.redos';
+
+    /**
+     * The lint rules that guess what the analysis proves: once it shows a
+     * pattern linear, their warnings go.
+     */
+    public const HEURISTIC_ISSUE_IDS = [
+        'regex.lint.quantifier.nested' => true,
+        'regex.lint.dotstar.nested' => true,
+        'regex.lint.overlap.charset' => true,
+    ];
+
+    /**
+     * Whether a verdict is reported: at or above the threshold, and in
+     * confirmed mode only when the engine confirmed it, except a verdict the
+     * engine could not replay, a proof reported as a confirmed one and a
+     * heuristic verdict as a warning, and a polynomial verdict, which is
+     * never replayed and is reported as it stands.
+     */
+    public static function reported(RedosAnalysis $analysis, RedosSeverity $threshold, RedosMode $mode): bool
+    {
+        if (!$analysis->exceedsThreshold($threshold)) {
+            return false;
+        }
+
+        if (RedosMode::Confirmed !== $mode
+            || self::standsConfirmed($analysis)
+            || self::replaySkipped($analysis)) {
+            return true;
+        }
+
+        return RedosComplexity::Polynomial === $analysis->complexity && null === $analysis->replayed;
+    }
+
+    /**
+     * A reported verdict is an error when it stands confirmed at high
+     * severity or above, a warning otherwise.
+     */
+    public static function isError(RedosAnalysis $analysis): bool
+    {
+        return self::standsConfirmed($analysis) && $analysis->exceedsThreshold(RedosSeverity::High);
+    }
 
     /**
      * The headline, then the severity and confidence, and what qualifies

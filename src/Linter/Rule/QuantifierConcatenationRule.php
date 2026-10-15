@@ -115,6 +115,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                     0 === $leftMin
                         ? 'The first quantifier can match zero times already: consider dropping the whole quantified term.'
                         : 'Consider tightening the first quantifier to its minimum.',
+                    end: $left->getEndPosition(),
                 );
 
                 while ($i + 1 < $count && $children[$i + 1] instanceof QuantifierNode) {
@@ -134,6 +135,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                     0 === $rightMin
                         ? 'The second quantifier can match zero times already: consider dropping the whole quantified term.'
                         : 'Consider tightening the second quantifier to its minimum.',
+                    end: $right->getEndPosition(),
                 );
 
                 while ($i + 1 < $count && $children[$i + 1] instanceof QuantifierNode) {

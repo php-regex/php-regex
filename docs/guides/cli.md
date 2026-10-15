@@ -15,6 +15,10 @@ Once installed, the binary is `vendor/bin/regex`:
 vendor/bin/regex --help
 ```
 
+The overview lists the commands and the options they all take;
+`vendor/bin/regex help <command>` shows the options, notes and examples of one
+command.
+
 **Via PHAR (standalone):**
 
 The PHAR needs no PHP project and no Composer:
@@ -29,6 +33,18 @@ chmod +x ~/.local/bin/regex
 regex --help
 ```
 {: data-copy="" }
+
+Every release's PHAR is built from its tag by a GitHub Actions workflow, which
+attests where it was built. With the [GitHub CLI](https://cli.github.com),
+check that the file you downloaded is that build:
+
+```bash
+gh attestation verify ~/.local/bin/regex --repo php-regex/php-regex
+```
+{: data-copy="" }
+
+The release also carries `regex.phar.sha256`, which `regex self-update`
+checks before it replaces the PHAR.
 
 > **Note:** Replace `vendor/bin/regex` with `regex` in all examples below if using the PHAR.
 
@@ -218,8 +234,8 @@ defuse it).`, the confidence stays `MEDIUM`, and the command exits with 0. A
 polynomial verdict is never replayed.
 
 `--format=json` prints the same verdict under `redos`, with `complexity`,
-`degree`, `proof`, `witness`, `replayed`, `abstractions`, `pcre_version` and
-`analysis_version` next to `severity`, `score` and the other keys (every key is in the
+`degree`, `proof`, `witness`, `replayed`, `abstractions`, `pcre_version`,
+`php_version` and `analysis_version` next to `severity`, `score` and the other keys (every key is in the
 [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis)):
 
 ```bash
@@ -246,6 +262,7 @@ vendor/bin/regex analyze '/(a+)+$/' --format=json
     "replayed": null,
     "abstractions": [],
     "pcre_version": "10.49",
+    "php_version": "8.4.26",
     "analysis_version": "1"
 },
 ```
@@ -284,7 +301,9 @@ vendor/bin/regex debug '/(a+)+$/'
       Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...).
 ```
 
-The carets under the pattern mark the hotspot. With
+The carets under the pattern mark the hotspot. A pattern proven safe, as
+`/a+/`, gets no carets and no `Hotspots:` line, and its findings are listed
+under `Heuristic hints`: the proof overrides them. With
 `--redos-mode=confirmed`, the `Replayed on …` or `Not reproduced on …` line
 follows the attack, a `[2/3] Confirmation` step follows the heatmap, and the
 exit code follows the same rule as `analyze`.
@@ -386,6 +405,14 @@ vendor/bin/regex validate '/(?<=a+)b/' --no-visuals
   Lookbehind is unbounded. PCRE requires a bounded maximum length.
 Line 1: (?<=a+)b
         ^
+```
+
+**Not analyzed** (a pattern past one of the library's own limits, which PCRE
+may compile: no verdict, exit code 1):
+```
+  Status: NOT ANALYZED
+  Regex pattern exceeds maximum length of 100000 characters.
+  A limit of this library, not of PCRE: raise the "max_pattern_length" option to analyze the pattern.
 ```
 
 ---
@@ -1247,8 +1274,11 @@ Without `--jobs` (or `"jobs"` in `regex.json`), the lint runs one worker per
 logical CPU the process may use: the CPUs it is pinned to on Linux, else
 `nproc` or `sysctl hw.logicalcpu`, else `/proc/cpuinfo`. Inside a container,
 the cgroup CPU quota (`docker run --cpus=2`) and `KUBERNETES_CPU_LIMIT` cap
-that number, a fraction rounding up. Without the `pcntl` extension, on
-Windows for one, the lint runs in one process. The banner shows the number
+that number, a fraction rounding up, and so does the cgroup memory limit
+(`docker run --memory=1g`): each worker is a copy of the main process, so the
+limit holds the main process and as many workers as fit beside it, at least
+one. `regex:lint` in Symfony and Laravel counts the same way. Without the
+`pcntl` extension, on Windows for one, the lint runs in one process. The banner shows the number
 planned; the `Processes:` line under the report shows the number of workers
 the run started, 1 when it had a single file or pattern to share out.
 
@@ -1270,7 +1300,13 @@ read for the `#[RegexPattern]` functions they declare, see [Patterns Behind a Wr
 `Functions` when namespaced functions are read too, then `Patterns`. Step 2
 analyses the patterns, step 3 suggests the optimizations; with
 `--no-optimize` the run has two steps. Without a terminal, in a CI log, the
-progress is not drawn.
+bar is not drawn: a line every 30 seconds says where a long step stands,
+such as `   7449/24824 (30%) 01:30` under `[2/3] Analyzing patterns`.
+When no worker has reported for 10 seconds, the run names the file it is
+held on, the first file of the oldest share still being worked on
+(`Still on src/web/Request.php`): above the bar in a terminal until the next
+file is done, on a line of its own in a log. `regex:lint` in Symfony and
+Laravel does the same.
 
 A worker that fails or exits, a PHP fatal error or the system killing it for
 memory, stops the run with exit code 1 and a message naming the files it was
@@ -1410,8 +1446,9 @@ vendor/bin/regex highlight '/^your-pattern$/' --format=html
 ### "Unknown command"
 
 Every command name is listed in the [command table](#command-overview). An
-unknown name prints `Unknown command: <name>`, then the help, and exits
-with 2:
+unknown name prints `Unknown command: <name>`, followed by
+`Did you mean "<command>"?` when a command is one or two letters away
+(`anlyze`), then the help, and exits with 2:
 ```bash
 # Wrong
 vendor/bin/regex check '/test/'

@@ -161,14 +161,15 @@ final class ConfigurationVocabularyTest extends TestCase
     #[Test]
     public function test_analysis_keeps_its_warning_threshold(): void
     {
-        // The one key under "analysis" that is read: the complexity score
-        // above which the lint warns.
+        // The switch that turns the complexity report of regex:lint on, off
+        // by default, and the score from which it reports a pattern.
         $default = $this->process([]);
         $this->assertIsArray($default['analysis']);
-        $this->assertSame(['warning_threshold' => 50], $default['analysis']);
+        $this->assertSame(['complexity' => false, 'warning_threshold' => 50], $default['analysis']);
 
-        $custom = $this->process(['analysis' => ['warning_threshold' => 7]]);
+        $custom = $this->process(['analysis' => ['complexity' => true, 'warning_threshold' => 7]]);
         $this->assertIsArray($custom['analysis']);
+        $this->assertTrue($custom['analysis']['complexity']);
         $this->assertSame(7, $custom['analysis']['warning_threshold']);
     }
 

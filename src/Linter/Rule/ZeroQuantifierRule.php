@@ -54,6 +54,7 @@ final class ZeroQuantifierRule extends AbstractLintRule
             'Quantifier always repeats zero times; it can be removed.',
             $node->startPosition,
             'Remove the quantified element or replace it with an empty pattern.',
+            end: $node->getEndPosition(),
         )];
     }
 }

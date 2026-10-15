@@ -150,7 +150,7 @@ final readonly class LanguageSolver
             throw new ComplexityException('Both patterns must read the subject the same way, as UTF-8 or as bytes, for the match solver to compare them.', 0, $left);
         }
 
-        $counterExample = (new MatchExplorer($leftNfa, $rightNfa, $options->maxDfaStates, $left))->counterExample();
+        $counterExample = (new MatchExplorer($leftNfa, $rightNfa, $options->maxDfaStates, $left, $options->maxTransitionsProcessed))->counterExample();
 
         // The sets the answer is computed from come from the running engine,
         // whatever PCRE2 is judged: the result carries the running release,

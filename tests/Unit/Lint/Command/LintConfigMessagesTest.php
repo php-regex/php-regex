@@ -50,6 +50,7 @@ final class LintConfigMessagesTest extends TestCase
         yield 'boolean check form' => ['{"checks": {"redos": true}}', 'write {"enabled": true}'];
         yield 'wrong case of a key' => ['{"Paths": ["src"]}', 'Did you mean "paths"?'];
         yield 'snake_case option' => ['{"checks": {"optimizations": {"options": {"min_quantifier_count": 3}}}}', 'Did you mean "minQuantifierCount"?'];
+        yield 'a mistyped key' => ['{"pths": ["src"]}', 'Did you mean "paths"?'];
         yield 'unknown lint rule' => ['{"checks": {"lint": {"rules": {"not.a.rule": true}}}}', 'Unknown lint rule "not.a.rule"'];
         yield 'integer minimum' => ['{"jobs": "four"}', 'expected an integer >= 1'];
         yield 'enum' => ['{"format": "xml"}', 'expected one of console, json, github, checkstyle, junit'];

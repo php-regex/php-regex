@@ -44,7 +44,7 @@ final class ForkedWorkerPoolTest extends TestCase
     /**
      * What the progress recorder received, in order.
      *
-     * @var list<array{method: string, count: int|null, at: float}>
+     * @var list<array{method: string, count: int|null, at: float, file: string|null}>
      */
     private array $events = [];
 
@@ -206,6 +206,67 @@ final class ForkedWorkerPoolTest extends TestCase
         $this->assertNotSame([], $ticks, 'The clock was never redrawn while the workers slept.');
         $this->assertNotSame([], $advances);
         $this->assertLessThan($advances[0]['at'], $ticks[0]['at'], 'No tick before the first progress.');
+    }
+
+    /**
+     * No worker reports for a while: the progress is told the first file of
+     * the chunk in flight the longest, once, so that a pattern holding the
+     * run is named while it holds it.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_run_names_the_file_a_silent_worker_is_on(): void
+    {
+        $progress = $this->recorder();
+        $pool = new ForkedWorkerPool(chunkFactor: 1, maxChunkSize: 1, stallAfter: 0.2);
+
+        $results = $this->withDeadline(self::DEADLINE, static fn (): ?array => $pool->run(
+            ['fast', 'slow'],
+            2,
+            static function (array $chunk, \Closure $done): array {
+                if (['slow'] === $chunk) {
+                    usleep(700_000);
+                }
+                $done(\count($chunk));
+
+                return $chunk;
+            },
+            $progress,
+            'Parallel analysis failed',
+            [],
+            static fn (string $item): string => $item.'.php',
+        ));
+
+        $this->assertSame(['fast', 'slow'], $results);
+        $stalls = $this->calls('stalled');
+        $this->assertCount(1, $stalls);
+        $this->assertSame('slow.php', $stalls[0]['file']);
+        $this->assertSame(0, $stalls[0]['count'], 'Under a second without a report.');
+    }
+
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_run_names_no_file_while_the_workers_report(): void
+    {
+        $progress = $this->recorder();
+
+        $results = $this->withDeadline(self::DEADLINE, static fn (): ?array => (new ForkedWorkerPool(chunkFactor: 1, maxChunkSize: 1))->run(
+            ['a', 'b'],
+            2,
+            static function (array $chunk, \Closure $done): array {
+                usleep(300_000);
+                $done(\count($chunk));
+
+                return $chunk;
+            },
+            $progress,
+            'Parallel analysis failed',
+            [],
+            static fn (string $item): string => $item.'.php',
+        ));
+
+        $this->assertSame(['a', 'b'], $results);
+        $this->assertSame([], $this->calls('stalled'));
     }
 
     /**
@@ -498,6 +559,8 @@ final class ForkedWorkerPoolTest extends TestCase
             public function tick(): void {}
 
             public function workers(int $count): void {}
+
+            public function stalled(string $file, int $seconds): void {}
 
             public function finish(): void {}
         };
@@ -864,6 +927,8 @@ final class ForkedWorkerPoolTest extends TestCase
 
             public function workers(int $count): void {}
 
+            public function stalled(string $file, int $seconds): void {}
+
             public function finish(): void {}
         };
         $timeout = ini_set('default_socket_timeout', '1');
@@ -1090,13 +1155,13 @@ final class ForkedWorkerPoolTest extends TestCase
      */
     private function recorder(): LintProgress
     {
-        $record = function (string $method, ?int $count): void {
-            $this->events[] = ['method' => $method, 'count' => $count, 'at' => microtime(true)];
+        $record = function (string $method, ?int $count, ?string $file = null): void {
+            $this->events[] = ['method' => $method, 'count' => $count, 'at' => microtime(true), 'file' => $file];
         };
 
         return new class($record) implements LintProgress {
             /**
-             * @param \Closure(string, ?int): void $record
+             * @param \Closure(string, ?int, ?string=): void $record
              */
             public function __construct(private readonly \Closure $record) {}
 
@@ -1120,6 +1185,11 @@ final class ForkedWorkerPoolTest extends TestCase
                 ($this->record)('workers', $count);
             }
 
+            public function stalled(string $file, int $seconds): void
+            {
+                ($this->record)('stalled', $seconds, $file);
+            }
+
             public function finish(): void
             {
                 ($this->record)('finish', null);
@@ -1128,7 +1198,7 @@ final class ForkedWorkerPoolTest extends TestCase
     }
 
     /**
-     * @return list<array{method: string, count: int|null, at: float}>
+     * @return list<array{method: string, count: int|null, at: float, file: string|null}>
      */
     private function calls(string $method): array
     {

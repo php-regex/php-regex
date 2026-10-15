@@ -13,28 +13,29 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Routing;
 
+use PHPRegex\Parser\Internal\LibraryPcre;
+
 /**
  * The pattern Symfony's route compiler matches a requirement with. The
  * compiler strips the requirement's leading ^ or \A and its trailing $ or
- * \z as Route::sanitizeRequirement() does, puts it in a group of its own
- * and matches the route with "{^...$}sD", plus u under the route's utf8
- * option. A top-level alternation is grouped here, so that every
- * alternative stays anchored; a requirement is a fragment, never a
- * delimited pattern.
+ * \z as Route::sanitizeRequirement() does, inserts ?: after every ( no
+ * backslash escapes, puts it in a group named after the parameter and
+ * matches the path with "{^...$}sD", the host with "{^...$}sDi", plus u
+ * under the route's utf8 option.
+ *
+ * The normalized pattern is the compiled one without the text of the path
+ * around the parameter, so the engine and the lint read the requirement as
+ * the compiled route reads it: a brace the compiled route's delimiters do
+ * not balance, or a backslash left before the group's ), fails here as it
+ * fails there.
  *
  * @internal
  */
 final readonly class RouteRequirementNormalizer
 {
-    public function normalize(string $requirement, bool $utf8 = false): string
+    public function normalize(string $requirement, string $parameter, bool $utf8 = false, bool $host = false): string
     {
-        $body = $this->sanitize($requirement);
-
-        if ($this->hasTopLevelAlternation($body)) {
-            $body = '(?:'.$body.')';
-        }
-
-        return '{^'.$body.'$}sD'.($utf8 ? 'u' : '');
+        return '{^'.$this->group($parameter, $this->nonCapturing($this->sanitize($requirement))).'$}sD'.($host ? 'i' : '').($utf8 ? 'u' : '');
     }
 
     /**
@@ -60,157 +61,48 @@ final readonly class RouteRequirementNormalizer
         return $requirement;
     }
 
-    private function hasTopLevelAlternation(string $body): bool
+    /**
+     * The requirement as RouteCompiler::transformCapturingGroupsToNonCapturings()
+     * leaves it: ?: goes after every ( no backslash escapes and no * or ?
+     * follows, whether it opens a group or stands in a class or a comment.
+     */
+    private function nonCapturing(string $requirement): string
     {
-        $depth = 0;
-        $extended = false;
-        $length = \strlen($body);
-
-        for ($i = 0; $i < $length; $i++) {
-            $char = $body[$i];
-
-            if ('\\' === $char) {
-                if ('Q' === ($body[$i + 1] ?? '')) {
-                    $end = strpos($body, '\E', $i + 2);
-                    if (false === $end) {
-                        return false;
-                    }
-                    $i = $end + 1;
-
-                    continue;
-                }
+        for ($i = 0; $i < \strlen($requirement); $i++) {
+            if ('\\' === $requirement[$i]) {
                 $i++;
 
                 continue;
             }
 
-            if ($extended && '#' === $char) {
-                // Under x a comment runs to the newline, its parentheses are text.
-                $end = strpos($body, "\n", $i);
-                if (false === $end) {
-                    return false;
-                }
-                $i = $end;
-            } elseif ('[' === $char) {
-                $i = $this->classEnd($body, $i);
-            } elseif (null !== ($options = $this->optionSetting($body, $i))) {
-                // The x an option setting turns on or off holds to the end
-                // of the requirement: its group's end is not tracked.
-                $extended = $this->extendedAfter($options[0], $extended);
-                $i = $options[1];
-                if (':' === $body[$i]) {
-                    $depth++;
-                }
-            } elseif (str_starts_with(substr($body, $i, 3), '(?#')) {
-                // A comment runs to the first ), its parentheses are text.
-                $end = strpos($body, ')', $i + 3);
-                if (false === $end) {
-                    return false;
-                }
-                $i = $end;
-            } elseif ('(' === $char) {
-                $depth++;
-            } elseif (')' === $char) {
-                $depth--;
-            } elseif ('|' === $char && 0 === $depth) {
-                return true;
+            if ('(' !== $requirement[$i] || !isset($requirement[$i + 2])) {
+                continue;
             }
-        }
 
-        return false;
-    }
-
-    /**
-     * The letters of an option setting opened at $start, "(?x)" or "(?-x:",
-     * and the offset of the ) or : that ends them; null for any other text.
-     *
-     * @return array{string, int}|null
-     */
-    private function optionSetting(string $body, int $start): ?array
-    {
-        if ('(?' !== substr($body, $start, 2)) {
-            return null;
-        }
-
-        $length = \strlen($body);
-        for ($i = $start + 2; $i < $length; $i++) {
-            if (')' === $body[$i] || ':' === $body[$i]) {
-                return [substr($body, $start + 2, $i - $start - 2), $i];
-            }
-            $lower = \ord($body[$i]) | 0x20;
-            if (($lower < 0x61 || $lower > 0x7A) && '-' !== $body[$i] && '^' !== $body[$i]) {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Whether x is on once the option letters apply: ^ resets it, a letter
-     * after - turns it off.
-     */
-    private function extendedAfter(string $letters, bool $extended): bool
-    {
-        $on = true;
-        foreach (str_split($letters) as $letter) {
-            if ('^' === $letter) {
-                $extended = false;
-            } elseif ('-' === $letter) {
-                $on = false;
-            } elseif ('x' === $letter) {
-                $extended = $on;
-            }
-        }
-
-        return $extended;
-    }
-
-    /**
-     * The offset of the ] that closes the class opened at $start: a ] first
-     * in the class is a literal, as is everything a backslash escapes.
-     */
-    private function classEnd(string $body, int $start): int
-    {
-        $length = \strlen($body);
-        $i = $start + 1;
-        if ('^' === ($body[$i] ?? '')) {
-            $i++;
-        }
-        if (']' === ($body[$i] ?? '')) {
-            $i++;
-        }
-
-        for (; $i < $length; $i++) {
-            if ('\\' === $body[$i]) {
+            if ('*' === $requirement[++$i] || '?' === $requirement[$i]) {
                 $i++;
-            } elseif ('[' === $body[$i] && ':' === ($body[$i + 1] ?? '')) {
-                $i = $this->posixClassEnd($body, $i) ?? $i;
-            } elseif (']' === $body[$i]) {
-                return $i;
+
+                continue;
             }
+
+            $requirement = substr_replace($requirement, '?:', $i, 0);
+            $i++;
         }
 
-        return $length;
+        return $requirement;
     }
 
     /**
-     * The offset of the ] of a [:name:] opened at $start, or null when it is
-     * no POSIX class: PCRE2 reads one only when no ] comes before the :].
+     * The group the compiler names after the parameter. A requirement on a
+     * parameter the path never names is never compiled: its group goes
+     * unnamed where the name is none PCRE takes.
      */
-    private function posixClassEnd(string $body, int $start): ?int
+    private function group(string $parameter, string $body): string
     {
-        $length = \strlen($body);
-
-        for ($i = $start + 2; $i < $length; $i++) {
-            if (':' === $body[$i] && ']' === ($body[$i + 1] ?? '')) {
-                return $i + 1;
-            }
-            if (']' === $body[$i]) {
-                return null;
-            }
+        if (1 === LibraryPcre::match('/^[a-zA-Z_]\w{0,31}$/D', $parameter)) {
+            return '(?P<'.$parameter.'>'.$body.')';
         }
 
-        return null;
+        return '('.$body.')';
     }
 }

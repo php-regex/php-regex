@@ -48,38 +48,6 @@ final class LintServiceEdgeCasesTest extends TestCase
         $this->assertSame([], $filtered);
     }
 
-    public function test_should_ignore_issue_handles_line_and_read_errors(): void
-    {
-        $service = $this->makeService();
-        $method = $this->getPrivateMethod($service, 'shouldIgnoreIssue');
-
-        $issue = [
-            'file' => __FILE__,
-            'line' => 1,
-        ];
-        $noLinesRead = [];
-        $this->assertFalse($method->invokeArgs($service, [$issue, &$noLinesRead]));
-
-        $tempFile = tempnam(sys_get_temp_dir(), 'regex-lint');
-        if (false === $tempFile) {
-            $this->markTestSkipped('Unable to create temp file.');
-        }
-        copy(__DIR__.'/../Fixtures/Lint/multiline.txt', $tempFile);
-        chmod($tempFile, 0o200);
-
-        try {
-            $issue = [
-                'file' => $tempFile,
-                'line' => 3,
-            ];
-            $noLinesRead = [];
-            $this->assertFalse($method->invokeArgs($service, [$issue, &$noLinesRead]));
-        } finally {
-            chmod($tempFile, 0o600);
-            @unlink($tempFile);
-        }
-    }
-
     public function test_severity_mapping_and_snippet_stripping(): void
     {
         $service = $this->makeService();

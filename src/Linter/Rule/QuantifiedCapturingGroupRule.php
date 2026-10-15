@@ -78,6 +78,7 @@ final class QuantifiedCapturingGroupRule extends AbstractLintRule
             $node->startPosition,
             'Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.',
             $isNamed ? LintSeverity::Warning : LintSeverity::Info,
+            end: $node->getEndPosition(),
         )];
     }
 }

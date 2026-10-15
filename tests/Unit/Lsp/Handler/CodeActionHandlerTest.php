@@ -110,6 +110,18 @@ final class CodeActionHandlerTest extends TestCase
         $this->handler = new CodeActionHandler($this->documents, Regex::create());
     }
 
+    /**
+     * A pattern past a limit of the library is not analyzed: no action is
+     * offered on it, and the request is still answered.
+     */
+    #[Test]
+    public function test_no_action_is_offered_on_a_pattern_past_a_limit(): void
+    {
+        $this->handler = new CodeActionHandler($this->documents, Regex::create(['max_recursion_depth' => 3]));
+
+        $this->assertSame([], $this->codeActions("<?php\npreg_match('/((((a))))/', \$s);\n", ['line' => 1, 'character' => 12], ['line' => 1, 'character' => 24]));
+    }
+
     #[Test]
     public function test_handler_can_be_instantiated(): void
     {

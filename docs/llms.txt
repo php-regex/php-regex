@@ -43,7 +43,7 @@ License: MIT
 - [API](https://php-regex.com/reference/api/): entry points, return objects, exceptions
 - [Diagnostics](https://php-regex.com/reference/diagnostics/): error types, messages, and how to map them to fixes
 - [Diagnostics cheat sheet](https://php-regex.com/reference/diagnostics-cheatsheet/): fast fixes for the most common diagnostics
-- [JSON output](https://php-regex.com/reference/json-output/): every key the regex command prints
+- [JSON output](https://php-regex.com/reference/json-output/): every key the regex command and the Symfony and Laravel reports print
 - [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/): which PCRE construct each analysis layer supports
 - [Correctness contracts](https://php-regex.com/reference/correctness-contracts/): what is sound, what is heuristic, per feature
 - [Backward compatibility](https://php-regex.com/reference/backward-compatibility/): what each release may change

@@ -14,6 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp\Converter;
 
 use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
+use PHPRegex\LanguageServer\Converter\PatternSpan;
+use PHPRegex\LanguageServer\Converter\PositionConverter;
+use PHPRegex\LanguageServer\Document\RegexOccurrence;
+use PHPRegex\Linter\Extraction\PhpStringLiteral;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
@@ -21,13 +25,21 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * The span used throughout: "'/abcdefghijklmnopqrst/i'" on line 1 from
+ * column 10, so the quote is at 10, the delimiter at 11, the body from 12
+ * to 32 and the closing delimiter at 32.
+ */
 final class DiagnosticConverterTest extends TestCase
 {
     private DiagnosticConverter $converter;
 
+    private PatternSpan $span;
+
     protected function setUp(): void
     {
         $this->converter = new DiagnosticConverter();
+        $this->span = self::span("'/abcdefghijklmnopqrst/i'");
     }
 
     #[Test]
@@ -40,8 +52,7 @@ final class DiagnosticConverterTest extends TestCase
             severity: LintSeverity::Warning,
         );
 
-        $start = ['line' => 1, 'character' => 10];
-        $diagnostic = $this->converter->convert($issue, $start, 20);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
         $this->assertArrayHasKey('range', $diagnostic);
         $this->assertArrayHasKey('severity', $diagnostic);
@@ -60,22 +71,32 @@ final class DiagnosticConverterTest extends TestCase
             severity: LintSeverity::Warning,
         );
 
-        $start = ['line' => 1, 'character' => 10];
-        $diagnostic = $this->converter->convert($issue, $start, 20);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
         /** @var array{start: array{line: int, character: int}, end: array{line: int, character: int}} $range */
         $range = $diagnostic['range'];
         $this->assertSame(1, $range['start']['line']);
-        $this->assertSame(15, $range['start']['character']); // 10 + 5
+        $this->assertSame(17, $range['start']['character']); // 12 + 5
         $this->assertSame(1, $range['end']['line']);
-        $this->assertSame(16, $range['end']['character']); // 10 + 5 + 1
+        $this->assertSame(18, $range['end']['character']); // one character, the rule giving no end
+    }
+
+    #[Test]
+    public function test_convert_spans_the_node_the_rule_names(): void
+    {
+        $issue = new RuleViolation('regex.lint.test', 'Test', 2, end: 6);
+
+        $this->assertSame(
+            ['start' => ['line' => 1, 'character' => 14], 'end' => ['line' => 1, 'character' => 18]],
+            $this->converter->convert($issue, $this->span)['range'],
+        );
     }
 
     #[Test]
     public function test_convert_sets_correct_source(): void
     {
         $issue = new RuleViolation('test', 'message');
-        $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 0], 10);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
         $this->assertSame('php-regex', $diagnostic['source']);
     }
@@ -88,7 +109,7 @@ final class DiagnosticConverterTest extends TestCase
             message: 'Test',
         );
 
-        $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 0], 10);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
         $this->assertSame('regex.lint.unicode.shorthandWithoutU', $diagnostic['code']);
     }
@@ -103,7 +124,7 @@ final class DiagnosticConverterTest extends TestCase
             severity: $inputSeverity,
         );
 
-        $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 0], 10);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
         $this->assertSame($expectedLspSeverity, $diagnostic['severity']);
     }
@@ -130,13 +151,14 @@ final class DiagnosticConverterTest extends TestCase
             offset: 100, // Beyond pattern length
         );
 
-        $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 0], 10);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
-        // Offset should be clamped to pattern length
+        // Clamped to the end of the body: the closing delimiter, never the
+        // modifiers or the quote.
         /** @var array{start: array{character: int}, end: array{character: int}} $range */
         $range = $diagnostic['range'];
-        $this->assertSame(10, $range['start']['character']);
-        $this->assertSame(10, $range['end']['character']);
+        $this->assertSame(32, $range['start']['character']);
+        $this->assertSame(33, $range['end']['character']);
     }
 
     #[Test]
@@ -145,8 +167,7 @@ final class DiagnosticConverterTest extends TestCase
         $diagnostic = $this->converter->fromParseError(
             'Parse error',
             ErrorCode::GroupUnclosed,
-            ['line' => 1, 'character' => 5],
-            15,
+            $this->span,
             3,
         );
 
@@ -155,7 +176,7 @@ final class DiagnosticConverterTest extends TestCase
         $this->assertSame('Parse error', $diagnostic['message']);
         /** @var array{start: array{character: int}} $range */
         $range = $diagnostic['range'];
-        $this->assertSame(8, $range['start']['character']); // 5 + 3
+        $this->assertSame(15, $range['start']['character']); // 12 + 3
     }
 
     #[Test]
@@ -164,8 +185,7 @@ final class DiagnosticConverterTest extends TestCase
         $diagnostic = $this->converter->fromValidationError(
             'Validation error',
             ErrorCode::LookbehindUnbounded,
-            ['line' => 2, 'character' => 10],
-            20,
+            $this->span,
             5,
         );
 
@@ -173,8 +193,21 @@ final class DiagnosticConverterTest extends TestCase
         $this->assertSame('regex.lookbehind.unbounded', $diagnostic['code']);
         $this->assertSame('Validation error', $diagnostic['message']);
         $this->assertSame(
-            ['start' => ['line' => 2, 'character' => 15], 'end' => ['line' => 2, 'character' => 30]],
+            ['start' => ['line' => 1, 'character' => 17], 'end' => ['line' => 1, 'character' => 18]],
             $diagnostic['range'],
+        );
+    }
+
+    #[Test]
+    public function test_a_limit_and_a_redos_verdict_with_no_part_cover_the_body(): void
+    {
+        $body = ['start' => ['line' => 1, 'character' => 12], 'end' => ['line' => 1, 'character' => 32]];
+
+        $this->assertSame($body, $this->converter->fromLimit('Too deep.', ErrorCode::NestingTooDeep, $this->span)['range']);
+        $this->assertSame($body, $this->converter->fromRedos('regex.lint.redos', 'Risky.', [], false, $this->span)['range']);
+        $this->assertSame(
+            ['start' => ['line' => 1, 'character' => 14], 'end' => ['line' => 1, 'character' => 16]],
+            $this->converter->fromRedos('regex.lint.redos', 'Risky.', [], true, $this->span, 2, 4)['range'],
         );
     }
 
@@ -187,11 +220,29 @@ final class DiagnosticConverterTest extends TestCase
             offset: null,
         );
 
-        $diagnostic = $this->converter->convert($issue, ['line' => 0, 'character' => 5], 10);
+        $diagnostic = $this->converter->convert($issue, $this->span);
 
         // Null offset should default to 0
         /** @var array{start: array{character: int}} $range */
         $range = $diagnostic['range'];
-        $this->assertSame(5, $range['start']['character']);
+        $this->assertSame(12, $range['start']['character']);
+    }
+
+    /**
+     * The span of a literal written on line 1 from column 10.
+     */
+    private static function span(string $literal): PatternSpan
+    {
+        $content = "<?php\n".str_repeat(' ', 10).$literal.";\n";
+        $positions = new PositionConverter($content);
+        $offset = \strlen("<?php\n") + 10;
+
+        return PatternSpan::of(new RegexOccurrence(
+            pattern: (string) PhpStringLiteral::decode($literal),
+            start: $positions->offsetToPosition($offset),
+            end: $positions->offsetToPosition($offset + \strlen($literal)),
+            byteOffset: $offset,
+            literal: $literal,
+        ), $positions);
     }
 }

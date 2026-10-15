@@ -148,7 +148,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         $this->commit();
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('2.0.0-DEV', $output);
@@ -160,7 +160,7 @@ final class ReleaseScriptsTest extends TestCase
         file_put_contents($this->root.'/src/Toolkit/Regex.php', str_replace('2.0.0-DEV', '2.0.0', (string) file_get_contents($this->root.'/src/Toolkit/Regex.php')));
         $this->commit();
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('CHANGELOG', $output);
@@ -173,7 +173,7 @@ final class ReleaseScriptsTest extends TestCase
         $this->commit();
         file_put_contents($this->root.'/stray.txt', 'x');
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('clean', $output);
@@ -186,7 +186,7 @@ final class ReleaseScriptsTest extends TestCase
         $this->commit();
         $this->git('tag', 'v2.0.0');
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(1, $code);
         $this->assertStringContainsString('v2.0.0', $output);
@@ -198,7 +198,7 @@ final class ReleaseScriptsTest extends TestCase
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(0, $code, $output);
         $this->assertStringContainsString('would tag v2.0.0', $output);
@@ -211,7 +211,7 @@ final class ReleaseScriptsTest extends TestCase
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(0, $code, $output);
         $this->assertStringContainsString('release notes: the CHANGELOG section', $output);
@@ -225,7 +225,7 @@ final class ReleaseScriptsTest extends TestCase
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
 
-        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
         $this->assertSame(0, $code, $output);
         $this->assertStringContainsString('release notes: a summary linking CHANGELOG.md', $output);
@@ -234,14 +234,48 @@ final class ReleaseScriptsTest extends TestCase
     }
 
     #[Test]
-    public function test_release_publishes_a_draft_before_the_tag_leaves(): void
+    public function test_release_dry_run_leaves_the_phar_to_the_release_workflow(): void
     {
-        // A phar/build that writes a script reporting the version, a gh that
-        // records each call and whether the tag had reached origin by then.
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('phar.yml', $output);
+        $this->assertStringNotContainsString('phar/build', $output);
+    }
+
+    #[Test]
+    public function test_release_no_longer_takes_skip_phar(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '--skip-phar', '2.0.0');
+
+        $this->assertSame(2, $code, $output);
+        $this->assertStringContainsString('--skip-phar', $output);
+    }
+
+    /**
+     * The release is drafted before the tag leaves, and stays a draft: the
+     * phar workflow the tag starts builds the phar, attests it, attaches it
+     * and only then publishes the release, so the latest release never goes
+     * without its phar.
+     */
+    #[Test]
+    public function test_release_drafts_the_release_and_leaves_publishing_to_the_phar_workflow(): void
+    {
+        // A phar/build that fails if it is run, a gh that records each call
+        // and whether the tag had reached origin by then.
         mkdir($this->root.'/phar');
-        file_put_contents($this->root.'/phar/build', "#!/usr/bin/env bash\nmkdir -p bin\nprintf '%s' '<?php echo \"PHPRegex 2.0.0\\n\";' > bin/regex.phar\n");
+        file_put_contents($this->root.'/phar/build', "#!/usr/bin/env bash
+echo 'built locally' >&2
+exit 1
+");
         chmod($this->root.'/phar/build', 0o755);
-        file_put_contents($this->root.'/.gitignore', "/bin/regex.phar\n/bin/regex.phar.sha256\n/origin.git/\n/fake/\n/gh.log\n");
+        file_put_contents($this->root.'/.gitignore', "/origin.git/\n/fake/\n/gh.log\n");
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
         exec('git init -q --bare '.escapeshellarg($this->root.'/origin.git'));
@@ -253,15 +287,16 @@ final class ReleaseScriptsTest extends TestCase
         [$code, $output] = $this->runScript('release', ['--skip-ci', '2.0.0'], ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'GH_LOG' => $this->root.'/gh.log', ...self::IDENTITY]);
 
         $this->assertSame(0, $code, $output);
+        $this->assertStringNotContainsString('built locally', $output);
+        $this->assertFileDoesNotExist($this->root.'/bin/regex.phar');
         $calls = file($this->root.'/gh.log', \FILE_IGNORE_NEW_LINES);
         $this->assertIsArray($calls);
-        $this->assertCount(2, $calls, implode("\n", $calls));
-        $this->assertStringStartsWith('release create v2.0.0 bin/regex.phar bin/regex.phar.sha256 ', $calls[0]);
+        $this->assertCount(1, $calls, implode("\n", $calls));
+        $this->assertStringStartsWith('release create v2.0.0 --title ', $calls[0]);
         $this->assertStringContainsString('--draft', $calls[0]);
         $this->assertStringEndsWith('[tag on origin: no]', $calls[0]);
-        $this->assertStringStartsWith('release edit v2.0.0 --draft=false', $calls[1]);
-        $this->assertStringEndsWith('[tag on origin: yes]', $calls[1]);
-        $this->assertSame(hash_file('sha256', $this->root.'/bin/regex.phar').'  regex.phar', trim((string) file_get_contents($this->root.'/bin/regex.phar.sha256')));
+        $this->assertStringContainsString('refs/tags/v2.0.0', $this->git('ls-remote', '--tags', 'origin'));
+        $this->assertStringContainsString('phar.yml', $output);
     }
 
     #[Test]
@@ -386,7 +421,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         yield 'bump' => ['script' => 'bump', 'description' => 'Sets the version every package reports', 'options' => ['--dry-run', '--next', '--date', '--root']];
         yield 'split' => ['script' => 'split', 'description' => 'Splits the monorepo into the read-only repositories', 'options' => ['--dry-run', '--branch', '--tag', '--only', '--root']];
-        yield 'release' => ['script' => 'release', 'description' => 'Releases a version', 'options' => ['--dry-run', '--skip-ci', '--skip-phar', '--branch', '--root']];
+        yield 'release' => ['script' => 'release', 'description' => 'Releases a version', 'options' => ['--dry-run', '--skip-ci', '--branch', '--root']];
         yield 'status' => ['script' => 'status', 'description' => 'Where the release stands', 'options' => ['--offline', '--root']];
     }
 

@@ -70,6 +70,7 @@ final class NestedDotStarRule extends AbstractLintRule
             'An unbounded quantifier wraps a dot-star, which can cause severe backtracking.',
             $node->startPosition,
             'Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.',
+            end: $node->getEndPosition(),
         )];
     }
 

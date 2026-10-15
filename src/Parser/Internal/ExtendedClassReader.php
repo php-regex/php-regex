@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Internal;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
@@ -63,19 +64,19 @@ final class ExtendedClassReader
     private readonly int $length;
 
     /**
-     * @param \Closure(string, int):NodeInterface                                      $escape        reads an escape written at an offset
-     * @param \Closure(string, int):NodeInterface                                      $class         reads a nested class written at an offset
-     * @param \Closure(LexerException|ParserException, int, list<NodeInterface>):never $fail          refuses
-     *                                                                                                the pattern at an offset, or for an error in an
-     *                                                                                                operand, given the operands read before
-     * @param bool                                                                     $pastTheFault  whether the nesting limit is reported
-     *                                                                                                on the character, as PCRE2 10.47 does
-     * @param bool                                                                     $utf           whether the pattern is read by UTF-8 character
-     * @param int                                                                      $maxOperations the most operations read, so the tree stays
-     *                                                                                                one the visitors can walk
-     * @param \Closure(int, int): void|null                                            $nest          told where each "(" is read and how
-     *                                                                                                many are open with it, for a limit on
-     *                                                                                                nesting other than PCRE's
+     * @param \Closure(string, int):NodeInterface                                                     $escape        reads an escape written at an offset
+     * @param \Closure(string, int):NodeInterface                                                     $class         reads a nested class written at an offset
+     * @param \Closure(LexerException|LimitException|ParserException, int, list<NodeInterface>):never $fail          refuses
+     *                                                                                                               the pattern at an offset, or for an error in an
+     *                                                                                                               operand, given the operands read before
+     * @param bool                                                                                    $pastTheFault  whether the nesting limit is reported
+     *                                                                                                               on the character, as PCRE2 10.47 does
+     * @param bool                                                                                    $utf           whether the pattern is read by UTF-8 character
+     * @param int                                                                                     $maxOperations the most operations read, so the tree stays
+     *                                                                                                               one the visitors can walk
+     * @param \Closure(int, int): void|null                                                           $nest          told where each "(" is read and how
+     *                                                                                                               many are open with it, for a limit on
+     *                                                                                                               nesting other than PCRE's
      */
     public function __construct(
         private readonly string $pattern,

@@ -21,8 +21,11 @@ public methods, public properties and public constants. A class marked
 `@internal` is not part of the API: it may change in any release.
 
 Some `@internal` classes and constructors are shared between packages. They
-may change in any release, since siblings always run at the same version. Code
-outside this project must not use them.
+may change in any release, since siblings always run at the same version (each
+package requires its siblings at `self.version`). Code outside this project must
+not use them. Within the project, which package may use which `Internal`
+namespace of a sibling is a closed list, checked on every change: a new
+dependency on one is a decision, not a side effect of an import.
 
 The `PHPRegex\Parser\Hir` classes of `regex-parser` are `@internal` like the
 rest: `regex-automata` and `regex-redos`, which build on them, move with them.
@@ -54,11 +57,22 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
 (now `Transform\HirToNfaTransformer`); [UPGRADE-2.0.md](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
 maps every removed name.
 
+## Packages and the facade
+
+The packages are the contract: each one's public classes, listed below, are
+what this promise covers. `PHPRegex\Toolkit\Regex` is a convenience layer over
+seven of them (parser, explain, generator, linter, optimizer, ReDoS and
+transpiler): its methods are public and covered like any other, but it gives
+the calls an application needs most, not everything the packages offer. Reach
+for a package directly when the facade has no method for it; to compare two
+patterns, for instance, use `LanguageSolver` from `regex-automata`, which the
+facade does not wrap.
+
 In short, the public surface is:
 
 | package | public |
 |---|---|
-| `regex-parser` | `RegexParser`, `Attribute\RegexPattern`, `ParserOptions`, `PcreTarget`, `PcreFeature`, `ErrorCode`, `DelimitedPattern`, `TolerantParseResult`, `NodeVisitorInterface`, `AbstractNodeVisitor`, `AbstractTraversingVisitor`, `NodeWalker`, `NodeFinder`, `TraversalAction`, `Token\Token`, `Token\TokenType`, `Validation\ValidationResult`, `Validation\ValidationErrorCategory`, `Printer\PatternPrinter`, `Printer\NodeDumper`, `Printer\PatternFormatter`, `Printer\FormatResult`, `Printer\FormatRefusal`, `Analysis\ComplexityScorer`, `Analysis\GroupNumbering`, `Analysis\GroupNumberingCollector`, `Analysis\LengthRangeCalculator`, `Analysis\LiteralExtractor`, `Analysis\LiteralExtractionResult`, `Analysis\LiteralConfidence`, `Analysis\LiteralSet`, `Analysis\MetricsCollector`, `Analysis\CaptureShapeAnalyzer`, `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Analysis\Participation`, `Analysis\RequiredLiteralAnalyzer`, `Analysis\PatternInfoAnalyzer`, `Analysis\PatternInfo`, `NewlineConvention`, `BsrConvention`, `Validation\CompatibilityChecker`, `Validation\PatternCompatibility`, `Validation\TargetVerdict`, `Cache\CacheInterface`, `Cache\RemovableCacheInterface`, `Cache\ArrayCache`, `Cache\NullCache`, `Cache\FilesystemCache`, `Cache\PsrCacheAdapter`, `Cache\PsrSimpleCacheAdapter`, `Engine\PcreEngine`, `Engine\PcreError`, `Engine\PcreLimits`, `Engine\PcreMatch`, `Exception\ExceptionInterface`, `Exception\RegexException`, `Exception\LexerException`, `Exception\ParserException`, `Exception\SyntaxErrorException`, `Exception\SemanticErrorException`, `Exception\RecursionLimitException`, `Exception\ResourceLimitException`, `Exception\InvalidRegexOptionException`, `Exception\CacheException`, `Exception\FormattingException`, `Exception\VisualContextInterface`, `Node\*` |
+| `regex-parser` | `RegexParser`, `Attribute\RegexPattern`, `ParserOptions`, `PcreTarget`, `PcreFeature`, `ErrorCode`, `DelimitedPattern`, `TolerantParseResult`, `NodeVisitorInterface`, `AbstractNodeVisitor`, `AbstractTraversingVisitor`, `NodeFinder`, `Token\Token`, `Token\TokenType`, `Validation\ValidationResult`, `Validation\ValidationErrorCategory`, `Printer\PatternPrinter`, `Printer\NodeDumper`, `Printer\JsonDumper`, `Printer\PatternFormatter`, `Printer\FormatResult`, `Printer\FormatRefusal`, `Analysis\ComplexityScorer`, `Analysis\GroupNumbering`, `Analysis\GroupNumberingCollector`, `Analysis\LengthRangeCalculator`, `Analysis\LiteralExtractor`, `Analysis\LiteralExtractionResult`, `Analysis\LiteralConfidence`, `Analysis\LiteralSet`, `Analysis\MetricsCollector`, `Analysis\CaptureShapeAnalyzer`, `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Analysis\Participation`, `Analysis\RequiredLiteralAnalyzer`, `Analysis\PatternInfoAnalyzer`, `Analysis\PatternInfo`, `NewlineConvention`, `BsrConvention`, `Validation\CompatibilityChecker`, `Validation\PatternCompatibility`, `Validation\TargetVerdict`, `Cache\CacheInterface`, `Cache\RemovableCacheInterface`, `Cache\ArrayCache`, `Cache\NullCache`, `Cache\FilesystemCache`, `Cache\PsrCacheAdapter`, `Cache\PsrSimpleCacheAdapter`, `Engine\PcreEngine`, `Engine\PcreError`, `Engine\PcreLimits`, `Engine\PcreMatch`, `Exception\ExceptionInterface`, `Exception\RegexException`, `Exception\LexerException`, `Exception\ParserException`, `Exception\SyntaxErrorException`, `Exception\SemanticErrorException`, `Exception\LimitException`, `Exception\RecursionLimitException`, `Exception\ResourceLimitException`, `Exception\InvalidRegexOptionException`, `Exception\CacheException`, `Exception\FormattingException`, `Exception\VisualContextInterface`, `Node\*` |
 | `regex-explain` | `TextExplainer`, `HtmlExplainer`, `AsciiTreeRenderer`, `MermaidRenderer`, `RailroadSvgRenderer`, `Highlighter\ConsoleHighlighter`, `Highlighter\HtmlHighlighter` |
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `SampleGenerationException` |
@@ -70,8 +84,8 @@ In short, the public surface is:
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-psalm` | `Plugin` |
 | `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `Set\RegexSetList` |
-| `regex-symfony` | `PHPRegexBundle` |
-| `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex` |
+| `regex-symfony` | `PHPRegexBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |
+| `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
 | `regex-language-server` | no PHP class is public |
 
@@ -110,12 +124,16 @@ The bridges and tools carry more than their classes:
   configuration, and `RegexSetList::STRING_FUNCTIONS` and
   `RegexSetList::PCRE_UPGRADE` name the sets that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.
-- `regex-symfony`: the `php_regex` configuration, and the commands' names and
-  options.
+- `regex-symfony`: the `php_regex` configuration, the commands' names and
+  options, the `regex:analyze` JSON report ([every key](json-output.md#symfony-analyze)),
+  and the `ValidRegex` constraint's options, message parameters and error
+  codes.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
   mirror every public method of `Regex`, so a signature that changes in the
-  code changes there in the same release — the `php-regex` configuration, and
-  the commands' names and options.
+  code changes there in the same release — the `php-regex` configuration, the
+  commands' names and options, the `regex:routes` and `regex:compare` JSON
+  reports ([every key](json-output.md#laravel-routes)), and the `ValidRegex`
+  rule's options.
 - `regex-cli`: the `regex` command, with its commands, options, exit codes and
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
@@ -154,10 +172,14 @@ add one to yet.
   instance reuses the DFAs its equivalence checks compiled, and without it a
   fresh in-memory cache is used, as before.
 - **New classes, methods and options**, and new keys in a configuration file.
+- **How a pattern splits into tokens**: `tokenize()` promises tokens in source
+  order that cover the pattern body, each with its type, its text and its byte
+  offsets, the end-of-pattern token last. A run of literal characters, one
+  token per character today, may become one token.
 - **New keys and values in the JSON output**: a key in any JSON document the
-  `regex` command prints, an optional key in its error envelope, and a value
-  of an open enum field, such as `stage` or `severity`. The
-  [JSON output reference](json-output.md#what-a-minor-release-may-change)
+  `regex` command or a bridge command prints, an optional key in the error
+  envelope, and a value of an open enum field, such as `stage` or `severity`.
+  The [JSON output reference](json-output.md#what-a-minor-release-may-change)
   lists what may change and which fields are open.
 - **Message texts**: an error or lint message may be reworded, in the console
   and in JSON alike; the CHANGELOG says so. Match on the error code, the
@@ -207,7 +229,14 @@ add one to yet.
   its analysis reads a case it missed, and the CHANGELOG names the rule. A
   patch only removes a false positive.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
-  with the replacement named.
+  with the replacement named. A deprecated class, method, option or
+  configuration key carries `@deprecated since <package> <version>, use <replacement>`
+  and raises a silenced `E_USER_DEPRECATED` notice when it is used, worded as
+  Symfony's `trigger_deprecation()` words one:
+  `Since php-regex/regex-parser 2.1: … use … instead.` It keeps working for the
+  rest of 2.x. Symfony's deprecation handler and PHPUnit's
+  `--display-deprecations` list these notices, so a project finds them before
+  3.0 removes the element.
 
 ## What stays for all of 2.x
 
@@ -240,6 +269,10 @@ add one to yet.
   (see [JSON output](json-output.md)). The ReDoS analysis' `search_cost`,
   `null` or `{degree, witness: {prefix, run, breaker}, replayed}`,
   is one of them.
+- The **tree's JSON export**, `JsonDumper` and `ast.schema.json`: within a
+  `version`, a key keeps its name, its type and its meaning, and a node kind
+  keeps its `type` name. A minor release may add keys and node kinds, the ones
+  a new PCRE2 construct needs.
 - The **severity of the lint rules**: a minor never raises an existing rule to
   error severity, the one that fails `regex lint`, and a new rule lands at
   warning severity or lower.

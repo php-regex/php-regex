@@ -102,7 +102,11 @@ final readonly class LintService
     public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null): LintReport
     {
         $progress?->step(LintProgress::STEP_ANALYSIS, \count($patterns));
-        $issues = $this->analysis->lint($patterns, $progress, $request->analysisWorkers);
+        // The optimizations take what the analysis read: no pattern is
+        // parsed or validated twice.
+        [$issues, $analyzed] = $request->checkOptimizations
+            ? $this->analysis->lintForSuggestions($patterns, $progress, $request->analysisWorkers)
+            : [$this->analysis->lint($patterns, $progress, $request->analysisWorkers), null];
         $progress?->finish();
         $issues = $this->filterLintIssues($issues);
         $issues = $this->filterIssuesByRequest($issues, $request);
@@ -112,7 +116,7 @@ final readonly class LintService
         $optimizations = [];
         if ($request->checkOptimizations) {
             $progress?->step(LintProgress::STEP_OPTIMIZATIONS, \count($patterns));
-            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress)), $request->minSavings);
+            $optimizations = $this->keepRouteFlags(array_values($this->analysis->suggestOptimizations($patterns, $request->minSavings, $request->optimizations, $request->analysisWorkers, $progress, $analyzed)), $request->minSavings);
             $progress?->finish();
         }
 
@@ -456,14 +460,7 @@ final readonly class LintService
      */
     private function addIssuesToResults(array $issues, array $patternMap, array &$results): void
     {
-        // Each file is read once for its ignore comments, whatever the
-        // number of its issues.
-        $ignoredLines = [];
         foreach ($issues as $issue) {
-            if ($this->shouldIgnoreIssue($issue, $ignoredLines)) {
-                continue;
-            }
-
             $key = $this->createPatternKey(
                 $issue['file'],
                 $issue['line'],
@@ -514,45 +511,6 @@ final readonly class LintService
     }
 
     /**
-     * @param array<string, array<int, true>> $ignoredLines by file, the lines a comment on the line above
-     *                                                      ignores, filled as the files are read
-     *
-     * @phpstan-param LintIssue $issue
-     */
-    private function shouldIgnoreIssue(array $issue, array &$ignoredLines): bool
-    {
-        $source = $issue['source'] ?? '';
-        if (str_starts_with($source, 'route:') || str_starts_with($source, 'validator:')) {
-            return false;
-        }
-
-        $file = $issue['file'];
-        if ('' === $file || !is_file($file)) {
-            return false;
-        }
-
-        $line = $issue['line'];
-        if ($line < 2) {
-            return false;
-        }
-
-        if (!isset($ignoredLines[$file])) {
-            $ignoredLines[$file] = [];
-            $content = @file_get_contents($file);
-            if (false !== $content) {
-                foreach (explode("\n", $content) as $index => $text) {
-                    if (str_contains($text, '// @regex-lint-ignore')) {
-                        // A comment ignores the line below its own.
-                        $ignoredLines[$file][$index + 2] = true;
-                    }
-                }
-            }
-        }
-
-        return isset($ignoredLines[$file][$line]);
-    }
-
-    /**
      * @param array{file: string, line: int, column?: int|null, fileOffset?: int|null, source?: string|null, ...} $item
      *
      * @return LintResult
@@ -581,11 +539,15 @@ final readonly class LintService
         $validation = $issue['validation'] ?? null;
         if ($validation instanceof ValidationResult) {
             $message = $issue['message'] ?? ($validation->error ?? 'Invalid regex.');
-            $type = ValidationErrorCategory::Semantic === $validation->category ? DiagnosticType::Semantic : DiagnosticType::Syntax;
+            $type = match ($validation->category) {
+                ValidationErrorCategory::Semantic => DiagnosticType::Semantic,
+                ValidationErrorCategory::Limit => DiagnosticType::Limit,
+                default => DiagnosticType::Syntax,
+            };
 
             return new Diagnostic(
                 $type,
-                LintSeverity::Error,
+                DiagnosticType::Limit === $type ? LintSeverity::Warning : LintSeverity::Error,
                 $message,
                 $validation->errorCode?->value,
                 $validation->offset,

@@ -53,33 +53,22 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * The overview's Lint Options section lists each lint option, the
-     * first of the table and the --json shorthand included.
+     * The overview lists the commands and the options every command takes,
+     * then points at `help <command>` for the rest: each command's options
+     * are on its own page, not repeated there.
      */
     #[Test]
-    #[DataProvider('provideLintOptions')]
-    public function test_general_help_lists_the_lint_option(string $option, string $description): void
+    public function test_the_overview_lists_the_commands_and_points_at_their_pages(): void
     {
-        $command = new HelpCommand();
-        $input = new Input('help', [], new GlobalOptions(false, null, false, false, null, null), []);
+        $overview = self::commandHelp(null);
 
-        ob_start();
-        $command->run($input, OutputFactory::create());
-        $text = (string) ob_get_clean();
-
-        $section = strstr($text, 'Lint Options:');
-        $this->assertIsString($section);
-        $section = (string) strstr($section, 'Config:', true);
-        $this->assertMatchesRegularExpression('/^  '.preg_quote($option, '/').' +'.preg_quote($description, '/').'$/m', $section);
-    }
-
-    /**
-     * @return iterable<string, array{option: string, description: string}>
-     */
-    public static function provideLintOptions(): iterable
-    {
-        yield '--exclude' => ['option' => '--exclude <path>', 'description' => 'Paths to exclude (repeatable)'];
-        yield '--json' => ['option' => '--json', 'description' => 'Same as --format=json'];
+        $this->assertArrayHasKey('lint', self::section($overview, 'Commands'));
+        $this->assertArrayHasKey('--php-version <ver>', self::section($overview, 'Global Options'));
+        $this->assertMatchesRegularExpression('/^  Run \S+ help <command> for the options of a command\.$/m', $overview);
+        foreach (['Lint', 'Diagram', 'Transpile', 'Format', 'Analyze', 'Debug', 'ReDoS Benchmark'] as $section) {
+            $this->assertStringNotContainsString($section.' Options:', $overview);
+        }
+        $this->assertStringNotContainsString('--min-savings', $overview);
     }
 
     /**
@@ -132,40 +121,6 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * The overview's options section of a command and `help <command>`
-     * list the same options, the global ones (--php-version, --pcre-version,
-     * listed once under Global Options on the overview) aside.
-     */
-    #[Test]
-    #[DataProvider('provideOverviewSections')]
-    public function test_command_help_lists_the_options_of_its_overview_section(string $command, string $section): void
-    {
-        $overview = self::commandHelp(null);
-        $global = self::optionNames(self::section($overview, 'Global Options'));
-
-        $onOverview = array_values(array_diff(self::optionNames(self::section($overview, $section)), $global));
-        $onCommandPage = array_values(array_diff(self::optionNames(self::section(self::commandHelp($command), 'Options')), $global));
-        sort($onOverview);
-        sort($onCommandPage);
-
-        $this->assertSame($onOverview, $onCommandPage, 'help '.$command.' and the overview\'s '.$section.' disagree.');
-    }
-
-    /**
-     * @return iterable<string, array{command: string, section: string}>
-     */
-    public static function provideOverviewSections(): iterable
-    {
-        yield 'lint' => ['command' => 'lint', 'section' => 'Lint Options'];
-        yield 'diagram' => ['command' => 'diagram', 'section' => 'Diagram Options'];
-        yield 'transpile' => ['command' => 'transpile', 'section' => 'Transpile Options'];
-        yield 'analyze' => ['command' => 'analyze', 'section' => 'Analyze Options'];
-        yield 'debug' => ['command' => 'debug', 'section' => 'Debug Options'];
-        yield 'redos' => ['command' => 'redos', 'section' => 'ReDoS Benchmark Options'];
-        yield 'format' => ['command' => 'format', 'section' => 'Format Options'];
-    }
-
-    /**
      * DiagramCommand renders text (the default) and svg; ascii is only an
      * old spelling of text it still accepts, and the page does not offer it.
      */
@@ -189,7 +144,6 @@ final class HelpCommandTest extends TestCase
     public function test_lint_help_shows_the_option_in_its_accepted_spelling(string $spelling): void
     {
         $this->assertArrayHasKey($spelling, self::section(self::commandHelp('lint'), 'Options'));
-        $this->assertArrayHasKey($spelling, self::section(self::commandHelp(null), 'Lint Options'));
     }
 
     /**
@@ -206,28 +160,27 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * Every command that takes --json describes it the same way, on its
-     * page and in its section of the overview.
+     * Every command that takes --json describes it the same way on its
+     * page.
      */
     #[Test]
     #[DataProvider('provideJsonCommands')]
-    public function test_command_help_describes_json_as_the_json_format(string $command, string $section): void
+    public function test_command_help_describes_json_as_the_json_format(string $command): void
     {
         $this->assertSame('Same as --format=json', self::section(self::commandHelp($command), 'Options')['--json'] ?? null);
-        $this->assertSame('Same as --format=json', self::section(self::commandHelp(null), $section)['--json'] ?? null);
     }
 
     /**
-     * @return iterable<string, array{command: string, section: string}>
+     * @return iterable<string, array{command: string}>
      */
     public static function provideJsonCommands(): iterable
     {
-        yield 'lint' => ['command' => 'lint', 'section' => 'Lint Options'];
-        yield 'analyze' => ['command' => 'analyze', 'section' => 'Analyze Options'];
-        yield 'debug' => ['command' => 'debug', 'section' => 'Debug Options'];
-        yield 'redos' => ['command' => 'redos', 'section' => 'ReDoS Benchmark Options'];
-        yield 'transpile' => ['command' => 'transpile', 'section' => 'Transpile Options'];
-        yield 'format' => ['command' => 'format', 'section' => 'Format Options'];
+        yield 'lint' => ['command' => 'lint'];
+        yield 'analyze' => ['command' => 'analyze'];
+        yield 'debug' => ['command' => 'debug'];
+        yield 'redos' => ['command' => 'redos'];
+        yield 'transpile' => ['command' => 'transpile'];
+        yield 'format' => ['command' => 'format'];
     }
 
     public function test_render_command_help_returns_zero_for_valid_command(): void
@@ -264,6 +217,20 @@ final class HelpCommandTest extends TestCase
         $this->assertStringContainsString('Unknown command: invalid', OutputFactory::errors($output));
         $this->assertStringNotContainsString('Unknown command', $text);
         $this->assertStringContainsString('Available Commands', $text);
+    }
+
+    #[Test]
+    public function test_help_for_a_mistyped_command_suggests_the_nearest(): void
+    {
+        $output = OutputFactory::create();
+        $input = new Input('help', ['anlyze'], new GlobalOptions(false, null, false, false, null, null), []);
+
+        ob_start();
+        $result = (new HelpCommand())->run($input, $output);
+        ob_end_clean();
+
+        $this->assertSame(2, $result);
+        $this->assertStringContainsString('Unknown command: anlyze. Did you mean "analyze"?', OutputFactory::errors($output));
     }
 
     public function test_render_command_help_includes_options(): void
@@ -528,10 +495,8 @@ final class HelpCommandTest extends TestCase
     public function test_transpile_help_names_every_target(): void
     {
         $page = self::section(self::commandHelp('transpile'), 'Options')['--target <dialect>'] ?? null;
-        $overview = self::section(self::commandHelp(null), 'Transpile Options')['--target <dialect>'] ?? null;
 
         $this->assertSame('Target dialect (js, html, python)', $page);
-        $this->assertSame($page, $overview);
 
         $registry = new TargetRegistry();
         foreach (['js', 'html', 'python'] as $target) {

@@ -27,6 +27,18 @@ use PHPUnit\Framework\TestCase;
  */
 final class ThrownExceptionsTest extends TestCase
 {
+    /**
+     * The exceptions a host framework's contract asks for, by the file that
+     * throws them: Symfony's validator turns these two into a violation or a
+     * configuration error, and no other class would do.
+     */
+    private const FRAMEWORK_CONTRACT = [
+        'src/Symfony/Validator/Constraints/ValidRegexValidator.php' => [
+            'Symfony\Component\Validator\Exception\UnexpectedTypeException',
+            'Symfony\Component\Validator\Exception\UnexpectedValueException',
+        ],
+    ];
+
     #[Test]
     public function test_every_thrown_exception_is_the_library_s_or_a_plain_logic_exception(): void
     {
@@ -39,6 +51,10 @@ final class ThrownExceptionsTest extends TestCase
                 }
 
                 if (class_exists($class) && is_subclass_of($class, ExceptionInterface::class)) {
+                    continue;
+                }
+
+                if (\in_array($class, self::FRAMEWORK_CONTRACT[$path] ?? [], true)) {
                     continue;
                 }
 

@@ -28,6 +28,7 @@ use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
 use PHPRegex\Symfony\Command\AnalyzeCommand;
 use PHPRegex\Symfony\Command\CompareCommand;
+use PHPRegex\Symfony\Command\ExplainCommand;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\Command\RoutesCommand;
 use PHPRegex\Symfony\Command\SecurityCommand;
@@ -44,8 +45,10 @@ use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
 use PHPRegex\Symfony\Security\SecurityPatternNormalizer;
+use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Validator\ConstraintValidator;
 
 use function Symfony\Component\DependencyInjection\Loader\Configurator\param;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -148,6 +151,7 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$pcreVersion', param('php_regex.pcre_version'))
         ->arg('$projectDir', param('php_regex.project_dir'))
         ->arg('$checkRedos', param('php_regex.redos.enabled'))
+        ->arg('$checkComplexity', param('php_regex.analysis.complexity'))
         ->tag('console.command')
         ->public();
 
@@ -232,6 +236,19 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$jsonFormatter', service(JsonReportFormatter::class))
         ->arg('$kernel', service('kernel')->nullOnInvalid())
         ->arg('$defaultRedosThreshold', param('php_regex.redos.threshold'))
+        ->tag('console.command')
+        ->public();
+
+    // The ValidRegex constraint judges with the service above; the
+    // validator finds it under its class name.
+    if (class_exists(ConstraintValidator::class)) {
+        $services->set(ValidRegexValidator::class)
+            ->arg('$regex', service('php_regex.regex'))
+            ->tag('validator.constraint_validator');
+    }
+
+    $services->set('php_regex.command.explain', ExplainCommand::class)
+        ->arg('$regex', service('php_regex.regex'))
         ->tag('console.command')
         ->public();
 

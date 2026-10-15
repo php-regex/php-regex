@@ -26,6 +26,55 @@ final class DocumentationExperienceTest extends TestCase
 
     private const QUICK_START = __DIR__.'/../../docs/quick-start.md';
 
+    private const EXTENDING = __DIR__.'/../../docs/extending.md';
+
+    /**
+     * Lint rules have no public registry in 2.0 (backward-compatibility.md):
+     * the extending guide must not offer one as an extension point.
+     */
+    #[Test]
+    public function test_the_extending_guide_offers_no_custom_lint_rule(): void
+    {
+        $extending = (string) file_get_contents(self::EXTENDING);
+
+        $this->assertDoesNotMatchRegularExpression('/custom lint rule/i', $extending);
+        $this->assertStringContainsString('reference/backward-compatibility.md', $extending);
+    }
+
+    /**
+     * tokenize() promises tokens in order that cover the pattern body, not
+     * one token per character: the API reference must not teach a
+     * per-character split, and the compatibility policy must say a minor
+     * release may group characters differently.
+     */
+    #[Test]
+    public function test_the_token_granularity_is_not_promised(): void
+    {
+        $api = (string) file_get_contents(__DIR__.'/../../docs/reference/api.md');
+        $policy = (string) file_get_contents(__DIR__.'/../../docs/reference/backward-compatibility.md');
+
+        $this->assertDoesNotMatchRegularExpression("/the same for 'o', '\\|'/", $api);
+        $this->assertMatchesRegularExpression('/tokenize\(\)[^\n]*(one token|group)/', $api);
+        $this->assertMatchesRegularExpression('/\*\*How a pattern splits into tokens\*\*/', $policy);
+    }
+
+    /**
+     * The packages are the contract and the Regex facade a convenience layer
+     * over seven of them: the policy says so, and the README neither claims
+     * the facade covers every package nor sells the solver without naming
+     * where it lives.
+     */
+    #[Test]
+    public function test_the_facade_is_described_as_a_convenience_layer(): void
+    {
+        $readme = (string) file_get_contents(__DIR__.'/../../README.md');
+        $policy = (string) file_get_contents(__DIR__.'/../../docs/reference/backward-compatibility.md');
+
+        $this->assertStringContainsString('The packages are the contract', $policy);
+        $this->assertStringNotContainsString('every library below in one call', $readme);
+        $this->assertMatchesRegularExpression('/\*\*Logic Solver:\*\*[^\n]*LanguageSolver/', $readme);
+    }
+
     #[Test]
     public function test_the_landing_page_keeps_its_first_visit_short(): void
     {

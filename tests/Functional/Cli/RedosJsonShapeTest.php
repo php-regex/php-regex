@@ -34,7 +34,7 @@ final class RedosJsonShapeTest extends TestCase
         'hotspots', 'confirmation',
         // The verdict.
         'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions', 'pcre_version',
-        'analysis_version',
+        'php_version', 'analysis_version',
         // The search cost.
         'search_cost',
     ];
@@ -167,6 +167,7 @@ final class RedosJsonShapeTest extends TestCase
         $this->assertIsString($json['pcre_version']);
         $this->assertNotSame('', $json['pcre_version']);
         $this->assertStringStartsWith($json['pcre_version'], \PCRE_VERSION);
+        $this->assertSame(\PHP_VERSION, $json['php_version']);
         $this->assertIsArray($json['abstractions']);
 
         if (null !== ($json['search_cost'] ?? null)) {

@@ -15,15 +15,21 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
+use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Compare two regex patterns for equivalence.
+ * Compare two regex patterns: whether they share a string, whether the
+ * first one's strings are all the second one's, or whether they are equal.
  *
  * @internal
  */
@@ -37,6 +43,7 @@ final class CompareCommand extends Command
     protected $signature = 'regex:compare
         {pattern1 : The first regex pattern}
         {pattern2 : The second regex pattern}
+        {--method=intersection : Comparison (intersection, subset, equivalence)}
         {--minimizer= : DFA minimization algorithm (hopcroft, moore); config php-regex.automata.minimization_algorithm by default}
         {--determinizer= : NFA determinization algorithm (subset, subset-indexed); config php-regex.automata.determinization_algorithm by default}
         {--format=console : Output format (console, json)}';
@@ -46,7 +53,7 @@ final class CompareCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Compare two regex patterns for equivalence';
+    protected $description = 'Compare two regex patterns using automata logic';
 
     public function __construct(private readonly Regex $regex)
     {
@@ -62,36 +69,29 @@ final class CompareCommand extends Command
         $pattern2 = (string) $this->argument('pattern2');
         $minimizer = strtolower($this->optionOrConfig('minimizer', 'minimization_algorithm', 'hopcroft'));
         $determinizer = strtolower($this->optionOrConfig('determinizer', 'determinization_algorithm', 'subset-indexed'));
+        $method = strtolower((string) $this->option('method'));
         $format = strtolower((string) $this->option('format'));
 
-        // A command line it cannot use is reported before the patterns.
-        if (!\in_array($minimizer, ['hopcroft', 'moore'], true)) {
-            $this->error("Invalid minimizer '{$minimizer}'. Supported: hopcroft, moore");
+        $json = 'json' === $format;
 
-            return self::INVALID;
+        // A command line it cannot use is reported before the patterns.
+        if (!\in_array($method, ['intersection', 'subset', 'equivalence'], true)) {
+            return $this->refuse($json, "Invalid method '{$method}'. Supported: intersection, subset, equivalence", JsonDocument::STAGE_USAGE, self::INVALID);
+        }
+
+        if (!\in_array($minimizer, ['hopcroft', 'moore'], true)) {
+            return $this->refuse($json, "Invalid minimizer '{$minimizer}'. Supported: hopcroft, moore", JsonDocument::STAGE_USAGE, self::INVALID);
         }
 
         if (!\in_array($determinizer, ['subset', 'subset-indexed'], true)) {
-            $this->error("Invalid determinizer '{$determinizer}'. Supported: subset, subset-indexed");
-
-            return self::INVALID;
+            return $this->refuse($json, "Invalid determinizer '{$determinizer}'. Supported: subset, subset-indexed", JsonDocument::STAGE_USAGE, self::INVALID);
         }
 
-        // Validate patterns
-        $validation1 = $this->regex->validate($pattern1);
-        if (!$validation1->isValid) {
-            $this->error('Invalid first pattern:');
-            $this->line((string) $validation1->error);
-
-            return self::FAILURE;
-        }
-
-        $validation2 = $this->regex->validate($pattern2);
-        if (!$validation2->isValid) {
-            $this->error('Invalid second pattern:');
-            $this->line((string) $validation2->error);
-
-            return self::FAILURE;
+        foreach (['first' => $pattern1, 'second' => $pattern2] as $which => $pattern) {
+            $validation = $this->regex->validate($pattern);
+            if (!$validation->isValid) {
+                return $this->invalidPattern($json, $which, $validation);
+            }
         }
 
         $startTime = microtime(true);
@@ -103,26 +103,35 @@ final class CompareCommand extends Command
                 determinizationAlgorithm: DeterminizationAlgorithm::from($determinizer),
             );
 
-            $result = $solver->equivalent($pattern1, $pattern2, $options);
+            $outcome = match ($method) {
+                'intersection' => $this->intersection($solver, $options, $pattern1, $pattern2),
+                'subset' => $this->subset($solver, $options, $pattern1, $pattern2),
+                default => $this->equivalence($solver, $options, $pattern1, $pattern2),
+            };
             $elapsed = microtime(true) - $startTime;
 
-            if ('json' === $format) {
-                $counterexample = $result->leftOnlyExample ?? $result->rightOnlyExample;
-                $this->output->writeln((string) json_encode([
+            if ($json) {
+                // Every key whatever the method, in the same order, null
+                // where the method fills none.
+                $this->writeDocument(JsonDocument::encode(array_replace([
                     'pattern1' => $pattern1,
                     'pattern2' => $pattern2,
-                    'equivalent' => $result->isEquivalent,
-                    'counterexample' => $counterexample,
-                    'leftOnlyExample' => $result->leftOnlyExample,
-                    'rightOnlyExample' => $result->rightOnlyExample,
+                    'method' => $method,
+                    'disjoint' => null,
+                    'subset' => null,
+                    'equivalent' => null,
+                    'example' => null,
+                    'counterexample' => null,
+                    'left_only_example' => null,
+                    'right_only_example' => null,
                     'algorithms' => [
                         'minimizer' => $minimizer,
                         'determinizer' => $determinizer,
                     ],
                     'elapsed_ms' => round($elapsed * 1000, 2),
-                ], \JSON_PRETTY_PRINT));
+                ], $outcome['json'])));
 
-                return $result->isEquivalent ? self::SUCCESS : self::FAILURE;
+                return $outcome['passed'] ? self::SUCCESS : self::FAILURE;
             }
 
             // Console output
@@ -137,45 +146,137 @@ final class CompareCommand extends Command
             $this->line('  '.$this->displayPattern($pattern2));
             $this->newLine();
 
-            if ($result->isEquivalent) {
-                $this->line('<bg=green;fg=white;options=bold> EQUIVALENT </> The patterns match the same strings.');
-            } else {
-                $this->line('<bg=red;fg=white;options=bold> NOT EQUIVALENT </> The patterns match different strings.');
+            $this->line($outcome['verdict']);
 
-                $counterexample = $result->leftOnlyExample ?? $result->rightOnlyExample;
-                if (null !== $counterexample) {
-                    $this->newLine();
-                    $this->line('<fg=white;options=bold>Counterexample:</>');
-                    $this->line('  <fg=yellow>'.$counterexample.'</>');
+            if (null !== $outcome['example']) {
+                [$label, $example] = $outcome['example'];
+                $this->newLine();
+                $this->line('<fg=white;options=bold>'.$label.':</>');
+                $this->line('  <fg=yellow>'.OutputFormatter::escape(DisplayEscaper::quote($example)).'</>');
 
-                    // Show which pattern matches
-                    $engine = new PcreEngine();
-                    $match1 = $engine->match($pattern1, $counterexample)->matched;
-                    $match2 = $engine->match($pattern2, $counterexample)->matched;
+                // Show which pattern matches
+                $engine = new PcreEngine();
+                $match1 = $engine->match($pattern1, $example)->matched;
+                $match2 = $engine->match($pattern2, $example)->matched;
 
-                    $this->line('  Pattern 1: '.($match1 ? '<fg=green>matches</>' : '<fg=red>no match</>'));
-                    $this->line('  Pattern 2: '.($match2 ? '<fg=green>matches</>' : '<fg=red>no match</>'));
-                }
+                $this->line('  Pattern 1: '.($match1 ? '<fg=green>matches</>' : '<fg=red>no match</>'));
+                $this->line('  Pattern 2: '.($match2 ? '<fg=green>matches</>' : '<fg=red>no match</>'));
             }
 
             $this->newLine();
-            $this->line('<fg=gray>Time: '.round($elapsed * 1000, 2).'ms | Algorithms: '.$minimizer.'/'.$determinizer.'</>');
+            $this->line('<fg=gray>Time: '.round($elapsed * 1000, 2).'ms | Method: '.$method.' | Algorithms: '.$minimizer.'/'.$determinizer.'</>');
             $this->newLine();
 
-            return $result->isEquivalent ? self::SUCCESS : self::FAILURE;
+            return $outcome['passed'] ? self::SUCCESS : self::FAILURE;
+        } catch (ComplexityException $e) {
+            // A valid pattern the automata cannot read, a backreference say.
+            return $this->refuse($json, $json ? $e->getMessage() : 'Comparison failed: '.$e->getMessage(), JsonDocument::STAGE_PATTERN, self::FAILURE);
         } catch (\Throwable $e) {
-            if ('json' === $format) {
-                $this->output->writeln((string) json_encode([
-                    'error' => $e->getMessage(),
-                    'pattern1' => $pattern1,
-                    'pattern2' => $pattern2,
-                ], \JSON_PRETTY_PRINT));
-            } else {
-                $this->error('Comparison failed: '.$e->getMessage());
-            }
-
-            return self::FAILURE;
+            // Not reached by a pattern the validation let through: a bug of
+            // the solver, which the command reports as the envelope says.
+            return $this->refuse($json, $json ? $e->getMessage() : 'Comparison failed: '.$e->getMessage(), JsonDocument::STAGE_INTERNAL, self::FAILURE);
         }
+    }
+
+    /**
+     * A comparison that cannot be made: the error envelope in JSON mode, an
+     * error line otherwise.
+     */
+    private function refuse(bool $json, string $message, string $stage, int $exitCode): int
+    {
+        if ($json) {
+            $this->writeDocument(JsonDocument::error($message, $stage));
+        } else {
+            $this->error($message);
+        }
+
+        return $exitCode;
+    }
+
+    /**
+     * An invalid pattern stops the comparison, with everything the
+     * validation found.
+     */
+    private function invalidPattern(bool $json, string $which, ValidationResult $validation): int
+    {
+        if ($json) {
+            $this->writeDocument(JsonDocument::error(
+                $validation->error ?? 'Invalid pattern.',
+                JsonDocument::STAGE_PATTERN,
+                ['validation' => $validation],
+            ));
+        } else {
+            $this->error('Invalid '.$which.' pattern:');
+            $this->line((string) $validation->error);
+        }
+
+        return self::FAILURE;
+    }
+
+    /**
+     * The document as it is, never read for console tags, and written even
+     * under --quiet: it is the output asked for, not a status line.
+     */
+    private function writeDocument(string $document): void
+    {
+        $this->output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
+    }
+
+    /**
+     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array<string, mixed>}
+     */
+    private function intersection(LanguageSolver $solver, SolverOptions $options, string $pattern1, string $pattern2): array
+    {
+        $result = $solver->intersection($pattern1, $pattern2, $options);
+
+        return [
+            'passed' => $result->isEmpty,
+            'verdict' => $result->isEmpty
+                ? '<bg=green;fg=white;options=bold> DISJOINT </> No intersection found. These regexes are disjoint.'
+                : '<bg=red;fg=white;options=bold> CONFLICT </> Conflict detected!',
+            'example' => null === $result->example ? null : ['Example', $result->example],
+            'json' => ['disjoint' => $result->isEmpty, 'example' => $result->example],
+        ];
+    }
+
+    /**
+     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array<string, mixed>}
+     */
+    private function subset(LanguageSolver $solver, SolverOptions $options, string $pattern1, string $pattern2): array
+    {
+        $result = $solver->subsetOf($pattern1, $pattern2, $options);
+
+        return [
+            'passed' => $result->isSubset,
+            'verdict' => $result->isSubset
+                ? '<bg=green;fg=white;options=bold> SUBSET </> Pattern 1 is a strict subset of Pattern 2.'
+                : '<bg=red;fg=white;options=bold> NOT A SUBSET </> Pattern 1 allows strings that Pattern 2 forbids.',
+            'example' => null === $result->counterExample ? null : ['Counterexample', $result->counterExample],
+            'json' => ['subset' => $result->isSubset, 'counterexample' => $result->counterExample],
+        ];
+    }
+
+    /**
+     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array<string, mixed>}
+     */
+    private function equivalence(LanguageSolver $solver, SolverOptions $options, string $pattern1, string $pattern2): array
+    {
+        $result = $solver->equivalent($pattern1, $pattern2, $options);
+        $counterexample = $result->leftOnlyExample ?? $result->rightOnlyExample;
+
+        return [
+            'passed' => $result->isEquivalent,
+            'verdict' => $result->isEquivalent
+                ? '<bg=green;fg=white;options=bold> EQUIVALENT </> The patterns match the same strings.'
+                : '<bg=red;fg=white;options=bold> NOT EQUIVALENT </> The patterns match different strings.',
+            'example' => null === $counterexample ? null : ['Counterexample', $counterexample],
+            'json' => [
+                'equivalent' => $result->isEquivalent,
+                'counterexample' => $counterexample,
+                'left_only_example' => $result->leftOnlyExample,
+                'right_only_example' => $result->rightOnlyExample,
+            ],
+        ];
     }
 
     /**

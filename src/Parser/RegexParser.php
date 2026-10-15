@@ -14,14 +14,18 @@ declare(strict_types=1);
 namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Cache\PsrCacheAdapter;
+use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -69,7 +73,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-1ba96f27a5b58e8eb18c4fdb9fb09e83';
+    public const CACHE_VERSION = 'ast-11ffdd1567a2138ca2cd68b069273625';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -97,6 +101,28 @@ final readonly class RegexParser
     private const TARGET_PREFIX = '#target=';
 
     /**
+     * The fix for the mistakes users make most, by error code, when the
+     * error carries none of its own.
+     */
+    private const COMMON_HINTS = [
+        ErrorCode::CharclassUnclosed->value => 'Close the class with "]", or write "\\[" to match a literal "[".',
+        ErrorCode::QuantifierNothingToRepeat->value => 'Put the quantifier after the item it repeats, or escape it with a backslash to match it literally.',
+        ErrorCode::QuantifierInvalidRange->value => 'Write the smaller count first.',
+        ErrorCode::QuantifierTooBig->value => 'PCRE counts at most 65535 repetitions: lower the count, or use "*" or "+" for an open-ended repeat.',
+        ErrorCode::RangeReversed->value => 'Write the lower end of the range first, or escape the "-" as "\\-" to match it literally.',
+        ErrorCode::DelimiterInvalid->value => 'Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".',
+        ErrorCode::GroupNameInvalid->value => 'Start a group name with a letter or "_", then use letters, digits and "_" only.',
+        ErrorCode::GroupDuplicateName->value => 'Rename one of the groups, or allow duplicate names with (?J).',
+        ErrorCode::SubroutineMissingNamedGroup->value => 'Name the group the call reaches, or call a group the pattern names.',
+        ErrorCode::UnicodePropertyInvalid->value => 'Use a property PCRE2 knows, such as \\p{L}, \\p{Lu}, \\p{N} or a script such as \\p{Greek}.',
+    ];
+
+    /**
+     * The trees a persistent cache gave or took in this process.
+     */
+    private ?ArrayCache $front;
+
+    /**
      * @param int            $maxPatternLength      Maximum allowed pattern length
      * @param int            $maxLookbehindLength   Maximum length of a variable-length lookbehind
      * @param CacheInterface $cache                 Cache for parsed trees
@@ -113,7 +139,15 @@ final readonly class RegexParser
         private int $maxRecursionDepth,
         private PcreTarget $target,
         private PcreEngine $engine = new PcreEngine(),
-    ) {}
+    ) {
+        // A directory or a PSR pool answers a tree it fetches and
+        // unserializes: the trees read or written in this process stay in
+        // memory in front of it, under the same key. A cache the application
+        // writes keeps its own policy.
+        $this->front = $cache instanceof FilesystemCache || $cache instanceof PsrCacheAdapter || $cache instanceof PsrSimpleCacheAdapter
+            ? new ArrayCache()
+            : null;
+    }
 
     /**
      * @param OptionsArray $options The options Regex::create() takes
@@ -153,6 +187,10 @@ final readonly class RegexParser
     {
         try {
             return new TolerantParseResult($this->doParse($regex));
+        } catch (LimitException $limit) {
+            // The library gave up where it stopped: no earlier error is
+            // looked for, the pattern was not read further.
+            return new TolerantParseResult($this->buildFallbackAstFromException($limit, $regex), [$limit]);
         } catch (LexerException|ParserException $parseException) {
             $fallbackAst = $this->buildFallbackAstFromException($parseException, $regex);
 
@@ -185,8 +223,9 @@ final readonly class RegexParser
             }
 
             return new ValidationResult(true, null, $complexityScore);
-        } catch (ResourceLimitException|RecursionLimitException $e) {
-            // The library's own limits: the pattern is not read further.
+        } catch (LimitException $e) {
+            // The library's own limits: the pattern is not read further,
+            // and no verdict is given on it.
             return $this->buildValidationFailure($e);
         } catch (LexerException|ParserException $e) {
             return $this->buildValidationFailure($this->firstParseError($regex, $e));
@@ -215,8 +254,10 @@ final readonly class RegexParser
     }
 
     /**
-     * The tokens of a regex as the parser reads them for this target, each
-     * with its offset in the pattern body, the end-of-pattern token last.
+     * The tokens of a regex as the parser reads them for this target, in
+     * source order and covering the pattern body, each with its byte
+     * offsets, the end-of-pattern token last. How many characters one token
+     * covers is not promised.
      *
      * @return list<Token>
      */
@@ -247,11 +288,13 @@ final readonly class RegexParser
      */
     public function getCacheStats(): array
     {
-        if (!$this->cache instanceof RemovableCacheInterface) {
-            return ['hits' => 0, 'misses' => 0];
+        $stats = $this->cache instanceof RemovableCacheInterface ? $this->cache->getStats() : ['hits' => 0, 'misses' => 0];
+        if (null !== $this->front) {
+            // A tree found in memory never reached the persistent cache.
+            $stats['hits'] += $this->front->getStats()['hits'];
         }
 
-        return $this->cache->getStats();
+        return $stats;
     }
 
     /**
@@ -264,6 +307,27 @@ final readonly class RegexParser
     {
         Validator::clearCaches();
         StaticCaches::clear();
+        $this->front?->clear();
+    }
+
+    /**
+     * Keeps a tree this parser built for $regex, in another process or
+     * earlier, where the next parse() of $regex looks first: in memory when
+     * a persistent cache stands behind it, never written to disk again.
+     *
+     * @internal
+     */
+    public function remember(string $regex, RegexNode $ast): void
+    {
+        if ($this->cache instanceof NullCache) {
+            return;
+        }
+
+        try {
+            ($this->front ?? $this->cache)->write($this->cache->generateKey($this->getCacheSeed($regex)), $ast);
+        } catch (\Throwable) {
+            // A cache that cannot store leaves the next parse() to parse.
+        }
     }
 
     /**
@@ -389,7 +453,7 @@ final readonly class RegexParser
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
-            } catch (LexerException|ParserException $syntaxError) {
+            } catch (LexerException|LimitException|ParserException $syntaxError) {
                 $at = $syntaxError->position ?? $position;
                 // A body that never closes is read to the end: an error met
                 // there, other than that ")" missing, comes first.
@@ -467,7 +531,7 @@ final readonly class RegexParser
 
         try {
             $ast = $parser->parse(new TokenStream([...$tokens, new Token(TokenType::Eof, '', $length)], $pattern), $flags, $delimiter, $length);
-        } catch (LexerException|ParserException) {
+        } catch (LexerException|LimitException|ParserException) {
             $read = \array_slice($tokens, 0, $parser->tokensReadWhole());
             $cutAt = [] === $read ? 0 : $read[array_key_last($read)]->end();
 
@@ -484,9 +548,11 @@ final readonly class RegexParser
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
                     ->parse(new TokenStream([...$read, ...$closers, new Token(TokenType::Eof, '', $cutAt)], $pattern), $flags, $delimiter, $length);
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
                 // Not expected: these are the tokens the first parse read
-                // whole, each group they open closed. Kept should one throw.
+                // whole, each group they open closed, no deeper than it went.
+                // Kept should one throw: this runs while an error is being
+                // reported, where nothing may escape.
                 return null;
             }
         }
@@ -591,7 +657,9 @@ final readonly class RegexParser
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
                     ->parse(new TokenStream([...$class, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
+                // A class read alone opens no group, so no limit is met
+                // here today; one would escape the error being reported.
                 continue;
             }
 
@@ -681,7 +749,7 @@ final readonly class RegexParser
                 if (($versionError->position ?? $position) < $position) {
                     return $versionError;
                 }
-            } catch (LexerException|ParserException) {
+            } catch (LexerException|LimitException|ParserException) {
                 continue;
             }
         }
@@ -800,9 +868,18 @@ final readonly class RegexParser
         // always an option, and it is never the pattern's fault.
         try {
             $cacheKey = $this->cache->generateKey($this->getCacheSeed($regex));
+            $cachedResult = $this->front?->load($cacheKey);
+            if (null !== $cachedResult) {
+                return [$cachedResult, $cacheKey];
+            }
+
             $cachedResult = $this->cache->load($cacheKey);
         } catch (\Throwable) {
             return [null, null];
+        }
+
+        if (null !== $cachedResult) {
+            $this->front?->write($cacheKey, $cachedResult);
         }
 
         return [$cachedResult, $cacheKey];
@@ -824,6 +901,8 @@ final readonly class RegexParser
         if (null === $cacheKey) {
             return;
         }
+
+        $this->front?->write($cacheKey, $ast);
 
         try {
             $this->cache->write($cacheKey, $ast);
@@ -903,6 +982,10 @@ final readonly class RegexParser
             $hint = $exception->hint;
         }
 
+        if (null !== $errorCode) {
+            $hint ??= self::COMMON_HINTS[$errorCode->value] ?? null;
+        }
+
         if ($exception instanceof SemanticErrorException) {
             return new ValidationResult(
                 false,
@@ -916,6 +999,22 @@ final readonly class RegexParser
             );
         }
 
+        if ($exception instanceof LimitException) {
+            return new ValidationResult(
+                false,
+                $errorMessage,
+                0,
+                ValidationErrorCategory::Limit,
+                $position,
+                '' !== $visualSnippet ? $visualSnippet : null,
+                \sprintf(
+                    'A limit of this library, not of PCRE: raise the "%s" option to analyze the pattern.',
+                    ErrorCode::PatternTooLong === $exception->errorCode ? 'max_pattern_length' : 'max_recursion_depth',
+                ),
+                $errorCode,
+            );
+        }
+
         return new ValidationResult(
             false,
             $errorMessage,
@@ -923,7 +1022,7 @@ final readonly class RegexParser
             ValidationErrorCategory::Syntax,
             $position,
             '' !== $visualSnippet ? $visualSnippet : null,
-            null,
+            $hint,
             $errorCode,
         );
     }
@@ -931,12 +1030,12 @@ final readonly class RegexParser
     /**
      * Build a fallback AST when parsing fails.
      *
-     * @param LexerException|ParserException $exception The parse exception
-     * @param string                         $regex     The original regex
+     * @param LexerException|LimitException|ParserException $exception The parse exception
+     * @param string                                        $regex     The original regex
      *
      * @return RegexNode Fallback AST
      */
-    private function buildFallbackAstFromException(LexerException|ParserException $exception, string $regex): RegexNode
+    private function buildFallbackAstFromException(LexerException|LimitException|ParserException $exception, string $regex): RegexNode
     {
         [$pattern, $flags, $delimiter, $length] = $this->safeExtractPattern($regex);
 

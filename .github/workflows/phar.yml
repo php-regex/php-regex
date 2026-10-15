@@ -1,0 +1,91 @@
+name: Phar
+
+# Builds regex.phar for a release, attests where it was built, attaches it
+# and its SHA-256 checksum to the release bin/release drafted, then publishes
+# the release: the latest release never goes without its phar.
+#
+# A version tag starts it. Run by hand, it builds the phar of a tag and
+# stops there, unless "publish" is set: then it does what the tag would have
+# done, as when a release run failed and was fixed on 2.x.
+#
+# Check a downloaded phar with:
+#   gh attestation verify regex.phar --repo php-regex/php-regex
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The release tag to build, as v2.1.0
+        required: true
+        type: string
+      publish:
+        description: Attest the phar, attach it to the release and publish the release
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phar-${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  phar:
+    name: Build the phar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+    steps:
+      - name: Checkout the tag
+        uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+
+      # The lowest PHP the phar runs on, so nothing newer reaches it.
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, tokenizer
+          ini-values: phar.readonly=0
+          tools: composer, box
+
+      - name: Build
+        run: phar/build
+
+      - name: Check the version and write the checksum
+        run: |
+          version="${TAG#v}"
+          reported=$(php bin/regex.phar --version | head -1)
+          case "$reported" in
+            *"$version"*) ;;
+            *) echo "bin/regex.phar reports \"$reported\", not $version." >&2; exit 1 ;;
+          esac
+          php -r 'echo hash_file("sha256", "bin/regex.phar"), "  regex.phar\n";' > bin/regex.phar.sha256
+          cat bin/regex.phar.sha256
+
+      - name: Attest the build provenance
+        if: env.PUBLISH == 'true'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: bin/regex.phar
+
+      - name: Attach to the release and publish it
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$TAG" --json isDraft >/dev/null || { echo "No release $TAG: bin/release drafts it before it pushes the tag." >&2; exit 1; }
+          gh release upload "$TAG" bin/regex.phar bin/regex.phar.sha256 --clobber
+          gh release edit "$TAG" --draft=false

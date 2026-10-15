@@ -138,8 +138,24 @@ final class JsonFormatterTest extends TestCase
         $decoded = json_decode((new JsonFormatter(target: $target))->format($report), true);
 
         $this->assertIsArray($decoded);
-        $this->assertSame(['target', 'stats', 'results'], array_keys($decoded));
+        $this->assertSame(['target', 'host', 'stats', 'results'], array_keys($decoded));
         $this->assertSame($target, $decoded['target']);
+    }
+
+    /**
+     * The target says what the patterns were judged for; the host says what
+     * ran the judgement: the PCRE2 that compiled them and the PHP whose
+     * mbstring tables fold their case under "iu".
+     */
+    public function test_format_names_the_php_and_the_pcre_that_ran_the_lint(): void
+    {
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
+
+        $decoded = json_decode($this->formatter->format($report), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertSame(['host', 'stats', 'results'], array_keys($decoded));
+        $this->assertSame(['php' => \PHP_VERSION, 'pcre' => explode(' ', \PCRE_VERSION)[0]], $decoded['host']);
     }
 
     public function test_format_has_no_target_by_default(): void

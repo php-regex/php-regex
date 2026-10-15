@@ -64,6 +64,7 @@ final class PHPRegexExtension extends Extension
          *         ignored_patterns: array<int, string>,
          *     },
          *     analysis: array{
+         *         complexity: bool,
          *         warning_threshold: int,
          *     },
          *     automata: array{
@@ -102,6 +103,7 @@ final class PHPRegexExtension extends Extension
         $container->setParameter('php_regex.redos.enabled', $config['redos']['enabled']);
         $container->setParameter('php_regex.redos.threshold', $config['redos']['threshold']);
         $container->setParameter('php_regex.redos.ignored_patterns', $ignoredPatterns);
+        $container->setParameter('php_regex.analysis.complexity', $config['analysis']['complexity']);
         $container->setParameter('php_regex.analysis.warning_threshold', $config['analysis']['warning_threshold']);
         $container->setParameter('php_regex.automata.minimization_algorithm', $config['automata']['minimization_algorithm']);
         $container->setParameter('php_regex.automata.determinization_algorithm', $config['automata']['determinization_algorithm']);

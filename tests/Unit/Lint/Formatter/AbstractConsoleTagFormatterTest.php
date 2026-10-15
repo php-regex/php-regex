@@ -231,6 +231,47 @@ final class AbstractConsoleTagFormatterTest extends TestCase
         );
     }
 
+    /**
+     * A route requirement is a pattern body with no delimiter: it is shown
+     * as written, whatever its first character, as the CLI shows it.
+     *
+     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     */
+    #[Test]
+    #[DataProvider('provideRequirementsPerFormatter')]
+    public function test_a_route_requirement_is_shown_as_written(string $formatterClass, bool $decorated, string $requirement): void
+    {
+        $formatter = new $formatterClass(
+            new AnalysisService(RegexParser::create(['cache' => null])),
+            new LinkFormatter(null, new RelativePathHelper('/project')),
+            $decorated,
+        );
+        $report = new LintReport([[
+            'file' => 'Route: blog_show',
+            'line' => 0,
+            'pattern' => $requirement,
+            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => 'Route: blog_show', 'line' => 0]],
+            'optimizations' => [],
+            'problems' => [],
+        ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
+
+        $this->assertStringContainsString('<fg=white>'.OutputFormatter::escape($requirement).'</>'.\PHP_EOL, $formatter->format($report));
+    }
+
+    /**
+     * @return iterable<string, array{formatterClass: class-string<AbstractConsoleTagFormatter>, decorated: bool, requirement: string}>
+     */
+    public static function provideRequirementsPerFormatter(): iterable
+    {
+        foreach ([SymfonyConsoleFormatter::class, LaravelConsoleFormatter::class] as $class) {
+            foreach ([false, true] as $decorated) {
+                foreach (['\\d+', 'en|fr', '[a-z]+'] as $requirement) {
+                    yield \sprintf('%s, %s, %s', $class, $decorated ? 'decorated' : 'plain', $requirement) => ['formatterClass' => $class, 'decorated' => $decorated, 'requirement' => $requirement];
+                }
+            }
+        }
+    }
+
     #[Test]
     public function test_the_linter_does_not_depend_on_symfony_console(): void
     {

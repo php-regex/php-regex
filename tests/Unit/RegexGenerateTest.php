@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Generator\SampleGenerationException;
+use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Toolkit\Regex;
@@ -41,6 +42,26 @@ final class RegexGenerateTest extends TestCase
             $this->assertSame(ErrorCode::GenerateNoMatch, $e->errorCode);
             $this->assertStringContainsString($pattern, $e->getMessage());
         }
+    }
+
+    /**
+     * The facade hands the pattern to the generator package, which checks
+     * the samples on its own: both say the same.
+     */
+    #[Test]
+    public function test_the_facade_says_what_the_generator_says(): void
+    {
+        $messages = [];
+        foreach ([static fn (string $p): string => Regex::create(['cache' => null])->generate($p), static fn (string $p): string => (new SampleGenerator())->generate($p)] as $generate) {
+            try {
+                $generate('/a(?!)b/');
+                self::fail('A sample was given for a pattern nothing matches.');
+            } catch (SampleGenerationException $e) {
+                $messages[] = $e->getMessage();
+            }
+        }
+
+        $this->assertSame($messages[0], $messages[1]);
     }
 
     #[Test]

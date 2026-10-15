@@ -19,6 +19,7 @@ use PHPRegex\Cli\Graph\GraphGenerator;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\HirTranslator;
 
@@ -89,7 +90,7 @@ final class GraphCommand extends AbstractCommand
             $output->write($output->success("Graph written to $outputFile")."\n");
 
             return self::SUCCESS;
-        } catch (LexerException|ParserException $e) {
+        } catch (LexerException|LimitException|ParserException $e) {
             $output->write($output->error('Error: '.$e->getMessage())."\n");
 
             return self::FAILURE;

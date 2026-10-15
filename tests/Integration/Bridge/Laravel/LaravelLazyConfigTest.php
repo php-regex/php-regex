@@ -182,7 +182,7 @@ final class LaravelLazyConfigTest extends TestCase
     #[WithConfig('php-regex.automata.minimization_algorithm', 'moore')]
     public function test_the_compare_option_wins_over_the_config(): void
     {
-        $status = Artisan::call('regex:compare', ['pattern1' => '/a/', 'pattern2' => '/a/', '--minimizer' => 'hopcroft', '--format' => 'json']);
+        $status = Artisan::call('regex:compare', ['pattern1' => '/a/', 'pattern2' => '/a/', '--minimizer' => 'hopcroft', '--method' => 'equivalence', '--format' => 'json']);
         $json = json_decode(Artisan::output(), true);
 
         $this->assertSame(0, $status);

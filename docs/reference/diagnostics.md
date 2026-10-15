@@ -59,7 +59,7 @@ if (!$result->isValid) {
     echo $result->errorCode->value; // "regex.charclass.unclosed"
     echo $result->offset;           // 9
     echo $result->caretSnippet;     // See below
-    echo $result->hint;             // null: no hint for this one
+    echo $result->hint;             // "Close the class with \"]\", or write \"\\[\" ..."
     echo $result->complexityScore;  // 0
     echo $result->category->value;  // "syntax"
 }
@@ -485,6 +485,12 @@ For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-c
 | `syntax`       | The pattern cannot be read                 | Unclosed class, missing delimiter        |
 | `semantic`     | The pattern reads, but PCRE refuses it     | Unbounded lookbehind, missing group      |
 | `pcre-runtime` | PCRE itself failed on the pattern          | Compilation error the checks do not know |
+| `limit`        | The library stopped at one of its own limits: no verdict | A pattern past `max_pattern_length`, nesting past `max_recursion_depth` |
+
+A `limit` result is not a judgement on the pattern: PCRE may compile it. The
+result is still not valid, since nothing was checked; `hint` names the option
+to raise. The lint reports it as a warning, `Not analyzed: …`, never as an
+invalid pattern.
 
 ---
 

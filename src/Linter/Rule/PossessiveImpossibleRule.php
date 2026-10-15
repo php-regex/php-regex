@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
@@ -46,17 +45,10 @@ final class PossessiveImpossibleRule extends AbstractLintRule
      */
     private const WRAPPERS = [GroupType::NonCapturing, GroupType::InlineFlags, GroupType::Capturing, GroupType::Named, GroupType::Atomic];
 
-    /**
-     * The DFAs the automata built for this rule's questions, kept for the
-     * ones that read the same pattern again.
-     */
-    private readonly InMemoryDfaCache $dfas;
-
     private readonly QuestionBudget $questions;
 
     public function __construct()
     {
-        $this->dfas = new InMemoryDfaCache();
         $this->questions = new QuestionBudget();
     }
 
@@ -102,7 +94,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
 
             $takenPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($taken, $context), $context->flagsAt($taken, $child, $flagsAtChild[$index]), $spelled);
             $nextPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($next, $context), $context->flagsAt($next, $children[$nextIndex], $flagsAtChild[$nextIndex]), $spelled);
-            if (!$this->questions->allows($context) || true !== LanguageQuestions::isSubset($nextPattern, $takenPattern, $this->dfas)) {
+            if (!$this->questions->allows($context) || true !== LanguageQuestions::isSubset($nextPattern, $takenPattern, $context->dfas, $context->target)) {
                 continue;
             }
 
@@ -117,6 +109,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
                 \sprintf('"%s" never gives back a character, and takes every one "%s" could read: %s.', LanguageQuestions::text($child, $context), LanguageQuestions::text($children[$nextIndex], $context), $outcome),
                 $child->getStartPosition(),
                 'Make the repeat greedy, or exclude from it what must follow.',
+                end: $child->getEndPosition(),
             );
         }
 

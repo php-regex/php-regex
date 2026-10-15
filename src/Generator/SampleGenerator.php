@@ -17,6 +17,9 @@ use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StaticCaches;
@@ -53,6 +56,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\RegexParser;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 
@@ -234,6 +238,83 @@ final class SampleGenerator extends AbstractNodeVisitor
     {
         $this->seed = null;
         $this->resetRandomizer();
+    }
+
+    /**
+     * A sample the running engine matches. Visiting the tree draws a sample
+     * from it alone, which an assertion, a condition or a backreference may
+     * make wrong; this draws again and checks each one with the engine.
+     *
+     * @param string           $regex  The delimited pattern
+     * @param RegexParser|null $parser Reads and judges the pattern; one for the running PHP when null
+     *
+     * @throws ParserException           when the pattern does not parse (a delimiter, flag or syntax fault)
+     * @throws LexerException            when the pattern does not tokenize
+     * @throws SampleGenerationException when the pattern parses but is invalid, as a call to a group that does not
+     *                                   exist, or no sample the running engine matches was found
+     */
+    public function generate(string $regex, ?RegexParser $parser = null): string
+    {
+        $parser ??= RegexParser::create();
+        $ast = $parser->parse($regex);
+        // A pattern PCRE refuses, as a call to a group that does not exist,
+        // has no sample to draw.
+        $validation = $parser->validate($regex);
+        if (!$validation->isValid) {
+            throw new SampleGenerationException(\sprintf('No sample matching %s can be drawn: %s', $regex, (string) $validation->error), null, $validation->errorCode ?? ErrorCode::GenerateNoMatch);
+        }
+
+        // Generation is best-effort (lookaround hints, negated classes, ...):
+        // verify the sample against the real engine and retry a few times
+        // before settling for the last attempt. The engine checks it without
+        // the JIT, which crashes PHP on some pattern and subject pairs.
+        // Only a pattern this PHP cannot compile gets a sample nothing checks.
+        $compiles = null === $this->engine->compile($regex);
+        $attempts = [];
+        $gaveUp = 0;
+        $engineError = '';
+        // A condition with one valid branch in two misses once in 2^32 calls.
+        for ($attempt = 0; $attempt < 32; $attempt++) {
+            $sample = $ast->accept($this);
+
+            $match = $this->engine->match($regex, $sample);
+            // Verified, or a pattern this PCRE runtime cannot compile: what
+            // we have. A limit or an error it met checks nothing: another try.
+            if (true === $match->matched || !$compiles) {
+                return $sample;
+            }
+
+            if (false === $match->matched) {
+                $attempts[$sample] = true;
+            } else {
+                $gaveUp++;
+                $engineError = (string) $match->error;
+                // A sample that matches is found quickly: the samples the
+                // engine gives up on are costly misses, and eight end it.
+                if (8 === $gaveUp) {
+                    break;
+                }
+            }
+        }
+
+        // An assertion on what surrounds the match, as "\b" or "(?!^)", may
+        // hold once the sample has text around it. A sample the engine gave
+        // up on is not tried again: with text around it, it gives up again.
+        foreach (array_keys($attempts) as $attempt) {
+            foreach (['a', ' ', "\n"] as $padding) {
+                foreach ([$padding.$attempt, $attempt.$padding, $padding.$attempt.$padding] as $padded) {
+                    if (true === $this->engine->match($regex, $padded)->matched) {
+                        return $padded;
+                    }
+                }
+            }
+        }
+
+        if ($gaveUp > 0) {
+            throw new SampleGenerationException(\sprintf('No sample matching %s was found: the engine gave up checking %d of the samples (%s).', $regex, $gaveUp, $engineError));
+        }
+
+        throw new SampleGenerationException(\sprintf('No sample matching %s was found: the pattern may match nothing, or its assertions ask for more than the samples give.', $regex));
     }
 
     #[\Override]

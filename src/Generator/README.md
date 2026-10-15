@@ -28,7 +28,7 @@ Documentation: [php-regex.com](https://php-regex.com) — the [API reference](ht
 Features
 --------
 
-- Generates a random string the pattern matches, from the parsed AST
+- Generates a random string the pattern matches, from the parsed AST, and checks it with the running engine
 - Reproducible samples: seed the generator, reset the seed, draw again
 - Open-ended quantifiers (`*`, `+`, `{n,}`) capped by a configurable repetition limit
 - Unicode properties (`\p{Lu}`), POSIX classes (`[[:alpha:]]`) and negated classes resolved by asking the running PCRE engine
@@ -55,7 +55,17 @@ Configuration
 Usage
 -----
 
-A sample, made reproducible with a seed:
+A sample the running engine matches: `generate()` draws from the pattern and checks each draw
+with `preg_match()`, padding the sample when an assertion asks for text around it, and throws
+`SampleGenerationException` when no draw matches:
+
+```php
+use PHPRegex\Generator\SampleGenerator;
+
+echo (new SampleGenerator())->generate('/(?!^)a/'); // "aa"
+```
+
+Visiting the tree draws from the tree alone, unchecked; a sample, made reproducible with a seed:
 
 ```php
 use PHPRegex\Generator\SampleGenerator;

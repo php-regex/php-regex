@@ -15,6 +15,8 @@ namespace PHPRegex\Parser;
 
 /**
  * What a walk does after a node, when the callback asks for more than going on.
+ *
+ * @internal
  */
 enum TraversalAction
 {

@@ -46,8 +46,6 @@ use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Exception\RecursionLimitException;
-use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -61,6 +59,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Psalm\Plugin;
 use Psalm\Codebase;
@@ -796,14 +795,16 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     {
         try {
             $regex = $parser->parse($pattern);
-        } catch (ResourceLimitException|RecursionLimitException) {
-            // The library's own limits, not PCRE's: it cannot judge the pattern, which PCRE may well accept.
-            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
         } catch (ExceptionInterface) {
             $regex = null;
         }
 
         $validation = $parser->validate($pattern);
+        // The library's own limits, not PCRE's: it cannot judge the pattern, which PCRE may well accept.
+        if (ValidationErrorCategory::Limit === $validation->category) {
+            return ['error' => null, 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
+        }
+
         if (!$validation->isValid) {
             return ['error' => self::message($parser, $validation), 'shape' => null, 'noAutoCapture' => false, 'keepsOut' => false, 'fewStrings' => false];
         }

@@ -23,10 +23,14 @@ use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -45,6 +49,9 @@ use PHPRegex\Toolkit\Regex;
  * #[RegexPattern] are read then too, from the PHP files under regex.json's
  * "paths" (the root by default) and out of its "exclude" entries (vendor/ by
  * default), and from each open document as it changes.
+ *
+ * The ReDoS analysis runs only when initializationOptions.redos, else
+ * checks.redos.enabled in regex.json, turns it on.
  *
  * @internal
  */
@@ -175,16 +182,6 @@ final class Server
             return;
         }
 
-        // Special handling for shutdown
-        if ('shutdown' === $method) {
-            $this->shutdown = true;
-            if (null !== $message->id) {
-                Response::success($message->id, null);
-            }
-
-            return;
-        }
-
         // Exit notification: the protocol's code, the binary exits with it.
         if ('exit' === $method) {
             $this->exitCode = $this->shutdown ? 0 : 1;
@@ -192,8 +189,22 @@ final class Server
             return;
         }
 
-        // Shut down: nothing is served until "exit".
+        // Shut down: nothing is served until "exit", a request, a second
+        // shutdown included, is answered Invalid Request.
         if ($this->shutdown) {
+            if (null !== $message->id) {
+                Response::error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is shut down');
+            }
+
+            return;
+        }
+
+        if ('shutdown' === $method) {
+            $this->shutdown = true;
+            if (null !== $message->id) {
+                Response::success($message->id, null);
+            }
+
             return;
         }
 
@@ -241,10 +252,15 @@ final class Server
         $params = $message->params ?? [];
         $root = self::rootDirectory($params);
         $config = null === $root ? [] : self::loadConfig($root);
+        // The lint rules regex.json turns on or off, as `regex lint` reads them.
+        $arguments = LintArguments::fromDefaults((new LintDefaultsBuilder())->build($config));
+        $lintRules = $arguments->lintRules;
+        [$redosMode, $redosThreshold] = self::redos($params, $arguments);
 
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
+            $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold);
         } else {
             $target = $this->resolveTarget($params, $root, $config);
             foreach ($target->notices() as $notice) {
@@ -252,12 +268,34 @@ final class Server
             }
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()));
 
-            $this->judgeWith(Regex::create($target->regexOptions()));
+            $this->judgeWith(Regex::create($target->regexOptions()), $lintRules, $redosMode, $redosThreshold);
         }
 
         if (null !== $root) {
             $this->readDeclarations($root, $config);
         }
+    }
+
+    /**
+     * The ReDoS analysis to run: none unless initializationOptions.redos,
+     * else checks.redos.enabled in regex.json, turns it on; the mode and
+     * the threshold of regex.json, high by default, as `regex lint` reads
+     * them.
+     *
+     * @param array<string, mixed> $params the "initialize" params
+     *
+     * @return array{RedosMode, RedosSeverity}
+     */
+    private static function redos(array $params, LintArguments $arguments): array
+    {
+        $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
+        $enabled = \is_bool($options['redos'] ?? null) ? $options['redos'] : $arguments->checkRedos;
+        $threshold = RedosSeverity::tryFrom($arguments->redosThreshold ?? '');
+
+        return [
+            $enabled ? (RedosMode::tryFrom($arguments->redosMode) ?? RedosMode::Theoretical) : RedosMode::Off,
+            null === $threshold || RedosSeverity::Safe === $threshold || RedosSeverity::Unknown === $threshold ? RedosSeverity::High : $threshold,
+        ];
     }
 
     /**
@@ -389,10 +427,13 @@ final class Server
         return is_dir($path) ? $path : null;
     }
 
-    private function judgeWith(Regex $regex): void
+    /**
+     * @param array<string, bool> $lintRules the lint rules turned on or off by id
+     */
+    private function judgeWith(Regex $regex, array $lintRules = [], RedosMode $redosMode = RedosMode::Off, RedosSeverity $redosThreshold = RedosSeverity::High): void
     {
-        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex);
-        $this->codeActionHandler = new CodeActionHandler($this->documents, $regex);
+        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex, $lintRules, $redosMode, $redosThreshold);
+        $this->codeActionHandler = new CodeActionHandler($this->documents, $regex, $lintRules);
     }
 
     private static function log(int $type, string $message): void

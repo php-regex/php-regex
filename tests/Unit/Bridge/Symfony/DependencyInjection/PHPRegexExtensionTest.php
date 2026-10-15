@@ -58,6 +58,7 @@ final class PHPRegexExtensionTest extends TestCase
         $cacheConfig = (array) $container->getParameter('php_regex.cache');
         $this->assertSame('/tmp/cache', $cacheConfig['directory']);
         $this->assertSame(1, $container->getParameter('php_regex.analysis.warning_threshold'));
+        $this->assertFalse($container->getParameter('php_regex.analysis.complexity'));
         // 2.0 has one ignore list, and no complexity score named after ReDoS.
         $this->assertFalse($container->hasParameter('php_regex.analysis.redos_threshold'));
         $this->assertSame(['foo'], $container->getParameter('php_regex.redos.ignored_patterns'));
@@ -76,6 +77,43 @@ final class PHPRegexExtensionTest extends TestCase
         $this->assertTrue($container->hasDefinition('php_regex.regex'));
         $this->assertTrue($container->hasDefinition('php_regex.extractor'));
         $this->assertTrue($container->hasDefinition('php_regex.command.lint'));
+    }
+
+    /**
+     * regex:explain is a console command of the bundle, built with its
+     * Regex service, as the Laravel command is.
+     */
+    public function test_load_registers_the_explain_command(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', false);
+
+        (new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension())->load([[]], $container);
+
+        $definition = $container->getDefinition('php_regex.command.explain');
+        $this->assertSame(\PHPRegex\Symfony\Command\ExplainCommand::class, $definition->getClass());
+        $this->assertTrue($definition->hasTag('console.command'));
+        $regex = $definition->getArgument('$regex');
+        $this->assertInstanceOf(Reference::class, $regex);
+        $this->assertSame('php_regex.regex', (string) $regex);
+    }
+
+    /**
+     * The ValidRegex constraint is judged with the bundle's Regex service,
+     * found by the validator under the validator's class name.
+     */
+    public function test_load_registers_the_valid_regex_validator(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setParameter('kernel.debug', false);
+
+        (new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension())->load([[]], $container);
+
+        $definition = $container->getDefinition(\PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator::class);
+        $this->assertTrue($definition->hasTag('validator.constraint_validator'));
+        $regex = $definition->getArgument('$regex');
+        $this->assertInstanceOf(Reference::class, $regex);
+        $this->assertSame('php_regex.regex', (string) $regex);
     }
 
     public function test_load_sets_custom_extractor_alias(): void
