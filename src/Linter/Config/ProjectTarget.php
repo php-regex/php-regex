@@ -44,10 +44,11 @@ use PHPRegex\Parser\Validation\RangeDiff;
  * knows in full, is judged with the 10.39 rules but for the few older
  * changes it names, and a notice says so. A PHP that ships PCRE1, 7.2 and
  * earlier, is never judged: no verdict of the library holds for it. A
- * version named below 7.3 is refused, and so is a require.php or a
- * config.platform.php that allows no PHP of 7.3 or later; a require.php
- * that also allows one is judged from the lowest it allows, and a notice
- * says the versions below 7.3 are not judged.
+ * version named below 7.3 is refused, and so is a composer.json whose
+ * require.php allows no PHP of 7.3 or later. A require.php that also allows
+ * one is judged from the lowest it allows, even under a config.platform.php
+ * below 7.3, which only pins the PHP Composer resolves the dependencies
+ * for, and a notice says the versions below 7.3 are not judged.
  *
  * Reading composer.json never fails: what cannot be read becomes a notice
  * and the running PHP is used.
@@ -340,6 +341,8 @@ final class ProjectTarget
      * @param array<string, string> $env
      * @param list<string>          $notices
      *
+     * @throws UnsupportedTargetException when the floor ships PCRE1 and require.php allows no PHP on PCRE2
+     *
      * @return array{int, string, string|null}|null the floor, its source, and require.php when it was read
      */
     private static function fromComposer(string $projectDir, array $env, array &$notices): ?array
@@ -361,23 +364,49 @@ final class ProjectTarget
             return null;
         }
 
+        // A platform on PCRE1 pins the PHP Composer resolves the
+        // dependencies for, the lowest the project installs on: it gives way
+        // to a require.php that also allows a PHP on PCRE2, and is refused
+        // when there is none.
+        $pinned = null;
         $platform = self::at($composer, 'config', 'platform', 'php');
         if (\is_string($platform)) {
             $floor = self::floor($platform);
             if (null !== $floor && !str_contains($platform, ' ') && !str_contains($platform, '|')) {
-                return [self::onPcre2($floor, $name.' config.platform.php allows'), $name.' config.platform.php', null];
+                if ($floor >= PcreTarget::phpVersionBoundaries()[0]) {
+                    return [$floor, $name.' config.platform.php', null];
+                }
+                $pinned = $floor;
+            } else {
+                $notices[] = \sprintf('%s config.platform.php "%s" is not a version: reading require.php instead.', $name, $platform);
             }
-            $notices[] = \sprintf('%s config.platform.php "%s" is not a version: reading require.php instead.', $name, $platform);
         }
 
         $constraint = self::at($composer, 'require', 'php');
-        if (!\is_string($constraint)) {
+        $constraint = \is_string($constraint) ? $constraint : null;
+        $intervals = null === $constraint ? null : self::intervals($constraint);
+        $firstOnPcre2 = null === $intervals ? null : self::lowestFrom($intervals, PcreTarget::phpVersionBoundaries()[0]);
+        if (null !== $pinned) {
+            if (null === $firstOnPcre2) {
+                throw self::onPcre1($pinned, $name.' config.platform.php allows');
+            }
+            $notices[] = \sprintf(
+                '%s config.platform.php pins PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version require.php allows on PCRE2.',
+                $name,
+                intdiv($pinned, 10000),
+                intdiv($pinned, 100) % 100,
+                self::phpLabel($firstOnPcre2),
+            );
+
+            return [$firstOnPcre2, $name.' require.php', $constraint];
+        }
+
+        if (null === $constraint) {
             $notices[] = \sprintf('%s has no require.php constraint: judging for the running PHP.', $name);
 
             return null;
         }
 
-        $intervals = self::intervals($constraint);
         if (null === $intervals) {
             $notices[] = \sprintf('%s require.php "%s" names no lowest PHP version: judging for the running PHP.', $name, $constraint);
 
@@ -388,7 +417,6 @@ final class ProjectTarget
         // judged from the lowest such PHP, and only the versions on PCRE1
         // are left out. A range that allows none is refused.
         $floor = min(array_column($intervals, 0));
-        $firstOnPcre2 = self::lowestFrom($intervals, PcreTarget::phpVersionBoundaries()[0]);
         if ($floor < PcreTarget::phpVersionBoundaries()[0] && null !== $firstOnPcre2) {
             $notices[] = \sprintf(
                 '%s require.php allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
@@ -453,15 +481,25 @@ final class ProjectTarget
         // oldest PCRE2 would be a verdict about an engine it does not run.
         // The oldest PHP the library judges is the first on PCRE2, 7.3.
         if ($phpVersionId < PcreTarget::phpVersionBoundaries()[0]) {
-            throw new UnsupportedTargetException(\sprintf(
-                '%s PHP %d.%d: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
-                $from,
-                intdiv($phpVersionId, 10000),
-                intdiv($phpVersionId, 100) % 100,
-            ));
+            throw self::onPcre1($phpVersionId, $from);
         }
 
         return $phpVersionId;
+    }
+
+    /**
+     * The refusal of a PHP version that ships PCRE1.
+     *
+     * @param string $from what named it, and how: "--php-version names", "composer.json require.php allows"
+     */
+    private static function onPcre1(int $phpVersionId, string $from): UnsupportedTargetException
+    {
+        return new UnsupportedTargetException(\sprintf(
+            '%s PHP %d.%d: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
+            $from,
+            intdiv($phpVersionId, 10000),
+            intdiv($phpVersionId, 100) % 100,
+        ));
     }
 
     /**

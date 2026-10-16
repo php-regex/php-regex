@@ -210,11 +210,111 @@ final class ProjectTargetEdgeCasesTest extends TestCase
             'files' => ['composer.json' => '{"require": {"php": "^7.1 <7.3 || >=8.4 <8.2"}}'],
             'message' => 'composer.json require.php allows PHP 7.1: '.$refusal,
         ];
-        yield 'the platform' => [
+        yield 'the platform without require.php' => [
             'php' => [],
-            'files' => ['composer.json' => '{"require": {"php": "^8.1"}, "config": {"platform": {"php": "7.2.34"}}}'],
+            'files' => ['composer.json' => '{"config": {"platform": {"php": "7.2.34"}}}'],
             'message' => 'composer.json config.platform.php allows PHP 7.2: '.$refusal,
         ];
+        yield 'the platform with a require.php closed below 7.3' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": ">=5.6 <7.3"}, "config": {"platform": {"php": "7.2"}}}'],
+            'message' => 'composer.json config.platform.php allows PHP 7.2: '.$refusal,
+        ];
+        yield 'the platform with a require.php that is not read' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": "dev-main"}, "config": {"platform": {"php": "7.1.3"}}}'],
+            'message' => 'composer.json config.platform.php allows PHP 7.1: '.$refusal,
+        ];
+        yield 'the platform with a require.php that is not a string' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": 8}, "config": {"platform": {"php": "5.6.40"}}}'],
+            'message' => 'composer.json config.platform.php allows PHP 5.6: '.$refusal,
+        ];
+    }
+
+    /**
+     * config.platform.php pins the PHP Composer resolves the dependencies
+     * for, the lowest the project installs on, not the only one the code
+     * runs on: a platform below 7.3 gives way to a require.php that also
+     * allows 7.3 or later, judged from the lowest such PHP, and the notice
+     * names the platform as the PHP on PCRE1.
+     *
+     * @param list<array{php: string, pcre: string}> $range
+     * @param list<string>                           $notices
+     */
+    #[Test]
+    #[DataProvider('providePlatformsOnPcre1')]
+    public function test_resolve_judges_a_platform_on_pcre1_from_require_php(string $composer, int $phpVersionId, string $pcre, array $range, array $notices): void
+    {
+        $resolved = ProjectTarget::fromSources([], [], $this->makeProject(['composer.json' => $composer]), []);
+
+        $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
+        $this->assertSame($pcre, $resolved->target()->pcreVersion);
+        $this->assertSame('composer.json require.php', $resolved->source());
+        $this->assertSame($notices, $resolved->notices());
+        $this->assertSame($range, \array_slice($resolved->toArray()['range'], 0, \count($range)));
+    }
+
+    /**
+     * @return iterable<string, array{composer: string, phpVersionId: int, pcre: string, range: list<array{php: string, pcre: string}>, notices: list<string>}>
+     */
+    public static function providePlatformsOnPcre1(): iterable
+    {
+        $pinned = static fn (string $platform, string $judged): string => \sprintf(
+            'composer.json config.platform.php pins PHP %s, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version require.php allows on PCRE2.',
+            $platform,
+            $judged,
+        );
+
+        // composer/composer: its lock installs on its own floor.
+        yield 'a platform on the floor of require.php' => [
+            'composer' => '{"require": {"php": "^7.2.5 || ^8.0"}, "config": {"platform": {"php": "7.2.5"}}}',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33'], ['php' => '8.0', 'pcre' => '10.35'], ['php' => '8.1', 'pcre' => '10.39']],
+            'notices' => [$pinned('7.2', '7.3'), 'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
+        ];
+        yield 'a platform below a require.php on PCRE2' => [
+            'composer' => '{"require": {"php": "^8.1"}, "config": {"platform": {"php": "7.2.34"}}}',
+            'phpVersionId' => 80100,
+            'pcre' => '10.39',
+            'range' => [['php' => '8.1', 'pcre' => '10.39'], ['php' => '8.2', 'pcre' => '10.40']],
+            'notices' => [$pinned('7.2', '8.1')],
+        ];
+        yield 'a require.php with a gap above 7.3' => [
+            'composer' => '{"require": {"php": "~7.0.0 || ^7.4"}, "config": {"platform": {"php": "7.0"}}}',
+            'phpVersionId' => 70400,
+            'pcre' => '10.33',
+            'range' => [['php' => '7.4', 'pcre' => '10.33']],
+            'notices' => [$pinned('7.0', '7.4'), 'PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
+        ];
+    }
+
+    /**
+     * A platform on PCRE2 still wins over require.php, from the first PHP
+     * on PCRE2 up: it is judged as given, patch included, with no range.
+     */
+    #[Test]
+    #[DataProvider('providePlatformsOnPcre2')]
+    public function test_resolve_keeps_a_platform_on_pcre2_over_a_require_php_from_below_7_3(string $platform, int $phpVersionId): void
+    {
+        $composer = json_encode(['require' => ['php' => '^7.1 || ^8.0'], 'config' => ['platform' => ['php' => $platform]]], \JSON_THROW_ON_ERROR);
+
+        $resolved = ProjectTarget::fromSources([], [], $this->makeProject(['composer.json' => $composer]), []);
+
+        $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
+        $this->assertSame('composer.json config.platform.php', $resolved->source());
+        $this->assertCount(1, $resolved->range());
+        $this->assertStringNotContainsString('PCRE1', implode("\n", $resolved->notices()));
+    }
+
+    /**
+     * @return iterable<string, array{platform: string, phpVersionId: int}>
+     */
+    public static function providePlatformsOnPcre2(): iterable
+    {
+        yield 'the first PHP on PCRE2' => ['platform' => '7.3', 'phpVersionId' => 70300];
+        yield 'a patch release of 7.3' => ['platform' => '7.3.5', 'phpVersionId' => 70305];
     }
 
     /**

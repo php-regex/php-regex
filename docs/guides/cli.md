@@ -1043,8 +1043,9 @@ pattern for one target, chosen in this order:
 
 1. `--php-version` and `--pcre-version` on the command line;
 2. `phpVersion` and `pcreVersion` in `regex.json`;
-3. `composer.json` in the working directory: `config.platform.php` if set,
-   else the lowest version `require.php` allows (`^8.2 || ^8.3` is PHP 8.2),
+3. `composer.json` in the working directory: `config.platform.php` if set
+   (one below 7.3 gives way to `require.php`, see below), else the lowest
+   version `require.php` allows (`^8.2 || ^8.3` is PHP 8.2),
    and then the patterns are also validated on the later PHP versions the
    constraint allows ([Several PHP versions](#several-php-versions));
    The `COMPOSER` environment variable names another file, as it does for
@@ -1086,8 +1087,18 @@ allows such a PHP depends on where the version comes from:
   Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
   ```
 
+- A `config.platform.php` below 7.3 pins the PHP Composer resolves the
+  dependencies for, not the only PHP the code runs on: it gives way to a
+  `require.php` that also allows 7.3 or later, judged from the lowest such
+  PHP the same way, with the note naming the platform:
+
+  ```text
+  Note: composer.json config.platform.php pins PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version require.php allows on PCRE2.
+  ```
+
 - A `require.php` that allows no PHP of 7.3 or later (`7.2.*`, `~7.1.0`,
-  `>=5.6 <7.3`), or a `config.platform.php` below 7.3, is refused. So is a
+  `>=5.6 <7.3`) is refused, and so is a `config.platform.php` below 7.3 with
+  no such `require.php` beside it. So is a
   version below 7.3 named by `--php-version`, `phpVersion` in `regex.json` or
   a bridge setting: that names a PHP on PCRE1 outright. The run stops until
   a PHP version of 7.3 or later is named:
