@@ -53,7 +53,7 @@ final class LintConfigLoaderMergeTest extends TestCase
         yield 'exclude, empty list clears' => ['{"exclude": ["vendor", "tests"]}', '{"exclude": []}', 'exclude', []];
         yield 'paths, shorter list' => ['{"paths": ["src", "lib"]}', '{"paths": ["app"]}', 'paths', ['app']];
         yield 'paths, empty list clears' => ['{"paths": ["src", "lib"]}', '{"paths": []}', 'paths', []];
-        yield 'extraction.interop, shorter list' => ['{"extraction": {"interop": ["composer-pcre", "nette-utils"]}}', '{"extraction": {"interop": ["laravel-str"]}}', 'interop', ['laravel-str']];
+        yield 'extraction.interop, shorter list' => ['{"extraction": {"interop": ["composer-pcre", "nette-utils"]}}', '{"extraction": {"interop": ["illuminate-support"]}}', 'interop', ['illuminate-support']];
         yield 'extraction.interop, empty list clears' => ['{"extraction": {"interop": ["composer-pcre", "nette-utils"]}}', '{"extraction": {"interop": []}}', 'interop', []];
         yield 'extraction.functions, shorter list' => ['{"extraction": {"functions": ["a_check", "b_check"]}}', '{"extraction": {"functions": ["c_check"]}}', 'patternFunctions', ['c_check']];
     }

@@ -193,6 +193,20 @@ final class ExtractionStrategyParityTest extends TestCase
             'presets' => [],
             'expected' => ['/attr-a/', '/attr-b/', '/real/'],
         ];
+
+        // A pattern the file proves through a constant, a property or a
+        // local variable is read once, at its literal.
+        yield 'resolution' => [
+            'fixture' => 'parity_resolution.php',
+            'presets' => [],
+            'expected' => ['/namespace-const/', '/self-constant/', '/abc+/i', '/list-a/', '/list-b/', '/property/', '/variable-a/', '/variable-b/'],
+        ];
+
+        yield 'presets and native APIs beyond preg_*' => [
+            'fixture' => 'parity_presets.php',
+            'presets' => ['phpunit', 'webmozart-assert', 'beberlei-assert', 'symfony-validator'],
+            'expected' => ['/symfony-attribute/', '/phpunit-this/', '/phpunit-named/', '/phpunit-expectation/', '/webmozart/', '/beberlei/', '/symfony-new/', '/regex-iterator/', '/filter-var/', '/after-spread/'],
+        ];
     }
 
     /**
@@ -312,6 +326,25 @@ final class ExtractionStrategyParityTest extends TestCase
     {
         $file = __DIR__.'/../../../Fixtures/Extractor/'.$fixture;
         $registry = PatternFunctionRegistry::native()->withCustomFunctions([$spec]);
+
+        $this->assertSame($expected, $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
+
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->patterns(new PhpParserExtractionStrategy([], $registry), $file));
+        }
+    }
+
+    /**
+     * "use Str;" in a class or enum body uses a trait, and imports nothing:
+     * Str still names the class of the namespace, in a method and in a
+     * closure alike.
+     */
+    #[Test]
+    public function test_a_trait_use_in_a_class_body_is_no_import(): void
+    {
+        $file = __DIR__.'/../../../Fixtures/Extractor/parity_trait_use.php';
+        $registry = PatternFunctionRegistry::native()->withCustomFunctions(['App\\Support\\Str::matches#1']);
+        $expected = ['/in-method/', '/in-closure/', '/in-enum/'];
 
         $this->assertSame($expected, $this->patterns(new TokenBasedExtractionStrategy([], $registry), $file));
 

@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Extraction;
 use PhpParser\Error;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\Attribute;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -23,11 +24,14 @@ use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\Cast\Array_ as ArrayCast;
 use PhpParser\Node\Expr\Cast\Object_;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Clone_;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\UnaryMinus;
 use PhpParser\Node\Expr\UnaryPlus;
@@ -54,7 +58,10 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * Names are resolved before extraction, so imported wrappers such as
  * composer/pcre's Preg::match() are matched on their fully qualified class
- * and a same-named class of the project's own is not mistaken for one.
+ * and a same-named class of the project's own is not mistaken for one. A
+ * pattern argument that is no literal is read through the constants,
+ * properties and local variables the file proves (AstValueCollector,
+ * InFileValueResolver).
  *
  * @internal
  */
@@ -152,8 +159,11 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
                 return [];
             }
 
+            // The names as written stay on the resolved ones: a pattern read
+            // through a constant is located "via Patterns::RE", as the call
+            // spells it.
             $traverser = new NodeTraverser();
-            $traverser->addVisitor(new NameResolver());
+            $traverser->addVisitor(new NameResolver(null, ['preserveOriginalNames' => true]));
             $ast = $traverser->traverse($ast);
         } catch (Error|\RangeException $e) {
             // A file PHP cannot parse still holds patterns: the tokenizer
@@ -166,93 +176,163 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
             ];
         }
 
-        return $this->extractFromTokens($ast, $file, $content);
+        $found = [];
+        foreach ($ast as $node) {
+            $this->extractFromNode($node, $file, $content, $found);
+        }
+
+        return $this->settle($found, $ast, $file, $content);
     }
 
     /**
-     * @param array<Node> $tokens
+     * The occurrences in the order of their calls. A pattern no literal
+     * gives is read, when the file holds one, through what the whole file
+     * proves about its names.
      *
-     * @return array<PatternOccurrence>
+     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
+     * @param array<Node>                                  $ast
+     *
+     * @return list<PatternOccurrence>
      */
-    private function extractFromTokens(array $tokens, string $file, string $content): array
+    private function settle(array $found, array $ast, string $file, string $content): array
     {
-        $occurrences = [];
+        $pending = array_filter($found, static fn (PatternOccurrence|PendingPattern $item): bool => $item instanceof PendingPattern);
+        if ([] === $pending) {
+            return array_values(array_filter($found, static fn (PatternOccurrence|PendingPattern $item): bool => $item instanceof PatternOccurrence));
+        }
 
-        foreach ($tokens as $node) {
-            $nodeOccurrences = $this->extractFromNode($node, $file, $content);
-            $this->appendOccurrences($occurrences, $nodeOccurrences);
+        $collector = new AstValueCollector($this->patternArguments(...));
+        $traverser = new NodeTraverser();
+        $traverser->addVisitor($collector);
+        $traverser->traverse($ast);
+        $values = $collector->values();
+
+        // Every read is known before the first is resolved: a value
+        // assigned after the last never reaches any.
+        $expressions = [];
+        foreach ($pending as $index => $item) {
+            $expressions[$index] = $collector->expression($item->place);
+            $values->read($expressions[$index]);
+        }
+
+        $occurrences = [];
+        foreach ($found as $index => $item) {
+            if ($item instanceof PatternOccurrence) {
+                $occurrences[] = $item;
+
+                continue;
+            }
+
+            array_push($occurrences, ...$item->occurrences($values, $expressions[$index], $file, $content));
         }
 
         return $occurrences;
     }
 
     /**
-     * @return array<PatternOccurrence>
+     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
      */
-    private function extractFromNode(Node $node, string $file, string $content): array
+    private function extractFromNode(Node $node, string $file, string $content, array &$found): void
     {
-        $occurrences = [];
-
         if ($node instanceof FuncCall) {
-            $this->appendOccurrences($occurrences, $this->extractFromFuncCall($node, $file, $content));
-        } elseif ($node instanceof StaticCall) {
-            $this->appendOccurrences($occurrences, $this->extractFromStaticCall($node, $file, $content));
+            array_push($found, ...$this->extractFromFuncCall($node, $file, $content));
+        } else {
+            $match = $this->patternCall($node);
+            if (null !== $match) {
+                $this->extractFromArgs($match[1], $match[0], $file, $content, $found);
+            }
         }
 
         // Recursively check child nodes
         foreach ($node->getSubNodeNames() as $subNodeName) {
             $subNode = $node->{$subNodeName};
             if ($subNode instanceof Node) {
-                $this->appendOccurrences($occurrences, $this->extractFromNode($subNode, $file, $content));
+                $this->extractFromNode($subNode, $file, $content, $found);
             } elseif (\is_array($subNode)) {
                 foreach ($subNode as $item) {
                     if ($item instanceof Node) {
-                        $this->appendOccurrences($occurrences, $this->extractFromNode($item, $file, $content));
+                        $this->extractFromNode($item, $file, $content, $found);
                     }
                 }
             }
         }
-
-        return $occurrences;
     }
 
     /**
-     * @return array<PatternOccurrence>
+     * The patterns of a function call.
+     *
+     * @return list<PatternOccurrence|PendingPattern<Expr>>
      */
     private function extractFromFuncCall(FuncCall $funcCall, string $file, string $content): array
     {
-        $args = self::ordinaryArgs($funcCall);
-        if (!$funcCall->name instanceof Name || null === $args) {
-            return [];
+        $found = [];
+        $match = $this->patternCall($funcCall);
+        if (null !== $match) {
+            $this->extractFromArgs($match[1], $match[0], $file, $content, $found);
         }
 
-        // An unqualified name in a namespace: PHP calls the namespace's
-        // function first, the global one when there is none.
-        $namespaced = $funcCall->name->getAttribute('namespacedName');
-        $patternFunction = $this->registry->lookupCall($namespaced instanceof Name ? $namespaced->toString() : null, $funcCall->name->toString());
-        if (null === $patternFunction) {
-            return [];
-        }
-
-        return $this->extractFromArgs($args, $patternFunction, $file, $content);
+        return $found;
     }
 
     /**
-     * @return array<PatternOccurrence>
+     * The pattern function a node calls, with its arguments: a function, a
+     * static method, a method of PHPUnit's on $this, a constructor or an
+     * attribute.
+     *
+     * @return array{PatternFunction, list<Arg>}|null
      */
-    private function extractFromStaticCall(StaticCall $staticCall, string $file, string $content): array
+    private function patternCall(Node $node): ?array
     {
-        $args = self::ordinaryArgs($staticCall);
-        if (!$staticCall->class instanceof Name || !$staticCall->name instanceof Identifier || null === $args) {
+        $function = null;
+        if ($node instanceof FuncCall && $node->name instanceof Name) {
+            // An unqualified name in a namespace: PHP calls the namespace's
+            // function first, the global one when there is none.
+            $namespaced = $node->name->getAttribute('namespacedName');
+            $function = $this->registry->lookupCall($namespaced instanceof Name ? $namespaced->toString() : null, $node->name->toString());
+        } elseif ($node instanceof StaticCall && $node->class instanceof Name && $node->name instanceof Identifier) {
+            $function = $node->class->isSpecialClassName()
+                ? $this->registry->lookupNamedMethod($node->name->toString())
+                : $this->registry->lookupMethod($node->class->toString(), $node->name->toString());
+        } elseif ($node instanceof MethodCall && $node->var instanceof Variable && 'this' === $node->var->name && $node->name instanceof Identifier) {
+            $function = $this->registry->lookupNamedMethod($node->name->toString());
+        } elseif ($node instanceof New_ && $node->class instanceof Name) {
+            $function = $this->registry->lookupConstructor($node->class->toString());
+        } elseif ($node instanceof Attribute) {
+            $function = $this->registry->lookupAttribute($node->name->toString());
+
+            return null === $function ? null : [$function, $node->args];
+        }
+
+        if (null === $function || !$node instanceof CallLike) {
+            return null;
+        }
+
+        $args = self::ordinaryArgs($node);
+
+        return null === $args ? null : [$function, $args];
+    }
+
+    /**
+     * The arguments a call reads its patterns from.
+     *
+     * @return list<Arg>
+     */
+    private function patternArguments(Node $node): array
+    {
+        $match = $this->patternCall($node);
+        if (null === $match) {
             return [];
         }
 
-        $patternFunction = $this->registry->lookupMethod($staticCall->class->toString(), $staticCall->name->toString());
-        if (null === $patternFunction) {
-            return [];
+        $read = [];
+        foreach ($match[0]->eachArgument() as $function) {
+            $arg = $this->findPatternArg($match[1], $function->argumentIndex, $function->parameterNames);
+            if (null !== $arg && !\in_array($arg, $read, true)) {
+                $read[] = $arg;
+            }
         }
 
-        return $this->extractFromArgs($args, $patternFunction, $file, $content);
+        return $read;
     }
 
     /**
@@ -277,16 +357,14 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
     }
 
     /**
-     * @param array<Arg> $args
-     *
-     * @return array<PatternOccurrence>
+     * @param array<Arg>                                   $args
+     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
      */
-    private function extractFromArgs(array $args, PatternFunction $patternFunction, string $file, string $content): array
+    private function extractFromArgs(array $args, PatternFunction $patternFunction, string $file, string $content, array &$found): void
     {
-        $occurrences = [];
         $read = [];
         foreach ($patternFunction->eachArgument() as $function) {
-            $arg = $this->findPatternArg($args, $function->argumentIndex);
+            $arg = $this->findPatternArg($args, $function->argumentIndex, $function->parameterNames);
             // A named argument stands for every position it may fill: read once.
             if (null === $arg || \in_array($arg, $read, true)) {
                 continue;
@@ -303,10 +381,69 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
                 }
             }
 
-            array_push($occurrences, ...$this->extractPatternFromArg($arg, $function, $file, $content));
+            // Nette's utf8: true appends "u" to every pattern; anything but
+            // true or false leaves its flags unknown.
+            if (null !== $function->utf8Argument) {
+                $utf8 = self::utf8($args, $function->utf8Argument);
+                if (null === $utf8) {
+                    continue;
+                }
+
+                if ($utf8) {
+                    $function = $function->withPatternSuffix('u');
+                }
+            }
+
+            // filter_var() compiles the option only under FILTER_VALIDATE_REGEXP.
+            if (null !== $function->filterArgument) {
+                [$index, $name, $constant] = $function->filterArgument;
+                $filter = $this->findPatternArg($args, $index, [$name]);
+                if (null === $filter || !$filter->value instanceof ConstFetch || $constant !== $filter->value->name->toString()) {
+                    continue;
+                }
+            }
+
+            $value = $this->optionValue($arg->value, $function);
+            if (null !== $value) {
+                $this->extractPatternFromValue($value, $function, $file, $content, $found);
+            }
+        }
+    }
+
+    /**
+     * The expression an argument holds the pattern in: the argument itself,
+     * or, for an array literal, the item its option path leads to (the
+     * last of a repeated key, as PHP keeps it).
+     */
+    private function optionValue(Expr $value, PatternFunction $function): ?Expr
+    {
+        if ([] === $function->optionPath || !$value instanceof Array_) {
+            return [] !== $function->optionPath && $function->optionPathRequired ? null : $value;
         }
 
-        return $occurrences;
+        foreach ($function->optionPath as $key) {
+            if (!$value instanceof Array_) {
+                return null;
+            }
+
+            $found = null;
+            foreach ($value->items as $item) {
+                if (null !== $item && $item->unpack) {
+                    // A spread may hold the key, replacing what came before.
+                    $found = null;
+                } elseif (null !== $item && null !== $item->key && $key === $this->extractStringValue($item->key)) {
+                    $found = $item->value;
+                }
+            }
+
+            if (null === $found) {
+                return null;
+            }
+
+            $value = $found;
+        }
+
+        return $value;
     }
 
     /**
@@ -336,12 +473,13 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
     }
 
     /**
-     * Locate the pattern argument, whether it was passed positionally or by name.
+     * Locate an argument, passed positionally or by name. A spread before
+     * its position makes the position unknowable; the name still passes it.
      *
      * @param array<Arg>   $args
-     * @param list<string> $names lowercase parameter names
+     * @param list<string> $names parameter names, compared as PHP does, case included
      */
-    private function findPatternArg(array $args, int $argumentIndex, array $names = PatternFunction::PATTERN_PARAMETER_NAMES): ?Arg
+    private function findPatternArg(array $args, int $argumentIndex, array $names): ?Arg
     {
         $position = 0;
 
@@ -350,9 +488,8 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
                 continue;
             }
 
-            // A spread makes every later position unknowable.
             if ($arg->unpack) {
-                return null;
+                break;
             }
 
             if ($position === $argumentIndex) {
@@ -362,12 +499,51 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
             $position++;
         }
 
+        return self::namedArg($args, $names);
+    }
+
+    /**
+     * What the utf8 argument of a nette/utils call is, by position or by
+     * name: false when left out; null when it is no literal true or false,
+     * or a spread may hold it.
+     *
+     * @param array<Arg>         $args
+     * @param array{int, string} $utf8 its position and its name
+     */
+    private static function utf8(array $args, array $utf8): ?bool
+    {
+        $position = 0;
+        $value = null;
         foreach ($args as $arg) {
-            if (null === $arg->name) {
-                continue;
+            if ($arg->unpack) {
+                return null;
             }
 
-            if (\in_array(strtolower($arg->name->toString()), $names, true)) {
+            if (null === $arg->name ? $position++ === $utf8[0] : $utf8[1] === $arg->name->toString()) {
+                $value = $arg->value;
+            }
+        }
+
+        if (null === $value) {
+            return false;
+        }
+
+        $name = $value instanceof ConstFetch ? $value->name->toLowerString() : null;
+
+        return 'true' === $name ? true : ('false' === $name ? false : null);
+    }
+
+    /**
+     * The argument passed by one of the names, compared as PHP does, case
+     * included.
+     *
+     * @param array<Arg>   $args
+     * @param list<string> $names
+     */
+    private static function namedArg(array $args, array $names): ?Arg
+    {
+        foreach ($args as $arg) {
+            if (null !== $arg->name && \in_array($arg->name->toString(), $names, true)) {
                 return $arg;
             }
         }
@@ -376,33 +552,32 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
     }
 
     /**
-     * @return array<PatternOccurrence>
+     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
      */
-    private function extractPatternFromArg(Arg $arg, PatternFunction $patternFunction, string $file, string $content): array
+    private function extractPatternFromValue(Expr $value, PatternFunction $patternFunction, string $file, string $content, array &$found): void
     {
-        $value = $arg->value;
-
-        if ($value instanceof ConstFetch && 'null' === $value->name->toString()) {
-            return [];
-        }
+        // A null argument, as any other constant that holds no string, is
+        // left out by mayName().
 
         // preg_replace(['/a/', '/b/'], ...) and preg_replace_callback_array(['/a/' => $fn])
         // hold several patterns in one argument.
         if ($value instanceof Array_) {
-            return $this->extractPatternsFromArray($value, $patternFunction, $file, $content);
+            $this->extractPatternsFromArray($value, $patternFunction, $file, $content, $found);
+
+            return;
         }
 
-        $occurrence = $this->extractPatternFromExpr($value, $patternFunction, $file, $content);
-
-        return null !== $occurrence ? [$occurrence] : [];
+        $pattern = $this->extractPatternFromExpr($value, $patternFunction, $file, $content);
+        if (null !== $pattern) {
+            $found[] = $pattern;
+        }
     }
 
     /**
-     * @return array<PatternOccurrence>
+     * @param list<PatternOccurrence|PendingPattern<Expr>> $found
      */
-    private function extractPatternsFromArray(Array_ $array, PatternFunction $patternFunction, string $file, string $content): array
+    private function extractPatternsFromArray(Array_ $array, PatternFunction $patternFunction, string $file, string $content, array &$found): void
     {
-        $occurrences = [];
         $useKeys = $patternFunction->keysArePatterns;
         if ($useKeys && null !== $patternFunction->replacementIndex) {
             // A key that is a string selects the keys, no key or an int key
@@ -421,13 +596,11 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
                 continue;
             }
 
-            $occurrence = $this->extractPatternFromExpr($expr, $patternFunction, $file, $content);
-            if (null !== $occurrence) {
-                $occurrences[] = $occurrence;
+            $pattern = $this->extractPatternFromExpr($expr, $patternFunction, $file, $content);
+            if (null !== $pattern) {
+                $found[] = $pattern;
             }
         }
-
-        return $occurrences;
     }
 
     /**
@@ -454,23 +627,51 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
         return null === $value || PatternFunction::isStringKey($value);
     }
 
-    private function extractPatternFromExpr(Expr $expr, PatternFunction $patternFunction, string $file, string $content): ?PatternOccurrence
+    /**
+     * A literal pattern is reported at the call; any other is held until
+     * the file is read, for the names it may go through.
+     *
+     * @return PatternOccurrence|PendingPattern<Expr>|null
+     */
+    private function extractPatternFromExpr(Expr $expr, PatternFunction $patternFunction, string $file, string $content): PatternOccurrence|PendingPattern|null
     {
         $pattern = $this->extractStringValue($expr);
-        if (null === $pattern || '' === $pattern) {
+        if (null === $pattern) {
+            return self::mayName($expr) ? new PendingPattern($expr, $patternFunction) : null;
+        }
+
+        if ('' === $pattern) {
             return null;
         }
 
         $offset = $this->normalizeOffset($expr->getStartFilePos());
 
         return new PatternOccurrence(
-            $pattern,
+            $pattern.$patternFunction->patternSuffix,
             $file,
             $expr->getStartLine(),
-            $patternFunction->label.'()',
-            column: null !== $offset ? $this->columnFromOffset($content, $offset) : null,
+            $patternFunction->source(),
+            column: null !== $offset ? PendingPattern::column($content, $offset) : null,
             fileOffset: $offset,
         );
+    }
+
+    /**
+     * Whether a pattern argument that is no literal may still be read
+     * through the names of the file: a concatenation, a constant, a local
+     * variable, a property of $this.
+     */
+    private static function mayName(Expr $expr): bool
+    {
+        if ($expr instanceof ConstFetch) {
+            return !\in_array($expr->name->toLowerString(), ['true', 'false', 'null'], true);
+        }
+
+        if ($expr instanceof PropertyFetch) {
+            return $expr->var instanceof Variable && 'this' === $expr->var->name && $expr->name instanceof Identifier;
+        }
+
+        return $expr instanceof Concat || $expr instanceof ClassConstFetch || ($expr instanceof Variable && \is_string($expr->name) && 'this' !== $expr->name);
     }
 
     private function extractStringValue(Expr $expr): ?string
@@ -500,21 +701,6 @@ final readonly class PhpParserExtractionStrategy implements ExtractorInterface, 
         }
 
         return $offset;
-    }
-
-    private function columnFromOffset(string $content, ?int $offset): ?int
-    {
-        if (null === $offset || $offset < 0) {
-            return null;
-        }
-
-        $prefix = substr($content, 0, $offset);
-        $lastNewline = strrpos($prefix, "\n");
-        if (false === $lastNewline) {
-            return $offset + 1;
-        }
-
-        return $offset - $lastNewline;
     }
 
     /**

@@ -29,6 +29,8 @@ final readonly class RegexOccurrence
      * @param Position $end
      * @param int      $byteOffset where the literal starts in the document
      * @param string   $literal    the literal as the document spells it, quotes included
+     * @param bool     $ignored    whether "@regex-ignore" or "@regex-ignore-next-line" silences
+     *                             its line: it gets no diagnostic
      */
     public function __construct(
         public string $pattern,
@@ -36,6 +38,7 @@ final readonly class RegexOccurrence
         public array $end,
         public int $byteOffset,
         public string $literal,
+        public bool $ignored = false,
     ) {}
 
     /**

@@ -63,6 +63,11 @@ return [
         'factorize' => false,
         'min_quantifier_count' => 4,
     ],
+    // The calls regex:lint reads patterns from, as "extraction" of regex.json.
+    'extraction' => [
+        'interop' => null,   // null: every preset; a list: exactly those; []: native calls only
+        'functions' => [],   // your helpers: "App\Support\Str::matches#1"
+    ],
     'paths' => ['app'],
     'exclude' => ['vendor', 'node_modules', 'storage'],
     'ide' => env('PHP_REGEX_IDE', env('APP_EDITOR', null)),
@@ -74,6 +79,30 @@ too: a file published by an older release keeps working after an upgrade.
 
 The `automata` settings are the defaults of `regex:compare`; its
 `--minimizer` and `--determinizer` options override them.
+
+`extraction` takes the presets and the helpers `regex lint` takes under
+`extraction` in `regex.json` (see
+[the CLI guide](cli.md#patterns-behind-a-wrapper)); the package does not read
+`regex.json`. `interop` left at `null`, or missing, reads every preset, those
+a later release adds included; a list reads exactly the presets it names. Each
+key falls back to its default alone: setting `interop` keeps `functions` at
+`[]`, and the other way round. A name that is no preset is ignored, and
+`regex:lint` says so under its banner, or on stderr with `--format=json` and
+the other machine formats:
+
+```
+Warning: Unknown extraction preset "laravel-str", ignored.
+```
+
+An entry of either list that is no string, a `false` say, is ignored the same
+way, the warning naming its type:
+
+```
+Warning: Extraction interop entry ignored: expected a string, got bool.
+```
+
+A `functions` spec the lint cannot read, `x#a` or `x#1$` say, is ignored
+with `Malformed pattern function "x#a", ignored.`
 
 An unknown `redos.threshold` stops `regex:lint` with an error naming the
 value, and leaves every other artisan command working. `safe` and `unknown`

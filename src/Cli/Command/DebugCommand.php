@@ -75,6 +75,15 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
                 return self::INVALID;
             }
+
+            // What the file holds that is ignored, as regex lint says it:
+            // on stderr, silenced by -q, and the command goes on.
+            if (!$output->isQuiet()) {
+                foreach ($configResult->warnings as $warning) {
+                    $output->writeError('Warning: '.$warning."\n");
+                }
+            }
+
             $defaults = $this->defaultsBuilder->build($configResult->config);
         }
 

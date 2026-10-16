@@ -67,6 +67,9 @@ final class LintExtractorFactoryTest extends TestCase
         $registry = $this->registryOf($factory->create());
 
         $this->assertInstanceOf(PatternFunction::class, $registry->lookupMethod('Composer\\Pcre\\Preg', 'match'));
+        // Every preset is on by default.
+        $this->assertInstanceOf(PatternFunction::class, $registry->lookupMethod('Nette\\Utils\\Strings', 'match'));
+        $this->assertInstanceOf(PatternFunction::class, $registry->lookupMethod('Webmozart\\Assert\\Assert', 'regex'));
     }
 
     private function registryOf(object $extractor): PatternFunctionRegistry

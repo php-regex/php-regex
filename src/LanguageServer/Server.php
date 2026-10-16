@@ -27,7 +27,9 @@ use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\IniFlag;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
@@ -45,10 +47,14 @@ use PHPRegex\Toolkit\Regex;
  * composer.json there, then the running PHP. A Regex handed to the
  * constructor is used as it is.
  *
- * The functions and static methods that declare a pattern parameter with
- * #[RegexPattern] are read then too, from the PHP files under regex.json's
- * "paths" (the root by default) and out of its "exclude" entries (vendor/ by
- * default), and from each open document as it changes.
+ * The calls read are those `regex lint` reads: the native functions, the
+ * presets regex.json's "extraction.interop" names (every one by default) and
+ * the functions its "extraction.functions" names. The functions and static
+ * methods that declare a pattern parameter with #[RegexPattern] are read at
+ * "initialize" too, from the PHP files under regex.json's "paths" (the root
+ * by default) and out of its "exclude" entries (vendor/ by default), from
+ * the libraries of vendor/ whatever "exclude" says, and from each open
+ * document as it changes. A document in vendor/ is not diagnosed.
  *
  * The ReDoS analysis runs only when initializationOptions.redos, else
  * checks.redos.enabled in regex.json, turns it on.
@@ -115,6 +121,14 @@ final class Server
      */
     public function run(): int
     {
+        // Stdout carries the frames: PHP's own diagnostics go to stderr.
+        // Where ini_get() or ini_set() is disabled the setting is left as
+        // it is.
+        $displayErrors = \function_exists('ini_get') && \function_exists('ini_set') ? \ini_get('display_errors') : false;
+        if (false !== $displayErrors && IniFlag::displaysErrors($displayErrors)) {
+            \ini_set('display_errors', 'stderr');
+        }
+
         // STDIN is only defined when PHP runs a script from the command line
         // with its standard streams: a child PHP process may have to open it.
         $input = $this->input ?? (\defined('STDIN') ? \STDIN : fopen('php://stdin', 'r'));
@@ -255,6 +269,8 @@ final class Server
         // The lint rules regex.json turns on or off, as `regex lint` reads them.
         $arguments = LintArguments::fromDefaults((new LintDefaultsBuilder())->build($config));
         $lintRules = $arguments->lintRules;
+        // The calls read, as `regex lint` reads them.
+        $this->documents->readWith(new RegexFinder(PatternFunctionRegistry::create($arguments->interop, $arguments->patternFunctions)));
         [$redosMode, $redosThreshold] = self::redos($params, $arguments);
 
         if (null !== $this->givenRegex) {
@@ -313,12 +329,19 @@ final class Server
             return [];
         }
 
+        // What the file holds that is ignored, the rest of it kept.
+        foreach ($loaded->warnings as $warning) {
+            self::log(self::LOG_WARNING, 'regex.json: '.$warning);
+        }
+
         return $loaded->config;
     }
 
     /**
      * Reads the workspace for the functions that declare a pattern parameter,
-     * under the "paths" and out of the "exclude" entries `regex lint` reads.
+     * under the "paths" and out of the "exclude" entries `regex lint` reads,
+     * and the libraries of vendor/, which `regex lint` reads whatever
+     * "exclude" says.
      *
      * @param array<string, mixed> $config
      */
@@ -330,6 +353,10 @@ final class Server
         $declarations = $this->documents->declarations();
         if (!$declarations->scanWorkspace($root, [] === $paths ? ['.'] : $paths, $exclude)) {
             self::log(self::LOG_WARNING, 'Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.');
+        }
+
+        if (!$declarations->scanLibraries($root.'/vendor')) {
+            self::log(self::LOG_WARNING, 'Functions declaring #[RegexPattern] were read from the first PHP files of vendor/ only.');
         }
     }
 

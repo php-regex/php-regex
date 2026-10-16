@@ -228,6 +228,12 @@ add one to yet.
 - **What a lint rule reports**: a rule may report more or fewer patterns when
   its analysis reads a case it missed, and the CHANGELOG names the rule. A
   patch only removes a false positive.
+- **Which patterns are read**: a minor release may read patterns the lint, the
+  language server, the bridges or the PHPStan extension did not read before: a
+  new preset, a call kind, a pattern reached through a name. More patterns
+  read means more findings on unchanged code; the CHANGELOG says what is read
+  that was not. A preset a minor adds is on by default, unless your
+  configuration lists its presets: a list means exactly that list.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
   with the replacement named. A deprecated class, method, option or
   configuration key carries `@deprecated since <package> <version>, use <replacement>`
@@ -264,6 +270,10 @@ add one to yet.
   Laravel config file and of the PHPStan extension, and the **exit codes** of
   every command (0 done, 1 a pattern or file problem, 2 a usage or
   configuration error).
+- The **names of the extraction presets** (`composer-pcre`, `nette-utils`,
+  `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`,
+  `beberlei-assert`, `symfony-validator`): a preset may read more calls of its
+  library in a minor release, never lose its name.
 - The **JSON output** of the `regex` command: a key keeps its name, its type
   and its meaning, and a success document never gains a top-level `error`
   (see [JSON output](json-output.md)). The ReDoS analysis' `search_cost`,

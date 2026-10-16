@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\DependencyInjection;
 
+use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosSeverity;
@@ -84,6 +85,27 @@ final readonly class Configuration implements ConfigurationInterface
                 ->scalarNode('extractor_service')
                     ->defaultNull()
                     ->info('Custom regex pattern extractor service ID. If not provided, PhpParser-based extraction will be tried first, then token-based extraction.')
+                ->end()
+                ->arrayNode('extraction')
+                    ->addDefaultsIfNotSet()
+                    ->info('Which calls regex:lint reads patterns from, beyond the native preg_* functions, RegexIterator and filter_var(): the shape of regex.json\'s "extraction", which the bundle does not read. Unused when extractor_service is set.')
+                    ->children()
+                        ->arrayNode('interop')
+                            ->beforeNormalization()->ifString()->then(static fn (string $name): array => [$name])->end()
+                            ->scalarPrototype()->end()
+                            ->defaultValue(InteropPresets::DEFAULT_PRESETS)
+                            ->treatNullLike(InteropPresets::DEFAULT_PRESETS)
+                            ->performNoDeepMerging()
+                            ->info('Libraries whose calls carry a regex pattern, by package slug ('.implode(', ', InteropPresets::names()).'). Every preset is on by default, and ~ says the same; a list reads exactly the presets it names, [] the native calls only, and a later config file\'s list replaces it. An unknown name is ignored, with a warning when regex:lint runs.')
+                        ->end()
+                        ->arrayNode('functions')
+                            ->beforeNormalization()->ifString()->then(static fn (string $name): array => [$name])->end()
+                            ->scalarPrototype()->end()
+                            ->defaultValue([])
+                            ->performNoDeepMerging()
+                            ->info('Project helpers carrying a pattern, as "function" or "Some\\Class::method". Append "#<index>" when the pattern is not the first argument, and "#<index>:keys" when that argument is an array whose keys hold the patterns. A call may pass the pattern by name as pattern:, patterns: or regex:; append "$<name>" to read it under the helper\'s own parameter name instead, as in "App\\grep#1$expression". A later config file\'s list replaces it.')
+                        ->end()
+                    ->end()
                 ->end()
                 ->arrayNode('redos')
                     ->addDefaultsIfNotSet()

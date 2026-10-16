@@ -223,6 +223,74 @@ final class PatternDeclarationsTest extends TestCase
     }
 
     #[Test]
+    public function test_a_new_workspace_scan_forgets_the_declarations_of_the_last(): void
+    {
+        $path = $this->write('src/Grep.php', self::GREP);
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $this->assertSame(1, $declarations->functionArgument('App\grep'));
+
+        unlink($path);
+        $declarations->scanWorkspace($this->root, ['src'], []);
+
+        $this->assertNull($declarations->functionArgument('App\grep'));
+        $this->assertSame([], $declarations->specs());
+    }
+
+    /**
+     * The namespaced functions named as a global pattern function, in
+     * lowercase, sorted, each once: from the files and from the open
+     * documents.
+     */
+    #[Test]
+    public function test_the_shadowing_functions_are_lowercase_sorted_and_listed_once(): void
+    {
+        $this->write('src/One.php', "<?php\nnamespace Alpha;\nfunction GREP() {}\n");
+        $this->write('src/Two.php', "<?php\nnamespace Alpha;\nfunction grep() {}\n");
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $declarations->readDocument('untitled:Untitled-1', "<?php\nnamespace Gamma;\nfunction Grep() {}\n");
+        $declarations->readDocument('untitled:Untitled-2', "<?php\nnamespace Beta;\nfunction grep() {}\n");
+
+        $this->assertSame(['alpha\grep', 'beta\grep', 'gamma\grep'], $declarations->plainFunctions(['Grep']));
+    }
+
+    /**
+     * An open document stands for its file among the shadowing functions
+     * too: the file's function, gone from the text, is no longer one.
+     */
+    #[Test]
+    public function test_an_open_document_stands_for_its_file_among_the_shadowing_functions(): void
+    {
+        $path = $this->write('src/Grep.php', "<?php\nnamespace App;\nfunction grep() {}\n");
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $this->assertSame(['app\grep'], $declarations->plainFunctions(['grep']));
+
+        $declarations->readDocument('file://'.$path, "<?php\nnamespace App;\nfunction find() {}\n");
+
+        $this->assertSame([], $declarations->plainFunctions(['grep']));
+    }
+
+    /**
+     * After a new scan, the shadowing functions are unknown until they are
+     * read again: forgetting a file that declares no pattern parameter
+     * changes nothing the documents are read with.
+     */
+    #[Test]
+    public function test_forgetting_a_file_before_the_shadowing_functions_are_read_again_changes_nothing(): void
+    {
+        $path = $this->write('src/Grep.php', "<?php\nnamespace App;\nfunction grep() {}\n");
+        $declarations = new PatternDeclarations();
+        $declarations->scanWorkspace($this->root, ['src'], []);
+        $this->assertSame(['app\grep'], $declarations->plainFunctions(['grep']));
+
+        $declarations->scanWorkspace($this->root, ['src'], []);
+
+        $this->assertFalse($declarations->forgetFile($path));
+    }
+
+    #[Test]
     public function test_a_file_uri_is_read_as_a_path(): void
     {
         $this->assertSame('/work space/src/A.php', PatternDeclarations::pathOf('file:///work%20space/src/A.php'));

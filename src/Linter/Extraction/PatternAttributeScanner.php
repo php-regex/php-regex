@@ -40,6 +40,10 @@ final class PatternAttributeScanner
     private const IDENTIFIER = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
 
     /**
+     * The pattern function specs the files declare, each naming the
+     * parameter it marks, "App\grep#1$expression", for a call that passes
+     * the pattern by name.
+     *
      * @param array<string> $files
      *
      * @return list<string>
@@ -73,28 +77,11 @@ final class PatternAttributeScanner
      */
     public static function namespacedFunctions(array $files, array $names): array
     {
-        // Only identifiers name a function, and none holds a character a
-        // pattern reads apart: they go into the search as written.
-        $identifiers = array_filter($names, static fn (string $name): bool => 1 === LibraryPcre::match(self::IDENTIFIER, $name));
-        $wanted = array_fill_keys(array_map(strtolower(...), $identifiers), true);
-
-        // A file is tokenized only when it declares a function of one of the
-        // names, which a search tells far more cheaply. Only whitespace may
-        // stand between `function`, `&` and the name: `function /* */ grep(`
-        // is not seen, and a global pattern function then captures the
-        // calls its namespace makes to it.
-        $declares = '/\\bfunction\\s+&?\\s*(?:'.implode('|', array_keys($wanted)).')\\s*\\(/i';
         $functions = [];
         foreach ($files as $file) {
             $content = self::read($file);
-            if (null === $content || false === stripos($content, 'namespace') || 1 !== LibraryPcre::match($declares, $content)) {
-                continue;
-            }
-
-            foreach (self::declarations($content)[1] as $function) {
-                if (isset($wanted[strtolower(substr($function, (int) strrpos($function, '\\') + 1))])) {
-                    $functions[] = $function;
-                }
+            if (null !== $content) {
+                array_push($functions, ...self::namespacedFunctionsIn($content, $names));
             }
         }
 
@@ -102,6 +89,47 @@ final class PatternAttributeScanner
     }
 
     /**
+     * The namespaced functions a PHP source declares under one of the given
+     * short names, as namespacedFunctions() reads a file.
+     *
+     * @param array<string> $names short function names
+     *
+     * @return list<string>
+     */
+    public static function namespacedFunctionsIn(string $content, array $names): array
+    {
+        // Only identifiers name a function, and none holds a character a
+        // pattern reads apart: they go into the search as written.
+        $identifiers = array_filter($names, static fn (string $name): bool => 1 === LibraryPcre::match(self::IDENTIFIER, $name));
+        $wanted = array_fill_keys(array_map(strtolower(...), $identifiers), true);
+        if ([] === $wanted || false === stripos($content, 'namespace')) {
+            return [];
+        }
+
+        // A source is tokenized only when it declares a function of one of
+        // the names, which a search tells far more cheaply. Between
+        // `function`, `&`, the name and `(`, PHP reads any white space or
+        // comment: `function /* */ grep(`, `function&grep(`.
+        $gap = '(?:\\s++|/\\*.*?\\*/|(?://|#)[^\\r\\n]*+)';
+        $declares = '~\\bfunction(?=[\\s/#&])(?:'.$gap.'|&)*(?:'.implode('|', array_keys($wanted)).')'.$gap.'*\\(~is';
+        if (1 !== LibraryPcre::match($declares, $content)) {
+            return [];
+        }
+
+        $functions = [];
+        foreach (self::declarations($content)[1] as $function) {
+            if (isset($wanted[strtolower(substr($function, (int) strrpos($function, '\\') + 1))])) {
+                $functions[] = $function;
+            }
+        }
+
+        return array_values(array_unique($functions));
+    }
+
+    /**
+     * The pattern function specs the content declares, each naming the
+     * parameter it marks.
+     *
      * @return list<string>
      */
     public static function scan(string $content): array
@@ -183,10 +211,12 @@ final class PatternAttributeScanner
                     $functions[] = $namespace.'\\'.$tokens[$next]->text;
                 }
 
-                $index = self::markedParameter($tokens, $next + 1, $namespace, $uses);
-                if (null === $index) {
+                $marked = self::markedParameter($tokens, $next + 1, $namespace, $uses);
+                if (null === $marked) {
                     continue;
                 }
+
+                $index = $marked[0].(null !== $marked[1] ? '$'.$marked[1] : '');
 
                 if ($isMethod) {
                     if (null !== $class[0]) {
@@ -251,12 +281,14 @@ final class PatternAttributeScanner
 
     /**
      * The zero-based position of the first parameter that carries the
-     * attribute, reading the parameter list that opens at $i.
+     * attribute, and its name, reading the parameter list that opens at $i.
      *
      * @param list<\PhpToken>       $tokens
      * @param array<string, string> $uses
+     *
+     * @return array{int, string|null}|null
      */
-    private static function markedParameter(array $tokens, int $i, string $namespace, array $uses): ?int
+    private static function markedParameter(array $tokens, int $i, string $namespace, array $uses): ?array
     {
         if (!isset($tokens[$i]) || '(' !== $tokens[$i]->text) {
             return null;
@@ -287,8 +319,36 @@ final class PatternAttributeScanner
                 && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
                 $name = strtolower(self::resolve($token, $namespace, $uses));
                 if (self::ATTRIBUTE === $name || (self::PHPSTORM_LANGUAGE === $name && self::namesRegExp($tokens, $i + 1))) {
-                    return $index;
+                    return [$index, self::parameterName($tokens, $i + 1)];
                 }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The name of the parameter whose attribute is read at $i, inside its
+     * "#[": the first variable at the parameter list's level.
+     *
+     * @param list<\PhpToken> $tokens
+     */
+    private static function parameterName(array $tokens, int $i): ?string
+    {
+        $nesting = 1;
+        for ($count = \count($tokens); $i < $count; $i++) {
+            $token = $tokens[$i];
+            if ($token->is(\T_ATTRIBUTE) || \in_array($token->text, ['(', '['], true)) {
+                $nesting++;
+            } elseif (\in_array($token->text, [')', ']'], true)) {
+                if (0 === $nesting) {
+                    return null;
+                }
+                $nesting--;
+            } elseif (0 === $nesting && $token->is(\T_VARIABLE)) {
+                return substr($token->text, 1);
+            } elseif (0 === $nesting && ',' === $token->text) {
+                return null;
             }
         }
 

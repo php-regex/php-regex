@@ -7,9 +7,11 @@ parametersSchema:
         # PCRE2 release patterns are judged for, like '10.42' or PCRE_VERSION
         # ('10.44 2024-06-07'); null for the one the PHP version bundles
         pcreVersion: schema(string(), pattern('\d+\.\d+(-[A-Za-z0-9]+)?(\s.*)?'), nullable()),
-        # Wrapper libraries whose static methods carry a pattern, as the
-        # lint's extraction.interop: composer-pcre, nette-utils,
-        # spatie-regex, laravel-str; null for composer-pcre
+        # Libraries whose static methods carry a pattern, as the lint's
+        # extraction.interop: composer-pcre, nette-utils, spatie-regex,
+        # illuminate-support, phpunit, webmozart-assert, beberlei-assert,
+        # symfony-validator; null for every preset, [] for the native
+        # functions only
         interop: schema(listOf(string()), nullable()),
         checks: structure([
             lint: structure([

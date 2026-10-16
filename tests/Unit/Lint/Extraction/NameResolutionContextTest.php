@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Linter\Extraction\NameResolutionContext;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class NameResolutionContextTest extends TestCase
@@ -109,5 +110,32 @@ final class NameResolutionContextTest extends TestCase
 
         $this->assertSame('Vendor\\Helpers\\check', $context->resolveFunction('Helpers\\check'));
         $this->assertSame('App\\Service\\Other\\check', $context->resolveFunction('Other\\check'));
+    }
+
+    /**
+     * PHP falls back to the global constant for an unqualified name only:
+     * a qualified one is the namespace's, or an imported class's.
+     */
+    #[Test]
+    public function test_a_qualified_constant_has_no_global_fallback(): void
+    {
+        $context = new NameResolutionContext();
+        $context->enterNamespace('App\\Service');
+        $context->importClass('Lib', 'Vendor\\Lib');
+
+        $this->assertSame(['App\\Service\\Sub\\RE'], $context->resolveConstant('Sub\\RE'));
+        $this->assertSame(['Vendor\\Lib\\RE'], $context->resolveConstant('Lib\\RE'));
+        $this->assertSame(['App\\Service\\RE', 'RE'], $context->resolveConstant('RE'));
+        $this->assertSame(['Other\\RE'], $context->resolveConstant('\\Other\\RE'));
+    }
+
+    #[Test]
+    public function test_an_imported_constant_resolves_to_its_target_without_leading_separator(): void
+    {
+        $context = new NameResolutionContext();
+        $context->enterNamespace('App\\Service');
+        $context->importConstant('PATTERN', '\\Vendor\\PATTERN');
+
+        $this->assertSame(['Vendor\\PATTERN'], $context->resolveConstant('PATTERN'));
     }
 }

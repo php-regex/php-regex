@@ -21,7 +21,7 @@ PHPRegex Language Server
 
 A language server for the regex patterns of PHP files: diagnostics, hovers, completions and code actions in any LSP editor.
 
-The server reads PHP source over stdio, finds the regex literals in it — the patterns of `preg_*` calls, of wrapper calls such as `Preg::match()`, and of the calls to functions whose parameter is marked `#[RegexPattern]` — and answers in JSON-RPC, so every LSP editor can check patterns while you type.
+The server reads PHP source over stdio, finds the regex literals in it — the patterns of `preg_*` calls, of library calls such as `Preg::match()` or `$this->assertMatchesRegularExpression()`, and of the calls to functions whose parameter is marked `#[RegexPattern]` — and answers in JSON-RPC, so every LSP editor can check patterns while you type.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [LSP guide](https://php-regex.com/guides/lsp/) gets diagnostics into your editor.
 
@@ -32,7 +32,8 @@ Features
 - Hovers in plain English: hold the pointer on a pattern to read what it matches, token by token.
 - Completions inside patterns: shorthands after a backslash, Unicode properties after `\p{`, POSIX classes after `[:`, groups after `(?`, flags after the closing delimiter.
 - Code actions: one action adds the `u` flag a Unicode pattern lacks, one applies the optimizer's rewrite — `/[0-9]{1,}/` becomes `/\d+/` — and two lay a long pattern out over lines under `x` or compact it back to one line.
-- Functions marked `#[RegexPattern]` (or PhpStorm's `#[Language('RegExp')]`): their calls are checked at that argument, the declarations read from the workspace's PHP files at start-up (under `paths`, out of `exclude` in `regex.json`) and from the open documents as you type.
+- The calls `regex lint` reads: the native ones (`preg_*`, `RegexIterator`, `filter_var()`), the presets `extraction.interop` in `regex.json` names (every one by default, an unknown name logged and ignored), the helpers `extraction.functions` names, and a pattern held in a constant, a variable or a property of the same file, diagnosed at its literal; `@regex-ignore` works as in the lint. A pattern assembled from several pieces at the call, or written as a heredoc, is reported by `regex lint` but gets no diagnostic in the editor.
+- Functions marked `#[RegexPattern]` (or PhpStorm's `#[Language('RegExp')]`): their calls are checked at that argument, the declarations read at start-up from the workspace's PHP files (under `paths`, out of `exclude` in `regex.json`) and from `vendor/` whatever `exclude` says (read again when the editor reports `vendor/composer/installed.json` changed), and from the open documents as you type. A document in `vendor/` gets no diagnostics.
 - One target per workspace: patterns are judged for one PHP and PCRE2 pair, resolved from the editor settings, `regex.json`, `composer.json` or the running PHP.
 
 Installation

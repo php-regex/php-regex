@@ -28,7 +28,7 @@ Features
 
 * 40 lint rules over the parsed AST: redundant and empty groups and character classes, useless flags and quantifiers, lazy quantifiers that end the pattern, repeats that can match the empty string, suspicious escapes and ranges, undefined backreferences, impossible anchors and word boundaries, anchors that bind to one alternative, possessive repeats and lookaheads that can never match (proven by the automata), multibyte text PCRE reads as bytes without `/u`; every SonarPHP regex rule is mapped to its id in the [SonarPHP Regex Rules](https://php-regex.com/reference/sonar/) page.
 * Patterns are validated before they are linted: parse and semantic errors arrive with a position and a tip, not a guess.
-* Extraction from PHP sources: native `preg_*` calls, the composer/pcre, nette/utils, spatie/regex and Laravel `Str` wrappers, and your own helper functions — with `@regex-ignore` comments to suppress a finding inline.
+* Extraction from PHP sources: native `preg_*` calls, `RegexIterator` and `filter_var()` with `FILTER_VALIDATE_REGEXP`; the composer/pcre, nette/utils, spatie/regex and Laravel `Str` wrappers, PHPUnit's regex assertions, webmozart/assert, beberlei/assert and Symfony's `Regex` constraint; your own helper functions; and a pattern held in a constant, a local variable or a property of the same file, reported where its literal is written — with `@regex-ignore` comments to suppress a finding inline.
 * ReDoS detection through php-regex/regex-redos: proven verdicts with their attack input, theoretical or confirmed mode, four severity thresholds, and `regex.lint.redos.search` for an unanchored search that retries a linear attempt along a run, quadratic in PCRE2's interpreter.
 * Optimization suggestions through php-regex/regex-optimizer, each rewrite checked for equivalence by the automata solver.
 * Five report formats: console, JSON, GitHub annotations, Checkstyle, JUnit.
@@ -61,7 +61,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | `jobs` | logical CPUs | Parallel workers: the CPUs the process may use, within a container's CPU quota; 1 without `pcntl` |
 | `format` | `console` | `console`, `json`, `github`, `checkstyle` or `junit` |
 | `ide` | none | `phpstorm`, `vscode`, others, or a URL template — for clickable links |
-| `extraction.interop` | `["composer-pcre"]` | Wrapper presets to read: `composer-pcre`, `nette-utils`, `spatie-regex`, `laravel-str` |
+| `extraction.interop` | every preset | Libraries whose calls carry a pattern: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; a list reads exactly those, `[]` the native calls only, an unknown name is ignored with a warning |
 | `extraction.functions` | `[]` | Project helpers carrying a pattern, as `App\Support\Str::matches#1` |
 | `checks.validation` | `true` | Syntax and semantic validation |
 | `checks.redos.enabled` | `false` | ReDoS analysis |

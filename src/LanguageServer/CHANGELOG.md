@@ -21,3 +21,11 @@ CHANGELOG
    `workspace/didChangeWatchedFiles` read a file again.
  * A double-quoted pattern is read as PHP reads it: `"/\d+\.x/"` is
    `/\d+\.x/`, where the escapes PHP keeps as written lost their backslash.
+ * The server reads the calls `regex lint` reads, configured by
+   `extraction.interop` and `extraction.functions` in the workspace's
+   `regex.json`, an unknown preset logged as a warning, and diagnoses a
+   pattern held in a constant, a variable or a property at its literal.
+   The declarations of `vendor/` are read too, 20,000 PHP files at most,
+   with a warning logged past that.
+ * PHP's own warnings go to stderr, never between the JSON-RPC frames on
+   stdout.

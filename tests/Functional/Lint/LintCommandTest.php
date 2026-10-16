@@ -23,6 +23,7 @@ use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintCommandTest extends TestCase
@@ -125,6 +126,32 @@ final class LintCommandTest extends TestCase
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString('"stats"', $buffer);
         $this->assertStringContainsString('"results"', $buffer);
+    }
+
+    /**
+     * Each warning about what the run ignores is a line of its own.
+     */
+    #[Test]
+    public function test_lint_command_writes_each_warning_on_its_own_line(): void
+    {
+        $command = $this->makeLintCommand();
+        $output = $this->makeOutput();
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput([
+            self::fixturePath('simple_text.php'),
+            '--interop=first-unknown,second-unknown',
+            '--format=console',
+            '--no-redos',
+            '--no-validate',
+            '--no-optimize',
+        ]), $output), $exitCode);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString(
+            "Warning: Unknown extraction preset \"first-unknown\", ignored.\nWarning: Unknown extraction preset \"second-unknown\", ignored.\n",
+            $buffer,
+        );
     }
 
     private function makeLintCommand(): LintCommand

@@ -30,6 +30,7 @@ Features
 * A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
 * Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`, with the options of the same commands in the CLI and the Laravel package
 * `regex:lint` reads your PHP files, your route requirements and your validator constraints in one pass
+* In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, `new Regex()` and `#[Assert\Regex]`, the wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
 * `regex:routes` and `regex:security` analyze route conflicts, `access_control` ordering and firewall regexes, including their ReDoS risk
@@ -55,12 +56,15 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
 | `cache.pool`, `cache.directory`, `cache.prefix` | `null`, `'%kernel.cache_dir%/php_regex'`, `'regex_'` | Cache for parsed ASTs: a PSR-6 pool, else this directory |
 | `extractor_service` | `null` | Service id of a custom pattern extractor |
+| `extraction.interop`, `extraction.functions` | every preset, `[]` | The libraries whose calls `regex:lint` reads patterns from (a list for exactly those, `[]` for the native calls only), and your own helpers carrying a pattern, as `extraction` of `regex.json`; unused with `extractor_service` |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported, patterns skipped |
 | `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind the automata comparisons |
 | `optimizations.*` | `digits`, `word`, `ranges`, `canonicalize_char_classes` `true`; `possessive`, `factorize` `false`; `min_quantifier_count` `4` | Default optimization switches for `regex:lint` |
 | `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips |
 | `ide` | `'%env(default::SYMFONY_IDE)%'` | IDE behind the clickable links; falls back to `framework.ide` |
+
+The bundle does not read `regex.json`: `extraction` is set here. A later configuration file's `extraction.interop` or `extraction.functions` list replaces the earlier one, where `paths` and `exclude` add up. A name in `extraction.interop` that is no preset is ignored, and `regex:lint` prints `Warning: Unknown extraction preset "…", ignored.` under its banner, or on stderr with `--format=json` and the other machine formats. A `#[Assert\Regex]` constraint read both from the PHP file and from the validator's metadata is reported once.
 
 Usage
 -----

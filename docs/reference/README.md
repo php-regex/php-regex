@@ -20,6 +20,7 @@ This section freezes behavior you build against: diagnostics, output shapes, com
 - [Feature support matrix](feature-support-matrix.md): PCRE construct coverage by component.
 - [Correctness contracts](correctness-contracts.md): what is proved, heuristic, or unknown.
 - [Backward compatibility](backward-compatibility.md): what a 2.x release may change.
+- [Extraction coverage](extraction-coverage.md): which calls each tool reads a pattern from.
 - [PCRE2 conformance](pcre2-conformance.md): validation verdicts measured against PHP's engine.
 
 ## Use the data

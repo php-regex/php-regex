@@ -306,9 +306,10 @@ parameters:
         # The PCRE2 release, like '10.42', for a PHP that links another one
         # than it bundles; null for the bundled one.
         pcreVersion: null
-        # The wrapper libraries whose static methods carry a pattern:
-        # composer-pcre, nette-utils, spatie-regex, laravel-str; null for
-        # composer-pcre, [] for the native functions only.
+        # The libraries whose static methods carry a pattern:
+        # composer-pcre, nette-utils, spatie-regex, illuminate-support,
+        # phpunit, webmozart-assert, beberlei-assert, symfony-validator;
+        # null for every preset, [] for the native functions only.
         interop: null
         checks:
             lint:
@@ -348,13 +349,17 @@ it starts, even while `complexity` is off.
 
 A pattern passed to a static method of a wrapper library is judged as one
 passed to `preg_*()`, at the argument the library takes it, as `regex lint`
-reads it under `extraction.interop` ([CLI guide](cli.md)): `Preg::match()` of
-composer/pcre by default, and with `interop`, `Strings::match()` of
-nette/utils (the pattern second), `Regex::match()` of spatie/regex and
-`Str::isMatch()` of Laravel. The class is resolved as PHP resolves it, an
-aliased import included; a method of another class with the same name is not
-read. The subject of such a call is not told apart, so a constant subject
-does not quiet a ReDoS report as it does in `preg_match()`.
+reads it under `extraction.interop` ([CLI guide](cli.md#patterns-behind-a-wrapper)):
+`Preg::match()` of composer/pcre, `Strings::match()` of nette/utils (the
+pattern second), `Regex::match()` of spatie/regex, `Str::isMatch()` of
+Laravel, `Assert::regex()` of webmozart/assert and `Assertion::regex()` of
+beberlei/assert (the pattern second), and PHPUnit's assertions called as
+`PHPUnit\Framework\Assert::assertMatchesRegularExpression()`. Every preset is
+read unless `interop` lists some; a list reads exactly the presets it names.
+The class is resolved as PHP resolves it, an aliased import included; a method
+of another class with the same name is not read. The subject of such a call is
+not told apart, so a constant subject does not quiet a ReDoS report as it does
+in `preg_match()`.
 
 ```neon
 parameters:
@@ -363,7 +368,15 @@ parameters:
 ```
 {: data-file="phpstan.neon" }
 
-A name the library does not know is passed over.
+A name the library does not know is passed over, without a warning.
+
+The rule reads static calls only. An assertion called on the test case,
+`$this->assertMatchesRegularExpression()` or `self::…`, PHPUnit's
+`assertMatchesRegularExpression()` function, `new Regex(...)` and
+`#[Assert\Regex(...)]` of the `symfony-validator` preset, `new RegexIterator()`
+and `filter_var()` are read by `regex lint`, not by the extension (see the
+[extraction coverage](../reference/extraction-coverage.md)). Nette's
+`utf8: true` is not applied: the pattern is judged without the `u` it adds.
 
 A `phpVersion` or `pcreVersion` that names no release stops the analysis when
 it starts, not on the first file. So does a `threshold` that is not `low`,

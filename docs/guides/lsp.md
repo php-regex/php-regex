@@ -227,6 +227,31 @@ Changing the setting takes a restart of the server.
 
 ---
 
+## Which Calls Are Read
+
+The server reads the calls `regex lint` reads (see
+[the CLI guide](cli.md#patterns-behind-a-wrapper)), with the same rules: the
+native calls, the presets `extraction.interop` names in the workspace's
+`regex.json` (every preset when unset), and the helpers
+`extraction.functions` names. A name in `extraction.interop` that is no preset
+is ignored and logged (`window/logMessage`, as a warning):
+
+```
+regex.json: Unknown extraction preset "laravel-str", ignored.
+```
+
+A pattern held in a constant, a local variable or a property of the same
+document is diagnosed where its literal is written, once, as `regex lint`
+reports it; `@regex-ignore` on that line silences it, and a marker on the
+call does not. A namespace that declares its own function shadows a global
+pattern function of the same name, as in the lint: an unqualified call in
+that namespace is not read.
+
+One difference: a diagnostic needs one string literal to land in, so a
+pattern the call assembles from several pieces (`'/'.self::PART.'/'`) and a
+pattern written as a heredoc or a nowdoc get no diagnostic in the editor,
+although `regex lint` reports them.
+
 ## Functions Marked `#[RegexPattern]`
 
 A parameter marked with the attribute `PHPRegex\Parser\Attribute\RegexPattern`,
@@ -251,7 +276,7 @@ final class Str
 Str::matches($input, '/(a/'); // reported: missing closing parenthesis
 ```
 
-The server finds the declarations in two places:
+The server finds the declarations in three places:
 
 - the PHP files of the workspace, read once at `initialize`: those under
   `paths` in `regex.json` (the root folder when unset), but those under an
@@ -260,6 +285,15 @@ The server finds the declarations in two places:
   `PHPRegex\Parser\Attribute` or `JetBrains\PhpStorm\Language` is tokenized;
   the scan stops after 20,000 PHP files and logs a warning, so a larger
   workspace narrows `paths` or `exclude`;
+- the libraries of the workspace's `vendor/`, read at `initialize` whatever
+  `exclude` says, as `regex lint` reads them: a helper a package declares is
+  known. This scan also stops after 20,000 PHP files and logs a warning
+  (`Functions declaring #[RegexPattern] were read from the first PHP files of
+  vendor/ only.`): a helper declared in a library past that point is not
+  known to the server, though `regex lint` still reads it. A document opened from `vendor/` gives its declarations and gets no
+  diagnostics. A project declaration wins over a library's of the same
+  function. When the editor reports `vendor/composer/installed.json` changed,
+  the libraries are read again;
 - the open documents, read on every change: an open document stands for its
   file, saved or not, and when its declarations change, the other open
   documents are checked again.
@@ -270,13 +304,12 @@ editor is set to send it) are read again. A file changed outside the editor
 that it does not report keeps its declarations until the server restarts.
 
 The calls are read as `regex lint` reads them: function calls and static
-calls, their names resolved through the namespace and the `use` imports; an
+calls that name their class, their names resolved through the namespace and
+the `use` imports, a named argument read under the marked parameter's name; an
 unqualified call in the function's own namespace, `grep()` in
 `namespace App`, is read, as PHP calls `App\grep()` first. An instance call
-(`$str->matches(...)`), a call through `self::` or `static::`, and an argument
-that is not one string literal (a concatenation, a variable, a named
-argument) are not read. `extraction.functions` in `regex.json` is not read by
-the server.
+(`$str->matches(...)`) and a call through `self::`, `static::` or `parent::`
+are not read.
 
 ---
 
@@ -610,14 +643,14 @@ For stdio-based connections:
 
 ### Custom Regex Detection
 
-The LSP server automatically detects regex patterns in:
+The LSP server detects regex patterns in:
 
-- `preg_match()` and `preg_match_all()`
-- `preg_replace()` and `preg_replace_callback()`
-- `preg_split()`
-- `preg_grep()`
-- `preg_filter()`
-- wrapper calls such as `Preg::match()`
+- the `preg_*` functions, `RegexIterator`, and `filter_var()` with
+  `FILTER_VALIDATE_REGEXP`
+- the calls of the presets `extraction.interop` names, every one by default:
+  `Preg::match()`, `Str::match()`, PHPUnit's regex assertions, `Assert::regex()`,
+  `#[Assert\Regex]` and the others ([Which calls are read](#which-calls-are-read))
+- the helpers `extraction.functions` names
 - the calls to the [functions marked `#[RegexPattern]`](#functions-marked-regexpattern)
 
 Both single-quoted and double-quoted strings are supported.

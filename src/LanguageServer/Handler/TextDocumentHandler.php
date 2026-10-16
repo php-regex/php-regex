@@ -253,8 +253,16 @@ final readonly class TextDocumentHandler
         $diagnostics = [];
         $content = $this->documents->getContent($uri) ?? '';
         $positions = new PositionConverter($content);
+        // A library's file is no file of the project: `regex lint` leaves
+        // vendor/ out, and so does the editor.
+        $occurrences = $this->documents->isLibrary($uri) ? [] : $this->documents->getOccurrences($uri);
 
-        foreach ($this->documents->getOccurrences($uri) as $occurrence) {
+        foreach ($occurrences as $occurrence) {
+            // "@regex-ignore" silences it, as in `regex lint`.
+            if ($occurrence->ignored) {
+                continue;
+            }
+
             // Offsets count in bytes of the pattern body; the span places
             // them through the literal's escapes, in UTF-16 columns.
             $span = PatternSpan::of($occurrence, $positions);

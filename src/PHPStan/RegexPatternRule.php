@@ -103,8 +103,8 @@ final class RegexPatternRule implements Rule
 
     /**
      * @param array<string, mixed> $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
-     *                                              "interop" (the wrapper libraries read, composer/pcre when
-     *                                              null) and "checks" ("lint", "redos", "optimizations"),
+     *                                              "interop" (the presets read, every one when null) and
+     *                                              "checks" ("lint", "redos", "optimizations"),
      *                                              every key optional
      * @param PhpVersion|null      $phpVersion      the PHP version PHPStan analyses the project for: patterns are
      *                                              judged for it, with the PCRE2 it bundles, unless "phpVersion"
@@ -235,7 +235,7 @@ final class RegexPatternRule implements Rule
         $args = $node->getArgs();
         $errors = [];
         foreach ($function->eachArgument() as $carrier) {
-            $patternArg = self::patternArgument($args, $carrier->argumentIndex);
+            $patternArg = self::patternArgument($args, $carrier);
             if (null === $patternArg) {
                 continue;
             }
@@ -283,23 +283,23 @@ final class RegexPatternRule implements Rule
     }
 
     /**
-     * The pattern argument of a wrapper: by one of the names a pattern
-     * parameter takes when the call names its arguments, by position
-     * otherwise.
+     * The pattern argument of a wrapper: by the name of its pattern
+     * parameter, case included as PHP compares it, when the call names its
+     * arguments, by position otherwise.
      *
      * @param array<Arg> $args
      */
-    private static function patternArgument(array $args, int $position): ?Expr
+    private static function patternArgument(array $args, PatternFunction $carrier): ?Expr
     {
-        foreach (PatternFunction::PATTERN_PARAMETER_NAMES as $name) {
+        foreach ($carrier->parameterNames as $name) {
             foreach ($args as $arg) {
-                if (null !== $arg->name && $name === $arg->name->toLowerString()) {
+                if (null !== $arg->name && $name === $arg->name->toString()) {
                     return $arg->value;
                 }
             }
         }
 
-        return self::argument($args, $position, '');
+        return self::argument($args, $carrier->argumentIndex, '');
     }
 
     /**

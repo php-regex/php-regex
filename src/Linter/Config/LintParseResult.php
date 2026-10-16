@@ -19,12 +19,14 @@ namespace PHPRegex\Linter\Config;
 final readonly class LintParseResult
 {
     /**
-     * @param bool $pathsGiven whether the paths come from the command line, not from the configuration
+     * @param bool         $pathsGiven whether the paths come from the command line, not from the configuration
+     * @param list<string> $warnings   what the command line holds that is ignored, the run going on
      */
     public function __construct(
         public ?LintArguments $arguments,
         public ?string $error = null,
         public bool $help = false,
         public bool $pathsGiven = false,
+        public array $warnings = [],
     ) {}
 }

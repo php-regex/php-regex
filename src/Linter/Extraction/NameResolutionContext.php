@@ -38,6 +38,11 @@ final class NameResolutionContext
     private array $functionAliases = [];
 
     /**
+     * @var array<string, string> alias, case kept => fully qualified constant name
+     */
+    private array $constantAliases = [];
+
+    /**
      * Enter a namespace, dropping the imports of the previous block.
      */
     public function enterNamespace(string $namespace): void
@@ -45,6 +50,16 @@ final class NameResolutionContext
         $this->namespace = trim($namespace, '\\');
         $this->classAliases = [];
         $this->functionAliases = [];
+        $this->constantAliases = [];
+    }
+
+    /**
+     * The fully qualified name of a class, function or constant the
+     * current namespace declares.
+     */
+    public function declaredName(string $name): string
+    {
+        return $this->qualify($name);
     }
 
     public function importClass(string $alias, string $target): void
@@ -55,6 +70,36 @@ final class NameResolutionContext
     public function importFunction(string $alias, string $target): void
     {
         $this->functionAliases[strtolower($alias)] = ltrim($target, '\\');
+    }
+
+    /**
+     * "use const A\B as C": the alias of a constant keeps its case, as PHP
+     * compares it.
+     */
+    public function importConstant(string $alias, string $target): void
+    {
+        $this->constantAliases[$alias] = ltrim($target, '\\');
+    }
+
+    /**
+     * The fully qualified names a constant written at the call may be, in
+     * the order PHP tries them: an unqualified name not imported is the
+     * namespace's constant, then the global one.
+     *
+     * @return non-empty-list<string>
+     */
+    public function resolveConstant(string $written): array
+    {
+        // A fully qualified name too: resolveClass() drops its leading "\".
+        if (str_contains($written, '\\')) {
+            return [$this->resolveClass($written)];
+        }
+
+        if (isset($this->constantAliases[$written])) {
+            return [$this->constantAliases[$written]];
+        }
+
+        return '' === $this->namespace ? [$written] : [$this->namespace.'\\'.$written, $written];
     }
 
     /**

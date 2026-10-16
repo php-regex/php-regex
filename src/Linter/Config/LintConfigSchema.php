@@ -98,13 +98,18 @@ final class LintConfigSchema
     ];
 
     /**
-     * The wrapper libraries extraction.interop can name.
+     * The libraries extraction.interop can name, by package slug, in the
+     * order of InteropPresets::names().
      */
     private const INTEROP_PRESETS = [
         'composer-pcre' => 'composer/pcre: Composer\Pcre\Preg and Composer\Pcre\Regex.',
         'nette-utils' => 'nette/utils: Nette\Utils\Strings, whose pattern is the second argument.',
         'spatie-regex' => 'spatie/regex: Spatie\Regex\Regex.',
-        'laravel-str' => 'Illuminate\Support\Str::match, matchAll, isMatch and replaceMatches.',
+        'illuminate-support' => 'illuminate/support: Illuminate\Support\Str::match, matchAll, isMatch and replaceMatches.',
+        'phpunit' => 'phpunit/phpunit: the regex assertions and expectations, matched by method name on $this->, self::, static::, parent::, Assert:: and TestCase::, and as functions of PHPUnit\Framework.',
+        'webmozart-assert' => 'webmozart/assert: Webmozart\Assert\Assert::regex, notRegex and their nullOr and all variants.',
+        'beberlei-assert' => 'beberlei/assert: Assert\Assertion::regex, notRegex and their nullOr and all variants.',
+        'symfony-validator' => 'symfony/validator: the Symfony\Component\Validator\Constraints\Regex constraint, as new and as attribute.',
     ];
 
     private const FORMATS = [
@@ -467,22 +472,22 @@ final class LintConfigSchema
 
         return [
             'type' => 'object',
-            'description' => 'Which calls the linter reads patterns from, beyond the native preg_* functions.',
+            'description' => 'Which calls the linter reads patterns from, beyond the native preg_* functions, RegexIterator and filter_var().',
             'additionalProperties' => false,
             'properties' => [
                 'interop' => [
                     'type' => 'array',
-                    'description' => 'Wrapper libraries whose static methods carry a regex pattern. Set to [] to look at native preg_* calls only.',
+                    'description' => 'Libraries whose calls carry a regex pattern, beyond the native preg_* functions, RegexIterator and filter_var(). Every preset is on by default; a list reads exactly the presets it names, those a later release adds left off. Set to [] to read the native calls only. The linter ignores a name that is no preset, with a warning.',
                     'x-expected' => 'a list of distinct presets among '.implode(', ', array_keys(self::INTEROP_PRESETS)),
                     'x-item' => 'preset',
-                    'default' => ['composer-pcre'],
+                    'default' => array_keys(self::INTEROP_PRESETS),
                     'uniqueItems' => true,
                     'items' => ['oneOf' => $presets],
                     'examples' => [['composer-pcre'], ['composer-pcre', 'nette-utils'], []],
                 ],
                 'functions' => [
                     'type' => 'array',
-                    'description' => 'Project helpers carrying a pattern, as "function" or "Some\Class::method". Append "#<index>" when the pattern is not the first argument, and "#<index>:keys" when that argument is an array whose keys hold the patterns.',
+                    'description' => 'Project helpers carrying a pattern, as "function" or "Some\Class::method". Append "#<index>" when the pattern is not the first argument, and "#<index>:keys" when that argument is an array whose keys hold the patterns. A call may pass the pattern by name as pattern:, patterns: or regex:; append "$<name>" to read it under the helper\'s own parameter name instead, as in "App\grep#1$expression".',
                     'x-expected' => 'a list of distinct non-empty strings',
                     'default' => [],
                     'uniqueItems' => true,

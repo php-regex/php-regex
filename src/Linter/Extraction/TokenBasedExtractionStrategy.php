@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -70,6 +71,77 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     }
 
     /**
+     * The patterns of a PHP source held in memory, read as extract() reads
+     * a file: an editor's unsaved text is read without the disk. The
+     * functions marked #[RegexPattern] are the registry's only, the source
+     * is not scanned for them.
+     *
+     * @param string $file the name the occurrences carry
+     *
+     * @return list<PatternOccurrence>
+     */
+    public function extractSource(string $content, string $file = ''): array
+    {
+        if ('' === $content || $this->shouldSkipContent($content)) {
+            return [];
+        }
+
+        if (!MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR)) {
+            return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::TOKENIZE_FACTOR))];
+        }
+
+        // PHP hands preg_match() the bytes of its source, valid UTF-8 or not,
+        // a NUL byte among them: the tokenizer reads them as they stand.
+        $tokens = token_get_all($content);
+        $tokenOffsets = $this->buildTokenOffsets($tokens);
+        $closers = $this->matchBrackets($tokens);
+        /** @var \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>> $found */
+        $found = new \ArrayObject();
+        /** @var list<int> $patternArguments */
+        $patternArguments = [];
+        $totalTokens = \count($tokens);
+        $context = new NameResolutionContext();
+        /** @var array<int, true> $attributeNames */
+        $attributeNames = [];
+
+        for ($i = 0; $i < $totalTokens; $i++) {
+            $token = $tokens[$i];
+            if (!\is_array($token) || isset(self::IGNORABLE_TOKENS[$token[0]]) || isset($attributeNames[$i])) {
+                continue;
+            }
+
+            if (\T_NAMESPACE === $token[0]) {
+                $i = $this->readNamespaceDeclaration($tokens, $i, $totalTokens, $context);
+
+                continue;
+            }
+
+            if (\T_USE === $token[0]) {
+                $i = $this->readUseStatement($tokens, $i, $totalTokens, $context);
+
+                continue;
+            }
+
+            if (\T_ATTRIBUTE === $token[0]) {
+                foreach ($this->matchAttributes($tokens, $i, $closers, $context, $attributeNames) as $match) {
+                    $this->extractFromMatch($match, $tokens, $totalTokens, $file, $tokenOffsets, $content, $closers, $context, $patternArguments, $found);
+                }
+
+                continue;
+            }
+
+            $match = \T_NEW === $token[0]
+                ? $this->matchConstructor($tokens, $i, $totalTokens, $context)
+                : $this->matchFunctionCall($tokens, $i, $totalTokens, $context);
+            if (null !== $match) {
+                $this->extractFromMatch($match, $tokens, $totalTokens, $file, $tokenOffsets, $content, $closers, $context, $patternArguments, $found);
+            }
+        }
+
+        return $this->settle(array_values($found->getArrayCopy()), $patternArguments, $tokens, $tokenOffsets, $closers, $file, $content);
+    }
+
+    /**
      * @param array<string> $files
      *
      * @return array<PatternOccurrence>
@@ -98,70 +170,311 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             return [PatternOccurrence::unread($file, 'Not linted: the file could not be read.')];
         }
 
-        if ('' === $content || $this->shouldSkipContent($content)) {
-            return [];
+        return $this->extractSource($content, $file);
+    }
+
+    /**
+     * The name of the variable the tokens in [$start, $end) are, alone.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private function soleVariable(array $tokens, int $start, int $end): ?string
+    {
+        $first = $this->nextSignificantTokenIndex($tokens, $start, $end);
+        if (null === $first || null !== $this->nextSignificantTokenIndex($tokens, $first + 1, $end)) {
+            return null;
         }
 
-        if (!MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR)) {
-            return [PatternOccurrence::unread($file, MemoryBudget::refusal($content, MemoryBudget::TOKENIZE_FACTOR))];
-        }
+        $token = $tokens[$first];
 
-        // PHP hands preg_match() the bytes of its source, valid UTF-8 or not,
-        // a NUL byte among them: the tokenizer reads them as they stand.
-        $tokens = token_get_all($content);
-        $tokenOffsets = $this->buildTokenOffsets($tokens);
-        $closers = $this->matchBrackets($tokens);
-        $occurrences = [];
-        $totalTokens = \count($tokens);
-        $context = new NameResolutionContext();
+        return \is_array($token) && \T_VARIABLE === $token[0] ? $token[1] : null;
+    }
 
-        for ($i = 0; $i < $totalTokens; $i++) {
-            $token = $tokens[$i];
-            if (!\is_array($token)) {
+    /**
+     * The variables the file assigns with a plain "=", whatever the scope.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array<string, true>
+     */
+    private function assignedVariables(array $tokens): array
+    {
+        $assigned = [];
+        foreach ($tokens as $index => $token) {
+            if ('=' !== $token) {
                 continue;
             }
 
-            if (\T_NAMESPACE === $token[0]) {
+            $target = $this->previousSignificantTokenIndex($tokens, $index - 1);
+            $targetToken = null === $target ? null : $tokens[$target];
+            if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
+                $assigned[$targetToken[1]] = true;
+            }
+        }
+
+        return $assigned;
+    }
+
+    /**
+     * Read the pattern arguments of a call the registry knows.
+     *
+     * @param array{PatternFunction, int}                                          $match            the function and the
+     *                                                                                               parenthesis opening its arguments
+     * @param array<int, array{int, string, int}|string>                           $tokens
+     * @param array<int, int>                                                      $tokenOffsets
+     * @param array<int, int>                                                      $closers
+     * @param list<int>                                                            $patternArguments
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>> $found
+     */
+    private function extractFromMatch(array $match, array $tokens, int $totalTokens, string $file, array $tokenOffsets, string $content, array $closers, NameResolutionContext $context, array &$patternArguments, \ArrayObject $found): void
+    {
+        [$patternFunction, $openParenIndex] = $match;
+
+        // A partial application, preg_match('/re/', ?), is no call, as
+        // the parser strategy reads it; the calls in its arguments are.
+        if ($this->isPartialApplication($tokens, $openParenIndex + 1, $totalTokens, $closers)) {
+            return;
+        }
+
+        // A named argument stands for every position it may fill: read once.
+        $read = [];
+        foreach ($patternFunction->eachArgument() as $function) {
+            $this->extractFromCall($tokens, $openParenIndex + 1, $totalTokens, $function, $file, $tokenOffsets, $content, $closers, $context, $read, $patternArguments, $found);
+        }
+    }
+
+    /**
+     * The occurrences in the order of their calls. A pattern no literal
+     * gives is read, when the file holds one, in a second pass over the
+     * file: what the file proves about its names is known once all of it
+     * is read.
+     *
+     * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found            a pattern argument that is no
+     *                                                                                  literal is its token range
+     * @param list<int>                                               $patternArguments where the pattern arguments start
+     * @param array<int, array{int, string, int}|string>              $tokens
+     * @param array<int, int>                                         $tokenOffsets
+     * @param array<int, int>                                         $closers
+     *
+     * @return list<PatternOccurrence>
+     */
+    private function settle(array $found, array $patternArguments, array $tokens, array $tokenOffsets, array $closers, string $file, string $content): array
+    {
+        $pending = $this->pendingRanges($found, $tokens);
+        if ([] === $pending) {
+            return array_values(array_filter($found, static fn (PatternOccurrence|PendingPattern $item): bool => $item instanceof PatternOccurrence));
+        }
+
+        [$variables, $properties] = $this->watchedNames($pending, $tokens);
+        $collector = new TokenValueCollector($tokens, $tokenOffsets, $closers, $content, $variables, $properties);
+        foreach ($patternArguments as $start) {
+            $collector->markPatternArgument($start);
+        }
+
+        $values = $this->readValues($collector, $pending, $tokens);
+        $resolver = $collector->values();
+        // Every read is known before the first is resolved: a value
+        // assigned after the last never reaches any.
+        foreach ($values as $value) {
+            $resolver->read($value);
+        }
+        $occurrences = [];
+        foreach ($found as $item) {
+            if ($item instanceof PatternOccurrence) {
+                $occurrences[] = $item;
+
+                continue;
+            }
+
+            [$start, $end] = $item->place;
+            $value = $values[$start.':'.$end] ?? null;
+            if (null !== $value && $value->isResolvable()) {
+                array_push($occurrences, ...$item->occurrences($resolver, $value, $file, $content));
+            }
+        }
+
+        return $occurrences;
+    }
+
+    /**
+     * The token ranges of the held arguments a second pass may resolve,
+     * start => end => true: a variable gets a value from an assignment, or
+     * none, so one the file never assigns is left out.
+     *
+     * @param list<PatternOccurrence|PendingPattern<array{int, int}>> $found
+     * @param array<int, array{int, string, int}|string>              $tokens
+     *
+     * @return array<int, non-empty-array<int, true>>
+     */
+    private function pendingRanges(array $found, array $tokens): array
+    {
+        $pending = [];
+        $assigned = null;
+        foreach ($found as $item) {
+            if (!$item instanceof PendingPattern) {
+                continue;
+            }
+
+            [$start, $end] = $item->place;
+            $variable = $this->soleVariable($tokens, $start, $end);
+            if (null !== $variable) {
+                $assigned ??= $this->assignedVariables($tokens);
+                if (!isset($assigned[$variable])) {
+                    continue;
+                }
+            }
+
+            $pending[$start][$end] = true;
+        }
+
+        return $pending;
+    }
+
+    /**
+     * The variables the held arguments name, and whether they name a
+     * property: the writes to any other change no pattern, and are not
+     * followed.
+     *
+     * @param array<int, non-empty-array<int, true>>     $pending
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{array<string, true>, bool}
+     */
+    private function watchedNames(array $pending, array $tokens): array
+    {
+        $variables = [];
+        $properties = false;
+        foreach ($pending as $start => $ends) {
+            for ($i = $start, $last = max(array_keys($ends)); $i < $last; $i++) {
+                $token = $tokens[$i];
+                if (!\is_array($token)) {
+                    continue;
+                }
+
+                if (\T_VARIABLE === $token[0]) {
+                    $variables[$token[1]] = true;
+                } elseif (!$properties && \T_STRING === $token[0]) {
+                    $before = $this->previousSignificantTokenIndex($tokens, $i - 1);
+                    $properties = null !== $before && $this->isObjectOrStaticOperator($tokens[$before]);
+                }
+            }
+        }
+
+        return [$variables, $properties];
+    }
+
+    /**
+     * What each held argument reads as, keyed "start:end", from a second
+     * walk over the file: the same walk as the first pass, so that each
+     * name is read in the namespace, the imports, the class and the
+     * function it sits in.
+     *
+     * @param array<int, non-empty-array<int, true>>     $pending
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array<string, ValueExpr>
+     */
+    private function readValues(TokenValueCollector $collector, array $pending, array $tokens): array
+    {
+        $values = [];
+        $context = new NameResolutionContext();
+        for ($i = 0, $totalTokens = \count($tokens); $i < $totalTokens; $i++) {
+            $token = $tokens[$i];
+            $id = \is_array($token) ? $token[0] : $token;
+            if (\T_NAMESPACE === $id) {
                 $i = $this->readNamespaceDeclaration($tokens, $i, $totalTokens, $context);
 
                 continue;
             }
 
-            if (\T_USE === $token[0]) {
-                $i = $this->readUseStatement($tokens, $i, $totalTokens, $context);
+            if (\T_USE === $id) {
+                $next = $this->readUseStatement($tokens, $i, $totalTokens, $context);
+                if ($next !== $i) {
+                    $i = $next;
 
-                continue;
+                    continue;
+                }
             }
 
-            $match = $this->matchFunctionCall($tokens, $i, $totalTokens, $context);
-            if (null === $match) {
-                continue;
+            // Most tokens declare, write and hold nothing.
+            if (isset(TokenValueCollector::READ[$id])) {
+                $collector->visit($i, $context);
             }
 
-            [$patternFunction, $openParenIndex] = $match;
-
-            // A partial application, preg_match('/re/', ?), is no call, as
-            // the parser strategy reads it; the calls in its arguments are.
-            if ($this->isPartialApplication($tokens, $openParenIndex + 1, $totalTokens, $closers)) {
-                continue;
-            }
-
-            foreach ($patternFunction->eachArgument() as $function) {
-                $this->appendOccurrences($occurrences, $this->extractFromCall(
-                    $tokens,
-                    $openParenIndex + 1,
-                    $totalTokens,
-                    $function,
-                    $file,
-                    $tokenOffsets,
-                    $content,
-                    $closers,
-                    $context,
-                ));
+            if (isset($pending[$i])) {
+                foreach ($pending[$i] as $end => $_) {
+                    $values[$i.':'.$end] = $collector->expression($i, $end, $context);
+                }
             }
         }
 
-        return $occurrences;
+        return $values;
+    }
+
+    /**
+     * The attributes of the group opening at $index that carry a pattern,
+     * each with the parenthesis opening its arguments. Their names are
+     * marked, so that they are not read again as function calls.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     * @param array<int, true>                           $attributeNames
+     *
+     * @return list<array{PatternFunction, int}>
+     */
+    private function matchAttributes(array $tokens, int $index, array $closers, NameResolutionContext $context, array &$attributeNames): array
+    {
+        // A group left open holds no item: the loop does not run.
+        $close = $closers[$index] ?? $index;
+        $matches = [];
+        $itemStart = $index + 1;
+        for ($i = $index + 1; $i <= $close; $i++) {
+            $token = $tokens[$i];
+            if (',' !== $token && $i !== $close) {
+                if ($this->opensNesting($token)) {
+                    $i = $closers[$i] ?? $close;
+                }
+
+                continue;
+            }
+
+            $nameIndex = $this->nextSignificantTokenIndex($tokens, $itemStart, $i);
+            $name = null === $nameIndex ? null : $this->readNameToken($tokens[$nameIndex]);
+            $itemStart = $i + 1;
+            if (null === $nameIndex || null === $name) {
+                continue;
+            }
+
+            $attributeNames[$nameIndex] = true;
+            $open = $this->nextSignificantTokenIndex($tokens, $nameIndex + 1, $i);
+            $function = $this->registry->lookupAttribute($context->resolveClass($name));
+            if (null !== $open && '(' === $tokens[$open] && null !== $function) {
+                $matches[] = [$function, $open];
+            }
+        }
+
+        return $matches;
+    }
+
+    /**
+     * new Class(...), the class resolved as PHP does.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{PatternFunction, int}|null
+     */
+    private function matchConstructor(array $tokens, int $index, int $totalTokens, NameResolutionContext $context): ?array
+    {
+        $classIndex = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
+        $class = null === $classIndex ? null : $this->readNameToken($tokens[$classIndex]);
+        $open = null === $classIndex ? null : $this->nextSignificantTokenIndex($tokens, $classIndex + 1, $totalTokens);
+        if (null === $class || null === $open || '(' !== $tokens[$open]) {
+            return null;
+        }
+
+        $function = $this->registry->lookupConstructor($context->resolveClass($class));
+
+        return null === $function ? null : [$function, $open];
     }
 
     /**
@@ -218,28 +531,30 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             return $index;
         }
 
-        $isFunction = false;
+        // "use Str;" in a class body uses a trait, and imports nothing.
+        if ($this->usesATrait($tokens, $index)) {
+            return $this->skipToStatementEnd($tokens, $cursor, $totalTokens);
+        }
+
+        // What the statement imports: classes, functions or constants; an
+        // item of a group may say otherwise.
+        $kind = \T_CLASS;
         $token = $tokens[$cursor];
-        if (\is_array($token)) {
-            if (\T_CONST === $token[0]) {
-                return $this->skipToStatementEnd($tokens, $cursor, $totalTokens);
+        if (\is_array($token) && (\T_CONST === $token[0] || \T_FUNCTION === $token[0])) {
+            $kind = $token[0];
+            $next = $this->nextSignificantTokenIndex($tokens, $cursor + 1, $totalTokens);
+            if (null === $next) {
+                return $index;
             }
 
-            if (\T_FUNCTION === $token[0]) {
-                $isFunction = true;
-                $next = $this->nextSignificantTokenIndex($tokens, $cursor + 1, $totalTokens);
-                if (null === $next) {
-                    return $index;
-                }
-
-                $cursor = $next;
-            }
+            $cursor = $next;
         }
 
         $prefix = '';
         $name = '';
         $alias = null;
         $expectAlias = false;
+        $itemKind = $kind;
 
         for (; $cursor < $totalTokens; $cursor++) {
             $token = $tokens[$cursor];
@@ -249,7 +564,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             }
 
             if (';' === $token) {
-                $this->commitImport($context, $prefix, $name, $alias, $isFunction);
+                $this->commitImport($context, $prefix, $name, $alias, $itemKind);
 
                 return $cursor;
             }
@@ -265,20 +580,29 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             }
 
             if ('}' === $token) {
-                $this->commitImport($context, $prefix, $name, $alias, $isFunction);
+                $this->commitImport($context, $prefix, $name, $alias, $itemKind);
                 $prefix = '';
                 $name = '';
                 $alias = null;
                 $expectAlias = false;
+                $itemKind = $kind;
 
                 continue;
             }
 
             if (',' === $token) {
-                $this->commitImport($context, $prefix, $name, $alias, $isFunction);
+                $this->commitImport($context, $prefix, $name, $alias, $itemKind);
                 $name = '';
                 $alias = null;
                 $expectAlias = false;
+                $itemKind = $kind;
+
+                continue;
+            }
+
+            // use A\{B, function c, const D}
+            if (\is_array($token) && (\T_CONST === $token[0] || \T_FUNCTION === $token[0]) && '' !== $prefix && '' === $name) {
+                $itemKind = $token[0];
 
                 continue;
             }
@@ -316,7 +640,47 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         return $cursor - 1;
     }
 
-    private function commitImport(NameResolutionContext $context, string $prefix, string $name, ?string $alias, bool $isFunction): void
+    /**
+     * Whether the "use" at $index sits in a brace no namespace opens, the
+     * body of a class, an enum or a trait: an import is written at the top
+     * of the file or of a braced namespace.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private function usesATrait(array $tokens, int $index): bool
+    {
+        $depth = 0;
+        for ($i = $index - 1; $i >= 0; $i--) {
+            $token = $tokens[$i];
+            if ('}' === $token) {
+                $depth++;
+
+                continue;
+            }
+
+            if ('{' !== $token && !(\is_array($token) && (\T_CURLY_OPEN === $token[0] || \T_DOLLAR_OPEN_CURLY_BRACES === $token[0]))) {
+                continue;
+            }
+
+            if ($depth > 0) {
+                $depth--;
+
+                continue;
+            }
+
+            // The brace the "use" sits in: "namespace {" or "namespace A\B {".
+            $before = $this->previousSignificantTokenIndex($tokens, $i - 1);
+            if (null !== $before && \is_array($tokens[$before]) && \in_array($tokens[$before][0], [\T_STRING, \T_NAME_QUALIFIED], true)) {
+                $before = $this->previousSignificantTokenIndex($tokens, $before - 1);
+            }
+
+            return null === $before || !\is_array($tokens[$before]) || \T_NAMESPACE !== $tokens[$before][0];
+        }
+
+        return false;
+    }
+
+    private function commitImport(NameResolutionContext $context, string $prefix, string $name, ?string $alias, int $kind): void
     {
         if ('' === $name) {
             return;
@@ -332,8 +696,14 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             return;
         }
 
-        if ($isFunction) {
+        if (\T_FUNCTION === $kind) {
             $context->importFunction($alias, $target);
+
+            return;
+        }
+
+        if (\T_CONST === $kind) {
+            $context->importConstant($alias, $target);
 
             return;
         }
@@ -362,7 +732,19 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      */
     private function matchFunctionCall(array $tokens, int $index, int $totalTokens, NameResolutionContext $context): ?array
     {
-        $name = $this->readNameToken($tokens[$index]);
+        $token = $tokens[$index];
+
+        // static::assertMatchesRegularExpression(...)
+        if (\is_array($token) && \T_STATIC === $token[0]) {
+            $nextIndex = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
+
+            return null !== $nextIndex && $this->isDoubleColonToken($tokens[$nextIndex])
+                ? $this->matchStaticMethodCall($tokens, $index, $nextIndex, $totalTokens, $context)
+                : null;
+        }
+
+        // A name after "->" is a T_STRING, whatever word spells it.
+        $name = $this->readNameToken($token);
         if (null === $name) {
             return null;
         }
@@ -372,9 +754,16 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             return $this->matchStaticMethodCall($tokens, $index, $nextIndex, $totalTokens, $context);
         }
 
+        $prevIndex = $this->previousSignificantTokenIndex($tokens, $index - 1);
+
+        // $this->assertMatchesRegularExpression(...): a method matched by
+        // its name.
+        if (null !== $prevIndex && \is_array($tokens[$prevIndex]) && \T_OBJECT_OPERATOR === $tokens[$prevIndex][0]) {
+            return $this->matchThisMethodCall($tokens, $index, $prevIndex, $nextIndex);
+        }
+
         // From here on we treat this as a plain function call and decide
         // whether it is a registered function.
-        $prevIndex = $this->previousSignificantTokenIndex($tokens, $index - 1);
         if (null !== $prevIndex) {
             $prevToken = $tokens[$prevIndex];
             if ($this->isDefinitionToken($prevToken) || $this->isObjectOrStaticOperator($prevToken)) {
@@ -419,12 +808,17 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             return null;
         }
 
-        $className = $this->readNameToken($tokens[$classIndex]);
+        $classToken = $tokens[$classIndex];
+        $className = \is_array($classToken) && \T_STATIC === $classToken[0] ? 'static' : $this->readNameToken($classToken);
         if (null === $className) {
             return null;
         }
 
-        $patternFunction = $this->registry->lookupMethod($context->resolveClass($className), $methodName);
+        // self::, static::, parent::: the class is the test's, PHPUnit's
+        // assertions are matched by name.
+        $patternFunction = \in_array(strtolower($className), ['self', 'static', 'parent'], true)
+            ? $this->registry->lookupNamedMethod($methodName)
+            : $this->registry->lookupMethod($context->resolveClass($className), $methodName);
         if (null === $patternFunction) {
             return null;
         }
@@ -433,11 +827,48 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     }
 
     /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenOffsets
-     * @param array<int, int>                            $closers      the closing index of each bracket, from matchBrackets()
+     * $this->method(...), the method matched by its name.
      *
-     * @return array<PatternOccurrence>
+     * @param array<int, array{int, string, int}|string> $tokens
+     *
+     * @return array{PatternFunction, int}|null
+     */
+    private function matchThisMethodCall(array $tokens, int $methodIndex, int $operatorIndex, ?int $openParenIndex): ?array
+    {
+        // The name first: most method calls are no pattern function.
+        $method = $this->readIdentifierToken($tokens[$methodIndex]);
+        $patternFunction = null === $method ? null : $this->registry->lookupNamedMethod($method);
+        if (null === $patternFunction) {
+            return null;
+        }
+
+        $receiver = $this->previousSignificantTokenIndex($tokens, $operatorIndex - 1);
+        if (null === $receiver || null === $openParenIndex || '(' !== $tokens[$openParenIndex]
+            || !\is_array($tokens[$receiver]) || \T_VARIABLE !== $tokens[$receiver][0] || '$this' !== $tokens[$receiver][1]) {
+            return null;
+        }
+
+        // $other->$this->method() reads a property named by $this.
+        $beforeReceiver = $this->previousSignificantTokenIndex($tokens, $receiver - 1);
+        if (null !== $beforeReceiver && ($this->isObjectOrStaticOperator($tokens[$beforeReceiver]) || '$' === $tokens[$beforeReceiver])) {
+            return null;
+        }
+
+        return [$patternFunction, $openParenIndex];
+    }
+
+    /**
+     * @param array<int, array{int, string, int}|string>                                $tokens
+     * @param array<int, int>                                                           $tokenOffsets
+     * @param array<int, int>                                                           $closers          the closing index of each bracket, from matchBrackets()
+     * @param list<int>                                                                 $read             where the arguments read for this call start
+     * @param list<int>                                                                 $patternArguments where every pattern argument read starts
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink             receives, in order,
+     *                                                                                                    the literal occurrences and the
+     *                                                                                                    token range of each pattern
+     *                                                                                                    argument no literal gives
+     *
+     * @return list<PatternOccurrence> the literal occurrences
      */
     private function extractFromCall(
         array $tokens,
@@ -449,11 +880,28 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         string $content,
         array $closers,
         NameResolutionContext $context,
+        array &$read = [],
+        array &$patternArguments = [],
+        ?\ArrayObject $sink = null,
     ): array {
-        $argument = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex, PatternFunction::PATTERN_PARAMETER_NAMES, $closers);
-        if (null === $argument) {
+        // A call being typed, its list left open, is read as far as it goes;
+        // an argument itself left open, an array or a callback cut short,
+        // makes the call unknown.
+        if (!isset($closers[$startIndex - 1])) {
+            for ($i = $startIndex; $i < $totalTokens; $i++) {
+                if ($this->opensNesting($tokens[$i]) && !isset($closers[$i])) {
+                    return [];
+                }
+            }
+        }
+
+        $argument = $this->findArgument($tokens, $startIndex, $totalTokens, $patternFunction->argumentIndex, $patternFunction->parameterNames, $closers);
+        if (null === $argument || \in_array($argument[0], $read, true)) {
             return [];
         }
+
+        $read[] = $argument[0];
+        $patternArguments[] = $argument[0];
 
         // Nette's Strings::replace() reads the values of the array when the
         // replacement is an object or an array: a callable.
@@ -464,9 +912,177 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             }
         }
 
-        [$argumentTokens, $argumentIndexes] = $this->sliceTokens($tokens, $argument[0], $argument[1]);
+        // Nette's utf8: true appends "u" to every pattern; anything but
+        // true or false leaves its flags unknown.
+        if (null !== $patternFunction->utf8Argument) {
+            $utf8 = $this->utf8($tokens, $startIndex, $totalTokens, $patternFunction->utf8Argument, $closers);
+            if (null === $utf8) {
+                return [];
+            }
 
-        return $this->extractFromArgumentTokens($argumentTokens, $argumentIndexes, $tokenOffsets, $content, $file, $patternFunction);
+            if ($utf8) {
+                $patternFunction = $patternFunction->withPatternSuffix('u');
+            }
+        }
+
+        // filter_var() compiles the option only under FILTER_VALIDATE_REGEXP.
+        if (null !== $patternFunction->filterArgument) {
+            [$index, $parameter, $constant] = $patternFunction->filterArgument;
+            $filter = $this->findArgument($tokens, $startIndex, $totalTokens, $index, [$parameter], $closers);
+            $name = null === $filter ? null : $this->soleName($tokens, $filter[0], $filter[1]);
+            if (null === $name || !\in_array($constant, $context->resolveConstant($name), true)) {
+                return [];
+            }
+        }
+
+        $range = $this->optionRange($tokens, $argument[0], $argument[1], $patternFunction, $closers, $tokenOffsets, $content);
+        if (null === $range) {
+            return [];
+        }
+
+        [$argumentTokens, $argumentIndexes] = $this->sliceTokens($tokens, $range[0], $range[1]);
+
+        return $this->extractFromArgumentTokens($argumentTokens, $argumentIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
+    }
+
+    /**
+     * Where an argument holds the pattern: the argument itself, or, for an
+     * array literal, the item its option path leads to (the last of a
+     * repeated key, as PHP keeps it).
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     * @param array<int, int>                            $tokenOffsets
+     *
+     * @return array{int, int}|null
+     */
+    private function optionRange(array $tokens, int $start, int $end, PatternFunction $function, array $closers, array $tokenOffsets, string $content): ?array
+    {
+        if ([] === $function->optionPath) {
+            return [$start, $end];
+        }
+
+        foreach ($function->optionPath as $key) {
+            $items = $this->arrayItems($tokens, $start, $end, $closers);
+            if (null === $items) {
+                // Only the first level may be the pattern itself.
+                return $function->optionPathRequired || $key !== $function->optionPath[0] ? null : [$start, $end];
+            }
+
+            $found = null;
+            foreach ($items as [$keyRange, $valueRange]) {
+                if (null === $keyRange) {
+                    // A spread may hold the key, replacing what came before.
+                    $first = $this->nextSignificantTokenIndex($tokens, $valueRange[0], $valueRange[1]);
+                    if (null !== $first && \is_array($tokens[$first]) && \T_ELLIPSIS === $tokens[$first][0]) {
+                        $found = null;
+                    }
+
+                    continue;
+                }
+
+                [$keyTokens, $keyIndexes] = $this->sliceTokens($tokens, $keyRange[0], $keyRange[1]);
+                [$keyTokens, $keyIndexes] = $this->stripOuterParentheses($keyTokens, $keyIndexes);
+                $literal = $this->parseConstantStringExpression($keyTokens, $keyIndexes, $tokenOffsets, $content);
+                if (null !== $literal && $key === $literal['pattern']) {
+                    $found = $valueRange;
+                }
+            }
+
+            if (null === $found) {
+                return null;
+            }
+
+            [$start, $end] = $found;
+        }
+
+        return [$start, $end];
+    }
+
+    /**
+     * The items of the array literal that is the whole of [$start, $end),
+     * each its key range, if any, and its value range; null when the range
+     * is no array literal.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers
+     *
+     * @return list<array{array{int, int}|null, array{int, int}}>|null
+     */
+    private function arrayItems(array $tokens, int $start, int $end, array $closers): ?array
+    {
+        $first = $this->nextSignificantTokenIndex($tokens, $start, $end);
+        $last = $this->previousSignificantTokenIndex($tokens, $end - 1);
+        while (null !== $first && null !== $last && '(' === $tokens[$first] && ($closers[$first] ?? null) === $last) {
+            $first = $this->nextSignificantTokenIndex($tokens, $first + 1, $last);
+            $last = $this->previousSignificantTokenIndex($tokens, $last - 1);
+        }
+
+        if (null === $first || null === $last) {
+            return null;
+        }
+
+        $open = $first;
+        if (\is_array($tokens[$first]) && \T_ARRAY === $tokens[$first][0]) {
+            $open = $this->nextSignificantTokenIndex($tokens, $first + 1, $last + 1);
+            if (null === $open || '(' !== $tokens[$open]) {
+                return null;
+            }
+        } elseif ('[' !== $tokens[$first]) {
+            return null;
+        }
+
+        if (($closers[$open] ?? null) !== $last) {
+            return null;
+        }
+
+        $items = [];
+        $itemStart = $open + 1;
+        for ($i = $open + 1; $i <= $last; $i++) {
+            $token = $tokens[$i];
+            if (',' !== $token && $i !== $last) {
+                if ($this->opensNesting($token)) {
+                    $i = $closers[$i] ?? $last;
+                }
+
+                continue;
+            }
+
+            $arrow = null;
+            for ($j = $itemStart; $j < $i; $j++) {
+                if ($this->isDoubleArrowToken($tokens[$j])) {
+                    $arrow = $j;
+
+                    break;
+                }
+
+                if ($this->opensNesting($tokens[$j])) {
+                    $j = $closers[$j] ?? $i;
+                }
+            }
+
+            if (null !== $this->nextSignificantTokenIndex($tokens, $itemStart, $i)) {
+                $items[] = null === $arrow ? [null, [$itemStart, $i]] : [[$itemStart, $arrow], [$arrow + 1, $i]];
+            }
+
+            $itemStart = $i + 1;
+        }
+
+        return $items;
+    }
+
+    /**
+     * The name an argument in [$start, $end) is, alone: a constant.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private function soleName(array $tokens, int $start, int $end): ?string
+    {
+        // (FILTER_VALIDATE_REGEXP) is the constant: PHP drops the parentheses.
+        [$slice] = $this->stripOuterParentheses(...$this->sliceTokens($tokens, $start, $end));
+        $significant = array_values(array_filter($slice, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+
+        return 1 === \count($significant) ? $this->readNameToken($significant[0]) : null;
     }
 
     /**
@@ -534,7 +1150,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      * call around it.
      *
      * @param array<int, array{int, string, int}|string> $tokens
-     * @param list<string>                               $names   lowercase parameter names
+     * @param list<string>                               $names   parameter names, compared as PHP does, case included
      * @param array<int, int>                            $closers the closing index of each bracket
      *
      * @return array{0: int, 1: int}|null where the argument's value starts and where it ends, past its last token
@@ -555,16 +1171,16 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
                 // Null for the empty slot a trailing comma leaves.
                 $argument = $this->readArgument($tokens, $argumentStart, $i);
                 if (null !== $argument && null === $argument['name']) {
+                    // A spread makes every later position unknowable; a
+                    // name still passes the argument.
                     if ($argument['spread']) {
-                        return null;
-                    }
-
-                    if ($position === $targetArgIndex) {
+                        $position = \PHP_INT_MIN;
+                    } elseif ($position === $targetArgIndex) {
                         return [$argument['valueStart'], $i];
                     }
 
                     $position++;
-                } elseif (null !== $argument && null === $named && \in_array(strtolower((string) $argument['name']), $names, true)) {
+                } elseif (null !== $argument && null === $named && \in_array($argument['name'], $names, true)) {
                     $named = [$argument['valueStart'], $i];
                 }
 
@@ -580,6 +1196,48 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
 
             $i++;
         }
+    }
+
+    /**
+     * What the utf8 argument of a nette/utils call is, by position or by
+     * name: false when left out; null when it is no literal true or false,
+     * or a spread may hold it.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array{int, string}                         $utf8    its position and its name
+     * @param array<int, int>                            $closers
+     */
+    private function utf8(array $tokens, int $startIndex, int $totalTokens, array $utf8, array $closers): ?bool
+    {
+        $position = 0;
+        $value = null;
+        $argumentStart = $startIndex;
+        for ($i = $startIndex; $i < $totalTokens; $i++) {
+            $token = $tokens[$i];
+            if (')' === $token || ',' === $token) {
+                $argument = $this->readArgument($tokens, $argumentStart, $i);
+                if (null !== $argument && $argument['spread']) {
+                    return null;
+                }
+
+                if (null !== $argument && (null === $argument['name'] ? $position++ === $utf8[0] : $utf8[1] === $argument['name'])) {
+                    $value = [$argument['valueStart'], $i];
+                }
+
+                if (')' === $token) {
+                    break;
+                }
+
+                $argumentStart = $i + 1;
+            } elseif ($this->opensNesting($token)) {
+                $i = $closers[$i] ?? $totalTokens;
+            }
+        }
+
+        $name = null === $value ? 'false' : $this->soleName($tokens, $value[0], $value[1]);
+        $literal = null === $name || 1 < substr_count($name, '\\') ? null : strtolower(ltrim($name, '\\'));
+
+        return 'true' === $literal ? true : ('false' === $literal ? false : null);
     }
 
     /**
@@ -850,11 +1508,12 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     }
 
     /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenIndexes
-     * @param array<int, int>                            $tokenOffsets
+     * @param array<int, array{int, string, int}|string>                                $tokens
+     * @param array<int, int>                                                           $tokenIndexes
+     * @param array<int, int>                                                           $tokenOffsets
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink
      *
-     * @return array<PatternOccurrence>
+     * @return list<PatternOccurrence>
      */
     private function extractFromArgumentTokens(
         array $tokens,
@@ -862,14 +1521,15 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         array $tokenOffsets,
         string $content,
         string $file,
-        PatternFunction $patternFunction
+        PatternFunction $patternFunction,
+        ?\ArrayObject $sink = null,
     ): array {
         [$stripped, $strippedIndexes] = $this->stripOuterParentheses($tokens, $tokenIndexes);
 
         // preg_replace(['/a/', '/b/'], ...) and preg_replace_callback_array(['/a/' => $fn])
         // hold several patterns in one argument.
         if (null !== $this->findArrayStartIndex($stripped)) {
-            return $this->extractFromArrayLiteral($stripped, $strippedIndexes, $tokenOffsets, $content, $file, $patternFunction);
+            return $this->extractFromArrayLiteral($stripped, $strippedIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
         }
 
         // Outside an array literal a keys-function still gets one pattern:
@@ -877,22 +1537,78 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         $patternInfo = $this->parseRegexExpression($stripped, $strippedIndexes, $tokenOffsets, $content)
             ?? $this->parseConstantStringExpression($stripped, $strippedIndexes, $tokenOffsets, $content);
 
-        if (null === $patternInfo || '' === $patternInfo['pattern']) {
+        if (null === $patternInfo) {
+            $this->holdPattern($stripped, $tokenIndexes, $patternFunction, $sink);
+
             return [];
         }
 
-        return [$this->createOccurrence($patternInfo, $file, $patternFunction)];
+        if ('' === $patternInfo['pattern']) {
+            return [];
+        }
+
+        $occurrence = $this->createOccurrence($patternInfo, $file, $patternFunction);
+        $sink?->append($occurrence);
+
+        return [$occurrence];
+    }
+
+    /**
+     * Hold a pattern no literal gives as its token range, for the names it
+     * may go through: a concatenation, a variable, $this->name, a constant
+     * or a class constant. Any other expression names no value the file
+     * proves.
+     *
+     * @param array<int, array{int, string, int}|string>                                $tokens       the expression, its outer parentheses stripped
+     * @param array<int, int>                                                           $tokenIndexes the indexes of its tokens in the file
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink
+     */
+    private function holdPattern(array $tokens, array $tokenIndexes, PatternFunction $patternFunction, ?\ArrayObject $sink): void
+    {
+        if (null !== $sink && [] !== $tokenIndexes && $this->mayName($tokens)) {
+            $sink->append(new PendingPattern([min($tokenIndexes), max($tokenIndexes) + 1], $patternFunction));
+        }
+    }
+
+    /**
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private function mayName(array $tokens): bool
+    {
+        $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+        if (\in_array('.', $significant, true)) {
+            return true;
+        }
+
+        [$first, $second, $third] = $significant + [null, null, null];
+        $count = \count($significant);
+        if (1 === $count && \is_array($first)) {
+            $name = $this->readNameToken($first);
+
+            return \T_VARIABLE === $first[0] ? '$this' !== $first[1] : null !== $name && !\in_array(strtolower(ltrim($name, '\\')), ['true', 'false', 'null'], true);
+        }
+
+        if (3 !== $count || !\is_array($first) || !\is_array($second) || !\is_array($third)) {
+            return false;
+        }
+
+        if (\T_DOUBLE_COLON === $second[0]) {
+            return \T_STATIC === $first[0] || null !== $this->readNameToken($first);
+        }
+
+        return \T_VARIABLE === $first[0] && '$this' === $first[1] && \T_OBJECT_OPERATOR === $second[0];
     }
 
     /**
      * Read every pattern out of an array literal, taking either its keys or
      * its values depending on the call being analysed.
      *
-     * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenIndexes
-     * @param array<int, int>                            $tokenOffsets
+     * @param array<int, array{int, string, int}|string>                                $tokens
+     * @param array<int, int>                                                           $tokenIndexes
+     * @param array<int, int>                                                           $tokenOffsets
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink
      *
-     * @return array<PatternOccurrence>
+     * @return list<PatternOccurrence>
      */
     private function extractFromArrayLiteral(
         array $tokens,
@@ -900,7 +1616,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         array $tokenOffsets,
         string $content,
         string $file,
-        PatternFunction $patternFunction
+        PatternFunction $patternFunction,
+        ?\ArrayObject $sink = null,
     ): array {
         $startIndex = $this->findArrayStartIndex($tokens);
         if (null === $startIndex) {
@@ -959,7 +1676,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
                 array_pop($stack);
                 if (empty($stack)) {
                     if (!$useKeys) {
-                        $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
+                        $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
                     }
 
                     break;
@@ -977,7 +1694,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
 
             if ($atTopLevel && ',' === $token) {
                 if (!$useKeys) {
-                    $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
+                    $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
                 }
 
                 $useKeys ??= false;
@@ -991,7 +1708,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
             if ($atTopLevel && $this->isDoubleArrowToken($token)) {
                 $useKeys ??= $this->isStringKey($segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content);
                 if ($useKeys) {
-                    $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction);
+                    $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
                     $collecting = false;
                 }
 
@@ -1045,10 +1762,11 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     }
 
     /**
-     * @param array<PatternOccurrence>                   $occurrences
-     * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenIndexes
-     * @param array<int, int>                            $tokenOffsets
+     * @param list<PatternOccurrence>                                                   $occurrences
+     * @param array<int, array{int, string, int}|string>                                $tokens
+     * @param array<int, int>                                                           $tokenIndexes
+     * @param array<int, int>                                                           $tokenOffsets
+     * @param \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>>|null $sink
      */
     private function appendOccurrenceFromSegment(
         array &$occurrences,
@@ -1057,15 +1775,24 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         array $tokenOffsets,
         string $content,
         string $file,
-        PatternFunction $patternFunction
+        PatternFunction $patternFunction,
+        ?\ArrayObject $sink = null,
     ): void {
         [$tokens, $tokenIndexes] = $this->stripOuterParentheses($tokens, $tokenIndexes);
         $patternInfo = $this->parseConstantStringExpression($tokens, $tokenIndexes, $tokenOffsets, $content);
-        if (null === $patternInfo || '' === $patternInfo['pattern']) {
+        if (null === $patternInfo) {
+            $this->holdPattern($tokens, $tokenIndexes, $patternFunction, $sink);
+
             return;
         }
 
-        $occurrences[] = $this->createOccurrence($patternInfo, $file, $patternFunction);
+        if ('' === $patternInfo['pattern']) {
+            return;
+        }
+
+        $occurrence = $this->createOccurrence($patternInfo, $file, $patternFunction);
+        $occurrences[] = $occurrence;
+        $sink?->append($occurrence);
     }
 
     /**
@@ -1074,10 +1801,10 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     private function createOccurrence(array $patternInfo, string $file, PatternFunction $patternFunction): PatternOccurrence
     {
         return new PatternOccurrence(
-            $patternInfo['pattern'],
+            $patternInfo['pattern'].$patternFunction->patternSuffix,
             $file,
             $patternInfo['line'],
-            $patternFunction->label.'()',
+            $patternFunction->source(),
             column: $patternInfo['column'] ?? null,
             fileOffset: $patternInfo['offset'] ?? null,
         );
@@ -1200,7 +1927,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
                     $tokenIndex = $tokenIndexes[$index] ?? null;
                     if (\is_int($tokenIndex) && isset($tokenOffsets[$tokenIndex])) {
                         $firstTokenOffset = $tokenOffsets[$tokenIndex];
-                        $firstTokenColumn = $this->columnFromOffset($content, $firstTokenOffset);
+                        $firstTokenColumn = PendingPattern::column($content, $firstTokenOffset);
                     }
                 }
 
@@ -1235,7 +1962,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         if (null !== $leadOffset && null !== $firstTokenOffset) {
             $firstLine -= substr_count($content, "\n", $leadOffset, $firstTokenOffset - $leadOffset);
             $firstTokenOffset = $leadOffset;
-            $firstTokenColumn = $this->columnFromOffset($content, $leadOffset);
+            $firstTokenColumn = PendingPattern::column($content, $leadOffset);
         }
 
         $pattern = implode('', $parts);
@@ -1281,21 +2008,6 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
         return $offsets;
     }
 
-    private function columnFromOffset(string $content, int $offset): ?int
-    {
-        if ($offset < 0) {
-            return null;
-        }
-
-        $prefix = substr($content, 0, $offset);
-        $lastNewline = strrpos($prefix, "\n");
-        if (false === $lastNewline) {
-            return $offset + 1;
-        }
-
-        return $offset - $lastNewline;
-    }
-
     /**
      * The value of a quoted string token, as PHP reads it. The b of a binary
      * string, b'/a/' or B"/a/", changes nothing.
@@ -1321,6 +2033,17 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
     private function readIdentifierToken(array|string $token): ?string
     {
         if (!\is_array($token)) {
+            return null;
+        }
+
+        if (\T_STRING === $token[0]) {
+            return $token[1];
+        }
+
+        // A variable, a literal, a number or an operator starts with no
+        // letter: no pattern needs to say so.
+        $first = $token[1][0] ?? '';
+        if ('_' !== $first && !Ascii::isAlpha($first) && \ord($first) < 0x80) {
             return null;
         }
 
@@ -1422,7 +2145,8 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      */
     private function nextSignificantTokenIndex(array $tokens, int $startIndex, int $totalTokens): ?int
     {
-        for ($i = $startIndex; $i < $totalTokens; $i++) {
+        // A range left open by a file cut short runs past the last token.
+        for ($i = $startIndex, $end = min($totalTokens, \count($tokens)); $i < $end; $i++) {
             if (!$this->isIgnorableToken($tokens[$i])) {
                 return $i;
             }
@@ -1436,7 +2160,7 @@ final readonly class TokenBasedExtractionStrategy implements ExtractorInterface,
      */
     private function previousSignificantTokenIndex(array $tokens, int $startIndex): ?int
     {
-        for ($i = $startIndex; $i >= 0; $i--) {
+        for ($i = min($startIndex, \count($tokens) - 1); $i >= 0; $i--) {
             if (!$this->isIgnorableToken($tokens[$i])) {
                 return $i;
             }

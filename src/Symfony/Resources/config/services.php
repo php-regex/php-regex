@@ -152,6 +152,7 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$projectDir', param('php_regex.project_dir'))
         ->arg('$checkRedos', param('php_regex.redos.enabled'))
         ->arg('$checkComplexity', param('php_regex.analysis.complexity'))
+        ->arg('$warnings', param('php_regex.extraction.warnings'))
         ->tag('console.command')
         ->public();
 

@@ -47,6 +47,7 @@ License: MIT
 - [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/): which PCRE construct each analysis layer supports
 - [Correctness contracts](https://php-regex.com/reference/correctness-contracts/): what is sound, what is heuristic, per feature
 - [Backward compatibility](https://php-regex.com/reference/backward-compatibility/): what each release may change
+- [Extraction coverage](https://php-regex.com/reference/extraction-coverage/): which calls the lint, the language server and the static analysers read a pattern from
 - [Capture shapes](https://php-regex.com/reference/capture-shapes/): what preg_match() writes into $matches
 - [Pattern info](https://php-regex.com/reference/pattern-info/): the facts PCRE2 computes on every compiled pattern
 - [Prefilters](https://php-regex.com/reference/prefilters/): when a string function can answer before preg_match()

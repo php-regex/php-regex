@@ -112,6 +112,15 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return $code;
         }
 
+        // What regex.json and the command line hold that the run ignores:
+        // one warning each on stderr, as the notes, and the run goes on. A
+        // name both of them hold is said once.
+        if (OutputConfiguration::VERBOSITY_QUIET !== $arguments->verbosity && !$output->isQuiet()) {
+            foreach (array_unique([...$lintConfigResult->warnings, ...$parsed->warnings]) as $warning) {
+                $output->writeError('Warning: '.$warning."\n");
+            }
+        }
+
         // A format is named in any case, as JsonRequest reads it.
         $format = strtolower($arguments->format);
         $json = 'json' === $format;

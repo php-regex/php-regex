@@ -19,7 +19,14 @@ namespace PHPRegex\Linter\Extraction;
  * Codebases that route every pattern through composer/pcre or nette/utils
  * never call preg_* directly, so an extractor that only knows the native
  * functions reports "no patterns found" on them. Each preset maps a
- * library's static methods to the position of their pattern argument.
+ * library's calls to the position of their pattern argument. The names are
+ * the slugs of the packages they read.
+ *
+ * Every preset but phpunit is matched on the fully qualified class once the
+ * imports are resolved. PHPUnit's assertions are matched by method name on
+ * the receivers a test calls them on ($this->, self::, static::, parent::),
+ * besides PHPUnit\Framework\Assert::, PHPUnit\Framework\TestCase:: and the
+ * functions of PHPUnit\Framework: their names are PHPUnit's own.
  *
  * @internal
  */
@@ -28,16 +35,47 @@ final class InteropPresets
     public const COMPOSER_PCRE = 'composer-pcre';
     public const NETTE_UTILS = 'nette-utils';
     public const SPATIE_REGEX = 'spatie-regex';
-    public const LARAVEL_STR = 'laravel-str';
+    public const ILLUMINATE_SUPPORT = 'illuminate-support';
+    public const PHPUNIT = 'phpunit';
+    public const WEBMOZART_ASSERT = 'webmozart-assert';
+    public const BEBERLEI_ASSERT = 'beberlei-assert';
+    public const SYMFONY_VALIDATOR = 'symfony-validator';
 
     /**
-     * Presets enabled unless configuration says otherwise.
-     *
-     * composer/pcre is a drop-in wrapper around the native functions with
-     * the same argument order, so recognising it can only add coverage.
+     * Presets enabled unless configuration says otherwise: every one. An
+     * explicit list means exactly that list.
      */
     public const DEFAULT_PRESETS = [
         self::COMPOSER_PCRE,
+        self::NETTE_UTILS,
+        self::SPATIE_REGEX,
+        self::ILLUMINATE_SUPPORT,
+        self::PHPUNIT,
+        self::WEBMOZART_ASSERT,
+        self::BEBERLEI_ASSERT,
+        self::SYMFONY_VALIDATOR,
+    ];
+
+    /**
+     * PHPUnit's assertions taking the pattern as $pattern, first: PHPUnit
+     * 12.5 Assert, and assertRegExp()/assertNotRegExp() of PHPUnit 9 and
+     * older.
+     */
+    private const PHPUNIT_ASSERTIONS = [
+        'assertMatchesRegularExpression',
+        'assertDoesNotMatchRegularExpression',
+        'matchesRegularExpression',
+        'assertRegExp',
+        'assertNotRegExp',
+    ];
+
+    /**
+     * TestCase's expectations, each with the name of its pattern parameter.
+     */
+    private const PHPUNIT_EXPECTATIONS = [
+        'expectOutputRegex' => 'expectedRegex',
+        'expectExceptionMessageMatches' => 'regularExpression',
+        'expectUserDeprecationMessageMatches' => 'expectedUserDeprecationMessageRegularExpression',
     ];
 
     /**
@@ -45,12 +83,7 @@ final class InteropPresets
      */
     public static function names(): array
     {
-        return [
-            self::COMPOSER_PCRE,
-            self::NETTE_UTILS,
-            self::SPATIE_REGEX,
-            self::LARAVEL_STR,
-        ];
+        return self::DEFAULT_PRESETS;
     }
 
     public static function exists(string $name): bool
@@ -59,7 +92,27 @@ final class InteropPresets
     }
 
     /**
-     * Static methods contributed by a preset, keyed by "Fqcn::method".
+     * The warning for a configured name that is no preset: the name is left
+     * out and the run goes on, whoever reads the configuration.
+     */
+    public static function unknownWarning(string $name): string
+    {
+        return \sprintf('Unknown extraction preset "%s", ignored.', $name);
+    }
+
+    /**
+     * The warning for an entry of the extraction list $key ("interop",
+     * "functions") that is no string, named by its type: false says "bool",
+     * not an empty name.
+     */
+    public static function notAStringWarning(string $key, mixed $entry): string
+    {
+        return \sprintf('Extraction %s entry ignored: expected a string, got %s.', $key, get_debug_type($entry));
+    }
+
+    /**
+     * Static methods contributed by a preset, keyed by "fqcn::method" in
+     * lowercase.
      *
      * @return array<string, PatternFunction>
      */
@@ -85,26 +138,112 @@ final class InteropPresets
                 'composer\pcre\preg::replacecallbackarray' => new PatternFunction('Preg::replaceCallbackArray', 0, keysArePatterns: true),
                 'composer\pcre\regex::replacecallbackarray' => new PatternFunction('Regex::replaceCallbackArray', 0, keysArePatterns: true),
             ],
-            // Nette puts the subject first and takes an array of pattern => replacement.
+            // Nette puts the subject first and takes an array of pattern =>
+            // replacement; utf8: true appends "u" to every pattern.
             self::NETTE_UTILS => [
-                'nette\utils\strings::match' => new PatternFunction('Strings::match', 1),
-                'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1),
-                'nette\utils\strings::split' => new PatternFunction('Strings::split', 1),
-                'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true, replacementIndex: 2),
+                'nette\utils\strings::match' => new PatternFunction('Strings::match', 1, utf8Argument: [5, 'utf8']),
+                'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1, utf8Argument: [6, 'utf8']),
+                'nette\utils\strings::split' => new PatternFunction('Strings::split', 1, utf8Argument: [5, 'utf8']),
+                'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true, replacementIndex: 2, utf8Argument: [6, 'utf8']),
             ],
             self::SPATIE_REGEX => [
                 'spatie\regex\regex::match' => new PatternFunction('Regex::match'),
                 'spatie\regex\regex::matchall' => new PatternFunction('Regex::matchAll'),
                 'spatie\regex\regex::replace' => new PatternFunction('Regex::replace'),
             ],
-            self::LARAVEL_STR => [
+            self::ILLUMINATE_SUPPORT => [
                 'illuminate\support\str::match' => new PatternFunction('Str::match'),
                 'illuminate\support\str::matchall' => new PatternFunction('Str::matchAll'),
                 'illuminate\support\str::ismatch' => new PatternFunction('Str::isMatch'),
                 'illuminate\support\str::replacematches' => new PatternFunction('Str::replaceMatches'),
             ],
+            self::PHPUNIT => [
+                ...self::onClass('PHPUnit\Framework', 'Assert', self::phpunitAssertions()),
+                ...self::onClass('PHPUnit\Framework', 'TestCase', [...self::phpunitAssertions(), ...self::phpunitExpectations()]),
+            ],
+            // The value first, the pattern second.
+            self::WEBMOZART_ASSERT => self::onClass('Webmozart\Assert', 'Assert', self::assertionMethods([
+                'regex', 'notRegex', 'nullOrRegex', 'nullOrNotRegex',
+                'allRegex', 'allNotRegex', 'allNullOrRegex', 'allNullOrNotRegex',
+            ])),
+            self::BEBERLEI_ASSERT => self::onClass('Assert', 'Assertion', self::assertionMethods([
+                'regex', 'notRegex', 'nullOrRegex', 'nullOrNotRegex', 'allRegex', 'allNotRegex',
+            ])),
             default => [],
         };
+    }
+
+    /**
+     * Methods a preset matches by name alone, on $this->, self::, static::
+     * and parent::, keyed by lowercase method name.
+     *
+     * @return array<string, PatternFunction>
+     */
+    public static function namedMethods(string $name): array
+    {
+        if (self::PHPUNIT !== $name) {
+            return [];
+        }
+
+        $methods = [];
+        foreach ([...self::phpunitAssertions(), ...self::phpunitExpectations()] as $method => $function) {
+            $methods[strtolower($method)] = new PatternFunction($method, $function->argumentIndex, parameterNames: $function->parameterNames, kind: PatternFunction::KIND_NAMED_METHOD);
+        }
+
+        return $methods;
+    }
+
+    /**
+     * Functions contributed by a preset, keyed by lowercase fully qualified
+     * name.
+     *
+     * @return array<string, PatternFunction>
+     */
+    public static function functions(string $name): array
+    {
+        if (self::PHPUNIT !== $name) {
+            return [];
+        }
+
+        $functions = [];
+        foreach (self::phpunitAssertions() as $method => $function) {
+            $functions[strtolower('PHPUnit\Framework\\'.$method)] = new PatternFunction($method, $function->argumentIndex, parameterNames: $function->parameterNames);
+        }
+
+        return $functions;
+    }
+
+    /**
+     * Constructors contributed by a preset, keyed by lowercase fully
+     * qualified class.
+     *
+     * @return array<string, PatternFunction>
+     */
+    public static function constructors(string $name): array
+    {
+        if (self::SYMFONY_VALIDATOR !== $name) {
+            return [];
+        }
+
+        // Regex::__construct(?string $pattern, ?string $message, ?string
+        // $htmlPattern, ...), and the legacy options array ['pattern' =>
+        // ...]. htmlPattern is an HTML attribute, no PCRE.
+        return ['symfony\component\validator\constraints\regex' => new PatternFunction('Regex', 0, kind: PatternFunction::KIND_CONSTRUCTOR, optionPath: ['pattern'])];
+    }
+
+    /**
+     * Attributes contributed by a preset, keyed by lowercase fully qualified
+     * class.
+     *
+     * @return array<string, PatternFunction>
+     */
+    public static function attributes(string $name): array
+    {
+        if (self::SYMFONY_VALIDATOR !== $name) {
+            return [];
+        }
+
+        return ['symfony\component\validator\constraints\regex' => new PatternFunction('Regex', 0, kind: PatternFunction::KIND_ATTRIBUTE, optionPath: ['pattern'])];
     }
 
     /**
@@ -112,10 +251,12 @@ final class InteropPresets
      *
      * Extractors use them to skip files without tokenizing them. An aliased
      * import, `use Composer\Pcre\Preg as P;` or `use Composer\{Pcre\Preg as P}`,
-     * hides `Preg::` but always spells the short class name before ` as`;
-     * the call is still resolved on the full class name once the file is
-     * read. An alias with anything but one space before `as` (a tab, a
-     * newline, a comment) does not open the file.
+     * hides `Preg::` but always spells the short class name before `as`: a
+     * needle ending in " as" stands for the name, any white space or comment,
+     * then the keyword, as PHP reads it. The call is still resolved on the
+     * full class name once the file is read. The method names of the
+     * assertion presets are their needles: a file of other assertions is not
+     * opened.
      *
      * @return array<int, string>
      */
@@ -125,9 +266,100 @@ final class InteropPresets
             self::COMPOSER_PCRE => ['preg::', 'regex::', 'preg as', 'regex as'],
             self::NETTE_UTILS => ['strings::', 'strings as'],
             self::SPATIE_REGEX => ['regex::', 'regex as'],
-            self::LARAVEL_STR => ['str::', 'str as'],
+            self::ILLUMINATE_SUPPORT => ['str::', 'str as'],
+            // Every call spells the whole method name.
+            self::PHPUNIT => [
+                'matchesregularexpression', 'assertdoesnotmatchregularexpression',
+                'expectoutputregex', 'expectexceptionmessagematches', 'expectuserdeprecationmessagematches',
+                'assertregexp', 'assertnotregexp',
+            ],
+            self::WEBMOZART_ASSERT, self::BEBERLEI_ASSERT => ['regex('],
+            self::SYMFONY_VALIDATOR => ['regex(', 'regex as'],
             default => [],
         };
+    }
+
+    /**
+     * The words of the fully qualified class a preset matches, lowercase,
+     * each of which a file must spell for the preset's needles to open it:
+     * an import, an alias, a group use, a namespace declaration or a
+     * qualified name writes every segment of Illuminate\Support\Str
+     * somewhere, and the call is resolved on that name. Null for a preset
+     * whose needles open the file alone: composer/pcre's spell its classes,
+     * and PHPUnit's methods are matched by name.
+     *
+     * @return list<string>|null
+     */
+    public static function classWords(string $name): ?array
+    {
+        return match ($name) {
+            self::NETTE_UTILS => ['nette', 'utils', 'strings'],
+            self::SPATIE_REGEX => ['spatie', 'regex'],
+            self::ILLUMINATE_SUPPORT => ['illuminate', 'support', 'str'],
+            self::WEBMOZART_ASSERT => ['webmozart', 'assert'],
+            self::BEBERLEI_ASSERT => ['assert', 'assertion'],
+            self::SYMFONY_VALIDATOR => ['symfony', 'component', 'validator', 'constraints', 'regex'],
+            default => null,
+        };
+    }
+
+    /**
+     * @return array<string, PatternFunction> keyed by method name as PHPUnit spells it
+     */
+    private static function phpunitAssertions(): array
+    {
+        $functions = [];
+        foreach (self::PHPUNIT_ASSERTIONS as $method) {
+            $functions[$method] = new PatternFunction($method);
+        }
+
+        return $functions;
+    }
+
+    /**
+     * @return array<string, PatternFunction> keyed by method name as PHPUnit spells it
+     */
+    private static function phpunitExpectations(): array
+    {
+        $functions = [];
+        foreach (self::PHPUNIT_EXPECTATIONS as $method => $parameter) {
+            $functions[$method] = new PatternFunction($method, parameterNames: [$parameter]);
+        }
+
+        return $functions;
+    }
+
+    /**
+     * @param list<string> $methods
+     *
+     * @return array<string, PatternFunction> keyed by method name
+     */
+    private static function assertionMethods(array $methods): array
+    {
+        $functions = [];
+        foreach ($methods as $method) {
+            $functions[$method] = new PatternFunction($method, 1);
+        }
+
+        return $functions;
+    }
+
+    /**
+     * The class is given as its namespace and its short name: the library
+     * need not be installed, its name is never resolved.
+     *
+     * @param array<string, PatternFunction> $functions keyed by method name
+     *
+     * @return array<string, PatternFunction> keyed by lowercase "fqcn::method"
+     */
+    private static function onClass(string $namespace, string $shortClass, array $functions): array
+    {
+        $entries = [];
+        foreach ($functions as $method => $function) {
+            $entries[strtolower($namespace.'\\'.$shortClass.'::'.$method)] = new PatternFunction($shortClass.'::'.$method, $function->argumentIndex, parameterNames: $function->parameterNames);
+        }
+
+        return $entries;
     }
 
     /**

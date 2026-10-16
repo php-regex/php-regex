@@ -26,7 +26,7 @@ Documentation: [php-regex.com](https://php-regex.com) — the [CLI guide](https:
 Features
 --------
 
-- Lints a whole codebase: patterns extracted from `preg_*` calls and four wrapper libraries, judged by 40 rules.
+- Lints a whole codebase: patterns extracted from `preg_*` calls, `RegexIterator` and `filter_var()`, eight library presets and your own helpers, followed through the variables, constants and properties of the same file, then judged by 40 rules.
 - ReDoS verdicts proven on a model of PCRE's backtracking, with the input that triggers a vulnerable pattern; confirmed mode replays it on the running PCRE — plus a benchmark command.
 - Automata comparison of two patterns: intersection, subset, equivalence, with counter-examples.
 - Transpiles PCRE patterns to JavaScript, HTML `pattern` attributes and Python; renders the AST as text or SVG and the NFA as DOT or Mermaid.

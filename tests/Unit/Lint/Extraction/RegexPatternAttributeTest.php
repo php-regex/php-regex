@@ -197,7 +197,7 @@ final class RegexPatternAttributeTest extends TestCase
             function afterClosure(#[RegexPattern] string $regex) {}
             CODE);
 
-        $this->assertSame(['App\byReference#0', 'App\defaults#3', 'App\afterClosure#0'], $specs);
+        $this->assertSame(['App\byReference#0$regex', 'App\defaults#3$regex', 'App\afterClosure#0$regex'], $specs);
     }
 
     /**
@@ -216,7 +216,7 @@ final class RegexPatternAttributeTest extends TestCase
             function relative(#[namespace\RegexPattern] string $regex) {}
             CODE);
 
-        $this->assertSame(['PHPRegex\Parser\Attribute\bare#0', 'PHPRegex\Parser\Attribute\relative#0'], $specs);
+        $this->assertSame(['PHPRegex\Parser\Attribute\bare#0$regex', 'PHPRegex\Parser\Attribute\relative#0$regex'], $specs);
     }
 
     /**
@@ -241,7 +241,7 @@ final class RegexPatternAttributeTest extends TestCase
             function bare(#[Language] string $text) {}
             CODE);
 
-        $this->assertSame(['App\single#0', 'App\double#1', 'App\named#0', 'App\qualified#0'], $specs);
+        $this->assertSame(['App\single#0$regex', 'App\double#1$regex', 'App\named#0$regex', 'App\qualified#0$regex'], $specs);
     }
 
     /**
@@ -292,7 +292,7 @@ final class RegexPatternAttributeTest extends TestCase
         $phpstorm = $this->write("<?php\nnamespace Acme;\nuse JetBrains\\PhpStorm\\{Language, Pure};\nclass Str { public static function find(#[Language('RegExp')] string \$p) {} }\n");
         $partial = $this->write("<?php\nnamespace Acme;\nuse PHPRegex\\Parser;\nclass Str2 { public static function find(#[Parser\\Attribute\\RegexPattern] string \$p) {} }\n");
 
-        $this->assertSame(['Acme\Str::find#0', 'Acme\Str2::find#0'], PatternAttributeScanner::specs([$phpstorm, $partial]));
+        $this->assertSame(['Acme\Str::find#0$p', 'Acme\Str2::find#0$p'], PatternAttributeScanner::specs([$phpstorm, $partial]));
     }
 
     /**
@@ -317,7 +317,7 @@ final class RegexPatternAttributeTest extends TestCase
             }
             CODE);
 
-        $this->assertSame(['App\Str::match#0', 'App\Str::list#1', 'App\Str::print#0'], $specs);
+        $this->assertSame(['App\Str::match#0$regex', 'App\Str::list#1$regex', 'App\Str::print#0$regex'], $specs);
     }
 
     /**

@@ -55,3 +55,13 @@ CHANGELOG
    `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where
    they are linted, and in the project's `vendor/` whatever `exclude` says: a
    call to one is read as a `preg_*()` call.
+ * `regex:lint` reads `php_regex.extraction.interop` (every preset by
+   default, and for `~`) and `php_regex.extraction.functions`, the shape of
+   `extraction` in `regex.json`; a later configuration file's list replaces
+   the earlier one. An unknown preset, or an entry of either list that is no
+   string, is ignored with a warning naming it, or its type. A `Regex`
+   constraint read from both the PHP file and the validator's metadata is
+   reported once.
+ * `php_regex.extraction.interop` and `functions` take one name written
+   without a list, and a `functions` spec the lint cannot read is ignored
+   with a warning, `Malformed pattern function "x#a", ignored.`
