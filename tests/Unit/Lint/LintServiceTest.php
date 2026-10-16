@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
+use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\LintProgress;
@@ -758,6 +759,28 @@ final class LintServiceTest extends TestCase
         $this->assertSame([], $this->optimized('{^\d+$}sD', 'route:home:id'));
         $this->assertSame(['{^\d+$}sD'], $this->optimized('{^[0-9]+$}sD', 'route:home:id'));
         $this->assertSame(['{^ab$}sDu'], $this->optimized('{^a{1}b$}sDu', 'route:home:id'));
+    }
+
+    /**
+     * The router splices a requirement into the pattern it compiles, between
+     * the text of the path and the other parameters: a rewrite proven on the
+     * requirement alone, anchored at both ends, proves nothing there. "a|ab"
+     * and "ab|a" write the same matches anchored, yet before a "b?" they
+     * capture other text. Only a rewrite whose normal form is the
+     * requirement's, as "[0-9]" for "\d", is offered.
+     */
+    #[Test]
+    public function test_analyze_offers_a_route_rewrite_only_when_it_reads_as_the_requirement(): void
+    {
+        $solver = new LanguageSolver();
+        $this->assertTrue($solver->matchEquivalent('{^(?P<p>a|ab)$}sD', '{^(?P<p>ab|a)$}sD')->isEquivalent);
+        $this->assertSame(1, preg_match('{^/(?P<p>a|ab)(?P<q>b?)$}sD', '/ab', $spliced));
+        $this->assertSame(1, preg_match('{^/(?P<p>ab|a)(?P<q>b?)$}sD', '/ab', $swapped));
+        $this->assertNotSame($spliced['p'], $swapped['p']);
+
+        $this->assertSame(['{^[abc]$}D'], $this->optimized('{^(?:a|b|c)$}sD', 'php:preg_match()'), 'control');
+        $this->assertSame([], $this->optimized('{^(?:a|b|c)$}sD', 'route:home:id'));
+        $this->assertSame(['{^\d+$}sD'], $this->optimized('{^[0-9]+$}sD', 'route:home:id'));
     }
 
     #[Test]

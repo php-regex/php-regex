@@ -46,7 +46,8 @@ final class AnalysisServiceDfaCacheTest extends TestCase
 
     /**
      * The lookahead keeps the match check out, so the language check runs,
-     * on the automata.
+     * on the automata: the run of x's spelled as a repeat keeps the rewrite
+     * from reading as the pattern does.
      */
     #[Test]
     public function test_the_optimizer_checks_share_the_cache_of_the_analysis(): void
@@ -54,7 +55,7 @@ final class AnalysisServiceDfaCacheTest extends TestCase
         $cache = self::spy();
         $analysis = new AnalysisService(RegexParser::create(), dfaCache: $cache);
 
-        $suggestions = $analysis->suggestOptimizations(self::twice(['/(?=1)[0-9]+ x/x', '/(?=1)[0-9]+x/']), 1);
+        $suggestions = $analysis->suggestOptimizations(self::twice(['/(?=1)[0-9]+xxxxxx x/x', '/(?=1)[0-9]+xxxxxx/']), 1);
 
         $this->assertCount(4, $suggestions);
         $this->assertNotSame([], $cache->sets, 'The rewrite under x is checked with the automata of the analysis.');

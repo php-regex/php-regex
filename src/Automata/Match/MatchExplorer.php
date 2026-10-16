@@ -50,6 +50,9 @@ final class MatchExplorer
      * @param int|null $maxTransitions the threads the search may step in all,
      *                                 null for no bound: a configuration of a
      *                                 wide alternation holds one per branch
+     * @param MatchRun $run            how the engine runs the patterns: from
+     *                                 the start of the subject or past it, a
+     *                                 search or the retry of an empty match
      */
     public function __construct(
         private readonly PriorityNfa $left,
@@ -57,13 +60,14 @@ final class MatchExplorer
         private readonly int $maxConfigurations,
         private readonly string $pattern,
         ?int $maxTransitions = null,
+        private readonly MatchRun $run = MatchRun::Search,
     ) {
         $this->budget = new WorkBudget($maxTransitions, 'match exploration', \count($left->kinds) + \count($right->kinds), 0, 0);
     }
 
     /**
-     * The shortest subject preg_match() treats differently, or null when
-     * there is none.
+     * The shortest subject the run treats differently, or null when there
+     * is none.
      *
      * @throws ComplexityException
      */
@@ -202,7 +206,7 @@ final class MatchExplorer
     {
         $threads = [];
         $visited = [];
-        $this->add($nfa, $threads, $visited, $nfa->start, [0 => 0], 0, true);
+        $this->add($nfa, $threads, $visited, $nfa->start, [0 => 0], 0, $this->run->atSubjectStart());
 
         return $this->cut($nfa, ['t' => $threads, 'b' => null], 0);
     }
@@ -237,8 +241,9 @@ final class MatchExplorer
         }
 
         // Until a match is found, a match may start at the next position too,
-        // after every start tried before it.
-        if (null === $side['b']) {
+        // after every start tried before it; a retry is anchored where it
+        // stands.
+        if (null === $side['b'] && !$this->run->isRetry()) {
             $this->add($nfa, $threads, $visited, $nfa->start, [0 => $fresh], $fresh, false);
         }
 
@@ -285,7 +290,8 @@ final class MatchExplorer
 
     /**
      * A thread that reached the end of the pattern is the match, for now;
-     * the threads PCRE would have tried after it are gone.
+     * the threads PCRE would have tried after it are gone. A retry refuses
+     * an empty match: that thread fails, and the next one is tried.
      *
      * @param Side $side
      *
@@ -293,15 +299,24 @@ final class MatchExplorer
      */
     private function cut(PriorityNfa $nfa, array $side, int $label): array
     {
-        foreach ($side['t'] as $index => [$state, $registers]) {
-            if (PriorityNfa::MATCH === $nfa->kinds[$state]) {
-                $registers[1] = $label;
+        $threads = [];
+        foreach ($side['t'] as [$state, $registers, $waiting]) {
+            if (PriorityNfa::MATCH !== $nfa->kinds[$state]) {
+                $threads[] = [$state, $registers, $waiting];
 
-                return ['t' => \array_slice($side['t'], 0, $index), 'b' => $registers];
+                continue;
             }
+
+            if ($this->run->isRetry() && $label === ($registers[0] ?? null)) {
+                continue;
+            }
+
+            $registers[1] = $label;
+
+            return ['t' => $threads, 'b' => $registers];
         }
 
-        return $side;
+        return ['t' => $threads, 'b' => $side['b']];
     }
 
     /**
@@ -320,7 +335,8 @@ final class MatchExplorer
             }
 
             $outcome = $this->finish($nfa, $nfa->next[$state], $registers, $waiting ?? 0, null !== $waiting);
-            if (null !== $outcome) {
+            // A retry refuses an empty match: the next thread is tried.
+            if (null !== $outcome && !($this->run->isRetry() && ($outcome[0] ?? null) === $outcome[1])) {
                 return $outcome;
             }
         }

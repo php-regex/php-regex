@@ -133,6 +133,22 @@ the match solver does not read a pattern, or gives up on its budget, `equivalent
 decides. Both questions work within a budget of their own there (200,000 units of work),
 and one that runs out proves nothing: the rewrite is not offered.
 
+A rewrite must hold in every call the pattern may go to, not only in `preg_match()` from
+offset 0. From an offset, `^` and `\A` never hold: `/^[\s\S]|a/` and `/^[\s\S]|b/` write
+the same `$matches` from offset 0, yet `preg_match_all()` finds two matches in `"xa"` with
+the first and one with the second. After an empty match, `preg_match_all()`,
+`preg_replace()` and `preg_split()` try again where it stands, refusing an empty match:
+`/a??/` and `/(?:)/` write the same `$matches`, yet `preg_replace()` gives `---` and `-a-`
+on `"a"`. So a pattern with `^` or `\A` is checked again from past the start of the
+subject, and one that may match empty in that retry as well, all by the match solver,
+which alone models them. A pattern that reads the text before where the search starts (a
+lookbehind, `\b`, `\B`, `^` under `m`) or that moves the start of its match (`\K`) is
+proven by no such check, and its rewrite is offered only when it reads as the pattern
+does: the same normal form, as `[0-9]` and `\d`, or a flag dropped that changes nothing.
+The same holds for a route requirement, which the router splices into a larger pattern:
+`a|ab` and `ab|a` write the same `$matches` anchored at both ends, yet before a `b?` they
+capture other text.
+
 ## Use Case 5: Live Input Validation (The "Prefix" Problem)
 
 A form field checks a date as it is typed. `preg_match()` says `0` for `2026`

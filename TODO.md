@@ -179,14 +179,18 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 The determinization budget, the shared rewrite check and the bounded DFA
 cache are merged. Follow-ups:
-- both checks model `preg_match` from offset 0 only: `/^[\s\S]|a/` and
-  `/^[\s\S]|b/` are proven equivalent, yet `preg_match_all` on "xa" finds 2
-  matches with one and 1 with the other. No known rewrite produces such a
-  pair, but `preg_match_all`, `preg_replace` and `preg_split` match from
-  every offset: the safety net should model that, or the suggestion should
-  name the calls it was proven for;
-- a rewrite proven by the match check alone is not proven once its text is
-  spliced into a larger pattern (an inline `(?x)` route requirement);
+- the language check, where the match solver does not read a pattern,
+  compares whole-string languages, which proves no `$matches`: it still
+  proves `/a(?!b)/` and `/a/` (`preg_match()` tells them apart on "ab"),
+  and `/(?:a|ab)(?!c)/` and `/(?:ab|a)(?!c)/` (on "ab" one matches "a",
+  the other "ab"). A lookahead at the edge of the match, and the order of
+  alternatives the match solver does not read, need a check of their own,
+  or the fallback should keep only rewrites that read alike (as patterns
+  that look before the match start already do). No known rewrite produces
+  such a pair; the corpus sample of 400 files shows none;
+- the language server offers its quick fix from `Regex::optimize()`
+  without `verify_with_automata`: only a rewrite that adds atomicity is
+  checked there;
 - about 265 bytes per transition: one check at the 200,000 budget still
   costs ~70 MB, close to PHP's default 128 MB `memory_limit` for embedders.
 

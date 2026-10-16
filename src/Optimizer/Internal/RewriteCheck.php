@@ -15,6 +15,7 @@ namespace PHPRegex\Optimizer\Internal;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Match\MatchRun;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 
@@ -64,15 +65,37 @@ final class RewriteCheck
      */
     public function verify(string $original, string $optimized): ?bool
     {
+        // A pattern goes to preg_match_all(), preg_replace(), preg_split()
+        // and preg_match() from an offset as well: the rewrite must write
+        // what the pattern writes in each. A pattern that reads the text
+        // before where the search starts proves nothing from offset 0, "^"
+        // needs a search past the start of the subject, and an empty match
+        // the retry those calls make after it.
+        $runs = $this->solver->runsOfEveryCall($original, $optimized);
+        if (null === $runs) {
+            return false;
+        }
+
         // The same strings are not enough: a rewrite must write the same
         // $matches, which /(a|ab)/ and /(ab|a)/ do not on "ab". The same
         // $matches on every subject is the same answer on every subject,
         // so the strings preg_match() accepts agree as well.
+        $options = new SolverOptions(maxDfaStates: self::MATCH_CHECK_STATES, maxTransitionsProcessed: self::MATCH_CHECK_WORK);
+
         try {
-            return $this->solver->matchEquivalent($original, $optimized, new SolverOptions(maxDfaStates: self::MATCH_CHECK_STATES, maxTransitionsProcessed: self::MATCH_CHECK_WORK))->isEquivalent;
+            foreach ($runs as $run) {
+                if (!$this->solver->matchEquivalentIn($run, $original, $optimized, $options)->isEquivalent) {
+                    return false;
+                }
+            }
+
+            return true;
         } catch (ComplexityException) {
             // Outside what the match solver reads, or past its budget: the
-            // strings must agree.
+            // strings must agree, which says nothing of the other runs.
+            if ([MatchRun::Search] !== $runs) {
+                return false;
+            }
         }
 
         try {

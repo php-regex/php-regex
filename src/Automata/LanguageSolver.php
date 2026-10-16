@@ -16,6 +16,7 @@ namespace PHPRegex\Automata;
 use PHPRegex\Automata\Builder\DfaBuilder;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Match\MatchExplorer;
+use PHPRegex\Automata\Match\MatchRun;
 use PHPRegex\Automata\Match\PriorityNfa;
 use PHPRegex\Automata\Match\PriorityNfaBuilder;
 use PHPRegex\Automata\Model\Dfa;
@@ -29,10 +30,25 @@ use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Hir\AssertionHir;
+use PHPRegex\Parser\Hir\AssertionKind;
+use PHPRegex\Parser\Hir\ConditionalHir;
+use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Hir\LookHir;
+use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\TraversalAction;
 
 /**
  * Answers questions about the languages regexes match: whether two overlap,
@@ -147,6 +163,20 @@ final class LanguageSolver
      */
     public function matchEquivalent(string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
+        return $this->matchEquivalentIn(MatchRun::Search, $left, $right, $options);
+    }
+
+    /**
+     * matchEquivalent() for one way the engine runs a pattern: from offset 0,
+     * from past the start of the subject, or the anchored retry that refuses
+     * an empty match.
+     *
+     * @internal the check of a rewrite asks it for each call a pattern may go to
+     *
+     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     */
+    public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
+    {
         $options ??= new SolverOptions();
         $leftNfa = $this->priorityNfa($left, $options);
         $rightNfa = $this->priorityNfa($right, $options);
@@ -155,12 +185,102 @@ final class LanguageSolver
             throw new ComplexityException('Both patterns must read the subject the same way, as UTF-8 or as bytes, for the match solver to compare them.', 0, $left);
         }
 
-        $counterExample = (new MatchExplorer($leftNfa, $rightNfa, $options->maxDfaStates, $left, $options->maxTransitionsProcessed))->counterExample();
+        $counterExample = (new MatchExplorer($leftNfa, $rightNfa, $options->maxDfaStates, $left, $options->maxTransitionsProcessed, $run))->counterExample();
 
         // The sets the answer is computed from come from the running engine,
         // whatever PCRE2 is judged: the result carries the running release,
         // like every other question.
         return new MatchEquivalenceResult(null === $counterExample, $counterExample);
+    }
+
+    /**
+     * The runs that prove two patterns write the same results in every
+     * preg_*() call, or null when no run does: a pattern that reads the text
+     * before where a search starts (a lookbehind, "\b", "\B", "^" under /m)
+     * or that reports a match start of its own ("\K").
+     *
+     * A search from an offset reads the subject from there as one from 0
+     * reads what follows, but for "^" and "\A", which never hold past the
+     * start of the subject: a pattern with one needs that search too. A
+     * pattern that may match empty needs the retry calls such as
+     * preg_match_all() make after an empty match.
+     *
+     * Two patterns that read alike (see readAlike()) run alike everywhere:
+     * no run is needed.
+     *
+     * @internal the check of a rewrite asks it for each call a pattern may go to
+     *
+     * @return list<MatchRun>|null
+     */
+    public function runsOfEveryCall(string $left, string $right): ?array
+    {
+        $translator = new HirTranslator($this->parser()->target());
+        $leftAst = $this->parser()->parse($left);
+        $rightAst = $this->parser()->parse($right);
+        $hirs = [$translator->translate($leftAst), $translator->translate($rightAst)];
+
+        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1])) {
+            return [];
+        }
+
+        $startAnchored = false;
+        $empty = false;
+        foreach ($hirs as $hir) {
+            $empty = $empty || false !== $hir->properties->nullable;
+            $pending = [$hir];
+            while (null !== $node = array_pop($pending)) {
+                if ($node instanceof LookHir && \in_array($node->kind, [LookKind::Behind, LookKind::NegativeBehind], true)) {
+                    return null;
+                }
+
+                if ($node instanceof AssertionHir) {
+                    if (\in_array($node->kind, [AssertionKind::LineStart, AssertionKind::WordBoundary, AssertionKind::NotWordBoundary, AssertionKind::ResetMatchStart], true)) {
+                        return null;
+                    }
+
+                    $startAnchored = $startAnchored || AssertionKind::SubjectStart === $node->kind;
+                }
+
+                // A condition stays as written: one that asserts anything
+                // about where it stands is not followed.
+                if ($node instanceof ConditionalHir && self::assertsPosition($node->condition)) {
+                    return null;
+                }
+
+                array_push($pending, ...$node->children());
+            }
+        }
+
+        $runs = [MatchRun::Search];
+        if ($startAnchored) {
+            $runs[] = MatchRun::SearchPastSubjectStart;
+        }
+        if ($empty) {
+            $runs[] = MatchRun::EmptyMatchRetry;
+            if ($startAnchored) {
+                $runs[] = MatchRun::EmptyMatchRetryPastSubjectStart;
+            }
+        }
+
+        return $runs;
+    }
+
+    /**
+     * Whether two patterns read alike: the same normal form, positions
+     * aside, the same options before it, and the same flags but for an "s"
+     * or an "m" that form already applied. [0-9] and \d, a{1} and a, (?:a)
+     * and a read alike. Such patterns run alike in every call, and wherever
+     * their text is spliced into a larger pattern.
+     *
+     * @internal the lint asks it of a rewrite it would splice into a larger pattern
+     */
+    public function readAlike(string $left, string $right): bool
+    {
+        $translator = new HirTranslator($this->parser()->target());
+        $leftAst = $this->parser()->parse($left);
+        $rightAst = $this->parser()->parse($right);
+
+        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst));
     }
 
     /**
@@ -234,6 +354,65 @@ final class LanguageSolver
         ];
 
         return \hash('sha256', \implode('|', $parts));
+    }
+
+    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir): bool
+    {
+        // The options a pattern opens with, (*UTF) or a newline
+        // convention, are no part of the normal form.
+        if (StartOptions::of($leftAst->source ?? '') !== StartOptions::of($rightAst->source ?? '')) {
+            return false;
+        }
+
+        $otherFlags = static fn (string $flags): string => count_chars(str_replace(['s', 'm'], '', $flags), 3);
+        if ($otherFlags($leftAst->flags) !== $otherFlags($rightAst->flags)) {
+            return false;
+        }
+
+        return self::shape($leftHir) === self::shape($rightHir);
+    }
+
+    /**
+     * A value with the positions of every node in it left out.
+     */
+    private static function shape(mixed $value): mixed
+    {
+        if (\is_array($value)) {
+            return array_map(self::shape(...), $value);
+        }
+
+        if ($value instanceof \UnitEnum) {
+            return $value::class.'::'.$value->name;
+        }
+
+        if (!\is_object($value)) {
+            return $value;
+        }
+
+        $shape = ['' => $value::class];
+        foreach ((array) $value as $property => $field) {
+            if ('startPosition' !== $property && 'endPosition' !== $property) {
+                $shape[$property] = self::shape($field);
+            }
+        }
+
+        return $shape;
+    }
+
+    /**
+     * Whether the condition holds an anchor, an assertion or a lookbehind.
+     */
+    private static function assertsPosition(NodeInterface $condition): bool
+    {
+        $asserts = false;
+        NodeWalker::walk($condition, static function (NodeInterface $node) use (&$asserts): ?TraversalAction {
+            $asserts = $node instanceof AnchorNode || $node instanceof AssertionNode || $node instanceof KeepNode
+                || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true));
+
+            return $asserts ? TraversalAction::Stop : null;
+        });
+
+        return $asserts;
     }
 
     /**

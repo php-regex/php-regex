@@ -27,19 +27,22 @@ use PHPUnit\Framework\TestCase;
  * other rewrite: first on the $matches it writes, then, where the match
  * solver does not read the pattern or gives up, on the strings it matches. A
  * check that gave up on its budget proves nothing, so the suggestion is not
- * made.
+ * made. A rewrite that only respells a class, [0-9] as \d, reads as the
+ * pattern does and needs no automaton: the rewrites here also spell a run
+ * of x's as a repeat.
  */
 final class ExtendedRewriteVerificationTest extends TestCase
 {
     /**
      * Under m the match check does not read the pattern, and the fifteenth
-     * character from the end is a 0: 2^15 DFA states for the language check.
+     * character before the x's is a 0: 2^15 DFA states for the language
+     * check.
      */
     #[Test]
     public function test_a_rewrite_the_language_check_gives_up_on_is_not_suggested(): void
     {
-        $this->assertSame([], $this->suggestions('/^[0-9]*0[0-9]{14}$/mx', true));
-        $this->assertSame(['/^\d*0\d{14}$/mx'], $this->suggestions('/^[0-9]*0[0-9]{14}$/mx', false), 'Unchecked, the rewrite is suggested.');
+        $this->assertSame([], $this->suggestions('/[0-9]*0[0-9]{14}xxxxxx$/mx', true));
+        $this->assertSame(['/\d*0\d{14}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{14}xxxxxx$/mx', false), 'Unchecked, the rewrite is suggested.');
     }
 
     /**
@@ -49,7 +52,7 @@ final class ExtendedRewriteVerificationTest extends TestCase
     #[Test]
     public function test_a_rewrite_the_match_check_proves_is_suggested_though_the_language_check_gives_up(): void
     {
-        $this->assertSame(['/^\d*0\d{14}$/x'], $this->suggestions('/^[0-9]*0[0-9]{14}$/x', true));
+        $this->assertSame(['/^\d*0\d{14}x{6}$/x'], $this->suggestions('/^[0-9]*0[0-9]{14}xxxxxx$/x', true));
     }
 
     /**
@@ -82,17 +85,17 @@ final class ExtendedRewriteVerificationTest extends TestCase
     #[Test]
     public function test_a_rewrite_whose_check_outgrows_its_work_is_not_suggested(): void
     {
-        $pattern = '/^[\pL0-9]*0[0-9]{6}$/umx';
-        $this->assertTrue((new LanguageSolver())->equivalent($pattern, '/^[0-9\pL]*0[0-9]{6}$/umx')->isEquivalent, 'The default budget settles it.');
+        $pattern = '/[\pL0-9]*0[0-9]{6}xxxxxx$/umx';
+        $this->assertTrue((new LanguageSolver())->equivalent($pattern, '/[0-9\pL]*0[0-9]{6}x{6}$/umx')->isEquivalent, 'The default budget settles it.');
 
         $this->assertSame([], $this->suggestions($pattern, true));
-        $this->assertSame(['/^[0-9\pL]*0[0-9]{6}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
+        $this->assertSame(['/[0-9\pL]*0[0-9]{6}x{6}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
     }
 
     #[Test]
     public function test_a_rewrite_the_language_check_proves_is_suggested(): void
     {
-        $this->assertSame(['/^\d*0\d{3}$/mx'], $this->suggestions('/^[0-9]*0[0-9]{3}$/mx', true));
+        $this->assertSame(['/\d*0\d{3}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', true));
     }
 
     /**

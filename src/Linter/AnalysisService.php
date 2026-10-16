@@ -764,6 +764,17 @@ final class AnalysisService
             } else {
                 $optimization = (new Optimizer($this->regex, $this->dfas()))->optimize($occurrence->pattern, $options);
             }
+
+            // The router splices a requirement into the pattern it compiles,
+            // after the text of the path and before the rest of it: a
+            // rewrite proven on the requirement alone proves nothing there,
+            // where "a|ab" and "ab|a" capture other text before a "b?". Only
+            // a rewrite that reads as the requirement does runs alike
+            // wherever it stands.
+            if (str_starts_with($source, 'route:') && $optimization->isChanged()
+                && !(new LanguageSolver($this->regex, $this->dfas()))->readAlike($optimization->original, $optimization->optimized)) {
+                return null;
+            }
         } catch (\Throwable) {
             // A suggestion is optional: whatever stops one pattern's rewrite,
             // the run goes on without it.
