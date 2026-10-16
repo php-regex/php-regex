@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\PHPStan\Internal\MixedTypeCollector;
+use PHPRegex\PHPStan\Internal\NoNewMixedRule;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -70,6 +72,20 @@ final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
             'complexity' => NeonParameters::read($parameters, 'checks', 'complexity', 'enabled'),
             'complexityThreshold' => NeonParameters::read($parameters, 'checks', 'complexity', 'threshold'),
         ]);
+    }
+
+    /**
+     * The library's own check on the mixed types it declares is off for
+     * every other project: neither its rule nor its collector runs.
+     */
+    #[Test]
+    public function test_extension_neon_leaves_the_mixed_type_check_off(): void
+    {
+        $this->assertFalse(NeonParameters::read(self::getContainer()->getParameter('phpRegex'), 'noNewMixed', 'enabled'));
+        $this->assertSame([], array_filter(
+            [...self::getContainer()->getServicesByTag('phpstan.rules.rule'), ...self::getContainer()->getServicesByTag('phpstan.collector')],
+            static fn (mixed $service): bool => $service instanceof NoNewMixedRule || $service instanceof MixedTypeCollector,
+        ));
     }
 
     /**

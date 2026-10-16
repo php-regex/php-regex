@@ -94,20 +94,12 @@ Parked, too large for upstream review: local branches
 `regex-negative-lookaround-groups`, `regex-quoted-sequence`,
 `regex-extended-mode`.
 
-## Declared-type tightening (shapes where keys are knowable)
+## Declared-type tightening
 
-Audited 2026-10-15: of the 214 `mixed` occurrences in `src/`, ~71 were real
-narrowing; the rest are honest boundaries that stay (decode fronts, host
-contracts, validator inputs, protocol slots). The native signatures, the
-consumer shapes and the internal docblock sweep are done; the JsonDumper
-leaf shapes are declined for now (no churn for the count).
-
-Left: the `noNewMixed` rule in the shipped plugin (flag off by default,
-baseline frozen by reason code, counting meta-test per package), which
-holds what stays.
-
-Never type the validator inputs (`ParserOptions::fromArray` and friends):
-their runtime checks and rotten-data tolerance are the contract.
+Every `mixed` type `src/` still declares sits in `phpstan-mixed-baseline.php`,
+one reason per symbol, and the analysis reports any new one. Left: review
+the reason given to each entry; a wrong reason is fixed in the baseline,
+and a type that can be narrowed is narrowed and its entry lowered.
 
 ## PHP 8.6 closeout and 8.7 canary
 
