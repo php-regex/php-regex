@@ -176,23 +176,8 @@ with local changes is never reset or removed unless `--force` is given, and a
 repository cloned by hand is removed on the next run unless it is added with
 `--add` or listed with `--write-manifest` first.
 
-Regenerate `var/log/corpus.log` after updating the corpus, from a terminal:
-
-```bash
-php bin/regex lint corpus/ --php-version=runtime --output=var/log/corpus.log
-```
-
-`--php-version=runtime` judges the corpus for the PHP running the command and
-the PCRE2 it links; without it, the command would judge for the lowest PHP this
-repository's `composer.json` allows.
-
-Piping the command instead of running it in a terminal renders the severity
-badges without their padding, which reformats every severity line of the
-tracked file.
-
-To judge every repository under the PHP its own `composer.json` requires,
-rather than one target for the whole tree, sweep the corpus repository by
-repository:
+Regenerate `var/log/corpus.log` after updating the corpus, sweeping it
+repository by repository:
 
 ```bash
 php bin/corpus-lint
@@ -209,6 +194,13 @@ without `require.php` falls back to `--php` (`8.1` by default). The merged
 log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
 of the corpus, and the merged log renders the same whether the command runs
 in a terminal or through a pipe.
+
+To judge the whole tree for one target instead, the PHP running the command
+and the PCRE2 it links, without touching the tracked log:
+
+```bash
+php bin/regex lint corpus/ --php-version=runtime
+```
 
 ## How to report a vulnerability responsibly
 

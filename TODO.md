@@ -182,14 +182,6 @@ Left:
 - PCRE2 10.39 also has matching bugs 10.40 fixed (`/[Aa]{2}/` misses `aa`):
   engine defects the library does not model, documented.
 
-## Which command regenerates the tracked corpus log
-
-`var/log/corpus.log` is tracked and today regenerates with
-`php bin/regex lint corpus/ --php-version=runtime`. `bin/corpus-lint`
-judges each repository under its own composer.json floor instead, and
-merges one log per repository. Decide which command the tracked file
-follows, then run it after the next corpus update.
-
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
