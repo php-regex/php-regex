@@ -38,6 +38,9 @@ use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\RouterInterface;
 
+/**
+ * @phpstan-import-type RegexOptions from LintCommand
+ */
 final class LintCommandTest extends TestCase
 {
     /**
@@ -794,7 +797,7 @@ final class LintCommandTest extends TestCase
 
     /**
      * @param array<int, PatternSourceInterface> $sources
-     * @param array<string, mixed>               $regexOptions
+     * @param RegexOptions                       $regexOptions
      */
     private function createCommandWithSources(array $sources, array $regexOptions = []): LintCommand
     {

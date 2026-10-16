@@ -45,6 +45,8 @@ use PHPRegex\Parser\RegexParser;
  * @internal
  *
  * @phpstan-type TargetDescription array{php: string, pcre: string}
+ *
+ * @phpstan-import-type OptionsArray from ParserOptions
  */
 final class ProjectTarget
 {
@@ -173,8 +175,8 @@ final class ProjectTarget
      * options of the floor's parser: they share its cache, so the targets
      * that read a pattern the same way parse it once.
      *
-     * @param RegexParser          $floor        the parser of the floor
-     * @param array<string, mixed> $regexOptions what the floor's parser was created with, its target aside
+     * @param RegexParser  $floor        the parser of the floor
+     * @param OptionsArray $regexOptions what the floor's parser was created with, its target aside
      *
      * @throws InvalidRegexOptionException when an option names no setting
      *

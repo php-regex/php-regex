@@ -101,20 +101,19 @@ narrowing; the rest are honest boundaries that stay (decode fronts, host
 contracts, validator inputs, protocol slots). The native signatures that
 could not move after the 2.0.0 tag are done. Left, in order:
 
-1. Consumer shapes: the explicit `regexOptions` subsets on the Symfony
-   lint command and the Linter's range parsers.
-2. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
+1. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
    handler-entry params, the nine unapplied Linter aliases,
    `LintDefaultsBuilder::build()`'s return shape (pays the CLI, LintArguments
    and LSP lines at once), the Symfony JSON report and Laravel compare
    literals.
-3. Deferred unless wanted: JsonDumper leaf shapes transcribed from
+2. Deferred unless wanted: JsonDumper leaf shapes transcribed from
    `ast.schema.json`.
 
 Never type the validator inputs (`ParserOptions::fromArray` and friends):
 their runtime checks and rotten-data tolerance are the contract. A
 `noNewMixed` rule in the shipped plugin (flag off by default, baseline
-frozen by reason code, counting meta-test) lands with unit 1.
+frozen by reason code, counting meta-test) is the last consumer piece left
+before the sweep.
 
 ## PHP 8.6 closeout and 8.7 canary
 

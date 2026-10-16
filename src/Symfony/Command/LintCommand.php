@@ -26,6 +26,7 @@ use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\ParserOptions;
@@ -44,6 +45,18 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Lint regex patterns in PHP source code.
+ *
+ * The options patterns are read with are RegexOptions: those of
+ * Regex::create() but the target, which is the project's, and the runtime
+ * validation, which only the running PHP can do.
+ *
+ * @phpstan-type RegexOptions array{
+ *     max_pattern_length?: int,
+ *     max_lookbehind_length?: int,
+ *     cache?: CacheInterface|string|null,
+ *     redos_ignored_patterns?: array<string>,
+ *     max_recursion_depth?: int,
+ * }
  *
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
@@ -78,7 +91,7 @@ final class LintCommand extends Command
      * @param array<string>           $defaultPaths
      * @param array<string>           $defaultExcludePaths
      * @param array<string, bool|int> $defaultOptimizations the bundle's optimizations, in snake_case
-     * @param array<string, mixed>    $regexOptions         what Regex::create() takes, but the target and the
+     * @param RegexOptions            $regexOptions         what Regex::create() takes, but the target and the
      *                                                      runtime validation: the settings patterns are read with
      * @param string|int|null         $phpVersion           the bundle's php_version
      * @param string|null             $pcreVersion          the bundle's pcre_version

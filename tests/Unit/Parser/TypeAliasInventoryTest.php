@@ -42,6 +42,7 @@ use PHPRegex\Redos\Internal\Backtrack\AmbiguityFinder;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
+use PHPRegex\Symfony\Command\LintCommand as SymfonyLintCommand;
 use PHPRegex\Symfony\Routing\RouteConflictReport;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
@@ -107,6 +108,7 @@ final class TypeAliasInventoryTest extends TestCase
         PregCallAnalyzer::class => ['CachedType', 'PatternVerdict'],
         AmbiguityFinder::class => ['Verdict', 'Witness'],
         SecurityAnalyzer::class => ['SkippedFile'],
+        SymfonyLintCommand::class => ['RegexOptions'],
 
         // Exported before the named-shape change and frozen since.
         RailroadLayoutVisitor::class => ['SvgBox', 'SvgLayout', 'SvgMarker', 'SvgNode', 'SvgPath', 'SvgPoint', 'SvgText'],
