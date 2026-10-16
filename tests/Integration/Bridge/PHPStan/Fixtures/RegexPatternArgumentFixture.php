@@ -128,3 +128,19 @@ final class Unresolved
         new \ArrayIterator(['/(foo/']);
     }
 }
+
+function between(#[RegexPattern] string $from, string $subject, #[RegexPattern] string $to): bool
+{
+    return $from.$subject.$to !== '';
+}
+
+final class SeveralMarked
+{
+    public function calls(): void
+    {
+        between('/(foo/', '/(foo/', '/foo/');
+        between('/foo/', '/(foo/', '/(foo/');
+        between(to: '/foo/', subject: '/(foo/', from: '/(foo/');
+        between(subject: '/(foo/', to: '/(foo/', from: '/foo/');
+    }
+}

@@ -217,14 +217,6 @@ Decisions for the maintainer:
 - **`PHPRegexServiceProvider::extraction()`** is a new public static marked
   `@internal`, on the model of `regexOptions()`.
 
-## `#[RegexPattern]` on more than one parameter
-
-`PatternAttributeScanner::markedParameter()` returns the first parameter
-marked `#[RegexPattern]` only: in `between(#[RegexPattern] string $from,
-#[RegexPattern] string $to)`, `$to` is never read, by the CLI, the LSP or the
-bridges. 2.x at 824626f637 behaves the same. Next: return every marked
-parameter, one spec each, with both strategies agreeing.
-
 ## PHP 8.1 floor: after the merge
 
 Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,

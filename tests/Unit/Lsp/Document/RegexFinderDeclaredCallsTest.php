@@ -48,6 +48,11 @@ final class RegexFinderDeclaredCallsTest extends TestCase
             public function onInstance(#[RegexPattern] string $regex): void
             {
             }
+
+            public static function between(#[RegexPattern] string $from, string $subject, #[RegexPattern] string $to): bool
+            {
+                return true;
+            }
         }
 
         function grep(#[RegexPattern] string $regex, array $lines): array
@@ -75,6 +80,27 @@ final class RegexFinderDeclaredCallsTest extends TestCase
         $this->assertSame(['line' => 6, 'character' => 26], $occurrences[0]->start);
         $this->assertSame(['line' => 6, 'character' => 32], $occurrences[0]->end);
         $this->assertSame(\strlen("<?php\n\nnamespace App;\n\nuse App\\Support\\Str;\n\nStr::matches('/subject/', "), $occurrences[0]->byteOffset);
+    }
+
+    /**
+     * A method marking two parameters receives a pattern at each: the
+     * editor reads both, by position and by name, as `regex lint` does.
+     */
+    #[Test]
+    public function test_every_marked_argument_is_read(): void
+    {
+        $content = <<<'CODE'
+            <?php
+
+            namespace App;
+
+            use App\Support\Str;
+
+            Str::between('/from/', 'not a pattern', '/(to/');
+            Str::between(to: '/named-to/', subject: 'not one either', from: '/named-from/');
+            CODE;
+
+        $this->assertSame(['/from/', '/(to/', '/named-to/', '/named-from/'], self::patterns($this->find($content)));
     }
 
     #[Test]

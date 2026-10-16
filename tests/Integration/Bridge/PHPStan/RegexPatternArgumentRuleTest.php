@@ -60,6 +60,10 @@ final class RegexPatternArgumentRuleTest extends RuleTestCase
             [$refused, 103], // self::
             [$refused, 104], // static::
             [$refused, 120], // a static call on a class-string PHPStan knows
+            [$refused, 141], // the first of two marked parameters
+            [$refused, 142], // the second of two marked parameters
+            [$refused, 143], // the first, named
+            [$refused, 144], // the second, named
         ]);
     }
 

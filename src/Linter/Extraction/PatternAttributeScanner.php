@@ -26,7 +26,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  * Token based, so it needs no parser: the attribute is resolved through the
  * file's namespace and "use" imports; a closure, an arrow function and a
  * method of an anonymous class are passed over; a function marking several
- * parameters is read at the first.
+ * parameters is read at each of them.
  *
  * @internal
  */
@@ -212,19 +212,16 @@ final class PatternAttributeScanner
                     $functions[] = $namespace.'\\'.$tokens[$next]->text;
                 }
 
-                $marked = self::markedParameter($tokens, $next + 1, $namespace, $uses);
-                if (null === $marked) {
-                    continue;
-                }
+                foreach (self::markedParameters($tokens, $next + 1, $namespace, $uses) as [$position, $name]) {
+                    $index = $position.(null !== $name ? '$'.$name : '');
 
-                $index = $marked[0].(null !== $marked[1] ? '$'.$marked[1] : '');
-
-                if ($isMethod) {
-                    if (null !== $class[0]) {
-                        $specs[] = $class[0].'::'.$tokens[$next]->text.'#'.$index;
+                    if ($isMethod) {
+                        if (null !== $class[0]) {
+                            $specs[] = $class[0].'::'.$tokens[$next]->text.'#'.$index;
+                        }
+                    } else {
+                        $specs[] = ltrim($namespace.'\\'.$tokens[$next]->text, '\\').'#'.$index;
                     }
-                } else {
-                    $specs[] = ltrim($namespace.'\\'.$tokens[$next]->text, '\\').'#'.$index;
                 }
             }
         }
@@ -281,20 +278,22 @@ final class PatternAttributeScanner
     }
 
     /**
-     * The zero-based position of the first parameter that carries the
-     * attribute, and its name, reading the parameter list that opens at $i.
+     * The zero-based position of each parameter that carries the attribute,
+     * and its name, reading the parameter list that opens at $i.
      *
      * @param list<\PhpToken>       $tokens
      * @param array<string, string> $uses
      *
-     * @return array{int, string|null}|null
+     * @return list<array{int, string|null}>
      */
-    private static function markedParameter(array $tokens, int $i, string $namespace, array $uses): ?array
+    private static function markedParameters(array $tokens, int $i, string $namespace, array $uses): array
     {
         if (!isset($tokens[$i]) || '(' !== $tokens[$i]->text) {
-            return null;
+            return [];
         }
 
+        /** @var array<int, array{int, string|null}> $marked */
+        $marked = [];
         $index = 0;
         $nesting = 0;
         $inAttribute = 0;
@@ -308,7 +307,7 @@ final class PatternAttributeScanner
                 $nesting++;
             } elseif (\in_array($token->text, [')', ']'], true)) {
                 if (0 === $nesting) {
-                    return null;
+                    return array_values($marked);
                 }
                 if ($inAttribute === $nesting) {
                     $inAttribute = 0;
@@ -320,12 +319,12 @@ final class PatternAttributeScanner
                 && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
                 $name = Ascii::lower(self::resolve($token, $namespace, $uses));
                 if (self::ATTRIBUTE === $name || (self::PHPSTORM_LANGUAGE === $name && self::namesRegExp($tokens, $i + 1))) {
-                    return [$index, self::parameterName($tokens, $i + 1)];
+                    $marked[$index] ??= [$index, self::parameterName($tokens, $i + 1)];
                 }
             }
         }
 
-        return null;
+        return array_values($marked);
     }
 
     /**

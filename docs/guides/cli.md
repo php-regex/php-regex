@@ -691,6 +691,10 @@ final class Str
 Str::matches($input, '/(a+)+$/'); // linted as preg_match('/(a+)+$/', ...)
 ```
 
+A function or method that marks several parameters is read at each of them,
+by position and by name: in `between(#[RegexPattern] string $from, string
+$subject, #[RegexPattern] string $to)`, both `$from` and `$to` are linted.
+
 Functions republished under another namespace with the same signature — as
 `thecodingmachine/safe` does with `Safe\preg_match()` — are recognised
 without any configuration.
