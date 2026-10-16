@@ -122,6 +122,40 @@ final class CodeActionHandlerTest extends TestCase
         $this->assertSame([], $this->codeActions("<?php\npreg_match('/((((a))))/', \$s);\n", ['line' => 1, 'character' => 12], ['line' => 1, 'character' => 24]));
     }
 
+    /**
+     * The quick fix offers a rewrite only once the automata prove it, as the
+     * lint checks the rewrites it suggests: a class respelled reads as the
+     * pattern does, while a run spelled as a repeat beside a back reference,
+     * which the match solver does not read, is not proven.
+     */
+    #[Test]
+    #[DataProvider('provideOptimizationsToProve')]
+    public function test_the_optimization_action_offers_only_a_proven_rewrite(string $pattern, ?string $offered): void
+    {
+        $this->assertNotSame($pattern, Regex::create()->optimize($pattern)->optimized, 'Unchecked, the pattern is rewritten.');
+
+        $action = self::action($this->codeActionsOnLiteral(self::source($pattern, 0)), 'Apply regex optimization');
+
+        if (null === $offered) {
+            $this->assertNull($action);
+
+            return;
+        }
+
+        $this->assertNotNull($action);
+        $this->assertSame(var_export($offered, true), self::singleEdit($action)['newText']);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offered: string|null}>
+     */
+    public static function provideOptimizationsToProve(): iterable
+    {
+        yield 'a class respelled' => ['pattern' => '/[0-9]+/', 'offered' => '/\d+/'];
+        yield 'a class respelled beside a back reference' => ['pattern' => '/(a)\1[0-9]/', 'offered' => '/(a)\1\d/'];
+        yield 'a run spelled as a repeat beside a back reference' => ['pattern' => '/(a)\1[0-9]aaaa/', 'offered' => null];
+    }
+
     #[Test]
     public function test_handler_can_be_instantiated(): void
     {

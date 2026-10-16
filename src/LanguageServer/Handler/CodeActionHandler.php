@@ -244,7 +244,9 @@ final class CodeActionHandler
         $actions = [];
 
         try {
-            $result = $this->regex->optimize($occurrence->pattern);
+            // Only a rewrite the automata prove is offered, as the lint
+            // checks the rewrites it suggests.
+            $result = $this->regex->optimize($occurrence->pattern, ['verify_with_automata' => true]);
 
             if ($result->isChanged()) {
                 $actions[] = [

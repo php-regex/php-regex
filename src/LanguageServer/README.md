@@ -89,7 +89,7 @@ Regex matches
 Code actions are offered on the pattern they fix:
 
 * `/\p{L}+/` without the `u` flag gets "Add /u flag for Unicode support", rewriting the literal to `'/\p{L}+/u'`.
-* `/[0-9]{1,}/` gets "Apply regex optimization", rewriting the literal to `'/\d+/'`.
+* `/[0-9]{1,}/` gets "Apply regex optimization", rewriting the literal to `'/\d+/'`; a rewrite is offered only once the automata prove it, as `regex lint` checks its suggestions.
 * A pattern too long for its line gets "Format pattern over lines", which lays it out under `x`, its continuation lines indented four spaces past the literal's line; a laid-out pattern gets "Compact pattern to one line". Each is offered only when it changes the literal.
 
 Integration

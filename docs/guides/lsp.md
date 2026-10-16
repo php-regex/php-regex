@@ -113,7 +113,7 @@ Quick fixes appear when issues are detected:
 | Code Action | Description |
 |-------------|-------------|
 | Add `/u` flag | Fix Unicode-related warnings |
-| Apply optimization | Simplify or improve the pattern |
+| Apply optimization | Simplify or improve the pattern, offered only when the automata prove the rewrite writes the same `$matches`, as `regex lint` checks the rewrites it suggests |
 | Format pattern over lines | Lay a long pattern out over lines under `x` (see [Formatting patterns](formatting.md)) |
 | Compact pattern to one line | Write a laid-out pattern back on one line, without `x`, layout or comments |
 

@@ -166,9 +166,6 @@ cache are merged. Follow-ups:
   that nothing reads any more: the check of a rewrite builds no DFA since
   the strings both sides match no longer prove one. Keep it or drop it
   before the tag;
-- the language server offers its quick fix from `Regex::optimize()`
-  without `verify_with_automata`: only a rewrite that adds atomicity is
-  checked there;
 - the match check stops at 500 configurations, and a pattern with `^`
   or `\A` no longer falls back to the language check: one corpus pattern
   (a 900-byte SQL alternation in `vaultpress.php`) loses its suggestion
