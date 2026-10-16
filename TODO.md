@@ -230,8 +230,13 @@ Decisions for the maintainer:
 Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,
 Laravel `^10.37|^11.0|^12.0|^13.0`, PCRE2 10.39 judged with its own rules.
 Left:
-- watch the first GitHub run of the `tests-php81` and prefer-lowest cells
-  (checked locally with act only);
+- the first GitHub run on 2.x (03699c27fe) failed in the PHP 8.1
+  prefer-lowest cell (PHPUnit 10.5.0 runs regexes on every assertion, one
+  ran under a test's recursion limit), the 8.2 and 8.3 bundled-engine
+  cells (the capture-shape report compared patterns with `r` their engine
+  refuses), PHPStan on 8.5 and 8.6 (`$argv` in the 8.1 smoke test) and
+  PHPCS (four test files): each is fixed on its own commit; watch the next
+  run;
 - PCRE2 10.39 also has matching bugs 10.40 fixed (`/[Aa]{2}/` misses `aa`):
   engine defects the library does not model, documented.
 Decisions for the maintainer: `docs/reference/backward-compatibility.md`
