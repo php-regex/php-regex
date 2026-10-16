@@ -115,6 +115,29 @@ final class LintCommandTargetOutputTest extends TestCase
         );
     }
 
+    /**
+     * A require.php reaching from PCRE1 into PCRE2 is judged from 7.3, not
+     * refused: only a version the bundle settings name is.
+     */
+    #[Test]
+    public function test_a_range_from_below_7_3_is_judged_from_its_lowest_php_on_pcre2(): void
+    {
+        $project = $this->makeProject(['composer.json' => '{"require": {"php": "^7.1 || ^8.0"}}', 'src/Pattern.php' => self::PATTERN_FILE]);
+        $tester = new CommandTester($this->command(projectDir: $project));
+
+        $status = $tester->execute(
+            ['paths' => [$project.'/src'], '--format' => 'github', '--no-routes' => true, '--no-validators' => true, '--jobs' => '1'],
+            ['capture_stderr_separately' => true],
+        );
+
+        $this->assertSame(Command::SUCCESS, $status, $tester->getErrorOutput());
+        $this->assertStringContainsString(
+            "Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.\n",
+            $tester->getErrorOutput(),
+        );
+        $this->assertStringContainsString('Target: PHP 7.3, PCRE2 10.32 (composer.json require.php)', $tester->getErrorOutput());
+    }
+
     private function command(?string $projectDir, ?string $phpVersion = null): LintCommand
     {
         $analysis = new AnalysisService(RegexParser::create());

@@ -190,9 +190,24 @@ final class ProjectTargetEdgeCasesTest extends TestCase
             'files' => [],
             'message' => 'php_regex.php_version names PHP 7.1: '.$refusal,
         ];
-        yield 'the floor of require.php' => [
+        yield 'require.php closed below 7.3' => [
             'php' => [],
-            'files' => ['composer.json' => '{"require": {"php": "^7.1 || ^8.0"}}'],
+            'files' => ['composer.json' => '{"require": {"php": ">=5.6 <7.3"}}'],
+            'message' => 'composer.json require.php allows PHP 5.6: '.$refusal,
+        ];
+        yield 'require.php on one PCRE1 series' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": "7.2.*"}}'],
+            'message' => 'composer.json require.php allows PHP 7.2: '.$refusal,
+        ];
+        yield 'require.php on PCRE1 patch releases' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": "~7.1.0 || ~7.2.0"}}'],
+            'message' => 'composer.json require.php allows PHP 7.1: '.$refusal,
+        ];
+        yield 'require.php whose only branch above 7.3 allows nothing' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": "^7.1 <7.3 || >=8.4 <8.2"}}'],
             'message' => 'composer.json require.php allows PHP 7.1: '.$refusal,
         ];
         yield 'the platform' => [
@@ -200,6 +215,135 @@ final class ProjectTargetEdgeCasesTest extends TestCase
             'files' => ['composer.json' => '{"require": {"php": "^8.1"}, "config": {"platform": {"php": "7.2.34"}}}'],
             'message' => 'composer.json config.platform.php allows PHP 7.2: '.$refusal,
         ];
+    }
+
+    /**
+     * A require.php that also allows a PHP on PCRE2 runs there too: its
+     * patterns are judged from the lowest PHP of 7.3 or later it allows,
+     * and a notice says the versions below 7.3 are not judged. Only the
+     * versions below 7.3 are left out: the range above the new floor is
+     * what the constraint allows, as for any floor.
+     *
+     * @param list<array{php: string, pcre: string}> $range
+     * @param list<string>                           $notices
+     */
+    #[Test]
+    #[DataProvider('provideRangesReachingPcre2')]
+    public function test_resolve_judges_a_range_from_below_7_3_from_its_lowest_php_on_pcre2(string $constraint, int $phpVersionId, string $pcre, array $range, array $notices): void
+    {
+        $directory = $this->makeProject(['composer.json' => json_encode(['require' => ['php' => $constraint]], \JSON_THROW_ON_ERROR)]);
+
+        $resolved = ProjectTarget::fromSources([], [], $directory, []);
+
+        $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
+        $this->assertSame($pcre, $resolved->target()->pcreVersion);
+        $this->assertSame('composer.json require.php', $resolved->source());
+        $this->assertSame($notices, $resolved->notices());
+        $this->assertSame($range, \array_slice($resolved->toArray()['range'], 0, \count($range)));
+    }
+
+    /**
+     * @return iterable<string, array{constraint: string, phpVersionId: int, pcre: string, range: list<array{php: string, pcre: string}>, notices: list<string>}>
+     */
+    public static function provideRangesReachingPcre2(): iterable
+    {
+        $older = 'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.';
+        $belowFrom = static fn (string $floor, string $judged): string => \sprintf(
+            'composer.json require.php allows PHP %s, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
+            $floor,
+            $judged,
+        );
+
+        yield 'OR of a PCRE1 major and a PCRE2 one' => [
+            'constraint' => '^7.1 || ^8.0',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33'], ['php' => '8.0', 'pcre' => '10.35'], ['php' => '8.1', 'pcre' => '10.39']],
+            'notices' => [$belowFrom('7.1', '7.3'), $older],
+        ];
+        yield 'an open floor far below' => [
+            'constraint' => '>=5.4',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33']],
+            'notices' => [$belowFrom('5.4', '7.3'), $older],
+        ];
+        yield 'a patch-level floor on PCRE1' => [
+            'constraint' => '^7.1.3',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33']],
+            'notices' => [$belowFrom('7.1', '7.3'), 'PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
+        ];
+        yield 'a tilde on a minor reaches the end of its major' => [
+            'constraint' => '~7.1',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33']],
+            'notices' => [$belowFrom('7.1', '7.3'), 'PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
+        ];
+        yield 'a gap from 7.2 to 8.0' => [
+            'constraint' => '~7.1.0 || ^8.0',
+            'phpVersionId' => 80000,
+            'pcre' => '10.35',
+            'range' => [['php' => '8.0', 'pcre' => '10.35'], ['php' => '8.1', 'pcre' => '10.39']],
+            'notices' => [$belowFrom('7.1', '8.0'), 'PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
+        ];
+        yield 'a gap from 7.2 to a release the library knows in full' => [
+            'constraint' => '>=5.6 <7.3 || ^8.1',
+            'phpVersionId' => 80100,
+            'pcre' => '10.39',
+            'range' => [['php' => '8.1', 'pcre' => '10.39'], ['php' => '8.2', 'pcre' => '10.40']],
+            'notices' => [$belowFrom('5.6', '8.1')],
+        ];
+        yield 'a branch above 7.3 starting at a patch' => [
+            'constraint' => '~7.2.5 || >=7.3.4',
+            'phpVersionId' => 70304,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3.4', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33']],
+            'notices' => [$belowFrom('7.2', '7.3.4'), $older],
+        ];
+        yield 'a branch spanning 7.3' => [
+            'constraint' => '7.2.5 - 7.4',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33']],
+            'notices' => [$belowFrom('7.2', '7.3'), 'PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
+        ];
+    }
+
+    /**
+     * The release named for the whole range is kept on the new floor.
+     */
+    #[Test]
+    public function test_resolve_keeps_the_pcre_release_named_on_a_range_from_below_7_3(): void
+    {
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": ">=7.0"}}']);
+
+        $resolved = ProjectTarget::fromSources([], ['--pcre-version' => '10.42'], $directory, []);
+
+        $this->assertSame(70300, $resolved->target()->phpVersionId);
+        $this->assertSame('10.42', $resolved->target()->pcreVersion);
+        $this->assertSame(
+            ['composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.'],
+            $resolved->notices(),
+        );
+    }
+
+    /**
+     * A version named by its source, not read from a range, is refused
+     * below 7.3 even when require.php reaches PCRE2: the regex.json or the
+     * setting names a PHP on PCRE1.
+     */
+    #[Test]
+    public function test_resolve_refuses_a_named_version_on_pcre1_whatever_require_php_allows(): void
+    {
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^7.1 || ^8.0"}}']);
+
+        $this->expectException(UnsupportedTargetException::class);
+        $this->expectExceptionMessage('regex.json names PHP 7.1: ');
+
+        ProjectTarget::fromSources(['regex.json' => '7.1'], [], $directory, []);
     }
 
     #[Test]

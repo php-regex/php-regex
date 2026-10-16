@@ -1513,7 +1513,8 @@ for the recursive `(?R)` calls some fixes keep working.
 
 - **PCRE2** via PHP's `preg_*` functions, judged for PHP 7.3 and later, the
   PHP versions on PCRE2; PHP 7.2 and earlier ship PCRE1, which the lint
-  refuses to judge
+  never judges: a `composer.json` range that also allows 7.3 or later is
+  judged from there, with a note, and any other target below 7.3 is refused
 
 ### Known Differences from PCRE1
 

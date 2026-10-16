@@ -200,7 +200,7 @@ final class JsonErrorEnvelopeTest extends TestCase
         $refusal = 'PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.';
 
         yield 'the flag' => ['arguments' => ['--php-version=5.6'], 'files' => [], 'error' => '--php-version names PHP 5.6: '.$refusal];
-        yield 'the floor of composer.json' => ['arguments' => [], 'files' => ['composer.json' => '{"require": {"php": ">=7.0"}}'], 'error' => 'composer.json require.php allows PHP 7.0: '.$refusal];
+        yield 'the floor of composer.json' => ['arguments' => [], 'files' => ['composer.json' => '{"require": {"php": ">=7.0 <7.3"}}'], 'error' => 'composer.json require.php allows PHP 7.0: '.$refusal];
     }
 
     #[Test]

@@ -22,10 +22,11 @@ declare(strict_types=1);
  * repository with the COMPOSER environment variable pointing at that
  * repository's composer.json, so each one is judged under its own floor and
  * the PCRE2 release bundled with it. A repository whose composer.json
- * declares no require.php falls back to --php of this script. A floor older
- * than the PHP the library supports is judged at that oldest supported PHP,
- * exactly as a single lint run would judge it, and the notice the linter
- * prints is carried into the merged log.
+ * declares no require.php falls back to --php of this script. A require.php
+ * that starts below PHP 7.3 but also allows 7.3 or later is judged from the
+ * lowest such PHP, exactly as a single lint run would judge it, and the
+ * notice the linter prints is carried into the merged log; one that allows
+ * nothing from 7.3 on is recorded as refused.
  *
  * Usage:
  *   bin/corpus-lint [options]

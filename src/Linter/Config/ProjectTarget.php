@@ -43,8 +43,11 @@ use PHPRegex\Parser\Validation\RangeDiff;
  * A PCRE2 release older than 10.39, the oldest whose rules the library
  * knows in full, is judged with the 10.39 rules but for the few older
  * changes it names, and a notice says so. A PHP that ships PCRE1, 7.2 and
- * earlier, is refused, from any source: no verdict of the library holds
- * for it.
+ * earlier, is never judged: no verdict of the library holds for it. A
+ * version named below 7.3 is refused, and so is a require.php or a
+ * config.platform.php that allows no PHP of 7.3 or later; a require.php
+ * that also allows one is judged from the lowest it allows, and a notice
+ * says the versions below 7.3 are not judged.
  *
  * Reading composer.json never fails: what cannot be read becomes a notice
  * and the running PHP is used.
@@ -374,14 +377,49 @@ final class ProjectTarget
             return null;
         }
 
-        $floor = self::floor($constraint);
-        if (null === $floor) {
+        $intervals = self::intervals($constraint);
+        if (null === $intervals) {
             $notices[] = \sprintf('%s require.php "%s" names no lowest PHP version: judging for the running PHP.', $name, $constraint);
 
             return null;
         }
 
+        // A range that also allows a PHP on PCRE2 installs there too: it is
+        // judged from the lowest such PHP, and only the versions on PCRE1
+        // are left out. A range that allows none is refused.
+        $floor = min(array_column($intervals, 0));
+        $firstOnPcre2 = self::lowestFrom($intervals, PcreTarget::phpVersionBoundaries()[0]);
+        if ($floor < PcreTarget::phpVersionBoundaries()[0] && null !== $firstOnPcre2) {
+            $notices[] = \sprintf(
+                '%s require.php allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
+                $name,
+                intdiv($floor, 10000),
+                intdiv($floor, 100) % 100,
+                self::phpLabel($firstOnPcre2),
+            );
+            $floor = $firstOnPcre2;
+        }
+
         return [self::onPcre2($floor, $name.' require.php allows'), $name.' require.php', $constraint];
+    }
+
+    /**
+     * The lowest version of $from or later the intervals allow, or null
+     * when they allow none.
+     *
+     * @param non-empty-list<array{int, int|null}> $intervals
+     */
+    private static function lowestFrom(array $intervals, int $from): ?int
+    {
+        $lowest = null;
+        foreach ($intervals as [$first, $below]) {
+            $candidate = max($first, $from);
+            if ((null === $below || $candidate < $below) && (null === $lowest || $candidate < $lowest)) {
+                $lowest = $candidate;
+            }
+        }
+
+        return $lowest;
     }
 
     /**

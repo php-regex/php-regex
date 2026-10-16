@@ -212,7 +212,10 @@ Left:
 ## Legacy targets (PHP 7.3 to 8.0): what is left
 
 PHP 7.3 is the oldest PHP judged, each PHP with the PCRE2 its x.y.0 bundled
-(8.1 with 10.39); PHP 7.2 and earlier ship PCRE1 and are refused. A release
+(8.1 with 10.39); PHP 7.2 and earlier ship PCRE1 and are never judged: a
+`require.php` that also allows 7.3 or later is judged from the lowest such
+PHP, with a note, and a version named below 7.3, or a `composer.json` that
+allows nothing from 7.3 on, is refused. A release
 older than 10.39 is judged with the 10.39 rules but for two changes the
 library knows: the alphabetic assertion names (10.33) and an open count past
 65535 read as text (10.37). Left:
@@ -253,8 +256,15 @@ library knows: the alphabetic assertion names (10.33) and an open count past
   it then never matches.
 - The PHPStan and Psalm extensions judge a project for PHP 7.2 or earlier
   instead of refusing it as `regex lint` does: PHPStan with the version as
-  given, Psalm raised to 7.3. Make both refuse it with the same error as
-  `regex lint`.
+  given, Psalm raised to 7.3. Make both follow `regex lint`: refuse a
+  version named below 7.3 with the same error, and judge a floor read from
+  a `composer.json` range that also allows 7.3 or later from there, with
+  the same note.
+- A `config.platform.php` below 7.3 is refused even when `require.php`
+  also allows 7.3 or later (`composer/composer`: platform `7.2.5`,
+  `^7.2.5 || ^8.0`; `editorconfig-checker/editorconfig-checker.php`: `7.2`,
+  `^7.2 || ^8.0`), the last two corpus repositories refused. Decide whether
+  such a platform gives way to `require.php`, judged from 7.3 with the note.
 - `validate`, `analyze` and the other pattern commands take a
   `--php-version` below 7.3 as given, with neither note nor refusal; only
   `lint` and the bridges' lint commands resolve the project target. Make

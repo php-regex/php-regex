@@ -160,7 +160,7 @@ final class ServerTargetTest extends TestCase
     #[Test]
     public function test_a_target_on_pcre1_is_shown_and_judges_no_pattern(): void
     {
-        file_put_contents($this->root.'/composer.json', (string) json_encode(['require' => ['php' => '>=5.6']]));
+        file_put_contents($this->root.'/composer.json', (string) json_encode(['require' => ['php' => '>=5.6 <7.3']]));
 
         $this->serve(['rootUri' => $this->rootUri()], hover: true);
 
@@ -170,6 +170,29 @@ final class ServerTargetTest extends TestCase
         $this->assertSame([], $this->notifications('textDocument/publishDiagnostics'));
         $this->assertSame([], $this->targetLogs());
         $this->assertSame(['jsonrpc' => '2.0', 'id' => 2, 'result' => null], $this->response(2));
+    }
+
+    /**
+     * A require.php that reaches PCRE2 is judged from the lowest PHP of 7.3
+     * or later it allows; the versions below 7.3 are logged as not judged.
+     */
+    #[Test]
+    public function test_a_range_from_below_7_3_is_judged_from_its_lowest_php_on_pcre2(): void
+    {
+        file_put_contents($this->root.'/composer.json', (string) json_encode(['require' => ['php' => '>=5.6']]));
+
+        $this->serve(['rootUri' => $this->rootUri()]);
+
+        $this->assertSame([], $this->notifications('window/showMessage'));
+        $this->assertContains(
+            ['type' => 3, 'message' => 'composer.json require.php allows PHP 5.6, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.'],
+            $this->notifications('window/logMessage'),
+        );
+        $this->assertSame(['Target: PHP 7.3, PCRE2 10.32 (composer.json require.php)'], array_values(array_filter(
+            $this->targetLogs(),
+            static fn (string $log): bool => str_starts_with($log, 'Target: '),
+        )));
+        $this->assertNotSame([], $this->diagnostics());
     }
 
     #[Test]

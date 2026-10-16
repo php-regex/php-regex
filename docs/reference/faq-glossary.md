@@ -34,9 +34,13 @@ $result = $regex->validate('/test/');
 
 PHP 7.3 is the first PHP on PCRE2 (10.32); PHP 7.2 and earlier ship PCRE1
 (8.x), a different engine that reads some patterns otherwise and whose last
-release came out in 2021. `regex lint` refuses to judge a project for such a
-PHP, with a message that names PCRE1 and exit code 2, rather than judge it
-as if it ran PCRE2.
+release came out in 2021. `regex lint` never judges such a PHP as if it ran
+PCRE2. A project whose `composer.json` allows PHP 7.3 or later as well,
+`^7.1 || ^8.0` or `>=5.4`, is judged from the lowest such PHP, and a note
+says the versions below 7.3 are not judged. A PHP below 7.3 named outright
+(`--php-version`, `phpVersion`, a bridge setting), or a `composer.json` that
+allows nothing from 7.3 on, is refused with a message that names PCRE1 and
+exit code 2.
 
 ```php
 // PCRE2-specific features work

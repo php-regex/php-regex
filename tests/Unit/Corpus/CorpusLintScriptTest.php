@@ -176,15 +176,15 @@ final class CorpusLintScriptTest extends TestCase
     }
 
     /**
-     * A repository whose floor ships PCRE1 is refused, not judged: its
-     * section says so, with no target and the refusal's exit code, and the
-     * sweep does not count it as clean.
+     * A repository whose require.php allows no PHP on PCRE2 is refused, not
+     * judged: its section says so, with no target and the refusal's exit
+     * code, and the sweep does not count it as clean.
      */
     #[Test]
     public function test_a_repository_on_pcre1_is_recorded_as_refused(): void
     {
         mkdir($this->root.'/corpus/ownerE/repoAncient', 0o777, true);
-        file_put_contents($this->root.'/corpus/ownerE/repoAncient/composer.json', '{"require": {"php": ">=5.4"}}');
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/composer.json', '{"require": {"php": ">=5.4 <7.3"}}');
         file_put_contents($this->root.'/corpus/ownerE/repoAncient/patterns.php', "<?php\n\npreg_match('/a/', \$x);\n");
 
         [$code, $output] = $this->script(['--only', 'ownerE']);
@@ -199,6 +199,32 @@ final class CorpusLintScriptTest extends TestCase
             $log,
         );
         $this->assertStringContainsString('[1/1] ownerE/repoAncient  none', $output);
+    }
+
+    /**
+     * A repository whose require.php reaches from PCRE1 into PCRE2 is
+     * judged from 7.3, with the note that the versions below are not.
+     */
+    #[Test]
+    public function test_a_repository_reaching_pcre2_from_below_7_3_is_judged_from_7_3(): void
+    {
+        mkdir($this->root.'/corpus/ownerF/repoLong', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerF/repoLong/composer.json', '{"require": {"php": ">=5.4"}}');
+        file_put_contents($this->root.'/corpus/ownerF/repoLong/patterns.php', "<?php\n\npreg_match('/a/', \$x);\n");
+
+        [$code, $output] = $this->script(['--only', 'ownerF']);
+
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+
+        $this->assertSame(0, $code, $output.$log);
+        $this->assertSame('### corpus/ownerF/repoLong — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0', $this->line($log, '### corpus/ownerF/repoLong'), $log);
+        $this->assertSame(
+            'Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.',
+            $this->line($log, 'Note: composer.json'),
+            $log,
+        );
+        $this->assertStringNotContainsString('Error: ', $log);
+        $this->assertStringContainsString('[1/1] ownerF/repoLong  PHP 7.3, PCRE2 10.32', $output);
     }
 
     #[Test]

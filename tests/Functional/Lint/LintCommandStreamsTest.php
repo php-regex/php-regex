@@ -46,6 +46,10 @@ final class LintCommandStreamsTest extends TestCase
 
     private const COMPOSER_ON_AN_OLD_PCRE2 = '{"name": "acme/app", "require": {"php": "^7.4"}}';
 
+    private const COMPOSER_FROM_PCRE1 = '{"name": "acme/app", "require": {"php": "^7.1 || ^8.0"}}';
+
+    private const BELOW_7_3_NOTICE = 'composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.';
+
     /**
      * Two patterns in one file: the file is read in this process (one file,
      * nothing to share), the two patterns are analysed by two workers.
@@ -446,6 +450,43 @@ final class LintCommandStreamsTest extends TestCase
         $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
         $this->assertIsArray($document);
         $this->assertSame(['php' => '7.3', 'pcre' => '10.32', 'source' => '--php-version', 'range' => [['php' => '7.3', 'pcre' => '10.32']]], $document['target'] ?? null);
+    }
+
+    /**
+     * A require.php reaching from PCRE1 into PCRE2 is judged from 7.3, not
+     * refused: the banner says the versions below are not judged, and the
+     * exit code is the verdict's alone.
+     */
+    #[Test]
+    public function test_lint_prints_a_range_from_below_7_3_and_its_notice_in_the_banner_for_the_console_format(): void
+    {
+        $this->enterProject(['composer.json' => self::COMPOSER_FROM_PCRE1, 'src/a.php' => self::PHP_FILE]);
+
+        [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertStringContainsString(
+            "\n".self::bannerRow('Target', 'PHP 7.3, PCRE2 10.32 (composer.json require.php)'),
+            $stdout,
+        );
+        $this->assertStringContainsString('Note: '.self::BELOW_7_3_NOTICE, $stdout);
+        $this->assertStringNotContainsString('Note:', $stderr);
+    }
+
+    #[Test]
+    public function test_lint_prints_a_range_from_below_7_3_notice_on_stderr_for_the_json_format(): void
+    {
+        $this->enterProject(['composer.json' => self::COMPOSER_FROM_PCRE1, 'src/a.php' => self::PHP_FILE]);
+
+        [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertStringContainsString('Note: '.self::BELOW_7_3_NOTICE."\n", $stderr);
+        $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $target = $document['target'] ?? null;
+        $this->assertIsArray($target);
+        $this->assertSame(['7.3', '10.32', 'composer.json require.php'], [$target['php'] ?? null, $target['pcre'] ?? null, $target['source'] ?? null]);
     }
 
     #[Test]

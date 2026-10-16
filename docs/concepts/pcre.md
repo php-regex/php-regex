@@ -94,8 +94,13 @@ release reads are not modelled release by release: which characters a
 spot below 10.39.
 
 PHP 7.2 and earlier ship PCRE1, a different engine that reads some patterns
-otherwise; `regex lint` refuses to judge for them rather than judge them as
-PCRE2.
+otherwise; `regex lint` never judges for them as if they ran PCRE2. A
+`composer.json` whose `require.php` also allows PHP 7.3 or later,
+`^7.1 || ^8.0` for instance, is judged from the lowest such PHP, with a note
+that the versions below 7.3 are not judged. A version below 7.3 named
+outright (`--php-version`, `phpVersion`, a bridge setting), or a
+`composer.json` that allows no PHP of 7.3 or later, is refused (see
+[Target PHP and PCRE2](../guides/cli.md#target-php-and-pcre2)).
 
 ### Which PHP and which PCRE2 judge a pattern
 

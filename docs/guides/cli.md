@@ -1071,24 +1071,39 @@ says so with a note such as `PCRE2 10.33 is judged with the PCRE2 10.39
 rules, the oldest this library knows in full.` (see
 [PHP 7.3 to 8.0, and PCRE1](../concepts/pcre.md#php-73-to-80-and-pcre1)).
 
-PHP 7.2 and earlier are refused instead, wherever the version comes from:
-they ship PCRE1, another engine than PCRE2, and no verdict of this library
-holds for it. PHP 7.3 is the first PHP on PCRE2 (10.32), with no release in
-between. A `composer.json` that allows such a PHP, `^7.1 || ^8.0` for
-instance, stops the run until `--php-version` or `phpVersion` names the PHP
-to judge for:
+PHP 7.2 and earlier are never judged: they ship PCRE1, another engine than
+PCRE2, and no verdict of this library holds for it. PHP 7.3 is the first PHP
+on PCRE2 (10.32), with no release in between. What happens to a project that
+allows such a PHP depends on where the version comes from:
 
-```text
-Error: composer.json require.php allows PHP 7.1: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.
-```
+- A `require.php` that starts below 7.3 but also allows PHP 7.3 or later,
+  `^7.1 || ^8.0` or `>=5.4` for instance, is judged from the lowest PHP of
+  7.3 or later it allows, usually 7.3, as any other floor. The versions below
+  7.3 are left out, and a note says so; the note does not change the exit
+  code:
 
-The command exits with 2, and with `--format=json` prints the
+  ```text
+  Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+  ```
+
+- A `require.php` that allows no PHP of 7.3 or later (`7.2.*`, `~7.1.0`,
+  `>=5.6 <7.3`), or a `config.platform.php` below 7.3, is refused. So is a
+  version below 7.3 named by `--php-version`, `phpVersion` in `regex.json` or
+  a bridge setting: that names a PHP on PCRE1 outright. The run stops until
+  a PHP version of 7.3 or later is named:
+
+  ```text
+  Error: composer.json require.php allows PHP 5.6: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.
+  ```
+
+A refused run exits with 2, and with `--format=json` prints the
 [error envelope](../reference/json-output.md#the-error-envelope) with stage
 `target`, so that a pipeline never reads a project the command refused to
-judge as a clean one. The Symfony and Laravel `regex:lint` commands refuse
-the same way; the language server shows the message and judges no pattern. A constraint the command cannot read (`*`, `<9`, a branch
-name) falls back to the running PHP, with a note naming it; reading
-`composer.json` never stops a run.
+judge as a clean one. The Symfony and Laravel `regex:lint` commands follow the
+same rule; the language server logs the note, or shows the refusal and judges
+no pattern. A constraint the command cannot read (`*`, `<9`, a branch name)
+falls back to the running PHP, with a note naming it: a `composer.json` the
+command cannot read never stops a run.
 
 Where the target is recorded depends on the format. The console format shows
 it as a `Target` row in the banner, right under `Runtime`, with any `Note:`
@@ -1215,7 +1230,8 @@ a missing pattern, an argument the command does not take (one pattern more
 than it reads, or anything after `version` or `self-update`), an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
 a `regex.json` that cannot be read (`lint` and `debug`), and, for `lint`, a
-target PHP of 7.2 or earlier, which ships PCRE1 (see
+target PHP of 7.2 or earlier, which ships PCRE1: one named outright, or a
+`composer.json` that allows no PHP of 7.3 or later (see
 [Target PHP and PCRE2](#target-php-and-pcre2)) — in which case nothing was
 scanned. `regex` run without a command prints the help and exits
 with 2, as `regex help` with an unknown command does.
