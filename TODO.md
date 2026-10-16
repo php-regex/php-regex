@@ -195,8 +195,16 @@ cache are merged. Follow-ups:
   or `\A` no longer falls back to the language check: one corpus pattern
   (a 900-byte SQL alternation in `vaultpress.php`) loses its suggestion
   there, proven in 0.13 s and 10 MB at 1,000 configurations;
-- about 265 bytes per transition: one check at the 200,000 budget still
-  costs ~70 MB, close to PHP's default 128 MB `memory_limit` for embedders.
+- a DFA holds 300 to 345 bytes per transition (measured with xdebug off:
+  `/[\pL0-9]*0[0-9]{6}$/um` compiles to 129 states and 176,988 range
+  transitions, 58 MB held and a 123 MB peak while it is built). Each range
+  is a three-int array (about 200 bytes) plus an entry in the start index
+  (about 40). A flat int list per state, three ints a range, would hold
+  about 48 bytes a range, four to six times less; but `DfaState::$ranges`
+  and `$transitions` are public (`Model\DfaState` is in the backward
+  compatibility promise), so the shape is a decision before 2.0.0, and
+  the minimizers, the lookaround product, `Language`, `PrefixReader` and
+  the DFA cache all read it.
 
 ## Extraction coverage: after the merge
 
