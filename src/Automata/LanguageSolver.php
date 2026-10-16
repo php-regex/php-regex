@@ -131,10 +131,14 @@ final class LanguageSolver
     /**
      * Whether preg_match() writes the same $matches for both patterns on
      * every subject: the same answer, the same match and the same groups,
-     * named alike. Stronger than equivalent(): /a|ab/ and /ab|a/ match the
-     * same strings, yet on "ab" the first matches "a" and the second "ab",
-     * as PCRE takes the first alternative that leads to a match. The
-     * counter-example is the shortest subject the two treat differently.
+     * named alike. It implies equivalent() in partial mode, where the same
+     * subjects hold a match, but neither implies nor follows from
+     * equivalent() in full mode, which compares the strings matched whole:
+     * /a|ab/ and /ab|a/ match the same strings, yet on "ab" the first
+     * matches "a" and the second "ab", as PCRE takes the first alternative
+     * that leads to a match; /a|ab/ and /a/ write the same matches, yet
+     * only the first matches "ab" whole. The counter-example is the
+     * shortest subject the two treat differently.
      *
      * The match mode of the options does not apply: the question is what
      * preg_match() does.

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,8 +25,11 @@ use PHPUnit\Framework\TestCase;
 /**
  * Two patterns are match-equivalent when preg_match() writes the same
  * $matches for them on every subject: same answer, same match, same groups.
- * Language equivalence is weaker: /a|ab/ and /ab|a/ match the same strings,
- * yet on "ab" the first matches "a" and the second "ab".
+ * It implies equivalence in partial mode (the same subjects hold a match),
+ * yet neither implies nor follows from equivalence in full mode, which
+ * compares the strings matched whole: /a|ab/ and /ab|a/ match the same
+ * strings, yet on "ab" the first matches "a" and the second "ab"; /a|ab/ and
+ * /a/ write the same matches, yet only the first matches "ab" whole.
  *
  * Every verdict is checked against the engine: an equivalence must hold on
  * each string over the patterns' letters up to a length, a difference must
@@ -83,6 +87,33 @@ final class MatchEquivalenceTest extends TestCase
 
         $this->assertTrue($solver->equivalent('/(a|ab)/', '/(ab|a)/')->isEquivalent);
         $this->assertFalse($solver->matchEquivalent('/(a|ab)/', '/(ab|a)/')->isEquivalent);
+    }
+
+    #[Test]
+    public function test_match_equivalence_misses_what_whole_string_equivalence_sees(): void
+    {
+        $solver = new LanguageSolver();
+
+        // preg_match() stops at the first alternative that leads to a match:
+        // on "ab", /a|ab/ matches "a" as /a/ does, though only /a|ab/ can
+        // match "ab" whole.
+        $this->assertSame(self::matchesOf('/a|ab/', 'ab'), self::matchesOf('/a/', 'ab'));
+        $this->assertTrue($solver->matchEquivalent('/a|ab/', '/a/')->isEquivalent);
+
+        $result = $solver->equivalent('/a|ab/', '/a/');
+
+        $this->assertFalse($result->isEquivalent);
+        $this->assertSame('ab', $result->leftOnlyExample);
+    }
+
+    #[Test]
+    public function test_match_equivalence_implies_partial_mode_equivalence(): void
+    {
+        $solver = new LanguageSolver();
+        $partial = new SolverOptions(matchMode: MatchMode::Partial);
+
+        $this->assertTrue($solver->matchEquivalent('/a|ab/', '/a/')->isEquivalent);
+        $this->assertTrue($solver->equivalent('/a|ab/', '/a/', $partial)->isEquivalent);
     }
 
     #[Test]

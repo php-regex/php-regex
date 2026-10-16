@@ -187,9 +187,6 @@ cache are merged. Follow-ups:
   name the calls it was proven for;
 - a rewrite proven by the match check alone is not proven once its text is
   spliced into a larger pattern (an inline `(?x)` route requirement);
-- `LanguageSolver::matchEquivalent()`'s docblock calls it "stronger than
-  `equivalent()`", which is false for whole-string languages (`/a|ab/`
-  against `/a/`);
 - about 265 bytes per transition: one check at the 200,000 budget still
   costs ~70 MB, close to PHP's default 128 MB `memory_limit` for embedders.
 
