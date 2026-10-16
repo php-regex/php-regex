@@ -64,18 +64,6 @@ final class ConsoleStyle
         echo $this->dim($line).\PHP_EOL;
     }
 
-    public function status(string $label, string $message, ?string $detail = null): void
-    {
-        $plainLabel = preg_replace('/\e\[[\d;]*m/', '', $label);
-        $plainLabel ??= $label;
-        $pad = max(0, 9 - \strlen($plainLabel));
-        $label .= str_repeat(' ', $pad);
-        echo '  '.$label.' '.$message.\PHP_EOL;
-        if (null !== $detail && '' !== $detail) {
-            echo $this->indent($detail, '            ');
-        }
-    }
-
     public function info(string $message): void
     {
         echo $message.\PHP_EOL;
@@ -96,19 +84,9 @@ final class ConsoleStyle
         return $this->colorize($text, '1');
     }
 
-    public function green(string $text): string
-    {
-        return $this->colorize($text, '32');
-    }
-
     public function red(string $text): string
     {
         return $this->colorize($text, '31');
-    }
-
-    public function yellow(string $text): string
-    {
-        return $this->colorize($text, '33');
     }
 
     private function colorize(string $text, string $code): string
@@ -131,18 +109,6 @@ final class ConsoleStyle
         }
 
         return posix_isatty(\STDOUT);
-    }
-
-    private function indent(string $text, string $prefix): string
-    {
-        $lines = preg_split('/\\r?\\n/', trim($text));
-        if (!\is_array($lines)) {
-            return '';
-        }
-
-        $indented = array_map(static fn (string $line): string => $prefix.$line, $lines);
-
-        return implode(\PHP_EOL, $indented).\PHP_EOL;
     }
 }
 
@@ -606,29 +572,9 @@ function main(array $argv): int
             $notClean = true;
         }
 
-        $findings = array_filter([
-            $severities['fail'] > 0 ? $severities['fail'].' FAIL' : null,
-            $severities['warn'] > 0 ? $severities['warn'].' WARN' : null,
-            $severities['tip'] > 0 ? $severities['tip'].' TIP' : null,
-        ]);
-        $detail = [] !== $findings
-            ? [implode(', ', $findings).' — '.basename($partsDir).'/'.basename($partFile)]
-            : [];
-        if ($exitCode > 1) {
-            $detail[] = 'not judged — exit '.$exitCode;
-        }
-        foreach ($notes as $note) {
-            if (str_contains($note, 'older than the PHP')) {
-                preg_match('/^PHP ([\d.]+)/', $targetLine, $floor);
-                $detail[] = 'floor clamped to PHP '.($floor[1] ?? 'the oldest supported');
-            }
-        }
-
         $target = preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown';
-        $tag = $severities['fail'] > 0 || 0 !== $exitCode
-            ? $io->red('[FAIL]')
-            : ([] !== $findings ? $io->yellow('[WARN]') : $io->dim('[OK]'));
-        $io->status($tag, $repo.'  '.$io->dim($target), [] !== $detail ? implode("\n", $detail) : null);
+        $name = $severities['fail'] > 0 || 0 !== $exitCode ? $io->red($repo) : $repo;
+        $io->info('  '.$name.'  '.$io->dim($target));
     }
 
     fwrite($merged, summaryBlock($rows, $fallbackCount, $clampedCount)."\n");

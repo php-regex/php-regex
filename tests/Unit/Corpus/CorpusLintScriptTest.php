@@ -122,15 +122,19 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertSame('Corpus Linter', $lines[0]);
         $this->assertSame('=============', $lines[1]);
 
-        // One aligned status row per repository, tags padded like update's.
-        $this->assertStringContainsString('[WARN]    ownerA/repoNew  PHP 8.2, PCRE2 10.40', $output);
-        $this->assertStringContainsString('[FAIL]    ownerB/repoOld  PHP 8.1, PCRE2 10.39', $output);
-        $this->assertStringContainsString('floor clamped', $output);
-        $this->assertStringContainsString('[WARN]    ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
-        $this->assertStringContainsString('[OK]      ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
+        // One bare row per repository — name, then its own target — with
+        // no tag and no findings detail: the merged log and the summary
+        // carry those.
+        $this->assertStringContainsString('  ownerA/repoNew  PHP 8.2, PCRE2 10.40', $output);
+        $this->assertStringContainsString('  ownerB/repoOld  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('  ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('  ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
 
-        // The findings of a repository are an indented detail line.
-        $this->assertStringContainsString('1 FAIL — parts/ownerB__repoOld.log', $output);
+        $this->assertStringNotContainsString('[OK]', $output);
+        $this->assertStringNotContainsString('[WARN]', $output);
+        $this->assertStringNotContainsString('[FAIL]', $output);
+        $this->assertStringNotContainsString('FAIL — ', $output);
+        $this->assertStringNotContainsString('floor clamped', $output);
 
         // The closing summary mirrors update's, elapsed included.
         $this->assertStringContainsString('Summary', $output);
