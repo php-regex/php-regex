@@ -102,7 +102,7 @@ final class Configuration implements ConfigurationInterface
                                 ->always(static function (array $names): array {
                                     foreach ($names as $name) {
                                         if (\is_string($name) && !InteropPresets::exists($name)) {
-                                            throw new \InvalidArgumentException(InteropPresets::unknownError($name));
+                                            throw new InvalidRegexOptionException(InteropPresets::unknownError($name));
                                         }
                                     }
 

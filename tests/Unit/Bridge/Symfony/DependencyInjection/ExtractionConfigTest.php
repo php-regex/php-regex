@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Symfony\DependencyInjection\Configuration;
 use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -135,6 +136,21 @@ final class ExtractionConfigTest extends TestCase
         $this->expectExceptionMessage('Invalid configuration for path "php_regex.extraction.interop": Unknown extraction preset "laravel-str": did you mean "illuminate-support"?');
 
         $this->container(['interop' => ['laravel-str', 'nette-utils']], $this->makeProject());
+    }
+
+    /**
+     * The tree wraps the library's own exception, which a caller catching
+     * ExceptionInterface reads as the configuration's mistake.
+     */
+    #[Test]
+    public function test_an_unknown_preset_wraps_the_library_s_exception(): void
+    {
+        try {
+            $this->container(['interop' => ['laravel-str']], $this->makeProject());
+            $this->fail('The configuration was taken.');
+        } catch (InvalidConfigurationException $e) {
+            $this->assertInstanceOf(InvalidRegexOptionException::class, $e->getPrevious());
+        }
     }
 
     #[Test]
