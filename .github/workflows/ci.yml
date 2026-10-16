@@ -122,6 +122,10 @@ jobs:
           - { php: '8.3', pcre: '10.42' }
           - { php: '8.4', pcre: '10.44' }
           - { php: '8.5', pcre: '10.44' }
+          # 8.6-rc is the rolling alias of the official image; it becomes plain
+          # '8.6' on the 8.6 GA day (2026-11-19), when the alias disappears —
+          # rename the row that day or this job breaks.
+          - { php: '8.6-rc', pcre: '10.44' }
 
     steps:
       - name: Install Git
@@ -147,9 +151,10 @@ jobs:
           # Without --prefer-dist: tools/phpunit/composer.json installs
           # orchestra/canvas and canvas-core from git, as GitHub serves no
           # archive of some of the commits their tags name.
-          composer install -d tools/phpunit --no-interaction --no-progress
-          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
-          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
+          # 8.6 ships no locked nette/schema release that admits it yet.
+          composer install -d tools/phpunit --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
 
       - name: Run Test Suite
         # As a plain user: a container job runs as root, who may write where
