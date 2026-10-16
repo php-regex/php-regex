@@ -180,8 +180,8 @@ final class LintCommandBaselineTest extends TestCase
     }
 
     /**
-     * @param array<int, string>   $args
-     * @param array<string, mixed> $regexOptions
+     * @param array<int, string>                                 $args
+     * @param array{php_version?: string, pcre_version?: string} $regexOptions
      */
     private function makeInput(array $args, array $regexOptions = []): Input
     {

@@ -36,8 +36,8 @@ use PHPUnit\Framework\TestCase;
 final class UsageErrorStreamTest extends TestCase
 {
     /**
-     * @param list<string>         $arguments
-     * @param array<string, mixed> $regexOptions
+     * @param list<string>                                       $arguments
+     * @param array{php_version?: string, pcre_version?: string} $regexOptions
      */
     #[Test]
     #[DataProvider('provideUsageErrors')]

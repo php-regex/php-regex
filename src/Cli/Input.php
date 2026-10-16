@@ -19,8 +19,8 @@ namespace PHPRegex\Cli;
 final class Input
 {
     /**
-     * @param array<int, string>   $args
-     * @param array<string, mixed> $regexOptions
+     * @param array<int, string>                                 $args
+     * @param array{php_version?: string, pcre_version?: string} $regexOptions the versions the command line names
      */
     public function __construct(
         public readonly string $command,

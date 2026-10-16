@@ -104,12 +104,12 @@ final class CommandTest extends TestCase
         $command = new AnalyzeCommand();
         $output = OutputFactory::create();
 
-        // Create input with invalid regex options
+        // Create input with a version the library cannot read
         $input = new Input(
             'analyze',
             ['/a+/'],
             new GlobalOptions(false, false, false, true, null, null),
-            ['invalid_option' => 'value'],
+            ['php_version' => 'nope'],
         );
 
         $exitCode = 0;
@@ -295,12 +295,12 @@ final class CommandTest extends TestCase
         $command = new DebugCommand();
         $output = OutputFactory::create();
 
-        // Create input with invalid regex options
+        // Create input with a version the library cannot read
         $input = new Input(
             'debug',
             ['/a+/'],
             new GlobalOptions(false, false, false, true, null, null),
-            ['invalid_option' => 'value'],
+            ['php_version' => 'nope'],
         );
 
         $exitCode = 0;
@@ -439,12 +439,12 @@ final class CommandTest extends TestCase
         $command = new DiagramCommand();
         $output = OutputFactory::create();
 
-        // Create input with invalid regex options
+        // Create input with a version the library cannot read
         $input = new Input(
             'diagram',
             ['/a+/'],
             new GlobalOptions(false, false, false, true, null, null),
-            ['invalid_option' => 'value'],
+            ['php_version' => 'nope'],
         );
 
         $exitCode = 0;
@@ -543,12 +543,12 @@ final class CommandTest extends TestCase
         $command = new HighlightCommand();
         $output = OutputFactory::create();
 
-        // Create input with invalid regex options
+        // Create input with a version the library cannot read
         $input = new Input(
             'highlight',
             ['/a+/'],
             new GlobalOptions(false, false, false, true, null, null),
-            ['invalid_option' => 'value'],
+            ['php_version' => 'nope'],
         );
 
         $exitCode = 0;
@@ -598,12 +598,12 @@ final class CommandTest extends TestCase
         $command = new ParseCommand();
         $output = OutputFactory::create();
 
-        // Create input with invalid regex options
+        // Create input with a version the library cannot read
         $input = new Input(
             'parse',
             ['/a+/'],
             new GlobalOptions(false, false, false, true, null, null),
-            ['invalid_option' => 'value'],
+            ['php_version' => 'nope'],
         );
 
         $exitCode = 0;
@@ -709,12 +709,12 @@ final class CommandTest extends TestCase
         $command = new ValidateCommand();
         $output = OutputFactory::create();
 
-        // Create input with invalid regex options
+        // Create input with a version the library cannot read
         $input = new Input(
             'validate',
             ['/a+/'],
             new GlobalOptions(false, false, false, true, null, null),
-            ['invalid_option' => 'value'],
+            ['php_version' => 'nope'],
         );
 
         $exitCode = 0;

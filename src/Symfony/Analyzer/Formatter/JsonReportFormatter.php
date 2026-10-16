@@ -33,7 +33,22 @@ final class JsonReportFormatter
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<array{
+     *     id: string,
+     *     title: string,
+     *     meta: list<array{label: string, value: int|string}>,
+     *     summary: list<array{severity: 'pass'|'warn'|'fail'|'critical', message: string}>,
+     *     warnings: list<array{severity: 'pass'|'warn'|'fail'|'critical', message: string}>,
+     *     issues: list<array{
+     *         kind: string,
+     *         severity: 'pass'|'warn'|'fail'|'critical',
+     *         title: string,
+     *         details: list<array{label: string, value: string, kind: string}>,
+     *         notes: array<int, string>,
+     *     }>,
+     *     suggestions: array<int, string>,
+     *     debug?: list<array{label: string, value: int|string}>,
+     * }>
      */
     private function normalizeSections(SecurityReport $report, bool $debug): array
     {

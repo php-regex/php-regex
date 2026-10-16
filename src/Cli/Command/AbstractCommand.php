@@ -31,8 +31,8 @@ use PHPRegex\Toolkit\Regex;
 abstract class AbstractCommand implements CommandInterface
 {
     /**
-     * @param array<string, mixed> $options
-     * @param bool                 $json    whether the command line asked for JSON: the error is then the envelope
+     * @param array{php_version?: string, pcre_version?: string} $options the versions the command line names
+     * @param bool                                               $json    whether the command line asked for JSON: the error is then the envelope
      */
     protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
     {
@@ -55,7 +55,7 @@ abstract class AbstractCommand implements CommandInterface
      * line gave is named by its option, --php-version or --pcre-version,
      * not by the library's key.
      *
-     * @param array<string, mixed> $fromCommandLine the library options the command line set
+     * @param array{php_version?: string, pcre_version?: string} $fromCommandLine the library options the command line set
      */
     protected function invalidOptionMessage(InvalidRegexOptionException $e, array $fromCommandLine): string
     {

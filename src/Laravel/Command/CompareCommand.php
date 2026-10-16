@@ -225,7 +225,7 @@ final class CompareCommand extends Command
     }
 
     /**
-     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array<string, mixed>}
+     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array{disjoint: bool, example: string|null}}
      */
     private function intersection(LanguageSolver $solver, SolverOptions $options, string $pattern1, string $pattern2): array
     {
@@ -242,7 +242,7 @@ final class CompareCommand extends Command
     }
 
     /**
-     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array<string, mixed>}
+     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array{subset: bool, counterexample: string|null}}
      */
     private function subset(LanguageSolver $solver, SolverOptions $options, string $pattern1, string $pattern2): array
     {
@@ -259,7 +259,7 @@ final class CompareCommand extends Command
     }
 
     /**
-     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array<string, mixed>}
+     * @return array{passed: bool, verdict: string, example: array{string, string}|null, json: array{equivalent: bool, counterexample: string|null, left_only_example: string|null, right_only_example: string|null}}
      */
     private function equivalence(LanguageSolver $solver, SolverOptions $options, string $pattern1, string $pattern2): array
     {
