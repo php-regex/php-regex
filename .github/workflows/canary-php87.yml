@@ -1,0 +1,57 @@
+name: PHP 8.7 canary
+
+# A watchtower, not readiness: PHP 8.7 is a moving branch and nothing is
+# promised on it yet. Scheduled only — like PHPUnit's nightly workflow, the
+# public precedent for a non-gating look at the future — so it never runs on
+# a push or a pull request and can never gate one. A red here is a signal to
+# read, never a broken build: an upstream snapshot that stopped installing,
+# a bridge dependency not admitting the branch yet, or the known PCRE2 JIT
+# crash (releases 10.40 through 10.49 and main; 8.7-dev bundles 10.44). The
+# documented workaround for that last one is the pcre.jit=0 ini, to be set
+# the day the crash actually fires — not before, or the signal goes dark.
+# No static analysis: the analyser range stops at 8.6. No coverage: no
+# driver builds on this branch.
+
+on:
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  # The event in the key: a scheduled run neither cancels another event's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+
+jobs:
+  canary:
+    name: Tests (PHP 8.7, scheduled)
+    runs-on: ubuntu-latest
+    # A moving branch breaks for upstream reasons; the run reports without
+    # failing the workflow.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.7
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.7'
+          extensions: mbstring, intl, pcre, tokenizer, xml
+          ini-values: phar.readonly=0
+
+      - name: Show the engine
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL;'
+
+      - name: Install Dependencies
+        run: |
+          composer install --prefer-dist --no-interaction --no-progress
+          # The dev tools ship locked dependencies whose ceilings do not
+          # admit this branch yet.
+          composer install -d tools/phpunit --no-interaction --no-progress --ignore-platform-req=php+
+          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress --ignore-platform-req=php+
+
+      - name: Run Test Suite
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
