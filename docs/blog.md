@@ -11,6 +11,9 @@ release's own sources before it is published — the method section of each
 article says exactly what was run, where.
 
 {% assign articles = site.articles | sort: date | reverse %}
+{% if articles.size == 0 %}
+<p class="article-soon">The first articles are on their way — each one measured, run against the engines it names, and checked line by line before it lands here.</p>
+{% else %}
 <ul class="article-list">
   {% for article in articles %}
   <li class="article-entry">
@@ -22,3 +25,4 @@ article says exactly what was run, where.
   </li>
   {% endfor %}
 </ul>
+{% endif %}

@@ -1312,6 +1312,18 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
 }
 
+/* The index's empty state: one sentence in the soft ink, the same register
+ * as the byline, so a reader who arrives before the first article lands
+ * knows the section is alive and what its bar is. */
+.article-soon {
+  margin: 2rem 0 0;
+  padding: 1.25rem .75rem;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
 /* ---- Article index -------------------------------------------------------
  * The blog's one list. Full-width entries: the title carries the line,
  * the date sits on its baseline at the far end, and the promise runs in

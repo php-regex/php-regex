@@ -1,6 +1,7 @@
 ---
 date: 2026-10-16 14:30:00 +00:00
 author: younes
+published: false
 description: "One nested-quantifier pattern timed at input lengths 18 to 26 on PHP 8.4 and PCRE2 10.49 — the exponential curve, what the default limit turns it into, the factor of seven the JIT buys, and the rewrites that are provably safe."
 ---
 # The measured anatomy of catastrophic backtracking

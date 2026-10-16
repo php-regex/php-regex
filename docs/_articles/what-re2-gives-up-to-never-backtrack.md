@@ -1,6 +1,7 @@
 ---
 date: 2026-10-16 14:40:00 +00:00
 author: younes
+published: false
 description: "The same pattern measured through a linear engine and a backtracker — Rust's regex answering in 0.015 s where PCRE2 exhausts its match limit and V8 takes 2.9 s — what RE2's linear-time guarantee costs, and why PHP still ships the backtracker."
 ---
 # What RE2 gives up to never backtrack
