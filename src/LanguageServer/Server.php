@@ -368,15 +368,15 @@ final class Server
     }
 
     /**
+     * A path of regex.json, or its list of paths, as a list.
+     *
+     * @param string|list<string>|null $value
+     *
      * @return list<string>
      */
-    private static function stringList(mixed $value): array
+    private static function stringList(string|array|null $value): array
     {
-        if (\is_string($value)) {
-            return [$value];
-        }
-
-        return \is_array($value) ? array_values(array_filter($value, \is_string(...))) : [];
+        return \is_string($value) ? [$value] : $value ?? [];
     }
 
     /**

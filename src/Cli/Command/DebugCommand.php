@@ -38,6 +38,8 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
+ * @phpstan-import-type LintDefaults from LintDefaultsBuilder
+ *
  * @internal
  */
 final class DebugCommand extends AbstractCommand implements JsonCommandInterface
@@ -316,8 +318,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
     }
 
     /**
-     * @param array<int, string>   $args
-     * @param array<string, mixed> $defaults
+     * @param array<int, string> $args
+     * @param LintDefaults       $defaults
      *
      * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
      */
