@@ -133,6 +133,15 @@ jobs:
         # leaves out what .gitattributes marks export-ignore, tests included.
         run: apt-get update && apt-get install -y --no-install-recommends git unzip
 
+      - name: Install multibyte support
+        # The 8.6-rc image ships without mbstring, and compiling it needs
+        # oniguruma; the GA image may restore the extension — try removing
+        # this step then.
+        if: startsWith(matrix.php, '8.6')
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends libonig-dev
+          docker-php-ext-install mbstring
+
       - name: Checkout Code
         uses: actions/checkout@v7
 
