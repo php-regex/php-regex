@@ -224,9 +224,6 @@ Laravel `^10.37|^11.0|^12.0|^13.0`, PCRE2 10.39 judged with its own rules.
 Left:
 - watch the first GitHub run of the `tests-php81` and prefer-lowest cells
   (checked locally with act only);
-- the "script only" meaning of `\p{Script}` before 10.40 reaches the solver,
-  not yet the other consumers of the HIR (ReDoS pairs, transpiler,
-  `PatternInfo`);
 - PCRE2 10.39 also has matching bugs 10.40 fixed (`/[Aa]{2}/` misses `aa`):
   engine defects the library does not model, documented.
 Decisions for the maintainer: `docs/reference/backward-compatibility.md`

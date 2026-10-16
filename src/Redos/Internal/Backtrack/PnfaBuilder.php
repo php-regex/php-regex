@@ -38,6 +38,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Builds the prioritized NFA of a pattern, Thompson style, from its AST.
@@ -196,11 +197,19 @@ final class PnfaBuilder
 
     private readonly string $source;
 
+    /**
+     * Whether a bare script name means the script alone, as before PCRE2
+     * 10.40, for the target while the running engine reads its extensions.
+     */
+    private readonly bool $scriptsAlone;
+
     public function __construct(
         private readonly RegexNode $regex,
         private readonly Budget $budget,
         private readonly int $boundedRepeatCutoff,
+        ?PcreTarget $target = null,
     ) {
+        $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
@@ -970,6 +979,9 @@ final class PnfaBuilder
     private function query(string $atom, int $flags): CharSet
     {
         $modifiers = self::modifiers($flags);
+        if ($this->scriptsAlone) {
+            $atom = ClassSetProvider::scriptsAlone($atom);
+        }
 
         // A scan of the Unicode range costs the engine tens of milliseconds:
         // each distinct atom is charged before it runs, the same whether the

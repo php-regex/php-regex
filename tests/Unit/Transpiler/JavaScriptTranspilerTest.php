@@ -154,6 +154,23 @@ final class JavaScriptTranspilerTest extends TestCase
         yield 'a binary property' => ['pattern' => '/^\p{Alphabetic}$/u', 'literal' => '/^\p{Alphabetic}$/u', 'subjects' => ['a' => 1, '1' => 0]];
     }
 
+    /**
+     * Before PCRE2 10.40 a bare script name is the script alone:
+     * preg_match('/^\p{Han}$/u', "\u{3001}") is 0 on PHP 8.1.34 with its
+     * bundled PCRE2 10.39, and 1 from 10.40, where the comma's extensions
+     * hold Han.
+     */
+    #[Test]
+    public function test_a_bare_script_is_its_script_for_a_target_before_pcre2_10_40(): void
+    {
+        $before = Regex::create(['cache' => null, 'php_version' => 80100]);
+        $after = Regex::create(['cache' => null, 'php_version' => 80200]);
+
+        $this->assertSame('/^\p{Script=Han}$/u', $before->transpile('/^\p{Han}$/u', 'javascript')->literal);
+        $this->assertSame('/^\P{Script=Han}$/u', $before->transpile('/^\p{^Han}$/u', 'javascript')->literal);
+        $this->assertSame('/^\p{Script_Extensions=Han}$/u', $after->transpile('/^\p{Han}$/u', 'javascript')->literal);
+    }
+
     #[Test]
     public function test_rejects_a_bidi_class(): void
     {

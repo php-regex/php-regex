@@ -567,7 +567,8 @@ Notes:
 - Unsupported PCRE constructs throw `TranspileException`.
 - JavaScript targets may add `/u` when Unicode properties or code point escapes are used.
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
-  `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused.
+  `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
+  target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
 - `/x` is dropped after comments/whitespace are normalized.
 - `/S` is dropped with a note in the JavaScript and `html-pattern` targets: PHP has ignored it since 7.3.
 - `/U` and `(?U)` are carried by swapping greedy and lazy in the quantifiers they govern (`/<.+>/U` is `/<.+?>/`);

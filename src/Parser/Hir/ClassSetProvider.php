@@ -15,7 +15,10 @@ namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\NoJit;
+use PHPRegex\Parser\Internal\PropertyNames;
 use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * The exact set of characters one atom matches, asked of the running PCRE:
@@ -57,6 +60,35 @@ final class ClassSetProvider
      * @var array<string, CharSet|false>
      */
     private static array $sets = [];
+
+    /**
+     * Whether a bare script name, "\p{Han}", means the script alone for the
+     * target, as before PCRE2 10.40, while the running engine reads it as
+     * the script extensions: the atoms are then asked with "sc:" (see
+     * scriptsAlone()).
+     */
+    public static function readsScriptsAlone(?PcreTarget $target): bool
+    {
+        return null !== $target
+            && !$target->supports(PcreFeature::LoosePropertyNames)
+            && PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames);
+    }
+
+    /**
+     * The atom with each "\p{Script}" and "\P{^Script}" a script table
+     * lookup, "\p{sc:Script}": what a script name meant before PCRE2 10.40.
+     * A backslash escaped by another is left alone.
+     */
+    public static function scriptsAlone(string $atom): string
+    {
+        return LibraryPcre::replaceCallback(
+            '/(?<!\\\\)((?:\\\\\\\\)*+\\\\[pP]\{)(\^?)([A-Za-z_]++)\}/',
+            static fn (array $match): string => PropertyNames::isScriptBefore1040($match[3])
+                ? $match[1].$match[2].'sc:'.$match[3].'}'
+                : $match[0],
+            $atom,
+        ) ?? $atom;
+    }
 
     /**
      * The characters the atom matches, or null when PCRE refuses it or

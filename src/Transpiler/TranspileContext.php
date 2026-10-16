@@ -35,10 +35,16 @@ final class TranspileContext
      */
     private array $notes = [];
 
+    /**
+     * @param bool $scriptsAlone whether a bare script name, "\p{Han}", is the
+     *                           script alone, as before PCRE2 10.40, rather
+     *                           than its script extensions
+     */
     public function __construct(
         public string $sourcePattern,
         public string $sourceFlags,
         public TranspileOptions $options,
+        public bool $scriptsAlone = false,
     ) {}
 
     public function requireFlag(string $flag, string $reason): void

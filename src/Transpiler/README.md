@@ -80,7 +80,7 @@ $result = $transpiler->transpile('/\p{L}+/', 'javascript');
 echo $result->literal;     // /\p{L}+/u
 echo $result->warnings[0]; // Added /u for Unicode property escapes.
 
-// PCRE2 reads a bare script name as the script's extensions; JavaScript names them.
+// PCRE2 reads a bare script name as the script's extensions (from 10.40; the script alone before); JavaScript names them.
 echo $transpiler->transpile('/\p{Han}+/u', 'javascript')->literal; // /\p{Script_Extensions=Han}+/u
 
 try {

@@ -625,7 +625,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     /**
      * A property as JavaScript names it. PCRE2 reads a bare script name as
-     * its Script_Extensions, "sc:" as its Script, and a name loosely;
+     * its Script_Extensions (its Script before 10.40), "sc:" as its Script, and a name loosely;
      * JavaScript wants "Script_Extensions=Han" or "Script=Han", spelled as
      * Unicode does. Common and Inherited are their Script either way in
      * PCRE2. A general category or a binary property is kept as written.
@@ -636,7 +636,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
         if ($separator === \strlen($prop)) {
             $script = ScriptNames::javaScriptName($prop);
 
-            return null === $script ? $prop : self::scriptProperty($script, true);
+            return null === $script ? $prop : self::scriptProperty($script, !$this->context->scriptsAlone);
         }
 
         $name = ScriptNames::looseKey(substr($prop, 0, $separator));

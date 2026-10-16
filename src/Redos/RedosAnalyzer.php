@@ -105,7 +105,7 @@ final class RedosAnalyzer
             $reason = null;
 
             try {
-                $proof = $prover->prove($ast, $regex);
+                $proof = $prover->prove($ast, $regex, $parser->target());
                 $proofKind = RedosProof::Proven;
             } catch (ModelLimit $limit) {
                 $proof = null;

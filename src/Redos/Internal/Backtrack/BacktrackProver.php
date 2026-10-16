@@ -26,6 +26,7 @@ use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\RedosComplexity;
 
 /**
@@ -65,14 +66,18 @@ final class BacktrackProver
     ) {}
 
     /**
+     * @param PcreTarget|null $target the PHP and PCRE2 the pattern is read for,
+     *                                as its character sets go; the running
+     *                                engine's reading when null
+     *
      * @throws ModelLimit
      */
-    public function prove(RegexNode $regex, ?string $pattern = null): ProofResult
+    public function prove(RegexNode $regex, ?string $pattern = null, ?PcreTarget $target = null): ProofResult
     {
         $budget = new Budget($this->maxSteps, $this->maxStates);
         $this->stepBound = null;
         $this->search = null;
-        $builder = $this->builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff);
+        $builder = $this->builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target);
         $searches = $builder->build();
 
         // A search's automaton is kept only while a lookaround of it is still

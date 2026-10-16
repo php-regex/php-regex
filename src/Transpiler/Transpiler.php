@@ -15,6 +15,7 @@ namespace PHPRegex\Transpiler;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 
@@ -57,7 +58,9 @@ final class Transpiler
         $dialect = $this->targets->get($target);
         $ast = $this->parser->parse($regex);
 
-        $context = new TranspileContext($regex, $ast->flags, $options);
+        // The pattern means what the PCRE2 it is read for makes of it: a
+        // bare script name is the script alone before 10.40.
+        $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames));
         $compiled = $dialect->compile($ast, $context);
         $flags = $dialect->mapFlags($ast->flags, $context);
 

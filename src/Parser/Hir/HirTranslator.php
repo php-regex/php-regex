@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PropertyNames;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -47,7 +45,6 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
-use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 
 /**
@@ -140,9 +137,7 @@ final class HirTranslator
      */
     public function __construct(?PcreTarget $target = null)
     {
-        $this->scriptsAlone = null !== $target
-            && !$target->supports(PcreFeature::LoosePropertyNames)
-            && PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames);
+        $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
     }
 
     public function translate(RegexNode $regex): Hir
@@ -171,22 +166,6 @@ final class HirTranslator
     public static function unicodeOf(RegexNode $regex): bool
     {
         return $regex->isUnicode();
-    }
-
-    /**
-     * The atom with each "\p{Script}" and "\P{^Script}" a script table
-     * lookup, "\p{sc:Script}": what a script name meant before PCRE2 10.40.
-     * A backslash escaped by another is left alone.
-     */
-    private static function scriptsAlone(string $atom): string
-    {
-        return LibraryPcre::replaceCallback(
-            '/(?<!\\\\)((?:\\\\\\\\)*+\\\\[pP]\{)(\^?)([A-Za-z_]++)\}/',
-            static fn (array $match): string => PropertyNames::isScriptBefore1040($match[3])
-                ? $match[1].$match[2].'sc:'.$match[3].'}'
-                : $match[0],
-            $atom,
-        ) ?? $atom;
     }
 
     private function node(NodeInterface $node, int $flags): Hir
@@ -397,7 +376,7 @@ final class HirTranslator
         }
 
         if ($this->scriptsAlone) {
-            $atom = self::scriptsAlone($atom);
+            $atom = ClassSetProvider::scriptsAlone($atom);
         }
 
         $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag);
