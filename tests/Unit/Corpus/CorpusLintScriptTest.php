@@ -118,17 +118,19 @@ final class CorpusLintScriptTest extends TestCase
 
         $lines = array_values(array_filter(explode("\n", $output), static fn (string $line): bool => '' !== trim($line)));
 
-        // A bold header over a dim rule, like the corpus installer.
-        $this->assertSame('Corpus Linter', $lines[0]);
-        $this->assertSame('=============', $lines[1]);
+        // No header: the console opens on the first repository row.
+        $this->assertStringNotContainsString('Corpus Linter', $output);
+        $this->assertStringNotContainsString('Runtime :', $output);
+        $this->assertStringNotContainsString('Output  :', $output);
+        $this->assertStringNotContainsString('Parts   :', $output);
 
-        // One bare row per repository — name, then its own target — with
-        // no tag and no findings detail: the merged log and the summary
-        // carry those.
-        $this->assertStringContainsString('  ownerA/repoNew  PHP 8.2, PCRE2 10.40', $output);
-        $this->assertStringContainsString('  ownerB/repoOld  PHP 8.1, PCRE2 10.39', $output);
-        $this->assertStringContainsString('  ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
-        $this->assertStringContainsString('  ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
+        // One bare paginated row per repository — counter, name, then its
+        // own target — with no tag and no findings detail: the merged log
+        // and the summary carry those.
+        $this->assertSame('[1/4] ownerA/repoNew  PHP 8.2, PCRE2 10.40', $lines[0]);
+        $this->assertStringContainsString('[2/4] ownerB/repoOld  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('[3/4] ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('[4/4] ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
 
         $this->assertStringNotContainsString('[OK]', $output);
         $this->assertStringNotContainsString('[WARN]', $output);
@@ -142,6 +144,17 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertStringContainsString('With findings: 3', $output);
         $this->assertStringContainsString('With errors  : 1', $output);
         $this->assertStringContainsString('Elapsed      : ', $output);
+    }
+
+    #[Test]
+    public function test_pagination_pads_the_counter_to_the_width_of_the_total(): void
+    {
+        $this->loadScriptFunctions();
+
+        $this->assertSame('[  1/314]', paginationPrefix(1, 314));
+        $this->assertSame('[ 10/314]', paginationPrefix(10, 314));
+        $this->assertSame('[100/314]', paginationPrefix(100, 314));
+        $this->assertSame('[2/4]', paginationPrefix(2, 4));
     }
 
     #[Test]

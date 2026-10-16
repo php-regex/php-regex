@@ -57,13 +57,6 @@ final class ConsoleStyle
         $this->useColor = $this->supportsColor();
     }
 
-    public function header(string $title): void
-    {
-        $line = str_repeat('=', \strlen($title));
-        echo $this->bold($title).\PHP_EOL;
-        echo $this->dim($line).\PHP_EOL;
-    }
-
     public function info(string $message): void
     {
         echo $message.\PHP_EOL;
@@ -166,6 +159,15 @@ function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFi
 function stripAnsi(string $text): string
 {
     return preg_replace('/\e\[[0-9;]*m/', '', $text) ?? $text;
+}
+
+/**
+ * The row counter, right-aligned to the width of the total: [  1/314],
+ * [ 10/314], [100/314].
+ */
+function paginationPrefix(int $index, int $total): string
+{
+    return sprintf('[%'.\strlen((string) $total).'d/%d]', $index, $total);
 }
 
 /**
@@ -509,19 +511,12 @@ function main(array $argv): int
     $total = \count($repos);
     $start = microtime(true);
 
-    $io->header('Corpus Linter');
-    $io->info('Runtime : PHP '.\PHP_VERSION.', PCRE2 '.explode(' ', \PCRE_VERSION)[0]);
-    $io->info('Corpus  : '.$total.' repositories');
-    $io->info('Output  : '.str_replace($root.'/', '', $outputFile));
-    $io->info('Parts   : '.str_replace($root.'/', '', $partsDir));
-    $io->info('');
-
     $rows = [];
     $fallbackCount = 0;
     $clampedCount = 0;
     $notClean = false;
 
-    foreach ($repos as $repo) {
+    foreach ($repos as $index => $repo) {
         $repoDir = $corpusDir.'/'.$repo;
         $partFile = $partsDir.'/'.str_replace('/', '__', $repo).'.log';
 
@@ -581,7 +576,7 @@ function main(array $argv): int
 
         $target = preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown';
         $name = $severities['fail'] > 0 || 0 !== $exitCode ? $io->red($repo) : $repo;
-        $io->info('  '.$name.'  '.$io->dim($target));
+        $io->info(paginationPrefix($index + 1, $total).' '.$name.'  '.$io->dim($target));
     }
 
     fwrite($merged, summaryBlock($rows, $fallbackCount, $clampedCount)."\n");
