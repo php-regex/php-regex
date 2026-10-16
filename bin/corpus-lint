@@ -72,11 +72,6 @@ final class ConsoleStyle
         return $this->colorize($text, '2');
     }
 
-    public function bold(string $text): string
-    {
-        return $this->colorize($text, '1');
-    }
-
     public function cyan(string $text): string
     {
         return $this->colorize($text, '36');
@@ -329,50 +324,6 @@ function runLint(array $plan): array
     return runCommand($command, $plan['env']);
 }
 
-/**
- * @param list<array{repo: string, target: string, exit: int, fail: int, warn: int, tip: int}> $rows
- */
-function summaryBlock(array $rows, int $fallbackCount, int $clampedCount): string
-{
-    $lines = [
-        '================ corpus-lint summary ================',
-        sprintf('%-44s %-30s %4s %5s %5s %5s', 'repository', 'target', 'exit', 'fail', 'warn', 'tip'),
-    ];
-
-    foreach ($rows as $row) {
-        $lines[] = sprintf(
-            '%-44s %-30s %4d %5d %5d %5d',
-            $row['repo'],
-            $row['target'],
-            $row['exit'],
-            $row['fail'],
-            $row['warn'],
-            $row['tip'],
-        );
-    }
-
-    $withErrors = count(array_filter($rows, static fn (array $row): bool => $row['fail'] > 0 || 0 !== $row['exit']));
-    $totals = ['fail' => 0, 'warn' => 0, 'tip' => 0];
-    foreach ($rows as $row) {
-        foreach ($totals as $severity => $total) {
-            $totals[$severity] += $row[$severity];
-        }
-    }
-
-    $lines[] = sprintf(
-        'Total: %d repositories, %d with errors, %d FAIL, %d WARN, %d TIP, %d fallback target, %d floor clamped',
-        \count($rows),
-        $withErrors,
-        $totals['fail'],
-        $totals['warn'],
-        $totals['tip'],
-        $fallbackCount,
-        $clampedCount,
-    );
-
-    return implode("\n", $lines);
-}
-
 function printUsage(): void
 {
     $help = <<<'TXT'
@@ -514,11 +465,6 @@ function main(array $argv): int
     $merged = null;
 
     $total = \count($repos);
-    $start = microtime(true);
-
-    $rows = [];
-    $fallbackCount = 0;
-    $clampedCount = 0;
     $notClean = false;
 
     foreach ($repos as $index => $repo) {
@@ -555,26 +501,6 @@ function main(array $argv): int
         fwrite($merged, "\n");
         fflush($merged);
 
-        $fallback = $plan['fallback'];
-        if ($fallback) {
-            $fallbackCount++;
-        }
-        if (\in_array(true, array_map(
-            static fn (string $note): bool => str_contains($note, 'older than the PHP'),
-            $notes,
-        ), true)) {
-            $clampedCount++;
-        }
-
-        $rows[] = [
-            'repo' => 'corpus/'.$repo,
-            'target' => preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown',
-            'exit' => $exitCode,
-            'fail' => $severities['fail'],
-            'warn' => $severities['warn'],
-            'tip' => $severities['tip'],
-        ];
-
         if (0 !== $exitCode) {
             $notClean = true;
         }
@@ -584,38 +510,7 @@ function main(array $argv): int
         $io->info($io->cyan(paginationPrefix($index + 1, $total)).' '.$name.'  '.$io->dim($target));
     }
 
-    fwrite($merged, summaryBlock($rows, $fallbackCount, $clampedCount)."\n");
     fclose($merged);
-
-    $withFindings = count(array_filter(
-        $rows,
-        static fn (array $row): bool => $row['fail'] + $row['warn'] + $row['tip'] > 0,
-    ));
-    $withErrors = count(array_filter(
-        $rows,
-        static fn (array $row): bool => $row['fail'] > 0 || 0 !== $row['exit'],
-    ));
-    $notJudged = count(array_filter(
-        $rows,
-        static fn (array $row): bool => $row['exit'] > 1,
-    ));
-    $line = static fn (string $label, string $value): string => sprintf('%-13s: %s', $label, $value);
-
-    $io->info('');
-    $io->info($io->bold('Summary'));
-    $io->info($line('Repositories', (string) $total));
-    $io->info($line('With findings', (string) $withFindings));
-    $io->info($line('With errors', (string) $withErrors));
-    $io->info($line('Verdicts', sprintf(
-        '%d FAIL, %d WARN, %d TIP',
-        array_sum(array_column($rows, 'fail')),
-        array_sum(array_column($rows, 'warn')),
-        array_sum(array_column($rows, 'tip')),
-    )));
-    $io->info($line('Fallback', (string) $fallbackCount));
-    $io->info($line('Clamped', (string) $clampedCount));
-    $io->info($line('Not judged', (string) $notJudged));
-    $io->info($line('Elapsed', round(microtime(true) - $start, 1).'s'));
 
     return $notClean ? 1 : 0;
 }

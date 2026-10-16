@@ -204,8 +204,8 @@ One lint run per repository, the target read from its own `composer.json`:
 older than the PHP the library supports is judged at that oldest supported
 PHP — the notice the linter prints is carried into the log — and a repository
 without `require.php` falls back to `--php` (`8.1` by default). The merged
-`var/log/corpus.log` keeps the issue format of a single run, gains one `###`
-header per repository, and closes with a summary table; each repository's own
+`var/log/corpus.log` keeps the issue format of a single run and gains one
+`###` header per repository; each repository's own
 log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
 of the corpus, and the merged log renders the same whether the command runs
 in a terminal or through a pipe.

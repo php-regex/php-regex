@@ -99,11 +99,13 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertStringContainsString('WARN  Quantifier is redundant', $log);
         $this->assertStringContainsString('FAIL  Invalid or unsupported Unicode property', $log);
 
-        // The merged file ends with one summary line for the whole sweep.
-        $this->assertStringContainsString('4 repositories', $log);
-        $this->assertStringContainsString('1 with errors', $log);
-        $this->assertStringContainsString('1 fallback target', $log);
-        $this->assertStringContainsString('1 floor clamped', $log);
+        // The merged log ends on the last section: no sweep summary at
+        // the bottom, the per-repository headers carry everything.
+        $this->assertStringNotContainsString('corpus-lint summary', $log);
+        $this->assertStringNotContainsString('Total:', $log);
+        $this->assertStringNotContainsString(' repositories,', $log);
+        $this->assertStringNotContainsString('fallback target', $log);
+        $this->assertStringNotContainsString('floor clamped', $log);
 
         // One part per repository, kept beside the merged log.
         $this->assertFileExists($this->root.'/parts/ownerA__repoNew.log');
@@ -138,12 +140,16 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertStringNotContainsString('FAIL — ', $output);
         $this->assertStringNotContainsString('floor clamped', $output);
 
-        // The closing summary mirrors update's, elapsed included.
-        $this->assertStringContainsString('Summary', $output);
-        $this->assertStringContainsString('Repositories : 4', $output);
-        $this->assertStringContainsString('With findings: 3', $output);
-        $this->assertStringContainsString('With errors  : 1', $output);
-        $this->assertStringContainsString('Elapsed      : ', $output);
+        // No closing summary on the console: the run ends on the last row.
+        $this->assertStringNotContainsString('Summary', $output);
+        $this->assertStringNotContainsString('Repositories :', $output);
+        $this->assertStringNotContainsString('With findings', $output);
+        $this->assertStringNotContainsString('With errors', $output);
+        $this->assertStringNotContainsString('Verdicts', $output);
+        $this->assertStringNotContainsString('Fallback', $output);
+        $this->assertStringNotContainsString('Clamped', $output);
+        $this->assertStringNotContainsString('Not judged', $output);
+        $this->assertStringNotContainsString('Elapsed', $output);
     }
 
     #[Test]
