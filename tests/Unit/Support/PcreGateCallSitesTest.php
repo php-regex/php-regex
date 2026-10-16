@@ -67,9 +67,9 @@ final class PcreGateCallSitesTest extends TestCase
         // "10.4" reads as 10.04, a minor PCRE2 always spells with two digits.
         yield 'a misspelled minor' => ['method' => 'requiresPcre2', 'argument' => '10.4'];
         yield 'a php floor above every php' => ['method' => 'requiresPhp', 'argument' => '99.0'];
-        yield 'a php the suite does not judge' => ['method' => 'requiresPhp', 'argument' => '8.6'];
+        yield 'a php the suite does not judge' => ['method' => 'requiresPhp', 'argument' => '8.7'];
         yield 'a php ceiling below every php' => ['method' => 'forbidsPhp', 'argument' => '5.0'];
-        yield 'a php ceiling the suite does not judge' => ['method' => 'forbidsPhp', 'argument' => '8.6'];
+        yield 'a php ceiling the suite does not judge' => ['method' => 'forbidsPhp', 'argument' => '8.7'];
     }
 
     #[Test]
