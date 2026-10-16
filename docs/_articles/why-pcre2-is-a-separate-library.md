@@ -1,5 +1,5 @@
 ---
-date: 2026-10-16 14:50:00 +00:00
+date: 2026-10-16 21:14:00 +00:00
 author: younes
 published: false
 description: "Why PCRE2 is a separate library in a separate repository rather than PCRE 9 — the project's own stated reason, the API break an embedder met, the boundary PHP crossed in 7.3 measured pattern by pattern, and where PCRE1 still runs today."
