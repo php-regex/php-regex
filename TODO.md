@@ -258,6 +258,22 @@ judges each repository under its own composer.json floor instead, and
 merges one log per repository. Decide which command the tracked file
 follows, then run it after the next corpus update.
 
+## The articles section: what is left
+
+- The next articles, in priority order: the measured anatomy of
+  `/^(\w+)+$/`, variable-length lookbehind across PHP 8.2-8.4, capture
+  shapes of `$matches`, why `pcre.backtrack_limit` does not protect under
+  the JIT, regex equivalence with proofs, named groups with branch reset,
+  measured data from the corpus, transpiling to JavaScript with a proof,
+  `preg_match()` versus `str_contains()` measured, Symfony route
+  requirements audited.
+- Re-check the 8.6 row of the published version matrix against the
+  PHP-8.6 branch before GA on 19 November 2026; the article promises it.
+- The og:image URL is cache-busted by the build time (`head.html`), which
+  re-caches social cards on every deploy; decide whether the manual `?v=`
+  ratchet fits articles too.
+- An articles pager (previous / next) once a second article exists.
+
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +
