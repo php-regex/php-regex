@@ -14,7 +14,19 @@
          displayDetailsOnTestsThatTriggerErrors="true"
          displayDetailsOnTestsThatTriggerNotices="true"
          displayDetailsOnTestsThatTriggerWarnings="true"
+         failOnWarning="true"
          resolveDependencies="true">
+    <!--
+        The deprecation policy: a PHP deprecation whose frame lands under
+        src/ — this library deprecating itself — fails the run through the
+        SourceDeprecationListener extension below (its throw becomes the
+        runner warning failOnWarning turns into failure). Every vendor or
+        tool deprecation stays PHPUnit's display-only signal: the weekly
+        re-resolved locks deprecate for reasons that are not this
+        library's, and a chronic red trains people to ignore the signal.
+        PHPUnit's own failOnDeprecation is rejected for exactly that
+        reason: it does not tell own deprecations from vendor ones.
+    -->
     <php>
         <ini name="memory_limit" value="-1"/>
         <ini name="error_reporting" value="-1"/>
@@ -22,6 +34,9 @@
         <ini name="log_errors" value="true"/>
         <ini name="serialize_precision" value="-1"/>
     </php>
+    <extensions>
+        <bootstrap class="PHPRegex\Tests\Support\SourceDeprecationListener"/>
+    </extensions>
     <testsuites>
         <testsuite name="PHPRegex Test Suite">
             <directory>tests</directory>

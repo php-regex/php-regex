@@ -514,6 +514,23 @@ class RegexProcessor
 
 ---
 
+## Deprecations the suite fails on
+
+A PHP deprecation — engine or user-level — whose frame lands under `src/` fails
+the test run: this library deprecating itself is never silent. The rule lives
+in `tests/Support/SourceDeprecationListener.php`, wired in `phpunit.xml.dist`,
+where its exception becomes the runner warning `failOnWarning` turns into
+failure.
+
+Every vendor or tool deprecation stays PHPUnit's display-only signal. The dev
+locks are re-resolved weekly, and Symfony, Laravel, Psalm and Rector deprecate
+for reasons that are not this library's; failing on them would be a chronic
+red that trains people to ignore the signal, which is why PHPUnit's own
+`failOnDeprecation` — unable to tell own deprecations from vendor ones — is
+rejected here.
+
+---
+
 ## Capture Shapes Next to PHPStan
 
 The default test run replays the capture shapes on the engine over a corpus of
