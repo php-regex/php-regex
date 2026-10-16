@@ -209,6 +209,63 @@ Left:
   heading, which splits an article's closing library section; an inline
   variant for articles would read better.
 
+## Legacy targets (PHP 7.3 to 8.0): what is left
+
+PHP 7.3 is the oldest PHP judged, each PHP with the PCRE2 its x.y.0 bundled
+(8.1 with 10.39); PHP 7.2 and earlier ship PCRE1 and are refused. A release
+older than 10.39 is judged with the 10.39 rules but for two changes the
+library knows: the alphabetic assertion names (10.33) and an open count past
+65535 read as text (10.37). Left:
+
+- Per-release rules for PCRE2 10.33 to 10.39, one release at a time, each
+  verified on a real build before it ships (pcre2test built from the release
+  tarball, `php:7.3-cli`, `php:7.4-cli`, `php:8.0-cli`): script runs `(*sr:`
+  and `(*asr:` and non-ASCII group names (10.33); the 65535-group limit,
+  quantified `(*ACCEPT)`, `(*napla:` and `(*naplb:` (10.34); `(?*` and `(?<*`,
+  the clamp of repeated assertions, de-atomised groups holding a recursive
+  back reference (10.35). Until `(?*` is known, `/(?*a)b/` passes for PHP
+  7.3, with the note that 10.32 is judged with the 10.39 rules. The Unicode
+  tables of each release are not modelled: `\p{...}` names and membership
+  below 10.39 are a documented blind spot. `\K` in a lookaround stays a rule
+  of PHP 8.5, never one of a PCRE2 release.
+- The `{1}+` pair, both directions: PCRE2 10.33 ignores a possessive `{1}+`
+  on a group and 10.34 honours it (pcre2test 10.32/10.33: `/(a|ab){1}+c/`
+  matches `abc`; 10.34, 10.35, 10.37: no match), so the old side is now
+  verified. Write `X{1}+` as `X{1}` for code leaving 7.4.0-7.4.5, and
+  `(G){1}+` as `(?>G)` the other way, each with the witness pair pinned: the
+  tree is the same on both sides, so comparing trees never sees the flip.
+- Discovery parity for the Rector rules: patterns folded from constants
+  (as the `preg_match()` rule already does), calls of functions marked
+  `#[RegexPattern]` or `Language('RegExp')`, and `preg_replace_callback_array()`.
+- Report-only verdicts, second wave: a bare `\p{Script}` is the script on
+  PCRE2 10.39 (PHP 8.1) and its script extensions from 10.40 (U+30FB for
+  `\p{Katakana}`, U+00B7 for `\p{Latin}`), which the tree comparison does not
+  see; UCP casing through `(*UCP)` between 7.4 and 8.0; de-atomisation (the
+  witness pair works on the named recursion `(?P>g)`); script runs,
+  non-atomic lookarounds, the group limit, quantified `(*ACCEPT)` and
+  non-ASCII group names, as their rules land. Flag only: none has a spelling
+  every release reads alike.
+- PHP 7.3.33 and 7.4.33 compile, with no warning, some patterns PCRE2 itself
+  refuses, to a pattern that matches nothing: `/\p{Bogus}/u` and
+  `/\214748364/` (pcre2test 10.32 and 10.35 refuse both, as PHP 8.0 does).
+  The library refuses them for those targets; decide whether the message
+  says so.
+- The PHPStan and Psalm extensions judge a project for PHP 7.2 or earlier
+  instead of refusing it as `regex lint` does: PHPStan with the version as
+  given, Psalm raised to 7.3. Decide.
+- `validate`, `analyze` and the other pattern commands take a
+  `--php-version` below 7.3 as given, with neither note nor refusal; only
+  `lint` and the bridges' lint commands resolve the project target.
+- The article on which PCRE2 ships with which PHP quotes the former `\K`
+  hint ("Move the \K out of the lookaround."): refresh its sample output.
+- Refused with a witness, do not build: the octal respell `\214748364` to
+  `\x{8C}748364` (PHP 7.3.33 and 7.4.33 match nothing with the first on
+  "\x8c748364" and match with the second); loose script names respelled
+  canonically (U+00B7 is in `\p{latin}` from 10.40, where it means the
+  script extension, and not on 10.39); moving any `\K` out of a lookaround
+  (`(?<=\Ka)b` matches "ab" in "ab"); `${n}` respelled `\1` in a
+  double-quoted replacement (`"\1"` is chr(1)).
+
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +
