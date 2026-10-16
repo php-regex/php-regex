@@ -25,6 +25,7 @@ use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Property;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
 use PHPStan\PhpDocParser\Ast\AbstractNodeVisitor;
@@ -113,7 +114,7 @@ final class MixedTypeCollector implements Collector
 
             public function enterNode(PhpDocNode $node): ?PhpDocNode
             {
-                if ($node instanceof IdentifierTypeNode && 'mixed' === strtolower($node->name)) {
+                if ($node instanceof IdentifierTypeNode && 'mixed' === Ascii::lower($node->name)) {
                     $this->count++;
                 }
 
