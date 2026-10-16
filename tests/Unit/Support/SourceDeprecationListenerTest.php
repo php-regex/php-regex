@@ -67,18 +67,18 @@ final class SourceDeprecationListenerTest extends TestCase
         foreach (['src', 'vendor/probe', 'tests'] as $directory) {
             mkdir($root.'/'.$directory, 0o777, true);
         }
-        file_put_contents($root.'/src/Legacy.php', <<<'PHP'
+        file_put_contents($root.'/src/Legacy.php', <<<'PHP_WRAP'
             <?php
-
+        
             namespace Probe;
-
+        
             final class Legacy
             {
                 public static function gone(): void
                 {
                     trigger_error('the library deprecated itself', \E_USER_DEPRECATED);
                 }
-
+        
                 public static function engineGone(): void
                 {
                     // Null to a non-nullable parameter: deprecated from PHP
@@ -86,7 +86,7 @@ final class SourceDeprecationListenerTest extends TestCase
                     \str_contains(null, 'x');
                 }
             }
-            PHP);
+            PHP_WRAP);
         file_put_contents($root.'/vendor/probe/Dep.php', <<<'PHP'
             <?php
 
@@ -100,57 +100,57 @@ final class SourceDeprecationListenerTest extends TestCase
                 }
             }
             PHP);
-        file_put_contents($root.'/tests/OwnSourceTest.php', <<<'PHP'
+        file_put_contents($root.'/tests/OwnSourceTest.php', <<<'PHP_WRAP'
             <?php
-
+        
             require_once __DIR__.'/../src/Legacy.php';
-
+        
             use Probe\Legacy;
-
+        
             final class OwnSourceTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_own_source_deprecation(): void
                 {
                     Legacy::gone();
-
+        
                     $this->assertTrue(true);
                 }
             }
-            PHP);
-        file_put_contents($root.'/tests/VendorDeprecationTest.php', <<<'PHP'
+            PHP_WRAP);
+        file_put_contents($root.'/tests/VendorDeprecationTest.php', <<<'PHP_WRAP'
             <?php
-
+        
             require __DIR__.'/../vendor/probe/Dep.php';
-
+        
             use Probe\Vendor\Dep;
-
+        
             final class VendorDeprecationTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_vendor_deprecation(): void
                 {
                     Dep::gone();
-
+        
                     $this->assertTrue(true);
                 }
             }
-            PHP);
-        file_put_contents($root.'/tests/EngineDeprecationTest.php', <<<'PHP'
+            PHP_WRAP);
+        file_put_contents($root.'/tests/EngineDeprecationTest.php', <<<'PHP_WRAP'
             <?php
-
+        
             require_once __DIR__.'/../src/Legacy.php';
-
+        
             use Probe\Legacy;
-
+        
             final class EngineDeprecationTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_engine_deprecation(): void
                 {
                     Legacy::engineGone();
-
+        
                     $this->assertTrue(true);
                 }
             }
-            PHP);
+            PHP_WRAP);
         file_put_contents($root.'/bootstrap.php', sprintf(
             "<?php\n\nrequire %s;\nrequire %s;\nrequire %s;\n",
             var_export($listener, true),
@@ -158,7 +158,7 @@ final class SourceDeprecationListenerTest extends TestCase
             var_export(\dirname($listener).'/UserDeprecationSubscriber.php', true),
         ));
         file_put_contents($root.'/phpunit.xml', sprintf(
-            <<<'XML'
+            <<<'XML_WRAP'
                 <?xml version="1.0" encoding="UTF-8"?>
                 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.5/phpunit.xsd" bootstrap="%s/bootstrap.php" failOnWarning="true">
                     <extensions>
@@ -172,7 +172,7 @@ final class SourceDeprecationListenerTest extends TestCase
                         </testsuite>
                     </testsuites>
                 </phpunit>
-                XML,
+                XML_WRAP,
             $root,
             $root,
             $root,

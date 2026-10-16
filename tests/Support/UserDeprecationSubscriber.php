@@ -22,12 +22,7 @@ use PHPUnit\Event\Test\DeprecationTriggeredSubscriber;
  */
 final class UserDeprecationSubscriber implements DeprecationTriggeredSubscriber
 {
-    private readonly string $sourceDirectory;
-
-    public function __construct(string $sourceDirectory)
-    {
-        $this->sourceDirectory = $sourceDirectory;
-    }
+    public function __construct(private readonly string $sourceDirectory) {}
 
     public function notify(DeprecationTriggered $event): void
     {
