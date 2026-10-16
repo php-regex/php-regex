@@ -52,6 +52,11 @@ final class RedosCallerPcreLimitsTest extends TestCase
     private const PROBE = '/^(\w+\s?)*$/';
 
     /**
+     * A regex the caller's limits stop where PCRE interprets it, JIT off.
+     */
+    private const INTERPRETED = '/(a)(b)c/';
+
+    /**
      * @var array<string, string|false>
      */
     private array $saved = [];
@@ -94,9 +99,10 @@ final class RedosCallerPcreLimitsTest extends TestCase
         ini_set('pcre.jit', $jit);
         $baseline = self::observe($pattern);
         StaticCaches::clear();
+        $interpreted = PcreInterpreter::pattern(self::INTERPRETED);
 
         [$bites, $observed, $after] = self::underLimits($backtrack, $recursion, static fn (): array => [
-            self::limitBites(),
+            self::limitBites($interpreted),
             self::observe($pattern),
             [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')],
         ]);
@@ -145,11 +151,12 @@ final class RedosCallerPcreLimitsTest extends TestCase
         ini_set('pcre.jit', '0');
         $fresh = (new RedosAnalyzer($parser))->analyze($pattern);
         StaticCaches::clear();
+        $interpreted = PcreInterpreter::pattern(self::INTERPRETED);
 
-        $bites = self::underLimits('19', '100000', static function () use ($parser, $pattern): bool {
+        $bites = self::underLimits('19', '100000', static function () use ($parser, $pattern, $interpreted): bool {
             (new RedosAnalyzer($parser))->analyze($pattern);
 
-            return self::limitBites();
+            return self::limitBites($interpreted);
         });
         $after = (new RedosAnalyzer($parser))->analyze($pattern);
 
@@ -334,15 +341,17 @@ final class RedosCallerPcreLimitsTest extends TestCase
     }
 
     /**
-     * Whether the caller's limits stop a regex the library could run.
+     * Whether the caller's limits stop a regex the library could run. The
+     * interpreted pattern is spelled before the limits are set: spelling it
+     * asserts, and PHPUnit 10.5.0 runs regexes of its own on every assertion.
      */
-    private static function limitBites(): bool
+    private static function limitBites(string $interpreted): bool
     {
         if (false === @preg_match(self::PROBE, str_repeat('a', 12).'!')) {
             return true;
         }
 
-        return '0' === ini_get('pcre.jit') && false === @preg_match(PcreInterpreter::pattern('/(a)(b)c/'), 'abc');
+        return '0' === ini_get('pcre.jit') && false === @preg_match($interpreted, 'abc');
     }
 
     /**
