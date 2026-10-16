@@ -35,7 +35,7 @@ final class RegexPatternRuleSearchCostTest extends RuleTestCase
     private const SEARCH = RegexPatternRule::IDENTIFIER_REDOS_SEARCH;
 
     /**
-     * @var array<string, mixed>
+     * @var array{enabled?: bool, threshold?: string}
      */
     private array $redos = ['enabled' => true, 'threshold' => 'medium'];
 
@@ -91,7 +91,7 @@ final class RegexPatternRuleSearchCostTest extends RuleTestCase
     }
 
     /**
-     * @param array<string, mixed> $redos
+     * @param array{enabled?: bool, threshold?: string} $redos
      */
     #[Test]
     #[DataProvider('provideSettingsHidingTheSearchCost')]
@@ -105,7 +105,7 @@ final class RegexPatternRuleSearchCostTest extends RuleTestCase
     }
 
     /**
-     * @return iterable<string, array{redos: array<string, mixed>}>
+     * @return iterable<string, array{redos: array{enabled?: bool, threshold?: string}}>
      */
     public static function provideSettingsHidingTheSearchCost(): iterable
     {

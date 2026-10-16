@@ -46,6 +46,35 @@ use PHPStan\Type\Type;
  * while the engine running PHPStan compiles them (PHPStan core reports what
  * the running engine refuses); lint, ReDoS risks and optimizations on demand.
  *
+ * The "phpRegex" parameter is ConfigArray, every key optional, as the
+ * extension's schema shapes it; the constructors read it again, for a rule
+ * built by hand.
+ *
+ * @phpstan-type ConfigArray array{
+ *     phpVersion?: string|int|null,
+ *     pcreVersion?: string|null,
+ *     interop?: list<string>|null,
+ *     checks?: array{
+ *         lint?: array{enabled?: bool},
+ *         redos?: array{enabled?: bool, threshold?: string},
+ *         optimizations?: array{
+ *             enabled?: bool,
+ *             minSavings?: int,
+ *             options?: array{
+ *                 digits?: bool,
+ *                 word?: bool,
+ *                 ranges?: bool,
+ *                 canonicalizeCharClasses?: bool,
+ *                 possessive?: bool,
+ *                 factorize?: bool,
+ *                 minQuantifierCount?: int,
+ *                 verifyWithAutomata?: bool,
+ *             },
+ *         },
+ *         complexity?: array{enabled?: bool, threshold?: int},
+ *     },
+ * }
+ *
  * @phpstan-import-type GroupReference from ReplacementReferences
  *
  * @implements Rule<CallLike>
@@ -102,7 +131,7 @@ final class RegexPatternRule implements Rule
     private ?TrivialMatchClassifier $trivialMatches = null;
 
     /**
-     * @param array<string, mixed>               $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
+     * @param ConfigArray                        $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
      *                                                            "interop" (the presets read, every one when null) and
      *                                                            "checks" ("lint", "redos", "optimizations"),
      *                                                            every key optional

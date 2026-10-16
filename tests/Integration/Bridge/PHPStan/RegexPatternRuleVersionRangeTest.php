@@ -27,6 +27,8 @@ use PHPUnit\Framework\Attributes\Test;
  * the first that refuses it is reported under regex.invalidForTarget.
  *
  * @extends RuleTestCase<RegexPatternRule>
+ *
+ * @phpstan-import-type ConfigArray from RegexPatternRule
  */
 final class RegexPatternRuleVersionRangeTest extends RuleTestCase
 {
@@ -38,7 +40,7 @@ final class RegexPatternRuleVersionRangeTest extends RuleTestCase
     private int|array|null $range = null;
 
     /**
-     * @var array<string, mixed>
+     * @var ConfigArray
      */
     private array $config = [];
 

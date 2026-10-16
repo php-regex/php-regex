@@ -12,6 +12,8 @@ CHANGELOG
  * The `$phpVersionRange` constructor parameter of `RegexPatternRule` and
    `RegexPatternArgumentRule` is typed `int|array|null`, as PHPStan's
    `phpVersion` parameter is, where it took `mixed`.
+ * `RegexPatternRule` exports `ConfigArray`, the shape of the `phpRegex`
+   parameter, which both rules take as their `$config`.
  * `RegexPatternArgumentRule` checks the constant pattern passed to a
    parameter marked `#[PHPRegex\Parser\Attribute\RegexPattern]` or
    `#[JetBrains\PhpStorm\Language('RegExp')]`, in calls to functions, static

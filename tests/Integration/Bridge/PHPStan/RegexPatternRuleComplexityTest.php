@@ -38,7 +38,7 @@ final class RegexPatternRuleComplexityTest extends RuleTestCase
     private const TIP = 'Read more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#complexity-threshold';
 
     /**
-     * @var array<string, mixed>
+     * @var array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, complexity?: array{enabled?: bool, threshold?: int}}
      */
     private array $checks = [];
 
@@ -96,7 +96,7 @@ final class RegexPatternRuleComplexityTest extends RuleTestCase
     }
 
     /**
-     * @return iterable<string, array{checks: array<string, mixed>}>
+     * @return iterable<string, array{checks: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, complexity?: array{enabled?: bool, threshold?: int}}}>
      */
     public static function provideChecksWithoutComplexity(): iterable
     {
@@ -107,7 +107,7 @@ final class RegexPatternRuleComplexityTest extends RuleTestCase
     }
 
     /**
-     * @param array<string, mixed> $checks
+     * @param array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, complexity?: array{enabled?: bool, threshold?: int}} $checks
      */
     #[Test]
     #[DataProvider('provideChecksWithoutComplexity')]

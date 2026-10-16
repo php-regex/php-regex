@@ -35,6 +35,7 @@ use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\ReplacementReferences;
 use PHPRegex\Psalm\Internal\PregCallAnalyzer;
 use PHPRegex\Redos\Internal\Backtrack\AmbiguityFinder;
@@ -102,6 +103,7 @@ final class TypeAliasInventoryTest extends TestCase
         GroupIndex::class => ['CapturingGroupInfo'],
         CaptureFacts::class => ['Facts'],
         ReplacementReferences::class => ['GroupReference'],
+        RegexPatternRule::class => ['ConfigArray'],
         PregCallAnalyzer::class => ['CachedType', 'PatternVerdict'],
         AmbiguityFinder::class => ['Verdict', 'Witness'],
         SecurityAnalyzer::class => ['SkippedFile'],

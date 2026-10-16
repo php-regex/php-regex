@@ -47,6 +47,8 @@ use PHPStan\Type\TypeCombinator;
  * the targeted PHP and PCRE2 refuse, and, as RegexPatternRule does, lint,
  * ReDoS risks and optimizations on demand.
  *
+ * @phpstan-import-type ConfigArray from RegexPatternRule
+ *
  * @implements Rule<CallLike>
  */
 final class RegexPatternArgumentRule implements Rule
@@ -62,7 +64,7 @@ final class RegexPatternArgumentRule implements Rule
     private readonly PatternChecker $checker;
 
     /**
-     * @param array<string, mixed>               $config          the "phpRegex" parameter, as RegexPatternRule reads it
+     * @param ConfigArray                        $config          the "phpRegex" parameter, as RegexPatternRule reads it
      * @param PhpVersion|null                    $phpVersion      the PHP version PHPStan analyses the project for
      * @param int|array{min: int, max: int}|null $phpVersionRange PHPStan's "phpVersion" parameter
      *

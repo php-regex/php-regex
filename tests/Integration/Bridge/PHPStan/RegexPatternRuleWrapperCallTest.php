@@ -26,13 +26,15 @@ use PHPUnit\Framework\Attributes\Test;
  * the argument the library takes it.
  *
  * @extends RuleTestCase<RegexPatternRule>
+ *
+ * @phpstan-import-type ConfigArray from RegexPatternRule
  */
 final class RegexPatternRuleWrapperCallTest extends RuleTestCase
 {
     private const FIXTURE = __DIR__.'/Fixtures/WrapperCallFixture.php';
 
     /**
-     * @var array<string, mixed>
+     * @var ConfigArray
      */
     private array $config = [];
 

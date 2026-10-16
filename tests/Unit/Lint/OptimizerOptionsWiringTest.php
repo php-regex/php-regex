@@ -92,7 +92,7 @@ final class OptimizerOptionsWiringTest extends TestCase
     }
 
     /**
-     * @param array<string, bool|int> $options
+     * @param array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool} $options
      */
     private function phpstanOptions(array $options): OptimizerOptions
     {

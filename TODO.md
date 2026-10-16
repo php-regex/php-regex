@@ -101,9 +101,8 @@ narrowing; the rest are honest boundaries that stay (decode fronts, host
 contracts, validator inputs, protocol slots). The native signatures that
 could not move after the 2.0.0 tag are done. Left, in order:
 
-1. Consumer shapes: the `phpRegex` neon parameter typed once and imported
-   across the PHPStan bridge; the explicit `regexOptions` subsets on the
-   Symfony lint command and the Linter's range parsers.
+1. Consumer shapes: the explicit `regexOptions` subsets on the Symfony
+   lint command and the Linter's range parsers.
 2. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
    handler-entry params, the nine unapplied Linter aliases,
    `LintDefaultsBuilder::build()`'s return shape (pays the CLI, LintArguments

@@ -954,6 +954,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 | `CacheStats` | `Parser\Cache\RemovableCacheInterface` | `{hits: int, misses: int}` |
 | `OptionsArray` | `Parser\ParserOptions` | the eight configuration keys, each optional |
 | `OptimizerOptionsArray` | `Optimizer\OptimizerOptions` | the eight optimizer options, in snake_case, each optional |
+| `ConfigArray` | `PHPStan\RegexPatternRule` | the `phpRegex` parameter of the PHPStan extension, every key optional |
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |
 | `LengthRange` | `Parser\Analysis\LengthRangeCalculator` | `{0: int, 1: int\|null}` — min and max match length |
 | `Metrics` | `Parser\Analysis\MetricsCollector` | `{counts: array<string, int>, total: int, maxDepth: int}` |

@@ -32,6 +32,8 @@ use PHPUnit\Framework\Attributes\Test;
  * stay silent.
  *
  * @extends RuleTestCase<RegexPatternRule>
+ *
+ * @phpstan-import-type ConfigArray from RegexPatternRule
  */
 final class RegexPatternRuleTargetVersionTest extends RuleTestCase
 {
@@ -42,7 +44,7 @@ final class RegexPatternRuleTargetVersionTest extends RuleTestCase
     private ?PhpVersion $phpVersion = null;
 
     /**
-     * @var array<string, mixed>
+     * @var ConfigArray
      */
     private array $config = [];
 

@@ -47,6 +47,8 @@ use PHPStan\Rules\RuleErrorBuilder;
  * patterns through it.
  *
  * @internal
+ *
+ * @phpstan-import-type ConfigArray from RegexPatternRule
  */
 final class PatternChecker
 {
@@ -163,7 +165,7 @@ final class PatternChecker
     private ?AnalysisService $analysis = null;
 
     /**
-     * @param array<string, mixed>               $config          the "phpRegex" parameter: "phpVersion", "pcreVersion" and
+     * @param ConfigArray                        $config          the "phpRegex" parameter: "phpVersion", "pcreVersion" and
      *                                                            "checks" ("lint", "redos", "optimizations", "complexity"), every
      *                                                            key optional
      * @param PhpVersion|null                    $phpVersion      the PHP version PHPStan analyses the project for: patterns are
@@ -189,11 +191,11 @@ final class PatternChecker
             $target->pcreVersion,
         );
 
-        $checks = self::section($config, 'checks');
-        $lint = self::section($checks, 'lint');
-        $redos = self::section($checks, 'redos');
-        $optimizations = self::section($checks, 'optimizations');
-        $complexity = self::section($checks, 'complexity');
+        $checks = $config['checks'] ?? [];
+        $lint = $checks['lint'] ?? [];
+        $redos = $checks['redos'] ?? [];
+        $optimizations = $checks['optimizations'] ?? [];
+        $complexity = $checks['complexity'] ?? [];
 
         $this->lintEnabled = true === ($lint['enabled'] ?? false);
         $this->redosEnabled = true === ($redos['enabled'] ?? false);
@@ -203,7 +205,7 @@ final class PatternChecker
         $this->optimizationMinSavings = \is_int($minSavings) ? max(1, $minSavings) : 1;
         // The PHPStan parameters name the options in camelCase; every rewrite
         // is checked with the automata unless the parameters say otherwise.
-        $this->optimizationOptions = OptimizerOptions::fromCamelCaseArray(self::section($optimizations, 'options') + ['verifyWithAutomata' => true]);
+        $this->optimizationOptions = OptimizerOptions::fromCamelCaseArray(($optimizations['options'] ?? []) + ['verifyWithAutomata' => true]);
         $this->complexityEnabled = true === ($complexity['enabled'] ?? false);
         $this->complexityThreshold = self::complexityThreshold($complexity['threshold'] ?? null);
     }
@@ -526,9 +528,9 @@ final class PatternChecker
      * the PCRE2 it links when that version is the running one or the setting
      * is "runtime", else the version the setting names.
      *
-     * @param array<string, mixed> $config
+     * @param ConfigArray $config
      *
-     * @return array<string, mixed>
+     * @return array{php_version?: string|int, pcre_version?: string}
      */
     private static function targetOptions(array $config, ?PhpVersion $phpVersion): array
     {
@@ -556,7 +558,7 @@ final class PatternChecker
      * when "phpVersion" names the version patterns are judged for, or when
      * PHPStan names one version.
      *
-     * @param array<string, mixed>               $config
+     * @param ConfigArray                        $config
      * @param int|array{min: int, max: int}|null $phpVersionRange
      *
      * @return list<array{RegexParser, string}>
@@ -621,18 +623,6 @@ final class PatternChecker
         }
 
         return $threshold;
-    }
-
-    /**
-     * @param array<mixed> $config
-     *
-     * @return array<mixed>
-     */
-    private static function section(array $config, string $key): array
-    {
-        $section = $config[$key] ?? null;
-
-        return \is_array($section) ? $section : [];
     }
 
     private function getAnalysisService(): AnalysisService
