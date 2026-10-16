@@ -60,16 +60,16 @@ final class SeveralMarkedParametersTest extends TestCase
             ['pattern' => '/named-from/', 'at' => "'/named-from/'"],
         ], <<<'PHP_WRAP'
             <?php
-        
+
             namespace App;
-        
+
             use PHPRegex\Parser\Attribute\RegexPattern;
-        
+
             function between(#[RegexPattern] string $from, string $subject, #[RegexPattern] string $to): bool
             {
                 return true;
             }
-        
+
             between('/from/', 'not a pattern', '/(to/');
             between(to: '/named-to/', subject: 'not one either', from: '/named-from/');
             PHP_WRAP);
@@ -80,12 +80,12 @@ final class SeveralMarkedParametersTest extends TestCase
     {
         $this->assertSame(['/start/', '/end/'], $this->patternsReadByBoth(<<<'PHP_WRAP'
             <?php
-        
+
             namespace App;
-        
+
             use JetBrains\PhpStorm\Language;
             use PHPRegex\Parser\Attribute\RegexPattern;
-        
+
             final class Range
             {
                 public static function of(#[Language('RegExp')] string $start, string $subject, #[RegexPattern] string $end): bool
@@ -93,7 +93,7 @@ final class SeveralMarkedParametersTest extends TestCase
                     return true;
                 }
             }
-        
+
             Range::of('/start/', 'not a pattern', '/end/');
             PHP_WRAP));
     }
