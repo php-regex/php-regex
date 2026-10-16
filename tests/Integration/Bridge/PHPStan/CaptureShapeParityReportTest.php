@@ -48,6 +48,12 @@ final class CaptureShapeParityReportTest extends TypeInferenceTestCase
     {
         $cases = [];
         foreach (EngineMatches::corpus() as $row) {
+            // A pattern the running engine refuses, as the "r" modifier
+            // before PHP 8.4, writes no $matches to compare with.
+            if (false === @preg_match($row['pattern'], '')) {
+                continue;
+            }
+
             foreach (EngineMatches::FLAG_SETS as $flags => $flagNames) {
                 $cases[] = $row + ['flags' => $flags, 'flagNames' => $flagNames];
             }
