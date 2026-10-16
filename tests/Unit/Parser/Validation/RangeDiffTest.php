@@ -81,6 +81,15 @@ final class RangeDiffTest extends TestCase
     }
 
     #[Test]
+    public function test_a_range_that_ends_before_it_starts_names_the_patch_releases(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage('A range of PHP versions ends at or after its start, not at 8.4.25 from 8.4.26.');
+
+        RangeDiff::between(80426, 80425);
+    }
+
+    #[Test]
     public function test_a_pattern_read_alike_everywhere_differs_nowhere(): void
     {
         $verdict = RangeDiff::between(80200, 80510)->diff('/^[a-z]+$/');

@@ -159,6 +159,13 @@ final class KeepInLookaroundTest extends TestCase
             Regex::create(['cache' => null, 'php_version' => 80500])->validate('/(?=\Kab)a/')->hint,
         );
         $this->assertTrue(Regex::create(['cache' => null, 'php_version' => 80500])->validate('/\K(?=ab)a/')->isValid);
+        // The lookahead holding the \K alone: "\K(?=)ab" matches "ab" in
+        // "xab" on PHP 8.4, as "(?=\K)ab" does, and PHP 8.5 compiles it.
+        $this->assertSame(
+            'This \K opens the lookahead: write "\K(?=" for "(?=\K", which every PHP reads alike.',
+            Regex::create(['cache' => null, 'php_version' => 80500])->validate('/(?=\K)ab/')->hint,
+        );
+        $this->assertTrue(Regex::create(['cache' => null, 'php_version' => 80500])->validate('/\K(?=)ab/')->isValid);
     }
 
     /**
@@ -183,6 +190,14 @@ final class KeepInLookaroundTest extends TestCase
             );
         }
         $this->assertSame(preg_replace('/(?=\Kab)a/', '-', 'xabab'), preg_replace('/\K(?=ab)a/', '-', 'xabab'));
+
+        foreach (['', 'ab', 'xab', 'a', 'abab'] as $subject) {
+            $this->assertSame(
+                [preg_match('/(?=\K)ab/', $subject, $before, \PREG_OFFSET_CAPTURE), $before],
+                [preg_match('/\K(?=)ab/', $subject, $after, \PREG_OFFSET_CAPTURE), $after],
+                $subject,
+            );
+        }
     }
 
     /**

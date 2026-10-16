@@ -73,6 +73,37 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'count followed by a space' => ['pattern' => '/a{65536 /', 'release' => '10.32', 'offset' => 7, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
     }
 
+    #[Test]
+    public function test_an_assertion_as_a_condition_is_refused_on_its_star_before_10_33(): void
+    {
+        $this->assertSame(
+            'Invalid conditional construct at position 3. Condition must be a group reference, lookaround, or (DEFINE).',
+            self::parser('10.32')->validate('/(?(*pla:a)a|b)/')->error,
+        );
+    }
+
+    /**
+     * The refusal names the spelling every release reads.
+     */
+    #[Test]
+    #[DataProvider('provideClassicSpellings')]
+    public function test_the_refusal_of_an_alphabetic_name_gives_its_classic_spelling(string $pattern, string $classic): void
+    {
+        $this->assertStringContainsString(\sprintf('write "%s" instead', $classic), (string) self::parser('10.32')->validate($pattern)->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, classic: string}>
+     */
+    public static function provideClassicSpellings(): iterable
+    {
+        yield 'lookahead' => ['pattern' => '/(*positive_lookahead:a)a/', 'classic' => '(?='];
+        yield 'negative lookahead' => ['pattern' => '/(*nla:b)a/', 'classic' => '(?!'];
+        yield 'lookbehind' => ['pattern' => '/b(*plb:a)/', 'classic' => '(?<='];
+        yield 'negative lookbehind' => ['pattern' => '/b(*negative_lookbehind:a)/', 'classic' => '(?<!'];
+        yield 'atomic group' => ['pattern' => '/(*atomic:a|ab)c/', 'classic' => '(?>'];
+    }
+
     /**
      * "x(*plb:a" is refused at its name on 10.32 (error 160 at 6), and for
      * its missing parenthesis from 10.33 (error 114 at 8).
