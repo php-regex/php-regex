@@ -197,6 +197,21 @@ final class ServerRegexPatternAttributeTest extends TestCase
     }
 
     /**
+     * One path is the only place read: a declaration out of it is not.
+     */
+    #[Test]
+    public function test_regex_json_naming_one_path_reads_nothing_else(): void
+    {
+        $this->write('regex.json', (string) json_encode(['paths' => 'src']));
+        $this->write('lib/Support/Str.php', self::DECLARATIONS);
+
+        $this->initialize();
+        $this->send($this->didOpen($this->uri('src/Http/Controller.php'), self::CALLS));
+
+        $this->assertSame([], $this->diagnosedLines($this->uri('src/Http/Controller.php')));
+    }
+
+    /**
      * The declarations of vendor/ are read whatever "exclude" says, as
      * `regex lint` reads them: a library declares the pattern parameters
      * the project calls.
