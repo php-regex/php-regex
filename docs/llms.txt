@@ -82,4 +82,5 @@ License: MIT
 
 ## Articles
 
+- [The measured anatomy of catastrophic backtracking](https://php-regex.com/blog/measured-anatomy-of-catastrophic-backtracking/): one pattern timed at input lengths 18 to 26 — the exponential curve, the false the default limit returns, the factor of seven the JIT buys, and the provably safe rewrites
 - [Which PCRE2 ships with which PHP](https://php-regex.com/blog/which-pcre2-ships-with-which-php/): the engine behind every PHP release, the mid-series bumps, and how to judge one pattern for an engine you do not run
