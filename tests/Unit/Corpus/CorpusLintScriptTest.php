@@ -203,7 +203,7 @@ final class CorpusLintScriptTest extends TestCase
         $elapsed = microtime(true) - $start;
 
         $this->assertSame(3, $exitCode, $console);
-        $this->assertStringContainsString('progress noise before the parent exits', $console);
+        $this->assertStringContainsString('progress noise before the parent exits', (string) $console);
         $this->assertLessThan(
             15.0,
             $elapsed,

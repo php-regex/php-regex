@@ -48,7 +48,7 @@ declare(strict_types=1);
 // Console output, in the same shape as bin/corpus
 // ---------------------------------------------------------------------------
 
-final class ConsoleStyle
+final class CorpusLintConsoleStyle
 {
     private bool $useColor;
 
@@ -324,7 +324,7 @@ function runLint(array $plan): array
     return runCommand($command, $plan['env']);
 }
 
-function printUsage(): void
+function printCorpusLintUsage(): void
 {
     $help = <<<'TXT'
         Usage: bin/corpus-lint [options]
@@ -354,7 +354,7 @@ function printUsage(): void
  *
  * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, help: bool}
  */
-function parseArgs(array $argv): array
+function parseCorpusLintArgs(array $argv): array
 {
     $root = null;
     $output = null;
@@ -409,21 +409,21 @@ function parseArgs(array $argv): array
 /**
  * @param list<string> $argv
  */
-function main(array $argv): int
+function corpusLintMain(array $argv): int
 {
-    $io = new ConsoleStyle();
+    $io = new CorpusLintConsoleStyle();
 
     try {
-        $options = parseArgs($argv);
+        $options = parseCorpusLintArgs($argv);
     } catch (InvalidArgumentException $e) {
         $io->error($e->getMessage());
-        printUsage();
+        printCorpusLintUsage();
 
         return 1;
     }
 
     if ($options['help']) {
-        printUsage();
+        printCorpusLintUsage();
 
         return 0;
     }
@@ -516,5 +516,5 @@ function main(array $argv): int
 }
 
 if (!\defined('CORPUS_LINT_INCLUDED')) {
-    exit(main($argv));
+    exit(corpusLintMain($argv));
 }
