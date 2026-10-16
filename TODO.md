@@ -191,20 +191,16 @@ cache are merged. Follow-ups:
 - the language server offers its quick fix from `Regex::optimize()`
   without `verify_with_automata`: only a rewrite that adds atomicity is
   checked there;
+- the match check stops at 500 configurations, and a pattern with `^`
+  or `\A` no longer falls back to the language check: one corpus pattern
+  (a 900-byte SQL alternation in `vaultpress.php`) loses its suggestion
+  there, proven in 0.13 s and 10 MB at 1,000 configurations;
 - about 265 bytes per transition: one check at the 200,000 budget still
   costs ~70 MB, close to PHP's default 128 MB `memory_limit` for embedders.
 
 ## Extraction coverage: after the merge
 
 Merged into 2.x. Left:
-- measured on the merged 2.x (`bin/regex lint corpus/ --jobs=1`, xdebug
-  off): 459 s wall-clock, 271 s user, 1.33 GB peak, 6,545 results, against
-  353 s / 186 s / 1.99 GB / 5,602 for 2.x before the merges. Peak memory is
-  down a third; CPU is up about half, the cost of analysing the ~4,600
-  distinct patterns now read. 21 optimization suggestions fewer than the
-  extraction branch alone (4,054 against 4,075): rewrites the bounded
-  check no longer proves, so no longer offered. Worth a look: which
-  patterns, and whether a larger budget for short patterns would keep them;
 - the limits written down in `docs/guides/cli.md` (writes made outside the
   file, by Reflection or `Closure::bind()`, are not seen; a `do` without
   braces around a control structure is unknown to the token strategy only).
