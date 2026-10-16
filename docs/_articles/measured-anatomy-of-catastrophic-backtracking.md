@@ -8,7 +8,6 @@ description: "One nested-quantifier pattern timed at input lengths 18 to 26 on P
 Take `/^(\w+)+$/` — the pattern every ReDoS talk opens with — and feed it `str_repeat('a', $n) . '!'`. Every input fails to match, and each length fails slower, on purpose. This probe does one run per number:
 
 ```php
-{: data-file="splits.php" data-copy="" }
 <?php
 
 echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, ' / jit ', ini_get('pcre.jit'), "\n";
@@ -22,12 +21,14 @@ $t = hrtime(true);
 $r = preg_match('/^(\w+)+$/', $subject);
 printf("n=%d  %10.2f ms  ret=%s  %s\n", $n, (hrtime(true) - $t) / 1e6, var_export($r, true), preg_last_error_msg());
 ```
+{: data-file="splits.php" data-copy="" }
 
 ```console
 $ php -d pcre.jit=0 splits.php 26 2147483647
 8.4.26 / PCRE2 10.49 2026-09-28 / jit 0
 n=26     2139.44 ms  ret=0  No error
 ```
+{: data-copy="" }
 
 Timed that way on PHP 8.4.26 with PCRE2 10.49 — externally linked; a stock PHP 8.4 bundles 10.44 — with `pcre.jit=0` and the backtrack limit raised to 2147483647:
 
@@ -60,6 +61,7 @@ $ php -d pcre.jit=0 splits.php 30
 8.4.26 / PCRE2 10.49 2026-09-28 / jit 0
 n=30       12.88 ms  ret=false  Backtrack limit exhausted
 ```
+{: data-copy="" }
 
 Twelve milliseconds, not twenty-seven seconds — but look at the return. `preg_match()` returns `false`, not `0`. The engine is not saying "no match"; it is saying "I gave up":
 
@@ -68,17 +70,22 @@ Twelve milliseconds, not twenty-seven seconds — but look at the return. `preg_
 // The same limit, asked directly.
 var_dump(preg_match('/^(\w+)+$/', str_repeat('a', 30) . '!'), preg_last_error_msg());
 ```
+{: data-copy="" }
 
 ```text
 bool(false)
 string(25) "Backtrack limit exhausted"
 ```
 
-The distinction is exactly one that `if (preg_match(...))` throws away. And the cap deserves precision: the limit counts backtracks, not time — thirteen milliseconds is what one attempt of this pattern costs without the JIT on this machine, two with it, and a pattern whose work is polynomial rather than exponential burns seconds without ever tripping it (the guide's `/a*a*$/` does exactly that). Within its reach, though, the trade is this: the limit converts the attack into an answer production code reads as *no match*. A validation gate built on this pattern does not hang — it silently rejects whatever tripped the limit.
+The distinction is exactly one that `if (preg_match(...))` throws away. And the cap deserves precision: the limit counts backtracks, not time — thirteen milliseconds is what one attempt of this pattern costs without the JIT on this machine, two with it, and a pattern whose work is polynomial rather than exponential burns seconds without ever tripping it (the guide's `/a*a*$/` does exactly that).
+
+> **Warning:** within its reach, the trade is this: the limit converts the attack into an answer production code reads as *no match*. A validation gate built on this pattern does not hang — it silently rejects whatever tripped the limit.
 
 ## The JIT buys a factor of seven, not a new curve
 
-The PCRE2 JIT compiles a pattern to machine code instead of walking it in the interpreter: a constant-factor win, never a complexity change. One measurement trap first, because it shaped every number in this section — an `ini_set('pcre.jit', '1')` that arrives after the pattern has already run interpreted does not recompile it; the process reuses the compiled pattern, and you time the interpreter twice believing you compared engines. That is why `splits.php` takes its JIT state from the command line, one process per run.
+The PCRE2 JIT compiles a pattern to machine code instead of walking it in the interpreter: a constant-factor win, never a complexity change.
+
+> **Note:** one measurement trap shaped every number in this section: an `ini_set('pcre.jit', '1')` that arrives after the pattern has already run interpreted does not recompile it — the process reuses the compiled pattern, and you time the interpreter twice believing you compared engines. That is why `splits.php` takes its JIT state from the command line, one process per run.
 
 | n | Interpreter | JIT |
 |---|---|---|
@@ -86,13 +93,14 @@ The PCRE2 JIT compiles a pattern to machine code instead of walking it in the in
 | 26 | 2 139.44 ms | 301.59 ms |
 | 30 | 27 264.13 ms, then the raised budget is exhausted | 4 884.45 ms, and the match completes |
 
-Seven times faster at every length — and still doubling per character: 19.12 → 301.59 → 4 884.45 is the same ×2 curve. At n = 30 the two engines even part ways on outcome: the interpreter's counter exhausts the raised 2147483647 budget and returns `false`, while the JIT run completes in 4.88 seconds and returns `0`. The limit still counts under the JIT — at the default 1 000 000 it aborts after 2.36 ms:
+Seven times faster where both engines return the same verdict — and still doubling per character: 19.12 → 301.59 → 4 884.45 is the same ×2 curve. At n = 30 the two engines even part ways on outcome: the interpreter's counter exhausts the raised 2147483647 budget and returns `false`, while the JIT run completes in 4.88 seconds and returns `0`. The limit still counts under the JIT — at the default 1 000 000 it aborts after 2.36 ms:
 
 ```console
 $ php -d pcre.jit=1 splits.php 30
 8.4.26 / PCRE2 10.49 2026-09-28 / jit 1
 n=30        2.36 ms  ret=false  Backtrack limit exhausted
 ```
+{: data-copy="" }
 
 Turning the JIT on is a real win for this pattern — a factor of seven — and no fix at all: the curve survives it.
 
@@ -101,7 +109,6 @@ Turning the JIT on is a real win for this pattern — a factor of seven — and 
 Both probes come from one file, run with n = 24, `pcre.jit=0`, limits raised. Absolute times drift a few percent run to run; the ratios do not:
 
 ```php
-{: data-file="myth.php" data-copy="" }
 <?php
 
 echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, ' / jit ', ini_get('pcre.jit'), "\n";
@@ -132,6 +139,7 @@ printf("%-22s %10.3f ms  ret=%s   (matching input, no '!')\n", 'original, no ban
 
 echo 'accept/reject: ', var_export((bool) preg_match('/^\w++$/', 'ab_9'), true), ' / ', var_export((bool) preg_match('/^\w++$/', 'ab!'), true), "\n";
 ```
+{: data-file="myth.php" data-copy="" }
 
 ```console
 $ php -d pcre.jit=0 myth.php 24 2147483647
@@ -145,6 +153,7 @@ simplified /^\w+$/          0.002 ms  ret=0
 original, no bang           0.002 ms  ret=1   (matching input, no '!')
 accept/reject: true / false
 ```
+{: data-copy="" }
 
 **The capture is not the problem.** The non-capturing variant takes 487.466 ms where the capturing original takes 538.303 — the same half-second. The explosion comes from one quantifier walking a range another quantifier can re-split, not from anything `(` does.
 
@@ -176,8 +185,11 @@ simplified /^\w+$/          0.001 ms  ret=0
 original, no bang           0.002 ms  ret=1   (matching input, no '!')
 accept/reject: true / false
 ```
+{: data-copy="" }
 
-The possessive and atomic forms refuse to re-enter the inner quantifier, so the engine never enumerates the splits. All three land under a hundredth of a millisecond — the spread between them is measurement overhead, not engine work. The language is untouched: `ab_9` still matches and `ab!` (not a word character) is still rejected. One caveat travels with **all three** rewrites: every one of them drops the capture group, so anything reading `$matches[1]` needs re-reading against the new shape.
+The possessive and atomic forms refuse to re-enter the inner quantifier, so the engine never enumerates the splits. All three land under a hundredth of a millisecond — the spread between them is measurement overhead, not engine work. The language is untouched: `ab_9` still matches and `ab!` (not a word character) is still rejected.
+
+> **Warning:** one caveat travels with **all three** rewrites: every one of them drops the capture group, so anything reading `$matches[1]` needs re-reading against the new shape.
 
 The script that produced the verdict and the rewrites — theoretical analysis, confirmed mode with witness samples, the three suggestions — is [runnable in the repository](https://github.com/php-regex/php-regex/blob/2.x/demo/redos/analysis.php); its own timing loop uses its inputs, not this article's.
 
