@@ -13,12 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Optimizer;
 
-use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
-use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
+use PHPRegex\Optimizer\Internal\RewriteCheck;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
@@ -47,26 +46,11 @@ use PHPRegex\Parser\TraversalAction;
  */
 final readonly class Optimizer
 {
-    /**
-     * The configurations the match check of a rewrite may explore: a few
-     * hundred settle the rewrites of real patterns, and the huge ones fall
-     * back to comparing languages.
-     */
-    private const MATCH_CHECK_BUDGET = 500;
-
-    /**
-     * The threads the match check may step in all: a configuration of a
-     * list of hundreds of words holds a thread per word, so a few hundred
-     * configurations there cost seconds, where the language check takes a
-     * fraction of one.
-     */
-    private const MATCH_CHECK_WORK = 200_000;
-
-    private readonly LanguageSolver $solver;
+    private RewriteCheck $check;
 
     public function __construct(private RegexParser $parser, private ?DfaCacheInterface $dfaCache = null)
     {
-        $this->solver = new LanguageSolver($parser, $dfaCache ?? new InMemoryDfaCache());
+        $this->check = new RewriteCheck(new LanguageSolver($parser, $dfaCache ?? new InMemoryDfaCache()));
     }
 
     /**
@@ -224,27 +208,6 @@ final readonly class Optimizer
      */
     private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): ?bool
     {
-        // The same strings are not enough: a rewrite must write the same
-        // $matches, which /(a|ab)/ and /(ab|a)/ do not on "ab".
-        try {
-            return $this->solver->matchEquivalent($original, $optimized, new SolverOptions(maxDfaStates: self::MATCH_CHECK_BUDGET, maxTransitionsProcessed: self::MATCH_CHECK_WORK))->isEquivalent;
-        } catch (ComplexityException) {
-            // Outside what the match solver reads, or past its budget: the
-            // strings must agree.
-        }
-
-        // The default options bound the states and the transition work. A
-        // check that ran out of them proves nothing: the rewrite is not
-        // offered unproven. Only a pattern the automata cannot read at all
-        // keeps its rewrite on trust.
-        try {
-            $result = $this->solver->equivalent($original, $optimized, new SolverOptions());
-
-            return $result->isEquivalent;
-        } catch (ComplexityException $e) {
-            // The match check parsed both patterns already: only the
-            // automata can refuse them here.
-            return isset($e->getDiagnostic()['limit']) ? false : null;
-        }
+        return $this->check->verify($original, $optimized);
     }
 }

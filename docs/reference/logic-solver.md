@@ -118,6 +118,21 @@ and `\K`; an end anchor followed by more of the pattern; and two patterns of whi
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
 write different `$matches`.
 
+Neither question answers the other. The same `$matches` on every subject is the same
+answer on every subject, so the two patterns find a match in the same subjects; it is not
+the same set of whole strings, which is what `equivalent()` compares by default.
+`/a|ab/` and `/a/` write the same `$matches` everywhere, as `ab` is never reached, yet
+`equivalent()` says they differ, and they do once spliced into `/^(?:…)$/`. The other
+way, `equivalent()` calls `/a$/` and `/a\z/` equivalent, as both match the whole string
+`a` only, while `preg_match()` finds `a` in `"a\n"` with the first and nothing with the
+second.
+
+The optimizer, with `verify_with_automata`, and the lint's suggestions put a rewrite to
+`matchEquivalent()` first: a rewrite it proves is offered, one it disproves is not. Where
+the match solver does not read a pattern, or gives up on its budget, `equivalent()`
+decides. Both questions work within a budget of their own there (200,000 units of work),
+and one that runs out proves nothing: the rewrite is not offered.
+
 ## Use Case 5: Live Input Validation (The "Prefix" Problem)
 
 A form field checks a date as it is typed. `preg_match()` says `0` for `2026`
@@ -240,7 +255,8 @@ $solver = new LanguageSolver(RegexParser::create(['pcre_version' => '10.42']), n
 ```
 
 `InMemoryDfaCache` keeps 1000 automata and drops the older half when full, as the library's other caches do, and
-`clearCaches()` empties it with them. Any `DfaCacheInterface` (a PSR-backed one, say) can take its place.
+`clearCaches()` empties it with them. It also holds 150,000 transitions in all at most, some tens of MB: the oldest
+automata go first, and one larger than that alone is not kept. Any `DfaCacheInterface` (a PSR-backed one, say) can take its place.
 
 A pattern outside the regular subset (backreferences, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong. The next section lists every reason.
@@ -487,6 +503,10 @@ Large patterns can cause determinization or minimization to grow quickly, and
 character. You can enforce a hard work budget using
 `SolverOptions::maxTransitionsProcessed`: it counts the transitions of the
 determinization and the minimization, and the threads the match solver steps.
+The determinization counts each transition it writes, one per range of the
+alphabet for every state: a Unicode class such as `\pL` splits the alphabet
+into hundreds of ranges, so a pattern with a few hundred states reaches the
+budget, and the memory its table would take stays bounded.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;

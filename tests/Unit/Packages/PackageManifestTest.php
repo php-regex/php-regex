@@ -72,8 +72,9 @@ final class PackageManifestTest extends TestCase
         'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\LibraryPcre'],
         'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         // The lint writes its rewrite of a pattern under x into the
-        // pattern's own layout, as the optimizer does.
-        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
+        // pattern's own layout, as the optimizer does, and checks it as
+        // the optimizer checks its own.
+        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Optimizer\Internal\RewriteCheck', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
         'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
         'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
         // The plugin reads the key layout CaptureShape renders for

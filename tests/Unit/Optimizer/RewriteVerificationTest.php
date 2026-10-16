@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -78,6 +79,25 @@ final class RewriteVerificationTest extends TestCase
 
         $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/')->optimized, 'Unchecked, the rewrite is made.');
         $this->assertSame('/^(a|b)*a(a|b){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/', ['verify_with_automata' => true])->optimized);
+    }
+
+    /**
+     * Under m the match check does not read the pattern, and the language
+     * check of [\pL0-9] writes a transition per range of an alphabet split
+     * into hundreds of them, for each of a few hundred states: past the work
+     * the check of a rewrite may spend, it proves nothing, though the
+     * solver's default budget would settle it.
+     */
+    #[Test]
+    public function test_a_rewrite_whose_language_check_outgrows_its_work_is_not_offered(): void
+    {
+        $original = '/^[\pL0-9]*0[0-9]{6}$/um';
+        $rewrite = '/^[0-9\pL]*0[0-9]{6}$/um';
+        $this->assertTrue((new LanguageSolver())->equivalent($original, $rewrite)->isEquivalent, 'The default budget settles it.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), $original, $rewrite));
     }
 
     /**

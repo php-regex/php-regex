@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
-use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
@@ -26,6 +25,7 @@ use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
+use PHPRegex\Optimizer\Internal\RewriteCheck;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -1237,20 +1237,17 @@ final readonly class AnalysisService
     }
 
     /**
-     * @return bool|null true when equivalent, false when not or when the
+     * The optimizer's verdict on a rewrite: the $matches first, then the
+     * strings matched.
+     *
+     * @return bool|null true when proven, false when disproven or when the
      *                   check gave up on its budget, null when the automata
      *                   do not read the pattern
      */
     private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
     {
         try {
-            $solver = new LanguageSolver($this->regex, $this->dfas());
-            $result = $solver->equivalent($original, $optimized);
-
-            return $result->isEquivalent;
-        } catch (ComplexityException $e) {
-            // Out of budget proves nothing: the rewrite is not offered.
-            return isset($e->getDiagnostic()['limit']) ? false : null;
+            return (new RewriteCheck(new LanguageSolver($this->regex, $this->dfas())))->verify($original, $optimized);
         } catch (ExceptionInterface) {
             return null;
         }

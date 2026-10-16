@@ -44,13 +44,17 @@ final class AnalysisServiceDfaCacheTest extends TestCase
         $this->assertSame(array_fill_keys(array_keys($cache->sets), 1), $cache->sets, 'Every automaton is built once.');
     }
 
+    /**
+     * The lookahead keeps the match check out, so the language check runs,
+     * on the automata.
+     */
     #[Test]
     public function test_the_optimizer_checks_share_the_cache_of_the_analysis(): void
     {
         $cache = self::spy();
         $analysis = new AnalysisService(RegexParser::create(), dfaCache: $cache);
 
-        $suggestions = $analysis->suggestOptimizations(self::twice(['/[0-9]+ x/x', '/[0-9]+x/']), 1);
+        $suggestions = $analysis->suggestOptimizations(self::twice(['/(?=1)[0-9]+ x/x', '/(?=1)[0-9]+x/']), 1);
 
         $this->assertCount(4, $suggestions);
         $this->assertNotSame([], $cache->sets, 'The rewrite under x is checked with the automata of the analysis.');

@@ -18,11 +18,23 @@ use PHPRegex\Parser\Internal\StaticCaches;
 
 /**
  * In-memory cache for DFAs. It keeps as many automata as the library's other
- * caches keep entries, the older half going when it is full, and empties
- * with them (RegexParser::clearCaches()).
+ * caches keep entries, the older half going when it is full, and 150,000
+ * transitions in all at most, the oldest automata going first; an automaton
+ * larger than that alone is not kept. It empties with the other caches
+ * (RegexParser::clearCaches()).
  */
 final class InMemoryDfaCache implements DfaCacheInterface
 {
+    /**
+     * The transitions the cache holds at most, each entry of a state's
+     * tables counted. One takes from about 40 bytes, a byte of a table over
+     * bytes, to about 260, a range of a Unicode class: the automata kept
+     * stay under some 40 MB in a process that lives long, as the language
+     * server or a lint over many files, where a thousand of them could take
+     * hundreds of megabytes.
+     */
+    private const MAX_TRANSITIONS = 150_000;
+
     /**
      * The caches alive in the process, for clearCaches() to reach.
      *
@@ -31,7 +43,9 @@ final class InMemoryDfaCache implements DfaCacheInterface
     private static ?\WeakMap $live = null;
 
     /**
-     * @var array<string, Dfa>
+     * The automata kept, oldest first, each with its transitions.
+     *
+     * @var array<string, array{0: Dfa, 1: int}>
      */
     private array $cache = [];
 
@@ -51,15 +65,32 @@ final class InMemoryDfaCache implements DfaCacheInterface
 
     public function get(string $key): ?Dfa
     {
-        return $this->cache[$key] ?? null;
+        return $this->cache[$key][0] ?? null;
     }
 
     public function set(string $key, Dfa $dfa): void
     {
-        if (!isset($this->cache[$key])) {
-            $this->cache = StaticCaches::makeRoom($this->cache);
+        // A key set again counts once, as the newest.
+        unset($this->cache[$key]);
+
+        $size = 0;
+        foreach ($dfa->states as $state) {
+            $size += \count($state->transitions) + \count($state->ranges);
         }
 
-        $this->cache[$key] = $dfa;
+        if ($size > self::MAX_TRANSITIONS) {
+            return;
+        }
+
+        $this->cache = StaticCaches::makeRoom($this->cache);
+        $held = array_sum(array_column($this->cache, 1));
+
+        // The oldest go first, until the new one fits.
+        while ($held + $size > self::MAX_TRANSITIONS && null !== $oldest = array_key_first($this->cache)) {
+            $held -= $this->cache[$oldest][1];
+            unset($this->cache[$oldest]);
+        }
+
+        $this->cache[$key] = [$dfa, $size];
     }
 }
