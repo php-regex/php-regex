@@ -131,7 +131,7 @@ second.
 
 The optimizer, with `verify_with_automata`, and the lint's suggestions put a rewrite to
 `matchEquivalent()`: a rewrite it proves is offered, one it disproves is not. The check
-works within a budget of its own (500 configurations, 200,000 units of work), and one that
+works within a budget of its own (1,000 configurations, 200,000 units of work), and one that
 runs out proves nothing. Where the match solver does not read a pattern, or gives up,
 only a rewrite that reads as the pattern does is offered (the same normal form, as `[0-9]`
 and `\d`): the strings two patterns match prove no `$matches`. `/a(?!b)/` and `/a/` match

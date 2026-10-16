@@ -69,6 +69,30 @@ final class RewriteVerificationTest extends TestCase
     }
 
     /**
+     * An anchored alternation of some thirty SQL statements: the rewrite
+     * spells "(?:S)?" as "S?" and drops a repeated branch, and the match
+     * check settles it after some six hundred configurations, within its
+     * cap and its work, in a fraction of a second.
+     */
+    #[Test]
+    public function test_a_wide_anchored_alternation_is_proven_within_the_configurations_the_check_explores(): void
+    {
+        /** @var string $original */
+        $original = require \dirname(__DIR__, 2).'/Fixtures/Automata/sql_table_pattern.php';
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+        $rewrite = $optimizer->optimize($original)->optimized;
+        $this->assertNotSame($original, $rewrite, 'The pattern has something to rewrite.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+        $start = hrtime(true);
+        $verdict = $verify->invoke($optimizer, $original, $rewrite);
+        $seconds = (hrtime(true) - $start) / 1e9;
+
+        $this->assertTrue($verdict);
+        $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
+    }
+
+    /**
      * The match check gives up on its configurations (2^14 for the last
      * fourteen letters), and the rewrite does not read as the pattern does:
      * it is unproven.

@@ -166,10 +166,6 @@ cache are merged. Follow-ups:
   that nothing reads any more: the check of a rewrite builds no DFA since
   the strings both sides match no longer prove one. Keep it or drop it
   before the tag;
-- the match check stops at 500 configurations, and a pattern with `^`
-  or `\A` no longer falls back to the language check: one corpus pattern
-  (a 900-byte SQL alternation in `vaultpress.php`) loses its suggestion
-  there, proven in 0.13 s and 10 MB at 1,000 configurations;
 - a DFA holds 300 to 345 bytes per transition (measured with xdebug off:
   `/[\pL0-9]*0[0-9]{6}$/um` compiles to 129 states and 176,988 range
   transitions, 58 MB held and a 123 MB peak while it is built). Each range

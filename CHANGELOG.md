@@ -303,6 +303,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `regex lint` and the optimizer prove a rewrite that takes the match check up to 1,000 configurations, where they stopped at 500, within the same work budget: WordPress's 700-byte anchored pattern for the table of an SQL query gets its suggestion back.
 - The language server's "Apply regex optimization" quick fix offers only a rewrite the automata prove, as `regex lint` checks the rewrites it suggests: it called the optimizer without `verify_with_automata`, so a rewrite such as `/(a)\1[0-9]aaaa/` into `/(a)\1\da{4}/`, which nothing proves, was offered.
 - The optimizer with `possessive` no longer turns `/a+(?!b)/` into `/a++(?!b)/`, and `regex lint` no longer suggests a rewrite proven only by the strings both patterns match: on `"aab"` the first matches `"a"` and the second nothing. The two match the same strings whole, which was all the check asked where the match solver does not read a lookahead.
 - A relative reference across a branch reset counts group numbers, as PCRE does, not the groups written before it: `(?|(a)|(b))\g{-2}`, `(?|(a)|(b))(?-2)`, `\g{+2}(?|(a)|(b))` and `(?(+2)x)(?|(a)|(b))` are refused, where they passed, since the branch reset holds two groups but only group 1. Pattern info's `maxBackreference` counts only a reference that names a group, so `(a)\2` and `(a)(?(+1)b)`, which PCRE refuses, count 0.

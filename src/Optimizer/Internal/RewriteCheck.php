@@ -32,9 +32,12 @@ final class RewriteCheck
 {
     /**
      * The configurations the match check may explore: a few hundred settle
-     * the rewrites of real patterns, and the huge ones stay unproven.
+     * the rewrites of real patterns (an anchored alternation of some thirty
+     * SQL statements takes some six hundred), and the huge ones stay
+     * unproven. A configuration holds some 9 KB while the check runs, so
+     * one that gives up here has held about 9 MB.
      */
-    private const MATCH_CHECK_STATES = 500;
+    private const MATCH_CHECK_STATES = 1_000;
 
     /**
      * The threads the match check may step in all: a configuration of a
