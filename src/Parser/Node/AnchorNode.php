@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents an anchor in a regular expression.
  */
-final readonly class AnchorNode extends AbstractNode
+final class AnchorNode extends AbstractNode
 {
     public function __construct(
-        public string $value,
+        public readonly string $value,
         int $startPosition,
         int $endPosition
     ) {

@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a zero-width assertion.
  */
-final readonly class AssertionNode extends AbstractNode
+final class AssertionNode extends AbstractNode
 {
     public function __construct(
-        public string $value,
+        public readonly string $value,
         int $startPosition,
         int $endPosition
     ) {

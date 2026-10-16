@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos\Proven;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,11 +33,15 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosResourceBoundsTest extends TestCase
 {
+    use PcreGates;
+
     private const MEMORY_BOUND_BYTES = 64 * 1024 * 1024;
 
     #[Test]
     public function test_deep_nesting_ends_budget_exceeded_within_the_memory_bound(): void
     {
+        $this->requiresPhp('8.2', 'The peak memory of an analysis', 'has no memory_reset_peak_usage()');
+
         $pattern = '/'.str_repeat('(?:', 249).'a'.str_repeat(')*', 249).'$/';
         // The engine compiles it: preg_match on '' returns 1.
         $this->assertSame(1, preg_match($pattern, ''));
@@ -110,6 +115,8 @@ final class RedosResourceBoundsTest extends TestCase
     #[DataProvider('provideLookaroundChains')]
     public function test_lookaround_sub_searches_stay_within_the_memory_bound(string $pattern): void
     {
+        $this->requiresPhp('8.2', 'The peak memory of an analysis', 'has no memory_reset_peak_usage()');
+
         // The engine compiles it: preg_match on '' returns 0.
         $this->assertSame(0, preg_match($pattern, ''));
 

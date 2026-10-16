@@ -38,14 +38,14 @@ use PHPRegex\Toolkit\Regex;
  *
  * @internal
  */
-final readonly class TextDocumentHandler
+final class TextDocumentHandler
 {
     /**
      * FileChangeType.Deleted.
      */
     private const FILE_DELETED = 3;
 
-    private DiagnosticConverter $diagnosticConverter;
+    private readonly DiagnosticConverter $diagnosticConverter;
 
     /**
      * @param array<string, bool> $lintRules      the lint rules regex.json turns on or off, by id
@@ -53,11 +53,11 @@ final readonly class TextDocumentHandler
      * @param RedosSeverity       $redosThreshold the lowest ReDoS severity reported
      */
     public function __construct(
-        private DocumentManager $documents,
-        private Regex $regex,
-        private array $lintRules = [],
-        private RedosMode $redosMode = RedosMode::Off,
-        private RedosSeverity $redosThreshold = RedosSeverity::High,
+        private readonly DocumentManager $documents,
+        private readonly Regex $regex,
+        private readonly array $lintRules = [],
+        private readonly RedosMode $redosMode = RedosMode::Off,
+        private readonly RedosSeverity $redosThreshold = RedosSeverity::High,
     ) {
         $this->diagnosticConverter = new DiagnosticConverter();
     }

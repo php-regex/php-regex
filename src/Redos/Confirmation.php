@@ -18,7 +18,7 @@ use PHPRegex\Parser\Internal\IniFlag;
 /**
  * Represents evidence gathered from a bounded confirmation run.
  */
-final readonly class Confirmation implements \JsonSerializable
+final class Confirmation implements \JsonSerializable
 {
     /**
      * The note of a replay made with preg_match() without $matches: PHP
@@ -39,17 +39,17 @@ final readonly class Confirmation implements \JsonSerializable
      * @param array<ConfirmationSample> $samples
      */
     public function __construct(
-        public bool $confirmed,
-        public array $samples,
-        public ?string $jitSetting,
-        public ?int $backtrackLimit,
-        public ?int $recursionLimit,
-        public int $iterations,
-        public float $timeoutMs,
-        public bool $timedOut = false,
-        public ?string $evidence = null,
-        public ?string $note = null,
-        public ?string $error = null,
+        public readonly bool $confirmed,
+        public readonly array $samples,
+        public readonly ?string $jitSetting,
+        public readonly ?int $backtrackLimit,
+        public readonly ?int $recursionLimit,
+        public readonly int $iterations,
+        public readonly float $timeoutMs,
+        public readonly bool $timedOut = false,
+        public readonly ?string $evidence = null,
+        public readonly ?string $note = null,
+        public readonly ?string $error = null,
     ) {}
 
     /**

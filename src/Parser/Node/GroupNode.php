@@ -18,7 +18,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a grouping construct in a regular expression.
  */
-final readonly class GroupNode extends AbstractNode
+final class GroupNode extends AbstractNode
 {
     /**
      * @param string|null  $name          the group's name; for a substring scan,
@@ -28,14 +28,14 @@ final readonly class GroupNode extends AbstractNode
      *                                    "-1", "<name>" or "'name'"
      */
     public function __construct(
-        public NodeInterface $child,
-        public GroupType $type,
-        public ?string $name = null,
-        public ?string $flags = null,
+        public readonly NodeInterface $child,
+        public readonly GroupType $type,
+        public readonly ?string $name = null,
+        public readonly ?string $flags = null,
         int $startPosition = 0,
         int $endPosition = 0,
-        public bool $usePythonSyntax = false,
-        public array $scannedGroups = [],
+        public readonly bool $usePythonSyntax = false,
+        public readonly array $scannedGroups = [],
     ) {
         parent::__construct($startPosition, $endPosition);
     }

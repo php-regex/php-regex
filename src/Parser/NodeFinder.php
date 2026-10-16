@@ -31,7 +31,7 @@ final class NodeFinder
     public static function find(NodeInterface $root, \Closure $filter): array
     {
         $found = [];
-        NodeWalker::walk($root, static function (NodeInterface $node) use ($filter, &$found): null {
+        NodeWalker::walk($root, static function (NodeInterface $node) use ($filter, &$found): ?TraversalAction {
             if ($filter($node)) {
                 $found[] = $node;
             }

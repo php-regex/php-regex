@@ -55,7 +55,7 @@ final class PatternInfoAnalyzerTest extends TestCase
         $class = new \ReflectionClass(PatternInfo::class);
 
         $this->assertTrue($class->isFinal());
-        $this->assertTrue($class->isReadOnly());
+        $this->assertTrue(self::everyPropertyIsReadonly(PatternInfo::class));
 
         $properties = array_map(
             static fn (\ReflectionProperty $property): string => $property->getName(),
@@ -734,5 +734,19 @@ final class PatternInfoAnalyzerTest extends TestCase
     private function info(string $pattern): PatternInfo
     {
         return (new PatternInfoAnalyzer())->analyze(RegexParser::create(self::TARGET)->parse($pattern));
+    }
+
+    /**
+     * @param class-string $class
+     */
+    private static function everyPropertyIsReadonly(string $class): bool
+    {
+        foreach ((new \ReflectionClass($class))->getProperties() as $property) {
+            if (!$property->isReadOnly()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

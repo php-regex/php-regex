@@ -179,7 +179,8 @@ final class LintConsoleOutputTest extends TestCase
         $this->assertSame(0, $status, $output);
         $this->assertGreaterThanOrEqual(1.2, $duration, 'The workers did not wait: nothing was tested.');
         $this->assertStringContainsString('[2/3] Analyzing patterns', $output);
-        $this->assertDoesNotMatchRegularExpression('/\b0\/2\b.*(?:\b[1-9]\d* (?:s|secs?|min)\b|\b\d\d:0[1-9]\b)/', $output, $output);
+        // Symfony 6.4 writes "< 1 sec" for no time at all, 7.x "< 1 ms".
+        $this->assertDoesNotMatchRegularExpression('/\b0\/2\b.*(?:(?<!< )\b[1-9]\d* (?:s|secs?|min)\b|\b\d\d:0[1-9]\b)/', $output, $output);
     }
 
     /**

@@ -18,6 +18,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Tests\Support\StringListAssertions;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosJsonShapeTest extends TestCase
 {
+    use StringListAssertions;
+
     private const KEYS = [
         'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part',
         'trigger', 'false_positive_risk', 'suggested_rewrite', 'recommendations', 'error', 'findings',
@@ -176,7 +179,7 @@ final class RedosJsonShapeTest extends TestCase
             $this->assertSame(2, $json['search_cost']['degree']);
             $this->assertIsArray($json['search_cost']['witness']);
             $this->assertSame(['prefix', 'run', 'breaker'], array_keys($json['search_cost']['witness']));
-            $this->assertContainsOnlyString($json['search_cost']['witness']);
+            self::assertOnlyStrings($json['search_cost']['witness']);
         } elseif (!\array_key_exists('search_cost', $expected)) {
             $this->fail('A row expecting a search cost got none.');
         }
@@ -188,7 +191,7 @@ final class RedosJsonShapeTest extends TestCase
         // Vulnerable verdicts: the escaped witness parts, never the input for n pumps.
         $this->assertIsArray($json['witness']);
         $this->assertSame(['prefix', 'pump', 'suffix'], array_keys($json['witness']));
-        $this->assertContainsOnlyString($json['witness']);
+        self::assertOnlyStrings($json['witness']);
     }
 
     /**

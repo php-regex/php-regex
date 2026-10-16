@@ -539,6 +539,8 @@ final class DisplayEscaperPatternModeTest extends TestCase
     #[DataProvider('provideReadBackPatterns')]
     public function test_escape_shown_form_matches_as_the_original(string $pattern, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         // A tab inside braces pads a count or an escape operand only from
         // PCRE2 10.43, and inside a class "\k{...}" reads as the letter only
         // from 10.45; before that the engine reports the braces as text.

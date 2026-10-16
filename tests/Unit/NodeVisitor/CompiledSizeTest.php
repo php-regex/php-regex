@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,10 +33,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class CompiledSizeTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideTooLargePatterns')]
     public function test_validate_refuses_a_pattern_too_large_to_compile(string $pattern): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertFalse(self::compiles($pattern), \sprintf('%s should not compile.', $pattern));
 
         $result = Regex::create(['cache' => null])->validate($pattern);
@@ -50,6 +55,8 @@ final class CompiledSizeTest extends TestCase
     #[DataProvider('provideLargestPatterns')]
     public function test_validate_accepts_a_pattern_just_under_the_limit(string $pattern): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertTrue(self::compiles($pattern), \sprintf('%s should compile.', $pattern));
 
         $result = Regex::create(['cache' => null])->validate($pattern);

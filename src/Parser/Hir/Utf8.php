@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Hir;
 
+use PHPRegex\Parser\Internal\Bytes;
+
 /**
  * Code points to and from the subject's bytes: UTF-8 under /u, one byte
  * per character without it.
@@ -61,7 +63,7 @@ final class Utf8
     public static function decode(string $text, bool $unicode): ?array
     {
         if (!$unicode) {
-            return '' === $text ? [] : array_values(array_map(ord(...), str_split($text)));
+            return '' === $text ? [] : array_values(array_map(ord(...), Bytes::split($text)));
         }
 
         if (!mb_check_encoding($text, 'UTF-8')) {

@@ -18,12 +18,12 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a single character literal expressed via escape syntax (unicode or octal).
  */
-final readonly class CharLiteralNode extends AbstractNode
+final class CharLiteralNode extends AbstractNode
 {
     public function __construct(
-        public string $originalRepresentation,
-        public int $codePoint,
-        public CharLiteralType $type,
+        public readonly string $originalRepresentation,
+        public readonly int $codePoint,
+        public readonly CharLiteralType $type,
         int $startPosition,
         int $endPosition
     ) {

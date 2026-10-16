@@ -18,6 +18,7 @@ use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\Pcre2CaseRunner;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
@@ -45,6 +46,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ErrorCodeSpecificityTest extends TestCase
 {
+    use PcreGates;
+
     private const SUITE_JSON = __DIR__.'/../Fixtures/Pcre2/suite-cases.json';
 
     /**
@@ -54,6 +57,8 @@ final class ErrorCodeSpecificityTest extends TestCase
     #[DataProvider('provideRefusedPatternsWithTheirCode')]
     public function test_validate_reports_the_code_of_the_problem(string $pattern, array $options, bool $engineRefuses, string $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         if ($this->judgedBeforeItsRelease($pattern, $options)) {
             return;
         }
@@ -448,6 +453,8 @@ final class ErrorCodeSpecificityTest extends TestCase
     #[DataProvider('provideSuiteRejectionsWithTheirMessage')]
     public function test_validate_reports_a_code_matching_the_pcre_message_for_every_suite_rejection(string $id, string $pattern, string $message, ?int $offset): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertArrayHasKey($message, PcreMessageCodes::CODES, \sprintf('%s (%s): PCRE message "%s" is missing from the message table.', $id, $pattern, $message));
 
         $allowed = PcreMessageCodes::CODES[$message];
@@ -476,9 +483,9 @@ final class ErrorCodeSpecificityTest extends TestCase
      * Every suite rejection the running PHP refuses too, with the message
      * and offset PHP reports.
      *
-     * @return iterable<string, array{id: string, pattern: string, message: string, offset: int|null}>
+     * @return \Generator<string, array{id: string, pattern: string, message: string, offset: int|null}>
      */
-    public static function provideSuiteRejectionsWithTheirMessage(): iterable
+    public static function provideSuiteRejectionsWithTheirMessage(): \Generator
     {
         $runner = new Pcre2CaseRunner();
 
@@ -591,9 +598,9 @@ final class ErrorCodeSpecificityTest extends TestCase
      * Every case the pinned PCRE2 suite records as refused in PHP, run for
      * the release the fixture was extracted from.
      *
-     * @return iterable<string, array{case: Pcre2Case, pin: string}>
+     * @return \Generator<string, array{case: Pcre2Case, pin: string}>
      */
-    public static function provideSuiteRejectedCases(): iterable
+    public static function provideSuiteRejectedCases(): \Generator
     {
         $raw = file_get_contents(self::SUITE_JSON);
 

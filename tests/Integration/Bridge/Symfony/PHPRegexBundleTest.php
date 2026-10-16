@@ -85,9 +85,9 @@ final class PHPRegexBundleTest extends TestCase
     }
 }
 
-final readonly class RouteCollectionRouter implements RouterInterface
+final class RouteCollectionRouter implements RouterInterface
 {
-    public function __construct(private RouteCollection $routes) {}
+    public function __construct(private readonly RouteCollection $routes) {}
 
     public function setContext(RequestContext $context): void {}
 

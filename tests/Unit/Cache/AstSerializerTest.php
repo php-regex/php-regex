@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\AstFingerprint;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
 
 final class AstSerializerTest extends TestCase
 {
+    use PcreGates;
+
     private string $cacheDir;
 
     protected function setUp(): void
@@ -47,6 +50,8 @@ final class AstSerializerTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_a_tree_survives_a_round_trip(string $pattern): void
     {
+        $this->requiresPhpReading($pattern);
+
         $tree = Regex::create(['cache' => null])->parse($pattern);
 
         $data = AstSerializer::serialize($tree);

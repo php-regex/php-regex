@@ -32,8 +32,6 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPUnit\Framework\TestCase;
-use Random\Engine;
-use Random\Randomizer;
 
 final class SampleGeneratorEdgeCasesTest extends TestCase
 {
@@ -143,15 +141,10 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
     public function test_random_int_falls_back_on_exception(): void
     {
         $generator = new SampleGenerator();
-        $engine = new class implements Engine {
-            public function generate(): string
-            {
-                throw new \RuntimeException('random failed');
-            }
-        };
-        $this->setPrivate($generator, 'randomizer', new Randomizer($engine));
 
-        $value = $this->invokePrivate($generator, 'randomInt', [5, 1]);
+        // No draw spans more than 2^32 values: the twister refuses, and the
+        // lower bound is taken.
+        $value = $this->invokePrivate($generator, 'randomInt', [5, \PHP_INT_MAX]);
 
         $this->assertSame(5, $value);
     }

@@ -18,12 +18,12 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents an alternation in a regular expression.
  */
-final readonly class AlternationNode extends AbstractNode
+final class AlternationNode extends AbstractNode
 {
     /**
      * @var list<NodeInterface>
      */
-    public array $alternatives;
+    public readonly array $alternatives;
 
     /**
      * @param array<NodeInterface> $alternatives Renumbered in the order given

@@ -685,7 +685,7 @@ final class DisplayEscaper
     private static function hexBytes(string $bytes): string
     {
         $hex = '';
-        foreach (str_split($bytes) as $byte) {
+        foreach (Bytes::split($bytes) as $byte) {
             $hex .= \sprintf('\\x%02X', \ord($byte));
         }
 

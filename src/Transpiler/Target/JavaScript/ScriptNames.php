@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * The Unicode scripts by the names PCRE2 reads, loosely: case, spaces,
  * hyphens and underscores aside, a long name or a four-letter one. Each
@@ -127,6 +129,6 @@ final class ScriptNames
      */
     public static function looseKey(string $name): string
     {
-        return strtolower(str_replace([' ', "\t", "\n", "\r", "\f", "\v", '-', '_'], '', $name));
+        return Ascii::lower(str_replace([' ', "\t", "\n", "\r", "\f", "\v", '-', '_'], '', $name));
     }
 }

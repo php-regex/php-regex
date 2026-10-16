@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class NoAutoCaptureNumberingTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideReferencesToUncapturedGroups')]
     public function test_validate_rejects_a_reference_to_a_group_n_leaves_uncaptured(string $pattern): void
@@ -47,6 +50,8 @@ final class NoAutoCaptureNumberingTest extends TestCase
     #[DataProvider('provideNoAutoCapturePatterns')]
     public function test_compiling_keeps_the_groups_as_written(string $pattern): void
     {
+        $this->requiresPhpReading($pattern);
+
         // Under n a plain group does not capture: preg_match() fills no group.
         $this->assertSame($pattern, Regex::create()->parse($pattern)->accept(new PatternPrinter()));
         $this->assertSame(1, preg_match($pattern, 'ab', $matches));

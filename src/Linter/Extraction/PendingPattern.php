@@ -25,12 +25,12 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * @internal
  */
-final readonly class PendingPattern
+final class PendingPattern
 {
     /**
      * @param TPlace $place where the argument is written
      */
-    public function __construct(public mixed $place, public PatternFunction $function) {}
+    public function __construct(public readonly mixed $place, public readonly PatternFunction $function) {}
 
     /**
      * The 1-based column of a byte offset in the content; null for an

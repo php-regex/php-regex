@@ -15,6 +15,7 @@ namespace PHPRegex\Redos\Internal;
 
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -629,7 +630,7 @@ final class LastCodeUnit
         }
 
         $on = true;
-        foreach (str_split($letters) as $letter) {
+        foreach (Bytes::split($letters) as $letter) {
             $bit = match ($letter) {
                 'i' => self::CASELESS,
                 'm' => self::MULTILINE,

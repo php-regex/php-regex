@@ -21,12 +21,14 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\LookbehindLength;
 use PHPRegex\Parser\Internal\NearMiss;
 use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Internal\PhpVersionGates;
+use PHPRegex\Parser\Internal\PropertyNames;
 use PHPRegex\Parser\Internal\VersionCondition;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -1182,6 +1184,14 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): void
     {
+        // Before PCRE2 10.40, a name is looked up as written in a table of
+        // its own: no running engine since then answers for it.
+        if (null !== $this->source && !$this->supports(PcreFeature::LoosePropertyNames)) {
+            $this->validateExactPropertyName($node, $this->source);
+
+            return;
+        }
+
         if ($node->hasBraces && null !== $this->source) {
             $malformedAt = $this->malformedPropertyNameEnd($this->source, $node->startPosition + 2);
             if (null !== $malformedAt) {
@@ -1735,6 +1745,52 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
+     * "\p" and "\P" as PCRE2 10.39 reads them: one letter, or a braced name
+     * of at most 31 characters after an optional "^", spelled exactly as its
+     * table holds it. Longer, the sequence is malformed where PCRE stops
+     * reading; unknown, it is refused past its "}".
+     */
+    private function validateExactPropertyName(UnicodePropNode $node, string $source): void
+    {
+        $letter = $source[$node->startPosition + 1] ?? 'p';
+        $at = $node->startPosition + 2;
+        $negated = false;
+        if ('{' !== ($source[$at] ?? '')) {
+            $name = $source[$at] ?? '';
+            $end = $at + 1;
+        } else {
+            $at++;
+            if ('^' === ($source[$at] ?? '')) {
+                $negated = true;
+                $at++;
+            }
+
+            $close = strpos($source, '}', $at);
+            if (false === $close || $close - $at >= PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40) {
+                $this->raiseMalformedPropertyAt($letter, min(\strlen($source), $at + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40));
+            }
+
+            $name = substr($source, $at, $close - $at);
+            $end = $close + 1;
+        }
+
+        if (PropertyNames::knownBefore1040($name)) {
+            return;
+        }
+
+        $unprefixed = LibraryPcre::replace('/^\s*+(?:sc|script|scx|script[\s_-]*+extensions)\s*+[:=]/i', '', $name) ?? $name;
+        $spelling = PropertyNames::spellingBefore1040($unprefixed);
+        $this->raiseSemanticError(
+            \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
+            $end,
+            ErrorCode::UnicodePropertyInvalid,
+            null === $spelling
+                ? 'Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.'
+                : \sprintf('Write \\%s{%s%s}.', $letter, $negated ? '^' : '', $spelling),
+        );
+    }
+
+    /**
      * The PCRE2 release that brought the property or script "\p{...}"
      * names, for a name whose support moved between releases; null for one
      * every release knows or refuses alike.
@@ -1748,7 +1804,7 @@ final class Validator extends AbstractNodeVisitor
 
         // Loose matching: case, spaces, hyphens and underscores are ignored,
         // and "sc=", "scx:" and their long forms only name the table.
-        $name = strtolower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
+        $name = Ascii::lower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
         $name = LibraryPcre::replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
 
         return '' !== $matches[1] && '' !== $matches[2] ? '10.45' : (self::UNICODE_NAMES_SINCE[$name] ?? null);
@@ -1801,7 +1857,7 @@ final class Validator extends AbstractNodeVisitor
     private function validateLimitValue(string $digits, int $start): void
     {
         $value = 0;
-        foreach (str_split($digits) as $index => $digit) {
+        foreach (Bytes::split($digits) as $index => $digit) {
             if ($value > self::MAX_LIMIT_VALUE_BEFORE_DIGIT) {
                 $this->raiseSemanticError(
                     \sprintf('The value %s is too large for a (*LIMIT_...) setting: PCRE takes at most 4294967289.', $digits),
@@ -1826,7 +1882,7 @@ final class Validator extends AbstractNodeVisitor
             : (string) $node->identifier; // Unreachable from a parsed pattern: only a hand-built callout has no source.
 
         $number = 0;
-        foreach (str_split($digits) as $index => $digit) {
+        foreach (Bytes::split($digits) as $index => $digit) {
             $number = $number * 10 + (int) $digit;
             if ($number > 255) {
                 return $node->startPosition + 4 + $index;
@@ -1876,7 +1932,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $value = 0;
-        foreach (str_split($digits) as $index => $digit) {
+        foreach (Bytes::split($digits) as $index => $digit) {
             $value = $value * 10 + (int) $digit;
             if ($value > 65535) {
                 return $index + 1;
@@ -2134,7 +2190,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $negation = $matches[1];
-        $property = strtolower($matches[2]);
+        $property = Ascii::lower($matches[2]);
         $aliases = [
             'javalowercase' => 'Ll',
             'javauppercase' => 'Lu',

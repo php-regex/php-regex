@@ -16,23 +16,23 @@ namespace PHPRegex\Redos;
 /**
  * Limits and controls the confirmation (runtime) probe.
  */
-final readonly class ConfirmationOptions
+final class ConfirmationOptions
 {
-    public int $minInputLength;
+    public readonly int $minInputLength;
 
-    public int $maxInputLength;
+    public readonly int $maxInputLength;
 
-    public int $steps;
+    public readonly int $steps;
 
-    public int $iterations;
+    public readonly int $iterations;
 
-    public float $timeoutMs;
+    public readonly float $timeoutMs;
 
-    public int $backtrackLimit;
+    public readonly int $backtrackLimit;
 
-    public int $recursionLimit;
+    public readonly int $recursionLimit;
 
-    public int $previewLength;
+    public readonly int $previewLength;
 
     public function __construct(
         int $minInputLength = 16,

@@ -22,7 +22,7 @@
         }
     ],
     "require": {
-        "php": ">=8.2",
+        "php": ">=8.1",
         "php-regex/regex-automata": "self.version",
         "php-regex/regex-explain": "self.version",
         "php-regex/regex-linter": "self.version",

@@ -21,7 +21,7 @@ PHPRegex Redos
 
 Proves a pattern safe from catastrophic backtracking (ReDoS), or hands you the input that triggers it — and can replay that input on the engine.
 
-Requires PHP 8.2+. MIT licensed.
+Requires PHP 8.1+. MIT licensed.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [ReDoS guide](https://php-regex.com/guides/redos/) walks from risky shape to mitigation.
 

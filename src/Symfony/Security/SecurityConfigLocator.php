@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Security;
 /**
  * @internal
  */
-final readonly class SecurityConfigLocator
+final class SecurityConfigLocator
 {
     /**
      * @return array<int, string>

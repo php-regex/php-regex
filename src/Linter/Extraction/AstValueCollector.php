@@ -137,7 +137,10 @@ final class AstValueCollector extends NodeVisitorAbstract
         return $this->values;
     }
 
-    public function enterNode(Node $node): null
+    /**
+     * @return null
+     */
+    public function enterNode(Node $node)
     {
         if ($node instanceof ClassLike) {
             $this->enterClass($node);
@@ -179,7 +182,10 @@ final class AstValueCollector extends NodeVisitorAbstract
         return null;
     }
 
-    public function leaveNode(Node $node): null
+    /**
+     * @return null
+     */
+    public function leaveNode(Node $node)
     {
         if ($node instanceof ClassLike) {
             array_pop($this->classes);

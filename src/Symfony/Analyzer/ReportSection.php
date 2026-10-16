@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Analyzer;
 /**
  * @internal
  */
-final readonly class ReportSection
+final class ReportSection
 {
     /**
      * @param array<string, int|string>  $meta
@@ -27,13 +27,13 @@ final readonly class ReportSection
      * @param array<string, int|string>  $debug
      */
     public function __construct(
-        public string $id,
-        public string $title,
-        public array $meta = [],
-        public array $summary = [],
-        public array $warnings = [],
-        public array $issues = [],
-        public array $suggestions = [],
-        public array $debug = [],
+        public readonly string $id,
+        public readonly string $title,
+        public readonly array $meta = [],
+        public readonly array $summary = [],
+        public readonly array $warnings = [],
+        public readonly array $issues = [],
+        public readonly array $suggestions = [],
+        public readonly array $debug = [],
     ) {}
 }

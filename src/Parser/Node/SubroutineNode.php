@@ -18,7 +18,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a subroutine call.
  */
-final readonly class SubroutineNode extends AbstractNode
+final class SubroutineNode extends AbstractNode
 {
     /**
      * @param list<string> $returnedGroups the groups the call returns, as
@@ -27,11 +27,11 @@ final readonly class SubroutineNode extends AbstractNode
      *                                     (PCRE2 10.47)
      */
     public function __construct(
-        public string $reference,
-        public string $syntax,
+        public readonly string $reference,
+        public readonly string $syntax,
         int $startPosition,
         int $endPosition,
-        public array $returnedGroups = [],
+        public readonly array $returnedGroups = [],
     ) {
         parent::__construct($startPosition, $endPosition);
     }

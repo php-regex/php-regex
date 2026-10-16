@@ -31,18 +31,18 @@ use PHPRegex\Symfony\Security\SecurityFirewallReport;
  *
  * @phpstan-type SkippedFile array{file: string, reason: string}
  */
-final readonly class SecurityAnalyzer implements AnalyzerInterface
+final class SecurityAnalyzer implements AnalyzerInterface
 {
     private const ID = 'security';
     private const PRIORITY = 20;
     private const ARROW_LABEL = "\u{21B3}";
 
     public function __construct(
-        private SecurityConfigExtractor $extractor,
-        private SecurityConfigLocator $locator,
-        private SecurityAccessControlAnalyzer $accessAnalyzer,
-        private SecurityFirewallAnalyzer $firewallAnalyzer,
-        private SecurityAccessSuggestionBuilder $suggestionBuilder = new SecurityAccessSuggestionBuilder(),
+        private readonly SecurityConfigExtractor $extractor,
+        private readonly SecurityConfigLocator $locator,
+        private readonly SecurityAccessControlAnalyzer $accessAnalyzer,
+        private readonly SecurityFirewallAnalyzer $firewallAnalyzer,
+        private readonly SecurityAccessSuggestionBuilder $suggestionBuilder = new SecurityAccessSuggestionBuilder(),
     ) {}
 
     public function getId(): string

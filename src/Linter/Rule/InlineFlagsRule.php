@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -66,7 +67,7 @@ final class InlineFlagsRule extends AbstractLintRule
         $baseFlags = $resetAll ? str_replace(['i', 'm', 'n', 'r', 's', 'x'], '', $context->activeFlags()) : $context->activeFlags();
         $issues = [];
 
-        foreach (str_split($set) as $flag) {
+        foreach (Bytes::split($set) as $flag) {
             if ('' === $flag) {
                 continue;
             }
@@ -84,7 +85,7 @@ final class InlineFlagsRule extends AbstractLintRule
             }
         }
 
-        foreach (str_split($unset) as $flag) {
+        foreach (Bytes::split($unset) as $flag) {
             if ('' === $flag) {
                 continue;
             }

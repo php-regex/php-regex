@@ -25,9 +25,9 @@ use PHPRegex\Linter\Source\PatternSourceInterface;
  *
  * @internal
  */
-final readonly class RoutePatternSource implements PatternSourceInterface
+final class RoutePatternSource implements PatternSourceInterface
 {
-    public function __construct(private Router $router, private RouteConstraintNormalizer $normalizer = new RouteConstraintNormalizer()) {}
+    public function __construct(private readonly Router $router, private readonly RouteConstraintNormalizer $normalizer = new RouteConstraintNormalizer()) {}
 
     public function getName(): string
     {

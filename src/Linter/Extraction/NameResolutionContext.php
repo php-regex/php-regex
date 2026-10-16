@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * The namespace and imports in effect at a point in a PHP file.
  *
@@ -64,12 +66,12 @@ final class NameResolutionContext
 
     public function importClass(string $alias, string $target): void
     {
-        $this->classAliases[strtolower($alias)] = ltrim($target, '\\');
+        $this->classAliases[Ascii::lower($alias)] = ltrim($target, '\\');
     }
 
     public function importFunction(string $alias, string $target): void
     {
-        $this->functionAliases[strtolower($alias)] = ltrim($target, '\\');
+        $this->functionAliases[Ascii::lower($alias)] = ltrim($target, '\\');
     }
 
     /**
@@ -112,7 +114,7 @@ final class NameResolutionContext
         }
 
         $segments = explode('\\', $written);
-        $first = strtolower($segments[0]);
+        $first = Ascii::lower($segments[0]);
 
         if (isset($this->classAliases[$first])) {
             $segments[0] = $this->classAliases[$first];
@@ -142,7 +144,7 @@ final class NameResolutionContext
         }
 
         if (!str_contains($written, '\\')) {
-            return $this->functionAliases[strtolower($written)] ?? $written;
+            return $this->functionAliases[Ascii::lower($written)] ?? $written;
         }
 
         return $this->resolveClass($written);
@@ -155,7 +157,7 @@ final class NameResolutionContext
      */
     public function namespacedFunction(string $written): ?string
     {
-        if ('' === $this->namespace || str_contains($written, '\\') || isset($this->functionAliases[strtolower($written)])) {
+        if ('' === $this->namespace || str_contains($written, '\\') || isset($this->functionAliases[Ascii::lower($written)])) {
             return null;
         }
 

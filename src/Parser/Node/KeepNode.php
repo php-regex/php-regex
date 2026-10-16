@@ -18,7 +18,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents the \K keep assertion.
  */
-final readonly class KeepNode extends AbstractNode
+final class KeepNode extends AbstractNode
 {
     public function accept(NodeVisitorInterface $visitor)
     {

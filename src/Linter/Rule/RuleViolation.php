@@ -18,7 +18,7 @@ use PHPRegex\Linter\LintSeverity;
 /**
  * Represents a single linter diagnostic for a regex pattern.
  */
-final readonly class RuleViolation
+final class RuleViolation
 {
     /**
      * @param int|null $offset where the reported text starts in the pattern body, in bytes
@@ -27,11 +27,11 @@ final readonly class RuleViolation
      * @internal built by the lint rules PatternLinter runs, read through PatternLinter::getIssues()
      */
     public function __construct(
-        public string $id,
-        public string $message,
-        public ?int $offset = null,
-        public ?string $hint = null,
-        public LintSeverity $severity = LintSeverity::Warning,
-        public ?int $end = null,
+        public readonly string $id,
+        public readonly string $message,
+        public readonly ?int $offset = null,
+        public readonly ?string $hint = null,
+        public readonly LintSeverity $severity = LintSeverity::Warning,
+        public readonly ?int $end = null,
     ) {}
 }

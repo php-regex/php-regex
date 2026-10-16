@@ -35,9 +35,9 @@ use PHPRegex\Parser\RegexParser;
  *
  * @internal
  */
-final readonly class LayoutSplicer
+final class LayoutSplicer
 {
-    public function __construct(private RegexParser $parser) {}
+    public function __construct(private readonly RegexParser $parser) {}
 
     /**
      * The rewrite as the original's text with the changed parts replaced,

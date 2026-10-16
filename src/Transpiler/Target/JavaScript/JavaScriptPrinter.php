@@ -16,6 +16,7 @@ namespace PHPRegex\Transpiler\Target\JavaScript;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -531,7 +532,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
                     13 => '\\r',
                     12 => '\\f',
                     27 => '\\x1B',
-                    default => '\\x'.strtoupper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
+                    default => '\\x'.Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
                 };
             } else {
                 $result .= $char;
@@ -572,16 +573,16 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     private function formatCodePoint(int $codePoint): string
     {
         if ($codePoint <= 0xFF) {
-            return '\\x'.strtoupper(str_pad(dechex($codePoint), 2, '0', \STR_PAD_LEFT));
+            return '\\x'.Ascii::upper(str_pad(dechex($codePoint), 2, '0', \STR_PAD_LEFT));
         }
 
         if ($codePoint <= 0xFFFF) {
-            return '\\u'.strtoupper(str_pad(dechex($codePoint), 4, '0', \STR_PAD_LEFT));
+            return '\\u'.Ascii::upper(str_pad(dechex($codePoint), 4, '0', \STR_PAD_LEFT));
         }
 
         $this->context->requireFlag('u', 'Added /u for Unicode code point escapes.');
 
-        return '\\u{'.strtoupper(dechex($codePoint)).'}';
+        return '\\u{'.Ascii::upper(dechex($codePoint)).'}';
     }
 
     private function normalizeBackreference(string $ref, int $position): string

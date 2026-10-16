@@ -12,10 +12,10 @@ the code is left as it is.
 
 {% include install-prerelease.html package="php-regex/regex-rector" dev=true %}
 
-The package runs on PHP 8.2 or later and requires Rector 2.4 or later
+The package runs on PHP 8.1 or later and requires Rector 2.4 or later
 (`rector/rector ^2.4`). A project that targets an older PHP can still use it:
 install Rector and the rules in a directory of their own, run them with
-PHP 8.2 or later, and let Rector read the target from your `composer.json`
+PHP 8.1 or later, and let Rector read the target from your `composer.json`
 (`require.php`) or from `withPhpVersion()`. The recipe below reads a
 `rector.php` at the project root, next to that `composer.json` — the next
 section shows one:

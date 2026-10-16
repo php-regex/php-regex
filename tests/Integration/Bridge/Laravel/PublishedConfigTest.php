@@ -18,7 +18,6 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -29,21 +28,23 @@ use PHPUnit\Framework\Attributes\Test;
  * (Laravel's mergeConfigFrom() only fills top-level keys), and the stale key
  * is read by no one and reported by no one.
  *
- * The attribute is not deferred: the config is in place before the provider
- * registers, as a published file is.
+ * The config is in place before the provider registers, as a published
+ * file is: it is set with the application's configuration, which every
+ * Testbench release from 8 does before it registers the providers.
  */
-#[WithConfig('php-regex', [
-    'max_pattern_length' => 1000,
-    'runtime_pcre_validation' => false,
-    'cache' => ['store' => null, 'directory' => null],
-    'redos' => ['enabled' => true],
-    'analysis' => ['redos_threshold' => 100],
-    'automata' => ['minimization_algorithm' => 'moore'],
-    'optimizations' => ['digits' => false],
-    'paths' => ['app'],
-], defer: false)]
 final class PublishedConfigTest extends TestCase
 {
+    private const PUBLISHED = [
+        'max_pattern_length' => 1000,
+        'runtime_pcre_validation' => false,
+        'cache' => ['store' => null, 'directory' => null],
+        'redos' => ['enabled' => true],
+        'analysis' => ['redos_threshold' => 100],
+        'automata' => ['minimization_algorithm' => 'moore'],
+        'optimizations' => ['digits' => false],
+        'paths' => ['app'],
+    ];
+
     private string $sourceDir;
 
     protected function setUp(): void
@@ -138,5 +139,15 @@ final class PublishedConfigTest extends TestCase
     protected function getPackageProviders($app): array
     {
         return [PHPRegexServiceProvider::class];
+    }
+
+    /**
+     * @param \Illuminate\Foundation\Application $app
+     */
+    protected function resolveApplicationConfiguration($app): void
+    {
+        parent::resolveApplicationConfiguration($app);
+
+        $app->make('config')->set('php-regex', self::PUBLISHED);
     }
 }

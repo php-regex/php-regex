@@ -18,10 +18,10 @@ use PHPRegex\Parser\PcreTarget;
 /**
  * The validator's answer for one PHP version and PCRE2 release.
  */
-final readonly class TargetVerdict
+final class TargetVerdict
 {
     /**
      * @internal built by CompatibilityChecker::check()
      */
-    public function __construct(public PcreTarget $target, public ValidationResult $validation) {}
+    public function __construct(public readonly PcreTarget $target, public readonly ValidationResult $validation) {}
 }

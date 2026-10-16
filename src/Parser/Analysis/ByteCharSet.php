@@ -18,14 +18,14 @@ namespace PHPRegex\Parser\Analysis;
  *
  * @internal
  */
-final readonly class ByteCharSet
+final class ByteCharSet
 {
     private const ASCII_MAX = 0x7F;
 
     /**
      * @param array<array{0:int, 1:int}> $ranges inclusive ranges of byte values
      */
-    private function __construct(private array $ranges = [], private bool $unknown = false) {}
+    private function __construct(private readonly array $ranges = [], private readonly bool $unknown = false) {}
 
     public static function empty(): self
     {

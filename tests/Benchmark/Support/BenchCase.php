@@ -18,9 +18,9 @@ namespace PHPRegex\Tests\Benchmark\Support;
  * data/<group>/<slug>.php: the key is the file's place, so adding a case
  * never renames another.
  */
-final readonly class BenchCase
+final class BenchCase
 {
-    public string $key;
+    public readonly string $key;
 
     /**
      * @param string      $group   the folder the file sits in, the benchmark group it feeds
@@ -32,13 +32,13 @@ final readonly class BenchCase
      * @param string|null $expect  the outcome the measured run must reach (redos and automata only, see Workloads::outcome()); null elsewhere
      */
     public function __construct(
-        public string $group,
-        public string $slug,
-        public string $pattern,
-        public string $origin,
-        public string $note,
-        public bool $invalid = false,
-        public ?string $expect = null,
+        public readonly string $group,
+        public readonly string $slug,
+        public readonly string $pattern,
+        public readonly string $origin,
+        public readonly string $note,
+        public readonly bool $invalid = false,
+        public readonly ?string $expect = null,
     ) {
         $this->key = $group.'/'.$slug;
     }

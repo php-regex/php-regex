@@ -21,7 +21,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
  *
  * @api
  */
-final readonly class RedosOptions
+final class RedosOptions
 {
     /**
      * @param int $maxStates           the states the pattern's automata may hold
@@ -31,9 +31,9 @@ final readonly class RedosOptions
      * @throws InvalidRegexOptionException when a state or step cap is below 1, or the cutoff below 0
      */
     public function __construct(
-        public int $maxStates = 2000,
-        public int $maxSteps = 250_000,
-        public int $boundedRepeatCutoff = 16,
+        public readonly int $maxStates = 2000,
+        public readonly int $maxSteps = 250_000,
+        public readonly int $boundedRepeatCutoff = 16,
     ) {
         foreach (['maxStates' => [$maxStates, 1], 'maxSteps' => [$maxSteps, 1], 'boundedRepeatCutoff' => [$boundedRepeatCutoff, 0]] as $name => [$value, $floor]) {
             if ($value < $floor) {

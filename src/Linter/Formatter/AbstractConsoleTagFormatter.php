@@ -37,14 +37,14 @@ use PHPRegex\Parser\Validation\ValidationResult;
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
  */
-abstract readonly class AbstractConsoleTagFormatter implements OutputFormatterInterface
+abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
 {
     private const ARROW_LABEL = "\u{21B3}";
 
     public function __construct(
-        private AnalysisService $analysis,
-        private LinkFormatter $linkFormatter,
-        private bool $decorated = true,
+        private readonly AnalysisService $analysis,
+        private readonly LinkFormatter $linkFormatter,
+        private readonly bool $decorated = true,
     ) {}
 
     public function format(LintReport $report): string

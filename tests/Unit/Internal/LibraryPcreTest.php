@@ -200,7 +200,7 @@ final class LibraryPcreTest extends TestCase
         $bare = self::underLimits('19', '100000', static fn (): array => [@preg_match(self::NO_JIT_PROBE, $subject), preg_last_error()]);
 
         $attempts = 0;
-        LibraryPcre::useIniSetter(static function () use (&$attempts): false {
+        LibraryPcre::useIniSetter(static function () use (&$attempts): bool {
             $attempts++;
 
             return false;

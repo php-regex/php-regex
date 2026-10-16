@@ -19,7 +19,7 @@ use PHPRegex\Redos\RedosComplexity;
  * A rewrite of a pattern open to catastrophic backtracking, with what was
  * proven about it.
  */
-final readonly class RedosRepair
+final class RedosRepair
 {
     /**
      * @internal built by RedosRepairer::repair()
@@ -28,10 +28,10 @@ final readonly class RedosRepair
      * @param bool|null $sameMatches  whether preg_match() also writes the same $matches; null when the match solver cannot judge
      */
     public function __construct(
-        public string $pattern,
-        public ?bool $sameSubjects,
-        public ?bool $sameMatches,
-        public RedosComplexity $complexity,
+        public readonly string $pattern,
+        public readonly ?bool $sameSubjects,
+        public readonly ?bool $sameMatches,
+        public readonly RedosComplexity $complexity,
     ) {}
 
     /**

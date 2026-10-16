@@ -90,9 +90,9 @@ final class PublicSurfaceTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return \Generator<string, array{string}>
      */
-    public static function provideClasses(): iterable
+    public static function provideClasses(): \Generator
     {
         $root = \dirname(__DIR__, 3).'/src/Automata';
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS));

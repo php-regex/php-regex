@@ -50,6 +50,8 @@ final class MatchesTypeTest extends TestCase
     #[DataProvider('provideMatchTypes')]
     public function test_match_type_reads_the_shape_as_psalm_atomics(string $pattern, int $flags, string $expected, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         $built = MatchesType::ofMatch(self::shape($pattern), $flags);
 
         $this->assertExactly($expected, $built);

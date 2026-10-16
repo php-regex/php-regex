@@ -58,7 +58,7 @@ use PHPRegex\Parser\Validation\Validator;
  * @phpstan-import-type CacheStats from RemovableCacheInterface
  * @phpstan-import-type OptionsArray from ParserOptions
  */
-final readonly class RegexParser
+final class RegexParser
 {
     /**
      * Cache version for AST serialization, and part of the key of a
@@ -73,7 +73,7 @@ final readonly class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-075a794e4f62ea92c107a63af4ee2c5a';
+    public const CACHE_VERSION = 'ast-198f0391e878e1514c345380d522490e';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -101,26 +101,9 @@ final readonly class RegexParser
     private const TARGET_PREFIX = '#target=';
 
     /**
-     * The fix for the mistakes users make most, by error code, when the
-     * error carries none of its own.
-     */
-    private const COMMON_HINTS = [
-        ErrorCode::CharclassUnclosed->value => 'Close the class with "]", or write "\\[" to match a literal "[".',
-        ErrorCode::QuantifierNothingToRepeat->value => 'Put the quantifier after the item it repeats, or escape it with a backslash to match it literally.',
-        ErrorCode::QuantifierInvalidRange->value => 'Write the smaller count first.',
-        ErrorCode::QuantifierTooBig->value => 'PCRE counts at most 65535 repetitions: lower the count, or use "*" or "+" for an open-ended repeat.',
-        ErrorCode::RangeReversed->value => 'Write the lower end of the range first, or escape the "-" as "\\-" to match it literally.',
-        ErrorCode::DelimiterInvalid->value => 'Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".',
-        ErrorCode::GroupNameInvalid->value => 'Start a group name with a letter or "_", then use letters, digits and "_" only.',
-        ErrorCode::GroupDuplicateName->value => 'Rename one of the groups, or allow duplicate names with (?J).',
-        ErrorCode::SubroutineMissingNamedGroup->value => 'Name the group the call reaches, or call a group the pattern names.',
-        ErrorCode::UnicodePropertyInvalid->value => 'Use a property PCRE2 knows, such as \\p{L}, \\p{Lu}, \\p{N} or a script such as \\p{Greek}.',
-    ];
-
-    /**
      * The trees a persistent cache gave or took in this process.
      */
-    private ?ArrayCache $front;
+    private readonly ?ArrayCache $front;
 
     /**
      * @param int            $maxPatternLength      Maximum allowed pattern length
@@ -132,13 +115,13 @@ final readonly class RegexParser
      * @param PcreEngine     $engine                Compiles the pattern with the running PHP
      */
     private function __construct(
-        private int $maxPatternLength,
-        private int $maxLookbehindLength,
-        private CacheInterface $cache,
-        private bool $runtimePcreValidation,
-        private int $maxRecursionDepth,
-        private PcreTarget $target,
-        private PcreEngine $engine = new PcreEngine(),
+        private readonly int $maxPatternLength,
+        private readonly int $maxLookbehindLength,
+        private readonly CacheInterface $cache,
+        private readonly bool $runtimePcreValidation,
+        private readonly int $maxRecursionDepth,
+        private readonly PcreTarget $target,
+        private readonly PcreEngine $engine = new PcreEngine(),
     ) {
         // A directory or a PSR pool answers a tree it fetches and
         // unserializes: the trees read or written in this process stay in
@@ -983,7 +966,7 @@ final readonly class RegexParser
         }
 
         if (null !== $errorCode) {
-            $hint ??= self::COMMON_HINTS[$errorCode->value] ?? null;
+            $hint ??= self::commonHint($errorCode);
         }
 
         if ($exception instanceof SemanticErrorException) {
@@ -1130,5 +1113,26 @@ final readonly class RegexParser
         $parser = new TokenParser($this->maxRecursionDepth, $this->target);
 
         return $parser->parse($tokenStream, $flags, $delimiter, \strlen($pattern));
+    }
+
+    /**
+     * The fix for the mistakes users make most, by error code, when the
+     * error carries none of its own.
+     */
+    private static function commonHint(ErrorCode $errorCode): ?string
+    {
+        return match ($errorCode) {
+            ErrorCode::CharclassUnclosed => 'Close the class with "]", or write "\\[" to match a literal "[".',
+            ErrorCode::QuantifierNothingToRepeat => 'Put the quantifier after the item it repeats, or escape it with a backslash to match it literally.',
+            ErrorCode::QuantifierInvalidRange => 'Write the smaller count first.',
+            ErrorCode::QuantifierTooBig => 'PCRE counts at most 65535 repetitions: lower the count, or use "*" or "+" for an open-ended repeat.',
+            ErrorCode::RangeReversed => 'Write the lower end of the range first, or escape the "-" as "\\-" to match it literally.',
+            ErrorCode::DelimiterInvalid => 'Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".',
+            ErrorCode::GroupNameInvalid => 'Start a group name with a letter or "_", then use letters, digits and "_" only.',
+            ErrorCode::GroupDuplicateName => 'Rename one of the groups, or allow duplicate names with (?J).',
+            ErrorCode::SubroutineMissingNamedGroup => 'Name the group the call reaches, or call a group the pattern names.',
+            ErrorCode::UnicodePropertyInvalid => 'Use a property PCRE2 knows, such as \\p{L}, \\p{Lu}, \\p{N} or a script such as \\p{Greek}.',
+            default => null,
+        };
     }
 }

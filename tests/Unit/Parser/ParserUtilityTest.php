@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ParserUtilityTest extends TestCase
 {
+    use PcreGates;
+
     private ParserAccessor $accessor;
 
     protected function setUp(): void
@@ -330,6 +333,8 @@ final class ParserUtilityTest extends TestCase
     #[DataProvider('provideNulDelimiter')]
     public function test_a_nul_delimiter_is_refused_like_php(string $regex): void
     {
+        $this->requiresPhpReading($regex);
+
         // Oracle: preg_match() refuses the pattern.
         $this->assertFalse(@preg_match($regex, 'a'));
 
@@ -359,6 +364,8 @@ final class ParserUtilityTest extends TestCase
 
     public function test_invalid_delimiter_message_names_nul_not_whitespace(): void
     {
+        $this->requiresPhp('8.2', 'A NUL delimiter', 'refuses a NUL byte in a pattern before it reads the delimiter');
+
         try {
             PatternParser::extractPatternAndFlags("\0/a/");
             $this->fail('A NUL delimiter must be refused.');

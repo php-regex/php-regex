@@ -16,7 +16,7 @@ namespace PHPRegex\Optimizer;
 /**
  * Captures optimization output with a simple change log.
  */
-final readonly class OptimizationResult implements \JsonSerializable
+final class OptimizationResult implements \JsonSerializable
 {
     /**
      * @internal built by Optimizer::optimize(), Regex::optimize() and Regex::analyze()
@@ -24,9 +24,9 @@ final readonly class OptimizationResult implements \JsonSerializable
      * @param array<string> $changes
      */
     public function __construct(
-        public string $original,
-        public string $optimized,
-        public array $changes = [],
+        public readonly string $original,
+        public readonly string $optimized,
+        public readonly array $changes = [],
     ) {}
 
     public function isChanged(): bool

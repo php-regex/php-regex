@@ -38,13 +38,13 @@ use PHPRegex\Parser\RegexParser;
  * are given, and throw rather than return a pattern that is not the one they
  * were given. Neither probes the engine.
  */
-final readonly class PatternFormatter
+final class PatternFormatter
 {
     private const CLOSING_DELIMITERS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 
-    private int $width;
+    private readonly int $width;
 
-    private PcreTarget $target;
+    private readonly PcreTarget $target;
 
     /**
      * @param int             $width  the width a line aims at, indent included:

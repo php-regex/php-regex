@@ -22,12 +22,12 @@ use PHPRegex\Parser\Node\NodeInterface;
  *
  * @internal
  */
-final readonly class ConditionalHir extends Hir
+final class ConditionalHir extends Hir
 {
     public function __construct(
-        public NodeInterface $condition,
-        public Hir $yes,
-        public Hir $no,
+        public readonly NodeInterface $condition,
+        public readonly Hir $yes,
+        public readonly Hir $no,
         int $conditionCaptureCount = 0,
         int $startPosition = 0,
         int $endPosition = 0,

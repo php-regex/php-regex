@@ -20,11 +20,11 @@ use PHPRegex\Parser\Hir\CharSet;
  *
  * @internal
  */
-final readonly class NfaTransition
+final class NfaTransition
 {
     /**
      * @param CharSet $charSet Transition label
      * @param int     $target  Target state id
      */
-    public function __construct(public CharSet $charSet, public int $target) {}
+    public function __construct(public readonly CharSet $charSet, public readonly int $target) {}
 }

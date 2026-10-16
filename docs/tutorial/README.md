@@ -33,7 +33,7 @@ Every chapter mixes two things: regex concepts you can use with `preg_match()` t
 
 ### Prerequisites
 
-- PHP 8.2 or newer
+- PHP 8.1 or newer
 - the `mbstring` extension
 - nothing else: the regex engine (PCRE2) ships inside PHP itself
 

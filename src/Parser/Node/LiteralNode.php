@@ -18,13 +18,13 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a literal character or sequence in a regex.
  */
-final readonly class LiteralNode extends AbstractNode
+final class LiteralNode extends AbstractNode
 {
     public function __construct(
-        public string $value,
+        public readonly string $value,
         int $startPosition,
         int $endPosition,
-        public bool $isRaw = false
+        public readonly bool $isRaw = false
     ) {
         parent::__construct($startPosition, $endPosition);
     }

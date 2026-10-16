@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * GitHub Actions output formatter.
@@ -119,7 +120,7 @@ final class GithubFormatter extends AbstractOutputFormatter
 
     private function formatProblemTitle(Diagnostic $problem): string
     {
-        $title = ucfirst($problem->type->value);
+        $title = Ascii::upperFirst($problem->type->value);
         if (null !== $problem->code && '' !== $problem->code) {
             $title .= ' ('.$problem->code.')';
         }

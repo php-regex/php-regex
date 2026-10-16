@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Transpiler\Target\TargetInterface;
 use PHPRegex\Transpiler\TranspileContext;
@@ -23,7 +24,7 @@ use PHPRegex\Transpiler\TranspileException;
  *
  * @internal
  */
-final readonly class JavaScriptTarget implements TargetInterface
+final class JavaScriptTarget implements TargetInterface
 {
     private const SUPPORTED_FLAGS = ['i', 'm', 's', 'u'];
 
@@ -58,7 +59,7 @@ final readonly class JavaScriptTarget implements TargetInterface
         $normalized = '';
         $unsupported = [];
 
-        foreach (str_split($flags) as $flag) {
+        foreach (Bytes::split($flags) as $flag) {
             if (\in_array($flag, self::SUPPORTED_FLAGS, true)) {
                 $normalized .= $flag;
 
@@ -97,7 +98,7 @@ final readonly class JavaScriptTarget implements TargetInterface
             }
         }
 
-        $normalized = implode('', array_unique(str_split($normalized)));
+        $normalized = implode('', array_unique(Bytes::split($normalized)));
 
         return $this->normalizeFlagOrder($normalized);
     }

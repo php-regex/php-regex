@@ -44,7 +44,7 @@ Installation
 composer require php-regex/regex-explain
 ```
 
-Requires PHP 8.2 and `php-regex/regex-parser` at the same version, pulled in
+Requires PHP 8.1+ and `php-regex/regex-parser` at the same version, pulled in
 automatically.
 
 Usage

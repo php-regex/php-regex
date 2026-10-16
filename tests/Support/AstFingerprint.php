@@ -51,6 +51,7 @@ final class AstFingerprint
         'src/Parser/Analysis/GroupNumbering.php',
         'src/Parser/Analysis/GroupNumberingCollector.php',
         'src/Parser/Internal/Ascii.php',
+        'src/Parser/Internal/Bytes.php',
         'src/Parser/Internal/CodePointReader.php',
         'src/Parser/Internal/ExtendedClassReader.php',
         'src/Parser/Internal/GroupIndex.php',
@@ -63,6 +64,7 @@ final class AstFingerprint
         'src/Parser/Internal/PatternParser.php',
         'src/Parser/Internal/PcreVerb.php',
         'src/Parser/Internal/PhpVersionGates.php',
+        'src/Parser/Internal/PropertyNames.php',
         'src/Parser/Internal/StartOptions.php',
         'src/Parser/Internal/VersionCondition.php',
         // The HIR and the automata built from it: a persistent DFA cache is

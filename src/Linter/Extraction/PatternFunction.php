@@ -22,7 +22,7 @@ namespace PHPRegex\Linter\Extraction;
  *
  * @internal
  */
-final readonly class PatternFunction
+final class PatternFunction
 {
     /**
      * The names a configured helper whose spec names no parameter takes
@@ -70,7 +70,7 @@ final readonly class PatternFunction
      *
      * @var list<string>
      */
-    public array $parameterNames;
+    public readonly array $parameterNames;
 
     /**
      * The names of each argument of $moreArgumentIndexes, in their order,
@@ -78,7 +78,7 @@ final readonly class PatternFunction
      *
      * @var list<list<string>>
      */
-    public array $moreParameterNames;
+    public readonly array $moreParameterNames;
 
     /**
      * @param string                          $label               name used in reports, e.g. "preg_match" or "Preg::match"
@@ -113,19 +113,19 @@ final readonly class PatternFunction
      * @param string                          $patternSuffix       what the call appends to every pattern it reads
      */
     public function __construct(
-        public string $label,
-        public int $argumentIndex = 0,
-        public bool $keysArePatterns = false,
-        public ?int $replacementIndex = null,
-        public array $moreArgumentIndexes = [],
+        public readonly string $label,
+        public readonly int $argumentIndex = 0,
+        public readonly bool $keysArePatterns = false,
+        public readonly ?int $replacementIndex = null,
+        public readonly array $moreArgumentIndexes = [],
         array $parameterNames = ['pattern'],
         array $moreParameterNames = [],
-        public string $kind = self::KIND_CALL,
-        public array $optionPath = [],
-        public bool $optionPathRequired = false,
-        public ?array $filterArgument = null,
-        public ?array $utf8Argument = null,
-        public string $patternSuffix = '',
+        public readonly string $kind = self::KIND_CALL,
+        public readonly array $optionPath = [],
+        public readonly bool $optionPathRequired = false,
+        public readonly ?array $filterArgument = null,
+        public readonly ?array $utf8Argument = null,
+        public readonly string $patternSuffix = '',
     ) {
         // Sorted and without duplicates: the order the declarations were
         // read in makes no other function.

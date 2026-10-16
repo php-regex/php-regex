@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\NearMiss;
 
@@ -25,12 +26,12 @@ use PHPRegex\Parser\Internal\NearMiss;
  *
  * @internal
  */
-final readonly class LintConfigValidator
+final class LintConfigValidator
 {
     /**
      * @var array<string, mixed>
      */
-    private array $schema;
+    private readonly array $schema;
 
     public function __construct()
     {
@@ -133,7 +134,7 @@ final readonly class LintConfigValidator
         }
 
         if (isset($schema['enum'])) {
-            $candidate = \is_string($value) && true === ($schema['x-case-insensitive'] ?? false) ? strtolower($value) : $value;
+            $candidate = \is_string($value) && true === ($schema['x-case-insensitive'] ?? false) ? Ascii::lower($value) : $value;
             if (!\in_array($candidate, $this->map($schema['enum']), true)) {
                 return false;
             }

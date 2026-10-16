@@ -75,6 +75,6 @@ final class NearMiss
 
     private static function fold(string $name): string
     {
-        return strtolower(str_replace('_', '', $name));
+        return Ascii::lower(str_replace('_', '', $name));
     }
 }

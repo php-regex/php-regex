@@ -68,7 +68,7 @@ final class ProjectTargetRangeTest extends TestCase
         yield 'tilde with a patch keeps the patch gates of its minor' => ['constraint' => '~8.4.0', 'expected' => [80400, 80425]];
         // "~8.3" is ">=8.3 <9.0", "~8" is ">=8 <9.0".
         yield 'tilde with a minor' => ['constraint' => '~8.3', 'expected' => [80300, 80400, 80425, 80500, 80510]];
-        yield 'tilde with a major' => ['constraint' => '~8', 'expected' => [80200, 80300, 80400, 80425, 80500, 80510]];
+        yield 'tilde with a major' => ['constraint' => '~8', 'expected' => [80100, 80200, 80300, 80400, 80425, 80500, 80510]];
         yield 'wildcard minor' => ['constraint' => '8.2.*', 'expected' => [80200]];
         yield 'AND with an upper bound' => ['constraint' => '>=8.2 <8.4', 'expected' => [80200, 80300]];
         yield 'hyphen range' => ['constraint' => '8.2 - 8.4', 'expected' => [80200, 80300, 80400, 80425]];
@@ -83,7 +83,8 @@ final class ProjectTargetRangeTest extends TestCase
         yield 'floor past a patch gate of its minor' => ['constraint' => '^8.4.30', 'expected' => [80430, 80500, 80510]];
         yield 'floor on a patch gate' => ['constraint' => '>=8.4.25', 'expected' => [80425, 80500, 80510]];
         yield 'bare version' => ['constraint' => '8.3.4', 'expected' => [80304]];
-        yield 'floor clamped to 8.2' => ['constraint' => '>=8.1,<8.4', 'expected' => [80200, 80300]];
+        yield 'floor on 8.1' => ['constraint' => '>=8.1,<8.4', 'expected' => [80100, 80200, 80300]];
+        yield 'floor clamped to 8.1' => ['constraint' => '>=8.0,<8.4', 'expected' => [80100, 80200, 80300]];
         // "<=8.4" is "<=8.4.0": 8.4 itself, not its 8.4.25 gate.
         yield 'inclusive upper bound' => ['constraint' => '>=8.2 <=8.4', 'expected' => [80200, 80300, 80400]];
         yield 'inclusive upper bound on a patch gate' => ['constraint' => '>=8.2 <=8.4.25', 'expected' => [80200, 80300, 80400, 80425]];
@@ -100,7 +101,7 @@ final class ProjectTargetRangeTest extends TestCase
         yield 'OR branch of one patch release' => ['constraint' => '8.2.* || 8.4.27', 'expected' => [80200, 80427]];
         yield 'OR branch that allows nothing' => ['constraint' => '8.2.* || >=8.5 <8.4 || >=8.5.3', 'expected' => [80200, 80503, 80510]];
         yield 'OR branch empty at its own lowest version' => ['constraint' => '8.2.* || >=8.4 <8.4', 'expected' => [80200]];
-        yield 'OR branches below the clamped floor' => ['constraint' => '^7.4 || ^8.0', 'expected' => [80200, 80300, 80400, 80425, 80500, 80510]];
+        yield 'OR branches below the clamped floor' => ['constraint' => '^7.4 || ^8.0', 'expected' => [80100, 80200, 80300, 80400, 80425, 80500, 80510]];
     }
 
     /**

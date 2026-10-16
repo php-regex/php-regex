@@ -18,6 +18,7 @@ use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * Extracts regex patterns from PHP source files using configured extractor.
@@ -27,7 +28,7 @@ use PHPRegex\Linter\Internal\ForkedWorkerPool;
  *
  * @internal
  */
-final readonly class PatternExtractor
+final class PatternExtractor
 {
     private const WORKER_ALLOWED_CLASSES = [
         PatternOccurrence::class,
@@ -48,7 +49,7 @@ final readonly class PatternExtractor
         '.twig.php',
     ];
 
-    public function __construct(private ExtractorInterface $extractor) {}
+    public function __construct(private readonly ExtractorInterface $extractor) {}
 
     public static function supportsParallel(): bool
     {
@@ -172,7 +173,7 @@ final readonly class PatternExtractor
     {
         $hash = strrpos($spec, '#');
 
-        return strtolower(false === $hash ? $spec : substr($spec, 0, $hash));
+        return Ascii::lower(false === $hash ? $spec : substr($spec, 0, $hash));
     }
 
     /**

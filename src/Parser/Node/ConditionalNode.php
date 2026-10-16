@@ -18,12 +18,12 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a conditional sub-pattern.
  */
-final readonly class ConditionalNode extends AbstractNode
+final class ConditionalNode extends AbstractNode
 {
     public function __construct(
-        public NodeInterface $condition,
-        public NodeInterface $yes,
-        public NodeInterface $no,
+        public readonly NodeInterface $condition,
+        public readonly NodeInterface $yes,
+        public readonly NodeInterface $no,
         int $startPosition,
         int $endPosition
     ) {

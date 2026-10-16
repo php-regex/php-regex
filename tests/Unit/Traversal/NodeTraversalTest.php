@@ -42,7 +42,7 @@ final class NodeTraversalTest extends TestCase
         $tree = RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])->parse($pattern);
         $reached = 0;
 
-        NodeWalker::walk($tree, static function () use (&$reached): null {
+        NodeWalker::walk($tree, static function () use (&$reached): ?TraversalAction {
             $reached++;
 
             return null;
@@ -117,7 +117,7 @@ final class NodeTraversalTest extends TestCase
 
         NodeWalker::walk(
             $tree,
-            static fn (): null => null,
+            static fn (): ?TraversalAction => null,
             static function (NodeInterface $node) use (&$left): ?TraversalAction {
                 $left[] = $node instanceof LiteralNode ? $node->value : null;
 
@@ -163,14 +163,14 @@ final class NodeTraversalTest extends TestCase
 
         NodeWalker::walk(
             $tree,
-            static function (NodeInterface $node, array $ancestors) use (&$depths): null {
+            static function (NodeInterface $node, array $ancestors) use (&$depths): ?TraversalAction {
                 if ($node instanceof LiteralNode) {
                     $depths[] = array_map(static fn (NodeInterface $ancestor): string => (new \ReflectionClass($ancestor))->getShortName(), $ancestors);
                 }
 
                 return null;
             },
-            static function (NodeInterface $node) use (&$left): null {
+            static function (NodeInterface $node) use (&$left): ?TraversalAction {
                 $left[] = (new \ReflectionClass($node))->getShortName();
 
                 return null;

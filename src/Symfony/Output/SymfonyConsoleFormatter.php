@@ -22,4 +22,4 @@ use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
  *
  * @internal
  */
-final readonly class SymfonyConsoleFormatter extends AbstractConsoleTagFormatter {}
+final class SymfonyConsoleFormatter extends AbstractConsoleTagFormatter {}

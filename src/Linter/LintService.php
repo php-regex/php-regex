@@ -37,7 +37,7 @@ use PHPRegex\Redos\RedosSeverity;
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
  */
-final readonly class LintService
+final class LintService
 {
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
 
@@ -61,7 +61,7 @@ final readonly class LintService
         'regex.lint.anchor.dollarNewline' => true,
     ];
 
-    public function __construct(private AnalysisService $analysis, private PatternSourceCollection $sources) {}
+    public function __construct(private readonly AnalysisService $analysis, private readonly PatternSourceCollection $sources) {}
 
     /**
      * The same sources, analysed by another analysis.

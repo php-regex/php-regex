@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
@@ -289,12 +290,12 @@ final class UselessIFlagRule extends AbstractLintRule
         $normalized = trim($normalized, '{}');
         $normalized = str_replace(['-', ' '], '_', $normalized);
 
-        return strtolower($normalized);
+        return Ascii::lower($normalized);
     }
 
     private function posixClassHasCaseSensitiveLetters(string $class): bool
     {
-        $normalized = strtolower(ltrim($class, '^'));
+        $normalized = Ascii::lower(ltrim($class, '^'));
 
         return \in_array($normalized, ['upper', 'lower'], true);
     }

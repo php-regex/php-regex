@@ -1,5 +1,5 @@
 ---
-description: "Register the PHPRegex bundle in Symfony 7.4 or 8.x: the php_regex.regex service, regex:* console commands, route and firewall analysis, the 1.x upgrade."
+description: "Register the PHPRegex bundle in Symfony 6.4, 7.4 or 8.x: the php_regex.regex service, regex:* console commands, route and firewall analysis, the 1.x upgrade."
 ---
 
 # Symfony Bundle Guide
@@ -8,7 +8,7 @@ The bundle registers a `Regex` service for your application and the
 `bin/console regex:*` commands. Its configuration lives under the
 `php_regex` key.
 
-Requires PHP 8.2 or later and Symfony 7.4 or 8.x — 6.4 LTS is not supported.
+Requires PHP 8.1 or later and Symfony 6.4 LTS, 7.4 or 8.x.
 The bundle ships no Symfony Flex recipe: register it by hand in
 `config/bundles.php`.
 

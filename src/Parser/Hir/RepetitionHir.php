@@ -18,13 +18,13 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class RepetitionHir extends Hir
+final class RepetitionHir extends Hir
 {
     public function __construct(
-        public Hir $body,
-        public int $min,
-        public ?int $max,
-        public Greed $greed,
+        public readonly Hir $body,
+        public readonly int $min,
+        public readonly ?int $max,
+        public readonly Greed $greed,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

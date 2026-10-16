@@ -23,20 +23,20 @@ use PHPRegex\Parser\Node\NodeInterface;
  * @phpstan-import-type WitnessArray from RedosWitness
  * @phpstan-import-type SearchCostArray from RedosSearchCost
  */
-final readonly class RedosAnalysis implements \JsonSerializable
+final class RedosAnalysis implements \JsonSerializable
 {
     /**
      * The PCRE2 release the verdict was computed with: verdicts are
      * deterministic per release and analysis version.
      */
-    public string $pcreVersion;
+    public readonly string $pcreVersion;
 
     /**
      * The PHP release that ran the analysis: under "iu" the proof pairs a
      * character with its other case through its mbstring tables, which
      * follow the PHP release, not the PCRE2 one.
      */
-    public string $phpVersion;
+    public readonly string $phpVersion;
 
     /**
      * @internal built by RedosAnalyzer::analyze() and Regex::redos()
@@ -52,30 +52,30 @@ final readonly class RedosAnalysis implements \JsonSerializable
      * @param RedosSearchCost|null $searchCost       the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
      */
     public function __construct(
-        public RedosSeverity $severity,
-        public int $score,
-        public ?string $vulnerablePart = null,
-        public array $recommendations = [],
-        public ?string $error = null,
-        public ?string $trigger = null,
-        public RedosConfidence $confidence = RedosConfidence::Low,
-        public ?string $falsePositiveRisk = null,
-        public array $findings = [],
-        public ?string $suggestedRewrite = null,
-        public ?NodeInterface $culpritNode = null,
-        public array $hotspots = [],
-        public RedosMode $mode = RedosMode::Theoretical,
-        public ?Confirmation $confirmation = null,
-        public RedosComplexity $complexity = RedosComplexity::Unknown,
-        public ?int $degree = null,
-        public RedosProof $proof = RedosProof::Heuristic,
-        public ?RedosWitness $witness = null,
-        public ?bool $replayed = null,
-        public array $abstractions = [],
+        public readonly RedosSeverity $severity,
+        public readonly int $score,
+        public readonly ?string $vulnerablePart = null,
+        public readonly array $recommendations = [],
+        public readonly ?string $error = null,
+        public readonly ?string $trigger = null,
+        public readonly RedosConfidence $confidence = RedosConfidence::Low,
+        public readonly ?string $falsePositiveRisk = null,
+        public readonly array $findings = [],
+        public readonly ?string $suggestedRewrite = null,
+        public readonly ?NodeInterface $culpritNode = null,
+        public readonly array $hotspots = [],
+        public readonly RedosMode $mode = RedosMode::Theoretical,
+        public readonly ?Confirmation $confirmation = null,
+        public readonly RedosComplexity $complexity = RedosComplexity::Unknown,
+        public readonly ?int $degree = null,
+        public readonly RedosProof $proof = RedosProof::Heuristic,
+        public readonly ?RedosWitness $witness = null,
+        public readonly ?bool $replayed = null,
+        public readonly array $abstractions = [],
         ?string $pcreVersion = null,
-        public string $analysisVersion = RedosAnalyzer::ANALYSIS_VERSION,
-        public ?int $upperBoundDegree = null,
-        public ?RedosSearchCost $searchCost = null,
+        public readonly string $analysisVersion = RedosAnalyzer::ANALYSIS_VERSION,
+        public readonly ?int $upperBoundDegree = null,
+        public readonly ?RedosSearchCost $searchCost = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
         $this->phpVersion = \PHP_VERSION;

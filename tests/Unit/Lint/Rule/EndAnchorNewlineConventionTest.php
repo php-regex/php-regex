@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,10 +26,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class EndAnchorNewlineConventionTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideEndAnchorsBeforeTheirNewline')]
     public function test_an_end_anchor_before_the_convention_newline_is_not_reported(string $pattern, string $subject): void
     {
+        $this->requiresPhpReading($pattern);
+
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the pattern matches.
         $this->assertSame(1, preg_match($pattern, $subject));
 

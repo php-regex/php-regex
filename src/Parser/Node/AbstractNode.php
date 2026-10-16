@@ -16,9 +16,9 @@ namespace PHPRegex\Parser\Node;
 /**
  * Abstract base class for all AST nodes.
  */
-abstract readonly class AbstractNode implements NodeInterface
+abstract class AbstractNode implements NodeInterface
 {
-    public function __construct(public int $startPosition, public int $endPosition) {}
+    public function __construct(public readonly int $startPosition, public readonly int $endPosition) {}
 
     public function getStartPosition(): int
     {

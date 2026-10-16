@@ -29,7 +29,7 @@ namespace PHPRegex\Symfony\Routing;
  * }
  * @phpstan-type RouteSkip array{route: string, reason: string}
  */
-final readonly class RouteConflictReport
+final class RouteConflictReport
 {
     /**
      * @param array<RouteConflict> $conflicts
@@ -39,10 +39,10 @@ final readonly class RouteConflictReport
      * @param array<int, string>   $routesWithUnsupportedHosts
      */
     public function __construct(
-        public array $conflicts,
-        public array $skippedRoutes,
-        public array $stats,
-        public array $routesWithConditions,
-        public array $routesWithUnsupportedHosts,
+        public readonly array $conflicts,
+        public readonly array $skippedRoutes,
+        public readonly array $stats,
+        public readonly array $routesWithConditions,
+        public readonly array $routesWithUnsupportedHosts,
     ) {}
 }

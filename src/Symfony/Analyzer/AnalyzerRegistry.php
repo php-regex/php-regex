@@ -16,12 +16,12 @@ namespace PHPRegex\Symfony\Analyzer;
 /**
  * @internal
  */
-final readonly class AnalyzerRegistry
+final class AnalyzerRegistry
 {
     /**
      * @var array<int, AnalyzerInterface>
      */
-    private array $analyzers;
+    private readonly array $analyzers;
 
     /**
      * @param iterable<AnalyzerInterface> $analyzers

@@ -65,11 +65,11 @@ use PHPRegex\Linter\PatternOccurrence;
  *
  * @internal
  */
-final readonly class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
+final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
 {
-    private ?Parser $parser;
+    private readonly ?Parser $parser;
 
-    private PatternFunctionRegistry $registry;
+    private readonly PatternFunctionRegistry $registry;
 
     /**
      * @param array<int, string> $customFunctions Additional functions/static methods to check (e.g., 'MyClass::customRegexCheck')

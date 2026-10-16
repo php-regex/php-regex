@@ -17,7 +17,8 @@ namespace PHPRegex\Parser\Internal;
  * The character classes PCRE reads in ASCII, whatever the locale of the
  * process: ctype_* answers for the current LC_CTYPE, where a Latin-1 locale
  * makes "\xE4" a letter. Each check is false for the empty string, as
- * ctype_* is.
+ * ctype_* is. Case is mapped the same way: PHP 8.1 lowers and uppers through
+ * the locale, PHP 8.2 maps the ASCII letters only.
  *
  * @internal
  */
@@ -25,7 +26,11 @@ final class Ascii
 {
     private const DIGITS = '0123456789';
 
-    private const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    private const LOWER = 'abcdefghijklmnopqrstuvwxyz';
+
+    private const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    private const LETTERS = self::LOWER.self::UPPER;
 
     private const HEX_LETTERS = 'abcdefABCDEF';
 
@@ -63,6 +68,32 @@ final class Ascii
     public static function isHexDigit(string $text): bool
     {
         return self::consistsOf($text, self::DIGITS.self::HEX_LETTERS);
+    }
+
+    /**
+     * The text with A to Z lowered and every other byte kept.
+     */
+    public static function lower(string $text): string
+    {
+        return strtr($text, self::UPPER, self::LOWER);
+    }
+
+    /**
+     * The text with a to z uppered and every other byte kept.
+     */
+    public static function upper(string $text): string
+    {
+        return strtr($text, self::LOWER, self::UPPER);
+    }
+
+    public static function lowerFirst(string $text): string
+    {
+        return '' === $text ? '' : self::lower($text[0]).substr($text, 1);
+    }
+
+    public static function upperFirst(string $text): string
+    {
+        return '' === $text ? '' : self::upper($text[0]).substr($text, 1);
     }
 
     private static function consistsOf(string $text, string $characters): bool

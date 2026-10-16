@@ -25,7 +25,7 @@ use PHPRegex\Parser\Analysis\CaptureGroupShape;
  *
  * @internal
  */
-final readonly class CaptureKey
+final class CaptureKey
 {
     /**
      * @param int|string              $key       the group number, 0 for the whole match, or the name
@@ -36,12 +36,12 @@ final readonly class CaptureKey
      * @param bool                    $alwaysSet the value is a set group's on every match: an offset pair then starts at 0, not -1
      */
     public function __construct(
-        public int|string $key,
-        public bool $optional,
-        public array $groups,
-        public bool $unset,
-        public bool $marks,
-        public bool $alwaysSet,
+        public readonly int|string $key,
+        public readonly bool $optional,
+        public readonly array $groups,
+        public readonly bool $unset,
+        public readonly bool $marks,
+        public readonly bool $alwaysSet,
     ) {}
 
     /**

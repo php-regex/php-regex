@@ -16,9 +16,9 @@ namespace PHPRegex\Automata\Solver;
 /**
  * Result of a subset check between two regexes.
  */
-final readonly class SubsetResult
+final class SubsetResult
 {
-    public string $pcreVersion;
+    public readonly string $pcreVersion;
 
     /**
      * @internal built by LanguageSolver::subsetOf()
@@ -28,8 +28,8 @@ final readonly class SubsetResult
      * @param string|null $pcreVersion    The PCRE2 release the answer was computed with
      */
     public function __construct(
-        public bool $isSubset,
-        public ?string $counterExample = null,
+        public readonly bool $isSubset,
+        public readonly ?string $counterExample = null,
         ?string $pcreVersion = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];

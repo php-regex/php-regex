@@ -21,7 +21,7 @@ PHPRegex Toolkit
 
 One entry point to every PHPRegex analysis library: parse, validate, explain, check ReDoS, optimize, generate, transpile and lint.
 
-Requires PHP 8.2+. MIT licensed.
+Requires PHP 8.1+. MIT licensed.
 
 Documentation: [php-regex.com](https://php-regex.com) — the [quick start](https://php-regex.com/quick-start/) opens with the facade at work.
 

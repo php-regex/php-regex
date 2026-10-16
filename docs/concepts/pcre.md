@@ -25,11 +25,15 @@ The `preg_*` family - what each function returns, with examples - is tabulated i
 echo PCRE_VERSION; // e.g., "10.42 2022-12-11"
 ```
 
-Some syntax depends on that release. PHP 8.2 and 8.3 bundle PCRE2 10.40
-and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
+Some syntax depends on that release. PHP 8.1 bundles PCRE2 10.39 (8.1.0
+bundled 10.37), PHP 8.2 and 8.3 bundle 10.40 and 10.42; PHP 8.4 bundles 10.44,
+which reads PCRE2 10.43's additions:
 
 | Syntax | Example | Needs |
 |---|---|---|
+| A property name spelled loosely: another case, spaces, hyphens or underscores dropped | `\p{greek}`, `\p{Old Italic}`, `\p{lu}` | PCRE2 10.40, PHP 8.2 |
+| Script and script extension tables, four-letter script codes | `\p{sc:Greek}`, `\p{scx:Greek}`, `\p{Grek}` | PCRE2 10.40, PHP 8.2 |
+| Bidi classes and binary properties | `\p{bc=L}`, `\p{Bidi_Control}`, `\p{Alphabetic}` | PCRE2 10.40, PHP 8.2 |
 | Variable-length lookbehind | `(?<=ab?)` | PCRE2 10.43, PHP 8.4 |
 | Caseless restrict option | `(?r)` | PCRE2 10.43, PHP 8.4 |
 | ASCII options: `a` alone, or with one of `D`, `S`, `W`, `P`, `T` | `(?aD)` | PCRE2 10.43, PHP 8.4 |
@@ -46,6 +50,25 @@ and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's additions:
 | Calls that return capture groups | `(?1(2,<name>))`, `(?R(1))`, `(?&name('id'))` | PCRE2 10.47, bundled by no PHP release yet |
 | `\K` inside a lookaround | `(?=a\K)` | allowed up to PHP 8.4; PHP 8.5 compiles without `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` and refuses it |
 
+#### PHP 8.1 and PCRE2 10.39
+
+PCRE2 10.39 looks a property up by one exact name, as its table spells it:
+`\p{Greek}`, `\p{Old_Italic}`, `\p{Lu}`, `\p{L&}`, `\p{Xan}`. Any other
+spelling is an unknown property there, and a braced name of 31 characters or
+more is a malformed `\p`. From 10.40, a bare script name also means another
+set: `\p{Han}` holds the characters whose script extensions name Han, where
+10.39 held those whose script is Han, so the ideographic comma U+3001 is
+`\p{Han}` on PHP 8.2 and not on PHP 8.1. Patterns judged for PHP 8.1 read
+both rules: the validator refuses what 10.39 refuses, and the automata read a
+script name as the script. Other answers the automata take from the running
+engine, such as the characters of a property, follow that engine's Unicode
+version.
+
+PHP 8.1.0 bundled PCRE2 10.37, which lacks five Unicode 14 scripts 10.39 knows
+(`Cypro_Minoan`, `Old_Uyghur`, `Tangsa`, `Toto`, `Vithkuqi`): it is judged as
+10.39, and so is any older release. PCRE2 10.40 also fixed matching bugs that
+no verdict models: on 10.39, `/[Aa]{2}/` does not match `aa`.
+
 ### Which PHP and which PCRE2 judge a pattern
 
 A pattern is judged for one PHP version and one PCRE2 release, the *target*,
@@ -57,7 +80,7 @@ error offsets and the cache key.
 | options | target |
 |---|---|
 | none | the running PHP and the PCRE2 it links (`PCRE_VERSION`) |
-| `php_version` | that PHP with the PCRE2 its sources bundle: 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5 |
+| `php_version` | that PHP with the PCRE2 its sources bundle: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5 |
 | `pcre_version` | the running PHP with that PCRE2 release |
 | both | that PHP with that PCRE2 release |
 
@@ -71,7 +94,7 @@ $regex->validate('/(?aD)x/')->isValid; // false: "(?aD)" is PCRE2 10.43 syntax
 $regex->target();                       // PcreTarget: PHP 80400, PCRE2 10.42
 ```
 
-A release older than 10.40 is judged with the 10.40 rules, a release newer than
+A release older than 10.39 is judged with the 10.39 rules, a release newer than
 the library knows with the newest rules it has. The command line takes the same
 pair as `--php-version` and `--pcre-version` (see [the CLI guide](../guides/cli.md)).
 
@@ -96,7 +119,8 @@ from the running engine are checked against each of them.
 A few answers still come from the running engine, because PCRE2 exposes no
 other way to get them: whether a Unicode property or script name exists (the
 running engine is asked, then a table of the names each release added corrects
-the answer for another target), the samples `generate()` checks, the ReDoS
+the answer for another target; for PCRE2 10.39, the library's own table of the
+names it knows decides), the samples `generate()` checks, the ReDoS
 confirmation run, and `runtime_pcre_validation`, which compiles with the
 running PHP and is refused with a target that is not that engine.
 
@@ -149,6 +173,7 @@ and a target has it from the release it arrived in on
 
 | behaviour | from | what changed |
 |---|---|---|
+| `LoosePropertyNames` | 10.40 | "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions. |
 | `OpenAndPaddedRepeatCounts` | 10.43 | "{,2}" and a count padded with spaces, as "{ 2 }", repeat instead of matching as text. |
 | `PaddedBracedEscapes` | 10.43 | Spaces are allowed inside braced escapes and references, as "\x{ 41 }" or "\g{ 1 }". |
 | `VariableLengthLookbehind` | 10.43 | A lookbehind may hold branches of different lengths, up to 255 characters. |

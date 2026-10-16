@@ -30,4 +30,4 @@ namespace PHPRegex\Parser\Attribute;
  * @api
  */
 #[\Attribute(\Attribute::TARGET_PARAMETER)]
-final readonly class RegexPattern {}
+final class RegexPattern {}

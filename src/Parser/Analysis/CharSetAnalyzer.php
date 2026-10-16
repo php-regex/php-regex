@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -37,18 +38,18 @@ use PHPRegex\Parser\Node\SequenceNode;
  *
  * @internal
  */
-final readonly class CharSetAnalyzer
+final class CharSetAnalyzer
 {
-    private bool $unicodeMode;
+    private readonly bool $unicodeMode;
 
-    private ByteCharSet $dot;
+    private readonly ByteCharSet $dot;
 
     /**
      * @param string $startOptions the options the pattern opens with, such
      *                             as "(*CR)(*UTF)": the newline convention
      *                             they set decides where the dot stops
      */
-    public function __construct(string $flags = '', private string $startOptions = '')
+    public function __construct(string $flags = '', private readonly string $startOptions = '')
     {
         $this->unicodeMode = str_contains($flags, 'u');
         $this->dot = self::dotSet(str_contains($flags, 's'), StartOptions::newline($startOptions));
@@ -255,7 +256,7 @@ final readonly class CharSetAnalyzer
         };
 
         $set = ByteCharSet::empty();
-        foreach (str_split($newlines) as $char) {
+        foreach (Bytes::split($newlines) as $char) {
             $set = $set->union(ByteCharSet::fromChar($char));
         }
 

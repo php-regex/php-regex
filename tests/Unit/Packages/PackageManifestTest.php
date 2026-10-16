@@ -45,10 +45,37 @@ final class PackageManifestTest extends TestCase
     ];
 
     /**
+     * The PHP each package runs on: 8.1 for all of them, the PHPStan, Psalm
+     * and Rector bridges like the tools they plug into, the Symfony and
+     * Laravel bridges on Symfony 6.4 and Laravel 10. The monorepo package
+     * installs every bridge, so it takes the highest floor of them.
+     */
+    private const PHP_FLOORS = [
+        'Automata' => '>=8.1',
+        'Cli' => '>=8.1',
+        'Explain' => '>=8.1',
+        'Generator' => '>=8.1',
+        'LanguageServer' => '>=8.1',
+        'Laravel' => '>=8.1',
+        'Linter' => '>=8.1',
+        'Optimizer' => '>=8.1',
+        'Parser' => '>=8.1',
+        'PHPStan' => '>=8.1',
+        'Psalm' => '>=8.1',
+        'Rector' => '>=8.1',
+        'Redos' => '>=8.1',
+        'Symfony' => '>=8.1',
+        'Toolkit' => '>=8.1',
+        'Transpiler' => '>=8.1',
+    ];
+
+    /**
      * The uses of a sibling's internal classes 2.0 ships with. Siblings always
      * run at the same version, so these may change in any release; a new entry
      * here is still a new cross-package dependency on code that promises
-     * nothing: make the class public instead, or keep it. Parser\Hir is
+     * nothing: make the class public instead, or keep it. Ascii and Bytes
+     * map case and split strings the same way on every PHP the packages
+     * run on. Parser\Hir is
      * watched the same way: it stays @internal while the analyses move onto
      * the normalized form.
      */
@@ -56,36 +83,36 @@ final class PackageManifestTest extends TestCase
         // The solver reads the whole normalized form: every class of
         // it, and the translator that builds the tree.
         'Automata' => [
-            'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind',
-            'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir',
-            'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
-            'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir',
-            'Parser\Hir\RepetitionHir', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StartOptions',
-            'Parser\Internal\StaticCaches',
+            'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind', 'Parser\Hir\AtomicHir',
+            'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir',
+            'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
+            'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind',
+            'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre',
+            'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches',
         ],
         'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Linter\Internal\WorkerCount', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
-        'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
-        'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
+        'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
-        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\IniFlag', 'Parser\Internal\LibraryPcre'],
+        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\Ascii', 'Parser\Internal\IniFlag', 'Parser\Internal\LibraryPcre'],
         'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         // The lint writes its rewrite of a pattern under x into the
         // pattern's own layout, as the optimizer does, and checks it as
         // the optimizer checks its own.
-        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Optimizer\Internal\RewriteCheck', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
+        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Optimizer\Internal\RewriteCheck', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
         'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
-        'PHPStan' => ['Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        'PHPStan' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
-        'Psalm' => ['Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
-        'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
+        'Psalm' => ['Parser\Internal\Ascii', 'Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
+        'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
         'Symfony' => ['Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         'Toolkit' => ['Parser\Internal\PatternParser'],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
-        'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\LibraryPcre'],
+        'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre'],
     ];
 
     #[Test]
@@ -108,7 +135,7 @@ final class PackageManifestTest extends TestCase
         $this->assertSame('php-regex/'.$name, self::dig($manifest, 'name'));
         $this->assertSame('MIT', self::dig($manifest, 'license'));
         $this->assertSame(['PHPRegex\\'.$directory.'\\' => ''], self::dig($manifest, 'autoload', 'psr-4'));
-        $this->assertSame('>=8.2', self::dig($manifest, 'require', 'php'));
+        $this->assertSame(self::PHP_FLOORS[$directory], self::dig($manifest, 'require', 'php'), $directory);
         $this->assertSame(['dev-2.x' => '2.x-dev'], self::dig($manifest, 'extra', 'branch-alias'));
     }
 
@@ -410,6 +437,68 @@ final class PackageManifestTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideDirectories')]
+    public function test_a_package_runs_on_every_php_its_siblings_run_on(string $directory): void
+    {
+        foreach (self::strings(self::dig(self::manifest($directory), 'require')) as $package => $constraint) {
+            $sibling = array_search(substr($package, \strlen('php-regex/')), self::PACKAGES, true);
+            if (str_starts_with($package, 'php-regex/') && \is_string($sibling)) {
+                $this->assertLessThanOrEqual(self::floor(self::PHP_FLOORS[$directory]), self::floor(self::PHP_FLOORS[$sibling]), $directory.' requires '.$package);
+            }
+        }
+    }
+
+    #[Test]
+    public function test_the_cli_binary_refuses_the_php_its_package_refuses(): void
+    {
+        $script = (string) file_get_contents(self::root().'/src/Cli/bin/regex');
+
+        $this->assertSame(1, preg_match("~version_compare\\('(\\d+\\.\\d+)\\.0', \\\\PHP_VERSION, '>'\\)~", $script, $floor));
+        $this->assertSame(self::floor(self::PHP_FLOORS['Cli']), $floor[1]);
+        $this->assertStringContainsString('requires PHP >= '.$floor[1].'.0.', $script);
+    }
+
+    /**
+     * Symfony 6.4, the LTS that runs on PHP 8.1, then the supported 7.4 and
+     * 8; Laravel 10.37, the first the tests run on PHP 8.1, to 13.
+     */
+    #[Test]
+    #[DataProvider('provideFrameworkBridges')]
+    public function test_a_bridge_takes_every_supported_release_of_its_framework(string $directory, string $prefix, string $constraint): void
+    {
+        $found = 0;
+        foreach (self::strings(self::dig(self::manifest($directory), 'require')) as $package => $required) {
+            if (str_starts_with($package, $prefix)) {
+                $this->assertSame($constraint, $required, $package);
+                $found++;
+            }
+        }
+
+        $this->assertGreaterThan(0, $found, $directory.' requires no '.$prefix.' package.');
+    }
+
+    /**
+     * @return iterable<string, array{directory: string, prefix: string, constraint: string}>
+     */
+    public static function provideFrameworkBridges(): iterable
+    {
+        yield 'Symfony bundle' => ['directory' => 'Symfony', 'prefix' => 'symfony/', 'constraint' => '^6.4|^7.4|^8.0'];
+        yield 'Laravel on Symfony Console' => ['directory' => 'Laravel', 'prefix' => 'symfony/', 'constraint' => '^6.4|^7.4|^8.0'];
+        yield 'Laravel' => ['directory' => 'Laravel', 'prefix' => 'illuminate/', 'constraint' => '^10.37|^11.0|^12.0|^13.0'];
+    }
+
+    #[Test]
+    public function test_the_monorepo_package_takes_the_highest_php_floor_of_its_packages(): void
+    {
+        $floors = array_map(self::floor(...), self::PHP_FLOORS);
+        $root = self::dig(self::decode(self::root().'/composer.json'), 'require', 'php');
+
+        $this->assertIsString($root);
+        $this->assertSame(max($floors), self::floor($root));
+        $this->assertSame('>=8.1', $root);
+    }
+
+    #[Test]
     public function test_the_root_package_replaces_every_package(): void
     {
         $root = self::decode(self::root().'/composer.json');
@@ -441,6 +530,11 @@ final class PackageManifestTest extends TestCase
         foreach (array_keys(self::PACKAGES) as $directory) {
             yield $directory => [$directory];
         }
+    }
+
+    private static function floor(string $constraint): string
+    {
+        return substr($constraint, \strlen('>='));
     }
 
     /**

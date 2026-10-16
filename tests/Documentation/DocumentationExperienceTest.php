@@ -94,7 +94,7 @@ final class DocumentationExperienceTest extends TestCase
         $product = (string) file_get_contents(self::PRODUCT);
         $home = (string) file_get_contents(self::HOME);
 
-        $this->assertStringContainsString("php_floor: '8.2'", $product);
+        $this->assertStringContainsString("php_floor: '8.1'", $product);
         $this->assertStringContainsString('site.data.product.php_floor', $home);
         $this->assertStringContainsString('site.data.product.release', $home);
         $this->assertStringNotContainsString('php-regex/php-regex:2.x-dev', $home);

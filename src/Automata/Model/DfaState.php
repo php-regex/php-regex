@@ -21,7 +21,7 @@ namespace PHPRegex\Automata\Model;
  *
  * @phpstan-type RangeTransition array{0: int, 1: int, 2: int}
  */
-final readonly class DfaState
+final class DfaState
 {
     /**
      * @internal the solver builds the automata
@@ -30,10 +30,10 @@ final readonly class DfaState
      * @param array<int, RangeTransition> $ranges
      */
     public function __construct(
-        public int $id,
-        public array $transitions,
-        public bool $isAccepting,
-        public array $ranges = [],
+        public readonly int $id,
+        public readonly array $transitions,
+        public readonly bool $isAccepting,
+        public readonly array $ranges = [],
     ) {}
 
     public function transitionFor(int $codePoint): ?int

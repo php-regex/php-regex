@@ -25,16 +25,16 @@ use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
  *
  * @phpstan-type WitnessArray array{prefix: string, pump: string, suffix: string}
  */
-final readonly class RedosWitness
+final class RedosWitness
 {
     /**
      * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$witness
      */
     public function __construct(
-        public string $prefix,
-        public string $pump,
-        public string $suffix,
-        public bool $unicode,
+        public readonly string $prefix,
+        public readonly string $pump,
+        public readonly string $suffix,
+        public readonly bool $unicode,
     ) {}
 
     /**

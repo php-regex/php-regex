@@ -28,7 +28,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class WorkerCount
+final class WorkerCount
 {
     /**
      * cgroup v1 writes "no limit" as the largest page-aligned 64-bit value:
@@ -39,22 +39,22 @@ final readonly class WorkerCount
     /**
      * @var \Closure(): int
      */
-    private \Closure $cores;
+    private readonly \Closure $cores;
 
     /**
      * @var \Closure(string): ?string
      */
-    private \Closure $readFile;
+    private readonly \Closure $readFile;
 
     /**
      * @var \Closure(): bool
      */
-    private \Closure $canFork;
+    private readonly \Closure $canFork;
 
     /**
      * @var \Closure(): int
      */
-    private \Closure $processBytes;
+    private readonly \Closure $processBytes;
 
     /**
      * @param (\Closure(): int)|null           $cores        the CPUs, CpuCoreCounter's count by default

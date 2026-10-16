@@ -19,10 +19,10 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class ClassHir extends Hir
+final class ClassHir extends Hir
 {
     public function __construct(
-        public CharSet $set,
+        public readonly CharSet $set,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

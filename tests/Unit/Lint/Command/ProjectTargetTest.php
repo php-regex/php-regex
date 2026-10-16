@@ -147,7 +147,7 @@ final class ProjectTargetTest extends TestCase
 
     /**
      * Floors of 8.3 and above, so that no case can pass by landing on the
-     * 8.2 clamp. Each floor agrees with composer/semver's lower bound
+     * 8.1 clamp. Each floor agrees with composer/semver's lower bound
      * (VersionParser::parseConstraints()->getLowerBound()), except `>8.3`:
      * its bound is exclusive, and the target stays on 8.3 by design, since
      * no rule depends on a patch release.
@@ -173,15 +173,15 @@ final class ProjectTargetTest extends TestCase
 
     #[Test]
     #[DataProvider('provideClampedConstraints')]
-    public function test_resolve_clamps_a_floor_below_8_2(string $constraint): void
+    public function test_resolve_clamps_a_floor_below_8_1(string $constraint): void
     {
         $directory = $this->makeProject(['composer.json' => self::composer($constraint)]);
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertTarget(80200, '10.40', $resolved);
+        $this->assertTarget(80100, '10.39', $resolved);
         $this->assertNotSame([], $resolved->notices());
-        $this->assertStringContainsString('8.2', implode("\n", $resolved->notices()));
+        $this->assertStringContainsString('8.1', implode("\n", $resolved->notices()));
     }
 
     /**
@@ -190,7 +190,7 @@ final class ProjectTargetTest extends TestCase
     public static function provideClampedConstraints(): iterable
     {
         yield 'OR of old majors' => ['^7.4 || ^8.0'];
-        yield 'range starting at 8.1' => ['>=8.1,<8.4'];
+        yield 'range starting at 8.0' => ['>=8.0,<8.4'];
     }
 
     #[Test]

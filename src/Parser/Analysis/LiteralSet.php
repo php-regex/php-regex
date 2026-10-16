@@ -22,7 +22,7 @@ namespace PHPRegex\Parser\Analysis;
  * would pass the size limits is dropped rather than cut: a cut list would
  * leave out strings a match can start or end with.
  */
-final readonly class LiteralSet
+final class LiteralSet
 {
     private const MAX_SET_SIZE = 100; // Prevent memory explosion
     private const MAX_STRING_LENGTH = 1000; // Prevent extremely long literals
@@ -30,14 +30,14 @@ final readonly class LiteralSet
     /**
      * @var array<string>
      */
-    public array $prefixes;
+    public readonly array $prefixes;
 
     /**
      * @var array<string>
      */
-    public array $suffixes;
+    public readonly array $suffixes;
 
-    public bool $complete;
+    public readonly bool $complete;
 
     /**
      * @internal the literal extractor builds the sets

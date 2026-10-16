@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Internal\CaptureKey;
 use PHPRegex\Parser\Internal\CaptureLayout;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CaptureLayoutTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param list<string> $expected
      */
@@ -45,6 +48,8 @@ final class CaptureLayoutTest extends TestCase
     #[DataProvider('provideMatchLayouts')]
     public function test_layout_of_match_lists_the_keys_preg_match_writes(string $pattern, bool $unmatchedAsNull, array $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertSame($expected, self::describe(CaptureLayout::ofMatch(self::shape($pattern), $unmatchedAsNull)));
     }
 

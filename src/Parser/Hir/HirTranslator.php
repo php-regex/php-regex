@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\PropertyNames;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -45,6 +47,8 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Translates the AST of a pattern into its Hir.
@@ -53,7 +57,8 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  * escape, a dot or a caseless letter is asked of the engine once per process
  * (see ClassSetProvider), so "\w" under /u, "\p{L}" or "k" under /iu, which
  * also matches the Kelvin sign, are exact for the PHP that runs. A class of
- * plain characters and ranges is read without asking.
+ * plain characters and ranges is read without asking. Given a target older
+ * than PCRE2 10.40, a script name means the script, as it did there.
  *
  * @internal
  */
@@ -106,18 +111,6 @@ final class HirTranslator
 
     private const SURROGATE_LAST = 0xDFFF;
 
-    /**
-     * The options a pattern may open with, "(*UTF)" or "(*CR)" among them:
-     * they match nothing, and change what a class, a dot or "\R" matches.
-     * The limits take a value, "(*LIMIT_MATCH=10)".
-     */
-    private const LOOKAROUNDS = [
-        GroupType::LookaheadPositive->value => LookKind::Ahead,
-        GroupType::LookaheadNegative->value => LookKind::NegativeAhead,
-        GroupType::LookbehindPositive->value => LookKind::Behind,
-        GroupType::LookbehindNegative->value => LookKind::NegativeBehind,
-    ];
-
     private bool $unicode = false;
 
     private bool $unicodeFlag = false;
@@ -132,6 +125,25 @@ final class HirTranslator
      * @var array<int, int> the number of each capturing group, by object id
      */
     private array $groupNumbers = [];
+
+    /**
+     * Whether a bare script name, "\p{Han}", means the script alone, as
+     * before PCRE2 10.40, while the running engine reads it as the script
+     * extensions: the sets are then asked with "sc:".
+     */
+    private readonly bool $scriptsAlone;
+
+    /**
+     * @param PcreTarget|null $target the PHP and PCRE2 the pattern is read
+     *                                for; the running engine's reading when
+     *                                null
+     */
+    public function __construct(?PcreTarget $target = null)
+    {
+        $this->scriptsAlone = null !== $target
+            && !$target->supports(PcreFeature::LoosePropertyNames)
+            && PcreTarget::runtime()->supports(PcreFeature::LoosePropertyNames);
+    }
 
     public function translate(RegexNode $regex): Hir
     {
@@ -159,6 +171,22 @@ final class HirTranslator
     public static function unicodeOf(RegexNode $regex): bool
     {
         return $regex->isUnicode();
+    }
+
+    /**
+     * The atom with each "\p{Script}" and "\P{^Script}" a script table
+     * lookup, "\p{sc:Script}": what a script name meant before PCRE2 10.40.
+     * A backslash escaped by another is left alone.
+     */
+    private static function scriptsAlone(string $atom): string
+    {
+        return LibraryPcre::replaceCallback(
+            '/(?<!\\\\)((?:\\\\\\\\)*+\\\\[pP]\{)(\^?)([A-Za-z_]++)\}/',
+            static fn (array $match): string => PropertyNames::isScriptBefore1040($match[3])
+                ? $match[1].$match[2].'sc:'.$match[3].'}'
+                : $match[0],
+            $atom,
+        ) ?? $atom;
     }
 
     private function node(NodeInterface $node, int $flags): Hir
@@ -229,9 +257,16 @@ final class HirTranslator
         $start = $node->getStartPosition();
         $end = $node->getEndPosition();
 
-        if (isset(self::LOOKAROUNDS[$node->type->value])) {
+        $look = match ($node->type) {
+            GroupType::LookaheadPositive => LookKind::Ahead,
+            GroupType::LookaheadNegative => LookKind::NegativeAhead,
+            GroupType::LookbehindPositive => LookKind::Behind,
+            GroupType::LookbehindNegative => LookKind::NegativeBehind,
+            default => null,
+        };
+        if (null !== $look) {
             // "(*napla:...)" and its kind backtrack into their body.
-            return new LookHir($this->node($node->child, $flags), self::LOOKAROUNDS[$node->type->value], '*' !== $node->flags, $start, $end);
+            return new LookHir($this->node($node->child, $flags), $look, '*' !== $node->flags, $start, $end);
         }
 
         return match ($node->type) {
@@ -359,6 +394,10 @@ final class HirTranslator
         // "aP" holds the digit classes already.
         if (self::ASCII_POSIX_DIGIT === ($flags & (self::ASCII_POSIX | self::ASCII_POSIX_DIGIT))) {
             $modifiers .= 'aT';
+        }
+
+        if ($this->scriptsAlone) {
+            $atom = self::scriptsAlone($atom);
         }
 
         $set = ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag);

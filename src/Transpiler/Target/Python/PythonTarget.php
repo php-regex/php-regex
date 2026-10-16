@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\Python;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Transpiler\Target\TargetInterface;
@@ -24,7 +25,7 @@ use PHPRegex\Transpiler\TranspileException;
  *
  * @internal
  */
-final readonly class PythonTarget implements TargetInterface
+final class PythonTarget implements TargetInterface
 {
     // Python re flags: ASCII (a), IGNORECASE (i), LOCALE (L), MULTILINE (m), DOTALL (s), VERBOSE (x)
     // We map PCRE flags to these.
@@ -57,7 +58,7 @@ final readonly class PythonTarget implements TargetInterface
         $normalized = '';
         $unsupported = [];
 
-        foreach (str_split($flags) as $flag) {
+        foreach (Bytes::split($flags) as $flag) {
             if (\in_array($flag, self::SUPPORTED_FLAGS, true)) {
                 $normalized .= $flag;
 

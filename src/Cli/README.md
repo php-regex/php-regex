@@ -39,7 +39,7 @@ Installation
 composer require --dev php-regex/regex-cli
 ```
 
-The binary is `vendor/bin/regex` and requires PHP 8.2+.
+The binary is `vendor/bin/regex` and requires PHP 8.1+.
 
 ### Standalone phar
 

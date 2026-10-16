@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -252,7 +253,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function fold(string $text, LintContext $context): string
     {
-        return $context->pattern->unicodeMode ? mb_strtolower($text, 'UTF-8') : strtolower($text);
+        return $context->pattern->unicodeMode ? mb_strtolower($text, 'UTF-8') : Ascii::lower($text);
     }
 
     /**

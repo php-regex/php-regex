@@ -42,6 +42,7 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Redos\ConfirmationOptions;
@@ -96,7 +97,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         // The configured format holds until the command line names one.
         $configuredFormat = $lintDefaults['format'] ?? null;
-        $json = 'json' === ($requestedFormat ?? (\is_string($configuredFormat) ? strtolower($configuredFormat) : null));
+        $json = 'json' === ($requestedFormat ?? (\is_string($configuredFormat) ? Ascii::lower($configuredFormat) : null));
 
         $parsed = $this->argumentParser->parse($input->args, $lintDefaults);
         if ($parsed->help) {
@@ -122,7 +123,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         // A format is named in any case, as JsonRequest reads it.
-        $format = strtolower($arguments->format);
+        $format = Ascii::lower($arguments->format);
         $json = 'json' === $format;
         $formatterRegistry = new FormatterRegistry();
         if (!$formatterRegistry->has($format)) {

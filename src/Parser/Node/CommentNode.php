@@ -18,17 +18,17 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents an inline comment in a regular expression.
  */
-final readonly class CommentNode extends AbstractNode
+final class CommentNode extends AbstractNode
 {
     /**
      * @param bool $extended whether the comment was written as a "# ..." line
      *                       under /x rather than as a "(?#...)" group
      */
     public function __construct(
-        public string $comment,
+        public readonly string $comment,
         int $startPosition,
         int $endPosition,
-        public bool $extended = false
+        public readonly bool $extended = false
     ) {
         parent::__construct($startPosition, $endPosition);
     }

@@ -18,10 +18,10 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class AtomicHir extends Hir
+final class AtomicHir extends Hir
 {
     public function __construct(
-        public Hir $body,
+        public readonly Hir $body,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

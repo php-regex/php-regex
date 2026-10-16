@@ -20,12 +20,12 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class LookHir extends Hir
+final class LookHir extends Hir
 {
     public function __construct(
-        public Hir $body,
-        public LookKind $kind,
-        public bool $atomic = true,
+        public readonly Hir $body,
+        public readonly LookKind $kind,
+        public readonly bool $atomic = true,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

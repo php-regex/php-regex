@@ -24,16 +24,16 @@ use Symfony\Component\Routing\RouterInterface;
  * @phpstan-import-type RouteConflict from RouteConflictReport
  * @phpstan-import-type RouteDescriptor from RouteConflictReport
  */
-final readonly class RoutesAnalyzer implements AnalyzerInterface
+final class RoutesAnalyzer implements AnalyzerInterface
 {
     private const ID = 'routes';
     private const PRIORITY = 10;
     private const ARROW_LABEL = "\u{21B3}";
 
     public function __construct(
-        private RouteConflictAnalyzer $analyzer,
-        private RouteConflictSuggestionBuilder $suggestionBuilder = new RouteConflictSuggestionBuilder(),
-        private ?RouterInterface $router = null,
+        private readonly RouteConflictAnalyzer $analyzer,
+        private readonly RouteConflictSuggestionBuilder $suggestionBuilder = new RouteConflictSuggestionBuilder(),
+        private readonly ?RouterInterface $router = null,
     ) {}
 
     public function getId(): string

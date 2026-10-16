@@ -133,9 +133,7 @@ final class MessageTest extends TestCase
     #[Test]
     public function test_message_is_readonly(): void
     {
-        $reflection = new \ReflectionClass(Message::class);
-
-        $this->assertTrue($reflection->isReadOnly());
+        $this->assertTrue(self::everyPropertyIsReadonly(Message::class));
     }
 
     #[Test]
@@ -302,5 +300,19 @@ final class MessageTest extends TestCase
         rewind($stream);
 
         return $stream;
+    }
+
+    /**
+     * @param class-string $class
+     */
+    private static function everyPropertyIsReadonly(string $class): bool
+    {
+        foreach ((new \ReflectionClass($class))->getProperties() as $property) {
+            if (!$property->isReadOnly()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

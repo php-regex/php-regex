@@ -33,7 +33,7 @@ use PHPRegex\Redos\Internal\InputGenerator;
  * run: the confirmation is not confirmed, holds no sample, and its evidence
  * says the engine limits are unavailable.
  */
-final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
+final class ConfirmationRunner implements ConfirmationRunnerInterface
 {
     /**
      * The engine runs every pattern without the JIT: this is the setting the
@@ -42,7 +42,7 @@ final readonly class ConfirmationRunner implements ConfirmationRunnerInterface
      */
     private const JIT_SETTING = '0';
 
-    public function __construct(private PcreEngine $engine = new PcreEngine()) {}
+    public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
 
     public function confirm(string $regex, RedosAnalysis $analysis, ?ConfirmationOptions $options = null): Confirmation
     {

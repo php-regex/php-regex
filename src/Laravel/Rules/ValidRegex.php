@@ -28,9 +28,9 @@ use PHPRegex\Toolkit\Regex;
  * pattern whose ReDoS severity reaches $redosThreshold is refused too. Like
  * every rule, it leaves an empty value to "required".
  */
-final readonly class ValidRegex implements ValidationRule
+final class ValidRegex implements ValidationRule
 {
-    private RedosSeverity $redosThreshold;
+    private readonly RedosSeverity $redosThreshold;
 
     /**
      * @param RedosSeverity|string $redosThreshold low, medium, high or critical
@@ -39,9 +39,9 @@ final readonly class ValidRegex implements ValidationRule
      * @throws InvalidRegexOptionException when the threshold names no severity to report from
      */
     public function __construct(
-        private bool $redos = false,
+        private readonly bool $redos = false,
         RedosSeverity|string $redosThreshold = RedosSeverity::High,
-        private ?Regex $regex = null,
+        private readonly ?Regex $regex = null,
     ) {
         $this->redosThreshold = RedosSeverity::fromConfig($redosThreshold instanceof RedosSeverity ? $redosThreshold->value : $redosThreshold);
     }

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\CodePointReader;
 use PHPRegex\Parser\Internal\ExtendedClassReader;
 use PHPRegex\Parser\Internal\InlineFlags;
@@ -811,14 +812,18 @@ final class Lexer
         // No ")" left, no body closes: the run of openers after it is not
         // read again for each one.
         if (!$this->follows(')', $at)) {
-            return $this->unclosedBodies($opened);
+            $this->unclosedBodies($opened);
+
+            return null;
         }
 
         while ($at < $this->length) {
             if ('[' === $this->pattern[$at]) {
                 $at = $this->bodyClassEnd($at, $extendedMore);
                 if (null === $at) {
-                    return $this->unclosedBodies($opened);
+                    $this->unclosedBodies($opened);
+
+                    return null;
                 }
 
                 continue;
@@ -881,7 +886,9 @@ final class Lexer
                     continue;
                 }
             } elseif (')' !== $char) {
-                return $this->unclosedBodies($opened);
+                $this->unclosedBodies($opened);
+
+                return null;
             } else {
                 [$open, $extended, $extendedMore] = array_pop($opened) ?? [$this->position, $extended, $extendedMore];
                 $this->bodyEnds[$this->bodyMode($extended, $extendedMore)][$this->offset + $open] = [$this->offset + $at + 1, $textEnd];
@@ -893,23 +900,23 @@ final class Lexer
             $at++;
         }
 
-        return $this->unclosedBodies($opened);
+        $this->unclosedBodies($opened);
+
+        return null;
     }
 
     /**
      * Record that none of the groups still open when the reading of a body
      * stopped closes in the text read, each under the mode its "(" was read
-     * in; null.
+     * in.
      *
      * @param list<array{0: int, 1: bool, 2: bool}> $opened
      */
-    private function unclosedBodies(array $opened): null
+    private function unclosedBodies(array $opened): void
     {
         foreach ($opened as [$open, $extended, $extendedMore]) {
             $this->bodyEnds[$this->bodyMode($extended, $extendedMore)][$this->offset + $open] = [null, $this->offset + $this->length];
         }
-
-        return null;
     }
 
     /**
@@ -1293,7 +1300,7 @@ final class Lexer
                 continue;
             }
 
-            $type = TokenType::from(strtolower(substr($tokenName, 2)));
+            $type = TokenType::from(Ascii::lower(substr($tokenName, 2)));
 
             if ($token = $this->handleStatefulToken($type, $matchedValue, $startPos, $currentTokens)) {
                 return $token;
@@ -1911,7 +1918,7 @@ final class Lexer
             TokenType::Octal => CodePointReader::fromOctalEscape($value),
             TokenType::OctalLegacy => CodePointReader::fromOctalEscape('\\'.$value),
             TokenType::UnicodeNamed => CodePointReader::fromNamedEscape('\\N{'.$value.'}'),
-            TokenType::ControlChar => 1 === \strlen($value) && \ord($value) < 0x80 ? \ord(strtoupper($value)) ^ 0x40 : null,
+            TokenType::ControlChar => 1 === \strlen($value) && \ord($value) < 0x80 ? \ord(Ascii::upper($value)) ^ 0x40 : null,
             default => null,
         };
 

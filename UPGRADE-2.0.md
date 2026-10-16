@@ -24,6 +24,10 @@ The other packages (`regex-explain`, `regex-optimizer`, `regex-generator`,
 `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`) come with
 the toolkit, or alone when only that part is needed.
 
+Every package runs on PHP 8.1 or later, `php-regex/php-regex` included:
+`regex-symfony` on Symfony 6.4, 7.4 and 8, `regex-laravel` on Laravel 10.37
+to 13.
+
 ### Names
 
 Every class moved from `RegexParser\` to `PHPRegex\`, under the package it

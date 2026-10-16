@@ -18,12 +18,12 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a sequence of atoms.
  */
-final readonly class SequenceNode extends AbstractNode
+final class SequenceNode extends AbstractNode
 {
     /**
      * @var list<NodeInterface>
      */
-    public array $children;
+    public readonly array $children;
 
     /**
      * @param array<NodeInterface> $children Renumbered in the order given

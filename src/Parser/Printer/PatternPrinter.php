@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\StartOptions;
@@ -777,7 +778,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                     13 => '\\r',
                     12 => '\\f',
                     27 => '\\e',
-                    default => '\\x'.strtoupper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
+                    default => '\\x'.Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT)),
                 };
             }
 
@@ -1272,7 +1273,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             if ($this->holdsKeptQuotedBracket($start + $offset, $part)) {
                 $pieces[] = ['\\Q'.$part.'\\E', self::PIECE_UNIT];
             } else {
-                foreach ('' === $part ? [] : ($this->countsCodePoints ? mb_str_split($part, 1, 'UTF-8') : str_split($part)) as $character) {
+                foreach ('' === $part ? [] : ($this->countsCodePoints ? mb_str_split($part, 1, 'UTF-8') : Bytes::split($part)) as $character) {
                     $pieces[] = [$this->escapeString($character), self::isWhiteSpaceCharacter($character) ? self::PIECE_SPACE : self::PIECE_WORD];
                 }
             }
@@ -1405,7 +1406,7 @@ final class PatternPrinter extends AbstractNodeVisitor
     private function extendedClassOperand(string $value): string
     {
         $unicodeMode = $this->utfVerb || str_contains($this->flags, 'u');
-        $characters = $unicodeMode ? mb_str_split($value, 1, 'UTF-8') : str_split($value);
+        $characters = $unicodeMode ? mb_str_split($value, 1, 'UTF-8') : Bytes::split($value);
 
         return implode('', array_map(static function (string $character) use ($unicodeMode): string {
             if (1 === LibraryPcre::match('/^[!-\/:-@\[-`{-~ ]$/', $character)) {
@@ -1967,7 +1968,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                     13 => '\\r',
                     12 => '\\f',
                     27 => '\\e',
-                    default => '\\x'.strtoupper(str_pad(dechex(\ord($char)), 2, '0', \STR_PAD_LEFT)),
+                    default => '\\x'.Ascii::upper(str_pad(dechex(\ord($char)), 2, '0', \STR_PAD_LEFT)),
                 };
             } else {
                 $result .= $char;
@@ -2711,7 +2712,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return [[$text, self::PIECE_UNIT]];
         }
 
-        $characters = $this->countsCodePoints ? mb_str_split($node->value, 1, 'UTF-8') : str_split($node->value);
+        $characters = $this->countsCodePoints ? mb_str_split($node->value, 1, 'UTF-8') : Bytes::split($node->value);
         if (1 === \count($characters)) {
             return [[$text, self::PIECE_WORD]];
         }
@@ -3746,7 +3747,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private static function markAbsentFrom(string $text): string
     {
-        $absent = str_replace(str_split(count_chars($text, 3)), '', "\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
+        $absent = str_replace(Bytes::split(count_chars($text, 3)), '', "\x03\x04\x05\x06\x07\x08\x0E\x0F\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F");
         if ('' !== $absent) {
             return $absent[0];
         }

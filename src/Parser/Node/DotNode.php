@@ -18,7 +18,7 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents the dot wildcard character.
  */
-final readonly class DotNode extends AbstractNode
+final class DotNode extends AbstractNode
 {
     public function __construct(int $startPosition, int $endPosition)
     {

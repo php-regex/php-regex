@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -55,7 +56,7 @@ final class MultibyteInCharClassWithoutURule extends AbstractLintRule
             \sprintf(
                 'Character class holds "%s", which without /u is the bytes %s: the class matches each byte on its own.',
                 $literal->value,
-                implode(' ', array_map(static fn (string $byte): string => \sprintf('\x%02X', \ord($byte)), str_split($literal->value))),
+                implode(' ', array_map(static fn (string $byte): string => \sprintf('\x%02X', \ord($byte)), Bytes::split($literal->value))),
             ),
             $literal->getStartPosition(),
             'Add the /u flag; write the bytes as \x escapes if bytes are meant.',

@@ -16,9 +16,9 @@ namespace PHPRegex\Automata\Solver;
 /**
  * Result of an equivalence check between two regexes.
  */
-final readonly class EquivalenceResult
+final class EquivalenceResult
 {
-    public string $pcreVersion;
+    public readonly string $pcreVersion;
 
     /**
      * @internal built by LanguageSolver::equivalent()
@@ -29,9 +29,9 @@ final readonly class EquivalenceResult
      * @param string|null $pcreVersion      The PCRE2 release the answer was computed with
      */
     public function __construct(
-        public bool $isEquivalent,
-        public ?string $leftOnlyExample = null,
-        public ?string $rightOnlyExample = null,
+        public readonly bool $isEquivalent,
+        public readonly ?string $leftOnlyExample = null,
+        public readonly ?string $rightOnlyExample = null,
         ?string $pcreVersion = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];

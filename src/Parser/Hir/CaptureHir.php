@@ -18,12 +18,12 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class CaptureHir extends Hir
+final class CaptureHir extends Hir
 {
     public function __construct(
-        public Hir $body,
-        public int $index,
-        public ?string $name = null,
+        public readonly Hir $body,
+        public readonly int $index,
+        public readonly ?string $name = null,
         int $startPosition = 0,
         int $endPosition = 0,
     ) {

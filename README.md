@@ -18,7 +18,7 @@
 
 # PHPRegex: Static Analysis, Linter & Logic Solver
 
-PHPRegex is a PHP 8.2+ library that treats regular expressions as code.
+PHPRegex is a PHP 8.1+ library that treats regular expressions as code.
 
 Unlike simple wrappers around `preg_match`, PHPRegex implements a complete **compiler pipeline** (Lexer → Parser → AST) and an **Automata-based Logic Solver** (normalized form → NFA → DFA).
 
@@ -71,6 +71,10 @@ vendor/bin/regex explain '/\d{4}-\d{2}-\d{2}/'
 
 The CLI requires the `mbstring` and `tokenizer` extensions; the standalone
 parser package needs only `mbstring`.
+
+Every package runs on PHP 8.1 or later, the integrations included: the
+Symfony bundle on Symfony 6.4, 7.4 and 8, the Laravel integration on Laravel
+10.37 to 13.
 
 PHPRegex is a family of packages, developed together in
 [php-regex/php-regex](https://github.com/php-regex/php-regex) and released

@@ -16,7 +16,7 @@ namespace PHPRegex\Linter\Config;
 /**
  * @internal
  */
-final readonly class LintConfigResult
+final class LintConfigResult
 {
     /**
      * @param array<string, mixed> $config
@@ -24,9 +24,9 @@ final readonly class LintConfigResult
      * @param list<string>         $warnings what the files hold that is ignored, the run going on
      */
     public function __construct(
-        public array $config,
-        public array $files,
-        public ?string $error = null,
-        public array $warnings = [],
+        public readonly array $config,
+        public readonly array $files,
+        public readonly ?string $error = null,
+        public readonly array $warnings = [],
     ) {}
 }

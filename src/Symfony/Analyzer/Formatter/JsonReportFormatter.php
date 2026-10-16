@@ -23,7 +23,7 @@ use PHPRegex\Symfony\Analyzer\SecurityReport;
  *
  * @internal
  */
-final readonly class JsonReportFormatter
+final class JsonReportFormatter
 {
     public function format(SecurityReport $report, bool $debug = false): string
     {

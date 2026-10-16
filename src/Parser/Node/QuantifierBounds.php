@@ -22,14 +22,14 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  * must use it instead of re-implementing the parsing, so that inputs like
  * "{,5}" or "{ 2 }" (extended mode) mean the same thing everywhere.
  */
-final readonly class QuantifierBounds
+final class QuantifierBounds
 {
     private function __construct(
-        public int $min,
+        public readonly int $min,
         /**
          * Maximum repetitions, or null when unbounded ("*", "+", "{n,}").
          */
-        public ?int $max,
+        public readonly ?int $max,
     ) {}
 
     /**

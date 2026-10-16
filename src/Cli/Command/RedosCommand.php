@@ -386,7 +386,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
             }
 
             if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = strtolower(substr($arg, \strlen('--format=')));
+                $format = Ascii::lower(substr($arg, \strlen('--format=')));
 
                 continue;
             }
@@ -396,7 +396,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorPayload('Missing value for --format.');
                 }
-                $format = strtolower($value);
+                $format = Ascii::lower($value);
                 $i++;
 
                 continue;

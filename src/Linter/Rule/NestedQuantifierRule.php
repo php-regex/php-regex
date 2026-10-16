@@ -17,6 +17,7 @@ use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -288,7 +289,7 @@ final class NestedQuantifierRule extends AbstractLintRule
 
         $folded = $set;
         foreach (range('a', 'z') as $lower) {
-            $pair = ByteCharSet::fromChar($lower)->union(ByteCharSet::fromChar(strtoupper($lower)));
+            $pair = ByteCharSet::fromChar($lower)->union(ByteCharSet::fromChar(Ascii::upper($lower)));
             if ($set->intersects($pair)) {
                 $folded = $folded->union($pair);
             }

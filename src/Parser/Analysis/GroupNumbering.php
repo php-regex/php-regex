@@ -16,7 +16,7 @@ namespace PHPRegex\Parser\Analysis;
 /**
  * Represents PCRE-aware group numbering metadata for a regex pattern.
  */
-final readonly class GroupNumbering
+final class GroupNumbering
 {
     /**
      * @internal built by GroupNumberingCollector::collect()
@@ -25,9 +25,9 @@ final readonly class GroupNumbering
      * @param array<string, array<int>> $namedGroups
      */
     public function __construct(
-        public int $maxGroupNumber,
-        public array $captureSequence,
-        public array $namedGroups,
+        public readonly int $maxGroupNumber,
+        public readonly array $captureSequence,
+        public readonly array $namedGroups,
     ) {}
 
     public function hasNamedGroup(string $name): bool

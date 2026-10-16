@@ -20,7 +20,7 @@ use PHPRegex\Linter\LintProgress;
  *
  * @internal
  */
-final readonly class PatternSourceContext
+final class PatternSourceContext
 {
     /**
      * @param array<string> $paths
@@ -32,13 +32,13 @@ final readonly class PatternSourceContext
      *                                        declaration wins over a copy found there
      */
     public function __construct(
-        public array $paths,
-        public array $excludePaths,
-        private array $disabledSources = [],
-        public ?LintProgress $progress = null,
-        public int $workers = 1,
-        public array $declarationPaths = [],
-        public array $vendorPaths = [],
+        public readonly array $paths,
+        public readonly array $excludePaths,
+        private readonly array $disabledSources = [],
+        public readonly ?LintProgress $progress = null,
+        public readonly int $workers = 1,
+        public readonly array $declarationPaths = [],
+        public readonly array $vendorPaths = [],
     ) {}
 
     public function isSourceEnabled(string $name): bool

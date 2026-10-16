@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -442,7 +443,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
     private function expandCaseInsensitive(string $value): LiteralSet
     {
         // Limit expansion length. Beyond ASCII, caseless matching folds
-        // characters strtolower() does not know ("ⱥ" and "Ⱥ"); in UTF mode
+        // characters Ascii::lower() does not know ("ⱥ" and "Ⱥ"); in UTF mode
         // it also folds "k" with the Kelvin sign and "s" with the long s.
         if (\strlen($value) > 8 || 1 === LibraryPcre::match($this->unicode ? '/[\x80-\xffkKsS]/' : '/[\x80-\xff]/', $value)) {
             return LiteralSet::empty();
@@ -451,8 +452,8 @@ final class LiteralExtractor extends AbstractNodeVisitor
         $results = [''];
         for ($i = 0; $i < \strlen($value); $i++) {
             $char = $value[$i];
-            $lower = strtolower($char);
-            $upper = strtoupper($char);
+            $lower = Ascii::lower($char);
+            $upper = Ascii::upper($char);
 
             $nextResults = [];
             foreach ($results as $prefix) {

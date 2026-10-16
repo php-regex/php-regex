@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a backreference to a captured group.
  */
-final readonly class BackrefNode extends AbstractNode
+final class BackrefNode extends AbstractNode
 {
     public function __construct(
-        public string $ref,
+        public readonly string $ref,
         int $startPosition,
         int $endPosition
     ) {

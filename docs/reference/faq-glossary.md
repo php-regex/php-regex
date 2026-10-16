@@ -245,11 +245,11 @@ $regex->clearCaches();
 
 #### What PHP versions are supported?
 
-- **PHP 8.2** and above
-- Uses modern PHP features (readonly classes, enums, etc.)
+- **PHP 8.1** and above
+- Uses modern PHP features (readonly properties, enums, etc.)
 
 ```php
-// Requires PHP 8.2+
+// Requires PHP 8.1+
 $regex = Regex::create([
     'php_version' => '8.2',  // Target version
 ]);

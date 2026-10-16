@@ -22,22 +22,22 @@ use PHPRegex\Parser\NodeVisitorInterface;
  * This node represents PCRE2 script run assertions that ensure
  * all characters in the subject string belong to the same script.
  */
-final readonly class ScriptRunNode extends AbstractNode
+final class ScriptRunNode extends AbstractNode
 {
     public function __construct(
-        public string $script,
+        public readonly string $script,
         int $startPosition,
         int $endPosition,
         /**
          * Parsed content of the script run, when available. Positions inside
          * are relative to the payload text.
          */
-        public ?NodeInterface $content = null,
+        public readonly ?NodeInterface $content = null,
         /**
          * Whether the body is atomic: "(*atomic_script_run:...)", short
          * "(*asr:...)", the same as "(*sr:(?>...))".
          */
-        public bool $atomic = false,
+        public readonly bool $atomic = false,
     ) {
         parent::__construct($startPosition, $endPosition);
     }

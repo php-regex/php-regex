@@ -18,7 +18,7 @@ namespace PHPRegex\Parser\Hir;
  *
  * @internal
  */
-final readonly class EmptyHir extends Hir
+final class EmptyHir extends Hir
 {
     public function __construct(
         int $startPosition = 0,

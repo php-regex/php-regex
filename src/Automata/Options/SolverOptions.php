@@ -20,7 +20,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 /**
  * Configuration for automata-based regex comparisons.
  */
-final readonly class SolverOptions
+final class SolverOptions
 {
     /**
      * @param MatchMode                $matchMode                How to interpret matching semantics
@@ -34,15 +34,15 @@ final readonly class SolverOptions
      * @throws InvalidRegexOptionException when a state cap is below 1, or the transition budget below 0
      */
     public function __construct(
-        public MatchMode $matchMode = MatchMode::Full,
-        public int $maxNfaStates = 5000,
-        public int $maxDfaStates = 10000,
-        public bool $minimizeDfa = true,
-        public MinimizationAlgorithm $minimizationAlgorithm = MinimizationAlgorithm::Hopcroft,
+        public readonly MatchMode $matchMode = MatchMode::Full,
+        public readonly int $maxNfaStates = 5000,
+        public readonly int $maxDfaStates = 10000,
+        public readonly bool $minimizeDfa = true,
+        public readonly MinimizationAlgorithm $minimizationAlgorithm = MinimizationAlgorithm::Hopcroft,
         // A finite default: with no cap, pathological real-world patterns can
         // spin the determinization loop for tens of minutes.
-        public ?int $maxTransitionsProcessed = 1_000_000,
-        public DeterminizationAlgorithm $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed,
+        public readonly ?int $maxTransitionsProcessed = 1_000_000,
+        public readonly DeterminizationAlgorithm $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed,
     ) {
         // A transition budget of 0 is a budget: the first transition spends it.
         foreach (['maxNfaStates' => [$maxNfaStates, 1], 'maxDfaStates' => [$maxDfaStates, 1], 'maxTransitionsProcessed' => [$maxTransitionsProcessed ?? 0, 0]] as $name => [$value, $floor]) {

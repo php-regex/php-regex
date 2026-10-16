@@ -16,7 +16,7 @@ namespace PHPRegex\Parser\Engine;
 /**
  * What the running engine answered for one pattern and one subject.
  */
-final readonly class PcreMatch
+final class PcreMatch
 {
     /**
      * @internal built by PcreEngine::match() and PcreEngine::test()
@@ -27,9 +27,9 @@ final readonly class PcreMatch
      * @param int                       $errorCode the engine's last error code, PREG_NO_ERROR with an answer
      */
     public function __construct(
-        public ?bool $matched,
-        public array $groups = [],
-        public ?string $error = null,
-        public int $errorCode = \PREG_NO_ERROR,
+        public readonly ?bool $matched,
+        public readonly array $groups = [],
+        public readonly ?string $error = null,
+        public readonly int $errorCode = \PREG_NO_ERROR,
     ) {}
 }

@@ -43,7 +43,7 @@ Installation
 composer require php-regex/regex-generator
 ```
 
-Requires PHP 8.2+ and `php-regex/regex-parser`. MIT licensed.
+Requires PHP 8.1+ and `php-regex/regex-parser`. MIT licensed.
 
 Configuration
 -------------

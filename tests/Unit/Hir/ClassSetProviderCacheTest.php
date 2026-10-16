@@ -74,7 +74,7 @@ final class ClassSetProviderCacheTest extends TestCase
     {
         $raises = 0;
         $work = static function () use (&$raises): array {
-            LibraryPcre::useIniSetter(static function () use (&$raises): false {
+            LibraryPcre::useIniSetter(static function () use (&$raises): bool {
                 $raises++;
 
                 return false;

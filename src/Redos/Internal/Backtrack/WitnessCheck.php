@@ -24,7 +24,7 @@ use PHPRegex\Parser\Engine\PcreEngine;
  *
  * @internal
  */
-final readonly class WitnessCheck
+final class WitnessCheck
 {
     private const NO_JIT = '(*NO_JIT)';
 
@@ -34,9 +34,9 @@ final readonly class WitnessCheck
      * The pattern pinned to the offset; null when no delimiter is left for
      * the verbs, and the engine is then not asked.
      */
-    private ?string $pinned;
+    private readonly ?string $pinned;
 
-    public function __construct(string $pattern, private PcreEngine $engine = new PcreEngine())
+    public function __construct(string $pattern, private readonly PcreEngine $engine = new PcreEngine())
     {
         $prepared = $this->engine->prepare($pattern);
         $this->pinned = self::NO_JIT === substr($prepared, 1, \strlen(self::NO_JIT))

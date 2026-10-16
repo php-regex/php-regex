@@ -83,8 +83,10 @@ final class AbstractConsoleTagFormatterTest extends TestCase
 
         $this->assertStringContainsString(
             // The hint is spelled for display first (a NUL or an escape
-            // character becomes "\xHH"), then escaped as Symfony escapes it.
-            "         <fg=gray>\u{21B3} ".OutputFormatter::escape(ReportSpelling::displayText($text)).'</>'.\PHP_EOL,
+            // character becomes "\xHH"), then escaped as Symfony escapes it
+            // from 6.4.44: every bracket, "\<" included, which 6.4.43 and
+            // earlier left as it was.
+            "         <fg=gray>\u{21B3} ".self::escapedAsSymfony6444(ReportSpelling::displayText($text)).'</>'.\PHP_EOL,
             $formatter->format($report),
         );
     }
@@ -338,5 +340,23 @@ final class AbstractConsoleTagFormatterTest extends TestCase
                 'problems' => [],
             ],
         ], ['errors' => 1, 'warnings' => 2, 'optimizations' => 1]);
+    }
+
+    /**
+     * OutputFormatter::escape() as Symfony writes it from 6.4.44, and in the
+     * 7.4 and 8 releases of the same fix: a backslash before each bracket, and a trailing run of backslashes turned into as
+     * many NUL bytes, the formatter's own marker.
+     */
+    private static function escapedAsSymfony6444(string $text): string
+    {
+        $text = str_replace(['<', '>'], ['\\<', '\\>'], $text);
+        if (!str_ends_with($text, '\\')) {
+            return $text;
+        }
+
+        $length = \strlen($text);
+        $text = str_replace("\0", '', rtrim($text, '\\'));
+
+        return $text.str_repeat("\0", $length - \strlen($text));
     }
 }

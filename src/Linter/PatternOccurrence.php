@@ -23,20 +23,20 @@ namespace PHPRegex\Linter;
  *
  * @internal
  */
-final readonly class PatternOccurrence
+final class PatternOccurrence
 {
     public function __construct(
-        public string $pattern,
-        public string $file,
-        public int $line,
-        public string $source,
-        public ?string $displayPattern = null,
-        public ?string $location = null,
-        public bool $isIgnored = false,
-        public ?int $column = null,
-        public ?int $fileOffset = null,
-        public ?string $unread = null,
-        public ?string $parserFallback = null,
+        public readonly string $pattern,
+        public readonly string $file,
+        public readonly int $line,
+        public readonly string $source,
+        public readonly ?string $displayPattern = null,
+        public readonly ?string $location = null,
+        public readonly bool $isIgnored = false,
+        public readonly ?int $column = null,
+        public readonly ?int $fileOffset = null,
+        public readonly ?string $unread = null,
+        public readonly ?string $parserFallback = null,
     ) {}
 
     /**

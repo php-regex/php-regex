@@ -42,7 +42,7 @@ Installation
 composer require php-regex/regex-optimizer
 ```
 
-Requires PHP 8.2+. MIT licensed. `php-regex/regex-parser`, and the `php-regex/regex-automata`
+Requires PHP 8.1+. MIT licensed. `php-regex/regex-parser`, and the `php-regex/regex-automata`
 engine the equivalence proof runs on, are installed with it. This package is part of
 [PHPRegex](https://github.com/php-regex/php-regex), released with its siblings under one version number.
 

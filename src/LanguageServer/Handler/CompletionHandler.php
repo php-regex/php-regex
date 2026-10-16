@@ -27,7 +27,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class CompletionHandler
+final class CompletionHandler
 {
     // LSP CompletionItemKind constants
     private const KIND_KEYWORD = 14;
@@ -156,7 +156,7 @@ final readonly class CompletionHandler
         ['label' => '[:xdigit:]', 'detail' => 'Hex digit', 'doc' => 'Matches hexadecimal digits [0-9A-Fa-f].'],
     ];
 
-    public function __construct(private DocumentManager $documents) {}
+    public function __construct(private readonly DocumentManager $documents) {}
 
     /**
      * Handle textDocument/completion request.

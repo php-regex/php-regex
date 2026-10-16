@@ -15,6 +15,7 @@ namespace PHPRegex\Generator;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -247,7 +248,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
 
         // Generate non-matching by changing one character
         if ('' !== $value) {
-            $chars = str_split($value);
+            $chars = Bytes::split($value);
             for ($i = 0; $i < min(\strlen($value), 2); $i++) {
                 $modified = $chars;
                 $modified[$i] = \chr((\ord($chars[$i]) + 1) & 0xFF);

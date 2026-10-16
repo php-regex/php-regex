@@ -27,6 +27,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Redos\ConfirmationOptions;
@@ -236,8 +237,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $severityOutput = $this->formatRedosSeverity($analysis, $output);
             $output->write('  Status:    '.$this->redosHeadline($analysis)."\n");
             $output->write('  Severity:  '.$severityOutput.' (score '.$analysis->score.")\n");
-            $output->write('  Mode:      '.strtoupper($analysis->mode->value)."\n");
-            $output->write('  Confidence: '.strtoupper($analysis->confidence->value)."\n");
+            $output->write('  Mode:      '.Ascii::upper($analysis->mode->value)."\n");
+            $output->write('  Confidence: '.Ascii::upper($analysis->confidence->value)."\n");
 
             if (!$provenSafe && null !== $analysis->vulnerablePart) {
                 $output->write('  Culprit:    '.$analysis->vulnerablePart."\n");
@@ -376,7 +377,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             }
 
             if (!$stopParsing && str_starts_with($arg, '--format=')) {
-                $format = strtolower(substr($arg, \strlen('--format=')));
+                $format = Ascii::lower(substr($arg, \strlen('--format=')));
 
                 continue;
             }
@@ -386,14 +387,14 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 if ('' === $value || str_starts_with($value, '-')) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --format.'];
                 }
-                $format = strtolower($value);
+                $format = Ascii::lower($value);
                 $i++;
 
                 continue;
             }
 
             if (!$stopParsing && str_starts_with($arg, '--redos-mode=')) {
-                $value = strtolower(substr($arg, \strlen('--redos-mode=')));
+                $value = Ascii::lower(substr($arg, \strlen('--redos-mode=')));
                 $mode = RedosMode::tryFrom($value);
                 if (null === $mode) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-mode.'];
@@ -408,7 +409,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 if ('' === $value || str_starts_with($value, '-')) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --redos-mode.'];
                 }
-                $mode = RedosMode::tryFrom(strtolower($value));
+                $mode = RedosMode::tryFrom(Ascii::lower($value));
                 if (null === $mode) {
                     return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-mode.'];
                 }
@@ -483,7 +484,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
     private function formatRedosSeverity(RedosAnalysis $analysis, Output $output, ?RedosSeverity $severity = null): string
     {
         $severity ??= $analysis->severity;
-        $label = strtoupper($severity->value);
+        $label = Ascii::upper($severity->value);
 
         $color = match ($severity) {
             RedosSeverity::Safe, RedosSeverity::Low => $output->success($label),

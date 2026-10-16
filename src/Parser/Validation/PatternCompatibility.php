@@ -23,14 +23,14 @@ namespace PHPRegex\Parser\Validation;
  * library learns, so its length, and isValidEverywhere(), may change in a
  * minor release.
  */
-final readonly class PatternCompatibility
+final class PatternCompatibility
 {
     /**
      * @internal built by CompatibilityChecker::check()
      *
      * @param list<TargetVerdict> $verdicts
      */
-    public function __construct(private array $verdicts) {}
+    public function __construct(private readonly array $verdicts) {}
 
     /**
      * @return list<TargetVerdict>

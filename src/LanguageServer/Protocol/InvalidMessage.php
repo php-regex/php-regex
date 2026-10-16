@@ -19,7 +19,7 @@ namespace PHPRegex\LanguageServer\Protocol;
  *
  * @internal
  */
-final readonly class InvalidMessage
+final class InvalidMessage
 {
     /**
      * JSON-RPC "parse error": the body is not JSON, or has no known length.
@@ -35,9 +35,9 @@ final readonly class InvalidMessage
      * @param int|string|null $id the id the message carries, when it can be read
      */
     private function __construct(
-        public int $code,
-        public string $message,
-        public int|string|null $id = null,
+        public readonly int $code,
+        public readonly string $message,
+        public readonly int|string|null $id = null,
     ) {}
 
     public static function parseError(): self

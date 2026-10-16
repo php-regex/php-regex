@@ -26,9 +26,15 @@ namespace PHPRegex\Parser\Internal;
 final class PhpVersionGates
 {
     /**
-     * The oldest PHP the library judges.
+     * The oldest PHP the library judges. PHP 8.1.1 and later bundle PCRE2
+     * 10.39; 8.1.0 bundled 10.37, judged as 10.39.
      */
-    public const FLOOR = 80200;
+    public const FLOOR = 80100;
+
+    /**
+     * PHP 8.2 bundles PCRE2 10.40.
+     */
+    public const BUNDLES_PCRE2_10_40 = 80200;
 
     /**
      * PHP reads the "n" modifier (PCRE2_NO_AUTO_CAPTURE) from 8.2.
@@ -87,6 +93,7 @@ final class PhpVersionGates
      */
     public const POINTS = [
         self::FLOOR,
+        self::BUNDLES_PCRE2_10_40,
         self::BUNDLES_PCRE2_10_42,
         self::BUNDLES_PCRE2_10_44,
         self::NEVER_BACKSLASH_C_UNDER_UTF_8_4,

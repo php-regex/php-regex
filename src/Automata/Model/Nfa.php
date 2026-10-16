@@ -18,16 +18,16 @@ namespace PHPRegex\Automata\Model;
  *
  * @internal
  */
-final readonly class Nfa
+final class Nfa
 {
     /**
      * @param array<int, NfaState> $states
      */
     public function __construct(
-        public int $startState,
-        public array $states,
-        public int $minCodePoint = 0,
-        public int $maxCodePoint = 255,
+        public readonly int $startState,
+        public readonly array $states,
+        public readonly int $minCodePoint = 0,
+        public readonly int $maxCodePoint = 255,
     ) {}
 
     public function getState(int $stateId): NfaState

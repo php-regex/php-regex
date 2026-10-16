@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * An expression of a PHP file as the in-file resolution reads it: a
  * literal, a concatenation, a reference to a constant, a local variable or
@@ -24,7 +26,7 @@ namespace PHPRegex\Linter\Extraction;
  *
  * @internal
  */
-final readonly class ValueExpr
+final class ValueExpr
 {
     public const LITERAL = 'literal';
     public const CONCAT = 'concat';
@@ -54,17 +56,17 @@ final readonly class ValueExpr
      * @param string                             $written    the reference as the source writes it: "self::RE"
      */
     private function __construct(
-        public string $kind,
-        public string $value = '',
-        public int $offset = -1,
-        public int $line = 0,
-        public array $parts = [],
-        public array $items = [],
-        public ?string $class = null,
-        public bool $lateStatic = false,
-        public array $names = [],
-        public ?int $scope = null,
-        public string $written = '',
+        public readonly string $kind,
+        public readonly string $value = '',
+        public readonly int $offset = -1,
+        public readonly int $line = 0,
+        public readonly array $parts = [],
+        public readonly array $items = [],
+        public readonly ?string $class = null,
+        public readonly bool $lateStatic = false,
+        public readonly array $names = [],
+        public readonly ?int $scope = null,
+        public readonly string $written = '',
     ) {}
 
     public static function literal(string $value, int $offset, int $line): self
@@ -137,7 +139,7 @@ final readonly class ValueExpr
         $name = ltrim($name, '\\');
         $separator = strrpos($name, '\\');
 
-        return false === $separator ? $name : strtolower(substr($name, 0, $separator)).substr($name, $separator);
+        return false === $separator ? $name : Ascii::lower(substr($name, 0, $separator)).substr($name, $separator);
     }
 
     /**
@@ -145,7 +147,7 @@ final readonly class ValueExpr
      */
     public static function classKey(string $name): string
     {
-        return strtolower(ltrim($name, '\\'));
+        return Ascii::lower(ltrim($name, '\\'));
     }
 
     /**

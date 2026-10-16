@@ -36,7 +36,7 @@ use PHPRegex\Parser\RegexParser;
  */
 final class CompatibilityChecker
 {
-    private const OLDEST_RELEASE = 40;
+    private const OLDEST_RELEASE = 39;
 
     public function check(string $regex): PatternCompatibility
     {
@@ -56,7 +56,7 @@ final class CompatibilityChecker
     }
 
     /**
-     * 10.40 up to the newest release a PCRE2 behaviour the library knows
+     * 10.39 up to the newest release a PCRE2 behaviour the library knows
      * arrived in.
      *
      * @return list<string>

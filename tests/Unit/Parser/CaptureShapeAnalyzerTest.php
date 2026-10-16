@@ -20,6 +20,7 @@ use PHPRegex\Parser\Analysis\Participation;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CaptureShapeAnalyzerTest extends TestCase
 {
+    use PcreGates;
+
     private const FLAG_SETS = [0, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
 
     /**
@@ -95,6 +98,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideShapes')]
     public function test_the_match_shape_is_written_as_a_phpstan_type(string $pattern, int $flags, string $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertSame($expected, $this->analyze($pattern)->matchShape($flags));
     }
 
@@ -105,6 +110,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideEngineRows')]
     public function test_every_fact_holds_for_what_the_engine_writes(string $pattern, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         $shape = $this->analyze($pattern);
 
         foreach ($subjects as $subject) {
@@ -123,6 +130,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideGroupNumbers')]
     public function test_groups_are_keyed_by_number(string $pattern, string $subject, array $numbers): void
     {
+        $this->requiresPhpReading($pattern);
+
         $shape = $this->analyze($pattern);
 
         $this->assertSame($numbers, array_keys($shape->groups));
@@ -210,6 +219,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideEngineRows')]
     public function test_the_match_shape_lists_keys_in_the_order_preg_match_writes_them(string $pattern, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         $shape = $this->analyze($pattern);
 
         foreach (self::FLAG_SETS as $flags) {
@@ -328,6 +339,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[Test]
     public function test_an_inline_capture_option_reaches_an_alphabetic_assertion(): void
     {
+        $this->requiresPhp('8.2', 'An inline capture option under the n modifier', 'does not read the n modifier');
+
         $this->assertSame("array{0: 'a', 1: 'a'}", $this->analyze('/(?-n)(*atomic:(a))/n')->matchShape(0));
         $this->assertSame("array{0: 'a', 1: 'a'}", $this->analyze('/(?-n)(*pla:(a))a/n')->matchShape(0));
     }
@@ -681,6 +694,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideMatchAllShapes')]
     public function test_match_all_shape_is_written_as_a_phpstan_type(string $pattern, int $flags, string $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertSame($expected, $this->analyze($pattern)->matchAllShape($flags));
     }
 
@@ -718,6 +733,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideCaseEngineRows')]
     public function test_match_all_shape_in_set_order_is_a_list_of_the_match_shape(string $pattern, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         $shape = $this->analyze($pattern);
         $unicode = RegexParser::create()->parse($pattern)->isUnicode();
         $replayed = array_values(array_unique([implode('', $subjects), ...$subjects]));
@@ -783,6 +800,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideCaseEngineRows')]
     public function test_match_all_shape_in_pattern_order_lists_every_key_in_the_order_php_writes_them(string $pattern, array $subjects): void
     {
+        $this->requiresPhpReading($pattern);
+
         $shape = $this->analyze($pattern);
         $replayed = [implode('', $subjects), ...$subjects];
         if (0 === preg_match($pattern, "\x00")) {

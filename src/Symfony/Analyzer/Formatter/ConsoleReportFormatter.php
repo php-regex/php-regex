@@ -26,7 +26,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * @internal
  */
-final readonly class ConsoleReportFormatter
+final class ConsoleReportFormatter
 {
     private const ARROW_LABEL = "\u{21B3}";
     private const BADGE_CRIT = '<bg=red;fg=white;options=bold> CRIT </>';

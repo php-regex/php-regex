@@ -16,10 +16,10 @@ namespace PHPRegex\Cli;
 /**
  * @internal
  */
-final readonly class ParsedGlobalOptions
+final class ParsedGlobalOptions
 {
     /**
      * @param array<int, string> $args
      */
-    public function __construct(public GlobalOptions $options, public array $args) {}
+    public function __construct(public readonly GlobalOptions $options, public readonly array $args) {}
 }

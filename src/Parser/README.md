@@ -41,7 +41,7 @@ Installation
 composer require php-regex/regex-parser
 ```
 
-Requires PHP 8.2+ and ext-mbstring. The AST cache can sit on a PSR-6 pool (`psr/cache`) or a PSR-16 cache (`psr/simple-cache`) when either is installed; `ext-intl` resolves `\N{name}` escapes by Unicode name when loaded.
+Requires PHP 8.1+ and ext-mbstring. The AST cache can sit on a PSR-6 pool (`psr/cache`) or a PSR-16 cache (`psr/simple-cache`) when either is installed; `ext-intl` resolves `\N{name}` escapes by Unicode name when loaded.
 
 Configuration
 -------------

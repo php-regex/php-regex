@@ -33,21 +33,21 @@ use PHPRegex\Toolkit\Regex;
  * @phpstan-import-type AccessSkip from SecurityAccessControlReport
  * @phpstan-import-type AccessControlRule from SecurityConfigExtractor
  */
-final readonly class SecurityAccessControlAnalyzer
+final class SecurityAccessControlAnalyzer
 {
     private const LEVEL_PUBLIC = 'public';
     private const LEVEL_RESTRICTED = 'restricted';
     private const LEVEL_CONDITIONAL = 'conditional';
     private const LEVEL_UNKNOWN = 'unknown';
 
-    private LanguageSolver $solver;
+    private readonly LanguageSolver $solver;
 
     public function __construct(
-        private Regex $regex,
-        private SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer(),
-        private string $minimizationAlgorithm = MinimizationAlgorithm::Hopcroft->value,
+        private readonly Regex $regex,
+        private readonly SecurityPatternNormalizer $patternNormalizer = new SecurityPatternNormalizer(),
+        private readonly string $minimizationAlgorithm = 'hopcroft',
         ?LanguageSolver $solver = null,
-        private string $determinizationAlgorithm = DeterminizationAlgorithm::SubsetIndexed->value,
+        private readonly string $determinizationAlgorithm = 'subset-indexed',
     ) {
         $this->solver = $solver ?? new LanguageSolver($this->regex->parser(), new InMemoryDfaCache());
     }

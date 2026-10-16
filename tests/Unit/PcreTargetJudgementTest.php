@@ -107,4 +107,15 @@ final class PcreTargetJudgementTest extends TestCase
         $this->assertFalse(Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.42'])->validate('/(?aD)x/')->isValid);
         $this->assertTrue(Regex::create(['cache' => null, 'php_version' => '8.4'])->validate('/(?aD)x/')->isValid);
     }
+
+    /**
+     * PHP 8.1.0 bundled PCRE2 10.37, judged as 10.39: the five scripts of
+     * Unicode 14 it does not know are taken for known.
+     */
+    #[Test]
+    public function test_pcre2_10_37_is_judged_as_10_39(): void
+    {
+        $this->assertTrue(Regex::create(['cache' => null, 'pcre_version' => '10.37'])->validate('/\\p{Toto}/u')->isValid);
+        $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.37'])->validate('/\\p{greek}/u')->isValid);
+    }
 }

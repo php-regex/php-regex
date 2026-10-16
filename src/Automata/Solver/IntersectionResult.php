@@ -16,9 +16,9 @@ namespace PHPRegex\Automata\Solver;
 /**
  * Result of an intersection check between two regexes.
  */
-final readonly class IntersectionResult
+final class IntersectionResult
 {
-    public string $pcreVersion;
+    public readonly string $pcreVersion;
 
     /**
      * @internal built by LanguageSolver::intersection()
@@ -28,8 +28,8 @@ final readonly class IntersectionResult
      * @param string|null $pcreVersion The PCRE2 release the answer was computed with
      */
     public function __construct(
-        public bool $isEmpty,
-        public ?string $example = null,
+        public readonly bool $isEmpty,
+        public readonly ?string $example = null,
         ?string $pcreVersion = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];

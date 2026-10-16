@@ -25,7 +25,7 @@ use PHPRegex\Parser\NewlineConvention;
  * sound bounds: every match holds within $minMatchLength and
  * $maxMatchLength, and an anchor is true only when proven.
  */
-final readonly class PatternInfo
+final class PatternInfo
 {
     /**
      * @internal built by PatternInfoAnalyzer::analyze()
@@ -46,19 +46,19 @@ final readonly class PatternInfo
      * @param bool                     $anchoredEnd      proven: every match ends at the end of the subject
      */
     public function __construct(
-        public int $captureCount,
-        public array $names,
-        public int $maxBackreference,
-        public int $minMatchLength,
-        public ?int $maxMatchLength,
-        public int $maxLookbehind,
-        public bool $usesBackslashC,
-        public ?int $matchLimit,
-        public ?int $depthLimit,
-        public ?int $heapLimit,
-        public ?NewlineConvention $newline,
-        public ?BsrConvention $bsr,
-        public bool $anchoredStart,
-        public bool $anchoredEnd,
+        public readonly int $captureCount,
+        public readonly array $names,
+        public readonly int $maxBackreference,
+        public readonly int $minMatchLength,
+        public readonly ?int $maxMatchLength,
+        public readonly int $maxLookbehind,
+        public readonly bool $usesBackslashC,
+        public readonly ?int $matchLimit,
+        public readonly ?int $depthLimit,
+        public readonly ?int $heapLimit,
+        public readonly ?NewlineConvention $newline,
+        public readonly ?BsrConvention $bsr,
+        public readonly bool $anchoredStart,
+        public readonly bool $anchoredEnd,
     ) {}
 }

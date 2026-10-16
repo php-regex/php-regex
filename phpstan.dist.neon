@@ -33,10 +33,12 @@ parameters:
 
     treatPhpDocTypesAsCertain: false
 
-    # The package supports 8.2 through 8.6 and CI analyses each of them, so
-    # analysing the whole range here says locally what CI would say.
+    # The core packages and the PHPStan, Psalm and Rector bridges support 8.1
+    # through 8.5, the Symfony and Laravel bridges 8.2 through 8.5; the whole
+    # code is written for 8.1, so analysing the whole range here reports any
+    # newer syntax or function left behind.
     phpVersion:
-        min: 80200
+        min: 80100
         max: 80599
 
     # The tests probe the running engine behind version guards: judge their
@@ -159,6 +161,14 @@ parameters:
             - classConstant.internalClass
             # PHPUnit assertions that PHPStan considers redundant
             - method.alreadyNarrowedType
+        # The benchmarks run on the PHP of the machine that measures, 8.2 or
+        # later, and a test that measures a peak skips below 8.2: each resets
+        # the peak it reports.
+        - message: '#^Function memory_reset_peak_usage not found\.$#'
+          identifier: function.notFound
+          paths:
+            - tests/Benchmark/*
+            - tests/Unit/Lint/Extraction/ResolutionLimitsTest.php
         # The bare (?flags) predicate does real work beyond the type it
         # asserts (group type, flags, span), so an argument already narrowed
         # to GroupNode does not make the call always true: visitGroup()

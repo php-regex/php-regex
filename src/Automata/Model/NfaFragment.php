@@ -18,10 +18,10 @@ namespace PHPRegex\Automata\Model;
  *
  * @internal
  */
-final readonly class NfaFragment
+final class NfaFragment
 {
     /**
      * @param array<int> $acceptStates
      */
-    public function __construct(public int $startState, public array $acceptStates) {}
+    public function __construct(public readonly int $startState, public readonly array $acceptStates) {}
 }

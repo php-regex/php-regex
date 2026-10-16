@@ -30,6 +30,7 @@ use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\RegexParser;
 
@@ -44,7 +45,7 @@ use PHPRegex\Parser\RegexParser;
  *
  * @phpstan-import-type AlphabetRange from Dfa
  */
-final readonly class LanguageSolver
+final class LanguageSolver
 {
     private const MAX_BYTE = 255;
 
@@ -60,7 +61,7 @@ final readonly class LanguageSolver
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
      * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
      */
-    public function __construct(private ?RegexParser $parser = null, private ?DfaCacheInterface $dfaCache = null) {}
+    public function __construct(private readonly ?RegexParser $parser = null, private readonly ?DfaCacheInterface $dfaCache = null) {}
 
     /**
      * Whether some string matches both patterns, and the shortest such string.
@@ -239,7 +240,7 @@ final readonly class LanguageSolver
         $ast = $this->parser()->parse($pattern);
 
         // These flags change nothing the tree does not already say.
-        $unsupported = array_diff(str_split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X', 'r']);
+        $unsupported = array_diff(Bytes::split($ast->flags), ['i', 's', 'u', 'x', 'D', 'U', 'n', 'J', 'S', 'X', 'r']);
         if ([] !== array_filter($unsupported, static fn (string $flag): bool => '' !== $flag)) {
             throw new ComplexityException('Unsupported regex flags for the match solver: '.implode(', ', $unsupported).'.', 0, $pattern);
         }
@@ -248,7 +249,7 @@ final readonly class LanguageSolver
             throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
         }
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator())->translate($ast), $ast->isUnicode());
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser()->target()))->translate($ast), $ast->isUnicode());
     }
 
     private function parser(): RegexParser
@@ -290,7 +291,7 @@ final readonly class LanguageSolver
         }
 
         $ast = $this->parser()->parse($pattern);
-        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options);
+        $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser()->target());
 
         $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast));
         $nfa = $transformer->transform($hir, $options);

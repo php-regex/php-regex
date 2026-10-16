@@ -172,7 +172,7 @@ final class RedosCallerPcreLimitsTest extends TestCase
         $fresh = (new RedosAnalyzer($parser))->analyze($pattern);
         StaticCaches::clear();
 
-        LibraryPcre::useIniSetter(static fn (): false => false);
+        LibraryPcre::useIniSetter(static fn (): bool => false);
 
         try {
             self::underLimits('19', '100000', static fn (): RedosAnalysis => (new RedosAnalyzer($parser))->analyze($pattern));

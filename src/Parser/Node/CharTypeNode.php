@@ -18,10 +18,10 @@ use PHPRegex\Parser\NodeVisitorInterface;
 /**
  * Represents a predefined character type.
  */
-final readonly class CharTypeNode extends AbstractNode
+final class CharTypeNode extends AbstractNode
 {
     public function __construct(
-        public string $value,
+        public readonly string $value,
         int $startPosition,
         int $endPosition
     ) {

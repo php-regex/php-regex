@@ -21,11 +21,11 @@ use PHPRegex\Parser\NodeVisitorInterface;
  * This node represents PCRE2 version conditions that allow
  * conditional matching based on the PCRE library version.
  */
-final readonly class VersionConditionNode extends AbstractNode
+final class VersionConditionNode extends AbstractNode
 {
     public function __construct(
-        public string $operator,
-        public string $version,
+        public readonly string $operator,
+        public readonly string $version,
         int $startPosition,
         int $endPosition
     ) {

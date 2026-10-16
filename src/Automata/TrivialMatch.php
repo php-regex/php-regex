@@ -13,13 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata;
 
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * A string function that returns true for exactly the subjects preg_match()
  * returns 1 for, as the automata proved.
  */
-final readonly class TrivialMatch
+final class TrivialMatch
 {
     private const PRINTABLE = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
 
@@ -37,7 +38,7 @@ final readonly class TrivialMatch
      *
      * @param list<string> $literals the literal, or the literals of OneOf; none for IsEmpty
      */
-    public function __construct(public TrivialMatchKind $kind, public array $literals) {}
+    public function __construct(public readonly TrivialMatchKind $kind, public readonly array $literals) {}
 
     /**
      * What the function says for a subject.
@@ -85,7 +86,7 @@ final readonly class TrivialMatch
 
         $utf8 = mb_check_encoding($text, 'UTF-8');
         $escaped = '';
-        foreach ($utf8 ? mb_str_split($text, 1, 'UTF-8') : str_split($text) as $character) {
+        foreach ($utf8 ? mb_str_split($text, 1, 'UTF-8') : Bytes::split($text) as $character) {
             $escaped .= 1 < \strlen($character) ? self::phpCharacter($character) : self::phpByte($character, $utf8);
         }
 

@@ -441,7 +441,7 @@ final class TokenValueCollector
         if (\is_array($operator) && \T_DOUBLE_COLON === $operator[0]) {
             $class = \is_array($token) && \T_STATIC === $token[0] ? 'static' : $this->name($token);
 
-            return null === $class || 'class' === strtolower($name) ? ValueExpr::unknown() : $this->classConstant($class, $name, $first, $context);
+            return null === $class || 'class' === Ascii::lower($name) ? ValueExpr::unknown() : $this->classConstant($class, $name, $first, $context);
         }
 
         if (\is_array($token) && \T_VARIABLE === $token[0] && '$this' === $token[1] && \is_array($operator) && \T_OBJECT_OPERATOR === $operator[0]
@@ -476,7 +476,7 @@ final class TokenValueCollector
             return ValueExpr::unknown();
         }
 
-        $lower = strtolower(ltrim($name, '\\'));
+        $lower = Ascii::lower(ltrim($name, '\\'));
         if ('true' === $lower || 'false' === $lower) {
             return ValueExpr::nonString();
         }
@@ -516,7 +516,7 @@ final class TokenValueCollector
     {
         $written = $class.'::'.$name;
 
-        return match (strtolower($class)) {
+        return match (Ascii::lower($class)) {
             // A closure may be bound to another class: self:: names none.
             'self' => ValueExpr::classConstant($this->isBoundAt($index) ? null : $this->classAt($index), $name, false, $written),
             'static' => ValueExpr::classConstant($this->isBoundAt($index) ? null : $this->classAt($index), $name, true, $written),
@@ -1349,7 +1349,7 @@ final class TokenValueCollector
 
         $scope = $this->scopeAt($index);
         if (null !== $function) {
-            $resolved = strtolower($context->resolveFunction($function));
+            $resolved = Ascii::lower($context->resolveFunction($function));
             if ('extract' === $resolved || 'compact' === $resolved) {
                 $this->bailScope($index);
             } elseif ('define' === $resolved) {
@@ -1843,7 +1843,7 @@ final class TokenValueCollector
 
     private static function decodeString(string $token): string
     {
-        if ('b' === strtolower($token[0] ?? '')) {
+        if ('b' === Ascii::lower($token[0] ?? '')) {
             $token = substr($token, 1);
         }
 

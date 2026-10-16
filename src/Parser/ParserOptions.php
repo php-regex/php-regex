@@ -42,7 +42,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *     pcre_version?: string|null,
  * }
  */
-final readonly class ParserOptions
+final class ParserOptions
 {
     /**
      * Allowed option keys for configuration.
@@ -61,7 +61,7 @@ final readonly class ParserOptions
     /**
      * The PHP version and the PCRE2 release patterns are judged for.
      */
-    public PcreTarget $target;
+    public readonly PcreTarget $target;
 
     /**
      * Create new configuration options.
@@ -76,12 +76,12 @@ final readonly class ParserOptions
      * @param PcreTarget|null $target                The PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(
-        public int $maxPatternLength,
-        public int $maxLookbehindLength,
-        public CacheInterface $cache,
-        public array $redosIgnoredPatterns = [],
-        public bool $runtimePcreValidation = false,
-        public int $maxRecursionDepth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
+        public readonly int $maxPatternLength,
+        public readonly int $maxLookbehindLength,
+        public readonly CacheInterface $cache,
+        public readonly array $redosIgnoredPatterns = [],
+        public readonly bool $runtimePcreValidation = false,
+        public readonly int $maxRecursionDepth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
     ) {
         $this->target = $target ?? PcreTarget::runtime();
@@ -262,7 +262,7 @@ final readonly class ParserOptions
         // "runtime", as PHPStan's phpVersion takes it: the running PHP, with
         // the PCRE2 it links unless a release is given beside it.
         $phpVersion = $options['php_version'] ?? null;
-        if (\is_string($phpVersion) && 'runtime' === strtolower(trim($phpVersion))) {
+        if (\is_string($phpVersion) && 'runtime' === Ascii::lower(trim($phpVersion))) {
             return null === $pcreVersion ? PcreTarget::runtime() : new PcreTarget(PcreTarget::runtime()->phpVersionId, $pcreVersion);
         }
 

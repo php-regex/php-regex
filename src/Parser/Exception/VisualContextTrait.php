@@ -20,8 +20,6 @@ namespace PHPRegex\Parser\Exception;
  */
 trait VisualContextTrait
 {
-    private const MAX_CONTEXT_WIDTH = 80;
-
     private ?string $pattern = null;
 
     private string $visualSnippet = '';
@@ -58,16 +56,19 @@ trait VisualContextTrait
 
         $lineNumber = substr_count($pattern, "\n", 0, $lineStart) + 1;
 
+        // The widest excerpt shown, in bytes: a longer line is cut around
+        // the caret.
+        $maxWidth = 80;
         $displayStart = $lineStart;
         $displayEnd = $lineEnd;
 
-        if (($displayEnd - $displayStart) > self::MAX_CONTEXT_WIDTH) {
-            $half = intdiv(self::MAX_CONTEXT_WIDTH, 2);
+        if (($displayEnd - $displayStart) > $maxWidth) {
+            $half = intdiv($maxWidth, 2);
             $displayStart = max($lineStart, $caretIndex - $half);
-            $displayEnd = min($lineEnd, $displayStart + self::MAX_CONTEXT_WIDTH);
+            $displayEnd = min($lineEnd, $displayStart + $maxWidth);
 
-            if (($displayEnd - $displayStart) > self::MAX_CONTEXT_WIDTH) {
-                $displayStart = $displayEnd - self::MAX_CONTEXT_WIDTH;
+            if (($displayEnd - $displayStart) > $maxWidth) {
+                $displayStart = $displayEnd - $maxWidth;
             }
         }
 

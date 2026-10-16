@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * Known regex wrappers shipped by third-party libraries.
  *
@@ -187,7 +189,7 @@ final class InteropPresets
 
         $methods = [];
         foreach ([...self::phpunitAssertions(), ...self::phpunitExpectations()] as $method => $function) {
-            $methods[strtolower($method)] = new PatternFunction($method, $function->argumentIndex, parameterNames: $function->parameterNames, kind: PatternFunction::KIND_NAMED_METHOD);
+            $methods[Ascii::lower($method)] = new PatternFunction($method, $function->argumentIndex, parameterNames: $function->parameterNames, kind: PatternFunction::KIND_NAMED_METHOD);
         }
 
         return $methods;
@@ -207,7 +209,7 @@ final class InteropPresets
 
         $functions = [];
         foreach (self::phpunitAssertions() as $method => $function) {
-            $functions[strtolower('PHPUnit\Framework\\'.$method)] = new PatternFunction($method, $function->argumentIndex, parameterNames: $function->parameterNames);
+            $functions[Ascii::lower('PHPUnit\Framework\\'.$method)] = new PatternFunction($method, $function->argumentIndex, parameterNames: $function->parameterNames);
         }
 
         return $functions;
@@ -356,7 +358,7 @@ final class InteropPresets
     {
         $entries = [];
         foreach ($functions as $method => $function) {
-            $entries[strtolower($namespace.'\\'.$shortClass.'::'.$method)] = new PatternFunction($shortClass.'::'.$method, $function->argumentIndex, parameterNames: $function->parameterNames);
+            $entries[Ascii::lower($namespace.'\\'.$shortClass.'::'.$method)] = new PatternFunction($shortClass.'::'.$method, $function->argumentIndex, parameterNames: $function->parameterNames);
         }
 
         return $entries;
@@ -372,7 +374,7 @@ final class InteropPresets
         $entries = [];
 
         foreach ($methods as $method) {
-            $entries[strtolower($class.'::'.$method)] = new PatternFunction($shortClass.'::'.$method);
+            $entries[Ascii::lower($class.'::'.$method)] = new PatternFunction($shortClass.'::'.$method);
         }
 
         return $entries;

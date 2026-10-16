@@ -27,7 +27,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
  *
  * @internal
  */
-final readonly class RewriteCheck
+final class RewriteCheck
 {
     /**
      * The configurations the match check may explore: a few hundred settle
@@ -53,7 +53,7 @@ final readonly class RewriteCheck
      */
     private const LANGUAGE_CHECK_WORK = 200_000;
 
-    public function __construct(private LanguageSolver $solver) {}
+    public function __construct(private readonly LanguageSolver $solver) {}
 
     /**
      * @throws ExceptionInterface when the match solver cannot parse a side

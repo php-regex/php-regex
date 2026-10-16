@@ -26,7 +26,7 @@ use PHPRegex\Parser\Node\GroupType;
  *
  * @internal
  */
-final readonly class PcreVerb
+final class PcreVerb
 {
     /**
      * PCRE2 10.32+ alphabetic assertion verbs and their group equivalents.
@@ -69,36 +69,36 @@ final readonly class PcreVerb
          * The verb as it should be recorded, which is not what was written
          * when the pattern used the "(*:name)" shorthand for a mark.
          */
-        public string $name,
+        public readonly string $name,
         /**
          * The group an alphabetic assertion stands for, or null.
          */
-        public ?GroupType $assertion = null,
+        public readonly ?GroupType $assertion = null,
         /**
          * The sub-pattern an assertion or a script run wraps, or null.
          */
-        public ?string $payload = null,
+        public readonly ?string $payload = null,
         /**
          * The limit "(*LIMIT_MATCH=n)" sets, or null.
          */
-        public ?int $matchLimit = null,
+        public readonly ?int $matchLimit = null,
         /**
          * Where the payload starts, relative to the verb text.
          */
-        public int $payloadOffset = 0,
+        public readonly int $payloadOffset = 0,
         /**
          * Whether the assertion is non-atomic: "(*napla:...)", "(?*...)".
          */
-        public bool $nonAtomic = false,
+        public readonly bool $nonAtomic = false,
         /**
          * Whether the script run's body is atomic: "(*asr:...)".
          */
-        public bool $atomicScriptRun = false,
+        public readonly bool $atomicScriptRun = false,
         /**
          * "scs" or "scan_substring" as written, for a substring scan
          * "(*scs:(1)...)", PCRE2 10.45; null otherwise.
          */
-        public ?string $scanSubstring = null,
+        public readonly ?string $scanSubstring = null,
     ) {}
 
     public static function read(string $verb): self

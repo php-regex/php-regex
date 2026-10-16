@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * Whether a command line asks for JSON: --format=json, --format json or
  * --json, before "--" ends the options. When the command line names more
@@ -51,9 +53,9 @@ final class JsonRequest
             if ('--json' === $arg) {
                 $format = 'json';
             } elseif (str_starts_with($arg, '--format=')) {
-                $format = strtolower(substr($arg, \strlen('--format=')));
+                $format = Ascii::lower(substr($arg, \strlen('--format=')));
             } elseif ('--format' === ($args[$index - 1] ?? null)) {
-                $format = strtolower($arg);
+                $format = Ascii::lower($arg);
             }
         }
 

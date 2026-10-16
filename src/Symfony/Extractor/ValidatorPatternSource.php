@@ -29,9 +29,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * @internal
  */
-final readonly class ValidatorPatternSource implements OverlappingPatternSourceInterface
+final class ValidatorPatternSource implements OverlappingPatternSourceInterface
 {
-    public function __construct(private ?ValidatorInterface $validator = null, private ?LoaderInterface $validatorLoader = null) {}
+    public function __construct(private readonly ?ValidatorInterface $validator = null, private readonly ?LoaderInterface $validatorLoader = null) {}
 
     public function getName(): string
     {

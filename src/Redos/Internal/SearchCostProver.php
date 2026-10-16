@@ -16,6 +16,8 @@ namespace PHPRegex\Redos\Internal;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\Utf8;
+use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -78,7 +80,7 @@ use PHPRegex\Redos\RedosSearchCost;
  *
  * @internal
  */
-final readonly class SearchCostProver
+final class SearchCostProver
 {
     /**
      * The most run words tried, and the most a cycle gives.
@@ -112,7 +114,7 @@ final readonly class SearchCostProver
 
     private const VERTICAL_SPACES = [[0x0A, 0x0D], [0x85, 0x85], [0x2028, 0x2029]];
 
-    public function __construct(private SearchCostReplayer $replayer = new SearchCostReplayer()) {}
+    public function __construct(private readonly SearchCostReplayer $replayer = new SearchCostReplayer()) {}
 
     /**
      * The search-cost witness of the pattern the prover proved linear per
@@ -398,11 +400,11 @@ final readonly class SearchCostProver
     {
         $negated = false;
         $name = '';
-        foreach (str_split(trim($node->prop, '{}')) as $character) {
+        foreach (Bytes::split(trim($node->prop, '{}')) as $character) {
             if ('^' === $character && '' === $name) {
                 $negated = !$negated;
             } elseif (!str_contains(" \t\n\v\f\r-_", $character)) {
-                $name .= strtolower($character);
+                $name .= Ascii::lower($character);
             }
         }
 

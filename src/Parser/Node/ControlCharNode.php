@@ -21,11 +21,11 @@ use PHPRegex\Parser\NodeVisitorInterface;
  * This node represents control character escapes in PCRE2,
  * where \c followed by a letter produces the corresponding control character.
  */
-final readonly class ControlCharNode extends AbstractNode
+final class ControlCharNode extends AbstractNode
 {
     public function __construct(
-        public string $char,
-        public int $codePoint,
+        public readonly string $char,
+        public readonly int $codePoint,
         int $startPosition,
         int $endPosition
     ) {

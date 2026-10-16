@@ -5,20 +5,20 @@
         "psr/cache": "^3.0",
         "psr/log": "^3.0",
         "psr/simple-cache": "^3.0",
-        "symfony/config": "^7.4|^8.0",
-        "symfony/console": "^7.4|^8.0",
-        "symfony/dependency-injection": "^7.4|^8.0",
-        "symfony/http-foundation": "^7.4|^8.0",
-        "symfony/http-kernel": "^7.4|^8.0",
-        "symfony/routing": "^7.4|^8.0",
-        "symfony/validator": "^7.4|^8.0",
-        "illuminate/config": "^12.0|^13.0",
-        "illuminate/console": "^12.0|^13.0",
-        "illuminate/container": "^12.0|^13.0",
-        "illuminate/contracts": "^12.0|^13.0",
-        "illuminate/routing": "^12.0|^13.0",
-        "illuminate/support": "^12.0|^13.0",
-        "orchestra/testbench": "^10.0|^11.0",
+        "symfony/config": "^6.4|^7.4|^8.0",
+        "symfony/console": "^6.4|^7.4|^8.0",
+        "symfony/dependency-injection": "^6.4|^7.4|^8.0",
+        "symfony/http-foundation": "^6.4|^7.4|^8.0",
+        "symfony/http-kernel": "^6.4|^7.4|^8.0",
+        "symfony/routing": "^6.4|^7.4|^8.0",
+        "symfony/validator": "^6.4|^7.4|^8.0",
+        "illuminate/config": "^10.37|^11.0|^12.0|^13.0",
+        "illuminate/console": "^10.37|^11.0|^12.0|^13.0",
+        "illuminate/container": "^10.37|^11.0|^12.0|^13.0",
+        "illuminate/contracts": "^10.37|^11.0|^12.0|^13.0",
+        "illuminate/routing": "^10.37|^11.0|^12.0|^13.0",
+        "illuminate/support": "^10.37|^11.0|^12.0|^13.0",
+        "orchestra/testbench": "^8.18|^9.0|^10.0|^11.0",
         "rector/rector": "^2.4",
         "vimeo/psalm": "^6.19"
     },
@@ -26,6 +26,9 @@
         "preferred-install": {
             "orchestra/canvas*": "source",
             "*": "dist"
+        },
+        "audit": {
+            "block-insecure": false
         }
     }
 }

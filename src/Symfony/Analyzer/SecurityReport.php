@@ -16,12 +16,12 @@ namespace PHPRegex\Symfony\Analyzer;
 /**
  * @internal
  */
-final readonly class SecurityReport
+final class SecurityReport
 {
     /**
      * @param array<int, ReportSection> $sections
      */
-    public function __construct(public array $sections) {}
+    public function __construct(public readonly array $sections) {}
 
     /**
      * @param array<int, string> $kinds

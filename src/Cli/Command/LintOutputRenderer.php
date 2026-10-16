@@ -26,7 +26,7 @@ use PHPRegex\Toolkit\Regex;
  *
  * @phpstan-import-type LintStats from LintReport
  */
-final readonly class LintOutputRenderer
+final class LintOutputRenderer
 {
     /**
      * @param LintStats $stats

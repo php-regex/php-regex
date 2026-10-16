@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -96,7 +97,7 @@ final class CodePoints
         $ord = \ord($value);
 
         if ($ord < 32 || 127 === $ord || $ord >= 128) {
-            return "'\\x".strtoupper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT))."'";
+            return "'\\x".Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT))."'";
         }
 
         if ("'" === $value) {
@@ -116,6 +117,6 @@ final class CodePoints
             return self::formatCharLiteralForHint(\chr($codePoint));
         }
 
-        return "'\\x{".strtoupper(dechex($codePoint))."}'";
+        return "'\\x{".Ascii::upper(dechex($codePoint))."}'";
     }
 }

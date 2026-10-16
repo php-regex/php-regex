@@ -21,7 +21,7 @@ namespace PHPRegex\LanguageServer\Document;
  *
  * @internal
  */
-final readonly class RegexOccurrence
+final class RegexOccurrence
 {
     /**
      * @param string   $pattern    the pattern, as PHP reads the literal
@@ -33,12 +33,12 @@ final readonly class RegexOccurrence
      *                             its line: it gets no diagnostic
      */
     public function __construct(
-        public string $pattern,
-        public array $start,
-        public array $end,
-        public int $byteOffset,
-        public string $literal,
-        public bool $ignored = false,
+        public readonly string $pattern,
+        public readonly array $start,
+        public readonly array $end,
+        public readonly int $byteOffset,
+        public readonly string $literal,
+        public readonly bool $ignored = false,
     ) {}
 
     /**

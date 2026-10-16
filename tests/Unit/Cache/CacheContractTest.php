@@ -57,7 +57,8 @@ final class CacheContractTest extends TestCase
     public function test_a_tree_comes_back_equal(\Closure $cache): void
     {
         $store = $cache($this->directory);
-        $regex = Regex::create(['cache' => null]);
+        // For PHP 8.2, which reads the NUL byte of a pattern PHP 8.1 refuses.
+        $regex = Regex::create(['cache' => null, 'php_version' => '8.2']);
 
         foreach (self::PATTERNS as $pattern) {
             $tree = $regex->parse($pattern);
@@ -90,7 +91,8 @@ final class CacheContractTest extends TestCase
     public function test_the_facade_parses_once_and_reads_the_tree_back(\Closure $cache): void
     {
         $store = $cache($this->directory);
-        $regex = Regex::create(['cache' => $store]);
+        // For PHP 8.2, which reads the NUL byte of a pattern PHP 8.1 refuses.
+        $regex = Regex::create(['cache' => $store, 'php_version' => '8.2']);
 
         foreach (self::PATTERNS as $pattern) {
             $first = $regex->parse($pattern);

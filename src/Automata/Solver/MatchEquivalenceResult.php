@@ -17,9 +17,9 @@ namespace PHPRegex\Automata\Solver;
  * Result of a match-equivalence check: whether preg_match() writes the same
  * $matches for both patterns on every subject.
  */
-final readonly class MatchEquivalenceResult
+final class MatchEquivalenceResult
 {
-    public string $pcreVersion;
+    public readonly string $pcreVersion;
 
     /**
      * @internal built by LanguageSolver::matchEquivalent()
@@ -29,8 +29,8 @@ final readonly class MatchEquivalenceResult
      * @param string|null $pcreVersion    The PCRE2 release the answer was computed with
      */
     public function __construct(
-        public bool $isEquivalent,
-        public ?string $counterExample = null,
+        public readonly bool $isEquivalent,
+        public readonly ?string $counterExample = null,
         ?string $pcreVersion = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];

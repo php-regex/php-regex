@@ -22,6 +22,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
 
 /**
@@ -206,7 +207,7 @@ final class CompareCommand extends AbstractCommand
             }
 
             if (!$stopParsing && str_starts_with($arg, '--method=')) {
-                $method = \strtolower(substr($arg, \strlen('--method=')));
+                $method = Ascii::lower(substr($arg, \strlen('--method=')));
 
                 continue;
             }
@@ -216,14 +217,14 @@ final class CompareCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult('Missing value for --method.');
                 }
-                $method = \strtolower($value);
+                $method = Ascii::lower($value);
                 $i++;
 
                 continue;
             }
 
             if (!$stopParsing && str_starts_with($arg, '--minimizer=')) {
-                $minimizer = \strtolower(substr($arg, \strlen('--minimizer=')));
+                $minimizer = Ascii::lower(substr($arg, \strlen('--minimizer=')));
 
                 continue;
             }
@@ -233,14 +234,14 @@ final class CompareCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult('Missing value for --minimizer.');
                 }
-                $minimizer = \strtolower($value);
+                $minimizer = Ascii::lower($value);
                 $i++;
 
                 continue;
             }
 
             if (!$stopParsing && str_starts_with($arg, '--determinizer=')) {
-                $determinizer = \strtolower(substr($arg, \strlen('--determinizer=')));
+                $determinizer = Ascii::lower(substr($arg, \strlen('--determinizer=')));
 
                 continue;
             }
@@ -250,7 +251,7 @@ final class CompareCommand extends AbstractCommand
                 if ('' === $value || str_starts_with($value, '-')) {
                     return $this->errorResult('Missing value for --determinizer.');
                 }
-                $determinizer = \strtolower($value);
+                $determinizer = Ascii::lower($value);
                 $i++;
 
                 continue;

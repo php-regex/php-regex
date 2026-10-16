@@ -20,14 +20,14 @@ use PHPRegex\Parser\Token\TokenType;
 /**
  * Accessor class to expose and manipulate private methods/properties of the Lexer for unit testing.
  */
-final readonly class LexerAccessor
+final class LexerAccessor
 {
     /**
      * @var \ReflectionClass<Lexer>
      */
-    private \ReflectionClass $reflection;
+    private readonly \ReflectionClass $reflection;
 
-    public function __construct(private Lexer $lexer)
+    public function __construct(private readonly Lexer $lexer)
     {
         $this->reflection = new \ReflectionClass($this->lexer);
     }

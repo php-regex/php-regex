@@ -20,19 +20,19 @@ use PHPRegex\Parser\Internal\LibraryPcre;
  *
  * @internal
  */
-final readonly class Message
+final class Message
 {
     /**
      * @param array<string, mixed>|null $params
      * @param array<string, mixed>|null $error
      */
     public function __construct(
-        public string $jsonrpc,
-        public ?string $method = null,
-        public int|string|null $id = null,
-        public ?array $params = null,
-        public mixed $result = null,
-        public ?array $error = null,
+        public readonly string $jsonrpc,
+        public readonly ?string $method = null,
+        public readonly int|string|null $id = null,
+        public readonly ?array $params = null,
+        public readonly mixed $result = null,
+        public readonly ?array $error = null,
     ) {}
 
     /**

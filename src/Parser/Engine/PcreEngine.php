@@ -28,7 +28,7 @@ use PHPRegex\Parser\Internal\NoJit;
  * is disabled, limits asked for are reported as not set, in the answer, and
  * a pattern the verb finds no place in runs with the JIT as the caller left it.
  */
-final readonly class PcreEngine
+final class PcreEngine
 {
     private const CLOSING_BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class InvisibleCharacterTest extends TestCase
 {
+    use PcreGates;
+
     private const RULE = 'regex.lint.literal.invisible';
 
     private const SUBJECTS = ['', 'a', 'ab', "a\tb", "a\nb", "a\rb", "a\0b", "a\eb", "a\x7Fb", "a\u{200B}b", "\u{FEFF}abc", "a\u{AD}b", "a\u{85}b", "\u{202E}", "a\u{2028}", "\t", ' ', 'a\\b', "a\\\tb"];
@@ -41,6 +44,8 @@ final class InvisibleCharacterTest extends TestCase
     #[DataProvider('provideRawCharacters')]
     public function test_a_raw_invisible_character_is_reported_with_its_escape(string $pattern, string $rewrite, array $issues): void
     {
+        $this->requiresPhpReading($pattern);
+
         foreach (self::SUBJECTS as $subject) {
             $this->assertSame(
                 [preg_match_all($rewrite, $subject, $expected, \PREG_OFFSET_CAPTURE), $expected],

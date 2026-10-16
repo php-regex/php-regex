@@ -19,6 +19,7 @@ use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,11 +32,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class ResolutionLimitsTest extends TestCase
 {
+    use PcreGates;
     use TemporaryProject;
 
     #[Test]
     public function test_a_constant_doubled_past_the_bound_proves_nothing(): void
     {
+        $this->requiresPhp('8.2', 'The peak memory of a resolution', 'has no memory_reset_peak_usage()');
+
         $code = "<?php\n\nfinal class Blow\n{\n    const C0 = 'ab';\n";
         for ($i = 1; $i <= 24; $i++) {
             $code .= \sprintf("    const C%d = self::C%d . self::C%d;\n", $i, $i - 1, $i - 1);

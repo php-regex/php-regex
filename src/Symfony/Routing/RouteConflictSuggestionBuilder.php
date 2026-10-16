@@ -21,12 +21,12 @@ use PHPRegex\Parser\Engine\PcreEngine;
  * @phpstan-import-type RouteDescriptor from RouteConflictReport
  * @phpstan-import-type RouteConflict from RouteConflictReport
  */
-final readonly class RouteConflictSuggestionBuilder
+final class RouteConflictSuggestionBuilder
 {
     /**
      * @param PcreEngine $engine Runs a route's pattern on the example that conflicts
      */
-    public function __construct(private PcreEngine $engine = new PcreEngine()) {}
+    public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
 
     /**
      * @phpstan-param array<RouteConflict> $conflicts

@@ -186,13 +186,13 @@ final class ServerTest extends TestCase
         yield 'empty batch' => ['frame' => self::body('[]')] + $invalidRequest;
         yield 'batch' => ['frame' => self::body('[{"jsonrpc":"2.0","id":5,"method":"shutdown"}]')] + $invalidRequest;
         yield 'empty object' => ['frame' => self::body('{}')] + $invalidRequest;
-        yield 'no jsonrpc member' => ['frame' => self::body('{"id":5,"method":"textDocument/hover"}'), 'id' => 5] + $invalidRequest;
-        yield 'jsonrpc 1.0' => ['frame' => self::body('{"jsonrpc":"1.0","id":"a","method":"textDocument/hover"}'), 'id' => 'a'] + $invalidRequest;
-        yield 'method not a string' => ['frame' => self::body('{"jsonrpc":"2.0","id":5,"method":5}'), 'id' => 5] + $invalidRequest;
+        yield 'no jsonrpc member' => array_replace(['frame' => self::body('{"id":5,"method":"textDocument/hover"}')] + $invalidRequest, ['id' => 5]);
+        yield 'jsonrpc 1.0' => array_replace(['frame' => self::body('{"jsonrpc":"1.0","id":"a","method":"textDocument/hover"}')] + $invalidRequest, ['id' => 'a']);
+        yield 'method not a string' => array_replace(['frame' => self::body('{"jsonrpc":"2.0","id":5,"method":5}')] + $invalidRequest, ['id' => 5]);
         yield 'id neither a number nor a string' => ['frame' => self::body('{"jsonrpc":"2.0","id":{"n":5},"method":"textDocument/hover"}')] + $invalidRequest;
         yield 'fractional id' => ['frame' => self::body('{"jsonrpc":"2.0","id":5.5,"method":"textDocument/hover"}')] + $invalidRequest;
-        yield 'params neither an object nor an array' => ['frame' => self::body('{"jsonrpc":"2.0","id":5,"method":"textDocument/hover","params":3}'), 'id' => 5] + $invalidRequest;
-        yield 'neither a request nor a response' => ['frame' => self::body('{"jsonrpc":"2.0","id":5}'), 'id' => 5] + $invalidRequest;
+        yield 'params neither an object nor an array' => array_replace(['frame' => self::body('{"jsonrpc":"2.0","id":5,"method":"textDocument/hover","params":3}')] + $invalidRequest, ['id' => 5]);
+        yield 'neither a request nor a response' => array_replace(['frame' => self::body('{"jsonrpc":"2.0","id":5}')] + $invalidRequest, ['id' => 5]);
     }
 
     /**
