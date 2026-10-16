@@ -69,7 +69,7 @@ final class PackageManifestTest extends TestCase
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
-        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\LibraryPcre'],
+        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\IniFlag', 'Parser\Internal\LibraryPcre'],
         'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
         // The lint writes its rewrite of a pattern under x into the
         // pattern's own layout, as the optimizer does.

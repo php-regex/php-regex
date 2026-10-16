@@ -26,6 +26,8 @@ use PHPRegex\Laravel\Extractor\RoutePatternSource;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
@@ -153,6 +155,55 @@ final class PHPRegexServiceProvider extends ServiceProvider
         ];
     }
 
+    /**
+     * The calls regex:lint reads, from php-regex.extraction: the presets
+     * named (every one when "interop" is null or missing), the project's
+     * functions, and one warning per name that is no preset, left out.
+     * Read when the extractor is built, so a key the application sets after
+     * the provider registers, or leaves out of a published file, takes the
+     * default all the same.
+     *
+     * @internal
+     *
+     * @return array{interop: list<string>, functions: list<string>, warnings: list<string>}
+     */
+    public static function extraction(Application $app): array
+    {
+        $extraction = $app['config']['php-regex.extraction'];
+        $extraction = \is_array($extraction) ? $extraction : [];
+        $interop = $extraction['interop'] ?? null;
+        $functions = $extraction['functions'] ?? [];
+
+        $presets = [];
+        $warnings = [];
+        foreach (null === $interop ? InteropPresets::DEFAULT_PRESETS : (array) $interop as $name) {
+            if (\is_string($name) && InteropPresets::exists($name)) {
+                $presets[] = $name;
+
+                continue;
+            }
+
+            $warnings[] = \is_string($name) ? InteropPresets::unknownWarning($name) : InteropPresets::notAStringWarning('interop', $name);
+        }
+
+        $specs = [];
+        foreach ((array) $functions as $spec) {
+            if (!\is_string($spec)) {
+                $warnings[] = InteropPresets::notAStringWarning('functions', $spec);
+            } elseif (PatternFunctionRegistry::isSpec($spec)) {
+                $specs[] = $spec;
+            } else {
+                $warnings[] = PatternFunctionRegistry::malformedSpecWarning($spec);
+            }
+        }
+
+        return [
+            'interop' => array_values(array_unique($presets)),
+            'functions' => $specs,
+            'warnings' => array_values(array_unique($warnings)),
+        ];
+    }
+
     private function configPath(): string
     {
         return __DIR__.'/config/php-regex.php';
@@ -203,14 +254,18 @@ final class PHPRegexServiceProvider extends ServiceProvider
 
     private function registerExtractor(): void
     {
-        $this->app->singleton('php-regex.extractor.strategy', static function (): ExtractorInterface {
+        $this->app->singleton('php-regex.extractor.strategy', static function (Application $app): ExtractorInterface {
+            $extraction = self::extraction($app);
+            $registry = PatternFunctionRegistry::create($extraction['interop'], $extraction['functions']);
+
             // Prefer PhpParser-based extraction when available
             if (class_exists(ParserFactory::class)) {
-                return new PhpParserExtractionStrategy();
+                return new PhpParserExtractionStrategy([], $registry);
             }
 
-            // Fallback to token-based extractor
-            return new TokenBasedExtractionStrategy();
+            // Without nikic/php-parser, the token-based extractor reads the
+            // same calls.
+            return new TokenBasedExtractionStrategy([], $registry);
         });
 
         $this->app->singleton('php-regex.extractor', static function (Application $app): PatternExtractor {

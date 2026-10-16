@@ -116,3 +116,27 @@ CHANGELOG
    closing delimiter is kept, an attribute or an interpolation inside an
    array of patterns no longer hides or invents a key, and nested wrapper
    calls are read in linear time.
+ * The extraction reads more calls: eight presets, all on by default
+   (composer/pcre, nette/utils, spatie/regex, Laravel's `Str`, PHPUnit,
+   webmozart/assert, beberlei/assert, Symfony's `Regex` constraint),
+   `RegexIterator` and `filter_var()`, and a pattern held in a constant, a
+   variable or a property the same file proves, reported once at its
+   literal with `location` saying the way. A configured helper is read
+   under `pattern:`, `patterns:` or `regex:`, or under the one name a
+   `$<name>` suffix gives (`App\grep#1$expression`). Of the other sources,
+   only the Symfony validator's occurrence of a pattern the PHP file already
+   gives is dropped; a Laravel `regex:` rule stays.
+ * A file cut short inside a call's arguments reads nothing from that call,
+   instead of stopping the run with a TypeError. A named argument is matched
+   with its case, as PHP does; nette/utils' `utf8` is read in its place too,
+   and one that is neither `true` nor `false` leaves the pattern unread.
+   Symfony's `Regex` reads only `pattern` from an array of options held in a
+   constant, and a spread after the key leaves it unread.
+ * The reading of names is bounded and stricter: a local assignment after
+   the last read outside any loop is not read; a protected property is read
+   only in a final class that extends none, and no property of a class using
+   a trait of another file, nor through `self::`, `static::` or `$this->` in
+   a closure; `array_walk()` over an object, and a `yield` in a by-reference
+   generator, count as writes; a constant PHP defines keeps its value; a
+   folded value past 64 KiB is not read, and a variable read many times is
+   read once.

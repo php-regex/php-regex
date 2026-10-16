@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Extraction\ExtractorInterface;
-use PHPRegex\Linter\Extraction\MemoryBudget;
+use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
@@ -38,10 +38,6 @@ final readonly class PatternExtractor
      */
     private const FOUND_BATCH = 1000;
 
-    private const SUPPRESSION_MARKERS = [
-        '@regex-ignore-next-line' => 'next',
-        '@regex-ignore' => 'same',
-    ];
     /**
      * Template file suffixes to exclude by default.
      * These files often contain template syntax that can be confused with regex quantifiers.
@@ -470,53 +466,8 @@ final readonly class PatternExtractor
     private function collectSuppressedLines(string $file): array
     {
         $content = @file_get_contents($file);
-        if (false === $content || '' === $content) {
-            return [];
-        }
 
-        // Reading a huge generated file into tokens can exhaust the memory
-        // limit, and a fatal error here would lose every result collected so
-        // far. Such a file simply keeps no suppression markers.
-        if (!MemoryBudget::allows($content, MemoryBudget::TOKENIZE_FACTOR)) {
-            return [];
-        }
-
-        $tokens = token_get_all($content);
-        $suppressed = [];
-
-        foreach ($tokens as $token) {
-            if (!\is_array($token)) {
-                continue;
-            }
-
-            if (\T_COMMENT !== $token[0] && \T_DOC_COMMENT !== $token[0]) {
-                continue;
-            }
-
-            $mode = $this->suppressionMode($token[1]);
-            if (null === $mode) {
-                continue;
-            }
-
-            $startLine = (int) $token[2];
-            $endLine = $startLine + substr_count($token[1], "\n");
-            $targetLine = 'next' === $mode ? $endLine + 1 : $endLine;
-
-            $suppressed[$targetLine] = true;
-        }
-
-        return $suppressed;
-    }
-
-    private function suppressionMode(string $comment): ?string
-    {
-        foreach (self::SUPPRESSION_MARKERS as $marker => $mode) {
-            if (str_contains($comment, $marker)) {
-                return $mode;
-            }
-        }
-
-        return null;
+        return false === $content ? [] : InlineIgnores::suppressedLines($content);
     }
 
     /**

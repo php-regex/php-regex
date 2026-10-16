@@ -125,6 +125,11 @@ Every position counts bytes.
   the PHP expression that holds the pattern: the opening quote of its first
   string literal. `file_offset` is `null`, and `column` too, when the pattern
   does not come from a PHP string, as a route requirement read from YAML.
+- A pattern the call reads through a constant, a local variable or a property
+  of the same file is placed at the literal that declares it, not at the call,
+  and reported once however many calls use it: its `source` is the first of
+  those calls in the file, and its `location` the name that call reads it
+  through (see [`location`](#result-lintresults)).
 - The pattern body is what sits between the delimiters. In `/(a/`, offset 0
   is the `(`. This is the coordinate PCRE2's own error offsets use. An error
   in the modifiers counts on past the body and its closing delimiter.
@@ -355,9 +360,9 @@ Every count is present on every run, `0` when there is none.
 | `line` | int | The line of the pattern, 1-based |
 | `column` | int \| null | The column of the pattern, 1-based, in bytes; `null` when unknown |
 | `file_offset` | int \| null | The byte offset of the pattern in the file, 0-based; `null` when unknown |
-| `source` | string \| null | What the pattern was read from: the call, as `preg_match()`, or a framework source, as `route:<name>:<parameter>` |
+| `source` | string \| null | What the pattern was read from: the call, as `preg_match()` or `Preg::match()`; a constructor, as `new RegexIterator()` or `new Regex()`; an attribute, as `#[Regex]`; or a framework source, as `route:<name>:<parameter>` |
 | `pattern` | string | The pattern as written |
-| `location` | string \| null | Where the pattern is declared when the file and line cannot say it, such as a route's name and controller |
+| `location` | string \| null | How the pattern was reached when the file and line do not say it alone: a route's name and controller, or, for a pattern a call reads through a name, `via ` and that name as the first call writes it (`via self::RE`, `via static::RE`, `via Patterns::RE`, `via RE`, `via $re`, `via $this->re`); `null` for a pattern written in the call |
 | `issues` | list of objects | The issues found in the pattern, possibly empty |
 | `optimizations` | list of objects | The optimizations suggested for the pattern, possibly empty |
 

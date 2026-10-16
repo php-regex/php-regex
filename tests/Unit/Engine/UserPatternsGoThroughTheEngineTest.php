@@ -58,6 +58,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Parser/Lexer.php',
         'src/Linter/Config/LintConfigValidator.php',
         'src/Linter/Config/ProjectTarget.php',
+        'src/Linter/Extraction/PatternFunctionRegistry.php',
         'src/Linter/Extraction/TokenBasedExtractionStrategy.php',
         'src/Linter/Formatter/AbstractConsoleTagFormatter.php',
         'src/Linter/Formatter/ConsoleFormatter.php',

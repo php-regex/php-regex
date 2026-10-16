@@ -14,7 +14,7 @@
             "composer-pcre",
             "nette-utils",
             "spatie-regex",
-            "laravel-str"
+            "illuminate-support"
         ],
         "functions": []
     },

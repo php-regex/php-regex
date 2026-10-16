@@ -33,6 +33,7 @@ Features
 * Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`, with the options of the same commands in the CLI and the Symfony bundle
 * `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass, a route constraint
   anchored and flagged as the router matches it
+* In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, Laravel's `Str::match()` and the other wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
 
@@ -66,6 +67,9 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind `regex:compare` |
 | `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
 | `paths`, `exclude`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, and the editor behind its clickable links |
+| `extraction.interop`, `extraction.functions` | `null`, `[]` | The libraries whose calls `regex:lint` reads patterns from (`null` for every preset, those a later release adds included; a list for exactly those; `[]` for the native calls only), and your own helpers carrying a pattern, as `extraction` of `regex.json` |
+
+The package does not read `regex.json`: `extraction` is set here. A name in `extraction.interop` that is no preset is ignored, and `regex:lint` prints `Warning: Unknown extraction preset "…", ignored.` under its banner, or on stderr with `--format=json` and the other machine formats.
 
 Usage
 -----

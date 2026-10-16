@@ -34,6 +34,7 @@ use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -82,6 +83,8 @@ final class LintCommand extends Command
      * @param string|int|null         $phpVersion           the bundle's php_version
      * @param string|null             $pcreVersion          the bundle's pcre_version
      * @param string|null             $projectDir           where composer.json is read; null reads none
+     * @param array<string>           $warnings             what the bundle's configuration holds that the run
+     *                                                      ignores, printed before the report
      */
     public function __construct(
         private readonly LintService $lint,
@@ -97,6 +100,7 @@ final class LintCommand extends Command
         private readonly ?string $projectDir = null,
         private readonly bool $checkRedos = false,
         private readonly bool $checkComplexity = false,
+        private readonly array $warnings = [],
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -315,6 +319,9 @@ final class LintCommand extends Command
         foreach ($target->notices() as $notice) {
             $io->writeln('<fg=gray>Note: '.$notice.'</>');
         }
+        foreach ($this->warnings as $warning) {
+            $io->writeln('<fg=yellow>Warning: '.OutputFormatter::escape($warning).'</>');
+        }
 
         $io->newLine();
     }
@@ -332,6 +339,9 @@ final class LintCommand extends Command
         $stderr = $output->getErrorOutput();
         foreach ($target->notices() as $notice) {
             $stderr->writeln('Note: '.$notice, OutputInterface::OUTPUT_RAW);
+        }
+        foreach ($this->warnings as $warning) {
+            $stderr->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
         }
         $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
     }

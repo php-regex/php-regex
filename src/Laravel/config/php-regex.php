@@ -205,6 +205,38 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Extraction
+    |--------------------------------------------------------------------------
+    |
+    | Which calls regex:lint reads patterns from, beyond the native preg_*
+    | functions, RegexIterator and filter_var(). The shape of regex.json's
+    | "extraction"; this package does not read regex.json.
+    |
+    */
+    'extraction' => [
+        /*
+        | Libraries whose calls carry a regex pattern, by package slug:
+        | composer-pcre, nette-utils, spatie-regex, illuminate-support,
+        | phpunit, webmozart-assert, beberlei-assert, symfony-validator.
+        | null reads every preset, those a later release adds included; a
+        | list reads exactly the presets it names, [] the native calls only.
+        | An unknown name is ignored, with a warning when regex:lint runs.
+        */
+        'interop' => null,
+
+        /*
+        | Project helpers carrying a pattern, as "function" or
+        | "Some\Class::method". Append "#<index>" when the pattern is not the
+        | first argument, and "#<index>:keys" when that argument is an array
+        | whose keys hold the patterns. A call may pass the pattern by name as
+        | pattern:, patterns: or regex:; append "$<name>" to read it under
+        | the helper's own parameter name instead: "App\grep#1$expression".
+        */
+        'functions' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Scan Paths
     |--------------------------------------------------------------------------
     |

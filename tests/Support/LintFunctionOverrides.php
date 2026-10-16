@@ -385,3 +385,12 @@ function microtime(bool $asFloat = false): string|float
 {
     return LintFunctionOverrides::microtime($asFloat);
 }
+
+namespace PHPRegex\Laravel;
+
+use PHPRegex\Tests\Support\LintFunctionOverrides;
+
+function class_exists(string $class, bool $autoload = true): bool
+{
+    return LintFunctionOverrides::classExists($class, $autoload);
+}

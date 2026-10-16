@@ -15,6 +15,8 @@ namespace PHPRegex\Symfony\DependencyInjection;
 
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Parser\Cache\FilesystemCache;
@@ -58,6 +60,10 @@ final class PHPRegexExtension extends Extension
          *         prefix: string,
          *     },
          *     extractor_service: string|null,
+         *     extraction: array{
+         *         interop: array<int, mixed>,
+         *         functions: array<int, mixed>,
+         *     },
          *     redos: array{
          *         enabled: bool,
          *         threshold: string,
@@ -122,8 +128,10 @@ final class PHPRegexExtension extends Extension
 
         $container->setDefinition('php_regex.cache', $this->buildCacheDefinition($config));
 
-        // Configure extractor service or default implementation.
+        // Configure extractor service or default implementation: a custom
+        // service reads its own calls, and php_regex.extraction is unused.
         $extractorService = $config['extractor_service'];
+        $container->setParameter('php_regex.extraction.warnings', []);
         if ($this->isNotNullOrEmpty($extractorService)) {
             if (\is_string($extractorService)) {
                 $container->setAlias(ExtractorInterface::class, $extractorService);
@@ -131,8 +139,9 @@ final class PHPRegexExtension extends Extension
             }
         } else {
             // Determine and register appropriate extractor.
-            $extractorDefinition = $this->createExtractorDefinition();
+            $extractorDefinition = $this->createExtractorDefinition($config['extraction']);
             $container->setDefinition('php_regex.extractor.instance', $extractorDefinition);
+            $container->setParameter('php_regex.extraction.warnings', $this->extractionWarnings($config['extraction']));
             $container->setAlias(ExtractorInterface::class, 'php_regex.extractor.instance');
         }
 
@@ -180,17 +189,60 @@ final class PHPRegexExtension extends Extension
     }
 
     /**
-     * Create the appropriate extractor definition based on availability.
+     * Create the appropriate extractor definition based on availability,
+     * reading the calls php_regex.extraction names: the presets it knows
+     * and the project's own functions.
+     *
+     * @param array{interop: array<int, mixed>, functions: array<int, mixed>} $extraction
      */
-    private function createExtractorDefinition(): Definition
+    private function createExtractorDefinition(array $extraction): Definition
     {
+        $registry = (new Definition(PatternFunctionRegistry::class))
+            ->setFactory([PatternFunctionRegistry::class, 'create'])
+            ->setArguments([
+                array_values(array_filter($extraction['interop'], static fn (mixed $name): bool => \is_string($name) && InteropPresets::exists($name))),
+                array_values(array_filter($extraction['functions'], \is_string(...))),
+            ]);
+
         // Prefer PhpParser-based extraction when available.
         if ($this->isPhpParserAvailable()) {
-            return new Definition(PhpParserExtractionStrategy::class);
+            return new Definition(PhpParserExtractionStrategy::class, [[], $registry]);
         }
 
         // Fallback to token-based extractor
-        return new Definition(TokenBasedExtractionStrategy::class);
+        return new Definition(TokenBasedExtractionStrategy::class, [[], $registry]);
+    }
+
+    /**
+     * One warning per name of php_regex.extraction.interop that is no
+     * preset, and per entry of either list that is no string: regex:lint
+     * prints them and reads the rest. A "%" is doubled, the container
+     * reading parameters for placeholders.
+     *
+     * @param array{interop: array<int, mixed>, functions: array<int, mixed>} $extraction
+     *
+     * @return list<string>
+     */
+    private function extractionWarnings(array $extraction): array
+    {
+        $warnings = [];
+        foreach ($extraction['interop'] as $name) {
+            if (!\is_string($name)) {
+                $warnings[] = InteropPresets::notAStringWarning('interop', $name);
+            } elseif (!InteropPresets::exists($name)) {
+                $warnings[] = str_replace('%', '%%', InteropPresets::unknownWarning($name));
+            }
+        }
+
+        foreach ($extraction['functions'] as $spec) {
+            if (!\is_string($spec)) {
+                $warnings[] = InteropPresets::notAStringWarning('functions', $spec);
+            } elseif (!PatternFunctionRegistry::isSpec($spec)) {
+                $warnings[] = str_replace('%', '%%', PatternFunctionRegistry::malformedSpecWarning($spec));
+            }
+        }
+
+        return array_values(array_unique($warnings));
     }
 
     /**

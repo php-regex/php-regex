@@ -24,3 +24,10 @@ CHANGELOG
    not have, or names a group (`${name}`), which PHP never substitutes. A
    pattern and a replacement that both vary are not paired value by value: a
    reference is reported only when no possible pattern defines its group.
+ * The static methods of every preset `regex lint` reads are judged by
+   default; `phpRegex.interop` takes the preset names of
+   `extraction.interop` to read only some, and ignores an unknown one
+   without a warning. A named argument is read under the name the library
+   gives its pattern parameter.
+ * A named argument is matched with its case, as PHP does: `PATTERN:` names
+   no `$pattern`.

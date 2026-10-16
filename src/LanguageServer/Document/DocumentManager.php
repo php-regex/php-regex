@@ -30,7 +30,20 @@ final class DocumentManager
      */
     private array $occurrences = [];
 
-    public function __construct(private readonly RegexFinder $finder, private readonly PatternDeclarations $declarations = new PatternDeclarations()) {}
+    public function __construct(private RegexFinder $finder, private readonly PatternDeclarations $declarations = new PatternDeclarations()) {}
+
+    /**
+     * Reads the open documents again with another finder, the one the
+     * workspace's configuration builds.
+     *
+     * @return list<string> the open documents
+     */
+    public function readWith(RegexFinder $finder): array
+    {
+        $this->finder = $finder;
+
+        return $this->refresh();
+    }
 
     /**
      * Open a document.
@@ -126,6 +139,17 @@ final class DocumentManager
         }
 
         return null;
+    }
+
+    /**
+     * Whether a document is a library's, in vendor/: its declarations are
+     * read, its patterns are not diagnosed.
+     */
+    public function isLibrary(string $uri): bool
+    {
+        $path = PatternDeclarations::pathOf($uri);
+
+        return null !== $path && $this->declarations->isLibrary($path);
     }
 
     /**

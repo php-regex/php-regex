@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Extractor;
 
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Source\OverlappingPatternSourceInterface;
 use PHPRegex\Linter\Source\PatternSourceContext;
-use PHPRegex\Linter\Source\PatternSourceInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Regex as SymfonyRegex;
 use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
@@ -29,7 +29,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  *
  * @internal
  */
-final readonly class ValidatorPatternSource implements PatternSourceInterface
+final readonly class ValidatorPatternSource implements OverlappingPatternSourceInterface
 {
     public function __construct(private ?ValidatorInterface $validator = null, private ?LoaderInterface $validatorLoader = null) {}
 

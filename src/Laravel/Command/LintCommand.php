@@ -36,6 +36,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Toolkit\Regex;
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -160,10 +161,13 @@ final class LintCommand extends Command
         );
         $this->formatterRegistry->override('json', new JsonFormatter(target: $target->toArray()));
 
+        // What config/php-regex.php holds that the run ignores: one warning
+        // each, and the run goes on.
+        $warnings = PHPRegexServiceProvider::extraction($this->laravel)['warnings'];
         if (self::FORMAT_CONSOLE === $format) {
-            $this->showBanner($jobs, $target);
+            $this->showBanner($jobs, $target, $warnings);
         } else {
-            $this->reportOnStderr($target);
+            $this->reportOnStderr($target, $warnings);
         }
 
         $startTime = (float) microtime(true);
@@ -288,7 +292,10 @@ final class LintCommand extends Command
         return $results;
     }
 
-    private function showBanner(int $jobs, ProjectTarget $target): void
+    /**
+     * @param list<string> $warnings
+     */
+    private function showBanner(int $jobs, ProjectTarget $target, array $warnings): void
     {
         $version = Regex::VERSION;
 
@@ -307,15 +314,20 @@ final class LintCommand extends Command
         foreach ($target->notices() as $notice) {
             $this->line('<fg=gray>Note: '.$notice.'</>');
         }
+        foreach ($warnings as $warning) {
+            $this->line('<fg=yellow>Warning: '.OutputFormatter::escape($warning).'</>');
+        }
 
         $this->newLine();
     }
 
     /**
      * Outside the console format, stdout holds the report alone: the
-     * target and the notices go to stderr, when there is one.
+     * target, the notices and the warnings go to stderr, when there is one.
+     *
+     * @param list<string> $warnings
      */
-    private function reportOnStderr(ProjectTarget $target): void
+    private function reportOnStderr(ProjectTarget $target, array $warnings): void
     {
         $output = $this->output->getOutput();
         if (!$output instanceof ConsoleOutputInterface) {
@@ -325,6 +337,9 @@ final class LintCommand extends Command
         $stderr = $output->getErrorOutput();
         foreach ($target->notices() as $line) {
             $stderr->writeln($line, OutputInterface::OUTPUT_RAW);
+        }
+        foreach ($warnings as $warning) {
+            $stderr->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
         }
         $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
     }

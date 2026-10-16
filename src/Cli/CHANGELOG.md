@@ -39,3 +39,10 @@ CHANGELOG
  * The help screens list every option each command accepts (`lint`,
    `compare`, `diagram`; `--json` on `analyze`, `debug`, `redos` and
    `transpile`).
+ * `regex lint` reads the eight presets by default, `RegexIterator`,
+   `filter_var()` and the patterns the same file proves through a constant,
+   a variable or a property; `--interop`, `--no-interop` and
+   `extraction.interop` narrow what is read, and `regex debug` prints the
+   warnings of `regex.json` on stderr.
+ * A `--pattern-function` or `extraction.functions` spec the lint cannot
+   read, `x#a` say, is ignored with a warning instead of silently.

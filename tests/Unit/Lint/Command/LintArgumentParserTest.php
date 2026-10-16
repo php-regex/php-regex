@@ -54,7 +54,8 @@ final class LintArgumentParserTest extends TestCase
         $this->assertFalse($arguments->checkOptimizations);
     }
 
-    public function test_parse_defaults_to_the_composer_pcre_preset(): void
+    #[Test]
+    public function test_parse_defaults_to_every_preset(): void
     {
         $parser = new LintArgumentParser();
 
@@ -62,7 +63,7 @@ final class LintArgumentParserTest extends TestCase
 
         $this->assertNull($result->error);
         $this->assertInstanceOf(LintArguments::class, $result->arguments);
-        $this->assertSame(['composer-pcre'], $result->arguments->interop);
+        $this->assertSame(['composer-pcre', 'nette-utils', 'spatie-regex', 'illuminate-support', 'phpunit', 'webmozart-assert', 'beberlei-assert', 'symfony-validator'], $result->arguments->interop);
         $this->assertSame([], $result->arguments->patternFunctions);
     }
 
@@ -89,14 +90,52 @@ final class LintArgumentParserTest extends TestCase
         $this->assertSame([], $parser->parse(['--interop=none', 'src'])->arguments?->interop);
     }
 
-    public function test_parse_rejects_an_unknown_interop_preset(): void
+    /**
+     * An unknown name is a warning, never fatal: the name is left out and
+     * the run goes on. laravel-str, renamed illuminate-support before any
+     * tag, is one.
+     */
+    #[Test]
+    public function test_parse_ignores_an_unknown_interop_preset(): void
     {
         $parser = new LintArgumentParser();
 
-        $result = $parser->parse(['--interop=not-a-preset', 'src']);
+        $result = $parser->parse(['--interop=not-a-preset,nette-utils,laravel-str', 'src']);
 
-        $this->assertNotNull($result->error);
-        $this->assertStringContainsString('Invalid value for --interop', (string) $result->error);
+        $this->assertNull($result->error);
+        $this->assertSame(['nette-utils'], $result->arguments?->interop);
+    }
+
+    /**
+     * An explicit list means exactly that list, a preset added later
+     * included.
+     */
+    /**
+     * A --pattern-function spec the lint cannot read is left out with a
+     * warning, as an unknown preset is: an index that is no number, a "$"
+     * naming nothing or no parameter PHP could declare.
+     */
+    #[Test]
+    public function test_parse_warns_about_a_malformed_pattern_function(): void
+    {
+        $result = (new LintArgumentParser())->parse(['--pattern-function=x#1$', '--pattern-function', 'x#1$1a', '--pattern-function=x#a', '--pattern-function=App\grep#1$expression', 'src']);
+
+        $this->assertNull($result->error);
+        $this->assertSame(['App\grep#1$expression'], $result->arguments?->patternFunctions);
+        $this->assertSame([
+            'Malformed pattern function "x#1$", ignored.',
+            'Malformed pattern function "x#1$1a", ignored.',
+            'Malformed pattern function "x#a", ignored.',
+        ], $result->warnings);
+    }
+
+    #[Test]
+    public function test_parse_reads_exactly_the_presets_listed(): void
+    {
+        $parser = new LintArgumentParser();
+
+        $this->assertSame(['phpunit', 'symfony-validator'], $parser->parse(['--interop=phpunit,symfony-validator', 'src'])->arguments?->interop);
+        $this->assertSame(['webmozart-assert'], $parser->parse(['src'], ['interop' => ['webmozart-assert']])->arguments?->interop);
     }
 
     public function test_parse_reports_missing_interop_value(): void

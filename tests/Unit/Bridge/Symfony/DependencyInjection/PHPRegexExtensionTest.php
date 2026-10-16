@@ -160,7 +160,7 @@ final class PHPRegexExtensionTest extends TestCase
         $method = $reflection->getMethod('createExtractorDefinition');
 
         /** @var Definition $definition */
-        $definition = $method->invoke($extension);
+        $definition = $method->invoke($extension, ['interop' => [], 'functions' => []]);
 
         $this->assertSame(\PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy::class, $definition->getClass());
     }

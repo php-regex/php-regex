@@ -14,361 +14,189 @@ declare(strict_types=1);
 namespace PHPRegex\LanguageServer\Document;
 
 use PHPRegex\LanguageServer\Converter\PositionConverter;
-use PHPRegex\Linter\Extraction\NameResolutionContext;
+use PHPRegex\Linter\Extraction\InlineIgnores;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
- * Finds regex patterns in PHP source code: the first argument of the
- * preg_* functions and of the wrapper methods, and the argument a function
- * or static method declares with #[RegexPattern] (see PatternDeclarations).
+ * Finds regex patterns in PHP source code as `regex lint` finds them: the
+ * calls the registry knows (the native functions, the presets, the
+ * configured functions), the functions and static methods that declare a
+ * pattern parameter with #[RegexPattern] (see PatternDeclarations), and the
+ * patterns the file proves through a constant, a variable or a property,
+ * found at their literal.
+ *
+ * An occurrence is one string literal: a pattern built at the call from
+ * several pieces, or written as a heredoc, is not found, as no single
+ * literal holds it for a diagnostic or an edit to land in.
  *
  * @internal
  */
 final class RegexFinder
 {
     /**
-     * Known preg_* functions that take regex patterns.
+     * The modifiers a call may add to the pattern its literal spells, as
+     * Nette's Strings::match(..., utf8: true) adds "u".
      */
-    private const PREG_FUNCTIONS = [
-        'preg_match',
-        'preg_match_all',
-        'preg_replace',
-        'preg_replace_callback',
-        'preg_replace_callback_array',
-        'preg_filter',
-        'preg_grep',
-        'preg_split',
-    ];
+    private const MODIFIERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    private readonly TokenBasedExtractionStrategy $extractor;
 
     /**
-     * Wrapper methods whose first argument is a regex pattern.
+     * The extractor told about the declarations last read: a keystroke that
+     * declares nothing new builds none.
+     */
+    private ?TokenBasedExtractionStrategy $declared = null;
+
+    /**
+     * The specs and the shadowing namespaced functions the declared
+     * extractor was built from.
      *
-     * Codebases that route patterns through composer/pcre never call preg_*
-     * directly. Matching on the method name alone is enough here: a string
-     * that does not look like a pattern is dropped by the delimiter check.
+     * @var array{list<string>, list<string>}
      */
-    private const WRAPPER_METHODS = [
-        'match',
-        'matchall',
-        'matchstrictgroups',
-        'matchallstrictgroups',
-        'matchwithoffsets',
-        'matchallwithoffsets',
-        'ismatch',
-        'ismatchall',
-        'ismatchstrictgroups',
-        'ismatchallstrictgroups',
-        'ismatchwithoffsets',
-        'ismatchallwithoffsets',
-        'replace',
-        'replacecallback',
-        'replacecallbackstrictgroups',
-        'replacecallbackarray',
-        'split',
-        'splitwithoffsets',
-        'grep',
-    ];
+    private array $declaredWith = [[], []];
 
     /**
-     * Matches an identifier, so a reserved word used as a method name, the
-     * "match" of Str::match(), is read as one.
+     * @param PatternFunctionRegistry|null $registry the calls read, every preset by default
      */
-    private const IDENTIFIER = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
+    public function __construct(?PatternFunctionRegistry $registry = null)
+    {
+        $this->extractor = new TokenBasedExtractionStrategy([], $registry ?? PatternFunctionRegistry::defaults());
+    }
 
     /**
-     * Find all regex patterns in PHP content.
+     * Find all regex patterns in PHP content, ordered by offset.
      *
      * @return list<RegexOccurrence>
      */
     public function find(string $content, ?PatternDeclarations $declarations = null): array
     {
-        $occurrences = $this->findKnownCalls($content);
-        if (null === $declarations || $declarations->isEmpty()) {
-            return $occurrences;
+        if (null === $declarations) {
+            return $this->findKnownCalls($content, $this->extractor);
         }
 
-        // A literal both readings find, Str::match('/x/') declared at its
-        // first argument, is one occurrence.
-        $byOffset = [];
-        foreach ([...$occurrences, ...$this->findDeclaredCalls($content, $declarations)] as $occurrence) {
-            $byOffset[$occurrence->byteOffset] ??= $occurrence;
-        }
-        ksort($byOffset);
-
-        return array_values($byOffset);
-    }
-
-    /**
-     * The patterns of the preg_* calls and of the wrapper methods.
-     *
-     * @return list<RegexOccurrence>
-     */
-    private function findKnownCalls(string $content): array
-    {
-        $occurrences = [];
-        $tokens = @token_get_all($content);
-        if ([] === $tokens) {
-            return [];
-        }
-
-        $positionConverter = new PositionConverter($content);
-        $expectingPattern = false;
-        $afterDoubleColon = false;
-
-        foreach ($tokens as $index => $token) {
-            if (!\is_array($token)) {
-                // Single character token
-                if ('(' === $token && $expectingPattern) {
-                    // Next string token should be the pattern
-                    $expectingPattern = 'next_arg';
-                } elseif (')' === $token || ',' === $token) {
-                    $expectingPattern = false;
-                }
-
-                continue;
-            }
-
-            [$tokenType, $tokenValue] = $token;
-
-            if (\T_DOUBLE_COLON === $tokenType) {
-                $afterDoubleColon = true;
-
-                continue;
-            }
-
-            $isStaticMember = $afterDoubleColon;
-            if (\T_WHITESPACE !== $tokenType && \T_COMMENT !== $tokenType && \T_DOC_COMMENT !== $tokenType) {
-                $afterDoubleColon = false;
-            }
-
-            // Track function calls
-            if (\T_STRING === $tokenType && \in_array($tokenValue, self::PREG_FUNCTIONS, true)) {
-                $expectingPattern = true;
-
-                continue;
-            }
-
-            // Track wrapper calls such as Preg::match(). Reserved words are
-            // valid method names, so any identifier token is considered.
-            if ($isStaticMember && \in_array(strtolower($tokenValue), self::WRAPPER_METHODS, true)) {
-                $expectingPattern = true;
-
-                continue;
-            }
-
-            // Find string patterns after preg_* function calls
-            if ('next_arg' === $expectingPattern && \in_array($tokenType, [\T_CONSTANT_ENCAPSED_STRING, \T_ENCAPSED_AND_WHITESPACE], true)) {
-                $pattern = $this->extractPattern($tokenValue);
-                if (null !== $pattern && $this->isValidRegexDelimiter($pattern)) {
-                    $byteOffset = $this->findByteOffset($tokens, $index);
-                    $startPos = $positionConverter->offsetToPosition($byteOffset);
-                    $endPos = $positionConverter->offsetToPosition($byteOffset + \strlen($tokenValue));
-
-                    $occurrences[] = new RegexOccurrence(
-                        pattern: $pattern,
-                        start: $startPos,
-                        end: $endPos,
-                        byteOffset: $byteOffset,
-                        literal: $tokenValue,
-                    );
-                }
-                $expectingPattern = false;
-            }
-        }
-
-        return $occurrences;
-    }
-
-    /**
-     * The patterns of the calls to the functions and static methods that
-     * declare a pattern parameter, their names resolved through the
-     * namespace and the "use" imports, as `regex lint` resolves them. An
-     * instance call names no class that can be known, and is not read; an
-     * argument is read when it is one string literal.
-     *
-     * @return list<RegexOccurrence>
-     */
-    private function findDeclaredCalls(string $content, PatternDeclarations $declarations): array
-    {
-        $tokens = array_values(array_filter(
-            @\PhpToken::tokenize($content),
-            static fn (\PhpToken $token): bool => !$token->isIgnorable(),
+        return $this->findKnownCalls($content, $this->extractorFor(
+            $declarations->specs(),
+            $declarations->plainFunctions($this->extractor->customGlobalFunctions()),
         ));
-
-        $positions = new PositionConverter($content);
-        $context = new NameResolutionContext();
-        $occurrences = [];
-        $depth = 0;
-        // The brace depth "use" imports are read at: in a braced namespace,
-        // its body; deeper, a "use" imports a trait.
-        $importDepth = 0;
-        $count = \count($tokens);
-        for ($i = 0; $i < $count; $i++) {
-            $token = $tokens[$i];
-            if ($token->is(\T_NAMESPACE)) {
-                $named = isset($tokens[$i + 1]) && $tokens[$i + 1]->is([\T_STRING, \T_NAME_QUALIFIED]);
-                $context->enterNamespace($named ? $tokens[$i + 1]->text : '');
-                $importDepth = '{' === ($tokens[$i + ($named ? 2 : 1)]->text ?? null) ? $depth + 1 : $depth;
-            } elseif ($token->is(\T_USE) && $depth === $importDepth && '(' !== ($tokens[$i + 1]->text ?? null)) {
-                $i = self::readUse($tokens, $i + 1, $context);
-            } elseif ('{' === $token->text || $token->is([\T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES])) {
-                $depth++;
-            } elseif ('}' === $token->text) {
-                $depth--;
-            } elseif ($token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
-                [$argument, $open] = $this->declaredArgument($tokens, $i, $context, $declarations);
-                $literal = null === $argument ? null : self::argumentLiteral($tokens, $open, $argument);
-                $pattern = null === $literal ? null : $this->extractPattern($literal->text);
-                if (null !== $literal && null !== $pattern && $this->isValidRegexDelimiter($pattern)) {
-                    $occurrences[] = new RegexOccurrence(
-                        pattern: $pattern,
-                        start: $positions->offsetToPosition($literal->pos),
-                        end: $positions->offsetToPosition($literal->pos + \strlen($literal->text)),
-                        byteOffset: $literal->pos,
-                        literal: $literal->text,
-                    );
-                }
-            }
-        }
-
-        return $occurrences;
     }
 
     /**
-     * The pattern argument of the call a name at $i opens, if it calls a
-     * declared function or static method, with the index of its "(".
+     * The patterns of the calls the extractor knows, one per literal and
+     * pattern: a literal read as "/\xFF/" by one call and "/\xFF/u" by
+     * another gives both, each with its own diagnostics on the literal.
      *
-     * @param list<\PhpToken> $tokens
-     *
-     * @return array{int|null, int}
+     * @return list<RegexOccurrence>
      */
-    private function declaredArgument(array $tokens, int $i, NameResolutionContext $context, PatternDeclarations $declarations): array
+    private function findKnownCalls(string $content, TokenBasedExtractionStrategy $extractor): array
     {
-        $name = $tokens[$i]->text;
-        $next = $tokens[$i + 1] ?? null;
-        $previous = $tokens[$i - 1] ?? null;
-        if (null !== $previous && $previous->is([\T_OBJECT_OPERATOR, \T_NULLSAFE_OBJECT_OPERATOR, \T_DOUBLE_COLON, \T_NEW])) {
-            return [null, 0];
-        }
-
-        if (null !== $next && $next->is(\T_DOUBLE_COLON)) {
-            $method = $tokens[$i + 2] ?? null;
-            if (null === $method || '(' !== ($tokens[$i + 3]->text ?? null) || 1 !== LibraryPcre::match(self::IDENTIFIER, $method->text)) {
-                return [null, 0];
-            }
-
-            return [$declarations->methodArgument($context->resolveClass($name), $method->text), $i + 3];
-        }
-
-        // A declaration, "function grep(" or "function &grep(", is no call.
-        $declaring = null !== $previous && ($previous->is(\T_FUNCTION) || ('&' === $previous->text && (($tokens[$i - 2] ?? null)?->is(\T_FUNCTION) ?? false)));
-        if (null === $next || '(' !== $next->text || $declaring) {
-            return [null, 0];
-        }
-
-        // PHP calls the namespace's function first, the global one when
-        // there is none.
-        $namespaced = $context->namespacedFunction($name);
-
-        return [(null === $namespaced ? null : $declarations->functionArgument($namespaced)) ?? $declarations->functionArgument($context->resolveFunction($name)), $i + 1];
-    }
-
-    /**
-     * The argument at $index of the list that opens at $open, when it is one
-     * string literal.
-     *
-     * @param list<\PhpToken> $tokens
-     */
-    private static function argumentLiteral(array $tokens, int $open, int $index): ?\PhpToken
-    {
-        $position = 0;
-        $nesting = 0;
-        $argument = [];
-        $count = \count($tokens);
-        for ($i = $open + 1; $i < $count; $i++) {
-            $token = $tokens[$i];
-            if (0 === $nesting && (')' === $token->text || ',' === $token->text)) {
-                if ($position === $index) {
-                    break;
-                }
-                if (')' === $token->text) {
-                    return null;
-                }
-                $position++;
-
+        $positions = null;
+        $suppressed = null;
+        $found = [];
+        foreach ($extractor->extractSource($content) as $occurrence) {
+            $offset = $occurrence->fileOffset;
+            if (null === $offset || isset($found[$offset."\0".$occurrence->pattern]) || !$this->isValidRegexDelimiter($occurrence->pattern)) {
                 continue;
             }
 
-            if (\in_array($token->text, ['(', '[', '{'], true) || $token->is([\T_ATTRIBUTE, \T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES])) {
-                $nesting++;
-            } elseif (\in_array($token->text, [')', ']', '}'], true)) {
-                $nesting--;
+            // b'/a/' is a plain string: the literal is what the quotes hold,
+            // the b stays out of its range and of any edit to it.
+            $offset += \in_array($content[$offset] ?? '', ['b', 'B'], true) ? 1 : 0;
+            $literal = self::literalAt($content, $offset);
+            if (null === $literal || !self::spells($content, $offset, $literal, $occurrence->pattern)) {
+                continue;
             }
 
-            if ($position === $index) {
-                $argument[] = $token;
-            }
+            $positions ??= new PositionConverter($content);
+            // The markers `regex lint` reads, on the line of the literal.
+            $suppressed ??= InlineIgnores::suppressedLines($content);
+            $found[$occurrence->fileOffset."\0".$occurrence->pattern] = new RegexOccurrence(
+                pattern: $occurrence->pattern,
+                start: $positions->offsetToPosition($offset),
+                end: $positions->offsetToPosition($offset + \strlen($literal)),
+                byteOffset: $offset,
+                literal: $literal,
+                ignored: isset($suppressed[$occurrence->line]),
+            );
         }
 
-        return 1 === \count($argument) && $argument[0]->is(\T_CONSTANT_ENCAPSED_STRING) ? $argument[0] : null;
+        // In the order of the source; the readings of one literal in the
+        // order of their calls.
+        $found = array_values($found);
+        usort($found, static fn (RegexOccurrence $a, RegexOccurrence $b): int => $a->byteOffset <=> $b->byteOffset);
+
+        return $found;
     }
 
     /**
-     * Reads "use A\B as C, D;", "use A\{B, C as D};" and their "use
-     * function" forms into the context; "use const" is passed over.
+     * The extractor that reads the calls to the declared functions too, and
+     * leaves to a namespace's own function the unqualified calls it
+     * reaches.
      *
-     * @param list<\PhpToken> $tokens
-     *
-     * @return int the index of the token that ends the statement
+     * @param list<string> $specs
+     * @param list<string> $plain
      */
-    private static function readUse(array $tokens, int $i, NameResolutionContext $context): int
+    private function extractorFor(array $specs, array $plain): TokenBasedExtractionStrategy
     {
-        $function = isset($tokens[$i]) && $tokens[$i]->is(\T_FUNCTION);
-        $constant = isset($tokens[$i]) && $tokens[$i]->is(\T_CONST);
-        if ($function || $constant) {
-            $i++;
+        if ([] === $specs && [] === $plain) {
+            return $this->extractor;
         }
 
-        $prefix = '';
-        $name = null;
-        $alias = null;
-        $count = \count($tokens);
-        for (; $i < $count; $i++) {
-            $token = $tokens[$i];
-            if ($token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED])) {
-                if (null !== $name && $tokens[$i - 1]->is(\T_AS)) {
-                    $alias = $token->text;
-                } else {
-                    $name = ltrim($token->text, '\\');
-                }
-            } elseif ('{' === $token->text) {
-                $prefix = rtrim((string) $name, '\\');
-                $name = null;
-            } elseif (\in_array($token->text, [',', ';', '}'], true)) {
-                if (null !== $name && !$constant) {
-                    $full = '' === $prefix ? $name : $prefix.'\\'.$name;
-                    $alias ??= substr($full, (int) strrpos('\\'.$full, '\\'));
-                    $function ? $context->importFunction($alias, $full) : $context->importClass($alias, $full);
-                }
-                $name = null;
-                $alias = null;
-                if (';' === $token->text) {
-                    return $i;
-                }
-            }
+        if (null === $this->declared || [$specs, $plain] !== $this->declaredWith) {
+            $this->declared = $this->extractor->withPatternFunctions($specs, $plain);
+            $this->declaredWith = [$specs, $plain];
         }
 
-        return $i;
+        return $this->declared;
     }
 
     /**
-     * Extract the actual pattern from a quoted string token.
+     * The quoted string literal that starts at $offset, quotes included.
      */
-    private function extractPattern(string $tokenValue): ?string
+    private static function literalAt(string $content, int $offset): ?string
     {
-        // As PHP reads it: "/\d+/" keeps its \d.
-        return PhpStringLiteral::decode($tokenValue);
+        $quote = $content[$offset] ?? '';
+        if ("'" !== $quote && '"' !== $quote) {
+            return null;
+        }
+
+        // The offset starts a string token the tokenizer closed: its closing
+        // quote is in the content, and the end of the content stops the
+        // search all the same.
+        $stops = $quote.'\\';
+        $i = $offset + 1;
+        while (true) {
+            $i += strcspn($content, $stops, $i);
+            if ($quote === ($content[$i] ?? $quote)) {
+                return substr($content, $offset, $i - $offset + 1);
+            }
+
+            // A backslash: the byte after it is escaped.
+            $i += 2;
+        }
+    }
+
+    /**
+     * Whether the literal at $offset spells the pattern, but for the
+     * modifiers a call adds after it: a literal the source concatenates
+     * with more ('/a/' . 'i') is only a piece of the pattern.
+     */
+    private static function spells(string $content, int $offset, string $literal, string $pattern): bool
+    {
+        // A closed literal always decodes, and the pattern read there starts
+        // with its value.
+        $value = PhpStringLiteral::decode($literal) ?? '';
+        $added = \strlen($pattern) - \strlen($value);
+        if (0 === $added) {
+            return $value === $pattern;
+        }
+
+        $after = $offset + \strlen($literal);
+        $after += strspn($content, " \t\r\n", $after);
+
+        return str_starts_with($pattern, $value) && strspn($pattern, self::MODIFIERS, \strlen($value)) === $added && '.' !== ($content[$after] ?? '');
     }
 
     /**
@@ -389,31 +217,7 @@ final class RegexFinder
 
         // Paired delimiters
         $pairs = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
-        if (isset($pairs[$delimiter])) {
-            return true;
-        }
 
-        return false;
-    }
-
-    /**
-     * Calculate byte offset for a token.
-     *
-     * @param array<int|string|array{int, string, int}> $tokens
-     */
-    private function findByteOffset(array $tokens, int $targetIndex): int
-    {
-        $offset = 0;
-
-        for ($i = 0; $i < $targetIndex; $i++) {
-            $token = $tokens[$i];
-            if (\is_array($token)) {
-                $offset += \strlen($token[1]);
-            } else {
-                $offset += \strlen((string) $token);
-            }
-        }
-
-        return $offset;
+        return isset($pairs[$delimiter]);
     }
 }

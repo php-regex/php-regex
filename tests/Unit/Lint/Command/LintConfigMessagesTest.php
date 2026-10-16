@@ -56,7 +56,6 @@ final class LintConfigMessagesTest extends TestCase
         yield 'enum' => ['{"format": "xml"}', 'expected one of console, json, github, checkstyle, junit'];
         yield 'boolean' => ['{"checks": {"validation": "yes"}}', 'expected a boolean'];
         yield 'object' => ['{"extraction": []}', 'expected an object'];
-        yield 'unknown preset' => ['{"extraction": {"interop": ["composer-pcre", "pcre-x"]}}', 'unknown preset "pcre-x"'];
         yield 'duplicate preset' => ['{"extraction": {"interop": ["nette-utils", "nette-utils"]}}', 'a list of distinct presets'];
         yield 'duplicate function' => ['{"extraction": {"functions": ["a", "a"]}}', 'a list of distinct non-empty strings'];
         yield 'unknown IDE' => ['{"ide": "notepad"}', 'a URL template holding %f or %l'];

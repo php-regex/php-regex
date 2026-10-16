@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
  * The set of calls an extractor treats as carrying a regex pattern.
@@ -41,16 +42,29 @@ final readonly class PatternFunctionRegistry
     ];
 
     /**
-     * @param array<string, PatternFunction> $functions        keyed by lowercase function name
-     * @param array<string, PatternFunction> $methods          keyed by lowercase "fqcn::method"
-     * @param array<int, string>             $needles          lowercase substrings gating file reads
-     * @param array<string, true>            $dropIns          functions a namespaced copy may stand in for
-     * @param array<string, true>            $plain            namespaced functions declared without a pattern
-     *                                                         parameter, keyed by lowercase name: an unqualified
-     *                                                         call in their namespace calls them, not a global one
-     * @param bool                           $declarationsRead whether the project's declarations were read before
-     *                                                         the files were shared out: an extractor then does not
-     *                                                         read those of its own files again
+     * One pattern finding any needle, the first test of matchesContent();
+     * null when there is none.
+     */
+    private ?string $trigger;
+
+    /**
+     * @param array<string, PatternFunction>    $functions        keyed by lowercase function name
+     * @param array<string, PatternFunction>    $methods          keyed by lowercase "fqcn::method"
+     * @param array<int, string>                $needles          lowercase substrings gating file reads; one ending in
+     *                                                            " as" stands for an aliased import, see matchesContent()
+     * @param array<string, true>               $dropIns          functions a namespaced copy may stand in for
+     * @param array<string, true>               $plain            namespaced functions declared without a pattern
+     *                                                            parameter, keyed by lowercase name: an unqualified
+     *                                                            call in their namespace calls them, not a global one
+     * @param bool                              $declarationsRead whether the project's declarations were read before
+     *                                                            the files were shared out: an extractor then does not
+     *                                                            read those of its own files again
+     * @param array<string, PatternFunction>    $namedMethods     keyed by lowercase method name, matched on $this->,
+     *                                                            self::, static:: and parent::
+     * @param array<string, PatternFunction>    $constructors     keyed by lowercase fqcn
+     * @param array<string, PatternFunction>    $attributes       keyed by lowercase fqcn
+     * @param array<string, list<list<string>>> $guarded          needles that open a file only with every word of
+     *                                                            one of the classes they map to, see matchesContent()
      */
     private function __construct(
         private array $functions,
@@ -59,10 +73,26 @@ final readonly class PatternFunctionRegistry
         private array $dropIns = [],
         private array $plain = [],
         private bool $declarationsRead = false,
-    ) {}
+        private array $namedMethods = [],
+        private array $constructors = [],
+        private array $attributes = [],
+        private array $guarded = [],
+    ) {
+        // Every needle, guarded or not, in one case-insensitive scan: most
+        // files hold none, and are then read once instead of once per needle.
+        // An aliased import spells the name, then white space or a comment.
+        $parts = [];
+        foreach ([...$needles, ...array_keys($guarded)] as $needle) {
+            $parts[] = str_ends_with($needle, ' as') ? preg_quote(substr($needle, 0, -3), '~').'(?:\s|/[*/]|#)' : preg_quote($needle, '~');
+        }
+
+        $this->trigger = [] === $parts ? null : '~(?:'.implode('|', array_values(array_unique($parts))).')~i';
+    }
 
     /**
-     * Only the native preg_* functions.
+     * Only the native calls: the preg_* functions, RegexIterator,
+     * RecursiveRegexIterator, and filter_var()/filter_input() with
+     * FILTER_VALIDATE_REGEXP.
      */
     public static function native(): self
     {
@@ -75,11 +105,23 @@ final readonly class PatternFunctionRegistry
         // The patterns are the keys of the array passed as first argument.
         $functions['preg_replace_callback_array'] = new PatternFunction('preg_replace_callback_array', 0, keysArePatterns: true);
 
+        // filter_var($value, $filter, $options), filter_input($type,
+        // $var_name, $filter, $options): with FILTER_VALIDATE_REGEXP, the
+        // option "regexp" is compiled as a delimited pattern.
+        $functions['filter_var'] = new PatternFunction('filter_var', 2, parameterNames: ['options'], optionPath: ['options', 'regexp'], optionPathRequired: true, filterArgument: [1, 'filter', 'FILTER_VALIDATE_REGEXP']);
+        $functions['filter_input'] = new PatternFunction('filter_input', 3, parameterNames: ['options'], optionPath: ['options', 'regexp'], optionPathRequired: true, filterArgument: [2, 'filter', 'FILTER_VALIDATE_REGEXP']);
+
         // Libraries such as thecodingmachine/safe re-publish these under their
         // own namespace with the same signature.
         $dropIns = array_fill_keys(array_keys($functions), true);
 
-        return new self($functions, [], ['preg_'], $dropIns);
+        // RegexIterator::__construct(Iterator $iterator, string $pattern, ...).
+        $constructors = [
+            'regexiterator' => new PatternFunction('RegexIterator', 1, kind: PatternFunction::KIND_CONSTRUCTOR),
+            'recursiveregexiterator' => new PatternFunction('RecursiveRegexIterator', 1, kind: PatternFunction::KIND_CONSTRUCTOR),
+        ];
+
+        return new self($functions, [], ['preg_', 'regexiterator', 'filter_validate_regexp'], $dropIns, constructors: $constructors);
     }
 
     /**
@@ -88,6 +130,25 @@ final readonly class PatternFunctionRegistry
     public static function defaults(): self
     {
         return self::native()->withPresets(InteropPresets::DEFAULT_PRESETS);
+    }
+
+    /**
+     * Whether a configured spec (--pattern-function, extraction.functions)
+     * is one the registry reads: "func", "Some\Cls::method", with
+     * "#<index>", ":keys" and "$<name>" as withCustomFunctions() says.
+     */
+    public static function isSpec(string $spec): bool
+    {
+        return null !== self::parseSpec($spec);
+    }
+
+    /**
+     * The warning for a configured spec the registry cannot read: it is
+     * left out and the run goes on, whoever reads the configuration.
+     */
+    public static function malformedSpecWarning(string $spec): string
+    {
+        return \sprintf('Malformed pattern function "%s", ignored.', $spec);
     }
 
     /**
@@ -104,25 +165,49 @@ final readonly class PatternFunctionRegistry
      */
     public function withPresets(array $presets): self
     {
+        $functions = $this->functions;
         $methods = $this->methods;
+        $namedMethods = $this->namedMethods;
+        $constructors = $this->constructors;
+        $attributes = $this->attributes;
         $needles = $this->needles;
+        $guarded = $this->guarded;
 
         foreach ($presets as $preset) {
             if (!\is_string($preset) || !InteropPresets::exists($preset)) {
                 continue;
             }
 
+            $functions = [...$functions, ...InteropPresets::functions($preset)];
             $methods = [...$methods, ...InteropPresets::methods($preset)];
-            $needles = [...$needles, ...InteropPresets::needles($preset)];
+            $namedMethods = [...$namedMethods, ...InteropPresets::namedMethods($preset)];
+            $constructors = [...$constructors, ...InteropPresets::constructors($preset)];
+            $attributes = [...$attributes, ...InteropPresets::attributes($preset)];
+
+            $words = InteropPresets::classWords($preset);
+            if (null === $words) {
+                $needles = [...$needles, ...InteropPresets::needles($preset)];
+
+                continue;
+            }
+
+            foreach (InteropPresets::needles($preset) as $needle) {
+                $guarded[$needle] ??= [];
+                if (!\in_array($words, $guarded[$needle], true)) {
+                    $guarded[$needle][] = $words;
+                }
+            }
         }
 
-        return new self($this->functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain, $this->declarationsRead);
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain, $this->declarationsRead, $namedMethods, $constructors, $attributes, $guarded);
     }
 
     /**
      * Declare extra calls, as "func", "Some\Cls::method", or either with a
      * "#<index>" suffix pointing at the pattern argument. Append ":keys" when
-     * that argument is an array whose keys hold the patterns.
+     * that argument is an array whose keys hold the patterns. A call passes
+     * the pattern by name as "pattern", "patterns" or "regex", or under the
+     * one name a "$name" suffix gives: "grep#1$expression".
      *
      * @param array<int, string> $specs
      */
@@ -153,12 +238,14 @@ final readonly class PatternFunctionRegistry
             $needles = [...$needles, ...$specNeedles];
         }
 
-        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain, $this->declarationsRead);
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $this->plain, $this->declarationsRead, $this->namedMethods, $this->constructors, $this->attributes, $this->guarded);
     }
 
     /**
      * Add the pattern functions the project's code declares (#[RegexPattern],
-     * #[Language('RegExp')]), as "name#<index>" specs.
+     * #[Language('RegExp')]), as "name#<index>" specs, or
+     * "name#<index>$parameter" to read a named argument under the name of
+     * the parameter marked.
      *
      * A function the registry already knows keeps its entry: a configured
      * spec (--pattern-function, extraction.functions), a preset or a native
@@ -173,7 +260,7 @@ final readonly class PatternFunctionRegistry
      */
     public function withDeclaredFunctions(array $specs, array $plain = []): self
     {
-        /** @var array<string, array{bool, PatternFunction, list<string>, list<int>}> $declared */
+        /** @var array<string, array{bool, PatternFunction, list<string>, array<int, list<string>>}> $declared */
         $declared = [];
         foreach ($specs as $spec) {
             $parsed = self::parseSpec($spec);
@@ -183,16 +270,26 @@ final readonly class PatternFunctionRegistry
 
             [$key, $isMethod, $function, $specNeedles] = $parsed;
             $declared[$key] ??= [$isMethod, $function, $specNeedles, []];
-            $declared[$key][3][] = $function->argumentIndex;
+            $declared[$key][3][$function->argumentIndex] = [...$declared[$key][3][$function->argumentIndex] ?? [], ...$function->parameterNames];
         }
 
         $functions = $this->functions;
         $methods = $this->methods;
         $needles = $this->needles;
-        foreach ($declared as $key => [$isMethod, $function, $specNeedles, $indexes]) {
-            $indexes = array_values(array_unique($indexes));
-            sort($indexes);
-            $union = new PatternFunction($function->label, $indexes[0], moreArgumentIndexes: \array_slice($indexes, 1));
+        foreach ($declared as $key => [$isMethod, $function, $specNeedles, $names]) {
+            // A position named differently by two declarations is read under
+            // either name; PatternFunction sorts them, whatever the order of
+            // the declarations.
+            ksort($names);
+            $indexes = array_keys($names);
+            $parameterNames = array_values($names);
+            $union = new PatternFunction(
+                $function->label,
+                $indexes[0],
+                moreArgumentIndexes: \array_slice($indexes, 1),
+                parameterNames: $parameterNames[0],
+                moreParameterNames: \array_slice($parameterNames, 1),
+            );
             if ($isMethod) {
                 $methods[$key] = $union;
             } else {
@@ -206,7 +303,7 @@ final readonly class PatternFunctionRegistry
             $plainFunctions[strtolower(ltrim($name, '\\'))] = true;
         }
 
-        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $plainFunctions, $this->declarationsRead);
+        return new self($functions, $methods, self::pruneNeedles($needles), $this->dropIns, $plainFunctions, $this->declarationsRead, $this->namedMethods, $this->constructors, $this->attributes, $this->guarded);
     }
 
     /**
@@ -215,7 +312,7 @@ final readonly class PatternFunctionRegistry
      */
     public function withDeclarationsRead(): self
     {
-        return new self($this->functions, $this->methods, $this->needles, $this->dropIns, $this->plain, true);
+        return new self($this->functions, $this->methods, $this->needles, $this->dropIns, $this->plain, true, $this->namedMethods, $this->constructors, $this->attributes, $this->guarded);
     }
 
     /**
@@ -287,17 +384,100 @@ final readonly class PatternFunctionRegistry
     }
 
     /**
+     * The pattern function a method of that name is, called on $this->,
+     * self::, static:: or parent::: PHPUnit's assertions.
+     */
+    public function lookupNamedMethod(string $method): ?PatternFunction
+    {
+        return $this->namedMethods[strtolower($method)] ?? null;
+    }
+
+    /**
+     * The pattern function "new Class(...)" is, the class fully qualified.
+     */
+    public function lookupConstructor(string $class): ?PatternFunction
+    {
+        return $this->constructors[strtolower(ltrim($class, '\\'))] ?? null;
+    }
+
+    /**
+     * The pattern function "#[Class(...)]" is, the class fully qualified.
+     */
+    public function lookupAttribute(string $class): ?PatternFunction
+    {
+        return $this->attributes[strtolower(ltrim($class, '\\'))] ?? null;
+    }
+
+    /**
      * Whether a file's contents can possibly hold a registered call.
+     *
+     * A needle ending in " as" stands for an aliased import: the name, then
+     * any white space or comment PHP allows before the keyword, "as" in any
+     * case. "use Composer\Pcre\Preg\tas P;" opens the file as
+     * "use Composer\Pcre\Preg as P;" does.
      */
     public function matchesContent(string $content): bool
     {
+        if (null === $this->trigger || 1 !== LibraryPcre::match($this->trigger, $content)) {
+            return false;
+        }
+
+        $aliases = [];
         foreach ($this->needles as $needle) {
+            if (str_ends_with($needle, ' as')) {
+                $aliases[] = substr($needle, 0, -3);
+
+                continue;
+            }
+
             if (false !== stripos($content, $needle)) {
                 return true;
             }
         }
 
+        foreach ($aliases as $name) {
+            if (self::importsAs($content, $name)) {
+                return true;
+            }
+        }
+
+        // A preset matched on a fully qualified class reaches it only through
+        // a name written with every word of the class: an import, an alias,
+        // a group use, a namespace declaration, a qualified name.
+        foreach ($this->guarded as $needle => $classes) {
+            $spelled = false;
+            foreach ($classes as $words) {
+                $spelled = true;
+                foreach ($words as $word) {
+                    if (false === stripos($content, $word)) {
+                        $spelled = false;
+
+                        break;
+                    }
+                }
+
+                if ($spelled) {
+                    break;
+                }
+            }
+
+            if ($spelled && (str_ends_with($needle, ' as') ? self::importsAs($content, substr($needle, 0, -3)) : false !== stripos($content, $needle))) {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * Whether the content imports a class of that short name under an
+     * alias, any white space or comment before "as".
+     */
+    private static function importsAs(string $content, string $name): bool
+    {
+        // Only a file holding the name can import it.
+        return false !== stripos($content, $name)
+            && 1 === LibraryPcre::match('~'.preg_quote($name, '~').'(?:\s++|/\*.*?\*/|(?://|#(?!\[))[^\r\n]*+)++as\b~is', $content);
     }
 
     /**
@@ -312,11 +492,25 @@ final readonly class PatternFunctionRegistry
 
         $keysArePatterns = false;
         $argumentIndex = 0;
+        // A spec that names no parameter is read under the usual names.
+        $parameterNames = PatternFunction::PATTERN_PARAMETER_NAMES;
 
         $hash = strrpos($spec, '#');
         if (false !== $hash) {
             $suffix = substr($spec, $hash + 1);
             $spec = substr($spec, 0, $hash);
+
+            // "#1$expression": the parameter's name, for a named argument.
+            $dollar = strpos($suffix, '$');
+            if (false !== $dollar) {
+                $parameterName = substr($suffix, $dollar + 1);
+                $suffix = substr($suffix, 0, $dollar);
+                if (1 !== LibraryPcre::match('/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/', $parameterName)) {
+                    return null;
+                }
+
+                $parameterNames = [$parameterName];
+            }
 
             if (str_ends_with(strtolower($suffix), ':keys')) {
                 $keysArePatterns = true;
@@ -350,17 +544,17 @@ final readonly class PatternFunctionRegistry
             $shortClass = false === $separator ? $class : substr($class, $separator + 1);
 
             // An aliased import hides `Re::` but spells `Re as`, the class
-            // global or namespaced, in a group use or not. One space only:
-            // `Re\tas` or `Re /* */ as` does not open the file.
+            // global or namespaced, in a group use or not, whatever white
+            // space or comment stands before the keyword: see matchesContent().
             $needle = strtolower($shortClass);
 
-            return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns), [$needle.'::', $needle.' as']];
+            return [$key, true, new PatternFunction($shortClass.'::'.$method, $argumentIndex, $keysArePatterns, parameterNames: $parameterNames), [$needle.'::', $needle.' as']];
         }
 
         $separator = strrpos($name, '\\');
         $shortName = false === $separator ? $name : substr($name, $separator + 1);
 
-        return [$key, false, new PatternFunction($shortName, $argumentIndex, $keysArePatterns), [strtolower($shortName)]];
+        return [$key, false, new PatternFunction($shortName, $argumentIndex, $keysArePatterns, parameterNames: $parameterNames), [strtolower($shortName)]];
     }
 
     /**

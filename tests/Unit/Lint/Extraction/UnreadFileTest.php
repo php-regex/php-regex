@@ -59,6 +59,25 @@ final class UnreadFileTest extends TestCase
     }
 
     /**
+     * The text an editor holds is budgeted as a file is: reported under the
+     * name given, not tokenized.
+     */
+    #[Test]
+    public function test_a_source_over_the_memory_budget_is_reported_unread(): void
+    {
+        // A megabyte of source needs some 60 MB of tokens.
+        $content = "<?php\npreg_match('/a+/', \$s);\n".str_repeat("// padding\n", 100_000);
+        $this->memoryLimit = ini_get('memory_limit');
+        ini_set('memory_limit', (string) (memory_get_usage(true) + 8 * 1024 * 1024));
+
+        $occurrences = (new TokenBasedExtractionStrategy())->extractSource($content, 'untitled:Large');
+
+        $this->assertCount(1, $occurrences);
+        $this->assertSame('untitled:Large', $occurrences[0]->file);
+        $this->assertStringContainsString('memory_limit', (string) $occurrences[0]->unread);
+    }
+
+    /**
      * @param \Closure(): ExtractorInterface $strategy
      */
     #[Test]

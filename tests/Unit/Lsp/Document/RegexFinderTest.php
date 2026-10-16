@@ -128,6 +128,34 @@ final class RegexFinderTest extends TestCase
         $this->assertSame("/a\tb\x41\\$/", $occurrences[1]->pattern);
     }
 
+    /**
+     * PHP ignores a newline after the closing delimiter: "/a/\n" is a
+     * pattern, its literal closing right after the escape.
+     */
+    #[Test]
+    public function test_a_literal_ending_in_an_escape_is_found_whole(): void
+    {
+        $occurrences = $this->finder->find("<?php\npreg_match(\"/a/\\n\", \$s);\n\$tail = \"after\";\n");
+
+        $this->assertCount(1, $occurrences);
+        $this->assertSame("/a/\n", $occurrences[0]->pattern);
+        $this->assertSame('"/a/\n"', $occurrences[0]->literal);
+    }
+
+    /**
+     * A literal that holds the whole pattern is found, whatever follows it:
+     * an empty string concatenated after it adds nothing.
+     */
+    #[Test]
+    public function test_a_literal_holding_the_whole_pattern_is_found_before_a_concatenation(): void
+    {
+        $occurrences = $this->finder->find("<?php\npreg_match('/a/' . '', \$s);\n");
+
+        $this->assertCount(1, $occurrences);
+        $this->assertSame('/a/', $occurrences[0]->pattern);
+        $this->assertSame("'/a/'", $occurrences[0]->literal);
+    }
+
     #[Test]
     public function test_handles_different_delimiters(): void
     {

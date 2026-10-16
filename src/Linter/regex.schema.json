@@ -541,16 +541,23 @@
     },
     "extraction": {
       "type": "object",
-      "description": "Which calls the linter reads patterns from, beyond the native preg_* functions.",
+      "description": "Which calls the linter reads patterns from, beyond the native preg_* functions, RegexIterator and filter_var().",
       "additionalProperties": false,
       "properties": {
         "interop": {
           "type": "array",
-          "description": "Wrapper libraries whose static methods carry a regex pattern. Set to [] to look at native preg_* calls only.",
-          "x-expected": "a list of distinct presets among composer-pcre, nette-utils, spatie-regex, laravel-str",
+          "description": "Libraries whose calls carry a regex pattern, beyond the native preg_* functions, RegexIterator and filter_var(). Every preset is on by default; a list reads exactly the presets it names, those a later release adds left off. Set to [] to read the native calls only. The linter ignores a name that is no preset, with a warning.",
+          "x-expected": "a list of distinct presets among composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator",
           "x-item": "preset",
           "default": [
-            "composer-pcre"
+            "composer-pcre",
+            "nette-utils",
+            "spatie-regex",
+            "illuminate-support",
+            "phpunit",
+            "webmozart-assert",
+            "beberlei-assert",
+            "symfony-validator"
           ],
           "uniqueItems": true,
           "items": {
@@ -568,8 +575,24 @@
                 "description": "spatie/regex: Spatie\\Regex\\Regex."
               },
               {
-                "const": "laravel-str",
-                "description": "Illuminate\\Support\\Str::match, matchAll, isMatch and replaceMatches."
+                "const": "illuminate-support",
+                "description": "illuminate/support: Illuminate\\Support\\Str::match, matchAll, isMatch and replaceMatches."
+              },
+              {
+                "const": "phpunit",
+                "description": "phpunit/phpunit: the regex assertions and expectations, matched by method name on $this->, self::, static::, parent::, Assert:: and TestCase::, and as functions of PHPUnit\\Framework."
+              },
+              {
+                "const": "webmozart-assert",
+                "description": "webmozart/assert: Webmozart\\Assert\\Assert::regex, notRegex and their nullOr and all variants."
+              },
+              {
+                "const": "beberlei-assert",
+                "description": "beberlei/assert: Assert\\Assertion::regex, notRegex and their nullOr and all variants."
+              },
+              {
+                "const": "symfony-validator",
+                "description": "symfony/validator: the Symfony\\Component\\Validator\\Constraints\\Regex constraint, as new and as attribute."
               }
             ]
           },
@@ -586,7 +609,7 @@
         },
         "functions": {
           "type": "array",
-          "description": "Project helpers carrying a pattern, as \"function\" or \"Some\\Class::method\". Append \"#<index>\" when the pattern is not the first argument, and \"#<index>:keys\" when that argument is an array whose keys hold the patterns.",
+          "description": "Project helpers carrying a pattern, as \"function\" or \"Some\\Class::method\". Append \"#<index>\" when the pattern is not the first argument, and \"#<index>:keys\" when that argument is an array whose keys hold the patterns. A call may pass the pattern by name as pattern:, patterns: or regex:; append \"$<name>\" to read it under the helper's own parameter name instead, as in \"App\\grep#1$expression\".",
           "x-expected": "a list of distinct non-empty strings",
           "default": [],
           "uniqueItems": true,

@@ -56,6 +56,10 @@ php_regex:
         directory: '%kernel.cache_dir%/php_regex'
         prefix: regex_
     extractor_service: null
+    # The calls regex:lint reads patterns from, as "extraction" of regex.json.
+    extraction:
+        interop: [composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator]
+        functions: []      # your helpers: 'App\Support\Str::matches#1'
     redos:
         enabled: false
         threshold: high    # low, medium, high or critical, in any case
@@ -87,6 +91,41 @@ they are the verdicts a pattern gets.
 `redos.ignored_patterns` lists patterns, fragments of patterns or whole
 regexes the risk analysis skips, such as the requirement constants of
 Symfony routes.
+
+`extraction` takes the presets and the helpers `regex lint` takes under
+`extraction` in `regex.json` (see
+[the CLI guide](cli.md#patterns-behind-a-wrapper)); the bundle does not read
+`regex.json`, and a custom `extractor_service` reads its own calls, leaving
+`extraction` unused. The default is every preset, and `interop: ~` says the
+same, as `null` does in the Laravel config and the PHPStan extension; a list
+reads exactly the presets it names, `[]` the native calls only. Where several files configure
+the bundle (`config/packages/php_regex.yaml`, then
+`config/packages/dev/php_regex.yaml`), a later file's `interop` or
+`functions` list replaces the earlier one, while `paths` and `exclude` add up.
+A name that is no preset is ignored, not an error: `regex:lint` says so under
+its banner, or on stderr with `--format=json` and the other machine formats:
+
+```
+Warning: Unknown extraction preset "laravel-str", ignored.
+```
+
+An entry of either list that is no string, a `false` say, is ignored the same
+way, the warning naming its type:
+
+```
+Warning: Extraction interop entry ignored: expected a string, got bool.
+```
+
+A `functions` spec the lint cannot read, `x#a` or `x#1$` say, is ignored
+with `Malformed pattern function "x#a", ignored.`
+
+One name written without a list, `interop: nette-utils`, is a list of that
+name.
+
+A `Regex` constraint written as an attribute is read twice, by the PHP
+extractor (`symfony-validator` preset) and from the validator's metadata;
+`regex:lint` reports it once. A constraint mapped in YAML or XML comes from
+the validator alone.
 
 ## Using the service
 

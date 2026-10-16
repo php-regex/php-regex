@@ -93,6 +93,8 @@
           url: /reference/correctness-contracts/
         - title: Backward compatibility
           url: /reference/backward-compatibility/
+        - title: Extraction coverage
+          url: /reference/extraction-coverage/
         - title: PCRE2 conformance
           url: /reference/pcre2-conformance/
     - title: Use the data

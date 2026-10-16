@@ -263,6 +263,38 @@ final class ServerTest extends TestCase
     }
 
     /**
+     * What regex.json holds that the server ignores is logged, each
+     * warning naming the file.
+     */
+    #[Test]
+    public function test_a_warning_about_regex_json_names_the_file(): void
+    {
+        $root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-server-'.bin2hex(random_bytes(6));
+        mkdir($root, 0o700, true);
+        file_put_contents($root.'/regex.json', '{"extraction": {"interop": ["unknown-preset"]}}');
+
+        try {
+            $this->serve([
+                ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$root]],
+                ['method' => 'initialized'],
+            ]);
+        } finally {
+            unlink($root.'/regex.json');
+            rmdir($root);
+        }
+
+        $messages = [];
+        foreach (preg_split('/Content-Length: \d+\r\n\r\n/', $this->written()) ?: [] as $body) {
+            $decoded = json_decode($body, true);
+            if (\is_array($decoded) && 'window/logMessage' === ($decoded['method'] ?? null) && \is_array($decoded['params'] ?? null)) {
+                $messages[] = $decoded['params']['message'] ?? null;
+            }
+        }
+
+        $this->assertContains('regex.json: Unknown extraction preset "unknown-preset", ignored.', $messages);
+    }
+
+    /**
      * The same document is published before "shutdown": the test above
      * checks the absence of something that does happen.
      */

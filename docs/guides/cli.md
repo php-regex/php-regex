@@ -442,28 +442,176 @@ vendor/bin/regex lint src/ --exclude=vendor --exclude=tests
 #### Patterns Behind a Wrapper
 
 Not every pattern reaches PCRE through `preg_match()`. Codebases that route
-them through composer/pcre, nette/utils or a helper of their own would
-otherwise be reported as having no patterns at all.
+them through composer/pcre, nette/utils, an assertion library or a helper of
+their own would otherwise be reported as having fewer patterns than they hold,
+or none at all.
 
-`composer/pcre` is recognised out of the box; the other libraries are opt-in:
+Besides the `preg_*` functions, the lint always reads the other native calls
+that compile a delimited pattern: `new RegexIterator($iterator, $pattern)` and
+`new RecursiveRegexIterator(...)` (the pattern second), and `filter_var()` or
+`filter_input()` with `FILTER_VALIDATE_REGEXP`, whose `regexp` option is read
+when the filter is that constant and the options are an array written in the
+call.
+
+The libraries are presets, named after their Composer package. Every preset is
+read by default:
+
+| Preset               | Recognised calls                                                                                                          |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `composer-pcre`      | the static methods of `Composer\Pcre\Preg` and `Composer\Pcre\Regex`                                                     |
+| `nette-utils`        | `Nette\Utils\Strings::match`, `matchAll`, `split`, `replace` (the pattern second; a `utf8` of `true`, by name or in its place, adds `u`)  |
+| `spatie-regex`       | `Spatie\Regex\Regex::match`, `matchAll`, `replace`                                                                        |
+| `illuminate-support` | `Illuminate\Support\Str::match`, `matchAll`, `isMatch`, `replaceMatches`                                                  |
+| `phpunit`            | `assertMatchesRegularExpression`, `assertDoesNotMatchRegularExpression`, `matchesRegularExpression`, `expectOutputRegex`, `expectExceptionMessageMatches`, `expectUserDeprecationMessageMatches`, and PHPUnit 9's `assertRegExp`, `assertNotRegExp` |
+| `webmozart-assert`   | `Webmozart\Assert\Assert::regex`, `notRegex`, and their `nullOr` and `all` forms (the pattern second)                       |
+| `beberlei-assert`    | `Assert\Assertion::regex`, `notRegex`, and their `nullOr` and `all` forms (the pattern second)                              |
+| `symfony-validator`  | `new Regex(...)` and `#[Regex(...)]` of `Symfony\Component\Validator\Constraints`: `pattern`, never `htmlPattern`         |
 
 ```bash
-# Add nette/utils on top of the default composer/pcre support
-vendor/bin/regex lint src/ --interop=composer-pcre,nette-utils
+# Every preset, the default
+vendor/bin/regex lint src/
 
-# Native preg_* calls only
+# Exactly these presets
+vendor/bin/regex lint src/ --interop=composer-pcre,phpunit
+
+# Native calls only (preg_*, RegexIterator, filter_var())
 vendor/bin/regex lint src/ --no-interop
 ```
 
-| Preset          | Recognised calls                                                       |
-|-----------------|------------------------------------------------------------------------|
-| `composer-pcre` | `Composer\Pcre\Preg` and `Composer\Pcre\Regex` (enabled by default) |
-| `nette-utils`   | `Nette\Utils\Strings::match`, `matchAll`, `split`, `replace`          |
-| `spatie-regex`  | `Spatie\Regex\Regex::match`, `matchAll`, `replace`                    |
-| `laravel-str`   | `Illuminate\Support\Str::match`, `matchAll`, `isMatch`, `replaceMatches` |
+A list, on the command line or in `extraction.interop`, means exactly that
+list: a preset a later release adds stays off for a project that lists its
+presets, and there is no way to say "every preset but one" other than listing
+the others. `[]` (or `--no-interop`) reads the native calls only.
+
+A name that is no preset is ignored, and the run goes on with the others; the
+lint says so on stderr, once per name, and `-q` silences it:
+
+```
+Warning: Unknown extraction preset "laravel-str", ignored.
+```
+
+`regex debug` reads `regex.json` too, and prints the same warning.
 
 Wrappers are matched on their fully qualified name, using the file's `use`
-statements: a class of your own named `Preg` is left alone.
+statements: a class of your own named `Preg` is left alone, and so is a
+subclass of an assertion class (`class Assert extends \Webmozart\Assert\Assert`
+called as `App\Assert::regex()`). A class is never looked up in the global
+namespace as a fallback: in `namespace App`, `new RegexIterator(...)` without a
+`use` or a leading `\` is not read, as PHP would not find the class either.
+PHPUnit's methods are the exception: their names are PHPUnit's own, so they
+are read by name, on `$this->`, `self::`, `static::` and `parent::`, on
+`PHPUnit\Framework\Assert::` and `PHPUnit\Framework\TestCase::`, and as the
+functions of `PHPUnit\Framework`, in any class, a test case or not. A named
+argument is read under the name the library gives the parameter, case
+included, as PHP compares it: `expectOutputRegex(expectedRegex: '/.../')`,
+`Assert::regex(pattern: '/.../', value: $v)`; `preg_match(PATTERN: '/.../')`
+is not read. nette/utils' `utf8` is read by name or in its place (sixth for
+`match()` and `split()`, seventh for `matchAll()` and `replace()`): `true`
+adds `u`, `false` adds nothing, and anything else, a spread included, leaves
+the pattern's flags unknown, so the pattern is not read.
+
+##### Patterns held in a constant, a variable or a property
+
+A pattern argument that names a value the same file proves is read:
+
+```php
+final class Slug
+{
+    private const PATTERN = '/^[a-z0-9-]+$/i';
+
+    public function isValid(string $slug): bool
+    {
+        return 1 === preg_match(self::PATTERN, $slug);
+    }
+
+    public function split(string $text): array
+    {
+        $separator = '/(\s+)+$/';
+
+        return preg_split($separator, $text);
+    }
+}
+```
+
+- **Constants**: `self::X`, and `ClassName::X` of a class declared in the
+  same file, its name resolved through the `use` imports; `static::X` only when
+  the class or the constant is `final`, as a subclass may redeclare it; a
+  namespace `const X`, or a `define('X', value)` with a literal name and these
+  two arguments only (a `define()` written otherwise, with named arguments, a
+  third argument or a name that is no quoted literal, is not read); an
+  unqualified name tried in the namespace, then globally. A constant built
+  from other constants (`'/'.self::PART.'/'`) is folded, up to 32 constants
+  deep; a cycle reads nothing, and neither does a value folded past 64 KiB. A
+  constant array feeds `preg_replace()` its values and
+  `preg_replace_callback_array()` its keys, and Symfony's `Regex` its
+  `pattern` option alone. A `define()` or a global `const` of a name PHP
+  already defines, `PHP_EOL` say, is not read: PHP keeps its own value.
+- **Local variables**: a variable of the function body whose every assignment
+  that may reach the call is a literal, a concatenation of literals or a
+  constant the file proves; each of those literals is a pattern the call may
+  receive. An assignment written after the variable's last read as a pattern
+  never reaches it, unless a loop (`for`, `foreach`, `while`, `do`) holds
+  both or the body has a `goto`: `$type = 'int'` after `preg_match($type,
+  ...)` is not read. The variable is
+  not read when it may hold anything else: a parameter, a reference (`=&`),
+  a compound assignment (`.=`, `??=`), `global`, `static`, a destructuring,
+  a `foreach` or `catch` target, `unset()`, `++` or `--`, a `yield` in a
+  generator that returns by reference (`function &gen()`), or the variable
+  passed to any other call, as `preg_match()`'s `$matches`. A function body
+  that writes `$$name`, or calls `extract()`, `compact()`, `eval()` or
+  `include`, has none of its variables read. A variable does not cross into a closure,
+  and one at file scope is not read.
+- **Properties**: `$this->p` with a literal default, `private` (in a `final`
+  class, or a `final` property) or `protected` (in a `final` class that
+  extends none), in a class using no trait the file does not declare,
+  neither static nor promoted nor
+  hooked, and whose name is never written in the file, on any object; a
+  by-reference `foreach` over `$this->p`, or `$x->p`, writes it too. Nor is
+  any property of a class whose body may write them all at once: a
+  by-reference `foreach` over `$this`, a variable or any other expression but
+  a literal array or a named property, or `$this` passed to a call; and no
+  property of any class of the file when `array_walk()` or
+  `array_walk_recursive()` walks anything but a literal array. A public
+  property can be given another value where this file cannot see it, a
+  protected one by a subclass or a parent class, and any one by a trait of
+  another file; a private one of a class that may be extended is left out as
+  well, a rule deliberately stricter than PHP, which lets no subclass write it.
+  In a closure or an arrow function, which `Closure::bind()` may give another
+  class, neither `$this->p` nor `self::X` nor `static::X` is read.
+  Writes the file does not show are not seen: those of another file, of
+  Reflection, of `Closure::bind()`, or of `array_walk()` on the object from
+  another scope. The default is still linted, as one of the values the
+  property holds.
+
+A pattern read through a name is reported once, where its literal is written,
+whatever the number of calls that use it: `regex lint` points at the line of
+`private const PATTERN`, and the JSON report gives the first call as `source`
+and the way it reached the literal as `location`, `via self::PATTERN` (see the
+[JSON output reference](../reference/json-output.md#result-lintresults)). The
+console shows it under the pattern:
+
+```
+  app/Slug.php:14:22
+      → /(\s+)+$/
+     ↳ via $separator
+```
+
+A pattern assembled at the call, `preg_match('/'.self::PART.'/', $s)`, is
+reported at the call. To silence a pattern read through a name,
+put `@regex-ignore` on the line of its declaration: a marker on the call does
+not reach it.
+
+Not read: a constant of another file, `self::` inside a trait, a ternary or a
+`match` over literals, a variable captured by a closure's `use` or an arrow
+function, an array of patterns held in a local variable, a concatenation with
+`preg_quote()` (its text is not known), a method called on an object
+(`$str->matches()`: Laravel's `Stringable`, Symfony String, Finder's
+`->name()`, Pest's `->toMatch()`, beberlei's `Assert::that($v)->regex()`), and
+`mb_ereg()` and `mb_split()`, whose patterns are not PCRE.
+[Extraction coverage](../reference/extraction-coverage.md) lists what each
+tool reads.
+
+##### Your own helpers
 
 A project's own helpers are declared as `function` or `Some\Class::method`.
 Append `#<index>` when the pattern is not the first argument, and
@@ -472,6 +620,13 @@ Append `#<index>` when the pattern is not the first argument, and
 ```bash
 vendor/bin/regex lint src/ --pattern-function='App\Support\Str::matches#1'
 ```
+
+A call that passes the pattern by name is read under `pattern:`, `patterns:`
+or `regex:`. When the helper names its parameter otherwise, append
+`$<name>` to the index: `App\grep#1$expression` reads `grep($list,
+expression: '/.../')`, and that name alone. A spec the lint cannot read,
+`x#a` or `x#1$` say, is left out with a warning, as an unknown preset is:
+`Malformed pattern function "x#a", ignored.`
 
 ```json
 {
@@ -507,14 +662,18 @@ When several declarations name one function, a configured spec
 the lint finds; a project declaration (in the linted or configured paths)
 wins over a copy in `vendor/`; two project declarations marking different
 parameters are both read, whatever the order of the paths or the number of
-jobs.
+jobs; two that mark one position under different parameter names read a
+named argument under either name.
 
 A call written unqualified in the function's own namespace, `grep()` in
 `namespace App`, is read, as PHP calls `App\grep()` first; and when the
 namespace declares its own `grep()`, marked or not, a global `grep()` marked
 in a library or named with `--pattern-function` or `extraction.functions` does
-not capture the call. An instance call (`$str->matches(...)`)
-names no class the linter can know, and is not read; the PHPStan extension,
+not capture the call. A static method is read when the call names its class,
+`Str::matches(...)`, not through `self::`, `static::` or `parent::`. An
+instance call (`$str->matches(...)`, `$this->matches(...)`), a method marked
+`#[RegexPattern]` included, names no class the linter can know, and is not
+read; the PHPStan extension,
 which knows the type of `$str`, reads it (see
 [the PHPStan guide](phpstan.md#pattern-parameters)).
 
@@ -816,7 +975,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `ide`                           | string           | IDE for clickable links                                  |
 | `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
-| `extraction.interop`            | array            | Wrapper libraries whose calls carry patterns (default `["composer-pcre"]`) |
+| `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` the native calls only) |
 | `extraction.functions`          | array            | Project helpers carrying patterns                        |
 | `checks.validation`             | boolean          | Report patterns PCRE2 refuses (default `true`)           |
 | `checks.redos`                  | object           | `enabled` (default `false`), `mode` (`theoretical` or `confirmed`), `threshold` (`low`, `medium`, `high`, `critical`) |
@@ -1072,6 +1231,13 @@ Enable clickable file links in lint output:
 preg_match('/pattern/', $input); // @regex-ignore-next-line
 ```
 
+A pattern read through a constant, a variable or a property is silenced on
+the line of its literal, where it is reported, not on the call:
+
+```php
+private const LEGACY = '/(a+)+$/'; // @regex-ignore
+```
+
 ### Config Exclude
 
 In `regex.json`:
@@ -1242,8 +1408,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--no-lint`         | Skip the lint rules                                |
 | `--enable-rule=<id>` | Turn a lint rule on (repeatable)                  |
 | `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
-| `--interop <presets>` | Wrapper libraries to read patterns from (comma separated, `none` to disable) |
-| `--no-interop`      | Read patterns from native `preg_*` calls only      |
+| `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` for the native calls only) |
+| `--no-interop`      | Read patterns from the native calls only (`preg_*`, `RegexIterator`, `filter_var()`) |
 | `--pattern-function <spec>` | Extra call carrying a pattern (repeatable) |
 | `-v, --verbose`     | Detailed output                                    |
 | `--debug`           | Debug information                                  |

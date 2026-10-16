@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosMode;
@@ -32,6 +33,7 @@ final class LintArgumentParser
     {
         $arguments = LintArguments::fromDefaults($defaults);
         $pathsProvided = false;
+        $warnings = [];
 
         for ($i = 0; $i < \count($args); $i++) {
             $arg = $args[$i];
@@ -90,12 +92,7 @@ final class LintArgumentParser
             }
 
             if (str_starts_with($arg, '--interop=')) {
-                $interop = $this->parseInteropValue(substr($arg, \strlen('--interop=')));
-                if (null === $interop) {
-                    return new LintParseResult(null, 'Invalid value for --interop. Available presets: '.implode(', ', InteropPresets::names()).'.');
-                }
-
-                $arguments = $this->withInterop($arguments, $interop);
+                $arguments = $this->withInterop($arguments, $this->parseInteropValue(substr($arg, \strlen('--interop=')), $warnings));
 
                 continue;
             }
@@ -106,18 +103,13 @@ final class LintArgumentParser
                     return new LintParseResult(null, 'Missing value for --interop.');
                 }
 
-                $interop = $this->parseInteropValue($args[$i]);
-                if (null === $interop) {
-                    return new LintParseResult(null, 'Invalid value for --interop. Available presets: '.implode(', ', InteropPresets::names()).'.');
-                }
-
-                $arguments = $this->withInterop($arguments, $interop);
+                $arguments = $this->withInterop($arguments, $this->parseInteropValue($args[$i], $warnings));
 
                 continue;
             }
 
             if (str_starts_with($arg, '--pattern-function=')) {
-                $arguments = $this->withPatternFunction($arguments, substr($arg, \strlen('--pattern-function=')));
+                $arguments = $this->withPatternFunction($arguments, substr($arg, \strlen('--pattern-function=')), $warnings);
 
                 continue;
             }
@@ -128,7 +120,7 @@ final class LintArgumentParser
                     return new LintParseResult(null, 'Missing value for --pattern-function.');
                 }
 
-                $arguments = $this->withPatternFunction($arguments, $args[$i]);
+                $arguments = $this->withPatternFunction($arguments, $args[$i], $warnings);
 
                 continue;
             }
@@ -804,7 +796,7 @@ final class LintArgumentParser
             );
         }
 
-        return new LintParseResult($arguments, pathsGiven: $pathsProvided);
+        return new LintParseResult($arguments, pathsGiven: $pathsProvided, warnings: $warnings);
     }
 
     /**
@@ -908,10 +900,13 @@ final class LintArgumentParser
 
     /**
      * Read a comma separated preset list, with "none" disabling every preset.
+     * A name that is no preset is left out, with a warning.
      *
-     * @return array<int, string>|null null when a name is not a known preset
+     * @param list<string> $warnings
+     *
+     * @return array<int, string>
      */
-    private function parseInteropValue(string $value): ?array
+    private function parseInteropValue(string $value, array &$warnings): array
     {
         $names = array_values(array_filter(array_map(trim(...), explode(',', strtolower($value))), static fn (string $name): bool => '' !== $name));
 
@@ -919,13 +914,21 @@ final class LintArgumentParser
             return [];
         }
 
+        $presets = [];
         foreach ($names as $name) {
-            if (!InteropPresets::exists($name)) {
-                return null;
+            if (InteropPresets::exists($name)) {
+                $presets[] = $name;
+
+                continue;
+            }
+
+            $warning = InteropPresets::unknownWarning($name);
+            if (!\in_array($warning, $warnings, true)) {
+                $warnings[] = $warning;
             }
         }
 
-        return $names;
+        return $presets;
     }
 
     /**
@@ -960,11 +963,19 @@ final class LintArgumentParser
         );
     }
 
-    private function withPatternFunction(LintArguments $arguments, string $spec): LintArguments
+    /**
+     * A spec the registry cannot read is left out, with a warning.
+     *
+     * @param list<string> $warnings
+     */
+    private function withPatternFunction(LintArguments $arguments, string $spec, array &$warnings): LintArguments
     {
         $patternFunctions = $arguments->patternFunctions;
-        if ('' !== trim($spec)) {
+        $warning = PatternFunctionRegistry::malformedSpecWarning($spec);
+        if (PatternFunctionRegistry::isSpec($spec)) {
             $patternFunctions[] = $spec;
+        } elseif ('' !== trim($spec) && !\in_array($warning, $warnings, true)) {
+            $warnings[] = $warning;
         }
 
         return new LintArguments(

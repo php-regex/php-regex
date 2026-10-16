@@ -14,12 +14,17 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Tests\Support\ExtractsWithBothStrategies;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PhpParserExtractionStrategyTest extends TestCase
 {
+    use ExtractsWithBothStrategies;
+
     private PhpParserExtractionStrategy $strategy;
 
     protected function setUp(): void
@@ -209,6 +214,28 @@ final class PhpParserExtractionStrategyTest extends TestCase
         } else {
             $this->assertSame([], $result);
         }
+    }
+
+    /**
+     * A call with two pattern arguments reads both: neither variable is
+     * taken for one the call may write by reference.
+     */
+    #[Test]
+    public function test_a_call_with_two_pattern_arguments_reads_both_variables(): void
+    {
+        $this->assertExtractedByBoth([
+            ['pattern' => '/from/', 'at' => "'/from/'", 'location' => 'via $from'],
+            ['pattern' => '/to/', 'at' => "'/to/'", 'location' => 'via $to'],
+        ], <<<'PHP'
+            <?php
+
+            function run(string $s): void
+            {
+                $from = '/from/';
+                $to = '/to/';
+                between($s, $from, $to);
+            }
+            PHP, PatternFunctionRegistry::native()->withDeclaredFunctions(['between#1$from', 'between#2$to']));
     }
 
     private function isPhpParserAvailable(): bool

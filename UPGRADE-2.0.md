@@ -1063,6 +1063,46 @@ as a `Target` row under `Runtime`, and the GitHub, Checkstyle and JUnit
 formats print the same line on stderr. Single-pattern commands, such as
 `analyze`, still judge for the running PHP.
 
+#### The lint reads more patterns
+
+1.x read the patterns written as a literal in a `preg_*()` call. 2.0 reads
+more, in `regex lint`, the language server and `regex:lint` of the Symfony
+bundle and the Laravel package, so a project clean on 1.x may report findings
+on unchanged code:
+
+- the calls of eight library presets, all on by default: `composer-pcre`,
+  `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`,
+  `webmozart-assert`, `beberlei-assert` and `symfony-validator`;
+- `RegexIterator`, `RecursiveRegexIterator`, and `filter_var()` or
+  `filter_input()` with `FILTER_VALIDATE_REGEXP`;
+- a pattern held in a constant, a local variable or a property of the same
+  file, reported at the line of its literal.
+
+To read only some presets, list them; a list means exactly those, so a preset
+a later 2.x release adds stays off for you:
+
+```json
+{
+    "extraction": {
+        "interop": ["composer-pcre"]
+    }
+}
+```
+
+`[]` (or `--no-interop`) reads the native calls only. The Laravel package
+takes the same list under `extraction.interop` in `config/php-regex.php`, the
+Symfony bundle under `php_regex.extraction.interop`, the PHPStan extension
+under `phpRegex.interop`. A name that is no preset is ignored, and the run
+goes on; the CLI, the LSP server, the Laravel package and the Symfony bundle
+warn, `Unknown extraction preset "x", ignored.`, while the PHPStan extension
+says nothing. If you followed the 2.x branch before 2.0, the preset
+`laravel-str` is now `illuminate-support`, without an alias: `laravel-str` is
+an unknown name, which PHPStan ignores silently.
+
+A finding on a pattern read through a name is silenced with `@regex-ignore`
+on the line of its literal, not on the call. See
+[the CLI guide](docs/guides/cli.md#patterns-behind-a-wrapper).
+
 #### The lint command's exit codes and streams
 
 - Exit code 2 now means the configuration or the command line cannot be used

@@ -197,17 +197,57 @@ final class ServerRegexPatternAttributeTest extends TestCase
     }
 
     /**
-     * Without regex.json the whole root is read, but vendor/.
+     * The declarations of vendor/ are read whatever "exclude" says, as
+     * `regex lint` reads them: a library declares the pattern parameters
+     * the project calls.
      */
     #[Test]
-    public function test_vendor_is_left_out_by_default(): void
+    public function test_vendor_declarations_are_read_whatever_exclude_says(): void
+    {
+        $this->write('regex.json', (string) json_encode(['exclude' => ['vendor', 'legacy']]));
+        $this->write('vendor/acme/Support/Str.php', self::DECLARATIONS);
+
+        $this->initialize();
+        $this->send($this->didOpen($this->uri('src/Http/Controller.php'), self::CALLS));
+
+        $this->assertSame([6], $this->diagnosedLines($this->uri('src/Http/Controller.php')));
+    }
+
+    /**
+     * Without regex.json, vendor/ is read for its declarations all the same.
+     */
+    #[Test]
+    public function test_vendor_declarations_are_read_by_default(): void
     {
         $this->write('vendor/acme/Support/Str.php', self::DECLARATIONS);
 
         $this->initialize();
         $this->send($this->didOpen($this->uri('src/Http/Controller.php'), self::CALLS));
 
-        $this->assertSame([], $this->diagnosedLines($this->uri('src/Http/Controller.php')));
+        $this->assertSame([6], $this->diagnosedLines($this->uri('src/Http/Controller.php')));
+    }
+
+    /**
+     * A library's file is no file of the project: opened in the editor, it
+     * gets no diagnostic.
+     */
+    #[Test]
+    public function test_a_vendor_document_gets_no_diagnostic(): void
+    {
+        $vendor = $this->uri('vendor/acme/Support/Broken.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($vendor, "<?php\n\npreg_match('/(a/', \$subject);\n"));
+        $this->send($this->didOpen($this->uri('src/Broken.php'), "<?php\n\npreg_match('/(a/', \$subject);\n"));
+
+        $diagnosed = [];
+        foreach ($this->notifications('textDocument/publishDiagnostics') as $params) {
+            if ($vendor === ($params['uri'] ?? null) && [] !== ($params['diagnostics'] ?? [])) {
+                $diagnosed[] = $params['diagnostics'];
+            }
+        }
+        $this->assertSame([], $diagnosed);
+        $this->assertSame([2], $this->diagnosedLines($this->uri('src/Broken.php')));
     }
 
     /**

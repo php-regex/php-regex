@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Command;
 
+use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LintConfigLoaderTest extends TestCase
@@ -164,7 +167,13 @@ final class LintConfigLoaderTest extends TestCase
         }
     }
 
-    public function test_load_rejects_an_unknown_interop_preset(): void
+    /**
+     * An unknown preset in regex.json is a warning, never fatal: the run
+     * reads the presets it knows. The schema keeps its list of names for
+     * the editors.
+     */
+    #[Test]
+    public function test_load_accepts_an_unknown_interop_preset(): void
     {
         $cwd = getcwd();
         $this->assertIsString($cwd);
@@ -181,8 +190,38 @@ final class LintConfigLoaderTest extends TestCase
             $loader = new LintConfigLoader();
             $result = $loader->load();
 
-            $this->assertNotNull($result->error);
-            $this->assertStringContainsString('unknown preset "not-a-preset"', (string) $result->error);
+            $this->assertNull($result->error);
+            $this->assertSame(['composer-pcre'], LintArguments::fromDefaults((new LintDefaultsBuilder())->build($result->config))->interop);
+        } finally {
+            chdir($cwd);
+            @unlink($configPath);
+            @rmdir($tempDir);
+        }
+    }
+
+    /**
+     * A function spec of regex.json the lint cannot read is left out with
+     * a warning, as an unknown preset is.
+     */
+    #[Test]
+    public function test_load_warns_about_a_malformed_pattern_function(): void
+    {
+        $cwd = getcwd();
+        $this->assertIsString($cwd);
+
+        $tempDir = sys_get_temp_dir().'/regex-parser-config-'.uniqid('', true);
+        mkdir($tempDir, 0o700, true);
+        $configPath = $tempDir.'/regex.json';
+        file_put_contents($configPath, '{"extraction": {"functions": ["x#1$", "x#a", "App\\\\grep#1$expression"]}}');
+
+        try {
+            chdir($tempDir);
+
+            $result = (new LintConfigLoader())->load();
+
+            $this->assertNull($result->error);
+            $this->assertSame(['Malformed pattern function "x#1$", ignored.', 'Malformed pattern function "x#a", ignored.'], $result->warnings);
+            $this->assertSame(['App\grep#1$expression'], LintArguments::fromDefaults((new LintDefaultsBuilder())->build($result->config))->patternFunctions);
         } finally {
             chdir($cwd);
             @unlink($configPath);

@@ -199,7 +199,6 @@ final class RegexFinderDeclaredCallsTest extends TestCase
 
             Str::matches($s, '/con/' . 'cat/');
             Str::matches($s, $pattern);
-            Str::matches(regex: '/named/', subject: $s);
             Str::matches($s, "/{$part}/");
             Str::matches($s, 'not a pattern');
             Str::matches(['/a/', '/b/'], '/after-array/');
@@ -209,6 +208,25 @@ final class RegexFinderDeclaredCallsTest extends TestCase
             CODE;
 
         $this->assertSame(['/after-array/', '/after-nested-call/'], self::patterns($this->find($content)));
+    }
+
+    /**
+     * PHP passes a named argument to the marked parameter whatever its
+     * position: the literal is read under the declared name.
+     */
+    #[Test]
+    public function test_a_named_argument_is_read_under_the_declared_name(): void
+    {
+        $content = <<<'CODE'
+            <?php
+
+            namespace App\Support;
+
+            Str::matches(regex: '/named/', subject: $s);
+            Str::matches(subject: $s, regex: '/reordered/');
+            CODE;
+
+        $this->assertSame(['/named/', '/reordered/'], self::patterns($this->find($content)));
     }
 
     #[Test]
