@@ -47,6 +47,7 @@ use PHPRegex\Parser\RegexParser;
  * @phpstan-type TargetDescription array{php: string, pcre: string}
  *
  * @phpstan-import-type OptionsArray from ParserOptions
+ * @phpstan-import-type LintConfig from LintConfigResult
  */
 final class ProjectTarget
 {
@@ -66,7 +67,7 @@ final class ProjectTarget
      *
      * @param string|null           $phpFlag    the --php-version option
      * @param string|null           $pcreFlag   the --pcre-version option
-     * @param array<string, mixed>  $config     the loaded regex.json
+     * @param LintConfig            $config     the loaded regex.json
      * @param string                $projectDir where composer.json is read, never a parent of it
      * @param array<string, string> $env        the environment, for COMPOSER
      *

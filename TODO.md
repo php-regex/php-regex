@@ -96,24 +96,18 @@ Parked, too large for upstream review: local branches
 
 ## Declared-type tightening (shapes where keys are knowable)
 
-Audited 2026-10-15: of the 214 `mixed` occurrences in `src/`, ~71 are real
+Audited 2026-10-15: of the 214 `mixed` occurrences in `src/`, ~71 were real
 narrowing; the rest are honest boundaries that stay (decode fronts, host
-contracts, validator inputs, protocol slots). The native signatures that
-could not move after the 2.0.0 tag are done. Left, in order:
+contracts, validator inputs, protocol slots). The native signatures, the
+consumer shapes and the internal docblock sweep are done; the JsonDumper
+leaf shapes are declined for now (no churn for the count).
 
-1. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
-   handler-entry params, the nine unapplied Linter aliases,
-   `LintDefaultsBuilder::build()`'s return shape (pays the CLI, LintArguments
-   and LSP lines at once), the Symfony JSON report and Laravel compare
-   literals.
-2. Deferred unless wanted: JsonDumper leaf shapes transcribed from
-   `ast.schema.json`.
+Left: the `noNewMixed` rule in the shipped plugin (flag off by default,
+baseline frozen by reason code, counting meta-test per package), which
+holds what stays.
 
 Never type the validator inputs (`ParserOptions::fromArray` and friends):
-their runtime checks and rotten-data tolerance are the contract. A
-`noNewMixed` rule in the shipped plugin (flag off by default, baseline
-frozen by reason code, counting meta-test) is the last consumer piece left
-before the sweep.
+their runtime checks and rotten-data tolerance are the contract.
 
 ## PHP 8.6 closeout and 8.7 canary
 

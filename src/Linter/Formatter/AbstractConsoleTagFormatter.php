@@ -242,11 +242,11 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
      * snippet its validation carries apart: the line of the pattern with the
      * character at fault, spelled in the pattern's mode.
      *
-     * @param array<array-key, mixed> $issue
+     * @param LintIssue $issue
      */
     private function messageWithSnippet(array $issue, ?string $pattern): string
     {
-        $message = ReportSpelling::displayText(\is_string($issue['message'] ?? null) ? $issue['message'] : '');
+        $message = ReportSpelling::displayText($issue['message']);
         $validation = $issue['validation'] ?? null;
         if (!$validation instanceof ValidationResult || null === $validation->caretSnippet || '' === $validation->caretSnippet) {
             return $message;

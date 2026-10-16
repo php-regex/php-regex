@@ -26,6 +26,8 @@ use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
  * else (a list included) is replaced whole. The result keeps the shape of
  * the file.
  *
+ * @phpstan-import-type LintConfig from LintConfigResult
+ *
  * @internal
  */
 final class LintConfigLoader
@@ -81,7 +83,10 @@ final class LintConfigLoader
             return new LintConfigResult([], [], implode("\n", $errors), $warnings);
         }
 
-        return new LintConfigResult(self::toArray($merged), $files, warnings: $warnings);
+        /** @var LintConfig $config every file read as the schema says */
+        $config = self::toArray($merged);
+
+        return new LintConfigResult($config, $files, warnings: $warnings);
     }
 
     /**

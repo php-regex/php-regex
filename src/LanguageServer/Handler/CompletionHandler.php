@@ -164,7 +164,7 @@ final class CompletionHandler
     public function handle(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         /** @var array{line?: int, character?: int}|null $position */

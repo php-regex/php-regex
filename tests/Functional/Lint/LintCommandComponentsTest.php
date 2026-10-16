@@ -31,6 +31,53 @@ use PHPUnit\Framework\TestCase;
 
 final class LintCommandComponentsTest extends TestCase
 {
+    /**
+     * Every key regex.json may hold gives its default, a single path read
+     * as a list of one; nothing else is set.
+     */
+    public function test_defaults_builder_reads_every_key_of_the_file(): void
+    {
+        $defaults = (new LintDefaultsBuilder())->build([
+            '$schema' => './vendor/php-regex/regex-linter/regex.schema.json',
+            'paths' => 'src',
+            'exclude' => 'vendor',
+            'phpVersion' => '8.2',
+            'pcreVersion' => '10.42',
+            'extraction' => ['interop' => ['phpunit'], 'functions' => ['App\\Str::matches']],
+            'jobs' => 4,
+            'format' => 'github',
+            'ide' => 'phpstorm',
+            'checks' => [
+                'validation' => false,
+                'redos' => ['enabled' => true, 'mode' => 'confirmed', 'threshold' => 'low'],
+                'optimizations' => ['enabled' => true, 'minSavings' => 2, 'options' => ['digits' => false]],
+                'lint' => ['enabled' => false, 'rules' => ['flag.redundant' => false]],
+                'complexity' => ['enabled' => true, 'threshold' => 20],
+            ],
+        ]);
+
+        $this->assertSame([
+            'paths' => ['src'],
+            'exclude' => ['vendor'],
+            'jobs' => 4,
+            'format' => 'github',
+            'ide' => 'phpstorm',
+            'interop' => ['phpunit'],
+            'patternFunctions' => ['App\\Str::matches'],
+            'checkValidation' => false,
+            'checkRedos' => true,
+            'redosMode' => 'confirmed',
+            'redosThreshold' => 'low',
+            'checkOptimizations' => true,
+            'minSavings' => 2,
+            'optimizations' => ['digits' => false],
+            'checkLint' => false,
+            'lintRules' => ['flag.redundant' => false],
+            'checkComplexity' => true,
+            'complexityThreshold' => 20,
+        ], $defaults);
+    }
+
     public function test_defaults_builder_extracts_known_keys(): void
     {
         $builder = new LintDefaultsBuilder();
@@ -47,14 +94,14 @@ final class LintCommandComponentsTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(['src'], $defaults['paths']);
-        $this->assertSame(['vendor'], $defaults['exclude']);
-        $this->assertSame(2, $defaults['jobs']);
-        $this->assertSame(3, $defaults['minSavings']);
-        $this->assertSame('json', $defaults['format']);
-        $this->assertFalse($defaults['checkRedos']);
-        $this->assertTrue($defaults['checkValidation']);
-        $this->assertFalse($defaults['checkOptimizations']);
+        $this->assertSame(['src'], $defaults['paths'] ?? null);
+        $this->assertSame(['vendor'], $defaults['exclude'] ?? null);
+        $this->assertSame(2, $defaults['jobs'] ?? null);
+        $this->assertSame(3, $defaults['minSavings'] ?? null);
+        $this->assertSame('json', $defaults['format'] ?? null);
+        $this->assertFalse($defaults['checkRedos'] ?? null);
+        $this->assertTrue($defaults['checkValidation'] ?? null);
+        $this->assertFalse($defaults['checkOptimizations'] ?? null);
     }
 
     public function test_argument_parser_handles_options_and_paths(): void
@@ -180,11 +227,11 @@ final class LintCommandComponentsTest extends TestCase
             $result = $loader->load();
 
             $this->assertNull($result->error);
-            $this->assertSame(['src'], $result->config['paths']);
-            $this->assertSame(['vendor'], $result->config['exclude']);
-            $this->assertSame('json', $result->config['format']);
-            $this->assertSame(2, $result->config['jobs']);
-            $this->assertSame(['validation' => true, 'optimizations' => ['enabled' => false]], $result->config['checks']);
+            $this->assertSame(['src'], $result->config['paths'] ?? null);
+            $this->assertSame(['vendor'], $result->config['exclude'] ?? null);
+            $this->assertSame('json', $result->config['format'] ?? null);
+            $this->assertSame(2, $result->config['jobs'] ?? null);
+            $this->assertSame(['validation' => true, 'optimizations' => ['enabled' => false]], $result->config['checks'] ?? null);
             $expectedFiles = array_map(realpath(...), [$tempDir.'/regex.dist.json', $tempDir.'/regex.json']);
             $actualFiles = array_map(realpath(...), $result->files);
             $this->assertSame($expectedFiles, $actualFiles);

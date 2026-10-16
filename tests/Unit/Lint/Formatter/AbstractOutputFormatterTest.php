@@ -18,6 +18,9 @@ use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\LintReport;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @phpstan-import-type LintResult from LintReport
+ */
 final class AbstractOutputFormatterTest extends TestCase
 {
     private TestableAbstractOutputFormatter $formatter;
@@ -215,10 +218,7 @@ final class AbstractOutputFormatterTest extends TestCase
         $config = new OutputConfiguration(groupByFile: false);
         $formatter = new TestableAbstractOutputFormatter($config);
 
-        $results = [
-            ['file' => 'file1.php', 'type' => 'error'],
-            ['file' => 'file2.php', 'type' => 'warning'],
-        ];
+        $results = [self::lintResult('file1.php', 1), self::lintResult('file2.php', 2)];
 
         $result = $formatter->groupResults($results);
 
@@ -231,48 +231,30 @@ final class AbstractOutputFormatterTest extends TestCase
         $config = new OutputConfiguration(groupByFile: true);
         $formatter = new TestableAbstractOutputFormatter($config);
 
-        $results = [
-            ['file' => 'file1.php', 'type' => 'error'],
-            ['file' => 'file2.php', 'type' => 'warning'],
-            ['file' => 'file1.php', 'type' => 'info'],
-        ];
+        $results = [self::lintResult('file1.php', 1), self::lintResult('file2.php', 2), self::lintResult('file1.php', 3)];
 
         $result = $formatter->groupResults($results);
 
         $expected = [
-            'file1.php' => [
-                ['file' => 'file1.php', 'type' => 'error'],
-                ['file' => 'file1.php', 'type' => 'info'],
-            ],
-            'file2.php' => [
-                ['file' => 'file2.php', 'type' => 'warning'],
-            ],
+            'file1.php' => [self::lintResult('file1.php', 1), self::lintResult('file1.php', 3)],
+            'file2.php' => [self::lintResult('file2.php', 2)],
         ];
         $this->assertSame($expected, $result);
     }
 
-    public function test_group_results_with_unknown_file(): void
+    /**
+     * @return LintResult
+     */
+    private static function lintResult(string $file, int $line): array
     {
-        $config = new OutputConfiguration(groupByFile: true);
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $results = [
-            ['type' => 'error'], // No file key
-            ['file' => null, 'type' => 'warning'], // Null file
-            ['file' => 123, 'type' => 'info'], // Non-string file
-        ];
-
-        $result = $formatter->groupResults($results);
-
-        $expected = [
-            'unknown' => $results,
-        ];
-        $this->assertSame($expected, $result);
+        return ['file' => $file, 'line' => $line, 'pattern' => null, 'issues' => [], 'optimizations' => [], 'problems' => []];
     }
 }
 
 /**
  * Testable implementation of AbstractOutputFormatter for testing protected methods.
+ *
+ * @phpstan-import-type LintResult from LintReport
  */
 final class TestableAbstractOutputFormatter extends AbstractOutputFormatter
 {
@@ -306,6 +288,11 @@ final class TestableAbstractOutputFormatter extends AbstractOutputFormatter
         return parent::formatReDoSHint($hint);
     }
 
+    /**
+     * @param array<LintResult> $results
+     *
+     * @return array<string, array<LintResult>>
+     */
     public function groupResults(array $results): array
     {
         return parent::groupResults($results);

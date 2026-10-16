@@ -25,6 +25,7 @@ use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
+use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
@@ -58,6 +59,8 @@ use PHPRegex\Toolkit\Regex;
  *
  * The ReDoS analysis runs only when initializationOptions.redos, else
  * checks.redos.enabled in regex.json, turns it on.
+ *
+ * @phpstan-import-type LintConfig from LintConfigResult
  *
  * @internal
  */
@@ -299,7 +302,7 @@ final class Server
      * the threshold of regex.json, high by default, as `regex lint` reads
      * them.
      *
-     * @param array<string, mixed> $params the "initialize" params
+     * @param array<array-key, mixed> $params the "initialize" params
      *
      * @return array{RedosMode, RedosSeverity}
      */
@@ -320,7 +323,7 @@ final class Server
      * to the user, and no configuration: the server reads as without the
      * file, every extraction preset included, rather than a part of it.
      *
-     * @return array<string, mixed>
+     * @return LintConfig
      */
     private static function loadConfig(string $root): array
     {
@@ -347,7 +350,7 @@ final class Server
      * and the libraries of vendor/, which `regex lint` reads whatever
      * "exclude" says.
      *
-     * @param array<string, mixed> $config
+     * @param LintConfig $config
      */
     private function readDeclarations(string $root, array $config): void
     {
@@ -377,8 +380,8 @@ final class Server
     }
 
     /**
-     * @param array<string, mixed> $params the "initialize" params
-     * @param array<string, mixed> $config regex.json
+     * @param array<array-key, mixed> $params the "initialize" params
+     * @param LintConfig              $config regex.json
      */
     private function resolveTarget(array $params, ?string $root, array $config): ProjectTarget
     {
@@ -440,7 +443,7 @@ final class Server
      * The directory of the first workspace folder, else of rootUri; null
      * when neither is a local directory.
      *
-     * @param array<string, mixed> $params
+     * @param array<array-key, mixed> $params
      */
     private static function rootDirectory(array $params): ?string
     {

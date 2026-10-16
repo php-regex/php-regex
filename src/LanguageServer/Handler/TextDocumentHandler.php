@@ -36,6 +36,8 @@ use PHPRegex\Toolkit\Regex;
 /**
  * Handles text document notifications and requests.
  *
+ * @phpstan-import-type Diagnostic from DiagnosticConverter
+ *
  * @internal
  */
 final class TextDocumentHandler
@@ -68,7 +70,7 @@ final class TextDocumentHandler
     public function didOpen(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string, text?: string, languageId?: string, version?: int} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         $text = isset($textDocument['text']) && \is_string($textDocument['text']) ? $textDocument['text'] : null;
@@ -86,7 +88,7 @@ final class TextDocumentHandler
     public function didChange(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         /** @var array<int, array{text?: string}> $contentChanges */
@@ -111,7 +113,7 @@ final class TextDocumentHandler
     public function didClose(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
 
@@ -137,7 +139,7 @@ final class TextDocumentHandler
     public function didSave(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         $path = null === $uri ? null : PatternDeclarations::pathOf($uri);
@@ -184,7 +186,7 @@ final class TextDocumentHandler
     public function hover(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         /** @var array{line?: int, character?: int}|null $position */
@@ -335,7 +337,7 @@ final class TextDocumentHandler
      * The verdict and the search cost `regex lint` reports for the analysis,
      * under the same ids, severities and words.
      *
-     * @return list<array<string, mixed>>
+     * @return list<Diagnostic>
      */
     private function redosDiagnostics(RedosAnalysis $redos, PatternSpan $span): array
     {

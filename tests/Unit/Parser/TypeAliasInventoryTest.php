@@ -23,9 +23,14 @@ use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Explain\Internal\RailroadLayoutVisitor;
 use PHPRegex\Generator\TestCaseGenerator;
+use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
+use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
+use PHPRegex\Linter\Config\LintConfigResult;
+use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -100,6 +105,11 @@ final class TypeAliasInventoryTest extends TestCase
         HelpCommand::class => ['CommandHelp'],
         RedosCommand::class => ['BenchResult'],
         CompletionHandler::class => ['CompletionContext', 'CompletionItem'],
+        CodeActionHandler::class => ['CodeAction', 'RewriteAction'],
+        DiagnosticConverter::class => ['Diagnostic'],
+        LintConfigResult::class => ['LintConfig'],
+        LintDefaultsBuilder::class => ['LintDefaults'],
+        JsonFormatter::class => ['JsonIssue', 'JsonOptimization'],
         ProjectTarget::class => ['TargetDescription'],
         GroupIndex::class => ['CapturingGroupInfo'],
         CaptureFacts::class => ['Facts'],

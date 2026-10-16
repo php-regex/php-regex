@@ -18,6 +18,8 @@ use PHPRegex\Linter\LintReport;
 /**
  * Base class for output formatters.
  *
+ * @phpstan-import-type LintResult from LintReport
+ *
  * @internal
  */
 abstract class AbstractOutputFormatter implements OutputFormatterInterface
@@ -105,9 +107,9 @@ abstract class AbstractOutputFormatter implements OutputFormatterInterface
     /**
      * Group results by file if configured.
      *
-     * @param array<array<string, mixed>> $results
+     * @param array<LintResult> $results
      *
-     * @return array<string, array<array<string, mixed>>>
+     * @return array<string, array<LintResult>>
      */
     protected function groupResults(array $results): array
     {
@@ -117,9 +119,7 @@ abstract class AbstractOutputFormatter implements OutputFormatterInterface
 
         $grouped = [];
         foreach ($results as $result) {
-            $file = $result['file'] ?? 'unknown';
-            $fileKey = \is_string($file) ? $file : 'unknown';
-            $grouped[$fileKey][] = $result;
+            $grouped[$result['file']][] = $result;
         }
 
         return $grouped;

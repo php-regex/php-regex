@@ -26,7 +26,7 @@ final class Message
      * A response a client sends is told apart by its id without a method:
      * the server never reads its result or error.
      *
-     * @param array<string, mixed>|null $params
+     * @param array<array-key, mixed>|null $params positional or named, as JSON-RPC allows
      */
     public function __construct(
         public readonly string $jsonrpc,
@@ -167,7 +167,6 @@ final class Message
             return InvalidMessage::invalidRequest($usableId);
         }
 
-        /** @var array<string, mixed>|null $params */
         $params = \is_array($params) ? $params : null;
 
         return new self(

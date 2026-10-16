@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Converter;
 
+use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
@@ -20,6 +21,10 @@ use PHPRegex\Parser\ErrorCode;
 /**
  * Converts PHPRegex diagnostics to LSP diagnostic format, each placed on
  * the document through the span of its pattern.
+ *
+ * @phpstan-type Diagnostic array{range: Range, severity: 1|2|3, code: string, source: 'php-regex', message: string}
+ *
+ * @phpstan-import-type Range from RegexOccurrence
  *
  * @internal
  */
@@ -34,7 +39,7 @@ final class DiagnosticConverter
      * A lint issue, over the node its rule names: from its offset to its
      * end, or one character when the rule gives no end.
      *
-     * @return array<string, mixed>
+     * @return Diagnostic
      */
     public function convert(RuleViolation $issue, PatternSpan $span): array
     {
@@ -51,7 +56,7 @@ final class DiagnosticConverter
      * A parse error, on the character `regex validate` puts its caret
      * under: where PCRE reports the error.
      *
-     * @return array<string, mixed>
+     * @return Diagnostic
      */
     public function fromParseError(string $message, ErrorCode $code, PatternSpan $span, ?int $offset = null, ?string $hint = null): array
     {
@@ -68,7 +73,7 @@ final class DiagnosticConverter
      * A limit of the library met on the pattern: no error in it, the
      * pattern is not analyzed. Shown as information over the whole body.
      *
-     * @return array<string, mixed>
+     * @return Diagnostic
      */
     public function fromLimit(string $message, ErrorCode $code, PatternSpan $span): array
     {
@@ -85,7 +90,7 @@ final class DiagnosticConverter
      * A validation error, on the character `regex validate` puts its caret
      * under, as a parse error.
      *
-     * @return array<string, mixed>
+     * @return Diagnostic
      */
     public function fromValidationError(string $message, ErrorCode $code, PatternSpan $span, ?int $offset = null, ?string $hint = null): array
     {
@@ -104,7 +109,7 @@ final class DiagnosticConverter
      *
      * @param list<string> $evidence the lines under the verdict: the attack, its replay
      *
-     * @return array<string, mixed>
+     * @return Diagnostic
      */
     public function fromRedos(string $code, string $message, array $evidence, bool $error, PatternSpan $span, ?int $from = null, ?int $to = null): array
     {
@@ -126,6 +131,9 @@ final class DiagnosticConverter
         return null === $hint || '' === $hint || str_contains($message, $hint) ? $message : $message."\n".$hint;
     }
 
+    /**
+     * @return self::SEVERITY_*
+     */
     private function mapSeverity(LintSeverity $severity): int
     {
         return match ($severity) {

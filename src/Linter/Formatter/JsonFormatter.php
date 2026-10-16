@@ -16,8 +16,11 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\JsonEncodingFailure;
+use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Redos\RedosAnalysis;
 
 /**
  * JSON output formatter for machine-readable output.
@@ -26,6 +29,32 @@ use PHPRegex\Parser\Internal\JsonEncodingFailure;
  * added to an issue array, a result or a value object does not reach the
  * report unless it is mapped here. Every issue carries every key, null
  * when it does not apply.
+ *
+ * @phpstan-type JsonIssue array{
+ *     severity: string,
+ *     file: string,
+ *     line: int,
+ *     column: int|null,
+ *     file_offset: int|null,
+ *     position: int|null,
+ *     issue_id: string|null,
+ *     message: string,
+ *     hint: string|null,
+ *     tip: string|null,
+ *     source: string|null,
+ *     validation: ValidationResult|null,
+ *     analysis: RedosAnalysis|null,
+ *     target: TargetDescription|null,
+ * }
+ * @phpstan-type JsonOptimization array{
+ *     file: string,
+ *     line: int,
+ *     column: int|null,
+ *     file_offset: int|null,
+ *     optimization: OptimizationResult,
+ *     savings: int,
+ *     source: string|null,
+ * }
  *
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintIssue from LintReport
@@ -87,7 +116,7 @@ final class JsonFormatter extends AbstractOutputFormatter
     /**
      * @phpstan-param array<LintResult> $results
      *
-     * @return list<array<string, mixed>>
+     * @return list<array{file: string, line: int, column: int|null, file_offset: int|null, source: string|null, pattern: string|null, location: string|null, issues: list<JsonIssue>, optimizations: list<JsonOptimization>}>
      */
     private function mapResults(array $results): array
     {
@@ -118,7 +147,7 @@ final class JsonFormatter extends AbstractOutputFormatter
     /**
      * @phpstan-param LintIssue $issue
      *
-     * @return array<string, mixed>
+     * @return JsonIssue
      */
     private function mapIssue(array $issue): array
     {
@@ -145,7 +174,7 @@ final class JsonFormatter extends AbstractOutputFormatter
     /**
      * @phpstan-param OptimizationEntry $optimization
      *
-     * @return array<string, mixed>
+     * @return JsonOptimization
      */
     private function mapOptimization(array $optimization): array
     {

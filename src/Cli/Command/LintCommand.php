@@ -50,6 +50,8 @@ use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
 /**
+ * @phpstan-import-type LintDefaults from LintDefaultsBuilder
+ *
  * @internal
  */
 final class LintCommand extends AbstractCommand implements JsonCommandInterface
@@ -523,15 +525,14 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
      * never the whole working directory. vendor/ of the working directory,
      * the project root as for regex.json, is read apart.
      *
-     * @param array<string, mixed> $lintDefaults
-     * @param array<string>        $linted
+     * @param LintDefaults  $lintDefaults
+     * @param array<string> $linted
      *
      * @return list<string>
      */
     private static function declarationPaths(array $lintDefaults, array $linted): array
     {
-        $configured = $lintDefaults['paths'] ?? null;
-        $paths = \is_array($configured) ? array_values(array_filter($configured, static fn (mixed $path): bool => \is_string($path) && '' !== $path)) : [];
+        $paths = array_values(array_filter($lintDefaults['paths'] ?? [], static fn (string $path): bool => '' !== $path));
 
         return [] === $paths ? array_values($linted) : $paths;
     }

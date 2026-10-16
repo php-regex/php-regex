@@ -121,7 +121,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param array{phpVersion?: string|int, pcreVersion?: string} $config
      */
     #[Test]
     #[DataProvider('provideInvalidVersions')]
@@ -133,7 +133,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{?string, ?string, array<string, mixed>}>
+     * @return iterable<string, array{?string, ?string, array{phpVersion?: string|int, pcreVersion?: string}}>
      */
     public static function provideInvalidVersions(): iterable
     {

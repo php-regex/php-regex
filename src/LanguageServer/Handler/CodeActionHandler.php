@@ -30,6 +30,22 @@ use PHPRegex\Toolkit\Regex;
 /**
  * Handles textDocument/codeAction requests.
  *
+ * A code action: a rewrite of the literal, or the quick fix of the
+ * diagnostics it answers.
+ *
+ * @phpstan-type RewriteAction array{
+ *     title: string,
+ *     kind: 'refactor.rewrite',
+ *     edit: array{changes: array<string, list<array{range: Range, newText: string}>>},
+ * }
+ * @phpstan-type CodeAction RewriteAction|array{
+ *     title: string,
+ *     kind: 'quickfix',
+ *     diagnostics: list<array{code?: int|string|null}>,
+ *     isPreferred: true,
+ *     edit: array{changes: array<string, list<array{range: Range, newText: string}>>},
+ * }
+ *
  * @phpstan-import-type Position from RegexOccurrence
  * @phpstan-import-type Range from RegexOccurrence
  *
@@ -73,12 +89,12 @@ final class CodeActionHandler
     public function handle(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array<string, mixed> $textDocument */
+        /** @var array{uri?: string} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         /** @var Range|null $range */
         $range = isset($params['range']) && \is_array($params['range']) ? $params['range'] : null;
-        /** @var array<string, mixed> $context */
+        /** @var array{diagnostics?: list<array{code?: int|string|null}>} $context */
         $context = isset($params['context']) && \is_array($params['context']) ? $params['context'] : [];
 
         if (null === $message->id || null === $uri || null === $range) {
@@ -163,16 +179,15 @@ final class CodeActionHandler
     /**
      * Get code actions for fixing Unicode lint issues.
      *
-     * @param array<string, mixed> $context
+     * @param array{diagnostics?: list<array{code?: int|string|null}>} $context
      *
-     * @return array<array<string, mixed>>
+     * @return list<CodeAction>
      */
     private function getUnicodeFixActions(RegexOccurrence $occurrence, string $uri, array $context): array
     {
         $actions = [];
 
         // Check if there are Unicode-related diagnostics
-        /** @var array<int, array{code?: string}> $diagnostics */
         $diagnostics = isset($context['diagnostics']) && \is_array($context['diagnostics']) ? $context['diagnostics'] : [];
         $hasUnicodeIssue = false;
 
@@ -237,7 +252,7 @@ final class CodeActionHandler
     /**
      * Get code actions for applying optimizations.
      *
-     * @return array<array<string, mixed>>
+     * @return list<CodeAction>
      */
     private function getOptimizationActions(RegexOccurrence $occurrence, string $uri): array
     {
@@ -282,7 +297,7 @@ final class CodeActionHandler
      * literal the format action wrote carries the extra indentation of its
      * continuation lines, so the formatter alone would call it changed.
      *
-     * @return array<array<string, mixed>>
+     * @return list<CodeAction>
      */
     private function getLayoutActions(RegexOccurrence $occurrence, string $uri): array
     {
@@ -353,7 +368,7 @@ final class CodeActionHandler
     /**
      * A refactor.rewrite action replacing the literal with the pattern.
      *
-     * @return array<string, mixed>
+     * @return RewriteAction
      */
     private function rewriteAction(string $title, RegexOccurrence $occurrence, string $uri, string $pattern): array
     {

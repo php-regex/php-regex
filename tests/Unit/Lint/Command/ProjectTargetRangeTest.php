@@ -156,7 +156,7 @@ final class ProjectTargetRangeTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param array{phpVersion?: string|int, pcreVersion?: string} $config
      */
     #[Test]
     #[DataProvider('provideSingleVersionSources')]
@@ -171,7 +171,7 @@ final class ProjectTargetRangeTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{flag: string|null, config: array<string, mixed>, platform: string|null, expected: int}>
+     * @return iterable<string, array{flag: string|null, config: array{phpVersion?: string|int, pcreVersion?: string}, platform: string|null, expected: int}>
      */
     public static function provideSingleVersionSources(): iterable
     {
@@ -189,7 +189,7 @@ final class ProjectTargetRangeTest extends TestCase
     }
 
     /**
-     * @param array<string, mixed> $config
+     * @param array{phpVersion?: string|int, pcreVersion?: string} $config
      */
     #[Test]
     #[DataProvider('providePinnedPcre')]
@@ -206,7 +206,7 @@ final class ProjectTargetRangeTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{flag: string|null, config: array<string, mixed>}>
+     * @return iterable<string, array{flag: string|null, config: array{phpVersion?: string|int, pcreVersion?: string}}>
      */
     public static function providePinnedPcre(): iterable
     {
