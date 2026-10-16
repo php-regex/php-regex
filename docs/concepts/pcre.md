@@ -190,6 +190,7 @@ and a target has it from the release it arrived in on
 | `MalformedPropertyName` | 10.45 | A character no property name holds makes "\p{...}" malformed at that character. |
 | `RangeFromTypeReadToItsEnd` | 10.45 | A range from a type, a POSIX class or a property is read to its end before it is refused. |
 | `EmptyQuoteSkippedAfterClassEscape` | 10.45 | "[\w\E-a]": the empty quote is skipped, and the hyphen makes a range. |
+| `SpacedHyphenAfterClassEscapeMakesRange` | 10.45 | Under "(?xx)", a space between a class escape and a hyphen no longer keeps the hyphen a member: "[\d -z]" is the range "\d-z", which is refused. |
 | `ClassBackslashKIsLetter` | 10.45 | "\k" in a class is the letter k, not an invalid escape. |
 | `HexEscapeNeedsDigits` | 10.45 | "\x" with no hexadecimal digit is an error, not a NUL. |
 | `EmptyQuoteOpeningClassIsUnclosed` | 10.45 | "[\E" or "[\Q\E" at the end of the pattern is a class left open, not a trailing backslash. |

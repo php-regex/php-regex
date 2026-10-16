@@ -106,6 +106,12 @@ enum PcreFeature
     case EmptyQuoteSkippedAfterClassEscape;
 
     /**
+     * Under "(?xx)", a space between a class escape and a hyphen no longer
+     * keeps the hyphen a member: "[\d -z]" is the range "\d-z", which is refused.
+     */
+    case SpacedHyphenAfterClassEscapeMakesRange;
+
+    /**
      * "\k" in a class is the letter k, not an invalid escape.
      */
     case ClassBackslashKIsLetter;
@@ -198,6 +204,7 @@ enum PcreFeature
             self::MalformedPropertyName,
             self::RangeFromTypeReadToItsEnd,
             self::EmptyQuoteSkippedAfterClassEscape,
+            self::SpacedHyphenAfterClassEscapeMakesRange,
             self::ClassBackslashKIsLetter,
             self::HexEscapeNeedsDigits,
             self::EmptyQuoteOpeningClassIsUnclosed,

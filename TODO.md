@@ -205,12 +205,6 @@ promises the 8.1 floor and the framework ranges; Laravel 10 and 11 carry an
 unfixed advisory (PKSA-mdq4-51ck-6kdq) that Composer blocks by default, and
 the test tooling allows it.
 
-## `(?xx)` and a space inside a class range, before PCRE2 10.48
-
-The library refuses `(?xx)[\d -z]` for every target, while PCRE2 10.44
-accepts it; only the test is gated at 10.48. Decide whether the verdict
-follows the target version.
-
 ## Which command regenerates the tracked corpus log
 
 `var/log/corpus.log` is tracked and today regenerates with

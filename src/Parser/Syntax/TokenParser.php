@@ -3512,6 +3512,16 @@ final class TokenParser
             return $startNode;
         }
 
+        // Under "(?xx)" a space or a tab between a class escape and the "-",
+        // which the lexer skipped, keeps the "-" a member up to PCRE2 10.44:
+        // "[\d -z]" is "[\d\-z]". From 10.45 the range forms and fails.
+        if ($classEscapeStart && $this->stream->previous()->position > $startNode->getEndPosition()
+            && !$this->supports(PcreFeature::SpacedHyphenAfterClassEscapeMakesRange)) {
+            $this->stream->setPosition($rangePosition);
+
+            return $startNode;
+        }
+
         // PCRE refuses a class escape before the "-" once it has read the "-".
         $afterHyphen = $this->stream->previous()->end();
 
