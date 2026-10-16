@@ -9,7 +9,11 @@ description: 'How catastrophic backtracking makes /^(\w+)+$/ double its time wit
 
 The pattern `/^(\w+)+$/` needs about 2 seconds to reject 26 letters followed by `!`, and each extra letter doubles that time. This is catastrophic backtracking: the regex engine tries every way to split the input before it gives up. With PHP's default settings it stops much earlier, and `preg_match()` returns `false` — which `if (preg_match(...))` reads as "no match". The fix is one character: `/^(\w++)+$/` answers in microseconds.
 
-Everything below runs with plain PHP 8.1 or newer; nothing to install, and each script finishes in a few seconds.
+## Before you start
+
+- **You should already know:** what `preg_match()` does, and the basics of a pattern: delimiters, literal characters, and `^`, `$` and `\w`. Every other term — quantifier, backtrack limit, JIT — is defined where it first appears. New to regex? The [basics chapter](../tutorial/01-basics.md) covers each of those in a few pages.
+- **You will learn:** why `/^(\w+)+$/` doubles its time with each letter, why `preg_match()` then returns `false` instead of `0`, which popular fixes do not work, and the two that do.
+- **Running the examples:** plain PHP 8.1 or newer, nothing to install; each script finishes in a few seconds. Reading time: about 12 minutes.
 
 ## Each extra character doubles the time
 
@@ -43,7 +47,7 @@ n=26     2179.66 ms  ret=0  No error
 ```
 {: data-copy="" }
 
-`ret=0` means "no match", the correct answer. It took more than 2 seconds for a 27-character string. Here are other lengths, each time the middle of three runs:
+`ret=0` means "no match", the correct answer. It took more than 2 seconds for a 27-character string. Here are other lengths, each time the median of three runs:
 
 | Letters (n) | Time, JIT off |
 |---|---|
@@ -51,9 +55,9 @@ n=26     2179.66 ms  ret=0  No error
 | 20 | 34.27 ms |
 | 22 | 136.42 ms |
 | 24 | 539.62 ms |
-| 26 | 2 179.66 ms |
+| 26 | 2,179.66 ms |
 
-Every 2 extra letters multiply the time by 4: each letter doubles it. Times move by a few percent between runs; the doubling does not.
+Every 2 extra letters multiply the time by 4: each letter doubles it. Times vary by a few percent between runs; the doubling does not.
 
 ## Why: the engine tries every way to cut the letters
 
@@ -65,7 +69,7 @@ A run of n letters can be cut in 2^(n−1) ways:
 
 | Letters (n) | 1 | 2 | 3 | 4 | 22 | 26 |
 |---|---|---|---|---|---|---|
-| Ways to cut | 1 | 2 | 4 | 8 | 2 097 152 | 33 554 432 |
+| Ways to cut | 1 | 2 | 4 | 8 | 2,097,152 | 33,554,432 |
 
 That is the doubling in the timing table. At 22 and at 26 letters, the times work out to about 15 million paths per second. The engine is not broken. It searches a space that doubles with each letter.
 
@@ -144,7 +148,7 @@ The short subject matches `ok`. The long one also ends with `ok`, but the engine
 
 ## Does the JIT fix it? No, it is about 7 times faster
 
-The *JIT* (just-in-time compiler) turns the pattern into machine code. Without it, PCRE2 walks the pattern step by step in its *interpreter*. PHP turns the JIT on by default. Here is the same `splits.php`, run with each setting and the limit raised, each time the middle of three runs:
+The *JIT* (just-in-time compiler) turns the pattern into machine code. Without it, PCRE2 walks the pattern step by step in its *interpreter*. PHP turns the JIT on by default. Here is the same `splits.php`, run with each setting and the limit raised, each time the median of three runs:
 
 | Letters (n) | JIT off | JIT on |
 |---|---|---|
@@ -152,8 +156,8 @@ The *JIT* (just-in-time compiler) turns the pattern into machine code. Without i
 | 20 | 34.27 ms | 4.74 ms |
 | 22 | 136.42 ms | 19.40 ms |
 | 24 | 539.62 ms | 75.69 ms |
-| 26 | 2 179.66 ms | 303.40 ms |
-| 28 | not run | 1 223.79 ms |
+| 26 | 2,179.66 ms | 303.40 ms |
+| 28 | not run | 1,223.79 ms |
 
 The JIT is about 7 times faster at every length. But the JIT column also doubles with each letter: 303 ms at 26 letters, 1.2 seconds at 28. A 7 times faster engine moves the cliff by about three letters; it does not remove it. With the default limit, the JIT also returns `false` at 19 letters, only sooner:
 
@@ -229,13 +233,25 @@ Each fix removes the choices, so the engine has one path instead of 2^(n−1). A
 
 > **Warning:** `/^\w++$/`, `/^(?>\w+)+$/` and `/^\w+$/` have no capture group, so code that reads `$matches[1]` breaks. `/^(\w++)+$/` keeps the group. Whichever you choose, run your tests on the new pattern.
 
-## How do I find these patterns before production?
+## Try it yourself
+
+- Run `splits.php` at lengths 28 and 30 with the limit raised and the JIT off: each 2 extra letters still multiply the time by about 4.
+- In `rewrites.php`, change `\w++` back to `\w+` in one rewrite and watch the milliseconds come back.
+- Time a matching subject, `str_repeat('a', 24) . 'b'`, on the original pattern: the first guess succeeds, so the engine never goes back.
+
+## How this was measured
+
+All times come from PHP 8.4.26 (a Homebrew build) on an Apple M1 Max, measured on 16 October 2026. This PHP is linked against the system's PCRE2 10.49, released 28 September 2026. A stock PHP 8.4 bundles PCRE2 10.44 instead: see [which PCRE2 ships with which PHP](which-pcre2-ships-with-which-php.md).
+
+Each run is a fresh process, with the JIT set by `-d pcre.jit=0` or `-d pcre.jit=1`. Timing tables use a backtrack limit of `2147483647`; every other run uses PHP's default of `1000000`. Each table cell is the median of three runs.
+
+Two results were checked again in Docker: the switch from 18 to 19 letters, and `false-is-not-zero.php`. Both hold in the official `php:8.1-cli` (PHP 8.1.34, PCRE2 10.39) and `php:8.4-cli` (PHP 8.4.26, PCRE2 10.44) images.
+
+## Check your patterns with PHPRegex
 
 PHPRegex, the library behind this site, reads a pattern and reports this problem without running an attack. Install its command-line tool in your project:
 
 {% include install-prerelease.html package="php-regex/php-regex" dev=true %}
-
-## What PHPRegex says about the pattern
 
 Ask it about the original pattern (output trimmed where you see `…`):
 
@@ -279,14 +295,6 @@ $ vendor/bin/regex lint app --redos
 {: data-copy="" }
 
 The same checks work from PHP code: the [ReDoS demo script](https://github.com/php-regex/php-regex/blob/2.x/demo/redos/analysis.php) analyzes `/^(\w+)+$/` and proposes the possessive, atomic and simplified rewrites shown above. The [CLI guide](../guides/cli.md) lists every command and option.
-
-## How these numbers were made
-
-All times come from PHP 8.4.26 (a Homebrew build) on an Apple M1 Max, measured on 16 October 2026. This PHP is linked against the system's PCRE2 10.49, released 28 September 2026. A stock PHP 8.4 bundles PCRE2 10.44 instead: see [which PCRE2 ships with which PHP](which-pcre2-ships-with-which-php.md).
-
-Each run is a fresh process, with the JIT set by `-d pcre.jit=0` or `-d pcre.jit=1`. Timing tables use a backtrack limit of `2147483647`; every other run uses PHP's default of `1000000`. Each table cell is the middle of three runs.
-
-Two results were checked again in Docker: the switch from 18 to 19 letters, and `false-is-not-zero.php`. Both hold in the official `php:8.1-cli` (PHP 8.1.34, PCRE2 10.39) and `php:8.4-cli` (PHP 8.4.26, PCRE2 10.44) images.
 
 ## Sources
 

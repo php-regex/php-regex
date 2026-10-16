@@ -8,7 +8,11 @@ description: "PCRE2 is a separate library with a new API, not PCRE 9; the old PC
 
 PCRE2 is not a new version of PCRE. It is a separate library, first released as 10.00 on 5 January 2015, and programs written for the old PCRE cannot use it without changes. The old PCRE is finished: its last release, 8.45, came out on 15 June 2021. PHP switched in 7.3.0, and a few patterns changed in both directions: some stopped compiling, some started.
 
-The snippets run with plain PHP 7.2 or newer, with nothing to install. To compare PHP versions, the article runs them in the official `php:<version>-cli` Docker images; only the last section needs Composer and PHP 8.1.
+## Before you start
+
+- **You should already know:** what `preg_match()` does, and what a character class `[abc]` is (the [character classes chapter](../tutorial/02-character-classes.md) covers the rules). Every other term — bundled, API, lookaround — is defined where it first appears. New to regex? Start with the [basics chapter](../tutorial/01-basics.md).
+- **You will learn:** why PCRE2 is a separate library and not "PCRE 9", which patterns PHP 7.3 changed in both directions, and how to check before you upgrade.
+- **Running the examples:** plain PHP 7.2 or newer, nothing to install; the comparison runs use the official `php:<version>-cli` Docker images, and only the last section needs Composer and PHP 8.1. Reading time: about 12 minutes.
 
 ## Which library does my PHP use?
 
@@ -186,9 +190,19 @@ The steps are the same whether you cross the PCRE to PCRE2 line or move between 
 3. On the new version, look in the logs for warnings that contain `Compilation failed`. Each one is a pattern the new engine refuses.
 4. Check the patterns no test runs with a linter — a tool that checks code without running it — set to the target version.
 
-## Checking every pattern for the PHP you deploy to
+## Try it yourself
 
-PHPRegex is a PHP library that reads regex patterns the way PCRE2 does. Its command-line linter finds the patterns in your code and judges each one for the PHP version you name, without running your code.
+- Run `boundary.php` on PHP 7.2, 7.3 and 7.4 with Docker, as above: the two directions of change appear in three lines of output.
+- Search your own code for character classes carrying a hyphen, then check each one against `[\w.-]`.
+- Run `range-meaning.php` on PHP 7.3: `b` and `d` match, the digit `5` does not — a pattern with a meaning nobody chose.
+
+## How this was measured
+
+All outputs were run on 16 October 2026. The probes ran in the official `php:X.Y-cli` Docker images, with bundled engines and default settings; the lint run used macOS with PHP 8.4.26, linked to PCRE2 10.49.
+
+## Check your patterns with PHPRegex
+
+PHPRegex, the library behind this site, reads regex patterns the way PCRE2 does. Its command-line linter finds the patterns in your code and judges each one for the PHP version you name, without running your code.
 
 One limit first: PHPRegex judges PHP 8.1 and newer only, with PCRE2 10.39 or newer. It cannot tell you what PHP 7.2 thought of a pattern. It can tell you what the PHP you move to will think of it.
 
@@ -256,8 +270,6 @@ Sources, for checking rather than trusting:
 - The release history: JIT in 8.20, 16-bit in 8.30, 32-bit in 8.32 and the final 8.45 in the [PCRE1 ChangeLog](https://raw.githubusercontent.com/PCRE2Project/pcre1/trunk/ChangeLog); the 10.33 range fix in the [PCRE2 ChangeLog](https://raw.githubusercontent.com/PCRE2Project/pcre2/main/ChangeLog)
 - The end-of-life wording and the 1997 origin: [pcre.org](https://www.pcre.org/); the archived [PCRE2Project/pcre1](https://github.com/PCRE2Project/pcre1) repository
 - PHP's side: the [PCRE2 migration RFC](https://wiki.php.net/rfc/pcre2-migration) and its vote; the PCRE note in the [PHP 7.3.0 UPGRADING file](https://github.com/php/php-src/blob/php-7.3.0/UPGRADING); the bundled versions and the 7.3 default option in `ext/pcre/` at the `php-7.2.34`, `php-7.3.0` and `php-7.4.0` tags of [php-src](https://github.com/php/php-src)
-
-All outputs were run on 16 October 2026: the probes in the official images, with bundled engines and default settings, and the lint run on macOS with PHP 8.4.26 linked to PCRE2 10.49.
 
 ## Recap
 

@@ -9,7 +9,11 @@ description: "Which PCRE2 version each PHP release bundles, from 7.3 to 8.6, and
 
 PHP 8.4 and 8.5 run every `preg_*` call on PCRE2 10.44. PHP 8.3 runs them on 10.42, and PHP 8.2 on 10.40. This is why `/(?<=a{1,3})f/` works on PHP 8.4 but fails on 8.3 with "Compilation failed: lookbehind assertion is not fixed length". To see the engine your PHP really uses, print `PCRE_VERSION`: `phpversion('pcre')` gives you the PHP version instead.
 
-Everything below runs with plain PHP 8.1 or newer and nothing to install; the side-by-side runs also use Docker and the official `php:X.Y-cli` images.
+## Before you start
+
+- **You should already know:** what `preg_match()` does, and what a lookbehind `(?<=…)` is ([the lookarounds chapter](../tutorial/06-lookarounds.md) teaches them). Every other term — bundled, external linking, lookaround — is defined where it first appears. New to regex? Start with the [basics chapter](../tutorial/01-basics.md).
+- **You will learn:** which PCRE2 version your PHP really runs, how to check it in one line, and the patterns that change between PHP versions.
+- **Running the examples:** plain PHP 8.1 or newer, nothing to install; the side-by-side runs also use Docker and the official `php:X.Y-cli` images. Reading time: about 12 minutes.
 
 ## One pattern, two PHP versions
 
@@ -188,7 +192,13 @@ On PHP 8.4, both patterns return `bc`. On PHP 8.5, the first one fails to compil
 
 Up to 8.4, PHP passed that option, so `\K` kept working. PHP 8.5 compiles your patterns without it, as its UPGRADING notes say. The fix is to move `\K` out of the lookaround: `(?<=a)bc` returns the same `bc` on both versions. The lesson: the engine version is not the whole dialect, because the options PHP passes to the engine count too.
 
-## How these facts were checked
+## Try it yourself
+
+- Run the probe above on every `php:X.Y-cli` image you deploy to, and keep the output next to your `composer.json`: that table is your compatibility contract.
+- Lint a real pattern from your own project for your oldest server: `vendor/bin/regex lint src/ --php-version=8.2`.
+- Add `/(?<=a\Kb)c/` to a project that targets PHP 8.5, and read the linter's answer before your users find it for you.
+
+## How this was measured
 
 The table was checked on 16 October 2026 in two ways. First, the bundled library header `ext/pcre/pcre2lib/pcre2.h` at each php-src release tag, and on the PHP-8.6 branch. Second, a run of each official `php:X.Y-cli` image, with its bundled engine and default settings. You can repeat the second check for PHP 8.1 and newer with this probe:
 
@@ -224,11 +234,11 @@ Each line is one PHP version with its engine. The ranged lookbehind starts to wo
 
 The same probe prints 10.35 for PHP 7.4.33. PHP 7.3 has no `fn`; with a plain function instead, PHP 7.3.33 prints 10.32. Images get new patch releases, so a later run may print higher patch numbers.
 
-## Judge your patterns for the oldest server you deploy to
+## Check your patterns with PHPRegex
 
 Both patterns that failed above compile on the Mac used here: PCRE2 10.49, and a PHP 8.4 that still allows `\K` in lookarounds. Your laptop says "fine", and a server on PHP 8.3 or 8.5 says otherwise. To catch this before deployment, you need to judge patterns for the servers, not for the machine you run.
 
-PHPRegex, the library this site documents, does that. It reads the regex patterns in your PHP files and judges each one for a target PHP and PCRE2 version. Its command-line tool is a dev dependency:
+PHPRegex, the library behind this site, does that. It reads the regex patterns in your PHP files and judges each one for a target PHP and PCRE2 version. Its command-line tool is a dev dependency:
 
 {% include install-prerelease.html package="php-regex/php-regex" dev=true %}
 

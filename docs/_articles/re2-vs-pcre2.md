@@ -11,7 +11,11 @@ Run `/^(\w+)+$/` on 26 letters and a `!`. In PHP, the PCRE2 engine gives up and 
 
 PCRE2 is a *backtracking* engine: when a guess fails, it goes back and tries another. Engines built like RE2 never go back, so they run in *linear time*: twice the text, about twice the time. The price is that they refuse backreferences and lookarounds. That is why PHP keeps PCRE2 — and why, in PHP, your protection is the way you write the pattern.
 
-The PHP snippets run with plain PHP 8.1 or newer; nothing to install. The Node.js and ripgrep rows need those two tools, only if you want to rerun them. Running everything takes about five minutes.
+## Before you start
+
+- **You should already know:** what `preg_match()` does, and the basics of a pattern: delimiters, literal characters, `^`, `$` and `\w`. Every other term — backreference, lookaround, JIT — is defined where it first appears. New to regex? Start with the [basics chapter](../tutorial/01-basics.md).
+- **You will learn:** why one pattern makes PHP give up while ripgrep answers at once, what linear-time engines give up for it, and the three layers that protect your PHP patterns.
+- **Running the examples:** the PHP snippets run with plain PHP 8.1 or newer, nothing to install. The Node.js and ripgrep rows need those two tools, only if you want to rerun them. Running everything takes about five minutes. Reading time: about 12 minutes.
 
 ## One pattern, three engines
 
@@ -90,20 +94,20 @@ The Rust engine reads a million letters and answers "no match" in about the time
 | Engine | Kind | Answer on 26 letters and `!` | Time |
 |---|---|---|---|
 | PHP 8.4.26, PCRE2 10.49, default limit | backtracking | gave up: `false` | 2.37 ms |
-| PHP 8.4.26, PCRE2 10.49, limit × 1 000 | backtracking | no match | 306.16 ms |
-| Node.js 24.18.0, V8 | backtracking | no match | 2 818 ms |
+| PHP 8.4.26, PCRE2 10.49, limit × 1,000 | backtracking | no match | 306.16 ms |
+| Node.js 24.18.0, V8 | backtracking | no match | 2,818 ms |
 | ripgrep 15.2.0 `--pcre2`, PCRE2 10.45 | backtracking | gave up: match limit exceeded | 0.03 s, program start included |
 | ripgrep 15.2.0, Rust `regex` | linear-time | no match, on a million letters too | 0.01 s, program start included |
 
-Times move a few percent between runs; the shape does not. Whether a regex is slow depends on the pattern *and* on the engine that runs it.
+Times vary by a few percent between runs; the shape does not. Whether a regex is slow depends on the pattern *and* on the engine that runs it.
 
 ## Why PHP's engine goes back and retries
 
 PCRE2 is a *backtracking engine*: it follows one way to match at a time. When that way fails, it goes back to its last choice and tries the next one.
 
-In `^(\w+)+$`, the inner `\w+` and the outer `+` can share the letters in many ways. Three letters `aaa` can be split as `(aaa)`, `(aa)(a)`, `(a)(aa)` or `(a)(a)(a)`. The final `!` makes every split fail, so the engine tries them all. Each extra letter doubles the count: 26 letters give 2^(26−1) = 33 554 432 splits.
+In `^(\w+)+$`, the inner `\w+` and the outer `+` can share the letters in many ways. Three letters `aaa` can be split as `(aaa)`, `(aa)(a)`, `(a)(aa)` or `(a)(a)(a)`. The final `!` makes every split fail, so the engine tries them all. Each extra letter doubles the count: 26 letters give 2^(26−1) = 33,554,432 splits.
 
-PHP protects itself with `pcre.backtrack_limit`, 1 000 000 by default. Past it, the engine stops and `preg_match()` returns `false` — the 2-millisecond answer above. [The catastrophic backtracking article](catastrophic-backtracking-in-php.md) measures how the time grows, what the JIT changes and which rewrites fix it.
+PHP protects itself with `pcre.backtrack_limit`, 1,000,000 by default. Past it, the engine stops and `preg_match()` returns `false` — the 2-millisecond answer above. [The catastrophic backtracking article](catastrophic-backtracking-in-php.md) measures how the time grows, what the JIT changes and which rewrites fix it.
 
 ## How a linear-time engine never goes back
 
@@ -213,11 +217,27 @@ In PHP, your protection has three layers:
 
 The [ReDoS guide](../guides/redos.md) lists the rewrites, pattern by pattern. ReDoS — regular expression denial of service — is an attack that sends a backtracking engine its worst-case input.
 
+## Try it yourself
+
+- Run `same-pattern.php 1000000 '/^\w++$/'`: PHP answers in under a millisecond on a million letters, with its default limit.
+- Ask ripgrep for the doubled-word rule without `--pcre2`, and read the error: a linear-time engine names what it refuses.
+- Put the password rule `/^(?=.*\d)(?=.*[a-z]).{8,}$/` into `same-pattern.php` at length 1,000,000: it fails in milliseconds too, because each lookahead scans the text once.
+
+## How this was measured
+
+Every output above was produced on 16 October 2026, on an Apple-silicon Mac:
+
+- PHP 8.4.26 with PCRE2 10.49 (2026-09-28), JIT on, default limits unless the command says otherwise. This PCRE2 is linked from the system; PHP 8.4 itself bundles 10.44 ([which PCRE2 ships with which PHP](which-pcre2-ships-with-which-php.md)).
+- Node.js 24.18.0; ripgrep 15.2.0, which carries its own PCRE2 10.45.
+- Each timing ran three times; the median run is shown.
+- Both PHP files also ran unchanged on the official `php:8.1-cli` image (PHP 8.1.34, PCRE2 10.39), with the same results.
+- The PHPRegex output comes from the 2.x branch, run in the repository as `php src/Cli/bin/regex` — the program `vendor/bin/regex` starts.
+
+## Check your patterns with PHPRegex
+
 A rewrite by eye can be wrong; PHPRegex, the library behind this site, checks it. Install it as a development dependency:
 
 {% include install-prerelease.html package="php-regex/php-regex" dev=true %}
-
-## Check a pattern before you ship it
 
 `vendor/bin/regex analyze` reads a pattern and proves that one match attempt stays linear in PCRE2, or gives you the input that makes it slow. Where it can do neither, it says so. With `--redos-mode=confirmed`, it also replays that input on the PCRE2 you run. Here is the ReDoS step of its output for the original pattern:
 
@@ -257,16 +277,6 @@ $ vendor/bin/regex analyze '/^\w++$/'
 The password rule, `/^(?=.*\d)(?=.*[a-z]).{8,}$/`, is also `safe (proven)`: a pattern RE2 refuses is not a dangerous pattern in PHP. The doubled-word rule gets `Potential backtracking (heuristic)`. Backreferences are outside what PHPRegex can prove, so a heuristic — a rule of thumb — decides, and the verdict says so.
 
 To check every pattern in a project, run `vendor/bin/regex lint src/ --redos`; the [CLI guide](../guides/cli.md) lists every option.
-
-## How this was measured
-
-Every output above was produced on 16 October 2026, on an Apple-silicon Mac:
-
-- PHP 8.4.26 with PCRE2 10.49 (2026-09-28), JIT on, default limits unless the command says otherwise. This PCRE2 is linked from the system; PHP 8.4 itself bundles 10.44 ([which PCRE2 ships with which PHP](which-pcre2-ships-with-which-php.md)).
-- Node.js 24.18.0; ripgrep 15.2.0, which carries its own PCRE2 10.45.
-- Each timing ran three times; the median run is shown.
-- Both PHP files also ran unchanged on the official `php:8.1-cli` image (PHP 8.1.34, PCRE2 10.39), with the same results.
-- The PHPRegex output comes from the 2.x branch, run in the repository as `php src/Cli/bin/regex` — the program `vendor/bin/regex` starts.
 
 ## Sources
 
