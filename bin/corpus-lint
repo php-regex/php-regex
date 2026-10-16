@@ -504,12 +504,7 @@ function main(array $argv): int
         return 1;
     }
 
-    $merged = fopen($outputFile, 'w');
-    if (!\is_resource($merged)) {
-        $io->error(sprintf('unable to write %s.', $outputFile));
-
-        return 1;
-    }
+    $merged = null;
 
     $total = \count($repos);
     $start = microtime(true);
@@ -532,6 +527,18 @@ function main(array $argv): int
 
         $plan = planRepositoryLint($repoDir, $options['php'], $partFile);
         [$exitCode, $console] = runLint($plan);
+
+        // Open the merged log only once a first section is ready: a sweep
+        // aborted before its first repository completes must leave the
+        // previous log intact instead of truncating it.
+        if (null === $merged) {
+            $merged = fopen($outputFile, 'w');
+            if (!\is_resource($merged)) {
+                $io->error(sprintf('unable to write %s.', $outputFile));
+
+                return 1;
+            }
+        }
 
         $targetLine = extractTargetLine($console);
         $notes = extractNotes($console, $plan['env'] ?? '');
