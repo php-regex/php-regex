@@ -488,7 +488,7 @@ final class PatternFunctionRegistry
      */
     private static function parseSpec(string $spec): ?array
     {
-        $spec = trim($spec);
+        $spec = trim($spec, " \t\n\r\0\x0B");
         if ('' === $spec) {
             return null;
         }
@@ -529,7 +529,7 @@ final class PatternFunctionRegistry
             }
         }
 
-        $name = ltrim(trim($spec), '\\');
+        $name = ltrim(trim($spec, " \t\n\r\0\x0B"), '\\');
         if ('' === $name) {
             return null;
         }

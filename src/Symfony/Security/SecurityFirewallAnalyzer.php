@@ -48,7 +48,7 @@ final class SecurityFirewallAnalyzer
             }
 
             $pattern = $firewall['pattern'];
-            if (null === $pattern || '' === trim($pattern)) {
+            if (null === $pattern || '' === trim($pattern, " \t\n\r\0\x0B")) {
                 continue;
             }
 

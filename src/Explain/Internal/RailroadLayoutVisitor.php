@@ -1170,7 +1170,7 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
             return Bytes::split($label, self::MAX_LABEL_CHARS);
         }
 
-        $label = trim($label);
+        $label = trim($label, " \t\n\r\0\x0B");
         if ('' === $label) {
             return ['(empty)'];
         }

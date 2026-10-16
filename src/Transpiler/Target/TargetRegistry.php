@@ -56,7 +56,7 @@ final class TargetRegistry
 
     public function get(string $name): TargetInterface
     {
-        $key = Ascii::lower(trim($name));
+        $key = Ascii::lower(trim($name, " \t\n\r\0\x0B"));
 
         if (isset($this->targets[$key])) {
             return $this->targets[$key];

@@ -232,7 +232,7 @@ final class AnalyzeCommand extends Command
     private function resolveFormat(InputInterface $input, SymfonyStyle $io): ?string
     {
         $formatValue = $input->getOption('format');
-        $format = is_string($formatValue) ? strtolower(trim($formatValue)) : '';
+        $format = is_string($formatValue) ? strtolower(trim($formatValue, " \t\n\r\0\x0B")) : '';
 
         if ('' === $format) {
             $format = self::FORMAT_CONSOLE;
@@ -302,7 +302,7 @@ final class AnalyzeCommand extends Command
     private function resolveThreshold(InputInterface $input): RedosSeverity|string
     {
         $thresholdValue = $input->getOption('redos-threshold');
-        $threshold = \is_string($thresholdValue) ? trim($thresholdValue) : '';
+        $threshold = \is_string($thresholdValue) ? trim($thresholdValue, " \t\n\r\0\x0B") : '';
 
         try {
             return RedosSeverity::fromConfig('' === $threshold ? $this->defaultRedosThreshold : $threshold);
@@ -324,7 +324,7 @@ final class AnalyzeCommand extends Command
                 continue;
             }
 
-            $trimmed = trim($value);
+            $trimmed = trim($value, " \t\n\r\0\x0B");
             if ('' !== $trimmed) {
                 $normalized[] = $trimmed;
             }

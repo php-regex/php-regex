@@ -235,7 +235,7 @@ final class SecurityAccessControlAnalyzer
 
         $notes = [];
         $path = $rule['path'];
-        if (null === $path || '' === trim((string) $path)) {
+        if (null === $path || '' === trim((string) $path, " \t\n\r\0\x0B")) {
             $path = '';
             $notes[] = 'Rule has no path; it matches all requests.';
             $rulesWithNoPath[] = $index;
@@ -275,7 +275,7 @@ final class SecurityAccessControlAnalyzer
         $hostPattern = null;
         $hostUnsupported = false;
         $host = $rule['host'];
-        if (null !== $host && '' !== trim($host)) {
+        if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
             try {
                 $hostPattern = $this->normalizePattern($host, true);
             } catch (\Throwable) {
@@ -388,7 +388,7 @@ final class SecurityAccessControlAnalyzer
             if (!\is_string($value)) {
                 continue;
             }
-            $trimmed = trim($value);
+            $trimmed = trim($value, " \t\n\r\0\x0B");
             if ('' !== $trimmed) {
                 $normalized[] = $trimmed;
             }
@@ -528,7 +528,7 @@ final class SecurityAccessControlAnalyzer
 
     private function resolveMinimizationAlgorithm(): MinimizationAlgorithm
     {
-        $normalized = \strtolower(\trim($this->minimizationAlgorithm));
+        $normalized = \strtolower(\trim($this->minimizationAlgorithm, " \t\n\r\0\x0B"));
         $algorithm = MinimizationAlgorithm::tryFrom($normalized);
 
         return $algorithm ?? MinimizationAlgorithm::Hopcroft;
@@ -536,7 +536,7 @@ final class SecurityAccessControlAnalyzer
 
     private function resolveDeterminizationAlgorithm(): DeterminizationAlgorithm
     {
-        $normalized = \strtolower(\trim($this->determinizationAlgorithm));
+        $normalized = \strtolower(\trim($this->determinizationAlgorithm, " \t\n\r\0\x0B"));
         $algorithm = DeterminizationAlgorithm::tryFrom($normalized);
 
         return $algorithm ?? DeterminizationAlgorithm::SubsetIndexed;

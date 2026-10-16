@@ -58,6 +58,6 @@ final class Plugin implements PluginEntryPointInterface
         $element = $config?->{$name};
 
         // A missing element reads as an empty list of elements.
-        return $element instanceof \SimpleXMLElement && 0 < $element->count() ? trim((string) $element) : null;
+        return $element instanceof \SimpleXMLElement && 0 < $element->count() ? trim((string) $element, " \t\n\r\0\x0B") : null;
     }
 }

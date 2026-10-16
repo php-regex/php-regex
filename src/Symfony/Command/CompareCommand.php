@@ -220,7 +220,7 @@ final class CompareCommand extends Command
 
     private function resolveMinimizationAlgorithm(mixed $value, SymfonyStyle $io): ?MinimizationAlgorithm
     {
-        $normalized = \is_string($value) ? strtolower(trim($value)) : '';
+        $normalized = \is_string($value) ? strtolower(trim($value, " \t\n\r\0\x0B")) : '';
 
         if ('' === $normalized) {
             $normalized = $this->defaultMinimizer;
@@ -238,7 +238,7 @@ final class CompareCommand extends Command
 
     private function resolveDeterminizationAlgorithm(mixed $value, SymfonyStyle $io): ?DeterminizationAlgorithm
     {
-        $normalized = \is_string($value) ? strtolower(trim($value)) : '';
+        $normalized = \is_string($value) ? strtolower(trim($value, " \t\n\r\0\x0B")) : '';
 
         if ('' === $normalized) {
             $normalized = $this->defaultDeterminizer;

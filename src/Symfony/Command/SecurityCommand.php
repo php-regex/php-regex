@@ -220,7 +220,7 @@ final class SecurityCommand extends Command
     private function resolveThreshold(InputInterface $input, SymfonyStyle $io): ?RedosSeverity
     {
         $thresholdValue = $input->getOption('redos-threshold');
-        $threshold = \is_string($thresholdValue) ? trim($thresholdValue) : '';
+        $threshold = \is_string($thresholdValue) ? trim($thresholdValue, " \t\n\r\0\x0B") : '';
 
         try {
             return RedosSeverity::fromConfig('' === $threshold ? $this->defaultRedosThreshold : $threshold);
@@ -569,13 +569,13 @@ final class SecurityCommand extends Command
         if ([] !== $methods) {
             $parts[] = 'methods='.implode('|', $methods);
         }
-        if (null !== $host && '' !== trim($host)) {
+        if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
             $parts[] = 'host='.$host;
         }
         if ([] !== $ips) {
             $parts[] = 'ips='.implode('|', $ips);
         }
-        if (null !== $requiresChannel && '' !== trim($requiresChannel)) {
+        if (null !== $requiresChannel && '' !== trim($requiresChannel, " \t\n\r\0\x0B")) {
             $parts[] = 'channel='.$requiresChannel;
         }
 
@@ -664,7 +664,7 @@ final class SecurityCommand extends Command
                 continue;
             }
 
-            $trimmed = trim($value);
+            $trimmed = trim($value, " \t\n\r\0\x0B");
             if ('' !== $trimmed) {
                 $normalized[] = $trimmed;
             }

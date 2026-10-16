@@ -436,7 +436,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
         $no = $hasElseBranch ? $this->explainInGroup($node->no) : '';
 
         // Condition node will be a <li>, just need its text
-        $condText = trim(strip_tags((string) $cond));
+        $condText = trim(strip_tags((string) $cond), " \t\n\r\0\x0B");
 
         if ('' === $no || '<li></li>' === $no) {
             return \sprintf(

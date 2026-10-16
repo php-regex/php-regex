@@ -187,7 +187,7 @@ final class ValidationRulePatternSource implements PatternSourceInterface
 
     private function normalizePattern(string $pattern): ?string
     {
-        $pattern = trim($pattern);
+        $pattern = trim($pattern, " \t\n\r\0\x0B");
 
         if ('' === $pattern) {
             return null;

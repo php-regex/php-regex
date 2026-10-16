@@ -72,7 +72,7 @@ final class RoutePatternSource implements PatternSourceInterface
                     continue;
                 }
 
-                $pattern = trim((string) $requirement);
+                $pattern = trim((string) $requirement, " \t\n\r\0\x0B");
                 if ('' === $pattern) {
                     continue;
                 }
@@ -196,7 +196,7 @@ final class RoutePatternSource implements PatternSourceInterface
         $requirementsEntryIndent = null;
 
         foreach ($lines as $index => $line) {
-            $trimmed = ltrim($line);
+            $trimmed = ltrim($line, " \t\n\r\0\x0B");
             if ('' === $trimmed || str_starts_with($trimmed, '#')) {
                 continue;
             }

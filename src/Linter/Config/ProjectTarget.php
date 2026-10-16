@@ -111,7 +111,7 @@ final class ProjectTarget
 
             // "runtime", as PHPStan's phpVersion takes it: the PHP running
             // the command, with the PCRE2 it links.
-            if (\is_string($version) && 'runtime' === Ascii::lower(trim($version))) {
+            if (\is_string($version) && 'runtime' === Ascii::lower(trim($version, " \t\n\r\0\x0B"))) {
                 [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, $name.' (running PHP)', true];
 
                 break;
@@ -427,7 +427,7 @@ final class ProjectTarget
     private static function intervals(string $constraint): ?array
     {
         $intervals = [];
-        foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint)) ?: [] as $branch) {
+        foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint, " \t\n\r\0\x0B")) ?: [] as $branch) {
             $interval = self::branchInterval($branch);
             if (null === $interval) {
                 return null;
@@ -461,7 +461,7 @@ final class ProjectTarget
 
         $lowest = null;
         $below = null;
-        foreach (LibraryPcre::split('/[\s,]+/', trim($branch)) ?: [] as $term) {
+        foreach (LibraryPcre::split('/[\s,]+/', trim($branch, " \t\n\r\0\x0B")) ?: [] as $term) {
             if (1 !== LibraryPcre::match('/^(>=|<=|!=|==|[<>=^~])?(.+)$/', $term, $parts)) {
                 return null;
             }

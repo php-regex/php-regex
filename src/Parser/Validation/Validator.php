@@ -2707,7 +2707,7 @@ final class Validator extends AbstractNodeVisitor
             // "\g'3gh'": the number read, what should close it is missing;
             // before PCRE2 10.47, "\g" itself is refused, past the "g".
             $closing = ['{' => '}', '<' => '>', "'" => "'", '' => ''][$matches[2]];
-            $rest = ltrim(substr($text, \strlen($matches[0])));
+            $rest = ltrim(substr($text, \strlen($matches[0])), " \t\n\r\0\x0B");
             if ('' !== $closing && !str_starts_with($rest, $closing)) {
                 return $this->supports(PcreFeature::GReferenceNumberReadBeforeClosing) ? $start + \strlen($matches[0]) : $start + 2;
             }

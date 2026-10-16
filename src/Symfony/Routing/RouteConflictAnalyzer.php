@@ -312,7 +312,7 @@ final class RouteConflictAnalyzer
         }
 
         $condition = $route->getCondition();
-        $hasCondition = '' !== trim($condition);
+        $hasCondition = '' !== trim($condition, " \t\n\r\0\x0B");
         if ($hasCondition) {
             $routesWithConditions[] = $name;
         }
@@ -650,7 +650,7 @@ final class RouteConflictAnalyzer
 
     private function resolveMinimizationAlgorithm(): MinimizationAlgorithm
     {
-        $normalized = \strtolower(\trim($this->minimizationAlgorithm));
+        $normalized = \strtolower(\trim($this->minimizationAlgorithm, " \t\n\r\0\x0B"));
         $algorithm = MinimizationAlgorithm::tryFrom($normalized);
 
         return $algorithm ?? MinimizationAlgorithm::Hopcroft;
@@ -658,7 +658,7 @@ final class RouteConflictAnalyzer
 
     private function resolveDeterminizationAlgorithm(): DeterminizationAlgorithm
     {
-        $normalized = \strtolower(\trim($this->determinizationAlgorithm));
+        $normalized = \strtolower(\trim($this->determinizationAlgorithm, " \t\n\r\0\x0B"));
         $algorithm = DeterminizationAlgorithm::tryFrom($normalized);
 
         return $algorithm ?? DeterminizationAlgorithm::SubsetIndexed;

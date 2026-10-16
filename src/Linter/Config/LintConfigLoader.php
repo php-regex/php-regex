@@ -107,7 +107,7 @@ final class LintConfigLoader
 
             $kept = [];
             foreach ($extraction->{$key} as $name) {
-                if (!\is_string($name) || '' === trim($name) || ('interop' === $key ? InteropPresets::exists($name) : PatternFunctionRegistry::isSpec($name))) {
+                if (!\is_string($name) || '' === trim($name, " \t\n\r\0\x0B") || ('interop' === $key ? InteropPresets::exists($name) : PatternFunctionRegistry::isSpec($name))) {
                     $kept[] = $name;
 
                     continue;

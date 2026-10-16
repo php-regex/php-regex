@@ -214,6 +214,9 @@ final class ProjectTargetTest extends TestCase
         yield 'any version' => ['*'];
         yield 'upper bound only' => ['<9'];
         yield 'branch name' => ['dev-main'];
+        // PHP 8.6 trim() also strips \f: a form feed keeps spoiling the
+        // constraint there, exactly as through 8.5.
+        yield 'form feed before the constraint' => ["\f>=8.3"];
     }
 
     #[Test]

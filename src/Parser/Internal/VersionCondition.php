@@ -40,19 +40,19 @@ final class VersionCondition
      */
     public static function read(string $text): ?self
     {
-        $text = trim($text);
+        $text = trim($text, " \t\n\r\0\x0B");
         if (!str_starts_with($text, 'VERSION')) {
             return null;
         }
 
-        $rest = ltrim(substr($text, \strlen('VERSION')));
+        $rest = ltrim(substr($text, \strlen('VERSION')), " \t\n\r\0\x0B");
 
         foreach (self::OPERATORS as $operator) {
             if (!str_starts_with($rest, $operator)) {
                 continue;
             }
 
-            $version = ltrim(substr($rest, \strlen($operator)));
+            $version = ltrim(substr($rest, \strlen($operator)), " \t\n\r\0\x0B");
 
             return self::isVersionNumber($version) ? new self($operator, $version) : null;
         }

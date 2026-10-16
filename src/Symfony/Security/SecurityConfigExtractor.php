@@ -80,7 +80,7 @@ final class SecurityConfigExtractor
         $skipWhen = false;
 
         foreach ($lines as $index => $line) {
-            $trimmed = ltrim($line);
+            $trimmed = ltrim($line, " \t\n\r\0\x0B");
             if ('' === $trimmed || str_starts_with($trimmed, '#')) {
                 continue;
             }
@@ -154,7 +154,7 @@ final class SecurityConfigExtractor
             // is an item of that block list, not a new rule.
             if (null !== $currentRuleIndex && null !== $currentListKey && null !== $currentListIndent
                 && $indent > $currentListIndent && LibraryPcre::match('/^\s*-\s*(.+)$/', $line, $matches)) {
-                $value = $this->stripQuotes(trim($matches[1]));
+                $value = $this->stripQuotes(trim($matches[1], " \t\n\r\0\x0B"));
                 if ('' !== $value) {
                     $rules[$currentRuleIndex][$currentListKey][] = $value;
                 }
@@ -181,7 +181,7 @@ final class SecurityConfigExtractor
                     'requiresChannel' => null,
                 ];
 
-                $inline = trim($matches[1]);
+                $inline = trim($matches[1], " \t\n\r\0\x0B");
                 if ('' !== $inline) {
                     $pairs = $this->parseInlineMapping($inline);
                     $this->applyRulePairs($rules[$currentRuleIndex], $pairs);
@@ -255,7 +255,7 @@ final class SecurityConfigExtractor
         $skipWhen = false;
 
         foreach ($lines as $index => $line) {
-            $trimmed = ltrim($line);
+            $trimmed = ltrim($line, " \t\n\r\0\x0B");
             if ('' === $trimmed || str_starts_with($trimmed, '#')) {
                 continue;
             }
@@ -403,7 +403,7 @@ final class SecurityConfigExtractor
      */
     private function applyRuleValue(array &$rule, string $key, string $value): void
     {
-        $value = $this->stripQuotes(trim($value));
+        $value = $this->stripQuotes(trim($value, " \t\n\r\0\x0B"));
 
         if ('' === $value && !\in_array($key, ['path', 'host'], true)) {
             return;
@@ -454,7 +454,7 @@ final class SecurityConfigExtractor
      */
     private function parseListValue(string $value): array
     {
-        $trimmed = trim($value);
+        $trimmed = trim($value, " \t\n\r\0\x0B");
         if ('' === $trimmed) {
             return [];
         }
@@ -464,7 +464,7 @@ final class SecurityConfigExtractor
         }
 
         if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-            $inner = trim(substr($trimmed, 1, -1));
+            $inner = trim(substr($trimmed, 1, -1), " \t\n\r\0\x0B");
             if ('' === $inner) {
                 return [];
             }
@@ -484,9 +484,9 @@ final class SecurityConfigExtractor
      */
     private function parseInlineMapping(string $value): array
     {
-        $trimmed = trim($value);
+        $trimmed = trim($value, " \t\n\r\0\x0B");
         if (str_starts_with($trimmed, '{') && str_ends_with($trimmed, '}')) {
-            $trimmed = trim(substr($trimmed, 1, -1));
+            $trimmed = trim(substr($trimmed, 1, -1), " \t\n\r\0\x0B");
         }
 
         if ('' === $trimmed) {
@@ -546,7 +546,7 @@ final class SecurityConfigExtractor
             }
 
             if (',' === $char && 0 === $depth) {
-                $parts[] = trim($buffer);
+                $parts[] = trim($buffer, " \t\n\r\0\x0B");
                 $buffer = '';
 
                 continue;
@@ -555,8 +555,8 @@ final class SecurityConfigExtractor
             $buffer .= $char;
         }
 
-        if ('' !== trim($buffer)) {
-            $parts[] = trim($buffer);
+        if ('' !== trim($buffer, " \t\n\r\0\x0B")) {
+            $parts[] = trim($buffer, " \t\n\r\0\x0B");
         }
 
         return $parts;
@@ -604,6 +604,6 @@ final class SecurityConfigExtractor
 
         $key = '' !== $matches[1] ? $matches[1] : ('' !== $matches[2] ? $matches[2] : $matches[3]);
 
-        return [$key, trim($matches[4])];
+        return [$key, trim($matches[4], " \t\n\r\0\x0B")];
     }
 }

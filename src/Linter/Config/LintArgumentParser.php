@@ -909,7 +909,7 @@ final class LintArgumentParser
      */
     private function parseInteropValue(string $value, array &$warnings): array
     {
-        $names = array_values(array_filter(array_map(trim(...), explode(',', Ascii::lower($value))), static fn (string $name): bool => '' !== $name));
+        $names = array_values(array_filter(array_map(static fn (string $v): string => trim($v, " \t\n\r\0\x0B"), explode(',', Ascii::lower($value))), static fn (string $name): bool => '' !== $name));
 
         if (['none'] === $names || [] === $names) {
             return [];
@@ -975,7 +975,7 @@ final class LintArgumentParser
         $warning = PatternFunctionRegistry::malformedSpecWarning($spec);
         if (PatternFunctionRegistry::isSpec($spec)) {
             $patternFunctions[] = $spec;
-        } elseif ('' !== trim($spec) && !\in_array($warning, $warnings, true)) {
+        } elseif ('' !== trim($spec, " \t\n\r\0\x0B") && !\in_array($warning, $warnings, true)) {
             $warnings[] = $warning;
         }
 

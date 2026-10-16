@@ -262,7 +262,7 @@ final class ParserOptions
         // "runtime", as PHPStan's phpVersion takes it: the running PHP, with
         // the PCRE2 it links unless a release is given beside it.
         $phpVersion = $options['php_version'] ?? null;
-        if (\is_string($phpVersion) && 'runtime' === Ascii::lower(trim($phpVersion))) {
+        if (\is_string($phpVersion) && 'runtime' === Ascii::lower(trim($phpVersion, " \t\n\r\0\x0B"))) {
             return null === $pcreVersion ? PcreTarget::runtime() : new PcreTarget(PcreTarget::runtime()->phpVersionId, $pcreVersion);
         }
 
@@ -299,7 +299,7 @@ final class ParserOptions
         }
 
         if (\is_string($version)) {
-            $trimmed = trim($version);
+            $trimmed = trim($version, " \t\n\r\0\x0B");
             if ('' === $trimmed) {
                 throw new InvalidRegexOptionException(
                     '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
@@ -373,7 +373,7 @@ final class ParserOptions
      */
     private static function createFilesystemCache(string $path): FilesystemCache
     {
-        $trimmedPath = trim($path);
+        $trimmedPath = trim($path, " \t\n\r\0\x0B");
 
         if ('' === $trimmedPath) {
             throw new InvalidRegexOptionException(

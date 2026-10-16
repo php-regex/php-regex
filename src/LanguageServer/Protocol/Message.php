@@ -65,7 +65,7 @@ final class Message
                 return null;
             }
 
-            $line = trim($line);
+            $line = trim($line, " \t\n\r\0\x0B");
             if ('' === $line) {
                 if (!$inHeaders) {
                     // A blank line between two messages.

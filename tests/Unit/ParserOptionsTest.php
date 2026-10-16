@@ -101,6 +101,22 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['php_version' => '   ']);
     }
 
+    public function test_from_array_invalid_php_version_leading_form_feed(): void
+    {
+        // PHP 8.6 trim() also strips \f: a form feed stays an invalid
+        // version spelling there, exactly as through 8.5.
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        ParserOptions::fromArray(['php_version' => "\f8.2"]);
+    }
+
+    public function test_from_array_invalid_php_version_form_feed_before_runtime(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        ParserOptions::fromArray(['php_version' => "\fruntime"]);
+    }
+
     public function test_from_array_invalid_php_version_digits_low(): void
     {
         $this->expectException(InvalidRegexOptionException::class);

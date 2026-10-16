@@ -25,6 +25,6 @@ final class SecurityPatternNormalizer
 {
     public function normalize(string $pattern, bool $host = false): string
     {
-        return '{'.trim($pattern).'}'.($host ? 'i' : 's');
+        return '{'.trim($pattern, " \t\n\r\0\x0B").'}'.($host ? 'i' : 's');
     }
 }

@@ -299,13 +299,13 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): string
     {
-        return $this->line('Extended character class: one character of '.ltrim($node->expression->accept($this)));
+        return $this->line('Extended character class: one character of '.ltrim($node->expression->accept($this), " \t\n\r\0\x0B"));
     }
 
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): string
     {
-        $right = ltrim($node->right->accept($this));
+        $right = ltrim($node->right->accept($this), " \t\n\r\0\x0B");
         if (null === $node->left) {
             return 'not '.$right;
         }
@@ -317,7 +317,7 @@ final class TextExplainer extends AbstractNodeVisitor
             default => 'or',
         };
 
-        return \sprintf('(%s %s %s)', ltrim($node->left->accept($this)), $word, $right);
+        return \sprintf('(%s %s %s)', ltrim($node->left->accept($this), " \t\n\r\0\x0B"), $word, $right);
     }
 
     #[\Override]
