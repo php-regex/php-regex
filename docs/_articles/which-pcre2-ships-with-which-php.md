@@ -1,5 +1,6 @@
 ---
-date: 2026-10-16 12:00:00 +00:00
+date: 2026-07-16 12:00:00 +00:00
+last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
 description: "The PCRE2 version behind every PHP release from 7.3 to 8.6, what the 10.43 bump bought, and how to judge one pattern for an engine you do not run — every released row verified against the php-src tags and run in the official images."
