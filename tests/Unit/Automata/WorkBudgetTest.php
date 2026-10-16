@@ -56,7 +56,7 @@ final class WorkBudgetTest extends TestCase
         $dfa = (new LanguageSolver())->compile($pattern, new SolverOptions(minimizeDfa: false, maxTransitionsProcessed: null, determinizationAlgorithm: $algorithm));
         $written = 0;
         foreach ($dfa->states as $state) {
-            $written += \count($state->ranges);
+            $written += $state->rangeCount();
         }
         $this->assertGreaterThan(1_000, $written);
 
@@ -110,8 +110,8 @@ final class WorkBudgetTest extends TestCase
         $minimizer = new DfaMinimizer();
 
         $states = [
-            0 => new DfaState(0, [97 => 1], false, [[97, 97, 1]]),
-            1 => new DfaState(1, [97 => 1], true, [[97, 97, 1]]),
+            0 => new DfaState(0, [97 => 1], false, [97, 97, 1]),
+            1 => new DfaState(1, [97 => 1], true, [97, 97, 1]),
         ];
         $dfa = new Dfa(0, $states, [[97, 97]], 97, 97);
 

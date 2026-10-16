@@ -137,7 +137,7 @@ final class InMemoryDfaCacheTest extends TestCase
     public function test_the_transitions_of_every_state_are_counted(): void
     {
         $quarter = intdiv(self::bound(), 4) + 1;
-        $state = static fn (int $id): DfaState => new DfaState($id, array_fill(0, $quarter, 0), true, array_fill(0, $quarter, [0, 0, 0]));
+        $state = static fn (int $id): DfaState => new DfaState($id, array_fill(0, $quarter, 0), true, array_fill(0, 3 * $quarter, 0));
         $cache = new InMemoryDfaCache();
 
         $cache->set('wide', new Dfa(0, [$state(0), $state(1)]));
@@ -234,7 +234,7 @@ final class InMemoryDfaCacheTest extends TestCase
     {
         $transitions = 0;
         foreach ($dfa->states as $state) {
-            $transitions += \count($state->transitions) + \count($state->ranges);
+            $transitions += \count($state->byteTransitions()) + $state->rangeCount();
         }
 
         return $transitions;

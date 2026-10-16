@@ -144,17 +144,22 @@ final class MoorePartitionRefinement implements MinimizationAlgorithmInterface, 
             $transitions = [];
             $ranges = [];
 
-            foreach ($representative->transitions as $symbol => $target) {
+            foreach ($representative->byteTransitions() as $symbol => $target) {
                 $transitions[(int) $symbol] = $stateToGroup[$target];
             }
 
-            if ([] !== $representative->ranges) {
-                foreach ($representative->ranges as [$start, $end, $target]) {
-                    $ranges[] = [$start, $end, $stateToGroup[$target]];
+            $packed = $representative->packedRanges();
+            if ([] !== $packed) {
+                for ($at = 0, $count = \count($packed); $at < $count; $at += 3) {
+                    $ranges[] = $packed[$at];
+                    $ranges[] = $packed[$at + 1];
+                    $ranges[] = $stateToGroup[$packed[$at + 2]];
                 }
             } else {
                 foreach ($transitions as $symbol => $target) {
-                    $ranges[] = [$symbol, $symbol, $target];
+                    $ranges[] = $symbol;
+                    $ranges[] = $symbol;
+                    $ranges[] = $target;
                 }
             }
 

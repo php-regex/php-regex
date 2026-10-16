@@ -131,15 +131,16 @@ final class PrefixReader
     private static function anyLiveTarget(Dfa $dfa, int $state, array $ranges, array $live): bool
     {
         $current = $dfa->getState($state);
+        $moves = $current->packedRanges();
         foreach ($ranges as [$from, $to]) {
-            foreach ($current->transitions as $codePoint => $target) {
+            foreach ($current->byteTransitions() as $codePoint => $target) {
                 if ($codePoint >= $from && $codePoint <= $to && isset($live[$target])) {
                     return true;
                 }
             }
 
-            foreach ($current->ranges as [$start, $end, $target]) {
-                if ($start <= $to && $end >= $from && isset($live[$target])) {
+            for ($at = 0, $count = \count($moves); $at < $count; $at += 3) {
+                if ($moves[$at] <= $to && $moves[$at + 1] >= $from && isset($live[$moves[$at + 2]])) {
                     return true;
                 }
             }
@@ -165,8 +166,12 @@ final class PrefixReader
         $live = [];
         $queue = [];
         foreach ($dfa->states as $id => $state) {
-            foreach ([...array_values($state->transitions), ...array_column($state->ranges, 2)] as $target) {
+            foreach ($state->byteTransitions() as $target) {
                 $predecessors[$target][$id] = true;
+            }
+            $ranges = $state->packedRanges();
+            for ($at = 2, $count = \count($ranges); $at < $count; $at += 3) {
+                $predecessors[$ranges[$at]][$id] = true;
             }
 
             if ($state->isAccepting) {

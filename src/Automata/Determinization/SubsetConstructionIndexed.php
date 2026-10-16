@@ -24,7 +24,6 @@ use PHPRegex\Automata\Support\WorkBudget;
  * Subset construction with indexed transition ranges for faster moves.
  *
  * @phpstan-import-type AlphabetRange from Dfa
- * @phpstan-import-type RangeTransition from DfaState
  *
  * @internal
  */
@@ -67,7 +66,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
             $this->budget->updateStats(\count($stateMap), $nfaTransitions, $alphabetSize);
         }
 
-        /** @var array<int, array{transitions: array<int, int>, ranges: array<int, RangeTransition>}> $transitions */
+        /** @var array<int, array{transitions: array<int, int>, ranges: list<int>}> $transitions */
         $transitions = [];
         /** @var array<int, bool> $accepting */
         $accepting = [];
@@ -80,7 +79,7 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
 
             /** @var array<int, int> $stateTransitions */
             $stateTransitions = [];
-            /** @var array<int, RangeTransition> $stateRanges */
+            /** @var list<int> $stateRanges */
             $stateRanges = [];
 
             /** @var array<int, array<int, true>> $targetsByRange */
@@ -130,15 +129,18 @@ final class SubsetConstructionIndexed implements DeterminizationAlgorithmInterfa
                     }
                 }
 
+                // Over bytes, a table entry per byte makes any byte one
+                // lookup; over code points the ranges alone say it, three
+                // ints each.
                 $targetId = $stateMap[$targetKey];
                 if ($nfa->maxCodePoint <= 255) {
                     for ($char = $start; $char <= $end; $char++) {
                         $stateTransitions[$char] = $targetId;
                     }
-                } else {
-                    $stateTransitions[$start] = $targetId;
                 }
-                $stateRanges[] = [$start, $end, $targetId];
+                $stateRanges[] = $start;
+                $stateRanges[] = $end;
+                $stateRanges[] = $targetId;
             }
 
             $transitions[$dfaId] = [

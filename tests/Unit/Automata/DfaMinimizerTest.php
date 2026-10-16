@@ -80,7 +80,7 @@ final class DfaMinimizerTest extends TestCase
         $minimized = (new DfaMinimizer($algorithm))->minimize($dfa);
 
         $this->assertCount(2, $minimized->states);
-        $this->assertArrayHasKey($snowman, $minimized->states[$minimized->startState]->transitions);
+        $this->assertNotNull($minimized->states[$minimized->startState]->transitionFor($snowman));
     }
 
     public static function provideAlgorithms(): \Generator
@@ -95,7 +95,10 @@ final class DfaMinimizerTest extends TestCase
         $length = \strlen($input);
 
         for ($index = 0; $index < $length; $index++) {
-            $stateId = $dfa->getState($stateId)->transitions[\ord($input[$index])];
+            $stateId = $dfa->getState($stateId)->transitionFor(\ord($input[$index]));
+            if (null === $stateId) {
+                return false;
+            }
         }
 
         return $dfa->getState($stateId)->isAccepting;

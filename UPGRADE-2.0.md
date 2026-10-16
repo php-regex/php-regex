@@ -832,6 +832,12 @@ result classes in `Solver\` (`IntersectionResult`, `SubsetResult`, `EquivalenceR
 `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns, and `Language`; every other class
 of the namespace is `@internal` and may change in any release.
 
+`Model\DfaState` reads its moves through methods: `transitionFor()` as before, `rangeCount()`, and `ranges()`, which
+builds the list of `[first, last, target]` triples the `$ranges` property held. `$ranges` and `$transitions` are gone:
+a state holds its ranges as three ints in one list, which takes a Unicode DFA from about 330 bytes a range to about 130,
+and an automaton over code points no longer keeps an index of where each range starts. Read `$state->ranges` as
+`$state->ranges()`, and `$state->transitions[$byte]` as `$state->transitionFor($byte)`.
+
 #### A custom node implements `getChildren()`
 
 `NodeInterface` gains `getChildren()`. The library's nodes extend

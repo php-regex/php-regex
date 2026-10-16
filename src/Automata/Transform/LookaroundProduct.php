@@ -290,13 +290,14 @@ final class LookaroundProduct
 
         foreach ($this->automata as $dfa) {
             foreach ($dfa->states as $state) {
-                foreach (array_keys($state->transitions) as $codePoint) {
+                foreach (array_keys($state->byteTransitions()) as $codePoint) {
                     $bounds[$codePoint] = true;
                     $bounds[$codePoint + 1] = true;
                 }
-                foreach ($state->ranges as [$from, $to]) {
-                    $bounds[$from] = true;
-                    $bounds[$to + 1] = true;
+                $ranges = $state->packedRanges();
+                for ($at = 0, $count = \count($ranges); $at < $count; $at += 3) {
+                    $bounds[$ranges[$at]] = true;
+                    $bounds[$ranges[$at + 1] + 1] = true;
                 }
             }
         }
@@ -324,8 +325,12 @@ final class LookaroundProduct
         $live = [];
         $queue = [];
         foreach ($dfa->states as $id => $state) {
-            foreach ([...array_values($state->transitions), ...array_column($state->ranges, 2)] as $target) {
+            foreach ($state->byteTransitions() as $target) {
                 $predecessors[$target][$id] = true;
+            }
+            $ranges = $state->packedRanges();
+            for ($at = 2, $count = \count($ranges); $at < $count; $at += 3) {
+                $predecessors[$ranges[$at]][$id] = true;
             }
 
             if ($state->isAccepting) {

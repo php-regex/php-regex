@@ -165,17 +165,7 @@ cache are merged. Follow-ups:
 - `Optimizer::__construct()` takes a `?DfaCacheInterface`, added in 2.0.0,
   that nothing reads any more: the check of a rewrite builds no DFA since
   the strings both sides match no longer prove one. Keep it or drop it
-  before the tag;
-- a DFA holds 300 to 345 bytes per transition (measured with xdebug off:
-  `/[\pL0-9]*0[0-9]{6}$/um` compiles to 129 states and 176,988 range
-  transitions, 58 MB held and a 123 MB peak while it is built). Each range
-  is a three-int array (about 200 bytes) plus an entry in the start index
-  (about 40). A flat int list per state, three ints a range, would hold
-  about 48 bytes a range, four to six times less; but `DfaState::$ranges`
-  and `$transitions` are public (`Model\DfaState` is in the backward
-  compatibility promise), so the shape is a decision before 2.0.0, and
-  the minimizers, the lookaround product, `Language`, `PrefixReader` and
-  the DFA cache all read it.
+  before the tag.
 
 ## Extraction coverage: after the merge
 

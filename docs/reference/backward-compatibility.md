@@ -100,7 +100,10 @@ and `BsrConvention` are the enums of `Analysis\PatternInfo`. `Analysis\ByteCharS
 other class of those namespaces left out of the row.
 
 In `regex-automata`, `Determinization\DeterminizationAlgorithm` and
-`Minimization\MinimizationAlgorithm` are the two algorithm enums. The promise
+`Minimization\MinimizationAlgorithm` are the two algorithm enums.
+`Model\DfaState` is read through `$id`, `$isAccepting`, `transitionFor()`,
+`rangeCount()` and `ranges()`, each range as its first code point, its last
+and its target; how a state holds its moves is not covered. The promise
 covers `TrivialMatchClassifier::matchedLiteral()` with `classify()`: a minor
 release may prove more patterns than the one before, and its CHANGELOG says so.
 

@@ -47,7 +47,7 @@ final class NfaBuilderByteBoundsTest extends TestCase
         $dfa = (new DfaBuilder())->determinize($nfa, new SolverOptions(minimizeDfa: false));
         $state = $dfa->getState($dfa->startState);
 
-        $this->assertSame(\range(0, 255), \array_keys($state->transitions));
+        $this->assertSame(\range(0, 255), \array_keys($state->byteTransitions()));
     }
 
     #[Test]

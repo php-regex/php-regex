@@ -36,9 +36,9 @@ final class DfaMinimizerRangesTest extends TestCase
         $alphabetRanges = [[48, 57], [65, 90], [97, 122]];
 
         $states = [
-            0 => new DfaState(0, [], false, [[48, 57, 1], [65, 90, 2], [97, 122, 2]]),
-            1 => new DfaState(1, [], true, [[48, 57, 1], [65, 90, 1], [97, 122, 1]]),
-            2 => new DfaState(2, [], true, [[48, 57, 2], [65, 90, 2], [97, 122, 2]]),
+            0 => new DfaState(0, [], false, [48, 57, 1, 65, 90, 2, 97, 122, 2]),
+            1 => new DfaState(1, [], true, [48, 57, 1, 65, 90, 1, 97, 122, 1]),
+            2 => new DfaState(2, [], true, [48, 57, 2, 65, 90, 2, 97, 122, 2]),
         ];
 
         $dfa = new Dfa(0, $states, $alphabetRanges);
@@ -56,8 +56,8 @@ final class DfaMinimizerRangesTest extends TestCase
         $alphabetRanges = [[48, 57], [65, 90]];
 
         $states = [
-            0 => new DfaState(0, [], false, [[48, 57, 1], [65, 90, 1]]),
-            1 => new DfaState(1, [], true, [[48, 57, 1], [65, 90, 1]]),
+            0 => new DfaState(0, [], false, [48, 57, 1, 65, 90, 1]),
+            1 => new DfaState(1, [], true, [48, 57, 1, 65, 90, 1]),
         ];
 
         $dfa = new Dfa(0, $states, $alphabetRanges);
@@ -66,7 +66,7 @@ final class DfaMinimizerRangesTest extends TestCase
         $this->assertCount(2, $minimized->states);
 
         foreach ($minimized->states as $state) {
-            $this->assertNotEmpty($state->ranges, 'Minimized state should preserve ranges.');
+            $this->assertNotSame([], $state->ranges(), 'Minimized state should preserve ranges.');
         }
     }
 

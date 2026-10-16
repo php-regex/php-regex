@@ -26,12 +26,12 @@ use PHPRegex\Parser\Internal\StaticCaches;
 final class InMemoryDfaCache implements DfaCacheInterface
 {
     /**
-     * The transitions the cache holds at most, each entry of a state's
-     * tables counted. One takes from about 40 bytes, a byte of a table over
-     * bytes, to about 260, a range of a Unicode class: the automata kept
-     * stay under some 40 MB in a process that lives long, as the language
-     * server or a lint over many files, where a thousand of them could take
-     * hundreds of megabytes.
+     * The transitions the cache holds at most, each byte of a table over
+     * bytes and each range counted. One takes from about 40 bytes, a byte
+     * of a table, to about 130, a range of a Unicode class: the automata
+     * kept stay under some 20 MB in a process that lives long, as the
+     * language server or a lint over many files, where a thousand of them
+     * could take hundreds of megabytes.
      */
     private const MAX_TRANSITIONS = 150_000;
 
@@ -75,7 +75,7 @@ final class InMemoryDfaCache implements DfaCacheInterface
 
         $size = 0;
         foreach ($dfa->states as $state) {
-            $size += \count($state->transitions) + \count($state->ranges);
+            $size += \count($state->byteTransitions()) + $state->rangeCount();
         }
 
         if ($size > self::MAX_TRANSITIONS) {

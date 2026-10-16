@@ -191,8 +191,10 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
         $inverse = [];
 
         foreach ($dfa->states as $stateId => $state) {
-            if ([] !== $state->ranges) {
-                foreach ($state->ranges as [$start, $_end, $target]) {
+            $ranges = $state->packedRanges();
+            if ([] !== $ranges) {
+                for ($at = 0, $count = \count($ranges); $at < $count; $at += 3) {
+                    $start = $ranges[$at];
                     if (!isset($alphabetSet[$start])) {
                         continue;
                     }
@@ -200,10 +202,10 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
                     if (null !== $this->budget) {
                         $this->budget->consume();
                     }
-                    $inverse[$start][$target][] = $stateId;
+                    $inverse[$start][$ranges[$at + 2]][] = $stateId;
                 }
             } else {
-                foreach ($state->transitions as $symbol => $target) {
+                foreach ($state->byteTransitions() as $symbol => $target) {
                     $symbol = (int) $symbol;
                     if (!isset($alphabetSet[$symbol])) {
                         continue;
@@ -233,17 +235,22 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
             $transitions = [];
             $ranges = [];
 
-            foreach ($representative->transitions as $symbol => $target) {
+            foreach ($representative->byteTransitions() as $symbol => $target) {
                 $transitions[(int) $symbol] = $stateToGroup[$target];
             }
 
-            if ([] !== $representative->ranges) {
-                foreach ($representative->ranges as [$start, $end, $target]) {
-                    $ranges[] = [$start, $end, $stateToGroup[$target]];
+            $packed = $representative->packedRanges();
+            if ([] !== $packed) {
+                for ($at = 0, $count = \count($packed); $at < $count; $at += 3) {
+                    $ranges[] = $packed[$at];
+                    $ranges[] = $packed[$at + 1];
+                    $ranges[] = $stateToGroup[$packed[$at + 2]];
                 }
             } else {
                 foreach ($transitions as $symbol => $target) {
-                    $ranges[] = [$symbol, $symbol, $target];
+                    $ranges[] = $symbol;
+                    $ranges[] = $symbol;
+                    $ranges[] = $target;
                 }
             }
 

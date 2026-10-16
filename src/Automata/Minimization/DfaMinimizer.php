@@ -72,7 +72,7 @@ final class DfaMinimizer
         $alphabet = [];
 
         foreach ($dfa->states as $state) {
-            foreach ($state->transitions as $symbol => $target) {
+            foreach ($state->byteTransitions() as $symbol => $target) {
                 $alphabet[(int) $symbol] = true;
             }
         }
@@ -88,13 +88,8 @@ final class DfaMinimizer
     {
         $count = 0;
         foreach ($dfa->states as $state) {
-            if ([] !== $state->ranges) {
-                $count += \count($state->ranges);
-
-                continue;
-            }
-
-            $count += \count($state->transitions);
+            $ranges = $state->rangeCount();
+            $count += 0 !== $ranges ? $ranges : \count($state->byteTransitions());
         }
 
         return $count;

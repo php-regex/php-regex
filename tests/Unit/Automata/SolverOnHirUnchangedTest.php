@@ -188,7 +188,7 @@ final class SolverOnHirUnchangedTest extends TestCase
     public function test_dfa_keeps_its_default_arguments(): void
     {
         $dfa = new Dfa(0, [
-            0 => new DfaState(0, [], false, [[65, 90, 1]]),
+            0 => new DfaState(0, [], false, [65, 90, 1]),
             1 => new DfaState(1, [], true),
         ]);
 

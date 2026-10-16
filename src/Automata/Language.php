@@ -312,11 +312,11 @@ final class Language
             $moves = [];
             $dfaState = $this->dfa->getState($state);
             $listed = CharSet::empty();
-            foreach ($dfaState->transitions as $codePoint => $target) {
+            foreach ($dfaState->byteTransitions() as $codePoint => $target) {
                 $moves[] = [$codePoint, $codePoint, $target];
                 $listed = $listed->union(CharSet::single($codePoint));
             }
-            foreach ($dfaState->ranges as [$from, $to, $target]) {
+            foreach ($dfaState->ranges() as [$from, $to, $target]) {
                 foreach (CharSet::range($from, $to)->subtract($listed)->ranges as [$start, $end]) {
                     $moves[] = [$start, $end, $target];
                 }

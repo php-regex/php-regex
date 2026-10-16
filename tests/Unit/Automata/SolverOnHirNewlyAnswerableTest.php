@@ -195,7 +195,7 @@ final class SolverOnHirNewlyAnswerableTest extends TestCase
 
         $overlaps = [];
         foreach ($dfa->states as $state) {
-            foreach ($state->ranges as [$start, $end]) {
+            foreach ($state->ranges() as [$start, $end]) {
                 if ($start <= 0xDFFF && $end >= 0xD800) {
                     $overlaps[] = sprintf('%04X-%04X', $start, $end);
                 }

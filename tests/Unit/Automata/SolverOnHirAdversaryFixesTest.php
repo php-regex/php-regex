@@ -95,7 +95,7 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
 
         $dfa = $solver->compile('/[\x{D7FF}-\x{E000}]/u', $this->fullMatchOptions());
         foreach ($dfa->states as $state) {
-            foreach ($state->ranges as [$start, $end]) {
+            foreach ($state->ranges() as [$start, $end]) {
                 $this->assertFalse($start <= 0xDFFF && $end >= 0xD800, sprintf('DFA range %04X-%04X covers the surrogate block.', $start, $end));
             }
         }
