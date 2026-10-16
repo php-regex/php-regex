@@ -5,20 +5,33 @@ description: "The PCRE2 version behind every PHP release from 7.3 to 8.6, what t
 ---
 # Which PCRE2 ships with which PHP
 
-Run this on PHP 8.2.34 and the engine refuses the pattern — the version line is the container's own banner:
+Save this probe — it names its engine, then asks one question of it:
 
-```console
-$ docker run --rm php:8.2-cli php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, "\n"; var_dump(preg_match("/(?<=a{1,3})f/", "aaaf"));'
-8.2.34 / PCRE2 10.40 2022-04-14
+```php
+{: data-file="lookbehind.php" data-copy="" }
+<?php
 
-Warning: preg_match(): Compilation failed: lookbehind assertion is not fixed length at offset 0 in Command line code on line 1
-bool(false)
+echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, "\n";
+
+// The lookbehind branch matches one, two or three a's — not one fixed length.
+var_dump(preg_match('/(?<=a{1,3})f/', 'aaaf', $m), $m);
 ```
 
-Run the same line on PHP 8.4.26 and it matches:
+Run it on PHP 8.2 and the engine refuses the pattern:
 
 ```console
-$ docker run --rm php:8.4-cli php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, "\n"; var_dump(@preg_match("/(?<=a{1,3})f/", "aaaf", $m), $m);'
+$ docker run --rm -i php:8.2-cli php < lookbehind.php
+8.2.34 / PCRE2 10.40 2022-04-14
+
+Warning: preg_match(): Compilation failed: lookbehind assertion is not fixed length at offset 0 in Standard input code on line 6
+bool(false)
+NULL
+```
+
+Run the same file on PHP 8.4 and it matches:
+
+```console
+$ docker run --rm -i php:8.4-cli php < lookbehind.php
 8.4.26 / PCRE2 10.44 2024-06-07
 int(1)
 array(1) {
@@ -94,8 +107,18 @@ preg_match('/(?<=a{1,3})f/', 'aaaf', $matches);
 
 A myth worth killing while we are here, because it circulates among people who should know better: **alternatives of different fixed lengths do not need 10.43**. `(?<=ab|cde)` — two branches, lengths 2 and 3 — compiles and matches on PCRE2 10.40 in the official PHP 8.2 image:
 
+```php
+{: data-file="mixed-lengths.php" data-copy="" }
+<?php
+
+echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, "\n";
+
+// Two branches, two fixed lengths — 2 and 3.
+var_dump(preg_match('/(?<=ab|cde)f/', 'abf', $m), $m);
+```
+
 ```console
-$ docker run --rm php:8.2-cli php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, "\n"; var_dump(preg_match("/(?<=ab|cde)f/", "abf", $m), $m);'
+$ docker run --rm -i php:8.2-cli php < mixed-lengths.php
 8.2.34 / PCRE2 10.40 2022-04-14
 int(1)
 array(1) {
@@ -110,10 +133,21 @@ The construct-by-construct version table lives in [PCRE vs other engines](../con
 
 ## Same engine version, different dialect
 
-The matrix has one divergence no version number explains. This pattern compiles on PHP 8.4 and returns `bc`, not `c`:
+The matrix has one divergence no version number explains. This file compiles on PHP 8.4 and returns `bc`, not `c`:
+
+```php
+{: data-file="keep.php" data-copy="" }
+<?php
+
+echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, "\n";
+
+// \K inside the lookbehind — an assertion, not part of the match.
+$r = preg_match('/(?<=a\Kb)c/', 'abc', $m);
+var_dump($r, $m);
+```
 
 ```console
-$ docker run --rm php:8.4-cli php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, "\n"; $r = preg_match("/(?<=a\Kb)c/", "abc", $m); var_dump($r, $m);'
+$ docker run --rm -i php:8.4-cli php < keep.php
 8.4.26 / PCRE2 10.44 2024-06-07
 int(1)
 array(1) {
@@ -122,13 +156,13 @@ array(1) {
 }
 ```
 
-The `\K` sits inside the lookbehind — an assertion, which is not part of the match — and still resets where the reported match starts. PHP 8.5 refuses the same pattern on the same PCRE2 10.44:
+The `\K` sits inside the lookbehind — an assertion, which is not part of the match — and still resets where the reported match starts. PHP 8.5 refuses the same file on the same PCRE2 10.44:
 
 ```console
-$ docker run --rm php:8.5-cli php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, "\n"; $r = preg_match("/(?<=a\Kb)c/", "abc", $m); var_dump($r, $m);'
+$ docker run --rm -i php:8.5-cli php < keep.php
 8.5.11 / PCRE2 10.44 2024-06-07
 
-Warning: preg_match(): Compilation failed: \K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK) at offset 10 in Command line code on line 1
+Warning: preg_match(): Compilation failed: \K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK) at offset 10 in Standard input code on line 6
 bool(false)
 NULL
 ```
