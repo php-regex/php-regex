@@ -25,6 +25,8 @@ use PHPUnit\Framework\TestCase;
  * snake_case, as Regex::create() and the Symfony and Laravel configs are: a
  * key it does not know or a value of the wrong type is refused instead of
  * being ignored or cast.
+ *
+ * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
 final class OptimizerOptionsTest extends TestCase
 {
@@ -160,7 +162,7 @@ final class OptimizerOptionsTest extends TestCase
     }
 
     /**
-     * @param array<string, bool|int> $options
+     * @param OptimizerOptionsArray $options
      */
     #[Test]
     #[DataProvider('provideOptimizations')]
@@ -173,7 +175,7 @@ final class OptimizerOptionsTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, options: array<string, bool|int>, optimized: string}>
+     * @return iterable<string, array{pattern: string, options: OptimizerOptionsArray, optimized: string}>
      */
     public static function provideOptimizations(): iterable
     {

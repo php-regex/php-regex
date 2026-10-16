@@ -19,6 +19,17 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
  * What the optimizer may rewrite. As a PHP array it is keyed in snake_case,
  * as Regex::create() and the Symfony and Laravel configs are; regex.json and
  * the PHPStan parameters spell the same names in camelCase.
+ *
+ * @phpstan-type OptimizerOptionsArray array{
+ *     digits?: bool,
+ *     word?: bool,
+ *     ranges?: bool,
+ *     canonicalize_char_classes?: bool,
+ *     possessive?: bool,
+ *     factorize?: bool,
+ *     min_quantifier_count?: int,
+ *     verify_with_automata?: bool,
+ * }
  */
 final class OptimizerOptions
 {

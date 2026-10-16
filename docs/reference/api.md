@@ -467,7 +467,9 @@ add verdicts. `CompatibilityChecker` gives the same answer from `php-regex/regex
 ### optimize(string $regex, OptimizerOptions|array $options = []): OptimizationResult
 
 Applies safe optimizations to the pattern. The options are an `OptimizerOptions` value, or an array keyed in
-snake_case as `Regex::create()`'s are; an unknown key or a value of the wrong type throws
+snake_case as `Regex::create()`'s are, the closed shape `OptimizerOptionsArray` (imported from
+`PHPRegex\Optimizer\OptimizerOptions`): PHPStan reports a misspelt key or a value of the wrong type where the
+array is written, and at run time an unknown key or a value of the wrong type throws
 `InvalidRegexOptionException`.
 
 ```php
@@ -951,6 +953,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 |---|---|---|
 | `CacheStats` | `Parser\Cache\RemovableCacheInterface` | `{hits: int, misses: int}` |
 | `OptionsArray` | `Parser\ParserOptions` | the eight configuration keys, each optional |
+| `OptimizerOptionsArray` | `Optimizer\OptimizerOptions` | the eight optimizer options, in snake_case, each optional |
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |
 | `LengthRange` | `Parser\Analysis\LengthRangeCalculator` | `{0: int, 1: int\|null}` — min and max match length |
 | `Metrics` | `Parser\Analysis\MetricsCollector` | `{counts: array<string, int>, total: int, maxDepth: int}` |

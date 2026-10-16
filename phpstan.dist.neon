@@ -243,6 +243,16 @@ parameters:
             identifier: shipmonk.binaryOperationWithNull
             path: tests/*
             count: 26
+        # The optimizer tests hand optimize() a key it does not know on
+        # purpose: the InvalidRegexOptionException it raises is the contract.
+        - message: '#^Parameter \#2 \$options of method PHPRegex\\Toolkit\\Regex::optimize\(\) expects .+, array\{autoPossessify: true\} given\.$#'
+          identifier: argument.type
+          path: tests/Unit/Optimizer/OptimizerOptionsTest.php
+          count: 1
+        - message: '#^Parameter \#2 \$options of method PHPRegex\\Toolkit\\Regex::optimize\(\) expects .+, array\{mode: ''aggressive''\|''safe''\} given\.$#'
+          identifier: argument.type
+          path: tests/Unit/Parser/ParserTest.php
+          count: 1
         # The node test hands the constructor the legacy 3-argument int form
         # on purpose: the TypeError it now raises is the pinned contract.
         - message: '#^Call to new PHPRegex\\Parser\\Node\\UnicodePropNode\(\) on a separate line has no effect\.$#'

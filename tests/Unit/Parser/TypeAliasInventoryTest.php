@@ -28,6 +28,7 @@ use PHPRegex\LanguageServer\Handler\CompletionHandler;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\Rule\GroupIndex;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Analysis\CaptureFacts;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Analysis\MetricsCollector;
@@ -84,6 +85,7 @@ final class TypeAliasInventoryTest extends TestCase
         RemovableCacheInterface::class => ['CacheStats'],
         NodeFinder::class => ['NodeFilter'],
         ParserOptions::class => ['OptionsArray'],
+        OptimizerOptions::class => ['OptimizerOptionsArray'],
         RedosSearchCost::class => ['SearchCostArray'],
         RedosWitness::class => ['WitnessArray'],
 

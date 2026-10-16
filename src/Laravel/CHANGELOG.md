@@ -6,8 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
- * The facade's `create()` takes the `OptionsArray` shape of
-   `Regex::create()`, so PHPStan checks the options passed through it.
+ * The facade's `create()` and `optimize()` take the `OptionsArray` and
+   `OptimizerOptionsArray` shapes of the toolkit, so PHPStan checks the
+   options passed through them.
  * `analysis.complexity`, off by default, makes `regex:lint` report the
    patterns whose complexity score reaches `analysis.warning_threshold`,
    as `regex lint` does under `checks.complexity`.

@@ -68,6 +68,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * regular expressions. Supports caching and runtime PCRE validation.
  *
  * @phpstan-import-type OptionsArray from ParserOptions
+ * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
 final class Regex
 {
@@ -277,8 +278,8 @@ final class Regex
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                   $regex   The regular expression to optimize
-     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as the array OptimizerOptions::fromArray() reads
+     * @param string                                 $regex   The regular expression to optimize
+     * @param OptimizerOptions|OptimizerOptionsArray $options What may be rewritten, as a value or as the array OptimizerOptions::fromArray() reads
      *
      * @return OptimizationResult Optimization results with changes applied
      */

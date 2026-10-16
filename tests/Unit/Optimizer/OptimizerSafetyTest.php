@@ -151,25 +151,23 @@ final class OptimizerSafetyTest extends TestCase
      * the quantifier, inside a sequence, an alternation or a conditional —
      * while a clean shape still possessifies.
      *
-     * @param array<string, bool|string> $options
+     * @param array{possessive: bool} $options
+     * @param string|null             $expected the optimized pattern, when it is not the input
      */
     #[DataProvider('provideInlineFlagScopeShapes')]
     #[Test]
-    public function test_possessify_refuses_inline_flag_scopes_at_any_depth(string $input, array $options): void
+    public function test_possessify_refuses_inline_flag_scopes_at_any_depth(string $input, array $options, ?string $expected = null): void
     {
-        $expected = isset($options['expected']) ? (string) $options['expected'] : $input;
-        unset($options['expected']);
-
         $optimized = Regex::create(['cache' => null])->optimize(
             $input,
             $options + ['verify_with_automata' => false],
         )->optimized;
 
-        $this->assertSame($expected, $optimized);
+        $this->assertSame($expected ?? $input, $optimized);
     }
 
     /**
-     * @return iterable<string, array{input: string, options: array<string, bool|string>}>
+     * @return iterable<string, array{input: string, options: array{possessive: bool}, expected?: string}>
      */
     public static function provideInlineFlagScopeShapes(): iterable
     {
@@ -215,7 +213,8 @@ final class OptimizerSafetyTest extends TestCase
 
         yield 'plain nested groups are still possessified' => [
             'input' => '/(?:a(?:bc)d)+e/',
-            'options' => ['possessive' => true, 'expected' => '/(?:a(?:bc)d)++e/'],
+            'options' => ['possessive' => true],
+            'expected' => '/(?:a(?:bc)d)++e/',
         ];
     }
 }

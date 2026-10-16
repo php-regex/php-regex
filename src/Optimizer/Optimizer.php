@@ -42,6 +42,8 @@ use PHPRegex\Parser\TraversalAction;
  *
  * The solver answering those confirmations is kept for the instance's
  * lifetime, with the DFA cache it is given.
+ *
+ * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
 final class Optimizer
 {
@@ -55,9 +57,9 @@ final class Optimizer
     /**
      * Optimize a regular expression for better performance.
      *
-     * @param string                                   $regex   The regular expression to optimize
-     * @param OptimizerOptions|array<array-key, mixed> $options What may be rewritten, as a value or as
-     *                                                          the array OptimizerOptions::fromArray() reads
+     * @param string                                 $regex   The regular expression to optimize
+     * @param OptimizerOptions|OptimizerOptionsArray $options What may be rewritten, as a value or as
+     *                                                        the array OptimizerOptions::fromArray() reads
      *
      * @throws InvalidRegexOptionException on an option it does not know or a value of the wrong type
      * @throws LexerException              when the pattern does not lex
