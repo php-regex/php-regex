@@ -32,10 +32,15 @@ final class CorpusLintScriptTest extends TestCase
             'corpus/ownerA/repoNew' => true,
             'corpus/ownerB/repoOld' => true,
             'corpus/ownerC/repoBare' => false,
+            'corpus/ownerD/repoClean' => true,
         ] as $repo => $withComposer) {
             mkdir($this->root.'/'.$repo, 0o777, true);
             if ($withComposer) {
-                $constraint = 'repoNew' === basename($repo) ? '^8.2' : '>=5.4';
+                $constraint = match (basename($repo)) {
+                    'repoNew' => '^8.2',
+                    'repoClean' => '^8.1',
+                    default => '>=5.4',
+                };
                 file_put_contents(
                     $this->root.'/'.$repo.'/composer.json',
                     sprintf("{\n    \"require\": {\n        \"php\": \"%s\"\n    }\n}\n", $constraint),
@@ -46,6 +51,7 @@ final class CorpusLintScriptTest extends TestCase
         file_put_contents($this->root.'/corpus/ownerA/repoNew/patterns.php', "<?php\n\npreg_match('/ab{1}c/', \$x);\n");
         file_put_contents($this->root.'/corpus/ownerB/repoOld/patterns.php', "<?php\n\npreg_match('/\\p{scx:Greek}/u', \$x);\n");
         file_put_contents($this->root.'/corpus/ownerC/repoBare/patterns.php', "<?php\n\npreg_match('/cd{1}e/', \$x);\n");
+        file_put_contents($this->root.'/corpus/ownerD/repoClean/patterns.php', "<?php\n\npreg_match('/^\\d{4}-\\d{2}-\\d{2}\$/', \$x);\n");
     }
 
     protected function tearDown(): void
@@ -94,7 +100,7 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertStringContainsString('FAIL  Invalid or unsupported Unicode property', $log);
 
         // The merged file ends with one summary line for the whole sweep.
-        $this->assertStringContainsString('3 repositories', $log);
+        $this->assertStringContainsString('4 repositories', $log);
         $this->assertStringContainsString('1 with errors', $log);
         $this->assertStringContainsString('1 fallback target', $log);
         $this->assertStringContainsString('1 floor clamped', $log);
@@ -103,6 +109,35 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertFileExists($this->root.'/parts/ownerA__repoNew.log');
         $this->assertFileExists($this->root.'/parts/ownerB__repoOld.log');
         $this->assertFileExists($this->root.'/parts/ownerC__repoBare.log');
+    }
+
+    #[Test]
+    public function test_console_follows_the_corpus_update_style(): void
+    {
+        [, $output] = $this->script([]);
+
+        $lines = array_values(array_filter(explode("\n", $output), static fn (string $line): bool => '' !== trim($line)));
+
+        // A bold header over a dim rule, like the corpus installer.
+        $this->assertSame('Corpus Linter', $lines[0]);
+        $this->assertSame('=============', $lines[1]);
+
+        // One aligned status row per repository, tags padded like update's.
+        $this->assertStringContainsString('[WARN]    ownerA/repoNew  PHP 8.2, PCRE2 10.40', $output);
+        $this->assertStringContainsString('[FAIL]    ownerB/repoOld  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('floor clamped', $output);
+        $this->assertStringContainsString('[WARN]    ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('[OK]      ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
+
+        // The findings of a repository are an indented detail line.
+        $this->assertStringContainsString('1 FAIL — parts/ownerB__repoOld.log', $output);
+
+        // The closing summary mirrors update's, elapsed included.
+        $this->assertStringContainsString('Summary', $output);
+        $this->assertStringContainsString('Repositories : 4', $output);
+        $this->assertStringContainsString('With findings: 3', $output);
+        $this->assertStringContainsString('With errors  : 1', $output);
+        $this->assertStringContainsString('Elapsed      : ', $output);
     }
 
     #[Test]

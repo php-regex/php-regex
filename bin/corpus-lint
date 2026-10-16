@@ -44,6 +44,108 @@ declare(strict_types=1);
  * or a repository could not be judged.
  */
 
+// ---------------------------------------------------------------------------
+// Console output, in the same shape as bin/corpus
+// ---------------------------------------------------------------------------
+
+final class ConsoleStyle
+{
+    private bool $useColor;
+
+    public function __construct()
+    {
+        $this->useColor = $this->supportsColor();
+    }
+
+    public function header(string $title): void
+    {
+        $line = str_repeat('=', \strlen($title));
+        echo $this->bold($title).\PHP_EOL;
+        echo $this->dim($line).\PHP_EOL;
+    }
+
+    public function status(string $label, string $message, ?string $detail = null): void
+    {
+        $plainLabel = preg_replace('/\e\[[\d;]*m/', '', $label);
+        $plainLabel ??= $label;
+        $pad = max(0, 9 - \strlen($plainLabel));
+        $label .= str_repeat(' ', $pad);
+        echo '  '.$label.' '.$message.\PHP_EOL;
+        if (null !== $detail && '' !== $detail) {
+            echo $this->indent($detail, '            ');
+        }
+    }
+
+    public function info(string $message): void
+    {
+        echo $message.\PHP_EOL;
+    }
+
+    public function error(string $message): void
+    {
+        fwrite(\STDERR, $this->red('Error: ').$message.\PHP_EOL);
+    }
+
+    public function dim(string $text): string
+    {
+        return $this->colorize($text, '2');
+    }
+
+    public function bold(string $text): string
+    {
+        return $this->colorize($text, '1');
+    }
+
+    public function green(string $text): string
+    {
+        return $this->colorize($text, '32');
+    }
+
+    public function red(string $text): string
+    {
+        return $this->colorize($text, '31');
+    }
+
+    public function yellow(string $text): string
+    {
+        return $this->colorize($text, '33');
+    }
+
+    private function colorize(string $text, string $code): string
+    {
+        if (!$this->useColor) {
+            return $text;
+        }
+
+        return "\033[".$code.'m'.$text."\033[0m";
+    }
+
+    private function supportsColor(): bool
+    {
+        if ('1' === getenv('NO_COLOR')) {
+            return false;
+        }
+
+        if (!\function_exists('posix_isatty')) {
+            return false;
+        }
+
+        return posix_isatty(\STDOUT);
+    }
+
+    private function indent(string $text, string $prefix): string
+    {
+        $lines = preg_split('/\\r?\\n/', trim($text));
+        if (!\is_array($lines)) {
+            return '';
+        }
+
+        $indented = array_map(static fn (string $line): string => $prefix.$line, $lines);
+
+        return implode(\PHP_EOL, $indented).\PHP_EOL;
+    }
+}
+
 /**
  * The PHP constraint a repository requires, or null when its composer.json
  * is missing, unreadable, or declares no require.php.
@@ -385,10 +487,12 @@ function parseArgs(array $argv): array
  */
 function main(array $argv): int
 {
+    $io = new ConsoleStyle();
+
     try {
         $options = parseArgs($argv);
     } catch (InvalidArgumentException $e) {
-        fwrite(\STDERR, sprintf("Error: %s\n", $e->getMessage())."\n");
+        $io->error($e->getMessage());
         printUsage();
 
         return 1;
@@ -402,7 +506,7 @@ function main(array $argv): int
 
     $root = realpath($options['root'] ?? \dirname(__DIR__));
     if (false === $root || !is_dir($root.'/corpus')) {
-        fwrite(\STDERR, "Error: no corpus/ directory under the requested root.\n");
+        $io->error('no corpus/ directory under the requested root.');
 
         return 1;
     }
@@ -414,7 +518,7 @@ function main(array $argv): int
     $corpusDir = $root.'/corpus';
     $repos = discoverRepositories($corpusDir, $options['only'], $options['limit']);
     if ([] === $repos) {
-        fwrite(\STDERR, sprintf("Error: no repositories found under %s.\n", $corpusDir));
+        $io->error(sprintf('no repositories found under %s.', $corpusDir));
 
         return 1;
     }
@@ -422,32 +526,41 @@ function main(array $argv): int
     $outputFile = $options['output'] ?? $root.'/var/log/corpus.log';
     $partsDir = $options['parts'] ?? $root.'/var/log/corpus-parts';
     if (!is_dir($partsDir) && !mkdir($partsDir, 0o777, true) && !is_dir($partsDir)) {
-        fwrite(\STDERR, sprintf("Error: unable to create %s.\n", $partsDir));
+        $io->error(sprintf('unable to create %s.', $partsDir));
 
         return 1;
     }
 
     $outputDir = \dirname($outputFile);
     if (!is_dir($outputDir) && !mkdir($outputDir, 0o777, true) && !is_dir($outputDir)) {
-        fwrite(\STDERR, sprintf("Error: unable to create %s.\n", $outputDir));
+        $io->error(sprintf('unable to create %s.', $outputDir));
 
         return 1;
     }
 
     $merged = fopen($outputFile, 'w');
     if (!\is_resource($merged)) {
-        fwrite(\STDERR, sprintf("Error: unable to write %s.\n", $outputFile));
+        $io->error(sprintf('unable to write %s.', $outputFile));
 
         return 1;
     }
+
+    $total = \count($repos);
+    $start = microtime(true);
+
+    $io->header('Corpus Linter');
+    $io->info('Runtime : PHP '.\PHP_VERSION.', PCRE2 '.explode(' ', \PCRE_VERSION)[0]);
+    $io->info('Corpus  : '.$total.' repositories');
+    $io->info('Output  : '.str_replace($root.'/', '', $outputFile));
+    $io->info('Parts   : '.str_replace($root.'/', '', $partsDir));
+    $io->info('');
 
     $rows = [];
     $fallbackCount = 0;
     $clampedCount = 0;
     $notClean = false;
-    $total = \count($repos);
 
-    foreach ($repos as $index => $repo) {
+    foreach ($repos as $repo) {
         $repoDir = $corpusDir.'/'.$repo;
         $partFile = $partsDir.'/'.str_replace('/', '__', $repo).'.log';
 
@@ -493,25 +606,63 @@ function main(array $argv): int
             $notClean = true;
         }
 
-        printf(
-            "[%d/%d] corpus/%s — %s — exit %d\n",
-            $index + 1,
-            $total,
-            $repo,
-            preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown target',
-            $exitCode,
-        );
+        $findings = array_filter([
+            $severities['fail'] > 0 ? $severities['fail'].' FAIL' : null,
+            $severities['warn'] > 0 ? $severities['warn'].' WARN' : null,
+            $severities['tip'] > 0 ? $severities['tip'].' TIP' : null,
+        ]);
+        $detail = [] !== $findings
+            ? [implode(', ', $findings).' — '.basename($partsDir).'/'.basename($partFile)]
+            : [];
+        if ($exitCode > 1) {
+            $detail[] = 'not judged — exit '.$exitCode;
+        }
+        foreach ($notes as $note) {
+            if (str_contains($note, 'older than the PHP')) {
+                preg_match('/^PHP ([\d.]+)/', $targetLine, $floor);
+                $detail[] = 'floor clamped to PHP '.($floor[1] ?? 'the oldest supported');
+            }
+        }
+
+        $target = preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown';
+        $tag = $severities['fail'] > 0 || 0 !== $exitCode
+            ? $io->red('[FAIL]')
+            : ([] !== $findings ? $io->yellow('[WARN]') : $io->dim('[OK]'));
+        $io->status($tag, $repo.'  '.$io->dim($target), [] !== $detail ? implode("\n", $detail) : null);
     }
 
     fwrite($merged, summaryBlock($rows, $fallbackCount, $clampedCount)."\n");
     fclose($merged);
 
-    printf(
-        "Merged %d repositories into %s (parts in %s)\n",
-        $total,
-        $outputFile,
-        $partsDir,
-    );
+    $withFindings = count(array_filter(
+        $rows,
+        static fn (array $row): bool => $row['fail'] + $row['warn'] + $row['tip'] > 0,
+    ));
+    $withErrors = count(array_filter(
+        $rows,
+        static fn (array $row): bool => $row['fail'] > 0 || 0 !== $row['exit'],
+    ));
+    $notJudged = count(array_filter(
+        $rows,
+        static fn (array $row): bool => $row['exit'] > 1,
+    ));
+    $line = static fn (string $label, string $value): string => sprintf('%-13s: %s', $label, $value);
+
+    $io->info('');
+    $io->info($io->bold('Summary'));
+    $io->info($line('Repositories', (string) $total));
+    $io->info($line('With findings', (string) $withFindings));
+    $io->info($line('With errors', (string) $withErrors));
+    $io->info($line('Verdicts', sprintf(
+        '%d FAIL, %d WARN, %d TIP',
+        array_sum(array_column($rows, 'fail')),
+        array_sum(array_column($rows, 'warn')),
+        array_sum(array_column($rows, 'tip')),
+    )));
+    $io->info($line('Fallback', (string) $fallbackCount));
+    $io->info($line('Clamped', (string) $clampedCount));
+    $io->info($line('Not judged', (string) $notJudged));
+    $io->info($line('Elapsed', round(microtime(true) - $start, 1).'s'));
 
     return $notClean ? 1 : 0;
 }
