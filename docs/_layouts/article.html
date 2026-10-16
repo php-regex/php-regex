@@ -18,7 +18,7 @@
         {% include breadcrumb.html %}
         {% assign article_author = site.data.authors[page.author] %}
         <p class="article-byline">
-          {{ article_author.name }} · {{ page.date | date: '%-d %B %Y' }}{% if page.last_modified_at and page.last_modified_at != page.date %} · updated {{ page.last_modified_at | date: '%-d %B %Y' }}{% endif %}
+          {{ article_author.name }} · {{ page.date | date: '%-d %B %Y' }}{% if page.last_modified_at and page.last_modified_at != page.date %} · updated {{ page.last_modified_at | date: '%-d %B %Y' }}{% endif %}{% if page.published == false %} <span class="draft-tag">Draft — not yet published</span>{% endif %}
         </p>
         {{ content }}
       </main>

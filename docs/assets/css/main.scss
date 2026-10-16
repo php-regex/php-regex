@@ -1324,6 +1324,22 @@ main table::-webkit-scrollbar-thumb {
   line-height: 1.5;
 }
 
+/* A draft's one marker, in the accent wash the site reserves for "read
+ * this first". It only ever renders under --unpublished: a draft is not
+ * written to a production build, so the tag cannot ship. */
+.draft-tag {
+  display: inline-block;
+  margin-left: .35rem;
+  padding: .1rem .5rem;
+  border: 1px solid var(--line);
+  background: var(--amber-tint);
+  color: var(--amber);
+  font-size: .72rem;
+  line-height: 1.4;
+  vertical-align: .12rem;
+  white-space: nowrap;
+}
+
 /* ---- Article index -------------------------------------------------------
  * The blog's one list. Full-width entries: the title carries the line,
  * the date sits on its baseline at the far end, and the promise runs in

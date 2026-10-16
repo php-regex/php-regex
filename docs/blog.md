@@ -18,7 +18,7 @@ article says exactly what was run, where.
   {% for article in articles %}
   <li class="article-entry">
     <div class="article-entry-head">
-      <a class="article-entry-title" href="{{ article.url }}">{{ article.title }}</a>
+      <a class="article-entry-title" href="{{ article.url }}">{{ article.title }}</a>{% if article.published == false %} <span class="draft-tag">Draft</span>{% endif %}
       <time class="article-entry-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
     </div>
     <p class="article-entry-desc">{{ article.description }}</p>
