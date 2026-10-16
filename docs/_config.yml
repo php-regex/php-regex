@@ -34,6 +34,12 @@ feed:
 titles_from_headings:
   collections: true
 
+# Same opt-in for the articles' relative links: without it the plugin
+# rewrites .md links on pages only, and an article would ship raw
+# "sibling.md" hrefs that 404 from /blog/<slug>/.
+relative_links:
+  collections: true
+
 kramdown:
   input: GFM
 

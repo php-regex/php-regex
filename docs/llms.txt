@@ -82,5 +82,7 @@ License: MIT
 
 ## Articles
 
+- [Why PCRE2 is a separate library, not a new version](https://php-regex.com/blog/why-pcre2-is-a-separate-library/): the project's stated reason for the break, the API an embedder met, the PHP 7.3 boundary measured pattern by pattern, and where PCRE1 still runs
+- [What RE2 gives up to never backtrack](https://php-regex.com/blog/what-re2-gives-up-to-never-backtrack/): the same pattern through a linear engine and a backtracker — what RE2's guarantee costs in refused features, and where each engine family belongs
 - [The measured anatomy of catastrophic backtracking](https://php-regex.com/blog/measured-anatomy-of-catastrophic-backtracking/): one pattern timed at input lengths 18 to 26 — the exponential curve, the false the default limit returns, the factor of seven the JIT buys, and the provably safe rewrites
 - [Which PCRE2 ships with which PHP](https://php-regex.com/blog/which-pcre2-ships-with-which-php/): the engine behind every PHP release, the mid-series bumps, and how to judge one pattern for an engine you do not run
