@@ -336,7 +336,7 @@ The library runs wherever PHP 8.1 runs, whatever PCRE2 that build links. The
 behaviours below exist only from the release named: the library reads them for
 a target that has the release, and the test suite verifies each row against a
 real engine that does. Ubuntu 24.04 links PCRE2 10.42 into its PHP packages,
-and PHP bundles 10.39 (8.1), 10.40 (8.2), 10.42 (8.3) and 10.44 (8.4 and 8.5), so a
+and PHP bundles 10.39 (8.1), 10.40 (8.2), 10.42 (8.3) and 10.44 (8.4 through 8.6), so a
 pattern that uses one of these behaviours does not compile on such an engine.
 A row names the `PcreFeature` case that owns it where there is one; the
 [PCRE page](../concepts/pcre.md#what-changed-in-which-release) carries the
@@ -364,7 +364,8 @@ The place of the named keys in `$matches` does not depend on the version:
 every PHP writes each name just before its group number. PHP 8.5 alone writes
 the `MARK` key a second time, last, when a mark meets a group named `MARK`;
 the key reads the mark there as on 8.4 and 8.6, so the capture shapes are the
-same for every target.
+same for every target. The bundled-engine CI row runs the suite on the 8.6
+image, so this claim is exercised, not just stated.
 
 The `r` flag carries a PHP floor of its own: PHP reads it from 8.4 only,
 whatever the engine, while the inline `(?r)` and `(?-r)` follow the PCRE2

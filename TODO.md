@@ -133,38 +133,21 @@ frozen by reason code, counting meta-test) lands with unit 2.
 
 ## PHP 8.6 closeout and 8.7 canary
 
-PHP 8.6 GA is scheduled 2026-11-19 (RC3 was 2026-10-08, RC4 is due
-2026-10-22). The core is already covered: the required 8.6 CI rows run the
-whole tree, and GA 8.6 bundles PCRE2 10.44, which `PcreTarget` already
-maps. What is left:
+The closeout is built: the analysis range reaches 8.6, both engine matrices
+carry 8.6, the `preg_grep()` array-to-false boundary is pinned by tests, the
+trim family keeps its pre-8.6 character set on every PHP, a scoped listener
+fails the suite only on deprecations under `src/`, and a scheduled 8.7 canary
+watches the future without gating anything. Left, dated:
 
-1. Before the 2.0.0 tag: `phpstan.dist.neon` analysis range
-   `max: 80599` → `80699` — the comment two lines above already claims
-   "8.2 through 8.6".
-2. `engines-bundled`: a `{ php: '8.6-rc', pcre: '10.44' }` row (the
-   rolling docker alias exists; no stable tag yet) plus the conditional
-   `--ignore-platform-req=php+` on its tool installs — without the flag the
-   row dies before judging any engine. `engines-latest`: add 8.6 on macOS
-   the same way.
-3. `preg_grep()` returns `false` on PCRE error in 8.6: widen the modeled
-   return to `array|false` in the PHPStan and Psalm bridges. The 8.6-gated
-   regression test and the `KNOWN_PHP_VERSIONS` extension land in one
-   commit, or the gate meta-test goes red.
-4. Walk the trim family for the new default `\f` stripping (66 files; the
-   sharpest is `ParserOptions:265`, which trims the user-supplied
-   `php_version`), then sweep the 8.6 deprecations (return-in-finally,
-   `let`/`is`/`_` identifiers, `__debugInfo` array|null, and the rest).
-5. Decide the deprecation policy before GA: documented display-only, or a
-   listener failing only `E_DEPRECATED` whose frame lands under `src/`.
-   Never native `failOnDeprecation`: the weekly-re-resolved bridge vendors
-   deprecate for reasons that are not this library's.
-6. A scheduled-only 8.7 canary (never gating PRs; no analysis and no
-   coverage — both impossible on 8.7 today), with `pcre.jit=0` as the
-   known workaround if the JIT crash fires.
-7. On GA day itself: rename the `8.6-rc` row to `'8.6'` (the `-rc` docker
-   aliases vanish that day, an unrenamed row breaks CI), re-verify the
-   bundle stayed 10.44. Until then, watch `ext/pcre/pcre2lib` on the 8.6
-   branch and master: a late bump would reopen the engine maps.
+1. **2026-11-19, GA day** — rename the `8.6-rc` row in `engines-bundled` to
+   `'8.6'`: the `-rc` docker aliases vanish that day and an unrenamed row
+   breaks CI. The `startsWith(matrix.php, '8.6')` conditions already match
+   either spelling, and `engines-latest` needs no change. Re-verify the
+   renamed image still bundles 10.44, and if it ships mbstring again, try
+   removing the "Install multibyte support" step.
+2. Until then, watch `ext/pcre/pcre2lib` on the PHP-8.6 branch and master:
+   a late PCRE2 bump would reopen the engine maps. If it moves, re-run the
+   engine-scoped corpus rows before anything else.
 
 ---
 

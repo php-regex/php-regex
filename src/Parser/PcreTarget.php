@@ -76,9 +76,9 @@ final class PcreTarget
 
     /**
      * A PHP version with the PCRE2 its sources bundle: 10.39 for 8.1, 10.40
-     * for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5. PHP 8.1.0 bundled 10.37,
-     * and older PHP versions older releases: they get 10.39, the oldest the
-     * library knows the rules of.
+     * for 8.2, 10.42 for 8.3, 10.44 for 8.4 through 8.6. PHP 8.1.0 bundled
+     * 10.37, and older PHP versions older releases: they get 10.39, the
+     * oldest the library knows the rules of.
      */
     public static function bundledWith(int $phpVersionId): self
     {

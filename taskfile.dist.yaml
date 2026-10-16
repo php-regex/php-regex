@@ -195,14 +195,17 @@ tasks:
   install:
     cmds:
       - composer install
-      - composer install -d tools/php-cs-fixer
-      - composer install -d tools/phpbench
-      - composer install -d tools/phplint
-      - composer install -d tools/phpstan
-      - composer install -d tools/rector
-      - composer install -d tools/infection
-      - composer install -d tools/phpunit
-      - composer install -d tools/deptrac
+      # The dev tools ship locked dependencies whose ceilings do not admit
+      # local PHP 8.6/8.7 (shivammathur/homebrew-php) yet; the library
+      # installs resolve genuinely, so only the tools carry the flag.
+      - composer install -d tools/php-cs-fixer --ignore-platform-req=php+
+      - composer install -d tools/phpbench --ignore-platform-req=php+
+      - composer install -d tools/phplint --ignore-platform-req=php+
+      - composer install -d tools/phpstan --ignore-platform-req=php+
+      - composer install -d tools/rector --ignore-platform-req=php+
+      - composer install -d tools/infection --ignore-platform-req=php+
+      - composer install -d tools/phpunit --ignore-platform-req=php+
+      - composer install -d tools/deptrac --ignore-platform-req=php+
 
       - task: link
     sources:
