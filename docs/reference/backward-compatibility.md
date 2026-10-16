@@ -302,7 +302,9 @@ add one to yet.
 - The **PHP floor**, PHP 8.1, for every package: no 2.x release raises it.
   The Symfony bundle supports Symfony 6.4, 7.4 and 8, the Laravel integration
   Laravel 10.37 to 13; a minor release may drop a framework release its
-  maintainers no longer support.
+  maintainers no longer support. Laravel 10 and 11 carry a security advisory
+  fixed in no release of theirs (CVE-2026-48019, PKSA-mdq4-51ck-6kdq), which
+  Composer refuses to install by default unless the application allows it.
 
 ## What a patch release may change
 

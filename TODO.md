@@ -181,10 +181,6 @@ Left:
   run;
 - PCRE2 10.39 also has matching bugs 10.40 fixed (`/[Aa]{2}/` misses `aa`):
   engine defects the library does not model, documented.
-Decisions for the maintainer: `docs/reference/backward-compatibility.md`
-promises the 8.1 floor and the framework ranges; Laravel 10 and 11 carry an
-unfixed advisory (PKSA-mdq4-51ck-6kdq) that Composer blocks by default, and
-the test tooling allows it.
 
 ## Which command regenerates the tracked corpus log
 
