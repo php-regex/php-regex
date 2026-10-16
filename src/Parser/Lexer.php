@@ -366,11 +366,25 @@ final class Lexer
     private readonly bool $emptyQuoteOpeningClassIsUnclosed;
 
     /**
+     * Whether "(*pla:" and the other alphabetic names of the assertions
+     * are read; before, they are verbs PCRE does not know.
+     */
+    private readonly bool $readsAlphabeticAssertions;
+
+    /**
+     * Whether a count past 65535 in a brace that is no quantifier is text;
+     * before, it is refused as too big a count.
+     */
+    private readonly bool $largeOpenCountIsText;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
     {
         $target ??= PcreTarget::runtime();
+        $this->readsAlphabeticAssertions = $target->supports(PcreFeature::AlphabeticAssertionNames);
+        $this->largeOpenCountIsText = $target->supports(PcreFeature::LargeOpenCountIsText);
         $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
         $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
         $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring);
@@ -723,6 +737,29 @@ final class Lexer
      */
     private function readBody(string $opener, array &$tokens): bool
     {
+        // Before PCRE2 10.33 an assertion has no alphabetic name: as a
+        // condition PCRE wants a group name on its "*", elsewhere a verb
+        // name ends with its run of letters, and is not one PCRE knows.
+        $name = substr($opener, 2, -1);
+        if (!$this->readsAlphabeticAssertions && PcreVerb::isAlphabeticAssertion($name)) {
+            $start = $this->position;
+            if ($this->opensCondition($tokens, $start)) {
+                throw LexerException::withContext(
+                    \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $start + 1),
+                    ErrorCode::ConditionalInvalid,
+                    $start + 1,
+                    $this->pattern,
+                );
+            }
+
+            throw LexerException::withContext(
+                \sprintf('Unknown alphabetic assertion "(*%s:": PCRE2 10.33 added the alphabetic names of the assertions; write "%s" instead.', $name, PcreVerb::classicOpener($name)),
+                ErrorCode::VerbInvalid,
+                $start + 2 + strspn($name, 'abcdefghijklmnopqrstuvwxyz'),
+                $this->pattern,
+            );
+        }
+
         $inPlace = $this->readsBodyInPlace($opener, $tokens);
         $end = $this->bodiesInPlace && $inPlace ? null : $this->alphabeticAssertionEnd($opener);
         $start = $this->position;
@@ -1359,6 +1396,20 @@ final class Lexer
             $this->trackExtendedModeScope($type);
         }
 
+        // Before PCRE2 10.37, the digits after a "{" that opens no quantifier
+        // are still read as a count, and one past 65535 refused there.
+        if (!$this->largeOpenCountIsText && !$this->inCharClass && '{' === $matchedValue && TokenType::Literal === $type) {
+            $overflow = self::countOverflow($this->pattern, $startPos + 1);
+            if (null !== $overflow) {
+                throw LexerException::withContext(
+                    \sprintf('Number too big in "{" at position %d: PCRE2 before 10.37 reads the digits after it as a count, at most 65535.', $overflow),
+                    ErrorCode::QuantifierTooBig,
+                    $overflow,
+                    $this->pattern,
+                );
+            }
+        }
+
         // "(*name:" read as a plain "(": its body never closes and is not
         // read in place. A name PCRE does not know is refused where it ends.
         if (TokenType::GroupOpen === $type && 1 === LibraryPcre::match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
@@ -1428,6 +1479,33 @@ final class Lexer
             TokenType::QuoteModeStart => $this->openQuoteMode($startPos),
             default => $this->handleContextualLiteral($type, $matchedValue, $startPos, $currentTokens),
         };
+    }
+
+    /**
+     * Where PCRE2 before 10.37 refuses the count after a "{": past the digit
+     * that takes the first number, or the one after its comma, over 65535.
+     * Null when neither does.
+     */
+    private static function countOverflow(string $pattern, int $at): ?int
+    {
+        for ($number = 0; $number < 2; $number++) {
+            $start = $at;
+            $value = 0;
+            while (Ascii::isDigit($pattern[$at] ?? '')) {
+                $value = $value * 10 + (int) $pattern[$at];
+                $at++;
+                if ($value > 65535) {
+                    return $at;
+                }
+            }
+
+            if ($at === $start || ',' !== ($pattern[$at] ?? '')) {
+                return null;
+            }
+            $at++;
+        }
+
+        return null;
     }
 
     /**

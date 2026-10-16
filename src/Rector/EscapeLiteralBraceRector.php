@@ -15,14 +15,12 @@ namespace PHPRegex\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Scalar\String_;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\RangeDiff;
-use PHPRegex\Rector\Internal\PregCall;
+use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
 
@@ -43,13 +41,6 @@ use Rector\Rector\AbstractRector;
  */
 final class EscapeLiteralBraceRector extends AbstractRector
 {
-    private const FUNCTIONS = ['preg_match', 'preg_match_all', 'preg_replace', 'preg_replace_callback', 'preg_split', 'preg_grep', 'preg_filter'];
-
-    /**
-     * @var array<int, RangeDiff>
-     */
-    private array $ranges = [];
-
     public function __construct(private readonly PhpVersionProvider $phpVersionProvider) {}
 
     /**
@@ -67,47 +58,45 @@ final class EscapeLiteralBraceRector extends AbstractRector
      */
     public function refactor(Node $node): ?Node
     {
-        $phpVersion = $this->phpVersionProvider->provide();
-        if (!$this->isNames($node, self::FUNCTIONS) || $node->isFirstClassCallable()) {
-            return null;
-        }
+        $literal = $this->isNames($node, TargetRange::FUNCTIONS) ? TargetRange::patternLiteral($node) : null;
+        $escaped = null === $literal ? null : self::escaped($literal->value, TargetRange::from($this->phpVersionProvider->provide()));
 
-        $argument = $node->getArgs()[0] ?? null;
-        if (null === $argument || !$argument->value instanceof String_ || null !== $argument->name || $argument->unpack) {
-            return null;
-        }
-
-        $escaped = $this->escaped($argument->value->value, $this->range($phpVersion));
-        if (null === $escaped) {
-            return null;
-        }
-
-        $argument->value = PregCall::string($escaped);
-
-        return $node;
+        return null === $escaped ? null : TargetRange::withPattern($node, $escaped);
     }
 
     /**
-     * The pattern with a backslash before each brace read as text that a
-     * later release would read otherwise; null when nothing differs, when
-     * the pattern is not one this rewrite can judge, or when the rewritten
-     * pattern would still read otherwise.
+     * The pattern with a backslash before each brace read as text; null
+     * when no PHP of the range reads it otherwise, when the pattern is not
+     * one this rewrite can judge, or when the rewritten pattern would not
+     * read alike on every PHP of the range.
+     *
+     * The reading kept is the targeted PHP's, when a later one reads a
+     * brace otherwise; the newest PHP's, when the targeted PHP refuses a
+     * brace a later one reads as text, as "a{65536" before PCRE2 10.37.
      */
-    private function escaped(string $pattern, RangeDiff $range): ?string
+    private static function escaped(string $pattern, RangeDiff $range): ?string
     {
         if ('' === $pattern || '{' === $pattern[0] || str_contains($pattern, '\Q')) {
             return null;
         }
 
         $verdict = $range->diff($pattern);
-        if (!$verdict->from->validation->isValid || null !== $verdict->refusedBy() || null === $verdict->readsOtherwise) {
-            return null;
+        if ($verdict->from->validation->isValid) {
+            if (null !== $verdict->refusedBy() || null === $verdict->readsOtherwise) {
+                return null;
+            }
+            $reader = $range->from();
+        } else {
+            $reader = $range->to();
+            if (!$reader->validate($pattern)->isValid) {
+                return null;
+            }
         }
 
         try {
             // Positions count from the start of the body, after the
             // one-byte delimiter.
-            $tree = $range->from()->parse($pattern);
+            $tree = $reader->parse($pattern);
             $source = $tree->source ?? '';
             $braces = self::literalBraces($tree->pattern, $source);
             rsort($braces);
@@ -116,24 +105,11 @@ final class EscapeLiteralBraceRector extends AbstractRector
                 $body = substr($body, 0, $offset).'\\'.substr($body, $offset);
             }
             $rewritten = $pattern[0].$body.substr($pattern, 1 + \strlen($source));
+
+            return TargetRange::keepsTheReading($range, $reader, $pattern, $rewritten) ? $rewritten : null;
         } catch (RegexException) {
-            return null; // never taken: every PHP of the range validated the pattern before it is parsed
+            return null; // never taken: the reader validated the pattern before it is parsed
         }
-
-        $check = $range->diff($rewritten);
-
-        return $check->from->validation->isValid && null === $check->refusedBy() && null === $check->readsOtherwise ? $rewritten : null;
-    }
-
-    /**
-     * From the PHP the code targets to the newest the library knows, never
-     * a single target: one range per PHP version, kept for the run.
-     */
-    private function range(int $phpVersion): RangeDiff
-    {
-        $boundaries = PcreTarget::phpVersionBoundaries();
-
-        return $this->ranges[$phpVersion] ??= RangeDiff::between($phpVersion, max($phpVersion, $boundaries[\count($boundaries) - 1]));
     }
 
     /**

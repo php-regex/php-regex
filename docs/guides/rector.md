@@ -63,6 +63,15 @@ return RectorConfig::configure()
 `regex.lint.compat.meaningChanges` when the project's `require.php` reaches
 PHP 8.4.
 
+The set also readies a pattern an older PHP the code runs on refuses, and a
+later one reads, without changing what the later ones read:
+`AlphabeticAssertionToClassicRector` spells `/(*pla:a)b/`, which PHP 7.3
+refuses, as `/(?=a)b/`; `EscapeNulByteRector` writes a NUL byte, which PHP 8.1
+and earlier refuse, as `\x00`; and `EscapeLiteralBraceRector` escapes the
+brace of `/a{65536/`, which PHP 8.0 and earlier refuse, as `/a\{65536/`. Each
+call is rewritten only when the rewritten pattern reads alike on every PHP
+from the one Rector targets to the newest the library knows.
+
 One rule alone is registered with `withRules()`:
 
 ```php

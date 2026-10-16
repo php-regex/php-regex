@@ -38,7 +38,11 @@ Features
   unqualified call would reach that one.
 * A pattern PHP 8.4 reads otherwise, `/a{,3}/` (text before PCRE2 10.43, a
   quantifier from it), is rewritten to keep its meaning: `/a\{,3}/`.
-* Four rules and two sets, `RegexSetList::STRING_FUNCTIONS` and
+* A pattern an older PHP your code runs on refuses, and a later one reads, is
+  spelled the way every PHP reads it: `/(*pla:a)b/` (PHP 7.4 and later) as
+  `/(?=a)b/`, a NUL byte (PHP 8.2 and later) as `\x00`, `/a{65536/` (PHP 8.1
+  and later) as `/a\{65536/`.
+* Six rules and two sets, `RegexSetList::STRING_FUNCTIONS` and
   `RegexSetList::PCRE_UPGRADE`. The rule names and the sets stay the same for
   all of 2.x; the rules take no configuration.
 
@@ -279,9 +283,58 @@ outside a class, and the call changes only when a PHP of that range reads the
 pattern otherwise, and the rewritten pattern then reads alike on every PHP of
 it. Left alone: code that targets PHP 8.4 or later, where the pattern already
 means what it says; a pattern built from more than one string; a pattern
-holding `\Q`, or delimited by `{}`; one a PHP of the range refuses, as PHP 8.5
-refuses `/(?<=a\Kb)c{,3}/` whatever its brace reads.
+holding `\Q`, or delimited by `{}`; one a later PHP of the range refuses, as
+PHP 8.5 refuses `/(?<=a\Kb)c{,3}/` whatever its brace reads.
+
+The rule also readies a pattern the targeted PHP refuses for its brace: before
+PCRE2 10.37 (PHP 8.0 and earlier), the digits after a `{` that opens no
+quantifier are read as a count, and `/a{65536/` fails with "number too big in
+{} quantifier"; from 10.37 the brace is text. The call becomes `/a\{65536/`,
+text on every PHP, as the newest PHP read it.
 Run it before raising the PHP version in `composer.json`.
+
+### `AlphabeticAssertionToClassicRector`
+
+In the `RegexSetList::PCRE_UPGRADE` set. PCRE2 10.33 (PHP 7.4) named the
+assertions and the atomic group: `(*pla:`, `(*nla:`, `(*plb:`, `(*nlb:`,
+`(*atomic:` and their long forms, as `(*positive_lookahead:`. PHP 7.3, on
+10.32, refuses them. For code that targets PHP 7.3,
+
+```php
+preg_match('/(*pla:foo)\w+(*nlb:bar)/', $subject);  // fails to compile on PHP 7.3
+```
+
+becomes
+
+```php
+preg_match('/(?=foo)\w+(?<!bar)/', $subject);        // the same tree on every PHP
+```
+
+The call changes only when the PHP your code targets refuses the pattern, and
+the rewritten pattern then reads alike on every PHP from it to the newest the
+library knows, and as the newest read the original. The non-atomic
+assertions, `(*napla:` and `(?*`, and the script runs, `(*sr:`, have no
+spelling an older release reads: they are left as they are.
+
+### `EscapeNulByteRector`
+
+In the `RegexSetList::PCRE_UPGRADE` set. PHP 8.1 and earlier refuse a pattern
+holding a NUL byte ("Null byte in regex"); PHP 8.2 reads it. For code that
+targets PHP 8.1 or earlier,
+
+```php
+preg_match("/a\0b/", $subject);   // fails on PHP 8.1
+```
+
+becomes
+
+```php
+preg_match('/a\x00b/', $subject); // the same character on every PHP
+```
+
+A byte the pattern reads as a character of its own is escaped, inside a class
+too. A byte after a backslash or in a comment, a pattern holding `\Q`, and a
+pattern built from more than one string are left as they are.
 
 Documentation
 -------------

@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector;
 
+use PHPRegex\Rector\AlphabeticAssertionToClassicRector;
 use PHPRegex\Rector\EscapeLiteralBraceRector;
+use PHPRegex\Rector\EscapeNulByteRector;
 use PHPRegex\Rector\PregMatchToStringComparisonRector;
 use PHPRegex\Rector\PregReplaceToStrReplaceRector;
 use PHPRegex\Rector\PregSplitToExplodeRector;
@@ -27,7 +29,7 @@ use Rector\ValueObject\PhpVersion;
 use Rector\VersionBonding\Contract\MinPhpVersionInterface;
 
 /**
- * The rules are frozen for 2.x: four Rector rules, none configurable, two
+ * The rules are frozen for 2.x: six Rector rules, none configurable, two
  * sets that name them; only the preg_match() rule has a PHP floor, the one
  * str_contains() and its siblings need. The literal-brace rule's docblock
  * contract is pinned here too: refactor() receives a FuncCall and returns
@@ -120,5 +122,7 @@ final class RuleContractTest extends TestCase
         yield 'preg_replace' => ['rule' => PregReplaceToStrReplaceRector::class];
         yield 'preg_split' => ['rule' => PregSplitToExplodeRector::class];
         yield 'literal brace' => ['rule' => EscapeLiteralBraceRector::class];
+        yield 'alphabetic assertion' => ['rule' => AlphabeticAssertionToClassicRector::class];
+        yield 'NUL byte' => ['rule' => EscapeNulByteRector::class];
     }
 }

@@ -29,7 +29,7 @@ use PHPRegex\Parser\Node\GroupType;
 final class PcreVerb
 {
     /**
-     * PCRE2 10.32+ alphabetic assertion verbs and their group equivalents.
+     * PCRE2 10.33+ alphabetic assertion verbs and their group equivalents.
      */
     private const ASSERTIONS = [
         'positive_lookahead' => GroupType::LookaheadPositive,
@@ -233,6 +233,30 @@ final class PcreVerb
     public static function isLookaround(string $name): bool
     {
         return GroupType::Atomic !== (self::ASSERTIONS[$name] ?? GroupType::Atomic);
+    }
+
+    /**
+     * Whether "(*name:" is one of the alphabetic names PCRE2 10.33 gave the
+     * assertions and the atomic group, "(*pla:" to "(*atomic:".
+     */
+    public static function isAlphabeticAssertion(string $name): bool
+    {
+        return isset(self::ASSERTIONS[$name]);
+    }
+
+    /**
+     * The opener every PCRE2 release reads for an alphabetic assertion name,
+     * "(?=" for "pla" or "positive_lookahead".
+     */
+    public static function classicOpener(string $name): string
+    {
+        return match (self::ASSERTIONS[$name] ?? null) {
+            GroupType::LookaheadPositive => '(?=',
+            GroupType::LookaheadNegative => '(?!',
+            GroupType::LookbehindPositive => '(?<=',
+            GroupType::LookbehindNegative => '(?<!',
+            default => '(?>',
+        };
     }
 
     /**

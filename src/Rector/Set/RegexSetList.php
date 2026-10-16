@@ -26,8 +26,10 @@ final class RegexSetList
     public const STRING_FUNCTIONS = __DIR__.'/../config/sets/string-functions.php';
 
     /**
-     * The patterns PCRE2 10.43 (PHP 8.4) reads otherwise, rewritten so they
-     * mean on PHP 8.4 what they mean today: "/a{,3}/" to "/a\{,3}/".
+     * The patterns a PHP from the one the code targets to the newest reads
+     * otherwise or refuses, rewritten so every one of them reads them alike:
+     * "/a{,3}/" to "/a\{,3}/" (PCRE2 10.43, PHP 8.4), "/(*pla:a)/" to
+     * "/(?=a)/" (PHP 7.3), a NUL byte to "\x00" (PHP 8.1 and earlier).
      */
     public const PCRE_UPGRADE = __DIR__.'/../config/sets/pcre-upgrade.php';
 }

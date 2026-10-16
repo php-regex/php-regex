@@ -311,18 +311,19 @@ final class CompatibilityCheckerTest extends TestCase
     }
 
     /**
-     * 10.39 up to the newest release a PcreFeature names.
+     * 10.32, the oldest PHP bundles, up to the newest release a
+     * PcreFeature names.
      *
      * @return list<string>
      */
     private static function releases(): array
     {
-        $newest = 39;
+        $newest = 32;
         foreach (PcreFeature::cases() as $feature) {
             $newest = max($newest, self::minor($feature->release()));
         }
 
-        return array_map(static fn (int $minor): string => '10.'.$minor, range(39, $newest));
+        return array_map(static fn (int $minor): string => '10.'.$minor, range(32, $newest));
     }
 
     private static function minor(string $release): int

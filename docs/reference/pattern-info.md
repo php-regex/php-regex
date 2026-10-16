@@ -189,12 +189,12 @@ use PHPRegex\Toolkit\Regex;
 $compatibility = Regex::create()->compatibility('/(?<=a\Kb)c/');
 
 $compatibility->isValidEverywhere();      // false
-count($compatibility->verdicts());        // 100
-count($compatibility->invalidVerdicts()); // 20
+count($compatibility->verdicts());        // 170
+count($compatibility->invalidVerdicts()); // 34
 
 $verdict = $compatibility->invalidVerdicts()[0];
 $verdict->target->phpVersionId;           // 80500
-$verdict->target->pcreVersion;            // '10.39'
+$verdict->target->pcreVersion;            // '10.32'
 $verdict->validation->errorCode;          // ErrorCode::KeepInLookaround
 $verdict->validation->offset;             // 10
 ```
@@ -207,8 +207,10 @@ version, then by PCRE2 release. Each carries its `PcreTarget` and the
 `ValidationResult` the validator gave there, with its error code and offset.
 `invalidVerdicts()` keeps the ones that refuse the pattern, in the same order.
 
-Today the matrix is 100 points: PHP 7.3, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4,
-8.4.25, 8.5 and 8.5.10, each with PCRE2 10.39 to 10.48. Every PHP is paired with every release,
+Today the matrix is 170 points: PHP 7.3, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4,
+8.4.25, 8.5 and 8.5.10, each with PCRE2 10.32 to 10.48. Below 10.39 a release
+is judged with the 10.39 rules but for the changes the library names (see
+[What changed in which release](../concepts/pcre.md#what-changed-in-which-release)). Every PHP is paired with every release,
 because PHP may be built against the PCRE2 of the system instead of the one it
 bundles. A newer PCRE2, such as 10.49, is judged with the rules of the newest
 release the library knows.
@@ -216,7 +218,7 @@ release the library knows.
 **The matrix widens.** Each PHP version or PCRE2 release whose rules the
 library learns adds points, so a minor release may change the number of
 verdicts, and `isValidEverywhere()` may turn false for a pattern a new point
-refuses. Do not count on 100.
+refuses. Do not count on 170.
 
 **Validity is not monotone.** `\K` in a lookaround is valid up to PHP 8.4 and
 refused from PHP 8.5, which compiles without
@@ -229,11 +231,11 @@ version": read the verdicts.
 The library refuses `\C` under `u` at every point. PHP 8.4.25 and later 8.4
 releases, and 8.5.10 and later, compile `u` patterns with
 `PCRE2_NEVER_BACKSLASH_C`, the others compile `\C` there, but an engine that
-compiles it can crash while matching, so `/a\Cb/u` gets 100 invalid verdicts.
+compiles it can crash while matching, so `/a\Cb/u` gets 170 invalid verdicts.
 
 A pattern is never a reason for `compatibility()` to throw. A pattern no
 target can read, a missing delimiter included, gets a verdict refusing it at
-every point: `/abc` gets 100 verdicts with the code `regex.delimiter.unclosed`
+every point: `/abc` gets 170 verdicts with the code `regex.delimiter.unclosed`
 and no offset.
 
 The lint command judges a project's patterns over the PHP versions its

@@ -33,6 +33,8 @@ additions:
 
 | Syntax | Example | Needs |
 |---|---|---|
+| Alphabetic names of the assertions and of the atomic group | `(*pla:a)`, `(*positive_lookbehind:a)`, `(*atomic:a)` | PCRE2 10.33, PHP 7.4 |
+| A brace opening no quantifier, holding a number past 65535, read as text | `a{65536` | PCRE2 10.37, PHP 8.1 |
 | A property name spelled loosely: another case, spaces, hyphens or underscores dropped | `\p{greek}`, `\p{Old Italic}`, `\p{lu}` | PCRE2 10.40, PHP 8.2 |
 | Script and script extension tables, four-letter script codes | `\p{sc:Greek}`, `\p{scx:Greek}`, `\p{Grek}` | PCRE2 10.40, PHP 8.2 |
 | Bidi classes and binary properties | `\p{bc=L}`, `\p{Bidi_Control}`, `\p{Alphabetic}` | PCRE2 10.40, PHP 8.2 |
@@ -76,8 +78,9 @@ no verdict models: on 10.39, `/[Aa]{2}/` does not match `aa`.
 The library judges PHP 7.3 and later, the PHP versions on PCRE2. It knows the
 rules of PCRE2 10.39 and later in full; a PHP that bundles an older release,
 10.32 for 7.3, 10.33 for 7.4 and 10.35 for 8.0, is judged for that release
-with the 10.39 rules, but for the few older changes the library names, and
-the lint says so in a note:
+with the 10.39 rules, but for the few older changes the library names
+(`AlphabeticAssertionNames` from 10.33, `LargeOpenCountIsText` from 10.37, in
+the table below), and the lint says so in a note:
 
 ```text
 Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -198,6 +201,8 @@ and a target has it from the release it arrived in on
 
 | behaviour | from | what changed |
 |---|---|---|
+| `AlphabeticAssertionNames` | 10.33 | The assertions and the atomic group take alphabetic names: "(*pla:", "(*positive_lookahead:", "(*nla:", "(*plb:", "(*nlb:", "(*atomic:" and their long forms. |
+| `LargeOpenCountIsText` | 10.37 | A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big. |
 | `LoosePropertyNames` | 10.40 | "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions. |
 | `OpenAndPaddedRepeatCounts` | 10.43 | "{,2}" and a count padded with spaces, as "{ 2 }", repeat instead of matching as text. |
 | `PaddedBracedEscapes` | 10.43 | Spaces are allowed inside braced escapes and references, as "\x{ 41 }" or "\g{ 1 }". |

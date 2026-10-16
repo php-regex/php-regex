@@ -83,7 +83,7 @@ In short, the public surface is:
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-psalm` | `Plugin` |
-| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `Set\RegexSetList` |
+| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `AlphabeticAssertionToClassicRector`, `EscapeNulByteRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |

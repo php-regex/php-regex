@@ -11,11 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PHPRegex\Rector\AlphabeticAssertionToClassicRector;
 use PHPRegex\Rector\EscapeLiteralBraceRector;
+use PHPRegex\Rector\EscapeNulByteRector;
 use Rector\Config\RectorConfig;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->rules([
         EscapeLiteralBraceRector::class,
+        AlphabeticAssertionToClassicRector::class,
+        EscapeNulByteRector::class,
     ]);
 };

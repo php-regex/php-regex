@@ -21,6 +21,16 @@ namespace PHPRegex\Parser;
 enum PcreFeature
 {
     /**
+     * The assertions and the atomic group take alphabetic names: "(*pla:", "(*positive_lookahead:", "(*nla:", "(*plb:", "(*nlb:", "(*atomic:" and their long forms.
+     */
+    case AlphabeticAssertionNames;
+
+    /**
+     * A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big.
+     */
+    case LargeOpenCountIsText;
+
+    /**
      * "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions.
      */
     case LoosePropertyNames;
@@ -187,6 +197,8 @@ enum PcreFeature
     public function release(): string
     {
         return match ($this) {
+            self::AlphabeticAssertionNames => '10.33',
+            self::LargeOpenCountIsText => '10.37',
             self::LoosePropertyNames => '10.40',
             self::OpenAndPaddedRepeatCounts,
             self::PaddedBracedEscapes,

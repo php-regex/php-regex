@@ -50,6 +50,17 @@ final class RangeDiffTest extends TestCase
     }
 
     #[Test]
+    public function test_the_first_and_the_last_parser_of_the_range_are_named(): void
+    {
+        $range = RangeDiff::between(70300, 80510);
+
+        $this->assertSame([70300, '10.32'], [$range->from()->target()->phpVersionId, $range->from()->target()->pcreVersion]);
+        $this->assertSame([80510, '10.44'], [$range->to()->target()->phpVersionId, $range->to()->target()->pcreVersion]);
+        $single = RangeDiff::between(80300, 80300);
+        $this->assertSame($single->from(), $single->to());
+    }
+
+    #[Test]
     public function test_one_php_is_a_range_of_one(): void
     {
         $verdict = RangeDiff::between(80300, 80300)->diff('/a{,3}/');

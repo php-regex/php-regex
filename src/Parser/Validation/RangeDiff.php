@@ -89,6 +89,14 @@ final class RangeDiff
     }
 
     /**
+     * The parser of the last target: the first one in a range of one.
+     */
+    public function to(): RegexParser
+    {
+        return [] === $this->later ? $this->from : $this->later[\count($this->later) - 1];
+    }
+
+    /**
      * The targets of the range, the first one first.
      *
      * @return list<PcreTarget>

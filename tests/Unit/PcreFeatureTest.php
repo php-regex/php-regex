@@ -47,6 +47,8 @@ final class PcreFeatureTest extends TestCase
      */
     public static function provideReleases(): iterable
     {
+        yield 'alphabetic assertion names' => [PcreFeature::AlphabeticAssertionNames, '10.32', '10.33'];
+        yield 'large open count as text' => [PcreFeature::LargeOpenCountIsText, '10.36', '10.37'];
         yield 'scan substring' => [PcreFeature::ScanSubstring, '10.44', '10.45'];
         yield 'offsets past the fault' => [PcreFeature::ErrorOffsetPastTheFault, '10.46', '10.47'];
         yield 'branch count off the condition name' => [PcreFeature::BranchCountErrorOffTheConditionName, '10.46', '10.47'];

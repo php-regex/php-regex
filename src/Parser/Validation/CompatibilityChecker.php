@@ -20,7 +20,8 @@ use PHPRegex\Parser\RegexParser;
 
 /**
  * Judges a pattern on every PHP version a rule of the library changes at,
- * with every PCRE2 release from 10.40 to the newest the library knows: the
+ * with every PCRE2 release from 10.32, the oldest PHP bundles, to the
+ * newest the library knows: the
  * validator itself runs at each point, so the answer can never drift from
  * validate(). One answer comes from the running engine: a Unicode property
  * name ("\p{...}", "\P{...}") is looked up there, at every point, unless the
@@ -36,7 +37,7 @@ use PHPRegex\Parser\RegexParser;
  */
 final class CompatibilityChecker
 {
-    private const OLDEST_RELEASE = 39;
+    private const OLDEST_RELEASE = 32;
 
     public function check(string $regex): PatternCompatibility
     {
@@ -56,8 +57,8 @@ final class CompatibilityChecker
     }
 
     /**
-     * 10.39 up to the newest release a PCRE2 behaviour the library knows
-     * arrived in.
+     * 10.32, the oldest release PHP bundles, up to the newest release a
+     * PCRE2 behaviour the library knows arrived in.
      *
      * @return list<string>
      */

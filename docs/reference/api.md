@@ -451,7 +451,7 @@ are sound bounds a minor release may narrow. A static analysis extension calls `
 
 ### compatibility(string $regex): PatternCompatibility
 
-Judges the pattern on every PHP version a rule of the library changes at, each with every PCRE2 release from 10.40 to
+Judges the pattern on every PHP version a rule of the library changes at, each with every PCRE2 release from 10.32 to
 the newest the library knows, whatever target the facade judges for. It never throws for the pattern: one no target
 accepts, a missing delimiter included, gets a verdict refusing it at every point.
 
