@@ -20,11 +20,11 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Rector\Internal\PregCall;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
-use Rector\ValueObject\PhpVersion;
 
 /**
  * Escapes a brace PCRE2 before 10.43 reads as text and PCRE2 10.43 (PHP
@@ -32,10 +32,14 @@ use Rector\ValueObject\PhpVersion;
  * finds the text "a{,3}"; on PHP 8.4 it finds "a" up to three times. The
  * call becomes preg_match('/a\{,3}/', $s), which finds the text on both.
  *
- * Only for code that targets a PHP below 8.4, a pattern written as one
- * string literal, and once the pattern, rewritten, reads alike on the
- * project's PHP and on 8.4. A pattern with "\Q", a "{" delimiter, or one
- * either PHP refuses is left as it is.
+ * The range runs from the PHP the code targets, as Rector reads it
+ * (withPhpVersion(), else composer.json), to the newest PHP the library
+ * knows, through every PHP version a verdict may change at: nothing to
+ * configure. The call is rewritten only when a PHP of that range reads the
+ * pattern otherwise, and once the pattern, rewritten, reads alike on every
+ * one of them. A pattern written in more than one string literal, with
+ * "\Q" or a "{" delimiter, or one a PHP of the range refuses, is left as it
+ * is: code that targets PHP 8.4 or later is never rewritten.
  */
 final class EscapeLiteralBraceRector extends AbstractRector
 {
@@ -64,7 +68,7 @@ final class EscapeLiteralBraceRector extends AbstractRector
     public function refactor(Node $node): ?Node
     {
         $phpVersion = $this->phpVersionProvider->provide();
-        if ($phpVersion >= PhpVersion::PHP_84 || !$this->isNames($node, self::FUNCTIONS) || $node->isFirstClassCallable()) {
+        if (!$this->isNames($node, self::FUNCTIONS) || $node->isFirstClassCallable()) {
             return null;
         }
 
@@ -122,12 +126,14 @@ final class EscapeLiteralBraceRector extends AbstractRector
     }
 
     /**
-     * From the PHP the code targets to PHP 8.4, the first that reads the
-     * braces otherwise: one range per PHP version, kept for the run.
+     * From the PHP the code targets to the newest the library knows, never
+     * a single target: one range per PHP version, kept for the run.
      */
     private function range(int $phpVersion): RangeDiff
     {
-        return $this->ranges[$phpVersion] ??= RangeDiff::between($phpVersion, PhpVersion::PHP_84);
+        $boundaries = PcreTarget::phpVersionBoundaries();
+
+        return $this->ranges[$phpVersion] ??= RangeDiff::between($phpVersion, max($phpVersion, $boundaries[\count($boundaries) - 1]));
     }
 
     /**

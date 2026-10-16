@@ -257,9 +257,9 @@ Left alone, and why:
 
 ### `EscapeLiteralBraceRector`
 
-In the `RegexSetList::PCRE_UPGRADE` set. Before PCRE2 10.43 (PHP 8.2 and 8.3)
-`{,3}` and `{ 2 }` are text; from 10.43 (PHP 8.4) they are quantifiers. For
-code that targets a PHP below 8.4,
+In the `RegexSetList::PCRE_UPGRADE` set. Before PCRE2 10.43 (PHP 8.3 and
+earlier) `{,3}` and `{ 2 }` are text; from 10.43 (PHP 8.4) they are
+quantifiers. For code that targets a PHP below 8.4,
 
 ```php
 preg_match('/a{,3}/', $subject);   // finds "a{,3}" on PHP 8.3, "a" on PHP 8.4
@@ -271,11 +271,16 @@ becomes
 preg_match('/a\{,3}/', $subject);  // finds "a{,3}" on both
 ```
 
-A backslash goes before each brace read as text outside a class, and the call
-changes only when the rewritten pattern then reads alike on the project's PHP
-and on PHP 8.4. Left alone: code that targets PHP 8.4 or later, where the
-pattern already means what it says there; a pattern built from more than one
-string; a pattern holding `\Q`, or delimited by `{}`; one either PHP refuses.
+The rule reads the range itself, with nothing to configure: from the PHP your
+code targets (`withPhpVersion()`, else `composer.json`) to the newest PHP the
+library knows, through every PHP version where a verdict may change, each with
+the PCRE2 its sources bundle. A backslash goes before each brace read as text
+outside a class, and the call changes only when a PHP of that range reads the
+pattern otherwise, and the rewritten pattern then reads alike on every PHP of
+it. Left alone: code that targets PHP 8.4 or later, where the pattern already
+means what it says; a pattern built from more than one string; a pattern
+holding `\Q`, or delimited by `{}`; one a PHP of the range refuses, as PHP 8.5
+refuses `/(?<=a\Kb)c{,3}/` whatever its brace reads.
 Run it before raising the PHP version in `composer.json`.
 
 Documentation

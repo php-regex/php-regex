@@ -47,8 +47,11 @@ return RectorConfig::configure()
 Before raising a project to PHP 8.4, the PCRE upgrade set readies the patterns
 PHP 8.4's PCRE2 reads otherwise: `EscapeLiteralBraceRector` turns `/a{,3}/`,
 the text `a{,3}` before PCRE2 10.43 and a quantifier from it, into `/a\{,3}/`,
-which reads as the text on both. It runs only while the PHP Rector targets is
-below 8.4:
+which reads as the text on both. It needs no configuration: it judges every
+PHP version from the one Rector targets to the newest the library knows, each
+with the PCRE2 its sources bundle, and rewrites a call only when one of them
+reads the pattern otherwise and the rewritten pattern reads alike on all of
+them. Code that targets PHP 8.4 or later is left as it is:
 
 ```php
 return RectorConfig::configure()
@@ -149,8 +152,8 @@ is `Xb`. See [Prefilters](../reference/prefilters.md) for both methods.
 The pattern must be one constant string, written as a literal or a constant,
 and compile on the PHP running Rector and on the PHP your code targets. The
 proof is made twice: with the PCRE2 the running PHP links, and with the one
-the target PHP bundles (10.40 up to PHP 8.2, 10.42 for 8.3, 10.44 for 8.4 and
-8.5); the call is rewritten only when both name the same function and
+the target PHP bundles (10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for 8.0, 10.39
+for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5); the call is rewritten only when both name the same function and
 strings.
 
 ## Where a `preg_match()` is rewritten

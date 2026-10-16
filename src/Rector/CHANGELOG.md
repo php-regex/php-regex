@@ -10,3 +10,6 @@ CHANGELOG
  * `EscapeLiteralBraceRector` and the `RegexSetList::PCRE_UPGRADE` set: a
    brace PCRE2 before 10.43 reads as text and PHP 8.4's PCRE2 as a quantifier
    is escaped, `/a{,3}/` to `/a\{,3}/`, for code that targets a PHP below 8.4.
+   The rule judges every PHP from the one the code targets to the newest the
+   library knows, with no configuration, and leaves a pattern any of them
+   refuses.

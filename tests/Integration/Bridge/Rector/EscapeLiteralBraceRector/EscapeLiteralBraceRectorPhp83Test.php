@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Tests\Integration\Bridge\Rector\EscapeLiteralBraceRector;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use Rector\Testing\PHPUnit\AbstractRectorTestCase;
+
+/**
+ * Configured for PHP 8.3 (PCRE2 10.42): the range from it to the newest PHP
+ * the library knows crosses PCRE2 10.43, where "{,3}" and "{ 2 }" start to
+ * repeat. The brace is escaped, as from PHP 8.2.
+ */
+final class EscapeLiteralBraceRectorPhp83Test extends AbstractRectorTestCase
+{
+    #[Test]
+    #[DataProvider('provideFixtures')]
+    public function test_fixture_is_rewritten_or_left_alone(string $filePath): void
+    {
+        $this->doTestFile($filePath);
+    }
+
+    /**
+     * @return iterable<string, array{filePath: string}>
+     */
+    public static function provideFixtures(): iterable
+    {
+        foreach (glob(__DIR__.'/Fixture/*.php.inc') ?: [] as $file) {
+            yield basename($file, '.php.inc') => ['filePath' => $file];
+        }
+    }
+
+    public function provideConfigFilePath(): string
+    {
+        return __DIR__.'/config/php83.php';
+    }
+}
