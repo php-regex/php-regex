@@ -176,7 +176,7 @@ and a target has it from the release it arrived in on
 | `LoosePropertyNames` | 10.40 | "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions. |
 | `OpenAndPaddedRepeatCounts` | 10.43 | "{,2}" and a count padded with spaces, as "{ 2 }", repeat instead of matching as text. |
 | `PaddedBracedEscapes` | 10.43 | Spaces are allowed inside braced escapes and references, as "\x{ 41 }" or "\g{ 1 }". |
-| `VariableLengthLookbehind` | 10.43 | A lookbehind may hold branches of different lengths, up to 255 characters. |
+| `VariableLengthLookbehind` | 10.43 | A lookbehind branch may match a range of lengths, up to 255 characters. |
 | `CaselessRestrictModifier` | 10.43 | The "r" modifier and "(?r)": caseless matching restricted to one script. |
 | `AsciiOptions` | 10.43 | "(?a)" and its "D", "S", "W", "P", "T" variants: ASCII-only classes. |
 | `LongGroupNames` | 10.44 | A group name may be 128 code units long, not 32. |

@@ -25,10 +25,12 @@
     {%- assign here = 'docs' -%}
     {%- if page.url contains '/guides/' %}{% assign here = 'guides' %}{% endif -%}
     {%- if page.url contains '/tutorial/' %}{% assign here = 'tutorial' %}{% endif -%}
+    {%- if page.url contains '/blog/' %}{% assign here = 'blog' %}{% endif -%}
     {%- if page.layout == 'landing' or page.layout == 'error' %}{% assign here = '' %}{% endif -%}
     <a href="/docs/"{% if here == 'docs' %} aria-current="page"{% endif %}>Docs</a>
     <a href="/guides/"{% if here == 'guides' %} aria-current="page"{% endif %}>Guides</a>
     <a href="/tutorial/"{% if here == 'tutorial' %} aria-current="page"{% endif %}>Tutorial</a>
+    <a href="/blog/"{% if here == 'blog' %} aria-current="page"{% endif %}>Blog</a>
     <a href="https://github.com/php-regex/php-regex">GitHub</a>
   </nav>
   <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>

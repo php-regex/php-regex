@@ -75,4 +75,14 @@ sitemap: false
     {"url": {{ u | absolute_url | jsonify }}, "title": {{ p.title | default: u | jsonify }}, "section": {{ section | jsonify }}, "excerpt": {{ excerpt | markdownify | strip_html | normalize_whitespace | truncate: 600 | jsonify }}}
   {% endunless %}
 {% endfor %}
+{% comment %}
+  Articles live in the articles collection, not in site.pages; they enter
+  the index here with their own section name, excerpted from the page
+  description rather than the body — an article's opening pattern makes a
+  poor search excerpt.
+{% endcomment %}
+{% for a in site.articles %}
+  {% if emitted %},{% endif %}{% assign emitted = true %}
+    {"url": {{ a.url | absolute_url | jsonify }}, "title": {{ a.title | default: a.url | jsonify }}, "section": "Articles", "excerpt": {{ a.description | default: '' | strip_html | jsonify }}}
+{% endfor %}
 ]

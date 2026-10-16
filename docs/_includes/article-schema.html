@@ -1,0 +1,31 @@
+{% comment %}
+  The article's structured data: a TechArticle carrying the author, both
+  dates and the canonical URL to search engines and LLM corpora. The author
+  is read from _data/authors.yml so the sameAs links live in exactly one
+  place; an article whose author is missing from that file degrades to the
+  organization rather than to an empty string.
+{% endcomment %}
+{% assign schema_author = site.data.authors[page.author] %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": {{ page.title | strip_html | jsonify }},
+  "description": {{ page.description | default: site.description | strip_html | jsonify }},
+  "datePublished": {{ page.date | date_to_xmlschema }},
+  "dateModified": {{ page.last_modified_at | default: page.date | date_to_xmlschema }},
+  "author": {
+    "@type": "{% if schema_author %}Person{% else %}Organization{% endif %}",
+    "name": {{ schema_author.name | default: 'PHPRegex' | jsonify }}{% if schema_author.url %},
+    "url": {{ schema_author.url | jsonify }}{% endif %}{% if schema_author.sameAs %},
+    "sameAs": {{ schema_author.sameAs | jsonify }}{% endif %}
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "PHPRegex",
+    "url": "https://php-regex.com"
+  },
+  "mainEntityOfPage": {{ page.url | absolute_url | jsonify }},
+  "inLanguage": "en"
+}
+</script>

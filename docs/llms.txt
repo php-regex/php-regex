@@ -79,3 +79,7 @@ License: MIT
 - [Chapter 8, Performance & ReDoS](https://php-regex.com/tutorial/08-performance-redos/)
 - [Chapter 9, Testing & debugging](https://php-regex.com/tutorial/09-testing-debugging/)
 - [Chapter 10, Real-world PHP](https://php-regex.com/tutorial/10-real-world-php/)
+
+## Articles
+
+- [Which PCRE2 ships with which PHP](https://php-regex.com/blog/which-pcre2-ships-with-which-php/): the engine behind every PHP release, the mid-series bumps, and how to judge one pattern for an engine you do not run

@@ -13,6 +13,26 @@ plugins:
   - jekyll-readme-index
   - jekyll-optional-front-matter
   - jekyll-relative-links
+  - jekyll-feed
+
+# Articles: dated, in-depth pieces under /blog/<slug>/. The permalink stays
+# dateless on purpose — a retitled article keeps its URL, and the citations
+# and corpora that quote it keep working; the date lives in the front
+# matter and reaches the feed, the sitemap and the article markup instead.
+collections:
+  articles:
+    output: true
+    permalink: /blog/:title/
+
+feed:
+  collections:
+    - articles
+
+# A collection document otherwise gets its title inferred from the filename
+# and titleized ("which-pcre2..." -> "Which Pcre2..."); the H1 is the real
+# title, as it already is for every page of the site.
+titles_from_headings:
+  collections: true
 
 kramdown:
   input: GFM
@@ -33,3 +53,10 @@ defaults:
       type: pages
     values:
       layout: tutorial
+  # Articles carry their own layout: a byline, the TechArticle schema and
+  # the article Open Graph type, over the same chrome as every other page.
+  - scope:
+      path: ""
+      type: articles
+    values:
+      layout: article

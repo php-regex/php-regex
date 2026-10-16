@@ -32,6 +32,8 @@
           url: /tutorial/10-real-world-php/
     - title: Regex in PHP
       url: /guides/regex-in-php/
+    - title: Articles
+      url: /blog/
     - title: ReDoS guide
       url: /guides/redos/
     - title: Formatting patterns

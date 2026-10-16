@@ -1,0 +1,9 @@
+# The byline and the article schema both read this file. The sameAs links
+# are what makes the author verifiable rather than a name in a template:
+# they point at the profiles that own the commits and the releases.
+younes:
+  name: Younes ENNAJI
+  url: https://github.com/yoeunes
+  sameAs:
+    - https://github.com/yoeunes
+    - https://packagist.org/users/yoeunes/

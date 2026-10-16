@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include head.html %}
+{% comment %}
+  Articles: the default chrome (global sidebar, breadcrumb, on-this-page
+  rail) plus the byline the docs pages do not carry — a docs page is
+  evergreen and undated, an article is dated content, so the byline is the
+  one place a publication date appears. The article Open Graph type in
+  head.html and the TechArticle schema both hang off this layout.
+{% endcomment %}
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% include header.html %}
+  <div class="page-shell">
+    {% include sidebar.html %}
+    <div class="page-main">
+      <main id="main" tabindex="-1">
+        {% include breadcrumb.html %}
+        {% assign article_author = site.data.authors[page.author] %}
+        <p class="article-byline">
+          {{ article_author.name }} · {{ page.date | date: '%-d %B %Y' }}{% if page.last_modified_at and page.last_modified_at != page.date %} · updated {{ page.last_modified_at | date: '%-d %B %Y' }}{% endif %}
+        </p>
+        {{ content }}
+      </main>
+      {% include toc.html %}
+    </div>
+  </div>
+  {% include footer.html %}
+  {% include search-dialog.html %}
+  {% include article-schema.html %}
+  {% include scripts.html %}
+</body>
+</html>

@@ -1298,6 +1298,26 @@ main table::-webkit-scrollbar-thumb {
   color: var(--amber);
 }
 
+/* ---- Article byline ------------------------------------------------------
+ * The articles' two pieces of page furniture. The docs pages are evergreen
+ * and carry no dates; an article is dated content, so the byline is the
+ * one place a publication date appears. It sits above the H1 as a kicker,
+ * small and in the soft ink — metadata the reader weighs, not a claim the
+ * piece leads with. The index date is the same register on the blog index.
+   -------------------------------------------------------------------------- */
+
+.article-byline {
+  margin: 0 0 .5rem;
+  font-size: .88rem;
+  color: var(--ink-soft);
+}
+
+.article-index-date {
+  margin: .25rem 0 2rem;
+  font-size: .88rem;
+  color: var(--ink-soft);
+}
+
 /* ---- Icons: inline SVG, brand geometry (square caps, currentColor) ---- */
 
 .icon {
