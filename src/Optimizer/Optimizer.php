@@ -41,8 +41,7 @@ use PHPRegex\Parser\TraversalAction;
  * two are equivalent before the rewrite is offered.
  *
  * The solver answering those confirmations is kept for the instance's
- * lifetime, with a DFA cache, so a later run — another pattern of the same
- * batch, the same pattern again — reuses the automata already built.
+ * lifetime, with the DFA cache it is given.
  */
 final class Optimizer
 {
@@ -128,13 +127,13 @@ final class Optimizer
             // change the language PCRE matches. This gate runs on its own, not
             // only under verifyWithAutomata, because the rewrite rules that
             // possessify are on by default.
-            if (true !== $this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
+            if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return new OptimizationResult($regex, $regex, []);
             }
         } elseif ($optimizedPattern !== $regex && $verifyWithAutomata) {
-            $isEquivalent = $this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern);
-            // A safety net: only a wrong rewrite fails the check, and none is known.
-            if (false === $isEquivalent) {
+            // Only a proven rewrite ships: one the automata disprove, or
+            // cannot prove, leaves the pattern as written.
+            if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return new OptimizationResult($regex, $regex, []);
             }
         }
@@ -202,11 +201,9 @@ final class Optimizer
     }
 
     /**
-     * @return bool|null true when equivalent, false when not or when the
-     *                   language check gave up on its budget, null when the
-     *                   automata do not read the pattern
+     * @return bool true when proven, false when disproven or unproven
      */
-    private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): ?bool
+    private function verifyOptimizedPatternWithAutomata(string $original, string $optimized): bool
     {
         return $this->check->verify($original, $optimized);
     }

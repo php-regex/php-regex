@@ -206,6 +206,16 @@ final class MatchEquivalenceTest extends TestCase
         yield 'end of subject or capital Z after dollar' => ['left' => '/a$(?:\z|\Z)/', 'right' => '/a$/', 'letters' => "a\n"];
         yield 'every branch after dollar wants the very end' => ['left' => '/a$(?:\z|\z)/', 'right' => '/a\z/', 'letters' => "a\n"];
         yield 'group closing after an anchor' => ['left' => '/(a$)/', 'right' => '/(a\Z)/', 'letters' => "a\n"];
+        yield 'possessive before a letter it never takes' => ['left' => '/a++b/', 'right' => '/a+b/', 'letters' => 'ab'];
+        yield 'possessive class before a letter it never takes' => ['left' => '/(\d++)a/', 'right' => '/(\d+)a/', 'letters' => '01a'];
+        yield 'possessive counted repeat' => ['left' => '/a{1,3}+b/', 'right' => '/a{1,3}b/', 'letters' => 'ab'];
+        yield 'possessive at the end of the pattern' => ['left' => '/(a++)/', 'right' => '/(a+)/', 'letters' => 'ab'];
+        yield 'possessive before an optional letter it never takes' => ['left' => '/a++b?/', 'right' => '/a+b?/', 'letters' => 'ab'];
+        yield 'possessive before a dollar' => ['left' => '/a++$/', 'right' => '/a+$/', 'letters' => "ab\n"];
+        yield 'possessive over a fixed sequence' => ['left' => '/(?:ab)++c/', 'right' => '/(?:ab)+c/', 'letters' => 'abc'];
+        yield 'possessive over a sequence of a letter and a class' => ['left' => '/(?:a[bc])++d/', 'right' => '/(?:a[bc])+d/', 'letters' => 'abcd'];
+        yield 'possessive over a group' => ['left' => '/(a)++b/', 'right' => '/(a)+b/', 'letters' => 'ab'];
+        yield 'possessive before branches that both may be skipped' => ['left' => '/a++(?:b?|c?)d/', 'right' => '/a+(?:b?|c?)d/', 'letters' => 'abcd'];
     }
 
     /**
@@ -235,7 +245,12 @@ final class MatchEquivalenceTest extends TestCase
         yield 'backreference' => ['left' => '/(a)\1/', 'right' => '/(a)a/', 'reason' => 'Backreferences'];
         yield 'lookahead' => ['left' => '/a(?=b)/', 'right' => '/a/', 'reason' => 'Lookarounds'];
         yield 'atomic group' => ['left' => '/(?>a+)b/', 'right' => '/a+b/', 'reason' => 'Atomic groups and possessive quantifiers'];
-        yield 'possessive' => ['left' => '/a++b/', 'right' => '/a+b/', 'reason' => 'Atomic groups and possessive quantifiers'];
+        yield 'possessive before what it would give back' => ['left' => '/a++a/', 'right' => '/a+a/', 'reason' => 'Atomic groups and possessive quantifiers'];
+        yield 'possessive whose body gives back' => ['left' => '/(?:ab?)++b/', 'right' => '/(?:ab?)+b/', 'reason' => 'Atomic groups and possessive quantifiers'];
+        yield 'possessive in a loop that takes it again' => ['left' => '/(?:a++b?)+/', 'right' => '/(?:a+b?)+/', 'reason' => 'Atomic groups and possessive quantifiers'];
+        yield 'possessive over a newline before a dollar' => ['left' => '/[a\n]++$/', 'right' => '/[a\n]+$/', 'reason' => 'Atomic groups and possessive quantifiers'];
+        yield 'possessive before a start anchor' => ['left' => '/a*+\Ab/', 'right' => '/a*\Ab/', 'reason' => 'Atomic groups and possessive quantifiers'];
+        yield 'possessive before an alternation' => ['left' => '/a++(?:a|b)/', 'right' => '/a+(?:a|b)/', 'reason' => 'Atomic groups and possessive quantifiers'];
         yield 'loop on a body that can match empty' => ['left' => '/(a*)*/', 'right' => '/(a*)/', 'reason' => 'A repeated body that can match empty'];
         yield 'word boundary' => ['left' => '/\ba/', 'right' => '/a/', 'reason' => 'Word boundaries'];
         yield 'anchor before more text' => ['left' => '/a$b/', 'right' => '/ab/', 'reason' => 'An end anchor followed by more of the pattern'];

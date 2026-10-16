@@ -754,8 +754,7 @@ final class AnalysisService
                 }
 
                 if ($verifyWithAutomata) {
-                    $isEquivalent = $this->verifyOptimizationWithAutomata($baseline, $optimizedPattern);
-                    if (false === $isEquivalent) {
+                    if (!$this->verifyOptimizationWithAutomata($baseline, $optimizedPattern)) {
                         return null;
                     }
                 }
@@ -1248,19 +1247,18 @@ final class AnalysisService
     }
 
     /**
-     * The optimizer's verdict on a rewrite: the $matches first, then the
-     * strings matched.
+     * The optimizer's verdict on a rewrite: the $matches it writes, or,
+     * where the match solver does not read it, the same normal form.
      *
-     * @return bool|null true when proven, false when disproven or when the
-     *                   check gave up on its budget, null when the automata
-     *                   do not read the pattern
+     * @return bool true when proven, false when disproven or unproven,
+     *              a side the solver cannot parse included
      */
-    private function verifyOptimizationWithAutomata(string $original, string $optimized): ?bool
+    private function verifyOptimizationWithAutomata(string $original, string $optimized): bool
     {
         try {
             return (new RewriteCheck(new LanguageSolver($this->regex, $this->dfas())))->verify($original, $optimized);
         } catch (ExceptionInterface) {
-            return null;
+            return false;
         }
     }
 

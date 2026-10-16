@@ -15,16 +15,16 @@ namespace PHPRegex\Optimizer\Internal;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
-use PHPRegex\Automata\Match\MatchRun;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 
 /**
  * The proof that a rewrite may replace its pattern, one verdict for the
- * optimizer and the lint: first the $matches preg_match() writes on every
- * subject, then, where the match solver does not read a pattern or gives up,
- * the strings both match. A check that runs out of its budget proves
- * nothing.
+ * optimizer and the lint: the $matches preg_match() writes on every subject,
+ * or, where the match solver does not read a pattern or gives up, the same
+ * normal form. The strings both match prove no $matches: /a(?!b)/ and /a/
+ * match the same strings whole, yet not the same text in "ab". A check that
+ * runs out of its budget proves nothing.
  *
  * @internal
  */
@@ -32,45 +32,33 @@ final class RewriteCheck
 {
     /**
      * The configurations the match check may explore: a few hundred settle
-     * the rewrites of real patterns, and the huge ones fall back to
-     * comparing languages.
+     * the rewrites of real patterns, and the huge ones stay unproven.
      */
     private const MATCH_CHECK_STATES = 500;
 
     /**
      * The threads the match check may step in all: a configuration of a
      * list of hundreds of words holds a thread per word, so a few hundred
-     * configurations there cost seconds, where the language check takes a
-     * fraction of one.
+     * configurations there cost seconds.
      */
     private const MATCH_CHECK_WORK = 200_000;
-
-    /**
-     * The transitions the language check may process. Each DFA state writes
-     * a transition per range of the alphabet, and a Unicode class such as
-     * \pL splits it into hundreds of ranges: at the solver's default budget,
-     * one pattern's table took hundreds of megabytes before the check gave
-     * up.
-     */
-    private const LANGUAGE_CHECK_WORK = 200_000;
 
     public function __construct(private readonly LanguageSolver $solver) {}
 
     /**
      * @throws ExceptionInterface when the match solver cannot parse a side
      *
-     * @return bool|null true when proven, false when disproven or when the
-     *                   language check gave up on its budget, null when the
-     *                   automata do not read the patterns
+     * @return bool true when proven, false when disproven or unproven
      */
-    public function verify(string $original, string $optimized): ?bool
+    public function verify(string $original, string $optimized): bool
     {
         // A pattern goes to preg_match_all(), preg_replace(), preg_split()
         // and preg_match() from an offset as well: the rewrite must write
         // what the pattern writes in each. A pattern that reads the text
         // before where the search starts proves nothing from offset 0, "^"
         // needs a search past the start of the subject, and an empty match
-        // the retry those calls make after it.
+        // the retry those calls make after it. Two patterns that read alike
+        // need no run at all.
         $runs = $this->solver->runsOfEveryCall($original, $optimized);
         if (null === $runs) {
             return false;
@@ -91,20 +79,11 @@ final class RewriteCheck
 
             return true;
         } catch (ComplexityException) {
-            // Outside what the match solver reads, or past its budget: the
-            // strings must agree, which says nothing of the other runs.
-            if ([MatchRun::Search] !== $runs) {
-                return false;
-            }
-        }
-
-        try {
-            return $this->solver->equivalent($original, $optimized, new SolverOptions(maxTransitionsProcessed: self::LANGUAGE_CHECK_WORK))->isEquivalent;
-        } catch (ComplexityException $e) {
-            // The match check parsed both patterns already: only the
-            // automata can refuse them here. Only a pattern they cannot
-            // read at all keeps its rewrite on trust.
-            return isset($e->getDiagnostic()['limit']) ? false : null;
+            // Outside what the match solver reads, or past its budget, and
+            // not reading alike: the strings both match whole would prove no
+            // $matches, a lookahead at the edge of the match or alternatives
+            // taken in another order write other text.
+            return false;
         }
     }
 }

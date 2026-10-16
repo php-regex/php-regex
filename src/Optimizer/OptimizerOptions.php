@@ -48,8 +48,8 @@ final class OptimizerOptions
      *                                      "ab(?:c|d)"; off by default, as it makes an /x pattern harder
      *                                      to read
      * @param int  $minQuantifierCount      how many repetitions of an item become a quantifier, at least 2
-     * @param bool $verifyWithAutomata      a rewrite is only offered when the automata prove it matches
-     *                                      the same strings
+     * @param bool $verifyWithAutomata      a rewrite is only offered when the automata prove it writes
+     *                                      the same $matches
      */
     public function __construct(
         public readonly bool $digits = true,

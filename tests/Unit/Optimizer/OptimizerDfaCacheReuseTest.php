@@ -21,25 +21,25 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The optimizer's automata net compiles a pattern once per instance: the
- * solver it asks is kept, with a DFA cache, so a later run of the same
- * pattern answers from the cache instead of building the automaton again.
+ * The optimizer's check of a rewrite asks the match solver, which builds a
+ * priority automaton per pattern and no DFA: the cache an instance is given
+ * is never filled by it, on the first run or on a later one.
  */
 final class OptimizerDfaCacheReuseTest extends TestCase
 {
     #[Test]
-    public function test_the_net_reuses_cached_dfas_between_runs_of_one_optimizer(): void
+    public function test_the_check_of_a_rewrite_compiles_no_dfa(): void
     {
         $cache = new CountingDfaCache();
         $optimizer = new Optimizer(Regex::create()->parser(), $cache);
 
         $this->assertSame('/a++b/', $optimizer->optimize('/a+b/', ['possessive' => true])->optimized);
-        $this->assertSame(2, $cache->lookups, 'one equivalence check reads two patterns');
-        $this->assertSame(0, $cache->hits, 'the first run compiles both sides itself');
+        $this->assertSame(0, $cache->lookups, 'the match solver proves the rewrite without a DFA');
+        $this->assertSame(0, $cache->hits);
 
         $this->assertSame('/a++b/', $optimizer->optimize('/a+b/', ['possessive' => true])->optimized);
-        $this->assertSame(4, $cache->lookups);
-        $this->assertSame(2, $cache->hits, 'the second run finds both DFAs the first one built');
+        $this->assertSame(0, $cache->lookups);
+        $this->assertSame(0, $cache->hits);
     }
 
     /**

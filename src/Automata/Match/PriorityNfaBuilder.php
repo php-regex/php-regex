@@ -32,9 +32,10 @@ use PHPRegex\Parser\Hir\RepetitionHir;
 /**
  * Builds the priority NFA of a pattern, for the fragment where trying the
  * paths in priority order, all at once, picks the match PCRE's backtracking
- * picks: no backreference, lookaround, atomic group or possessive
- * quantifier, no loop over a body that can match empty, anchors only where
- * they test the edges of the subject.
+ * picks: no backreference, lookaround or atomic group, no possessive
+ * quantifier that could have to give anything back, no loop over a body
+ * that can match empty, anchors only where they test the edges of the
+ * subject.
  *
  * @internal
  */
@@ -54,6 +55,15 @@ final class PriorityNfaBuilder
 
     private PriorityNfa $nfa;
 
+    /**
+     * The possessive quantifiers read as greedy ones, each with the first
+     * characters of its body and the state that follows it, checked once
+     * the whole automaton is built.
+     *
+     * @var list<array{first: CharSet, next: int, position: int}>
+     */
+    private array $possessives = [];
+
     public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
 
     /**
@@ -62,9 +72,12 @@ final class PriorityNfaBuilder
     public function build(Hir $hir, bool $unicode): PriorityNfa
     {
         $this->nfa = new PriorityNfa($unicode);
+        $this->possessives = [];
         $match = $this->nfa->add(PriorityNfa::MATCH);
         $this->nfa->start = $this->state($hir, $match);
         ksort($this->nfa->names);
+
+        $this->assertPossessivesNeverGiveBack();
 
         return $this->nfa;
     }
@@ -133,15 +146,24 @@ final class PriorityNfaBuilder
      */
     private function repetition(RepetitionHir $hir, int $next): int
     {
+        // A possessive quantifier writes what the greedy one writes when the
+        // greedy one never has to give anything back: its body goes one
+        // fixed way, and nothing after it can start where an iteration
+        // started. That is checked once what follows it is built.
         if (Greed::Possessive === $hir->greed) {
-            throw new ComplexityException(self::ATOMIC_MESSAGE, $hir->startPosition, $this->pattern);
+            $first = self::fixedFirst($hir->body);
+            if (null === $first) {
+                throw new ComplexityException(self::ATOMIC_MESSAGE, $hir->startPosition, $this->pattern);
+            }
+
+            $this->possessives[] = ['first' => $first, 'next' => $next, 'position' => $hir->startPosition];
         }
 
         if ((null === $hir->max || $hir->max > 1) && 0 === $hir->body->properties->minLength) {
             throw new ComplexityException(self::NULLABLE_LOOP_MESSAGE, $hir->startPosition, $this->pattern);
         }
 
-        $greedy = Greed::Greedy === $hir->greed;
+        $greedy = Greed::Lazy !== $hir->greed;
         if (null === $hir->max) {
             // The loop: one more iteration or out, in the order the greed says.
             $loop = $this->split([]);
@@ -210,6 +232,107 @@ final class PriorityNfaBuilder
         $this->nfa->next[$state] = $next;
 
         return $state;
+    }
+
+    /**
+     * The characters a body that matches one fixed way starts with: a
+     * class, a literal, or a sequence of them, through captures. Null for
+     * anything with a choice inside, which a greedy quantifier may undo.
+     */
+    private static function fixedFirst(Hir $body): ?CharSet
+    {
+        while ($body instanceof CaptureHir) {
+            $body = $body->body;
+        }
+
+        if ($body instanceof ClassHir) {
+            return $body->set->isEmpty() ? null : $body->set;
+        }
+
+        if ($body instanceof LiteralHir) {
+            return [] === $body->codePoints ? null : CharSet::single($body->codePoints[0]);
+        }
+
+        if (!$body instanceof ConcatHir || [] === $body->parts) {
+            return null;
+        }
+
+        $first = null;
+        foreach ($body->parts as $part) {
+            $partFirst = self::fixedFirst($part);
+            if (null === $partFirst) {
+                return null;
+            }
+
+            $first ??= $partFirst;
+        }
+
+        return $first;
+    }
+
+    /**
+     * Each possessive quantifier read as a greedy one, checked against what
+     * follows it now that the whole automaton is built.
+     *
+     * @throws ComplexityException
+     */
+    private function assertPossessivesNeverGiveBack(): void
+    {
+        foreach ($this->possessives as $possessive) {
+            if (!$this->neverTakes($possessive['first'], $possessive['next'])) {
+                throw new ComplexityException(self::ATOMIC_MESSAGE, $possessive['position'], $this->pattern);
+            }
+        }
+    }
+
+    /**
+     * Whether nothing reached from the state, before it reads a character,
+     * can hold where a possessive quantifier's iteration started: the
+     * characters it reads first share none with the body's, and no anchor
+     * on the way could hold there and not after the last iteration. A
+     * greedy quantifier given back to such a place finds no match there, so
+     * it never gives back, and the possessive one writes what it writes.
+     */
+    private function neverTakes(CharSet $first, int $state): bool
+    {
+        $pending = [$state];
+        $seen = [];
+        while (null !== $state = array_pop($pending)) {
+            if (isset($seen[$state])) {
+                continue;
+            }
+            $seen[$state] = true;
+
+            switch ($this->nfa->kinds[$state]) {
+                case PriorityNfa::MATCH:
+                    break;
+                case PriorityNfa::SPLIT:
+                    array_push($pending, ...$this->nfa->targets[$state]);
+
+                    break;
+                case PriorityNfa::CHAR:
+                    if (!$this->nfa->sets[$state]->intersect($first)->isEmpty()) {
+                        return false;
+                    }
+
+                    break;
+                case PriorityNfa::START:
+                    // "\A" holds before the first iteration as well as before none.
+                    return false;
+                case PriorityNfa::END_OR_FINAL_NEWLINE:
+                    // "$" holds before a final newline the body may have read.
+                    if ($first->contains(0x0A)) {
+                        return false;
+                    }
+                    $pending[] = $this->nfa->next[$state];
+
+                    break;
+                default:
+                    $pending[] = $this->nfa->next[$state];
+            }
+        }
+
+        return true;
     }
 
     /**

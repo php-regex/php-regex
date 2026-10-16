@@ -177,16 +177,20 @@ final class RegexPatternRuleQuotedPatternRenderingTest extends RuleTestCase
     public static function provideUnbracedEscapesAtTheCut(): iterable
     {
         $a = static fn (int $count): string => str_repeat('a', $count);
+        // Letters that do not repeat: a run of one letter spelled as a
+        // repeat would keep the rewrite of a pattern with a back reference
+        // from reading as the pattern does, and unproven.
+        $letters = static fn (int $count): string => substr(str_repeat('abcdefghijklmnopqrstuvwxyz', 3), 0, $count);
 
         yield 'a control character' => ['line' => 51, 'pattern' => '/'.$a(47).'\cA[0-9]+/'];
-        yield 'a back reference by name in angle brackets' => ['line' => 52, 'pattern' => '/(?<n>b)'.$a(40).'\k<n>[0-9]+/'];
-        yield 'a back reference by name in quotes' => ['line' => 53, 'pattern' => '/(?<n>b)'.$a(40)."\\k'n'[0-9]+/"];
-        yield 'a subroutine call by name' => ['line' => 54, 'pattern' => '/(?<n>b)'.$a(40).'\g<n>[0-9]+/'];
-        yield 'a relative back reference' => ['line' => 55, 'pattern' => '/(b)'.$a(44).'\g-1[0-9]+/'];
-        yield 'a numbered back reference after \g' => ['line' => 56, 'pattern' => '/(b)'.$a(44).'\g1[0-9]+/'];
+        yield 'a back reference by name in angle brackets' => ['line' => 52, 'pattern' => '/(?<n>b)'.$letters(40).'\k<n>[0-9]+/'];
+        yield 'a back reference by name in quotes' => ['line' => 53, 'pattern' => '/(?<n>b)'.$letters(40)."\\k'n'[0-9]+/"];
+        yield 'a subroutine call by name' => ['line' => 54, 'pattern' => '/(?<n>b)'.$letters(40).'\g<n>[0-9]+/'];
+        yield 'a relative back reference' => ['line' => 55, 'pattern' => '/(b)'.$letters(44).'\g-1[0-9]+/'];
+        yield 'a numbered back reference after \g' => ['line' => 56, 'pattern' => '/(b)'.$letters(44).'\g1[0-9]+/'];
         yield 'an octal escape of two digits' => ['line' => 57, 'pattern' => '/'.$a(47).'\12[0-9]+/'];
         yield 'an octal escape of three digits' => ['line' => 58, 'pattern' => '/'.$a(47).'\012[0-9]+/'];
-        yield 'a back reference of two digits' => ['line' => 59, 'pattern' => '/(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)'.$a(17).'\10[0-9]+/'];
+        yield 'a back reference of two digits' => ['line' => 59, 'pattern' => '/(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)'.$letters(17).'\10[0-9]+/'];
         // An unbraced property is "\p" or "\P" and one letter.
         yield 'a one-letter property' => ['line' => 65, 'pattern' => '/'.$a(47).'\pL[0-9]+/'];
         yield 'a negated one-letter property' => ['line' => 66, 'pattern' => '/'.$a(47).'\PL[0-9]+/'];
@@ -227,7 +231,7 @@ final class RegexPatternRuleQuotedPatternRenderingTest extends RuleTestCase
     #[Test]
     public function test_quoted_pattern_cut_keeps_an_unbraced_escape_ending_on_the_cut(): void
     {
-        $pattern = '/(?<n>b)'.str_repeat('a', 37).'\k<n>[0-9]+/';
+        $pattern = '/(?<n>b)'.substr(str_repeat('abcdefghijklmnopqrstuvwxyz', 2), 0, 37).'\k<n>[0-9]+/';
         $message = $this->errorOnLine(RegexPatternRule::IDENTIFIER_OPTIMIZATION, 60)->getMessage();
 
         $this->assertSame('>', $pattern[49]);

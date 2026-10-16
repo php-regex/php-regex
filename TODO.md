@@ -162,15 +162,10 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 The determinization budget, the shared rewrite check and the bounded DFA
 cache are merged. Follow-ups:
-- the language check, where the match solver does not read a pattern,
-  compares whole-string languages, which proves no `$matches`: it still
-  proves `/a(?!b)/` and `/a/` (`preg_match()` tells them apart on "ab"),
-  and `/(?:a|ab)(?!c)/` and `/(?:ab|a)(?!c)/` (on "ab" one matches "a",
-  the other "ab"). A lookahead at the edge of the match, and the order of
-  alternatives the match solver does not read, need a check of their own,
-  or the fallback should keep only rewrites that read alike (as patterns
-  that look before the match start already do). No known rewrite produces
-  such a pair; the corpus sample of 400 files shows none;
+- `Optimizer::__construct()` takes a `?DfaCacheInterface`, added in 2.0.0,
+  that nothing reads any more: the check of a rewrite builds no DFA since
+  the strings both sides match no longer prove one. Keep it or drop it
+  before the tag;
 - the language server offers its quick fix from `Regex::optimize()`
   without `verify_with_automata`: only a rewrite that adds atomicity is
   checked there;

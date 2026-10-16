@@ -45,21 +45,21 @@ final class AnalysisServiceDfaCacheTest extends TestCase
     }
 
     /**
-     * The lookahead keeps the match check out, so the language check runs,
-     * on the automata: the run of x's spelled as a repeat keeps the rewrite
-     * from reading as the pattern does.
+     * The lookahead keeps the match check out, and the rewrite reads as the
+     * pattern does: the check proves it on the patterns' normal form and
+     * builds no automaton.
      */
     #[Test]
-    public function test_the_optimizer_checks_share_the_cache_of_the_analysis(): void
+    public function test_the_optimizer_checks_build_no_automaton(): void
     {
         $cache = self::spy();
         $analysis = new AnalysisService(RegexParser::create(), dfaCache: $cache);
 
-        $suggestions = $analysis->suggestOptimizations(self::twice(['/(?=1)[0-9]+xxxxxx x/x', '/(?=1)[0-9]+xxxxxx/']), 1);
+        $suggestions = $analysis->suggestOptimizations(self::twice(['/(?=1)[0-9]+ x/x', '/(?=1)[0-9]+/']), 1);
 
         $this->assertCount(4, $suggestions);
-        $this->assertNotSame([], $cache->sets, 'The rewrite under x is checked with the automata of the analysis.');
-        $this->assertSame(array_fill_keys(array_keys($cache->sets), 1), $cache->sets, 'Every automaton is built once.');
+        $this->assertSame(['/(?=1)\d+ x/x', '/(?=1)\d+ x/x', '/(?=1)\d+/', '/(?=1)\d+/'], array_map(static fn (array $suggestion): string => $suggestion['optimization']->optimized, $suggestions));
+        $this->assertSame([], $cache->sets, 'The check of a rewrite builds no automaton.');
     }
 
     /**

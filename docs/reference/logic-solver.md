@@ -112,7 +112,9 @@ subject on which the two differ is the shortest.
 
 It reads the fragment where that run picks the match PCRE's backtracking picks. It refuses,
 each with its reason: backreferences, subroutines, conditionals and control verbs;
-lookarounds; atomic groups and possessive quantifiers; a loop over a body that can match
+lookarounds; atomic groups, and a possessive quantifier that could have to give back what
+it matched (one whose body may match more than one way, or that something after it may
+start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
 and `\K`; an end anchor followed by more of the pattern; and two patterns of which one
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
@@ -128,10 +130,13 @@ way, `equivalent()` calls `/a$/` and `/a\z/` equivalent, as both match the whole
 second.
 
 The optimizer, with `verify_with_automata`, and the lint's suggestions put a rewrite to
-`matchEquivalent()` first: a rewrite it proves is offered, one it disproves is not. Where
-the match solver does not read a pattern, or gives up on its budget, `equivalent()`
-decides. Both questions work within a budget of their own there (200,000 units of work),
-and one that runs out proves nothing: the rewrite is not offered.
+`matchEquivalent()`: a rewrite it proves is offered, one it disproves is not. The check
+works within a budget of its own (500 configurations, 200,000 units of work), and one that
+runs out proves nothing. Where the match solver does not read a pattern, or gives up,
+only a rewrite that reads as the pattern does is offered (the same normal form, as `[0-9]`
+and `\d`): the strings two patterns match prove no `$matches`. `/a(?!b)/` and `/a/` match
+the same strings whole, yet on `"ab"` only the second matches; `/(?:a|ab)(?!c)/` and
+`/(?:ab|a)(?!c)/` match `"a"` and `"ab"` there.
 
 A rewrite must hold in every call the pattern may go to, not only in `preg_match()` from
 offset 0. From an offset, `^` and `\A` never hold: `/^[\s\S]|a/` and `/^[\s\S]|b/` write

@@ -24,19 +24,18 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The rewrite of a pattern under /x is checked as the optimizer checks every
- * other rewrite: first on the $matches it writes, then, where the match
- * solver does not read the pattern or gives up, on the strings it matches. A
- * check that gave up on its budget proves nothing, so the suggestion is not
- * made. A rewrite that only respells a class, [0-9] as \d, reads as the
+ * other rewrite: on the $matches it writes, or, where the match solver does
+ * not read the pattern or gives up, on whether it reads as the pattern does.
+ * The strings both match prove nothing, and neither does a check that gave
+ * up on its budget, so the suggestion is not made. A rewrite that only respells a class, [0-9] as \d, reads as the
  * pattern does and needs no automaton: the rewrites here also spell a run
  * of x's as a repeat.
  */
 final class ExtendedRewriteVerificationTest extends TestCase
 {
     /**
-     * Under m the match check does not read the pattern, and the fifteenth
-     * character before the x's is a 0: 2^15 DFA states for the language
-     * check.
+     * Under m the match check does not read the pattern, and the run of x's
+     * spelled as a repeat keeps the rewrite from reading as it does.
      */
     #[Test]
     public function test_a_rewrite_the_language_check_gives_up_on_is_not_suggested(): void
@@ -77,10 +76,9 @@ final class ExtendedRewriteVerificationTest extends TestCase
     }
 
     /**
-     * [\pL0-9] splits the alphabet into hundreds of ranges, a transition
-     * each for every state, and under m the match check does not read the
-     * pattern: the check of the rewrite runs out of the work it may spend,
-     * though the solver's default budget would settle it.
+     * Under m the match check does not read the pattern, and the strings
+     * both sides match, which the solver's default budget settles, prove no
+     * $matches.
      */
     #[Test]
     public function test_a_rewrite_whose_check_outgrows_its_work_is_not_suggested(): void
@@ -92,10 +90,28 @@ final class ExtendedRewriteVerificationTest extends TestCase
         $this->assertSame(['/[0-9\pL]*0[0-9]{6}x{6}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
     }
 
+    /**
+     * Under m the match check does not read the pattern: the two match the
+     * same strings, which proves no $matches, and the rewrite is not
+     * suggested.
+     */
     #[Test]
-    public function test_a_rewrite_the_language_check_proves_is_suggested(): void
+    public function test_a_rewrite_only_the_strings_matched_agree_on_is_not_suggested(): void
     {
-        $this->assertSame(['/\d*0\d{3}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', true));
+        $this->assertTrue((new LanguageSolver())->equivalent('/[0-9]*0[0-9]{3}xxxxxx$/mx', '/\d*0\d{3}x{6}$/mx')->isEquivalent, 'The two match the same strings.');
+
+        $this->assertSame([], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', true));
+        $this->assertSame(['/\d*0\d{3}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', false), 'Unchecked, the rewrite is suggested.');
+    }
+
+    /**
+     * A rewrite that only respells a class reads as the pattern does: it is
+     * suggested where the match check does not read the pattern.
+     */
+    #[Test]
+    public function test_a_rewrite_reading_alike_is_suggested_where_the_match_check_does_not_read(): void
+    {
+        $this->assertSame(['/\d*0\d{3} x$/mx'], $this->suggestions('/[0-9]*0[0-9]{3} x$/mx', true));
     }
 
     /**
@@ -114,17 +130,17 @@ final class ExtendedRewriteVerificationTest extends TestCase
     }
 
     /**
-     * Only the automata's own budget proves nothing; a check that could not
-     * even read a side answers nothing either way.
+     * A rewrite the check cannot read, or a side it cannot even parse, is
+     * not proven.
      */
     #[Test]
-    public function test_a_rewrite_the_check_cannot_read_is_left_undecided(): void
+    public function test_a_rewrite_the_check_cannot_read_is_not_proven(): void
     {
         $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
         $analysis = new AnalysisService(RegexParser::create(['cache' => null]));
 
-        $this->assertNull($verify->invoke($analysis, '/(a)\1/x', '/(a)a/x'));
-        $this->assertNull($verify->invoke($analysis, '/a/x', '/(a/x'));
+        $this->assertFalse($verify->invoke($analysis, '/(a)\1/x', '/(a)a/x'));
+        $this->assertFalse($verify->invoke($analysis, '/a/x', '/(a/x'));
     }
 
     /**

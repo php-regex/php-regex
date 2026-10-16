@@ -494,10 +494,10 @@ echo $result->changes[0];  // 'Optimized pattern.'
 ```
 
 When `verifyWithAutomata` is enabled, PHPRegex validates that the optimization writes the same `$matches` as the
-pattern on every subject (`LanguageSolver::matchEquivalent()`), and, where the match solver does not read the
-pattern, that it matches the same strings, for the supported regular subset. Unsupported patterns fall back to the
-original behavior. The check works within a budget of its own: one it runs out of proves nothing, and the original
-pattern is returned. The rewrite must hold in `preg_match_all()`, `preg_replace()`, `preg_split()` and from an offset
+pattern on every subject (`LanguageSolver::matchEquivalent()`). Where the match solver does not read the pattern, only
+a rewrite that reads as the pattern does (`[0-9]` for `\d`) is kept: matching the same strings is not enough, as
+`/a(?!b)/` and `/a/` show on `"ab"`. The check works within a budget of its own: one it runs out of proves nothing,
+and the original pattern is returned. The rewrite must hold in `preg_match_all()`, `preg_replace()`, `preg_split()` and from an offset
 too: a pattern with `^` or `\A`, or that may match empty, is checked in those runs as well, and one that reads the
 text before where the search starts (a lookbehind, `\b`, `\B`, `^` under `m`, `\K`) keeps only a rewrite that reads
 as it does (see [the logic solver](logic-solver.md)).

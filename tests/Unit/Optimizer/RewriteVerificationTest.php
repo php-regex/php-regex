@@ -23,7 +23,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * A rewrite ships only if it writes the same $matches as the pattern: the
  * same strings are not enough, as /(a|ab)/ and /(ab|a)/ show on "ab". Where
- * the match solver cannot read a pattern, the language solver judges it.
+ * the match solver cannot read a pattern, only a rewrite that reads as the
+ * pattern does is proven.
  */
 final class RewriteVerificationTest extends TestCase
 {
@@ -39,8 +40,9 @@ final class RewriteVerificationTest extends TestCase
     /**
      * Hundreds of short branches, as in a user-agent list: the match check
      * steps a thread per branch for every character class, so it gives up on
-     * its work budget, not after hundreds of configurations, and the
-     * language check settles the rewrite. It took seconds.
+     * its work budget, not after hundreds of configurations. The strings both
+     * match prove no $matches: the rewrite is not proven, and that is known
+     * at once. It took seconds.
      */
     #[Test]
     public function test_a_wide_alternation_is_judged_without_a_long_match_search(): void
@@ -62,15 +64,14 @@ final class RewriteVerificationTest extends TestCase
         $verdict = $verify->invoke($optimizer, $original, $rewrite);
         $seconds = (hrtime(true) - $start) / 1e9;
 
-        $this->assertTrue($verdict);
+        $this->assertFalse($verdict);
         $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
     }
 
     /**
-     * The match check gives up on its configurations and the language check
-     * on its DFA states (2^14 for the last fourteen letters): the rewrite is
-     * unproven, and only a rewrite the automata cannot read at all is kept
-     * on trust.
+     * The match check gives up on its configurations (2^14 for the last
+     * fourteen letters), and the rewrite does not read as the pattern does:
+     * it is unproven.
      */
     #[Test]
     public function test_a_rewrite_both_solvers_give_up_on_is_not_offered(): void
@@ -110,14 +111,61 @@ final class RewriteVerificationTest extends TestCase
         yield 'branches swapped: same strings, other groups' => ['original' => '/(a|ab)/', 'rewrite' => '/(ab|a)/', 'verdict' => false];
         yield 'shorter branch first, made lazy' => ['original' => '/a|ab/', 'rewrite' => '/a(?:b)??/', 'verdict' => true];
         yield 'class for an alternation' => ['original' => '/(a|b)c/', 'rewrite' => '/([ab])c/', 'verdict' => true];
-        yield 'possessive, judged on the language' => ['original' => '/a+b/', 'rewrite' => '/a++b/', 'verdict' => true];
+        yield 'possessive, never giving back' => ['original' => '/a+b/', 'rewrite' => '/a++b/', 'verdict' => true];
+        yield 'possessive before a lookahead' => ['original' => '/a+(?!b)/', 'rewrite' => '/a++(?!b)/', 'verdict' => false];
         yield 'other strings' => ['original' => '/ab/', 'rewrite' => '/ac/', 'verdict' => false];
-        yield 'beyond both solvers' => ['original' => '/(a)\1/', 'rewrite' => '/(a)a/', 'verdict' => null];
+        yield 'beyond both solvers' => ['original' => '/(a)\1/', 'rewrite' => '/(a)a/', 'verdict' => false];
+        yield 'beyond the match solver, reading alike' => ['original' => '/(a)\1[0-9]/', 'rewrite' => '/(a)\1\d/', 'verdict' => true];
         yield 'a shorthand for a class, anchored' => ['original' => '/^[0-9]+$/', 'rewrite' => '/^\d+$/', 'verdict' => true];
         yield 'a shorthand for a class, matching empty' => ['original' => '/[0-9]*/', 'rewrite' => '/\d*/', 'verdict' => true];
         yield 'a class for an alternation, anchored and matching empty' => ['original' => '/^(?:a|b)*/', 'rewrite' => '/^[ab]*/', 'verdict' => true];
         yield 'a useless flag dropped around a lookbehind' => ['original' => '/(?<!x)a/s', 'rewrite' => '/(?<!x)a/', 'verdict' => true];
         yield 'a useless flag dropped around a start of line' => ['original' => '/^\s*$/sm', 'rewrite' => '/^\s*$/m', 'verdict' => true];
+    }
+
+    /**
+     * The match solver does not read a lookahead: the strings both patterns
+     * match whole agree, yet preg_match() tells them apart, with a lookahead
+     * at the edge of the match or alternatives taken in another order. Only a
+     * rewrite that reads as the pattern does is proven there.
+     */
+    #[Test]
+    #[DataProvider('provideRewritesOnlyTheLanguagesAgreeOn')]
+    public function test_a_rewrite_only_the_languages_agree_on_is_not_proven(string $original, string $rewrite, string $subject): void
+    {
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null]));
+        $this->assertTrue($solver->equivalent($original, $rewrite)->isEquivalent, 'Both match the same strings whole.');
+        $this->assertNotSame(self::called('preg_match', $original, $subject), self::called('preg_match', $rewrite, $subject), 'The engine tells them apart.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), $original, $rewrite));
+    }
+
+    /**
+     * A possessive quantifier before a lookahead gives nothing back where
+     * the greedy one would: the strings matched whole agree, the engine does
+     * not, and the rewrite is not made.
+     */
+    #[Test]
+    public function test_a_possessive_rewrite_before_a_lookahead_is_not_made(): void
+    {
+        $this->assertNotSame(self::called('preg_match', '/a+(?!b)/', 'aab'), self::called('preg_match', '/a++(?!b)/', 'aab'), 'The engine tells them apart.');
+
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+
+        $this->assertSame('/a+(?!b)/', $optimizer->optimize('/a+(?!b)/', ['possessive' => true])->optimized);
+        $this->assertSame('/\d++a/', $optimizer->optimize('/\d+a/', ['possessive' => true])->optimized, 'A possessive that never gives back is still made.');
+    }
+
+    /**
+     * @return iterable<string, array{original: string, rewrite: string, subject: string}>
+     */
+    public static function provideRewritesOnlyTheLanguagesAgreeOn(): iterable
+    {
+        yield 'a lookahead at the edge of the match' => ['original' => '/a(?!b)/', 'rewrite' => '/a/', 'subject' => 'ab'];
+        yield 'alternatives swapped before a lookahead' => ['original' => '/(?:a|ab)(?!c)/', 'rewrite' => '/(?:ab|a)(?!c)/', 'subject' => 'ab'];
+        yield 'a possessive before a lookahead' => ['original' => '/a+(?!b)/', 'rewrite' => '/a++(?!b)/', 'subject' => 'aab'];
     }
 
     /**

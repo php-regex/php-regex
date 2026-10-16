@@ -49,15 +49,15 @@ final class QuotedPatternRenderingFixture
     public function escapesWithAnOperandAtTheCut(string $subject): void
     {
         preg_match('/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\cA[0-9]+/', $subject, $matches); // "\cA" across the 50th character
-        preg_match('/(?<n>b)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\k<n>[0-9]+/', $subject, $matches); // "\k<n>" across the 50th character
-        preg_match('/(?<n>b)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\k\'n\'[0-9]+/', $subject, $matches); // "\k'n'" across the 50th character
-        preg_match('/(?<n>b)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\g<n>[0-9]+/', $subject, $matches); // "\g<n>" across the 50th character
-        preg_match('/(b)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\g-1[0-9]+/', $subject, $matches); // "\g-1" across the 50th character
-        preg_match('/(b)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\g1[0-9]+/', $subject, $matches); // "\g1" across the 50th character
+        preg_match('/(?<n>b)abcdefghijklmnopqrstuvwxyzabcdefghijklmn\k<n>[0-9]+/', $subject, $matches); // "\k<n>" across the 50th character
+        preg_match('/(?<n>b)abcdefghijklmnopqrstuvwxyzabcdefghijklmn\k\'n\'[0-9]+/', $subject, $matches); // "\k'n'" across the 50th character
+        preg_match('/(?<n>b)abcdefghijklmnopqrstuvwxyzabcdefghijklmn\g<n>[0-9]+/', $subject, $matches); // "\g<n>" across the 50th character
+        preg_match('/(b)abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr\g-1[0-9]+/', $subject, $matches); // "\g-1" across the 50th character
+        preg_match('/(b)abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr\g1[0-9]+/', $subject, $matches); // "\g1" across the 50th character
         preg_match('/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\12[0-9]+/', $subject, $matches); // the octal "\12" across the 50th character
         preg_match('/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\012[0-9]+/', $subject, $matches); // the octal "\012" across the 50th character
-        preg_match('/(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)aaaaaaaaaaaaaaaaa\10[0-9]+/', $subject, $matches); // the back reference "\10" across the 50th character
-        preg_match('/(?<n>b)aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\k<n>[0-9]+/', $subject, $matches); // "\k<n>" ending on the 50th character
+        preg_match('/(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)abcdefghijklmnopq\10[0-9]+/', $subject, $matches); // the back reference "\10" across the 50th character
+        preg_match('/(?<n>b)abcdefghijklmnopqrstuvwxyzabcdefghijk\k<n>[0-9]+/', $subject, $matches); // "\k<n>" ending on the 50th character
     }
 
     public function unbracedPropertiesAtTheCut(string $subject): void
