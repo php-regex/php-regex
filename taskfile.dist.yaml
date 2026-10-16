@@ -76,6 +76,8 @@ tasks:
       - src/Parser/Validation/Validator.php
       - src/Parser/PcreTarget.php
       - src/Parser/PcreFeature.php
+      - src/Parser/NodeWalker.php
+      - src/Parser/TraversalAction.php
       - src/Parser/Analysis/GroupNumbering*.php
       - src/Parser/Analysis/LengthRangeCalculator.php
       - src/Parser/Engine/PcreEngine.php

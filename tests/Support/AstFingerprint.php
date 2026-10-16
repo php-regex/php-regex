@@ -48,6 +48,10 @@ final class AstFingerprint
         'src/Parser/Engine/PcreEngine.php',
         'src/Parser/PcreTarget.php',
         'src/Parser/PcreFeature.php',
+        // Walk the condition of a conditional when the solver asks which
+        // runs prove a rewrite for every call.
+        'src/Parser/NodeWalker.php',
+        'src/Parser/TraversalAction.php',
         'src/Parser/Analysis/GroupNumbering.php',
         'src/Parser/Analysis/GroupNumberingCollector.php',
         'src/Parser/Internal/Ascii.php',
