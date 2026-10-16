@@ -174,13 +174,6 @@ Merged into 2.x. Left:
   file, by Reflection or `Closure::bind()`, are not seen; a `do` without
   braces around a control structure is unknown to the token strategy only).
 
-Decisions for the maintainer:
-- **`composer-pcre`** opens any file spelling `Preg::`/`Regex::` without the
-  namespace check the newer presets have; adding it opens fewer files but
-  changes `PatternFunctionRegistryTest`'s pinned cases.
-- **`PHPRegexServiceProvider::extraction()`** is a new public static marked
-  `@internal`, on the model of `regexOptions()`.
-
 ## PHP 8.1 floor: after the merge
 
 Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,

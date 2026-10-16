@@ -82,13 +82,19 @@ final class PresetNamespaceGuardTest extends TestCase
     }
 
     /**
-     * composer/pcre keeps the check it had before the other presets were
-     * on: its short class names open the file.
+     * composer/pcre asks for its namespace as the other presets do: a short
+     * class name alone resolves to no class of composer/pcre, and the file
+     * is not opened for it; spelled with the namespace, it is, and the call
+     * is read.
      */
     #[Test]
-    public function test_composer_pcre_keeps_its_short_name_check(): void
+    public function test_composer_pcre_asks_for_its_namespace(): void
     {
-        $this->assertTrue(PatternFunctionRegistry::native()->withPresets(['composer-pcre'])->matchesContent("<?php Preg::match('/a/', \$s);"));
+        $registry = PatternFunctionRegistry::native()->withPresets(['composer-pcre']);
+
+        $this->assertFalse($registry->matchesContent("<?php Preg::match('/a/', \$s);"));
+        $this->assertTrue($registry->matchesContent("<?php use Composer\\Pcre\\Preg;\nPreg::match('/found/', \$s);"));
+        $this->assertSame(['/found/'], $this->patternsReadByBoth("<?php use Composer\\Pcre\\Preg;\nPreg::match('/found/', \$s);", $registry));
     }
 
     /**

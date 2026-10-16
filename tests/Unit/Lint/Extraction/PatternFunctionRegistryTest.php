@@ -143,14 +143,45 @@ final class PatternFunctionRegistryTest extends TestCase
         );
     }
 
+    /**
+     * A bare "Preg::" or "REGEX::" no longer opens a file: the call resolves
+     * to Composer\Pcre or Spatie\Regex only in a file that spells the
+     * namespace, which every preset matched on its class now asks for.
+     */
     public function test_content_matching_skips_files_without_a_candidate_call(): void
     {
         $registry = PatternFunctionRegistry::defaults();
 
         $this->assertTrue($registry->matchesContent('<?php preg_match("/a/", $s);'));
-        $this->assertTrue($registry->matchesContent('<?php Preg::match("/a/", $s);'));
-        $this->assertTrue($registry->matchesContent('<?php REGEX::MATCH("/a/", $s);'));
+        $this->assertTrue($registry->matchesContent('<?php use Composer\Pcre\Preg; Preg::match("/a/", $s);'));
+        $this->assertTrue($registry->matchesContent('<?php use Composer\Pcre\Regex; REGEX::MATCH("/a/", $s);'));
+        $this->assertFalse($registry->matchesContent('<?php Preg::match("/a/", $s);'));
+        $this->assertFalse($registry->matchesContent('<?php REGEX::MATCH("/a/", $s);'));
         $this->assertFalse($registry->matchesContent('<?php echo strtoupper($s);'));
+    }
+
+    /**
+     * composer/pcre's calls are read on Composer\Pcre\Preg and
+     * Composer\Pcre\Regex: a file that never spells the namespace has none
+     * to read, whatever class of its own it names Preg.
+     *
+     * @return iterable<string, array{content: string, opened: bool}>
+     */
+    public static function provideComposerPcreFiles(): iterable
+    {
+        yield 'an import' => ['content' => '<?php use Composer\Pcre\Preg; Preg::match("/a/", $s);', 'opened' => true];
+        yield 'a fully qualified call' => ['content' => '<?php \Composer\Pcre\Regex::isMatch("/a/", $s);', 'opened' => true];
+        yield 'inside the namespace' => ['content' => '<?php namespace Composer\Pcre; Preg::match("/a/", $s);', 'opened' => true];
+        yield 'a class of its own named Preg' => ['content' => '<?php use App\Preg; Preg::match("/a/", $s);', 'opened' => false];
+        yield 'no import' => ['content' => '<?php Preg::match("/a/", $s);', 'opened' => false];
+    }
+
+    #[DataProvider('provideComposerPcreFiles')]
+    public function test_composer_pcre_opens_a_file_that_spells_its_namespace(string $content, bool $opened): void
+    {
+        $registry = PatternFunctionRegistry::native()->withPresets([InteropPresets::COMPOSER_PCRE]);
+
+        $this->assertSame($opened, $registry->matchesContent($content));
     }
 
     public function test_declared_helpers_widen_the_content_check(): void

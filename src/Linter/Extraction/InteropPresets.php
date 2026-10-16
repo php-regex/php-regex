@@ -339,15 +339,17 @@ final class InteropPresets
      * each of which a file must spell for the preset's needles to open it:
      * an import, an alias, a group use, a namespace declaration or a
      * qualified name writes every segment of Illuminate\Support\Str
-     * somewhere, and the call is resolved on that name. Null for a preset
-     * whose needles open the file alone: composer/pcre's spell its classes,
-     * and PHPUnit's methods are matched by name.
+     * somewhere, and the call is resolved on that name. composer/pcre's two
+     * classes share their namespace, which the needles do not spell: a
+     * "Preg::" alone resolves to some other class. Null for PHPUnit, whose
+     * methods are matched by name.
      *
      * @return list<string>|null
      */
     public static function classWords(string $name): ?array
     {
         return match ($name) {
+            self::COMPOSER_PCRE => ['composer', 'pcre'],
             self::NETTE_UTILS => ['nette', 'utils', 'strings'],
             self::SPATIE_REGEX => ['spatie', 'regex'],
             self::ILLUMINATE_SUPPORT => ['illuminate', 'support', 'str'],
