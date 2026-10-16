@@ -326,6 +326,11 @@ final class TextDocumentHandlerTest extends TestCase
         yield 'an error on a multibyte character, whole' => ['line' => "preg_match('/a)é/u', \$s);", 'code' => 'regex.group.unmatched_close', 'underlined' => 'é'];
         yield 'a node starting inside a character, without u' => ['line' => "preg_match('/é+/', \$s);", 'code' => 'regex.lint.unicode.quantifiedMultibyteWithoutU', 'underlined' => 'é+'];
         yield 'a limit over the body' => ['line' => "preg_match('/((((a))))/i', \$s);", 'code' => 'regex.nesting.too_deep', 'underlined' => '((((a))))', 'options' => ['max_recursion_depth' => 3]];
+        yield 'a "|" delimiter' => ['line' => "preg_match('|(a|', \$s);", 'code' => 'regex.group.unclosed', 'underlined' => '|'];
+        yield 'a "+" delimiter' => ['line' => "preg_match('+x[aa]+i', \$s);", 'code' => 'regex.lint.charclass.redundant', 'underlined' => '[aa]'];
+        yield 'a double-quote delimiter' => ['line' => "preg_match('\"x[aa]\"', \$s);", 'code' => 'regex.lint.charclass.redundant', 'underlined' => '[aa]'];
+        yield 'the spaces PHP skips before the delimiter' => ['line' => "preg_match(' /x[aa]/', \$s);", 'code' => 'regex.lint.charclass.redundant', 'underlined' => '[aa]'];
+        yield 'an error after the spaces PHP skips' => ['line' => 'preg_match("\\t |a)|", $s);', 'code' => 'regex.group.unmatched_close', 'underlined' => '|'];
     }
 
     /**
@@ -344,6 +349,30 @@ final class TextDocumentHandlerTest extends TestCase
 
         $this->assertIsArray($diagnostic, 'No '.$code.' diagnostic was published.');
         $this->assertSame($underlined, self::underlined($line, $diagnostic));
+    }
+
+    /**
+     * A string with no delimiter PHP accepts, after the spaces it skips, is
+     * not taken for a pattern: nothing is published on it.
+     *
+     * @return iterable<string, array{line: string}>
+     */
+    public static function provideStringsThatAreNotPatterns(): iterable
+    {
+        yield 'a word' => ['line' => "preg_match('abc', \$s);"];
+        yield 'one letter' => ['line' => "preg_match('a', \$s);"];
+        yield 'a digit first' => ['line' => "preg_match('1a1', \$s);"];
+        yield 'a backslash first' => ['line' => "preg_match('\\\\d\\\\', \$s);"];
+        yield 'an empty string' => ['line' => "preg_match('', \$s);"];
+        yield 'spaces only' => ['line' => "preg_match('  ', \$s);"];
+        yield 'a NUL byte first' => ['line' => 'preg_match("\0(a\0", $s);'];
+    }
+
+    #[Test]
+    #[DataProvider('provideStringsThatAreNotPatterns')]
+    public function test_a_string_that_is_not_a_pattern_is_not_published(string $line): void
+    {
+        $this->assertSame([], $this->publish($line));
     }
 
     #[Test]

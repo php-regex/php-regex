@@ -247,10 +247,15 @@ call does not. A namespace that declares its own function shadows a global
 pattern function of the same name, as in the lint: an unqualified call in
 that namespace is not read.
 
-One difference: a diagnostic needs one string literal to land in, so a
+Two differences: a diagnostic needs one string literal to land in, so a
 pattern the call assembles from several pieces (`'/'.self::PART.'/'`) and a
 pattern written as a heredoc or a nowdoc get no diagnostic in the editor,
-although `regex lint` reports them.
+although `regex lint` reports them. And a string that does not open with a
+delimiter, after the spaces PHP skips, is not taken for a pattern: one
+starting with a letter, a digit, a backslash or NUL gets no diagnostic, where
+`regex lint` reports its invalid delimiter. Any other first byte is a
+delimiter PHP accepts, `|`, `+` and `"` included, and the pattern is
+diagnosed.
 
 ## Functions Marked `#[RegexPattern]`
 

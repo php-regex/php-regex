@@ -18,6 +18,7 @@ use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -49,6 +50,36 @@ final class RegexFinderLintAgreementTest extends TestCase
         $code = "<?php\nuse Nette\\Utils\\Strings;\n\nfinal class M\n{\n    private const RE = \"/\xFF/\";\n\n    public function run(string \$s): void\n    {\n        preg_match(self::RE, \$s);\n        Strings::match(\$s, self::RE, utf8: true);\n    }\n}\n";
 
         $this->assertAgree($code, ["/\xFF/", "/\xFF/u"]);
+    }
+
+    /**
+     * PHP takes any byte for a delimiter but a letter, a digit, a backslash
+     * and NUL, after the spaces it skips: preg_match('|(a|') fails to
+     * compile, "missing closing parenthesis at offset 2", and lint reads
+     * each of these patterns.
+     *
+     * @return iterable<string, array{code: string, patterns: list<string>}>
+     */
+    public static function provideDelimitersPhpAccepts(): iterable
+    {
+        yield 'a pipe' => ['code' => "<?php\npreg_match('|(a|', \$s);\n", 'patterns' => ['|(a|']];
+        yield 'a plus sign and a modifier' => ['code' => "<?php\npreg_match('+a+i', \$s);\n", 'patterns' => ['+a+i']];
+        yield 'a double quote' => ['code' => "<?php\npreg_match('\"a\"', \$s);\n", 'patterns' => ['"a"']];
+        yield 'an equals sign' => ['code' => "<?php\npreg_match('=(=', \$s);\n", 'patterns' => ['=(=']];
+        yield 'a lone comma, never closed' => ['code' => "<?php\npreg_split(',', \$s);\n", 'patterns' => [',']];
+        yield 'a control byte' => ['code' => "<?php\npreg_match(\"\\x01a\\x01\", \$s);\n", 'patterns' => ["\x01a\x01"]];
+        yield 'a byte past ASCII' => ['code' => "<?php\npreg_match(\"\\xA7a\\xA7\", \$s);\n", 'patterns' => ["\xA7a\xA7"]];
+        yield 'spaces before the delimiter' => ['code' => "<?php\npreg_match(\" \\t\\n/a/\", \$s);\n", 'patterns' => [" \t\n/a/"]];
+    }
+
+    /**
+     * @param list<string> $patterns
+     */
+    #[Test]
+    #[DataProvider('provideDelimitersPhpAccepts')]
+    public function test_a_pattern_with_any_delimiter_php_accepts_is_found(string $code, array $patterns): void
+    {
+        $this->assertAgree($code, $patterns);
     }
 
     /**

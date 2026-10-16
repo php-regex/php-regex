@@ -15,6 +15,7 @@ namespace PHPRegex\LanguageServer\Converter;
 
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * Where the text of a pattern lies in its document. The library counts in
@@ -40,6 +41,7 @@ final class PatternSpan
         private readonly array $spelling,
         private readonly string $pattern,
         private readonly int $bodyLength,
+        private readonly int $delimiterOffset,
     ) {}
 
     public static function of(RegexOccurrence $occurrence, PositionConverter $positions): self
@@ -48,10 +50,13 @@ final class PatternSpan
         $length = \strlen($pattern);
         $spelling = PhpStringLiteral::spellingOffsets($occurrence->literal) ?? range(1, $length + 1);
 
-        // The body ends at the last closing delimiter: the modifiers follow it.
-        $close = strrpos($pattern, self::CLOSING[$pattern[0] ?? ''] ?? ($pattern[0] ?? ''), 1);
+        // The delimiter follows the spaces PHP skips; the body ends at the
+        // last closing delimiter, the modifiers follow it.
+        $at = $length - \strlen(Ascii::trimLeadingSpaces($pattern));
+        $delimiter = $pattern[$at] ?? '';
+        $close = '' === $delimiter ? false : strrpos($pattern, (string) (self::CLOSING[$delimiter] ?? $delimiter), $at + 1);
 
-        return new self($positions, $occurrence->byteOffset, $spelling, $pattern, false === $close ? $length - 1 : $close - 1);
+        return new self($positions, $occurrence->byteOffset, $spelling, $pattern, false === $close ? $length - 1 - $at : $close - 1 - $at, $at);
     }
 
     /**
@@ -77,9 +82,10 @@ final class PatternSpan
 
         // Pattern offsets: past the opening delimiter.
         $length = \strlen($this->pattern);
-        $start = min($from + 1, $length);
-        $end = min($to + 1, $length);
-        while ($start > 1 && self::continuesACharacter($this->pattern, $start)) {
+        $bodyStart = $this->delimiterOffset + 1;
+        $start = min($from + $bodyStart, $length);
+        $end = min($to + $bodyStart, $length);
+        while ($start > $bodyStart && self::continuesACharacter($this->pattern, $start)) {
             $start--;
         }
         while ($end < $length && self::continuesACharacter($this->pattern, $end)) {

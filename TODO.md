@@ -225,15 +225,6 @@ marked `#[RegexPattern]` only: in `between(#[RegexPattern] string $from,
 bridges. 2.x at 824626f637 behaves the same. Next: return every marked
 parameter, one spec each, with both strategies agreeing.
 
-## The editor skips patterns with some delimiters
-
-`RegexFinder::isValidRegexDelimiter()` accepts `/ ~ # @ ! %` and the bracket
-pairs only, so the LSP shows nothing for `preg_match('|(a|', $s)` (a
-compilation error PHP reports) or for `+`/`"`-delimited patterns, which
-`regex lint` reads. It predates the extraction work. Next: accept every
-delimiter PHP accepts (any non-alphanumeric, non-backslash, non-space byte)
-and keep only the "is this a pattern at all" guard the editor needs.
-
 ## PHP 8.1 floor: after the merge
 
 Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,

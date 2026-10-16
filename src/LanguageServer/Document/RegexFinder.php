@@ -18,7 +18,7 @@ use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\Ascii;
 
 /**
  * Finds regex patterns in PHP source code as `regex lint` finds them: the
@@ -97,7 +97,7 @@ final class RegexFinder
         $found = [];
         foreach ($extractor->extractSource($content) as $occurrence) {
             $offset = $occurrence->fileOffset;
-            if (null === $offset || isset($found[$offset."\0".$occurrence->pattern]) || !$this->isValidRegexDelimiter($occurrence->pattern)) {
+            if (null === $offset || isset($found[$offset."\0".$occurrence->pattern]) || !self::opensWithADelimiter($occurrence->pattern)) {
                 continue;
             }
 
@@ -200,24 +200,15 @@ final class RegexFinder
     }
 
     /**
-     * Check if a string looks like a regex with valid delimiter.
+     * Whether the string opens with a delimiter PHP accepts, after the
+     * spaces it skips: any byte but a letter, a digit, a backslash and NUL.
+     * A string that does not is not taken for a pattern; one that does is
+     * read as lint reads it, an unclosed or invalid body included.
      */
-    private function isValidRegexDelimiter(string $pattern): bool
+    private static function opensWithADelimiter(string $pattern): bool
     {
-        if (\strlen($pattern) < 2) {
-            return false;
-        }
+        $delimiter = Ascii::trimLeadingSpaces($pattern)[0] ?? '';
 
-        $delimiter = $pattern[0];
-
-        // Common regex delimiters
-        if (LibraryPcre::match('/^[\/~#@!%]/', $delimiter)) {
-            return true;
-        }
-
-        // Paired delimiters
-        $pairs = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
-
-        return isset($pairs[$delimiter]);
+        return '' !== $delimiter && "\0" !== $delimiter && '\\' !== $delimiter && !Ascii::isAlnum($delimiter);
     }
 }
