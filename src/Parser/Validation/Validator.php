@@ -361,6 +361,11 @@ final class Validator extends AbstractNodeVisitor
     private array $keepsInLookarounds = [];
 
     /**
+     * How many repeated items the node being visited sits in.
+     */
+    private int $repeatDepth = 0;
+
+    /**
      * How many lookbehinds the node being visited sits in.
      */
     private int $lookbehindDepth = 0;
@@ -658,7 +663,7 @@ final class Validator extends AbstractNodeVisitor
                 '\K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.',
                 $this->patternLength - $this->positionOffset,
                 ErrorCode::KeepInLookaround,
-                'Move the \K out of the lookaround.',
+                $this->keepHint($node),
             );
         }
 
@@ -703,7 +708,13 @@ final class Validator extends AbstractNodeVisitor
 
         // PCRE reads the item before its count: what it refuses there comes
         // first, and what it checks once the pattern is read waits.
-        $node->node->accept($this);
+        $this->repeatDepth++;
+
+        try {
+            $node->node->accept($this);
+        } finally {
+            $this->repeatDepth--;
+        }
 
         // Fast cached quantifier bounds parsing
         [$min, $max] = $this->getQuantifierBounds($node->quantifier);
@@ -1594,6 +1605,36 @@ final class Validator extends AbstractNodeVisitor
                 ErrorCode::CalloutOutOfRange,
             );
         }
+    }
+
+    /**
+     * What to do with a lookaround PHP 8.5 refuses for its "\K". Up to PHP
+     * 8.4 the "\K" resets the start of the match from inside it, which no
+     * other spelling keeps in general; only a "\K" alone at the start of a
+     * plain lookahead, in no repeated item nor in another lookaround,
+     * resets it where the lookahead starts, as a "\K" just before it does.
+     */
+    private function keepHint(GroupNode $node): string
+    {
+        $body = $node->child instanceof SequenceNode ? $node->child->children : [$node->child];
+        if (GroupType::LookaheadPositive === $node->type && null === $node->flags
+            && $node->child->getStartPosition() === $node->startPosition + 3
+            && ($body[0] ?? null) instanceof KeepNode && 1 === self::keepCount($node->child)
+            && 0 === $this->repeatDepth && [] === $this->keepsInLookarounds) {
+            return 'This \K opens the lookahead: write "\K(?=" for "(?=\K", which every PHP reads alike.';
+        }
+
+        return 'Up to PHP 8.4 a \K in a lookaround resets the start of the match from inside it: "(?=\Ka)" matches an empty string in "a", and "(?<=\Ka)b" matches "ab" in "ab". No spelling keeps that in general: rewrite the pattern without it.';
+    }
+
+    private static function keepCount(NodeInterface $node): int
+    {
+        $count = $node instanceof KeepNode ? 1 : 0;
+        foreach ($node->getChildren() as $child) {
+            $count += self::keepCount($child);
+        }
+
+        return $count;
     }
 
     /**

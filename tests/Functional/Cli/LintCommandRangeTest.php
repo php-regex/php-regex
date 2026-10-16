@@ -76,6 +76,33 @@ final class LintCommandRangeTest extends TestCase
     }
 
     /**
+     * The lint reports and edits nothing: the hint says what PHP 8.4 and
+     * earlier read, and that no spelling keeps it in general, or gives the
+     * one spelling that does when the \K opens a lookahead.
+     */
+    #[Test]
+    public function test_lint_hints_what_the_refused_keep_meant_and_how_to_respell_it_when_it_can(): void
+    {
+        $this->enterProject(['composer.json' => self::COMPOSER, 'src/a.php' => self::KEEP_IN_LOOKBEHIND."preg_match('/(?=\\Kab)a/', \$s);\n"]);
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src', '--format=json', '--jobs=1', '--no-redos']);
+
+        $this->assertSame(1, $exitCode, $stdout);
+        $hints = [];
+        foreach (self::issues(JsonContract::decodeDocument($stdout)) as $issue) {
+            $validation = $issue['validation'] ?? null;
+            $this->assertIsArray($validation);
+            $hints[] = $validation['hint'] ?? null;
+        }
+
+        $this->assertSame([
+            'Up to PHP 8.4 a \\K in a lookaround resets the start of the match from inside it: "(?=\\Ka)" matches an empty string in "a", and "(?<=\\Ka)b" matches "ab" in "ab". No spelling keeps that in general: rewrite the pattern without it.',
+            'This \\K opens the lookahead: write "\\K(?=" for "(?=\\K", which every PHP reads alike.',
+        ], $hints);
+        $this->assertStringContainsString("preg_match('/(?=\\Kab)a/', \$s);", (string) file_get_contents('src/a.php'));
+    }
+
+    /**
      * "~8.3.0 || >=8.5.3" allows PHP 8.5.3 to 8.5.9, which no gate point
      * stands for: the branch's lowest version is judged and named.
      */

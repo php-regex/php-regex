@@ -17,6 +17,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class KeepInLookaroundTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideKeepsInLookarounds')]
     public function test_validate_refuses_keep_in_a_lookaround_from_php_8_5(string $pattern, int $offset): void
@@ -108,6 +111,78 @@ final class KeepInLookaroundTest extends TestCase
         $this->expectExceptionMessage('not allowed in a lookaround');
 
         $lookahead->accept(new Validator(target: PcreTarget::bundledWith(80500)));
+    }
+
+    /**
+     * Up to PHP 8.4 a "\K" in a lookaround resets the start of the match
+     * from inside it (PHP 8.4.26): "(?=\Ka)" matches an empty string in
+     * "a", and "(?<=\Ka)b" matches "ab" in "ab". No spelling keeps that in
+     * general, so the hint says it and rewrites nothing.
+     */
+    #[Test]
+    #[DataProvider('provideKeepsWithNoRespelling')]
+    public function test_the_hint_names_what_php_8_4_reads_and_no_respelling(string $pattern): void
+    {
+        $hint = Regex::create(['cache' => null, 'php_version' => 80500])->validate($pattern)->hint;
+
+        $this->assertSame('Up to PHP 8.4 a \K in a lookaround resets the start of the match from inside it: "(?=\Ka)" matches an empty string in "a", and "(?<=\Ka)b" matches "ab" in "ab". No spelling keeps that in general: rewrite the pattern without it.', $hint);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideKeepsWithNoRespelling(): iterable
+    {
+        yield 'lookbehind' => ['pattern' => '/(?<=a\Kb)c/'];
+        yield 'not the first item of the lookahead' => ['pattern' => '/(?=a\Kb)c/'];
+        yield 'one branch of the lookahead' => ['pattern' => '/(?=\Ka|b)c/'];
+        yield 'two keeps' => ['pattern' => '/(?=\Ka\Kb)c/'];
+        yield 'negative lookahead' => ['pattern' => '/(?!\Ka)b/'];
+        yield 'repeated lookahead' => ['pattern' => '/(?=\Ka)?b/'];
+        yield 'lookahead in a repeated group' => ['pattern' => '/(?:(?=\Ka)b)*c/'];
+        yield 'lookahead in a lookahead' => ['pattern' => '/(?=(?=\Ka))b/'];
+        yield 'non-atomic lookahead' => ['pattern' => '/(?*\Ka)b/'];
+        yield 'alphabetic lookahead' => ['pattern' => '/(*pla:\Ka)b/'];
+    }
+
+    /**
+     * A "\K" alone at the start of a lookahead resets the start of the
+     * match where the lookahead starts, as a "\K" just before it does: the
+     * two spellings match alike on PHP 8.4, and PHP 8.5 compiles the
+     * second (php:8.5-cli: "\K(?=ab)a" matches "a" in "xab").
+     */
+    #[Test]
+    public function test_the_hint_respells_a_keep_that_opens_a_lookahead(): void
+    {
+        $this->assertSame(
+            'This \K opens the lookahead: write "\K(?=" for "(?=\K", which every PHP reads alike.',
+            Regex::create(['cache' => null, 'php_version' => 80500])->validate('/(?=\Kab)a/')->hint,
+        );
+        $this->assertTrue(Regex::create(['cache' => null, 'php_version' => 80500])->validate('/\K(?=ab)a/')->isValid);
+    }
+
+    /**
+     * The witnesses the hints name, replayed on an engine that reads a
+     * "\K" in a lookaround.
+     */
+    #[Test]
+    public function test_the_witnesses_of_the_hints_hold_up_to_php_8_4(): void
+    {
+        $this->forbidsPhp('8.4', 'A \K in a lookaround', 'refuses it');
+
+        $this->assertSame(1, preg_match('/(?=\Ka)/', 'a', $empty));
+        $this->assertSame([''], $empty);
+        $this->assertSame(1, preg_match('/(?<=\Ka)b/', 'ab', $wide));
+        $this->assertSame(['ab'], $wide);
+
+        foreach (['', 'a', 'ab', 'xab', 'aab', 'abab', 'xa'] as $subject) {
+            $this->assertSame(
+                [preg_match('/(?=\Kab)a/', $subject, $before, \PREG_OFFSET_CAPTURE), $before],
+                [preg_match('/\K(?=ab)a/', $subject, $after, \PREG_OFFSET_CAPTURE), $after],
+                $subject,
+            );
+        }
+        $this->assertSame(preg_replace('/(?=\Kab)a/', '-', 'xabab'), preg_replace('/\K(?=ab)a/', '-', 'xabab'));
     }
 
     /**

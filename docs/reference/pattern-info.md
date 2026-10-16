@@ -222,7 +222,7 @@ refuses. Do not count on 170.
 
 **Validity is not monotone.** `\K` in a lookaround is valid up to PHP 8.4 and
 refused from PHP 8.5, which compiles without
-`PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`: the 18 invalid verdicts above are PHP 8.5
+`PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`: the 34 invalid verdicts above are PHP 8.5
 and 8.5.10, with every release. Along the PCRE2 axis, `/{,3}/` is valid up to
 10.42, where `{,3}` is literal text, and refused from 10.43, where it is a
 quantifier with nothing to repeat. That is why the result offers no "lowest

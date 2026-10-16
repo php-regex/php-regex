@@ -1139,7 +1139,13 @@ What runs where:
   app/Example.php:3:12
       → /(?<=a\Kb)c/
     FAIL On PHP 8.5 and later: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
+         ↳ Up to PHP 8.4 a \K in a lookaround resets the start of the match from inside it: "(?=\Ka)" matches an empty string in "a", and "(?<=\Ka)b" matches "ab" in "ab". No spelling keeps that in general: rewrite the pattern without it.
 ```
+
+  The lint changes no code. A `\K` alone at the start of a plain lookahead is
+  the one case a spelling keeps: `(?=\Kab)a` resets the start of the match
+  where `\K(?=ab)a` does, on every PHP, and the hint says
+  `This \K opens the lookahead: write "\K(?=" for "(?=\K", which every PHP reads alike.`
 
 - **A pattern every version accepts but one reads otherwise** is a warning,
   `regex.lint.compat.meaningChanges`, naming the first version that parses it
