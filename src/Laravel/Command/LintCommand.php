@@ -19,6 +19,7 @@ use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
 use PHPRegex\Laravel\Output\LintProgressBar;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
@@ -151,6 +152,8 @@ final class LintCommand extends Command
             $appAnalysis = $this->laravel->make('php-regex.analysis');
             /** @var \PHPRegex\Linter\LintService $appLint */
             $appLint = $this->laravel->make('php-regex.lint');
+        } catch (UnsupportedTargetException $e) {
+            return $this->renderFailure($format, $e->getMessage(), JsonDocument::STAGE_TARGET, self::INVALID);
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, 'Invalid config/php-regex.php: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, self::INVALID);
         }

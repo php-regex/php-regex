@@ -39,7 +39,7 @@ final class CorpusLintScriptTest extends TestCase
                 $constraint = match (basename($repo)) {
                     'repoNew' => '^8.2',
                     'repoClean' => '^8.1',
-                    default => '>=5.4',
+                    default => '>=7.4',
                 };
                 file_put_contents(
                     $this->root.'/'.$repo.'/composer.json',
@@ -90,7 +90,7 @@ final class CorpusLintScriptTest extends TestCase
             $log,
         );
         $this->assertStringContainsString(
-            'composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports',
+            'composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports',
             $this->line($log, 'Note: '),
             $log,
         );
@@ -175,6 +175,32 @@ final class CorpusLintScriptTest extends TestCase
         $this->assertStringContainsString('### corpus/ownerB/repoOld', $log);
     }
 
+    /**
+     * A repository whose floor ships PCRE1 is refused, not judged: its
+     * section says so, with no target and the refusal's exit code, and the
+     * sweep does not count it as clean.
+     */
+    #[Test]
+    public function test_a_repository_on_pcre1_is_recorded_as_refused(): void
+    {
+        mkdir($this->root.'/corpus/ownerE/repoAncient', 0o777, true);
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/composer.json', '{"require": {"php": ">=5.4"}}');
+        file_put_contents($this->root.'/corpus/ownerE/repoAncient/patterns.php', "<?php\n\npreg_match('/a/', \$x);\n");
+
+        [$code, $output] = $this->script(['--only', 'ownerE']);
+
+        $log = (string) file_get_contents($this->root.'/corpus.log');
+
+        $this->assertSame(1, $code, $output);
+        $this->assertSame('### corpus/ownerE/repoAncient — Target: none — exit 2', $this->line($log, '### corpus/ownerE/repoAncient'), $log);
+        $this->assertSame(
+            'Error: composer.json require.php allows PHP 5.4: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
+            $this->line($log, 'Error: '),
+            $log,
+        );
+        $this->assertStringContainsString('[1/1] ownerE/repoAncient  none', $output);
+    }
+
     #[Test]
     public function test_exit_is_zero_when_no_repository_has_errors(): void
     {
@@ -217,7 +243,7 @@ final class CorpusLintScriptTest extends TestCase
         $this->loadScriptFunctions();
 
         $this->assertSame('^8.2', requirePhpConstraint($this->root.'/corpus/ownerA/repoNew'));
-        $this->assertSame('>=5.4', requirePhpConstraint($this->root.'/corpus/ownerB/repoOld'));
+        $this->assertSame('>=7.4', requirePhpConstraint($this->root.'/corpus/ownerB/repoOld'));
         $this->assertNull(requirePhpConstraint($this->root.'/corpus/ownerC/repoBare'));
     }
 

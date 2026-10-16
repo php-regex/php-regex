@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -119,6 +120,76 @@ final class ProjectTargetEdgeCasesTest extends TestCase
 
         $this->assertSame(80100, $resolved->target()->phpVersionId);
         $this->assertSame([], $resolved->notices());
+    }
+
+    /**
+     * PHP 7.2 and earlier link PCRE1 (8.41 for 7.2.0, php:7.2-cli); 7.3.0
+     * is the first PHP on PCRE2 (10.32), with no release in between. PCRE1
+     * is another engine, not an older PCRE2: no verdict of this library
+     * holds for it, so a target there is refused, never judged as another.
+     *
+     * @param array<string, string|int|null> $php
+     * @param array<string, string>          $files
+     */
+    #[Test]
+    #[DataProvider('providePcre1Targets')]
+    public function test_resolve_refuses_a_php_that_ships_pcre1(array $php, array $files, string $message): void
+    {
+        $directory = $this->makeProject($files);
+
+        try {
+            ProjectTarget::fromSources($php, [], $directory, []);
+            self::fail('A PHP on PCRE1 was judged.');
+        } catch (UnsupportedTargetException $e) {
+            $this->assertSame($message, $e->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{php: array<string, string|int|null>, files: array<string, string>, message: string}>
+     */
+    public static function providePcre1Targets(): iterable
+    {
+        $refusal = 'PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.';
+
+        yield 'the flag at 7.2' => [
+            'php' => ['--php-version' => '7.2'],
+            'files' => [],
+            'message' => '--php-version names PHP 7.2: '.$refusal,
+        ];
+        yield 'the flag at 5.6' => [
+            'php' => ['--php-version' => '5.6'],
+            'files' => [],
+            'message' => '--php-version names PHP 5.6: '.$refusal,
+        ];
+        yield 'regex.json as the last PHP_VERSION_ID on PCRE1' => [
+            'php' => ['--php-version' => null, 'regex.json' => 70299],
+            'files' => [],
+            'message' => 'regex.json names PHP 7.2: '.$refusal,
+        ];
+        yield 'a bridge setting' => [
+            'php' => ['php_regex.php_version' => '7.1'],
+            'files' => [],
+            'message' => 'php_regex.php_version names PHP 7.1: '.$refusal,
+        ];
+        yield 'the floor of require.php' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": "^7.1 || ^8.0"}}'],
+            'message' => 'composer.json require.php allows PHP 7.1: '.$refusal,
+        ];
+        yield 'the platform' => [
+            'php' => [],
+            'files' => ['composer.json' => '{"require": {"php": "^8.1"}, "config": {"platform": {"php": "7.2.34"}}}'],
+            'message' => 'composer.json config.platform.php allows PHP 7.2: '.$refusal,
+        ];
+    }
+
+    #[Test]
+    public function test_resolve_does_not_refuse_the_first_php_on_pcre2(): void
+    {
+        $resolved = ProjectTarget::fromSources([], [], $this->makeProject(['composer.json' => '{"require": {"php": ">=7.3"}}']), []);
+
+        $this->assertNotSame([], $resolved->notices());
     }
 
     #[Test]

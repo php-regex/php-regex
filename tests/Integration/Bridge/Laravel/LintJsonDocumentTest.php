@@ -151,6 +151,24 @@ final class LintJsonDocumentTest extends LaravelTestCase
         $this->assertStringStartsWith('Invalid config/php-regex.php: ', $document['error']);
     }
 
+    /**
+     * PHP 7.2 and earlier ship PCRE1: the command refuses to judge them,
+     * with the stage the CLI names the refusal with.
+     */
+    #[Test]
+    public function test_a_target_on_pcre1_prints_the_envelope_with_the_target_stage(): void
+    {
+        config(['php-regex.php_version' => '5.6']);
+
+        $status = Artisan::call('regex:lint', $this->arguments('src') + ['--quiet' => true]);
+
+        $this->assertSame(2, $status);
+        $this->assertSame(
+            ['error' => 'config php-regex.php_version names PHP 5.6: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.', 'stage' => 'target'],
+            $this->decodeDocument(Artisan::output()),
+        );
+    }
+
     #[Test]
     public function test_collection_failure_prints_the_envelope(): void
     {

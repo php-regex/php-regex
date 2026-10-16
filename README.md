@@ -188,7 +188,10 @@ One lint run per repository, the target read from its own `composer.json`:
 `require.php` allows, with the PCRE2 release bundled with that PHP. A floor
 older than the PHP the library supports is judged at that oldest supported
 PHP — the notice the linter prints is carried into the log — and a repository
-without `require.php` falls back to `--php` (`8.1` by default). The merged
+without `require.php` falls back to `--php` (`8.1` by default). A floor of PHP
+7.2 or earlier ships PCRE1, which the linter refuses to judge: the section
+names no target (`Target: none — exit 2`) and carries the refusal, and the
+sweep counts it as a failure, never as a clean repository. The merged
 `var/log/corpus.log` keeps the issue format of a single run and gains one
 `###` header per repository; each repository's own
 log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice

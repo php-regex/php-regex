@@ -183,14 +183,15 @@ function extractTargetLine(string $console): string
 }
 
 /**
- * The linter's notices, with the repository's composer.json path shortened
+ * The linter's notices, and the error that stopped it, such as the refusal
+ * of a floor on PCRE1, with the repository's composer.json path shortened
  * back to "composer.json" so the merged log stays portable.
  *
  * @return list<string>
  */
 function extractNotes(string $console, string $composerPath): array
 {
-    if (!preg_match_all('/^Note: .+$/m', stripAnsi($console), $matches)) {
+    if (!preg_match_all('/^(?:Note|Error): .+$/m', stripAnsi($console), $matches)) {
         return [];
     }
 
@@ -206,10 +207,15 @@ function extractNotes(string $console, string $composerPath): array
 
 /**
  * One merged-log section header. The target source keeps its meaning but
- * loses the absolute path it was resolved from.
+ * loses the absolute path it was resolved from. A run that judged nothing,
+ * as a refused floor, names no target.
  */
 function sectionHeader(string $repoPath, string $targetLine, int $exitCode, bool $fallback): string
 {
+    if ('' === $targetLine) {
+        return sprintf('### %s — Target: none — exit %d', $repoPath, $exitCode);
+    }
+
     $target = preg_replace_callback(
         '/\(([^)]*)\)$/',
         static function (array $m) use ($fallback): string {
@@ -505,7 +511,7 @@ function corpusLintMain(array $argv): int
             $notClean = true;
         }
 
-        $target = preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown';
+        $target = preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'none';
         $name = $severities['fail'] > 0 || 0 !== $exitCode ? $io->red($repo) : $repo;
         $io->info($io->cyan(paginationPrefix($index + 1, $total)).' '.$name.'  '.$io->dim($target));
     }

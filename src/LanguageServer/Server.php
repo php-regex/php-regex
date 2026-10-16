@@ -28,6 +28,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintConfigResult;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\IniFlag;
@@ -86,6 +87,12 @@ final class Server
      * The code the session ends with, once the "exit" notification came.
      */
     private ?int $exitCode = null;
+
+    /**
+     * Whether the workspace's target is one the library does not judge:
+     * then no pattern is.
+     */
+    private bool $refused = false;
 
     private readonly InitializeHandler $initHandler;
 
@@ -247,6 +254,16 @@ final class Server
             return;
         }
 
+        // A workspace the library does not judge gets no verdict: a request
+        // that asks for one is answered with none.
+        if ($this->refused && \in_array($method, ['textDocument/didOpen', 'textDocument/didChange', 'textDocument/didClose', 'textDocument/didSave', 'workspace/didChangeWatchedFiles', 'textDocument/hover', 'textDocument/codeAction'], true)) {
+            if ($message->isRequest() && null !== $message->id) {
+                Response::success($message->id, 'textDocument/codeAction' === $method ? [] : null);
+            }
+
+            return;
+        }
+
         // Handle document methods
         match ($method) {
             'textDocument/didOpen' => $this->textDocHandler->didOpen($message),
@@ -282,7 +299,16 @@ final class Server
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
             $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold);
         } else {
-            $target = $this->resolveTarget($params, $root, $config);
+            try {
+                $target = $this->resolveTarget($params, $root, $config);
+            } catch (UnsupportedTargetException $e) {
+                $message = $e->getMessage().' No pattern is judged.';
+                self::log(self::LOG_ERROR, $message);
+                Response::notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
+                $this->refused = true;
+
+                return;
+            }
             foreach ($target->notices() as $notice) {
                 self::log(self::LOG_INFO, $notice);
             }

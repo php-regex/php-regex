@@ -32,6 +32,12 @@ final class PhpVersionGates
     public const FLOOR = 80100;
 
     /**
+     * PHP 7.3 is the first PHP on PCRE2 (10.32): 7.2 and earlier link
+     * PCRE1, another engine, which the library does not judge.
+     */
+    public const PCRE2 = 70300;
+
+    /**
      * PHP 8.2 bundles PCRE2 10.40.
      */
     public const BUNDLES_PCRE2_10_40 = 80200;

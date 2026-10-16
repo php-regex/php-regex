@@ -15,6 +15,7 @@ namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
@@ -210,6 +211,8 @@ final class LintCommand extends Command
             );
             $parser = Regex::fromOptions(ParserOptions::fromArray($this->regexOptions + $target->regexOptions()))->parser();
             $range = $target->rangeParsers($parser, $this->regexOptions);
+        } catch (UnsupportedTargetException $e) {
+            return $this->renderFailure($format, $output, $io, $e->getMessage(), JsonDocument::STAGE_TARGET, Command::INVALID);
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, $output, $io, 'Invalid option: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, Command::INVALID);
         }

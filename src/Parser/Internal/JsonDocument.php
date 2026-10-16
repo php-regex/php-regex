@@ -38,6 +38,11 @@ final class JsonDocument
 
     public const STAGE_CONFIG = 'config';
 
+    /**
+     * The PHP to judge for runs an engine the library does not judge.
+     */
+    public const STAGE_TARGET = 'target';
+
     public const STAGE_COLLECT = 'collect';
 
     public const STAGE_PATTERN = 'pattern';

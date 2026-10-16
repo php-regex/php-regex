@@ -24,6 +24,7 @@ use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
@@ -148,6 +149,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             );
             $regex = Regex::create($target->regexOptions());
             $range = $target->rangeParsers($regex->parser());
+        } catch (UnsupportedTargetException $e) {
+            // Neither a usage error nor a finding: the project is not judged.
+            return $this->fail($output, $json, $e->getMessage(), JsonDocument::STAGE_TARGET, self::INVALID);
         } catch (InvalidRegexOptionException $e) {
             // A version given on the command line is a usage error; one
             // read from regex.json or the environment, a configuration one.

@@ -32,6 +32,12 @@ $result = $regex->validate('/test/');
 
 **Yes.** PHPRegex targets PHP's `preg_*` engine, which uses PCRE2. Patterns are validated against PCRE2 semantics.
 
+PHP 7.3 is the first PHP on PCRE2 (10.32); PHP 7.2 and earlier ship PCRE1
+(8.x), a different engine that reads some patterns otherwise and whose last
+release came out in 2021. `regex lint` refuses to judge a project for such a
+PHP, with a message that names PCRE1 and exit code 2, rather than judge it
+as if it ran PCRE2.
+
 ```php
 // PCRE2-specific features work
 preg_match('/\p{L}/u', $text);  // Unicode properties

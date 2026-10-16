@@ -51,7 +51,7 @@ final class JsonOutputReferenceTest extends TestCase
 {
     private const PAGE = __DIR__.'/../../docs/reference/json-output.md';
 
-    private const STAGES = ['usage', 'config', 'collect', 'analyze', 'pattern', 'internal'];
+    private const STAGES = ['usage', 'config', 'target', 'collect', 'analyze', 'pattern', 'internal'];
 
     #[Test]
     public function test_json_reference_page_exists(): void

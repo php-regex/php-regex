@@ -172,6 +172,49 @@ final class JsonErrorEnvelopeTest extends TestCase
     }
 
     /**
+     * A target on PCRE1 is neither a usage error nor a finding: the run
+     * stops with the envelope, stage "target", and exit code 2, so that no
+     * pipeline reads a project the library refused to judge as a clean one.
+     *
+     * @param list<string>          $arguments
+     * @param array<string, string> $files
+     */
+    #[Test]
+    #[DataProvider('providePcre1Targets')]
+    public function test_lint_refuses_a_target_on_pcre1_with_the_target_stage(array $arguments, array $files, string $error): void
+    {
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/a/', \$s);\n"] + $files);
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex([...$arguments, 'lint', 'src', '--jobs=1', '--json']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $this->assertSame(['error' => $error, 'stage' => 'target'], JsonContract::decodeDocument($stdout));
+        $this->assertStringNotContainsString('Target:', $stderr);
+    }
+
+    /**
+     * @return iterable<string, array{arguments: list<string>, files: array<string, string>, error: string}>
+     */
+    public static function providePcre1Targets(): iterable
+    {
+        $refusal = 'PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.';
+
+        yield 'the flag' => ['arguments' => ['--php-version=5.6'], 'files' => [], 'error' => '--php-version names PHP 5.6: '.$refusal];
+        yield 'the floor of composer.json' => ['arguments' => [], 'files' => ['composer.json' => '{"require": {"php": ">=7.0"}}'], 'error' => 'composer.json require.php allows PHP 7.0: '.$refusal];
+    }
+
+    #[Test]
+    public function test_lint_refuses_a_target_on_pcre1_with_one_error_line_outside_json(): void
+    {
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/a/', \$s);\n"]);
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=7.2', 'lint', 'src', '--jobs=1']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $this->assertSame("Error: --php-version names PHP 7.2: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.\n", $stderr);
+    }
+
+    /**
      * --generate-baseline in a directory the process cannot write to is
      * refused before the run, as a usage error.
      */

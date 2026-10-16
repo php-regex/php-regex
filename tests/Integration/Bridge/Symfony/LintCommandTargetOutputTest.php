@@ -96,6 +96,25 @@ final class LintCommandTargetOutputTest extends TestCase
         $this->assertStringContainsString('php_version', $tester->getDisplay());
     }
 
+    /**
+     * PHP 7.2 and earlier ship PCRE1: the command refuses to judge them,
+     * with the stage the CLI names the refusal with.
+     */
+    #[Test]
+    public function test_a_target_on_pcre1_stops_it_with_the_target_stage(): void
+    {
+        $project = $this->makeProject(['composer.json' => '{"name": "acme/app"}', 'src/Pattern.php' => self::PATTERN_FILE]);
+        $tester = new CommandTester($this->command(projectDir: $project, phpVersion: '7.2'));
+
+        $status = $tester->execute(['paths' => [$project.'/src'], '--format' => 'json', '--no-routes' => true, '--no-validators' => true, '--jobs' => '1']);
+
+        $this->assertSame(Command::INVALID, $status);
+        $this->assertSame(
+            ['error' => 'php_regex.php_version names PHP 7.2: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.', 'stage' => 'target'],
+            json_decode($tester->getDisplay(), true),
+        );
+    }
+
     private function command(?string $projectDir, ?string $phpVersion = null): LintCommand
     {
         $analysis = new AnalysisService(RegexParser::create());

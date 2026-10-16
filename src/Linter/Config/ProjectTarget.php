@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Config;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
@@ -40,7 +41,8 @@ use PHPRegex\Parser\RegexParser;
  * version, and the range is that version.
  *
  * A PHP older than the oldest the library judges, from any source, is
- * judged as that oldest one, and a notice says so.
+ * judged as that oldest one, and a notice says so. A PHP that ships PCRE1,
+ * 7.2 and earlier, is refused: no verdict of the library holds for it.
  *
  * Reading composer.json never fails: what cannot be read becomes a notice
  * and the running PHP is used.
@@ -75,6 +77,7 @@ final class ProjectTarget
      * @param array<string, string> $env        the environment, for COMPOSER
      *
      * @throws InvalidRegexOptionException when an option or regex.json names no version
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
      */
     public static function resolve(?string $phpFlag, ?string $pcreFlag, array $config, string $projectDir, array $env): self
     {
@@ -101,6 +104,7 @@ final class ProjectTarget
      * @param array<string, string>          $env        the environment, for COMPOSER
      *
      * @throws InvalidRegexOptionException when a source that is set names no version
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
      */
     public static function fromSources(array $php, array $pcre, ?string $projectDir, array $env): self
     {
@@ -395,9 +399,22 @@ final class ProjectTarget
      *
      * @param string       $from    what named $floor, and how: "--php-version names", "composer.json require.php allows"
      * @param list<string> $notices
+     *
+     * @throws UnsupportedTargetException when $floor ships PCRE1
      */
     private static function clamp(int $floor, string $from, array &$notices): int
     {
+        // PCRE1 is another engine, not an older PCRE2: judging it as the
+        // oldest PCRE2 would be a verdict about an engine it does not run.
+        if ($floor < PhpVersionGates::PCRE2) {
+            throw new UnsupportedTargetException(\sprintf(
+                '%s PHP %d.%d: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
+                $from,
+                intdiv($floor, 10000),
+                intdiv($floor, 100) % 100,
+            ));
+        }
+
         // The oldest PHP the library judges; a lower floor is judged as this.
         $lowest = PcreTarget::phpVersionBoundaries()[0];
         if ($floor >= $lowest) {

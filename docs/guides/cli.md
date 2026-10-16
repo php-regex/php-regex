@@ -1066,7 +1066,24 @@ pattern that only compiles on a newer PCRE2 fails on the oldest one. A floor
 below PHP 8.1 is judged as PHP 8.1, the oldest this library judges, and the
 command says so; so is a version below it named with `--php-version` or
 `phpVersion`, with a note such as `--php-version names PHP 7.4, older than the
-PHP 8.1 this library supports: judging for PHP 8.1.` A constraint the command cannot read (`*`, `<9`, a branch
+PHP 8.1 this library supports: judging for PHP 8.1.`
+
+PHP 7.2 and earlier are refused instead, wherever the version comes from:
+they ship PCRE1, another engine than PCRE2, and no verdict of this library
+holds for it. PHP 7.3 is the first PHP on PCRE2 (10.32), with no release in
+between. A `composer.json` that allows such a PHP, `^7.1 || ^8.0` for
+instance, stops the run until `--php-version` or `phpVersion` names the PHP
+to judge for:
+
+```text
+Error: composer.json require.php allows PHP 7.1: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.
+```
+
+The command exits with 2, and with `--format=json` prints the
+[error envelope](../reference/json-output.md#the-error-envelope) with stage
+`target`, so that a pipeline never reads a project the command refused to
+judge as a clean one. The Symfony and Laravel `regex:lint` commands refuse
+the same way; the language server shows the message and judges no pattern. A constraint the command cannot read (`*`, `<9`, a branch
 name) falls back to the running PHP, with a note naming it; reading
 `composer.json` never stops a run.
 
@@ -1188,8 +1205,10 @@ with a value the command does not accept (an unknown `--format`, `--target`,
 a missing pattern, an argument the command does not take (one pattern more
 than it reads, or anything after `version` or `self-update`), an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
-and a `regex.json` that cannot be read (`lint` and `debug`) — in which case
-nothing was scanned. `regex` run without a command prints the help and exits
+a `regex.json` that cannot be read (`lint` and `debug`), and, for `lint`, a
+target PHP of 7.2 or earlier, which ships PCRE1 (see
+[Target PHP and PCRE2](#target-php-and-pcre2)) — in which case nothing was
+scanned. `regex` run without a command prints the help and exits
 with 2, as `regex help` with an unknown command does.
 
 For `lint`, code 2 also covers the paths it is given:

@@ -152,6 +152,26 @@ final class ServerTargetTest extends TestCase
         $this->assertStringContainsString('running PHP', $this->targetLog());
     }
 
+    /**
+     * PHP 7.2 and earlier ship PCRE1, which no verdict of the library
+     * holds for: the server shows why and judges no pattern, rather than
+     * judge them for another PHP.
+     */
+    #[Test]
+    public function test_a_target_on_pcre1_is_shown_and_judges_no_pattern(): void
+    {
+        file_put_contents($this->root.'/composer.json', (string) json_encode(['require' => ['php' => '>=5.6']]));
+
+        $this->serve(['rootUri' => $this->rootUri()], hover: true);
+
+        $message = 'composer.json require.php allows PHP 5.6: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for. No pattern is judged.';
+        $this->assertSame([['type' => 1, 'message' => $message]], $this->notifications('window/showMessage'));
+        $this->assertContains(['type' => 1, 'message' => $message], $this->notifications('window/logMessage'));
+        $this->assertSame([], $this->notifications('textDocument/publishDiagnostics'));
+        $this->assertSame([], $this->targetLogs());
+        $this->assertSame(['jsonrpc' => '2.0', 'id' => 2, 'result' => null], $this->response(2));
+    }
+
     #[Test]
     public function test_the_target_is_logged_once(): void
     {
@@ -185,13 +205,19 @@ final class ServerTargetTest extends TestCase
     /**
      * @param array<string, mixed> $initializeParams
      */
-    private function serve(array $initializeParams, int $extraDocuments = 0, ?Regex $regex = null): void
+    private function serve(array $initializeParams, int $extraDocuments = 0, ?Regex $regex = null, bool $hover = false): void
     {
         $messages = [
             ['id' => 1, 'method' => 'initialize', 'params' => $initializeParams],
             ['method' => 'initialized', 'params' => []],
             $this->didOpen(self::DOCUMENT_URI),
         ];
+        if ($hover) {
+            $messages[] = ['id' => 2, 'method' => 'textDocument/hover', 'params' => [
+                'textDocument' => ['uri' => self::DOCUMENT_URI],
+                'position' => ['line' => 2, 'character' => 13],
+            ]];
+        }
         for ($i = 1; $i <= $extraDocuments; $i++) {
             $messages[] = $this->didOpen('file:///workspace/src/Other'.$i.'.php');
         }
@@ -269,6 +295,25 @@ final class ServerTargetTest extends TestCase
         }
 
         return $logs;
+    }
+
+    /**
+     * The response to the request of that id, null when none was written.
+     *
+     * @return array<array-key, mixed>|null
+     */
+    private function response(int $id): ?array
+    {
+        rewind($this->output);
+        foreach (explode('Content-Length: ', (string) stream_get_contents($this->output)) as $frame) {
+            $json = strstr($frame, '{');
+            $decoded = false === $json ? null : json_decode($json, true);
+            if (\is_array($decoded) && $id === ($decoded['id'] ?? null) && !isset($decoded['method'])) {
+                return $decoded;
+            }
+        }
+
+        return null;
     }
 
     /**
