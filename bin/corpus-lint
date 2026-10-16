@@ -77,6 +77,11 @@ final class ConsoleStyle
         return $this->colorize($text, '1');
     }
 
+    public function cyan(string $text): string
+    {
+        return $this->colorize($text, '36');
+    }
+
     public function red(string $text): string
     {
         return $this->colorize($text, '31');
@@ -576,7 +581,7 @@ function main(array $argv): int
 
         $target = preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown';
         $name = $severities['fail'] > 0 || 0 !== $exitCode ? $io->red($repo) : $repo;
-        $io->info(paginationPrefix($index + 1, $total).' '.$name.'  '.$io->dim($target));
+        $io->info($io->cyan(paginationPrefix($index + 1, $total)).' '.$name.'  '.$io->dim($target));
     }
 
     fwrite($merged, summaryBlock($rows, $fallbackCount, $clampedCount)."\n");
