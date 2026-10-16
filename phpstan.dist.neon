@@ -100,11 +100,12 @@ parameters:
         - src
         - tests
 
-    # bin/corpus has no .php extension, so paths above do not parse it; scan it
-    # so its functions (deriveTargetPath, normalizeCloneUrl, ...) exist for the
-    # tests that require it.
+    # bin/corpus and bin/corpus-lint have no .php extension, so paths above do
+    # not parse them; scan them so their functions exist for the tests that
+    # require them.
     scanFiles:
         - bin/corpus
+        - bin/corpus-lint
 
     # The benchmarks' attributes live in the phpbench tool's own vendor.
     scanDirectories:

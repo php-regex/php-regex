@@ -1,0 +1,493 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+/*
+ * Lint every repository under corpus/, each judged under the PHP its own
+ * composer.json requires, and merge the per-repository logs into one file.
+ *
+ * One lint run resolves one target from the composer.json of the directory
+ * it runs in; a single run over corpus/ would judge every repository under
+ * this checkout's floor instead. This script runs the linter once per
+ * repository with the COMPOSER environment variable pointing at that
+ * repository's composer.json, so each one is judged under its own floor and
+ * the PCRE2 release bundled with it. A repository whose composer.json
+ * declares no require.php falls back to --php of this script. A floor older
+ * than the PHP the library supports is judged at that oldest supported PHP,
+ * exactly as a single lint run would judge it, and the notice the linter
+ * prints is carried into the merged log.
+ *
+ * Usage:
+ *   bin/corpus-lint [options]
+ *
+ *   --root <dir>    the checkout whose corpus/ is swept (default: the one
+ *                   holding this script)
+ *   --output <file> merged log (default: <root>/var/log/corpus.log)
+ *   --parts <dir>   per-repository logs (default: <root>/var/log/corpus-parts)
+ *   --php <version> target for repositories without a require.php
+ *                   (default: 8.1, the oldest PHP the library supports)
+ *   --only <text>   sweep only the repositories whose path contains <text>
+ *   --limit <n>     sweep at most <n> repositories, after --only
+ *   --help          this message
+ *
+ * Exit codes: 0 every repository was judged clean, 1 findings were reported
+ * or a repository could not be judged.
+ */
+
+/**
+ * The PHP constraint a repository requires, or null when its composer.json
+ * is missing, unreadable, or declares no require.php.
+ */
+function requirePhpConstraint(string $repoDir): ?string
+{
+    $file = $repoDir.'/composer.json';
+    if (!is_file($file)) {
+        return null;
+    }
+
+    $composer = json_decode((string) file_get_contents($file), true);
+    if (!\is_array($composer)) {
+        return null;
+    }
+
+    $require = $composer['require'] ?? null;
+    if (!\is_array($require)) {
+        return null;
+    }
+
+    $constraint = $require['php'] ?? null;
+
+    return \is_string($constraint) && '' !== $constraint ? $constraint : null;
+}
+
+/**
+ * How one repository is linted: under its own composer.json through the
+ * COMPOSER environment variable, or under the fallback flag when it declares
+ * no require.php of its own.
+ *
+ * @return array{env: ?string, args: list<string>, fallback: bool}
+ */
+function planRepositoryLint(string $repoDir, string $fallbackPhp, string $partFile): array
+{
+    $composer = $repoDir.'/composer.json';
+    if (null !== requirePhpConstraint($repoDir)) {
+        return [
+            'env' => $composer,
+            'args' => ['--ansi', 'lint', $repoDir, '--output', $partFile],
+            'fallback' => false,
+        ];
+    }
+
+    return [
+        'env' => null,
+        'args' => ['--ansi', 'lint', $repoDir, '--php-version', $fallbackPhp, '--output', $partFile],
+        'fallback' => true,
+    ];
+}
+
+function stripAnsi(string $text): string
+{
+    return preg_replace('/\e\[[0-9;]*m/', '', $text) ?? $text;
+}
+
+/**
+ * The banner Target line ("PHP 8.2, PCRE2 10.40 (source)"), ANSI stripped.
+ */
+function extractTargetLine(string $console): string
+{
+    if (preg_match('/^Target\s*:\s*(.+)$/m', stripAnsi($console), $match)) {
+        return trim($match[1]);
+    }
+
+    return '';
+}
+
+/**
+ * The linter's notices, with the repository's composer.json path shortened
+ * back to "composer.json" so the merged log stays portable.
+ *
+ * @return list<string>
+ */
+function extractNotes(string $console, string $composerPath): array
+{
+    if (!preg_match_all('/^Note: .+$/m', stripAnsi($console), $matches)) {
+        return [];
+    }
+
+    if ('' === $composerPath) {
+        return $matches[0];
+    }
+
+    return array_map(
+        static fn (string $note): string => str_replace($composerPath, 'composer.json', $note),
+        $matches[0],
+    );
+}
+
+/**
+ * One merged-log section header. The target source keeps its meaning but
+ * loses the absolute path it was resolved from.
+ */
+function sectionHeader(string $repoPath, string $targetLine, int $exitCode, bool $fallback): string
+{
+    $target = preg_replace_callback(
+        '/\(([^)]*)\)$/',
+        static function (array $m) use ($fallback): string {
+            $source = preg_replace('#\S*/#', '', $m[1]) ?? $m[1];
+            if ($fallback && !str_contains($source, 'fallback')) {
+                $source .= ', fallback: no require.php';
+            }
+
+            return '('.$source.')';
+        },
+        $targetLine,
+    ) ?? $targetLine;
+
+    return sprintf('### %s — Target: %s — exit %d', $repoPath, $target, $exitCode);
+}
+
+/**
+ * @return array{fail: int, warn: int, tip: int}
+ */
+function countSeverities(string $part): array
+{
+    $count = static fn (string $badge): int => preg_match_all('/^\s*'.$badge.'\b/m', $part) ?: 0;
+
+    return [
+        'fail' => $count('FAIL'),
+        'warn' => $count('WARN'),
+        'tip' => $count('TIP'),
+    ];
+}
+
+/**
+ * The repository paths under corpus/ (owner/repository), sorted, filtered by
+ * --only, trimmed by --limit.
+ *
+ * @return list<string>
+ */
+function discoverRepositories(string $corpusDir, ?string $only, ?int $limit): array
+{
+    $dirs = glob($corpusDir.'/*/*', \GLOB_ONLYDIR) ?: [];
+    sort($dirs);
+
+    $repos = array_map(
+        static fn (string $dir): string => basename(\dirname($dir)).'/'.basename($dir),
+        $dirs,
+    );
+
+    if (null !== $only && '' !== $only) {
+        $repos = array_values(array_filter(
+            $repos,
+            static fn (string $repo): bool => str_contains($repo, $only),
+        ));
+    }
+
+    if (null !== $limit && $limit >= 0) {
+        $repos = \array_slice($repos, 0, $limit);
+    }
+
+    return $repos;
+}
+
+/**
+ * @param array{env: ?string, args: list<string>, fallback: bool} $plan
+ *
+ * @return array{0: int, 1: string}
+ */
+function runLint(array $plan): array
+{
+    $env = getenv();
+    unset($env['COMPOSER']);
+    if (null !== $plan['env']) {
+        $env['COMPOSER'] = $plan['env'];
+    }
+
+    $command = array_merge([\PHP_BINARY, \dirname(__DIR__).'/bin/regex'], $plan['args']);
+    $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
+    if (!\is_resource($process)) {
+        return [2, 'unable to start the linter'];
+    }
+
+    $console = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+
+    return [proc_close($process), $console];
+}
+
+/**
+ * @param list<array{repo: string, target: string, exit: int, fail: int, warn: int, tip: int}> $rows
+ */
+function summaryBlock(array $rows, int $fallbackCount, int $clampedCount): string
+{
+    $lines = [
+        '================ corpus-lint summary ================',
+        sprintf('%-44s %-30s %4s %5s %5s %5s', 'repository', 'target', 'exit', 'fail', 'warn', 'tip'),
+    ];
+
+    foreach ($rows as $row) {
+        $lines[] = sprintf(
+            '%-44s %-30s %4d %5d %5d %5d',
+            $row['repo'],
+            $row['target'],
+            $row['exit'],
+            $row['fail'],
+            $row['warn'],
+            $row['tip'],
+        );
+    }
+
+    $withErrors = count(array_filter($rows, static fn (array $row): bool => $row['fail'] > 0 || 0 !== $row['exit']));
+    $totals = ['fail' => 0, 'warn' => 0, 'tip' => 0];
+    foreach ($rows as $row) {
+        foreach ($totals as $severity => $total) {
+            $totals[$severity] += $row[$severity];
+        }
+    }
+
+    $lines[] = sprintf(
+        'Total: %d repositories, %d with errors, %d FAIL, %d WARN, %d TIP, %d fallback target, %d floor clamped',
+        \count($rows),
+        $withErrors,
+        $totals['fail'],
+        $totals['warn'],
+        $totals['tip'],
+        $fallbackCount,
+        $clampedCount,
+    );
+
+    return implode("\n", $lines);
+}
+
+function printUsage(): void
+{
+    $help = <<<'TXT'
+        Usage: bin/corpus-lint [options]
+
+          --root <dir>    the checkout whose corpus/ is swept (default: the one
+                          holding this script)
+          --output <file> merged log (default: <root>/var/log/corpus.log)
+          --parts <dir>   per-repository logs (default: <root>/var/log/corpus-parts)
+          --php <version> target for repositories without a require.php
+                          (default: 8.1, the oldest PHP the library supports)
+          --only <text>   sweep only the repositories whose path contains <text>
+          --limit <n>     sweep at most <n> repositories, after --only
+          --help          this message
+
+        Every repository under corpus/ is judged under the PHP its own
+        composer.json requires; one merged log and one part per repository are
+        written. Exit codes: 0 every repository judged clean, 1 findings were
+        reported or a repository could not be judged.
+
+        TXT;
+
+    echo $help;
+}
+
+/**
+ * @param list<string> $argv
+ *
+ * @return array{root: ?string, output: ?string, parts: ?string, php: string, only: ?string, limit: ?int, help: bool}
+ */
+function parseArgs(array $argv): array
+{
+    $root = null;
+    $output = null;
+    $parts = null;
+    $php = '8.1';
+    $only = null;
+    $limit = null;
+    $help = false;
+
+    for ($i = 1, $count = \count($argv); $i < $count; $i++) {
+        $arg = $argv[$i];
+
+        if ('--help' === $arg || '-h' === $arg) {
+            $help = true;
+
+            continue;
+        }
+
+        $name = $arg;
+        $inline = null;
+        if (str_contains($arg, '=')) {
+            [$name, $inline] = explode('=', $arg, 2);
+        }
+
+        $value = $inline ?? $argv[++$i] ?? null;
+        if (null === $value || '' === $value) {
+            throw new InvalidArgumentException(sprintf('%s needs a value', $name));
+        }
+
+        match ($name) {
+            '--root' => $root = $value,
+            '--output' => $output = $value,
+            '--parts' => $parts = $value,
+            '--php' => $php = $value,
+            '--only' => $only = $value,
+            '--limit' => $limit = max(0, (int) $value),
+            default => throw new InvalidArgumentException(sprintf('Unknown option: %s', $arg)),
+        };
+    }
+
+    return [
+        'root' => $root,
+        'output' => $output,
+        'parts' => $parts,
+        'php' => $php,
+        'only' => $only,
+        'limit' => $limit,
+        'help' => $help,
+    ];
+}
+
+/**
+ * @param list<string> $argv
+ */
+function main(array $argv): int
+{
+    try {
+        $options = parseArgs($argv);
+    } catch (InvalidArgumentException $e) {
+        fwrite(\STDERR, sprintf("Error: %s\n", $e->getMessage())."\n");
+        printUsage();
+
+        return 1;
+    }
+
+    if ($options['help']) {
+        printUsage();
+
+        return 0;
+    }
+
+    $root = realpath($options['root'] ?? \dirname(__DIR__));
+    if (false === $root || !is_dir($root.'/corpus')) {
+        fwrite(\STDERR, "Error: no corpus/ directory under the requested root.\n");
+
+        return 1;
+    }
+
+    // Run the linter from the checkout root so every per-repository run
+    // reads the same regex.dist.json a single corpus run would.
+    chdir($root);
+
+    $corpusDir = $root.'/corpus';
+    $repos = discoverRepositories($corpusDir, $options['only'], $options['limit']);
+    if ([] === $repos) {
+        fwrite(\STDERR, sprintf("Error: no repositories found under %s.\n", $corpusDir));
+
+        return 1;
+    }
+
+    $outputFile = $options['output'] ?? $root.'/var/log/corpus.log';
+    $partsDir = $options['parts'] ?? $root.'/var/log/corpus-parts';
+    if (!is_dir($partsDir) && !mkdir($partsDir, 0o777, true) && !is_dir($partsDir)) {
+        fwrite(\STDERR, sprintf("Error: unable to create %s.\n", $partsDir));
+
+        return 1;
+    }
+
+    $outputDir = \dirname($outputFile);
+    if (!is_dir($outputDir) && !mkdir($outputDir, 0o777, true) && !is_dir($outputDir)) {
+        fwrite(\STDERR, sprintf("Error: unable to create %s.\n", $outputDir));
+
+        return 1;
+    }
+
+    $merged = fopen($outputFile, 'w');
+    if (!\is_resource($merged)) {
+        fwrite(\STDERR, sprintf("Error: unable to write %s.\n", $outputFile));
+
+        return 1;
+    }
+
+    $rows = [];
+    $fallbackCount = 0;
+    $clampedCount = 0;
+    $notClean = false;
+    $total = \count($repos);
+
+    foreach ($repos as $index => $repo) {
+        $repoDir = $corpusDir.'/'.$repo;
+        $partFile = $partsDir.'/'.str_replace('/', '__', $repo).'.log';
+
+        $plan = planRepositoryLint($repoDir, $options['php'], $partFile);
+        [$exitCode, $console] = runLint($plan);
+
+        $targetLine = extractTargetLine($console);
+        $notes = extractNotes($console, $plan['env'] ?? '');
+        $part = is_file($partFile) ? (string) file_get_contents($partFile) : '';
+        $severities = countSeverities($part);
+
+        fwrite($merged, sectionHeader('corpus/'.$repo, $targetLine, $exitCode, $plan['fallback'])."\n");
+        foreach ($notes as $note) {
+            fwrite($merged, $note."\n");
+        }
+        if ('' !== rtrim($part)) {
+            fwrite($merged, $part."\n");
+        }
+        fwrite($merged, "\n");
+        fflush($merged);
+
+        $fallback = $plan['fallback'];
+        if ($fallback) {
+            $fallbackCount++;
+        }
+        if (\in_array(true, array_map(
+            static fn (string $note): bool => str_contains($note, 'older than the PHP'),
+            $notes,
+        ), true)) {
+            $clampedCount++;
+        }
+
+        $rows[] = [
+            'repo' => 'corpus/'.$repo,
+            'target' => preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown',
+            'exit' => $exitCode,
+            'fail' => $severities['fail'],
+            'warn' => $severities['warn'],
+            'tip' => $severities['tip'],
+        ];
+
+        if (0 !== $exitCode) {
+            $notClean = true;
+        }
+
+        printf(
+            "[%d/%d] corpus/%s — %s — exit %d\n",
+            $index + 1,
+            $total,
+            $repo,
+            preg_replace('/\s*\([^)]*\)$/', '', $targetLine) ?: 'unknown target',
+            $exitCode,
+        );
+    }
+
+    fwrite($merged, summaryBlock($rows, $fallbackCount, $clampedCount)."\n");
+    fclose($merged);
+
+    printf(
+        "Merged %d repositories into %s (parts in %s)\n",
+        $total,
+        $outputFile,
+        $partsDir,
+    );
+
+    return $notClean ? 1 : 0;
+}
+
+if (!\defined('CORPUS_LINT_INCLUDED')) {
+    exit(main($argv));
+}

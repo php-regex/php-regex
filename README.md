@@ -190,6 +190,26 @@ Piping the command instead of running it in a terminal renders the severity
 badges without their padding, which reformats every severity line of the
 tracked file.
 
+To judge every repository under the PHP its own `composer.json` requires,
+rather than one target for the whole tree, sweep the corpus repository by
+repository:
+
+```bash
+php bin/corpus-lint
+```
+
+One lint run per repository, the target read from its own `composer.json`:
+`config.platform.php` when it declares a plain version, else the lowest PHP
+`require.php` allows, with the PCRE2 release bundled with that PHP. A floor
+older than the PHP the library supports is judged at that oldest supported
+PHP — the notice the linter prints is carried into the log — and a repository
+without `require.php` falls back to `--php` (`8.1` by default). The merged
+`var/log/corpus.log` keeps the issue format of a single run, gains one `###`
+header per repository, and closes with a summary table; each repository's own
+log stays under `var/log/corpus-parts/`. `--only` and `--limit` sweep a slice
+of the corpus, and the merged log renders the same whether the command runs
+in a terminal or through a pipe.
+
 ## How to report a vulnerability responsibly
 
 If you believe a pattern is exploitable:
