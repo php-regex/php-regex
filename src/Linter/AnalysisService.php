@@ -39,9 +39,10 @@ use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\RangeDiff;
+use PHPRegex\Parser\Validation\RangeVerdict;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\ConfirmationOptions;
@@ -390,7 +391,8 @@ final class AnalysisService
 
             // Valid on the floor: a later PHP of the range may refuse it.
             // The lint rules and the risk analysis still judge the floor.
-            $rangeError = $this->rangeError($occurrence);
+            $diff = [] === $this->range ? null : (new RangeDiff($this->regex, $this->range))->diff($occurrence->pattern, $this->comparesTrees());
+            $rangeError = null === $diff ? null : self::rangeError($diff);
             if (null !== $rangeError) {
                 [$target, $refusedOn, $rangeValidation] = $rangeError;
                 $message = \sprintf('On %s: %s', $refusedOn, $rangeValidation->error ?? 'Invalid regex.');
@@ -416,7 +418,7 @@ final class AnalysisService
 
             // Accepted everywhere, the pattern may still read otherwise on a
             // later PHP: the same text, another tree.
-            $readsOtherwise = null === $rangeError ? $this->readsOtherwise($occurrence, $ast) : null;
+            $readsOtherwise = $diff?->readsOtherwise;
             if (null !== $readsOtherwise) {
                 $issues[] = [
                     'type' => 'warning',
@@ -560,60 +562,45 @@ final class AnalysisService
      *
      * @return array{PcreTarget, string, ValidationResult}|null
      */
-    private function rangeError(PatternOccurrence $occurrence): ?array
+    private static function rangeError(RangeVerdict $diff): ?array
     {
-        $lowest = null;
+        $lowest = $diff->refusedBy();
+        if (null === $lowest) {
+            return null;
+        }
+
         $runs = [];
         $from = null;
-        foreach ($this->range as $parser) {
-            $validation = $parser->validate($occurrence->pattern);
-            if ($validation->isValid) {
+        foreach ($diff->later as $verdict) {
+            if ($verdict->validation->isValid) {
                 // Unreachable with today's rules: none stops refusing a
                 // pattern at a later PHP. It names the stretch the day one does.
                 if (null !== $from) {
-                    $runs[] = \sprintf('PHP %s and later, before %s', $from, ProjectTarget::phpLabel($parser->target()->phpVersionId));
+                    $runs[] = \sprintf('PHP %s and later, before %s', $from, ProjectTarget::phpLabel($verdict->target->phpVersionId));
                     $from = null;
                 }
 
                 continue;
             }
 
-            $lowest ??= [$parser->target(), $validation];
-            $from ??= ProjectTarget::phpLabel($parser->target()->phpVersionId);
-        }
-
-        if (null === $lowest) {
-            return null;
+            $from ??= ProjectTarget::phpLabel($verdict->target->phpVersionId);
         }
         if (null !== $from) {
             $runs[] = \sprintf('PHP %s and later', $from);
         }
 
-        return [$lowest[0], implode('; ', $runs), $lowest[1]];
+        return [$lowest->target, implode('; ', $runs), $lowest->validation];
     }
 
     /**
-     * The lowest PHP of the range after the floor that accepts the pattern
-     * but parses it into another tree, as "a{,3}", text before PCRE2 10.43
-     * and a quantifier from it; null when every one reads it as the floor
-     * does, or when the rules map turns the check off.
+     * Whether a pattern every PHP of the range accepts has its trees
+     * compared, as "a{,3}", text before PCRE2 10.43 and a quantifier from
+     * it: unless the rules map turns the check off.
      */
-    private function readsOtherwise(PatternOccurrence $occurrence, NodeInterface $floor): ?PcreTarget
+    private function comparesTrees(): bool
     {
-        if ([] === $this->range
-            || false === ($this->lintRules[self::ISSUE_ID_MEANING_CHANGES] ?? null)
-            || false === ($this->lintRules[substr(self::ISSUE_ID_MEANING_CHANGES, \strlen('regex.lint.'))] ?? null)) {
-            return null;
-        }
-
-        $tree = $floor->accept(new NodeDumper());
-        foreach ($this->range as $parser) {
-            if ($parser->parse($occurrence->pattern)->accept(new NodeDumper()) !== $tree) {
-                return $parser->target();
-            }
-        }
-
-        return null;
+        return false !== ($this->lintRules[self::ISSUE_ID_MEANING_CHANGES] ?? null)
+            && false !== ($this->lintRules[substr(self::ISSUE_ID_MEANING_CHANGES, \strlen('regex.lint.'))] ?? null);
     }
 
     /**

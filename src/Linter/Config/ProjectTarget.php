@@ -19,6 +19,7 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\RangeDiff;
 
 /**
  * The PHP and PCRE2 a project's patterns are judged for, and where each
@@ -160,22 +161,11 @@ final class ProjectTarget
         $range = self::rangeFor($target, $constraint, $pinnedPcre);
 
         // A release older than the library knows in full is judged with
-        // the rules of the oldest it does: said once for the whole range.
-        $older = [];
-        foreach ($range as $point) {
-            if ($point->judgedWith() !== $point->pcreVersion) {
-                $older[$point->pcreVersion] = $point->judgedWith();
-            }
-        }
-        if ([] !== $older) {
-            $releases = array_keys($older);
-            $last = array_pop($releases);
-            $notices[] = \sprintf(
-                'PCRE2 %s %s judged with the PCRE2 %s rules, the oldest this library knows in full.',
-                [] === $releases ? $last : implode(', ', $releases).' and '.$last,
-                [] === $releases ? 'is' : 'are',
-                $older[$last],
-            );
+        // the rules of the oldest it does: said once for the whole range,
+        // in the words every range verdict uses.
+        $older = RangeDiff::notice(RangeDiff::judgedWith($range));
+        if (null !== $older) {
+            $notices[] = $older;
         }
 
         return new self($target, $source, $notices, $range);

@@ -189,12 +189,12 @@ use PHPRegex\Toolkit\Regex;
 $compatibility = Regex::create()->compatibility('/(?<=a\Kb)c/');
 
 $compatibility->isValidEverywhere();      // false
-count($compatibility->verdicts());        // 54
-count($compatibility->invalidVerdicts()); // 18
+count($compatibility->verdicts());        // 100
+count($compatibility->invalidVerdicts()); // 20
 
 $verdict = $compatibility->invalidVerdicts()[0];
 $verdict->target->phpVersionId;           // 80500
-$verdict->target->pcreVersion;            // '10.40'
+$verdict->target->pcreVersion;            // '10.39'
 $verdict->validation->errorCode;          // ErrorCode::KeepInLookaround
 $verdict->validation->offset;             // 10
 ```
@@ -229,16 +229,52 @@ version": read the verdicts.
 The library refuses `\C` under `u` at every point. PHP 8.4.25 and later 8.4
 releases, and 8.5.10 and later, compile `u` patterns with
 `PCRE2_NEVER_BACKSLASH_C`, the others compile `\C` there, but an engine that
-compiles it can crash while matching, so `/a\Cb/u` gets 54 invalid verdicts.
+compiles it can crash while matching, so `/a\Cb/u` gets 100 invalid verdicts.
 
 A pattern is never a reason for `compatibility()` to throw. A pattern no
 target can read, a missing delimiter included, gets a verdict refusing it at
-every point: `/abc` gets 54 verdicts with the code `regex.delimiter.unclosed`
+every point: `/abc` gets 100 verdicts with the code `regex.delimiter.unclosed`
 and no offset.
 
 The lint command judges a project's patterns over the PHP versions its
 `composer.json` allows in the same way: see
 [Several PHP versions](../guides/cli.md#several-php-versions).
+
+### Between two PHP versions
+
+`PHPRegex\Parser\Validation\RangeDiff` asks one question of a pattern: does it
+change between the PHP a project runs on and a later one? `between()` takes two
+`PHP_VERSION_ID`s and judges the first, then every PHP version a verdict may
+change at up to the second, each with the PCRE2 its sources bundle:
+
+```php
+use PHPRegex\Parser\Validation\RangeDiff;
+
+$verdict = RangeDiff::between(80200, 80510)->diff('/a{,3}/');
+
+$verdict->from->validation->isValid;   // true: text on PHP 8.2
+$verdict->refusedBy();                 // null: no later PHP refuses it
+$verdict->readsOtherwise?->phpVersionId; // 80400: a quantifier from PCRE2 10.43
+
+RangeDiff::between(80200, 80510)->diff('/(?<=a\Kb)c/')->refusedBy()?->target->phpVersionId; // 80500
+```
+
+`refusedBy()` is the lowest later target that refuses a pattern the first one
+accepts; `readsOtherwise` the lowest that accepts it but reads it into another
+tree, compared when every target accepts it. The trees are compared, not the
+matches: a change of meaning that keeps the same tree, such as `(a|ab){1}+c`
+between PCRE2 10.33 and 10.34, is not seen.
+
+A range that reaches below PCRE2 10.39 says how it is judged: `judgedWith`
+maps each older release to the release whose rules judge it, and `notice()`
+says it in the words the lint prints:
+
+```php
+RangeDiff::between(70300, 80400)->diff('/a/')->notice();
+// 'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.'
+```
+
+The lint range and the Rector rules ask their questions through it.
 
 ## How the facts are checked
 

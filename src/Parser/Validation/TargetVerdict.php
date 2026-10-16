@@ -21,7 +21,7 @@ use PHPRegex\Parser\PcreTarget;
 final class TargetVerdict
 {
     /**
-     * @internal built by CompatibilityChecker::check()
+     * @internal built by CompatibilityChecker::check() and RangeDiff::diff()
      */
     public function __construct(public readonly PcreTarget $target, public readonly ValidationResult $validation) {}
 }

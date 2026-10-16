@@ -20,8 +20,7 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Printer\NodeDumper;
-use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Rector\Internal\PregCall;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
@@ -41,6 +40,11 @@ use Rector\ValueObject\PhpVersion;
 final class EscapeLiteralBraceRector extends AbstractRector
 {
     private const FUNCTIONS = ['preg_match', 'preg_match_all', 'preg_replace', 'preg_replace_callback', 'preg_split', 'preg_grep', 'preg_filter'];
+
+    /**
+     * @var array<int, RangeDiff>
+     */
+    private array $ranges = [];
 
     public function __construct(private readonly PhpVersionProvider $phpVersionProvider) {}
 
@@ -69,7 +73,7 @@ final class EscapeLiteralBraceRector extends AbstractRector
             return null;
         }
 
-        $escaped = $this->escaped($argument->value->value, PregCall::targetParser($phpVersion), PregCall::targetParser(PhpVersion::PHP_84));
+        $escaped = $this->escaped($argument->value->value, $this->range($phpVersion));
         if (null === $escaped) {
             return null;
         }
@@ -85,21 +89,21 @@ final class EscapeLiteralBraceRector extends AbstractRector
      * the pattern is not one this rewrite can judge, or when the rewritten
      * pattern would still read otherwise.
      */
-    private function escaped(string $pattern, RegexParser $current, RegexParser $later): ?string
+    private function escaped(string $pattern, RangeDiff $range): ?string
     {
-        if ('' === $pattern || '{' === $pattern[0] || str_contains($pattern, '\Q')
-            || !PregCall::targetAccepts($pattern, $current) || !PregCall::targetAccepts($pattern, $later)) {
+        if ('' === $pattern || '{' === $pattern[0] || str_contains($pattern, '\Q')) {
+            return null;
+        }
+
+        $verdict = $range->diff($pattern);
+        if (!$verdict->from->validation->isValid || null !== $verdict->refusedBy() || null === $verdict->readsOtherwise) {
             return null;
         }
 
         try {
-            $tree = $current->parse($pattern);
-            if ($tree->accept(new NodeDumper()) === $later->parse($pattern)->accept(new NodeDumper())) {
-                return null;
-            }
-
             // Positions count from the start of the body, after the
             // one-byte delimiter.
+            $tree = $range->from()->parse($pattern);
             $source = $tree->source ?? '';
             $braces = self::literalBraces($tree->pattern, $source);
             rsort($braces);
@@ -108,14 +112,22 @@ final class EscapeLiteralBraceRector extends AbstractRector
                 $body = substr($body, 0, $offset).'\\'.substr($body, $offset);
             }
             $rewritten = $pattern[0].$body.substr($pattern, 1 + \strlen($source));
-
-            return PregCall::targetAccepts($rewritten, $current)
-                && $current->parse($rewritten)->accept(new NodeDumper()) === $later->parse($rewritten)->accept(new NodeDumper())
-                ? $rewritten
-                : null;
         } catch (RegexException) {
-            return null; // never taken: both PHPs validated the pattern before it is parsed
+            return null; // never taken: every PHP of the range validated the pattern before it is parsed
         }
+
+        $check = $range->diff($rewritten);
+
+        return $check->from->validation->isValid && null === $check->refusedBy() && null === $check->readsOtherwise ? $rewritten : null;
+    }
+
+    /**
+     * From the PHP the code targets to PHP 8.4, the first that reads the
+     * braces otherwise: one range per PHP version, kept for the run.
+     */
+    private function range(int $phpVersion): RangeDiff
+    {
+        return $this->ranges[$phpVersion] ??= RangeDiff::between($phpVersion, PhpVersion::PHP_84);
     }
 
     /**
