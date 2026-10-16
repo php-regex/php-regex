@@ -126,6 +126,34 @@ final class CorpusLintScriptTest extends TestCase
     }
 
     #[Test]
+    public function test_run_command_returns_when_the_child_exits_even_if_a_worker_holds_the_descriptors(): void
+    {
+        $this->loadScriptFunctions();
+
+        $child = <<<'CODE'
+            $holder = pcntl_fork();
+            if (0 === $holder) {
+                sleep(60);
+                exit(0);
+            }
+            fwrite(STDERR, 'progress noise before the parent exits');
+            exit(3);
+            CODE;
+
+        $start = microtime(true);
+        [$exitCode, $console] = runCommand([\PHP_BINARY, '-r', $child], null);
+        $elapsed = microtime(true) - $start;
+
+        $this->assertSame(3, $exitCode, $console);
+        $this->assertStringContainsString('progress noise before the parent exits', $console);
+        $this->assertLessThan(
+            15.0,
+            $elapsed,
+            'the command waited on a leaked output descriptor instead of returning when its child exited',
+        );
+    }
+
+    #[Test]
     public function test_require_php_constraint_reads_the_repository_floor(): void
     {
         $this->loadScriptFunctions();

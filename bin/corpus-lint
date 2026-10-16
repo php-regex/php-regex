@@ -201,29 +201,57 @@ function discoverRepositories(string $corpusDir, ?string $only, ?int $limit): ar
 }
 
 /**
+ * Run one command to completion, its output captured out of the pipes: a
+ * parallel worker that outlives its parent, or a progress bar big enough to
+ * fill a pipe buffer, would otherwise hold the pipes open forever.
+ *
+ * @param list<string> $command
+ *
+ * @return array{0: int, 1: string}
+ */
+function runCommand(array $command, ?string $composerEnv): array
+{
+    $env = getenv();
+    unset($env['COMPOSER']);
+    if (null !== $composerEnv) {
+        $env['COMPOSER'] = $composerEnv;
+    }
+
+    $stdout = tempnam(sys_get_temp_dir(), 'corpus-lint-out-');
+    $stderr = tempnam(sys_get_temp_dir(), 'corpus-lint-err-');
+    if (false === $stdout || false === $stderr) {
+        return [2, 'unable to create the capture files'];
+    }
+
+    $process = proc_open(
+        $command,
+        [0 => ['file', '/dev/null', 'r'], 1 => ['file', $stdout, 'w'], 2 => ['file', $stderr, 'w']],
+        $pipes,
+        null,
+        $env,
+    );
+    if (!\is_resource($process)) {
+        return [2, 'unable to start the linter'];
+    }
+
+    $exitCode = proc_close($process);
+    $console = (string) file_get_contents($stdout).(string) file_get_contents($stderr);
+    unlink($stdout);
+    unlink($stderr);
+
+    return [$exitCode, $console];
+}
+
+/**
  * @param array{env: ?string, args: list<string>, fallback: bool} $plan
  *
  * @return array{0: int, 1: string}
  */
 function runLint(array $plan): array
 {
-    $env = getenv();
-    unset($env['COMPOSER']);
-    if (null !== $plan['env']) {
-        $env['COMPOSER'] = $plan['env'];
-    }
-
     $command = array_merge([\PHP_BINARY, \dirname(__DIR__).'/bin/regex'], $plan['args']);
-    $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $env);
-    if (!\is_resource($process)) {
-        return [2, 'unable to start the linter'];
-    }
 
-    $console = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
-    fclose($pipes[1]);
-    fclose($pipes[2]);
-
-    return [proc_close($process), $console];
+    return runCommand($command, $plan['env']);
 }
 
 /**
