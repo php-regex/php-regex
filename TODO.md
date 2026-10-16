@@ -276,6 +276,14 @@ The library refuses `(?xx)[\d -z]` for every target, while PCRE2 10.44
 accepts it; only the test is gated at 10.48. Decide whether the verdict
 follows the target version.
 
+## Which command regenerates the tracked corpus log
+
+`var/log/corpus.log` is tracked and today regenerates with
+`php bin/regex lint corpus/ --php-version=runtime`. `bin/corpus-lint`
+judges each repository under its own composer.json floor instead, and
+merges one log per repository. Decide which command the tracked file
+follows, then run it after the next corpus update.
+
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +
