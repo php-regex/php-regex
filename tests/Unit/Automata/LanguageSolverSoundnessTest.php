@@ -90,6 +90,66 @@ final class LanguageSolverSoundnessTest extends TestCase
     }
 
     /**
+     * A possessive quantifier gives back nothing, an iteration included: a
+     * body that may match more than one way, an optional letter or a count
+     * between two bounds, keeps from the greedy spelling a string the
+     * follower or the next iteration would take back. Oracle: "ab" is
+     * matched by "/^(?:ab?)+b$/" alone, "aaaab" by "/^(?:a{2,3})+b$/" alone;
+     * the solver called each pair equivalent.
+     */
+    #[Test]
+    #[DataProvider('providePossessivesWhoseBodyGivesBack')]
+    public function test_a_possessive_whose_body_gives_back_is_refused(string $possessive, string $greedy, string $subject): void
+    {
+        $this->assertSame(0, preg_match($possessive, $subject));
+        $this->assertSame(1, preg_match($greedy, $subject));
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessage('Possessive quantifiers never give back');
+
+        (new LanguageSolver())->equivalent($possessive, $greedy);
+    }
+
+    /**
+     * @return iterable<string, array{possessive: string, greedy: string, subject: string}>
+     */
+    public static function providePossessivesWhoseBodyGivesBack(): iterable
+    {
+        yield 'an optional letter in the body' => ['possessive' => '/^(?:ab?)++b$/', 'greedy' => '/^(?:ab?)+b$/', 'subject' => 'ab'];
+        yield 'a count between two bounds in the body' => ['possessive' => '/^(?:a{2,3})++b$/', 'greedy' => '/^(?:a{2,3})+b$/', 'subject' => 'aaaab'];
+        yield 'an alternation in a sequence of the body' => ['possessive' => '/^(?:a(?:bc|b))++c$/', 'greedy' => '/^(?:a(?:bc|b))+c$/', 'subject' => 'abc'];
+    }
+
+    /**
+     * A body that gives back only whole iterations, or an unbounded run of
+     * one class, before a follower it never starts like, reads the language
+     * of its greedy spelling. Oracle: every string over "abc" up to five
+     * characters.
+     */
+    #[Test]
+    #[DataProvider('providePossessivesThatGiveNothingBack')]
+    public function test_a_possessive_that_gives_nothing_back_reads_its_greedy_language(string $possessive, string $greedy): void
+    {
+        foreach ($this->generateStrings(['a', 'b', 'c'], 5) as $subject) {
+            $this->assertSame(preg_match($greedy, $subject), preg_match($possessive, $subject), (string) json_encode($subject));
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent($possessive, $greedy)->isEquivalent);
+    }
+
+    /**
+     * @return iterable<string, array{possessive: string, greedy: string}>
+     */
+    public static function providePossessivesThatGiveNothingBack(): iterable
+    {
+        yield 'a fixed sequence' => ['possessive' => '/^(?:ab)++c$/', 'greedy' => '/^(?:ab)+c$/'];
+        yield 'an unbounded run of a letter' => ['possessive' => '/^(?:a+)++b$/', 'greedy' => '/^(?:a+)+b$/'];
+        yield 'a single class' => ['possessive' => '/^[ab]++c$/', 'greedy' => '/^[ab]+c$/'];
+        yield 'a sequence holding a group' => ['possessive' => '/^(?:(a)b)++c$/', 'greedy' => '/^(?:(a)b)+c$/'];
+        yield 'an unbounded run of a group' => ['possessive' => '/^(?:(a)+)++b$/', 'greedy' => '/^(?:(a)+)+b$/'];
+    }
+
+    /**
      * @return list<string>
      */
     private function supportedPatterns(): array

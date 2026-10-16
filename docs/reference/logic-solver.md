@@ -400,7 +400,12 @@ Two refinements inside those rules:
   characters included — case- and flag-aware, so Symfony's `[^/]++` route
   requirements keep being analyzed. A flat chain of
   possessives (`/x*+ab*+/`) is refused: the second possessive sits beyond the
-  next part, which is exactly what the rule cannot see across.
+  next part, which is exactly what the rule cannot see across. So is a
+  possessive whose atom may match one iteration more than one way, as
+  `(?:ab?)++`, `(?:a{2,3})++` or `(?:a(?:bc|b))++`: it gives back nothing
+  inside an iteration either, where the greedy spelling would give a `b` back
+  to a follower `b`. The atom is a class, a literal, a sequence of them, or an
+  unbounded run of one class (`(?:a+)++`).
 
 An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:

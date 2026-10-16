@@ -306,6 +306,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `LanguageSolver` no longer reads a possessive quantifier as its greedy spelling when one iteration of its atom may match more than one way: `/^(?:ab?)++b$/` and `/^(?:ab?)+b$/` were called equivalent, though only the second matches `ab`, and so were `/^(?:a{2,3})++b$/` and `/^(?:a{2,3})+b$/` on `aaaab`. Such a pattern is refused, as any possessive the solver cannot prove inert.
 - Without nikic/php-parser, the lint ends a `do` whose body is a control structure without braces, `do if ($s) preg_match($re, $s); while ($s);`, at its `while`, as the parser-based reading does: an assignment after the loop no longer reaches a read inside it, and is no longer reported as a pattern the call may receive.
 - `(?xx)[\d -z]`, a space between a class escape and a hyphen under `(?xx)`, is judged by the PCRE2 release targeted: up to 10.44, which every PHP release bundles, the hyphen is a member, `[\d\-z]`, and the pattern is valid; from 10.45 it makes the range `\d-z`, which is refused. The library refused it for every target. The same holds after a POSIX class or a property, and with a tab.
 - `regex lint` and the optimizer prove a rewrite that takes the match check up to 1,000 configurations, where they stopped at 500, within the same work budget: WordPress's 700-byte anchored pattern for the table of an SQL query gets its suggestion back.

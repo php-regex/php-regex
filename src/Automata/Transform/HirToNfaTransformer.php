@@ -372,10 +372,13 @@ final class HirToNfaTransformer
 
     /**
      * The characters the atom of a possessive quantifier consumes first,
-     * when it always consumes from one set before anything else: a class,
-     * a literal, a concatenation or a repetition that cannot be skipped
-     * and starts the same way. An alternation, an empty set, or anything
-     * that may match nothing first, stays refused.
+     * when an iteration gives nothing back that the follower or the next
+     * iteration could take: a class or a literal, a sequence of them that
+     * matches one fixed way, or an unbounded run of one class (its
+     * characters given back are taken by no follower that starts otherwise,
+     * and the next iteration takes them all the same). A body that may
+     * match more than one way, "ab?", "a{2,3}", "(?:bc|b)", an alternation,
+     * an empty set, or anything that may match nothing first, stays refused.
      */
     private function atomFirstSet(Hir $atom): ?CharSet
     {
@@ -383,30 +386,53 @@ final class HirToNfaTransformer
             $atom = $atom->body;
         }
 
-        if ($atom instanceof ClassHir || $atom instanceof LiteralHir) {
-            $first = $atom->properties->first;
+        if ($atom instanceof RepetitionHir) {
+            if ($atom->min < 1 || null !== $atom->max) {
+                return null;
+            }
+
+            $body = $atom->body;
+            while ($body instanceof CaptureHir) {
+                $body = $body->body;
+            }
+
+            return $body instanceof ClassHir || ($body instanceof LiteralHir && 1 === \count($body->codePoints)) ? $this->fixedFirstSet($body) : null;
+        }
+
+        return $this->fixedFirstSet($atom);
+    }
+
+    /**
+     * The characters a body that matches one fixed way starts with: a class,
+     * a literal, or a sequence of them, through captures; null otherwise.
+     */
+    private function fixedFirstSet(Hir $body): ?CharSet
+    {
+        while ($body instanceof CaptureHir) {
+            $body = $body->body;
+        }
+
+        if ($body instanceof ClassHir || $body instanceof LiteralHir) {
+            $first = $body->properties->first;
 
             return null === $first || $first->isEmpty() ? null : $first;
         }
 
-        if ($atom instanceof ConcatHir) {
-            $head = $atom->parts[0] ?? null;
-            if (null === $head || false !== $head->properties->nullable) {
+        if (!$body instanceof ConcatHir || [] === $body->parts) {
+            return null;
+        }
+
+        $first = null;
+        foreach ($body->parts as $part) {
+            $partFirst = $this->fixedFirstSet($part);
+            if (null === $partFirst) {
                 return null;
             }
 
-            return $this->atomFirstSet($head);
+            $first ??= $partFirst;
         }
 
-        if ($atom instanceof RepetitionHir) {
-            if ($atom->min < 1 || false !== $atom->body->properties->nullable) {
-                return null;
-            }
-
-            return $this->atomFirstSet($atom->body);
-        }
-
-        return null;
+        return $first;
     }
 
     /**
