@@ -69,16 +69,16 @@ final class SourceDeprecationListenerTest extends TestCase
         }
         file_put_contents($root.'/src/Legacy.php', <<<'PHP_WRAP'
             <?php
-        
+
             namespace Probe;
-        
+
             final class Legacy
             {
                 public static function gone(): void
                 {
                     trigger_error('the library deprecated itself', \E_USER_DEPRECATED);
                 }
-        
+
                 public static function engineGone(): void
                 {
                     // Null to a non-nullable parameter: deprecated from PHP
@@ -102,51 +102,51 @@ final class SourceDeprecationListenerTest extends TestCase
             PHP);
         file_put_contents($root.'/tests/OwnSourceTest.php', <<<'PHP_WRAP'
             <?php
-        
+
             require_once __DIR__.'/../src/Legacy.php';
-        
+
             use Probe\Legacy;
-        
+
             final class OwnSourceTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_own_source_deprecation(): void
                 {
                     Legacy::gone();
-        
+
                     $this->assertTrue(true);
                 }
             }
             PHP_WRAP);
         file_put_contents($root.'/tests/VendorDeprecationTest.php', <<<'PHP_WRAP'
             <?php
-        
+
             require __DIR__.'/../vendor/probe/Dep.php';
-        
+
             use Probe\Vendor\Dep;
-        
+
             final class VendorDeprecationTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_vendor_deprecation(): void
                 {
                     Dep::gone();
-        
+
                     $this->assertTrue(true);
                 }
             }
             PHP_WRAP);
         file_put_contents($root.'/tests/EngineDeprecationTest.php', <<<'PHP_WRAP'
             <?php
-        
+
             require_once __DIR__.'/../src/Legacy.php';
-        
+
             use Probe\Legacy;
-        
+
             final class EngineDeprecationTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_engine_deprecation(): void
                 {
                     Legacy::engineGone();
-        
+
                     $this->assertTrue(true);
                 }
             }
