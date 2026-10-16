@@ -11,10 +11,14 @@ release's own sources before it is published — the method section of each
 article says exactly what was run, where.
 
 {% assign articles = site.articles | sort: date | reverse %}
-{% for article in articles %}
-### [{{ article.title }}]({{ article.url }})
-
-{{ article.description }}
-
-<p class="article-index-date">{{ article.date | date: '%-d %B %Y' }}</p>
-{% endfor %}
+<ul class="article-list">
+  {% for article in articles %}
+  <li class="article-entry">
+    <time class="article-entry-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
+    <div class="article-entry-body">
+      <a class="article-entry-title" href="{{ article.url }}">{{ article.title }}</a>
+      <p class="article-entry-desc">{{ article.description }}</p>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
