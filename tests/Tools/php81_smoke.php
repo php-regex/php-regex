@@ -46,8 +46,9 @@ spl_autoload_register(static function (string $class) use ($root): void {
 });
 
 $phpstan = null;
-foreach (array_slice($argv, 1) as $argument) {
-    if (str_starts_with($argument, '--phpstan=')) {
+$argv = $_SERVER['argv'] ?? [];
+foreach (is_array($argv) ? array_slice($argv, 1) : [] as $argument) {
+    if (is_string($argument) && str_starts_with($argument, '--phpstan=')) {
         $phpstan = (string) realpath(substr($argument, strlen('--phpstan=')));
     }
 }
