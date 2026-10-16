@@ -3,155 +3,166 @@ date: 2026-07-14 15:47:00 +00:00
 last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
-description: "The PCRE2 version behind every PHP release from 7.3 to 8.6, what the 10.43 bump bought, and how to judge one pattern for an engine you do not run — every released row verified against the php-src tags and run in the official images."
+description: "Which PCRE2 version each PHP release bundles, from 7.3 to 8.6, and how to check yours with PCRE_VERSION, since phpversion('pcre') prints the PHP version; then why a lookbehind fails on 8.3 but not 8.4, and why 8.5 refuses \\K in lookarounds."
 ---
-# Which PCRE2 ships with which PHP
+# Which PCRE2 ships with which PHP, and how to check yours
 
-Since PHP 7.3, PHP compiles every `preg_*` call with PCRE2, the regex engine bundled into php-src and built into your PHP by default. (Before 7.3, PHP carried the original PCRE, which ended at 8.41. Some distribution packages and Homebrew builds link the system's own PCRE2 instead of the bundled one — more below.) The bundled version is not a setting: it moves only when PHP moves, and each release accepts a slightly different pattern language. That is why the same file can compile on one PHP version and be refused by another — the probe below shows it, and the table after maps it from PHP 7.3 to the 8.6 branch.
+PHP 8.4 and 8.5 run every `preg_*` call on PCRE2 10.44. PHP 8.3 runs them on 10.42, and PHP 8.2 on 10.40. This is why `/(?<=a{1,3})f/` works on PHP 8.4 but fails on 8.3 with "Compilation failed: lookbehind assertion is not fixed length". To see the engine your PHP really uses, print `PCRE_VERSION`: `phpversion('pcre')` gives you the PHP version instead.
 
-Save this probe — it names its engine, then asks one question of it:
+Everything below runs with plain PHP 8.1 or newer and nothing to install; the side-by-side runs also use Docker and the official `php:X.Y-cli` images.
+
+## One pattern, two PHP versions
+
+PCRE2 is the regex engine inside PHP. It is the library that compiles and runs every pattern you pass to `preg_match()`, `preg_replace()` and the other `preg_*` functions. PHP ships its own copy of it, the *bundled* PCRE2, and each PHP release picks one version.
+
+This file uses a lookbehind: `(?<=…)`, a check that some text comes right before the current position. That text is not part of the match ([the lookarounds chapter](../tutorial/06-lookarounds.md) teaches them). Here the lookbehind asks for one, two or three `a` before the `f`.
 
 ```php
 <?php
 
 echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, "\n";
 
-// The lookbehind branch matches one, two or three a's — not one fixed length.
-var_dump(preg_match('/(?<=a{1,3})f/', 'aaaf', $m), $m);
+// One, two or three "a" before the "f": the lookbehind has no single length.
+var_dump(preg_match('/(?<=a{1,3})f/', 'aaf'));
 ```
 {: data-file="lookbehind.php" data-copy="" }
 
-Run it on PHP 8.2 (the official `php:8.2-cli` image — nothing but Docker to install) and the engine refuses the pattern:
+Run the same file on PHP 8.3, then on PHP 8.4:
 
 ```console
-$ docker run --rm -i php:8.2-cli php < lookbehind.php
-8.2.34 / PCRE2 10.40 2022-04-14
+$ docker run --rm -i php:8.3-cli php < lookbehind.php
+8.3.35 / PCRE2 10.42 2022-12-12
 
 Warning: preg_match(): Compilation failed: lookbehind assertion is not fixed length at offset 0 in Standard input code on line 6
 bool(false)
-NULL
-```
-{: data-copy="" }
-
-Run the same file on PHP 8.4 and it matches:
-
-```console
 $ docker run --rm -i php:8.4-cli php < lookbehind.php
 8.4.26 / PCRE2 10.44 2024-06-07
 int(1)
-array(1) {
-  [0]=>
-  string(1) "f"
-}
 ```
 {: data-copy="" }
 
-The pattern did not change. The engine did. PHP 8.2 bundles PCRE2 10.40, PHP 8.4 bundles 10.44, and bounded variable-length lookbehind — a branch inside a lookbehind that can match more than one length — arrived in PCRE2 10.43. On a stock build — the php.net tarball, or the official images used here — your regex dialect is pinned by your PHP version. The construct gets [its own section below](#what-pcre2-1043-bought).
+The file did not change; the engine did. On PHP 8.3, `preg_match()` returns `false` with a warning: `false` means the engine refused the pattern, not "no match". PHP 8.4 matches, because PCRE2 10.43 (16 February 2024) added lookbehinds whose length can vary, up to 255 characters.
 
-## The matrix
+So your regex *dialect*, the set of patterns the engine accepts, depends on your PHP version. More exactly, it depends on the PCRE2 that your PHP runs, as the next sections show.
 
-Every row for a released PHP — 7.3 through 8.5 — was checked twice on 16 October 2026: against the bundled library header at the php-src release tags, and in the official Docker images. The method and sources have their own section below.
+## Which PCRE2 does each PHP version bundle?
 
-| PHP | Released | PCRE2 at `.0` | Across the series |
-|---|---|---|---|
-| 7.3.0 | 2018-12-06 | 10.32 | never bumped, through 7.3.33 |
-| 7.4.0 | 2019-11-28 | 10.33 | 10.34 in 7.4.6, 10.35 in 7.4.12, through 7.4.33 |
-| 8.0.0 | 2020-11-26 | 10.35 | never bumped, through 8.0.30 |
-| 8.1.0 | 2021-11-25 | 10.37 | 10.39 from 8.1.1, through 8.1.34 |
-| 8.2.0 | 2022-12-08 | 10.40 | never bumped, through 8.2.34 |
-| 8.3.0 | 2023-11-23 | 10.42 | never bumped, through 8.3.35 |
-| 8.4.0 | 2024-11-21 | 10.44 | never bumped, through 8.4.26 |
-| 8.5.0 | 2025-11-20 | 10.44 | never bumped, through 8.5.11 |
-| 8.6 | *GA planned 2026-11-19* | 10.44 on the branch | — |
+| PHP | Released | PCRE2 in `.0` | Changes during the series | Last release checked |
+|---|---|---|---|---|
+| 7.3 | 2018-12-06 | 10.32 | none | 7.3.33 |
+| 7.4 | 2019-11-28 | 10.33 | 10.34 in 7.4.6, 10.35 in 7.4.12 | 7.4.33 |
+| 8.0 | 2020-11-26 | 10.35 | none | 8.0.30 |
+| 8.1 | 2021-11-25 | 10.37 | 10.39 from 8.1.1 | 8.1.34 |
+| 8.2 | 2022-12-08 | 10.40 | none | 8.2.34 |
+| 8.3 | 2023-11-23 | 10.42 | none | 8.3.35 |
+| 8.4 | 2024-11-21 | 10.44 | none | 8.4.26 |
+| 8.5 | 2025-11-20 | 10.44 | none | 8.5.11 |
+| 8.6 | planned for 2026-11-19 | 10.44 in 8.6.0RC3 | — | 8.6.0RC3 |
 
-Three rows carry more history than the table shows:
+Three things the table tells you:
 
-- **PHP 7.3 is the boundary release.** Everything before it — through 7.2.34 — shipped PCRE, not PCRE2, ending at PCRE 8.41.
-- **Two series bumped mid-flight.** 7.4 went from 10.33 to 10.34 in 7.4.6 and to 10.35 in 7.4.12 — the only minor to bump twice; 8.1 went from 10.37 to 10.39 in 8.1.1, one patch release after its debut.
-- **PHP 8.5 repeats its predecessor's engine to the byte** — same 10.44, but php-src no longer passes `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` when it compiles your patterns; the [same version, different dialect](#same-engine-version-different-dialect) section shows the pattern that proves it.
+- **PHP 7.3 is the first PHP with PCRE2.** PHP 7.2 and older used the original PCRE library, which ended at 8.41 in PHP 7.2. [Why PCRE2 is a separate library](why-pcre2-is-a-separate-library.md) tells that story.
+- **Only two series changed engine after their first release:** 7.4 (twice) and 8.1 (once, in 8.1.1). For every other series, the patch number does not change the engine.
+- **No PHP release bundles anything newer than PCRE2 10.44**, released on 7 June 2024. PHP 8.5 kept it, and so does the 8.6.0 release candidate. Newer engines reach PHP only through a system library, as shown below.
 
-> **Note:** the 8.4 row hides a trap for anyone reading php.net's own changelog: the PCRE2 bumps to 10.43 and 10.44 are listed there under PHP 8.4.**1**, yet the `php-8.4.0` tag already carries version 10.44 in its bundled library header, both upstream commits predate the PHP 8.4 branch cut, and the first 8.4 alpha tag already carries it too. **The tag, not the changelog entry, is the source of truth** — one reason this table was verified against the tags first and the running images second.
+## How do I check which PCRE2 my PHP uses?
 
-> **Note:** the 8.6 row is a snapshot, not a promise. The timetable on wiki.php.net puts GA at 19 November 2026; the branch bundles 10.44 as of 16 October 2026, and php-src has pulled an engine bump back before — master took 10.45 in February 2025, took 10.46 in August 2025, and reverted both in November 2025, leaving 8.5, 8.6 and master all on 10.44. Nothing past 10.44 has ever shipped inside a PHP release, so the constructs the 10.45+ engines advertise are reachable in PHP only through an externally linked PCRE2.
-
-## How to know what you are running
-
-The obvious probe lies. `phpversion()` is supposed to return an extension's version, but for `pcre` it returns the PHP version, not the engine's. Three probes, two answers:
+Ask PHP three questions and compare the answers. The last two lines show how to compare engine versions in code.
 
 ```php
 <?php
-var_dump(PHP_VERSION, phpversion('pcre'), PCRE_VERSION);
-```
-{: data-copy="" }
 
-```text
-string(6) "8.4.26"
-string(6) "8.4.26"
-string(16) "10.49 2026-09-28"
-```
+echo 'PHP_VERSION        ', PHP_VERSION, "\n";
+echo "phpversion('pcre') ", phpversion('pcre'), "\n";
+echo 'PCRE_VERSION       ', PCRE_VERSION, "\n";
 
-The first two lines print the same string — both PHP's version. The third, `PCRE_VERSION`, carries the engine's version and release date — 10.49 here, which no stock PHP build ships. One `php -i` line names the library and how PHP got it:
+// Compare engine versions with the two number constants.
+$engine = PCRE_VERSION_MAJOR.'.'.PCRE_VERSION_MINOR;
+var_dump(version_compare($engine, '10.43', '>='));
+```
+{: data-file="which-engine.php" data-copy="" }
+
+Here it runs on a Mac with PHP from Homebrew, then in the official PHP 8.4 image:
 
 ```console
-$ php -i | grep 'PCRE Library Version'
-PCRE Library Version => 10.49 2026-09-28
+$ php which-engine.php
+PHP_VERSION        8.4.26
+phpversion('pcre') 8.4.26
+PCRE_VERSION       10.49 2026-09-28
+bool(true)
+$ docker run --rm -i php:8.4-cli php < which-engine.php
+PHP_VERSION        8.4.26
+phpversion('pcre') 8.4.26
+PCRE_VERSION       10.44 2024-06-07
+bool(true)
 ```
 {: data-copy="" }
 
-That machine runs 10.49 on a PHP whose stock builds bundle 10.44 — the configure line shows `--with-external-pcre`, so this PHP links the system PCRE2 the same way distribution packages do. Bundled and linked engines answer to different upgrade clocks: the bundled one moves only with a PHP release, the linked one moves with the distribution. When two machines that report the same PHP version disagree about a pattern, this is the first line to check — and `PCRE_VERSION` is the documented constant to check it with.
+The first two lines are always the same: `phpversion('pcre')` returns the PHP version, not the engine version. Only `PCRE_VERSION` names the engine, with its release date. And look at the two machines: same PHP 8.4.26, two different engines.
 
-## What PCRE2 10.43 bought
+> **Warning:** `version_compare(phpversion('pcre'), '10.43', '>=')` is `false` on every PHP 8 release, because `8.x` is lower than `10.x`. A feature check written that way never turns on. Use `PCRE_VERSION_MAJOR` and `PCRE_VERSION_MINOR`, as above.
 
-One construct separates PHP 8.3 from 8.4 in daily pattern writing: the bounded variable-length lookbehind from the opening. PCRE2 10.43 accepts a lookbehind branch that matches a range of lengths, up to 255 characters by default, which is what lets a lookbehind say "one to three `a` — then require `f`" in a single assertion:
+## Bundled, or the system's PCRE2?
 
-```php
-<?php
-// Refused while the engine is 10.40 or 10.42 — what PHP 8.2 and 8.3 bundle.
-// Matched from 10.43 — the engine PHP 8.4 bundles.
-preg_match('/(?<=a{1,3})f/', 'aaaf', $matches);
+The Homebrew PHP above does not use the bundled copy. It uses the PCRE2 installed on the system, 10.49. This is called *external linking*, and PHP does it when it is built with the `--with-external-pcre` option. You can look for that option in the build settings:
+
+```console
+$ php -i | grep -o -- --with-external-pcre
+--with-external-pcre
 ```
+{: data-copy="" }
 
-A myth worth killing while we are here, because it circulates among people who should know better: **alternatives of different fixed lengths do not need 10.43**. `(?<=ab|cde)` — two branches, lengths 2 and 3 — compiles and matches on PCRE2 10.40 in the official PHP 8.2 image:
+The same command prints nothing in the official `php:8.4-cli` image, which uses the bundled copy. Linux packages often link the system library too. Alpine's `php84` package is one example, checked on 16 October 2026:
+
+```console
+$ docker run --rm alpine:3.22 sh -c 'apk add -q php84 && php84 -r "echo PHP_VERSION, \" / PCRE2 \", PCRE_VERSION, PHP_EOL;"'
+8.4.16 / PCRE2 10.46 2025-08-27
+```
+{: data-copy="" }
+
+So the engine can change in two ways. A bundled engine changes only when you upgrade PHP. A linked engine changes when the system updates its PCRE2 package, even if PHP stays the same.
+
+The practical reading: the table tells you what a php.net build or an official Docker image runs. For any other build, `PCRE_VERSION` is the only reliable answer. A linked engine can also be *older* than the bundled one; then it refuses patterns that the table says your PHP accepts.
+
+## How do I fix "lookbehind assertion is not fixed length"?
+
+If your code must also run on PHP 8.3 or older, give the lookbehind branches that each have one fixed length. A *branch* is one alternative between `|` signs. `(?<=a|aa|aaa)` has three branches, of length 1, 2 and 3:
 
 ```php
 <?php
 
 echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, "\n";
 
-// Two branches, two fixed lengths — 2 and 3.
-var_dump(preg_match('/(?<=ab|cde)f/', 'abf', $m), $m);
+// Three branches, each with one fixed length: 1, 2 and 3.
+var_dump(preg_match('/(?<=a|aa|aaa)f/', 'aaf'));
 ```
-{: data-file="mixed-lengths.php" data-copy="" }
+{: data-file="lookbehind-split.php" data-copy="" }
 
 ```console
-$ docker run --rm -i php:8.2-cli php < mixed-lengths.php
+$ docker run --rm -i php:8.2-cli php < lookbehind-split.php
 8.2.34 / PCRE2 10.40 2022-04-14
 int(1)
-array(1) {
-  [0]=>
-  string(1) "f"
-}
 ```
 {: data-copy="" }
 
-What 10.43 added is a branch that is itself not one length, like `a{1,3}`. If you have been avoiding mixed-length alternatives out of compatibility caution, you were giving up nothing.
+PHP 8.2, with PCRE2 10.40, accepts it and matches. Branches of *different* fixed lengths were always allowed. What PCRE2 10.43 added is a single branch whose own length varies, like `a{1,3}` or `ab?`.
 
-> **Warning:** if you have been writing `{1,3}` inside lookbehinds and shipping to PHP 8.2, you have a `false` return and a warning waiting in production.
+> **Note:** a lookbehind with no maximum length, such as `(?<=a+)`, is refused on every PHP version, 8.5 included. The error is "length of lookbehind assertion is not limited". PCRE2 10.43 allows a length that varies, but it still needs a maximum.
 
-The construct-by-construct version table lives in [PCRE vs other engines](../concepts/pcre.md); which analysis layer reads which construct is the [feature support matrix](../reference/feature-support-matrix.md). When either page and this article ever differ, those pages win.
+## Same engine, new rule: `\K` in PHP 8.5
 
-## Same engine version, different dialect
-
-The matrix has one divergence no version number explains. This file compiles on PHP 8.4 and returns `bc`, not `c`:
+PHP 8.5 bundles exactly the same PCRE2 10.44 as PHP 8.4. Yet one kind of pattern works on 8.4 and fails on 8.5. It uses `\K`, which means "start the reported match here". The text before `\K` must be present, but it is not part of the result.
 
 ```php
 <?php
 
 echo PHP_VERSION, ' / PCRE2 ', PCRE_VERSION, "\n";
 
-// \K inside the lookbehind — an assertion, not part of the match.
-$r = preg_match('/(?<=a\Kb)c/', 'abc', $m);
-var_dump($r, $m);
+// \K inside a lookbehind: "start the reported match here".
+var_dump(preg_match('/(?<=a\Kb)c/', 'abc', $m), $m[0] ?? null);
+
+// The same match without \K: "bc", when an "a" comes before it.
+var_dump(preg_match('/(?<=a)bc/', 'abc', $m), $m[0] ?? null);
 ```
 {: data-file="keep.php" data-copy="" }
 
@@ -159,86 +170,141 @@ var_dump($r, $m);
 $ docker run --rm -i php:8.4-cli php < keep.php
 8.4.26 / PCRE2 10.44 2024-06-07
 int(1)
-array(1) {
-  [0]=>
-  string(2) "bc"
-}
-```
-{: data-copy="" }
-
-The `\K` sits inside the lookbehind — an assertion, which is not part of the match — and still resets where the reported match starts. PHP 8.5 refuses the same file on the same PCRE2 10.44:
-
-```console
+string(2) "bc"
+int(1)
+string(2) "bc"
 $ docker run --rm -i php:8.5-cli php < keep.php
 8.5.11 / PCRE2 10.44 2024-06-07
 
 Warning: preg_match(): Compilation failed: \K is not allowed in lookarounds (but see PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK) at offset 10 in Standard input code on line 6
 bool(false)
 NULL
+int(1)
+string(2) "bc"
 ```
 {: data-copy="" }
 
-The difference is one extra option. PCRE2 10.38 introduced a lockout — `\K` inside a lookaround became a compile error by default, and `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK` is the option that restores the old behaviour. The engines PHP bundled through 8.1.0 predate the lockout, so `\K` was allowed there by default; from PHP 8.1.1, the first release whose bundled engine knows the option, through 8.4, php-src passes it; PHP 8.5 stops passing it, and the default takes over. A `\K` inside a lookaround is therefore a PHP 8.5 compatibility break hiding behind an unchanged engine version, and the match it produced on 8.4 was never a shape to build on: the reported match starts where an assertion, not the match path, reset it.
+On PHP 8.4, both patterns return `bc`. On PHP 8.5, the first one fails to compile. A *lookaround* is a lookbehind or a lookahead `(?=…)`, and PCRE2 10.38 (1 October 2021) made `\K` inside one an error by default. It also added an option, `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`, to allow it again.
 
-## Judging a pattern for a fleet you do not run
+Up to 8.4, PHP passed that option, so `\K` kept working. PHP 8.5 compiles your patterns without it, as its UPGRADING notes say. The fix is to move `\K` out of the lookaround: `(?<=a)bc` returns the same `bc` on both versions. The lesson: the engine version is not the whole dialect, because the options PHP passes to the engine count too.
 
-Reading the matrix is one thing; enforcing it in a codebase is another. The parser that judges these patterns ships in PHPRegex, and `compatibility()` judges a pattern at every point the library's own behavior changes at — every PHP gate, every PCRE2 release from 10.39 to 10.48 — so the oldest engine in your fleet is asked, not assumed:
+## How these facts were checked
 
-{% include install-prerelease.html package="php-regex/regex-toolkit" %}
+The table was checked on 16 October 2026 in two ways. First, the bundled library header `ext/pcre/pcre2lib/pcre2.h` at each php-src release tag, and on the PHP-8.6 branch. Second, a run of each official `php:X.Y-cli` image, with its bundled engine and default settings. You can repeat the second check for PHP 8.1 and newer with this probe:
 
 ```php
 <?php
-use PHPRegex\Toolkit\Regex;
 
-// The facade also accepts a pinned target: validation, lint and the other
-// checks then judge for PHP 8.2 / PCRE2 10.40, not for this machine.
-$regex = Regex::create(['php_version' => '8.2', 'pcre_version' => '10.40']);
+// 1 = the pattern compiled and matched; false = the engine refused it.
+$try = fn (string $pattern, string $subject) => var_export(@preg_match($pattern, $subject), true);
 
-$compatibility = $regex->compatibility('/(?<=a{1,3})f/');
-var_dump($compatibility->isValidEverywhere());
+printf(
+    "%-9s %-17s ranged=%-5s split=%-5s keep=%s\n",
+    PHP_VERSION,
+    PCRE_VERSION,
+    $try('/(?<=a{1,3})f/', 'aaf'),
+    $try('/(?<=a|aa|aaa)f/', 'aaf'),
+    $try('/(?<=a\Kb)c/', 'abc'),
+);
 ```
+{: data-file="matrix.php" data-copy="" }
 
-```text
-bool(false)
+```console
+$ for v in 8.1 8.2 8.3 8.4 8.5 8.6-rc; do docker run --rm -i php:$v-cli php < matrix.php; done
+8.1.34    10.39 2021-10-29  ranged=false split=1     keep=1
+8.2.34    10.40 2022-04-14  ranged=false split=1     keep=1
+8.3.35    10.42 2022-12-12  ranged=false split=1     keep=1
+8.4.26    10.44 2024-06-07  ranged=1     split=1     keep=1
+8.5.11    10.44 2024-06-07  ranged=1     split=1     keep=false
+8.6.0RC3  10.44 2024-06-07  ranged=1     split=1     keep=false
 ```
+{: data-copy="" }
 
-The ranged-lookbehind pattern comes back with the exact rule it breaks:
+Each line is one PHP version with its engine. The ranged lookbehind starts to work at PHP 8.4. The split lookbehind works everywhere. The `\K` pattern stops working at PHP 8.5, on the same engine.
 
-```text
-Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.
+The same probe prints 10.35 for PHP 7.4.33. PHP 7.3 has no `fn`; with a plain function instead, PHP 7.3.33 prints 10.32. Images get new patch releases, so a later run may print higher patch numbers.
+
+## Judge your patterns for the oldest server you deploy to
+
+Both patterns that failed above compile on the Mac used here: PCRE2 10.49, and a PHP 8.4 that still allows `\K` in lookarounds. Your laptop says "fine", and a server on PHP 8.3 or 8.5 says otherwise. To catch this before deployment, you need to judge patterns for the servers, not for the machine you run.
+
+PHPRegex, the library this site documents, does that. It reads the regex patterns in your PHP files and judges each one for a target PHP and PCRE2 version. Its command-line tool is a dev dependency:
+
+{% include install-prerelease.html package="php-regex/php-regex" dev=true %}
+
+Take a project whose `composer.json` requires `"php": ">=8.2"`, with this file:
+
+```php
+<?php
+
+var_dump(preg_match('/(?<=a{1,3})f/', 'aaf'));
+var_dump(preg_match('/(?<=a\Kb)c/', 'abc'));
 ```
+{: data-file="lib/patterns.php" data-copy="" }
 
-The `\K` pattern from the previous section gets its verdict in the same vocabulary, with the fix attached:
+Plain `php lib/patterns.php` prints `int(1)` twice on the Mac above. The linter does not agree:
 
-```text
-\K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
-Hint: Move the \K out of the lookaround.
+```console
+$ vendor/bin/regex lint lib/
+PHPRegex 2.0.0-DEV by Younes ENNAJI
+
+Runtime   : PHP 8.4.26, PCRE2 10.49
+Target    : PHP 8.2, PCRE2 10.40 (composer.json require.php)
+Processes : 10
+PCRE JIT  : 1
+Backtrack : 1000000
+Recursion : 100000
+
+  [1/3] Scanning files
+  Scanned 1 files, found 2 patterns.
+
+  [2/3] Analyzing patterns
+  [3/3] Suggesting optimizations
+  lib/patterns.php:3:21
+      → /(?<=a{1,3})f/
+    FAIL Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.
+         ↳         (?<=a{1,3})f
+                   ^
+         ↳ Give each branch of the lookbehind a fixed length, or target PHP 8.4+.
+
+  lib/patterns.php:4:21
+      → /(?<=a\Kb)c/
+    FAIL On PHP 8.5 and later: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
+         ↳         (?<=a\Kb)c
+                             ^
+         ↳ Move the \K out of the lookaround.
+
+
+  FAIL 2 invalid patterns, 0 warnings, 0 optimizations.
+  Time: 0.08s  Memory: 12 MB  Processes: 2
+  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex
 ```
+{: data-copy="" }
 
-The complete script, with the report loop and the verdict listing, is [runnable in the repository](https://github.com/php-regex/php-regex/blob/2.x/demo/parser/version-targets.php).
+The `Target` line shows what happened. The tool read the oldest PHP that `composer.json` allows, 8.2, with the PCRE2 it bundles, 10.40. It refused the ranged lookbehind there. It also checked the later PHP versions where a rule changes, and found the PHP 8.5 `\K` break.
 
-## How this table stays true
+The command exits with code 1, so it can fail a CI job. The `Processes`, `Time` and `Memory` lines depend on your machine.
 
-The matrix was not assembled from blog posts. Each cell for a released PHP was checked against the bundled library header — `ext/pcre/pcre2lib/pcre2.h` — at the exact release tags of php-src, then confirmed by running the engine inside the official `php:7.3-cli` through `php:8.5-cli` images on 16 October 2026. The 8.6 row rests on the branch header alone — no tag and no image exist until the release does. Release dates come from php.net's own release data; the PCRE2 feature dates come from the upstream ChangeLog; the 8.6 schedule comes from the php.net timetable page.
+If your servers link a system PCRE2, add `--pcre-version=10.46` (or whatever `PCRE_VERSION` prints there). PHPRegex judges PHP 8.1 and newer with PCRE2 10.39 and newer; a lower floor is judged as PHP 8.1, and the command says so. The [CLI guide](../guides/cli.md#target-php-and-pcre2) lists every way to set the target. To run the same check from PHP code, see the [version targets demo](https://github.com/php-regex/php-regex/blob/2.x/demo/parser/version-targets.php).
 
-From its floor — PHP 8.1.1, judged as PCRE2 10.39 — the map is the one the parser's target judging uses, so a drifted 8.1-to-8.6 row would fail the test suite rather than mislead a reader; the older rows rest on the tag checks alone. Before PHP 8.6 goes GA on 19 November 2026, the last row gets re-checked against the branch — engine bumps have been reverted upstream before, and a matrix that goes stale silently is worse than no matrix.
+## Sources
 
 Sources, for checking rather than trusting:
 
-- php-src release tags and their bundled `pcre2.h`: [github.com/php/php-src](https://github.com/php/php-src)
-- PHP release changelogs and dates: [php.net/ChangeLog-8.php](https://www.php.net/ChangeLog-8.php), [php.net/ChangeLog-7.php](https://www.php.net/ChangeLog-7.php)
-- The PCRE2 migration: [RFC: PCRE2 migration](https://wiki.php.net/rfc/pcre2-migration) and the UPGRADING note in the `php-7.3.0` tag
-- PCRE2 releases and dates: [the PCRE2 ChangeLog](https://github.com/PCRE2Project/pcre2/blob/master/ChangeLog)
-- The PHP 8.6 timetable: [wiki.php.net/todo/php86](https://wiki.php.net/todo/php86)
-- `PCRE_VERSION` and the other PCRE constants: [php.net/pcre.constants](https://www.php.net/pcre.constants)
+- [php-src on GitHub](https://github.com/php/php-src): each release tag holds the bundled engine's version in `ext/pcre/pcre2lib/pcre2.h`. The tag, not a changelog entry, is the primary source for what a release ships.
+- [PHP 8.5.0 UPGRADING](https://github.com/php/php-src/blob/php-8.5.0/UPGRADING): the PCRE entry that drops `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`.
+- [The PCRE2 ChangeLog](https://github.com/PCRE2Project/pcre2/blob/master/ChangeLog): release dates, the 10.43 entry adding variable-length lookbehind, the 10.38 entry locking out `\K` in lookarounds.
+- [PHP 8.6 timetable](https://wiki.php.net/todo/php86): the planned release date.
+- [PCRE constants on php.net](https://www.php.net/manual/en/pcre.constants.php): `PCRE_VERSION`, `PCRE_VERSION_MAJOR` and `PCRE_VERSION_MINOR`.
 
 ## Recap
 
 You now understand:
 
-- which PCRE2 every PHP from 7.3 to 8.5 bundles, and that the 8.6 branch held 10.44 at verification — with the two mid-series bumps (7.4, 8.1) that break the "one minor, one engine" assumption
-- that `phpversion('pcre')` reports the PHP version, and `PCRE_VERSION` or `php -i` reports the engine — the first thing to compare when two machines on "the same PHP" disagree
-- that bounded variable lookbehind needs PCRE2 10.43 — every stock PHP from 8.4 bundles it — that mixed-length *alternatives* never needed it, and that `\K` inside a lookaround is a PHP 8.5 break with no engine version attached
-- how to have every verdict judged for the fleet's oldest engine instead of the machine you are on
+- Your PHP version picks the bundled PCRE2: 10.40 on PHP 8.2, 10.42 on 8.3, 10.44 on 8.4 and 8.5. No PHP release bundles anything newer.
+- A PHP linked to a system PCRE2 runs that library instead, so the same PHP version can run different engines.
+- `PCRE_VERSION` names the engine; `phpversion('pcre')` only repeats the PHP version.
+- "lookbehind assertion is not fixed length" means an engine older than 10.43; split the lookbehind into fixed-length branches.
+- PHP 8.5 refuses `\K` inside a lookaround on the same engine as 8.4; move the `\K` out.
 
-**Next:** the construct-by-construct version tables live in [PCRE vs other engines](../concepts/pcre.md); the [feature support matrix](../reference/feature-support-matrix.md) maps each construct to the analysis layers that read it.
+**Next:** other constructs also depend on the PCRE2 release, such as loose `\p{...}` property names and `a{,2}`. [PCRE vs other engines](../concepts/pcre.md#pcre-version-in-php) lists each one with the PHP version it needs.
