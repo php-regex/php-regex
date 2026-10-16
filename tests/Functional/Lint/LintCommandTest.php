@@ -140,7 +140,8 @@ final class LintCommandTest extends TestCase
         $exitCode = 0;
         $buffer = $this->captureOutput(static fn (): int => $command->run(self::makeInput([
             self::fixturePath('simple_text.php'),
-            '--interop=first-unknown,second-unknown',
+            '--pattern-function=first#a',
+            '--pattern-function=second#b',
             '--format=console',
             '--no-redos',
             '--no-validate',
@@ -149,7 +150,7 @@ final class LintCommandTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString(
-            "Warning: Unknown extraction preset \"first-unknown\", ignored.\nWarning: Unknown extraction preset \"second-unknown\", ignored.\n",
+            "Warning: Malformed pattern function \"first#a\", ignored.\nWarning: Malformed pattern function \"second#b\", ignored.\n",
             $buffer,
         );
     }

@@ -168,12 +168,12 @@ final class LintConfigLoaderTest extends TestCase
     }
 
     /**
-     * An unknown preset in regex.json is a warning, never fatal: the run
-     * reads the presets it knows. The schema keeps its list of names for
-     * the editors.
+     * An unknown preset in regex.json is an error, which lists the presets
+     * when no name is near: left out, it would leave a list that reads
+     * fewer calls than meant.
      */
     #[Test]
-    public function test_load_accepts_an_unknown_interop_preset(): void
+    public function test_load_refuses_an_unknown_interop_preset(): void
     {
         $cwd = getcwd();
         $this->assertIsString($cwd);
@@ -190,8 +190,8 @@ final class LintConfigLoaderTest extends TestCase
             $loader = new LintConfigLoader();
             $result = $loader->load();
 
-            $this->assertNull($result->error);
-            $this->assertSame(['composer-pcre'], LintArguments::fromDefaults((new LintDefaultsBuilder())->build($result->config))->interop);
+            $this->assertSame('Invalid "extraction.interop" in '.getcwd().'/regex.json: unknown preset "not-a-preset"; expected a list of distinct presets among composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator.', $result->error);
+            $this->assertSame([], $result->config);
         } finally {
             chdir($cwd);
             @unlink($configPath);
@@ -201,7 +201,7 @@ final class LintConfigLoaderTest extends TestCase
 
     /**
      * A function spec of regex.json the lint cannot read is left out with
-     * a warning, as an unknown preset is.
+     * a warning.
      */
     #[Test]
     public function test_load_warns_about_a_malformed_pattern_function(): void

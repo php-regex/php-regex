@@ -69,8 +69,9 @@ final class Server
     private const ERROR_INTERNAL = -32603;
 
     /**
-     * window/logMessage types.
+     * window/logMessage and window/showMessage types.
      */
+    private const LOG_ERROR = 1;
     private const LOG_WARNING = 2;
     private const LOG_INFO = 3;
 
@@ -315,8 +316,9 @@ final class Server
     }
 
     /**
-     * regex.json at the root; what cannot be read is a warning, and no
-     * configuration.
+     * regex.json at the root; a file that cannot be read is an error shown
+     * to the user, and no configuration: the server reads as without the
+     * file, every extraction preset included, rather than a part of it.
      *
      * @return array<string, mixed>
      */
@@ -324,7 +326,9 @@ final class Server
     {
         $loaded = (new LintConfigLoader())->load($root);
         if (null !== $loaded->error) {
-            self::log(self::LOG_WARNING, 'regex.json ignored: '.$loaded->error);
+            $message = 'regex.json ignored: '.$loaded->error;
+            self::log(self::LOG_ERROR, $message);
+            Response::notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
 
             return [];
         }

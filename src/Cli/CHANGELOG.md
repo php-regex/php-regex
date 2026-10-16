@@ -42,7 +42,8 @@ CHANGELOG
  * `regex lint` reads the eight presets by default, `RegexIterator`,
    `filter_var()` and the patterns the same file proves through a constant,
    a variable or a property; `--interop`, `--no-interop` and
-   `extraction.interop` narrow what is read, and `regex debug` prints the
-   warnings of `regex.json` on stderr.
+   `extraction.interop` narrow what is read, an unknown preset name is a
+   usage error (exit 2) that names the preset it most likely means, and
+   `regex debug` prints the warnings of `regex.json` on stderr.
  * A `--pattern-function` or `extraction.functions` spec the lint cannot
    read, `x#a` say, is ignored with a warning instead of silently.

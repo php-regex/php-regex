@@ -214,9 +214,10 @@ final class PHPRegexExtension extends Extension
     }
 
     /**
-     * One warning per name of php_regex.extraction.interop that is no
-     * preset, and per entry of either list that is no string: regex:lint
-     * prints them and reads the rest. A "%" is doubled, the container
+     * One warning per entry of either list of php_regex.extraction that is
+     * no string, and per spec of "functions" the lint cannot read: regex:lint
+     * prints them and reads the rest. A name that is no preset never gets
+     * here: the configuration refuses it. A "%" is doubled, the container
      * reading parameters for placeholders.
      *
      * @param array{interop: array<int, mixed>, functions: array<int, mixed>} $extraction
@@ -229,8 +230,6 @@ final class PHPRegexExtension extends Extension
         foreach ($extraction['interop'] as $name) {
             if (!\is_string($name)) {
                 $warnings[] = InteropPresets::notAStringWarning('interop', $name);
-            } elseif (!InteropPresets::exists($name)) {
-                $warnings[] = str_replace('%', '%%', InteropPresets::unknownWarning($name));
             }
         }
 

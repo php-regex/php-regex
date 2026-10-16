@@ -86,16 +86,17 @@ The `automata` settings are the defaults of `regex:compare`; its
 `regex.json`. `interop` left at `null`, or missing, reads every preset, those
 a later release adds included; a list reads exactly the presets it names. Each
 key falls back to its default alone: setting `interop` keeps `functions` at
-`[]`, and the other way round. A name that is no preset is ignored, and
+`[]`, and the other way round. A name that is no preset stops `regex:lint`,
+exit code 2, as any setting of `config/php-regex.php` it cannot read, naming
+the preset it most likely means:
+
+```
+Invalid config/php-regex.php: Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?
+```
+
+An entry of either list that is no string, a `false` say, is ignored, and
 `regex:lint` says so under its banner, or on stderr with `--format=json` and
-the other machine formats:
-
-```
-Warning: Unknown extraction preset "laravel-str", ignored.
-```
-
-An entry of either list that is no string, a `false` say, is ignored the same
-way, the warning naming its type:
+the other machine formats, the warning naming its type:
 
 ```
 Warning: Extraction interop entry ignored: expected a string, got bool.

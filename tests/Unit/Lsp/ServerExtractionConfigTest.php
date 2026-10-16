@@ -114,23 +114,28 @@ final class ServerExtractionConfigTest extends TestCase
     }
 
     /**
-     * An unknown preset is a warning in the server's log, the name ignored,
-     * the configuration kept.
+     * An unknown preset makes regex.json an error, shown to the user and
+     * naming the preset it most likely means; the server reads as without
+     * the file, every preset included, rather than a list that silently
+     * reads fewer calls than meant.
      */
     #[Test]
-    public function test_an_unknown_preset_is_logged_and_the_rest_is_read(): void
+    public function test_an_unknown_preset_is_shown_as_an_error_and_no_preset_is_lost(): void
     {
-        $this->write('regex.json', (string) json_encode(['extraction' => ['interop' => ['laravel-str', 'nette-utils']]]));
+        $this->write('regex.json', (string) json_encode(['extraction' => ['interop' => ['laravel-str']]]));
 
         $this->initialize();
         $this->send($this->didOpen($this->uri('src/Http/Controller.php'), self::CALLS));
 
-        $warnings = array_filter(
-            $this->notifications('window/logMessage'),
-            static fn (array $params): bool => \is_string($params['message'] ?? null) && str_contains($params['message'], 'Unknown extraction preset "laravel-str", ignored.'),
-        );
-        $this->assertCount(1, $warnings);
-        $this->assertSame([7], $this->diagnosedLines($this->uri('src/Http/Controller.php')));
+        $errors = array_values(array_filter(
+            $this->notifications('window/showMessage'),
+            static fn (array $params): bool => 1 === ($params['type'] ?? null) && \is_string($params['message'] ?? null) && str_contains($params['message'], 'unknown preset "laravel-str"; did you mean "illuminate-support"?'),
+        ));
+        $this->assertCount(1, $errors);
+        $message = $errors[0]['message'];
+        $this->assertIsString($message);
+        $this->assertStringStartsWith('regex.json ignored: ', $message);
+        $this->assertSame([7, 8], $this->diagnosedLines($this->uri('src/Http/Controller.php')));
     }
 
     /**

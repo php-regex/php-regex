@@ -175,11 +175,6 @@ Merged into 2.x. Left:
   braces around a control structure is unknown to the token strategy only).
 
 Decisions for the maintainer:
-- **An `interop` list made only of unknown names** (`["laravel-str"]`)
-  falls back to native calls only, with a warning. Documented in
-  `UPGRADE-2.0.md`, but a 2.x-dev user with that list loses their presets.
-- **PHPStan** passes over an unknown preset name silently, where the CLI,
-  the bridges and the LSP warn.
 - **`composer-pcre`** opens any file spelling `Preg::`/`Regex::` without the
   namespace check the newer presets have; adding it opens fewer files but
   changes `PatternFunctionRegistryTest`'s pinned cases.

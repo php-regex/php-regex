@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPStan\DependencyInjection\Container;
 use PHPStan\DependencyInjection\ContainerFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -94,6 +95,29 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}complexity\u{A0}›\u{A0}");
+
+        $this->loadExtensionWith($neon);
+    }
+
+    /**
+     * A name that is no preset stops PHPStan while it loads the
+     * configuration, the schema naming the key and the presets it takes:
+     * left out, it would leave a list that reads fewer calls than meant.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function provideUnknownPresets(): iterable
+    {
+        yield 'the name before the rename' => ['interop: [laravel-str]'];
+        yield 'beside a known one' => ['interop: [nette-utils, phpunt]'];
+    }
+
+    #[Test]
+    #[DataProvider('provideUnknownPresets')]
+    public function test_schema_refuses_an_unknown_preset(string $neon): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessageMatches("/'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}interop\u{A0}›\u{A0}\\d' expects to match pattern '".preg_quote(implode('|', InteropPresets::names()), '/')."', '[a-z-]+' given/");
 
         $this->loadExtensionWith($neon);
     }

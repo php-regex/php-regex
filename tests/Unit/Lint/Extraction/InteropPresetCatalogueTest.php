@@ -82,6 +82,35 @@ final class InteropPresetCatalogueTest extends TestCase
         $this->assertTrue(InteropPresets::exists('illuminate-support'));
     }
 
+    /**
+     * A name that is no preset is a configuration error, which names the
+     * preset it most likely means: the slug of its package, spelled with a
+     * slash or another separator, a word of it, or a name one or two
+     * letters off.
+     */
+    #[Test]
+    #[DataProvider('provideNamesThatAreNoPreset')]
+    public function test_an_unknown_name_is_told_the_preset_it_most_likely_means(string $name, ?string $suggestion, string $error): void
+    {
+        $this->assertFalse(InteropPresets::exists($name));
+        $this->assertSame($suggestion, InteropPresets::suggestion($name));
+        $this->assertSame($error, InteropPresets::unknownError($name));
+    }
+
+    /**
+     * @return iterable<string, array{name: string, suggestion: string|null, error: string}>
+     */
+    public static function provideNamesThatAreNoPreset(): iterable
+    {
+        yield 'the name before the rename' => ['name' => 'laravel-str', 'suggestion' => 'illuminate-support', 'error' => 'Unknown extraction preset "laravel-str": did you mean "illuminate-support"?'];
+        yield 'the framework' => ['name' => 'laravel', 'suggestion' => 'illuminate-support', 'error' => 'Unknown extraction preset "laravel": did you mean "illuminate-support"?'];
+        yield 'the package name' => ['name' => 'composer/pcre', 'suggestion' => 'composer-pcre', 'error' => 'Unknown extraction preset "composer/pcre": did you mean "composer-pcre"?'];
+        yield 'in capitals' => ['name' => 'Nette-Utils', 'suggestion' => 'nette-utils', 'error' => 'Unknown extraction preset "Nette-Utils": did you mean "nette-utils"?'];
+        yield 'a letter left out' => ['name' => 'phpunt', 'suggestion' => 'phpunit', 'error' => 'Unknown extraction preset "phpunt": did you mean "phpunit"?'];
+        yield 'the vendor' => ['name' => 'webmozart', 'suggestion' => 'webmozart-assert', 'error' => 'Unknown extraction preset "webmozart": did you mean "webmozart-assert"?'];
+        yield 'nothing like a preset' => ['name' => 'acme', 'suggestion' => null, 'error' => 'Unknown extraction preset "acme": the presets are composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator.'];
+    }
+
     #[Test]
     public function test_illuminate_support_reads_str(): void
     {

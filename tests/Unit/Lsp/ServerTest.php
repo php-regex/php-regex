@@ -271,7 +271,7 @@ final class ServerTest extends TestCase
     {
         $root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-server-'.bin2hex(random_bytes(6));
         mkdir($root, 0o700, true);
-        file_put_contents($root.'/regex.json', '{"extraction": {"interop": ["unknown-preset"]}}');
+        file_put_contents($root.'/regex.json', '{"extraction": {"functions": ["x#a"]}}');
 
         try {
             $this->serve([
@@ -291,7 +291,7 @@ final class ServerTest extends TestCase
             }
         }
 
-        $this->assertContains('regex.json: Unknown extraction preset "unknown-preset", ignored.', $messages);
+        $this->assertContains('regex.json: Malformed pattern function "x#a", ignored.', $messages);
     }
 
     /**

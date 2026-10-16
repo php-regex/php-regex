@@ -233,11 +233,13 @@ The server reads the calls `regex lint` reads (see
 [the CLI guide](cli.md#patterns-behind-a-wrapper)), with the same rules: the
 native calls, the presets `extraction.interop` names in the workspace's
 `regex.json` (every preset when unset), and the helpers
-`extraction.functions` names. A name in `extraction.interop` that is no preset
-is ignored and logged (`window/logMessage`, as a warning):
+`extraction.functions` names. A `regex.json` the server cannot read, a name in
+`extraction.interop` that is no preset included, is an error shown to the user
+(`window/showMessage`) and logged, and the server reads as without the file,
+every preset included, rather than a list that reads fewer calls than meant:
 
 ```
-regex.json: Unknown extraction preset "laravel-str", ignored.
+regex.json ignored: Invalid "extraction.interop" in /app/regex.json: unknown preset "laravel-str"; did you mean "illuminate-support"?
 ```
 
 A pattern held in a constant, a local variable or a property of the same

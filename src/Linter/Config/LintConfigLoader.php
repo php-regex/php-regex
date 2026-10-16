@@ -13,15 +13,15 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
-use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 
 /**
  * Reads regex.dist.json, then regex.json, from the working directory.
  *
  * Each file is checked against LintConfigSchema, and every problem of both
- * files is reported at once. A name in "extraction.interop" that is no
- * preset is a warning, never a problem: it is left out of the result.
+ * files is reported at once, a name in "extraction.interop" that is no
+ * preset included. A spec of "extraction.functions" the lint cannot read is
+ * a warning, never a problem: it is left out of the result.
  * regex.json overrides regex.dist.json: objects merge key by key, anything
  * else (a list included) is replaced whole. The result keeps the shape of
  * the file.
@@ -65,7 +65,7 @@ final class LintConfigLoader
                 continue;
             }
 
-            $document = self::withoutUnknownPresets($document, $warnings);
+            $document = self::withoutMalformedFunctions($document, $warnings);
             $problems = $this->validator->validate($document, $path);
             if ([] !== $problems) {
                 array_push($errors, ...$problems);
@@ -85,43 +85,35 @@ final class LintConfigLoader
     }
 
     /**
-     * The document with the names of "extraction.interop" that are no
-     * preset, and the specs of "extraction.functions" the lint cannot read,
-     * left out, one warning per name. Anything that is not a name stays,
-     * for the schema to report.
+     * The document with the specs of "extraction.functions" the lint cannot
+     * read left out, one warning per spec. Anything that is not a spec
+     * stays, for the schema to report.
      *
      * @param list<string> $warnings
      */
-    private static function withoutUnknownPresets(\stdClass $document, array &$warnings): \stdClass
+    private static function withoutMalformedFunctions(\stdClass $document, array &$warnings): \stdClass
     {
         $extraction = $document->extraction ?? null;
-        if (!$extraction instanceof \stdClass) {
+        if (!$extraction instanceof \stdClass || !isset($extraction->functions) || !\is_array($extraction->functions)) {
             return $document;
         }
 
-        $extraction = clone $extraction;
-        foreach (['interop', 'functions'] as $key) {
-            if (!isset($extraction->{$key}) || !\is_array($extraction->{$key})) {
+        $kept = [];
+        foreach ($extraction->functions as $spec) {
+            if (!\is_string($spec) || '' === trim($spec, " \t\n\r\0\x0B") || PatternFunctionRegistry::isSpec($spec)) {
+                $kept[] = $spec;
+
                 continue;
             }
 
-            $kept = [];
-            foreach ($extraction->{$key} as $name) {
-                if (!\is_string($name) || '' === trim($name, " \t\n\r\0\x0B") || ('interop' === $key ? InteropPresets::exists($name) : PatternFunctionRegistry::isSpec($name))) {
-                    $kept[] = $name;
-
-                    continue;
-                }
-
-                $warning = 'interop' === $key ? InteropPresets::unknownWarning($name) : PatternFunctionRegistry::malformedSpecWarning($name);
-                if (!\in_array($warning, $warnings, true)) {
-                    $warnings[] = $warning;
-                }
+            $warning = PatternFunctionRegistry::malformedSpecWarning($spec);
+            if (!\in_array($warning, $warnings, true)) {
+                $warnings[] = $warning;
             }
-
-            $extraction->{$key} = $kept;
         }
 
+        $extraction = clone $extraction;
+        $extraction->functions = $kept;
         $document = clone $document;
         $document->extraction = $extraction;
 

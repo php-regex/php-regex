@@ -61,7 +61,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | `jobs` | logical CPUs | Parallel workers: the CPUs the process may use, within a container's CPU quota; 1 without `pcntl` |
 | `format` | `console` | `console`, `json`, `github`, `checkstyle` or `junit` |
 | `ide` | none | `phpstorm`, `vscode`, others, or a URL template — for clickable links |
-| `extraction.interop` | every preset | Libraries whose calls carry a pattern: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; a list reads exactly those, `[]` the native calls only, an unknown name is ignored with a warning |
+| `extraction.interop` | every preset | Libraries whose calls carry a pattern: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; a list reads exactly those, `[]` the native calls only, an unknown name is an error that names the preset it most likely means |
 | `extraction.functions` | `[]` | Project helpers carrying a pattern, as `App\Support\Str::matches#1` |
 | `checks.validation` | `true` | Syntax and semantic validation |
 | `checks.redos.enabled` | `false` | ReDoS analysis |

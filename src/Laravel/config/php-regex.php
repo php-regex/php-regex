@@ -220,7 +220,8 @@ return [
         | phpunit, webmozart-assert, beberlei-assert, symfony-validator.
         | null reads every preset, those a later release adds included; a
         | list reads exactly the presets it names, [] the native calls only.
-        | An unknown name is ignored, with a warning when regex:lint runs.
+        | An unknown name stops regex:lint, naming the preset it most
+        | likely means.
         */
         'interop' => null,
 

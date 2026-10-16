@@ -58,8 +58,9 @@ CHANGELOG
  * `regex:lint` reads `php_regex.extraction.interop` (every preset by
    default, and for `~`) and `php_regex.extraction.functions`, the shape of
    `extraction` in `regex.json`; a later configuration file's list replaces
-   the earlier one. An unknown preset, or an entry of either list that is no
-   string, is ignored with a warning naming it, or its type. A `Regex`
+   the earlier one. An unknown preset is an `InvalidConfigurationException`
+   that names the preset it most likely means; an entry of either list that
+   is no string is ignored with a warning naming its type. A `Regex`
    constraint read from both the PHP file and the validator's metadata is
    reported once.
  * `php_regex.extraction.interop` and `functions` take one name written

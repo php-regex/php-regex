@@ -102,46 +102,50 @@ final class LintExtractionPresetsTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{files: array<string, string>, arguments: list<string>, unknown: string}>
+     * @return iterable<string, array{files: array<string, string>, arguments: list<string>, error: string}>
      */
     public static function provideUnknownPresets(): iterable
     {
-        yield 'command line flag' => ['files' => [], 'arguments' => ['--interop=not-a-preset,nette-utils'], 'unknown' => 'not-a-preset'];
-        yield 'regex.json' => ['files' => ['regex.json' => '{"extraction": {"interop": ["nette-utils", "not-a-preset"]}}'], 'arguments' => [], 'unknown' => 'not-a-preset'];
-        yield 'the name laravel-str had before any tag' => ['files' => ['regex.json' => '{"extraction": {"interop": ["laravel-str", "nette-utils"]}}'], 'arguments' => [], 'unknown' => 'laravel-str'];
+        yield 'command line flag' => ['files' => [], 'arguments' => ['--interop=nette-utils,not-a-preset'], 'error' => 'Unknown extraction preset "not-a-preset" in --interop: the presets are composer-pcre, '];
+        yield 'regex.json' => ['files' => ['regex.json' => '{"extraction": {"interop": ["nette-utils", "not-a-preset"]}}'], 'arguments' => [], 'error' => 'unknown preset "not-a-preset"; expected a list of distinct presets among composer-pcre, '];
+        yield 'the name laravel-str had before any tag' => ['files' => ['regex.json' => '{"extraction": {"interop": ["laravel-str", "nette-utils"]}}'], 'arguments' => [], 'error' => 'unknown preset "laravel-str"; did you mean "illuminate-support"?'];
+        yield 'a list made only of an unknown name' => ['files' => [], 'arguments' => ['--interop=laravel-str'], 'error' => 'Unknown extraction preset "laravel-str" in --interop: did you mean "illuminate-support"?'];
     }
 
     /**
+     * An unknown preset is a configuration error, exit code 2, which names
+     * the preset it most likely means: left out, it would leave a list that
+     * reads fewer calls than meant, the native ones only when it was the
+     * only one.
+     *
      * @param array<string, string> $files
      * @param list<string>          $arguments
      */
     #[Test]
     #[DataProvider('provideUnknownPresets')]
-    public function test_an_unknown_preset_warns_and_the_run_goes_on(array $files, array $arguments, string $unknown): void
+    public function test_an_unknown_preset_is_a_configuration_error(array $files, array $arguments, string $error): void
     {
         $this->enterProject([...$files, 'src/EveryLibraryTest.php' => self::EVERY_LIBRARY]);
 
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', ...$arguments, '--format=json', '--jobs=1', '--no-redos']);
 
-        $this->assertSame(1, $exitCode, $stdout.$stderr);
-        $this->assertStringContainsString(\sprintf('Unknown extraction preset "%s", ignored.', $unknown), $stderr);
-        $this->assertSame(['/(filter-var/', '/(native/', '/(nette/', '/(regex-iterator/'], $this->reportedPatterns($stdout));
+        $this->assertSame(2, $exitCode, $stdout.$stderr);
+        $this->assertStringContainsString($error, stripslashes($stdout), $stdout.$stderr);
+        $this->assertStringNotContainsString('"results"', $stdout);
     }
 
     /**
-     * -q silences the warning as it silences the other status lines; the
-     * run reads the same patterns.
+     * -q silences the status lines, never the error.
      */
     #[Test]
-    public function test_quiet_hides_the_unknown_preset_warning(): void
+    public function test_quiet_still_reports_an_unknown_preset(): void
     {
-        $this->enterProject(['regex.json' => '{"extraction": {"interop": ["not-a-preset", "nette-utils"]}}', 'src/EveryLibraryTest.php' => self::EVERY_LIBRARY]);
+        $this->enterProject(['src/EveryLibraryTest.php' => self::EVERY_LIBRARY]);
 
-        [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--interop=other-unknown,nette-utils', '--format=json', '--jobs=1', '--no-redos'], quiet: true);
+        [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--interop=other-unknown,nette-utils', '--jobs=1', '--no-redos'], quiet: true);
 
-        $this->assertSame(1, $exitCode, $stdout.$stderr);
-        $this->assertStringNotContainsString('Unknown extraction preset', $stderr);
-        $this->assertSame(['/(filter-var/', '/(native/', '/(nette/', '/(regex-iterator/'], $this->reportedPatterns($stdout));
+        $this->assertSame(2, $exitCode, $stdout.$stderr);
+        $this->assertStringContainsString('Error: Unknown extraction preset "other-unknown" in --interop', $stderr);
     }
 
     /**
@@ -149,26 +153,27 @@ final class LintExtractionPresetsTest extends TestCase
      */
     public static function provideRepeatedUnknownPresets(): iterable
     {
-        yield 'twice in regex.json' => ['files' => ['regex.json' => '{"extraction": {"interop": ["x", "x"]}}'], 'arguments' => []];
         yield 'in regex.dist.json and regex.json' => ['files' => ['regex.dist.json' => '{"extraction": {"interop": ["x"]}}', 'regex.json' => '{"extraction": {"interop": ["x"]}}'], 'arguments' => []];
         yield 'twice on the command line' => ['files' => [], 'arguments' => ['--interop=x,x']];
-        yield 'in regex.json and on the command line' => ['files' => ['regex.json' => '{"extraction": {"interop": ["x"]}}'], 'arguments' => ['--interop=x']];
     }
 
     /**
+     * Each file that names the unknown preset is told so once, and the
+     * command line once.
+     *
      * @param array<string, string> $files
      * @param list<string>          $arguments
      */
     #[Test]
     #[DataProvider('provideRepeatedUnknownPresets')]
-    public function test_an_unknown_preset_named_twice_warns_once(array $files, array $arguments): void
+    public function test_an_unknown_preset_named_twice_is_reported_once_per_place(array $files, array $arguments): void
     {
         $this->enterProject([...$files, 'src/EveryLibraryTest.php' => self::EVERY_LIBRARY]);
 
-        [$exitCode, $stdout, $stderr] = $this->runLint(['src', ...$arguments, '--format=json', '--jobs=1', '--no-redos']);
+        [$exitCode, $stdout, $stderr] = $this->runLint(['src', ...$arguments, '--jobs=1', '--no-redos']);
 
-        $this->assertSame(1, $exitCode, $stdout.$stderr);
-        $this->assertSame(1, substr_count($stderr, 'Warning: Unknown extraction preset "x", ignored.'), $stderr);
+        $this->assertSame(2, $exitCode, $stdout.$stderr);
+        $this->assertSame(max(1, \count($files)), substr_count(strtolower($stderr), 'preset "x"'), $stderr);
     }
 
     /**

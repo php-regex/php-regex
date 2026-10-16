@@ -36,6 +36,8 @@ final class ServerTargetFallbackTest extends TestCase
 
     private const DOCUMENT_URI = 'file:///workspace/src/Pattern.php';
 
+    private const LOG_ERROR = 1;
+
     private const LOG_WARNING = 2;
 
     private const LOG_INFO = 3;
@@ -88,17 +90,21 @@ final class ServerTargetFallbackTest extends TestCase
         $this->assertStringContainsString('"eight"', $warnings[0]);
     }
 
+    /**
+     * A regex.json the server cannot read is an error, logged and shown to
+     * the user; the target falls back as without the file.
+     */
     #[Test]
-    public function test_an_unreadable_regex_json_is_a_warning(): void
+    public function test_an_unreadable_regex_json_is_an_error(): void
     {
         file_put_contents($this->root.'/regex.json', '{"phpVersion": "eight"}');
 
         $this->serve(['rootUri' => $this->rootUri()]);
 
         $this->assertStringContainsString('running PHP', $this->targetLog()['message']);
-        $warnings = $this->logs(self::LOG_WARNING);
-        $this->assertCount(1, $warnings);
-        $this->assertStringContainsString('regex.json', $warnings[0]);
+        $errors = $this->logs(self::LOG_ERROR);
+        $this->assertCount(1, $errors);
+        $this->assertStringContainsString('regex.json', $errors[0]);
     }
 
     #[Test]

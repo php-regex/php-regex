@@ -18,6 +18,7 @@ use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,8 +29,8 @@ use Symfony\Component\Console\Output\StreamOutput;
 
 /**
  * How php-regex.extraction is read: what a key holds that is no list, a
- * name that is no string, a name given twice, and where the warnings go
- * outside the console format.
+ * name that is no string, a name given twice, a name that is no preset,
+ * and where the warnings go outside the console format.
  */
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
@@ -67,7 +68,7 @@ final class ExtractionWarningTest extends TestCase
         ];
 
         yield 'names that are no string, and twice the same' => [
-            'extraction' => ['interop' => ['nette-utils', 42, ['x'], false, 'nette-utils', 42, 'not-a-preset'], 'functions' => [7, 'App\grep#1', null]],
+            'extraction' => ['interop' => ['nette-utils', 42, ['x'], false, 'nette-utils', 42], 'functions' => [7, 'App\grep#1', null]],
             'expected' => [
                 'interop' => ['nette-utils'],
                 'functions' => ['App\grep#1'],
@@ -75,7 +76,6 @@ final class ExtractionWarningTest extends TestCase
                     'Extraction interop entry ignored: expected a string, got int.',
                     'Extraction interop entry ignored: expected a string, got array.',
                     'Extraction interop entry ignored: expected a string, got bool.',
-                    'Unknown extraction preset "not-a-preset", ignored.',
                     'Extraction functions entry ignored: expected a string, got int.',
                     'Extraction functions entry ignored: expected a string, got null.',
                 ],
@@ -92,12 +92,30 @@ final class ExtractionWarningTest extends TestCase
         ];
     }
 
+    /**
+     * A name that is no preset is an error of the configuration, which
+     * names the preset it most likely means: left out, it would leave a list
+     * that reads fewer calls than meant, the native ones only when it was
+     * the only one.
+     */
+    #[Test]
+    public function test_an_unknown_preset_is_a_configuration_error(): void
+    {
+        config(['php-regex.extraction' => ['interop' => ['laravel-str']]]);
+        $this->assertNotNull($this->app);
+
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessage('Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?');
+
+        PHPRegexServiceProvider::extraction($this->app);
+    }
+
     #[Test]
     public function test_other_formats_say_the_warning_on_stderr(): void
     {
         $project = $this->makeProject(['app/Check.php' => "<?php\n\npreg_match('/fine/', \$s);\n"]);
         $this->app?->setBasePath($project);
-        config(['php-regex.extraction' => ['interop' => ['laravel-str']]]);
+        config(['php-regex.extraction' => ['functions' => ['x#a']]]);
 
         $stdout = fopen('php://memory', 'r+');
         $stderr = fopen('php://memory', 'r+');
@@ -143,7 +161,7 @@ final class ExtractionWarningTest extends TestCase
 
         $this->assertSame(0, $status, $report.$errors);
         $this->assertIsArray(json_decode($report, true), 'stdout is not JSON: '.$report);
-        $this->assertStringContainsString('Warning: Unknown extraction preset "laravel-str", ignored.', $errors);
+        $this->assertStringContainsString('Warning: Malformed pattern function "x#a", ignored.', $errors);
     }
 
     /**

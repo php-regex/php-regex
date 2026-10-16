@@ -26,8 +26,8 @@ CHANGELOG
    reference is reported only when no possible pattern defines its group.
  * The static methods of every preset `regex lint` reads are judged by
    default; `phpRegex.interop` takes the preset names of
-   `extraction.interop` to read only some, and ignores an unknown one
-   without a warning. A named argument is read under the name the library
+   `extraction.interop` to read only some, and refuses an unknown one as it
+   loads the configuration. A named argument is read under the name the library
    gives its pattern parameter.
  * A named argument is matched with its case, as PHP does: `PATTERN:` names
    no `$pattern`.

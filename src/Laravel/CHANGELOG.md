@@ -53,7 +53,8 @@ CHANGELOG
    `exclude` says: a call to one is read as a `preg_*()` call.
  * `regex:lint` reads `php-regex.extraction.interop` (`null` for every
    preset, the default) and `php-regex.extraction.functions`, the shape of
-   `extraction` in `regex.json`. An unknown preset, or an entry of either
-   list that is no string, is ignored with a warning naming it, or its type.
+   `extraction` in `regex.json`. An unknown preset stops `regex:lint`
+   (exit 2), naming the preset it most likely means; an entry of either
+   list that is no string is ignored with a warning naming its type.
  * A `functions` spec the lint cannot read is ignored with a warning,
    `Malformed pattern function "x#a", ignored.`

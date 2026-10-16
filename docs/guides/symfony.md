@@ -102,15 +102,16 @@ reads exactly the presets it names, `[]` the native calls only. Where several fi
 the bundle (`config/packages/php_regex.yaml`, then
 `config/packages/dev/php_regex.yaml`), a later file's `interop` or
 `functions` list replaces the earlier one, while `paths` and `exclude` add up.
-A name that is no preset is ignored, not an error: `regex:lint` says so under
-its banner, or on stderr with `--format=json` and the other machine formats:
+A name that is no preset is a configuration error, raised as the container is
+built, which names the preset it most likely means:
 
 ```
-Warning: Unknown extraction preset "laravel-str", ignored.
+Invalid configuration for path "php_regex.extraction.interop": Unknown extraction preset "laravel-str": did you mean "illuminate-support"?
 ```
 
-An entry of either list that is no string, a `false` say, is ignored the same
-way, the warning naming its type:
+An entry of either list that is no string, a `false` say, is ignored, and
+`regex:lint` says so under its banner, or on stderr with `--format=json` and
+the other machine formats, the warning naming its type:
 
 ```
 Warning: Extraction interop entry ignored: expected a string, got bool.

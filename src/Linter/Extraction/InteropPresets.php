@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\NearMiss;
 
 /**
  * Known regex wrappers shipped by third-party libraries.
@@ -59,6 +60,18 @@ final class InteropPresets
     ];
 
     /**
+     * The words of a package name that point to a preset whose slug does
+     * not hold them: the framework a component ships with, the function a
+     * preset is known by.
+     */
+    private const SUGGESTED_FOR_WORD = [
+        'laravel' => self::ILLUMINATE_SUPPORT,
+        'str' => self::ILLUMINATE_SUPPORT,
+        'preg' => self::COMPOSER_PCRE,
+        'assertion' => self::BEBERLEI_ASSERT,
+    ];
+
+    /**
      * PHPUnit's assertions taking the pattern as $pattern, first: PHPUnit
      * 12.5 Assert, and assertRegExp()/assertNotRegExp() of PHPUnit 9 and
      * older.
@@ -94,12 +107,52 @@ final class InteropPresets
     }
 
     /**
-     * The warning for a configured name that is no preset: the name is left
-     * out and the run goes on, whoever reads the configuration.
+     * The preset a name that is none most likely means, or null: the slug
+     * of the package spelled another way ("composer/pcre", "Nette_Utils"),
+     * a preset one or two letters off ("phpunt"), or the preset a word of
+     * the name belongs to ("laravel-str", "webmozart").
      */
-    public static function unknownWarning(string $name): string
+    public static function suggestion(string $name): ?string
     {
-        return \sprintf('Unknown extraction preset "%s", ignored.', $name);
+        $slug = trim(strtr(Ascii::lower($name), ['/' => '-', '_' => '-', ' ' => '-', '.' => '-']), '-');
+        if (self::exists($slug)) {
+            return $slug;
+        }
+
+        $closest = NearMiss::closest($slug, self::names());
+        if (null !== $closest) {
+            return $closest;
+        }
+
+        foreach (explode('-', $slug) as $word) {
+            if (isset(self::SUGGESTED_FOR_WORD[$word])) {
+                return self::SUGGESTED_FOR_WORD[$word];
+            }
+
+            foreach (self::names() as $preset) {
+                if (\in_array($word, explode('-', $preset), true) && 'assert' !== $word) {
+                    return $preset;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The error for a configured name that is no preset, $where it was
+     * read ("--interop"), with the preset it most likely means or, when
+     * none, every preset: dropped, the name would leave a list that reads
+     * fewer calls than meant, the native ones only when it was the only one.
+     */
+    public static function unknownError(string $name, ?string $where = null): string
+    {
+        $suggestion = self::suggestion($name);
+        $unknown = \sprintf('Unknown extraction preset "%s"%s', $name, null === $where ? '' : ' in '.$where);
+
+        return null !== $suggestion
+            ? \sprintf('%s: did you mean "%s"?', $unknown, $suggestion)
+            : \sprintf('%s: the presets are %s.', $unknown, implode(', ', self::names()));
     }
 
     /**

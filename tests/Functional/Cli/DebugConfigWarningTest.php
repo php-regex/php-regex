@@ -26,8 +26,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * regex debug reads regex.json as regex lint does: what the file holds
- * that is ignored, an unknown extraction preset, is a warning on stderr,
- * once per name, silenced by -q, and the command goes on.
+ * that is ignored, a pattern function it cannot read, is a warning on
+ * stderr, once per spec, silenced by -q, and the command goes on; an
+ * unknown extraction preset is an error.
  */
 final class DebugConfigWarningTest extends TestCase
 {
@@ -47,21 +48,36 @@ final class DebugConfigWarningTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideFormats')]
-    public function test_an_unknown_preset_in_regex_json_warns_once_on_stderr(array $format): void
+    public function test_a_malformed_pattern_function_in_regex_json_warns_once_on_stderr(array $format): void
     {
-        $this->enterProject(['regex.json' => '{"extraction": {"interop": ["x", "nette-utils", "x"]}}']);
+        $this->enterProject(['regex.json' => '{"extraction": {"functions": ["x#a", "App\\\\grep"]}}']);
 
         [$exitCode, $stdout, $stderr] = $this->runDebug(['/abc/', ...$format]);
 
         $this->assertSame(0, $exitCode, $stdout.$stderr);
-        $this->assertSame("Warning: Unknown extraction preset \"x\", ignored.\n", $stderr);
-        $this->assertStringNotContainsString('Unknown extraction preset', $stdout);
+        $this->assertSame("Warning: Malformed pattern function \"x#a\", ignored.\n", $stderr);
+        $this->assertStringNotContainsString('Malformed pattern function', $stdout);
+    }
+
+    /**
+     * @param list<string> $format
+     */
+    #[Test]
+    #[DataProvider('provideFormats')]
+    public function test_an_unknown_preset_in_regex_json_is_an_error(array $format): void
+    {
+        $this->enterProject(['regex.json' => '{"extraction": {"interop": ["laravel-str", "nette-utils"]}}']);
+
+        [$exitCode, $stdout, $stderr] = $this->runDebug(['/abc/', ...$format]);
+
+        $this->assertSame(2, $exitCode, $stdout.$stderr);
+        $this->assertStringContainsString('unknown preset "laravel-str"; did you mean "illuminate-support"?', [] === $format ? $stderr : stripslashes($stdout));
     }
 
     #[Test]
     public function test_quiet_hides_the_warning(): void
     {
-        $this->enterProject(['regex.json' => '{"extraction": {"interop": ["x"]}}']);
+        $this->enterProject(['regex.json' => '{"extraction": {"functions": ["x#a"]}}']);
 
         [$exitCode, $stdout, $stderr] = $this->runDebug(['/abc/'], quiet: true);
 

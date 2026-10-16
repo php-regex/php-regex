@@ -96,7 +96,20 @@ final class Configuration implements ConfigurationInterface
                             ->defaultValue(InteropPresets::DEFAULT_PRESETS)
                             ->treatNullLike(InteropPresets::DEFAULT_PRESETS)
                             ->performNoDeepMerging()
-                            ->info('Libraries whose calls carry a regex pattern, by package slug ('.implode(', ', InteropPresets::names()).'). Every preset is on by default, and ~ says the same; a list reads exactly the presets it names, [] the native calls only, and a later config file\'s list replaces it. An unknown name is ignored, with a warning when regex:lint runs.')
+                            // A name that is no preset, left out, would leave a
+                            // list that reads fewer calls than meant.
+                            ->validate()
+                                ->always(static function (array $names): array {
+                                    foreach ($names as $name) {
+                                        if (\is_string($name) && !InteropPresets::exists($name)) {
+                                            throw new \InvalidArgumentException(InteropPresets::unknownError($name));
+                                        }
+                                    }
+
+                                    return $names;
+                                })
+                            ->end()
+                            ->info('Libraries whose calls carry a regex pattern, by package slug ('.implode(', ', InteropPresets::names()).'). Every preset is on by default, and ~ says the same; a list reads exactly the presets it names, [] the native calls only, and a later config file\'s list replaces it. An unknown name is a configuration error, which names the preset it most likely means.')
                         ->end()
                         ->arrayNode('functions')
                             ->beforeNormalization()->ifString()->then(static fn (string $name): array => [$name])->end()

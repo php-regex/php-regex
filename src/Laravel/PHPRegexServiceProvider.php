@@ -158,12 +158,15 @@ final class PHPRegexServiceProvider extends ServiceProvider
     /**
      * The calls regex:lint reads, from php-regex.extraction: the presets
      * named (every one when "interop" is null or missing), the project's
-     * functions, and one warning per name that is no preset, left out.
-     * Read when the extractor is built, so a key the application sets after
-     * the provider registers, or leaves out of a published file, takes the
-     * default all the same.
+     * functions, and one warning per entry that is no string or spec the
+     * lint cannot read, left out. Read when the extractor is built, so a key
+     * the application sets after the provider registers, or leaves out of a
+     * published file, takes the default all the same.
      *
      * @internal
+     *
+     * @throws InvalidRegexOptionException on a name that is no preset: left out, it would leave a list that
+     *                                     reads fewer calls than meant
      *
      * @return array{interop: list<string>, functions: list<string>, warnings: list<string>}
      */
@@ -177,13 +180,17 @@ final class PHPRegexServiceProvider extends ServiceProvider
         $presets = [];
         $warnings = [];
         foreach (null === $interop ? InteropPresets::DEFAULT_PRESETS : (array) $interop as $name) {
-            if (\is_string($name) && InteropPresets::exists($name)) {
-                $presets[] = $name;
+            if (!\is_string($name)) {
+                $warnings[] = InteropPresets::notAStringWarning('interop', $name);
 
                 continue;
             }
 
-            $warnings[] = \is_string($name) ? InteropPresets::unknownWarning($name) : InteropPresets::notAStringWarning('interop', $name);
+            if (!InteropPresets::exists($name)) {
+                throw new InvalidRegexOptionException(InteropPresets::unknownError($name, 'php-regex.extraction.interop'));
+            }
+
+            $presets[] = $name;
         }
 
         $specs = [];

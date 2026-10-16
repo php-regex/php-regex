@@ -21,9 +21,8 @@ use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
@@ -56,15 +55,15 @@ final class ExtractionConfigTest extends TestCase
         PHP;
 
     #[Test]
-    public function test_the_tree_takes_the_extraction_keys_and_any_preset_name(): void
+    public function test_the_tree_takes_the_extraction_keys(): void
     {
         $config = (new Processor())->processConfiguration(new Configuration(), [[
-            'extraction' => ['interop' => ['nette-utils', 'not-a-preset'], 'functions' => ['App\grep#1']],
+            'extraction' => ['interop' => ['nette-utils', 'phpunit'], 'functions' => ['App\grep#1']],
         ]]);
 
         $extraction = $config['extraction'] ?? null;
         $this->assertIsArray($extraction);
-        $this->assertSame(['nette-utils', 'not-a-preset'], $extraction['interop'] ?? null);
+        $this->assertSame(['nette-utils', 'phpunit'], $extraction['interop'] ?? null);
         $this->assertSame(['App\grep#1'], $extraction['functions'] ?? null);
     }
 
@@ -123,21 +122,28 @@ final class ExtractionConfigTest extends TestCase
         $this->assertSame(['/native/'], $this->patterns(['interop' => []]));
     }
 
+    /**
+     * An unknown preset is a configuration error, as any value the tree
+     * refuses, which names the preset it most likely means: left out, it
+     * would leave a list that reads fewer calls than meant, the native ones
+     * only when it was the only one.
+     */
     #[Test]
-    public function test_an_unknown_preset_warns_and_the_lint_goes_on(): void
+    public function test_an_unknown_preset_is_a_configuration_error(): void
     {
-        $project = $this->makeProject(['src/Check.php' => "<?php\n\nNette\\Utils\\Strings::match(\$s, '/(nette/');\n"]);
-        $container = $this->container(['interop' => ['laravel-str', 'nette-utils']], $project);
-        $command = $container->get('php_regex.command.lint');
-        $this->assertInstanceOf(Command::class, $command);
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Invalid configuration for path "php_regex.extraction.interop": Unknown extraction preset "laravel-str": did you mean "illuminate-support"?');
 
-        $tester = new CommandTester($command);
-        $status = $tester->execute(['paths' => [$project.'/src'], '--no-routes' => true, '--no-validators' => true, '--jobs' => '1']);
-        $output = $tester->getDisplay();
+        $this->container(['interop' => ['laravel-str', 'nette-utils']], $this->makeProject());
+    }
 
-        $this->assertSame(1, $status, $output);
-        $this->assertStringContainsString('Unknown extraction preset "laravel-str", ignored.', $output);
-        $this->assertStringContainsString('/(nette/', $output);
+    #[Test]
+    public function test_a_list_made_only_of_an_unknown_preset_is_a_configuration_error(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Unknown extraction preset "acme": the presets are composer-pcre, ');
+
+        $this->container(['interop' => 'acme'], $this->makeProject());
     }
 
     /**

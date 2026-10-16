@@ -23,7 +23,8 @@ CHANGELOG
    `/\d+\.x/`, where the escapes PHP keeps as written lost their backslash.
  * The server reads the calls `regex lint` reads, configured by
    `extraction.interop` and `extraction.functions` in the workspace's
-   `regex.json`, an unknown preset logged as a warning, and diagnoses a
+   `regex.json` (one it cannot read, an unknown preset included, is an
+   error shown to the user, and the file is ignored), and diagnoses a
    pattern held in a constant, a variable or a property at its literal.
    The declarations of `vendor/` are read too, 20,000 PHP files at most,
    with a warning logged past that.

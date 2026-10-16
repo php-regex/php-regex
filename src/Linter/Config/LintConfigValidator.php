@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\NearMiss;
@@ -82,7 +83,12 @@ final class LintConfigValidator
         if (\is_string($item) && \is_array($value) && isset($schema['items'])) {
             foreach ($value as $entry) {
                 if (!$this->accepts($this->map($schema['items']), $entry)) {
-                    $errors[] = \sprintf('Invalid "%s" in %s: unknown %s %s; expected %s.', $path, $file, $item, json_encode($entry, \JSON_UNESCAPED_SLASHES), $expected);
+                    // A preset name a letter off, or spelled as its package,
+                    // is told the preset it most likely means.
+                    $suggestion = 'preset' === $item && \is_string($entry) ? InteropPresets::suggestion($entry) : null;
+                    $errors[] = null !== $suggestion
+                        ? \sprintf('Invalid "%s" in %s: unknown %s %s; did you mean "%s"?', $path, $file, $item, json_encode($entry, \JSON_UNESCAPED_SLASHES), $suggestion)
+                        : \sprintf('Invalid "%s" in %s: unknown %s %s; expected %s.', $path, $file, $item, json_encode($entry, \JSON_UNESCAPED_SLASHES), $expected);
 
                     return;
                 }

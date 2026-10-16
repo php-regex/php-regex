@@ -118,11 +118,11 @@ final class ExtractionConfigTest extends TestCase
     }
 
     /**
-     * An unknown preset is a warning in the command's output, the name
-     * ignored; the run goes on and reads the presets it knows.
+     * An unknown preset stops regex:lint as any configuration it cannot
+     * read does, exit code 2, naming the preset it most likely means.
      */
     #[Test]
-    public function test_an_unknown_preset_warns_and_the_lint_goes_on(): void
+    public function test_an_unknown_preset_stops_the_lint(): void
     {
         $project = $this->makeProject(['app/Check.php' => "<?php\n\nNette\\Utils\\Strings::match(\$s, '/(nette/');\n"]);
         $this->app?->setBasePath($project);
@@ -136,9 +136,9 @@ final class ExtractionConfigTest extends TestCase
         ]);
         $output = Artisan::output();
 
-        $this->assertSame(1, $status, $output);
-        $this->assertStringContainsString('Unknown extraction preset "laravel-str", ignored.', $output);
-        $this->assertStringContainsString('/(nette/', $output);
+        $this->assertSame(2, $status, $output);
+        $this->assertStringContainsString('Invalid config/php-regex.php: Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?', $output);
+        $this->assertStringNotContainsString('/(nette/', $output);
     }
 
     /**

@@ -91,19 +91,24 @@ final class LintArgumentParserTest extends TestCase
     }
 
     /**
-     * An unknown name is a warning, never fatal: the name is left out and
-     * the run goes on. laravel-str, renamed illuminate-support before any
-     * tag, is one.
+     * An unknown name is a usage error that names the preset it most likely
+     * means: dropped, it would leave a list read as the native calls only.
+     * laravel-str, renamed illuminate-support before any tag, is one.
      */
     #[Test]
-    public function test_parse_ignores_an_unknown_interop_preset(): void
+    public function test_parse_refuses_an_unknown_interop_preset(): void
     {
         $parser = new LintArgumentParser();
 
-        $result = $parser->parse(['--interop=not-a-preset,nette-utils,laravel-str', 'src']);
+        $result = $parser->parse(['--interop=nette-utils,laravel-str', 'src']);
 
-        $this->assertNull($result->error);
-        $this->assertSame(['nette-utils'], $result->arguments?->interop);
+        $this->assertNull($result->arguments);
+        $this->assertSame('Unknown extraction preset "laravel-str" in --interop: did you mean "illuminate-support"?', $result->error);
+
+        $result = $parser->parse(['--interop', 'acme', 'src']);
+
+        $this->assertNull($result->arguments);
+        $this->assertStringStartsWith('Unknown extraction preset "acme" in --interop: the presets are composer-pcre, ', (string) $result->error);
     }
 
     /**

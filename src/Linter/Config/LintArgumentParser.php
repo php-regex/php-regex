@@ -92,19 +92,17 @@ final class LintArgumentParser
                 continue;
             }
 
-            if (str_starts_with($arg, '--interop=')) {
-                $arguments = $this->withInterop($arguments, $this->parseInteropValue(substr($arg, \strlen('--interop=')), $warnings));
-
-                continue;
-            }
-
-            if ('--interop' === $arg) {
-                $i++;
-                if (!isset($args[$i])) {
+            if (str_starts_with($arg, '--interop=') || '--interop' === $arg) {
+                if ('--interop' === $arg && !isset($args[++$i])) {
                     return new LintParseResult(null, 'Missing value for --interop.');
                 }
 
-                $arguments = $this->withInterop($arguments, $this->parseInteropValue($args[$i], $warnings));
+                $interop = $this->parseInteropValue('--interop' === $arg ? $args[$i] : substr($arg, \strlen('--interop=')));
+                if (\is_string($interop)) {
+                    return new LintParseResult(null, $interop);
+                }
+
+                $arguments = $this->withInterop($arguments, $interop);
 
                 continue;
             }
@@ -901,32 +899,25 @@ final class LintArgumentParser
 
     /**
      * Read a comma separated preset list, with "none" disabling every preset.
-     * A name that is no preset is left out, with a warning.
+     * A name that is no preset is an error, which the message gives back.
      *
-     * @param list<string> $warnings
-     *
-     * @return array<int, string>
+     * @return array<int, string>|string the presets, or the error
      */
-    private function parseInteropValue(string $value, array &$warnings): array
+    private function parseInteropValue(string $value): array|string
     {
-        $names = array_values(array_filter(array_map(static fn (string $v): string => trim($v, " \t\n\r\0\x0B"), explode(',', Ascii::lower($value))), static fn (string $name): bool => '' !== $name));
+        $names = array_values(array_filter(array_map(static fn (string $v): string => trim($v, " \t\n\r\0\x0B"), explode(',', $value)), static fn (string $name): bool => '' !== $name));
 
-        if (['none'] === $names || [] === $names) {
+        if (['none'] === array_map(Ascii::lower(...), $names) || [] === $names) {
             return [];
         }
 
         $presets = [];
         foreach ($names as $name) {
-            if (InteropPresets::exists($name)) {
-                $presets[] = $name;
-
-                continue;
+            if (!InteropPresets::exists(Ascii::lower($name))) {
+                return InteropPresets::unknownError($name, '--interop');
             }
 
-            $warning = InteropPresets::unknownWarning($name);
-            if (!\in_array($warning, $warnings, true)) {
-                $warnings[] = $warning;
-            }
+            $presets[] = Ascii::lower($name);
         }
 
         return $presets;

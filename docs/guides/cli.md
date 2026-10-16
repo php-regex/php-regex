@@ -483,14 +483,16 @@ list: a preset a later release adds stays off for a project that lists its
 presets, and there is no way to say "every preset but one" other than listing
 the others. `[]` (or `--no-interop`) reads the native calls only.
 
-A name that is no preset is ignored, and the run goes on with the others; the
-lint says so on stderr, once per name, and `-q` silences it:
+A name that is no preset is a configuration error, exit code 2, that names the
+preset it most likely means: left out, it would leave a list that reads fewer
+calls than meant, the native ones only when it was the only one.
 
 ```
-Warning: Unknown extraction preset "laravel-str", ignored.
+Error: Unknown extraction preset "laravel-str" in --interop: did you mean "illuminate-support"?
+Error: Invalid "extraction.interop" in /app/regex.json: unknown preset "laravel-str"; did you mean "illuminate-support"?
 ```
 
-`regex debug` reads `regex.json` too, and prints the same warning.
+`regex debug` reads `regex.json` too, and stops on the same error.
 
 Wrappers are matched on their fully qualified name, using the file's `use`
 statements: a class of your own named `Preg` is left alone, and so is a
@@ -625,8 +627,8 @@ A call that passes the pattern by name is read under `pattern:`, `patterns:`
 or `regex:`. When the helper names its parameter otherwise, append
 `$<name>` to the index: `App\grep#1$expression` reads `grep($list,
 expression: '/.../')`, and that name alone. A spec the lint cannot read,
-`x#a` or `x#1$` say, is left out with a warning, as an unknown preset is:
-`Malformed pattern function "x#a", ignored.`
+`x#a` or `x#1$` say, is left out with a warning on stderr, once per spec,
+which `-q` silences: `Malformed pattern function "x#a", ignored.`
 
 ```json
 {

@@ -477,7 +477,7 @@ final class LintConfigSchema
             'properties' => [
                 'interop' => [
                     'type' => 'array',
-                    'description' => 'Libraries whose calls carry a regex pattern, beyond the native preg_* functions, RegexIterator and filter_var(). Every preset is on by default; a list reads exactly the presets it names, those a later release adds left off. Set to [] to read the native calls only. The linter ignores a name that is no preset, with a warning.',
+                    'description' => 'Libraries whose calls carry a regex pattern, beyond the native preg_* functions, RegexIterator and filter_var(). Every preset is on by default; a list reads exactly the presets it names, those a later release adds left off. Set to [] to read the native calls only. A name that is no preset is an error, which names the preset it most likely means.',
                     'x-expected' => 'a list of distinct presets among '.implode(', ', array_keys(self::INTEROP_PRESETS)),
                     'x-item' => 'preset',
                     'default' => array_keys(self::INTEROP_PRESETS),

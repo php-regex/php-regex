@@ -64,7 +64,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips |
 | `ide` | `'%env(default::SYMFONY_IDE)%'` | IDE behind the clickable links; falls back to `framework.ide` |
 
-The bundle does not read `regex.json`: `extraction` is set here. A later configuration file's `extraction.interop` or `extraction.functions` list replaces the earlier one, where `paths` and `exclude` add up. A name in `extraction.interop` that is no preset is ignored, and `regex:lint` prints `Warning: Unknown extraction preset "…", ignored.` under its banner, or on stderr with `--format=json` and the other machine formats. A `#[Assert\Regex]` constraint read both from the PHP file and from the validator's metadata is reported once.
+The bundle does not read `regex.json`: `extraction` is set here. A later configuration file's `extraction.interop` or `extraction.functions` list replaces the earlier one, where `paths` and `exclude` add up. A name in `extraction.interop` that is no preset is a configuration error, raised as the container is built, which names the preset it most likely means. A `#[Assert\Regex]` constraint read both from the PHP file and from the validator's metadata is reported once.
 
 Usage
 -----
