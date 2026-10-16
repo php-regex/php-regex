@@ -1,3 +1,5 @@
+### corpus/10up/ElasticPress — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/10up/ElasticPress/includes/compat.php:139:44
     → #[^a-zA-Z0-9\-\_]#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5,6 +7,10 @@ corpus/10up/ElasticPress/includes/compat.php:139:44
        - #[^a-zA-Z0-9\-\_]#is
        + #[^a-zA-Z0-9\-\_]#i
 
+
+
+### corpus/Alexia/php7mar — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/Alexia/php7mar/classes/options.php:174:12
     → #^(?P<option>-[a-zA-Z]{1}|--[a-zA-Z-]{2,})(?:=(?P<value>['|"]?.+?['|"]?))?$#
    ↳ via $regex
@@ -21,6 +27,9 @@ corpus/Alexia/php7mar/classes/tests.php:177:21
        - #line (?P<line>\d*)#is
        + #line (?P<line>\d*)#i
 
+
+
+### corpus/Automattic/jetpack — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
 corpus/Automattic/jetpack/projects/packages/agents-manager/src/class-agents-manager.php:439:30
     → /([-_].*)$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -632,6 +641,11 @@ corpus/Automattic/jetpack/tools/stubs/zero-bs-crm-stub-defs.php:16:20
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+
+
+### corpus/BitbucketPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/CarbonPHP/carbon — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/CarbonPHP/carbon/phpdoc.php:47:44
     → /(\/\/ <methods[\s\S]*>)([\s\S]+)(<\/methods>)/mU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -700,6 +714,9 @@ corpus/CarbonPHP/carbon/src/Carbon/Traits/Creator.php:697:41
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/Codeception/Codeception — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/Codeception/Codeception/src/Codeception/Lib/Generator/GherkinSnippets.php:101:42
     → #([\d.])(?=([^"]*"[^"]*")*[^"]*$)#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -729,6 +746,9 @@ corpus/Codeception/Codeception/src/Codeception/Subscriber/Console.php:736:28
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+
+
+### corpus/CuyZ/Valinor — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/CuyZ/Valinor/src/Utility/Reflection/Annotations.php:198:29
     → /^\s*\*\s*(\S*)/mU
    WARN  Quantifier "*" is lazy under the U flag and is followed only by what may match nothing, so it always matches its minimum.
@@ -741,12 +761,23 @@ corpus/CuyZ/Valinor/src/Utility/String/StringFormatter.php:56:24
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
+
+
+### corpus/DaveLiddament/sarb — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/DaveLiddament/sarb/src/Domain/HistoryAnalyser/UnifiedDiffParser/internal/RangeInformation.php:45:29
     → /^@@ -(\d+)(,\d+){0,1} \+(\d+)(,\d+){0,1} @@/
    TIP 
        - /^@@ -(\d+)(,\d+){0,1} \+(\d+)(,\d+){0,1} @@/
        + /^@@ -(\d+)(,\d+)? \+(\d+)(,\d+)? @@/
 
+
+
+### corpus/DeGraciaMathieu/php-class-dependencies-analyzer — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/DigitalOceanPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/EdgedesignCZ/phpqa — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/EdgedesignCZ/phpqa/src/Tools/GetVersions.php:173:29
     → /\.0$/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -754,6 +785,9 @@ corpus/EdgedesignCZ/phpqa/src/Tools/GetVersions.php:173:29
        - /\.0$/s
        + /\.0$/
 
+
+
+### corpus/FOSSBilling/FOSSBilling — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/FOSSBilling/FOSSBilling/src/library/FOSSBilling/Doctrine/InstallSeeder.php:310:34
     → /\;[\r]*\n/ism
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -825,6 +859,10 @@ corpus/FOSSBilling/FOSSBilling/src/modules/Theme/Model/Theme.php:183:24
     → /<(.+?)[\s]*\/?[\s]*>/si
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/FakerPHP/Faker — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/FakerPHP/Faker/src/Provider/Text.php:200:29
     → /([ ,-:;\x{2013}\x{2014}]+$)/us
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -839,6 +877,11 @@ corpus/FakerPHP/Faker/test/Provider/ro_RO/PersonTest.php:16:35
        - /^[1-9][0-9]{2}(?:0[1-9]|1[012])(?:0[1-9]|[12][0-9]|3[01])(?:0[1-9]|[123][0-9]|4[0-6]|5[12])[0-9]{3}[0-9]$/
        + /^[1-9][0-9]{2}(?:0[1-9]|1[012])(?:0[1-9]|[12][0-9]|3[01])(?:0[1-9]|[123][0-9]|4[0-6]|5[12])[0-9]{4}$/
 
+
+
+### corpus/GitLabPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/Humbug/php-scoper — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/Humbug/php-scoper/src/Patcher/SymfonyPatcher.php:35:13
     → /use (Symfony(\\(?:\\)?)Component\\.+?;)/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -901,16 +944,29 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/YamlScoper.php:37:35
        - /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\(?:\\)?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\(?:\\)?)+)+[\p{L}_\d]+)/u
        + /(?:(?<singleClass>(?:[\p{L}_][\p{L}_\d]*(?<singleSeparator>\\\\?))):)|(?<class>(?:[\p{L}_][\p{L}_\d]*(?<separator>\\\\?)+)+[\p{L}_\d]+)/u
 
+
+
+### corpus/JakubOnderka/PHP-Parallel-Lint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/Jexactyl/Jexactyl — Target: PHP 8.4, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/Jexactyl/Jexactyl/app/Traits/Commands/EnvironmentWriterTrait.php:20:63
     → /([^\w.\-+\/])+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/Jumping-Beaver/PHP_Static_Type_Checker — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/Jumping-Beaver/PHP_Static_Type_Checker/php_static_type_checker.php:2547:36
     → |/(\./)+|
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/MyIntervals/PHP-CSS-Parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/MyIntervals/PHP-CSS-Parser/src/Parsing/ParserState.php:119:40
     → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -939,6 +995,9 @@ corpus/MyIntervals/PHP-CSS-Parser/src/Value/CSSString.php:60:44
        - /[\s{}()<>\[\]]/isu
        + /[\s{}()<>\[\]]/iu
 
+
+
+### corpus/NativePHP/desktop — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/NativePHP/desktop/src/Drivers/Electron/Commands/RunCommand.php:79:20
     → /(<key>CFBundleName<\/key>\s+<string>)(.*?)(<\/string>)/m
    ↳ via $pattern
@@ -955,6 +1014,15 @@ corpus/NativePHP/desktop/src/Drivers/Electron/Commands/RunCommand.php:82:20
        - /(<key>CFBundleDisplayName<\/key>\s+<string>)(.*?)(<\/string>)/m
        + /(<key>CFBundleDisplayName<\/key>\s+<string>)(.*?)(<\/string>)/
 
+
+
+### corpus/NativePHP/laravel — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+
+### corpus/NativePHP/php-bin — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/NielsdeBlaauw/php-doc-check — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/OskarStark/doctor-rst — Target: PHP 8.5, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/OskarStark/doctor-rst/src/Helper/PhpHelper.php:35:34
     → /[\\]{1}/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -963,10 +1031,21 @@ corpus/OskarStark/doctor-rst/src/Helper/PhpHelper.php:35:34
        - /[\\]{1}/
        + /[\\]/
 
+
+
+### corpus/PHP-CS-Fixer/PHP-CS-Fixer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/PHP-FFMpeg/PHP-FFMpeg — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/PHP-FFMpeg/PHP-FFMpeg/src/FFMpeg/Media/AbstractVideo.php:236:40
     → /^\[[^\]]+\](.*?)\[[^\]]+\]$/is
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/PHPCSStandards/PHP_CodeSniffer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:502:28
     → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -1015,11 +1094,19 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Util/Common.php:492:28
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '^' (duplicate)
 
+
+
+### corpus/PHPCheckstyle/phpcheckstyle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/PHPCheckstyle/phpcheckstyle/test/sample/issue61.php:43:36
     → /^20[123][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$/
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '1' and '2' explicitly instead of a range.
 
+
+
+### corpus/PHPCompatibility/PHPCompatibility — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php:128:28
     → `^((?<![\.e])_[0-9][0-9e\.]*)+$`iD
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -1042,6 +1129,10 @@ corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIn
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '8' and '9' explicitly instead of a range.
 
+
+
+### corpus/PHPMailer/PHPMailer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/PHPMailer/PHPMailer/src/PHPMailer.php:946:37
     → /\r\n|\r/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -1109,11 +1200,18 @@ corpus/PHPMailer/PHPMailer/test/Language/TranslationCompletenessTest.php:71:29
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/PHPOffice/PHPWord — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/PHPOffice/PHPWord/src/PhpWord/TemplateProcessor.php:481:25
     → /^([0-9\.]*(cm|mm|in|pt|pc|px|%|em|ex|)|auto)$/i
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/PHPOffice/PhpSpreadsheet — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/PHPOffice/PhpSpreadsheet/bin/check-phpdoc-types.php:14:20
     → ~^\+ +\* @(param|var) (mixed|string|int|float|bool|null|array|\?|\|)+( \$\w+)?$~m
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -1584,6 +1682,11 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.ph
        - /(?<!_xlws\.)(filter|sort)\s*\(/mui
        + /(?<!_xlws\.)(filter|sort)\s*\(/ui
 
+
+
+### corpus/Phauthentic/cognitive-code-analysis — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/PhpCodeArcheology/PhpCodeArcheology — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/PhpCodeArcheology/PhpCodeArcheology/src/Analysis/Helper/ClassMemberAnalyzer.php:210:20
     → /@var\s+([^\s]+)(?:\s+(.*))?/ms
    ↳ via $pattern
@@ -1622,6 +1725,9 @@ corpus/PhpCodeArcheology/PhpCodeArcheology/src/Application/Service/TestCoversVis
        - /@covers(?:Class)?\s+(\\?[\w\\]+)(?:::[\w]+)?/m
        + /@covers(?:Class)?\s+(\\?[\w\\]+)(?:::[\w]+)?/
 
+
+
+### corpus/PrestaShop/PrestaShop — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
 corpus/PrestaShop/PrestaShop/classes/AddressFormat.php:97:37
     → #([^\w:_]+)#i
    ↳ via self::_CLEANING_REGEX_
@@ -2172,12 +2278,18 @@ corpus/PrestaShop/PrestaShop/tools/build/Library/Version.php:236:25
        - ~^\d+(\.\d+){0,}$~
        + ~^\d+(\.\d+)*$~
 
+
+
+### corpus/QafooLabs/php-refactoring-browser — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/QafooLabs/php-refactoring-browser/features/bootstrap/FeatureContext.php:124:47
     → ~^((?:---|\+\+\+)\s*(?:a|b)/)(.*)~
    TIP 
        - ~^((?:---|\+\+\+)\s*(?:a|b)/)(.*)~
        + ~^((?:---|\+\+\+)\s*[ab]/)(.*)~
 
+
+
+### corpus/Respect/Validation — Target: PHP 8.5, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/Respect/Validation/src-dev/Markdown/Content.php:145:29
     → /\[(.+?)\](?:\[\]|\(.+?\))/
    TIP 
@@ -2218,27 +2330,75 @@ corpus/Respect/Validation/src/Validators/Consonant.php:42:27
 
 corpus/Respect/Validation/src/Validators/Emoji.php:64:27
     → /^(?: [\x{1F1E6}-\x{1F1FF}]{2} | \x{1F3F4}[\x{E0020}-\x{E007E}]+\x{E007F} | [0-9#*](?:\x{FE0F})?\x{20E3} | \p{Extended_Pictographic} (?:\x{FE0F})? (?:[\x{1F3FB}-\x{1F3FF}])? (?: \x{200D} (?: \p{Extended_Pictographic} | [\x{2640}\x{2642}\x{26A7}] ) (?:\x{FE0F})? (?:[\x{1F3FB}-\x{1F3FF}])? )* )+$/ux
-   FAIL  Invalid or unsupported Unicode property: \p{Extended_Pictographic}. PCRE2 10.39 knows a property by one exact name only.
-       ↳              \p{Extended_Pictographic}               # base emoji
-                                               ^
-       ↳ Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.
+   WARN  Redundant non-capturing group; it can be removed without changing behavior.
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+   TIP 
+         /^(?:
+             # Tag sequence for country flags
+             [\x{1F1E6}-\x{1F1FF}]{2}
+             |
+             # Tag sequence for subdivision flags
+             \x{1F3F4}[\x{E0020}-\x{E007E}]+\x{E007F}
+             |
+             # Keycap sequences
+       -     [0-9#*](?:\x{FE0F})?\x{20E3}
+       ---
+       +     [0-9#*]\x{FE0F}?\x{20E3}
+             |
+             # Standard emoji cluster:
+             \p{Extended_Pictographic}               # base emoji
+       -     (?:\x{FE0F})?                           # optional emoji variant selector
+       -     (?:[\x{1F3FB}-\x{1F3FF}])?              # optional skin tone modifier
+       ---
+       +     \x{FE0F}?                           # optional emoji variant selector
+       +     [\x{1F3FB}-\x{1F3FF}]?              # optional skin tone modifier
+             (?:                                     # optionally repeat ZWJ sequences:
+                 \x{200D}                            #   ZWJ
+                 (?:                                 #   joined element:
+                     \p{Extended_Pictographic}       #     another emoji
+                     |
+                     [\x{2640}\x{2642}\x{26A7}]      #     or gender symbol
+                 )
+       -         (?:\x{FE0F})?                       #   optional variant selector
+       -         (?:[\x{1F3FB}-\x{1F3FF}])?          #   optional skin tone modifier
+       ---
+       +         \x{FE0F}?                       #   optional variant selector
+       +         [\x{1F3FB}-\x{1F3FF}]?          #   optional skin tone modifier
+             )*                                      # ...zero or more times
+         )+$/ux
 
 corpus/Respect/Validation/src/Validators/MacAddress.php:42:27
     → /^(([0-9a-fA-F]{2}-){5}|([0-9a-fA-F]{2}:){5})[0-9a-fA-F]{2}$/
    INFO  Quantified capturing group "(...)" with "{5}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/Roave/BackwardCompatibilityCheck — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+
+### corpus/Roave/BetterReflection — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/Roave/BetterReflection/src/Identifier/Identifier.php:19:46
     → /([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*/
    ↳ via self::VALID_NAME_REGEXP
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/Roave/DocbookTool — Target: PHP 8.3.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/Roave/DocbookTool/src/Writer/ConfluenceWriter.php:317:13
     → /<pre><code(?: class="lang-([^"]+)"|)>([^<]+)<\/code><\/pre>/
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/Roave/FunctionFQNReplacer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/Seldaek/jsonlint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
     → {"(?:[^"]+|\\")*$}m
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -2246,6 +2406,14 @@ corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
+
+
+### corpus/Seldaek/monolog — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/Seldaek/phar-utils — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/Shopify/shopify-api-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/Shopify/shopify-api-php/src/Rest/Base.php:136:35
     → /^([A-z_0-9]+\\)*([A-z_]+)/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -2268,6 +2436,9 @@ corpus/Shopify/shopify-api-php/src/Rest/Base.php:142:35
    WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
        ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
 
+
+
+### corpus/Sylius/Sylius — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/Sylius/Sylius/src/Sylius/Behat/Context/Transform/LexicalContext.php:49:25
     → /^\d{1,3}(,\d{3})*\.\d{2}$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -2278,6 +2449,9 @@ corpus/Sylius/Sylius/src/Sylius/Behat/Service/Checker/EmailChecker.php:47:55
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+
+
+### corpus/TYPO3/Fluid — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/TYPO3/Fluid/src/Core/Parser/SyntaxTree/Expression/MathExpressionNode.php:44:24
     → /([+\-*\^\/\%]|[_a-zA-Z0-9\.]+)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -2299,6 +2473,9 @@ corpus/TYPO3/Fluid/src/Core/Parser/SyntaxTree/Expression/TernaryExpressionNode.p
        - /([\?:])/s
        + /([\?:])/
 
+
+
+### corpus/TYPO3/typo3 — Target: PHP 8.5, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/TYPO3/typo3/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php:920:29
     → /###SITE:([^#]+)###/m
    ↳ via $siteClausesRegEx
@@ -2501,6 +2678,10 @@ corpus/TYPO3/typo3/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migr
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/WhichBrowser/Parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Application.php:95:28
     → /^(.+) Android Application \([0-9]+, .+ v[0-9\.]+\) - [a-z-]+ (.*) [a-z_-]+ - [0-9A-F]{8,8}-[0-9A-F]{4,4}-[0-9A-F]{4,4}-[0-9A-F]{4,4}-[0-9A-F]{12,12}$/iu
    TIP 
@@ -2594,6 +2775,10 @@ corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:2248:28
     → /《붉은별》\/([0-9.]*)/iu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/Wixel/GUMP — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/Wixel/GUMP/ci/boot.php:46:20
     → /<div id="available_validators">(.*?)<.div>/ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -2633,6 +2818,10 @@ corpus/Wixel/GUMP/gump.class.php:2344:27
    INFO  Quantified capturing group "(...)" with "{5}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/WordPress/WordPress-Coding-Standards — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php:101:40
     → `(?: (?<!%) ( % (?! %[^%] | %%[dfFsi] ) (?:[0-9]+\\??\$)?+ [+-]?+ (?: (?:0|'.)?+ -?+ [0-9]*+ (?:\.(?:[ 0]|'.)?[0-9]+)?+ | (?:[ ])?+ -?+ [0-9]++ (?:\.(?:[ 0]|'.)?[0-9]+)?+ ) (?![dfFsi]) (?:[^ '"]*|$) ) )`x
    ↳ via self::UNSUPPORTED_PLACEHOLDER_REGEX
@@ -2774,6 +2963,10 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/WP/I18nSniff.php:71
                  [bcdeEfFgGhHosuxX]           # Type specifier.
              )/x
 
+
+
+### corpus/WordPress/wordpress-develop — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/WordPress/wordpress-develop/src/wp-admin/includes/ajax-actions.php:4358:30
     → /[^A-z0-9_\-]/
    WARN  Redundant elements detected in character class.
@@ -3330,6 +3523,10 @@ corpus/WordPress/wordpress-develop/src/wp-includes/script-loader.php:4599:24
        - :^\s*(/\*# sourceURL=\S+? \*/\s*)?$:s
        + :^\s*(/\*# sourceURL=\S+? \*/\s*)?$:
 
+
+
+### corpus/Yoast/wordpress-seo — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/Yoast/wordpress-seo/inc/options/class-wpseo-option-social.php:274:20
     → `^http(?:s)?://(?:www\.)?(?:twitter|x)\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -3372,6 +3569,9 @@ corpus/Yoast/wordpress-seo/src/llms-txt/application/markdown-escaper.php:23:14
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (duplicate)
 
+
+
+### corpus/akaunting/akaunting — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/akaunting/akaunting/app/Http/Middleware/AuthenticateOnceWithDynamicApi.php:54:52
     → /^\s*(\w+)\s+/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -3381,6 +3581,9 @@ corpus/akaunting/akaunting/app/Traits/Contacts.php:106:34
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/api-platform/core — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/api-platform/core/src/JsonApi/Serializer/ItemNormalizerTrait.php:94:27
     → /^\w[-\w_]*$/
    WARN  Character class contains duplicate elements that do not add new matches.
@@ -3398,12 +3601,19 @@ corpus/api-platform/core/src/Metadata/Util/CompositeIdentifierParser.php:25:48
    WARN  An anchor holds for its own alternative only: "(\w+)=(?<=\w=)(.*?)(?=;\w+=)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "(?:(\w+)=(?<=\w=)(.*?)(?=;\w+=)|(\w+)=([^;]*);?)$".
 
+
+
+### corpus/atoum/atoum — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/atoum/atoum/classes/script/arguments/parser.php:276:28
     → /^(\+{1,}|-{1,})[a-z][-_a-z0-9]*/i
    TIP 
        - /^(\+{1,}|-{1,})[a-z][-_a-z0-9]*/i
        + /^(\++|-+)[a-z][\-_a-z0-9]*/i
 
+
+
+### corpus/aws/aws-sdk-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/aws/aws-sdk-php/src/CloudFront/Signer.php:174:36
     → /\s/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -3450,11 +3660,19 @@ corpus/aws/aws-sdk-php/src/functions.php:387:23
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/awslabs/aws-crt-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/awslabs/aws-crt-php/gen_stub.php:1034:24
     → /^\s*([\w\|\\\[\]]+)\s*\$\w+.*$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+
+
+### corpus/bcit-ci/CodeIgniter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/bcit-ci/CodeIgniter/system/core/Input.php:146:36
     → /(?:^[^\[]+)|\[[^]]*\]/
    WARN  An anchor holds for its own alternative only: "\[[^]]*\]" matches anywhere in the subject.
@@ -3626,6 +3844,12 @@ corpus/bcit-ci/CodeIgniter/system/libraries/Upload.php:383:32
    WARN  An anchor holds for its own alternative only: "\[[^]]*\]" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:(?:[^\[]+)|\[[^]]*\])".
 
+
+
+### corpus/bcosca/fatfree — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/beberlei/assert — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/beberlei/assert/bin/MethodDocGenerator.php:58:28
     → `\* This is an alias of {@see (?P<aliasOf>[^\s\}]++)`sim
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -3648,6 +3872,13 @@ corpus/beberlei/assert/bin/MethodDocGenerator.php:163:21
        - /```php\n<\?php\nuse Assert\\Assertion;\n\nAssertion::.*?```/sim
        + /```php\n<\?php\nuse Assert\\Assertion;\n\nAssertion::.*?```/si
 
+
+
+### corpus/bmitch/churn-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/bobthecow/psysh — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/bobthecow/psysh/scoper.inc.php:146:17
     → /'(PhpParser\\.+(?:\\)?)'/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -3729,6 +3960,9 @@ corpus/bobthecow/psysh/src/Util/Str.php:125:28
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/bolt/core — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/bolt/core/src/DataFixtures/ContentFixtures.php:276:17
     → /{([\w]+)}/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -3751,6 +3985,9 @@ corpus/bolt/core/src/Widget/Injector/QueueProcessor.php:31:31
     → /<!--(.*)-->/Uis
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/browscap/browscap-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/browscap/browscap-php/src/IniParser/IniParser.php:70:24
     → /(?<=\[)(?:[^\r\n]+)(?=\])/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -3771,6 +4008,9 @@ corpus/browscap/browscap-php/src/Parser/Helper/Pattern.php:48:20
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/cakephp/cakephp — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/cakephp/cakephp/src/Console/CommandCollection.php:78:25
     → /^[^\s]+(?:(?: [^\s]+){1,2})?$/ui
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -3890,6 +4130,9 @@ corpus/cakephp/cakephp/src/View/StringTemplate.php:334:25
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/canyongbs/aidingapp — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/canyongbs/aidingapp/app-modules/contact/src/Imports/OrganizationImporter.php:184:42
     → /^(?!-)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,63}$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -3945,10 +4188,20 @@ corpus/canyongbs/aidingapp/app/Rules/ValidUrl.php:52:26
    INFO  Quantified capturing group "(...)" with "{7}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/captainhook-git/captainhook — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/captainhook-git/captainhook/src/Runner/Action/PHP.php:159:33
     → #^\\.+::.+$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/carlosas/phpat — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/cartalyst/stripe — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/cartalyst/stripe/src/AmountConverter.php:33:32
     → /\,/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -3957,6 +4210,10 @@ corpus/cartalyst/stripe/src/AmountConverter.php:35:32
     → /([^0-9\.\-])/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/cebe/markdown — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/cebe/markdown/GithubMarkdown.php:84:20
     → ~<\w+([^>]+)$~s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -4043,11 +4300,23 @@ corpus/cebe/markdown/inline/UrlLinkTrait.php:25:14
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/chillerlan/php-qrcode — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/chillerlan/php-qrcode/src/Output/CssColorModuleValueTrait.php:46:17
     → /^#([\da-f]{3}){1,2}$|^#([\da-f]{4}){1,2}$/i
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/chrome-php/chrome — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/cloudevents/sdk-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/codeigniter4/CodeIgniter4 — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/codeigniter4/CodeIgniter4/admin/update-upgrade-guide.php:161:16
     → /^Config\n------\n\n(.*?)(?=^[^\s-][^\n]*\n(?:-+|=+)$|\z)/msu
    TIP 
@@ -4164,6 +4433,12 @@ corpus/codeigniter4/CodeIgniter4/system/View/Parser.php:466:20
        - /\{\s*noparse\s*\}(.*?)\{\s*\/noparse\s*\}/ums
        + /\{\s*noparse\s*\}(.*?)\{\s*\/noparse\s*\}/us
 
+
+
+### corpus/composer-unused/composer-unused — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/composer/composer — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/composer/composer/src/Composer/Autoload/AutoloadGenerator.php:529:42
     → {^(([^.+*?\[^\]$(){}=!<>|:\\#-]+|\\[.+*?\[^\]$(){}=!<>|:#-])*).*}
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4317,6 +4592,9 @@ corpus/composer/composer/src/Composer/Util/ProcessExecutor.php:129:56
    WARN  "([^:/\\]++)" never gives back a character, and takes every one " " could read: the pattern can never match through here.
        ↳ Make the repeat greedy, or exclude from it what must follow.
 
+
+
+### corpus/composer/packagist — Target: PHP 8.4.11, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/composer/packagist/src/Controller/PackageController.php:1452:40
     → {\.9999999$}
    TIP 
@@ -4333,6 +4611,10 @@ corpus/composer/packagist/src/Service/VersionCache.php:71:34
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/composer/semver — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/composer/semver/src/VersionParser.php:219:24
     → {^(?P<version>(\d++\.)*\d++)(?:\.x)?-dev$}i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4343,6 +4625,12 @@ corpus/composer/semver/src/VersionParser.php:345:24
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/composer/spdx-licenses — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/concretecms/concretecms — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
 corpus/concretecms/concretecms/concrete/attributes/topics/controller.php:451:31
     → /^tid:\d+(,tid:\d+)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4569,6 +4857,9 @@ corpus/concretecms/concretecms/concrete/src/Validation/SanitizeService.php:37:32
        - /<.*/ms
        + /<.*/s
 
+
+
+### corpus/contao/contao — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/contao/contao/core-bundle/contao/controllers/BackendPopup.php:73:98
     → @(://)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -4650,6 +4941,9 @@ corpus/contao/contao/core-bundle/src/String/HtmlAttributes.php:525:29
    ↳ via $declarationRegex
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/craftcms/cms — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/craftcms/cms/src/db/mysql/Schema.php:302:19
     → /(UNIQUE\s+)?KEY\s+([^\(\s]+)\s*\(([^\(\)]+)\)/mi
    ↳ via $regexp
@@ -4757,6 +5051,9 @@ corpus/craftcms/cms/src/web/twig/variables/Cp.php:401:53
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/cycle/database — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/cycle/database/src/Driver/SQLite/Schema/SQLiteColumn.php:149:28
     → /^['""].*?['"]$/
    WARN  Redundant elements detected in character class.
@@ -4772,6 +5069,9 @@ corpus/cycle/database/src/Query/Interpolator.php:41:13
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
+
+
+### corpus/deployphp/deployer — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/deployphp/deployer/recipe/codeigniter4.php:28:20
     → /(\d+\.?)+/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -4819,6 +5119,11 @@ corpus/deployphp/deployer/src/Documentation/DocGen.php:404:23
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/deptrac/deptrac — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+
+### corpus/designsecurity/progpilot — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/designsecurity/progpilot/package/src/progpilot/Analysis/IncludeAnalysis.php:55:47
     → /^[a-bA-B]*:/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -4834,6 +5139,9 @@ corpus/designsecurity/progpilot/package/src/progpilot/Inputs/MyInputsInternalApi
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use 'a' and 'b' explicitly instead of a range.
 
+
+
+### corpus/doctrine/dbal — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/doctrine/dbal/src/Platforms/SQLServerPlatform.php:1309:40
     → /[\s]+order\s+by\s/im
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -4887,6 +5195,10 @@ corpus/doctrine/dbal/src/Schema/SQLiteSchemaManager.php:337:17
        ---
        +                     )?#ix
 
+
+
+### corpus/dompdf/dompdf — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/dompdf/dompdf/src/Css/Style.php:1714:49
     → /var\((([^()]|(?R))*)\)/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4931,6 +5243,9 @@ corpus/dompdf/dompdf/src/Helpers.php:320:23
    WARN  Quantified named group "(?<charset>...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/drupal/drupal — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/drupal/drupal/core/lib/Drupal/Component/Datetime/DateTimePlus.php:586:29
     → /^([1-2][0-3]|[01]?[0-9])$/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -5087,16 +5402,36 @@ corpus/drupal/drupal/core/modules/views/src/Plugin/views/argument_default/QueryP
        - #(\[|\]\[|\])#
        + #(\[|\]\[|])#
 
+
+
+### corpus/dunglas/phpdoc-to-typehint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/ecsphp/ecs — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/ecsphp/ecs/packages/coding-standard/src/Fixer/Annotation/RemoveEventSubscriberDescriptionFixer.php:149:37
     → #[/*\s]+#
    WARN  "*" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
 
+
+
+### corpus/editorconfig-checker/editorconfig-checker.php — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/edsonmedina/php_testability — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/egulias/EmailValidator — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/egulias/EmailValidator/src/EmailLexer.php:112:40
     → /[^\p{S}\p{C}\p{Cc}]+/iu
    ↳ via self::INVALID_CHARS_REGEX
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/elementor/elementor — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/elementor/elementor/core/utils/svg/svg-sanitizer.php:233:33
     → ~^url\(\s*['"]\s*(.*)\s*['"]\s*\)$~xi
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -5132,6 +5467,13 @@ corpus/elementor/elementor/php-scoper/twig-inc.php:34:5
    WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
        ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
 
+
+
+### corpus/ergebnis/composer-normalize — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/erusev/parsedown — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/erusev/parsedown/Parsedown.php:1470:56
     → /^<\/\w[\w-]*+[ ]*+>/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5155,6 +5497,9 @@ corpus/erusev/parsedown/test/CommonMarkTestStrict.php:49:24
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/espocrm/espocrm — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/espocrm/espocrm/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php:89:24
     → /permanent[ ]*[error|failure]/
    WARN  Redundant elements detected in character class.
@@ -5179,6 +5524,10 @@ corpus/espocrm/espocrm/application/Espo/Core/Utils/System.php:48:24
     → /^(.*)\/?/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/exakat/exakat — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/exakat/exakat/RoboFile.php:299:12
     → /BUILD = (\d+)/is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5544,14 +5893,24 @@ corpus/exakat/exakat/scripts/pecl2ini/pecl2ini.php:112:24
        - /REGISTER_LONG_CONSTANT\(\s*"([a-zA-Z0-9_]+)"/is
        + /REGISTER_LONG_CONSTANT\(\s*"([a-zA-Z0-9_]+)"/i
 
+
+
+### corpus/exposedev/expose — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/exposedev/expose/app/Support/ConsoleSectionOutput.php:134:37
     → /]8;;(.*)]8;;/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
 
+
+
+### corpus/exussum12/coverageChecker — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/exussum12/coverageChecker/src/Loaders/Infection.php:107:24
     → /^[0-9]+\) (.*?):([0-9]+) (.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/ezyang/htmlpurifier — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.6, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/ezyang/htmlpurifier/library/HTMLPurifier/AttrDef/URI/IPv6.php:81:29
     → #^[0-9a-fA-F]{4}$#s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5564,16 +5923,27 @@ corpus/ezyang/htmlpurifier/library/HTMLPurifier/Injector/Linkify.php:40:13
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/facebook/facebook-for-woocommerce — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/facebook/facebook-for-woocommerce/includes/Events/Normalizer.php:197:28
     → /[\-\s+]/
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
 
+
+
+### corpus/facebook/facebook-php-business-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/facebook/facebook-php-business-sdk/src/FacebookAds/Object/ServerSide/Normalizer.php:187:30
     → /[\-\s+]/
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
 
+
+
+### corpus/facebook/open-graph-protocol — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:226:24
     → {^\xEF\xBB\xBF|\x1A}
    WARN  An anchor holds for its own alternative only: "\x1A" matches anywhere in the subject.
@@ -5611,6 +5981,10 @@ corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:1618:33
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/facebook/php-graph-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/facebook/php-graph-sdk/src/Facebook/Url/FacebookUrlDetectionHandler.php:178:27
     → /^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -5623,6 +5997,9 @@ corpus/facebook/php-graph-sdk/src/Facebook/Url/FacebookUrlDetectionHandler.php:1
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/filamentphp/filament — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/filamentphp/filament/packages/panels/src/Commands/MakeThemeCommand.php:250:20
     → /(\binput\s*:\s*\[)([^\]]*?)(\])/s
    ↳ via $pattern
@@ -5648,6 +6025,10 @@ corpus/filamentphp/filament/packages/tables/src/Concerns/CanSearchRecords.php:13
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/filp/whoops — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/filp/whoops/src/Whoops/Util/TemplateHelper.php:93:13
     → @(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?)?)@i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -5663,6 +6044,9 @@ corpus/filp/whoops/src/Whoops/Util/TemplateHelper.php:228:30
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/flarum/framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/flarum/framework/extensions/package-manager/src/Command/RequireExtensionHandler.php:96:33
     → /^([A-z0-9-_\/]+)(?::.*|)$/i
    WARN  Redundant elements detected in character class.
@@ -5689,6 +6073,10 @@ corpus/flarum/framework/extensions/package-manager/src/Exception/MajorUpdateFail
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: ranges 'A'-'z' and '.'-'_' overlap: merge them into '.'-'z', '/' (covered by range '.'-'_')
 
+
+
+### corpus/freescout-help-desk/freescout — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:866:40
     → /^[[:alpha:]]{1,3}\s*:(.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -6016,6 +6404,9 @@ corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Header.php:1
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/getgrav/grav — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/getgrav/grav/system/src/Grav/Common/Assets/Pipeline.php:51:51
     → ~("(?:[^"\\\r\n]|\\(?:\r\n|.))*"|'(?:[^'\\\r\n]|\\(?:\r\n|.))*')|(/\*!.*?\*/)|/\*.*?\*/~s
    ↳ via self::CSS_STRING_OR_COMMENT_REGEX
@@ -6197,6 +6588,9 @@ corpus/getgrav/grav/system/src/Grav/Installer/YamlUpdater.php:368:34
    WARN  Suspicious \2 inside character class: this is octal (\x02), not a backreference to group 2.
        ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 2, move the check outside the class.
 
+
+
+### corpus/google/google-cloud-php — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/google/google-cloud-php/Auth/src/CredentialSource/X509Source.php:91:17
     → /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/
    TIP 
@@ -6275,6 +6669,9 @@ corpus/google/google-cloud-php/dev/src/ReleaseNotes.php:91:24
        - /\S{0,}\/(\S{1,}): ([0-9\.]+)/
        + /\S*\/(\S+): ([0-9.]+)/
 
+
+
+### corpus/google/recaptcha — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/google/recaptcha/src/ReCaptcha/RequestMethod/SocketPost.php:134:29
     → #\n\s*\n#Uis
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -6283,6 +6680,10 @@ corpus/google/recaptcha/src/ReCaptcha/RequestMethod/SocketPost.php:134:29
        - #\n\s*\n#Uis
        + #\n\s*\n#Ui
 
+
+
+### corpus/google/site-kit-wp — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/google/site-kit-wp/includes/Core/Authentication/Authentication.php:1023:27
     → /(?:[^\x00-\x7F])/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -6317,6 +6718,10 @@ corpus/google/site-kit-wp/includes/Modules/Analytics_4/Web_Tag.php:191:4
        - /<script\b([^>]*?)\s*src=/si
        + /<script\b([^>]*?)\s*src=/i
 
+
+
+### corpus/greenlion/php-sql-parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/greenlion/php-sql-parser/libs/codesniffer/PhOSCo/Sniffs/Commenting/FileCommentSniff.php:581:32
     → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -6325,6 +6730,9 @@ corpus/greenlion/php-sql-parser/libs/codesniffer/PhOSCo/Sniffs/Commenting/FileCo
        - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
        + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
 
+
+
+### corpus/grokability/snipe-it — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/grokability/snipe-it/app/Helpers/Helper.php:521:20
     → /[\x{0590}-\x{083F}]|[\x{08A0}-\x{08FF}]|[\x{FB1D}-\x{FDFF}]|[\x{FE70}-\x{FEFF}]/u
    ↳ via $rtlChar
@@ -6357,11 +6765,22 @@ corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:440:31
    FAIL  Without the /u flag, Unicode property "\p{P}" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
 
+
+
+### corpus/guzzle/guzzle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/guzzle/guzzle/src/Cookie/SetCookie.php:476:13
     → /[\x00-\x20\x22\x28-\x29\x2c\x2f\x3a-\x40\x5c\x7b\x7d\x7f]/
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '(' and ')' explicitly instead of a range.
 
+
+
+### corpus/guzzle/promises — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/guzzle/psr7 — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/guzzle/psr7/src/Rfc9112.php:101:27
     → /^[A-Za-z][A-Za-z0-9+.-]*:\/\//D
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
@@ -6382,6 +6801,10 @@ corpus/guzzle/psr7/src/UriParser.php:93:13
        - %[^:/@?&=#]+%usD
        + %[^:/@?&=#]+%uD
 
+
+
+### corpus/guzzle/uri-template — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/guzzle/uri-template/src/UriTemplate.php:1506:13
     → /\A(?:[\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})*+/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -6393,6 +6816,9 @@ corpus/guzzle/uri-template/src/UriTemplate.php:1540:28
        - /\A(?:[\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}]|[\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}])\z/u
        + /\A(?:[\x{A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}])\z/u
 
+
+
+### corpus/hyperf/hyperf — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/hyperf/hyperf/src/crontab/src/Parser.php:71:26
     → #^((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)\s+((\*(/[0-9]+)?)|[0-9\-,/]+)$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -6473,6 +6899,9 @@ corpus/hyperf/hyperf/src/view-engine/src/Compiler/ComponentTagCompiler.php:304:2
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/ibexa/core — Target: PHP 8.5, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/ibexa/core/src/contracts/Repository/Values/Content/Query/Aggregation/Location/SubtreeTermAggregation.php:43:27
     → /^(\/\w+)+\/$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -6511,6 +6940,9 @@ corpus/ibexa/core/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php:30
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/infection/infection — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/infection/infection/src/TestFramework/Coverage/CoverageChecker.php:172:13
     → /(zend_extension\s*=.*xdebug.*)/mi
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -6540,6 +6972,9 @@ corpus/infection/infection/src/TestFramework/PhpUnit/CommandLine/TestFrameworkEx
    WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
        ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
+
+
+### corpus/invoiceninja/invoiceninja — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/invoiceninja/invoiceninja/app/Console/Commands/ImportHarvest.php:1350:13
     → ~(?<![A-Za-z0-9])(?:[A-Za-z]:[\\/]|/)(?:[^\s:]+[\\/]?)+~u
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -6563,6 +6998,9 @@ corpus/invoiceninja/invoiceninja/app/Utils/Ninja.php:227:28
    FAIL  Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
        ↳ Add the /u flag to match beyond the first 256 code points.
 
+
+
+### corpus/ircmaxell/php-cfg — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/ircmaxell/php-cfg/lib/PHPCfg/AstVisitor/NameResolver.php:101:18
     → (^([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\\)*[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$)
    ↳ via $regex
@@ -6585,6 +7023,9 @@ corpus/ircmaxell/php-cfg/lib/PHPCfg/Types/Helper.php:217:22
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/janephp/janephp — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/janephp/janephp/src/Component/JsonSchema/Generator/Naming.php:14:41
     → /^ ([0-9])| \b( (a(bstract|nd|rray|s))| (c(a(llable|se|tch)|l(ass|one)|on(st|tinue)))| (d(e(clare|fault)|ie|o))| (e(cho|lse(if)?|mpty|nd(declare|for(each)?|if|switch|while)|val|x(it|tends)))| (f(inal|or(each)?|unction))| (g(lobal|oto))| (i(f|mplements|n(clude(_once)?|st(anceof|eadof)|terface)|sset))| (n(amespace|ew))| (p(arent|r(i(nt|vate)|otected)|ublic))| (re(quire(_once)?|turn))| (s(elf|tatic|witch))| (t(hrow|r(ait|y)))| (u(nset|se))| (__halt_compiler|break|list|(x)?or|var|while) )\b/ix
    ↳ via self::BAD_CLASS_NAME_REGEX
@@ -6628,11 +7069,24 @@ corpus/janephp/janephp/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
    WARN  Quantifier "+" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to "".
 
+
+
+### corpus/jaybizzle/crawler-detect — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/jaytaph/Transphpile — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/jbowens/jBBCode — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/jbowens/jBBCode/JBBCode/validators/CssColorValidator.php:28:34
     → /^[A-z0-9\-#., ()%]+$/
    WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
        ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
 
+
+
+### corpus/jolicode/castor — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/jolicode/castor/tools/mkdocs/castor.php:137:37
     → /### Usage\n([^#]*)\n\n###/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -6640,6 +7094,9 @@ corpus/jolicode/castor/tools/mkdocs/castor.php:137:37
        - /### Usage\n([^#]*)\n\n###/s
        + /### Usage\n([^#]*)\n\n###/
 
+
+
+### corpus/joomla/joomla-cms — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 1
 corpus/joomla/joomla-cms/administrator/components/com_content/src/Model/ArticleModel.php:723:36
     → ~^#[a-zA-Z]{1}[a-zA-Z0-9-_:.]*$~
    WARN  Quantifier is redundant; it matches exactly once.
@@ -6991,6 +7448,12 @@ corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.p
        - /\[\]|\]/
        + /\[\]|]/
 
+
+
+### corpus/karlosagudo/fixtro — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/laminas/laminas-code — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/laminas/laminas-code/src/Generator/FileGenerator.php:437:24
     → #/\* Laminas_Code_Generator_Php_File-(.*?)Marker:#m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -7093,6 +7556,9 @@ corpus/laminas/laminas-code/src/Reflection/DocBlockReflection.php:235:47
        - #[ \t]*(?:/\*\*|\*/|\*)[ ]{0,1}(.*)?#
        + #[ \t]*(?:/\*\*|\*/|\*)[ ]?(.*)?#
 
+
+
+### corpus/laminas/laminas-filter — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/laminas/laminas-filter/src/StripTags.php:122:24
     → /([^<]*)(<?[^>]*>?)/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -7103,6 +7569,9 @@ corpus/laminas/laminas-filter/src/StripTags.php:160:31
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/laminas/laminas-validator — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 1
 corpus/laminas/laminas-validator/src/DateComparison.php:197:26
     → /^\d{4}-[0-1]\d-[0-3]\d$/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -7158,6 +7627,9 @@ corpus/laminas/laminas-validator/src/Sitemap/Lastmod.php:24:34
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '1' and '2' explicitly instead of a range.
 
+
+
+### corpus/larastan/larastan — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/larastan/larastan/src/Collectors/UsedTranslationViewCollector.php:27:39
     → / ( ( (?<!\w) (trans|trans_choice|Lang::get|Lang::choice|Lang::trans|Lang::transChoice|__|\$t) ) | (@lang|@choice) ) \( (?P<quote>['"]) (?P<string>(\\.|(?!(?P=quote))[^\\\\])*?) (?P=quote) [),]/mix
    ↳ via self::TRANSLATION_REGEX
@@ -7193,6 +7665,11 @@ corpus/larastan/larastan/src/Collectors/UsedViewInAnotherViewCollector.php:20:37
        - /@(extends|include(If|Unless|When|First)?)(\(.*?(['"])(.*?)(['"])([),]))/m
        + /@(extends|include(If|Unless|When|First)?)(\(.*?(['"])(.*?)(['"])([),]))/
 
+
+
+### corpus/laravel-zero/laravel-zero — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
+
+### corpus/laravel/boost — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/laravel/boost/src/Concerns/RendersBladeGuidelines.php:103:38
     → /(?<!@)@boostsnippet\(\s*(?P<nameQuote>['"])(?P<name>[^\1]*?)\1(?:\s*,\s*(?P<langQuote>['"])(?P<lang>[^\3]*?)\3)?\s*\)(?P<content>.*?)@endboostsnippet/s
    WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
@@ -7233,6 +7710,12 @@ corpus/laravel/boost/src/Rules/RuleFrontmatter.php:19:24
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
+
+
+### corpus/laravel/envoy — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/laravel/framework — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/laravel/framework/src/Illuminate/Console/Scheduling/Schedule.php:365:54
     → /^(-.$|--.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -7510,11 +7993,17 @@ corpus/laravel/framework/types/Support/Str.php:101:34
    FAIL  Invalid delimiter "T". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #Taylor#.
        ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
 
+
+
+### corpus/laravel/pao — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/laravel/pao/src/Drivers/Concerns/TestResultParsable.php:405:24
     → #([\w/\\._-]+\.php):(\d+)#
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/laravel/pint — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/laravel/pint/app/PrettierFormatters/EmbeddedBladeMasker.php:70:13
     → /(<(style|script)\b(?:"[^"]*"|'[^']*'|[^>])*>)(.*?)(<\/\2>)/is
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -7522,6 +8011,9 @@ corpus/laravel/pint/app/PrettierFormatters/EmbeddedBladeMasker.php:70:13
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
+
+
+### corpus/laravel/prompts — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/laravel/prompts/src/Task.php:243:34
     → /\e\[(?:1)?G\e\[2K/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -7529,6 +8021,11 @@ corpus/laravel/prompts/src/Task.php:243:34
        - /\e\[(?:1)?G\e\[2K/
        + /\e\[1?G\e\[2K/
 
+
+
+### corpus/laravel/reverb — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/laravel/roster — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/laravel/roster/src/Detectors/Approaches/EnumCasing.php:70:24
     → /^[A-Z0-9]+(_[A-Z0-9]+)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -7539,6 +8036,10 @@ corpus/laravel/roster/src/Detectors/Approaches/ModelKeyStyle.php:33:24
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/laravel/valet — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/laravel/valet/cli/Valet/PhpFpm.php:275:29
     → /(?:php@?)?([0-9+])(?:.)?([0-9+])/i
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -7551,12 +8052,21 @@ corpus/laravel/valet/cli/Valet/Server.php:78:27
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/laravel/wayfinder — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/liip/RMT — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/liip/RMT/src/Liip/RMT/Changelog/Formatter/SemanticChangelogFormatter.php:146:32
     → /^=======/
    TIP 
        - /^=======/
        + /^={7}/
 
+
+
+### corpus/livewire/blaze — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/livewire/blaze/src/Directive/BlazeDirective.php:18:26
     → /^\s*(?:\/\*.*?\*\/\s*)*@blaze(?:\s*\(([^)]+)\))?/s
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
@@ -7570,6 +8080,9 @@ corpus/livewire/blaze/src/Unblaze.php:61:41
        - /(\[STARTUNBLAZE:([0-9a-zA-Z]+)\])(.*?)(\[ENDUNBLAZE\])/s
        + /(\[STARTUNBLAZE:([0-9a-zA-Z]+)])(.*?)(\[ENDUNBLAZE\])/s
 
+
+
+### corpus/livewire/livewire — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/livewire/livewire/.github/scripts/get-browser-test-shard.php:21:24
     → /function\s+test_/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -7616,6 +8129,13 @@ corpus/livewire/livewire/src/Mechanisms/FrontendAssets/FrontendAssets.php:307:29
        - ~(\v|\t|\s{2,})~m
        + ~(\v|\t|\s{2,})~
 
+
+
+### corpus/livewire/volt — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/llaville/php-compatinfo — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/magento/magento2 — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/magento/magento2/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php:65:50
     → /^-?\d*(\.|,)?\d{0,4}$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -8176,6 +8696,17 @@ corpus/magento/magento2/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanne
        - /\[\s\<\w+?>\s\??([\w\\]+)/s
        + /\[\s\<\w+?>\s\??([\w\\]+)/
 
+
+
+### corpus/maglnet/ComposerRequireChecker — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
+
+### corpus/mamuz/PhpDependencyAnalysis — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/matomo-org/device-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/matomo-org/matomo — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 1
 corpus/matomo-org/matomo/core/Common.php:30:33
     → /^[-+]?((([0-9]+(_[0-9]+)*)|(([0-9]+(_[0-9]+)*)?\.([0-9]+(_[0-9]+)*))|(([0-9]+(_[0-9]+)*)\.([0-9]+(_[0-9]+)*)?))([eE][+-]?([0-9]+(_[0-9]+)*))?)$/
    ↳ via self::FLOAT_REGEX
@@ -8308,6 +8839,10 @@ corpus/matomo-org/matomo/plugins/UsersManager/Validators/Login.php:43:28
    FAIL  Character class holds "Ä", which without /u is the bytes \xC3 \x84: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
+
+
+### corpus/matthiasmullie/minify — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/matthiasmullie/minify/src/CSS.php:720:33
     → /(?<=(\}|;))[^\{\};]+\{\s*\}/
    TIP 
@@ -8384,6 +8919,9 @@ corpus/matthiasmullie/minify/src/JS.php:441:33
        - /;(\}|$)/s
        + /;(\}|$)/
 
+
+
+### corpus/mautic/mautic — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/mautic/mautic/app/bundles/ApiBundle/Form/Validator/Constraints/OAuthCallbackValidator.php:13:28
     → ~^[0-9a-z].*://(.*?)(:[0-9]+)?(/?|/\S+)$~ixu
    ↳ via self::PATTERN
@@ -8800,6 +9338,10 @@ corpus/mautic/mautic/utils/phpstan/src/Collector/ServiceNameUsageCollector.php:2
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/michelf/php-markdown — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/michelf/php-markdown/Michelf/Markdown.php:220:24
     → {^\xEF\xBB\xBF|\x1A}
    WARN  An anchor holds for its own alternative only: "\x1A" matches anywhere in the subject.
@@ -8862,6 +9404,9 @@ corpus/michelf/php-markdown/Michelf/MarkdownExtra.php:847:33
        ---
        +             }x
 
+
+
+### corpus/mihaeu/dephpend — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/mihaeu/dephpend/src/Analyser/DependencyInspectionVisitor.php:384:30
     → /(\[\])+$/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -8872,11 +9417,19 @@ corpus/mihaeu/dephpend/src/Analyser/DependencyInspectionVisitor.php:419:30
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/minkphp/Mink — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/minkphp/Mink/src/Selector/Xpath/Manipulator.php:53:28
     → /^[\(\s*]+/
    WARN  "*" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the class.
 
+
+
+### corpus/mmoreram/php-formatter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/HeaderFixer.php:53:18
     → ~(?P<group>^\s*<\?php(?:(?:(?:/\*.*?\*/)|(?:(?://|#).*?\n{1})|(?:\s*))*))(?P<other>.*)~s
    ↳ via $regex
@@ -8919,6 +9472,10 @@ corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/UseSortFixer.php:187:18
        - /(\s*(?:(?:\s+use\s+?[\w\\\,\s]+?;)+)\s+)/s
        + /(\s*(?:(?:\s+use\s+?[\w\\\,\s]+?;)+)\s+)/
 
+
+
+### corpus/mockery/mockery — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.12, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/mockery/mockery/library/Mockery/Generator/MockConfiguration.php:441:55
     → /^\?Iterator(|Aggregate)$/i
    WARN  Alternation contains an empty alternative.
@@ -8937,6 +9494,9 @@ corpus/mockery/mockery/library/Mockery/Generator/StringManipulation/Pass/RemoveD
        - /public function __destruct\(\)\s+\{.*?\}/sm
        + /public function __destruct\(\)\s+\{.*?\}/s
 
+
+
+### corpus/modelcontextprotocol/php-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/modelcontextprotocol/php-sdk/src/Capability/Discovery/SchemaGenerator.php:775:24
     → /^int\s*<\s*[^<>]+\s*>$/i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -8959,6 +9519,9 @@ corpus/modelcontextprotocol/php-sdk/src/Schema/Extension/ExtensionIdentifier.php
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/moodle/moodle — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/moodle/moodle/public/admin/classes/setting/setting/configcolourpicker.php:113:25
     → /^#?([[:xdigit:]]{3}){1,2}$/
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
@@ -11346,6 +11909,10 @@ corpus/moodle/moodle/public/repository/url/lib.php:244:20
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/mpdf/mpdf — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.6, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/mpdf/mpdf/src/Css/CssLoader.php:91:22
     → /@import url\(['\"]{0,1}(\S*?\.css(\?[^\s'\"]+)?)['\"]{0,1}\)\;?/si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -11959,6 +12526,10 @@ corpus/mpdf/mpdf/utils/font_coverage.php:45:23
        - /^([12]{0,1}[0-9A-Za-z]{4});/
        + /^([12]?[0-9A-Za-z]{4});/
 
+
+
+### corpus/mustangostang/spyc — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/mustangostang/spyc/Spyc.php:692:44
     → /^(-|)[1-9]+[0-9]*$/
    WARN  Alternation contains an empty alternative.
@@ -11971,6 +12542,9 @@ corpus/mustangostang/spyc/Spyc.php:1116:62
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/nbs-system/php-malware-finder — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
 corpus/nbs-system/php-malware-finder/php-malware-finder/samples/artificial/dodgy.php:13:15
     → /*/e
    FAIL  The 'e' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.
@@ -12001,6 +12575,13 @@ corpus/nbs-system/php-malware-finder/php-malware-finder/samples/obfuscators/onli
        ↳         /.*/e
                      ^
 
+
+
+### corpus/nelmio/NelmioApiDocBundle — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/nelmio/NelmioCorsBundle — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/nelmio/alice — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/nelmio/alice/src/FixtureBuilder/ExpressionLanguage/Lexer/FunctionTreeTokenizer.php:47:13
     → /(.*?)<((?:.*?:)?(?:\p{L}|_|[0-9])+?)\((.*?)/
    FAIL  Without the /u flag, Unicode property "\p{L}" only covers the first 256 code points.
@@ -12037,11 +12618,17 @@ corpus/nelmio/alice/src/Parser/Chainable/YamlParser.php:31:26
        - /.{1,}\.ya?ml$/i
        + /.+\.ya?ml$/i
 
+
+
+### corpus/nette/application — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/nette/application/src/Bridges/ApplicationLatte/UIExtension.php:124:21
     → #\s'nonce-([\w+/]+=*)'#
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
 
+
+
+### corpus/nette/latte — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nette/latte/src/Latte/Compiler/PrintContext.php:62:4
     → #% (\d+) \. (escape|modify(?:Content)?) ( \( ([^()]*+|(?-2))+ \) )#xi
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -12072,6 +12659,9 @@ corpus/nette/latte/src/Latte/Runtime/XmlHelpers.php:110:25
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{200C}' and '\x{200D}' explicitly instead of a range.
 
+
+
+### corpus/nette/tester — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/nette/tester/src/Framework/Dumper.php:358:22
     → #^-*([^|]+).*#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -12084,6 +12674,9 @@ corpus/nette/tester/src/Framework/Helpers.php:119:18
     → #^[ \t*]*@(\w+)([^\w\r\n].*)?#mi
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/nette/tracy — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nette/tracy/src/Tracy/BlueScreen/BlueScreen.php:536:4
     → #'\S(?:[^']|\\')*\S'|"\S(?:[^"]|\\")*\S"#
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
@@ -12108,6 +12701,9 @@ corpus/nette/tracy/src/Tracy/Session/FileSession.php:54:19
     → #^\w{10}\z#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/nette/utils — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nette/utils/src/Utils/Finder.php:247:20
     → ~^/?(\*\*/)?(.+?)(/\*\*|/\*|/|)$~D
    WARN  Alternation contains an empty alternative.
@@ -12127,11 +12723,17 @@ corpus/nette/utils/src/Utils/ObjectHelpers.php:133:4
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/nextcloud/all-in-one — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/nextcloud/all-in-one/php/src/Data/ConfigurationManager.php:959:25
     → #^[0-1][0-9]:[0-5][0-9]$#
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '0' and '1' explicitly instead of a range.
 
+
+
+### corpus/nextcloud/server — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/nextcloud/server/apps/files/lib/Service/OwnershipTransferService.php:236:23
     → /-{2,}/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -12271,6 +12873,10 @@ corpus/nextcloud/server/lib/public/Util.php:399:18
        - #([kmgtp]?b?)$#si
        + #([kmgtp]?b?)$#i
 
+
+
+### corpus/nikic/PHP-Parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/nikic/PHP-Parser/lib/PhpParser/Comment.php:127:24
     → (^.*(?:\n\s+\*.*)+$)
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
@@ -12305,12 +12911,26 @@ corpus/nikic/PHP-Parser/lib/PhpParser/PrettyPrinter/Standard.php:1112:18
                      | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) # Short 4 byte sequence (2)
                  )/x
 
+
+
+### corpus/nikic/php-ast — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/nilportugues/php-backslasher — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/nunomaduro/phpinsights — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+
+### corpus/nunomaduro/termwind — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/nunomaduro/termwind/src/ValueObjects/Styles.php:29:34
     → /\<[\w=#\/\;,:.&,%?-]+\>|\e\[\d+m/
    ↳ via self::STYLING_REGEX
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: ',' (duplicate)
 
+
+
+### corpus/octobercms/october — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/octobercms/october/modules/cms/classes/CodeParser.php:103:20
     → /(use\s+[a-z0-9_\\]+(\s+as\s+[a-z0-9_]+)?;(?:\r?\n)?)/mi
    ↳ via $pattern
@@ -12378,6 +12998,14 @@ corpus/octobercms/october/modules/system/models/SiteDefinition.php:231:17
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
+
+
+### corpus/openai-php/client — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/ovr/phpsa — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/owncloud/core — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/owncloud/core/apps/dav/lib/Connector/Sabre/BlockLegacyClientPlugin.php:73:15
     → /(?:mirall\/)([\d.]+)/i
    TIP 
@@ -12435,6 +13063,9 @@ corpus/owncloud/core/lib/private/legacy/helper.php:611:14
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/paratestphp/paratest — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:255:32
     → /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-\w+)?\n\n/
    TIP 
@@ -12453,6 +13084,10 @@ corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:303:32
        - /^Processes:     \d+\nRuntime:       PHP \d+\.\d+\.\w+(-.+)?\n\n/
        + /^Processes: {5}\d+\nRuntime: {7}PHP \d+\.\d+\.\w+(-.+)?\n\n/
 
+
+
+### corpus/parsecsv/parsecsv-for-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/parsecsv/parsecsv-for-php/src/Csv.php:1296:66
     → /<\?.*?\?>(.*)/ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -12460,6 +13095,11 @@ corpus/parsecsv/parsecsv-for-php/src/Csv.php:1296:66
        - /<\?.*?\?>(.*)/ms
        + /<\?.*?\?>(.*)/s
 
+
+
+### corpus/pdepend/pdepend — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/pestphp/pest — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/pestphp/pest/src/Expectation.php:525:71
     → /^<\?php\s*(\/\*[\s\S]*?\*\/|\/\/[^\r\n]*(?:\r?\n|$)|\s)*declare\s*\(\s*strict_types\s*=\s*1\s*\)\s*;/m
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -12474,6 +13114,11 @@ corpus/pestphp/pest/src/Plugins/Help.php:89:28
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
+
+
+### corpus/phalcon/cphalcon — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/phan/phan — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/phan/phan/.phan/plugins/WhitespacePlugin.php:49:25
     → /[\r\t]|[ \t]\r?$/mS
    WARN  An anchor holds for its own alternative only: "[\r\t]" matches anywhere in the subject.
@@ -12682,6 +13327,9 @@ corpus/phan/phan/tool/validate_stubs.php:96:42
        - /@return\s+T\w+\s*/m
        + /@return\s+T\w+\s*/
 
+
+
+### corpus/php-debugbar/php-debugbar — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
     → /\?(?=(?:[^'\\']*'[^'\']*')*[^'\\']*$)(?:\?)/
    WARN  Redundant elements detected in character class.
@@ -12691,6 +13339,15 @@ corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
        - /\?(?=(?:[^'\\']*'[^'\']*')*[^'\\']*$)(?:\?)/
        + /\?(?=(?:[^'\\']*'[^'']*')*[^'\\']*$)\?/
 
+
+
+### corpus/php-parallel-lint/PHP-Parallel-Lint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/phpDocumentor/Reflection — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+
+### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/StandardTagFactory.php:230:25
     → /^@([\w\-\_\\:]+)((?:[\s\(\{])\s*([^\s].*)|$)/us
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -12715,6 +13372,9 @@ corpus/phpDocumentor/ReflectionDocBlock/src/DocBlockFactory.php:177:13
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/phpactor/phpactor — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpactor/phpactor/lib/CodeTransform/Adapter/TolerantParser/Refactor/TolerantExtractExpression.php:152:24
     → /(\t| )*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -12754,12 +13414,19 @@ corpus/phpactor/phpactor/lib/Indexer/Util/PhpNameMatcher.php:15:33
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: range 'a'-'z' (covered by range '\x07'-'z'), '_' (covered by range '\x07'-'z'), ']' (covered by range '\x07'-'z'), '[' (covered by range '\x07'-'z') (and 3 more).
 
+
+
+### corpus/phparkitect/arkitect — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/phparkitect/arkitect/src/Analyzer/Pattern.php:14:35
     → /^([a-zA-Z0-9_\x80-\xff]|\\|\*|\?)*$/
    ↳ via self::VALID_PATTERN
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/phpbb/phpbb — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/phpbb/phpbb/phpBB/develop/create_variable_overview.php:179:17
     → #{L_([a-z0-9\-_]*?)\}#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -13141,6 +13808,9 @@ corpus/phpbb/phpbb/phpBB/posting.php:1762:42
        - #\[attachment=([0-9]+)\](.*?)\[\/attachment\]#uis
        + #\[attachment=([0-9]+)](.*?)\[/attachment\]#uis
 
+
+
+### corpus/phpmd/phpmd — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/phpmd/phpmd/public/scripts/update-rules.php:70:25
     → (\s+)s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -13165,6 +13835,9 @@ corpus/phpmd/phpmd/src/Rule/Controversial/CamelCaseNamespace.php:41:24
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/phpmetrics/PhpMetrics — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/phpmetrics/PhpMetrics/src/Hal/Metric/Class_/Text/LengthVisitor.php:66:43
     → !('[^']*'|"[^"]*")|((?:#|\/\/).*$)!m
    WARN  An anchor holds for its own alternative only: "('[^']*'|"[^"]*")" matches anywhere in the subject.
@@ -13177,6 +13850,9 @@ corpus/phpmetrics/PhpMetrics/src/Hal/Metric/Class_/Text/LengthVisitor.php:74:39
        - !(^\s*[\r\n])!sm
        + !(^\s*[\r\n])!m
 
+
+
+### corpus/phpmyadmin/phpmyadmin — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpmyadmin/phpmyadmin/src/Bookmarks/Bookmark.php:136:40
     → |/\*(.*\[VARIABLE[0-9]*\].*)\*/|imsU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -13238,11 +13914,17 @@ corpus/phpmyadmin/phpmyadmin/src/Table/Table.php:586:57
        - ~^\s*AUTO_INCREMENT\s*~is
        + ~^\s*AUTO_INCREMENT\s*~i
 
+
+
+### corpus/phpmyadmin/sql-parser — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/phpmyadmin/sql-parser/src/Context.php:676:27
     → /^[$]|^\d+$|[^0-9a-zA-Z$_\x80-\xffff]/
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: 'f' (covered by range 'a'-'z'), 'f' (duplicate)
 
+
+
+### corpus/phpro/grumphp — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpro/grumphp/src/Linter/Xml/XmlLinter.php:165:33
     → /\s{1,}/
    TIP 
@@ -13255,6 +13937,9 @@ corpus/phpro/grumphp/src/Linter/Xml/XmlLinter.php:174:57
        - /\s{1,}/
        + /\s+/
 
+
+
+### corpus/phpseclib/phpseclib — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/phpseclib/phpseclib/phpseclib/Crypt/EC/Formats/Keys/PKCS1.php:65:24
     → #-*BEGIN EC PRIVATE KEY-*[^-]*-*END EC PRIVATE KEY-*#s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -13309,6 +13994,9 @@ corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2570:24
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/phpspec/phpspec — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/phpspec/phpspec/src/PhpSpec/Console/ConsoleIO.php:174:24
     → /(^.*)<[a-z-]*>?[^<]*$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -13340,6 +14028,12 @@ corpus/phpspec/phpspec/src/PhpSpec/Util/MethodAnalyser.php:108:34
        - /^[\s{}]*$/s
        + /^[\s{}]*$/
 
+
+
+### corpus/phpspec/prophecy — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/phpstan/phpdoc-parser — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/phpstan/phpdoc-parser/src/Ast/ConstExpr/ConstExprStringNode.php:56:12
     → /( [\x00-\x08\x0E-\x1F] | [\xC0-\xC1] | [\xF5-\xFF] | \xE0(?=[\x80-\x9F]) | \xF0(?=[\x80-\x8F]) | [\xC2-\xDF](?![\x80-\xBF]) | [\xE0-\xEF](?![\x80-\xBF]{2}) | [\xF0-\xF4](?![\x80-\xBF]{3}) | (?<=[\x00-\x7F\xF5-\xFF])[\x80-\xBF] | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]|[\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) )/x
    ↳ via $regex
@@ -13364,6 +14058,15 @@ corpus/phpstan/phpdoc-parser/src/Ast/ConstExpr/ConstExprStringNode.php:56:12
                      | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) # Short 4 byte sequence (2)
                  )/x
 
+
+
+### corpus/phpstan/phpstan — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/phpstan/phpstan-deprecation-rules — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/phpstan/phpstan-src — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpstan/phpstan-src/.claude/skills/rebase-branch/rebase-plan.php:285:18
     → ~^[-+]\s*(?:(?:public|protected|private|readonly|static)(?:\(set\))?\s+)+[^=;(]*?\$(\w+)~
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
@@ -13407,17 +14110,32 @@ corpus/phpstan/phpstan-src/turbo-ext/bin/side-by-side.php:514:19
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/phpstan/phpstan-strict-rules — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/phpstan/phpstan-symfony — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/phpunit/environment — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/phpunit/environment/src/Console.php:221:32
     → /--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
    TIP 
        - /--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
        + /-{7}-+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/
 
+
+
+### corpus/phpunit/phpunit — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/phpunit/phpunit/src/Util/Color.php:206:17
     → /(\x1B\[[^m]*m)+(\x1B\[0m)/
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/pimcore/pimcore — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/pimcore/pimcore/bundles/CustomReportsBundle/src/Tool/Adapter/Sql.php:184:42
     → /\s+/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -13514,6 +14232,13 @@ corpus/pimcore/pimcore/models/Element/Service.php:560:28
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/povils/phpmnd — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/processwire/processwire — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/processwire/processwire/wire/core/Field.php:1068:27
     → /([_|a-zA-Z0-9]+)*([-._|a-zA-Z0-9]*)([=!%*<>]+)/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -13709,11 +14434,21 @@ corpus/processwire/processwire/wire/modules/Textformatter/TextformatterMarkdownE
     → /^<(\w++:\/{2}[^ >]++)>/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/protonemedia/laravel-splade — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/protonemedia/laravel-splade/src/Http/BladeDirectives.php:67:20
     → /('|")([\w\-_\.]+)('|")(,)?(\s*)(.*)/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/psecio/parse — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/reactphp/http — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/reactphp/http/src/Message/Uri.php:49:149
     → #[\s%+]#
    WARN  "+" is a literal character inside a character class, not a quantifier.
@@ -13724,12 +14459,22 @@ corpus/reactphp/http/src/Message/Uri.php:167:25
    WARN  "+" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "+" matches a literal "+". If you meant to quantify a shorthand like \w, use \w+ outside the class.
 
+
+
+### corpus/reactphp/socket — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/reactphp/socket/src/UnixServer.php:69:29
     → /\(([^\)]+)\)|\[(\d+)\]: (.*)/
    TIP 
        - /\(([^\)]+)\)|\[(\d+)\]: (.*)/
        + /\(([^)]+)\)|\[(\d+)\]: (.*)/
 
+
+
+### corpus/rectorphp/rector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/rectorphp/rector-src — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/rectorphp/rector-src/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php:37:59
     → #^([A-Za-z]+?)([A-Z]{1}[a-z]{1})([A-Za-z]*)#
    ↳ via self::STARTS_WITH_ABBREVIATION_REGEX
@@ -13798,6 +14543,9 @@ corpus/rectorphp/rector-src/src/Util/NodePrinter.php:22:47
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/roundcube/roundcubemail — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/roundcube/roundcubemail/plugins/archive/archive.php:483:20
     → /[\b<](.+@.+)[\b>]/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -14091,6 +14839,11 @@ corpus/roundcube/roundcubemail/program/lib/Roundcube/rcube_washtml.php:699:24
        - /<base\s+href=['"]*([^'"]+)/is
        + /<base\s+href=['"]*([^'"]+)/i
 
+
+
+### corpus/rskuipers/php-assumptions — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/s9e/TextFormatter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/s9e/TextFormatter/scripts/patchCollectionProxies.php:145:3
     → #(?<=\n)(?:(/[*]+\n(?:[*](?! @method).*\n)*?)(?:[*]\n)*(?:[*] @method.*\n)*[*]/\n)?class#
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
@@ -14220,6 +14973,10 @@ corpus/s9e/TextFormatter/src/Plugins/PipeTables/Parser.php:327:28
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/sabre-io/dav — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/sabre-io/dav/lib/CalDAV/ICSExportPlugin.php:260:13
     → /[^a-zA-Z0-9-_ ]/um
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -14247,6 +15004,9 @@ corpus/sabre-io/dav/lib/DAV/Server.php:1579:18
        - /(?:\<(?P<uri>.*?)\>\s)?\((?P<not>Not\s)?(?:\<(?P<token>[^\>]*)\>)?(?:\s?)(?:\[(?P<etag>[^\]]*)\])?\)/im
        + /(?:\<(?P<uri>.*?)\>\s)?\((?P<not>Not\s)?(?:\<(?P<token>[^\>]*)\>)?(?:\s?)(?:\[(?P<etag>[^\]]*)\])?\)/i
 
+
+
+### corpus/sabre-io/vobject — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/sabre-io/vobject/lib/DateTimeParser.php:33:30
     → /^([0-9]{4})([0-1][0-9])([0-3][0-9])T([0-2][0-9])([0-5][0-9])([0-5][0-9])([Z]?)$/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -14328,6 +15088,9 @@ corpus/sabre-io/vobject/lib/StringUtil.php:40:29
        - %(?:[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F])%
        + %[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]%
 
+
+
+### corpus/salesagility/SuiteCRM — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 1
 corpus/salesagility/SuiteCRM/SugarSecurity.php:106:24
     → 'require\([^\)]*\$[^\)]*\)'si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -15265,11 +16028,22 @@ corpus/salesagility/SuiteCRM/service/JsonRPCServer/JsonRPCServerCalls.php:129:47
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/schmittjoh/JMSSerializerBundle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/schmittjoh/JMSSerializerBundle/Cache/CacheWarmer.php:102:34
     → {"[^"\\]*+(\\.[^"\\]*+)*+"|'[^'\\]*+(\\.[^'\\]*+)*+'}s
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/schmittjoh/php-manipulator — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/schmittjoh/serializer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/schmittjoh/serializer/src/Metadata/Driver/DocBlockDriver/DocBlockTypeResolver.php:34:48
     → /^[^\S\r\n]*use[[\s]*([^;\n]*)[\s]*{([a-zA-Z0-9\s\n\r,]*)};$/m
    ↳ via self::GROUP_USE_STATEMENTS_REGEX
@@ -15280,6 +16054,10 @@ corpus/schmittjoh/serializer/src/XmlSerializationVisitor.php:559:68
     → #^[\pL_][\pL0-9._-]*$#ui
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/scrivo/highlight.php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.6, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/scrivo/highlight.php/src/Highlight/RegExUtils.php:56:33
     → #(?<!\\)/#um
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -15303,12 +16081,26 @@ corpus/scrivo/highlight.php/tools/get_language_definitions.php:74:33
        - /(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/um
        + /(\[[^:]*?\w)(-)([^a-zA-Z0-9\\]+?)/u
 
+
+
+### corpus/sebastianbergmann/phpcpd — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+
+### corpus/sebastianbergmann/phploc — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+
+### corpus/serbanghita/Mobile-Detect — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/shipmonk-rnd/composer-dependency-analyser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/shipmonk-rnd/composer-dependency-analyser/src/Config/Configuration.php:709:18
     → ~^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$~
    ↳ via $regex
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/shipmonk-rnd/coverage-guard — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/shipmonk-rnd/dead-code-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/shipmonk-rnd/dead-code-detector/src/Provider/NetteUsageProvider.php:182:13
     → ~^  [ \t*]*  @property(|-read|-write|-deprecated)  [ \t]+  [^\s$]+  [ \t]+  \$  (\w+)  ()~mx
    WARN  Alternation contains an empty alternative.
@@ -15319,6 +16111,11 @@ corpus/shipmonk-rnd/dead-code-detector/src/Provider/NetteUsageProvider.php:346:2
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/shipmonk-rnd/name-collision-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/shopware/shopware — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/shopware/shopware/src/Core/Checkout/Promotion/Util/PromotionCodeService.php:25:50
     → /(?<prefix>[^%]*)(?<replacement>(%[sd])+)(?<suffix>.*)/
    ↳ via self::PROMOTION_PATTERN_REGEX
@@ -15411,6 +16208,9 @@ corpus/shopware/shopware/src/Storefront/Theme/Validator/SCSSValidator.php:199:24
    WARN  End anchor '$' appears before consuming characters, making it impossible to match.
    WARN  Start anchor '^' appears after consuming characters, making it impossible to match.
 
+
+
+### corpus/silverstripe/silverstripe-framework — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/silverstripe/silverstripe-framework/src/Control/ContentNegotiator.php:195:33
     → #(\<option[^>]*[\s]+selected)(?!\s*\=)#si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -15592,6 +16392,10 @@ corpus/silverstripe/silverstripe-framework/src/i18n/TextCollection/i18nTextColle
        - /(_t\([^\)]*?\))/ms
        + /(_t\([^\)]*?\))/
 
+
+
+### corpus/simplepie/simplepie — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/simplepie/simplepie/src/Item.php:2305:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -15646,6 +16450,10 @@ corpus/simplepie/simplepie/src/Source.php:488:117
        - /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
        + /^(-?[0-9]+(?:\.[0-9]+)) (-?[0-9]+(?:\.[0-9]+))$/
 
+
+
+### corpus/slevomat/coding-standard — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/slevomat/coding-standard/SlevomatCodingStandard/Helpers/TypeHelper.php:23:4
     → ~^\\?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$~
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -15680,6 +16488,13 @@ corpus/slevomat/coding-standard/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.
     → ~^\(\s*(\S+)\s*\)\z~i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/slimphp/Slim — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/smalot/pdfparser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/smalot/pdfparser/src/Smalot/PdfParser/Element/ElementArray.php:112:24
     → /^\s*\[(?P<array>.*)/is
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -15900,6 +16715,10 @@ corpus/smalot/pdfparser/src/Smalot/PdfParser/RawData/RawDataParser.php:959:13
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the second quantifier to its minimum.
 
+
+
+### corpus/smarty-php/smarty — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/smarty-php/smarty/src/Compiler/Template.php:581:4
     → #@!@SMARTY:([0-9]+):SMARTY@!@#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -16022,6 +16841,10 @@ corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:975:43
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
+
+
+### corpus/spipu/html2pdf — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/spipu/html2pdf/examples/res/example09.php:2:26
     → /[^a-zA-Z0-9]/isU
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -16431,6 +17254,9 @@ corpus/spipu/html2pdf/src/SvgDrawer.php:119:29
        - /([a-z]+)\(([^\)]*)\)/isU
        + /([a-z]+)\(([^\)]*)\)/iU
 
+
+
+### corpus/spiral/framework — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/spiral/framework/src/Console/src/Configurator/Signature/Parser.php:94:32
     → /(.+)\[\]\=(.+)/
    TIP 
@@ -16448,6 +17274,10 @@ corpus/spiral/framework/src/Cookies/src/Config/CookiesConfig.php:49:25
    INFO  Quantified capturing group "(...)" with "{4}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/squizlabs/PHP_CodeSniffer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:500:28
     → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -16510,6 +17340,16 @@ corpus/squizlabs/PHP_CodeSniffer/src/Util/Common.php:476:28
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '^' (duplicate)
 
+
+
+### corpus/staabm/annotate-pull-request-from-checkstyle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/staabm/phpstan-baseline-analysis — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/staabm/phpstan-dba — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/staabm/phpstan-dba/src/QueryReflection/QuerySimulation.php:172:13
     → /("(""|[^"])*")|('(''|[^'])*')|((?:--|#)[^\n\r]*)|(\/\*[\w\W]*?(?=\*\/)\*\/)/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -16519,6 +17359,15 @@ corpus/staabm/phpstan-dba/src/QueryReflection/QuerySimulation.php:172:13
        - /("(""|[^"])*")|('(''|[^'])*')|((?:--|#)[^\n\r]*)|(\/\*[\w\W]*?(?=\*\/)\*\/)/m
        + /("(""|[^"])*")|('(''|[^'])*')|((?:--|#)[^\n\r]*)|(\/\*[\w\W]*?(?=\*\/)\*\/)/
 
+
+
+### corpus/staabm/phpstan-todo-by — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/staabm/side-effects-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/statamic/cms — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/statamic/cms/src/Console/Commands/ProEnable.php:273:34
     → /['"]pro['"]\s*=>\s*env\(['"]STATAMIC_PRO_ENABLED['"]/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -16650,6 +17499,9 @@ corpus/statamic/cms/src/View/Antlers/Language/Runtime/RuntimeParser.php:231:24
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '\x0A' (duplicate)
 
+
+
+### corpus/stecman/symfony-console-completion — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/stecman/symfony-console-completion/src/CompletionContext.php:300:35
     → /^(?:['"])(.*?)(?:['"])?$/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -16657,15 +17509,28 @@ corpus/stecman/symfony-console-completion/src/CompletionContext.php:300:35
        - /^(?:['"])(.*?)(?:['"])?$/
        + /^['"](.*?)['"]?$/
 
+
+
+### corpus/sulu/sulu — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/sulu/sulu/src/Sulu/Component/Rest/ListBuilder/ListRestHelper.php:77:26
     → #^\w+(\.\w+)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/symfony/ai — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/symfony/docs — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/symfony/flex — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/symfony/flex/src/Response.php:78:28
     → {^([^:]++):\s*(.+?)\s*$}i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/symfony/maker-bundle — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/symfony/maker-bundle/src/Test/MakerTestEnvironment.php:29:42
     → #(?:created|updated):\s(?:.*\\)*(.*\.[a-z]{3,4}).*(?:\\n)?#ui
    ↳ via self::GENERATED_FILES_REGEX
@@ -16687,6 +17552,9 @@ corpus/symfony/maker-bundle/src/Util/ClassSourceManipulator.php:925:33
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/symfony/mime — Target: PHP 8.4.1, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/symfony/mime/Header/AbstractHeader.php:99:25
     → /^(?:(?:(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?[a-zA-Z0-9!#\$%&'\*\+\-\/=\?\^_`\{\}\|~]+(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?)|(?:(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?"((?:(?:[ \t]*(?:\r\n))?[ \t])?(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21\x23-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])))*(?:(?:[ \t]*(?:\r\n))?[ \t])?"(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))*(?:(?:(?:(?:[ \t]*(?:\r\n))?[ \t])?(\((?:(?:(?:[ \t]*(?:\r\n))?[ \t])|(?:(?:[\x01-\x08\x0B\x0C\x0E-\x19\x7F]|[\x21-\x27\x2A-\x5B\x5D-\x7E])|(?:\[\x00-\x08\x0B\x0C\x0E-\x7F])|(?1)))*(?:(?:[ \t]*(?:\r\n))?[ \t])?\)))|(?:(?:[ \t]*(?:\r\n))?[ \t])))?))+?)$/D
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -16711,15 +17579,12 @@ corpus/symfony/mime/Resources/bin/update_mime_types.php:158:21
        - {^        '([^'/]+)' => \['(.+)'\],$}
        + {^ {8}'([^'/]+)' => \['(.+)'\],$}
 
-corpus/symfony/polyfill-mbstring/Mbstring.php:634:31
-    → /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
-   WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
-   WARN  Character range is unnecessary; list the characters explicitly.
-       ↳ Use '\x{FC}' and '\x{FD}' explicitly instead of a range.
-   TIP 
-       - /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
-       + /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/
 
+
+### corpus/symfony/panther — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/symfony/polyfill — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/symfony/polyfill/src/Intl/Grapheme/Grapheme.php:45:45
     → /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/s
    ↳ via self::UTF8_CHAR_OR_SUBPART_RX
@@ -16763,6 +17628,24 @@ corpus/symfony/polyfill/src/Php84/Php84.php:518:24
        - /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/s
        + /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/
 
+
+
+### corpus/symfony/polyfill-mbstring — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+corpus/symfony/polyfill-mbstring/Mbstring.php:634:31
+    → /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
+   WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
+   WARN  Character range is unnecessary; list the characters explicitly.
+       ↳ Use '\x{FC}' and '\x{FD}' explicitly instead of a range.
+   TIP 
+       - /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
+       + /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/
+
+
+
+### corpus/symfony/recipes — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
+
+### corpus/symfony/symfony — Target: PHP 8.4.1, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/symfony/symfony/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php:156:29
     → /\n\s*/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -16810,18 +17693,6 @@ corpus/symfony/symfony/src/Symfony/Component/Console/Command/Command.php:731:25
     → /^[^\:]++(\:[^\:]++)*$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-corpus/symfony/symfony/src/Symfony/Component/Console/Exception/InvalidFileException.php:27:37
-    → /[\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]/
-   FAIL  Null byte in regex at position 1: PHP before 8.2 refuses a NUL byte anywhere in a pattern; write it "\0" or "\x00".
-       ↳         /[\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]/
-                   ^
-
-corpus/symfony/symfony/src/Symfony/Component/Console/Helper/FileInputHelper.php:415:35
-    → /[\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]/
-   FAIL  Null byte in regex at position 1: PHP before 8.2 refuses a NUL byte anywhere in a pattern; write it "\0" or "\x00".
-       ↳         /[\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]/
-                   ^
 
 corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:620:45
     → /^<(\w+|(\w+=[\w,]+;?)*)>.+<\/(\w+|(\w+=\w+;?)*)?>$/
@@ -17079,18 +17950,6 @@ corpus/symfony/symfony/src/Symfony/Component/Tui/Style/TailwindStylesheet.php:29
        - /^border-(t|r|b|l)-(\d+)$/
        + /^border-([trbl])-(\d+)$/
 
-corpus/symfony/symfony/src/Symfony/Component/Tui/Terminal/TerminalEscapeTrait.php:63:30
-    → /[\x00-\x1F\x7F]|\xC2[\x80-\x9F]/
-   FAIL  Null byte in regex at position 1: PHP before 8.2 refuses a NUL byte anywhere in a pattern; write it "\0" or "\x00".
-       ↳         /[\x00-\x1F\x7F]|\xC2[\x80-\x9F]/
-                   ^
-
-corpus/symfony/symfony/src/Symfony/Component/Tui/Widget/Util/StringUtils.php:74:29
-    → /[\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]/
-   FAIL  Null byte in regex at position 1: PHP before 8.2 refuses a NUL byte anywhere in a pattern; write it "\0" or "\x00".
-       ↳         /[\x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x9F]/
-                   ^
-
 corpus/symfony/symfony/src/Symfony/Component/VarExporter/ProxyHelper.php:394:40
     → /(?|(,)\n( )       |\n        |,\n    (\]))/
    TIP 
@@ -17114,6 +17973,9 @@ corpus/symfony/symfony/src/Symfony/Contracts/Translation/TranslatorTrait.php:64:
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/symfony/ux — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/symfony/ux/src/Icons/src/Icon.php:63:34
     → #^([a-z0-9]+(-[a-z0-9]+)*)(--[a-z0-9]+(-[a-z0-9]+)*)*$#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -17135,11 +17997,21 @@ corpus/symfony/ux/src/Toolkit/src/Registry/GitHubRegistry.php:50:34
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
+
+
+### corpus/symfony/ux-live-component — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+
+### corpus/symfony/ux-turbo — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
+
+### corpus/tecnickcom/TCPDF — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/tecnickcom/TCPDF/tcpdf.php:1458:37
     → #[0-9.]+( [0-9.]+)* (scn|SCN|rg|RG|g|G|k|K)(?![a-zA-Z])#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/tempestphp/highlight — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/tempestphp/highlight/src/Languages/Base/Injections/AdditionInjection.php:25:24
     → /(\{\+)((.|\n)*?)(\+})/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -17174,27 +18046,9 @@ corpus/tempestphp/highlight/src/Themes/InlineTheme.php:29:24
    WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
        ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
 
-corpus/tempestphp/tempest-framework/packages/console/src/Components/TextBuffer.php:338:44
-    → /[\p{Emoji_Presentation}\x{20E3}]/u
-   FAIL  Invalid or unsupported Unicode property: \p{Emoji_Presentation}. PCRE2 10.39 knows a property by one exact name only.
-       ↳         [\p{Emoji_Presentation}\x{20E3}]
-                                        ^
-       ↳ Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.
 
-corpus/tempestphp/tempest-framework/packages/console/src/Components/TextBuffer.php:339:41
-    → /\p{Extended_Pictographic}\x{FE0F}/u
-   FAIL  Invalid or unsupported Unicode property: \p{Extended_Pictographic}. PCRE2 10.39 knows a property by one exact name only.
-       ↳         \p{Extended_Pictographic}\x{FE0F}
-                                          ^
-       ↳ Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.
 
-corpus/tempestphp/tempest-framework/packages/console/src/Components/TextBuffer.php:345:35
-    → /[\p{M}\p{Cf}\p{Emoji_Modifier}]/u
-   FAIL  Invalid or unsupported Unicode property: \p{Emoji_Modifier}. PCRE2 10.39 knows a property by one exact name only.
-       ↳         [\p{M}\p{Cf}\p{Emoji_Modifier}]
-                                               ^
-       ↳ Spell the name as PCRE2 10.39 lists it, as "Greek" or "Lu", or target a PHP whose PCRE2 is 10.40 or later.
-
+### corpus/tempestphp/tempest-framework — Target: PHP 8.5, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/tempestphp/tempest-framework/packages/console/src/Highlight/TempestConsoleLanguage/Injections/DynamicInjection.php:18:20
     → /(?<match>\<style=(?<quote>[\"'])(?<styles>(?:[a-z-]+\s*)+)\k<quote>\>(?:(?!\<style).|\n)*?\<\/style\>)/
    ↳ via $pattern
@@ -17235,6 +18089,10 @@ corpus/tempestphp/tempest-framework/src/Tempest/Framework/Commands/MetaViewCompo
    WARN  Alternation (.|\n) is an anti-pattern for matching any character including newlines.
        ↳ Use the "s" (PCRE_DOTALL) flag to make "." match newlines, or use [\s\S] instead of (.|\n).
 
+
+
+### corpus/thephpleague/commonmark — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/thephpleague/commonmark/src/Extension/CommonMark/Parser/Inline/BacktickParser.php:59:32
     → /\n/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -17242,6 +18100,10 @@ corpus/thephpleague/commonmark/src/Extension/CommonMark/Parser/Inline/BacktickPa
        - /\n/m
        + /\n/
 
+
+
+### corpus/thephpleague/flysystem — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/thephpleague/flysystem/bin/set-flysystem-version.php:36:29
     → ~("league/flysystem": "\^[a-zA-Z0-9\.-]+")~ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -17250,6 +18112,10 @@ corpus/thephpleague/flysystem/bin/set-flysystem-version.php:36:29
        - ~("league/flysystem": "\^[a-zA-Z0-9\.-]+")~ms
        + ~("league/flysystem": "\^[a-zA-Z0-9\.-]+")~
 
+
+
+### corpus/thephpleague/geotools — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/thephpleague/geotools/src/Coordinate/Coordinate.php:207:24
     → /([ns]{1})\s?([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*[, ]?([we]{1})\s? ?([0-9]{1,3})\D+([0-9]{1,2}\.?\d*)\D*$/i
    WARN  Quantifier is redundant; it matches exactly once.
@@ -17288,6 +18154,9 @@ corpus/thephpleague/geotools/src/Coordinate/Coordinate.php:260:24
        - /([0-9]{1,2})\D+([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*([ns]{1})[, ] ?([0-9]{1,3})\D+([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*([we]{1})$/i
        + /([0-9]{1,2})\D+([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*([ns])[, ] ?([0-9]{1,3})\D+([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*([we])$/i
 
+
+
+### corpus/thephpleague/glide — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/thephpleague/glide/src/Manipulators/Helpers/Color.php:17:31
     → /^[0-9]{1}[0-9a-f]{3}$/i
    ↳ via self::SHORT_ARGB
@@ -17316,6 +18185,10 @@ corpus/thephpleague/glide/src/Manipulators/Size.php:481:24
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/theseer/phpdox — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/theseer/phpdox/src/collector/project/InlineComment.php:37:25
     → =//(.*)$|/\*{1,}(.*)\*/$|/\*{1,}(.*)$|^(.*)\*/$|#(.*)$|\*{1}(.*)$|^(.*)$=
    WARN  Quantifier is redundant; it matches exactly once.
@@ -17335,16 +18208,26 @@ corpus/theseer/phpdox/src/collector/project/Tokenizer.php:96:39
    WARN  Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.
        ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
+
+
+### corpus/theseer/tokenizer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/theseer/tokenizer/src/Tokenizer.php:72:34
     → /\R+/Uu
    WARN  Quantifier "+" is lazy under the U flag and ends the pattern, so it always matches its minimum.
        ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
+
+
+### corpus/tighten/tlint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/tighten/tlint/src/Linters/NoJsonDirective.php:26:17
     → /\B@(@?\w+(?:::\w+)?)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?/x
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/tijsverkoyen/CssToInlineStyles — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/tijsverkoyen/CssToInlineStyles/src/Css/Processor.php:60:29
     → /@media [^{]*+{([^{}]++|{[^{}]*+})*+}/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -17354,6 +18237,15 @@ corpus/tijsverkoyen/CssToInlineStyles/src/Css/Rule/Processor.php:91:43
     → /  \#/ix
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+
+
+### corpus/tomzx/php-semver-checker — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
+
+### corpus/troelskn/phpweaver — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/tubalmartin/YUI-CSS-compressor-PHP-port — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:309:13
     → /filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -17373,6 +18265,9 @@ corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:324:13
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
+
+
+### corpus/twigphp/Twig — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/twigphp/Twig/src/Lexer.php:54:33
     → /(?(DEFINE) (?<LNUM>[0-9]+(_[0-9]+)*) (?<FRAC>\.(?&LNUM)) (?<EXPONENT>[eE][+-]?(?&LNUM)) (?<DNUM>(?&LNUM)(?:(?&FRAC))?) )(?:(?&DNUM)(?:(?&EXPONENT))?)/Ax
    ↳ via self::REGEX_NUMBER
@@ -17390,11 +18285,17 @@ corpus/twigphp/Twig/src/Test/IntegrationTestCase.php:198:34
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
 
+
+
+### corpus/twigstan/twigstan — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 0
 corpus/twigstan/twigstan/src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php:29:28
     → #// line (?<line_number>\d+)+#
    WARN  Quantified named group "(?<line_number>...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/vimeo/psalm — Target: PHP 8.1.31, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/vimeo/psalm/bin/hack-conformance/lib.php:29:20
     → /^\/\/\/\/\s*expect:\s*(\S+)/m
    TIP 
@@ -17483,6 +18384,9 @@ corpus/vimeo/psalm/src/Psalm/Type/Atomic/TKeyedArray.php:729:28
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/vinkius-labs/laravel-page-speed — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/vinkius-labs/laravel-page-speed/src/Middleware/InlineCss.php:106:13
     → /<([^>]+)>/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -17490,6 +18394,15 @@ corpus/vinkius-labs/laravel-page-speed/src/Middleware/InlineCss.php:106:13
        - /<([^>]+)>/s
        + /<([^>]+)>/
 
+
+
+### corpus/vlucas/phpdotenv — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/voku/PHPDoctor — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/voku/anti-xss — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1060:29
     → /(?<html_entity>&[A-Za-z]{2,};{0})/
    WARN  Quantifier always repeats zero times; it can be removed.
@@ -17532,11 +18445,19 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2039:17
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/voku/email-check — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/voku/email-check/src/voku/helper/EmailCheck.php:207:26
     → /^(?<local>.*<?)(?:.*)@(?<domain>.*)(?:>?)$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
+
+
+### corpus/voku/portable-utf8 — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/voku/portable-utf8/src/voku/helper/UTF8.php:1205:13
     → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -17579,6 +18500,10 @@ corpus/voku/portable-utf8/src/voku/helper/UTF8.php:5231:39
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
+
+
+### corpus/voku/simple_html_dom — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/voku/simple_html_dom/src/voku/helper/Html5DomParser.php:228:13
     → /<[A-Za-z][A-Za-z0-9:-]*(?:"[^"]*"|'[^']*'|[^>"'])*>/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -17598,6 +18523,10 @@ corpus/voku/simple_html_dom/src/voku/helper/XmlDomParser.php:653:39
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
+
+
+### corpus/voku/urlify — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/voku/urlify/src/voku/helper/URLify.php:538:21
     → /(?:\s|^)(\d+)(?: )*€(?:\s|$)/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -17696,6 +18625,9 @@ corpus/voku/urlify/src/voku/helper/URLify.php:573:17
     → /(?:\s|^)£(?: )*(\d+)[.|,](\d+)(?:\s|$)/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
 
+
+
+### corpus/walkor/workerman — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/walkor/workerman/src/Protocols/Http.php:140:13
     → ~^(?-i:GET|POST|OPTIONS|HEAD|DELETE|PUT|PATCH) /[^\x00-\x20\x7f]* (?-i:HTTP)/1\.(?<minor>[0-9])$~
    WARN  Inline flag '-i' is redundant; the flag is not set at this position.
@@ -17711,6 +18643,9 @@ corpus/walkor/workerman/src/Worker.php:1316:32
    WARN  Lazy quantifier "+?" ends the pattern, so it always matches its minimum.
        ↳ Write the minimum count, make the quantifier greedy, or anchor what must follow it.
 
+
+
+### corpus/wapmorgan/PhpCodeAnalyzer — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/wapmorgan/PhpCodeAnalyzer/src/PhpCodeAnalyzer.php:60:25
     → ~^[[:digit:]]{1}\.[[:digit:]]{1}(\.[[:digit:]]{1})?$~
    WARN  Quantifier is redundant; it matches exactly once.
@@ -17719,6 +18654,17 @@ corpus/wapmorgan/PhpCodeAnalyzer/src/PhpCodeAnalyzer.php:60:25
        - ~^[[:digit:]]{1}\.[[:digit:]]{1}(\.[[:digit:]]{1})?$~
        + ~^[[:digit:]]\.[[:digit:]](\.[[:digit:]])?$~
 
+
+
+### corpus/wapmorgan/PhpDeprecationDetector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/wata727/pahout — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+
+### corpus/webmozarts/assert — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+
+### corpus/wikimedia/mediawiki — Target: PHP 8.3, PCRE2 10.42 (composer.json require.php) — exit 1
 corpus/wikimedia/mediawiki/includes/Debug/MWDebug.php:575:4
     → /( [\xC0-\xC1] | [\xF5-\xFF] | \xE0[\x80-\x9F] | \xF0[\x80-\x8F] | [\xC2-\xDF](?![\x80-\xBF]) | [\xE0-\xEF](?![\x80-\xBF]{2}) | [\xF0-\xF4](?![\x80-\xBF]{3}) | (?<=[\x0-\x7F\xF5-\xFF])[\x80-\xBF] | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4] | [\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) )/x
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -17999,11 +18945,18 @@ corpus/wikimedia/mediawiki/maintenance/storage/trackBlobs.php:119:21
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
+
+
+### corpus/willdurand/Negotiation — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/willdurand/Negotiation/src/Negotiation/AbstractNegotiator.php:137:31
     → /(?:[^,"]*+(?:"[^"]*+")?)+[^,"]*+/
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/woocommerce/woocommerce — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/woocommerce/woocommerce/.github/workflows/scripts/post-request-shared.php:119:29
     → /^\d+\.\d+\.\d+/D
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
@@ -18392,6 +19345,10 @@ corpus/woocommerce/woocommerce/tools/monorepo/check-changelogger-use.php:85:18
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/wp-cli/wp-cli — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/IdnaEncoder.php:144:22
     → /(?:[^\x00-\x7F])/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -18477,6 +19434,10 @@ corpus/wp-cli/wp-cli/php/utils.php:1540:18
    WARN  Suspicious \5 inside character class: this is octal (\x05), not a backreference to group 5.
        ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 5, move the check outside the class.
 
+
+
+### corpus/yiisoft/yii — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/yiisoft/yii/build/commands/LiteCommand.php:179:26
     → /[\r\n]+[\s\t]*[\r\n]+/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -18860,6 +19821,10 @@ corpus/yiisoft/yii/requirements/index.php:213:17
        - /public static function getVersion.*?return '(.*?)'/ms
        + /public static function getVersion.*?return '(.*?)'/s
 
+
+
+### corpus/yiisoft/yii2 — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
 corpus/yiisoft/yii2/build/controllers/ReleaseController.php:896:43
     → /^- Fix(?= #\d+(, #\d+)*: )/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -19040,6 +20005,9 @@ corpus/yiisoft/yii2/framework/web/ViewAction.php:125:50
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+
+
+### corpus/zbateson/mail-mime-parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/zbateson/mail-mime-parser/src/Header/Part/ReceivedDomainPart.php:66:20
     → ~^(\[(IPv[64])?(?P<addr1>[a-f\d\.\:]+)\])?\s*(helo=)?(?P<name>[a-z0-9\-]+[a-z0-9\-\.]+)?\s*(\[(IPv[64])?(?P<addr2>[a-f\d\.\:]+)\])?$~i
    ↳ via $pattern
@@ -19066,12 +20034,18 @@ corpus/zbateson/mail-mime-parser/src/Header/Part/Token.php:41:61
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+
+
+### corpus/zenstruck/foundry — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/zenstruck/foundry/src/Persistence/ProxyGenerator.php:177:13
     → /^(\s*(?:#\[\\ReturnTypeWillChange\]\s*)?(?:public|protected|private)?\s*function\s+(?!__)\w+\s*\([^\)]*\)\s*):?\s*\??[\w\\|&]*\s*\{\s*$/m
    TIP 
        - /^(\s*(?:#\[\\ReturnTypeWillChange\]\s*)?(?:public|protected|private)?\s*function\s+(?!__)\w+\s*\([^\)]*\)\s*):?\s*\??[\w\\|&]*\s*\{\s*$/m
        + /^(\s*(?:#\[\\ReturnTypeWillChange\]\s*)?(?:public|protected|private)?\s*function\s+(?!__)\w+\s*\([^)]*\)\s*):?\s*\??[\w\\|&]*\s*\{\s*$/m
 
+
+
+### corpus/zircote/swagger-php — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/zircote/swagger-php/src/Annotations/Operation.php:219:115
     → /^([12345]{1}\d{2})|([12345]{1}XX)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -19080,3 +20054,322 @@ corpus/zircote/swagger-php/src/Annotations/Operation.php:219:115
        - /^([12345]{1}\d{2})|([12345]{1}XX)$/
        + /^([12345]\d{2})|([12345]XX)$/
 
+
+
+================ corpus-lint summary ================
+repository                                   target                         exit  fail  warn   tip
+corpus/10up/ElasticPress                     PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/Alexia/php7mar                        PHP 8.1, PCRE2 10.39              0     0     2     2
+corpus/Automattic/jetpack                    PHP 8.1, PCRE2 10.39              1     2    85    29
+corpus/BitbucketPHP/Client                   PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/CarbonPHP/carbon                      PHP 8.1, PCRE2 10.39              0     0     7     7
+corpus/Codeception/Codeception               PHP 8.2, PCRE2 10.40              0     0     4     2
+corpus/CuyZ/Valinor                          PHP 8.2, PCRE2 10.40              0     0     3     0
+corpus/DaveLiddament/sarb                    PHP 8.2, PCRE2 10.40              0     0     0     1
+corpus/DeGraciaMathieu/php-class-dependencies-analyzer PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/DigitalOceanPHP/Client                PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/EdgedesignCZ/phpqa                    PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/FOSSBilling/FOSSBilling               PHP 8.3, PCRE2 10.42              0     0    15     5
+corpus/FakerPHP/Faker                        PHP 8.1, PCRE2 10.39              0     0     1     2
+corpus/GitLabPHP/Client                      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/Humbug/php-scoper                     PHP 8.2, PCRE2 10.40              0     0    10     5
+corpus/JakubOnderka/PHP-Parallel-Lint        PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/Jexactyl/Jexactyl                     PHP 8.4, PCRE2 10.44              0     0     0     0
+corpus/Jumping-Beaver/PHP_Static_Type_Checker PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/MyIntervals/PHP-CSS-Parser            PHP 8.1, PCRE2 10.39              0     0     7     3
+corpus/NativePHP/desktop                     PHP 8.3, PCRE2 10.42              0     0     2     2
+corpus/NativePHP/laravel                     PHP 8.3, PCRE2 10.42              0     0     0     0
+corpus/NativePHP/php-bin                     PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/NielsdeBlaauw/php-doc-check           PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/OskarStark/doctor-rst                 PHP 8.5, PCRE2 10.44              0     0     1     1
+corpus/PHP-CS-Fixer/PHP-CS-Fixer             PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/PHP-FFMpeg/PHP-FFMpeg                 PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/PHPCSStandards/PHP_CodeSniffer        PHP 8.1, PCRE2 10.39              0     0     6     3
+corpus/PHPCheckstyle/phpcheckstyle           PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/PHPCompatibility/PHPCompatibility     PHP 8.1, PCRE2 10.39              0     0     6     0
+corpus/PHPMailer/PHPMailer                   PHP 8.1, PCRE2 10.39              0     0    13     4
+corpus/PHPOffice/PHPWord                     PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/PHPOffice/PhpSpreadsheet              PHP 8.2.99, PCRE2 10.40           0     0    83    40
+corpus/Phauthentic/cognitive-code-analysis   PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/PhpCodeArcheology/PhpCodeArcheology   PHP 8.2, PCRE2 10.40              0     0     7     4
+corpus/PrestaShop/PrestaShop                 PHP 8.1, PCRE2 10.39              0     0   100    38
+corpus/QafooLabs/php-refactoring-browser     PHP 8.1, PCRE2 10.39              0     0     0     1
+corpus/Respect/Validation                    PHP 8.5, PCRE2 10.44              0     0     5     2
+corpus/Roave/BackwardCompatibilityCheck      PHP 8.4.99, PCRE2 10.44           0     0     0     0
+corpus/Roave/BetterReflection                PHP 8.4.99, PCRE2 10.44           0     0     0     0
+corpus/Roave/DocbookTool                     PHP 8.3.3, PCRE2 10.42            0     0     1     0
+corpus/Roave/FunctionFQNReplacer             PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/Seldaek/jsonlint                      PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/Seldaek/monolog                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/Seldaek/phar-utils                    PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/Shopify/shopify-api-php               PHP 8.1, PCRE2 10.39              0     0     6     0
+corpus/Sylius/Sylius                         PHP 8.2, PCRE2 10.40              0     0     1     0
+corpus/TYPO3/Fluid                           PHP 8.2, PCRE2 10.40              0     0     3     3
+corpus/TYPO3/typo3                           PHP 8.5, PCRE2 10.44              0     0    22    16
+corpus/WhichBrowser/Parser                   PHP 8.1, PCRE2 10.39              0     0    15     7
+corpus/Wixel/GUMP                            PHP 8.1, PCRE2 10.39              0     0     4     3
+corpus/WordPress/WordPress-Coding-Standards  PHP 8.1, PCRE2 10.39              0     0     5     5
+corpus/WordPress/wordpress-develop           PHP 8.1, PCRE2 10.39              1     1    87    39
+corpus/Yoast/wordpress-seo                   PHP 8.1, PCRE2 10.39              0     0     7     3
+corpus/akaunting/akaunting                   PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/api-platform/core                     PHP 8.2, PCRE2 10.40              0     0     3     0
+corpus/atoum/atoum                           PHP 8.1, PCRE2 10.39              0     0     0     1
+corpus/aws/aws-sdk-php                       PHP 8.1, PCRE2 10.39              0     0     3     2
+corpus/awslabs/aws-crt-php                   PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/bcit-ci/CodeIgniter                   PHP 8.1, PCRE2 10.39              0     0    35     5
+corpus/bcosca/fatfree                        PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/beberlei/assert                       PHP 8.1, PCRE2 10.39              0     0     4     3
+corpus/bmitch/churn-php                      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/bobthecow/psysh                       PHP 8.1, PCRE2 10.39              0     0    12     4
+corpus/bolt/core                             PHP 8.2, PCRE2 10.40              0     0     4     0
+corpus/browscap/browscap-php                 PHP 8.1, PCRE2 10.39              0     0     3     2
+corpus/cakephp/cakephp                       PHP 8.2, PCRE2 10.40              0     0    16     6
+corpus/canyongbs/aidingapp                   PHP 8.4, PCRE2 10.44              0     0     7     0
+corpus/captainhook-git/captainhook           PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/carlosas/phpat                        PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/cartalyst/stripe                      PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/cebe/markdown                         PHP 8.1, PCRE2 10.39              0     0    10     7
+corpus/chillerlan/php-qrcode                 PHP 8.4, PCRE2 10.44              0     0     0     0
+corpus/chrome-php/chrome                     PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/cloudevents/sdk-php                   PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/codeigniter4/CodeIgniter4             PHP 8.2, PCRE2 10.40              0     0    15     8
+corpus/composer-unused/composer-unused       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/composer/composer                     PHP 8.1, PCRE2 10.39              0     0    12     8
+corpus/composer/packagist                    PHP 8.4.11, PCRE2 10.44           0     0     0     1
+corpus/composer/semver                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/composer/spdx-licenses                PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/concretecms/concretecms               PHP 8.1, PCRE2 10.39              1     2    37     8
+corpus/contao/contao                         PHP 8.4, PCRE2 10.44              0     0    12     1
+corpus/craftcms/cms                          PHP 8.2, PCRE2 10.40              1     1    15     7
+corpus/cycle/database                        PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/deployphp/deployer                    PHP 8.3, PCRE2 10.42              0     0     3     0
+corpus/deptrac/deptrac                       PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/designsecurity/progpilot              PHP 8.3, PCRE2 10.42              0     0     3     0
+corpus/doctrine/dbal                         PHP 8.2, PCRE2 10.40              0     0     5     5
+corpus/dompdf/dompdf                         PHP 8.1, PCRE2 10.39              0     0     7     0
+corpus/drupal/drupal                         PHP 8.1, PCRE2 10.39              0     0    24     2
+corpus/dunglas/phpdoc-to-typehint            PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/ecsphp/ecs                            PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/editorconfig-checker/editorconfig-checker.php PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/edsonmedina/php_testability           PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/egulias/EmailValidator                PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/elementor/elementor                   PHP 8.1, PCRE2 10.39              0     0     8     1
+corpus/ergebnis/composer-normalize           PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/erusev/parsedown                      PHP 8.1, PCRE2 10.39              0     0     4     2
+corpus/espocrm/espocrm                       PHP 8.3, PCRE2 10.42              0     0     6     0
+corpus/exakat/exakat                         PHP 8.1, PCRE2 10.39              0     0    63    47
+corpus/exposedev/expose                      PHP 8.2, PCRE2 10.40              0     0     1     0
+corpus/exussum12/coverageChecker             PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/ezyang/htmlpurifier                   PHP 8.1, PCRE2 10.39              0     0     2     1
+corpus/facebook/facebook-for-woocommerce     PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/facebook/facebook-php-business-sdk    PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/facebook/open-graph-protocol          PHP 8.1, PCRE2 10.39              0     0     5     1
+corpus/facebook/php-graph-sdk                PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/filamentphp/filament                  PHP 8.2, PCRE2 10.40              0     0     2     2
+corpus/filp/whoops                           PHP 8.1, PCRE2 10.39              0     0     4     0
+corpus/flarum/framework                      PHP 8.3, PCRE2 10.42              0     0     8     0
+corpus/freescout-help-desk/freescout         PHP 8.1, PCRE2 10.39              0     0    42    16
+corpus/getgrav/grav                          PHP 8.3, PCRE2 10.42              0     0    27    19
+corpus/google/google-cloud-php               PHP 8.2, PCRE2 10.40              0     0     6     6
+corpus/google/recaptcha                      PHP 8.4, PCRE2 10.44              0     0     2     1
+corpus/google/site-kit-wp                    PHP 8.1, PCRE2 10.39              0     0     6     4
+corpus/greenlion/php-sql-parser              PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/grokability/snipe-it                  PHP 8.2, PCRE2 10.40              1     5     0     2
+corpus/guzzle/guzzle                         PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/guzzle/promises                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/guzzle/psr7                           PHP 8.1, PCRE2 10.39              0     0     5     2
+corpus/guzzle/uri-template                   PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/hyperf/hyperf                         PHP 8.2, PCRE2 10.40              0     0    10     2
+corpus/ibexa/core                            PHP 8.5, PCRE2 10.44              0     0     4     0
+corpus/infection/infection                   PHP 8.3, PCRE2 10.42              0     0     5     2
+corpus/invoiceninja/invoiceninja             PHP 8.2, PCRE2 10.40              1     1     3     1
+corpus/ircmaxell/php-cfg                     PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/janephp/janephp                       PHP 8.3, PCRE2 10.42              0     0     4     1
+corpus/jaybizzle/crawler-detect              PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/jaytaph/Transphpile                   PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/jbowens/jBBCode                       PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/jolicode/castor                       PHP 8.4.1, PCRE2 10.44            0     0     1     1
+corpus/joomla/joomla-cms                     PHP 8.1, PCRE2 10.39              1     1    69    23
+corpus/karlosagudo/fixtro                    PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/laminas/laminas-code                  PHP 8.2.99, PCRE2 10.40           0     0    14    11
+corpus/laminas/laminas-filter                PHP 8.2.99, PCRE2 10.40           0     0     1     0
+corpus/laminas/laminas-validator             PHP 8.2.99, PCRE2 10.40           1     1     7     1
+corpus/larastan/larastan                     PHP 8.2, PCRE2 10.40              0     0     3     2
+corpus/laravel-zero/laravel-zero             PHP 8.3, PCRE2 10.42              0     0     0     0
+corpus/laravel/boost                         PHP 8.2, PCRE2 10.40              0     0     8     2
+corpus/laravel/envoy                         PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/laravel/framework                     PHP 8.2, PCRE2 10.40              1     1    18     5
+corpus/laravel/pao                           PHP 8.3, PCRE2 10.42              0     0     1     0
+corpus/laravel/pint                          PHP 8.3, PCRE2 10.42              0     0     2     0
+corpus/laravel/prompts                       PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/laravel/reverb                        PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/laravel/roster                        PHP 8.2, PCRE2 10.40              0     0     1     0
+corpus/laravel/valet                         PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/laravel/wayfinder                     PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/liip/RMT                              PHP 8.1, PCRE2 10.39              0     0     0     1
+corpus/livewire/blaze                        PHP 8.1, PCRE2 10.39              0     0     2     1
+corpus/livewire/livewire                     PHP 8.1, PCRE2 10.39              0     0     8     6
+corpus/livewire/volt                         PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/llaville/php-compatinfo               PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/magento/magento2                      PHP 8.3, PCRE2 10.42              0     0    86    43
+corpus/maglnet/ComposerRequireChecker        PHP 8.4.99, PCRE2 10.44           0     0     0     0
+corpus/mamuz/PhpDependencyAnalysis           PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/matomo-org/device-detector            PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/matomo-org/matomo                     PHP 8.1, PCRE2 10.39              1     2    20     4
+corpus/matthiasmullie/minify                 PHP 8.1, PCRE2 10.39              0     0    12     9
+corpus/mautic/mautic                         PHP 8.1, PCRE2 10.39              0     0    62    51
+corpus/michelf/php-markdown                  PHP 8.1, PCRE2 10.39              0     0     8     2
+corpus/mihaeu/dephpend                       PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/minkphp/Mink                          PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/mmoreram/php-formatter                PHP 8.1, PCRE2 10.39              0     0    11     3
+corpus/mockery/mockery                       PHP 8.1, PCRE2 10.39              0     0     3     1
+corpus/modelcontextprotocol/php-sdk          PHP 8.1, PCRE2 10.39              0     0     5     0
+corpus/moodle/moodle                         PHP 8.3, PCRE2 10.42              1    11   365   193
+corpus/mpdf/mpdf                             PHP 8.1, PCRE2 10.39              0     0    67    59
+corpus/mustangostang/spyc                    PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/nbs-system/php-malware-finder         PHP 8.1, PCRE2 10.39              1     2     3     2
+corpus/nelmio/NelmioApiDocBundle             PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/nelmio/NelmioCorsBundle               PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/nelmio/alice                          PHP 8.2, PCRE2 10.40              1     2     3     2
+corpus/nette/application                     PHP 8.3, PCRE2 10.42              0     0     1     0
+corpus/nette/latte                           PHP 8.2, PCRE2 10.40              0     0     5     0
+corpus/nette/tester                          PHP 8.1, PCRE2 10.39              0     0     3     0
+corpus/nette/tracy                           PHP 8.2, PCRE2 10.40              0     0     5     0
+corpus/nette/utils                           PHP 8.2, PCRE2 10.40              0     0     4     0
+corpus/nextcloud/all-in-one                  PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/nextcloud/server                      PHP 8.3, PCRE2 10.42              0     0    16    11
+corpus/nikic/PHP-Parser                      PHP 8.1, PCRE2 10.39              0     0     3     1
+corpus/nikic/php-ast                         PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/nilportugues/php-backslasher          PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/nunomaduro/phpinsights                PHP 8.4, PCRE2 10.44              0     0     0     0
+corpus/nunomaduro/termwind                   PHP 8.2, PCRE2 10.40              0     0     1     0
+corpus/octobercms/october                    PHP 8.2, PCRE2 10.40              0     0    13     5
+corpus/openai-php/client                     PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/ovr/phpsa                             PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/owncloud/core                         PHP 8.3, PCRE2 10.42              0     0     7     5
+corpus/paratestphp/paratest                  PHP 8.4, PCRE2 10.44              0     0     0     3
+corpus/parsecsv/parsecsv-for-php             PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/pdepend/pdepend                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/pestphp/pest                          PHP 8.3, PCRE2 10.42              0     0     3     0
+corpus/phalcon/cphalcon                      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phan/phan                             PHP 8.1, PCRE2 10.39              0     0    26    10
+corpus/php-debugbar/php-debugbar             PHP 8.2, PCRE2 10.40              0     0     2     1
+corpus/php-parallel-lint/PHP-Parallel-Lint   PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phpDocumentor/Reflection              PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/phpDocumentor/ReflectionDocBlock      PHP 8.1, PCRE2 10.39              0     0     5     1
+corpus/phpactor/phpactor                     PHP 8.2, PCRE2 10.40              0     0     7     0
+corpus/phparkitect/arkitect                  PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phpbb/phpbb                           PHP 8.1, PCRE2 10.39              0     0    55    33
+corpus/phpmd/phpmd                           PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/phpmetrics/PhpMetrics                 PHP 8.1, PCRE2 10.39              0     0     2     1
+corpus/phpmyadmin/phpmyadmin                 PHP 8.2.99, PCRE2 10.40           0     0     7     5
+corpus/phpmyadmin/sql-parser                 PHP 8.2, PCRE2 10.40              0     0     1     0
+corpus/phpro/grumphp                         PHP 8.2, PCRE2 10.40              0     0     0     2
+corpus/phpseclib/phpseclib                   PHP 8.1, PCRE2 10.39              0     0     8     4
+corpus/phpspec/phpspec                       PHP 8.2, PCRE2 10.40              0     0     4     1
+corpus/phpspec/prophecy                      PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/phpstan/phpdoc-parser                 PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/phpstan/phpstan                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phpstan/phpstan-deprecation-rules     PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phpstan/phpstan-src                   PHP 8.2.99, PCRE2 10.40           0     0     5     3
+corpus/phpstan/phpstan-strict-rules          PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phpstan/phpstan-symfony               PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/phpunit/environment                   PHP 8.4.1, PCRE2 10.44            0     0     0     1
+corpus/phpunit/phpunit                       PHP 8.4.1, PCRE2 10.44            0     0     0     0
+corpus/pimcore/pimcore                       PHP 8.4, PCRE2 10.44              0     0    14     5
+corpus/povils/phpmnd                         PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/processwire/processwire               PHP 8.1, PCRE2 10.39              1     2    31    13
+corpus/protonemedia/laravel-splade           PHP 8.2, PCRE2 10.40              0     0     1     0
+corpus/psecio/parse                          PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/reactphp/http                         PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/reactphp/socket                       PHP 8.1, PCRE2 10.39              0     0     0     1
+corpus/rectorphp/rector                      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/rectorphp/rector-src                  PHP 8.4, PCRE2 10.44              0     0     6     6
+corpus/roundcube/roundcubemail               PHP 8.1, PCRE2 10.39              0     0    41    17
+corpus/rskuipers/php-assumptions             PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/s9e/TextFormatter                     PHP 8.1, PCRE2 10.39              0     0    21     6
+corpus/sabre-io/dav                          PHP 8.1, PCRE2 10.39              0     0     4     3
+corpus/sabre-io/vobject                      PHP 8.2, PCRE2 10.40              0     0     9     4
+corpus/salesagility/SuiteCRM                 PHP 8.1, PCRE2 10.39              1     1   153    82
+corpus/schmittjoh/JMSSerializerBundle        PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/schmittjoh/php-manipulator            PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/schmittjoh/serializer                 PHP 8.1, PCRE2 10.39              0     0     2     0
+corpus/scrivo/highlight.php                  PHP 8.1, PCRE2 10.39              0     0     4     3
+corpus/sebastianbergmann/phpcpd              PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/sebastianbergmann/phploc              PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/serbanghita/Mobile-Detect             PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/shipmonk-rnd/composer-dependency-analyser PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/shipmonk-rnd/coverage-guard           PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/shipmonk-rnd/dead-code-detector       PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/shipmonk-rnd/name-collision-detector  PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/shopware/shopware                     PHP 8.2, PCRE2 10.40              0     0    12     5
+corpus/silverstripe/silverstripe-framework   PHP 8.3, PCRE2 10.42              0     0    30    12
+corpus/simplepie/simplepie                   PHP 8.1, PCRE2 10.39              0     0     7     7
+corpus/slevomat/coding-standard              PHP 8.1, PCRE2 10.39              0     0     5     2
+corpus/slimphp/Slim                          PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/smalot/pdfparser                      PHP 8.1, PCRE2 10.39              0     0    33    24
+corpus/smarty-php/smarty                     PHP 8.1, PCRE2 10.39              0     0    18     5
+corpus/spipu/html2pdf                        PHP 8.1, PCRE2 10.39              0     0    78    54
+corpus/spiral/framework                      PHP 8.1, PCRE2 10.39              0     0     0     2
+corpus/squizlabs/PHP_CodeSniffer             PHP 8.1, PCRE2 10.39              0     0    10     3
+corpus/staabm/annotate-pull-request-from-checkstyle PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/staabm/phpstan-baseline-analysis      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/staabm/phpstan-dba                    PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/staabm/phpstan-todo-by                PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/staabm/side-effects-detector          PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/statamic/cms                          PHP 8.1, PCRE2 10.39              0     0    25    12
+corpus/stecman/symfony-console-completion    PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/sulu/sulu                             PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/symfony/ai                            PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/symfony/docs                          PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/symfony/flex                          PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/symfony/maker-bundle                  PHP 8.2, PCRE2 10.40              0     0     2     1
+corpus/symfony/mime                          PHP 8.4.1, PCRE2 10.44            0     0     2     3
+corpus/symfony/panther                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/symfony/polyfill                      PHP 8.1, PCRE2 10.39              0     0     9     4
+corpus/symfony/polyfill-mbstring             PHP 8.1, PCRE2 10.39              0     0     2     1
+corpus/symfony/recipes                       PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/symfony/symfony                       PHP 8.4.1, PCRE2 10.44            0     0    42    19
+corpus/symfony/ux                            PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/symfony/ux-live-component             PHP 8.4, PCRE2 10.44              0     0     0     0
+corpus/symfony/ux-turbo                      PHP 8.4, PCRE2 10.44              0     0     0     0
+corpus/tecnickcom/TCPDF                      PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/tempestphp/highlight                  PHP 8.4, PCRE2 10.44              0     0     4     0
+corpus/tempestphp/tempest-framework          PHP 8.5, PCRE2 10.44              0     0     8     0
+corpus/thephpleague/commonmark               PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/thephpleague/flysystem                PHP 8.1, PCRE2 10.39              0     0     2     1
+corpus/thephpleague/geotools                 PHP 8.1, PCRE2 10.39              0     0     6     4
+corpus/thephpleague/glide                    PHP 8.3, PCRE2 10.42              0     0     4     1
+corpus/theseer/phpdox                        PHP 8.1, PCRE2 10.39              0     0     2     2
+corpus/theseer/tokenizer                     PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/tighten/tlint                         PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/tijsverkoyen/CssToInlineStyles        PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/tomzx/php-semver-checker              PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/troelskn/phpweaver                    PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/tubalmartin/YUI-CSS-compressor-PHP-port PHP 8.1, PCRE2 10.39              0     0     3     2
+corpus/twigphp/Twig                          PHP 8.1, PCRE2 10.39              0     0     3     0
+corpus/twigstan/twigstan                     PHP 8.3, PCRE2 10.42              0     0     1     0
+corpus/vimeo/psalm                           PHP 8.1.31, PCRE2 10.39           0     0     4     5
+corpus/vinkius-labs/laravel-page-speed       PHP 8.2, PCRE2 10.40              0     0     1     1
+corpus/vlucas/phpdotenv                      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/voku/PHPDoctor                        PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/voku/anti-xss                         PHP 8.1, PCRE2 10.39              0     0    11     1
+corpus/voku/email-check                      PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/voku/portable-utf8                    PHP 8.1, PCRE2 10.39              0     0     8     3
+corpus/voku/simple_html_dom                  PHP 8.1, PCRE2 10.39              0     0     4     1
+corpus/voku/urlify                           PHP 8.1, PCRE2 10.39              0     0    20     6
+corpus/walkor/workerman                      PHP 8.1, PCRE2 10.39              0     0     3     0
+corpus/wapmorgan/PhpCodeAnalyzer             PHP 8.1, PCRE2 10.39              0     0     1     1
+corpus/wapmorgan/PhpDeprecationDetector      PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/wata727/pahout                        PHP 8.1, PCRE2 10.39              0     0     0     0
+corpus/webmozarts/assert                     PHP 8.2, PCRE2 10.40              0     0     0     0
+corpus/wikimedia/mediawiki                   PHP 8.3, PCRE2 10.42              1     3    37    11
+corpus/willdurand/Negotiation                PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/woocommerce/woocommerce               PHP 8.1, PCRE2 10.39              0     0    73    29
+corpus/wp-cli/wp-cli                         PHP 8.1, PCRE2 10.39              0     0    15     4
+corpus/yiisoft/yii                           PHP 8.1, PCRE2 10.39              0     0    57    22
+corpus/yiisoft/yii2                          PHP 8.1, PCRE2 10.39              0     0    25    11
+corpus/zbateson/mail-mime-parser             PHP 8.1, PCRE2 10.39              0     0     1     0
+corpus/zenstruck/foundry                     PHP 8.1, PCRE2 10.39              0     0     0     1
+corpus/zircote/swagger-php                   PHP 8.2, PCRE2 10.40              0     0     1     1
+Total: 314 repositories, 16 with errors, 38 FAIL, 2820 WARN, 1329 TIP, 23 fallback target, 129 floor clamped
