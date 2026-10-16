@@ -14,11 +14,11 @@ article says exactly what was run, where.
 <ul class="article-list">
   {% for article in articles %}
   <li class="article-entry">
-    <time class="article-entry-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
-    <div class="article-entry-body">
+    <div class="article-entry-head">
       <a class="article-entry-title" href="{{ article.url }}">{{ article.title }}</a>
-      <p class="article-entry-desc">{{ article.description }}</p>
+      <time class="article-entry-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
     </div>
+    <p class="article-entry-desc">{{ article.description }}</p>
   </li>
   {% endfor %}
 </ul>

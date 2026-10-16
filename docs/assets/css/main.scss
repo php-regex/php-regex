@@ -1313,71 +1313,88 @@ main table::-webkit-scrollbar-thumb {
 }
 
 /* ---- Article index -------------------------------------------------------
- * The blog's one list. An index page, not a card grid: one hairline per
- * entry, the date in a column of its own so a scan reads the timeline,
- * the title in ink and the promise in the soft ink beneath. The entry is
- * the target, so the entry answers — the title takes the underline the
- * site's links speak, and its color goes to the amber on hover. Below
- * 640px the date column folds into a kicker, the register the article
- * byline already uses.
+ * The blog's one list. Full-width entries: the title carries the line,
+ * the date sits on its baseline at the far end, and the promise runs in
+ * the soft ink beneath — nothing reserves a column it only occupies
+ * once. A hairline separates entries, never frames them. The entry is
+ * the target, so the entry answers: the amber wash the site reserves
+ * for its panels lights the row, the title takes the underline the
+ * site's links speak, and the arrow the index cards use slides in.
    -------------------------------------------------------------------------- */
 
 .article-list {
-  margin: 2.5rem 0 0;
+  margin: 2rem 0 0;
   padding: 0;
   list-style: none;
 }
 
 .article-entry {
-  display: grid;
-  grid-template-columns: 10.5rem 1fr;
-  column-gap: 2rem;
-  padding: 1.5rem 0;
+  padding: 1.25rem .75rem;
+}
+
+.article-entry + .article-entry {
   border-top: 1px solid var(--line);
 }
 
-.article-entry:last-child {
-  border-bottom: 1px solid var(--line);
-}
-
-.article-entry-date {
-  margin: .15rem 0 0;
-  font-size: .88rem;
-  color: var(--ink-soft);
-  font-variant-numeric: tabular-nums;
+.article-entry-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .article-entry-title {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   line-height: 1.3;
   text-decoration: none;
 }
 
+.article-entry-title::after {
+  content: '→';
+  margin-left: .45rem;
+  color: var(--amber);
+  opacity: 0;
+  text-decoration: none;
+  transition: opacity .15s ease;
+}
+
+.article-entry:hover {
+  background: var(--amber-tint);
+}
+
 .article-entry:hover .article-entry-title,
-.article-entry-title:hover,
 .article-entry-title:focus-visible {
   text-decoration: underline;
   text-decoration-color: var(--amber);
 }
 
+.article-entry:hover .article-entry-title::after {
+  opacity: 1;
+}
+
+.article-entry-date {
+  flex-shrink: 0;
+  font-size: .88rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .article-entry-desc {
-  max-width: 62ch;
-  margin: .35rem 0 0;
+  max-width: 70ch;
+  margin: .4rem 0 0;
   color: var(--ink-soft);
   font-size: .92rem;
   line-height: 1.5;
 }
 
 @media (max-width: 639px) {
-  .article-entry {
-    grid-template-columns: 1fr;
-    row-gap: .25rem;
-  }
-
-  .article-entry-date {
-    margin: 0;
+  .article-entry-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .15rem;
   }
 }
 
