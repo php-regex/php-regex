@@ -212,10 +212,14 @@ cache are merged. Follow-ups:
 ## Extraction coverage: after the merge
 
 Merged into 2.x. Left:
-- measure `bin/regex lint corpus/` again (xdebug off, `--jobs=1`) now that
-  the optimizer's memory bound is in: before it, the wider extraction cost
-  +22 % wall-clock and +49 % peak memory against 2.x, the memory being the
-  URL pattern the bound now handles;
+- measured on the merged 2.x (`bin/regex lint corpus/ --jobs=1`, xdebug
+  off): 459 s wall-clock, 271 s user, 1.33 GB peak, 6,545 results, against
+  353 s / 186 s / 1.99 GB / 5,602 for 2.x before the merges. Peak memory is
+  down a third; CPU is up about half, the cost of analysing the ~4,600
+  distinct patterns now read. 21 optimization suggestions fewer than the
+  extraction branch alone (4,054 against 4,075): rewrites the bounded
+  check no longer proves, so no longer offered. Worth a look: which
+  patterns, and whether a larger budget for short patterns would keep them;
 - the limits written down in `docs/guides/cli.md` (writes made outside the
   file, by Reflection or `Closure::bind()`, are not seen; a `do` without
   braces around a control structure is unknown to the token strategy only).
