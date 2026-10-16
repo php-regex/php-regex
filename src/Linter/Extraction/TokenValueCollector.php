@@ -1045,14 +1045,17 @@ final class TokenValueCollector
      * The last token of the loop whose keyword is at $index, as php-parser
      * ends the statement: the brace closing its body, the ";" after its
      * endfor, endforeach or endwhile, the ";" of a single statement, or,
-     * for do, the ";" after its condition. Null for a body that is itself
-     * a control structure, or a loop the file leaves open.
+     * for do, the ";" after its condition, whatever statement its body is.
+     * Null for another loop whose body is itself a control structure, as
+     * the php-parser strategy reads it, or a loop the file leaves open.
      */
     private function loopEnd(int $index): ?int
     {
         $open = $this->next($index + 1);
         if ($this->is($index, \T_DO)) {
-            $bodyEnd = null === $open ? null : $this->bodyEnd($open);
+            // "do if (...) ...; while (...);": the while closing the do
+            // comes after the whole statement its body is.
+            $bodyEnd = null === $open ? null : $this->wholeStatementEnd($open);
             $while = null === $bodyEnd ? null : $this->next($bodyEnd + 1);
             $condition = null !== $while && $this->is($while, \T_WHILE) ? $this->next($while + 1) : null;
             $conditionEnd = null === $condition ? null : $this->closers[$condition] ?? null;
@@ -1088,6 +1091,147 @@ final class TokenValueCollector
         $end = $this->statementEnd($body, \count($this->tokens));
 
         return isset($this->tokens[$end]) ? $end : null;
+    }
+
+    /**
+     * The last token of the statement that starts at $index, a control
+     * structure read to its end: a block's closing brace, the ";" of a
+     * single statement, an if with its elseif and else branches, a loop or
+     * a switch with its body, a try with its catch and finally blocks, the
+     * ";" after an endif, endfor, endforeach, endwhile, endswitch or
+     * enddeclare. Null for a statement the file leaves open.
+     */
+    private function wholeStatementEnd(int $index): ?int
+    {
+        if ('{' === $this->tokens[$index]) {
+            return $this->closers[$index] ?? null;
+        }
+
+        if ($this->is($index, \T_IF)) {
+            return $this->ifEnd($index);
+        }
+
+        if ($this->is($index, \T_TRY)) {
+            return $this->tryEnd($index);
+        }
+
+        if ($this->is($index, \T_DO)) {
+            return $this->loopEnd($index);
+        }
+
+        if (!$this->is($index, \T_FOR, \T_FOREACH, \T_WHILE, \T_SWITCH, \T_DECLARE)) {
+            $end = $this->statementEnd($index, \count($this->tokens));
+
+            return isset($this->tokens[$end]) ? $end : null;
+        }
+
+        $body = $this->afterCondition($index);
+        if (null === $body) {
+            return null;
+        }
+
+        if (':' === $this->tokens[$body]) {
+            return $this->is($index, \T_SWITCH, \T_DECLARE)
+                ? $this->alternativeBlockEnd($body, $this->is($index, \T_SWITCH) ? \T_SWITCH : \T_DECLARE, $this->is($index, \T_SWITCH) ? \T_ENDSWITCH : \T_ENDDECLARE)
+                : $this->alternativeEnd($index, $body);
+        }
+
+        return $this->wholeStatementEnd($body);
+    }
+
+    /**
+     * The first token after the parenthesised condition of the keyword at
+     * $index, or null.
+     */
+    private function afterCondition(int $index): ?int
+    {
+        $open = $this->next($index + 1);
+        $close = null !== $open && '(' === $this->tokens[$open] ? $this->closers[$open] ?? null : null;
+
+        return null === $close ? null : $this->next($close + 1);
+    }
+
+    /**
+     * The last token of the if at $index: its last branch, elseif and else
+     * included, or the ";" after its endif.
+     */
+    private function ifEnd(int $index): ?int
+    {
+        for ($at = $index; ;) {
+            $body = $this->afterCondition($at);
+            if (null === $body) {
+                return null;
+            }
+
+            if (':' === $this->tokens[$body]) {
+                return $this->alternativeBlockEnd($body, \T_IF, \T_ENDIF);
+            }
+
+            $end = $this->wholeStatementEnd($body);
+            $after = null === $end ? null : $this->next($end + 1);
+            if (null !== $after && $this->is($after, \T_ELSEIF)) {
+                $at = $after;
+
+                continue;
+            }
+
+            if (null !== $after && $this->is($after, \T_ELSE)) {
+                $else = $this->next($after + 1);
+
+                return null === $else ? null : $this->wholeStatementEnd($else);
+            }
+
+            return $end;
+        }
+    }
+
+    /**
+     * The brace closing the last block of the try at $index: its catch and
+     * finally blocks included.
+     */
+    private function tryEnd(int $index): ?int
+    {
+        $block = $this->next($index + 1);
+        while (null !== $block && '{' === $this->tokens[$block]) {
+            $end = $this->closers[$block] ?? null;
+            $after = null === $end ? null : $this->next($end + 1);
+            if (null === $after || !$this->is($after, \T_CATCH, \T_FINALLY)) {
+                return $end;
+            }
+
+            $block = $this->is($after, \T_CATCH) ? $this->afterCondition($after) : $this->next($after + 1);
+        }
+
+        return null;
+    }
+
+    /**
+     * The ";" after the $closing keyword (endif, endswitch, enddeclare) that
+     * ends the block opened by the ":" at $colon; a block of the same
+     * $keyword opened inside it, with its own ":", is stepped over.
+     */
+    private function alternativeBlockEnd(int $colon, int $keyword, int $closing): ?int
+    {
+        $depth = 0;
+        for ($i = $colon + 1, $count = \count($this->tokens); $i < $count; $i++) {
+            if ($this->is($i, $closing)) {
+                if (0 === $depth) {
+                    return $this->next($i + 1) ?? $i;
+                }
+
+                $depth--;
+            } elseif ($this->is($i, $keyword)) {
+                $body = $this->afterCondition($i);
+                if (null !== $body && ':' === $this->tokens[$body]) {
+                    $depth++;
+                    $i = $body;
+                }
+            } elseif ($this->opensNesting($this->tokens[$i])) {
+                $i = $this->closers[$i] ?? $count;
+            }
+        }
+
+        return null;
     }
 
     /**

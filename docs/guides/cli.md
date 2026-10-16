@@ -554,7 +554,9 @@ final class Slug
   receive. An assignment written after the variable's last read as a pattern
   never reaches it, unless a loop (`for`, `foreach`, `while`, `do`) holds
   both or the body has a `goto`: `$type = 'int'` after `preg_match($type,
-  ...)` is not read. The variable is
+  ...)` is not read. A `for`, `foreach` or `while` whose body is a control
+  structure without braces counts as holding the whole function body; a `do`
+  ends at its `while`, whatever its body is. The variable is
   not read when it may hold anything else: a parameter, a reference (`=&`),
   a compound assignment (`.=`, `??=`), `global`, `static`, a destructuring,
   a `foreach` or `catch` target, `unset()`, `++` or `--`, a `yield` in a

@@ -167,13 +167,6 @@ cache are merged. Follow-ups:
   the strings both sides match no longer prove one. Keep it or drop it
   before the tag.
 
-## Extraction coverage: after the merge
-
-Merged into 2.x. Left:
-- the limits written down in `docs/guides/cli.md` (writes made outside the
-  file, by Reflection or `Closure::bind()`, are not seen; a `do` without
-  braces around a control structure is unknown to the token strategy only).
-
 ## PHP 8.1 floor: after the merge
 
 Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,
