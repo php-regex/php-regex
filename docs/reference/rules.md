@@ -1511,7 +1511,9 @@ for the recursive `(?R)` calls some fixes keep working.
 
 ### Target Engine
 
-- **PCRE2** via PHP's `preg_*` functions
+- **PCRE2** via PHP's `preg_*` functions, judged for PHP 7.3 and later, the
+  PHP versions on PCRE2; PHP 7.2 and earlier ship PCRE1, which the lint
+  refuses to judge
 
 ### Known Differences from PCRE1
 

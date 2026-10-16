@@ -171,26 +171,52 @@ final class ProjectTargetTest extends TestCase
         yield 'patch-level floor kept' => ['^8.3.2', 80302];
     }
 
+    /**
+     * A floor below 8.1 is judged for itself with the PCRE2 it bundles, and
+     * the range walks the PHP versions that bundle a newer one; the releases
+     * older than 10.39 are named once, judged with the 10.39 rules.
+     *
+     * @param list<array{php: string, pcre: string}> $range
+     */
     #[Test]
-    #[DataProvider('provideClampedConstraints')]
-    public function test_resolve_clamps_a_floor_below_8_1(string $constraint): void
+    #[DataProvider('provideOldFloors')]
+    public function test_resolve_judges_a_floor_below_8_1_for_itself(string $constraint, int $phpVersionId, string $pcre, array $range, string $notice): void
     {
         $directory = $this->makeProject(['composer.json' => self::composer($constraint)]);
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertTarget(80100, '10.39', $resolved);
-        $this->assertNotSame([], $resolved->notices());
-        $this->assertStringContainsString('8.1', implode("\n", $resolved->notices()));
+        $this->assertTarget($phpVersionId, $pcre, $resolved);
+        $this->assertSame([$notice], $resolved->notices());
+        $this->assertSame($range, \array_slice($resolved->toArray()['range'], 0, \count($range)));
     }
 
     /**
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{constraint: string, phpVersionId: int, pcre: string, range: list<array{php: string, pcre: string}>, notice: string}>
      */
-    public static function provideClampedConstraints(): iterable
+    public static function provideOldFloors(): iterable
     {
-        yield 'OR of old majors' => ['^7.4 || ^8.0'];
-        yield 'range starting at 8.0' => ['>=8.0,<8.4'];
+        yield 'OR of old majors' => [
+            'constraint' => '^7.4 || ^8.0',
+            'phpVersionId' => 70400,
+            'pcre' => '10.33',
+            'range' => [['php' => '7.4', 'pcre' => '10.33'], ['php' => '8.0', 'pcre' => '10.35'], ['php' => '8.1', 'pcre' => '10.39'], ['php' => '8.2', 'pcre' => '10.40']],
+            'notice' => 'PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
+        ];
+        yield 'range starting at 8.0' => [
+            'constraint' => '>=8.0,<8.4',
+            'phpVersionId' => 80000,
+            'pcre' => '10.35',
+            'range' => [['php' => '8.0', 'pcre' => '10.35'], ['php' => '8.1', 'pcre' => '10.39'], ['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42']],
+            'notice' => 'PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
+        ];
+        yield 'the first PHP on PCRE2' => [
+            'constraint' => '>=7.3',
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'range' => [['php' => '7.3', 'pcre' => '10.32'], ['php' => '7.4', 'pcre' => '10.33'], ['php' => '8.0', 'pcre' => '10.35'], ['php' => '8.1', 'pcre' => '10.39']],
+            'notice' => 'PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
+        ];
     }
 
     #[Test]

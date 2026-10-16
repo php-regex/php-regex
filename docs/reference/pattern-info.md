@@ -207,8 +207,8 @@ version, then by PCRE2 release. Each carries its `PcreTarget` and the
 `ValidationResult` the validator gave there, with its error code and offset.
 `invalidVerdicts()` keeps the ones that refuse the pattern, in the same order.
 
-Today the matrix is 70 points: PHP 8.1, 8.2, 8.3, 8.4, 8.4.25, 8.5 and
-8.5.10, each with PCRE2 10.39 to 10.48. Every PHP is paired with every release,
+Today the matrix is 100 points: PHP 7.3, 7.4, 8.0, 8.1, 8.2, 8.3, 8.4,
+8.4.25, 8.5 and 8.5.10, each with PCRE2 10.39 to 10.48. Every PHP is paired with every release,
 because PHP may be built against the PCRE2 of the system instead of the one it
 bundles. A newer PCRE2, such as 10.49, is judged with the rules of the newest
 release the library knows.
@@ -216,7 +216,7 @@ release the library knows.
 **The matrix widens.** Each PHP version or PCRE2 release whose rules the
 library learns adds points, so a minor release may change the number of
 verdicts, and `isValidEverywhere()` may turn false for a pattern a new point
-refuses. Do not count on 54.
+refuses. Do not count on 100.
 
 **Validity is not monotone.** `\K` in a lookaround is valid up to PHP 8.4 and
 refused from PHP 8.5, which compiles without

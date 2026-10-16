@@ -365,8 +365,9 @@ other:
 
 ## The PHP version judged
 
-Patterns are judged for the PHP version Psalm analyses for, 8.1 at least,
-with the PCRE2 release that version bundles: 10.39 for 8.1, 10.40 for 8.2,
+Patterns are judged for the PHP version Psalm analyses for, 7.3 at least,
+with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.4,
+10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2,
 10.42 for 8.3, 10.44 for 8.4 and 8.5. Two options of the plugin override it:
 
 ```xml

@@ -73,7 +73,7 @@ final class CorpusLintScriptTest extends TestCase
             $output.$log,
         );
         $this->assertSame(
-            '### corpus/ownerB/repoOld — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1',
+            '### corpus/ownerB/repoOld — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 1',
             $this->line($log, '### corpus/ownerB/repoOld'),
             $log,
         );
@@ -83,14 +83,14 @@ final class CorpusLintScriptTest extends TestCase
             $log,
         );
 
-        // The clamped floor of repoOld is announced inside its own section.
+        // The old floor of repoOld is announced inside its own section.
         $this->assertSame(
             1,
             substr_count($log, 'Note: '),
             $log,
         );
         $this->assertStringContainsString(
-            'composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports',
+            'PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules',
             $this->line($log, 'Note: '),
             $log,
         );
@@ -130,7 +130,7 @@ final class CorpusLintScriptTest extends TestCase
         // own target — with no tag and no findings detail: the merged log
         // and the summary carry those.
         $this->assertSame('[1/4] ownerA/repoNew  PHP 8.2, PCRE2 10.40', $lines[0]);
-        $this->assertStringContainsString('[2/4] ownerB/repoOld  PHP 8.1, PCRE2 10.39', $output);
+        $this->assertStringContainsString('[2/4] ownerB/repoOld  PHP 7.4, PCRE2 10.33', $output);
         $this->assertStringContainsString('[3/4] ownerC/repoBare  PHP 8.1, PCRE2 10.39', $output);
         $this->assertStringContainsString('[4/4] ownerD/repoClean  PHP 8.1, PCRE2 10.39', $output);
 

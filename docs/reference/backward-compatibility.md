@@ -341,7 +341,7 @@ The library runs wherever PHP 8.1 runs, whatever PCRE2 that build links. The
 behaviours below exist only from the release named: the library reads them for
 a target that has the release, and the test suite verifies each row against a
 real engine that does. Ubuntu 24.04 links PCRE2 10.42 into its PHP packages,
-and PHP bundles 10.39 (8.1), 10.40 (8.2), 10.42 (8.3) and 10.44 (8.4 through 8.6), so a
+and PHP bundles 10.32 (7.3), 10.33 (7.4.0), 10.35 (8.0), 10.39 (8.1.1), 10.40 (8.2), 10.42 (8.3) and 10.44 (8.4 through 8.6), so a
 pattern that uses one of these behaviours does not compile on such an engine.
 A row names the `PcreFeature` case that owns it where there is one; the
 [PCRE page](../concepts/pcre.md#what-changed-in-which-release) carries the

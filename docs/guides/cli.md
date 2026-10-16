@@ -1056,17 +1056,20 @@ the command and the PCRE2 it links, as PHPStan's `phpVersion` does: a project
 that lints for its floor can still ask what the engine at hand says.
 
 Each version is chosen on its own. Without a PCRE2 release, the command uses
-the one the target PHP bundles (10.39 for PHP 8.1, 10.40 for 8.2, 10.42 for
+the one the target PHP bundles (10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for
+8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for
 8.3, 10.44 for 8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
 PHP.
 
 The lowest PHP is the one that matters because a library, or an application
 deployed on several servers, runs on every version its constraint allows: a
-pattern that only compiles on a newer PCRE2 fails on the oldest one. A floor
-below PHP 8.1 is judged as PHP 8.1, the oldest this library judges, and the
-command says so; so is a version below it named with `--php-version` or
-`phpVersion`, with a note such as `--php-version names PHP 7.4, older than the
-PHP 8.1 this library supports: judging for PHP 8.1.`
+pattern that only compiles on a newer PCRE2 fails on the oldest one. PHP 7.3
+is the oldest PHP the command judges, the first on PCRE2. A PCRE2 release
+older than 10.39, the oldest whose rules the library knows in full, is judged
+with the 10.39 rules but for the few older changes it names, and the command
+says so with a note such as `PCRE2 10.33 is judged with the PCRE2 10.39
+rules, the oldest this library knows in full.` (see
+[PHP 7.3 to 8.0, and PCRE1](../concepts/pcre.md#php-73-to-80-and-pcre1)).
 
 PHP 7.2 and earlier are refused instead, wherever the version comes from:
 they ship PCRE1, another engine than PCRE2, and no verdict of this library

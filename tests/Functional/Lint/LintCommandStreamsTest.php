@@ -44,7 +44,7 @@ final class LintCommandStreamsTest extends TestCase
 
     private const COMPOSER = '{"name": "acme/app", "require": {"php": "^8.3"}}';
 
-    private const COMPOSER_BELOW_THE_FLOOR = '{"name": "acme/app", "require": {"php": "^7.4"}}';
+    private const COMPOSER_ON_AN_OLD_PCRE2 = '{"name": "acme/app", "require": {"php": "^7.4"}}';
 
     /**
      * Two patterns in one file: the file is read in this process (one file,
@@ -391,19 +391,19 @@ final class LintCommandStreamsTest extends TestCase
     }
 
     #[Test]
-    public function test_lint_prints_the_clamped_floor_and_its_notice_in_the_banner_for_the_console_format(): void
+    public function test_lint_prints_an_old_floor_and_its_notice_in_the_banner_for_the_console_format(): void
     {
-        $this->enterProject(['composer.json' => self::COMPOSER_BELOW_THE_FLOOR, 'src/a.php' => self::PHP_FILE]);
+        $this->enterProject(['composer.json' => self::COMPOSER_ON_AN_OLD_PCRE2, 'src/a.php' => self::PHP_FILE]);
 
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos']);
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString(
-            "\n".self::bannerRow('Target', 'PHP 8.1, PCRE2 10.39 (composer.json require.php)'),
+            "\n".self::bannerRow('Target', 'PHP 7.4, PCRE2 10.33 (composer.json require.php)'),
             $stdout,
         );
         $this->assertStringContainsString(
-            'Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.',
+            'Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
             $stdout,
         );
         $this->assertStringNotContainsString('Note:', $stderr);
@@ -411,12 +411,12 @@ final class LintCommandStreamsTest extends TestCase
 
     /**
      * "(?*" arrived in PCRE2 10.35: PHP 7.3, on 10.32, refuses "/(?*a)b/"
-     * ("unrecognized character after (? or (?-", php:7.3-cli). Judged for
-     * an older PHP than the library knows, the run says which PHP it
-     * judged for instead, never a silent pass for 7.3.
+     * ("unrecognized character after (? or (?-", php:7.3-cli). The library
+     * does not know that change yet: the run says 10.32 is judged with the
+     * 10.39 rules, never a silent pass for 7.3.
      */
     #[Test]
-    public function test_lint_prints_the_clamped_flag_and_its_notice_in_the_banner_for_the_console_format(): void
+    public function test_lint_prints_an_old_flag_and_its_notice_in_the_banner_for_the_console_format(): void
     {
         $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?*a)b/', \$s);\n"]);
 
@@ -424,28 +424,28 @@ final class LintCommandStreamsTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $this->assertStringContainsString(
-            "\n".self::bannerRow('Target', 'PHP 8.1, PCRE2 10.39 (--php-version)'),
+            "\n".self::bannerRow('Target', 'PHP 7.3, PCRE2 10.32 (--php-version)'),
             $stdout,
         );
         $this->assertStringContainsString(
-            'Note: --php-version names PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.',
+            'Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
             $stdout,
         );
         $this->assertStringNotContainsString('Note:', $stderr);
     }
 
     #[Test]
-    public function test_lint_prints_the_clamped_flag_notice_on_stderr_for_the_json_format(): void
+    public function test_lint_prints_an_old_flag_notice_on_stderr_for_the_json_format(): void
     {
         $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?*a)b/', \$s);\n"]);
 
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos'], phpVersion: '7.3');
 
         $this->assertSame(0, $exitCode);
-        $this->assertStringContainsString('Note: --php-version names PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.', $stderr);
+        $this->assertStringContainsString('Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.', $stderr);
         $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
         $this->assertIsArray($document);
-        $this->assertSame(['php' => '8.1', 'pcre' => '10.39', 'source' => '--php-version', 'range' => [['php' => '8.1', 'pcre' => '10.39']]], $document['target'] ?? null);
+        $this->assertSame(['php' => '7.3', 'pcre' => '10.32', 'source' => '--php-version', 'range' => [['php' => '7.3', 'pcre' => '10.32']]], $document['target'] ?? null);
     }
 
     #[Test]

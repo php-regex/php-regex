@@ -56,11 +56,42 @@ final class PcreTargetTest extends TestCase
         yield 'PHP 8.6' => ['phpVersionId' => 80600, 'release' => '10.44'];
         yield 'PHP 8.6 RC' => ['phpVersionId' => 80603, 'release' => '10.44'];
         // PHP 8.1.1 to 8.1.34 bundle 10.39; 8.1.0 bundled 10.37, judged as
-        // 10.39. Older PHP versions are judged with the oldest rules the
-        // library knows.
+        // 10.39.
         yield 'PHP 8.1' => ['phpVersionId' => 80100, 'release' => '10.39'];
         yield 'PHP 8.1 patch' => ['phpVersionId' => 80134, 'release' => '10.39'];
-        yield 'PHP 7.4' => ['phpVersionId' => 70400, 'release' => '10.39'];
+        // The release each series bundled at x.y.0, read from pcre2.h at the
+        // php-src tags: the whole 7.3 series kept 10.32 and 8.0 kept 10.35;
+        // 7.4.6 moved to 10.34 and 7.4.12 to 10.35, judged as 7.4.0's 10.33.
+        yield 'PHP 8.0' => ['phpVersionId' => 80000, 'release' => '10.35'];
+        yield 'PHP 8.0 patch' => ['phpVersionId' => 80030, 'release' => '10.35'];
+        yield 'PHP 7.4' => ['phpVersionId' => 70400, 'release' => '10.33'];
+        yield 'PHP 7.4 patch' => ['phpVersionId' => 70433, 'release' => '10.33'];
+        yield 'PHP 7.3' => ['phpVersionId' => 70300, 'release' => '10.32'];
+        yield 'PHP 7.3 patch' => ['phpVersionId' => 70333, 'release' => '10.32'];
+    }
+
+    /**
+     * The library knows the rules of PCRE2 10.39 and later in full: an
+     * older release is judged with the 10.39 rules but for the few older
+     * changes the library names.
+     */
+    #[Test]
+    #[DataProvider('provideJudgedReleases')]
+    public function test_a_release_older_than_the_library_knows_in_full_is_judged_with_the_oldest_it_does(string $release, string $judgedWith): void
+    {
+        $this->assertSame($judgedWith, (new PcreTarget(70300, $release))->judgedWith());
+    }
+
+    /**
+     * @return iterable<string, array{release: string, judgedWith: string}>
+     */
+    public static function provideJudgedReleases(): iterable
+    {
+        yield 'PHP 7.3\'s' => ['release' => '10.32', 'judgedWith' => '10.39'];
+        yield 'PHP 8.1.0\'s' => ['release' => '10.37', 'judgedWith' => '10.39'];
+        yield 'the oldest known in full' => ['release' => '10.39', 'judgedWith' => '10.39'];
+        yield 'a newer one' => ['release' => '10.44', 'judgedWith' => '10.44'];
+        yield 'one newer than any rule' => ['release' => '10.49', 'judgedWith' => '10.49'];
     }
 
     #[Test]
@@ -167,9 +198,10 @@ final class PcreTargetTest extends TestCase
     #[Test]
     public function test_php_version_boundaries_list_every_version_a_verdict_may_change_at(): void
     {
-        // The floor, the PHP versions that bundle a newer PCRE2 (8.3, 8.4),
-        // and the ones where a rule starts: \C under u refused from 8.4.25
-        // and 8.5.10, \K in a lookaround refused from 8.5.
-        $this->assertSame([80100, 80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
+        // The floor, 7.3, the first PHP on PCRE2; the PHP versions that
+        // bundle a newer PCRE2 (7.4, 8.0, 8.1, 8.2, 8.3, 8.4); and the ones
+        // where a rule starts: \C under u refused from 8.4.25 and 8.5.10, \K
+        // in a lookaround refused from 8.5.
+        $this->assertSame([70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
     }
 }

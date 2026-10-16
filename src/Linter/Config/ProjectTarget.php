@@ -16,7 +16,6 @@ namespace PHPRegex\Linter\Config;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
@@ -40,9 +39,11 @@ use PHPRegex\Parser\RegexParser;
  * or the release named at every point. Every other source names one
  * version, and the range is that version.
  *
- * A PHP older than the oldest the library judges, from any source, is
- * judged as that oldest one, and a notice says so. A PHP that ships PCRE1,
- * 7.2 and earlier, is refused: no verdict of the library holds for it.
+ * A PCRE2 release older than 10.39, the oldest whose rules the library
+ * knows in full, is judged with the 10.39 rules but for the few older
+ * changes it names, and a notice says so. A PHP that ships PCRE1, 7.2 and
+ * earlier, is refused, from any source: no verdict of the library holds
+ * for it.
  *
  * Reading composer.json never fails: what cannot be read becomes a notice
  * and the running PHP is used.
@@ -127,9 +128,7 @@ final class ProjectTarget
                 break;
             }
 
-            // A version named below the floor is judged as the floor, as a
-            // composer.json floor is, and the notice says so.
-            [$phpVersionId, $phpSource] = [self::clamp(self::phpVersionId($version), $name.' names', $notices), (string) $name];
+            [$phpVersionId, $phpSource] = [self::onPcre2(self::phpVersionId($version), $name.' names'), (string) $name];
 
             break;
         }
@@ -158,8 +157,28 @@ final class ProjectTarget
 
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
         $target = new PcreTarget($phpVersionId, $pcreVersion);
+        $range = self::rangeFor($target, $constraint, $pinnedPcre);
 
-        return new self($target, $source, $notices, self::rangeFor($target, $constraint, $pinnedPcre));
+        // A release older than the library knows in full is judged with
+        // the rules of the oldest it does: said once for the whole range.
+        $older = [];
+        foreach ($range as $point) {
+            if ($point->judgedWith() !== $point->pcreVersion) {
+                $older[$point->pcreVersion] = $point->judgedWith();
+            }
+        }
+        if ([] !== $older) {
+            $releases = array_keys($older);
+            $last = array_pop($releases);
+            $notices[] = \sprintf(
+                'PCRE2 %s %s judged with the PCRE2 %s rules, the oldest this library knows in full.',
+                [] === $releases ? $last : implode(', ', $releases).' and '.$last,
+                [] === $releases ? 'is' : 'are',
+                $older[$last],
+            );
+        }
+
+        return new self($target, $source, $notices, $range);
     }
 
     public function target(): PcreTarget
@@ -353,7 +372,7 @@ final class ProjectTarget
         if (\is_string($platform)) {
             $floor = self::floor($platform);
             if (null !== $floor && !str_contains($platform, ' ') && !str_contains($platform, '|')) {
-                return [self::clamp($floor, $name.' config.platform.php allows', $notices), $name.' config.platform.php', null];
+                return [self::onPcre2($floor, $name.' config.platform.php allows'), $name.' config.platform.php', null];
             }
             $notices[] = \sprintf('%s config.platform.php "%s" is not a version: reading require.php instead.', $name, $platform);
         }
@@ -372,7 +391,7 @@ final class ProjectTarget
             return null;
         }
 
-        return [self::clamp($floor, $name.' require.php allows', $notices), $name.' require.php', $constraint];
+        return [self::onPcre2($floor, $name.' require.php allows'), $name.' require.php', $constraint];
     }
 
     /**
@@ -394,42 +413,27 @@ final class ProjectTarget
     }
 
     /**
-     * The lowest PHP the library judges when $floor is older, with a
-     * notice that names the substitution.
+     * The PHP version, once it is one on PCRE2.
      *
-     * @param string       $from    what named $floor, and how: "--php-version names", "composer.json require.php allows"
-     * @param list<string> $notices
+     * @param string $from what named it, and how: "--php-version names", "composer.json require.php allows"
      *
-     * @throws UnsupportedTargetException when $floor ships PCRE1
+     * @throws UnsupportedTargetException when it ships PCRE1
      */
-    private static function clamp(int $floor, string $from, array &$notices): int
+    private static function onPcre2(int $phpVersionId, string $from): int
     {
         // PCRE1 is another engine, not an older PCRE2: judging it as the
         // oldest PCRE2 would be a verdict about an engine it does not run.
-        if ($floor < PhpVersionGates::PCRE2) {
+        // The oldest PHP the library judges is the first on PCRE2, 7.3.
+        if ($phpVersionId < PcreTarget::phpVersionBoundaries()[0]) {
             throw new UnsupportedTargetException(\sprintf(
                 '%s PHP %d.%d: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
                 $from,
-                intdiv($floor, 10000),
-                intdiv($floor, 100) % 100,
+                intdiv($phpVersionId, 10000),
+                intdiv($phpVersionId, 100) % 100,
             ));
         }
 
-        // The oldest PHP the library judges; a lower floor is judged as this.
-        $lowest = PcreTarget::phpVersionBoundaries()[0];
-        if ($floor >= $lowest) {
-            return $floor;
-        }
-
-        $notices[] = \sprintf(
-            '%s PHP %d.%d, older than the PHP %4$s this library supports: judging for PHP %4$s.',
-            $from,
-            intdiv($floor, 10000),
-            intdiv($floor, 100) % 100,
-            self::phpLabel($lowest),
-        );
-
-        return $lowest;
+        return $phpVersionId;
     }
 
     /**

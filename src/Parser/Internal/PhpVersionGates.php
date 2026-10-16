@@ -26,16 +26,33 @@ namespace PHPRegex\Parser\Internal;
 final class PhpVersionGates
 {
     /**
-     * The oldest PHP the library judges. PHP 8.1.1 and later bundle PCRE2
-     * 10.39; 8.1.0 bundled 10.37, judged as 10.39.
-     */
-    public const FLOOR = 80100;
-
-    /**
      * PHP 7.3 is the first PHP on PCRE2 (10.32): 7.2 and earlier link
      * PCRE1, another engine, which the library does not judge.
      */
     public const PCRE2 = 70300;
+
+    /**
+     * The oldest PHP the library judges: the first on PCRE2. The whole 7.3
+     * series bundles PCRE2 10.32.
+     */
+    public const FLOOR = self::PCRE2;
+
+    /**
+     * PHP 7.4 bundles PCRE2 10.33 from 7.4.0, 10.34 from 7.4.6 and 10.35
+     * from 7.4.12: a series is judged with the release of its x.y.0.
+     */
+    public const BUNDLES_PCRE2_10_33 = 70400;
+
+    /**
+     * PHP 8.0 bundles PCRE2 10.35.
+     */
+    public const BUNDLES_PCRE2_10_35 = 80000;
+
+    /**
+     * PHP 8.1.1 and later bundle PCRE2 10.39; 8.1.0 bundled 10.37, judged
+     * as 10.39.
+     */
+    public const BUNDLES_PCRE2_10_39 = 80100;
 
     /**
      * PHP 8.2 bundles PCRE2 10.40.
@@ -99,6 +116,9 @@ final class PhpVersionGates
      */
     public const POINTS = [
         self::FLOOR,
+        self::BUNDLES_PCRE2_10_33,
+        self::BUNDLES_PCRE2_10_35,
+        self::BUNDLES_PCRE2_10_39,
         self::BUNDLES_PCRE2_10_40,
         self::BUNDLES_PCRE2_10_42,
         self::BUNDLES_PCRE2_10_44,

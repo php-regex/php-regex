@@ -25,9 +25,11 @@ The `preg_*` family - what each function returns, with examples - is tabulated i
 echo PCRE_VERSION; // e.g., "10.42 2022-12-11"
 ```
 
-Some syntax depends on that release. PHP 8.1 bundles PCRE2 10.39 (8.1.0
-bundled 10.37), PHP 8.2 and 8.3 bundle 10.40 and 10.42; PHP 8.4 bundles 10.44,
-which reads PCRE2 10.43's additions:
+Some syntax depends on that release. PHP 7.3 bundles PCRE2 10.32, the first
+PHP on PCRE2; PHP 7.4 bundles 10.33 (10.34 from 7.4.6, 10.35 from 7.4.12), PHP
+8.0 bundles 10.35, PHP 8.1 bundles 10.39 (8.1.0 bundled 10.37), PHP 8.2 and 8.3
+bundle 10.40 and 10.42; PHP 8.4 bundles 10.44, which reads PCRE2 10.43's
+additions:
 
 | Syntax | Example | Needs |
 |---|---|---|
@@ -69,6 +71,29 @@ PHP 8.1.0 bundled PCRE2 10.37, which lacks five Unicode 14 scripts 10.39 knows
 10.39, and so is any older release. PCRE2 10.40 also fixed matching bugs that
 no verdict models: on 10.39, `/[Aa]{2}/` does not match `aa`.
 
+#### PHP 7.3 to 8.0, and PCRE1
+
+The library judges PHP 7.3 and later, the PHP versions on PCRE2. It knows the
+rules of PCRE2 10.39 and later in full; a PHP that bundles an older release,
+10.32 for 7.3, 10.33 for 7.4 and 10.35 for 8.0, is judged for that release
+with the 10.39 rules, but for the few older changes the library names, and
+the lint says so in a note:
+
+```text
+Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+```
+
+A PHP series is judged with the release its x.y.0 bundled, but for 8.1,
+judged with the 10.39 of 8.1.1 onwards: PHP 7.4.6 moved to 10.34 and 7.4.12
+to 10.35, and a 7.4 target is still judged as 10.33. The Unicode tables a
+release reads are not modelled release by release: which characters a
+`\p{...}` holds, and which script names an old release knows, are a blind
+spot below 10.39.
+
+PHP 7.2 and earlier ship PCRE1, a different engine that reads some patterns
+otherwise; `regex lint` refuses to judge for them rather than judge them as
+PCRE2.
+
 ### Which PHP and which PCRE2 judge a pattern
 
 A pattern is judged for one PHP version and one PCRE2 release, the *target*,
@@ -80,7 +105,7 @@ error offsets and the cache key.
 | options | target |
 |---|---|
 | none | the running PHP and the PCRE2 it links (`PCRE_VERSION`) |
-| `php_version` | that PHP with the PCRE2 its sources bundle: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5 |
+| `php_version` | that PHP with the PCRE2 its sources bundle: 10.32 for 7.3, 10.33 for 7.4, 10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5 |
 | `pcre_version` | the running PHP with that PCRE2 release |
 | both | that PHP with that PCRE2 release |
 

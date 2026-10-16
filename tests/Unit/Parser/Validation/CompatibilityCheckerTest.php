@@ -41,12 +41,12 @@ final class CompatibilityCheckerTest extends TestCase
     use PcreGates;
 
     /**
-     * The PHP versions a rule changes at: the 8.1 floor, 8.2 (its PCRE2
-     * 10.40, the "n" modifier, a NUL byte in a pattern), the PCRE2 that 8.3
-     * and 8.4 bundle, "r" (8.4), \C under "u" (8.4.25, 8.5.10), \K in a
-     * lookaround (8.5).
+     * The PHP versions a rule changes at: the 7.3 floor, the PCRE2 that
+     * 7.4, 8.0 and 8.1 bundle, 8.2 (its PCRE2 10.40, the "n" modifier, a
+     * NUL byte in a pattern), the PCRE2 that 8.3 and 8.4 bundle, "r" (8.4),
+     * \C under "u" (8.4.25, 8.5.10), \K in a lookaround (8.5).
      */
-    private const PHP_POINTS = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
+    private const PHP_POINTS = [70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510];
 
     #[Test]
     public function test_verdicts_run_every_php_point_then_every_pcre2_release(): void
@@ -237,6 +237,9 @@ final class CompatibilityCheckerTest extends TestCase
 
         $count = \count(self::releases());
         $this->assertSame([
+            70300 => array_fill(0, $count, 0),
+            70400 => array_fill(0, $count, 0),
+            80000 => array_fill(0, $count, 0),
             80100 => array_fill(0, $count, 0),
             80200 => array_fill(0, $count, 0),
             80300 => array_fill(0, $count, 0),

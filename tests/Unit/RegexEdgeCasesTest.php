@@ -63,7 +63,7 @@ final class RegexEdgeCasesTest extends TestCase
         $seed = $method->invoke($regex->parser(), '/abc/');
 
         $this->assertIsString($seed);
-        $this->assertStringContainsString('#target=php8.0/pcre10.39', (string) $seed);
+        $this->assertStringContainsString('#target=php8.0/pcre10.35', (string) $seed);
     }
 
     public function test_store_in_cache_swallows_write_errors(): void

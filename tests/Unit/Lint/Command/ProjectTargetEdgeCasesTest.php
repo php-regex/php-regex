@@ -44,82 +44,100 @@ final class ProjectTargetEdgeCasesTest extends TestCase
     }
 
     #[Test]
-    public function test_resolve_clamps_an_old_platform(): void
+    public function test_resolve_judges_an_old_platform_with_the_pcre2_it_bundles(): void
     {
         $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^8.3"}, "config": {"platform": {"php": "7.4.33"}}}']);
 
         $resolved = ProjectTarget::resolve(null, null, [], $directory, []);
 
-        $this->assertSame(80100, $resolved->target()->phpVersionId);
+        $this->assertSame(70433, $resolved->target()->phpVersionId);
+        $this->assertSame('10.33', $resolved->target()->pcreVersion);
         $this->assertSame('composer.json config.platform.php', $resolved->source());
-        $this->assertStringContainsString('PHP 7.4', implode("\n", $resolved->notices()));
+        $this->assertStringContainsString('PCRE2 10.33', implode("\n", $resolved->notices()));
         $this->assertSame(
-            ['composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+            ['PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
             $resolved->notices(),
         );
     }
 
     /**
-     * A version named below the floor is judged as the floor, as a
-     * composer.json floor is, and the substitution is said: "PHP 7.3,
-     * PCRE2 10.39" judged nothing any PHP 7.3 runs.
+     * A version named below PHP 8.1 is judged for itself, with the PCRE2
+     * its sources bundle, and the notice says that release is judged with
+     * the rules of 10.39, the oldest the library knows in full: "PHP 7.3,
+     * PCRE2 10.39" would name an engine no PHP 7.3 runs.
      *
      * @param array<string, string|int|null> $php
      * @param list<string>                   $notices
      */
     #[Test]
     #[DataProvider('provideNamedVersionsBelowTheFloor')]
-    public function test_resolve_clamps_a_version_named_below_the_floor(array $php, array $notices): void
+    public function test_resolve_judges_a_version_named_below_8_1_with_the_10_39_rules(array $php, int $phpVersionId, string $pcre, array $notices): void
     {
         $resolved = ProjectTarget::fromSources($php, [], $this->makeProject(), []);
 
-        $this->assertSame(80100, $resolved->target()->phpVersionId);
-        $this->assertSame('10.39', $resolved->target()->pcreVersion);
+        $this->assertSame($phpVersionId, $resolved->target()->phpVersionId);
+        $this->assertSame($pcre, $resolved->target()->pcreVersion);
         $this->assertSame($notices, $resolved->notices());
-        $this->assertSame([['php' => '8.1', 'pcre' => '10.39']], $resolved->toArray()['range']);
+        $this->assertSame([['php' => ProjectTarget::phpLabel($phpVersionId), 'pcre' => $pcre]], $resolved->toArray()['range']);
     }
 
     /**
-     * @return iterable<string, array{php: array<string, string|int|null>, notices: list<string>}>
+     * @return iterable<string, array{php: array<string, string|int|null>, phpVersionId: int, pcre: string, notices: list<string>}>
      */
     public static function provideNamedVersionsBelowTheFloor(): iterable
     {
         yield 'the flag' => [
             'php' => ['--php-version' => '7.3', 'regex.json' => '8.4'],
-            'notices' => ['--php-version names PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+            'phpVersionId' => 70300,
+            'pcre' => '10.32',
+            'notices' => ['PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
         ];
         yield 'regex.json with a patch release' => [
             'php' => ['--php-version' => null, 'regex.json' => '7.4.33'],
-            'notices' => ['regex.json names PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+            'phpVersionId' => 70433,
+            'pcre' => '10.33',
+            'notices' => ['PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
         ];
         yield 'regex.json as a PHP_VERSION_ID' => [
             'php' => ['regex.json' => 80000],
-            'notices' => ['regex.json names PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+            'phpVersionId' => 80000,
+            'pcre' => '10.35',
+            'notices' => ['PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
         ];
         yield 'a bridge setting' => [
             'php' => ['php_regex.php_version' => '7.4'],
-            'notices' => ['php_regex.php_version names PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+            'phpVersionId' => 70400,
+            'pcre' => '10.33',
+            'notices' => ['PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'],
         ];
     }
 
     #[Test]
-    public function test_resolve_keeps_the_pcre_release_named_with_a_clamped_version(): void
+    public function test_resolve_keeps_the_pcre_release_named_with_an_old_version(): void
     {
         $resolved = ProjectTarget::resolve('7.4', '10.42', [], $this->makeProject(), []);
 
-        $this->assertSame(80100, $resolved->target()->phpVersionId);
+        $this->assertSame(70400, $resolved->target()->phpVersionId);
         $this->assertSame('10.42', $resolved->target()->pcreVersion);
         $this->assertSame('--php-version; --pcre-version', $resolved->source());
-        $this->assertSame(['--php-version names PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'], $resolved->notices());
+        $this->assertSame([], $resolved->notices());
     }
 
     #[Test]
-    public function test_resolve_does_not_clamp_a_version_named_at_the_floor(): void
+    public function test_resolve_says_nothing_of_a_release_the_library_knows_in_full(): void
     {
         $resolved = ProjectTarget::resolve('8.1', null, [], $this->makeProject(), []);
 
         $this->assertSame(80100, $resolved->target()->phpVersionId);
         $this->assertSame([], $resolved->notices());
+    }
+
+    #[Test]
+    public function test_resolve_names_an_older_pcre2_release_named_alone(): void
+    {
+        $resolved = ProjectTarget::resolve('8.2', '10.34', [], $this->makeProject(), []);
+
+        $this->assertSame(['PCRE2 10.34 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'], $resolved->notices());
     }
 
     /**

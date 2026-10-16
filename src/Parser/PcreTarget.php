@@ -24,11 +24,17 @@ use PHPRegex\Parser\Internal\PhpVersionGates;
  * releases; a few rules belong to PHP itself. The engine that runs the
  * analysis need not be the one that will run the pattern, so the target
  * is named once and read everywhere a rule depends on it. Releases older
- * than 10.39 are judged with the 10.39 rules, newer ones than the library
- * knows with the newest rules it has.
+ * than 10.39 are judged with the 10.39 rules, but for the few older changes
+ * the library names (judgedWith()); newer ones than the library knows with
+ * the newest rules it has.
  */
 final class PcreTarget
 {
+    /**
+     * The oldest release whose rules the library knows in full, 10.39.
+     */
+    private const KNOWN_IN_FULL = 10_039;
+
     public readonly string $pcreVersion;
 
     private readonly int $release;
@@ -75,10 +81,12 @@ final class PcreTarget
     }
 
     /**
-     * A PHP version with the PCRE2 its sources bundle: 10.39 for 8.1, 10.40
-     * for 8.2, 10.42 for 8.3, 10.44 for 8.4 through 8.6. PHP 8.1.0 bundled
-     * 10.37, and older PHP versions older releases: they get 10.39, the
-     * oldest the library knows the rules of.
+     * A PHP version with the PCRE2 its sources bundle: 10.32 for 7.3, 10.33
+     * for 7.4, 10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
+     * 10.44 for 8.4 through 8.6. A series is given the release of its x.y.0,
+     * but for 8.1: 8.1.0 bundled 10.37, and 8.1.1 onwards 10.39. PHP 7.4.6
+     * moved to 10.34 and 7.4.12 to 10.35, judged as 10.33. PHP 7.2 and
+     * earlier link PCRE1, which no PCRE2 release stands for: they get 10.32.
      */
     public static function bundledWith(int $phpVersionId): self
     {
@@ -86,10 +94,23 @@ final class PcreTarget
             $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_44 => '10.44',
             $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_42 => '10.42',
             $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_40 => '10.40',
-            default => '10.39',
+            $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_39 => '10.39',
+            $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_35 => '10.35',
+            $phpVersionId >= PhpVersionGates::BUNDLES_PCRE2_10_33 => '10.33',
+            default => '10.32',
         };
 
         return new self($phpVersionId, $release);
+    }
+
+    /**
+     * The PCRE2 release whose rules judge this one: its own, or 10.39 for
+     * an older release. The library knows the rules of 10.39 and later in
+     * full; of an older release, only the few changes it names.
+     */
+    public function judgedWith(): string
+    {
+        return $this->release < self::KNOWN_IN_FULL ? '10.39' : $this->pcreVersion;
     }
 
     /**

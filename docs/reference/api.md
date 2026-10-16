@@ -209,6 +209,16 @@ PcreFeature::ScanSubstring->release();                                   // '10.
 `pcreAtLeast('10.45')` stays for a release that comes from data; it refuses a
 release spelled short, as `'10.4'`, which would read as 10.04.
 
+`judgedWith()` names the release whose rules judge the target: its own, or
+`'10.39'` for an older one. The library knows the rules of PCRE2 10.39 and
+later in full; of an older release, such as the 10.32 of PHP 7.3, only the few
+changes it names:
+
+```php
+(new PcreTarget(70300, '10.32'))->judgedWith(); // '10.39'
+PcreTarget::bundledWith(70400)->pcreVersion;    // '10.33', PHP 7.4.0's
+```
+
 ### PcreTarget::phpVersionBoundaries(): list<int>
 
 The PHP versions, as `PHP_VERSION_ID`s in ascending order, at which a verdict
@@ -219,7 +229,7 @@ lookaround, and stops refusing `\C` under `u` until 8.5.10:
 ```php
 use PHPRegex\Parser\PcreTarget;
 
-PcreTarget::phpVersionBoundaries(); // [80100, 80200, 80300, 80400, 80425, 80500, 80510]
+PcreTarget::phpVersionBoundaries(); // [70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510]
 ```
 
 Judging a range of PHP versions at these points judges all of it:
