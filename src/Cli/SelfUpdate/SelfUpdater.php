@@ -285,7 +285,7 @@ class SelfUpdater
 
     private function parseChecksum(string $contents): string
     {
-        $line = trim($contents);
+        $line = trim($contents, " \t\n\r\0\x0B");
         $first = (LibraryPcre::split('/\s+/', $line) ?: [])[0] ?? '';
         $checksum = Ascii::lower($first);
 

@@ -26,6 +26,12 @@
         <ini name="log_errors" value="true"/>
         <ini name="serialize_precision" value="-1"/>
     </php>
+    <extensions>
+        <!-- The same deprecation policy as the PHPUnit 12 run: a
+             deprecation under src/ fails, vendor ones stay
+             informational. PHPUnit 10.5 carries the same event types. -->
+        <bootstrap class="PHPRegex\Tests\Support\SourceDeprecationListener"/>
+    </extensions>
     <testsuites>
         <testsuite name="PHPRegex on PHP 8.1">
             <directory>../../tests</directory>

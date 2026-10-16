@@ -205,7 +205,7 @@ final class CpuCoreCounter
     private static function cpuList(string $list): ?array
     {
         $cpus = [];
-        foreach (explode(',', trim($list)) as $range) {
+        foreach (explode(',', trim($list, " \t\n\r\0\x0B")) as $range) {
             if (1 !== LibraryPcre::match('/^(\d+)(?:-(\d+))?$/D', $range, $match)) {
                 return null;
             }
@@ -222,7 +222,7 @@ final class CpuCoreCounter
 
     private static function positive(?string $value): ?int
     {
-        $value = trim((string) $value);
+        $value = trim((string) $value, " \t\n\r\0\x0B");
 
         return 1 === LibraryPcre::match('/^[1-9]\d*$/D', $value) ? (int) $value : null;
     }
@@ -255,7 +255,7 @@ final class CpuCoreCounter
             return null; // proc_open() refused to start the shell: no test can make it.
         }
 
-        $stdout = trim((string) stream_get_contents($pipes[1]));
+        $stdout = trim((string) stream_get_contents($pipes[1]), " \t\n\r\0\x0B");
         fclose($pipes[1]);
 
         return 0 === proc_close($process) && '' !== $stdout ? $stdout : null;

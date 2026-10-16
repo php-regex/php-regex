@@ -118,8 +118,8 @@ final class WorkerCount
                 continue;
             }
 
-            if (1 === LibraryPcre::match('/^\d{1,19}$/', trim((string) $limit))) {
-                $bytes = (int) trim((string) $limit);
+            if (1 === LibraryPcre::match('/^\d{1,19}$/', trim((string) $limit, " \t\n\r\0\x0B"))) {
+                $bytes = (int) trim((string) $limit, " \t\n\r\0\x0B");
 
                 return $bytes > 0 && $bytes < self::UNLIMITED ? $bytes : null;
             }

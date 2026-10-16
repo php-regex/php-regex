@@ -88,7 +88,7 @@ final class PcreRuntimeInfo implements \JsonSerializable
             return null;
         }
 
-        $value = trim((string) $value);
+        $value = trim((string) $value, " \t\n\r\0\x0B");
         if ('' === $value || !Ascii::isDigit($value)) {
             return null;
         }

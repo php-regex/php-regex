@@ -37,17 +37,17 @@ final class SourceDeprecationListenerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, bool}>
+     * @return iterable<string, array{file: string, fails: bool}>
      */
     public static function provideFrames(): iterable
     {
         $repo = \dirname(__DIR__, 3);
 
-        yield 'a parser frame' => [$repo.'/src/Parser/ParserOptions.php', true];
-        yield 'a bridge frame' => [$repo.'/src/Symfony/Security/SecurityConfigExtractor.php', true];
-        yield 'a phpstan tool frame' => [$repo.'/tools/phpstan/vendor/phpstan/phpstan/src/Rules/Rule.php', false];
-        yield 'a vendor frame' => [$repo.'/vendor/symfony/cache/Cache.php', false];
-        yield 'a test frame' => [$repo.'/tests/Unit/Support/SourceDeprecationListenerTest.php', false];
+        yield 'a parser frame' => ['file' => $repo.'/src/Parser/ParserOptions.php', 'fails' => true];
+        yield 'a bridge frame' => ['file' => $repo.'/src/Symfony/Security/SecurityConfigExtractor.php', 'fails' => true];
+        yield 'a phpstan tool frame' => ['file' => $repo.'/tools/phpstan/vendor/phpstan/phpunit/src/Rules/Rule.php', 'fails' => false];
+        yield 'a vendor frame' => ['file' => $repo.'/vendor/symfony/cache/Cache.php', 'fails' => false];
+        yield 'a test frame' => ['file' => $repo.'/tests/Unit/Support/SourceDeprecationListenerTest.php', 'fails' => false];
     }
 
     #[Test]
@@ -78,6 +78,13 @@ final class SourceDeprecationListenerTest extends TestCase
                 {
                     trigger_error('the library deprecated itself', \E_USER_DEPRECATED);
                 }
+
+                public static function engineGone(): void
+                {
+                    // Null to a non-nullable parameter: deprecated from PHP
+                    // 8.1 on, so the probe fires on every stack.
+                    \str_contains(null, 'x');
+                }
             }
             PHP);
         file_put_contents($root.'/vendor/probe/Dep.php', <<<'PHP'
@@ -96,7 +103,7 @@ final class SourceDeprecationListenerTest extends TestCase
         file_put_contents($root.'/tests/OwnSourceTest.php', <<<'PHP'
             <?php
 
-            require __DIR__.'/../src/Legacy.php';
+            require_once __DIR__.'/../src/Legacy.php';
 
             use Probe\Legacy;
 
@@ -127,7 +134,29 @@ final class SourceDeprecationListenerTest extends TestCase
                 }
             }
             PHP);
-        file_put_contents($root.'/bootstrap.php', sprintf("<?php\n\nrequire %s;\n", var_export($listener, true)));
+        file_put_contents($root.'/tests/EngineDeprecationTest.php', <<<'PHP'
+            <?php
+
+            require_once __DIR__.'/../src/Legacy.php';
+
+            use Probe\Legacy;
+
+            final class EngineDeprecationTest extends \PHPUnit\Framework\TestCase
+            {
+                public function test_engine_deprecation(): void
+                {
+                    Legacy::engineGone();
+
+                    $this->assertTrue(true);
+                }
+            }
+            PHP);
+        file_put_contents($root.'/bootstrap.php', sprintf(
+            "<?php\n\nrequire %s;\nrequire %s;\nrequire %s;\n",
+            var_export($listener, true),
+            var_export(\dirname($listener).'/EngineDeprecationSubscriber.php', true),
+            var_export(\dirname($listener).'/UserDeprecationSubscriber.php', true),
+        ));
         file_put_contents($root.'/phpunit.xml', sprintf(
             <<<'XML'
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -151,21 +180,31 @@ final class SourceDeprecationListenerTest extends TestCase
 
         try {
             [$ownExit, $ownOutput] = $this->runProbe($root.'/phpunit.xml', 'OwnSourceTest');
-            [$vendorExit] = $this->runProbe($root.'/phpunit.xml', 'VendorDeprecationTest');
+            [$engineExit, $engineOutput] = $this->runProbe($root.'/phpunit.xml', 'EngineDeprecationTest');
+            [$vendorExit, $vendorOutput] = $this->runProbe($root.'/phpunit.xml', 'VendorDeprecationTest');
 
-            $this->assertNotSame(0, $ownExit, "a deprecation under the guarded source must fail the run\n".$ownOutput);
-            $this->assertSame(0, $vendorExit, 'a vendor deprecation stays informational');
+            $this->assertNotSame(0, $ownExit, "a user-level deprecation under the guarded source must fail the run\n".$ownOutput);
+            $this->assertNotSame(0, $engineExit, "an engine deprecation under the guarded source must fail the run\n".$engineOutput);
+            $this->assertSame(0, $vendorExit, "a vendor deprecation stays informational\n".$vendorOutput);
         } finally {
             exec('rm -rf '.escapeshellarg($root));
         }
     }
 
     /**
+     * The probe runs under the stack the test itself runs under: the 8.1
+     * rows drive the PHPUnit 10.5 of tools/phpunit-81, everyone else the
+     * PHPUnit 12 of tools/phpunit.
+     *
      * @return array{0: int, 1: string}
      */
     private function runProbe(string $config, string $filter): array
     {
-        $command = [\PHP_BINARY, \dirname(__DIR__, 3).'/tools/phpunit/vendor/bin/phpunit', '--configuration', $config, '--filter', $filter, '--no-progress'];
+        $phpunit = \PHP_VERSION_ID < 80300
+            ? \dirname(__DIR__, 3).'/tools/phpunit-81/vendor/bin/phpunit'
+            : \dirname(__DIR__, 3).'/tools/phpunit/vendor/bin/phpunit';
+
+        $command = [\PHP_BINARY, $phpunit, '--configuration', $config, '--filter', $filter, '--no-progress'];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
         $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);

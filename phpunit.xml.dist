@@ -14,18 +14,19 @@
          displayDetailsOnTestsThatTriggerErrors="true"
          displayDetailsOnTestsThatTriggerNotices="true"
          displayDetailsOnTestsThatTriggerWarnings="true"
-         failOnWarning="true"
          resolveDependencies="true">
     <!--
         The deprecation policy: a PHP deprecation whose frame lands under
         src/ — this library deprecating itself — fails the run through the
-        SourceDeprecationListener extension below (its throw becomes the
-        runner warning failOnWarning turns into failure). Every vendor or
-        tool deprecation stays PHPUnit's display-only signal: the weekly
-        re-resolved locks deprecate for reasons that are not this
-        library's, and a chronic red trains people to ignore the signal.
-        PHPUnit's own failOnDeprecation is rejected for exactly that
-        reason: it does not tell own deprecations from vendor ones.
+        SourceDeprecationListener extension below. Its subscribers throw,
+        and PHPUnit reports a third-party subscriber exception as a test
+        runner warning that exits the run non-zero whatever this file
+        says about warnings. Every vendor or tool deprecation stays
+        PHPUnit's display-only signal: the weekly re-resolved locks
+        deprecate for reasons that are not this library's, and a chronic
+        red trains people to ignore the signal. PHPUnit's own
+        failOnDeprecation is rejected for exactly that reason: it does not
+        tell own deprecations from vendor ones.
     -->
     <php>
         <ini name="memory_limit" value="-1"/>

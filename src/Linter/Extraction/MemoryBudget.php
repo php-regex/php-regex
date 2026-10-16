@@ -83,7 +83,7 @@ final class MemoryBudget
             return -1;
         }
 
-        $limit = trim($limit);
+        $limit = trim($limit, " \t\n\r\0\x0B");
         $unit = Ascii::lower($limit[\strlen($limit) - 1]);
         $value = (int) $limit;
 
