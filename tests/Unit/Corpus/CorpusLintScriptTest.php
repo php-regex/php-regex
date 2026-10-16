@@ -293,6 +293,24 @@ final class CorpusLintScriptTest extends TestCase
     }
 
     /**
+     * The suite loads bin/corpus as well, for its own functions: the two
+     * scripts declare nothing under the same name, or the process dies on
+     * the second one, whichever test needs it first.
+     */
+    #[Test]
+    public function test_the_script_loads_beside_bin_corpus(): void
+    {
+        if (!\defined('CORPUS_INCLUDED')) {
+            \define('CORPUS_INCLUDED', true);
+        }
+        require_once \dirname(__DIR__, 3).'/bin/corpus';
+        $this->loadScriptFunctions();
+
+        $this->assertTrue(\function_exists('deriveTargetPath'));
+        $this->assertTrue(\function_exists('requirePhpConstraint'));
+    }
+
+    /**
      * @param list<string> $arguments
      *
      * @return array{0: int, 1: string}
