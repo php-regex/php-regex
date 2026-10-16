@@ -165,7 +165,18 @@ cache are merged. Follow-ups:
 - `Optimizer::__construct()` takes a `?DfaCacheInterface`, added in 2.0.0,
   that nothing reads any more: the check of a rewrite builds no DFA since
   the strings both sides match no longer prove one. Keep it or drop it
-  before the tag.
+  before the tag;
+- the strings matched no longer prove a rewrite: where the match solver
+  does not read a pattern (a lookahead, `m`, a backreference), only a
+  rewrite that reads alike is offered. On the 400-file corpus sample that
+  costs 5 of 779 suggestions, such as `(?=\s*(?:,|\n))` into
+  `(?=\s*[,\n])`. Proving the rewritten subtree alone (it reads alike, or
+  its own match check passes, and it holds no group) would win them back;
+- the formatter writes a class under `(?xx)` without its spaces, so
+  `(?xx)[\d -z]`, valid up to PCRE2 10.44 with a member `-`, comes back
+  as `[\d-z]`, which reads back otherwise: `format()` throws
+  `FormattingException` for it on those targets instead of escaping the
+  hyphen.
 
 ## PHP 8.1 floor: after the merge
 
@@ -178,7 +189,23 @@ Left:
   cells (the capture-shape report compared patterns with `r` their engine
   refuses), PHPStan on 8.5 and 8.6 (`$argv` in the 8.1 smoke test) and
   PHPCS (four test files): each is fixed on its own commit; watch the next
-  run;
+  run. Reproduced on 2026-10-16 as the cell runs (Ubuntu 24.04, PHP 8.1
+  from the ondrej PPA linking the system PCRE2 10.42, PHPUnit 10.5.0,
+  Symfony 6.4.0, Laravel 10.37.3, a plain user): the suite died on
+  `bin/corpus-lint` redeclaring `printUsage()` beside `bin/corpus`, and the
+  Symfony configuration threw a plain `InvalidArgumentException`; both
+  fixed, nothing else failed;
+- the official `php:8.1-cli` image (bundled PCRE2 10.39, no intl, no
+  pcntl) runs the suite to 168 failures and 24 errors, none of them a
+  verdict the library gets wrong for that engine: 100 PCRE2-suite cases
+  pinned to 10.40–10.48 (the library gives the verdict of 10.39 on all 100), tests
+  that expect the property and script semantics of 10.40 and later or ask
+  the running engine for a property it lacks, `Locale` and `pcntl_fork()`
+  missing, two linear-time ratios on a 2-CPU VM, the 10.39 spelling
+  "unknown property name after \P or \p" missing from the tests' message
+  table, and `RuntimePcreDetectionTest`'s oracle reading six patterns 10.39
+  refuses as compiled. No CI cell runs 10.39; gating those tests is left
+  for when one does;
 - PCRE2 10.39 also has matching bugs 10.40 fixed (`/[Aa]{2}/` misses `aa`):
   engine defects the library does not model, documented.
 
