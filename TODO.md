@@ -248,14 +248,17 @@ library knows: the alphabetic assertion names (10.33) and an open count past
 - PHP 7.3.33 and 7.4.33 compile, with no warning, some patterns PCRE2 itself
   refuses, to a pattern that matches nothing: `/\p{Bogus}/u` and
   `/\214748364/` (pcre2test 10.32 and 10.35 refuse both, as PHP 8.0 does).
-  The library refuses them for those targets; decide whether the message
-  says so.
+  The library refuses them for those targets, and keeps refusing them. Add
+  to the message that PHP 7.3 and 7.4 accept such a pattern silently and that
+  it then never matches.
 - The PHPStan and Psalm extensions judge a project for PHP 7.2 or earlier
   instead of refusing it as `regex lint` does: PHPStan with the version as
-  given, Psalm raised to 7.3. Decide.
+  given, Psalm raised to 7.3. Make both refuse it with the same error as
+  `regex lint`.
 - `validate`, `analyze` and the other pattern commands take a
   `--php-version` below 7.3 as given, with neither note nor refusal; only
-  `lint` and the bridges' lint commands resolve the project target.
+  `lint` and the bridges' lint commands resolve the project target. Make
+  them refuse it the same way, exit 2.
 - The article on which PCRE2 ships with which PHP quotes the former `\K`
   hint ("Move the \K out of the lookaround."): refresh its sample output.
 - Refused with a witness, do not build: the octal respell `\214748364` to
