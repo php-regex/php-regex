@@ -106,7 +106,7 @@ final class InteropPresetCatalogueTest extends TestCase
             '/composer/', '/nette/', '/spatie/', '/laravel/', '/phpunit/', '/webmozart/', '/beberlei/', '/symfony/',
         ], $this->patternsReadByBoth(<<<'PHP_WRAP'
             <?php
-        
+
             use Composer\Pcre\Preg;
             use Nette\Utils\Strings;
             use Spatie\Regex\Regex;
@@ -114,7 +114,7 @@ final class InteropPresetCatalogueTest extends TestCase
             use Webmozart\Assert\Assert;
             use Assert\Assertion;
             use Symfony\Component\Validator\Constraints as Constraint;
-        
+
             final class EveryLibraryTest extends \PHPUnit\Framework\TestCase
             {
                 public function test_it(string $s): void

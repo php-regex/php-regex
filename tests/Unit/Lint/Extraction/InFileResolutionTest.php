@@ -323,16 +323,16 @@ final class InFileResolutionTest extends TestCase
             ['pattern' => '/t/', 'at' => "'/t/'", 'location' => 'via TRUE_'],
         ], <<<'PHP_WRAP'
             <?php
-        
+
             @define('PHP_EOL', '/(/');
             const E_ALL = '/(/';
             define('TRUE_', '/t/');
-        
+
             function run(string $s): int
             {
                 return preg_match(PHP_EOL, $s) + preg_match(E_ALL, $s) + preg_match(TRUE_, $s);
             }
-        
+
             PHP_WRAP);
     }
 

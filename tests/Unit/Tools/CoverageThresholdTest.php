@@ -44,7 +44,7 @@ final class CoverageThresholdTest extends TestCase
     #[Test]
     public function test_line_coverage_reads_the_project_totals(): void
     {
-        $this->assertEqualsWithDelta(93.25, CoverageThreshold::lineCoverage(self::clover(400, 373)), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(93.25, CoverageThreshold::lineCoverage(self::clover(400, 373)), \PHP_FLOAT_EPSILON);
     }
 
     #[Test]
@@ -62,7 +62,7 @@ final class CoverageThresholdTest extends TestCase
             </coverage>
             XML;
 
-        $this->assertEqualsWithDelta(75.0, CoverageThreshold::lineCoverage($clover), PHP_FLOAT_EPSILON);
+        $this->assertEqualsWithDelta(75.0, CoverageThreshold::lineCoverage($clover), \PHP_FLOAT_EPSILON);
     }
 
     /**

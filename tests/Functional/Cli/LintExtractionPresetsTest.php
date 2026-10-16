@@ -43,12 +43,12 @@ final class LintExtractionPresetsTest extends TestCase
 
     private const EVERY_LIBRARY = <<<'PHP_WRAP'
         <?php
-    
+
         namespace App;
-    
+
         use Nette\Utils\Strings;
         use Webmozart\Assert\Assert;
-    
+
         final class EveryLibraryTest extends \PHPUnit\Framework\TestCase
         {
             public function test_it(string $s, \Iterator $it): void
@@ -61,7 +61,7 @@ final class LintExtractionPresetsTest extends TestCase
                 filter_var($s, FILTER_VALIDATE_REGEXP, ['options' => ['regexp' => '/(filter-var/']]);
             }
         }
-    
+
         PHP_WRAP;
 
     #[Test]
