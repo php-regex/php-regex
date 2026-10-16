@@ -409,6 +409,45 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertStringNotContainsString('Note:', $stderr);
     }
 
+    /**
+     * "(?*" arrived in PCRE2 10.35: PHP 7.3, on 10.32, refuses "/(?*a)b/"
+     * ("unrecognized character after (? or (?-", php:7.3-cli). Judged for
+     * an older PHP than the library knows, the run says which PHP it
+     * judged for instead, never a silent pass for 7.3.
+     */
+    #[Test]
+    public function test_lint_prints_the_clamped_flag_and_its_notice_in_the_banner_for_the_console_format(): void
+    {
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?*a)b/', \$s);\n"]);
+
+        [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos'], phpVersion: '7.3');
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString(
+            "\n".self::bannerRow('Target', 'PHP 8.1, PCRE2 10.39 (--php-version)'),
+            $stdout,
+        );
+        $this->assertStringContainsString(
+            'Note: --php-version names PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.',
+            $stdout,
+        );
+        $this->assertStringNotContainsString('Note:', $stderr);
+    }
+
+    #[Test]
+    public function test_lint_prints_the_clamped_flag_notice_on_stderr_for_the_json_format(): void
+    {
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?*a)b/', \$s);\n"]);
+
+        [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos'], phpVersion: '7.3');
+
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('Note: --php-version names PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.', $stderr);
+        $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertSame(['php' => '8.1', 'pcre' => '10.39', 'source' => '--php-version', 'range' => [['php' => '8.1', 'pcre' => '10.39']]], $document['target'] ?? null);
+    }
+
     #[Test]
     public function test_lint_prints_no_console_banner_when_quiet(): void
     {

@@ -39,6 +39,9 @@ use PHPRegex\Parser\RegexParser;
  * or the release named at every point. Every other source names one
  * version, and the range is that version.
  *
+ * A PHP older than the oldest the library judges, from any source, is
+ * judged as that oldest one, and a notice says so.
+ *
  * Reading composer.json never fails: what cannot be read becomes a notice
  * and the running PHP is used.
  *
@@ -120,7 +123,9 @@ final class ProjectTarget
                 break;
             }
 
-            [$phpVersionId, $phpSource] = [self::phpVersionId($version), (string) $name];
+            // A version named below the floor is judged as the floor, as a
+            // composer.json floor is, and the notice says so.
+            [$phpVersionId, $phpSource] = [self::clamp(self::phpVersionId($version), $name.' names', $notices), (string) $name];
 
             break;
         }
@@ -344,7 +349,7 @@ final class ProjectTarget
         if (\is_string($platform)) {
             $floor = self::floor($platform);
             if (null !== $floor && !str_contains($platform, ' ') && !str_contains($platform, '|')) {
-                return [self::clamp($floor, $name.' config.platform.php', $notices), $name.' config.platform.php', null];
+                return [self::clamp($floor, $name.' config.platform.php allows', $notices), $name.' config.platform.php', null];
             }
             $notices[] = \sprintf('%s config.platform.php "%s" is not a version: reading require.php instead.', $name, $platform);
         }
@@ -363,7 +368,7 @@ final class ProjectTarget
             return null;
         }
 
-        return [self::clamp($floor, $name.' require.php', $notices), $name.' require.php', $constraint];
+        return [self::clamp($floor, $name.' require.php allows', $notices), $name.' require.php', $constraint];
     }
 
     /**
@@ -385,6 +390,10 @@ final class ProjectTarget
     }
 
     /**
+     * The lowest PHP the library judges when $floor is older, with a
+     * notice that names the substitution.
+     *
+     * @param string       $from    what named $floor, and how: "--php-version names", "composer.json require.php allows"
      * @param list<string> $notices
      */
     private static function clamp(int $floor, string $from, array &$notices): int
@@ -396,7 +405,7 @@ final class ProjectTarget
         }
 
         $notices[] = \sprintf(
-            '%s allows PHP %d.%d, older than the PHP %4$s this library supports: judging for PHP %4$s.',
+            '%s PHP %d.%d, older than the PHP %4$s this library supports: judging for PHP %4$s.',
             $from,
             intdiv($floor, 10000),
             intdiv($floor, 100) % 100,

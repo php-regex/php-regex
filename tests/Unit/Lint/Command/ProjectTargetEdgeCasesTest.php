@@ -58,6 +58,69 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         );
     }
 
+    /**
+     * A version named below the floor is judged as the floor, as a
+     * composer.json floor is, and the substitution is said: "PHP 7.3,
+     * PCRE2 10.39" judged nothing any PHP 7.3 runs.
+     *
+     * @param array<string, string|int|null> $php
+     * @param list<string>                   $notices
+     */
+    #[Test]
+    #[DataProvider('provideNamedVersionsBelowTheFloor')]
+    public function test_resolve_clamps_a_version_named_below_the_floor(array $php, array $notices): void
+    {
+        $resolved = ProjectTarget::fromSources($php, [], $this->makeProject(), []);
+
+        $this->assertSame(80100, $resolved->target()->phpVersionId);
+        $this->assertSame('10.39', $resolved->target()->pcreVersion);
+        $this->assertSame($notices, $resolved->notices());
+        $this->assertSame([['php' => '8.1', 'pcre' => '10.39']], $resolved->toArray()['range']);
+    }
+
+    /**
+     * @return iterable<string, array{php: array<string, string|int|null>, notices: list<string>}>
+     */
+    public static function provideNamedVersionsBelowTheFloor(): iterable
+    {
+        yield 'the flag' => [
+            'php' => ['--php-version' => '7.3', 'regex.json' => '8.4'],
+            'notices' => ['--php-version names PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+        ];
+        yield 'regex.json with a patch release' => [
+            'php' => ['--php-version' => null, 'regex.json' => '7.4.33'],
+            'notices' => ['regex.json names PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+        ];
+        yield 'regex.json as a PHP_VERSION_ID' => [
+            'php' => ['regex.json' => 80000],
+            'notices' => ['regex.json names PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+        ];
+        yield 'a bridge setting' => [
+            'php' => ['php_regex.php_version' => '7.4'],
+            'notices' => ['php_regex.php_version names PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'],
+        ];
+    }
+
+    #[Test]
+    public function test_resolve_keeps_the_pcre_release_named_with_a_clamped_version(): void
+    {
+        $resolved = ProjectTarget::resolve('7.4', '10.42', [], $this->makeProject(), []);
+
+        $this->assertSame(80100, $resolved->target()->phpVersionId);
+        $this->assertSame('10.42', $resolved->target()->pcreVersion);
+        $this->assertSame('--php-version; --pcre-version', $resolved->source());
+        $this->assertSame(['--php-version names PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.'], $resolved->notices());
+    }
+
+    #[Test]
+    public function test_resolve_does_not_clamp_a_version_named_at_the_floor(): void
+    {
+        $resolved = ProjectTarget::resolve('8.1', null, [], $this->makeProject(), []);
+
+        $this->assertSame(80100, $resolved->target()->phpVersionId);
+        $this->assertSame([], $resolved->notices());
+    }
+
     #[Test]
     #[DataProvider('provideDanglingConstraints')]
     public function test_resolve_falls_back_on_a_dangling_constraint(string $constraint): void

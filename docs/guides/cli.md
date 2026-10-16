@@ -1064,7 +1064,9 @@ The lowest PHP is the one that matters because a library, or an application
 deployed on several servers, runs on every version its constraint allows: a
 pattern that only compiles on a newer PCRE2 fails on the oldest one. A floor
 below PHP 8.1 is judged as PHP 8.1, the oldest this library judges, and the
-command says so. A constraint the command cannot read (`*`, `<9`, a branch
+command says so; so is a version below it named with `--php-version` or
+`phpVersion`, with a note such as `--php-version names PHP 7.4, older than the
+PHP 8.1 this library supports: judging for PHP 8.1.` A constraint the command cannot read (`*`, `<9`, a branch
 name) falls back to the running PHP, with a note naming it; reading
 `composer.json` never stops a run.
 
