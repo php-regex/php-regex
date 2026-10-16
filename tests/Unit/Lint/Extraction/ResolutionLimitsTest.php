@@ -61,11 +61,14 @@ final class ResolutionLimitsTest extends TestCase
     #[Test]
     public function test_a_variable_reused_many_times_is_read_in_linear_time(): void
     {
+        // Eight times the calls: linear work takes about 8 times as long,
+        // quadratic about 64 times. The bound sits between the two, and the
+        // best of three runs keeps a loaded machine from deciding.
         foreach ($this->strategies() as $name => $strategy) {
-            $small = $this->timeReading($strategy, 500);
-            $large = $this->timeReading($strategy, 4000);
+            $small = min(array_map(fn (): float => $this->timeReading($strategy, 500), range(1, 3)));
+            $large = min(array_map(fn (): float => $this->timeReading($strategy, 4000), range(1, 3)));
 
-            $this->assertLessThan(12 * $small, $large, \sprintf('%s: %.3fs for 500 calls, %.3fs for 4000.', $name, $small, $large));
+            $this->assertLessThan(24 * $small, $large, \sprintf('%s: %.3fs for 500 calls, %.3fs for 4000.', $name, $small, $large));
         }
     }
 
