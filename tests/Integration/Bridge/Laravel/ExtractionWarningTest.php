@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -35,7 +34,7 @@ use Symfony\Component\Console\Output\StreamOutput;
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
 #[WithConfig('php-regex.runtime_pcre_validation', false)]
-final class ExtractionWarningTest extends TestCase
+final class ExtractionWarningTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -49,7 +48,7 @@ final class ExtractionWarningTest extends TestCase
         config(['php-regex.extraction' => $extraction]);
         $this->assertNotNull($this->app);
 
-        $this->assertSame($expected, PHPRegexServiceProvider::extraction($this->app));
+        $this->assertSame($expected, PHPRegexServiceProvider::extraction($this->application()));
     }
 
     /**
@@ -107,14 +106,14 @@ final class ExtractionWarningTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessage('Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?');
 
-        PHPRegexServiceProvider::extraction($this->app);
+        PHPRegexServiceProvider::extraction($this->application());
     }
 
     #[Test]
     public function test_other_formats_say_the_warning_on_stderr(): void
     {
         $project = $this->makeProject(['app/Check.php' => "<?php\n\npreg_match('/fine/', \$s);\n"]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
         config(['php-regex.extraction' => ['functions' => ['x#a']]]);
 
         $stdout = fopen('php://memory', 'r+');

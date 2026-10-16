@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Toolkit\Regex;
 
@@ -22,21 +21,21 @@ use PHPRegex\Toolkit\Regex;
  * says nothing about it either: Laravel keeps loading the file, the provider
  * keeps ignoring it, and every php-regex.* default stays the 2.0 one.
  */
-final class OldConfigFileTest extends TestCase
+final class OldConfigFileTest extends LaravelTestCase
 {
     public function test_an_old_config_file_is_silently_ignored(): void
     {
-        $this->app['config']->set('regex-parser', ['max_pattern_length' => 10]);
+        self::configOf($this->application())->set('regex-parser', ['max_pattern_length' => 10]);
 
-        $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->app))->register());
+        $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->application()))->register());
 
         $this->assertSame([], $deprecations, 'A 1.x config file must not raise a deprecation any more.');
-        $this->assertSame(Regex::DEFAULT_MAX_PATTERN_LENGTH, $this->app['config']->get('php-regex.max_pattern_length'));
+        $this->assertSame(Regex::DEFAULT_MAX_PATTERN_LENGTH, self::configOf($this->application())->get('php-regex.max_pattern_length'));
     }
 
     public function test_no_old_config_file_reports_nothing(): void
     {
-        $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->app))->register());
+        $deprecations = $this->deprecationsWhile(fn () => (new PHPRegexServiceProvider($this->application()))->register());
 
         $this->assertSame([], $deprecations);
     }

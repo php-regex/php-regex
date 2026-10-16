@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,7 +25,7 @@ use PHPUnit\Framework\Attributes\Test;
  * (a+)+ finds a match at once and its backtracking stayed hidden; and the
  * flags the router adds are no finding, since nobody can remove them.
  */
-final class LintCommandRouteConstraintTest extends TestCase
+final class LintCommandRouteConstraintTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -59,10 +58,10 @@ final class LintCommandRouteConstraintTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
-        $app['config']->set('php-regex.redos.enabled', true);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.redos.enabled', true);
     }
 
     /**
@@ -95,7 +94,9 @@ final class LintCommandRouteConstraintTest extends TestCase
             }
             foreach ((array) ($result['issues'] ?? []) as $issue) {
                 $this->assertIsArray($issue);
-                $ids[] = (string) ($issue['issue_id'] ?? '');
+                $id = $issue['issue_id'] ?? '';
+                $this->assertIsString($id);
+                $ids[] = $id;
             }
         }
 

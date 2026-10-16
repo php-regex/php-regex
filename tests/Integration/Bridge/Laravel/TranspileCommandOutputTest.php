@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\ResetsShellVerbosity;
 use PHPRegex\Transpiler\Target\TargetRegistry;
@@ -24,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
  * regex:transpile where the run stops before or after the pattern is read,
  * and the JSON document under --quiet.
  */
-final class TranspileCommandOutputTest extends TestCase
+final class TranspileCommandOutputTest extends LaravelTestCase
 {
     use ResetsShellVerbosity;
 
@@ -40,8 +39,7 @@ final class TranspileCommandOutputTest extends TestCase
     #[Test]
     public function test_target_help_names_the_transpiler_targets(): void
     {
-        $command = Artisan::all()['regex:transpile'] ?? null;
-        $this->assertNotNull($command);
+        $command = $this->registeredCommand('regex:transpile');
         $description = $command->getDefinition()->getOption('target')->getDescription();
 
         $this->assertSame(1, preg_match('/\(([^)]*)\)/', $description, $matches), $description);

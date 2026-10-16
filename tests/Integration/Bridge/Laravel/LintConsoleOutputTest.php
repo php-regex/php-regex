@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintService;
@@ -36,7 +35,7 @@ use PHPUnit\Framework\Attributes\Test;
  * console styles, and a run that stops prints its error line, never a
  * JSON document, with the exit code of the stage that failed.
  */
-final class LintConsoleOutputTest extends TestCase
+final class LintConsoleOutputTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -169,7 +168,7 @@ final class LintConsoleOutputTest extends TestCase
     {
         $project = $this->makeProject(['src/Patterns.php' => self::TWO_PATTERNS]);
         $marker = $project.'/slow-worker-waited';
-        $this->app?->instance('php-regex.cache', self::cacheSlowInWorkers($marker, 1_200_000));
+        $this->application()->instance('php-regex.cache', self::cacheSlowInWorkers($marker, 1_200_000));
 
         $startedAt = microtime(true);
         $status = Artisan::call('regex:lint', ['--jobs' => '2'] + $this->arguments($project.'/src'));
@@ -242,9 +241,9 @@ final class LintConsoleOutputTest extends TestCase
                 throw new \RuntimeException('boom');
             }
         };
-        $analysis = $this->app?->make('php-regex.analysis');
+        $analysis = $this->application()->make('php-regex.analysis');
         $this->assertInstanceOf(AnalysisService::class, $analysis);
-        $this->app?->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$failing])));
+        $this->application()->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$failing])));
     }
 
     /**
@@ -317,9 +316,9 @@ final class LintConsoleOutputTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     /**

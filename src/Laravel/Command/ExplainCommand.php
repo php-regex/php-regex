@@ -25,6 +25,8 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
  */
 final class ExplainCommand extends Command
 {
+    use ReadsStringInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -52,8 +54,8 @@ final class ExplainCommand extends Command
      */
     public function handle(): int
     {
-        $pattern = (string) $this->argument('pattern');
-        $format = strtolower((string) $this->option('format'));
+        $pattern = $this->stringArgument('pattern');
+        $format = strtolower($this->stringOption('format'));
         $highlight = (bool) $this->option('highlight');
 
         if (!\in_array($format, ['console', 'html'], true)) {

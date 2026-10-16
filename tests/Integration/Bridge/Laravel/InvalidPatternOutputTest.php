@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,7 +22,7 @@ use PHPUnit\Framework\Attributes\Test;
  * An Artisan command refusing a pattern prints the message, under it the
  * caret snippet that points at the fault, then the hint.
  */
-final class InvalidPatternOutputTest extends TestCase
+final class InvalidPatternOutputTest extends LaravelTestCase
 {
     /**
      * @param array<string, string> $options

@@ -20,7 +20,6 @@ use PHPRegex\Parser\RegexParser;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\Attributes\WithEnv;
-use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -31,7 +30,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
-final class LaravelTargetConfigTest extends TestCase
+final class LaravelTargetConfigTest extends LaravelTestCase
 {
     /**
      * Valid from PCRE2 10.43 (variable-length lookbehind, PcreFeature::
@@ -134,7 +133,7 @@ final class LaravelTargetConfigTest extends TestCase
         // 1.x read it as "high".
         $this->expectException(InvalidRegexOptionException::class);
 
-        $this->app?->make('php-regex.analysis');
+        $this->application()->make('php-regex.analysis');
     }
 
     #[Test]
@@ -143,14 +142,14 @@ final class LaravelTargetConfigTest extends TestCase
     {
         $this->expectException(InvalidRegexOptionException::class);
 
-        $this->app?->make('php-regex.analysis');
+        $this->application()->make('php-regex.analysis');
     }
 
     #[Test]
     #[WithConfig('php-regex.redos.threshold', 'CRITICAL')]
     public function test_an_upper_case_threshold_is_read(): void
     {
-        $this->assertNotNull($this->app?->make('php-regex.analysis'));
+        $this->assertNotNull($this->application()->make('php-regex.analysis'));
     }
 
     #[Test]
@@ -183,7 +182,7 @@ final class LaravelTargetConfigTest extends TestCase
 
     private function regexService(): Regex
     {
-        $regex = $this->app?->make(Regex::class);
+        $regex = $this->application()->make(Regex::class);
         $this->assertInstanceOf(Regex::class, $regex);
 
         return $regex;
@@ -198,7 +197,7 @@ final class LaravelTargetConfigTest extends TestCase
     }
 
     /**
-     * @return array{int, array<string, mixed>}
+     * @return array{int, array{target?: array<string, mixed>, stats?: array<string, mixed>}}
      */
     private function lintJson(): array
     {
@@ -213,7 +212,7 @@ final class LaravelTargetConfigTest extends TestCase
         $json = json_decode($output, true);
         $this->assertIsArray($json, 'regex:lint did not print JSON: '.$output);
 
-        /** @var array<string, mixed> $json */
+        /** @var array{target?: array<string, mixed>, stats?: array<string, mixed>} $json */
         return [$status, $json];
     }
 }

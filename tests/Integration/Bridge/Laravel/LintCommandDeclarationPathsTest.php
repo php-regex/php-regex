@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintService;
@@ -34,7 +33,7 @@ use PHPUnit\Framework\Attributes\Test;
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
 #[WithConfig('php-regex.runtime_pcre_validation', false)]
-final class LintCommandDeclarationPathsTest extends TestCase
+final class LintCommandDeclarationPathsTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -46,7 +45,7 @@ final class LintCommandDeclarationPathsTest extends TestCase
             'app/caller.php' => "<?php\n\n\\App\\grep('/b02(/');\n\\Acme\\search('/c03(/');\n",
             'vendor/acme/search/helper.php' => "<?php\n\nnamespace Acme;\n\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\n\nfunction search(#[RegexPattern] string \$regex): void {}\n",
         ]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
         config(['php-regex.paths' => [$project.'/app']]);
 
         $status = Artisan::call('regex:lint', [
@@ -78,7 +77,7 @@ final class LintCommandDeclarationPathsTest extends TestCase
             'app/Support/helper.php' => "<?php\n\nnamespace App;\n\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\n\nfunction grep(#[RegexPattern] string \$regex): void {}\n",
             'app/caller.php' => "<?php\n\n\\App\\grep('/b02(/');\n",
         ]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
         config(['php-regex.paths' => \is_string($setting) ? $project.'/'.$setting : $setting]);
 
         $status = Artisan::call('regex:lint', [
@@ -113,7 +112,7 @@ final class LintCommandDeclarationPathsTest extends TestCase
     public function test_lint_reads_declarations_in_the_linted_paths_when_no_path_is_configured(?array $setting): void
     {
         $project = $this->makeProject(['app/caller.php' => "<?php\n"]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
         config(['php-regex.paths' => $setting]);
         $source = new class implements PatternSourceInterface {
             public ?PatternSourceContext $context = null;
@@ -135,9 +134,9 @@ final class LintCommandDeclarationPathsTest extends TestCase
                 return [];
             }
         };
-        $analysis = $this->app?->make('php-regex.analysis');
+        $analysis = $this->application()->make('php-regex.analysis');
         $this->assertInstanceOf(AnalysisService::class, $analysis);
-        $this->app?->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$source])));
+        $this->application()->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$source])));
 
         Artisan::call('regex:lint', [
             'paths' => [$project.'/app'],
@@ -148,7 +147,7 @@ final class LintCommandDeclarationPathsTest extends TestCase
         ]);
 
         $this->assertSame([$project.'/app'], $source->context?->declarationPaths);
-        $this->assertSame([$project.'/vendor'], $source->context?->vendorPaths);
+        $this->assertSame([$project.'/vendor'], $source->context->vendorPaths);
     }
 
     /**
@@ -163,7 +162,7 @@ final class LintCommandDeclarationPathsTest extends TestCase
     public function test_lint_without_any_path_reads_the_default_one(?array $setting): void
     {
         $project = $this->makeProject(['app/caller.php' => "<?php\n"]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
         config(['php-regex.paths' => $setting]);
         $source = new class implements PatternSourceInterface {
             public ?PatternSourceContext $context = null;
@@ -185,9 +184,9 @@ final class LintCommandDeclarationPathsTest extends TestCase
                 return [];
             }
         };
-        $analysis = $this->app?->make('php-regex.analysis');
+        $analysis = $this->application()->make('php-regex.analysis');
         $this->assertInstanceOf(AnalysisService::class, $analysis);
-        $this->app?->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$source])));
+        $this->application()->instance('php-regex.lint', new LintService($analysis, new PatternSourceCollection([$source])));
 
         $exitCode = Artisan::call('regex:lint', [
             '--format' => 'json',

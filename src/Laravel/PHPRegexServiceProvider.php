@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Laravel;
 
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
+use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Foundation\CachesConfiguration;
 use Illuminate\Support\ServiceProvider;
@@ -40,10 +42,13 @@ use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Toolkit\Regex;
 
 /**
  * Laravel Service Provider for the PHPRegex library.
+ *
+ * @phpstan-import-type OptionsArray from ParserOptions
  */
 final class PHPRegexServiceProvider extends ServiceProvider
 {
@@ -85,7 +90,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
     /**
      * Get the services provided by the provider.
      *
-     * @return array<class-string>
+     * @return list<string>
      */
     public function provides(): array
     {
@@ -140,17 +145,19 @@ final class PHPRegexServiceProvider extends ServiceProvider
      *
      * @internal
      *
-     * @return array<string, mixed>
+     * @return OptionsArray
      */
     public static function regexOptions(Application $app): array
     {
         /** @var array{max_pattern_length: int, max_lookbehind_length: int, redos: array{ignored_patterns: array<string>}} $config */
-        $config = $app['config']['php-regex'];
+        $config = self::config($app)->get('php-regex');
+        /** @var CacheInterface $cache */
+        $cache = $app->make('php-regex.cache');
 
         return [
             'max_pattern_length' => $config['max_pattern_length'],
             'max_lookbehind_length' => $config['max_lookbehind_length'],
-            'cache' => $app->make('php-regex.cache'),
+            'cache' => $cache,
             'redos_ignored_patterns' => $config['redos']['ignored_patterns'],
         ];
     }
@@ -172,7 +179,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
      */
     public static function extraction(Application $app): array
     {
-        $extraction = $app['config']['php-regex.extraction'];
+        $extraction = self::config($app)->get('php-regex.extraction');
         $extraction = \is_array($extraction) ? $extraction : [];
         $interop = $extraction['interop'] ?? null;
         $functions = $extraction['functions'] ?? [];
@@ -220,7 +227,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
     {
         // A cached configuration was merged when it was cached.
         if (!($this->app instanceof CachesConfiguration && $this->app->configurationIsCached())) {
-            $config = $this->app->make('config');
+            $config = self::config($this->app);
             /** @var array<string, mixed> $defaults */
             $defaults = require $this->configPath();
             $current = $config->get('php-regex', []);
@@ -233,13 +240,14 @@ final class PHPRegexServiceProvider extends ServiceProvider
     {
         $this->app->singleton('php-regex.cache', static function (Application $app): CacheInterface {
             /** @var array{cache: array{store: string|null, directory: string|null, prefix: string}} $config */
-            $config = $app['config']['php-regex'];
+            $config = self::config($app)->get('php-regex');
             $cacheConfig = $config['cache'];
 
             // Use Laravel cache store if specified
             if (null !== $cacheConfig['store'] && '' !== $cacheConfig['store']) {
-                /** @var \Illuminate\Contracts\Cache\Repository $store */
-                $store = $app['cache']->store($cacheConfig['store']);
+                /** @var CacheFactory $cache */
+                $cache = $app->make('cache');
+                $store = $cache->store($cacheConfig['store']);
 
                 return new PsrSimpleCacheAdapter($store, $cacheConfig['prefix']);
             }
@@ -290,7 +298,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
         // The application's own service: it judges for the running PHP,
         // whatever php_version / pcre_version say (they drive regex:lint).
         $this->app->singleton(Regex::class, static fn (Application $app): Regex => Regex::create(self::regexOptions($app) + [
-            'runtime_pcre_validation' => true === $app['config']['php-regex.runtime_pcre_validation'],
+            'runtime_pcre_validation' => true === self::config($app)->get('php-regex.runtime_pcre_validation'),
         ]));
 
         $this->app->alias(Regex::class, 'php-regex');
@@ -303,7 +311,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
         // artisan command.
         $this->app->singleton('php-regex.analysis', static function (Application $app): AnalysisService {
             /** @var array{redos: array{enabled: bool, threshold: mixed, ignored_patterns: array<string>}, analysis: array{warning_threshold: int}} $config */
-            $config = $app['config']['php-regex'];
+            $config = self::config($app)->get('php-regex');
             /** @var \PHPRegex\Toolkit\Regex $regex */
             $regex = $app->make(Regex::class);
             /** @var \PHPRegex\Linter\PatternExtractor $extractor */
@@ -363,5 +371,16 @@ final class PHPRegexServiceProvider extends ServiceProvider
         });
 
         $this->app->alias('php-regex.lint', LintService::class);
+    }
+
+    /**
+     * The application's config, which the container holds untyped.
+     */
+    private static function config(Application $app): Repository
+    {
+        /** @var Repository $config */
+        $config = $app->make('config');
+
+        return $config;
     }
 }

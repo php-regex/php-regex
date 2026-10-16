@@ -17,7 +17,6 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Laravel\Command\LintCommand;
-use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -25,7 +24,7 @@ use PHPUnit\Framework\Attributes\Test;
  * under the names the config gives them: in 1.x only digits, word and
  * ranges did, the snake_case ones were dropped on the way.
  */
-final class OptimizationConfigTest extends TestCase
+final class OptimizationConfigTest extends LaravelTestCase
 {
     #[Test]
     public function test_every_config_key_reaches_the_optimizer(): void
@@ -71,7 +70,7 @@ final class OptimizationConfigTest extends TestCase
      */
     private function optionsFrom(array $config): OptimizerOptions
     {
-        $command = $this->app?->make(LintCommand::class);
+        $command = $this->application()->make(LintCommand::class);
         $this->assertInstanceOf(LintCommand::class, $command);
 
         $options = (new \ReflectionClass($command))->getMethod('normalizeOptimizations')->invoke($command, $config);

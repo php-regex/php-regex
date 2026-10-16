@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
@@ -33,7 +32,7 @@ use PHPUnit\Framework\Attributes\Test;
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
 #[WithConfig('php-regex.runtime_pcre_validation', false)]
-final class ExtractionConfigTest extends TestCase
+final class ExtractionConfigTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -77,7 +76,7 @@ final class ExtractionConfigTest extends TestCase
         LintFunctionOverrides::queueClassExists(false);
 
         try {
-            $strategy = $this->app->make('php-regex.extractor.strategy');
+            $strategy = $this->application()->make('php-regex.extractor.strategy');
         } finally {
             LintFunctionOverrides::reset();
         }
@@ -125,7 +124,7 @@ final class ExtractionConfigTest extends TestCase
     public function test_an_unknown_preset_stops_the_lint(): void
     {
         $project = $this->makeProject(['app/Check.php' => "<?php\n\nNette\\Utils\\Strings::match(\$s, '/(nette/');\n"]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
         config(['php-regex.extraction' => ['interop' => ['laravel-str', 'nette-utils']]]);
 
         $status = Artisan::call('regex:lint', [
@@ -155,7 +154,7 @@ final class ExtractionConfigTest extends TestCase
     private function patterns(): array
     {
         $project = $this->makeProject(['app/Check.php' => self::CALLS]);
-        $strategy = $this->app?->make('php-regex.extractor.strategy');
+        $strategy = $this->application()->make('php-regex.extractor.strategy');
         $this->assertInstanceOf(ExtractorInterface::class, $strategy);
 
         return array_values(array_map(

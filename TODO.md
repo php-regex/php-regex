@@ -104,9 +104,7 @@ could not move after the 2.0.0 tag are done. Left, in order:
 1. Consumer shapes: `OptimizerOptionsArray` on the public `optimize()`
    entry points; the `phpRegex` neon parameter typed once and imported
    across the PHPStan bridge; the explicit `regexOptions` subsets on the
-   Symfony lint command and the Laravel provider; lift the stale
-   `src/Laravel/*` analysis exclusion (illuminate is installed in
-   `tools/phpunit/vendor`).
+   Symfony lint command and the Linter's range parsers.
 2. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
    handler-entry params, the nine unapplied Linter aliases,
    `LintDefaultsBuilder::build()`'s return shape (pays the CLI, LintArguments

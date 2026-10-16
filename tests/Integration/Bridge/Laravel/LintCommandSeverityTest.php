@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
  * the command, an Info rule does not. Without /u, [é] matches the byte
  * \xC3 on its own.
  */
-final class LintCommandSeverityTest extends TestCase
+final class LintCommandSeverityTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -58,9 +57,9 @@ final class LintCommandSeverityTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     /**

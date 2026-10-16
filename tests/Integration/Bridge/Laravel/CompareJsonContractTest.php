@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -25,7 +24,7 @@ use PHPUnit\Framework\Attributes\Test;
  * describes: every key whatever the method, null when the method does not
  * fill it, and the error envelope when the comparison cannot be made.
  */
-final class CompareJsonContractTest extends TestCase
+final class CompareJsonContractTest extends LaravelTestCase
 {
     /**
      * @param array<string, mixed> $verdict

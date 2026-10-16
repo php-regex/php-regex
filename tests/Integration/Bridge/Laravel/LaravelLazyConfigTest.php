@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
-use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
@@ -32,7 +31,7 @@ use Symfony\Component\Console\Output\StreamOutput;
  */
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
-final class LaravelLazyConfigTest extends TestCase
+final class LaravelLazyConfigTest extends LaravelTestCase
 {
     private string $sourceDir;
 

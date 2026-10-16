@@ -29,6 +29,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class RoutesCommand extends Command
 {
+    use ReadsStringInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -73,17 +75,16 @@ final class RoutesCommand extends Command
     {
         $showConstraints = (bool) $this->option('show-constraints');
         $validate = (bool) $this->option('validate');
-        $format = strtolower((string) $this->option('format'));
+        $format = strtolower($this->stringOption('format'));
 
         $routes = $this->router->getRoutes();
         $routeData = [];
         $issues = [];
 
-        /** @var Route $route */
-        foreach ($routes as $route) {
+        foreach ($routes->getRoutes() as $route) {
             $routeName = $route->getName() ?? $route->uri();
             $wheres = $route->wheres;
-            $methods = $route->methods();
+            $methods = array_values(array_filter($route->methods(), \is_string(...)));
 
             $routeInfo = [
                 'name' => $routeName,
@@ -201,21 +202,16 @@ final class RoutesCommand extends Command
 
     private function resolveAction(Route $route): string
     {
-        $action = $route->getAction();
-
-        if (isset($action['controller']) && \is_string($action['controller'])) {
-            return $action['controller'];
+        $controller = $route->getAction('controller');
+        if (\is_string($controller)) {
+            return $controller;
         }
 
-        if (isset($action['uses'])) {
-            if (\is_string($action['uses'])) {
-                return $action['uses'];
-            }
-            if ($action['uses'] instanceof \Closure) {
-                return 'Closure';
-            }
+        $uses = $route->getAction('uses');
+        if (\is_string($uses)) {
+            return $uses;
         }
 
-        return 'Unknown';
+        return $uses instanceof \Closure ? 'Closure' : 'Unknown';
     }
 }

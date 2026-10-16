@@ -59,7 +59,7 @@ final class ValidRegex implements ValidationRule
         $result = $regex->validate($value);
 
         if (!$result->isValid) {
-            $fail('The :attribute field must be a valid regular expression: '.$result->error);
+            $fail('The :attribute field must be a valid regular expression: '.($result->error ?? ''));
 
             return;
         }

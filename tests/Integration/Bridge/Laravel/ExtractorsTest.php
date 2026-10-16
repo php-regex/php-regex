@@ -21,13 +21,12 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Laravel\Facades\Regex;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
-use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Tests for Laravel pattern extractors.
  */
-final class ExtractorsTest extends TestCase
+final class ExtractorsTest extends LaravelTestCase
 {
     public function test_route_extractor_extracts_where_constraints(): void
     {
@@ -41,7 +40,7 @@ final class ExtractorsTest extends TestCase
             ->name('posts.show');
 
         /** @var Router $router */
-        $router = $this->app->make('router');
+        $router = $this->application()->make('router');
         $extractor = new RoutePatternSource($router);
 
         $context = new PatternSourceContext(
@@ -71,7 +70,7 @@ final class ExtractorsTest extends TestCase
             ->name('test.route');
 
         /** @var Router $router */
-        $router = $this->app->make('router');
+        $router = $this->application()->make('router');
         $extractor = new RoutePatternSource($router);
 
         $context = new PatternSourceContext(
@@ -103,7 +102,7 @@ final class ExtractorsTest extends TestCase
             ->name('api.items.show');
 
         /** @var Router $router */
-        $router = $this->app->make('router');
+        $router = $this->application()->make('router');
         $extractor = new RoutePatternSource($router);
 
         $context = new PatternSourceContext(

@@ -32,6 +32,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class TranspileCommand extends Command
 {
+    use ReadsStringInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -59,12 +61,12 @@ final class TranspileCommand extends Command
      */
     public function handle(): int
     {
-        $pattern = (string) $this->argument('pattern');
-        $target = strtolower((string) $this->option('target'));
-        $format = strtolower((string) $this->option('format'));
+        $pattern = $this->stringArgument('pattern');
+        $target = strtolower($this->stringOption('target'));
+        $format = strtolower($this->stringOption('format'));
         if ('json' !== $format && 'console' !== $format) {
             // As the CLI: an unknown format is a usage error, and JSON was not asked for.
-            $this->error(\sprintf('Invalid value for --format: %s. Use console or json.', (string) $this->option('format')));
+            $this->error(\sprintf('Invalid value for --format: %s. Use console or json.', $this->stringOption('format')));
 
             return self::INVALID;
         }

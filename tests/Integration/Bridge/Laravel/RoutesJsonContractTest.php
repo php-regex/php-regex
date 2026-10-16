@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,10 +25,10 @@ use PHPUnit\Framework\Attributes\Test;
  * describes: one JSON document on stdout, every key snake_case, slashes and
  * Unicode written as they are.
  */
-final class RoutesJsonContractTest extends TestCase
+final class RoutesJsonContractTest extends LaravelTestCase
 {
     /**
-     * @param array<string, bool> $options
+     * @param array<string, bool|string> $options
      */
     #[Test]
     #[DataProvider('provideRuns')]
@@ -50,7 +49,7 @@ final class RoutesJsonContractTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{options: array<string, bool>, exitCode: int}>
+     * @return iterable<string, array{options: array<string, bool|string>, exitCode: int}>
      */
     public static function provideRuns(): iterable
     {

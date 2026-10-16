@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Orchestra\Testbench\Attributes\WithEnv;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -22,7 +21,7 @@ use PHPUnit\Framework\Attributes\Test;
  * The ide default of config/php-regex.php reads one environment variable,
  * PHP_REGEX_IDE, and falls back to APP_EDITOR when it is not bound.
  */
-final class IdeEnvironmentVariableTest extends TestCase
+final class IdeEnvironmentVariableTest extends LaravelTestCase
 {
     #[Test]
     #[WithEnv('PHP_REGEX_IDE', 'vscode')]

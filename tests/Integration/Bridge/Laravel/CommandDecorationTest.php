@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,8 +25,11 @@ use Symfony\Component\Console\Output\OutputInterface;
  * --no-ansi, or piped, the highlighter's escape sequences were written
  * as they are.
  */
-final class CommandDecorationTest extends TestCase
+final class CommandDecorationTest extends LaravelTestCase
 {
+    /**
+     * @param array<string, mixed> $arguments
+     */
     #[Test]
     #[DataProvider('provideCommands')]
     public function test_an_undecorated_output_carries_no_escape_sequence(string $command, array $arguments, string $pattern): void
@@ -38,6 +40,9 @@ final class CommandDecorationTest extends TestCase
         $this->assertStringContainsString('  '.$pattern, $output);
     }
 
+    /**
+     * @param array<string, mixed> $arguments
+     */
     #[Test]
     #[DataProvider('provideCommands')]
     public function test_a_decorated_output_highlights_the_pattern(string $command, array $arguments, string $pattern): void

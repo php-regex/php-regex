@@ -29,7 +29,9 @@ use PHPUnit\Framework\TestCase;
  * instance ones alike — and each line must agree with the reflected
  * signature. Names, arities, types and defaults are compared after
  * normalization (unions order-insensitive, class names resolved against the
- * file that spells them), never as raw text.
+ * file that spells them), never as raw text. A parameter the toolkit types
+ * more precisely in its @param, an options shape or a generic array, is
+ * spelled the same way on the facade.
  */
 final class FacadeParityTest extends TestCase
 {
@@ -190,17 +192,23 @@ final class FacadeParityTest extends TestCase
     {
         $signatures = [];
         $class = new \ReflectionClass(Regex::class);
+        [$useMap, $namespace] = self::fileImports(Regex::class);
 
         foreach ($class->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
             if (Regex::class !== $method->getDeclaringClass()->getName()) {
                 continue;
             }
 
+            preg_match_all('/@param\s+(.+?)\s+\$(\w+)/', (string) $method->getDocComment(), $tags, \PREG_SET_ORDER);
+            $documented = array_column($tags, 1, 2);
+
             $params = [];
             foreach ($method->getParameters() as $parameter) {
                 $params[] = [
                     'name' => $parameter->getName(),
-                    'type' => self::normalizeType(null === $parameter->getType() ? '' : (string) $parameter->getType(), [], ''),
+                    'type' => isset($documented[$parameter->getName()])
+                        ? self::normalizeType($documented[$parameter->getName()], $useMap, $namespace)
+                        : self::normalizeType(null === $parameter->getType() ? '' : (string) $parameter->getType(), [], ''),
                     'default' => $parameter->isDefaultValueAvailable() ? self::reflectedDefault($parameter) : null,
                 ];
             }
@@ -345,9 +353,14 @@ final class FacadeParityTest extends TestCase
      */
     private static function resolveTypeName(string $name, array $useMap, string $namespace): string
     {
-        if (str_contains($name, '{')) {
-            // An array shape: canonicalize whitespace only; both sides must spell it the same way.
+        if (str_contains($name, '{') || str_starts_with($name, 'array<')) {
+            // An array shape or a generic array: canonicalize whitespace only; both sides must spell it the same way.
             return trim((string) preg_replace('/\s+/', ' ', $name));
+        }
+
+        if (\in_array($name, self::importedAliases(), true)) {
+            // A type alias, imported on each side from the class that declares it.
+            return 'alias '.$name;
         }
 
         if (str_starts_with($name, 'list<')) {
@@ -418,6 +431,23 @@ final class FacadeParityTest extends TestCase
         }
 
         return var_export($value, true);
+    }
+
+    /**
+     * The type aliases the toolkit and the facade import.
+     *
+     * @return list<string>
+     */
+    private static function importedAliases(): array
+    {
+        static $aliases = null;
+        if (null === $aliases) {
+            $docBlocks = (string) (new \ReflectionClass(Regex::class))->getDocComment().(string) (new \ReflectionClass(LaravelRegex::class))->getDocComment();
+            preg_match_all('/@phpstan-import-type\s+(\w+)\s+from\s/', $docBlocks, $imports);
+            $aliases = array_values(array_unique($imports[1]));
+        }
+
+        return $aliases;
     }
 
     /**

@@ -16,16 +16,15 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Laravel\Facades\Regex;
 use Illuminate\Support\Facades\Route;
-use Orchestra\Testbench\TestCase;
 
 /**
  * Tests for Laravel Artisan commands.
  */
-final class CommandsTest extends TestCase
+final class CommandsTest extends LaravelTestCase
 {
     public function test_explain_command_explains_pattern(): void
     {
-        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/'])
+        $this->command('regex:explain', ['pattern' => '/^[a-z]+$/'])
             ->assertSuccessful()
             ->expectsOutputToContain('Pattern Explanation')
             ->expectsOutputToContain('Pattern:')
@@ -34,27 +33,27 @@ final class CommandsTest extends TestCase
 
     public function test_explain_command_takes_the_console_and_html_formats(): void
     {
-        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'console'])
+        $this->command('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'console'])
             ->assertSuccessful()
             ->expectsOutputToContain('Explanation:');
-        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'html'])
+        $this->command('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'html'])
             ->assertSuccessful()
             ->expectsOutputToContain('Explanation:');
-        $this->artisan('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'text'])
+        $this->command('regex:explain', ['pattern' => '/^[a-z]+$/', '--format' => 'text'])
             ->assertExitCode(2)
             ->expectsOutputToContain("Invalid format 'text'. Supported formats: console, html");
     }
 
     public function test_explain_command_fails_on_invalid_pattern(): void
     {
-        $this->artisan('regex:explain', ['pattern' => '/^(unclosed/'])
+        $this->command('regex:explain', ['pattern' => '/^(unclosed/'])
             ->assertFailed()
             ->expectsOutputToContain('Invalid regex pattern');
     }
 
     public function test_compare_command_detects_equivalent_patterns(): void
     {
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/[0-9]+/',
             'pattern2' => '/\\d+/',
             '--method' => 'equivalence',
@@ -65,7 +64,7 @@ final class CommandsTest extends TestCase
 
     public function test_compare_command_detects_non_equivalent_patterns(): void
     {
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/[a-z]+/',
             'pattern2' => '/[A-Z]+/',
             '--method' => 'equivalence',
@@ -76,7 +75,7 @@ final class CommandsTest extends TestCase
 
     public function test_compare_command_shows_counterexample(): void
     {
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/[a-z]+/',
             'pattern2' => '/[A-Z]+/',
             '--method' => 'equivalence',
@@ -91,7 +90,7 @@ final class CommandsTest extends TestCase
      */
     public function test_compare_command_quotes_and_escapes_the_example(): void
     {
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/^\t$/',
             'pattern2' => '/^a$/',
             '--method' => 'subset',
@@ -99,7 +98,7 @@ final class CommandsTest extends TestCase
             ->assertFailed()
             ->expectsOutputToContain('"\t"');
 
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/^$/',
             'pattern2' => '/^a$/',
             '--method' => 'subset',
@@ -110,7 +109,7 @@ final class CommandsTest extends TestCase
 
     public function test_compare_command_json_output(): void
     {
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/[0-9]+/',
             'pattern2' => '/\\d+/',
             '--method' => 'equivalence',
@@ -122,7 +121,7 @@ final class CommandsTest extends TestCase
 
     public function test_compare_command_fails_on_invalid_pattern(): void
     {
-        $this->artisan('regex:compare', [
+        $this->command('regex:compare', [
             'pattern1' => '/^(unclosed/',
             'pattern2' => '/valid/',
         ])
@@ -132,7 +131,7 @@ final class CommandsTest extends TestCase
 
     public function test_transpile_command_transpiles_to_javascript(): void
     {
-        $this->artisan('regex:transpile', [
+        $this->command('regex:transpile', [
             'pattern' => '/^[a-z]+$/',
             '--target' => 'javascript',
         ])
@@ -143,7 +142,7 @@ final class CommandsTest extends TestCase
 
     public function test_transpile_command_json_output(): void
     {
-        $this->artisan('regex:transpile', [
+        $this->command('regex:transpile', [
             'pattern' => '/^[a-z]+$/',
             '--target' => 'python',
             '--format' => 'json',
@@ -154,7 +153,7 @@ final class CommandsTest extends TestCase
 
     public function test_transpile_command_fails_on_invalid_target(): void
     {
-        $this->artisan('regex:transpile', [
+        $this->command('regex:transpile', [
             'pattern' => '/test/',
             '--target' => 'invalid',
         ])
@@ -169,7 +168,7 @@ final class CommandsTest extends TestCase
             ->where('id', '[0-9]+')
             ->name('users.show');
 
-        $this->artisan('regex:routes', ['--show-constraints' => true])
+        $this->command('regex:routes', ['--show-constraints' => true])
             ->assertSuccessful();
     }
 
@@ -180,7 +179,7 @@ final class CommandsTest extends TestCase
             ->where('slug', '[a-z0-9-]+')
             ->name('posts.show');
 
-        $this->artisan('regex:routes', ['--validate' => true])
+        $this->command('regex:routes', ['--validate' => true])
             ->assertSuccessful();
     }
 
@@ -190,7 +189,7 @@ final class CommandsTest extends TestCase
             ->where('id', '[0-9]+')
             ->name('test.route');
 
-        $this->artisan('regex:routes', ['--format' => 'json'])
+        $this->command('regex:routes', ['--format' => 'json'])
             ->assertSuccessful()
             ->expectsOutputToContain('"routes"');
     }
@@ -206,7 +205,7 @@ final class CommandsTest extends TestCase
             preg_match('/^[a-z]+$/', 'test');
             PHP);
 
-        $this->artisan('regex:lint', [
+        $this->command('regex:lint', [
             'paths' => [$tempDir],
             '--format' => 'json',
         ])
@@ -227,7 +226,7 @@ final class CommandsTest extends TestCase
             preg_match('/^(unclosed/', 'test');
             PHP);
 
-        $this->artisan('regex:lint', [
+        $this->command('regex:lint', [
             'paths' => [$tempDir],
             '--format' => 'json',
         ])
@@ -255,7 +254,7 @@ final class CommandsTest extends TestCase
             PHP);
 
         // Should pass because vendor is excluded
-        $this->artisan('regex:lint', [
+        $this->command('regex:lint', [
             'paths' => [$tempDir],
             '--exclude' => ['vendor'],
             '--format' => 'json',
@@ -305,8 +304,8 @@ final class CommandsTest extends TestCase
      */
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 }

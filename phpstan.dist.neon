@@ -121,9 +121,6 @@ parameters:
         # Psalm reads these, invalid patterns and all
         - tests/Integration/Bridge/Psalm/Fixtures/
         - tests/Tools/validate_library.php
-        # Laravel bridge - requires illuminate/* packages which are optional
-        - src/Laravel/*
-        - tests/Integration/Bridge/Laravel/*
         # The Rector set is read by Rector, whose classes live in its own vendor
         - src/Toolkit/Resources/rector/*
 

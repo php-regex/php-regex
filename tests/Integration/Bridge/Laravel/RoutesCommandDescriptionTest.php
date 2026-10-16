@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,12 +23,12 @@ use PHPUnit\Framework\Attributes\Test;
  * constraints; it detects no conflict between routes, and its description,
  * its help and the docs no longer promise one.
  */
-final class RoutesCommandDescriptionTest extends TestCase
+final class RoutesCommandDescriptionTest extends LaravelTestCase
 {
     #[Test]
     public function test_description_and_help_say_what_the_command_does(): void
     {
-        $command = Artisan::all()['regex:routes'];
+        $command = $this->registeredCommand('regex:routes');
 
         $this->assertSame('List the routes that have a regex constraint, and validate the constraints', $command->getDescription());
         $this->assertStringContainsString('--validate', $command->getHelp());

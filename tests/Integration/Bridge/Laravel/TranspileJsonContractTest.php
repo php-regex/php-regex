@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\RunsRegexCli;
@@ -26,7 +25,7 @@ use PHPUnit\Framework\Attributes\Test;
  * prints for the same pattern and target, its errors included: the 1.x
  * {source, target, result, flags, warnings, compatible} payload is gone.
  */
-final class TranspileJsonContractTest extends TestCase
+final class TranspileJsonContractTest extends LaravelTestCase
 {
     use RunsRegexCli;
 

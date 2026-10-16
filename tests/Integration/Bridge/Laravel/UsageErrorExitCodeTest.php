@@ -16,7 +16,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
-use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -26,7 +25,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
-final class UsageErrorExitCodeTest extends TestCase
+final class UsageErrorExitCodeTest extends LaravelTestCase
 {
     /**
      * @param array<string, mixed> $parameters

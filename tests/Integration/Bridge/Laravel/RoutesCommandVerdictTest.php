@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -24,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
  * --show-constraints alone lists the constraints, and marked each one
  * valid although nothing had been checked.
  */
-final class RoutesCommandVerdictTest extends TestCase
+final class RoutesCommandVerdictTest extends LaravelTestCase
 {
     #[Test]
     public function test_show_constraints_without_validate_gives_no_verdict(): void

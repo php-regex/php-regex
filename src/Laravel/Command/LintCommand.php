@@ -49,6 +49,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class LintCommand extends Command
 {
+    use ReadsStringInput;
+
     private const FORMAT_CONSOLE = 'console';
 
     /**
@@ -112,7 +114,7 @@ final class LintCommand extends Command
         $minSavings = (int) $this->option('min-savings');
         $skipRoutes = (bool) $this->option('no-routes');
         $skipValidators = (bool) $this->option('no-validators');
-        $format = strtolower((string) $this->option('format'));
+        $format = strtolower($this->stringOption('format'));
 
         if (!$this->formatterRegistry->has($format)) {
             $this->error(\sprintf(

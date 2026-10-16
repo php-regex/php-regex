@@ -18,7 +18,6 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -32,7 +31,7 @@ use PHPUnit\Framework\Attributes\Test;
  * file is: it is set with the application's configuration, which every
  * Testbench release from 8 does before it registers the providers.
  */
-final class PublishedConfigTest extends TestCase
+final class PublishedConfigTest extends LaravelTestCase
 {
     private const PUBLISHED = [
         'max_pattern_length' => 1000,
@@ -91,9 +90,9 @@ final class PublishedConfigTest extends TestCase
     #[Test]
     public function test_the_services_resolve_from_a_partial_config(): void
     {
-        $this->assertInstanceOf(Regex::class, $this->app?->make(Regex::class));
-        $this->assertInstanceOf(AnalysisService::class, $this->app?->make('php-regex.analysis'));
-        $this->assertInstanceOf(LintService::class, $this->app?->make('php-regex.lint'));
+        $this->assertInstanceOf(Regex::class, $this->application()->make(Regex::class));
+        $this->assertInstanceOf(AnalysisService::class, $this->application()->make('php-regex.analysis'));
+        $this->assertInstanceOf(LintService::class, $this->application()->make('php-regex.lint'));
     }
 
     #[Test]
@@ -148,6 +147,6 @@ final class PublishedConfigTest extends TestCase
     {
         parent::resolveApplicationConfiguration($app);
 
-        $app->make('config')->set('php-regex', self::PUBLISHED);
+        self::configOf($app)->set('php-regex', self::PUBLISHED);
     }
 }

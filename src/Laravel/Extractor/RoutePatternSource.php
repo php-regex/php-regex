@@ -48,12 +48,10 @@ final class RoutePatternSource implements PatternSourceInterface
         $routes = $this->router->getRoutes();
         $lineCounter = -1;
 
-        /** @var Route $route */
-        foreach ($routes as $route) {
+        foreach ($routes->getRoutes() as $route) {
             $routeName = $route->getName() ?? $route->uri();
             $wheres = $route->wheres;
-            $action = $route->getAction();
-            $controller = $this->resolveControllerInfo($action);
+            $controller = $this->resolveControllerInfo($route);
 
             foreach ($wheres as $parameter => $pattern) {
                 if (!\is_string($pattern) || '' === $pattern) {
@@ -65,7 +63,7 @@ final class RoutePatternSource implements PatternSourceInterface
 
                 $patterns[] = new PatternOccurrence(
                     $normalized,
-                    $this->resolveRouteFile($action),
+                    $this->resolveRouteFile($route),
                     $lineCounter--,
                     'route:'.$routeName.':'.$parameter,
                     $pattern,
@@ -79,41 +77,31 @@ final class RoutePatternSource implements PatternSourceInterface
 
     /**
      * Resolve controller information from route action.
-     *
-     * @param array<string, mixed> $action
      */
-    private function resolveControllerInfo(array $action): ?string
+    private function resolveControllerInfo(Route $route): ?string
     {
-        if (isset($action['controller'])) {
-            $controller = $action['controller'];
-            if (\is_string($controller)) {
-                return $controller;
-            }
+        $controller = $route->getAction('controller');
+        if (\is_string($controller)) {
+            return $controller;
         }
 
-        if (isset($action['uses'])) {
-            $uses = $action['uses'];
-            if (\is_string($uses)) {
-                return $uses;
-            }
-            if ($uses instanceof \Closure) {
-                return 'Closure';
-            }
+        $uses = $route->getAction('uses');
+        if (\is_string($uses)) {
+            return $uses;
         }
 
-        return null;
+        return $uses instanceof \Closure ? 'Closure' : null;
     }
 
     /**
      * Resolve the file where the route is defined.
-     *
-     * @param array<string, mixed> $action
      */
-    private function resolveRouteFile(array $action): string
+    private function resolveRouteFile(Route $route): string
     {
         // Try to get controller file
-        if (isset($action['controller']) && \is_string($action['controller'])) {
-            $controller = explode('@', $action['controller'])[0];
+        $action = $route->getAction('controller');
+        if (\is_string($action)) {
+            $controller = explode('@', $action)[0];
             if (class_exists($controller)) {
                 try {
                     $reflection = new \ReflectionClass($controller);

@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\Facades\Regex;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -32,7 +31,7 @@ use PHPUnit\Framework\Attributes\Test;
 /**
  * Tests for the Laravel Regex Facade.
  */
-final class FacadeTest extends TestCase
+final class FacadeTest extends LaravelTestCase
 {
     public function test_parse_returns_regex_node(): void
     {
@@ -246,8 +245,8 @@ final class FacadeTest extends TestCase
      */
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 }

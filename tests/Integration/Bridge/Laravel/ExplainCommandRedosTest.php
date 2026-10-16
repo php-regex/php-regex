@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -24,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
  * The security warning of "regex:explain" names the verdict as every other
  * ReDoS surface, and shows the attack.
  */
-final class ExplainCommandRedosTest extends TestCase
+final class ExplainCommandRedosTest extends LaravelTestCase
 {
     #[Test]
     public function test_explain_prints_the_pattern_and_the_vulnerable_part_literally(): void
@@ -141,8 +140,8 @@ final class ExplainCommandRedosTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 }

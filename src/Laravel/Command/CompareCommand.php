@@ -35,6 +35,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class CompareCommand extends Command
 {
+    use ReadsStringInput;
+
     /**
      * The name and signature of the console command.
      *
@@ -65,12 +67,12 @@ final class CompareCommand extends Command
      */
     public function handle(): int
     {
-        $pattern1 = (string) $this->argument('pattern1');
-        $pattern2 = (string) $this->argument('pattern2');
+        $pattern1 = $this->stringArgument('pattern1');
+        $pattern2 = $this->stringArgument('pattern2');
         $minimizer = strtolower($this->optionOrConfig('minimizer', 'minimization_algorithm', 'hopcroft'));
         $determinizer = strtolower($this->optionOrConfig('determinizer', 'determinization_algorithm', 'subset-indexed'));
-        $method = strtolower((string) $this->option('method'));
-        $format = strtolower((string) $this->option('format'));
+        $method = strtolower($this->stringOption('method'));
+        $format = strtolower($this->stringOption('format'));
 
         $json = 'json' === $format;
 

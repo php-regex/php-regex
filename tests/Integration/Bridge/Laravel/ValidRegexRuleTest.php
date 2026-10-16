@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Contracts\Validation\ValidationRule;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Laravel\Rules\ValidRegex;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -28,7 +27,7 @@ use PHPUnit\Framework\Attributes\Test;
  * application's Regex service and its limits. The ReDoS check is off unless
  * asked for, and then rejects from the threshold up.
  */
-final class ValidRegexRuleTest extends TestCase
+final class ValidRegexRuleTest extends LaravelTestCase
 {
     /**
      * @return iterable<string, array{value: string}>
@@ -65,8 +64,8 @@ final class ValidRegexRuleTest extends TestCase
     #[Test]
     public function test_the_rule_judges_with_the_application_service(): void
     {
-        $this->app['config']->set('php-regex.max_pattern_length', 5);
-        $this->app->forgetInstance(Regex::class);
+        self::configOf($this->application())->set('php-regex.max_pattern_length', 5);
+        $this->application()->forgetInstance(Regex::class);
 
         $this->assertSame(
             ['The pattern field must be a valid regular expression: Regex pattern exceeds maximum length of 5 characters.'],
@@ -167,9 +166,13 @@ final class ValidRegexRuleTest extends TestCase
     private function errors(mixed $value, ValidationRule|array $rules): array
     {
         /** @var \Illuminate\Validation\Factory $factory */
-        $factory = $this->app->make('validator');
+        $factory = $this->application()->make('validator');
         $validator = $factory->make(['pattern' => $value], ['pattern' => \is_array($rules) ? $rules : [$rules]]);
 
-        return $validator->errors()->get('pattern');
+        $messages = $validator->errors()->get('pattern');
+        $strings = array_values(array_filter($messages, \is_string(...)));
+        $this->assertSame($strings, $messages, 'Every message of the attribute is a string.');
+
+        return $strings;
     }
 }

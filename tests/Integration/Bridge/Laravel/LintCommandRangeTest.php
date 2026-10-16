@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -30,7 +29,7 @@ use PHPUnit\Framework\Attributes\Test;
  */
 #[WithConfig('php-regex.cache.directory', null)]
 #[WithConfig('php-regex.cache.store', null)]
-final class LintCommandRangeTest extends TestCase
+final class LintCommandRangeTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -85,7 +84,7 @@ final class LintCommandRangeTest extends TestCase
     private function lintJson(): array
     {
         $project = $this->makeProject(['composer.json' => self::COMPOSER, 'app/a.php' => self::KEEP_IN_LOOKBEHIND]);
-        $this->app?->setBasePath($project);
+        $this->application()->setBasePath($project);
 
         $status = Artisan::call('regex:lint', [
             'paths' => [$project.'/app'],

@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternOccurrence;
@@ -30,7 +29,7 @@ use PHPUnit\Framework\Attributes\Test;
  * are found. When the extractor cannot read a file, regex:lint says so for
  * that file and fails, instead of linting the rest as if it were empty.
  */
-final class ValidationRuleExtractionFailureTest extends TestCase
+final class ValidationRuleExtractionFailureTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -208,6 +207,7 @@ final class ValidationRuleExtractionFailureTest extends TestCase
 
         $this->assertSame(1, $code, $output);
         $document = new \DOMDocument();
+        $this->assertNotSame('', $output);
         $this->assertTrue($document->loadXML($output), $output);
         $errors = 0;
         $sources = [];
@@ -273,11 +273,12 @@ final class ValidationRuleExtractionFailureTest extends TestCase
 
         $this->assertSame([1, 1], [$result['line'] ?? null, $result['column'] ?? null], $output);
         $this->assertIsArray($result['issues'] ?? null);
-        $this->assertSame(
-            [['error', 1, 'regex.lint.source.unreadable']],
-            array_map(static fn (array $issue): array => [$issue['severity'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null], $result['issues']),
-            $output,
-        );
+        $issues = [];
+        foreach ($result['issues'] as $issue) {
+            $this->assertIsArray($issue);
+            $issues[] = [$issue['severity'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null];
+        }
+        $this->assertSame([['error', 1, 'regex.lint.source.unreadable']], $issues, $output);
     }
 
     /**
@@ -290,9 +291,9 @@ final class ValidationRuleExtractionFailureTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     /**

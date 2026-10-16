@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
  * "analysis.complexity" turns the report on, as `regex lint` does under
  * "checks.complexity"; off, the threshold alone reports nothing.
  */
-final class LintCommandComplexityTest extends TestCase
+final class LintCommandComplexityTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -71,16 +70,16 @@ final class LintCommandComplexityTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     private function configure(bool $complexity, int $threshold): void
     {
-        $config = $this->app?->make('config');
-        $config?->set('php-regex.analysis.complexity', $complexity);
-        $config?->set('php-regex.analysis.warning_threshold', $threshold);
+        $config = self::configOf($this->application());
+        $config->set('php-regex.analysis.complexity', $complexity);
+        $config->set('php-regex.analysis.warning_threshold', $threshold);
     }
 
     /**
@@ -108,7 +107,9 @@ final class LintCommandComplexityTest extends TestCase
             $this->assertIsArray($result);
             foreach ((array) ($result['issues'] ?? []) as $issue) {
                 $this->assertIsArray($issue);
-                $ids[] = (string) ($issue['issue_id'] ?? '');
+                $id = $issue['issue_id'] ?? '';
+                $this->assertIsString($id);
+                $ids[] = $id;
             }
         }
 

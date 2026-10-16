@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
-use Orchestra\Testbench\TestCase;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,7 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
  * analysis with ReDoS on, then sent a lint request that never asked for it,
  * and the issues were dropped.
  */
-final class LintCommandRedosTest extends TestCase
+final class LintCommandRedosTest extends LaravelTestCase
 {
     use TemporaryProject;
 
@@ -33,7 +32,7 @@ final class LintCommandRedosTest extends TestCase
     #[Test]
     public function test_lint_with_redos_enabled_reports_the_redos_issue(): void
     {
-        $this->app?->make('config')->set('php-regex.redos.enabled', true);
+        self::configOf($this->application())->set('php-regex.redos.enabled', true);
 
         $this->assertContains('regex.lint.redos', $this->lintIssueIds());
     }
@@ -41,7 +40,7 @@ final class LintCommandRedosTest extends TestCase
     #[Test]
     public function test_lint_with_redos_disabled_reports_no_redos_issue(): void
     {
-        $this->app?->make('config')->set('php-regex.redos.enabled', false);
+        self::configOf($this->application())->set('php-regex.redos.enabled', false);
 
         $this->assertNotContains('regex.lint.redos', $this->lintIssueIds());
     }
@@ -56,9 +55,9 @@ final class LintCommandRedosTest extends TestCase
 
     protected function defineEnvironment($app): void
     {
-        $app['config']->set('php-regex.cache.directory', null);
-        $app['config']->set('php-regex.cache.store', null);
-        $app['config']->set('php-regex.runtime_pcre_validation', false);
+        self::configOf($app)->set('php-regex.cache.directory', null);
+        self::configOf($app)->set('php-regex.cache.store', null);
+        self::configOf($app)->set('php-regex.runtime_pcre_validation', false);
     }
 
     /**
@@ -86,7 +85,9 @@ final class LintCommandRedosTest extends TestCase
             $this->assertIsArray($result);
             foreach ((array) ($result['issues'] ?? []) as $issue) {
                 $this->assertIsArray($issue);
-                $ids[] = (string) ($issue['issue_id'] ?? '');
+                $id = $issue['issue_id'] ?? '';
+                $this->assertIsString($id);
+                $ids[] = $id;
             }
         }
 
