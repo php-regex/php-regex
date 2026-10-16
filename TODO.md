@@ -33,22 +33,6 @@ The code is ready; what is left is the maintainer's, in this order.
    2.0 `regex.phar`, which `self-update` and `releases/latest` serve.
 5. `bin/bump --next 2.0.1`.
 
-## Development tooling defects
-
-Both small; neither blocks the 2.0.0 tag, both make `task` and `composer`
-disagree about what the checks are.
-
-1. **`coverage` declares the wrong success marker.** In `taskfile.dist.yaml`,
-   the `coverage` task touches `.task/coverage.success` but its `generates:`
-   lists `.task/phpbench.success` — the marker of another task — so the
-   checksum cache answers for a task it never ran. Fix the declaration.
-2. **deptrac sits outside the taskfile.** `composer lint` ends with
-   `@deptrac` and `tools/deptrac/` is configured, but `task install` and
-   `task update` never install that tool and `task lint` never runs it;
-   only the CI `deptrac` job installs it today. A contributor who ran
-   `task install` alone cannot run `composer deptrac`, and `task lint` no
-   longer equals `composer lint`. Add it to the three tasks.
-
 ## Phar provenance: the GitHub side
 
 `.github/workflows/phar.yml` builds, attests and attaches the phar on a

@@ -159,8 +159,19 @@ tasks:
       - src/**/*.php
       - tests/**/*.php
     generates:
-      - coverage
-      - .task/phpbench.success
+      - coverage/index.html
+      - .task/coverage.success
+    method: checksum
+
+  deptrac:
+    cmds:
+      - cmd: tools/deptrac/vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress {{.CLI_ARGS}}
+      - cmd: touch .task/deptrac.success
+    sources:
+      - deptrac.yaml
+      - src/**/*.php
+    generates:
+      - .task/deptrac.success
     method: checksum
 
   phar:
@@ -177,6 +188,7 @@ tasks:
       - task: phplint
       - task: phpunit
       - task: phpstan
+      - task: deptrac
 
   install:
     cmds:
@@ -188,6 +200,7 @@ tasks:
       - composer install -d tools/rector
       - composer install -d tools/infection
       - composer install -d tools/phpunit
+      - composer install -d tools/deptrac
 
       - task: link
     sources:
@@ -232,6 +245,10 @@ tasks:
       - composer update -W -d tools/phpunit
       - composer outdated --direct -d tools/phpunit
       - composer audit -d tools/phpunit || true
+
+      - composer update -W -d tools/deptrac
+      - composer outdated --direct -d tools/deptrac
+      - composer audit -d tools/deptrac || true
 
       - task: link
 
