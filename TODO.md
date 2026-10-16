@@ -227,6 +227,17 @@ Left:
   re-caches social cards on every deploy; decide whether the manual `?v=`
   ratchet fits articles too.
 - An articles pager (previous / next) once a second article exists.
+- Publishing the four drafts: flip `published`, add each article's line
+  under `## Articles` in `docs/llms.txt`, and give each `/blog/<slug>` its
+  entry in the sitemap navigation-coverage check, with the blog-index
+  justification.
+- `head.html` writes `page.description` into the description, og and
+  Twitter meta tags with `strip_html` only: a `"` in an article
+  description cuts the attribute (the JSON-LD escapes it). Add `escape`,
+  or forbid double quotes in descriptions.
+- The pre-release install include renders its own `## Installation`
+  heading, which splits an article's closing library section; an inline
+  variant for articles would read better.
 
 ## Checked and refused (do not re-litigate)
 
