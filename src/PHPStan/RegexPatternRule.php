@@ -102,20 +102,20 @@ final class RegexPatternRule implements Rule
     private ?TrivialMatchClassifier $trivialMatches = null;
 
     /**
-     * @param array<string, mixed> $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
-     *                                              "interop" (the presets read, every one when null) and
-     *                                              "checks" ("lint", "redos", "optimizations"),
-     *                                              every key optional
-     * @param PhpVersion|null      $phpVersion      the PHP version PHPStan analyses the project for: patterns are
-     *                                              judged for it, with the PCRE2 it bundles, unless "phpVersion"
-     *                                              is "runtime" or names a version, and "pcreVersion" a release
-     * @param mixed                $phpVersionRange PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
-     *                                              also validated at each later PHP up to max where a rule of the
-     *                                              library changes, unless "phpVersion" names one version
+     * @param array<string, mixed>               $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
+     *                                                            "interop" (the presets read, every one when null) and
+     *                                                            "checks" ("lint", "redos", "optimizations"),
+     *                                                            every key optional
+     * @param PhpVersion|null                    $phpVersion      the PHP version PHPStan analyses the project for: patterns are
+     *                                                            judged for it, with the PCRE2 it bundles, unless "phpVersion"
+     *                                                            is "runtime" or names a version, and "pcreVersion" a release
+     * @param int|array{min: int, max: int}|null $phpVersionRange PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
+     *                                                            also validated at each later PHP up to max where a rule of the
+     *                                                            library changes, unless "phpVersion" names one version
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      */
-    public function __construct(array $config = [], ?PhpVersion $phpVersion = null, mixed $phpVersionRange = null)
+    public function __construct(array $config = [], ?PhpVersion $phpVersion = null, int|array|null $phpVersionRange = null)
     {
         $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange);
         $interop = $config['interop'] ?? null;

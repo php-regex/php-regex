@@ -62,9 +62,9 @@ final class RegexPatternArgumentRule implements Rule
     private readonly PatternChecker $checker;
 
     /**
-     * @param array<string, mixed> $config          the "phpRegex" parameter, as RegexPatternRule reads it
-     * @param PhpVersion|null      $phpVersion      the PHP version PHPStan analyses the project for
-     * @param mixed                $phpVersionRange PHPStan's "phpVersion" parameter
+     * @param array<string, mixed>               $config          the "phpRegex" parameter, as RegexPatternRule reads it
+     * @param PhpVersion|null                    $phpVersion      the PHP version PHPStan analyses the project for
+     * @param int|array{min: int, max: int}|null $phpVersionRange PHPStan's "phpVersion" parameter
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      */
@@ -72,7 +72,7 @@ final class RegexPatternArgumentRule implements Rule
         private readonly ReflectionProvider $reflectionProvider,
         array $config = [],
         ?PhpVersion $phpVersion = null,
-        mixed $phpVersionRange = null,
+        int|array|null $phpVersionRange = null,
     ) {
         $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange);
     }

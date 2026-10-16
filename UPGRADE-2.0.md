@@ -846,6 +846,23 @@ others returns them, in pattern order. Custom visitors should extend
 `AbstractNodeVisitor`, never implement `NodeVisitorInterface` directly: a
 new kind of node adds a method to the interface.
 
+#### `accept()` has no native return type on any node
+
+`CalloutNode::accept()` and `DefineNode::accept()` declared a native `mixed`
+return type; like every other node, they now declare none and return what
+the visitor gives, the `@return T` of `NodeInterface::accept()`. Code that
+reads the return type through reflection gets `null` for every node.
+
+#### The PHPStan rules take PHPStan's `phpVersion` as it is
+
+The last constructor parameter of `RegexPatternRule` and
+`RegexPatternArgumentRule`, `$phpVersionRange`, is typed
+`int|array|null`, an `int|array{min: int, max: int}|null` in its
+docblock, where it took `mixed`: PHPStan's `phpVersion` parameter, one
+version id or a `{min, max}` range. A rule built by hand with anything else
+throws `TypeError` from a file that declares `strict_types` (elsewhere PHP's
+own coercion applies), where the value was silently ignored.
+
 #### Sequences and alternations hold lists
 
 `SequenceNode::$children` and `AlternationNode::$alternatives` are

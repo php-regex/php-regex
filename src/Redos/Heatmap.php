@@ -28,7 +28,7 @@ final class Heatmap
     private const GRAY = "\033[90m";
 
     /**
-     * @param array<Hotspot|mixed> $hotspots
+     * @param array<Hotspot> $hotspots
      */
     public function highlight(string $body, array $hotspots, bool $ansi = true): string
     {
@@ -47,10 +47,6 @@ final class Heatmap
 
         $levels = array_fill(0, $length, RedosSeverity::Safe);
         foreach ($hotspots as $hotspot) {
-            if (!$hotspot instanceof Hotspot) {
-                continue;
-            }
-
             $start = max(0, min($length, $hotspot->start));
             $end = max($start, min($length, $hotspot->end));
             if ($start >= $end) {

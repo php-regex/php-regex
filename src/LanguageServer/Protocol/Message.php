@@ -23,16 +23,16 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 final class Message
 {
     /**
+     * A response a client sends is told apart by its id without a method:
+     * the server never reads its result or error.
+     *
      * @param array<string, mixed>|null $params
-     * @param array<string, mixed>|null $error
      */
     public function __construct(
         public readonly string $jsonrpc,
         public readonly ?string $method = null,
         public readonly int|string|null $id = null,
         public readonly ?array $params = null,
-        public readonly mixed $result = null,
-        public readonly ?array $error = null,
     ) {}
 
     /**
@@ -169,16 +169,12 @@ final class Message
 
         /** @var array<string, mixed>|null $params */
         $params = \is_array($params) ? $params : null;
-        /** @var array<string, mixed>|null $error */
-        $error = \is_array($data['error'] ?? null) ? $data['error'] : null;
 
         return new self(
             jsonrpc: '2.0',
             method: \is_string($method) ? $method : null,
             id: $usableId,
             params: $params,
-            result: $data['result'] ?? null,
-            error: $error,
         );
     }
 }

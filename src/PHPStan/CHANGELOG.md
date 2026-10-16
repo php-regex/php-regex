@@ -9,6 +9,9 @@ CHANGELOG
  * PHPStan's `phpVersion: {min, max}` is read whole: each later PHP up to
    `max` where a rule changes validates the patterns too, reported as
    `regex.invalidForTarget`.
+ * The `$phpVersionRange` constructor parameter of `RegexPatternRule` and
+   `RegexPatternArgumentRule` is typed `int|array|null`, as PHPStan's
+   `phpVersion` parameter is, where it took `mixed`.
  * `RegexPatternArgumentRule` checks the constant pattern passed to a
    parameter marked `#[PHPRegex\Parser\Attribute\RegexPattern]` or
    `#[JetBrains\PhpStorm\Language('RegExp')]`, in calls to functions, static

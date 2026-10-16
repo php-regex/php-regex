@@ -72,13 +72,33 @@ final class ResponseTest extends TestCase
         $reflection = new \ReflectionMethod(Response::class, 'error');
         $parameters = $reflection->getParameters();
 
-        $this->assertCount(4, $parameters);
+        $this->assertCount(3, $parameters);
         $this->assertSame('id', $parameters[0]->getName());
         $this->assertSame('code', $parameters[1]->getName());
         $this->assertSame('message', $parameters[2]->getName());
-        $this->assertSame('data', $parameters[3]->getName());
-        $this->assertTrue($parameters[3]->isDefaultValueAvailable());
-        $this->assertNull($parameters[3]->getDefaultValue());
+    }
+
+    #[Test]
+    public function test_an_error_holds_its_code_and_message_only(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            Response::error(7, -32601, 'Method not found: foo');
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $body = substr($written, (int) strpos($written, "\r\n\r\n") + 4);
+
+        $this->assertSame(
+            ['jsonrpc' => '2.0', 'id' => 7, 'error' => ['code' => -32601, 'message' => 'Method not found: foo']],
+            json_decode($body, true, 512, \JSON_THROW_ON_ERROR),
+        );
     }
 
     #[Test]

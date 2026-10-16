@@ -28,7 +28,15 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->showOptimizations);
         $this->assertTrue($config->showHints);
         $this->assertTrue($config->groupByFile);
-        $this->assertTrue($config->sortBySeverity);
+    }
+
+    /**
+     * Results are ordered by file and line where they are collected: no
+     * formatter sorts them again, so no setting asks one to.
+     */
+    public function test_no_setting_orders_the_results_by_severity(): void
+    {
+        $this->assertFalse(property_exists(OutputConfiguration::class, 'sortBySeverity'));
     }
 
     public function test_construct_with_custom_values(): void
@@ -40,7 +48,6 @@ final class OutputConfigurationTest extends TestCase
             showOptimizations: false,
             showHints: false,
             groupByFile: false,
-            sortBySeverity: false,
         );
 
         $this->assertSame(OutputConfiguration::VERBOSITY_VERBOSE, $config->verbosity);
@@ -49,7 +56,6 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->showOptimizations);
         $this->assertFalse($config->showHints);
         $this->assertFalse($config->groupByFile);
-        $this->assertFalse($config->sortBySeverity);
     }
 
     public function test_quiet_factory_method(): void
@@ -62,7 +68,6 @@ final class OutputConfigurationTest extends TestCase
         $this->assertFalse($config->showOptimizations);
         $this->assertFalse($config->showHints);
         $this->assertTrue($config->groupByFile);
-        $this->assertTrue($config->sortBySeverity);
     }
 
     public function test_verbose_factory_method(): void
@@ -75,7 +80,6 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->showOptimizations);
         $this->assertTrue($config->showHints);
         $this->assertTrue($config->groupByFile);
-        $this->assertTrue($config->sortBySeverity);
     }
 
     public function test_debug_factory_method(): void
@@ -88,7 +92,6 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->showOptimizations);
         $this->assertTrue($config->showHints);
         $this->assertTrue($config->groupByFile);
-        $this->assertTrue($config->sortBySeverity);
     }
 
     public function test_should_show_hints_with_normal_verbosity_and_hints_enabled(): void

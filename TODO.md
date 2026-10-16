@@ -98,38 +98,27 @@ Parked, too large for upstream review: local branches
 
 Audited 2026-10-15: of the 214 `mixed` occurrences in `src/`, ~71 are real
 narrowing; the rest are honest boundaries that stay (decode fronts, host
-contracts, validator inputs, protocol slots). Four units, in order:
+contracts, validator inputs, protocol slots). The native signatures that
+could not move after the 2.0.0 tag are done. Left, in order:
 
-1. Before the 2.0.0 tag — the native signatures that cannot move after it:
-   drop the native `: mixed` on `CalloutNode::accept()` and
-   `DefineNode::accept()` (every other node class is untyped and inherits
-   `@return T` from the interface); narrow `$phpVersionRange` from `mixed`
-   to `int|array|null` on the four constructors (`PatternChecker` ×2,
-   `RegexPatternRule`, `RegexPatternArgumentRule`); the Lexer matches
-   docblocks at `Lexer.php:1230/1280/1753` become
-   `array<int|string, string|null>` (what `LibraryPcre`'s `@param-out`
-   already guarantees) plus the dead inline ignore at `:1764` goes;
-   `Heatmap.php:31` becomes `array<Hotspot>`; the dead public surface
-   (`Message::$result`/`$error`, `Response::error()`'s `$data`,
-   `sortResults`) is removed once verified unreferenced.
-2. Consumer shapes: `OptimizerOptionsArray` on the public `optimize()`
+1. Consumer shapes: `OptimizerOptionsArray` on the public `optimize()`
    entry points; the `phpRegex` neon parameter typed once and imported
    across the PHPStan bridge; the explicit `regexOptions` subsets on the
    Symfony lint command and the Laravel provider; lift the stale
    `src/Laravel/*` analysis exclusion (illuminate is installed in
    `tools/phpunit/vendor`).
-3. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
+2. Internal docblock sweep (post-tag safe): LanguageServer diagnostics and
    handler-entry params, the nine unapplied Linter aliases,
    `LintDefaultsBuilder::build()`'s return shape (pays the CLI, LintArguments
    and LSP lines at once), the Symfony JSON report and Laravel compare
    literals.
-4. Deferred unless wanted: JsonDumper leaf shapes transcribed from
+3. Deferred unless wanted: JsonDumper leaf shapes transcribed from
    `ast.schema.json`.
 
 Never type the validator inputs (`ParserOptions::fromArray` and friends):
 their runtime checks and rotten-data tolerance are the contract. A
 `noNewMixed` rule in the shipped plugin (flag off by default, baseline
-frozen by reason code, counting meta-test) lands with unit 2.
+frozen by reason code, counting meta-test) lands with unit 1.
 
 ## PHP 8.6 closeout and 8.7 canary
 

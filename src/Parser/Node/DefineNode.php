@@ -28,7 +28,7 @@ final class DefineNode extends AbstractNode
         parent::__construct($startPosition, $endPosition);
     }
 
-    public function accept(NodeVisitorInterface $visitor): mixed
+    public function accept(NodeVisitorInterface $visitor)
     {
         return $visitor->visitDefine($this);
     }

@@ -67,7 +67,7 @@ final readonly class CalloutNode extends AbstractNode
         parent::__construct($startPosition, $endPosition);
     }
 
-    public function accept(NodeVisitorInterface $visitor): mixed
+    public function accept(NodeVisitorInterface $visitor)
     {
         return $visitor->visitCallout($this);
     }
@@ -77,7 +77,7 @@ final readonly class CalloutNode extends AbstractNode
 ### Checklist for New Nodes
 
 - [ ] Extend `AbstractNode`
-- [ ] Implement `NodeInterface` (via `accept()`)
+- [ ] Implement `NodeInterface` (via `accept()`, without a native return type: the interface's `@return T` gives the visitor's)
 - [ ] Add public readonly properties
 - [ ] Call `parent::__construct($startPosition, $endPosition)`
 

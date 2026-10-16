@@ -65,21 +65,6 @@ final class RedosHeatmapTest extends TestCase
         $this->assertStringContainsString("\033[31m", $output);
     }
 
-    public function test_highlight_skips_non_redos_hotspot(): void
-    {
-        $heatmap = new Heatmap();
-        $hotspots = [
-            'invalid',
-            new Hotspot(0, 1, RedosSeverity::Low, 'a', null),
-        ];
-
-        $output = $heatmap->highlight('abc', $hotspots, true);
-
-        $this->assertStringContainsString('a', $output);
-        $this->assertStringContainsString('b', $output);
-        $this->assertStringContainsString('c', $output);
-    }
-
     public function test_color_for_level_default(): void
     {
         $heatmap = new Heatmap();

@@ -32,7 +32,10 @@ final class RegexPatternRuleVersionRangeTest extends RuleTestCase
 {
     private const KEEP_IN_LOOKBEHIND = '/(?<=a\Kb)c/';
 
-    private mixed $range = null;
+    /**
+     * @var int|array{min: int, max: int}|null
+     */
+    private int|array|null $range = null;
 
     /**
      * @var array<string, mixed>

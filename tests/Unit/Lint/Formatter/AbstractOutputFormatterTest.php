@@ -269,84 +269,6 @@ final class AbstractOutputFormatterTest extends TestCase
         ];
         $this->assertSame($expected, $result);
     }
-
-    public function test_sort_results_when_sort_by_severity_disabled(): void
-    {
-        $config = new OutputConfiguration(sortBySeverity: false);
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $results = [
-            ['type' => 'info'],
-            ['type' => 'error'],
-            ['type' => 'warning'],
-        ];
-
-        $result = $formatter->sortResults($results);
-
-        $this->assertSame($results, $result);
-    }
-
-    public function test_sort_results_when_sort_by_severity_enabled(): void
-    {
-        $config = new OutputConfiguration(sortBySeverity: true);
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $results = [
-            ['type' => 'info'],
-            ['type' => 'warning'],
-            ['type' => 'error'],
-        ];
-
-        $result = $formatter->sortResults($results);
-
-        $expected = [
-            ['type' => 'error'],
-            ['type' => 'warning'],
-            ['type' => 'info'],
-        ];
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_sort_results_with_unknown_severity(): void
-    {
-        $config = new OutputConfiguration(sortBySeverity: true);
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $results = [
-            ['type' => 'unknown'],
-            ['type' => 'error'],
-            [], // No type
-        ];
-
-        $result = $formatter->sortResults($results);
-
-        $expected = [
-            ['type' => 'error'],
-            ['type' => 'unknown'],
-            [], // No type (defaults to 'info' priority)
-        ];
-        $this->assertSame($expected, $result);
-    }
-
-    public function test_sort_results_with_mixed_types(): void
-    {
-        $config = new OutputConfiguration(sortBySeverity: true);
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $results = [
-            ['type' => 'warning', 'non_string_type' => 123],
-            ['type' => 'error'],
-            ['type' => null],
-            ['type' => 'info'],
-        ];
-
-        $result = $formatter->sortResults($results);
-
-        // Error first, then warning, then others (info priority)
-        $this->assertSame('error', $result[0]['type']);
-        $this->assertSame('warning', $result[1]['type']);
-        // The rest should be at info priority level
-    }
 }
 
 /**
@@ -387,10 +309,5 @@ final class TestableAbstractOutputFormatter extends AbstractOutputFormatter
     public function groupResults(array $results): array
     {
         return parent::groupResults($results);
-    }
-
-    public function sortResults(array $results): array
-    {
-        return parent::sortResults($results);
     }
 }

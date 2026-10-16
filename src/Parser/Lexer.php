@@ -1234,7 +1234,7 @@ final class Lexer
     }
 
     /**
-     * @return array{0: string, 1: int, 2: array<int|string, mixed>}
+     * @return array{0: string, 1: int, 2: array<int|string, string|null>}
      */
     private function matchAtPosition(string $regex): array
     {
@@ -1283,9 +1283,9 @@ final class Lexer
     }
 
     /**
-     * @param array<string>            $tokenMap
-     * @param array<int|string, mixed> $matches
-     * @param list<Token>              $currentTokens
+     * @param array<string>                  $tokenMap
+     * @param array<int|string, string|null> $matches
+     * @param list<Token>                    $currentTokens
      */
     private function createToken(
         array $tokenMap,
@@ -1757,7 +1757,7 @@ final class Lexer
     }
 
     /**
-     * @param array<int|string, mixed> $matches
+     * @param array<int|string, string|null> $matches
      */
     private function extractTokenValue(TokenType $type, string $matchedValue, array $matches): string
     {

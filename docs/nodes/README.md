@@ -1014,7 +1014,14 @@ var_dump($named->isStringIdentifier);  // bool(true)
 ```php
 interface NodeInterface
 {
-    public function accept(NodeVisitorInterface $visitor): mixed;
+    /**
+     * @template T
+     *
+     * @param NodeVisitorInterface<T> $visitor
+     *
+     * @return T
+     */
+    public function accept(NodeVisitorInterface $visitor);
 }
 ```
 

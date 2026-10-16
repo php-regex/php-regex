@@ -29,16 +29,39 @@ final class MessageTest extends TestCase
             method: 'initialize',
             id: 1,
             params: ['foo' => 'bar'],
-            result: ['baz' => 'qux'],
-            error: ['code' => -32600, 'message' => 'Invalid Request'],
         );
 
         $this->assertSame('2.0', $message->jsonrpc);
         $this->assertSame('initialize', $message->method);
         $this->assertSame(1, $message->id);
         $this->assertSame(['foo' => 'bar'], $message->params);
-        $this->assertSame(['baz' => 'qux'], $message->result);
-        $this->assertSame(['code' => -32600, 'message' => 'Invalid Request'], $message->error);
+    }
+
+    /**
+     * The server answers requests and notifications: the result or error
+     * of a response a client sends is never read, so it is not kept.
+     */
+    #[Test]
+    public function test_a_message_keeps_only_what_the_server_reads(): void
+    {
+        $this->assertSame(
+            ['jsonrpc', 'method', 'id', 'params'],
+            array_map(static fn (\ReflectionProperty $property): string => $property->getName(), (new \ReflectionClass(Message::class))->getProperties()),
+        );
+    }
+
+    #[Test]
+    public function test_a_response_a_client_sends_is_read_as_a_response(): void
+    {
+        $body = '{"jsonrpc":"2.0","id":3,"result":{"applied":true}}';
+        $stream = $this->streamOf('Content-Length: '.\strlen($body)."\r\n\r\n".$body);
+
+        $message = Message::readFrom($stream);
+        $this->assertInstanceOf(Message::class, $message);
+        $this->assertTrue($message->isResponse());
+        $this->assertSame(3, $message->id);
+
+        fclose($stream);
     }
 
     #[Test]
@@ -88,7 +111,6 @@ final class MessageTest extends TestCase
             jsonrpc: '2.0',
             method: null,
             id: 1,
-            result: ['capabilities' => []],
         );
 
         $this->assertFalse($message->isRequest());

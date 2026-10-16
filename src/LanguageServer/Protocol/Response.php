@@ -55,21 +55,15 @@ final class Response
      *
      * @param int|string|null $id null when the id of the request cannot be read
      */
-    public static function error(int|string|null $id, int $code, string $message, mixed $data = null): void
+    public static function error(int|string|null $id, int $code, string $message): void
     {
-        $error = [
-            'code' => $code,
-            'message' => $message,
-        ];
-
-        if (null !== $data) {
-            $error['data'] = $data;
-        }
-
         self::send([
             'jsonrpc' => '2.0',
             'id' => $id,
-            'error' => $error,
+            'error' => [
+                'code' => $code,
+                'message' => $message,
+            ],
         ]);
     }
 

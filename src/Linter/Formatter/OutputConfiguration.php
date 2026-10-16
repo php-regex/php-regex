@@ -35,7 +35,6 @@ final class OutputConfiguration
         public bool $showOptimizations = true,
         public bool $showHints = true,
         public bool $groupByFile = true,
-        public bool $sortBySeverity = true,
     ) {}
 
     /**

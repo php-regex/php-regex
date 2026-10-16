@@ -124,29 +124,4 @@ abstract class AbstractOutputFormatter implements OutputFormatterInterface
 
         return $grouped;
     }
-
-    /**
-     * Sort results by severity if configured.
-     *
-     * @param array<array<string, mixed>> $results
-     *
-     * @return array<array<string, mixed>>
-     */
-    protected function sortResults(array $results): array
-    {
-        if (!$this->config->sortBySeverity) {
-            return $results;
-        }
-
-        $severityOrder = ['error' => 0, 'warning' => 1, 'info' => 2];
-
-        usort($results, static function (array $a, array $b) use ($severityOrder): int {
-            $aSeverity = isset($a['type']) && \is_string($a['type']) ? $a['type'] : 'info';
-            $bSeverity = isset($b['type']) && \is_string($b['type']) ? $b['type'] : 'info';
-
-            return ($severityOrder[$aSeverity] ?? 2) - ($severityOrder[$bSeverity] ?? 2);
-        });
-
-        return $results;
-    }
 }
