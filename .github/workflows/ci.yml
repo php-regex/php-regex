@@ -184,7 +184,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [ 8.5, 8.4, 8.3, 8.2 ]
+        # 8.6 runs under setup-php's nightly-of-branch build until GA
+        # (2026-11-19), then the same plain '8.6' serves the stable release.
+        php: [ 8.6, 8.5, 8.4, 8.3, 8.2 ]
 
     steps:
       - name: Checkout Code
@@ -207,9 +209,10 @@ jobs:
           # Without --prefer-dist: tools/phpunit/composer.json installs
           # orchestra/canvas and canvas-core from git, as GitHub serves no
           # archive of some of the commits their tags name.
-          composer install -d tools/phpunit --no-interaction --no-progress
-          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress
-          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress
+          # 8.6 ships no locked nette/schema release that admits it yet.
+          composer install -d tools/phpunit --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }}
 
       - name: Run Test Suite
         run: tools/phpunit/vendor/bin/phpunit --colors=always
