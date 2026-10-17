@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\PHPUnit\RegexAssertions;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -21,6 +22,8 @@ use PHPUnit\Framework\TestCase;
 
 final class JavaScriptTranspilerTest extends TestCase
 {
+    use RegexAssertions;
+
     #[Test]
     public function test_transpiles_basic_pattern_to_js_literal(): void
     {
@@ -204,7 +207,8 @@ final class JavaScriptTranspilerTest extends TestCase
     /**
      * /U and "(?U)" swap greedy and lazy: each quantifier in their scope is
      * printed the other way. Each literal was checked with node: exec() on
-     * the subject gives the groups preg_match() gives.
+     * the subject gives the groups preg_match() gives, every group of the
+     * pattern listed by number from the whole match.
      *
      * @param list<string> $groups
      */
@@ -212,8 +216,7 @@ final class JavaScriptTranspilerTest extends TestCase
     #[DataProvider('provideUngreedyPatterns')]
     public function test_carries_the_ungreedy_flag(string $pattern, string $literal, string $subject, array $groups): void
     {
-        $this->assertSame(1, preg_match($pattern, $subject, $matches));
-        $this->assertSame($groups, $matches);
+        self::assertPatternMatches($pattern, $subject, $groups);
 
         $result = Regex::create(['cache' => null])->transpile($pattern, 'javascript');
 

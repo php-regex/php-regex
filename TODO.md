@@ -218,36 +218,7 @@ code-scanning user asks); utf-8 positionEncoding (our UTF-16 path is
 correct and tested; revisit on a real encoding bug); a memory_limit floor
 (the scan is per-file bounded; revisit on a real OOM report).
 
-## PHPUnit companion package: regex-phpunit
-
-A distributable `php-regex/regex-phpunit` package under `src/PHPUnit` (a
-seventeenth split): PHPUnit constraints and assertions backed by the parser,
-used by this suite too. PcreGates stays internal whatever happens — its
-judged-matrix coupling is ours alone; reopen distribution of the gates
-themselves only on real maintainer demand, after guarded-targets ships.
-
-1. A constraint extending `PHPUnit\Framework\Constraint\Constraint` plus an
-   assertions trait: `assertPatternMatches($pattern, $subject, $expected)` —
-   the expected group names are validated against the parsed AST (a typo'd
-   name is a named failure, not a silent pass), the assertion runs the match
-   itself so capture semantics are exact under their flags (`null` requires
-   `PREG_UNMATCHED_AS_NULL`, `[value, offset]` requires
-   `PREG_OFFSET_CAPTURE`; no `''`-means-unmatched ambiguity), and a failure
-   renders a `ComparisonFailure` trimmed to the groups under test, saying
-   which construct failed.
-2. `assertPatternCompiles()` and `assertPatternIsLinear()` — compile and
-   prover verdicts, not guesses.
-2. Dogfood it in the parity suites first, replacing hand-written match-array
-   assertions file by file; that is also the cheapest real-world test of the
-   package.
-2. Spec decisions waiting: the PHPUnit matrix (`^10.5||^11||^12||^13` — CI on
-   all four; `Constraint::evaluate()` and diff rendering differ across
-   majors; 13.x needs PHP >=8.4.1, which per-consumer resolution costs the
-   8.1 floor nothing), phpunit in require vs require-dev, engine-relative
-   verdicts at the user's end (running engine vs declared target; a pattern
-   that does not compile there fails loudly, never silently skips), the
-   release train (post-2.0, so the tag is not hostage to a new package), and
-   registering the name on Packagist early — free today, first-come.
+## Test support for the PcreGates trait
 
 Two internal test-support items on the way: a static-analysis fixture
 pinning the PcreGates contract (gate literals inside
