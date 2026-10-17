@@ -10,7 +10,7 @@ This reference documents the public API surface of PHPRegex: entry points, confi
   <input type="search" id="page-filter-input" data-unit="methods" placeholder="Filter by method, class or return — e.g. parse, redos, equivalent" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 The `Regex` facade lives in `php-regex/regex-toolkit` and needs PHP 8.1 or later with the `mbstring` extension. See [Quick Start](../quick-start.md) for a first tour.
 

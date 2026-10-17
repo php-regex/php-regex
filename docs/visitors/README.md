@@ -11,7 +11,7 @@ Visitors are the algorithms that process the AST. They implement all the interes
   <input type="search" id="page-filter-input" data-unit="visitors" placeholder="Filter by visitor or method — e.g. Visitor, enter, leave" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ## How Visitors Work
 

@@ -16,7 +16,7 @@ captures before running it.
   <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by pattern shape — e.g. group, named, optional" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ```php
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;

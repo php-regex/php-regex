@@ -11,7 +11,7 @@ This guide helps you resolve common issues when using PHPRegex.
   <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by symptom or message — e.g. memory, cache, timeout, offset" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">No section matches that symptom — try a shorter fragment, or press Escape to see the whole guide again.</p>
+<p class="page-empty" role="status" hidden>No section matches that symptom — try a shorter fragment, or press Escape to see the whole guide again.</p>
 
 ## Common Error Messages
 

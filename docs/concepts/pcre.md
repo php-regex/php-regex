@@ -10,7 +10,7 @@ description: "How PCRE2 relates to PHP and other engines: syntax by PCRE2 releas
   <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by section or engine — e.g. lookbehind, unicode, RE2" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ## What is PCRE?
 

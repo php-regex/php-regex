@@ -10,7 +10,7 @@ This reference documents every lint rule that PHPRegex produces. It serves as th
   <input type="search" id="rules-filter-input" data-unit="rules" placeholder="Filter by rule, message or identifier — e.g. useless flag, redos, backreference" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">No rule matches that filter — try a shorter fragment, or press Escape to see all of them again.</p>
+<p class="page-empty" role="status" hidden>No rule matches that filter — try a shorter fragment, or press Escape to see all of them again.</p>
 
 ## Table of Contents
 

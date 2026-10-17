@@ -9,7 +9,7 @@ Fast fixes for the most common PHPRegex diagnostics. Use this as a quick referen
   <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by construct or fix — e.g. delimiter, backreference, unicode" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ## Quick Fix Index
 

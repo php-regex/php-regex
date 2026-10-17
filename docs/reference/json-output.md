@@ -19,7 +19,7 @@ This page lists every key of every document.
   <input type="search" id="page-filter-input" data-unit="fields" placeholder="Filter by field or section — e.g. pattern, verdict, captures" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 | command | document |
 |---|---|

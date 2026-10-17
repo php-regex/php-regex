@@ -11,7 +11,7 @@ This guide covers PHPRegex's Language Server Protocol (LSP) server and how to in
   <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by section — e.g. install, diagnostics, hover, completion" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ---
 
