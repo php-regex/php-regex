@@ -589,6 +589,19 @@ main td:last-child {
   padding-right: 0;
 }
 
+/* A cell wraps anywhere so a wide table never pushes the page; but the
+   rule inherits into the code chips, and an identifier is a lookup key
+   - `regex.lint.flag.useless.s` broken across three lines is no longer
+   readable as the thing you paste into an ignore list. Code inside a
+   cell refuses the mid-token break: the token stays whole, the column
+   widens to hold it, and the table's own scroll with its cut-edge tell
+   answers when the whole is wider than the measure. Entries that carry
+   spaces - signatures, messages - still wrap at their spaces. */
+main td code,
+main th code {
+  overflow-wrap: normal;
+}
+
 main tbody tr:hover {
   background: var(--amber-tint);
 }
