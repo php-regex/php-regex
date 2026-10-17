@@ -49,6 +49,18 @@ final class PhpVersionGates
     public const BUNDLES_PCRE2_10_35 = 80000;
 
     /**
+     * PHP 8.0 warns on every pattern its PCRE2 refuses. PHP 7.3.33 and
+     * 7.4.33 compile "\p{Bogus}" outside a class and "\214748364" without a
+     * warning, and the branch holding either then never matches.
+     */
+    public const WARNS_ON_EVERY_REFUSAL = 80000;
+
+    /**
+     * What a refusal of such a pattern adds for PHP 7.3 and 7.4.
+     */
+    public const SILENT_REFUSAL_NOTE = 'PHP 7.3 and 7.4 accept this pattern without a warning, and the branch that holds it then never matches.';
+
+    /**
      * PHP 8.1.1 and later bundle PCRE2 10.39; 8.1.0 bundled 10.37, judged
      * as 10.39.
      */

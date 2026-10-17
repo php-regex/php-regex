@@ -26,9 +26,39 @@ enum PcreFeature
     case AlphabeticAssertionNames;
 
     /**
+     * Script runs: "(*script_run:", "(*sr:", "(*atomic_script_run:" and "(*asr:".
+     */
+    case ScriptRuns;
+
+    /**
+     * Under UTF a group name may hold letters and decimal digits of any script, as "(?<nämed>a)".
+     */
+    case NonAsciiGroupNames;
+
+    /**
+     * "(*ACCEPT)" may be repeated, as "(*ACCEPT)??".
+     */
+    case QuantifiedAccept;
+
+    /**
+     * The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms.
+     */
+    case NonAtomicAssertionNames;
+
+    /**
+     * "(?*" and "(?<*" spell the non-atomic lookarounds.
+     */
+    case NonAtomicAssertionShortSyntax;
+
+    /**
      * A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big.
      */
     case LargeOpenCountIsText;
+
+    /**
+     * A backslash and digits past 214748363, as "\214748364", is an octal escape and text instead of a number too big.
+     */
+    case OverflowingBackslashNumberIsOctal;
 
     /**
      * "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions.
@@ -197,8 +227,14 @@ enum PcreFeature
     public function release(): string
     {
         return match ($this) {
-            self::AlphabeticAssertionNames => '10.33',
-            self::LargeOpenCountIsText => '10.37',
+            self::AlphabeticAssertionNames,
+            self::ScriptRuns,
+            self::NonAsciiGroupNames => '10.33',
+            self::QuantifiedAccept,
+            self::NonAtomicAssertionNames => '10.34',
+            self::NonAtomicAssertionShortSyntax => '10.35',
+            self::LargeOpenCountIsText,
+            self::OverflowingBackslashNumberIsOctal => '10.37',
             self::LoosePropertyNames => '10.40',
             self::OpenAndPaddedRepeatCounts,
             self::PaddedBracedEscapes,

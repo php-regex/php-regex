@@ -49,6 +49,12 @@ final class PcreFeatureTest extends TestCase
     {
         yield 'alphabetic assertion names' => [PcreFeature::AlphabeticAssertionNames, '10.32', '10.33'];
         yield 'large open count as text' => [PcreFeature::LargeOpenCountIsText, '10.36', '10.37'];
+        yield 'script runs' => [PcreFeature::ScriptRuns, '10.32', '10.33'];
+        yield 'group names past ASCII' => [PcreFeature::NonAsciiGroupNames, '10.32', '10.33'];
+        yield 'repeated accept' => [PcreFeature::QuantifiedAccept, '10.33', '10.34'];
+        yield 'non-atomic assertion names' => [PcreFeature::NonAtomicAssertionNames, '10.33', '10.34'];
+        yield 'non-atomic assertion short syntax' => [PcreFeature::NonAtomicAssertionShortSyntax, '10.34', '10.35'];
+        yield 'overflowing backslash number as octal' => [PcreFeature::OverflowingBackslashNumberIsOctal, '10.36', '10.37'];
         yield 'scan substring' => [PcreFeature::ScanSubstring, '10.44', '10.45'];
         yield 'offsets past the fault' => [PcreFeature::ErrorOffsetPastTheFault, '10.46', '10.47'];
         yield 'branch count off the condition name' => [PcreFeature::BranchCountErrorOffTheConditionName, '10.46', '10.47'];

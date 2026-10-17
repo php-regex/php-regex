@@ -245,6 +245,24 @@ final class PcreVerb
     }
 
     /**
+     * Whether "(*name:" spells a non-atomic lookaround, "(*napla:" or one of
+     * its kind, which PCRE2 10.34 added.
+     */
+    public static function isNonAtomicAssertion(string $name): bool
+    {
+        return isset(self::NON_ATOMIC_ASSERTIONS[$name]);
+    }
+
+    /**
+     * Whether "(*name:" spells a script run, "(*sr:" or one of its kind,
+     * which PCRE2 10.33 added.
+     */
+    public static function namesScriptRun(string $name): bool
+    {
+        return isset(self::SCRIPT_RUN_PREFIXES[$name.':']);
+    }
+
+    /**
      * The opener every PCRE2 release reads for an alphabetic assertion name,
      * "(?=" for "pla" or "positive_lookahead".
      */

@@ -1808,7 +1808,7 @@ final class Validator extends AbstractNodeVisitor
 
             $close = strpos($source, '}', $at);
             if (false === $close || $close - $at >= PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40) {
-                $this->raiseMalformedPropertyAt($letter, min(\strlen($source), $at + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40));
+                $this->raiseMalformedPropertyAt($letter, min(\strlen($source), $at + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40), false === $close ? '' : $this->silentRefusalNote());
             }
 
             $name = substr($source, $at, $close - $at);
@@ -1822,7 +1822,7 @@ final class Validator extends AbstractNodeVisitor
         $unprefixed = LibraryPcre::replace('/^\s*+(?:sc|script|scx|script[\s_-]*+extensions)\s*+[:=]/i', '', $name) ?? $name;
         $spelling = PropertyNames::spellingBefore1040($unprefixed);
         $this->raiseSemanticError(
-            \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
+            \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.%s', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion, $this->silentRefusalNote()),
             $end,
             ErrorCode::UnicodePropertyInvalid,
             null === $spelling
@@ -3049,10 +3049,20 @@ final class Validator extends AbstractNodeVisitor
         $this->raiseMalformedPropertyAt($letter, $offset);
     }
 
-    private function raiseMalformedPropertyAt(string $letter, int $offset): never
+    /**
+     * What a refusal adds where the PHP judged compiles the pattern without
+     * a warning: PHP 7.3 and 7.4 do so for a property they do not know,
+     * outside a class.
+     */
+    private function silentRefusalNote(): string
+    {
+        return 0 === $this->charClassDepth && $this->target->phpVersionId < PhpVersionGates::WARNS_ON_EVERY_REFUSAL ? ' '.PhpVersionGates::SILENT_REFUSAL_NOTE : '';
+    }
+
+    private function raiseMalformedPropertyAt(string $letter, int $offset, string $note = ''): never
     {
         $this->raiseSemanticError(
-            \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.', $letter),
+            \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.%s', $letter, $note),
             $offset,
             ErrorCode::UnicodePropertyMalformed,
             \sprintf('Name a property, as in "\\%1$sL" or "\\%1$s{Lu}", or drop the backslash for a literal "%1$s".', $letter),

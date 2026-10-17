@@ -208,21 +208,21 @@ PHP 7.3 is the oldest PHP judged, each PHP with the PCRE2 its x.y.0 bundled
 `require.php` that also allows 7.3 or later is judged from the lowest such
 PHP, with a note, and a version named below 7.3, or a `composer.json` that
 allows nothing from 7.3 on, is refused. A release
-older than 10.39 is judged with the 10.39 rules but for two changes the
-library knows: the alphabetic assertion names (10.33) and an open count past
-65535 read as text (10.37). Left:
+older than 10.39 is judged with the 10.39 rules but for the changes the
+library knows, each verified on pcre2test 10.32 to 10.40: the alphabetic
+assertion names, script runs and group names past ASCII (10.33), a repeated
+`(*ACCEPT)` and the non-atomic lookarounds (10.34), `(?*` and `(?<*` (10.35),
+an open count past 65535 and `\214748364` read as text (10.37). Left:
 
-- Per-release rules for PCRE2 10.33 to 10.39, one release at a time, each
-  verified on a real build before it ships (pcre2test built from the release
-  tarball, `php:7.3-cli`, `php:7.4-cli`, `php:8.0-cli`): script runs `(*sr:`
-  and `(*asr:` and non-ASCII group names (10.33); the 65535-group limit,
-  quantified `(*ACCEPT)`, `(*napla:` and `(*naplb:` (10.34); `(?*` and `(?<*`,
-  the clamp of repeated assertions, de-atomised groups holding a recursive
-  back reference (10.35). Until `(?*` is known, `/(?*a)b/` passes for PHP
-  7.3, with the note that 10.32 is judged with the 10.39 rules. The Unicode
-  tables of each release are not modelled: `\p{...}` names and membership
-  below 10.39 are a documented blind spot. `\K` in a lookaround stays a rule
-  of PHP 8.5, never one of a PCRE2 release.
+- Not modelled, documented: the Unicode tables of each release (`\p{...}`
+  names and membership below 10.39 are a blind spot), and the matching bugs
+  of old releases, such as a `(?(DEFINE)...)` inside a lookbehind before
+  10.35 (pcre2test 10.32 to 10.34 refuse `/(?<=b(?(DEFINE)))c/` and
+  `/(?<=(?(DEFINE)(?<a>x+))b)c/`, accept `/(?<=(?(DEFINE)(?<a>x))b)c/`, and
+  find nothing with `/(?<=b(?(DEFINE)(?<a>x)))c/` in "bc"). `\K` in a
+  lookaround stays a rule of PHP 8.5, never one of a PCRE2 release. The
+  10.34 limit of 65535 capturing groups changes no verdict: 10.32 and 10.33
+  refuse 65,536 groups as a pattern too large, only with another message.
 - The `{1}+` pair, both directions: PCRE2 10.33 ignores a possessive `{1}+`
   on a group and 10.34 honours it (pcre2test 10.32/10.33: `/(a|ab){1}+c/`
   matches `abc`; 10.34, 10.35, 10.37: no match), so the old side is now
@@ -236,16 +236,11 @@ library knows: the alphabetic assertion names (10.33) and an open count past
   PCRE2 10.39 (PHP 8.1) and its script extensions from 10.40 (U+30FB for
   `\p{Katakana}`, U+00B7 for `\p{Latin}`), which the tree comparison does not
   see; UCP casing through `(*UCP)` between 7.4 and 8.0; de-atomisation (the
-  witness pair works on the named recursion `(?P>g)`); script runs,
-  non-atomic lookarounds, the group limit, quantified `(*ACCEPT)` and
-  non-ASCII group names, as their rules land. Flag only: none has a spelling
-  every release reads alike.
-- PHP 7.3.33 and 7.4.33 compile, with no warning, some patterns PCRE2 itself
-  refuses, to a pattern that matches nothing: `/\p{Bogus}/u` and
-  `/\214748364/` (pcre2test 10.32 and 10.35 refuse both, as PHP 8.0 does).
-  The library refuses them for those targets, and keeps refusing them. Add
-  to the message that PHP 7.3 and 7.4 accept such a pattern silently and that
-  it then never matches.
+  witness pair works on the named recursion `(?P>g)`); the repeat of an
+  assertion, which PCRE2 before 10.35 clamps to one. Flag only: none has a
+  spelling every release reads alike. Script runs, the non-atomic
+  lookarounds, a repeated `(*ACCEPT)` and group names past ASCII are refused
+  below the release that added them: no verdict is left to report there.
 - The PHPStan and Psalm extensions judge a project for PHP 7.2 or earlier
   instead of refusing it as `regex lint` does: PHPStan with the version as
   given, Psalm raised to 7.3. Make both follow `regex lint`: refuse a

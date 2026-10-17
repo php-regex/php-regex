@@ -20,6 +20,7 @@ use PHPRegex\Parser\Internal\ExtendedClassReader;
 use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PcreVerb;
+use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Token\Token;
@@ -37,6 +38,12 @@ use PHPRegex\Parser\Token\TokenType;
 final class Lexer
 {
     // Token priority maps for efficient matching
+    /**
+     * The largest number a backslash and its digits may make before PCRE2
+     * 10.37, which reads one past it as an octal escape and text.
+     */
+    private const LARGEST_NUMBER_BEFORE_PCRE_10_37 = 214_748_363;
+
     private const TOKENS_OUTSIDE = [
         'T_COMMENT_OPEN', 'T_CALLOUT', 'T_PCRE_VERB', 'T_GROUP_MODIFIER_OPEN',
         'T_GROUP_OPEN', 'T_GROUP_CLOSE', 'T_CHAR_CLASS_OPEN', 'T_QUANTIFIER',
@@ -378,12 +385,46 @@ final class Lexer
     private readonly bool $largeOpenCountIsText;
 
     /**
+     * Whether "(*sr:" and the other names of a script run are read.
+     */
+    private readonly bool $readsScriptRuns;
+
+    /**
+     * Whether "(*napla:" and the other names of the non-atomic lookarounds
+     * are read.
+     */
+    private readonly bool $readsNonAtomicAssertions;
+
+    /**
+     * Whether "(?*" spells a non-atomic lookahead; before, the "*" follows
+     * "(?" where no option letter may.
+     */
+    private readonly bool $readsNonAtomicShortSyntax;
+
+    /**
+     * Whether a backslash and digits past 214748363 is an octal escape and
+     * text; before, the number is refused at the digit that takes it there.
+     */
+    private readonly bool $overflowingNumberIsOctal;
+
+    /**
+     * Whether the PHP judged warns on every pattern its PCRE2 refuses; PHP
+     * 7.3 and 7.4 compile some without a word.
+     */
+    private readonly bool $warnsOnEveryRefusal;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
     {
         $target ??= PcreTarget::runtime();
         $this->readsAlphabeticAssertions = $target->supports(PcreFeature::AlphabeticAssertionNames);
+        $this->readsScriptRuns = $target->supports(PcreFeature::ScriptRuns);
+        $this->readsNonAtomicAssertions = $target->supports(PcreFeature::NonAtomicAssertionNames);
+        $this->readsNonAtomicShortSyntax = $target->supports(PcreFeature::NonAtomicAssertionShortSyntax);
+        $this->overflowingNumberIsOctal = $target->supports(PcreFeature::OverflowingBackslashNumberIsOctal);
+        $this->warnsOnEveryRefusal = $target->phpVersionId >= PhpVersionGates::WARNS_ON_EVERY_REFUSAL;
         $this->largeOpenCountIsText = $target->supports(PcreFeature::LargeOpenCountIsText);
         $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
         $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
@@ -737,13 +778,33 @@ final class Lexer
      */
     private function readBody(string $opener, array &$tokens): bool
     {
-        // Before PCRE2 10.33 an assertion has no alphabetic name: as a
-        // condition PCRE wants a group name on its "*", elsewhere a verb
-        // name ends with its run of letters, and is not one PCRE knows.
+        // Before PCRE2 10.35 "(?*" is no group: no option letter is "*".
+        if ('(?*' === $opener && !$this->readsNonAtomicShortSyntax) {
+            throw LexerException::withContext(
+                \sprintf('Invalid group modifier syntax at position %d: PCRE2 10.35 added "(?*" for "(*napla:"%s.', $this->position + 2, $this->readsNonAtomicAssertions ? '; write "(*napla:" instead' : ''),
+                ErrorCode::GroupSyntax,
+                $this->position + 2,
+                $this->pattern,
+            );
+        }
+
         $name = substr($opener, 2, -1);
-        if (!$this->readsAlphabeticAssertions && PcreVerb::isAlphabeticAssertion($name)) {
+        $why = match (true) {
+            PcreVerb::isAlphabeticAssertion($name) => $this->readsAlphabeticAssertions ? null
+                : \sprintf('Unknown alphabetic assertion "(*%s:": PCRE2 10.33 added the alphabetic names of the assertions; write "%s" instead.', $name, PcreVerb::classicOpener($name)),
+            PcreVerb::isNonAtomicAssertion($name) => $this->readsNonAtomicAssertions ? null
+                : \sprintf('Unknown alphabetic assertion "(*%s:": PCRE2 10.34 added the non-atomic lookarounds.', $name),
+            PcreVerb::namesScriptRun($name) => $this->readsScriptRuns ? null
+                : \sprintf('Unknown verb "(*%s:": PCRE2 10.33 added script runs.', $name),
+            default => null,
+        };
+        if (null !== $why) {
+            // Before PCRE2 10.33 no name is alphabetic: as a condition PCRE
+            // wants a group name on its "*", elsewhere a verb name ends with
+            // its run of letters, and is not one PCRE knows. From 10.33 a
+            // name it does not know yet is refused where it ends.
             $start = $this->position;
-            if ($this->opensCondition($tokens, $start)) {
+            if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $start)) {
                 throw LexerException::withContext(
                     \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $start + 1),
                     ErrorCode::ConditionalInvalid,
@@ -753,9 +814,9 @@ final class Lexer
             }
 
             throw LexerException::withContext(
-                \sprintf('Unknown alphabetic assertion "(*%s:": PCRE2 10.33 added the alphabetic names of the assertions; write "%s" instead.', $name, PcreVerb::classicOpener($name)),
+                $why,
                 ErrorCode::VerbInvalid,
-                $start + 2 + strspn($name, 'abcdefghijklmnopqrstuvwxyz'),
+                $start + 2 + ($this->readsAlphabeticAssertions ? \strlen($name) : strspn($name, 'abcdefghijklmnopqrstuvwxyz')),
                 $this->pattern,
             );
         }
@@ -1407,6 +1468,26 @@ final class Lexer
                     $overflow,
                     $this->pattern,
                 );
+            }
+        }
+
+        // Before PCRE2 10.37 a backslash and its digits are one number, refused
+        // at the digit that takes it past 214748363.
+        if (!$this->overflowingNumberIsOctal && !$this->inCharClass && TokenType::Backref === $type
+            && 1 === LibraryPcre::match('/^\\\\([1-9]\d{8,})$/', $matchedValue, $digits)) {
+            $value = 0;
+            for ($index = 0, $count = \strlen($digits[1]); $index < $count; $index++) {
+                $value = 10 * $value + (int) $digits[1][$index];
+                if ($value > self::LARGEST_NUMBER_BEFORE_PCRE_10_37) {
+                    $overflow = $startPos + 2 + $index;
+
+                    throw LexerException::withContext(
+                        \sprintf('Number too big at position %d: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.%s', $overflow, $this->warnsOnEveryRefusal ? '' : ' '.PhpVersionGates::SILENT_REFUSAL_NOTE),
+                        ErrorCode::GroupNumberTooBig,
+                        $overflow,
+                        $this->pattern,
+                    );
+                }
             }
         }
 

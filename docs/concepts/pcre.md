@@ -85,9 +85,11 @@ no verdict models: on 10.39, `/[Aa]{2}/` does not match `aa`.
 The library judges PHP 7.3 and later, the PHP versions on PCRE2. It knows the
 rules of PCRE2 10.39 and later in full; a PHP that bundles an older release,
 10.32 for 7.3, 10.33 for 7.4 and 10.35 for 8.0, is judged for that release
-with the 10.39 rules, but for the few older changes the library names
-(`AlphabeticAssertionNames` from 10.33, `LargeOpenCountIsText` from 10.37, in
-the table below), and the lint says so in a note:
+with the 10.39 rules, but for the older changes the library names (in the
+table below: the alphabetic assertion names, script runs and group names past
+ASCII from 10.33, a repeated `(*ACCEPT)` and the non-atomic lookarounds from
+10.34, `(?*` and `(?<*` from 10.35, `a{65536` and `\214748364` read as text
+from 10.37), and the lint says so in a note:
 
 ```text
 Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -98,7 +100,16 @@ judged with the 10.39 of 8.1.1 onwards: PHP 7.4.6 moved to 10.34 and 7.4.12
 to 10.35, and a 7.4 target is still judged as 10.33. The Unicode tables a
 release reads are not modelled release by release: which characters a
 `\p{...}` holds, and which script names an old release knows, are a blind
-spot below 10.39.
+spot below 10.39. Neither are the matching bugs of an old release, such as a
+`(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse
+and others read with the wrong length.
+
+PHP 7.3 and 7.4 compile some patterns their PCRE2 refuses, without a warning:
+an unknown property outside a class, `\p{Bogus}`, and a backslash and digits
+past 214748363, `\214748364`. The branch that holds either then never matches:
+`/\p{Bogus}|a/u` finds `a`, `/\p{Bogus}?a/u` finds nothing in `"a"`. The
+library refuses them for those targets as PCRE2 does, and its message says
+so. PHP 8.0 warns on them.
 
 PHP 7.2 and earlier ship PCRE1, a different engine that reads some patterns
 otherwise; `regex lint` never judges for them as if they ran PCRE2. A
@@ -216,7 +227,13 @@ and a target has it from the release it arrived in on
 | behaviour | from | what changed |
 |---|---|---|
 | `AlphabeticAssertionNames` | 10.33 | The assertions and the atomic group take alphabetic names: "(*pla:", "(*positive_lookahead:", "(*nla:", "(*plb:", "(*nlb:", "(*atomic:" and their long forms. |
+| `ScriptRuns` | 10.33 | Script runs: "(*script_run:", "(*sr:", "(*atomic_script_run:" and "(*asr:". |
+| `NonAsciiGroupNames` | 10.33 | Under UTF a group name may hold letters and decimal digits of any script, as "(?<nämed>a)". |
+| `QuantifiedAccept` | 10.34 | "(*ACCEPT)" may be repeated, as "(*ACCEPT)??". |
+| `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |
+| `NonAtomicAssertionShortSyntax` | 10.35 | "(?*" and "(?<*" spell the non-atomic lookarounds. |
 | `LargeOpenCountIsText` | 10.37 | A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big. |
+| `OverflowingBackslashNumberIsOctal` | 10.37 | A backslash and digits past 214748363, as "\214748364", is an octal escape and text instead of a number too big. |
 | `LoosePropertyNames` | 10.40 | "\p{...}" names are matched loosely ("\p{greek}", "\p{Old Italic}") and take "sc:", "scx:", four-letter script codes, Bidi classes and binary properties; a bare script name means its script extensions. |
 | `OpenAndPaddedRepeatCounts` | 10.43 | "{,2}" and a count padded with spaces, as "{ 2 }", repeat instead of matching as text. |
 | `PaddedBracedEscapes` | 10.43 | Spaces are allowed inside braced escapes and references, as "\x{ 41 }" or "\g{ 1 }". |

@@ -313,11 +313,11 @@ final class TokenParser
                 ? GroupNameReader::MAX_NAME_LENGTH
                 : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044,
         );
-        // Group names take any letter in Unicode mode: "u", or "(*UTF)" at
-        // the start.
+        // Group names take any letter in Unicode mode, "u" or "(*UTF)" at
+        // the start, from PCRE2 10.33.
         $this->unicodeMode = str_contains($flags, 'u')
             || 1 === LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern);
-        $this->groupNames->readUnicodeNames($this->unicodeMode);
+        $this->groupNames->readUnicodeNames($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames));
         if (null !== $this->namesAround) {
             $this->groupNames->shareNamesWith($this->namesAround);
             $this->groupNames->allowDuplicates($this->namesAround->duplicatesAllowed());
@@ -852,20 +852,21 @@ final class TokenParser
             );
         }
 
-        // PCRE lets "(*ACCEPT)" be repeated, "(*ACCEPT)??" included: it wraps
-        // it in a group. No other verb takes a quantifier. An alphabetic name
-        // PCRE does not know, as "(*scs:" before PCRE2 10.45, is refused where
-        // it ends, before its quantifier is read: the validator reports it.
+        // From PCRE2 10.34 PCRE lets "(*ACCEPT)" be repeated, "(*ACCEPT)??"
+        // included: it wraps it in a group. No other verb takes a
+        // quantifier. An alphabetic name PCRE does not know, as "(*scs:"
+        // before PCRE2 10.45, is refused where it ends, before its
+        // quantifier is read: the validator reports it.
         $isAccept = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::|$)/', $node->verb);
         $isUnknownName = $node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^[a-z]/', $node->verb);
 
-        if (!$isAccept && !$isUnknownName && $this->isAssertionNode($node)) {
+        if (!($isAccept && $this->supports(PcreFeature::QuantifiedAccept)) && !$isUnknownName && $this->isAssertionNode($node)) {
             $this->guardQuantifierCount($token);
             $nodeName = $this->getAssertionNodeName($node);
 
             throw $this->parserException(
-                \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d',
-                    $token->value, $nodeName, $position),
+                \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d%s',
+                    $token->value, $nodeName, $position, $isAccept ? ': PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))'.$token->value.'", which every release reads' : ''),
                 ErrorCode::QuantifierNothingToRepeat,
                 $position,
             );
@@ -2380,7 +2381,18 @@ final class TokenParser
     {
         // "(?<*...)" is the non-atomic lookbehind; the "*" arrives as a
         // quantifier token. In "(?<*+" or "(?<*?" the "+" or "?" that came
-        // with it repeats nothing.
+        // with it repeats nothing. Before PCRE2 10.35 the "*" is where a
+        // group name is expected.
+        if ($this->stream->check(TokenType::Quantifier) && str_starts_with($this->stream->current()->value, '*') && !$this->supports(PcreFeature::NonAtomicAssertionShortSyntax)) {
+            $position = $this->stream->current()->position;
+
+            throw $this->parserException(
+                \sprintf('Expected group name at position %d: PCRE2 10.35 added "(?<*" for "(*naplb:"%s.', $position, $this->supports(PcreFeature::NonAtomicAssertionNames) ? '; write "(*naplb:" instead' : ''),
+                ErrorCode::GroupNameExpected,
+                $position,
+            );
+        }
+
         if ($this->stream->check(TokenType::Quantifier) && \in_array($this->stream->current()->value, ['*+', '*?'], true)) {
             $token = $this->stream->current();
             $position = $this->pastTheFault($token->position + \strlen($token->value));

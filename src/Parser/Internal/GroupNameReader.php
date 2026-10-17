@@ -93,7 +93,7 @@ final class GroupNameReader
     }
 
     /**
-     * Whether the pattern is in Unicode mode, where PCRE2 10.43+ takes a name
+     * Whether the pattern is in Unicode mode, where PCRE2 10.33+ takes a name
      * made of letters of any script, decimal digits and "_", not starting
      * with a digit: "(?<nämed>b)".
      */

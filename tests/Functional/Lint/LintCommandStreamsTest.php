@@ -414,15 +414,14 @@ final class LintCommandStreamsTest extends TestCase
     }
 
     /**
-     * "(?*" arrived in PCRE2 10.35: PHP 7.3, on 10.32, refuses "/(?*a)b/"
-     * ("unrecognized character after (? or (?-", php:7.3-cli). The library
-     * does not know that change yet: the run says 10.32 is judged with the
-     * 10.39 rules, never a silent pass for 7.3.
+     * A pattern every release reads alike passes for PHP 7.3, and the run
+     * says 10.32 is judged with the 10.39 rules but for the changes the
+     * library names.
      */
     #[Test]
     public function test_lint_prints_an_old_flag_and_its_notice_in_the_banner_for_the_console_format(): void
     {
-        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?*a)b/', \$s);\n"]);
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?=a)b/', \$s);\n"]);
 
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=console', '--jobs=1', '--no-redos'], phpVersion: '7.3');
 
@@ -441,7 +440,7 @@ final class LintCommandStreamsTest extends TestCase
     #[Test]
     public function test_lint_prints_an_old_flag_notice_on_stderr_for_the_json_format(): void
     {
-        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?*a)b/', \$s);\n"]);
+        $this->enterProject(['src/a.php' => "<?php\n\npreg_match('/(?=a)b/', \$s);\n"]);
 
         [$exitCode, $stdout, $stderr] = $this->runLint(['src', '--format=json', '--jobs=1', '--no-redos'], phpVersion: '7.3');
 
