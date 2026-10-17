@@ -35,7 +35,7 @@ final class PackageSelectionDocumentationTest extends TestCase
     public function test_onboarding_installs_the_focused_cli_package(): void
     {
         $home = (string) file_get_contents(__DIR__.'/../../docs/index.md');
-        $quickStart = (string) file_get_contents(__DIR__.'/../../docs/quick-start.md');
+        $quickStart = self::rendered((string) file_get_contents(__DIR__.'/../../docs/quick-start.md'));
         $readme = (string) file_get_contents(__DIR__.'/../../README.md');
 
         $command = 'composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev';
@@ -118,5 +118,32 @@ final class PackageSelectionDocumentationTest extends TestCase
         foreach (['regex-parser', 'regex-toolkit', 'regex-cli', 'regex-phpstan', 'regex-language-server'] as $package) {
             $this->assertStringContainsString('`php-regex/'.$package.'`', $page);
         }
+    }
+
+    /**
+     * The page with each install include written out as the site renders
+     * it, for the package and the dev flag the page passes.
+     */
+    private static function rendered(string $page): string
+    {
+        $include = (string) file_get_contents(__DIR__.'/../../docs/_includes/install-prerelease.html');
+        $include = (string) preg_replace('/\{%-? comment -?%\}.*?\{%-? endcomment -?%\}\s*/s', '', $include);
+
+        return (string) preg_replace_callback(
+            '/\{%-? include install-prerelease\.html((?:\s+\w+=(?:"[^"]*"|\w+))*)\s*-?%\}/',
+            static function (array $match) use ($include): string {
+                preg_match_all('/(\w+)=(?:"([^"]*)"|(\w+))/', $match[1], $parameters, \PREG_SET_ORDER);
+                $values = [];
+                foreach ($parameters as $parameter) {
+                    $values[$parameter[1]] = '' !== ($parameter[2] ?? '') ? $parameter[2] : ($parameter[3] ?? '');
+                }
+
+                $dev = 'true' === ($values['dev'] ?? '');
+                $text = (string) preg_replace('/\{% if include\.dev %\}(.*?)\{% endif %\}/s', $dev ? '$1' : '', $include);
+
+                return str_replace('{{ include.package }}', $values['package'] ?? '', $text);
+            },
+            $page,
+        );
     }
 }

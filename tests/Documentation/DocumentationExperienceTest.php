@@ -80,7 +80,7 @@ final class DocumentationExperienceTest extends TestCase
     {
         $home = (string) file_get_contents(self::HOME);
 
-        $this->assertLessThanOrEqual(4, substr_count($home, '<section'), 'The landing page has at most four narrative sections.');
+        $this->assertLessThanOrEqual(5, substr_count($home, '<section'), 'The landing page routes through at most five sections.');
         $this->assertLessThanOrEqual(11, substr_count($home, '<article'), 'The landing page shows at most eleven cards.');
         $this->assertStringNotContainsString('Sixteen components', $home);
         $this->assertStringNotContainsString('every preg_* pattern, every route constraint', $home);
