@@ -531,6 +531,35 @@ Add to your settings:
 }
 ```
 
+### Coding Agents (OpenCode)
+
+[OpenCode](https://opencode.ai/docs/lsp/) feeds the diagnostics of the
+language servers it runs back to its agent, so the patterns the agent writes
+are checked as it writes them. A custom server goes under `lsp` in
+`opencode.json` at the project root; `initialization` is sent as the
+`initializationOptions` of `initialize`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "php-regex": {
+      "command": ["vendor/bin/regex-lsp"],
+      "extensions": [".php"],
+      "initialization": {
+        "redos": true
+      }
+    }
+  }
+}
+```
+{: data-file="opencode.json" }
+
+Configured as an object beside the built-in servers, it keeps them on:
+Intelephense still serves PHP. The other `initializationOptions` the server
+reads, `phpVersion`, `pcreVersion` and `trace`, go under `initialization`
+too.
+
 ---
 
 ## LSP Protocol Details

@@ -126,7 +126,7 @@ end
 lspconfig.php_regex.setup({})
 ```
 
-Vim, Emacs, Sublime Text, Helix and Zed are wired the same way; the [LSP guide](https://php-regex.com/guides/lsp/#ide-configuration) holds each snippet.
+Vim, Emacs, Sublime Text, Helix, Zed and the OpenCode coding agent are wired the same way; the [LSP guide](https://php-regex.com/guides/lsp/#ide-configuration) holds each snippet.
 
 Documentation
 -------------

@@ -167,9 +167,6 @@ lifecycle gates and framing caps, dynamic watcher registration, document
 versions on diagnostics pushes, the LSP/CLI parity test, and the
 not-analyzed severity aligned with `regex lint`. Remaining:
 
-4. **Coding-agent configuration guide**: an OpenCode-class section in
-   `docs/guides/lsp.md` with a validated config snippet — the cheapest
-   new audience.
 5. **`regex lsp` dispatch** so the existing phar carries the server
    (soft-gated on class_exists in the standalone CLI package); gives
    Neovim/Helix/Zed a one-download install.
