@@ -169,6 +169,47 @@
     }
   });
 
+  // Swipe gestures: a swipe from the left edge opens the drawer, a swipe
+  // left inside it closes it. The gestures are touch-only and never start
+  // on an interactive element, so a tap or a scroll is never hijacked.
+  var EDGE_ZONE = 24;
+  var SWIPE_THRESHOLD = 60;
+  var touchStartX = 0;
+  var touchStartY = 0;
+  var touchOnInteractive = false;
+
+  document.addEventListener('touchstart', function (event) {
+    if (event.touches.length !== 1) {
+      return;
+    }
+    var touch = event.touches[0];
+    var target = event.target;
+    touchOnInteractive = target.closest('a, button, input, select, textarea, [role="button"]') !== null;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function (event) {
+    if (event.touches.length !== 1 || touchOnInteractive) {
+      return;
+    }
+    var touch = event.touches[0];
+    var dx = touch.clientX - touchStartX;
+    var dy = touch.clientY - touchStartY;
+
+    if (isOpen()) {
+      // Swipe left inside the drawer to close it
+      if (dx < -SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        closeDrawer(true);
+      }
+    } else if (!desktop.matches) {
+      // Swipe right from the left edge to open the drawer
+      if (touchStartX <= EDGE_ZONE && dx > SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        openDrawer();
+      }
+    }
+  }, { passive: true });
+
   function onBreakpoint(event) {
     if (event.matches) {
       closeDrawer(false);
