@@ -100,6 +100,32 @@ The Rust engine reads a million letters and answers "no match" in about the time
 | ripgrep 15.2.0 `--pcre2`, PCRE2 10.45 | backtracking | gave up: match limit exceeded | 0.03 s, program start included |
 | ripgrep 15.2.0, Rust `regex` | linear-time | no match, on a million letters too | 0.01 s, program start included |
 
+<figure class="pipeline-figure" role="group" aria-labelledby="engines-chart-caption">
+<svg viewBox="0 0 640 210" role="img" aria-label="Bar chart of one identical match call on three backtracking engines: 2.37 milliseconds for PHP at its default limit, which gave up; 306 milliseconds with the limit raised one thousand times; 2,818 milliseconds on Node.js.">
+  <title>The same call, three backtracking engines</title>
+  <line x1="48" y1="170" x2="616" y2="170" stroke="var(--line-soft)" stroke-width="1"/>
+  <g>
+    <rect x="104" y="169" width="96" height="1" fill="var(--ink-soft)"/>
+    <rect x="272" y="151" width="96" height="19" fill="var(--ink-soft)"/>
+    <rect x="440" y="10" width="96" height="160" fill="var(--amber)"/>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 13px;" text-anchor="middle" fill="var(--ink)">
+    <text x="152" y="162">2.37 ms</text>
+    <text x="320" y="144">306 ms</text>
+    <text x="488" y="2" style="font-weight: 600; fill: var(--amber);">2,818 ms</text>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink-soft)">
+    <text x="152" y="190">PHP &middot; default limit</text>
+    <text x="320" y="190">PHP &middot; limit &times;1000</text>
+    <text x="488" y="190">Node.js 24</text>
+    <text x="332" y="208">one call, 27 bytes of input</text>
+  </g>
+</svg>
+<figcaption id="engines-chart-caption">
+  The same <code>preg_match</code>-shaped call, in-process, on the three backtracking engines that finished or gave up. The first bar is fast because PHP's default limit stopped the search. The linear-time engines are off the chart on purpose: their timings include program start, a different race.
+</figcaption>
+</figure>
+
 Times vary by a few percent between runs; the shape does not. Whether a regex is slow depends on the pattern *and* on the engine that runs it.
 
 ## Why PHP's engine goes back and retries
