@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Automata\LanguageSolver;
-use PHPRegex\Automata\Solver\DfaCacheInterface;
-use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
 use PHPRegex\Optimizer\Internal\RewriteCheck;
 use PHPRegex\Parser\ErrorCode;
@@ -40,18 +38,15 @@ use PHPRegex\Parser\TraversalAction;
  * strings, read with the parser it is given; the automata can confirm the
  * two are equivalent before the rewrite is offered.
  *
- * The solver answering those confirmations is kept for the instance's
- * lifetime, with the DFA cache it is given.
- *
  * @phpstan-import-type OptimizerOptionsArray from OptimizerOptions
  */
 final class Optimizer
 {
     private readonly RewriteCheck $check;
 
-    public function __construct(private readonly RegexParser $parser, private readonly ?DfaCacheInterface $dfaCache = null)
+    public function __construct(private readonly RegexParser $parser)
     {
-        $this->check = new RewriteCheck(new LanguageSolver($parser, $dfaCache ?? new InMemoryDfaCache()));
+        $this->check = new RewriteCheck(new LanguageSolver($parser));
     }
 
     /**

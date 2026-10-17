@@ -132,10 +132,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 The determinization budget, the shared rewrite check and the bounded DFA
 cache are merged. Follow-ups:
-- `Optimizer::__construct()` takes a `?DfaCacheInterface`, added in 2.0.0,
-  that nothing reads any more: the check of a rewrite builds no DFA since
-  the strings both sides match no longer prove one. Keep it or drop it
-  before the tag;
 - where the match solver does not read a pattern, a rewrite is offered when
   it reads alike or when each part it changed is proven alone; on the whole
   corpus that brings the suggestions from 1,292 to 1,325 (33 of the 40 the

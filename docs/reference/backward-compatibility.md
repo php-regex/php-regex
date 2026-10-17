@@ -177,10 +177,7 @@ add one to yet.
   that answers `MayBeUnset` stays sound.
 - **New optional parameters**: a node constructor or a method may gain a
   trailing parameter with a default value. Pass arguments by position for the
-  ones you set, or by name. 2.0.0 adds one: `Optimizer::__construct()` takes an
-  optional trailing `?DfaCacheInterface $dfaCache = null`, the cache the
-  solver checking its rewrites keeps its automata in; without it a fresh
-  in-memory cache is used, as before.
+  ones you set, or by name.
 - **New classes, methods and options**, and new keys in a configuration file.
 - **How a pattern splits into tokens**: `tokenize()` promises tokens in source
   order that cover the pattern body, each with its type, its text and its byte

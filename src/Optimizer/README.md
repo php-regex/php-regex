@@ -114,11 +114,10 @@ echo $optimizer->optimize('/[0-9]+;/', $options)->optimized;  // '/\d++;/'
 echo $optimizer->optimize('/abc|abd/', $options)->optimized;  // '/ab(?:c|d)/'
 ```
 
-The instance keeps the solver its automata checks ask, with a DFA cache: a
-later `optimize()` on the same instance reuses the automata an earlier one
-built. Keep one instance for a batch of patterns rather than building one per
-call; the cache it stores them in is the constructor's optional second
-argument, any `DfaCacheInterface`.
+The instance keeps the solver its automata checks ask: keep one instance for
+a batch of patterns rather than building one per call. The check of a
+rewrite builds no DFA to keep between calls, so the constructor takes the
+parser alone.
 
 To have every rewrite proven before it is offered:
 

@@ -748,7 +748,7 @@ final class AnalysisService
 
                 $optimization = new OptimizationResult($baseline, $optimizedPattern, ['Optimized pattern.']);
             } else {
-                $optimization = (new Optimizer($this->regex, $this->dfas()))->optimize($occurrence->pattern, $options);
+                $optimization = (new Optimizer($this->regex))->optimize($occurrence->pattern, $options);
             }
 
             // The router splices a requirement into the pattern it compiles,
