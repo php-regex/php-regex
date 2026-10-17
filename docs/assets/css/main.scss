@@ -1601,15 +1601,18 @@ main table::-webkit-scrollbar-thumb {
  * this first". It only ever renders under --unpublished: a draft is not
  * written to a production build, so the tag cannot ship. */
 .draft-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   margin-left: .35rem;
-  padding: .1rem .5rem;
-  border: 1px solid var(--line);
+  padding: .08rem .55rem;
+  border: 1px solid var(--amber);
   border-radius: var(--radius-pill);
-  background: var(--amber-tint);
-  color: var(--amber);
-  font-size: .78rem;
-  line-height: 1.4;
+  color: var(--amber-deep);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1.5;
   vertical-align: .12rem;
   white-space: nowrap;
 }
