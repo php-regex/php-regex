@@ -58,6 +58,38 @@ n=26     2179.66 ms  ret=0  No error
 | 24 | 539.62 ms |
 | 26 | 2,179.66 ms |
 
+<figure class="pipeline-figure" role="group" aria-labelledby="splits-chart-caption">
+<svg viewBox="0 0 640 236" role="img" aria-label="Bar chart: match time grows from 8.5 milliseconds at 18 letters to 2.18 seconds at 26 letters, each two extra letters multiplying the time by four.">
+  <title>One preg_match call, by input length</title>
+  <line x1="48" y1="184" x2="616" y2="184" stroke="var(--line-soft)" stroke-width="1"/>
+  <g>
+    <rect x="64" y="183" width="80" height="1" fill="var(--ink-soft)"/>
+    <rect x="172" y="181" width="80" height="3" fill="var(--ink-soft)"/>
+    <rect x="280" y="174" width="80" height="10" fill="var(--ink-soft)"/>
+    <rect x="388" y="144" width="80" height="40" fill="var(--ink-soft)"/>
+    <rect x="496" y="24" width="80" height="160" fill="var(--amber)"/>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 13px;" text-anchor="middle" fill="var(--ink)">
+    <text x="104" y="176">8.5 ms</text>
+    <text x="212" y="173">34 ms</text>
+    <text x="320" y="166">136 ms</text>
+    <text x="428" y="136">540 ms</text>
+    <text x="536" y="16" style="font-weight: 600; fill: var(--amber);">2.18 s</text>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink-soft)">
+    <text x="104" y="204">18</text>
+    <text x="212" y="204">20</text>
+    <text x="320" y="204">22</text>
+    <text x="428" y="204">24</text>
+    <text x="536" y="204">26</text>
+    <text x="332" y="226">letters of input (n)</text>
+  </g>
+</svg>
+<figcaption id="splits-chart-caption">
+  One <code>preg_match()</code> call against <code>/^(\w+)+$/</code>, median of three runs. The last bar is 256&times; the first; the first four barely leave the axis.
+</figcaption>
+</figure>
+
 Every 2 extra letters multiply the time by 4: each letter doubles it. Times vary by a few percent between runs; the doubling does not.
 
 ## Why: the engine tries every way to cut the letters
