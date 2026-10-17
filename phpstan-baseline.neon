@@ -817,6 +817,24 @@ parameters:
 			path: tests/Unit/Support/PcreGatesTest.php
 
 		-
+			rawMessage: 'Parameter #1 $floor of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPhp() expects ''8.1''|''8.2''|''8.3''|''8.4''|''8.5''|''8.6'', ''99.0'' given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/PcreGatesTest.php
+
+		-
+			rawMessage: 'Parameter #1 $release of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPcre2() expects ''10.39''|''10.40''|''10.41''|''10.42''|''10.43''|''10.44''|''10.45''|''10.46''|''10.47''|''10.48''|''10.49'', ''10.99'' given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/PcreGatesTest.php
+
+		-
+			rawMessage: 'Parameter #1 $through of method PHPRegex\Tests\Unit\Support\PcreGatesTest::forbidsPhp() expects ''8.1''|''8.2''|''8.3''|''8.4''|''8.5''|''8.6'', ''5.0'' given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/PcreGatesTest.php
+
+		-
 			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''10.40'' and ''10.40'' will always evaluate to true.'
 			identifier: method.alreadyNarrowedType
 			count: 1

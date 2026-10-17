@@ -220,9 +220,6 @@ correct and tested; revisit on a real encoding bug); a memory_limit floor
 
 ## Test support for the PcreGates trait
 
-Two internal test-support items on the way: a static-analysis fixture
-pinning the PcreGates contract (gate literals inside
-`PcreGateLimits::KNOWN_RELEASES`), and shared provider traits for the
-release-map idiom duplicated in
+Shared provider traits for the release-map idiom duplicated in
 `tests/Unit/NodeVisitor/UnicodePropertyReleaseTest.php:50` and `:78` and
 three `tests/Unit/Lint/Rule/` files.

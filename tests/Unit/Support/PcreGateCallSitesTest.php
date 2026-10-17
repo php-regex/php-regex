@@ -29,7 +29,7 @@ final class PcreGateCallSitesTest extends TestCase
      * The self-tests force their gates with versions outside every judged
      * one by design; they gate nothing in the suite.
      */
-    private const SELF_TEST_PATHS = ['Unit/Support/PcreGatesTest.php', 'Unit/Support/PcreGateCallSitesTest.php'];
+    private const SELF_TEST_PATHS = ['Unit/Support/PcreGatesTest.php', 'Unit/Support/PcreGateCallSitesTest.php', 'Unit/Support/PcreGatesStaticContractTest.php'];
 
     #[Test]
     public function test_every_gate_call_site_in_the_suite_names_a_judged_version(): void

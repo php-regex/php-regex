@@ -21,12 +21,16 @@ use PHPRegex\Parser\PcreTarget;
  * The release comparison is PcreTarget's alone — the date-suffixed
  * PCRE_VERSION and the pre-release spellings are its to parse — and the
  * releases a cutoff may name stop at PcreGateLimits::MAX_KNOWN_RELEASE.
+ * The versions a gate takes are typed as PcreGateLimits' lists, so the
+ * analysis refuses a literal outside them at the call site.
  */
 trait PcreGates
 {
     /**
      * Skip unless the running PCRE2 reads the release the row is verified
      * against.
+     *
+     * @param value-of<PcreGateLimits::KNOWN_RELEASES> $release
      */
     private function requiresPcre2(string $release, string $subject): void
     {
@@ -38,7 +42,7 @@ trait PcreGates
     /**
      * Skip unless the running PHP is the floor or newer.
      *
-     * @param non-empty-string $floor
+     * @param value-of<PcreGateLimits::KNOWN_PHP_VERSIONS> $floor
      */
     private function requiresPhp(string $floor, string $subject, string $reason): void
     {
@@ -51,7 +55,7 @@ trait PcreGates
      * Skip once the running PHP is newer than the last one the row is
      * verified against.
      *
-     * @param non-empty-string $through the last PHP the row holds on, two parts, as "8.4"
+     * @param value-of<PcreGateLimits::KNOWN_PHP_VERSIONS> $through the last PHP the row holds on, two parts, as "8.4"
      */
     private function forbidsPhp(string $through, string $subject, string $reason): void
     {
