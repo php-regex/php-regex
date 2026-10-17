@@ -6,6 +6,13 @@ description: "Point any LSP editor at the PHPRegex language server: install it, 
 
 This guide covers PHPRegex's Language Server Protocol (LSP) server and how to integrate it with your IDE for real-time regex analysis.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the LSP guide</label>
+  <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by section — e.g. install, diagnostics, hover, completion" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ---
 
 ## Overview

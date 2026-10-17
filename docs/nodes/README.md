@@ -6,6 +6,13 @@ description: "Every AST node type in PHPRegex with its fields and runnable examp
 
 This reference documents every node type in the PHPRegex AST. Nodes are the building blocks that represent parsed regex patterns. Understanding nodes is essential for building custom visitors, debugging parsing issues, or extending the library.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the node reference</label>
+  <input type="search" id="page-filter-input" data-unit="nodes" placeholder="Filter by node type or property — e.g. Quantifier, Group, Literal" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ## How to Read This Reference
 
 Each node includes:

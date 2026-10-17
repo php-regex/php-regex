@@ -14,6 +14,13 @@ values, and may improve messages; see
 [What a minor release may change](#what-a-minor-release-may-change).
 This page lists every key of every document.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the JSON output reference</label>
+  <input type="search" id="page-filter-input" data-unit="fields" placeholder="Filter by field or section — e.g. pattern, verdict, captures" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 | command | document |
 |---|---|
 | `regex lint` | the [lint report](#lint-report) |

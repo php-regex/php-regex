@@ -7,6 +7,13 @@ redirect_from:
 
 This guide shows how to add new PCRE features, build custom visitors, and integrate PHPRegex into tools.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the extending guide</label>
+  <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by section — e.g. visitor, rule, service" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ---
 
 ## What You Can Extend

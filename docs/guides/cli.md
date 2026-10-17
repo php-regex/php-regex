@@ -7,6 +7,13 @@ description: "Install the PHPRegex CLI and drive it end to end: parse, explain, 
 This guide covers PHPRegex's command-line tool and the workflows it enables.
 The binary requires PHP 8.1 or later.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the CLI guide</label>
+  <input type="search" id="page-filter-input" data-unit="commands" placeholder="Filter by command, flag or output — e.g. lint, explain, diagram, json" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 {% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
 
 Once installed, the binary is `vendor/bin/regex`:

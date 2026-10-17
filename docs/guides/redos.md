@@ -8,6 +8,13 @@ redirect_from:
 
 ReDoS (Regular Expression Denial of Service) happens when a regex takes exponential or high polynomial time to reject certain inputs. This guide explains what PHPRegex proves about a pattern, how to read its verdict and the attack it hands you, what confirmed mode adds, and how to fix a vulnerable pattern.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the ReDoS guide</label>
+  <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by section or verdict — e.g. guarantee, proven, heuristic" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 PHPRegex proves a pattern safe, or hands you the input that kills it. Where it cannot do either, it says so, and its structural heuristics decide.
 
 {% include install-prerelease.html package="php-regex/regex-toolkit" %}

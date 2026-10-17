@@ -6,6 +6,13 @@ description: "The built-in PHPRegex visitors — print, rewrite, modernize, vali
 
 Visitors are the algorithms that process the AST. They implement all the interesting behaviors — validation, optimization, explanation, visualization, and more. This reference documents every built-in visitor and shows how to build custom ones.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the visitor reference</label>
+  <input type="search" id="page-filter-input" data-unit="visitors" placeholder="Filter by visitor or method — e.g. Visitor, enter, leave" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ## How Visitors Work
 
 Visitors walk the AST using `accept()` on each node. Each node dispatches to the matching `visit*()` method on the visitor, and the visitor controls whether and how to continue traversal.

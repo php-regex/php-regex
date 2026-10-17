@@ -12,6 +12,13 @@ length and the anchoring of what the pattern matches, and
 `Regex::compatibility()` says on which PHP versions and PCRE2 releases the
 pattern is valid at all.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the pattern info reference</label>
+  <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by field — e.g. delimiters, flags, captures" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ```php
 use PHPRegex\Toolkit\Regex;
 

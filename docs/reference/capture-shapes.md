@@ -11,6 +11,13 @@ or "digits only". It is built for static
 analysers that type `$matches`, and for anyone who wants to know what a pattern
 captures before running it.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the capture shapes reference</label>
+  <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by pattern shape — e.g. group, named, optional" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ```php
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\RegexParser;

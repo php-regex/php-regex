@@ -11,6 +11,13 @@ and each requires its siblings at exactly its own version (Composer's
 and update them together, with `composer update 'php-regex/*'`; Composer refuses
 a partial update.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the compatibility promise</label>
+  <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by version or change — e.g. 2.0, renamed, removed" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 This page says what a minor release (2.1, 2.2, …) and a patch release
 (2.0.1, …) may change, and what only the next major release (3.0) may change.
 

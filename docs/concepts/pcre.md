@@ -5,6 +5,13 @@ description: "How PCRE2 relates to PHP and other engines: syntax by PCRE2 releas
 
 **PCRE** (Perl Compatible Regular Expressions) is the regex engine used by PHP's `preg_*` functions. Understanding PCRE helps you write better patterns and avoid compatibility issues.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the PCRE concepts page</label>
+  <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by section or engine — e.g. lookbehind, unicode, RE2" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 ## What is PCRE?
 
 PCRE is a regular expression engine that:

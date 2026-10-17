@@ -14,6 +14,13 @@ and reports what PHPStan itself cannot see: a pattern the PHP your project
 targets refuses, while the PHP running PHPStan accepts it. Lint rules and ReDoS
 analysis are there too, off until you ask for them.
 
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the PHPStan guide</label>
+  <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by identifier, option or method — e.g. regex.lint, ignore, analyse" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+
 {% include install-prerelease.html package="php-regex/regex-phpstan" dev=true %}
 
 The extension runs on PHP 8.1 or later and PHPStan 2.x
