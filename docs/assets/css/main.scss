@@ -2406,6 +2406,20 @@ main table::-webkit-scrollbar-thumb {
   overflow-y: auto;
 }
 
+/* On phones the dialog goes full-screen: the input and results take the
+   whole viewport, safe-area insets are honored, and the scrim is gone
+   because there is nothing behind to dim. */
+@media (max-width: 639px) {
+  .search-dialog {
+    padding: max(.75rem, env(safe-area-inset-top)) .75rem max(.75rem, env(safe-area-inset-bottom));
+    background: var(--paper);
+  }
+
+  .search-dialog input[type='search'] {
+    font-size: 1rem;
+  }
+}
+
 .search-dialog[hidden] {
   display: none;
 }
