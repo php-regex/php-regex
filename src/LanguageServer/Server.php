@@ -36,6 +36,7 @@ use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\IniFlag;
+use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
@@ -629,12 +630,53 @@ final class Server
 
         $declarations = $this->documents->declarations();
         if (!$declarations->scanWorkspace($root, [] === $paths ? ['.'] : $paths, $exclude)) {
-            self::log(self::LOG_WARNING, 'Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.');
+            self::warn('Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.');
         }
 
-        if (!$declarations->scanLibraries($root.'/vendor')) {
-            self::log(self::LOG_WARNING, 'Functions declaring #[RegexPattern] were read from the first PHP files of vendor/ only.');
+        // Read even when absent: the directory is watched, and read once
+        // Composer installs into it.
+        $libraries = $declarations->scanLibraries($root.'/vendor');
+        if (!is_dir($root.'/vendor') && self::requiresPackages($root.'/composer.json')) {
+            self::warn('vendor/ is not in the workspace, though composer.json is: the functions its libraries declare with #[RegexPattern] are not read, and the patterns passed to them are not checked. Install the dependencies where the editor sees them, the host and not only a container.');
+        } elseif (!$libraries) {
+            self::warn('Functions declaring #[RegexPattern] were read from the first PHP files of vendor/ only.');
         }
+    }
+
+    /**
+     * Whether the manifest requires a package Composer installs into
+     * vendor/: a platform requirement (php, hhvm, ext-*, lib-*, composer and its APIs)
+     * installs nothing, and a manifest that cannot be read requires
+     * nothing that can be told.
+     */
+    private static function requiresPackages(string $manifest): bool
+    {
+        $content = is_file($manifest) ? file_get_contents($manifest) : false;
+        $decoded = false === $content ? null : json_decode($content, true);
+        if (!\is_array($decoded)) {
+            return false;
+        }
+
+        foreach (['require', 'require-dev'] as $section) {
+            $requirements = $decoded[$section] ?? null;
+            foreach (\is_array($requirements) ? array_keys($requirements) : [] as $name) {
+                if (\is_string($name) && 1 !== LibraryPcre::match('/^(?:php(?:-64bit|-ipv6|-zts|-debug)?|hhvm|ext-.+|lib-.+|composer(?:-plugin-api|-runtime-api)?)$/i', $name)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A coverage the session reads less of than the user expects: logged,
+     * and shown once, since "initialize" reads the workspace once.
+     */
+    private static function warn(string $message): void
+    {
+        self::log(self::LOG_WARNING, $message);
+        Response::notification('window/showMessage', ['type' => self::LOG_WARNING, 'message' => $message]);
     }
 
     /**

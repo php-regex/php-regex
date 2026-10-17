@@ -353,6 +353,7 @@ final class ServerRegexPatternAttributeTest extends TestCase
             static fn (array $params): bool => 2 === ($params['type'] ?? null) && \is_string($params['message'] ?? null) && str_contains($params['message'], '#[RegexPattern]'),
         );
         $this->assertCount(1, $warnings);
+        $this->assertSame([['type' => 2, 'message' => 'Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.']], $this->notifications('window/showMessage'));
     }
 
     private function initialize(?PatternDeclarations $declarations = null): void

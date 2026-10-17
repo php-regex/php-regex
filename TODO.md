@@ -167,10 +167,6 @@ lifecycle gates and framing caps, dynamic watcher registration, document
 versions on diagnostics pushes, the LSP/CLI parity test, and the
 not-analyzed severity aligned with `regex lint`. Remaining:
 
-3. **Honest degradation**: warn when vendor/ is absent on the host
-   (containerized projects: library patterns silently unavailable) and
-   when the 20000-file scan cap downgrades coverage; both are currently
-   at most one log line nobody reads.
 4. **Coding-agent configuration guide**: an OpenCode-class section in
    `docs/guides/lsp.md` with a validated config snippet — the cheapest
    new audience.

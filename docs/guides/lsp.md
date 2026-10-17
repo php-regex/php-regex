@@ -681,6 +681,21 @@ regex-lsp: trace: received notification "initialized"
 
 Stdout carries the frames only, traced or not.
 
+### A Warning About vendor/ or the File Limit
+
+Two coverage gaps are shown once, at `initialize`, as a warning the editor
+displays, and logged:
+
+- `vendor/` is missing from a workspace whose `composer.json` requires a
+  package: the dependencies are installed somewhere the editor does not
+  read, a container most often, so the functions they declare with
+  `#[RegexPattern]` are not read and the patterns passed to them are not
+  checked. Install the dependencies on the host too, or open the workspace
+  where they are installed.
+- The workspace or `vendor/` holds more than 20,000 PHP files: the
+  declarations were read from the first ones only. Narrow `paths` or
+  `exclude` in `regex.json`.
+
 ### No Diagnostics Appearing
 
 1. Ensure the file contains `preg_*` function calls

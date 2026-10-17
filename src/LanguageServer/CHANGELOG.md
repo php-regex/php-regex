@@ -72,3 +72,7 @@ CHANGELOG
    method and id; `verbose` adds its payload as JSON, cut past 1 KiB on a
    character boundary. A value that is not `off`, `messages` or `verbose`
    is ignored with a warning.
+ * A workspace whose `composer.json` requires a package but has no
+   `vendor/` (installed in a container, or not yet), and a workspace or a
+   `vendor/` past the 20,000-file limit, are shown once as a warning
+   (`window/showMessage`), where they were at most a log line.

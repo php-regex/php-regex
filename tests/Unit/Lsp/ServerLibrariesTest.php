@@ -126,6 +126,82 @@ final class ServerLibrariesTest extends TestCase
             static fn (array $params): bool => 2 === ($params['type'] ?? null) && \is_string($params['message'] ?? null) && str_contains($params['message'], 'vendor/'),
         );
         $this->assertCount(1, $warnings);
+        $this->assertSame([['type' => 2, 'message' => 'Functions declaring #[RegexPattern] were read from the first PHP files of vendor/ only.']], $this->notifications('window/showMessage'));
+    }
+
+    /**
+     * A Composer project whose vendor/ is not on this side of the editor —
+     * installed in a container, or not installed yet — has its libraries'
+     * declarations silently missing: the user is told, once.
+     */
+    #[Test]
+    public function test_a_composer_project_without_vendor_is_warned_once(): void
+    {
+        $this->write('composer.json', '{"require": {"acme/support": "^1.0"}}');
+
+        $this->initialize();
+        $this->send(['method' => 'workspace/didChangeWatchedFiles', 'params' => ['changes' => [['uri' => $this->uri('vendor/composer/installed.json'), 'type' => 2]]]]);
+
+        $shown = $this->notifications('window/showMessage');
+        $this->assertCount(1, $shown);
+        $this->assertSame(2, $shown[0]['type'] ?? null);
+        $this->assertSame(
+            'vendor/ is not in the workspace, though composer.json is: the functions its libraries declare with #[RegexPattern] are not read, and the patterns passed to them are not checked. Install the dependencies where the editor sees them, the host and not only a container.',
+            $shown[0]['message'] ?? null,
+        );
+    }
+
+    #[Test]
+    public function test_a_composer_project_with_vendor_is_not_warned(): void
+    {
+        $this->write('composer.json', '{"require": {"acme/support": "^1.0"}}');
+        $this->write('vendor/composer/installed.json', '{"packages": []}');
+
+        $this->initialize();
+
+        $this->assertSame([], $this->notifications('window/showMessage'));
+    }
+
+    /**
+     * The platform requirements install nothing: without a package to
+     * install, no library declares anything.
+     */
+    #[Test]
+    public function test_a_composer_project_requiring_only_the_platform_is_not_warned(): void
+    {
+        $this->write('composer.json', '{"require": {"php": ">=8.1", "ext-mbstring": "*", "lib-pcre": "*", "composer-runtime-api": "^2"}, "require-dev": {}}');
+
+        $this->initialize();
+
+        $this->assertSame([], $this->notifications('window/showMessage'));
+    }
+
+    #[Test]
+    public function test_a_composer_project_requiring_a_package_only_for_development_is_warned(): void
+    {
+        $this->write('composer.json', '{"require": {"php": ">=8.1"}, "require-dev": {"acme/support": "^1.0"}}');
+
+        $this->initialize();
+
+        $this->assertCount(1, $this->notifications('window/showMessage'));
+    }
+
+    #[Test]
+    public function test_a_composer_json_that_cannot_be_read_is_not_warned_for_vendor(): void
+    {
+        $this->write('composer.json', '{"require": ');
+
+        $this->initialize();
+
+        $this->assertSame([], $this->notifications('window/showMessage'));
+    }
+
+    #[Test]
+    public function test_a_workspace_without_composer_json_is_not_warned_for_vendor(): void
+    {
+        $this->initialize();
+
+        $this->assertSame([], $this->notifications('window/showMessage'));
     }
 
     /**
