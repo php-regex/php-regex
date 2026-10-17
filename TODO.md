@@ -253,17 +253,3 @@ pinning the PcreGates contract (gate literals inside
 release-map idiom duplicated in
 `tests/Unit/NodeVisitor/UnicodePropertyReleaseTest.php:50` and `:78` and
 three `tests/Unit/Lint/Rule/` files.
-
-## Checked and refused (do not re-litigate)
-
-- A compile-once `Pattern` handle: parses are already cached per pattern +
-  target; the handle would duplicate the frozen facade surface.
-- nikic-style multi-error recovery: PCRE reports one error (the oracle the
-  library is grounded on) and no internal consumer wants more; if anything,
-  document the tolerant-mode truncation contract (`docs/reference/api.md:254`).
-- One diagnostic god-DTO shared across packages: it couples Parser to lint
-  and LSP vocabulary; keep the small boundary converters.
-- An absolute-latency performance gate in CI: environment noise; keep the
-  asymptotic tripwires already in the suite.
-- "The AST is a dead end": wrong — `$ast->accept(new PatternPrinter())` is
-  public and documented; only the formatting factories are internal.
