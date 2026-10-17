@@ -204,6 +204,41 @@ final class UnmatchedIgnoresTest extends TestCase
     }
 
     /**
+     * A run that leaves the ReDoS check off passes over its identifiers,
+     * whatever the analysis would run.
+     */
+    #[Test]
+    public function test_a_run_without_redos_passes_over_its_identifiers(): void
+    {
+        $project = $this->makeProject(['src/a.php' => "<?php\npreg_match('/x/', \$s); // @regex-ignore regex.lint.redos\npreg_match('/x/', \$s); // @regex-ignore regex.lint.redos.search\n"]);
+        $parser = RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44', 'runtime_pcre_validation' => false]);
+        $sources = new PatternSourceCollection([new PhpFilePatternSource(new PatternExtractor(new TokenBasedExtractionStrategy()))]);
+        $lint = new LintService(new AnalysisService($parser, redosEnabled: true), $sources);
+        $request = new LintRequest([$project.'/src'], [], 1, checkRedos: false, checkOptimizations: false, analysisWorkers: 1);
+
+        $this->assertSame([], self::issues($lint->analyze($lint->collectPatterns($request), $request)));
+    }
+
+    /**
+     * What the analysis leaves off itself: the ReDoS check when off, the
+     * change of meaning when the range is one version or the check is
+     * off, and no identifier that is not a lint rule's, lint off or not.
+     */
+    #[Test]
+    public function test_what_the_analysis_leaves_off(): void
+    {
+        $parser = RegexParser::create(['php_version' => '8.2']);
+        $range = [RegexParser::create(['php_version' => '8.4'])];
+
+        $this->assertTrue((new AnalysisService($parser))->leavesOff('regex.lint.redos'));
+        $this->assertTrue((new AnalysisService($parser))->leavesOff('regex.lint.compat.meaningChanges'));
+        $this->assertFalse((new AnalysisService($parser, range: $range))->leavesOff('regex.lint.compat.meaningChanges'));
+        $this->assertTrue((new AnalysisService($parser, lintRules: ['compat.meaningChanges' => false], range: $range))->leavesOff('regex.lint.compat.meaningChanges'));
+        $this->assertFalse((new AnalysisService($parser, lintEnabled: false))->leavesOff('regex.optimization'));
+        $this->assertFalse((new AnalysisService($parser, lintEnabled: false))->leavesOff('regex.lint.no.such.rule'));
+    }
+
+    /**
      * The search cost of the ReDoS check is left off with the check, or
      * by its rule, in full or short.
      */

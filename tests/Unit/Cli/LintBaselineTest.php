@@ -439,6 +439,34 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * A path excluded or linted holds the files under it by whole
+     * segments: "old" holds "old/a.php", not "older/a.php", and "gone"
+     * holds "src/gone/a.php", not "src/agone/a.php" nor "src/gonex/a.php".
+     * An excluded path is read with either separator.
+     */
+    #[Test]
+    public function test_filter_reads_the_paths_by_whole_segments(): void
+    {
+        chdir($this->directory);
+        $baseline = $this->baselineFrom(['version' => 1, 'issues' => [
+            self::entryFor('regex.lint.known', 'src/agone/a.php', '/a+b/', 9),
+            self::entryFor('regex.lint.known', 'src/gonex/a.php', '/a+b/', 10),
+            self::entryFor('regex.lint.known', 'src/gone/a.php', '/a+b/', 11),
+            self::entryFor('regex.lint.known', 'old/a.php', '/a+b/', 12),
+            self::entryFor('regex.lint.known', 'older/a.php', '/a+b/', 13),
+            self::entryFor('regex.lint.known', 'win/dir/a.php', '/a+b/', 14),
+            self::entryFor('regex.lint.known', 'srcx/a.php', '/a+b/', 15),
+        ]]);
+
+        $filtered = $baseline->filter(self::report([]), [], ['src', 'old', 'older', 'win'], ['gone', 'old', 'win\\dir']);
+
+        $this->assertSame(
+            [['older/a.php', 13], ['src/agone/a.php', 9], ['src/gonex/a.php', 10]],
+            array_map(static fn (array $result): array => [$result['file'], $result['line']], $filtered->results),
+        );
+    }
+
+    /**
      * The one issue left takes the entry on its line, whichever comes
      * last, and the entries left are reported in file and line order among
      * the results the baseline keeps.

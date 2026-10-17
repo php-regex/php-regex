@@ -392,6 +392,57 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{identifier: string, lintRules: array<string, bool>, reported: bool}>
+     */
+    public static function provideLeftOffIdentifiers(): iterable
+    {
+        yield 'the search cost, its rule off' => ['identifier' => 'regex.lint.redos.search', 'lintRules' => ['redos.search' => false], 'reported' => false];
+        yield 'the search cost, its rule off by its full name' => ['identifier' => 'regex.lint.redos.search', 'lintRules' => ['regex.lint.redos.search' => false], 'reported' => false];
+        yield 'the search cost, its rule on' => ['identifier' => 'regex.lint.redos.search', 'lintRules' => [], 'reported' => true];
+        yield 'the complexity score, never reported' => ['identifier' => 'regex.lint.complexity', 'lintRules' => [], 'reported' => false];
+        yield 'the change of meaning, never reported' => ['identifier' => 'regex.lint.compat.meaningChanges', 'lintRules' => [], 'reported' => false];
+        yield 'a lint rule turned off' => ['identifier' => 'regex.lint.charclass.single', 'lintRules' => ['charclass.single' => false], 'reported' => false];
+        yield 'no rule, turned off all the same' => ['identifier' => 'regex.lint.no.such.rule', 'lintRules' => ['no.such.rule' => false], 'reported' => true];
+    }
+
+    /**
+     * An identifier of a check the editor leaves off is passed over; one
+     * that names no check is reported, even turned off in the rules map.
+     *
+     * @param array<string, bool> $lintRules
+     */
+    #[Test]
+    #[DataProvider('provideLeftOffIdentifiers')]
+    public function test_an_identifier_of_a_check_left_off_is_passed_over(string $identifier, array $lintRules, bool $reported): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null]), $lintRules, RedosMode::Theoretical))->didOpen(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/didOpen',
+                id: null,
+                params: ['textDocument' => ['uri' => 'file:///i.php', 'text' => "<?php\npreg_match('/x/', \$s); // @regex-ignore ".$identifier."\n"]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $payload = json_decode(substr($written, (int) strpos($written, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($payload);
+        $params = $payload['params'] ?? null;
+        $this->assertIsArray($params);
+        $diagnostics = $params['diagnostics'] ?? null;
+        $this->assertIsArray($diagnostics);
+        $codes = array_map(static fn (mixed $diagnostic): mixed => \is_array($diagnostic) ? ($diagnostic['code'] ?? null) : null, $diagnostics);
+        $this->assertSame($reported ? ['regex.ignore.unmatched'] : [], $codes);
+    }
+
+    /**
      * A lint issue is placed from the body too: "[aa]" starts at offset 1
      * of the body "x[aa]".
      */
