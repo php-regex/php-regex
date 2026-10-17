@@ -1,0 +1,30 @@
+{% comment %}
+  The landing's structured data: the project as a software application.
+  A library is a developer application for the purposes of a rich
+  result - the category, the license, and the price carry what an
+  evaluator's snippet needs. The version label travels with the
+  product data the header already reads.
+{% endcomment %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PHPRegex",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Linux, macOS, Windows",
+  "url": "https://php-regex.com/",
+  "description": "Parses PCRE patterns into an immutable AST and gives structured answers about validity, meaning, backtracking risk, capture shape, and equivalence.",
+  "softwareVersion": "{{ site.data.product.version_label }}",
+  "license": "https://github.com/php-regex/php-regex/blob/2.x/LICENSE",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "php-regex",
+    "url": "https://github.com/php-regex"
+  }
+}
+</script>

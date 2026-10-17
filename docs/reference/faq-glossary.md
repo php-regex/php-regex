@@ -6,6 +6,79 @@ description: "Short answers to common PHPRegex questions — CI integration, cac
 
 Short answers to common questions plus quick definitions of core terms used throughout PHPRegex documentation.
 
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Does PHPRegex execute regexes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No — until you ask it to. PHPRegex parses and analyzes patterns statically: the default verdicts never run the regex against input. The confirmed ReDoS mode is the exception by design."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this PCRE2-only?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. PHPRegex targets PHP's preg_* engine, which uses PCRE2. PHP 7.3 is the first PHP on PCRE2; projects allowing older PHP versions are judged from the lowest supported one, with a note."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this guarantee ReDoS safety?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Within limits. For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: safe (proven) means no input makes that attempt backtrack beyond a linear number of steps. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is tolerant parsing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tolerant parsing returns a partial AST plus errors, allowing tools to continue even when patterns are partially invalid."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this in CI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. PHPRegex is designed for CI/CD integration: the CLI exits non-zero on findings, and every verdict names its scope."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why an AST?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Abstract Syntax Tree is what every analysis reads: explanations, validation, capture shapes, ReDoS findings and rewrites all walk the same tree, so they agree with each other."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What's the difference between validate() and parse()?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "parse() builds the tree and reports syntax errors; validate() runs the full analysis - syntax, semantics, compatibility for the target PHP and PCRE2 pair - and returns structured diagnostics."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What PHP versions are supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PHP 8.1 and above, built on modern PHP features such as readonly properties and enums."
+      }
+    }
+  ]
+}
+</script>
+
 ## Frequently Asked Questions
 
 ### General Questions
