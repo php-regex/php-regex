@@ -124,7 +124,10 @@ final class RouteConflictSuggestionBuilder
 
         $variables = [];
         foreach ($match->groups as $key => $value) {
-            if (!\is_string($key)) {
+            // The value half guards the capture shapes the engine's match()
+            // fills under other flags; this caller passes none, so only the
+            // key half ever fires here.
+            if (!\is_string($key) || !\is_string($value)) {
                 continue;
             }
             $variables[$key] = $value;

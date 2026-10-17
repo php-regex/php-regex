@@ -71,15 +71,18 @@ final class PcreEngine
      * offset as preg_match() reads it: a byte offset in the whole subject,
      * counted from its end when negative, so "\b" and a lookbehind still see
      * what lies before it. An offset past the end of the subject is a null
-     * verdict, as preg_match() returns false for it.
+     * verdict, as preg_match() returns false for it. The flags are
+     * preg_match()'s own, so the capture shape follows them.
+     *
+     * @param int-mask<0, \PREG_OFFSET_CAPTURE, \PREG_UNMATCHED_AS_NULL> $flags
      */
-    public function match(string $regex, string $subject, ?PcreLimits $limits = null, int $offset = 0): PcreMatch
+    public function match(string $regex, string $subject, ?PcreLimits $limits = null, int $offset = 0, int $flags = 0): PcreMatch
     {
         $groups = [];
         $outcome = $this->run(
             $regex,
-            static function (string $prepared) use ($subject, $offset, &$groups): int|false {
-                return preg_match($prepared, $subject, $groups, 0, $offset);
+            static function (string $prepared) use ($subject, $offset, $flags, &$groups): int|false {
+                return preg_match($prepared, $subject, $groups, $flags, $offset);
             },
             $limits,
         );
