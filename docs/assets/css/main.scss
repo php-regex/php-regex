@@ -56,36 +56,43 @@
    Tokens — the theme palettes. The only raw colors in this stylesheet,
    together with the code-token block and the terminal block below.
  *
- * Contrast (WCAG 2.2, measured): light — ink/paper 13.32, amber/paper 5.37,
- * ink-soft/paper 6.79, line/paper 4.44 (>= 3, non-text); dark — ink/paper
+ * Contrast (WCAG 2.2, measured): light — ink/paper 13.39, amber/paper 4.97,
+ * ink-soft/paper 6.83, line/paper 4.46 (>= 3, non-text); dark — ink/paper
  * 15.23, amber/paper 5.82, ink-soft/paper 7.86, line/paper 4.41. The ambers
- * never cross themes: ember on light paper is 2.76, rust on navy is 3.00 —
- * both below every threshold we honor, so each theme keeps its own.
- * --amber-tint and --amber-deep extend the same accent into the two states
- * a filled button needs: a wash behind text that already holds its own
- * contrast, and a hover step of 6.79 (light) / 6.91 (dark) against paper.
- * --link-line is the underline only, never the text: 4.22 on light paper,
- * 4.68 on dark — both above the 3:1 a non-text graphical object needs,
- * while the words it sits under stay at full ink.
+ * never cross themes: ember on light paper is 2.78, the light ember on
+ * navy is 3.26 — both below every threshold we honor, so each theme
+ * keeps its own. --amber-tint and --amber-deep extend the same accent
+ * into the two states a filled button needs: a wash behind text that
+ * already holds its own contrast, and a hover step of 6.19 (light) /
+ * 6.91 (dark) against paper. --link-line is the underline only, never
+ * the text: 4.24 on light paper, 4.68 on dark — both above the 3:1 a
+ * non-text graphical object needs, while the words it sits under stay
+ * at full ink.
+ *
+ * The light paper is deliberately cool, of the navy family its ink and
+ * its dark sibling speak: a cream paper read sepia against them. The
+ * code panel follows as a cool grey — the dark theme's navy panel,
+ * turned over — and the accent is the dark theme's ember, at the depth
+ * light paper demands.
    ========================================================================== */
 
 @mixin tokens-light {
   color-scheme: light;
-  --paper: #F8F7F2;
-  --panel: #FCFBF7;
+  --paper: #F7F8F4;
+  --panel: #FCFCFA;
   --ink: #182B45;
-  --amber: #A84A08;
+  --amber: #B14E06;
   --ink-soft: #46586E;
   --line: #64748B;
   /* The quiet half of the line scale: rules that separate peers inside a
      framed thing (table rows) must not carry the weight of the rules that
      frame the thing itself. */
   --line-soft: rgba(100, 116, 139, 0.32);
-  --code-bg: #EBE7DA;
+  --code-bg: #EDEFF1;
   --code-ink: #22344E;
   --link-line: #AD6430;
-  --amber-tint: rgba(168, 74, 8, 0.06);
-  --amber-deep: #8F3F06;
+  --amber-tint: rgba(177, 78, 6, 0.06);
+  --amber-deep: #9A4307;
   --scrim: rgba(24, 43, 69, 0.55);
   /* Elevations, in the ink the borders already speak. */
   --shadow-1: 0 1px 2px rgba(24, 43, 69, 0.06), 0 2px 8px rgba(24, 43, 69, 0.05);
@@ -115,7 +122,7 @@
 
 /* Code-token palette (the second raw-color block): one restrained,
  * ink-adjacent set per theme, every role measured >= 4.5:1 on --code-bg.
- * light: key 4.91, string 5.52, number 6.27, comment 6.21;
+ * light: key 4.60, string 5.62, number 6.38, comment 6.32;
  * dark: key 6.18, string 9.20, number 8.07, comment 8.34. */
 @mixin code-tokens-light {
   --tk-key: var(--amber);
