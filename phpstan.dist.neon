@@ -140,11 +140,13 @@ parameters:
         # message is the very contract under test.
         - identifier: catch.internalClass
           path: tests/Unit/Support/PcreGatesTest.php
+          count: 11
         # Symfony 8.1 validates through validateInContext(); the bundle also
         # supports 7.4, which has no such method, so the test drives the
         # validator through initialize() and validate() there. Symfony 7.4,
         # the one PHP 8.2 and 8.3 install, deprecates neither.
-        - identifier: method.deprecated
+        - message: '#^Call to deprecated method (initialize|validate)\(\)#'
+          identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
           reportUnmatched: false
         # The worker pool test hands run() a chunk result that is not a list on
@@ -162,10 +164,69 @@ parameters:
         - message: '#^Static property PHPRegex\\Cli\\Application::\$memoryReserve is never read, only written\.$#'
           identifier: property.onlyWritten
           path: src/Cli/Application.php
-        - identifiers:
-            - classConstant.internalClass
-            # PHPUnit assertions that PHPStan considers redundant
-            - method.alreadyNarrowedType
+          count: 1
+        # Tautologies the suite keeps as pins: each site asserts a public
+        # value or taxonomy its declared type already enforces, so the
+        # analysis reads the assertion as dead — until the value moves and
+        # it flips to always-false, which is exactly what the pin is there
+        # to catch. One entry per file, counted; a count only goes down.
+        - identifier: method.alreadyNarrowedType
+          path: tests/Integration/Bridge/PHPStan/RegexPatternRuleSearchCostTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/ErrorCodeSpecificityTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/ErrorCodeTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Internal/LibraryPcreTest.php
+          count: 2
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/NodeVisitor/AbstractTraversingVisitorTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Packages/MixedTypeBaselineTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Parser/LimitOutcomeTest.php
+          count: 3
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Parser/PatternInfoAnalyzerTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Parser/PhpVersionGatesTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Parser/Printer/PatternFormatterTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Parser/ScanSubstringTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/PcreTargetJudgementTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Redos/ConfirmationTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Redos/Proven/RedosConfirmedReplayUnavailableTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Redos/Proven/RedosSearchCostTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/RegexParserTest.php
+          count: 3
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Support/PcreGatesTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Tools/Pcre2TestdataExtractorTest.php
+          count: 1
+        - identifier: method.alreadyNarrowedType
+          path: tests/Unit/Lint/Rule/QuestionBudgetTest.php
+          count: 1
         # These tests probe the running engine for syntax newer PCRE2 releases
         # added, as (?[...]), (*scs:...), (?^i) or a \K inside a lookbehind,
         # and only match with it when it compiles: the analysis, run on an
@@ -178,8 +239,6 @@ parameters:
           paths:
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleExtensionNeonRangeTest.php
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupEdgeTest.php
-            - tests/Integration/Bridge/PHPStan/RegexPatternRuleTargetVersionTest.php
-            - tests/Unit/Automata/DfaCacheKeyVersionTest.php
             - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
             - tests/Unit/Hir/ClassSetProviderCacheTest.php
             - tests/Unit/Internal/InlineFlagsTest.php
@@ -206,6 +265,7 @@ parameters:
         # group gives: those calls are the ones the rule reports, on purpose.
         - identifier: regex.replacement.undefinedGroup
           path: tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupTest.php
+          count: 11
         # The contract test pins what the types already say: the replace,
         # split and brace rules have no PHP floor, and a later change must
         # not add one.
@@ -224,6 +284,7 @@ parameters:
         # drop it.
         - identifier: function.alreadyNarrowedType
           path: tests/Unit/ParserExceptionTest.php
+          count: 1
         # The PHPStan rule tests hand the constructors a threshold of the
         # wrong type on purpose, as a configuration built by hand can: the
         # InvalidRegexOptionException they raise is the contract.
@@ -250,14 +311,17 @@ parameters:
         - message: '#^Call to new PHPRegex\\Parser\\Node\\UnicodePropNode\(\) on a separate line has no effect\.$#'
           identifier: new.resultUnused
           path: tests/Unit/Node/UnicodePropNodeTest.php
+          count: 1
         - message: '#^Parameter \#2 \$hasBraces of class PHPRegex\\Parser\\Node\\UnicodePropNode constructor expects bool, int given\.$#'
           identifier: argument.type
           path: tests/Unit/Node/UnicodePropNodeTest.php
+          count: 1
 
         # The Psalm plugin's tests drive Psalm in this process, through its
         # project analyser, issue buffer and type comparator, which Psalm
         # marks internal: there is no public API to run an analysis.
         - identifiers:
+            - classConstant.internalClass
             - method.internalClass
             - new.internalClass
             - parameter.internalClass
