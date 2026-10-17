@@ -1332,9 +1332,13 @@ main table::-webkit-scrollbar-thumb {
   gap: 2rem;
 }
 
-/* Documentation column: generous but bounded line length. */
+/* Documentation column: generous but bounded line length. The container
+   query context lets components adapt to their own width rather than the
+   viewport, so a component behaves the same in a narrow column as in a
+   wide one. */
 .page-main > main {
   max-width: 75ch;
+  container-type: inline-size;
 }
 
 /* Markdown pages open with a note telling folder readers where the served
