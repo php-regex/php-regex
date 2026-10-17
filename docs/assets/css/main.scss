@@ -2742,6 +2742,13 @@ main > section:not([class]) p > a.button:focus-visible {
 .hero-copy {
   display: grid;
   gap: 2rem;
+  /* The column is bounded, not content-sized: the install box below sets
+     its own width to max-content, and an implicit auto track would follow
+     it past the viewport on a phone — the whole hero overflowed by its
+     widest unbreakable line. A minmax(0, 1fr) track keeps the column at
+     the container and lets the command scroll inside its own panel,
+     where the cut-edge tell applies. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 1fr auto;
 }
 
@@ -2749,6 +2756,10 @@ main > section:not([class]) p > a.button:focus-visible {
   display: grid;
   gap: 2rem;
   align-content: start;
+  /* The install box sets its own width to max-content; an implicit auto
+     track would follow it past the hero's bounded column, so this grid
+     bounds its own column the same way .hero-copy does. */
+  grid-template-columns: minmax(0, 1fr);
 }
 
 /* The two closing sentences are the secondary half of the pitch, so they
