@@ -125,8 +125,10 @@ final class CodeActionHandlerTest extends TestCase
     /**
      * The quick fix offers a rewrite only once the automata prove it, as the
      * lint checks the rewrites it suggests: a class respelled reads as the
-     * pattern does, while a run spelled as a repeat beside a back reference,
-     * which the match solver does not read, is not proven.
+     * pattern does, a run spelled as a repeat beside a back reference, which
+     * the match solver does not read, is proven alone, while the same run
+     * beside a subroutine call, which may run any group again, is not
+     * proven.
      */
     #[Test]
     #[DataProvider('provideOptimizationsToProve')]
@@ -153,7 +155,8 @@ final class CodeActionHandlerTest extends TestCase
     {
         yield 'a class respelled' => ['pattern' => '/[0-9]+/', 'offered' => '/\d+/'];
         yield 'a class respelled beside a back reference' => ['pattern' => '/(a)\1[0-9]/', 'offered' => '/(a)\1\d/'];
-        yield 'a run spelled as a repeat beside a back reference' => ['pattern' => '/(a)\1[0-9]aaaa/', 'offered' => null];
+        yield 'a run spelled as a repeat beside a back reference' => ['pattern' => '/(a)\1[0-9]aaaa/', 'offered' => '/(a)\1\da{4}/'];
+        yield 'a run spelled as a repeat beside a subroutine call' => ['pattern' => '/(a)(?1)[0-9]aaaa/', 'offered' => null];
     }
 
     #[Test]
