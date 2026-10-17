@@ -38,6 +38,7 @@ tasks:
       - cmd: touch .task/phpstan.success
     sources:
       - phpstan.dist.neon
+      - phpstan-baseline.neon
       - src/PHPStan/extension.neon
       - bin/**/*.php
       - src/**/*.php
