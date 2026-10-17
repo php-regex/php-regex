@@ -89,6 +89,7 @@ In short, the public surface is:
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `LintException`, `Rule\RuleViolation` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
+| `regex-phpunit` | `RegexAssertions`, `Constraint\MatchesPattern`, `Constraint\CompilesPattern`, `Constraint\IsLinearPattern` |
 | `regex-psalm` | `Plugin` |
 | `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `AlphabeticAssertionToClassicRector`, `EscapeNulByteRector`, `PossessiveRepeatOnceRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |

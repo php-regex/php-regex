@@ -27,6 +27,7 @@ The first two commands run once in the consuming project: they allow the prerele
 | PHPStan findings | `php-regex/regex-phpstan` | Reports invalid patterns and optional lint, ReDoS, and optimization findings during static analysis. |
 | Psalm types and findings | `php-regex/regex-psalm` | Types `$matches` from the pattern and reports patterns the target PHP refuses. |
 | Verified rewrites | `php-regex/regex-rector` | Rewrites a `preg_*` call only when the automata prove the replacement answers alike. |
+| Regex assertions in your test suite | `php-regex/regex-phpunit` | Asserts what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear. |
 | Editor diagnostics | `php-regex/regex-language-server` | Serves diagnostics, hovers, completion, and code actions through the Language Server Protocol. |
 | Laravel commands and services | `php-regex/regex-laravel` | Adds the service, facade, and Artisan commands. |
 | Symfony commands and services | `php-regex/regex-symfony` | Adds the bundle, service, and console commands. |
@@ -44,7 +45,7 @@ The focused analysis libraries remain available for tools that compose them dire
 
 1. **Build a PHP application:** start with `regex-toolkit`; add `regex-cli` when you want terminal commands.
 2. **Build an analysis tool:** start with `regex-parser`; add only the analysis packages your tool reports.
-3. **Improve an existing project in CI:** start with `regex-cli`; add a static-analysis or framework package when your workflow already uses one.
+3. **Improve an existing project in CI:** start with `regex-cli`; add a static-analysis, testing or framework package when your workflow already uses one.
 4. **Get feedback while editing:** install `regex-language-server`.
 
 ## When the monorepo is useful

@@ -1,6 +1,6 @@
 ---
 title: Guides
-description: "Choose the PHPRegex integration that fits your workflow: PHPStan, Psalm, Rector, Laravel, Symfony, the language server, or the CLI."
+description: "Choose the PHPRegex integration that fits your workflow: PHPStan, Psalm, Rector, PHPUnit, Laravel, Symfony, the language server, or the CLI."
 ---
 
 # Guides
@@ -32,6 +32,20 @@ Types `$matches` from the pattern and reports invalid patterns for the PHP versi
 ### [Rector](rector.md)
 
 Rewrites a `preg_*` call into a cheaper string function only when the automata prove the two behave alike.
+
+</div>
+
+</div>
+
+## Testing
+
+<div class="guide-grid" markdown="1">
+
+<div class="guide-entry" markdown="1">
+
+### [PHPUnit](phpunit.md)
+
+Four assertions for your test suite: what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear.
 
 </div>
 

@@ -15,6 +15,7 @@ packages; replace it with the one you use:
 | the `Regex` facade, or a bit of everything | `php-regex/regex-toolkit` |
 | the parser, the validator and the AST only | `php-regex/regex-parser` |
 | the PHPStan extension | `php-regex/regex-phpstan` (dev) |
+| regex assertions in your test suite | `php-regex/regex-phpunit` (dev) |
 | the Symfony bundle | `php-regex/regex-symfony` |
 | the Laravel provider | `php-regex/regex-laravel` |
 | the `regex` command | `php-regex/regex-cli` (dev) |

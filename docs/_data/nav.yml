@@ -53,6 +53,8 @@
       url: /guides/psalm/
     - title: Rector
       url: /guides/rector/
+    - title: PHPUnit
+      url: /guides/phpunit/
     - title: Laravel
       url: /guides/laravel/
     - title: Symfony

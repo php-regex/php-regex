@@ -78,7 +78,7 @@ The [correctness contracts](/reference/correctness-contracts/) define those boun
 ## Documentation map
 
 - [Learn](/tutorial/): tutorial, PHP regex guide, ReDoS guide, cookbook, troubleshooting.
-- [Integrations](/guides/): CLI, PHPStan, Psalm, Rector, Laravel, Symfony, language server.
+- [Integrations](/guides/): CLI, PHPStan, Psalm, Rector, PHPUnit, Laravel, Symfony, language server.
 - [Concepts](/concepts/): AST, visitors, PCRE behavior, and ReDoS theory.
 - [Reference](/reference/): diagnostics, API, output contracts, support matrices, compatibility.
 - [Internals](/architecture/): architecture, traversal, AST nodes, visitors, extending, maintainer guide.

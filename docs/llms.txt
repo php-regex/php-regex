@@ -20,6 +20,7 @@ License: MIT
 - [PHPStan](https://php-regex.com/guides/phpstan/): regex findings inside static analysis
 - [Psalm](https://php-regex.com/guides/psalm/): $matches typed from the pattern
 - [Rector](https://php-regex.com/guides/rector/): preg_* calls rewritten to the string functions they provably equal
+- [PHPUnit](https://php-regex.com/guides/phpunit/): match, compilation and proven-linearity assertions for your test suite
 - [Laravel](https://php-regex.com/guides/laravel/): Regex service, facade, artisan commands
 - [Symfony](https://php-regex.com/guides/symfony/): bundle, service, console commands
 - [LSP](https://php-regex.com/guides/lsp/): diagnostics, hovers and code actions in any editor
