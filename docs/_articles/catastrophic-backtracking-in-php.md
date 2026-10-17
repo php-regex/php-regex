@@ -192,6 +192,45 @@ The *JIT* (just-in-time compiler) turns the pattern into machine code. Without i
 | 26 | 2,179.66 ms | 303.40 ms |
 | 28 | not run | 1,223.79 ms |
 
+<figure class="pipeline-figure" role="group" aria-labelledby="jit-chart-caption">
+<svg viewBox="0 0 640 220" role="img" aria-label="Grouped bar chart: interpreter and JIT times side by side for each input length. Both series climb in the same proportions; the JIT bars are about seven times shorter but still quadruple with every two extra letters.">
+  <title>The JIT moves the cliff, it does not remove it</title>
+  <line x1="48" y1="180" x2="616" y2="180" stroke="var(--line-soft)" stroke-width="1"/>
+  <g>
+    <rect x="48" y="179" width="26" height="1" fill="var(--ink-soft)"/>
+    <rect x="80" y="179" width="26" height="1" fill="var(--ink)"/>
+    <rect x="150" y="177" width="26" height="3" fill="var(--ink-soft)"/>
+    <rect x="182" y="179" width="26" height="1" fill="var(--ink)"/>
+    <rect x="252" y="170" width="26" height="10" fill="var(--ink-soft)"/>
+    <rect x="284" y="178" width="26" height="2" fill="var(--ink)"/>
+    <rect x="354" y="143" width="26" height="37" fill="var(--ink-soft)"/>
+    <rect x="386" y="175" width="26" height="5" fill="var(--ink)"/>
+    <rect x="456" y="30" width="26" height="150" fill="var(--ink-soft)"/>
+    <rect x="488" y="159" width="26" height="21" fill="var(--ink)"/>
+    <rect x="590" y="179" width="26" height="1" fill="var(--ink)"/>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink)">
+    <text x="61" y="172">8.5</text>
+    <text x="93" y="170">1.2</text>
+    <text x="469" y="24">2,180</text>
+    <text x="501" y="152">303</text>
+    <text x="603" y="172" style="font-weight: 600;">1,224</text>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink-soft)">
+    <text x="77" y="200">18</text>
+    <text x="179" y="200">20</text>
+    <text x="281" y="200">22</text>
+    <text x="383" y="200">24</text>
+    <text x="485" y="200">26</text>
+    <text x="601" y="200">28</text>
+    <text x="332" y="218">letters of input (n) &middot; milliseconds</text>
+  </g>
+</svg>
+<figcaption id="jit-chart-caption">
+  Interpreter bars in grey, JIT bars in ink, labelled in milliseconds. The JIT staircase is seven times lower and climbs at the same slope: <code>not run</code> marks where the interpreter column stopped.
+</figcaption>
+</figure>
+
 The JIT is about 7 times faster at every length. But the JIT column also doubles with each letter: 303 ms at 26 letters, 1.2 seconds at 28. A 7 times faster engine moves the cliff by about three letters; it does not remove it. With the default limit, the JIT also returns `false` at 19 letters, only sooner:
 
 ```console
