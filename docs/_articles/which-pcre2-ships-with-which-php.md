@@ -64,6 +64,54 @@ So your regex *dialect*, the set of patterns the engine accepts, depends on your
 | 8.5 | 2025-11-20 | 10.44 | none | 8.5.11 |
 | 8.6 | planned for 2026-11-19 | 10.44 in 8.6.0RC3 | — | 8.6.0RC3 |
 
+<figure class="pipeline-figure" role="group" aria-labelledby="timeline-chart-caption">
+<svg viewBox="0 0 640 250" role="img" aria-label="Step chart of the PCRE2 version each PHP release bundles, from 10.32 in PHP 7.3 up to 10.44 in PHP 8.4, then flat through 8.5 and the 8.6 release candidate.">
+  <title>The engine staircase, and its flat tail</title>
+  <g stroke="var(--line-soft)" stroke-width="1">
+    <line x1="70" y1="190" x2="610" y2="190"/>
+    <line x1="70" y1="147.5" x2="610" y2="147.5"/>
+    <line x1="70" y1="105" x2="610" y2="105"/>
+    <line x1="70" y1="62.5" x2="610" y2="62.5"/>
+    <line x1="70" y1="20" x2="610" y2="20"/>
+  </g>
+  <polyline points="70,190 137.5,168.75 205,147.5 272.5,126.25 340,62.5 407.5,41.25 475,20 610,20" fill="none" stroke="var(--ink)" stroke-width="2"/>
+  <polyline points="475,20 610,20" fill="none" stroke="var(--amber)" stroke-width="2"/>
+  <g fill="var(--ink)">
+    <circle cx="70" cy="190" r="4"/>
+    <circle cx="137.5" cy="168.75" r="4"/>
+    <circle cx="205" cy="147.5" r="4"/>
+    <circle cx="272.5" cy="126.25" r="4"/>
+    <circle cx="340" cy="62.5" r="4"/>
+    <circle cx="407.5" cy="41.25" r="4"/>
+  </g>
+  <circle cx="475" cy="20" r="4" fill="var(--amber)"/>
+  <circle cx="542.5" cy="20" r="4" fill="var(--amber)"/>
+  <circle cx="610" cy="20" r="4" fill="var(--amber)"/>
+  <g style="font-family: var(--font-mono); font-size: 11px;" text-anchor="end" fill="var(--ink-soft)">
+    <text x="62" y="194">10.32</text>
+    <text x="62" y="151.5">10.35</text>
+    <text x="62" y="109">10.37</text>
+    <text x="62" y="66.5">10.40</text>
+    <text x="62" y="24">10.44</text>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink-soft)">
+    <text x="70" y="212">7.3</text>
+    <text x="137.5" y="212">7.4</text>
+    <text x="205" y="212">8.0</text>
+    <text x="272.5" y="212">8.1</text>
+    <text x="340" y="212">8.2</text>
+    <text x="407.5" y="212">8.3</text>
+    <text x="475" y="212">8.4</text>
+    <text x="542.5" y="212">8.5</text>
+    <text x="610" y="212">8.6&thinsp;RC</text>
+    <text x="340" y="238">the engine each PHP bundles at its .0 release</text>
+  </g>
+</svg>
+<figcaption id="timeline-chart-caption">
+  Every PHP climbs one step of the staircase; from 8.4 on, nobody has &mdash; the amber tail is two releases and a candidate long, and no PHP has ever bundled a PCRE2 newer than 10.44. The two mid-series bumps (7.4 twice, 8.1 once) are in the table above.
+</figcaption>
+</figure>
+
 Three things the table tells you:
 
 - **PHP 7.3 is the first PHP with PCRE2.** PHP 7.2 and older used the original PCRE library, which ended at 8.41 in PHP 7.2. [Why PCRE2 is a separate library](why-pcre2-is-a-separate-library.md) tells that story.
