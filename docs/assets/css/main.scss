@@ -2215,6 +2215,25 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink);
 }
 
+/* On phones the breadcrumb collapses to parent › current: the intermediate
+   levels are hidden, the parent stays as a way back, and the current page
+   is the only thing the reader needs to know where they are. */
+@media (max-width: 639px) {
+  .breadcrumbs ol {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .breadcrumbs li:not(:nth-last-child(2)):not(:last-child) {
+    display: none;
+  }
+
+  .breadcrumbs li:nth-last-child(2)::before {
+    content: none;
+  }
+}
+
 .pager {
   display: flex;
   justify-content: space-between;
