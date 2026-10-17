@@ -36,6 +36,7 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => 'regex-optimizer',
         'Parser' => 'regex-parser',
         'PHPStan' => 'regex-phpstan',
+        'PHPUnit' => 'regex-phpunit',
         'Psalm' => 'regex-psalm',
         'Rector' => 'regex-rector',
         'Redos' => 'regex-redos',
@@ -61,6 +62,7 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => '>=8.1',
         'Parser' => '>=8.1',
         'PHPStan' => '>=8.1',
+        'PHPUnit' => '>=8.1',
         'Psalm' => '>=8.1',
         'Rector' => '>=8.1',
         'Redos' => '>=8.1',
@@ -267,6 +269,9 @@ final class PackageManifestTest extends TestCase
 
         $this->assertSame('<2.4', self::dig($root, 'conflict', 'rector/rector'));
         $this->assertSame('<6.19', self::dig($root, 'conflict', 'vimeo/psalm'));
+        // The PHPUnit bridge's floor is 9.6, the oldest the assertions still
+        // serve, so the monorepo refuses every host older than that.
+        $this->assertSame('<9.6', self::dig($root, 'conflict', 'phpunit/phpunit'));
     }
 
     #[Test]
@@ -296,6 +301,17 @@ final class PackageManifestTest extends TestCase
         // Psalm requires the parser it runs on: requiring another copy could
         // only conflict with it.
         $this->assertNull(self::dig($manifest, 'require', 'nikic/php-parser'));
+    }
+
+    #[Test]
+    public function test_phpunit_package_takes_every_supported_phpunit_major(): void
+    {
+        $manifest = self::manifest('PHPUnit');
+
+        // 9.6 is the settled floor, the oldest the assertions still serve;
+        // every major from it runs on some PHP the package runs on, so all
+        // five are required, not suggested.
+        $this->assertSame('^9.6 || ^10.0 || ^11.0 || ^12.0 || ^13.0', self::dig($manifest, 'require', 'phpunit/phpunit'));
     }
 
     #[Test]
@@ -634,6 +650,7 @@ final class PackageManifestTest extends TestCase
             'Psr' => 'psr/'.$kebab($second),
             'PhpParser' => 'nikic/php-parser',
             'PHPStan' => 'phpstan/phpstan',
+            'PHPUnit' => 'phpunit/phpunit',
             'Rector' => 'rector/rector',
             'Psalm' => 'vimeo/psalm',
             'Symfony' => 'Component' === $second && isset($segments[2]) ? 'symfony/'.$kebab($segments[2]) : null,

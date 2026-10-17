@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Exception;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 use Symfony\Component\Validator\Exception\UnexpectedValueException;
@@ -35,6 +36,12 @@ final class ThrownExceptionsTest extends TestCase
      * configuration error, and no other class would do.
      */
     private const FRAMEWORK_CONTRACT = [
+        'src/PHPUnit/Constraint/MatchesPattern.php' => [
+            ExpectationFailedException::class,
+        ],
+        'src/PHPUnit/RegexAssertions.php' => [
+            ExpectationFailedException::class,
+        ],
         'src/Symfony/Validator/Constraints/ValidRegexValidator.php' => [
             UnexpectedTypeException::class,
             UnexpectedValueException::class,

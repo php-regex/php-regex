@@ -42,6 +42,7 @@
         "php-regex/regex-optimizer": "self.version",
         "php-regex/regex-parser": "self.version",
         "php-regex/regex-phpstan": "self.version",
+        "php-regex/regex-phpunit": "self.version",
         "php-regex/regex-psalm": "self.version",
         "php-regex/regex-rector": "self.version",
         "php-regex/regex-redos": "self.version",
@@ -118,6 +119,7 @@
     },
     "conflict": {
         "nikic/php-parser": "<4.18",
+        "phpunit/phpunit": "<9.6",
         "rector/rector": "<2.4",
         "vimeo/psalm": "<6.19"
     },
@@ -127,6 +129,7 @@
         "phpstan/phpstan": "To run static analysis and detect invalid regex patterns.",
         "nikic/php-parser": "To extract regex patterns from PHP sources with a real parser instead of the tokenizer.",
         "phpstan/extension-installer": "To automatically enable the PHPStan rule for regex validation.",
+        "phpunit/phpunit": "To assert on regex patterns in your test suite (php-regex/regex-phpunit).",
         "rector/rector": "To rewrite preg_* calls into the string functions the automata prove they match.",
         "vimeo/psalm": "To type $matches from the pattern and report invalid patterns in Psalm (php-regex/regex-psalm).",
         "illuminate/support": "Required for Laravel integration.",

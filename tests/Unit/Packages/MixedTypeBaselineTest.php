@@ -39,6 +39,7 @@ final class MixedTypeBaselineTest extends TestCase
         'Linter' => 34,
         'Optimizer' => 3,
         'PHPStan' => 2,
+        'PHPUnit' => 18,
         'Parser' => 64,
         'Symfony' => 23,
     ];

@@ -180,6 +180,35 @@ return [
         'PHPRegex\Parser\Printer\JsonDumper::visitUnicodeProp()' => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::visitVersionCondition()' => ['reflection-sink', 1],
     ],
+    'src/PHPUnit/Constraint/CompilesPattern.php' => [
+        'PHPRegex\PHPUnit\Constraint\CompilesPattern::matches()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\CompilesPattern::failureDescription()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\CompilesPattern::additionalFailureDescription()' => ['host-contract', 1],
+    ],
+    'src/PHPUnit/Constraint/IsLinearPattern.php' => [
+        'PHPRegex\PHPUnit\Constraint\IsLinearPattern::matches()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\IsLinearPattern::failureDescription()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\IsLinearPattern::additionalFailureDescription()' => ['host-contract', 1],
+    ],
+    'src/PHPUnit/Constraint/MatchesPattern.php' => [
+        'PHPRegex\PHPUnit\Constraint\MatchesPattern::__construct()' => ['validator-input', 1],
+        'PHPRegex\PHPUnit\Constraint\MatchesPattern::evaluate()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\MatchesPattern::matches()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\MatchesPattern::failureDescription()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\MatchesPattern::additionalFailureDescription()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\MatchesPattern::failWithDiff()' => ['host-contract', 1],
+    ],
+    'src/PHPUnit/Internal/Expectation.php' => [
+        'PHPRegex\PHPUnit\Internal\Expectation::__construct()' => ['validator-input', 1],
+    ],
+    'src/PHPUnit/Internal/MatchAttempt.php' => [
+        'PHPRegex\PHPUnit\Internal\MatchAttempt::__construct()' => ['validator-input', 2],
+    ],
+    'src/PHPUnit/Internal/PatternLab.php' => [
+        'PHPRegex\PHPUnit\Internal\PatternLab::run()' => ['validator-input', 1],
+        'PHPRegex\PHPUnit\Internal\PatternLab::export()' => ['validator-input', 1],
+        'PHPRegex\PHPUnit\Internal\PatternLab::judge()' => ['validator-input', 1],
+    ],
     'src/Symfony/Command/AnalyzeCommand.php' => [
         'PHPRegex\Symfony\Command\AnalyzeCommand::normalizeLowercaseList()' => ['host-return', 1],
         'PHPRegex\Symfony\Command\AnalyzeCommand::normalizeStringList()' => ['host-return', 1],

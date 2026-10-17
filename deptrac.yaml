@@ -68,6 +68,10 @@ deptrac:
       collectors:
         - type: classLike
           value: '^PHPRegex\\PHPStan\\'
+    - name: PHPUnit
+      collectors:
+        - type: classLike
+          value: '^PHPRegex\\PHPUnit\\'
     - name: Psalm
       collectors:
         - type: classLike
@@ -101,6 +105,7 @@ deptrac:
     Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, RedosInternal, Transpiler, Linter, LinterInternal]
     LanguageServer: [Toolkit, Parser, ParserInternal, Explain, Optimizer, ReDoS, Linter, LinterInternal]
     PHPStan: [Parser, ParserInternal, Linter, ReDoS, Automata, Optimizer]
+    PHPUnit: [Toolkit, Parser, ReDoS]
     Psalm: [Parser, ParserInternal, Automata, Linter]
     Rector: [Parser, Automata]
     Symfony: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, LinterInternal]

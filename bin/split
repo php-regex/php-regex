@@ -38,6 +38,7 @@ SPLITS=(
     "src/Cli:regex-cli"
     "src/LanguageServer:regex-language-server"
     "src/PHPStan:regex-phpstan"
+    "src/PHPUnit:regex-phpunit"
     "src/Psalm:regex-psalm"
     "src/Rector:regex-rector"
     "src/Symfony:regex-symfony"
