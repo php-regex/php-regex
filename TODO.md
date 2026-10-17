@@ -230,9 +230,10 @@ an open count past 65535 and `\214748364` read as text (10.37). Left:
   10.34 and later with `/(a|ab){1}+c/`), but no rule lowers a target: the
   upgrade set runs from the targeted PHP up. Build it when a mouth for a
   lowered target exists.
-- Discovery parity for the Rector rules: patterns folded from constants
-  (as the `preg_match()` rule already does), calls of functions marked
-  `#[RegexPattern]` or `Language('RegExp')`, and `preg_replace_callback_array()`.
+- The upgrade rules leave a pattern held by a constant (`preg_match(self::P,
+  $s)`) as it is: rewriting the call inlines the constant, and rewriting its
+  declaration changes every other reader. Rewrite the declaration when every
+  reader of the constant in the project is a pattern argument.
 - The article on which PCRE2 ships with which PHP quotes the former `\K`
   hint ("Move the \K out of the lookaround."): refresh its sample output.
 - Refused with a witness, do not build: the octal respell `\214748364` to

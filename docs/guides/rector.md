@@ -72,6 +72,12 @@ brace of `/a{65536/`, which PHP 8.0 and earlier refuse, as `/a\{65536/`. Each
 call is rewritten only when the rewritten pattern reads alike on every PHP
 from the one Rector targets to the newest the library knows.
 
+The set reads the patterns `regex lint` reads: the first argument of a
+`preg_*()` call, the keys of the array `preg_replace_callback_array()` takes,
+and the arguments a function or a static method marks with `#[RegexPattern]`
+or `#[Language('RegExp')]`. A pattern held by a constant is left as it is, as
+rewriting the call would inline the constant.
+
 `PossessiveRepeatOnceRector` keeps what an older PHP matched where a later one
 reads the same tree otherwise: PCRE2 10.33 and earlier (PHP 7.3, 7.4.0 to
 7.4.5) ignore a possessive `{1}+`, and 10.34 makes the group atomic, so

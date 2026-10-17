@@ -15,6 +15,7 @@ namespace PHPRegex\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\StaticCall;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -22,6 +23,7 @@ use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
+use Rector\Reflection\ReflectionResolver;
 
 /**
  * Spells an assertion or an atomic group with the opener every PCRE2
@@ -58,27 +60,32 @@ final class AlphabeticAssertionToClassicRector extends AbstractRector
         'atomic' => '(?>',
     ];
 
-    public function __construct(private readonly PhpVersionProvider $phpVersionProvider) {}
+    public function __construct(private readonly PhpVersionProvider $phpVersionProvider, private readonly ReflectionResolver $reflectionResolver) {}
 
     /**
      * @return array<class-string<Node>>
      */
     public function getNodeTypes(): array
     {
-        return [FuncCall::class];
+        return [FuncCall::class, StaticCall::class];
     }
 
     /**
-     * @param FuncCall $node
+     * @param FuncCall|StaticCall $node
      *
-     * @return FuncCall|null the same call, its pattern literal rewritten
+     * @return FuncCall|StaticCall|null the same call, its pattern literals rewritten
      */
     public function refactor(Node $node): ?Node
     {
-        $literal = $this->isNames($node, TargetRange::FUNCTIONS) ? TargetRange::patternLiteral($node) : null;
-        $respelled = null === $literal || !str_contains($literal->value, '(*') ? null : self::respelled($literal->value, TargetRange::from($this->phpVersionProvider->provide()));
+        $range = TargetRange::from($this->phpVersionProvider->provide());
 
-        return null === $respelled ? null : TargetRange::withPattern($node, $respelled);
+        return TargetRange::rewriteEach(
+            $node,
+            $node instanceof FuncCall && $this->isNames($node, TargetRange::FUNCTIONS),
+            $node instanceof FuncCall && $this->isName($node, 'preg_replace_callback_array'),
+            $this->reflectionResolver,
+            static fn (string $pattern): ?string => str_contains($pattern, '(*') ? self::respelled($pattern, $range) : null,
+        );
     }
 
     /**

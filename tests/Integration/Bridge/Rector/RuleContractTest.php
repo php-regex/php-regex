@@ -84,7 +84,7 @@ final class RuleContractTest extends TestCase
         $this->assertSame(
             1,
             preg_match('/@param\s+(\S+)\s+\$node\b/', $docComment, $param),
-            'refactor() must document its $node as FuncCall: the rule subscribes to FuncCall alone.',
+            'refactor() must document its $node as FuncCall|StaticCall: the rule subscribes to those two alone.',
         );
         $this->assertSame(
             1,
@@ -94,19 +94,19 @@ final class RuleContractTest extends TestCase
         );
 
         $this->assertSame(
-            'FuncCall',
+            'FuncCall|StaticCall',
             $param[1],
-            sprintf('The @param for $node in refactor() must name FuncCall, not %s.', $param[1]),
+            sprintf('The @param for $node in refactor() must name FuncCall|StaticCall, not %s.', $param[1]),
         );
 
         $members = array_values(array_filter(array_map(trim(...), explode('|', $return[1])), static fn (string $member): bool => '' !== $member));
         sort($members);
 
         $this->assertSame(
-            ['FuncCall', 'null'],
+            ['FuncCall', 'StaticCall', 'null'],
             $members,
             sprintf(
-                'The @return of refactor() must say FuncCall|null, not %s: every non-null path returns the very'
+                'The @return of refactor() must say FuncCall|StaticCall|null, not %s: every non-null path returns the very'
                 .' $node it received (the native ?Node stays — RectorInterface owns that contract), and a pipeline'
                 .' holding the result reads ->getArgs() on it without a @var re-assert.',
                 trim($return[1]),

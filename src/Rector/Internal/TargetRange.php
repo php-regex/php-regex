@@ -13,18 +13,19 @@ declare(strict_types=1);
 
 namespace PHPRegex\Rector\Internal;
 
-use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Expr\CallLike;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\RangeDiff;
+use Rector\Reflection\ReflectionResolver;
 
 /**
  * What the rules that ready a pattern for the PHP versions a project runs
  * on share: the range they judge, from the PHP the code targets to the
- * newest the library knows, and the pattern literal of a preg_*() call.
+ * newest the library knows, and the pattern literals a call hands to a
+ * regex engine.
  *
  * @internal
  */
@@ -43,6 +44,34 @@ final class TargetRange
     private function __construct() {}
 
     /**
+     * The call with each pattern literal it hands to a regex engine
+     * replaced by its rewrite (see PatternLiterals); null when none is
+     * rewritten.
+     *
+     * @template T of CallLike
+     *
+     * @param T                         $call
+     * @param bool                      $pregCall      whether the call is a function call named in FUNCTIONS
+     * @param bool                      $callbackArray whether the call is preg_replace_callback_array()
+     * @param \Closure(string): ?string $rewrite       the rewritten pattern, or null to leave it
+     *
+     * @return T|null
+     */
+    public static function rewriteEach(CallLike $call, bool $pregCall, bool $callbackArray, ReflectionResolver $reflection, \Closure $rewrite): ?CallLike
+    {
+        $changed = false;
+        foreach (PatternLiterals::of($call, $pregCall, $callbackArray, $reflection) as [$literal, $replace]) {
+            $rewritten = $rewrite($literal->value);
+            if (null !== $rewritten) {
+                $replace(PregCall::string($rewritten));
+                $changed = true;
+            }
+        }
+
+        return $changed ? $call : null;
+    }
+
+    /**
      * From the PHP the code targets to the newest the library knows,
      * through every PHP version a verdict may change at: never a single
      * target. One range per PHP version, kept for the run.
@@ -52,32 +81,6 @@ final class TargetRange
         $boundaries = PcreTarget::phpVersionBoundaries();
 
         return self::$ranges[$phpVersion] ??= RangeDiff::between($phpVersion, max($phpVersion, $boundaries[\count($boundaries) - 1]));
-    }
-
-    /**
-     * The first argument of the call when it is one string literal, given
-     * by position: the pattern a rule may rewrite. Null for a first-class
-     * callable, a named or unpacked argument, or any other expression.
-     */
-    public static function patternLiteral(FuncCall $call): ?String_
-    {
-        if ($call->isFirstClassCallable()) {
-            return null;
-        }
-
-        $argument = $call->getArgs()[0] ?? null;
-
-        return null === $argument || !$argument->value instanceof String_ || null !== $argument->name || $argument->unpack ? null : $argument->value;
-    }
-
-    /**
-     * The call with its pattern literal replaced by one holding $pattern.
-     */
-    public static function withPattern(FuncCall $call, string $pattern): FuncCall
-    {
-        $call->getArgs()[0]->value = PregCall::string($pattern);
-
-        return $call;
     }
 
     /**

@@ -259,6 +259,24 @@ Left alone, and why:
 * A pattern the target PHP refuses or reads otherwise, as for
   `preg_match()`. The rule has no other version floor.
 
+### The patterns the upgrade rules read
+
+The four rules of the `RegexSetList::PCRE_UPGRADE` set read the pattern of
+each `preg_*()` call, each key of the array `preg_replace_callback_array()`
+takes, and each argument a function or a static method marks with
+`#[PHPRegex\Parser\Attribute\RegexPattern]` or PhpStorm's
+`#[Language('RegExp')]` receives, as `regex lint` reads them:
+
+```php
+function matches(#[RegexPattern] string $pattern, string $subject): bool { /* ... */ }
+
+matches('/a{,3}/', $subject);   // becomes matches('/a\{,3}/', $subject) for PHP 8.3 and earlier
+```
+
+Each is a string literal rewritten in place. A pattern held by a constant is
+left as it is: rewriting the call would inline the constant, and rewriting the
+declaration would change every other reader of it.
+
 ### `EscapeLiteralBraceRector`
 
 In the `RegexSetList::PCRE_UPGRADE` set. Before PCRE2 10.43 (PHP 8.3 and

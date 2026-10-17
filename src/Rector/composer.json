@@ -24,6 +24,7 @@
     ],
     "require": {
         "php": ">=8.1",
+        "phpstan/phpstan": "^2.1.31",
         "rector/rector": "^2.4",
         "php-regex/regex-automata": "self.version",
         "php-regex/regex-parser": "self.version"

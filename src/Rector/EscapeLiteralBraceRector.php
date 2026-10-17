@@ -15,6 +15,7 @@ namespace PHPRegex\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\StaticCall;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -23,6 +24,7 @@ use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
+use Rector\Reflection\ReflectionResolver;
 
 /**
  * Escapes a brace PCRE2 before 10.43 reads as text and PCRE2 10.43 (PHP
@@ -41,27 +43,32 @@ use Rector\Rector\AbstractRector;
  */
 final class EscapeLiteralBraceRector extends AbstractRector
 {
-    public function __construct(private readonly PhpVersionProvider $phpVersionProvider) {}
+    public function __construct(private readonly PhpVersionProvider $phpVersionProvider, private readonly ReflectionResolver $reflectionResolver) {}
 
     /**
      * @return array<class-string<Node>>
      */
     public function getNodeTypes(): array
     {
-        return [FuncCall::class];
+        return [FuncCall::class, StaticCall::class];
     }
 
     /**
-     * @param FuncCall $node
+     * @param FuncCall|StaticCall $node
      *
-     * @return FuncCall|null the same call, its pattern literal rewritten
+     * @return FuncCall|StaticCall|null the same call, its pattern literals rewritten
      */
     public function refactor(Node $node): ?Node
     {
-        $literal = $this->isNames($node, TargetRange::FUNCTIONS) ? TargetRange::patternLiteral($node) : null;
-        $escaped = null === $literal ? null : self::escaped($literal->value, TargetRange::from($this->phpVersionProvider->provide()));
+        $range = TargetRange::from($this->phpVersionProvider->provide());
 
-        return null === $escaped ? null : TargetRange::withPattern($node, $escaped);
+        return TargetRange::rewriteEach(
+            $node,
+            $node instanceof FuncCall && $this->isNames($node, TargetRange::FUNCTIONS),
+            $node instanceof FuncCall && $this->isName($node, 'preg_replace_callback_array'),
+            $this->reflectionResolver,
+            static fn (string $pattern): ?string => self::escaped($pattern, $range),
+        );
     }
 
     /**

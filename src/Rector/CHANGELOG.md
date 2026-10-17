@@ -18,6 +18,11 @@ CHANGELOG
    `RegexSetList::PCRE_UPGRADE` set: `/(*pla:a)b/`, which PHP 7.3 refuses,
    becomes `/(?=a)b/`, and a NUL byte, which PHP 8.1 and earlier refuse,
    `\x00`, for code that targets such a PHP.
+ * The rules of `RegexSetList::PCRE_UPGRADE` read the keys of the array
+   `preg_replace_callback_array()` takes and the arguments a function or a
+   static method marks with `#[RegexPattern]` or `#[Language('RegExp')]`.
+   The package requires `phpstan/phpstan`, which Rector runs on, for the
+   attributes of a parameter.
  * `PossessiveRepeatOnceRector`, in the `RegexSetList::PCRE_UPGRADE` set:
    `/(a|ab){1}+c/`, which PHP 7.3 and 7.4.0 to 7.4.5 read as `/(a|ab)c/` and
    7.4.6 and later as atomic, becomes `/(a|ab){1}c/` for code that targets

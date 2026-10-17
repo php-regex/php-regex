@@ -15,6 +15,7 @@ namespace PHPRegex\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\StaticCall;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -29,6 +30,7 @@ use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
+use Rector\Reflection\ReflectionResolver;
 
 /**
  * Drops the "+" of a possessive "{1}+" on a group, for code leaving a PHP
@@ -55,28 +57,37 @@ final class PossessiveRepeatOnceRector extends AbstractRector
      */
     private const PHP_HONOURING_THE_REPEAT = 70406;
 
-    public function __construct(private readonly PhpVersionProvider $phpVersionProvider) {}
+    public function __construct(private readonly PhpVersionProvider $phpVersionProvider, private readonly ReflectionResolver $reflectionResolver) {}
 
     /**
      * @return array<class-string<Node>>
      */
     public function getNodeTypes(): array
     {
-        return [FuncCall::class];
+        return [FuncCall::class, StaticCall::class];
     }
 
     /**
-     * @param FuncCall $node
+     * @param FuncCall|StaticCall $node
      *
-     * @return FuncCall|null the same call, its pattern literal rewritten
+     * @return FuncCall|StaticCall|null the same call, its pattern literals rewritten
      */
     public function refactor(Node $node): ?Node
     {
         $phpVersion = $this->phpVersionProvider->provide();
-        $literal = $phpVersion < self::PHP_HONOURING_THE_REPEAT && $this->isNames($node, TargetRange::FUNCTIONS) ? TargetRange::patternLiteral($node) : null;
-        $rewritten = null === $literal || !str_contains($literal->value, '}+') ? null : self::rewritten($literal->value, TargetRange::from($phpVersion));
+        if ($phpVersion >= self::PHP_HONOURING_THE_REPEAT) {
+            return null;
+        }
 
-        return null === $rewritten ? null : TargetRange::withPattern($node, $rewritten);
+        $range = TargetRange::from($phpVersion);
+
+        return TargetRange::rewriteEach(
+            $node,
+            $node instanceof FuncCall && $this->isNames($node, TargetRange::FUNCTIONS),
+            $node instanceof FuncCall && $this->isName($node, 'preg_replace_callback_array'),
+            $this->reflectionResolver,
+            static fn (string $pattern): ?string => str_contains($pattern, '}+') ? self::rewritten($pattern, $range) : null,
+        );
     }
 
     /**
