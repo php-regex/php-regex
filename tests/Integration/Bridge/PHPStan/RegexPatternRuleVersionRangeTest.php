@@ -54,7 +54,7 @@ final class RegexPatternRuleVersionRangeTest extends RuleTestCase
         $this->analyse(
             [__DIR__.'/Fixtures/VersionRangeFixture.php'],
             self::runningEngineCompiles(self::KEEP_IN_LOOKBEHIND) ? [
-                ['Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: '.$refusal->error, 22, $refusal->hint],
+                ['Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: '.($refusal->error ?? 'Invalid regex.'), 22, $refusal->hint],
             ] : [],
         );
     }

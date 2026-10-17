@@ -36,7 +36,7 @@ final class RegexPatternRuleSonarParityLintTest extends RuleTestCase
     public function test_the_bug_rules_reach_phpstan_and_the_opt_in_rules_do_not(): void
     {
         $identifiers = array_map(
-            static fn (Error $error): string => $error->getLine().' '.$error->getIdentifier(),
+            static fn (Error $error): string => ($error->getLine() ?? '').' '.($error->getIdentifier() ?? ''),
             $this->gatherAnalyserErrors([self::FIXTURE]),
         );
         sort($identifiers);

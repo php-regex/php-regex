@@ -47,7 +47,7 @@ final class RegexPatternArgumentRuleChecksTest extends RuleTestCase
         $this->requiresPcre2('10.43', '/(?aD)x/');
 
         $identifiers = array_map(
-            static fn (Error $error): string => $error->getLine().' '.$error->getIdentifier(),
+            static fn (Error $error): string => ($error->getLine() ?? '').' '.($error->getIdentifier() ?? ''),
             $this->gatherAnalyserErrors([__DIR__.'/Fixtures/RegexPatternArgumentChecksFixture.php']),
         );
         sort($identifiers);

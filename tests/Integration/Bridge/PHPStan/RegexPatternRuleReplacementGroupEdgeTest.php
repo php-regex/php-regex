@@ -54,7 +54,7 @@ final class RegexPatternRuleReplacementGroupEdgeTest extends RuleTestCase
         $errors = [];
         foreach ($this->gatherAnalyserErrors([self::FIXTURE]) as $error) {
             if (RegexPatternRule::IDENTIFIER_REPLACEMENT_UNDEFINED_GROUP === $error->getIdentifier()) {
-                $errors[] = $error->getLine().' '.$error->getMessage();
+                $errors[] = ($error->getLine() ?? '').' '.$error->getMessage();
             }
         }
 

@@ -112,7 +112,7 @@ final class RegexPatternRuleProvenRedosTest extends RuleTestCase
             $this->gatherAnalyserErrors([self::FIXTURE]),
             static fn (Error $error): bool => RegexPatternRule::IDENTIFIER_REDOS === $error->getIdentifier(),
         ));
-        usort($errors, static fn (Error $a, Error $b): int => $a->getLine() <=> $b->getLine());
+        usort($errors, static fn (Error $a, Error $b): int => ($a->getLine() ?? 0) <=> ($b->getLine() ?? 0));
 
         return $errors;
     }

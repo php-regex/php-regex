@@ -82,7 +82,7 @@ final class OctalEscapeReadingTest extends TestCase
         // 10.45 refuses the number, as it does for any past 65535.
         foreach (['/a\\800000000b/', '/a\\914748364b/', '/(a)\\9147483640{2}/'] as $pattern) {
             $old = Regex::create(['cache' => null, 'pcre_version' => '10.44'])->validate($pattern);
-            $this->assertTrue($old->isValid, $pattern.': '.$old->error);
+            $this->assertTrue($old->isValid, $pattern.': '.($old->error ?? ''));
             $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.45'])->validate($pattern)->isValid, $pattern);
         }
 

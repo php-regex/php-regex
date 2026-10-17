@@ -40,7 +40,7 @@ final class RuntimePcreDetectionTest extends TestCase
             $pattern,
             $compiles ? 'compiles' : 'does not compile',
             \PCRE_VERSION,
-            $result->isValid ? 'valid' : 'invalid: '.$result->error,
+            $result->isValid ? 'valid' : 'invalid: '.($result->error ?? ''),
         ));
     }
 

@@ -47,7 +47,7 @@ final class HeroAstOutputTest extends TestCase
         exec($command, $outputLines, $exitCode);
         $output = implode("\n", $outputLines);
         $data = (string) file_get_contents(self::DATA);
-        $indentedOutput = preg_replace('/^/m', '  ', $output);
+        $indentedOutput = preg_replace('/^/m', '  ', $output) ?? '';
 
         $this->assertSame(0, $exitCode, $output);
         $this->assertStringContainsString("command: |-\n  $ vendor/bin/regex diagram \\", $data);

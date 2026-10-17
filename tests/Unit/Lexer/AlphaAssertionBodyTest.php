@@ -237,7 +237,7 @@ final class AlphaAssertionBodyTest extends TestCase
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 
-        $this->assertSame($compiles, $result->isValid, \sprintf('%s: PCRE %s it, the library %s.', $pattern, $compiles ? 'accepts' : 'refuses', $result->isValid ? 'accepts' : 'refuses ('.$result->error.')'));
+        $this->assertSame($compiles, $result->isValid, \sprintf('%s: PCRE %s it, the library %s.', $pattern, $compiles ? 'accepts' : 'refuses', $result->isValid ? 'accepts' : 'refuses ('.($result->error ?? '').')'));
     }
 
     /**

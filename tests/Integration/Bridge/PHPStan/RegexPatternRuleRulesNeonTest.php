@@ -85,7 +85,7 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
     public function test_rules_neon_errors_carry_stable_identifiers(): void
     {
         $identifiers = array_map(
-            static fn (Error $error): string => $error->getLine().' '.$error->getIdentifier(),
+            static fn (Error $error): string => ($error->getLine() ?? '').' '.($error->getIdentifier() ?? ''),
             $this->gatherAnalyserErrors([__DIR__.'/Fixtures/NeonConfigFixture.php']),
         );
         sort($identifiers);

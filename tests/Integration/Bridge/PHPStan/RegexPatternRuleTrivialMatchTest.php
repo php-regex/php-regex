@@ -41,7 +41,7 @@ final class RegexPatternRuleTrivialMatchTest extends RuleTestCase
             $this->gatherAnalyserErrors([self::FIXTURE]),
             static fn (Error $error): bool => RegexPatternRule::IDENTIFIER_TRIVIAL_MATCH === $error->getIdentifier(),
         ));
-        usort($errors, static fn (Error $a, Error $b): int => $a->getLine() <=> $b->getLine());
+        usort($errors, static fn (Error $a, Error $b): int => ($a->getLine() ?? 0) <=> ($b->getLine() ?? 0));
 
         $this->assertSame([
             [23, "preg_match() with /^https:/ is str_starts_with(\$subject, 'https:')."],

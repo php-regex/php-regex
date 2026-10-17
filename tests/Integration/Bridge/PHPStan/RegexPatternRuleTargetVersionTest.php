@@ -182,7 +182,7 @@ final class RegexPatternRuleTargetVersionTest extends RuleTestCase
     private function identifiersOf(string $file): array
     {
         $errors = $this->gatherAnalyserErrors([$file]);
-        usort($errors, static fn (Error $a, Error $b): int => $a->getLine() <=> $b->getLine());
+        usort($errors, static fn (Error $a, Error $b): int => ($a->getLine() ?? 0) <=> ($b->getLine() ?? 0));
 
         return array_map(static fn (Error $error): array => [$error->getLine(), $error->getIdentifier()], $errors);
     }

@@ -124,7 +124,7 @@ final class RegexPatternRuleComplexityTest extends RuleTestCase
         $this->checks = ['lint' => ['enabled' => true], 'complexity' => ['enabled' => true, 'threshold' => 17]];
 
         $lines = array_map(
-            static fn (Error $error): string => $error->getLine().' '.$error->getIdentifier(),
+            static fn (Error $error): string => ($error->getLine() ?? '').' '.($error->getIdentifier() ?? ''),
             $this->gatherAnalyserErrors([self::FIXTURE]),
         );
         sort($lines);

@@ -149,7 +149,7 @@ final class LexerExtendedModeTest extends TestCase
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 
-        $this->assertSame($compiles, $result->isValid, \sprintf('%s: PCRE %s it, the library %s.', json_encode($pattern), $compiles ? 'accepts' : 'refuses', $result->isValid ? 'accepts' : 'refuses ('.$result->error.')'));
+        $this->assertSame($compiles, $result->isValid, \sprintf('%s: PCRE %s it, the library %s.', json_encode($pattern), $compiles ? 'accepts' : 'refuses', $result->isValid ? 'accepts' : 'refuses ('.($result->error ?? '').')'));
     }
 
     /**

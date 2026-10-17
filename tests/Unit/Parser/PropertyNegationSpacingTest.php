@@ -38,7 +38,7 @@ final class PropertyNegationSpacingTest extends TestCase
 
         $result = Regex::create(['cache' => null])->validate($pattern);
 
-        $this->assertTrue($result->isValid, $pattern.': '.$result->error);
+        $this->assertTrue($result->isValid, $pattern.': '.($result->error ?? ''));
     }
 
     /**

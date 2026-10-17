@@ -187,7 +187,7 @@ final class RegexPatternRuleTest extends RuleTestCase
             $this->gatherAnalyserErrors([$file]),
             static fn (Error $error): bool => str_starts_with($error->getMessage(), $messagePrefix),
         ));
-        usort($errors, static fn (Error $a, Error $b): int => $a->getLine() <=> $b->getLine());
+        usort($errors, static fn (Error $a, Error $b): int => ($a->getLine() ?? 0) <=> ($b->getLine() ?? 0));
 
         return array_map(static fn (Error $error): array => [$error->getLine(), $error->getIdentifier()], $errors);
     }

@@ -43,7 +43,7 @@ final class RegexPatternRuleExtensionNeonRangeTest extends RuleTestCase
         $this->analyse(
             [__DIR__.'/Fixtures/VersionRangeFixture.php'],
             false !== @preg_match('/(?<=a\Kb)c/', '') ? [
-                ['Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: '.$refusal->error, 22, $refusal->hint],
+                ['Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: '.($refusal->error ?? 'Invalid regex.'), 22, $refusal->hint],
             ] : [],
         );
     }

@@ -48,7 +48,7 @@ final class DuplicateNameScopeTest extends TestCase
 
         $ast = $regex->parse($pattern);
 
-        $this->assertSame($pattern, $ast->delimiter.$ast->source.$ast->delimiter.$ast->flags);
+        $this->assertSame($pattern, $ast->delimiter.($ast->source ?? '').$ast->delimiter.$ast->flags);
     }
 
     /**
@@ -149,7 +149,7 @@ final class DuplicateNameScopeTest extends TestCase
         $this->assertSame([null === $code, $code, $offset], [$result->isValid, $result->errorCode, $result->offset], \sprintf('%s: %s', $pattern, (string) $result->error));
         if (null === $code) {
             $ast = $regex->parse($pattern);
-            $this->assertSame($pattern, $ast->delimiter.$ast->source.$ast->delimiter.$ast->flags);
+            $this->assertSame($pattern, $ast->delimiter.($ast->source ?? '').$ast->delimiter.$ast->flags);
         }
     }
 

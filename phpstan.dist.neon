@@ -240,16 +240,6 @@ parameters:
         # drop it.
         - identifier: function.alreadyNarrowedType
           path: tests/Unit/ParserExceptionTest.php
-        # ── shipmonk ratchet ────────────────────────────────────────────────
-        # The null-binary findings left in tests build failure messages
-        # ("line " . $error->getLine(), where a null renders as '') and feed
-        # usort comparators whose operands the tests always set: cosmetics,
-        # not defects. Pinned with a count so the number only goes down; the
-        # src/ sites were all fixed (guards, never casts).
-        -
-            identifier: shipmonk.binaryOperationWithNull
-            path: tests/*
-            count: 26
         # The PHPStan rule tests hand the constructors a threshold of the
         # wrong type on purpose, as a configuration built by hand can: the
         # InvalidRegexOptionException they raise is the contract.
