@@ -23,15 +23,19 @@ The code is ready; what is left is the maintainer's, in this order.
      `docs/tutorial/09-testing-debugging.md`;
    - `tests/Documentation/PackageSelectionDocumentationTest.php` pins the
      prerelease commands: it moves with them.
-3. Push 2.x, wait for CI to pass, then `bin/release --dry-run 2.0.0` and
+3. Before the tag: create the `php-regex/regex-phpunit` repository on GitHub
+   and register its Packagist webhook like the sixteen others — the split
+   pushes to it, and without a webhook Packagist learns of the tag only
+   through its two-week crawl.
+4. Push 2.x, wait for CI to pass, then `bin/release --dry-run 2.0.0` and
    `bin/release 2.0.0`: it drafts the GitHub release and pushes the tag; the
    phar workflow builds and attests the phar, attaches it and its checksum,
-   then publishes the draft; the split workflow tags the sixteen packages.
-4. After the tag: `bin/status` and Packagist show `v2.0.0` for all sixteen
+   then publishes the draft; the split workflow tags the seventeen packages.
+5. After the tag: `bin/status` and Packagist show `v2.0.0` for all seventeen
    packages (they require each other at `self.version`: one missing tag
    leaves the others uninstallable), and the "Latest" release carries the
    2.0 `regex.phar`, which `self-update` and `releases/latest` serve.
-5. `bin/bump --next 2.0.1`.
+6. `bin/bump --next 2.0.1`.
 
 ## Phar provenance: the GitHub side
 
