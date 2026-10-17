@@ -186,6 +186,11 @@ final class RewriteVerificationTest extends TestCase
         yield 'parts of other counts paired into other strings' => ['original' => '/(?<!x)-----.*-----/i', 'rewrite' => '/(?<!x)-{5}.*-{4}/i', 'verdict' => false];
         yield 'parts of other counts swapped around a repeat' => ['original' => '/(?<!x)ab.*cde/', 'rewrite' => '/(?<!x)cde.*ab/', 'verdict' => false];
         yield 'a part of another count dropped beside a repeat' => ['original' => '/(?<!x)a.*b.*c/', 'rewrite' => '/(?<!x)a.*c/', 'verdict' => false];
+        yield 'a part dropped before a part both keep' => ['original' => '/(?<!x)q.*-----/i', 'rewrite' => '/(?<!x).*-{5}/i', 'verdict' => false];
+        yield 'a part added before a part both keep' => ['original' => '/(?<!x).*-----/i', 'rewrite' => '/(?<!x)q.*-{5}/i', 'verdict' => false];
+        yield 'a paired part of one count changed beside counted runs' => ['original' => '/(?<!x)a.*-----/i', 'rewrite' => '/(?<!x)b.*-{5}/i', 'verdict' => false];
+        yield 'branches of a lookbehind merged, a later part changed' => ['original' => '/(?<=a|bc|d)y(?<!x)z/', 'rewrite' => '/(?<=[ad]|bc)y(?<!x)w/', 'verdict' => false];
+        yield 'branches of a lookbehind merged into one branch of two lengths' => ['original' => '/(?<=ab|a)x/', 'rewrite' => '/(?<=ab?)x/', 'verdict' => false];
         yield 'a rewritten part beside a backtracking verb' => ['original' => '/(?<!x)(?:_|%)(*PRUNE)a/', 'rewrite' => '/(?<!x)[_%](*PRUNE)a/', 'verdict' => false];
         yield 'a rewritten part of a group only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>a|b))x(?&n)/', 'rewrite' => '/(?(DEFINE)(?<n>[ab]))x(?&n)/', 'verdict' => false];
         // The condition of a conditional stays as written in the normal
