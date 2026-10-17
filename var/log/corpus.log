@@ -1,5 +1,5 @@
-### corpus/10up/ElasticPress — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/10up/ElasticPress — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/10up/ElasticPress/includes/compat.php:139:44
     → #[^a-zA-Z0-9\-\_]#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -9,8 +9,9 @@ corpus/10up/ElasticPress/includes/compat.php:139:44
 
 
 
-### corpus/Alexia/php7mar — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/Alexia/php7mar — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/Alexia/php7mar/classes/options.php:174:12
     → #^(?P<option>-[a-zA-Z]{1}|--[a-zA-Z-]{2,})(?:=(?P<value>['|"]?.+?['|"]?))?$#
    ↳ via $regex
@@ -243,10 +244,28 @@ corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/class-concatenat
        - /^[',"]use strict[',"];/Uims
        + /^[',"]use strict[',"];/Uim
 
+corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service-fallback.php:222:5
+    → /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
+   TIP 
+       - /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
+       + /(Microsoft.AlphaImageLoader\s*\([^)]*src=(?:['"])?)([^\/'"\s)](?:(?<!http:|https:).)*)\)/isU
+
 corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service-fallback.php:248:6
     → /(?P<pre_path>@import\s+(?:url\s*\()?['"\s]*)(?P<path>[^'"\s](?:https?:\/\/.+\/?)?.+?)(?P<post_path>['"\s\)]*;)/i
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
+
+corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service-fallback.php:359:3
+    → /(:?\s*url\s*\()\s*(?:'|")?\s*([^\/'"\s\)](?:(?<!data:|http:|https:|[\('"]#|%23).)*)['"\s]*\)/isU
+   TIP 
+       - /(:?\s*url\s*\()\s*(?:'|")?\s*([^\/'"\s\)](?:(?<!data:|http:|https:|[\('"]#|%23).)*)['"\s]*\)/isU
+       + /(:?\s*url\s*\()\s*(?:['"])?\s*([^\/'"\s)](?:(?<!data:|http:|https:|[('"]#|%23).)*)['"\s]*\)/isU
+
+corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service.php:269:5
+    → /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
+   TIP 
+       - /(Microsoft.AlphaImageLoader\s*\([^\)]*src=(?:'|")?)([^\/'"\s\)](?:(?<!http:|https:).)*)\)/isU
+       + /(Microsoft.AlphaImageLoader\s*\([^)]*src=(?:['"])?)([^\/'"\s)](?:(?<!http:|https:).)*)\)/isU
 
 corpus/Automattic/jetpack/projects/plugins/boost/app/lib/minify/functions-service.php:295:6
     → /(?P<pre_path>@import\s+(?:url\s*\()?['"\s]*)(?P<path>[^'"\s](?:https?:\/\/.+\/?)?.+?)(?P<post_path>['"\s\)]*;)/i
@@ -685,6 +704,12 @@ corpus/CarbonPHP/carbon/src/Carbon/Lang/uk.php:178:28
        - /\[?(?:минулої|наступної)?\s*\]\s+dddd/u
        + /\[?(?:минулої|наступної)?\s*]\s+d{4}/u
 
+corpus/CarbonPHP/carbon/src/Carbon/Traits/Creator.php:574:24
+    → /(?<!\\)(?:\\{2})*(h|g|H|G)/
+   TIP 
+       - /(?<!\\)(?:\\{2})*(h|g|H|G)/
+       + /(?<!\\)(?:\\{2})*([hgHG])/
+
 corpus/CarbonPHP/carbon/src/Carbon/Traits/Creator.php:697:41
     → /(?<!\\)(\\{2})*(LTS|LT|[Ll]{1,4})/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -752,8 +777,9 @@ corpus/DaveLiddament/sarb/src/Domain/HistoryAnalyser/UnifiedDiffParser/internal/
 
 ### corpus/DigitalOceanPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/EdgedesignCZ/phpqa — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/EdgedesignCZ/phpqa — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/EdgedesignCZ/phpqa/src/Tools/GetVersions.php:173:29
     → /\.0$/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -837,14 +863,29 @@ corpus/FOSSBilling/FOSSBilling/src/modules/Theme/Model/Theme.php:183:24
 
 
 
-### corpus/FakerPHP/Faker — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/FakerPHP/Faker — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/FakerPHP/Faker/src/Provider/Text.php:200:29
     → /([ ,-:;\x{2013}\x{2014}]+$)/us
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /([ ,-:;\x{2013}\x{2014}]+$)/us
        + /([ ,-:;\x{2013}\x{2014}]+$)/u
+
+corpus/FakerPHP/Faker/src/Provider/ar_EG/Text.php:9:27
+    → /^\p{Arabic}/u
+   WARN  From PHP 8.2 (PCRE2 10.40) \p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.
+       ↳ No spelling reads alike on both: "\p{sc:Arabic}" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.
+
+corpus/FakerPHP/Faker/src/Provider/ar_JO/Text.php:9:27
+    → /^\p{Arabic}/u
+   WARN  From PHP 8.2 (PCRE2 10.40) \p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.
+       ↳ No spelling reads alike on both: "\p{sc:Arabic}" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.
+
+corpus/FakerPHP/Faker/src/Provider/ar_SA/Text.php:9:27
+    → /^\p{Arabic}/u
+   WARN  From PHP 8.2 (PCRE2 10.40) \p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.
+       ↳ No spelling reads alike on both: "\p{sc:Arabic}" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.
 
 corpus/FakerPHP/Faker/test/Provider/ro_RO/PersonTest.php:16:35
     → /^[1-9][0-9]{2}(?:0[1-9]|1[012])(?:0[1-9]|[12][0-9]|3[01])(?:0[1-9]|[123][0-9]|4[0-6]|5[12])[0-9]{3}[0-9]$/
@@ -922,8 +963,9 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/YamlScoper.php:37:35
 
 
 
-### corpus/JakubOnderka/PHP-Parallel-Lint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/JakubOnderka/PHP-Parallel-Lint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/Jexactyl/Jexactyl — Target: PHP 8.4, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/Jexactyl/Jexactyl/app/Traits/Commands/EnvironmentWriterTrait.php:20:63
@@ -941,8 +983,9 @@ corpus/Jumping-Beaver/PHP_Static_Type_Checker/php_static_type_checker.php:2547:3
 
 
 
-### corpus/MyIntervals/PHP-CSS-Parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/MyIntervals/PHP-CSS-Parser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/MyIntervals/PHP-CSS-Parser/src/Parsing/ParserState.php:119:40
     → /[a-zA-Z0-9\x{00A0}-\x{FFFF}_-]/Sux
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -1009,19 +1052,20 @@ corpus/OskarStark/doctor-rst/src/Helper/PhpHelper.php:35:34
 
 
 
-### corpus/PHP-CS-Fixer/PHP-CS-Fixer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHP-CS-Fixer/PHP-CS-Fixer — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/PHP-FFMpeg/PHP-FFMpeg — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHP-FFMpeg/PHP-FFMpeg — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/PHP-FFMpeg/PHP-FFMpeg/src/FFMpeg/Media/AbstractVideo.php:236:40
     → /^\[[^\]]+\](.*?)\[[^\]]+\]$/is
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
 
 
-### corpus/PHPCSStandards/PHP_CodeSniffer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHPCSStandards/PHP_CodeSniffer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:502:28
     → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -1030,10 +1074,22 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileC
        - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
        + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
 
+corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCommentSniff.php:295:28
+    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
+
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:80:28
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9_\[\]]+))*)( .*)?`i
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:313:28
+    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
 corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/VariableCommentSniff.php:141:20
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
@@ -1060,8 +1116,9 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Util/Common.php:492:28
 
 
 
-### corpus/PHPCheckstyle/phpcheckstyle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHPCheckstyle/phpcheckstyle — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/PHPCheckstyle/phpcheckstyle/test/sample/issue61.php:43:36
     → /^20[123][0-9]-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[01])$/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -1069,8 +1126,9 @@ corpus/PHPCheckstyle/phpcheckstyle/test/sample/issue61.php:43:36
 
 
 
-### corpus/PHPCompatibility/PHPCompatibility — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHPCompatibility/PHPCompatibility — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIntegersSniff.php:128:28
     → `^((?<![\.e])_[0-9][0-9e\.]*)+$`iD
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -1095,8 +1153,9 @@ corpus/PHPCompatibility/PHPCompatibility/PHPCompatibility/Sniffs/Numbers/ValidIn
 
 
 
-### corpus/PHPMailer/PHPMailer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHPMailer/PHPMailer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/PHPMailer/PHPMailer/src/PHPMailer.php:946:37
     → /\r\n|\r/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -1166,8 +1225,9 @@ corpus/PHPMailer/PHPMailer/test/Language/TranslationCompletenessTest.php:71:29
 
 
 
-### corpus/PHPOffice/PHPWord — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/PHPOffice/PHPWord — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/PHPOffice/PHPWord/src/PhpWord/TemplateProcessor.php:481:25
     → /^([0-9\.]*(cm|mm|in|pt|pc|px|%|em|ex|)|auto)$/i
    WARN  Alternation contains an empty alternative.
@@ -1309,25 +1369,25 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Helper/Sample.php:90:65
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1125:51
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1155:51
     → /\d\d\d\d/
    TIP 
        - /\d\d\d\d/
        + /\d{4}/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1127:43
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1157:43
     → /^\d\d\d\d-\d\d-\d\d$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d$/
        + /^\d{4}-\d\d-\d\d$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1129:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1159:49
     → /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
        + /^\d{4}-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1131:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1161:49
     → /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
    TIP 
        - /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
@@ -1429,7 +1489,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Security/XmlScanner.ph
        - /encoding\s*=\s*(["'])UTF-7\1/si
        + /encoding\s*=\s*(["'])UTF-7\1/i
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1968:78
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1973:78
     → /[ ,](?=([^']*'[^']*')*[^']*$)/miuU
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -1637,6 +1697,9 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.ph
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    WARN  Duplicate alternation branch "textjoin".
        ↳ Remove the redundant alternative.
+   TIP 
+       - /(?:_xlfn\.)?((?:_xlws\.)?\b(beta[.]dist|beta[.]inv|binom[.]dist|binom[.]inv|ceiling[.]precise|chisq[.]dist|chisq[.]dist[.]rt|chisq[.]inv|chisq[.]inv[.]rt|chisq[.]test|confidence[.]norm|confidence[.]t|covariance[.]p|covariance[.]s|erf[.]precise|erfc[.]precise|expon[.]dist|f[.]dist|f[.]dist[.]rt|f[.]inv|f[.]inv[.]rt|f[.]test|floor[.]precise|gamma[.]dist|gamma[.]inv|gammaln[.]precise|lognorm[.]dist|lognorm[.]inv|mode[.]mult|mode[.]sngl|negbinom[.]dist|networkdays[.]intl|norm[.]dist|norm[.]inv|norm[.]s[.]dist|norm[.]s[.]inv|percentile[.]exc|percentile[.]inc|percentrank[.]exc|percentrank[.]inc|poisson[.]dist|quartile[.]exc|quartile[.]inc|rank[.]avg|rank[.]eq|stdev[.]p|stdev[.]s|t[.]dist|t[.]dist[.]2t|t[.]dist[.]rt|t[.]inv|t[.]inv[.]2t|t[.]test|var[.]p|var[.]s|weibull[.]dist|z[.]test|base|acot|acoth|arabic|averageifs|binom[.]dist[.]range|bitand|bitlshift|bitor|bitrshift|bitxor|ceiling[.]math|combina|cot|coth|csc|csch|days|dbcs|decimal|encodeurl|filterxml|floor[.]math|formulatext|gamma|gauss|ifna|imcosh|imcot|imcsc|imcsch|imsec|imsech|imsinh|imtan|isformula|iso[.]ceiling|isoweeknum|munit|numbervalue|pduration|permutationa|phi|rri|sec|sech|sheet|sheets|skew[.]p|unichar|unicode|webservice|xor|forecast[.]et2|forecast[.]ets[.]confint|forecast[.]ets[.]seasonality|forecast[.]ets[.]stat|forecast[.]linear|switch|concat|ifs|maxifs|minifs|textjoin|anchorarray|arraytotext|bycol|byrow|call|choosecols|chooserows|drop|expand|filter|groupby|hstack|isomitted|lambda|let|makearray|map|randarray|reduce|register[.]id|scan|sequence|single|sort|sortby|take|textafter|textbefore|textjoin|textsplit|tocol|torow|unique|valuetotext|vstack|wrapcols|wraprows|xlookup|xmatch))\s*\(/Umui
+       + /(?:_xlfn\.)?((?:_xlws\.)?\b(beta[.]dist|beta[.]inv|binom[.]dist|binom[.]inv|ceiling[.]precise|chisq[.]dist|chisq[.]dist[.]rt|chisq[.]inv|chisq[.]inv[.]rt|chisq[.]test|confidence[.]norm|confidence[.]t|covariance[.]p|covariance[.]s|erf[.]precise|erfc[.]precise|expon[.]dist|f[.]dist|f[.]dist[.]rt|f[.]inv|f[.]inv[.]rt|f[.]test|floor[.]precise|gamma[.]dist|gamma[.]inv|gammaln[.]precise|lognorm[.]dist|lognorm[.]inv|mode[.]mult|mode[.]sngl|negbinom[.]dist|networkdays[.]intl|norm[.]dist|norm[.]inv|norm[.]s[.]dist|norm[.]s[.]inv|percentile[.]exc|percentile[.]inc|percentrank[.]exc|percentrank[.]inc|poisson[.]dist|quartile[.]exc|quartile[.]inc|rank[.]avg|rank[.]eq|stdev[.]p|stdev[.]s|t[.]dist|t[.]dist[.]2t|t[.]dist[.]rt|t[.]inv|t[.]inv[.]2t|t[.]test|var[.]p|var[.]s|weibull[.]dist|z[.]test|base|acot|acoth|arabic|averageifs|binom[.]dist[.]range|bitand|bitlshift|bitor|bitrshift|bitxor|ceiling[.]math|combina|cot|coth|csc|csch|days|dbcs|decimal|encodeurl|filterxml|floor[.]math|formulatext|gamma|gauss|ifna|imcosh|imcot|imcsc|imcsch|imsec|imsech|imsinh|imtan|isformula|iso[.]ceiling|isoweeknum|munit|numbervalue|pduration|permutationa|phi|rri|sec|sech|sheet|sheets|skew[.]p|unichar|unicode|webservice|xor|forecast[.]et2|forecast[.]ets[.]confint|forecast[.]ets[.]seasonality|forecast[.]ets[.]stat|forecast[.]linear|switch|concat|ifs|maxifs|minifs|textjoin|anchorarray|arraytotext|bycol|byrow|call|choosecols|chooserows|drop|expand|filter|groupby|hstack|isomitted|lambda|let|makearray|map|randarray|reduce|register[.]id|scan|sequence|single|sort|sortby|take|textafter|textbefore|textsplit|tocol|torow|unique|valuetotext|vstack|wrapcols|wraprows|xlookup|xmatch))\s*\(/Uui
 
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php:179:24
     → /(?<!_xlws\.)(filter|sort)\s*\(/mui
@@ -1703,6 +1766,9 @@ corpus/PrestaShop/PrestaShop/classes/Connection.php:126:17
     → /BotLink|ahoy|AlkalineBOT|anthill|appie|arale|araneo|AraybOt|ariadne|arks|ATN_Worldwide|Atomz|bbot|Bjaaland|Ukonline|borg\-bot\/0\.9|boxseabot|bspider|calif|christcrawler|CMC\/0\.01|combine|confuzzledbot|CoolBot|cosmos|Internet Cruiser Robot|cusco|cyberspyder|cydralspider|desertrealm, desert realm|digger|DIIbot|grabber|downloadexpress|DragonBot|dwcp|ecollector|ebiness|elfinbot|esculapio|esther|fastcrawler|FDSE|FELIX IDE|ESI|fido|H\xc3\xa4m\xc3\xa4h\xc3\xa4kki|KIT\-Fireball|fouineur|Freecrawl|gammaSpider|gazz|gcreep|golem|griffon|Gromit|gulliver|gulper|hambot|havIndex|hotwired|htdig|iajabot|INGRID\/0\.1|Informant|InfoSpiders|inspectorwww|irobot|Iron33|JBot|jcrawler|Teoma|Jeeves|jobo|image\.kapsi\.net|KDD\-Explorer|ko_yappo_robot|label\-grabber|larbin|legs|Linkidator|linkwalker|Lockon|logo_gif_crawler|marvin|mattie|mediafox|MerzScope|NEC\-MeshExplorer|MindCrawler|udmsearch|moget|\bMotor\b|msnbot|muncher|muninn|MuscatFerret|MwdSearch|sharp\-info\-agent|WebMechanic|NetScoop|newscan\-online|ObjectsSearch|Occam|Orbsearch\/1\.0|packrat|pageboy|ParaSite|patric|pegasus|perlcrawler|phpdig|piltdownman|Pimptrain|pjspider|PlumtreeWebAccessor|PortalBSpider|psbot|Getterrobo\-Plus|Raven|RHCS|RixBot|roadrunner|Robbie|robi|RoboCrawl|robofox|Scooter|Search\-AU|searchprocess|Senrigan|Shagseeker|sift|SimBot|Site Valet|skymob|SLCrawler\/2\.0|slurp|ESI|snooper|solbot|speedy|spider_monkey|SpiderBot\/1\.0|spiderline|nil|suke|http:\/\/www\.sygol\.com|tach_bw|TechBOT|templeton|titin|topiclink|UdmSearch|urlck|Valkyrie libwww\-perl|verticrawl|Victoria|void\-bot|Voyager|VWbot_K|crawlpaper|wapspider|WebBandit\/1\.0|webcatcher|T\-H\-U\-N\-D\-E\-R\-S\-T\-O\-N\-E|WebMoose|webquest|webreaper|\bwebs\b|webspider|WebWalker|wget|winona|whowhere|wlm|WOLP|WWWC|none|XGET|Nederland\.zoek|AISearchBot|woriobot|NetSeer|Nutch|YandexBot|bingbot|Baiduspider|Applebot|Amazonbot|SeznamBot|Googlebot|AdsBot-Google|AhrefsBot|SemrushBot|DotBot|MJ12bot|PetalBot|DataForSeoBot|GPTBot|ClaudeBot|CCBot|Bytespider|PerplexityBot|DuckDuckBot|ia_archiver|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|Discordbot|TelegramBot|lighthouse|PageSpeed/i
    WARN  Duplicate alternation branch "ESI".
        ↳ Remove the redundant alternative.
+   TIP 
+       - /BotLink|ahoy|AlkalineBOT|anthill|appie|arale|araneo|AraybOt|ariadne|arks|ATN_Worldwide|Atomz|bbot|Bjaaland|Ukonline|borg\-bot\/0\.9|boxseabot|bspider|calif|christcrawler|CMC\/0\.01|combine|confuzzledbot|CoolBot|cosmos|Internet Cruiser Robot|cusco|cyberspyder|cydralspider|desertrealm, desert realm|digger|DIIbot|grabber|downloadexpress|DragonBot|dwcp|ecollector|ebiness|elfinbot|esculapio|esther|fastcrawler|FDSE|FELIX IDE|ESI|fido|H\xc3\xa4m\xc3\xa4h\xc3\xa4kki|KIT\-Fireball|fouineur|Freecrawl|gammaSpider|gazz|gcreep|golem|griffon|Gromit|gulliver|gulper|hambot|havIndex|hotwired|htdig|iajabot|INGRID\/0\.1|Informant|InfoSpiders|inspectorwww|irobot|Iron33|JBot|jcrawler|Teoma|Jeeves|jobo|image\.kapsi\.net|KDD\-Explorer|ko_yappo_robot|label\-grabber|larbin|legs|Linkidator|linkwalker|Lockon|logo_gif_crawler|marvin|mattie|mediafox|MerzScope|NEC\-MeshExplorer|MindCrawler|udmsearch|moget|\bMotor\b|msnbot|muncher|muninn|MuscatFerret|MwdSearch|sharp\-info\-agent|WebMechanic|NetScoop|newscan\-online|ObjectsSearch|Occam|Orbsearch\/1\.0|packrat|pageboy|ParaSite|patric|pegasus|perlcrawler|phpdig|piltdownman|Pimptrain|pjspider|PlumtreeWebAccessor|PortalBSpider|psbot|Getterrobo\-Plus|Raven|RHCS|RixBot|roadrunner|Robbie|robi|RoboCrawl|robofox|Scooter|Search\-AU|searchprocess|Senrigan|Shagseeker|sift|SimBot|Site Valet|skymob|SLCrawler\/2\.0|slurp|ESI|snooper|solbot|speedy|spider_monkey|SpiderBot\/1\.0|spiderline|nil|suke|http:\/\/www\.sygol\.com|tach_bw|TechBOT|templeton|titin|topiclink|UdmSearch|urlck|Valkyrie libwww\-perl|verticrawl|Victoria|void\-bot|Voyager|VWbot_K|crawlpaper|wapspider|WebBandit\/1\.0|webcatcher|T\-H\-U\-N\-D\-E\-R\-S\-T\-O\-N\-E|WebMoose|webquest|webreaper|\bwebs\b|webspider|WebWalker|wget|winona|whowhere|wlm|WOLP|WWWC|none|XGET|Nederland\.zoek|AISearchBot|woriobot|NetSeer|Nutch|YandexBot|bingbot|Baiduspider|Applebot|Amazonbot|SeznamBot|Googlebot|AdsBot-Google|AhrefsBot|SemrushBot|DotBot|MJ12bot|PetalBot|DataForSeoBot|GPTBot|ClaudeBot|CCBot|Bytespider|PerplexityBot|DuckDuckBot|ia_archiver|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|Discordbot|TelegramBot|lighthouse|PageSpeed/i
+       + /BotLink|ahoy|AlkalineBOT|anthill|appie|arale|araneo|AraybOt|ariadne|arks|ATN_Worldwide|Atomz|bbot|Bjaaland|Ukonline|borg-bot\/0\.9|boxseabot|bspider|calif|christcrawler|CMC\/0\.01|combine|confuzzledbot|CoolBot|cosmos|Internet Cruiser Robot|cusco|cyberspyder|cydralspider|desertrealm, desert realm|digger|DIIbot|grabber|downloadexpress|DragonBot|dwcp|ecollector|ebiness|elfinbot|esculapio|esther|fastcrawler|FDSE|FELIX IDE|ESI|fido|H\xc3\xa4m\xc3\xa4h\xc3\xa4kki|KIT-Fireball|fouineur|Freecrawl|gammaSpider|gazz|gcreep|golem|griffon|Gromit|gulliver|gulper|hambot|havIndex|hotwired|htdig|iajabot|INGRID\/0\.1|Informant|InfoSpiders|inspectorwww|irobot|Iron33|JBot|jcrawler|Teoma|Jeeves|jobo|image\.kapsi\.net|KDD-Explorer|ko_yappo_robot|label-grabber|larbin|legs|Linkidator|linkwalker|Lockon|logo_gif_crawler|marvin|mattie|mediafox|MerzScope|NEC-MeshExplorer|MindCrawler|udmsearch|moget|\bMotor\b|msnbot|muncher|muninn|MuscatFerret|MwdSearch|sharp-info-agent|WebMechanic|NetScoop|newscan-online|ObjectsSearch|Occam|Orbsearch\/1\.0|packrat|pageboy|ParaSite|patric|pegasus|perlcrawler|phpdig|piltdownman|Pimptrain|pjspider|PlumtreeWebAccessor|PortalBSpider|psbot|Getterrobo-Plus|Raven|RHCS|RixBot|roadrunner|Robbie|robi|RoboCrawl|robofox|Scooter|Search-AU|searchprocess|Senrigan|Shagseeker|sift|SimBot|Site Valet|skymob|SLCrawler\/2\.0|slurp|snooper|solbot|speedy|spider_monkey|SpiderBot\/1\.0|spiderline|nil|suke|http:\/\/www\.sygol\.com|tach_bw|TechBOT|templeton|titin|topiclink|UdmSearch|urlck|Valkyrie libwww-perl|verticrawl|Victoria|void-bot|Voyager|VWbot_K|crawlpaper|wapspider|WebBandit\/1\.0|webcatcher|T-H-U-N-D-E-R-S-T-O-N-E|WebMoose|webquest|webreaper|\bwebs\b|webspider|WebWalker|wget|winona|whowhere|wlm|WOLP|WWWC|none|XGET|Nederland\.zoek|AISearchBot|woriobot|NetSeer|Nutch|YandexBot|bingbot|Baiduspider|Applebot|Amazonbot|SeznamBot|Googlebot|AdsBot-Google|AhrefsBot|SemrushBot|DotBot|MJ12bot|PetalBot|DataForSeoBot|GPTBot|ClaudeBot|CCBot|Bytespider|PerplexityBot|DuckDuckBot|ia_archiver|facebookexternalhit|Twitterbot|LinkedInBot|Slackbot|Discordbot|TelegramBot|lighthouse|PageSpeed/i
 
 corpus/PrestaShop/PrestaShop/classes/Cookie.php:140:14
     → !(?:(\w+)://)?(?:(\w+)\:(\w+)@)?([^/:]+)?(?:\:(\d*))?([^#?]+)?(?:\?([^#]+))?(?:#(.+$))?!i
@@ -2355,11 +2421,13 @@ corpus/Roave/DocbookTool/src/Writer/ConfluenceWriter.php:317:13
 
 
 
-### corpus/Roave/FunctionFQNReplacer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/Roave/FunctionFQNReplacer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/Seldaek/jsonlint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/Seldaek/jsonlint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
     → {"(?:[^"]+|\\")*$}m
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -2371,8 +2439,9 @@ corpus/Seldaek/jsonlint/src/Seld/JsonLint/JsonParser.php:281:46
 
 ### corpus/Seldaek/monolog — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/Seldaek/phar-utils — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/Seldaek/phar-utils — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/Shopify/shopify-api-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/Shopify/shopify-api-php/src/Rest/Base.php:136:35
@@ -2550,13 +2619,13 @@ corpus/TYPO3/typo3/typo3/sysext/core/Classes/Utility/GeneralUtility.php:1643:32
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/TYPO3/typo3/typo3/sysext/extbase/Classes/Validation/Validator/FileSizeValidator.php:107:25
+corpus/TYPO3/typo3/typo3/sysext/extbase/Classes/Validation/Validator/FileSizeValidator.php:103:25
     → /^(\d*\.?\d+)(B|K|M|G)$/i
    TIP 
        - /^(\d*\.?\d+)(B|K|M|G)$/i
        + /^(\d*\.?\d+)([BKMG])$/i
 
-corpus/TYPO3/typo3/typo3/sysext/extbase/Classes/Validation/Validator/FileSizeValidator.php:110:25
+corpus/TYPO3/typo3/typo3/sysext/extbase/Classes/Validation/Validator/FileSizeValidator.php:106:25
     → /^(\d*\.?\d+)(B|K|M|G)$/i
    TIP 
        - /^(\d*\.?\d+)(B|K|M|G)$/i
@@ -2641,8 +2710,9 @@ corpus/TYPO3/typo3/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migr
 
 
 
-### corpus/WhichBrowser/Parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/WhichBrowser/Parser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Application.php:95:28
     → /^(.+) Android Application \([0-9]+, .+ v[0-9\.]+\) - [a-z-]+ (.*) [a-z_-]+ - [0-9A-F]{8,8}-[0-9A-F]{4,4}-[0-9A-F]{4,4}-[0-9A-F]{4,4}-[0-9A-F]{12,12}$/iu
    TIP 
@@ -2738,8 +2808,9 @@ corpus/WhichBrowser/Parser/src/Analyser/Header/Useragent/Os.php:2248:28
 
 
 
-### corpus/Wixel/GUMP — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/Wixel/GUMP — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/Wixel/GUMP/ci/boot.php:46:20
     → /<div id="available_validators">(.*?)<.div>/ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -2781,8 +2852,9 @@ corpus/Wixel/GUMP/gump.class.php:2344:27
 
 
 
-### corpus/WordPress/WordPress-Coding-Standards — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/WordPress/WordPress-Coding-Standards — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/DB/PreparedSQLPlaceholdersSniff.php:101:40
     → `(?: (?<!%) ( % (?! %[^%] | %%[dfFsi] ) (?:[0-9]+\\??\$)?+ [+-]?+ (?: (?:0|'.)?+ -?+ [0-9]*+ (?:\.(?:[ 0]|'.)?[0-9]+)?+ | (?:[ ])?+ -?+ [0-9]++ (?:\.(?:[ 0]|'.)?[0-9]+)?+ ) (?![dfFsi]) (?:[^ '"]*|$) ) )`x
    ↳ via self::UNSUPPORTED_PLACEHOLDER_REGEX
@@ -2926,8 +2998,8 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/WP/I18nSniff.php:71
 
 
 
-### corpus/WordPress/wordpress-develop — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/WordPress/wordpress-develop — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 1
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/WordPress/wordpress-develop/src/wp-admin/includes/ajax-actions.php:4358:30
     → /[^A-z0-9_\-]/
    WARN  Redundant elements detected in character class.
@@ -3216,7 +3288,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-plugin-dependencies.
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-query.php:1079:22
+corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-query.php:1090:22
     → /^[^%]*%(?:postname)%/
    TIP 
        - /^[^%]*%(?:postname)%/
@@ -3380,7 +3452,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:5167:65
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6412:19
+corpus/WordPress/wordpress-develop/src/wp-includes/formatting.php:6413:19
     → |^#([A-Fa-f0-9]{3}){1,2}$|
    INFO  Quantified capturing group "(...)" with "{1,2}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -3434,6 +3506,11 @@ corpus/WordPress/wordpress-develop/src/wp-includes/kses.php:4069:20
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
+corpus/WordPress/wordpress-develop/src/wp-includes/link-template.php:4617:53
+    → /\p{Han}|\p{Hiragana}|\p{Katakana}|\p{Hangul}/u
+   WARN  From PHP 8.2 (PCRE2 10.40) \p{Han} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.
+       ↳ No spelling reads alike on both: "\p{sc:Han}" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.
+
 corpus/WordPress/wordpress-develop/src/wp-includes/load.php:2071:46
     → /(^|\s|,)application\/([\w!#\$&-\^\.\+]+\+)?json(\+oembed)?($|\s|;|,)/i
    WARN  Redundant elements detected in character class.
@@ -3486,8 +3563,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/script-loader.php:4599:24
 
 
 
-### corpus/Yoast/wordpress-seo — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/Yoast/wordpress-seo — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/Yoast/wordpress-seo/inc/options/class-wpseo-option-social.php:274:20
     → `^http(?:s)?://(?:www\.)?(?:twitter|x)\.com/(?P<handle>[A-Za-z0-9_]{1,25})/?$`
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -3564,8 +3641,8 @@ corpus/api-platform/core/src/Metadata/Util/CompositeIdentifierParser.php:25:48
 
 
 
-### corpus/atoum/atoum — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/atoum/atoum — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/atoum/atoum/classes/script/arguments/parser.php:276:28
     → /^(\+{1,}|-{1,})[a-z][-_a-z0-9]*/i
    TIP 
@@ -3623,8 +3700,9 @@ corpus/aws/aws-sdk-php/src/functions.php:387:23
 
 
 
-### corpus/awslabs/aws-crt-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/awslabs/aws-crt-php — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/awslabs/aws-crt-php/gen_stub.php:1034:24
     → /^\s*([\w\|\\\[\]]+)\s*\$\w+.*$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -3632,8 +3710,9 @@ corpus/awslabs/aws-crt-php/gen_stub.php:1034:24
 
 
 
-### corpus/bcit-ci/CodeIgniter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/bcit-ci/CodeIgniter — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/bcit-ci/CodeIgniter/system/core/Input.php:146:36
     → /(?:^[^\[]+)|\[[^]]*\]/
    WARN  An anchor holds for its own alternative only: "\[[^]]*\]" matches anywhere in the subject.
@@ -3809,8 +3888,9 @@ corpus/bcit-ci/CodeIgniter/system/libraries/Upload.php:383:32
 
 ### corpus/bcosca/fatfree — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 
-### corpus/beberlei/assert — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/beberlei/assert — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/beberlei/assert/bin/MethodDocGenerator.php:58:28
     → `\* This is an alias of {@see (?P<aliasOf>[^\s\}]++)`sim
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -3835,11 +3915,12 @@ corpus/beberlei/assert/bin/MethodDocGenerator.php:163:21
 
 
 
-### corpus/bmitch/churn-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/bmitch/churn-php — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/bobthecow/psysh — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/bobthecow/psysh — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/bobthecow/psysh/scoper.inc.php:146:17
     → /'(PhpParser\\.+(?:\\)?)'/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -4151,8 +4232,8 @@ corpus/canyongbs/aidingapp/app/Rules/ValidUrl.php:52:26
 
 
 
-### corpus/captainhook-git/captainhook — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/captainhook-git/captainhook — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/captainhook-git/captainhook/src/Runner/Action/PHP.php:159:33
     → #^\\.+::.+$#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -4161,8 +4242,9 @@ corpus/captainhook-git/captainhook/src/Runner/Action/PHP.php:159:33
 
 ### corpus/carlosas/phpat — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/cartalyst/stripe — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/cartalyst/stripe — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/cartalyst/stripe/src/AmountConverter.php:33:32
     → /\,/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -4173,8 +4255,9 @@ corpus/cartalyst/stripe/src/AmountConverter.php:35:32
 
 
 
-### corpus/cebe/markdown — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/cebe/markdown — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/cebe/markdown/GithubMarkdown.php:84:20
     → ~<\w+([^>]+)$~s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -4271,13 +4354,19 @@ corpus/chillerlan/php-qrcode/src/Output/CssColorModuleValueTrait.php:46:17
 
 
 
-### corpus/chrome-php/chrome — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/chrome-php/chrome — Target: PHP 7.4.15, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/cloudevents/sdk-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/cloudevents/sdk-php — Target: PHP 7.4.15, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/codeigniter4/CodeIgniter4 — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
+corpus/codeigniter4/CodeIgniter4/admin/update-upgrade-guide.php:161:16
+    → /^Config\n------\n\n(.*?)(?=^[^\s-][^\n]*\n(?:-+|=+)$|\z)/msu
+   TIP 
+       - /^Config\n------\n\n(.*?)(?=^[^\s-][^\n]*\n(?:-+|=+)$|\z)/msu
+       + /^Config\n-{6}\n\n(.*?)(?=^[^\s\-][^\n]*\n(?:-+|=+)$|\z)/msu
+
 corpus/codeigniter4/CodeIgniter4/preload.php:92:17
     → /.+((?<!Test)+\.php$)/i
    WARN  Quantifier "+" on an assertion changes nothing: PCRE checks it once.
@@ -4392,8 +4481,9 @@ corpus/codeigniter4/CodeIgniter4/system/View/Parser.php:466:20
 
 ### corpus/composer-unused/composer-unused — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/composer/composer — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/composer/composer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json config.platform.php pins PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version require.php allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/composer/composer/src/Composer/Autoload/AutoloadGenerator.php:529:42
     → {^(([^.+*?\[^\]$(){}=!<>|:\\#-]+|\\[.+*?\[^\]$(){}=!<>|:#-])*).*}
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4568,8 +4658,9 @@ corpus/composer/packagist/src/Service/VersionCache.php:71:34
 
 
 
-### corpus/composer/semver — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/composer/semver — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/composer/semver/src/VersionParser.php:219:24
     → {^(?P<version>(\d++\.)*\d++)(?:\.x)?-dev$}i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -4582,8 +4673,9 @@ corpus/composer/semver/src/VersionParser.php:345:24
 
 
 
-### corpus/composer/spdx-licenses — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/composer/spdx-licenses — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/concretecms/concretecms — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 1
 corpus/concretecms/concretecms/concrete/attributes/topics/controller.php:451:31
@@ -4940,6 +5032,12 @@ corpus/craftcms/cms/src/helpers/FileHelper.php:259:34
     → /\x{00a0}/iu
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
+corpus/craftcms/cms/src/helpers/Html.php:899:13
+    → /(?<=\s)((for|list|xlink:href|href|aria\-labelledby|aria\-describedby|aria\-controls|aria\-activedescendant|aria\-flowto|aria\-owns|data\-target|data\-reverse\-target|data\-target\-prefix)=('|"))([^'"]+)\3/i
+   TIP 
+       - /(?<=\s)((for|list|xlink:href|href|aria\-labelledby|aria\-describedby|aria\-controls|aria\-activedescendant|aria\-flowto|aria\-owns|data\-target|data\-reverse\-target|data\-target\-prefix)=('|"))([^'"]+)\3/i
+       + /(?<=\s)((for|list|xlink:href|href|aria-labelledby|aria-describedby|aria-controls|aria-activedescendant|aria-flowto|aria-owns|data-target|data-reverse-target|data-target-prefix)=(['"]))([^'"]+)\3/i
+
 corpus/craftcms/cms/src/helpers/Html.php:901:40
     → /([,\s+]+)/
    WARN  "+" is a literal character inside a character class, not a quantifier.
@@ -4976,6 +5074,12 @@ corpus/craftcms/cms/src/helpers/StringHelper.php:2505:32
    FAIL  Character class holds "‘", which without /u is the bytes \xE2 \x80 \x98: the class matches each byte on its own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
+corpus/craftcms/cms/src/i18n/Formatter.php:361:29
+    → /(?<!\\)(S|w|t|L|B|u|I|Z|U|A|a)/
+   TIP 
+       - /(?<!\\)(S|w|t|L|B|u|I|Z|U|A|a)/
+       + /(?<!\\)([SwtLBuIZUAa])/
+
 corpus/craftcms/cms/src/web/RedirectRule.php:74:51
     → /<([\w._-]+):?([^>]+)?>/
    WARN  Character class contains duplicate elements that do not add new matches.
@@ -4985,6 +5089,9 @@ corpus/craftcms/cms/src/web/Request.php:877:25
     → /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '2' and '3' explicitly instead of a range.
+   TIP 
+       - /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i
+       + /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br([ev])w|bumb|bw-([nu])|c55\/|capi|ccwa|cdm-|cell|chtm|cldc|cmd-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc-s|devi|dica|dmob|do([cp])o|ds(12|-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(-|_)|g1 u|g560|gene|gf-5|g-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd-([mpt])|hei-|hi(pt|ta)|hp( i|ip)|hs-c|ht(c(-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i-(20|go|ma)|i230|iac( |-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja([tv])a|jbro|jemu|jigs|kddi|keji|kgt([ \/])|klon|kpt |kwc-|kyo([ck])|le(no|xi)|lg( g|\/([klu])|50|54|-[a-w])|libw|lynx|m1-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30([02])|n50([025])|n7(0([01])|10)|ne(([cm])-|on|tf|wf|wg|wt)|nok([6i])|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan([adt])|pdxg|pg(13|-([1-8]|c))|phil|pire|pl(ay|uc)|pn-2|po(ck|rt|se)|prox|psio|pt-g|qa-a|qc(07|12|21|32|60|-[2-7]|i-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h-|oo|p-)|sdk\/|se(c(-|0|1)|47|mc|nd|ri)|sgh-|shar|sie(-|m)|sk-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h-|v-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl-|tdg-|tel([im])|tim-|t-mo|to(pl|sh)|ts(70|m-|m3|m5)|tx-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas-|your|zeto|zte-/i
 
 corpus/craftcms/cms/src/web/twig/variables/Cp.php:401:53
     → /[^\w\-_]/
@@ -5137,8 +5244,9 @@ corpus/doctrine/dbal/src/Schema/SQLiteSchemaManager.php:337:17
 
 
 
-### corpus/dompdf/dompdf — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/dompdf/dompdf — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/dompdf/dompdf/src/Css/Style.php:1714:49
     → /var\((([^()]|(?R))*)\)/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -5344,11 +5452,13 @@ corpus/drupal/drupal/core/modules/views/src/Plugin/views/argument_default/QueryP
 
 
 
-### corpus/dunglas/phpdoc-to-typehint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/dunglas/phpdoc-to-typehint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/ecsphp/ecs — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/ecsphp/ecs — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/ecsphp/ecs/packages/coding-standard/src/Fixer/Annotation/RemoveEventSubscriberDescriptionFixer.php:149:37
     → #[/*\s]+#
    WARN  "*" is a literal character inside a character class, not a quantifier.
@@ -5356,11 +5466,13 @@ corpus/ecsphp/ecs/packages/coding-standard/src/Fixer/Annotation/RemoveEventSubsc
 
 
 
-### corpus/editorconfig-checker/editorconfig-checker.php — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/editorconfig-checker/editorconfig-checker.php — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json config.platform.php pins PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version require.php allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/edsonmedina/php_testability — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/edsonmedina/php_testability — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/egulias/EmailValidator — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 corpus/egulias/EmailValidator/src/EmailLexer.php:112:40
@@ -5370,8 +5482,8 @@ corpus/egulias/EmailValidator/src/EmailLexer.php:112:40
 
 
 
-### corpus/elementor/elementor — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/elementor/elementor — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/elementor/elementor/core/utils/svg/svg-sanitizer.php:233:33
     → ~^url\(\s*['"]\s*(.*)\s*['"]\s*\)$~xi
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -5409,11 +5521,12 @@ corpus/elementor/elementor/php-scoper/twig-inc.php:34:5
 
 
 
-### corpus/ergebnis/composer-normalize — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/ergebnis/composer-normalize — Target: PHP 7.4.33, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/erusev/parsedown — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/erusev/parsedown — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/erusev/parsedown/Parsedown.php:1470:56
     → /^<\/\w[\w-]*+[ ]*+>/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5466,8 +5579,8 @@ corpus/espocrm/espocrm/application/Espo/Core/Utils/System.php:48:24
 
 
 
-### corpus/exakat/exakat — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/exakat/exakat — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/exakat/exakat/RoboFile.php:299:12
     → /BUILD = (\d+)/is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5548,6 +5661,9 @@ corpus/exakat/exakat/library/Exakat/Reports/Emissary.php:3536:45
 corpus/exakat/exakat/library/Exakat/Reports/Exakatyaml.php:48:39
     → /    (\d+): \[(.+?)\]/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - /    (\d+): \[(.+?)\]/m
+       + / {4}(\d+): \[(.+?)]/
 
 corpus/exakat/exakat/library/Exakat/Reports/Phpconfiguration.php:160:32
     → #(https?://[^"]+?)"#is
@@ -5846,8 +5962,9 @@ corpus/exussum12/coverageChecker/src/Loaders/Infection.php:107:24
 
 
 
-### corpus/ezyang/htmlpurifier — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.6, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/ezyang/htmlpurifier — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.6, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/ezyang/htmlpurifier/library/HTMLPurifier/AttrDef/URI/IPv6.php:81:29
     → #^[0-9a-fA-F]{4}$#s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -5862,8 +5979,8 @@ corpus/ezyang/htmlpurifier/library/HTMLPurifier/Injector/Linkify.php:40:13
 
 
 
-### corpus/facebook/facebook-for-woocommerce — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/facebook/facebook-for-woocommerce — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/facebook/facebook-for-woocommerce/includes/Events/Normalizer.php:197:28
     → /[\-\s+]/
    WARN  "+" is a literal character inside a character class, not a quantifier.
@@ -5871,8 +5988,8 @@ corpus/facebook/facebook-for-woocommerce/includes/Events/Normalizer.php:197:28
 
 
 
-### corpus/facebook/facebook-php-business-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/facebook/facebook-php-business-sdk — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/facebook/facebook-php-business-sdk/src/FacebookAds/Object/ServerSide/Normalizer.php:187:30
     → /[\-\s+]/
    WARN  "+" is a literal character inside a character class, not a quantifier.
@@ -5920,8 +6037,9 @@ corpus/facebook/open-graph-protocol/lib/Michelf/Markdown.php:1618:33
 
 
 
-### corpus/facebook/php-graph-sdk — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/facebook/php-graph-sdk — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/facebook/php-graph-sdk/src/Facebook/Url/FacebookUrlDetectionHandler.php:178:27
     → /^([a-z\d](-*[a-z\d])*)(\.([a-z\d](-*[a-z\d])*))*$/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -5964,8 +6082,9 @@ corpus/filamentphp/filament/packages/tables/src/Concerns/CanSearchRecords.php:13
 
 
 
-### corpus/filp/whoops — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/filp/whoops — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/filp/whoops/src/Whoops/Util/TemplateHelper.php:93:13
     → @(https?://([-\w\.]+[-\w])+(:\d+)?(/([\w/_\.#-]*(\?\S+)?[^\.\s])?)?)@i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
@@ -6012,38 +6131,39 @@ corpus/flarum/framework/extensions/package-manager/src/Exception/MajorUpdateFail
 
 
 
-### corpus/freescout-help-desk/freescout — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:866:40
+### corpus/freescout-help-desk/freescout — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:891:40
     → /^[[:alpha:]]{1,3}\s*:(.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:930:31
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:955:31
     → /^[[:alpha:]]{1,3}\s*:(.*)/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:937:31
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:962:31
     → /^[\s]*@fwd/su
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /^[\s]*@fwd/su
        + /^[\s]*@fwd/u
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:958:51
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:983:51
     → /@fwd([\s<]+)/su
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /@fwd([\s<]+)/su
        + /@fwd([\s<]+)/u
 
-corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1138:30
+corpus/freescout-help-desk/freescout/app/Console/Commands/FetchEmails.php:1171:30
     → /@fwd([\s<]+)/isu
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
        - /@fwd([\s<]+)/isu
        + /@fwd([\s<]+)/iu
 
-corpus/freescout-help-desk/freescout/app/Http/Controllers/ConversationsController.php:425:32
+corpus/freescout-help-desk/freescout/app/Http/Controllers/ConversationsController.php:428:32
     → /From:[^<\n]+<([^<\n]+)>/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -6077,17 +6197,17 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:1917:41
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2796:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2807:33
     → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2797:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2808:33
     → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2800:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2811:33
     → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
        ↳ Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.
@@ -6098,12 +6218,12 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2800:33
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2803:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2814:33
     → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{2,4}\ [0-9]{2}\:[0-9]{2}\:[0-9]{2}\ [A-Z]{2}\ \-[0-9]{2}\:[0-9]{2}\ \([A-Z]{2,3}\ \-[0-9]{2}:[0-9]{2}\))+$/i
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2883:41
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2894:41
     → /enable/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -6223,6 +6343,22 @@ corpus/freescout-help-desk/freescout/overrides/laravel/framework/src/Illuminate/
                      (/?|/\S+|\?\S*|\#\S*)                   # a /, nothing, a / with something, a query or a fragment
                  $~ixu
 
+corpus/freescout-help-desk/freescout/overrides/league/flysystem/src/Util.php:347:27
+    → #^[a-zA-Z]{1}:[^\\/]#
+   WARN  Quantifier is redundant; it matches exactly once.
+       ↳ Remove the {1} quantifier; it does not change the match.
+   TIP 
+       - #^[a-zA-Z]{1}:[^\\/]#
+       + #^[a-zA-Z]:[^\\/]#
+
+corpus/freescout-help-desk/freescout/overrides/league/flysystem/src/Util.php:352:24
+    → #^[a-zA-Z]{1}:$#
+   WARN  Quantifier is redundant; it matches exactly once.
+       ↳ Remove the {1} quantifier; it does not change the match.
+   TIP 
+       - #^[a-zA-Z]{1}:$#
+       + #^[a-zA-Z]:$#
+
 corpus/freescout-help-desk/freescout/overrides/psy/psysh/src/Shell.php:1030:13
     → #(\w:)?(/\w+)*/src/Execution(?:Loop)?Closure.php\(\d+\) : eval\(\)'d code#
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -6267,7 +6403,7 @@ corpus/freescout-help-desk/freescout/overrides/symfony/routing/Generator/UrlGene
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php:287:32
+corpus/freescout-help-desk/freescout/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php:298:32
     → %^\(*"((.|\\|\")*?)" *%
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -6616,8 +6752,8 @@ corpus/google/recaptcha/src/ReCaptcha/RequestMethod/SocketPost.php:134:29
 
 
 
-### corpus/google/site-kit-wp — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/google/site-kit-wp — Target: PHP 7.4.33, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/google/site-kit-wp/includes/Core/Authentication/Authentication.php:1023:27
     → /(?:[^\x00-\x7F])/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -6654,8 +6790,9 @@ corpus/google/site-kit-wp/includes/Modules/Analytics_4/Web_Tag.php:191:4
 
 
 
-### corpus/greenlion/php-sql-parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/greenlion/php-sql-parser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/greenlion/php-sql-parser/libs/codesniffer/PhOSCo/Sniffs/Commenting/FileCommentSniff.php:581:32
     → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -6701,8 +6838,9 @@ corpus/grokability/snipe-it/app/Providers/ValidationServiceProvider.php:440:31
 
 
 
-### corpus/guzzle/guzzle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/guzzle/guzzle — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/guzzle/guzzle/src/Cookie/SetCookie.php:476:13
     → /[\x00-\x20\x22\x28-\x29\x2c\x2f\x3a-\x40\x5c\x7b\x7d\x7f]/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -6710,11 +6848,11 @@ corpus/guzzle/guzzle/src/Cookie/SetCookie.php:476:13
 
 
 
-### corpus/guzzle/promises — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/guzzle/promises — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/guzzle/psr7 — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/guzzle/psr7 — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/guzzle/psr7/src/Rfc9112.php:101:27
     → /^[A-Za-z][A-Za-z0-9+.-]*:\/\//D
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
@@ -6737,8 +6875,8 @@ corpus/guzzle/psr7/src/UriParser.php:93:13
 
 
 
-### corpus/guzzle/uri-template — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/guzzle/uri-template — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/guzzle/uri-template/src/UriTemplate.php:1506:13
     → /\A(?:[\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})*+/
    WARN  Character range is unnecessary; list the characters explicitly.
@@ -7005,14 +7143,17 @@ corpus/janephp/janephp/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php
 
 
 
-### corpus/jaybizzle/crawler-detect — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/jaybizzle/crawler-detect — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/jaytaph/Transphpile — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/jaytaph/Transphpile — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/jbowens/jBBCode — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/jbowens/jBBCode — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/jbowens/jBBCode/JBBCode/validators/CssColorValidator.php:28:34
     → /^[A-z0-9\-#., ()%]+$/
    WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
@@ -7384,8 +7525,9 @@ corpus/joomla/joomla-cms/plugins/editors/tinymce/src/PluginTraits/DisplayTrait.p
 
 
 
-### corpus/karlosagudo/fixtro — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/karlosagudo/fixtro — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/laminas/laminas-code — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/laminas/laminas-code/src/Generator/FileGenerator.php:437:24
@@ -7646,8 +7788,9 @@ corpus/laravel/boost/src/Rules/RuleFrontmatter.php:19:24
 
 
 
-### corpus/laravel/envoy — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/laravel/envoy — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/laravel/framework — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 1
 corpus/laravel/framework/src/Illuminate/Console/Scheduling/Schedule.php:365:54
@@ -7972,8 +8115,8 @@ corpus/laravel/roster/src/Detectors/Approaches/ModelKeyStyle.php:33:24
 
 
 
-### corpus/laravel/valet — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/laravel/valet — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/laravel/valet/cli/Valet/PhpFpm.php:275:29
     → /(?:php@?)?([0-9+])(?:.)?([0-9+])/i
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -7990,8 +8133,8 @@ corpus/laravel/valet/cli/Valet/Server.php:78:27
 
 ### corpus/laravel/wayfinder — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
-### corpus/liip/RMT — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/liip/RMT — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/liip/RMT/src/Liip/RMT/Changelog/Formatter/SemanticChangelogFormatter.php:146:32
     → /^=======/
    TIP 
@@ -8576,6 +8719,12 @@ corpus/magento/magento2/lib/internal/Magento/Framework/View/Template/Html/Minifi
        - #(?<!:|\\|'|"|/)//(?!/)(?!\s*\<\!\[)(?!\s*]]\>)[^\n\r]*#
        + #(?<!:|\\|'|"|/)//(?!/)(?!\s*<!\[)(?!\s*\]\]>)[^\n\r]*#
 
+corpus/magento/magento2/lib/internal/Magento/Framework/View/Template/Html/Minifier.php:148:33
+    → #(?<!:|'|")//[^\n\r<]*(\?\>)#
+   TIP 
+       - #(?<!:|'|")//[^\n\r<]*(\?\>)#
+       + #(?<![:'"])//[^\n\r<]*(\?>)#
+
 corpus/magento/magento2/lib/internal/Magento/Framework/View/Template/Html/Minifier.php:164:13
     → /__MINIFIED_HEREDOC__(\d+)/ims
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -8621,11 +8770,12 @@ corpus/magento/magento2/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanne
 
 ### corpus/maglnet/ComposerRequireChecker — Target: PHP 8.4.99, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 
-### corpus/mamuz/PhpDependencyAnalysis — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/mamuz/PhpDependencyAnalysis — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: PCRE2 10.32 and 10.33 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/matomo-org/device-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/matomo-org/device-detector — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/matomo-org/matomo — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 1
 corpus/matomo-org/matomo/core/Common.php:30:33
@@ -8762,8 +8912,15 @@ corpus/matomo-org/matomo/plugins/UsersManager/Validators/Login.php:43:28
 
 
 
-### corpus/matthiasmullie/minify — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/matthiasmullie/minify — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+corpus/matthiasmullie/minify/src/CSS.php:720:33
+    → /(?<=(\}|;))[^\{\};]+\{\s*\}/
+   TIP 
+       - /(?<=(\}|;))[^\{\};]+\{\s*\}/
+       + /(?<=([};]))[^{};]+\{\s*\}/
+
 corpus/matthiasmullie/minify/src/JS.php:406:33
     → /(for\((?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*;[^;\{]*\));(\}|$)/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -9258,8 +9415,8 @@ corpus/mautic/mautic/utils/phpstan/src/Collector/ServiceNameUsageCollector.php:2
 
 
 
-### corpus/michelf/php-markdown — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/michelf/php-markdown — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/michelf/php-markdown/Michelf/Markdown.php:220:24
     → {^\xEF\xBB\xBF|\x1A}
    WARN  An anchor holds for its own alternative only: "\x1A" matches anywhere in the subject.
@@ -9337,8 +9494,9 @@ corpus/mihaeu/dephpend/src/Analyser/DependencyInspectionVisitor.php:419:30
 
 
 
-### corpus/minkphp/Mink — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/minkphp/Mink — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/minkphp/Mink/src/Selector/Xpath/Manipulator.php:53:28
     → /^[\(\s*]+/
    WARN  "*" is a literal character inside a character class, not a quantifier.
@@ -9346,8 +9504,9 @@ corpus/minkphp/Mink/src/Selector/Xpath/Manipulator.php:53:28
 
 
 
-### corpus/mmoreram/php-formatter — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/mmoreram/php-formatter — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/HeaderFixer.php:53:18
     → ~(?P<group>^\s*<\?php(?:(?:(?:/\*.*?\*/)|(?:(?://|#).*?\n{1})|(?:\s*))*))(?P<other>.*)~s
    ↳ via $regex
@@ -9392,8 +9551,8 @@ corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/UseSortFixer.php:187:18
 
 
 
-### corpus/mockery/mockery — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.12, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/mockery/mockery — Target: PHP 7.12.99, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/mockery/mockery/library/Mockery/Generator/MockConfiguration.php:441:55
     → /^\?Iterator(|Aggregate)$/i
    WARN  Alternation contains an empty alternative.
@@ -9494,6 +9653,13 @@ corpus/moodle/moodle/public/admin/tool/brickfield/classes/local/htmlchecker/repo
    TIP 
        - /^(?:(http[s]?):\/\/(?:(.*):(.*)@)?([^\/]+))?((?:[\/])?(?:[^\.]*?)?(?:[\/])?)?(?:([^\/^\.]+)\.([^\?]+))?(?:\?(.+))?$/i
        + /^(?:(http[s]?):\/\/(?:(.*):(.*)@)?([^\/]+))?([\/]?(?:[^.]*?)?[\/]?)?(?:([^\/\^.]+)\.([^?]+))?(?:\?(.+))?$/i
+
+corpus/moodle/moodle/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php:129:20
+    → #(?<="|'|=)\/\/#
+   ↳ via $pattern
+   TIP 
+       - #(?<="|'|=)\/\/#
+       + #(?<=["'=])//#
 
 corpus/moodle/moodle/public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php:148:30
     → #\/(\w*?)\/\.\.\/(.*?)>#ims
@@ -10057,6 +10223,12 @@ corpus/moodle/moodle/public/lib/classes/param.php:1025:31
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+corpus/moodle/moodle/public/lib/classes/param.php:1086:33
+    → /\bjavascript\b[\s\S]*?(?:\:|\/)/i
+   TIP 
+       - /\bjavascript\b[\s\S]*?(?:\:|\/)/i
+       + /\bjavascript\b[\s\S]*?[:\/]/i
+
 corpus/moodle/moodle/public/lib/classes/param.php:1110:24
     → /^-----BEGIN CERTIFICATE-----([\s\w\/\+=]+)-----END CERTIFICATE-----$/
    TIP 
@@ -10140,6 +10312,9 @@ corpus/moodle/moodle/public/lib/classes/useragent.php:184:24
    ↳ via $modelsregex
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '2' and '3' explicitly instead of a range.
+   TIP 
+       - /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|e\-|e\/|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|xda(\-|2|g)|yas\-|your|zeto|zte\-/i
+       + /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br([ev])w|bumb|bw-([nu])|c55\/|capi|ccwa|cdm-|cell|chtm|cldc|cmd-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc-s|devi|dica|dmob|do([cp])o|ds(12|-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(-|_)|g1 u|g560|gene|gf-5|g-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd-([mpt])|hei-|hi(pt|ta)|hp( i|ip)|hs-c|ht(c(-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i-(20|go|ma)|i230|iac( |-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja([tv])a|jbro|jemu|jigs|kddi|keji|kgt([ \/])|klon|kpt |kwc-|kyo([ck])|le(no|xi)|lg( g|\/([klu])|50|54|e-|e\/|-[a-w])|libw|lynx|m1-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m-cr|me(di|rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30([02])|n50([025])|n7(0([01])|10)|ne(([cm])-|on|tf|wf|wg|wt)|nok([6i])|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan([adt])|pdxg|pg(13|-([1-8]|c))|phil|pire|pl(ay|uc)|pn-2|po(ck|rt|se)|prox|psio|pt-g|qa-a|qc(07|12|21|32|60|-[2-7]|i-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h-|oo|p-)|sdk\/|se(c(-|0|1)|47|mc|nd|ri)|sgh-|shar|sie(-|m)|sk-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h-|v-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl-|tdg-|tel([im])|tim-|t-mo|to(pl|sh)|ts(70|m-|m3|m5)|tx-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|xda(-|2|g)|yas-|your|zeto|zte-/i
 
 corpus/moodle/moodle/public/lib/classes/useragent.php:863:28
     → /rv\:([1-2])\.([0-9])/
@@ -10291,6 +10466,12 @@ corpus/moodle/moodle/public/lib/markdown/Michelf/MarkdownExtra.php:847:33
        -             }xs
        ---
        +             }x
+
+corpus/moodle/moodle/public/lib/minify/matthiasmullie-minify/src/CSS.php:720:33
+    → /(?<=(\}|;))[^\{\};]+\{\s*\}/
+   TIP 
+       - /(?<=(\}|;))[^\{\};]+\{\s*\}/
+       + /(?<=([};]))[^{};]+\{\s*\}/
 
 corpus/moodle/moodle/public/lib/minify/matthiasmullie-minify/src/JS.php:406:33
     → /(for\((?:[^;\{]*|[^;\{]*function[^;\{]*(\{([^\{\}]*(?-2))*[^\{\}]*\})?[^;\{]*);[^;\{]*;[^;\{]*\));(\}|$)/s
@@ -10880,6 +11061,9 @@ corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    WARN  Duplicate alternation branch "textjoin".
        ↳ Remove the redundant alternative.
+   TIP 
+       - /(?:_xlfn\.)?((?:_xlws\.)?\b(beta[.]dist|beta[.]inv|binom[.]dist|binom[.]inv|ceiling[.]precise|chisq[.]dist|chisq[.]dist[.]rt|chisq[.]inv|chisq[.]inv[.]rt|chisq[.]test|confidence[.]norm|confidence[.]t|covariance[.]p|covariance[.]s|erf[.]precise|erfc[.]precise|expon[.]dist|f[.]dist|f[.]dist[.]rt|f[.]inv|f[.]inv[.]rt|f[.]test|floor[.]precise|gamma[.]dist|gamma[.]inv|gammaln[.]precise|lognorm[.]dist|lognorm[.]inv|mode[.]mult|mode[.]sngl|negbinom[.]dist|networkdays[.]intl|norm[.]dist|norm[.]inv|norm[.]s[.]dist|norm[.]s[.]inv|percentile[.]exc|percentile[.]inc|percentrank[.]exc|percentrank[.]inc|poisson[.]dist|quartile[.]exc|quartile[.]inc|rank[.]avg|rank[.]eq|stdev[.]p|stdev[.]s|t[.]dist|t[.]dist[.]2t|t[.]dist[.]rt|t[.]inv|t[.]inv[.]2t|t[.]test|var[.]p|var[.]s|weibull[.]dist|z[.]test|base|acot|acoth|arabic|averageifs|binom[.]dist[.]range|bitand|bitlshift|bitor|bitrshift|bitxor|ceiling[.]math|combina|cot|coth|csc|csch|days|dbcs|decimal|encodeurl|filterxml|floor[.]math|formulatext|gamma|gauss|ifna|imcosh|imcot|imcsc|imcsch|imsec|imsech|imsinh|imtan|isformula|iso[.]ceiling|isoweeknum|munit|numbervalue|pduration|permutationa|phi|rri|sec|sech|sheet|sheets|skew[.]p|unichar|unicode|webservice|xor|forecast[.]et2|forecast[.]ets[.]confint|forecast[.]ets[.]seasonality|forecast[.]ets[.]stat|forecast[.]linear|switch|concat|ifs|maxifs|minifs|textjoin|anchorarray|arraytotext|bycol|byrow|call|choosecols|chooserows|drop|expand|filter|groupby|hstack|isomitted|lambda|let|makearray|map|randarray|reduce|register[.]id|scan|sequence|single|sort|sortby|take|textafter|textbefore|textjoin|textsplit|tocol|torow|unique|valuetotext|vstack|wrapcols|wraprows|xlookup|xmatch))\s*\(/Umui
+       + /(?:_xlfn\.)?((?:_xlws\.)?\b(beta[.]dist|beta[.]inv|binom[.]dist|binom[.]inv|ceiling[.]precise|chisq[.]dist|chisq[.]dist[.]rt|chisq[.]inv|chisq[.]inv[.]rt|chisq[.]test|confidence[.]norm|confidence[.]t|covariance[.]p|covariance[.]s|erf[.]precise|erfc[.]precise|expon[.]dist|f[.]dist|f[.]dist[.]rt|f[.]inv|f[.]inv[.]rt|f[.]test|floor[.]precise|gamma[.]dist|gamma[.]inv|gammaln[.]precise|lognorm[.]dist|lognorm[.]inv|mode[.]mult|mode[.]sngl|negbinom[.]dist|networkdays[.]intl|norm[.]dist|norm[.]inv|norm[.]s[.]dist|norm[.]s[.]inv|percentile[.]exc|percentile[.]inc|percentrank[.]exc|percentrank[.]inc|poisson[.]dist|quartile[.]exc|quartile[.]inc|rank[.]avg|rank[.]eq|stdev[.]p|stdev[.]s|t[.]dist|t[.]dist[.]2t|t[.]dist[.]rt|t[.]inv|t[.]inv[.]2t|t[.]test|var[.]p|var[.]s|weibull[.]dist|z[.]test|base|acot|acoth|arabic|averageifs|binom[.]dist[.]range|bitand|bitlshift|bitor|bitrshift|bitxor|ceiling[.]math|combina|cot|coth|csc|csch|days|dbcs|decimal|encodeurl|filterxml|floor[.]math|formulatext|gamma|gauss|ifna|imcosh|imcot|imcsc|imcsch|imsec|imsech|imsinh|imtan|isformula|iso[.]ceiling|isoweeknum|munit|numbervalue|pduration|permutationa|phi|rri|sec|sech|sheet|sheets|skew[.]p|unichar|unicode|webservice|xor|forecast[.]et2|forecast[.]ets[.]confint|forecast[.]ets[.]seasonality|forecast[.]ets[.]stat|forecast[.]linear|switch|concat|ifs|maxifs|minifs|textjoin|anchorarray|arraytotext|bycol|byrow|call|choosecols|chooserows|drop|expand|filter|groupby|hstack|isomitted|lambda|let|makearray|map|randarray|reduce|register[.]id|scan|sequence|single|sort|sortby|take|textafter|textbefore|textsplit|tocol|torow|unique|valuetotext|vstack|wrapcols|wraprows|xlookup|xmatch))\s*\(/Uui
 
 corpus/moodle/moodle/public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php:179:24
     → /(?<!_xlws\.)(filter|sort)\s*\(/mui
@@ -11807,8 +11991,9 @@ corpus/moodle/moodle/public/repository/url/lib.php:244:20
 
 
 
-### corpus/mpdf/mpdf — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.6, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/mpdf/mpdf — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.6, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/mpdf/mpdf/src/Css/CssLoader.php:91:22
     → /@import url\(['\"]{0,1}(\S*?\.css(\?[^\s'\"]+)?)['\"]{0,1}\)\;?/si
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -12424,8 +12609,9 @@ corpus/mpdf/mpdf/utils/font_coverage.php:45:23
 
 
 
-### corpus/mustangostang/spyc — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/mustangostang/spyc — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/mustangostang/spyc/Spyc.php:692:44
     → /^(-|)[1-9]+[0-9]*$/
    WARN  Alternation contains an empty alternative.
@@ -12771,8 +12957,8 @@ corpus/nextcloud/server/lib/public/Util.php:399:18
 
 
 
-### corpus/nikic/PHP-Parser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/nikic/PHP-Parser — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/nikic/PHP-Parser/lib/PhpParser/Comment.php:127:24
     → (^.*(?:\n\s+\*.*)+$)
    WARN  An unbounded quantifier wraps a dot-star, which can cause severe backtracking.
@@ -12791,11 +12977,13 @@ corpus/nikic/PHP-Parser/lib/PhpParser/PrettyPrinter/Standard.php:1112:18
 
 
 
-### corpus/nikic/php-ast — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/nikic/php-ast — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/nilportugues/php-backslasher — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/nilportugues/php-backslasher — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/nunomaduro/phpinsights — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 
@@ -12880,8 +13068,9 @@ corpus/octobercms/october/modules/system/models/SiteDefinition.php:231:17
 
 ### corpus/openai-php/client — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
-### corpus/ovr/phpsa — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/ovr/phpsa — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/owncloud/core — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/owncloud/core/apps/dav/lib/Connector/Sabre/BlockLegacyClientPlugin.php:73:15
@@ -12964,8 +13153,9 @@ corpus/paratestphp/paratest/test/Unit/WrapperRunner/WrapperRunnerTest.php:303:32
 
 
 
-### corpus/parsecsv/parsecsv-for-php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.5, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/parsecsv/parsecsv-for-php — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.5, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/parsecsv/parsecsv-for-php/src/Csv.php:1296:66
     → /<\?.*?\?>(.*)/ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -13068,6 +13258,12 @@ corpus/phan/phan/src/Phan/Config.php:1632:35
     → @^(\./)+@
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+corpus/phan/phan/src/Phan/Config/Initializer.php:111:29
+    → /^        (['"])([a-z0-9A-Z_]+)\1\s*=>/
+   TIP 
+       - /^        (['"])([a-z0-9A-Z_]+)\1\s*=>/
+       + /^ {8}(['"])([a-z0-9A-Z_]+)\1\s*=>/
 
 corpus/phan/phan/src/Phan/Config/Initializer.php:545:61
     → @(/+\.)+$@D
@@ -13213,13 +13409,14 @@ corpus/php-debugbar/php-debugbar/src/DataFormatter/QueryFormatter.php:17:29
 
 
 
-### corpus/php-parallel-lint/PHP-Parallel-Lint — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/php-parallel-lint/PHP-Parallel-Lint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/phpDocumentor/Reflection — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 
-### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phpDocumentor/ReflectionDocBlock/src/DocBlock/StandardTagFactory.php:230:25
     → /^@([\w\-\_\\:]+)((?:[\s\(\{])\s*([^\s].*)|$)/us
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -13288,8 +13485,8 @@ corpus/phpactor/phpactor/lib/Indexer/Util/PhpNameMatcher.php:15:33
 
 
 
-### corpus/phparkitect/arkitect — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phparkitect/arkitect — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phparkitect/arkitect/src/Analyzer/Pattern.php:14:35
     → /^([a-zA-Z0-9_\x80-\xff]|\\|\*|\?)*$/
    ↳ via self::VALID_PATTERN
@@ -13353,6 +13550,12 @@ corpus/phpbb/phpbb/phpBB/develop/create_variable_overview.php:482:22
     → #^L_(.*?)#
    WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
+
+corpus/phpbb/phpbb/phpBB/develop/namespacify.php:143:25
+    → #(implements |extends )([a-zA-Z0-9_][a-zA-Z0-9_\\]+)(?=\s*(?:,|\n))#
+   TIP 
+       - #(implements |extends )([a-zA-Z0-9_][a-zA-Z0-9_\\]+)(?=\s*(?:,|\n))#
+       + #(implements |extends )([a-zA-Z0-9_][a-zA-Z0-9_\\]+)(?=\s*[,\n])#
 
 corpus/phpbb/phpbb/phpBB/includes/acp/acp_attachments.php:1610:25
     → #^([\w\-_]\.?){2,}$#is
@@ -13738,6 +13941,18 @@ corpus/phpmyadmin/phpmyadmin/src/Plugins/Transformations/Abs/DateFormatTransform
    INFO  Quantified capturing group "(...)" with "{3,7}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
+corpus/phpmyadmin/phpmyadmin/src/Server/Privileges.php:1349:28
+    → /(?<!\\)(?:_|%)/
+   TIP 
+       - /(?<!\\)(?:_|%)/
+       + /(?<!\\)[_%]/
+
+corpus/phpmyadmin/phpmyadmin/src/Server/Privileges.php:3267:49
+    → /(?<!\\)(?:_|%)/
+   TIP 
+       - /(?<!\\)(?:_|%)/
+       + /(?<!\\)[_%]/
+
 corpus/phpmyadmin/phpmyadmin/src/Server/Status/Monitor.php:332:29
     → /^INSERT INTO (`|'|"|)([^\s\1]+)\1/i
    WARN  Alternation contains an empty alternative.
@@ -13886,8 +14101,8 @@ corpus/phpspec/phpspec/src/PhpSpec/Util/MethodAnalyser.php:108:34
 
 ### corpus/phpspec/prophecy — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
-### corpus/phpstan/phpdoc-parser — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phpstan/phpdoc-parser — Target: PHP 7.4.6, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/phpstan/phpdoc-parser/src/Ast/ConstExpr/ConstExprStringNode.php:56:12
     → /( [\x00-\x08\x0E-\x1F] | [\xC0-\xC1] | [\xF5-\xFF] | \xE0(?=[\x80-\x9F]) | \xF0(?=[\x80-\x8F]) | [\xC2-\xDF](?![\x80-\xBF]) | [\xE0-\xEF](?![\x80-\xBF]{2}) | [\xF0-\xF4](?![\x80-\xBF]{3}) | (?<=[\x00-\x7F\xF5-\xFF])[\x80-\xBF] | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]|[\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) )/x
    ↳ via $regex
@@ -13896,17 +14111,23 @@ corpus/phpstan/phpdoc-parser/src/Ast/ConstExpr/ConstExprStringNode.php:56:12
 
 
 
-### corpus/phpstan/phpstan — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phpstan/phpstan — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/phpstan/phpstan-deprecation-rules — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phpstan/phpstan-deprecation-rules — Target: PHP 7.4.6, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/phpstan/phpstan-src — Target: PHP 8.2.99, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpstan/phpstan-src/.claude/skills/rebase-branch/rebase-plan.php:285:18
     → ~^[-+]\s*(?:(?:public|protected|private|readonly|static)(?:\(set\))?\s+)+[^=;(]*?\$(\w+)~
    WARN  Alternation branches have overlapping character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.
+
+corpus/phpstan/phpstan-src/build/PHPStan/Build/TurboDeclarationGenerator.php:370:18
+    → ~^\t+use ([\w\\,\s]+?)\s*(?:;|\{)~m
+   TIP 
+       - ~^\t+use ([\w\\,\s]+?)\s*(?:;|\{)~m
+       + ~^\t+use ([\w\\,\s]+?)\s*[;{]~m
 
 corpus/phpstan/phpstan-src/src/Command/ErrorFormatter/BaselineNeonErrorFormatter.php:124:95
     → ~(\n)+$~
@@ -13942,11 +14163,11 @@ corpus/phpstan/phpstan-src/turbo-ext/bin/side-by-side.php:514:19
 
 
 
-### corpus/phpstan/phpstan-strict-rules — Target: PHP 8.1, PCRE2 10.39 (composer.json config.platform.php) — exit 0
-Note: composer.json config.platform.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phpstan/phpstan-strict-rules — Target: PHP 7.4.6, PCRE2 10.33 (composer.json config.platform.php) — exit 0
+Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/phpstan/phpstan-symfony — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/phpstan/phpstan-symfony — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/phpunit/environment — Target: PHP 8.4.1, PCRE2 10.44 (composer.json config.platform.php) — exit 0
 corpus/phpunit/environment/src/Console.php:221:32
@@ -14064,11 +14285,12 @@ corpus/pimcore/pimcore/models/Element/Service.php:560:28
 
 
 
-### corpus/povils/phpmnd — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/povils/phpmnd — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/processwire/processwire — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/processwire/processwire — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 1
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/processwire/processwire/wire/core/Field.php:1068:27
     → /([_|a-zA-Z0-9]+)*([-._|a-zA-Z0-9]*)([=!%*<>]+)/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -14274,11 +14496,13 @@ corpus/protonemedia/laravel-splade/src/Http/BladeDirectives.php:67:20
 
 
 
-### corpus/psecio/parse — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/psecio/parse — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/reactphp/http — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/reactphp/http — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/reactphp/http/src/Message/Uri.php:49:149
     → #[\s%+]#
    WARN  "+" is a literal character inside a character class, not a quantifier.
@@ -14291,8 +14515,9 @@ corpus/reactphp/http/src/Message/Uri.php:167:25
 
 
 
-### corpus/reactphp/socket — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/reactphp/socket — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/reactphp/socket/src/UnixServer.php:69:29
     → /\(([^\)]+)\)|\[(\d+)\]: (.*)/
    TIP 
@@ -14301,8 +14526,8 @@ corpus/reactphp/socket/src/UnixServer.php:69:29
 
 
 
-### corpus/rectorphp/rector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/rectorphp/rector — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/rectorphp/rector-src — Target: PHP 8.4, PCRE2 10.44 (composer.json require.php) — exit 0
 corpus/rectorphp/rector-src/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php:37:59
@@ -14314,10 +14539,30 @@ corpus/rectorphp/rector-src/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMa
        - #^([A-Za-z]+?)([A-Z]{1}[a-z]{1})([A-Za-z]*)#
        + #^([A-Za-z]+?)([A-Z][a-z])([A-Za-z]*)#
 
+corpus/rectorphp/rector-src/rules/Php73/Rector/FuncCall/RegexDashEscapeRector.php:33:59
+    → #(\[.*?\\(w|s|d))-(?!\])#i
+   ↳ via self::LEFT_HAND_UNESCAPED_DASH_REGEX
+   TIP 
+       - #(\[.*?\\(w|s|d))-(?!\])#i
+       + #(\[.*?\\([wsd]))-(?!])#i
+
+corpus/rectorphp/rector-src/rules/Php73/Rector/FuncCall/RegexDashEscapeRector.php:38:60
+    → #(?<!\[)(?<!\\)-(\\(w|s|d)[.*]?)\]#i
+   ↳ via self::RIGHT_HAND_UNESCAPED_DASH_REGEX
+   TIP 
+       - #(?<!\[)(?<!\\)-(\\(w|s|d)[.*]?)\]#i
+       + #(?<!\[)(?<!\\)-(\\([wsd])[.*]?)]#i
+
 corpus/rectorphp/rector-src/scoper.php:122:17
     → #(public function getRuleDefinition\(\): RuleDefinition\s+\{\R)(.*?)(\R[^\r\n]*[\]\)]{2,};\R\s*\})#s
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the second quantifier to its minimum.
+
+corpus/rectorphp/rector-src/scripts/check-before-after-same-fixtures.php:56:62
+    → #^\s*-----\s*$#m
+   TIP 
+       - #^\s*-----\s*$#m
+       + #^\s*-{5}\s*$#m
 
 corpus/rectorphp/rector-src/src/BetterPhpDocParser/NodeDecorator/DoctrineAnnotationDecorator.php:62:47
     → #^\s*\*#ms
@@ -14785,8 +15030,8 @@ corpus/s9e/TextFormatter/src/Plugins/PipeTables/Parser.php:327:28
 
 
 
-### corpus/sabre-io/dav — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/sabre-io/dav — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/sabre-io/dav/lib/CalDAV/ICSExportPlugin.php:260:13
     → /[^a-zA-Z0-9-_ ]/um
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -15840,8 +16085,8 @@ corpus/salesagility/SuiteCRM/service/JsonRPCServer/JsonRPCServerCalls.php:129:47
 
 
 
-### corpus/schmittjoh/JMSSerializerBundle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/schmittjoh/JMSSerializerBundle — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/schmittjoh/JMSSerializerBundle/Cache/CacheWarmer.php:102:34
     → {"[^"\\]*+(\\.[^"\\]*+)*+"|'[^'\\]*+(\\.[^'\\]*+)*+'}s
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -15849,11 +16094,12 @@ corpus/schmittjoh/JMSSerializerBundle/Cache/CacheWarmer.php:102:34
 
 
 
-### corpus/schmittjoh/php-manipulator — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/schmittjoh/php-manipulator — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/schmittjoh/serializer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/schmittjoh/serializer — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/schmittjoh/serializer/src/Metadata/Driver/DocBlockDriver/DocBlockTypeResolver.php:34:48
     → /^[^\S\r\n]*use[[\s]*([^;\n]*)[\s]*{([a-zA-Z0-9\s\n\r,]*)};$/m
    ↳ via self::GROUP_USE_STATEMENTS_REGEX
@@ -15866,8 +16112,9 @@ corpus/schmittjoh/serializer/src/XmlSerializationVisitor.php:559:68
 
 
 
-### corpus/scrivo/highlight.php — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.6, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/scrivo/highlight.php — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.6, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/scrivo/highlight.php/src/Highlight/RegExUtils.php:56:33
     → #(?<!\\)/#um
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -16204,8 +16451,9 @@ corpus/silverstripe/silverstripe-framework/src/i18n/TextCollection/i18nTextColle
 
 
 
-### corpus/simplepie/simplepie — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/simplepie/simplepie — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/simplepie/simplepie/src/Item.php:2305:115
     → /^((?:-)?[0-9]+(?:\.[0-9]+)) ((?:-)?[0-9]+(?:\.[0-9]+))$/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -16262,8 +16510,8 @@ corpus/simplepie/simplepie/src/Source.php:488:117
 
 
 
-### corpus/slevomat/coding-standard — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/slevomat/coding-standard — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/slevomat/coding-standard/SlevomatCodingStandard/Helpers/TypeHelper.php:23:4
     → ~^\\?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)(\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$~
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -16300,11 +16548,12 @@ corpus/slevomat/coding-standard/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.
 
 
 
-### corpus/slimphp/Slim — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/slimphp/Slim — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/smalot/pdfparser — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/smalot/pdfparser — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/smalot/pdfparser/src/Smalot/PdfParser/Element/ElementArray.php:112:24
     → /^\s*\[(?P<array>.*)/is
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -16527,8 +16776,9 @@ corpus/smalot/pdfparser/src/Smalot/PdfParser/RawData/RawDataParser.php:959:13
 
 
 
-### corpus/smarty-php/smarty — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/smarty-php/smarty — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/smarty-php/smarty/src/Compiler/Template.php:581:4
     → #@!@SMARTY:([0-9]+):SMARTY@!@#is
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -16653,8 +16903,9 @@ corpus/smarty-php/smarty/src/Lexer/TemplateLexer.php:975:43
 
 
 
-### corpus/spipu/html2pdf — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/spipu/html2pdf — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/spipu/html2pdf/examples/res/example09.php:2:26
     → /[^a-zA-Z0-9]/isU
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -17086,8 +17337,9 @@ corpus/spiral/framework/src/Cookies/src/Config/CookiesConfig.php:49:25
 
 
 
-### corpus/squizlabs/PHP_CodeSniffer — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/squizlabs/PHP_CodeSniffer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php:500:28
     → /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
    WARN  Quantifier is redundant; it matches exactly once.
@@ -17095,6 +17347,12 @@ corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FileCommen
    TIP 
        - /^([0-9]{4})((.{1})([0-9]{4}))? (.+)$/
        + /^([0-9]{4})((.)([0-9]{4}))? (.+)$/
+
+corpus/squizlabs/PHP_CodeSniffer/src/Standards/PEAR/Sniffs/Commenting/FunctionCommentSniff.php:287:28
+    → /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+   TIP 
+       - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
+       + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
 corpus/squizlabs/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/FunctionCommentSniff.php:79:28
     → `^((?:\|?(?:array\([^\)]*\)|[\\a-z0-9\[\]]+))*)( .*)?`i
@@ -17146,14 +17404,15 @@ corpus/squizlabs/PHP_CodeSniffer/src/Util/Common.php:476:28
 
 
 
-### corpus/staabm/annotate-pull-request-from-checkstyle — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/staabm/annotate-pull-request-from-checkstyle — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/staabm/phpstan-baseline-analysis — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/staabm/phpstan-baseline-analysis — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/staabm/phpstan-dba — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/staabm/phpstan-dba — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/staabm/phpstan-dba/src/QueryReflection/QuerySimulation.php:172:13
     → /("(""|[^"])*")|('(''|[^'])*')|((?:--|#)[^\n\r]*)|(\/\*[\w\W]*?(?=\*\/)\*\/)/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -17165,11 +17424,11 @@ corpus/staabm/phpstan-dba/src/QueryReflection/QuerySimulation.php:172:13
 
 
 
-### corpus/staabm/phpstan-todo-by — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/staabm/phpstan-todo-by — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/staabm/side-effects-detector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/staabm/side-effects-detector — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/statamic/cms — Target: PHP 8.1, PCRE2 10.39 (--php-version, fallback: no require.php) — exit 0
 corpus/statamic/cms/src/Console/Commands/ProEnable.php:273:34
@@ -17384,8 +17643,9 @@ corpus/symfony/mime/Resources/bin/update_mime_types.php:158:21
 
 ### corpus/symfony/panther — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/symfony/polyfill — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/symfony/polyfill — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/symfony/polyfill/src/Intl/Grapheme/Grapheme.php:45:45
     → /([\x00-\x7F]|[\xC2-\xDF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]|[\xEE-\xEF][\x80-\xBF]{2}|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})|(\xF0[\x90-\xBF][\x80-\xBF]?|[\xF1-\xF3][\x80-\xBF]{1,2}|\xF4[\x80-\x8F][\x80-\xBF]?|\xE0[\xA0-\xBF]|[\xE1-\xEC][\x80-\xBF]|\xED[\x80-\x9F]|[\xEE-\xEF][\x80-\xBF]|[\x80-\xFF])/s
    ↳ via self::UTF8_CHAR_OR_SUBPART_RX
@@ -17431,8 +17691,9 @@ corpus/symfony/polyfill/src/Php84/Php84.php:518:24
 
 
 
-### corpus/symfony/polyfill-mbstring — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/symfony/polyfill-mbstring — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/symfony/polyfill-mbstring/Mbstring.php:634:31
     → /[\x00-\x7F]|[\xC0-\xDF][\x80-\xBF]?|[\xE0-\xEF][\x80-\xBF]{0,2}|[\xF0-\xF7][\x80-\xBF]{0,3}|[\xF8-\xFB][\x80-\xBF]{0,4}|[\xFC-\xFD][\x80-\xBF]{0,5}|[\x80-\xBF\xFE\xFF]/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -17889,8 +18150,8 @@ corpus/tempestphp/tempest-framework/src/Tempest/Framework/Commands/MetaViewCompo
 
 
 
-### corpus/thephpleague/commonmark — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/thephpleague/commonmark — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/thephpleague/commonmark/src/Extension/CommonMark/Parser/Inline/BacktickParser.php:59:32
     → /\n/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -17900,8 +18161,8 @@ corpus/thephpleague/commonmark/src/Extension/CommonMark/Parser/Inline/BacktickPa
 
 
 
-### corpus/thephpleague/flysystem — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 8.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/thephpleague/flysystem — Target: PHP 8.0.2, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/thephpleague/flysystem/bin/set-flysystem-version.php:36:29
     → ~("league/flysystem": "\^[a-zA-Z0-9\.-]+")~ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -17912,8 +18173,8 @@ corpus/thephpleague/flysystem/bin/set-flysystem-version.php:36:29
 
 
 
-### corpus/thephpleague/geotools — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/thephpleague/geotools — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/thephpleague/geotools/src/Coordinate/Coordinate.php:207:24
     → /([ns]{1})\s?([0-9]{1,2})\D+([0-9]{1,2}\.?\d*)\D*[, ]?([we]{1})\s? ?([0-9]{1,3})\D+([0-9]{1,2}\.?\d*)\D*$/i
    WARN  Quantifier is redundant; it matches exactly once.
@@ -17985,8 +18246,9 @@ corpus/thephpleague/glide/src/Manipulators/Size.php:481:24
 
 
 
-### corpus/theseer/phpdox — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/theseer/phpdox — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/theseer/phpdox/src/collector/project/InlineComment.php:37:25
     → =//(.*)$|/\*{1,}(.*)\*/$|/\*{1,}(.*)$|^(.*)\*/$|#(.*)$|\*{1}(.*)$|^(.*)$=
    WARN  Quantifier is redundant; it matches exactly once.
@@ -18024,8 +18286,8 @@ corpus/tighten/tlint/src/Linters/NoJsonDirective.php:26:17
 
 
 
-### corpus/tijsverkoyen/CssToInlineStyles — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/tijsverkoyen/CssToInlineStyles — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/tijsverkoyen/CssToInlineStyles/src/Css/Processor.php:60:29
     → /@media [^{]*+{([^{}]++|{[^{}]*+})*+}/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
@@ -18039,11 +18301,12 @@ corpus/tijsverkoyen/CssToInlineStyles/src/Css/Rule/Processor.php:91:43
 
 ### corpus/tomzx/php-semver-checker — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 
-### corpus/troelskn/phpweaver — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/troelskn/phpweaver — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/tubalmartin/YUI-CSS-compressor-PHP-port — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.3, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/tubalmartin/YUI-CSS-compressor-PHP-port — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/tubalmartin/YUI-CSS-compressor-PHP-port/src/Minifier.php:309:13
     → /filter:\s*progid:DXImageTransform\.Microsoft\.Matrix\(([^)]+)\)/Ss
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -18094,6 +18357,18 @@ corpus/twigstan/twigstan/src/Processing/Compilation/PhpVisitor/AppendFilePathToL
 
 
 ### corpus/vimeo/psalm — Target: PHP 8.1.31, PCRE2 10.39 (composer.json require.php) — exit 0
+corpus/vimeo/psalm/bin/hack-conformance/lib.php:29:20
+    → /^\/\/\/\/\s*expect:\s*(\S+)/m
+   TIP 
+       - /^\/\/\/\/\s*expect:\s*(\S+)/m
+       + /^\/{4}\s*expect:\s*(\S+)/m
+
+corpus/vimeo/psalm/bin/hack-conformance/lib.php:30:20
+    → /^\/\/\/\/\s*psalm-test:\s*(.+)$/m
+   TIP 
+       - /^\/\/\/\/\s*psalm-test:\s*(.+)$/m
+       + /^\/{4}\s*psalm-test:\s*(.+)$/m
+
 corpus/vimeo/psalm/examples/plugins/StringChecker.php:33:38
     → /^\\?Psalm(\\[A-Z][A-Za-z0-9]+)+(::[A-Za-z0-9]+)?$/
    ↳ via $class_or_class_method
@@ -18182,13 +18457,15 @@ corpus/vinkius-labs/laravel-page-speed/src/Middleware/InlineCss.php:106:13
 
 
 
-### corpus/vlucas/phpdotenv — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/vlucas/phpdotenv — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/voku/PHPDoctor — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
-### corpus/voku/anti-xss — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/voku/anti-xss — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1060:29
     → /(?<html_entity>&[A-Za-z]{2,};{0})/
    WARN  Quantifier always repeats zero times; it can be removed.
@@ -18233,8 +18510,9 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2039:17
 
 
 
-### corpus/voku/email-check — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.0, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/voku/email-check — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/email-check/src/voku/helper/EmailCheck.php:207:26
     → /^(?<local>.*<?)(?:.*)@(?<domain>.*)(?:>?)$/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -18242,8 +18520,9 @@ corpus/voku/email-check/src/voku/helper/EmailCheck.php:207:26
 
 
 
-### corpus/voku/portable-utf8 — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/voku/portable-utf8 — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/portable-utf8/src/voku/helper/UTF8.php:1205:13
     → #@media\s+(?:only\s)?(?:[\s{(]|screen|all)\s?[^{]+{.*}\s*}\s*#isumU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -18288,8 +18567,9 @@ corpus/voku/portable-utf8/src/voku/helper/UTF8.php:5231:39
 
 
 
-### corpus/voku/simple_html_dom — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/voku/simple_html_dom — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/simple_html_dom/src/voku/helper/Html5DomParser.php:228:13
     → /<[A-Za-z][A-Za-z0-9:-]*(?:"[^"]*"|'[^']*'|[^>"'])*>/s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -18311,8 +18591,9 @@ corpus/voku/simple_html_dom/src/voku/helper/XmlDomParser.php:653:39
 
 
 
-### corpus/voku/urlify — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/voku/urlify — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/voku/urlify/src/voku/helper/URLify.php:538:21
     → /(?:\s|^)(\d+)(?: )*€(?:\s|$)/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -18442,11 +18723,13 @@ corpus/wapmorgan/PhpCodeAnalyzer/src/PhpCodeAnalyzer.php:60:25
 
 
 
-### corpus/wapmorgan/PhpDeprecationDetector — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/wapmorgan/PhpDeprecationDetector — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/wata727/pahout — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/wata727/pahout — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/webmozarts/assert — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 
@@ -18522,6 +18805,40 @@ corpus/wikimedia/mediawiki/includes/Parser/Parser.php:5783:28
     → / & (?= (?: A(?:Elig|MP|acute|circ|grave|ring|tilde|uml)| C(?:OPY|cedil)|E(?:TH|acute|circ|grave|uml)| GT|I(?:acute|circ|grave|uml)|LT|Ntilde| O(?:acute|circ|grave|slash|tilde|uml)|QUOT|REG|THORN| U(?:acute|circ|grave|uml)|Yacute| a(?:acute|c(?:irc|ute)|elig|grave|mp|ring|tilde|uml)|brvbar| c(?:cedil|edil|urren)|cent(?!erdot;)|copy(?!sr;)|deg| divide(?!ontimes;)|e(?:acute|circ|grave|th|uml)| frac(?:1(?:2|4)|34)| gt(?!c(?:c|ir)|dot|lPar|quest|r(?:a(?:pprox|rr)|dot|eq(?:less|qless)|less|sim);)| i(?:acute|circ|excl|grave|quest|uml)|laquo| lt(?!c(?:c|ir)|dot|hree|imes|larr|quest|r(?:Par|i(?:e|f|));)| m(?:acr|i(?:cro|ddot))|n(?:bsp|tilde)| not(?!in(?:E|dot|v(?:a|b|c)|)|ni(?:v(?:a|b|c)|);)| o(?:acute|circ|grave|rd(?:f|m)|slash|tilde|uml)| p(?:lusmn|ound)|para(?!llel;)|quot|r(?:aquo|eg)| s(?:ect|hy|up(?:1|2|3)|zlig)|thorn|times(?!b(?:ar|)|d;)| u(?:acute|circ|grave|ml|uml)|y(?:acute|en|uml) ) (?:[^;]|$))/Sx
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+   TIP 
+         /
+                     &           # 1. entity prefix
+                     (?=         # 2. followed by:
+                     (?:         #  a. one of the legacy semicolon-less named entities
+                         A(?:Elig|MP|acute|circ|grave|ring|tilde|uml)|
+                         C(?:OPY|cedil)|E(?:TH|acute|circ|grave|uml)|
+                         GT|I(?:acute|circ|grave|uml)|LT|Ntilde|
+                         O(?:acute|circ|grave|slash|tilde|uml)|QUOT|REG|THORN|
+                         U(?:acute|circ|grave|uml)|Yacute|
+                         a(?:acute|c(?:irc|ute)|elig|grave|mp|ring|tilde|uml)|brvbar|
+                         c(?:cedil|edil|urren)|cent(?!erdot;)|copy(?!sr;)|deg|
+                         divide(?!ontimes;)|e(?:acute|circ|grave|th|uml)|
+       -                 frac(?:1(?:2|4)|34)|
+       ---
+       +                 frac(?:1[24]|34)|
+                         gt(?!c(?:c|ir)|dot|lPar|quest|r(?:a(?:pprox|rr)|dot|eq(?:less|qless)|less|sim);)|
+                         i(?:acute|circ|excl|grave|quest|uml)|laquo|
+                         lt(?!c(?:c|ir)|dot|hree|imes|larr|quest|r(?:Par|i(?:e|f|));)|
+                         m(?:acr|i(?:cro|ddot))|n(?:bsp|tilde)|
+       -                 not(?!in(?:E|dot|v(?:a|b|c)|)|ni(?:v(?:a|b|c)|);)|
+       -                 o(?:acute|circ|grave|rd(?:f|m)|slash|tilde|uml)|
+       ---
+       +                 not(?!in(?:E|dot|v[abc]|)|ni(?:v[abc]|);)|
+       +                 o(?:acute|circ|grave|rd[fm]|slash|tilde|uml)|
+                         p(?:lusmn|ound)|para(?!llel;)|quot|r(?:aquo|eg)|
+       -                 s(?:ect|hy|up(?:1|2|3)|zlig)|thorn|times(?!b(?:ar|)|d;)|
+       ---
+       +                 s(?:ect|hy|up[123]|zlig)|thorn|times(?!b(?:ar|)|d;)|
+                         u(?:acute|circ|grave|ml|uml)|y(?:acute|en|uml)
+                     )
+                     (?:[^;]|$)) #  b. and not followed by a semicolon
+                     # S = study, for efficiency
+                     /Sx
 
 corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:47:30
     → ! expression | accelerator\s*: | -o-link\s*: | -o-link-source\s*: | -o-replace\s*: | url\s*\( | src\s*\( | image\s*\( | image-set\s*\( | attr\s*\([^)]+[\s,]+url!ix
@@ -18681,8 +18998,9 @@ corpus/wikimedia/mediawiki/maintenance/storage/trackBlobs.php:119:21
 
 
 
-### corpus/willdurand/Negotiation — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/willdurand/Negotiation — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/willdurand/Negotiation/src/Negotiation/AbstractNegotiator.php:137:31
     → /(?:[^,"]*+(?:"[^"]*+")?)+[^,"]*+/
    WARN  Nested quantifiers can cause catastrophic backtracking.
@@ -19008,6 +19326,13 @@ corpus/woocommerce/woocommerce/plugins/woocommerce/src/Blocks/BlockTypes/Checkou
    WARN  Lazy quantifier "*?" ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/Blocks/BlockTypes/ClassicTemplate.php:447:24
+    → /(?<=class=\"|')[^"|']+(?=\"|')/
+   ↳ via $pattern_get_class
+   TIP 
+       - /(?<=class=\"|')[^"|']+(?=\"|')/
+       + /(?<=class="|')[^"|']+(?=["'])/
+
 corpus/woocommerce/woocommerce/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php:10:32
     → /^[A-z0-9\/_-]+$/
    ↳ via self::SLUG_REGEX
@@ -19074,8 +19399,9 @@ corpus/woocommerce/woocommerce/tools/monorepo/check-changelogger-use.php:85:18
 
 
 
-### corpus/wp-cli/wp-cli — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.2, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/wp-cli/wp-cli — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/IdnaEncoder.php:144:22
     → /(?:[^\x00-\x7F])/
    WARN  Redundant non-capturing group; it can be removed without changing behavior.
@@ -19163,8 +19489,9 @@ corpus/wp-cli/wp-cli/php/utils.php:1540:18
 
 
 
-### corpus/yiisoft/yii — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 5.1, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/yiisoft/yii — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/yiisoft/yii/build/commands/LiteCommand.php:179:26
     → /[\r\n]+[\s\t]*[\r\n]+/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
@@ -19550,8 +19877,8 @@ corpus/yiisoft/yii/requirements/index.php:213:17
 
 
 
-### corpus/yiisoft/yii2 — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
-Note: composer.json require.php allows PHP 7.4, older than the PHP 8.1 this library supports: judging for PHP 8.1.
+### corpus/yiisoft/yii2 — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 corpus/yiisoft/yii2/build/controllers/ReleaseController.php:896:43
     → /^- Fix(?= #\d+(, #\d+)*: )/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
