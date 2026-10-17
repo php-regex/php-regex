@@ -245,6 +245,20 @@ final class JsonErrorEnvelopeTest extends TestCase
         yield 'compare' => ['command' => ['compare', '/a/', '/b/']];
     }
 
+    /**
+     * A PCRE2 the command line names beside the PHP is the one judged:
+     * "(?aD)" arrived in PCRE2 10.43, which PHP 8.4 bundles.
+     */
+    #[Test]
+    public function test_a_pattern_command_judges_the_pcre2_named_beside_the_php(): void
+    {
+        [$exitCode] = $this->runRegex(['--php-version=8.4', '--pcre-version=10.40', 'validate', '/(?aD)x/']);
+        $this->assertSame(1, $exitCode);
+
+        [$exitCode] = $this->runRegex(['--php-version=8.4', 'validate', '/(?aD)x/']);
+        $this->assertSame(0, $exitCode);
+    }
+
     #[Test]
     public function test_a_pattern_command_refuses_a_target_on_pcre1_with_the_target_stage_in_json(): void
     {

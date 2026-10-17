@@ -211,6 +211,8 @@ final class RewriteVerificationTest extends TestCase
         yield 'a class for an alternation inside a group inside a lookbehind' => ['original' => '/(?<=(\}|;))a/', 'rewrite' => '/(?<=([};]))a/', 'letters' => '};a', 'length' => 4];
         yield 'a repeated branch dropped beside a word boundary' => ['original' => '/\b(?:ab|cd|ab|abc)/', 'rewrite' => '/\b(?:ab|cd|abc)/', 'letters' => 'abcd ', 'length' => 4];
         yield 'branches of more than one length merged beside a word boundary' => ['original' => '/\b(?:a|bc|d)/', 'rewrite' => '/\b(?:[ad]|bc)/', 'letters' => 'abcd ', 'length' => 4];
+        yield 'a class for an alternation inside an atomic group' => ['original' => '/(?<!x)(?>(?:_|%))b/', 'rewrite' => '/(?<!x)(?>[_%])b/', 'letters' => '_%bx', 'length' => 4];
+        yield 'branches of more than one length merged inside a group' => ['original' => '/\b((?:a|bc|d))/', 'rewrite' => '/\b((?:[ad]|bc))/', 'letters' => 'abcd ', 'length' => 4];
         yield 'a repeated branch dropped, another caseless copy kept' => ['original' => '/\b(?:ab|AB|cd|ab)/i', 'rewrite' => '/\b(?:ab|AB|cd)/i', 'letters' => 'aBcd ', 'length' => 4];
     }
 
@@ -261,6 +263,15 @@ final class RewriteVerificationTest extends TestCase
         yield 'a branch moved where its first copy was' => ['original' => '/\b(?:a|ab|a)/', 'rewrite' => '/\b(?:ab|a)/', 'subject' => 'ab'];
         yield 'a branch dropped that is no copy' => ['original' => '/\b(?:a|b|c)/', 'rewrite' => '/\b(?:a|b)/', 'subject' => 'c'];
         yield 'a part whose strings begin one another' => ['original' => '/\b(?:x|xy)/', 'rewrite' => '/\bxy?/', 'subject' => 'xy'];
+        yield 'strings of three lengths, one beginning another past a step' => ['original' => '/\b(?:a|abcd)/', 'rewrite' => '/\ba(?:bcd)?/', 'subject' => 'abcd'];
+        yield 'options the pattern opens with dropped' => ['original' => '/(*UTF)(?<!\xA9)(?:_|%)/', 'rewrite' => '/(?<!\xA9)[_%]/', 'subject' => "\u{E9}_"];
+        yield 'a part of two lengths for one of one character' => ['original' => '/(?<!x)(?:ab|c)/', 'rewrite' => '/(?<!x)[abc]/', 'subject' => 'ab'];
+        yield 'a repeat of another count' => ['original' => '/(?<!x)(?:ab){1,3}c/', 'rewrite' => '/(?<!x)(?:ab){1,4}c/', 'subject' => 'ababababc'];
+        yield 'a group of another name' => ['original' => '/(?<!y)(?<a>x)/', 'rewrite' => '/(?<!y)(?<b>x)/', 'subject' => 'x'];
+        yield 'a lookahead of another kind' => ['original' => '/(?<!x)a(?=b)/', 'rewrite' => '/(?<!x)a(?!b)/', 'subject' => 'ab'];
+        yield 'a group made atomic' => ['original' => '/(?<!x)(a|ab)c/', 'rewrite' => '/(?<!x)(?>a|ab)c/', 'subject' => 'abc'];
+        yield 'a repeated part dropped' => ['original' => '/(?<!y)a\d\d/', 'rewrite' => '/(?<!y)a\d/', 'subject' => 'a12'];
+        yield 'a possessive part only a second DEFINE holds' => ['original' => '/(?(DEFINE)(?<a>x))(?(DEFINE)(?<n>\d+))(?&n)1/', 'rewrite' => '/(?(DEFINE)(?<a>x))(?(DEFINE)(?<n>\d++))(?&n)1/', 'subject' => '21'];
         yield 'a possessive part only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>\d+))(?&n)1/', 'rewrite' => '/(?(DEFINE)(?<n>\d++))(?&n)1/', 'subject' => '21'];
     }
 

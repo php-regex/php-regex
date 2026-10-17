@@ -41,6 +41,59 @@ final class AnalysisServiceSilentChangeTest extends TestCase
         $this->assertSame($message, $issues[0]['message']);
         $this->assertSame($hint, $issues[0]['hint'] ?? null);
         $this->assertSame(['php' => $php, 'pcre' => $pcre], $issues[0]['target'] ?? null);
+        $this->assertSame(['src/a.php', 3, 17, 42, 'preg_match'], [$issues[0]['file'], $issues[0]['line'], $issues[0]['column'] ?? null, $issues[0]['fileOffset'] ?? null, $issues[0]['source'] ?? null]);
+    }
+
+    /**
+     * Each spelling a change reaches is reported, each one that keeps the
+     * older reading is not: the release table names the construct, not the
+     * pattern.
+     */
+    #[Test]
+    #[DataProvider('provideSpellingsReached')]
+    public function test_each_spelling_the_change_reaches_is_reported(string $pattern, string $floor, string $later, bool $reported): void
+    {
+        $this->assertCount($reported ? 1 : 0, $this->rangeIssues($this->analysis($floor, [$later]), $pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, floor: string, later: string, reported: bool}>
+     */
+    public static function provideSpellingsReached(): iterable
+    {
+        yield 'once spelled twice' => ['pattern' => '/(a|ab){1,1}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'once on a branch reset group' => ['pattern' => '/(?|(a)|(ab)){1}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'once on a script run' => ['pattern' => '/(*sr:a|ab){1}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'once on an atomic script run' => ['pattern' => '/(*asr:a|ab){1}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'once on a subroutine call' => ['pattern' => '/(a|ab)(?1){1}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'twice, possessive' => ['pattern' => '/(a|ab){2}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'once or twice, possessive' => ['pattern' => '/(a|ab){1,2}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'once on a lookahead' => ['pattern' => '/(?=a|ab){1}+c/', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'an assertion one or more times' => ['pattern' => '/^(?=(\1?a))+/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'an assertion any number of times' => ['pattern' => '/^(?=(\1?a)){0,}/', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'a caseless option under (*UCP)' => ['pattern' => '/(*UCP)(?i)\xC9/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'a caseless group under (*UCP)' => ['pattern' => '/(*UCP)(?i:\xC9)/', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'a caseless option taken off under (*UCP)' => ['pattern' => '/(*UCP)(?-i:\xC9)/', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'a range past ASCII under (*UCP)' => ['pattern' => '/(*UCP)[\x41-\xC9]/i', 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+        yield 'a range up to 0x7F under (*UCP)' => ['pattern' => '/(*UCP)[\x41-\x7F]/i', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'the character 0x7F under (*UCP)' => ['pattern' => '/(*UCP)\x7F/i', 'floor' => '7.4', 'later' => '8.0', 'reported' => false];
+        yield 'a raw byte past ASCII under (*UCP)' => ['pattern' => "/(*UCP)\xC9/i", 'floor' => '7.4', 'later' => '8.0', 'reported' => true];
+    }
+
+    /**
+     * A pattern a later PHP refuses, or parses into another tree, gets that
+     * verdict alone: the change of meaning that keeps the tree is not added.
+     */
+    #[Test]
+    public function test_a_refusal_or_another_tree_comes_alone(): void
+    {
+        $otherTree = $this->rangeIssues($this->analysis('7.4', ['8.4']), '/(a|ab){1}+c{,3}/');
+        $this->assertCount(1, $otherTree);
+        $this->assertStringContainsString('parses differently', (string) $otherTree[0]['message']);
+
+        $refused = $this->rangeIssues($this->analysis('7.4', ['8.5']), '/(?<=a\Kb)(a|ab){1}+c/');
+        $this->assertCount(1, $refused);
+        $this->assertSame('error', $refused[0]['type']);
     }
 
     /**

@@ -553,6 +553,15 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $this->assertSame(70300, $fromBelow->target()->phpVersionId);
         $this->assertContains('phpVersion allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.', $fromBelow->notices());
 
+        $this->assertSame([
+            'phpVersion allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.',
+            'PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.',
+        ], $fromBelow->notices());
+
+        $fromFirst = ProjectTarget::fromRange(70300, 80499, 'phpVersion');
+        $this->assertSame(['PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.'], $fromFirst->notices());
+        $this->assertSame(70300, ProjectTarget::fromRange(70100, 70300, 'phpVersion')->target()->phpVersionId);
+
         $this->expectException(UnsupportedTargetException::class);
         $this->expectExceptionMessage('phpVersion allows PHP 7.0: PHP 7.2 and earlier ship PCRE1');
         ProjectTarget::fromRange(70000, 70299, 'phpVersion');

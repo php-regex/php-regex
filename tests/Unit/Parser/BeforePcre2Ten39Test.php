@@ -253,6 +253,31 @@ final class BeforePcre2Ten39Test extends TestCase
     }
 
     /**
+     * Each refusal in full: the release that changed, the spelling an older
+     * one reads where one exists, and what PHP 7.3 and 7.4 do with it.
+     */
+    #[Test]
+    #[DataProvider('provideFullRefusals')]
+    public function test_a_refusal_says_it_all(string $pattern, string $phpVersion, string $release, string $error): void
+    {
+        $this->assertSame($error, RegexParser::create(['php_version' => $phpVersion, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern)->error);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, phpVersion: string, release: string, error: string}>
+     */
+    public static function provideFullRefusals(): iterable
+    {
+        $silent = ' PHP 7.3 and 7.4 accept this pattern without a warning, and the branch that holds it then never matches.';
+
+        yield 'unknown property' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '7.3', 'release' => '10.32', 'error' => 'Invalid or unsupported Unicode property: \p{Bogus}. PCRE2 10.32 knows a property by one exact name only.'.$silent];
+        yield 'backslash number' => ['pattern' => '/\214748364/', 'phpVersion' => '7.3', 'release' => '10.32', 'error' => 'Number too big at position 10: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.'.$silent];
+        yield 'repeated accept' => ['pattern' => '/a(*ACCEPT)?b/', 'phpVersion' => '7.4', 'release' => '10.33', 'error' => 'Quantifier "?" cannot be applied to assertion or verb "(*ACCEPT)" at position 10: PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))?", which every release reads'];
+        yield 'short non-atomic lookahead' => ['pattern' => '/x(?*a)a/', 'phpVersion' => '7.4', 'release' => '10.34', 'error' => 'Invalid group modifier syntax at position 3: PCRE2 10.35 added "(?*" for "(*napla:"; write "(*napla:" instead.'];
+        yield 'script run' => ['pattern' => '/x(*sr:a)/', 'phpVersion' => '7.3', 'release' => '10.32', 'error' => 'Unknown verb "(*sr:": PCRE2 10.33 added script runs.'];
+    }
+
+    /**
      * PHP 7.3.33 and 7.4.33 compile "\p{Bogus}" and "\214748364", which
      * their PCRE2 refuses, without a warning, and the branch holding one
      * never matches: "/\p{Bogus}|a/u" finds "a", "/\p{Bogus}?a/u" finds
