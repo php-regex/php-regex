@@ -143,10 +143,13 @@
      stays in a custom property, which the Pages Sass engine passes through
      verbatim. */
   --fs-article: clamp(1.875rem, 1.35rem + 2.3vw, 2.5rem);
+  --fs-article-title: clamp(2.2rem, 1.6rem + 3vw, 3rem);
+  --fs-article-main-h1: clamp(1.9rem, 1.4rem + 2.6vw, 2.6rem);
   --fs-hero: clamp(2rem, 1.4rem + 3.2vw, 3.4rem);
   --fs-section: clamp(1.5rem, 1.3rem + 1vw, 2rem);
   --pad-hero: clamp(3.5rem, 2rem + 6vw, 6.5rem);
   --pad-section: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  --pad-blog: clamp(2rem, 1.5rem + 3vw, 3.5rem);
 
   --header-h: 4rem;
   /* Page gutter: flush on small screens, aligned to the centered 87.5rem
@@ -1475,7 +1478,7 @@ main table::-webkit-scrollbar-thumb {
    -------------------------------------------------------------------------- */
 
 .blog-hero {
-  padding-block: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+  padding-block: var(--pad-blog);
   border-bottom: 1px solid var(--line);
   margin-bottom: 2.5rem;
 }
@@ -1756,7 +1759,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 .75rem;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(2.2rem, 1.6rem + 3vw, 3rem);
+  font-size: var(--fs-article-title);
   line-height: 1.05;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -1767,7 +1770,7 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .article-main > h1 {
-  font-size: clamp(1.9rem, 1.4rem + 2.6vw, 2.6rem);
+  font-size: var(--fs-article-main-h1);
   letter-spacing: -0.02em;
   margin: 0 0 1.25rem;
 }
