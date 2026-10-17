@@ -345,21 +345,6 @@ release-map idiom duplicated in
 `tests/Unit/NodeVisitor/UnicodePropertyReleaseTest.php:50` and `:78` and
 three `tests/Unit/Lint/Rule/` files.
 
-## Guarded targets: what is left
-
-The ignore identifiers, the report of the markers and baseline entries that
-silence nothing, `@regex-target`, the PHPStan guard narrowing and the lint
-guard reading are built. Follow-ups:
-- the Psalm plugin reads `@regex-target` only, not a guard on
-  `PHP_VERSION_ID`. The plugin could read Psalm's narrowed type
-  (`$context->vars_in_scope['PHP_VERSION_ID']`, `int<80400, max>` inside
-  `if (PHP_VERSION_ID >= 80400)` on Psalm 6.20), but Psalm narrows it the
-  same way under `function_exists('array_find')`, a userland polyfill loaded
-  or not: reading it would leave PHP 8.2 and 8.3 unjudged in a branch the
-  polyfill runs there. Either accept Psalm's inference, or read the guards
-  from the file's AST with the lint's reader (`PhpParserGuards`), which
-  knows only comparisons and `version_compare()`.
-
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +

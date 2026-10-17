@@ -338,11 +338,15 @@ ERROR: InvalidRegexPattern - app/numbers.php:5:29 - Regex pattern is invalid for
 On a project analysed below PHP 8.2, a pattern using the `n` modifier, which
 PHP reads from 8.2 only, is not typed, and is reported as `InvalidRegexPattern`.
 
-A call under `// @regex-target php>=8.4` (or `pcre>=10.43`) is judged for the
-versions the marker keeps of the series Psalm analyses for; a marker that
-keeps none, or cannot be read, is reported as `InvalidRegexTarget`. A guard on
-`PHP_VERSION_ID` is not read: Psalm narrows the constant under
-`function_exists()` of a newer function too, polyfilled or not.
+A call under `if (PHP_VERSION_ID >= 80400)`, or after an early `return` below
+it, is judged for the versions the guard keeps of the series Psalm analyses
+for, the guard read from the file as `regex lint` reads it; one that keeps
+none leaves the call unjudged. Psalm's own narrowing of the constant is not
+read: Psalm narrows it under `function_exists()` of a newer function too,
+polyfilled or not. A call under `// @regex-target php>=8.4` (or
+`pcre>=10.43`) is judged for the versions the marker keeps, and for those the
+guard keeps too; a marker that keeps none, or cannot be read, is reported as
+`InvalidRegexTarget`.
 
 ### The `InvalidRegexPattern` issue
 

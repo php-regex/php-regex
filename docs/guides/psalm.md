@@ -422,21 +422,34 @@ which PHP reads from 8.2 only, is not typed, and is reported as
 
 ### Code that runs on some PHP versions only
 
-A call under `@regex-target` is judged for the versions the marker keeps of
-the series Psalm analyses for, as `regex lint` reads the marker (see
+A call under a guard on `PHP_VERSION_ID`, or under `@regex-target`, is
+judged for the versions they keep of the series Psalm analyses for. The
+plugin reads the guards from the file as `regex lint` reads them with
+`nikic/php-parser` (see
 [the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)): with
-`<phpVersion>8.2</phpVersion>`, `// @regex-target php>=8.2.5` judges the call
-for PHP 8.2.5. A marker that keeps none of that series, `php>=8.4` there, is
+`<phpVersion>8.2</phpVersion>`, a call under `if (PHP_VERSION_ID >= 80205)` is
+judged for PHP 8.2.5, and one under `if (PHP_VERSION_ID >= 80400)`, or after
+`if (PHP_VERSION_ID < 80400) { return; }`, runs on no version of that series
+and is not judged.
+
+```php
+if (PHP_VERSION_ID >= 80400) {
+    preg_match('/^(?aD)\d+$/u', $input);   // not judged for PHP 8.2
+}
+```
+
+It does not read Psalm's own narrowing of the constant: Psalm narrows it
+under `function_exists('array_find')` too, to PHP 8.4 and later, a polyfill
+loaded or not, and a call such a check holds is judged for the whole series.
+A file PHP cannot parse holds no guard the plugin reads.
+
+The marker reads as for `regex lint`: with `<phpVersion>8.2</phpVersion>`,
+`// @regex-target php>=8.2.5` judges the call for PHP 8.2.5. A guard and a
+marker on one call both apply: the versions judged are those both keep. A marker that keeps none of that series, `php>=8.4` there, is
 reported as `InvalidRegexTarget` on the marker, and its call is not judged;
 so is a marker whose constraint cannot be read, and its call is judged as if
 it held none. The types of `$matches` stay those of the PHP Psalm analyses
 for.
-
-The plugin does not read a guard on `PHP_VERSION_ID` around the call. Psalm
-narrows the constant there, but it narrows it under
-`function_exists('array_find')` too, to PHP 8.4 and later, a polyfill loaded
-or not: a call such a guard holds would go unjudged for the PHP versions the
-polyfill runs it on. Write the marker instead.
 
 ## Adopting the plugin
 

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Psalm\Internal;
 
+use PhpParser\Error;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr;
@@ -41,9 +42,12 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\ParserFactory;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Extraction\GuardRegions;
+use PHPRegex\Linter\Extraction\PhpParserGuards;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Parser\Analysis\CaptureShape;
@@ -194,10 +198,10 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     private static array $belowPcre2 = [];
 
     /**
-     * The "@regex-target" markers of each file read, by path, with the hash
-     * of the source they were read from.
+     * The "@regex-target" markers and the guards of each file read, by
+     * path, with the hash of the source they were read from.
      *
-     * @var array<string, array{string, list<TargetMarker>}>
+     * @var array<string, array{string, list<TargetMarker>, GuardRegions}>
      */
     private static array $markers = [];
 
@@ -337,9 +341,10 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $codebase = $event->getCodebase();
         $nodeTypes = $source->getNodeTypeProvider();
         $parser = self::parser($codebase);
-        // A "@regex-target" marker narrows the versions the call is judged
-        // for; the types stay those of Psalm's PHP.
-        $judgedBy = self::judgedBy($parser, $codebase, $source->getFilePath(), $call->getStartLine());
+        // A guard on PHP_VERSION_ID and a "@regex-target" marker narrow
+        // the versions the call is judged for; the types stay those of
+        // Psalm's PHP.
+        $judgedBy = self::judgedBy($parser, $codebase, $source->getFilePath(), $call->getStartLine(), $call->getStartFilePos());
 
         $judged = null;
         foreach (self::constantPatterns($function, $arguments['pattern'], $nodeTypes) as [$pattern, $node]) {
@@ -857,19 +862,23 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * The parser judging a call the "@regex-target" markers of its line
-     * cover: that of the lowest version they keep, Psalm's when they keep
-     * it or none covers the call; null when they keep no version.
+     * The parser judging a call the guards around it and the
+     * "@regex-target" markers of its line cover: that of the lowest version
+     * they keep, Psalm's when they keep it or none covers the call; null
+     * when they keep no version.
      */
-    private static function judgedBy(RegexParser $parser, Codebase $codebase, string $file, int $line): ?RegexParser
+    private static function judgedBy(RegexParser $parser, Codebase $codebase, string $file, int $line, int $offset): ?RegexParser
     {
         // Read again when the file changed, as under the language server.
         $content = $codebase->getFileContents($file);
         $hash = hash('xxh128', $content);
         if ($hash !== (self::$markers[$file][0] ?? null)) {
-            self::$markers[$file] = [$hash, TargetMarkers::read($content)];
+            self::$markers[$file] = [$hash, TargetMarkers::read($content), self::guards($content)];
         }
-        $constraint = TargetMarker::constraintAt(self::$markers[$file][1], $line);
+        [, $markers, $guards] = self::$markers[$file];
+        $constraint = TargetMarker::constraintAt($markers, $line);
+        $guard = $guards->at($offset);
+        $constraint = null === $guard ? $constraint : ($constraint?->intersect($guard) ?? $guard);
         if (null === $constraint) {
             return $parser;
         }
@@ -877,6 +886,30 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $lowest = self::judgedRange($parser)->narrow($constraint)[0] ?? null;
 
         return null === $lowest ? null : self::judgedRange($parser)->parserFor($lowest);
+    }
+
+    /**
+     * The guards on PHP_VERSION_ID of a file, read from its tree as `regex
+     * lint` reads them. Psalm's own narrowing of PHP_VERSION_ID is not
+     * read: it narrows the constant under function_exists() too, which a
+     * polyfill makes true on any version. A file PHP cannot parse holds
+     * none: the call is judged for the whole range.
+     */
+    private static function guards(string $content): GuardRegions
+    {
+        if (!str_contains($content, 'PHP_VERSION')) {
+            return new GuardRegions();
+        }
+
+        try {
+            $ast = (new ParserFactory())->createForHostVersion()->parse($content);
+        } catch (Error|\RangeException) {
+            // A RangeException is the parser meeting a token of a PHP newer
+            // than itself, as for the lint.
+            return new GuardRegions();
+        }
+
+        return PhpParserGuards::regions($ast ?? [], $content);
     }
 
     /**
