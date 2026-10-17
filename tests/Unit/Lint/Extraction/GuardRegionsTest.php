@@ -72,6 +72,12 @@ final class GuardRegionsTest extends TestCase
         yield 'an anonymous class after an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    \$b = new class {\n        public function c(): void\n        {\n            f('@');\n        }\n    };\n}", 'expected' => '>=8.4'];
         yield 'the default of a switch' => ['code' => "function g(\$x) {\n    switch (\$x) {\n        case 1:\n            if (PHP_VERSION_ID < 80400) {\n                break;\n            }\n        default:\n            f('@');\n    }\n}", 'expected' => null];
         yield 'version_compare with named arguments' => ['code' => "if (version_compare(version1: PHP_VERSION, version2: '8.4', operator: '>=')) {\n    f('@');\n}", 'expected' => null];
+        yield 'the value an early exit returns' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return f('@');\n    }\n    f(1);\n}", 'expected' => '<8.4'];
+        yield 'digits separated by underscores' => ['code' => "if (PHP_VERSION_ID >= 80_400) {\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'a hexadecimal literal' => ['code' => "if (PHP_VERSION_ID >= 0x13A10) {\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'an octal literal' => ['code' => "if (PHP_VERSION_ID >= 0o235020) {\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'a binary literal' => ['code' => "if (PHP_VERSION_ID >= 0b10011101000010000) {\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'an octal literal of old' => ['code' => "if (PHP_VERSION_ID >= 0235020) {\n    f('@');\n}", 'expected' => '>=8.4'];
         yield 'an early exit that is no guard' => ['code' => "function g() {\n    if (\$x) {\n        return;\n    }\n    f('@');\n}", 'expected' => null];
         yield 'a closure, a class name and an anonymous class after an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    \$a = A::class;\n    \$b = new class {};\n    \$c = function () {\n        f('@');\n    };\n}", 'expected' => '>=8.4'];
         yield 'an interface after an early exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\ninterface I\n{\n    const RE = '@';\n}", 'expected' => null];

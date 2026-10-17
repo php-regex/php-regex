@@ -467,7 +467,9 @@ final class TokenGuards
     }
 
     /**
-     * A decimal integer literal's value, digits separated by "_" or not.
+     * An integer literal's value as PHP reads it: decimal, hexadecimal
+     * ("0x"), octal ("0" or "0o") or binary ("0b"), digits separated by "_"
+     * or not.
      *
      * @param array{int, string, int}|string $token
      */
@@ -477,9 +479,15 @@ final class TokenGuards
             return null;
         }
 
-        $digits = str_replace('_', '', $token[1]);
+        $digits = Ascii::lower(str_replace('_', '', $token[1]));
 
-        return Ascii::isDigit($digits) && ('0' === $digits || '0' !== $digits[0]) ? (int) $digits : null;
+        return match (true) {
+            str_starts_with($digits, '0x') => (int) hexdec(substr($digits, 2)),
+            str_starts_with($digits, '0b') => (int) bindec(substr($digits, 2)),
+            str_starts_with($digits, '0o') => (int) octdec(substr($digits, 2)),
+            str_starts_with($digits, '0') => (int) octdec($digits),
+            default => (int) $digits,
+        };
     }
 
     /**
