@@ -3,6 +3,7 @@ date: 2026-09-22 17:08:00 +00:00
 last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
+tags: [Engines, Linear time]
 description: "Why one regex makes PHP give up and Node.js stall while RE2-style engines answer at once, and how to write PHP patterns that cannot backtrack. RE2 vs PCRE2, measured, with the price of linear time: backreferences and lookarounds."
 ---
 # RE2 vs PCRE2: why some regex engines never hang

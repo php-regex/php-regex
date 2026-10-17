@@ -2,6 +2,7 @@
 date: 2026-10-16 15:38:00 +00:00
 author: younes
 published: false
+tags: [PCRE2, History]
 description: "PCRE2 is a separate library with a new API, not PCRE 9; the old PCRE ended at 8.45 in 2021. Check which one your PHP runs and which patterns PHP 7.3 broke or let through, measured in the official PHP 7.2, 7.3 and 7.4 images."
 ---
 # PCRE vs PCRE2: why PCRE2 is a separate library

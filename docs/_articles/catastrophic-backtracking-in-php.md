@@ -3,6 +3,7 @@ date: 2026-08-19 11:23:00 +00:00
 last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
+tags: [Performance, ReDoS]
 description: 'How catastrophic backtracking makes /^(\w+)+$/ double its time with each character, why preg_match() then returns false (Backtrack limit exhausted), and which rewrites fix it: measured on PHP 8.4, with the JIT on and off.'
 ---
 # Catastrophic backtracking in PHP: why one regex takes seconds

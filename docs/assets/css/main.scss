@@ -139,6 +139,10 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --fs-h1: clamp(1.75rem, 1.3rem + 2vw, 2.25rem);
+  /* An article's headline owns one size above the docs h1: the fluid value
+     stays in a custom property, which the Pages Sass engine passes through
+     verbatim. */
+  --fs-article: clamp(1.875rem, 1.35rem + 2.3vw, 2.5rem);
   --fs-hero: clamp(2rem, 1.4rem + 3.2vw, 3.4rem);
   --fs-section: clamp(1.5rem, 1.3rem + 1vw, 2rem);
   --pad-hero: clamp(3.5rem, 2rem + 6vw, 6.5rem);
@@ -1307,9 +1311,32 @@ main table::-webkit-scrollbar-thumb {
    -------------------------------------------------------------------------- */
 
 .article-byline {
-  margin: 0 0 .5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem .5rem;
+  margin: 0 0 .75rem;
   font-size: .88rem;
   color: var(--ink-soft);
+}
+
+.article-byline-author {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.article-meta-sep {
+  color: var(--line);
+  user-select: none;
+}
+
+/* The article headline takes one step above the docs h1 — the same
+ * editorial register the blog hero opens at. The size lives in a token,
+ * the only way a fluid declaration survives the Sass engine. */
+.article-main h1 {
+  margin-bottom: .7em;
+  font-size: var(--fs-article);
+  letter-spacing: -0.015em;
 }
 
 /* The index's empty state: one sentence in the soft ink, the same register
@@ -1383,7 +1410,7 @@ main table::-webkit-scrollbar-thumb {
   content: '→';
   margin-left: .45rem;
   color: var(--amber);
-  opacity: 0;
+  opacity: .35;
   text-decoration: none;
   transition: opacity .15s ease;
 }
@@ -1418,12 +1445,452 @@ main table::-webkit-scrollbar-thumb {
   line-height: 1.5;
 }
 
+.article-entry-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .35rem;
+  flex-shrink: 0;
+  font-size: .88rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.article-entry-reading {
+  color: var(--ink-soft);
+}
+
 @media (max-width: 639px) {
   .article-entry-head {
     flex-direction: column;
     align-items: flex-start;
     gap: .15rem;
   }
+}
+
+/* ---- Blog hero ----------------------------------------------------------
+ * The blog's own header: a kicker, a claim, a lead and a small meta row.
+ * It borrows the landing hero's geometry but stays single-column and
+ * shorter, so the first article sits above the fold on a laptop.
+   -------------------------------------------------------------------------- */
+
+.blog-hero {
+  padding-block: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2.5rem;
+}
+
+.blog-kicker {
+  margin: 0 0 .75rem;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.blog-title {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-section);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.blog-lead {
+  max-width: 70ch;
+  margin: 0 0 1.25rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.blog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .5rem;
+  font-size: .88rem;
+  color: var(--ink-soft);
+}
+
+.blog-meta a {
+  color: var(--amber);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.blog-meta a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+}
+
+.blog-meta-sep {
+  color: var(--line);
+  user-select: none;
+}
+
+.blog-section-title {
+  margin: 2.5rem 0 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* ---- Featured article ---------------------------------------------------- */
+
+.article-featured {
+  margin: 0 0 3rem;
+  padding: 2rem 1.5rem;
+  border: 1px solid var(--line);
+  background: var(--amber-tint);
+}
+
+.article-featured-kicker {
+  margin: 0 0 .75rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.article-featured-title {
+  margin: 0 0 .75rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.article-featured-title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.article-featured-title a:hover {
+  color: var(--amber);
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+}
+
+.article-featured-desc {
+  max-width: 70ch;
+  margin: 0 0 1.25rem;
+  color: var(--ink-soft);
+  font-size: .95rem;
+  line-height: 1.55;
+}
+
+.article-featured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem .5rem;
+  margin: 0 0 1.25rem;
+  font-size: .85rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.article-featured-link {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.article-featured-link:hover {
+  color: var(--amber-deep);
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+}
+
+/* ---- Article footer ------------------------------------------------------ */
+
+.article-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+
+.author-card {
+  margin: 0 0 2rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  background: var(--amber-tint);
+}
+
+.author-card-label {
+  margin: 0 0 .35rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.author-card-name {
+  margin: 0 0 .35rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.author-card-name a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.author-card-name a:hover {
+  color: var(--amber);
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+}
+
+.author-card-meta {
+  margin: 0;
+  font-size: .85rem;
+  color: var(--ink-soft);
+}
+
+.article-nav {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin: 0 0 2rem;
+}
+
+@media (min-width: 640px) {
+  .article-nav {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.article-nav-link {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  text-decoration: none;
+  color: var(--ink);
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.article-nav-link:hover {
+  background: var(--amber-tint);
+  border-color: var(--amber);
+}
+
+.article-nav-next {
+  text-align: right;
+}
+
+.article-nav-label {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.article-nav-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: .95rem;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.article-back {
+  margin: 0;
+  font-size: .9rem;
+}
+
+.article-back a {
+  color: var(--amber);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.article-back a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+}
+
+/* ---- Reading progress ---------------------------------------------------- */
+
+.reading-progress {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 45;
+  background: transparent;
+  pointer-events: none;
+}
+
+.reading-progress-bar {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--amber);
+  transition: width .1s linear;
+}
+
+/* ---- Article magazine header -------------------------------------------- */
+
+.article-content > h1:first-child {
+  display: none;
+}
+
+.article-title {
+  margin: 0 0 .75rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 1.6rem + 3vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: var(--ink);
+  padding-bottom: .75rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1rem;
+}
+
+.article-main > h1 {
+  font-size: clamp(1.9rem, 1.4rem + 2.6vw, 2.6rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 1.25rem;
+}
+
+.article-glance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0 0 2.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--line);
+  background: var(--amber-tint);
+}
+
+.article-glance-item {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.article-glance-label {
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.article-glance-value {
+  font-size: .92rem;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.article-tag {
+  display: inline-block;
+  margin: 0 .35rem .25rem 0;
+  padding: .1rem .5rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: .72rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Author card with initials avatar. */
+.author-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem 1.25rem;
+  align-items: start;
+}
+
+.author-card-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--amber);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: .02em;
+}
+
+.author-card-label,
+.author-card-name,
+.author-card-meta {
+  grid-column: 2;
+}
+
+/* More articles. */
+.article-more {
+  margin: 0 0 2rem;
+}
+
+.article-more-title {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.article-more-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.article-more-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .5rem 1rem;
+  padding: .85rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.article-more-link {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.article-more-link:hover {
+  color: var(--amber);
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+}
+
+.article-more-meta {
+  font-size: .82rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* ---- Icons: inline SVG, brand geometry (square caps, currentColor) ---- */

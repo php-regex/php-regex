@@ -3,24 +3,119 @@
 {% include head.html %}
 {% comment %}
   Articles: the default chrome (global sidebar, breadcrumb, on-this-page
-  rail) plus the byline the docs pages do not carry — a docs page is
-  evergreen and undated, an article is dated content, so the byline is the
-  one place a publication date appears. The article Open Graph type in
-  head.html and the TechArticle schema both hang off this layout.
+  rail) plus the dateline the docs pages do not carry — a docs page is
+  evergreen and undated, an article is dated content, so the byline above
+  the headline is the only place an author, a publication date and a
+  reading estimate appear. Below the content, the article footer stands
+  where a pager would sit if the nav's reading order carried the
+  articles: the author card, the older/newer steps and the way back to
+  the index. The reading-progress bar, the article Open Graph type in
+  head.html and the TechArticle schema all hang off this layout.
 {% endcomment %}
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+  <div class="reading-progress" aria-hidden="true"><span class="reading-progress-bar"></span></div>
   {% include header.html %}
   <div class="page-shell">
     {% include sidebar.html %}
     <div class="page-main">
-      <main id="main" tabindex="-1">
+      <main id="main" class="article-main" tabindex="-1">
         {% include breadcrumb.html %}
         {% assign article_author = site.data.authors[page.author] %}
-        <p class="article-byline">
-          {{ article_author.name }} · {{ page.date | date: '%-d %B %Y' }}{% if page.last_modified_at and page.last_modified_at != page.date %} · updated {{ page.last_modified_at | date: '%-d %B %Y' }}{% endif %}{% if page.published == false %} <span class="draft-tag">Draft — not yet published</span>{% endif %}
-        </p>
-        {{ content }}
+        {% assign article_words = content | number_of_words %}
+        {% assign article_minutes = article_words | divided_by: 200 %}
+        {% if article_minutes < 1 %}{% assign article_minutes = 1 %}{% endif %}
+        <h1 class="article-title">{{ page.title }}</h1>
+        <div class="article-byline">
+          <span class="article-byline-author">{{ article_author.name }}</span>
+          <span class="article-meta-sep" aria-hidden="true">·</span>
+          <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: '%-d %B %Y' }}</time>
+          <span class="article-meta-sep" aria-hidden="true">·</span>
+          <span>{{ article_minutes }} min read</span>
+          {% if page.last_modified_at and page.last_modified_at != page.date %}
+          <span class="article-meta-sep" aria-hidden="true">·</span>
+          <span>updated {{ page.last_modified_at | date: '%-d %B %Y' }}</span>
+          {% endif %}
+          {% if page.published == false %}<span class="draft-tag">Draft — not yet published</span>{% endif %}
+        </div>
+        <aside class="article-glance" aria-label="At a glance">
+          <div class="article-glance-item">
+            <span class="article-glance-label">Reading time</span>
+            <span class="article-glance-value">{{ article_minutes }} min</span>
+          </div>
+          {% if page.tags %}
+          <div class="article-glance-item">
+            <span class="article-glance-label">Topics</span>
+            <span class="article-glance-value">{% for tag in page.tags %}<span class="article-tag">{{ tag }}</span>{% unless forloop.last %} {% endunless %}{% endfor %}</span>
+          </div>
+          {% endif %}
+          <div class="article-glance-item">
+            <span class="article-glance-label">Published</span>
+            <span class="article-glance-value">{{ page.date | date: '%-d %B %Y' }}</span>
+          </div>
+          {% if page.last_modified_at and page.last_modified_at != page.date %}
+          <div class="article-glance-item">
+            <span class="article-glance-label">Updated</span>
+            <span class="article-glance-value">{{ page.last_modified_at | date: '%-d %B %Y' }}</span>
+          </div>
+          {% endif %}
+        </aside>
+        <div class="article-content">{{ content }}</div>
+        <footer class="article-footer">
+          <div class="author-card">
+            <div class="author-card-avatar" aria-hidden="true">{{ article_author.name | slice: 0,1 }}{{ article_author.name | split: ' ' | last | slice: 0,1 }}</div>
+            <p class="author-card-label">Written by</p>
+            <p class="author-card-name"><a href="{{ article_author.url }}">{{ article_author.name }}</a></p>
+            <p class="author-card-meta">{{ page.date | date: '%-d %B %Y' }}{% if page.last_modified_at and page.last_modified_at != page.date %} · updated {{ page.last_modified_at | date: '%-d %B %Y' }}{% endif %}</p>
+          </div>
+          {% assign sorted_articles = site.articles | sort: 'date' %}
+          {% assign current_index = nil %}
+          {% for a in sorted_articles %}
+            {% if a.url == page.url %}{% assign current_index = forloop.index0 %}{% endif %}
+          {% endfor %}
+          {% if current_index != nil %}
+            {% assign prev_article = nil %}
+            {% assign next_article = nil %}
+            {% assign prev_index = current_index | minus: 1 %}
+            {% assign next_index = current_index | plus: 1 %}
+            {% assign last_index = sorted_articles.size | minus: 1 %}
+            {% if current_index > 0 %}{% assign prev_article = sorted_articles[prev_index] %}{% endif %}
+            {% if current_index < last_index %}{% assign next_article = sorted_articles[next_index] %}{% endif %}
+            {% if prev_article or next_article %}
+            <nav class="article-nav" aria-label="Article navigation">
+              {% if prev_article %}
+              <a class="article-nav-link article-nav-prev" href="{{ prev_article.url }}">
+                <span class="article-nav-label">← Older</span>
+                <span class="article-nav-title">{{ prev_article.title }}</span>
+              </a>
+              {% endif %}
+              {% if next_article %}
+              <a class="article-nav-link article-nav-next" href="{{ next_article.url }}">
+                <span class="article-nav-label">Newer →</span>
+                <span class="article-nav-title">{{ next_article.title }}</span>
+              </a>
+              {% endif %}
+            </nav>
+            {% endif %}
+          {% endif %}
+          {% assign more_articles = site.articles | sort: 'date' | reverse %}
+          <section class="article-more" aria-labelledby="article-more-title">
+            <h2 id="article-more-title" class="article-more-title">More articles</h2>
+            <ul class="article-more-list">
+              {% assign more_count = 0 %}
+              {% for a in more_articles %}
+                {% if a.url != page.url and more_count < 3 %}
+                  {% assign more_count = more_count | plus: 1 %}
+                  <li class="article-more-entry">
+                    <a class="article-more-link" href="{{ a.url }}">{{ a.title }}</a>
+                    <span class="article-more-meta">{{ a.date | date: '%-d %B %Y' }}</span>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </section>
+          <p class="article-back"><a href="/blog/">← All articles</a></p>
+        </footer>
       </main>
       {% include toc.html %}
     </div>

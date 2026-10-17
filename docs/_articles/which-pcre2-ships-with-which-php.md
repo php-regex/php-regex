@@ -3,6 +3,7 @@ date: 2026-07-14 15:47:00 +00:00
 last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
+tags: [PCRE2, Compatibility]
 description: "Which PCRE2 version each PHP release bundles, from 7.3 to 8.6, and how to check yours with PCRE_VERSION, since phpversion('pcre') prints the PHP version; then why a lookbehind fails on 8.3 but not 8.4, and why 8.5 refuses \\K in lookarounds."
 ---
 # Which PCRE2 ships with which PHP, and how to check yours

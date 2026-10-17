@@ -77,3 +77,20 @@
     mark();
   });
 })();
+
+(function () {
+  var bar = document.querySelector('.reading-progress-bar');
+  if (!bar) {
+    return;
+  }
+  function update() {
+    var doc = document.documentElement;
+    var scrolled = doc.scrollTop || document.body.scrollTop;
+    var total = (doc.scrollHeight || document.body.scrollHeight) - (window.innerHeight || doc.clientHeight);
+    var pct = total > 0 ? Math.min(100, Math.max(0, (scrolled / total) * 100)) : 0;
+    bar.style.width = pct + '%';
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
