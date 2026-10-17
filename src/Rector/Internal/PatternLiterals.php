@@ -152,8 +152,8 @@ final class PatternLiterals
      */
     private static function marksRegex(AttributeReflection $attribute): bool
     {
-        $name = strtolower(ltrim($attribute->getName(), '\\'));
-        if (strtolower(RegexPattern::class) === $name) {
+        $name = self::lower(ltrim($attribute->getName(), '\\'));
+        if (self::lower(RegexPattern::class) === $name) {
             return true;
         }
 
@@ -163,12 +163,20 @@ final class PatternLiterals
 
         foreach ($attribute->getArgumentTypes() as $type) {
             foreach ($type->getConstantStrings() as $constantString) {
-                if ('regexp' === strtolower($constantString->getValue())) {
+                if ('regexp' === self::lower($constantString->getValue())) {
                     return true;
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * The text with its ASCII letters lowered, whatever the locale says.
+     */
+    private static function lower(string $text): string
+    {
+        return strtr($text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz');
     }
 }
