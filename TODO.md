@@ -223,12 +223,13 @@ an open count past 65535 and `\214748364` read as text (10.37). Left:
   lookaround stays a rule of PHP 8.5, never one of a PCRE2 release. The
   10.34 limit of 65535 capturing groups changes no verdict: 10.32 and 10.33
   refuse 65,536 groups as a pattern too large, only with another message.
-- The `{1}+` pair, both directions: PCRE2 10.33 ignores a possessive `{1}+`
-  on a group and 10.34 honours it (pcre2test 10.32/10.33: `/(a|ab){1}+c/`
-  matches `abc`; 10.34, 10.35, 10.37: no match), so the old side is now
-  verified. Write `X{1}+` as `X{1}` for code leaving 7.4.0-7.4.5, and
-  `(G){1}+` as `(?>G)` the other way, each with the witness pair pinned: the
-  tree is the same on both sides, so comparing trees never sees the flip.
+- The `{1}+` pair, the other direction: `PossessiveRepeatOnceRector` keeps
+  the meaning of PHP 7.3 and 7.4.0-7.4.5 (`(G){1}+` into `(G){1}`) for code
+  leaving them. Code going to them keeps the later meaning with `(?>G)`
+  (pcre2test 10.32 and 10.33 find nothing with `/(?>(a|ab))c/` in "abc", as
+  10.34 and later with `/(a|ab){1}+c/`), but no rule lowers a target: the
+  upgrade set runs from the targeted PHP up. Build it when a mouth for a
+  lowered target exists.
 - Discovery parity for the Rector rules: patterns folded from constants
   (as the `preg_match()` rule already does), calls of functions marked
   `#[RegexPattern]` or `Language('RegExp')`, and `preg_replace_callback_array()`.

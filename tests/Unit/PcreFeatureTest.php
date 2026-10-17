@@ -52,6 +52,7 @@ final class PcreFeatureTest extends TestCase
         yield 'script runs' => [PcreFeature::ScriptRuns, '10.32', '10.33'];
         yield 'group names past ASCII' => [PcreFeature::NonAsciiGroupNames, '10.32', '10.33'];
         yield 'repeated accept' => [PcreFeature::QuantifiedAccept, '10.33', '10.34'];
+        yield 'possessive repeat once' => [PcreFeature::PossessiveRepeatOnceIsAtomic, '10.33', '10.34'];
         yield 'non-atomic assertion names' => [PcreFeature::NonAtomicAssertionNames, '10.33', '10.34'];
         yield 'non-atomic assertion short syntax' => [PcreFeature::NonAtomicAssertionShortSyntax, '10.34', '10.35'];
         yield 'overflowing backslash number as octal' => [PcreFeature::OverflowingBackslashNumberIsOctal, '10.36', '10.37'];

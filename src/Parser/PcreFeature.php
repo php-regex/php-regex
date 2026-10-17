@@ -41,6 +41,11 @@ enum PcreFeature
     case QuantifiedAccept;
 
     /**
+     * A possessive "{1}+" on a group or a subroutine call makes it atomic, where it was ignored as "{1}" is.
+     */
+    case PossessiveRepeatOnceIsAtomic;
+
+    /**
      * The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms.
      */
     case NonAtomicAssertionNames;
@@ -231,6 +236,7 @@ enum PcreFeature
             self::ScriptRuns,
             self::NonAsciiGroupNames => '10.33',
             self::QuantifiedAccept,
+            self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames => '10.34',
             self::NonAtomicAssertionShortSyntax => '10.35',
             self::LargeOpenCountIsText,

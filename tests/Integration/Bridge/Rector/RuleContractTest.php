@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Rector;
 use PHPRegex\Rector\AlphabeticAssertionToClassicRector;
 use PHPRegex\Rector\EscapeLiteralBraceRector;
 use PHPRegex\Rector\EscapeNulByteRector;
+use PHPRegex\Rector\PossessiveRepeatOnceRector;
 use PHPRegex\Rector\PregMatchToStringComparisonRector;
 use PHPRegex\Rector\PregReplaceToStrReplaceRector;
 use PHPRegex\Rector\PregSplitToExplodeRector;
@@ -124,5 +125,6 @@ final class RuleContractTest extends TestCase
         yield 'literal brace' => ['rule' => EscapeLiteralBraceRector::class];
         yield 'alphabetic assertion' => ['rule' => AlphabeticAssertionToClassicRector::class];
         yield 'NUL byte' => ['rule' => EscapeNulByteRector::class];
+        yield 'possessive repeat once' => ['rule' => PossessiveRepeatOnceRector::class];
     }
 }

@@ -90,7 +90,7 @@ In short, the public surface is:
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `OutputFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-psalm` | `Plugin` |
-| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `AlphabeticAssertionToClassicRector`, `EscapeNulByteRector`, `Set\RegexSetList` |
+| `regex-rector` | `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`, `PregSplitToExplodeRector`, `EscapeLiteralBraceRector`, `AlphabeticAssertionToClassicRector`, `EscapeNulByteRector`, `PossessiveRepeatOnceRector`, `Set\RegexSetList` |
 | `regex-symfony` | `PHPRegexBundle`, `Validator\Constraints\ValidRegex`, `Validator\Constraints\ValidRegexValidator` |
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
@@ -130,7 +130,7 @@ The bridges and tools carry more than their classes:
   `$matches` types follow the capture shape: a minor release may type a
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
-- `regex-rector`: the four rules keep their names for all of 2.x and take no
+- `regex-rector`: the rules keep their names for all of 2.x and take no
   configuration, and `RegexSetList::STRING_FUNCTIONS` and
   `RegexSetList::PCRE_UPGRADE` name the sets that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.

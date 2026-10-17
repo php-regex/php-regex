@@ -230,6 +230,7 @@ and a target has it from the release it arrived in on
 | `ScriptRuns` | 10.33 | Script runs: "(*script_run:", "(*sr:", "(*atomic_script_run:" and "(*asr:". |
 | `NonAsciiGroupNames` | 10.33 | Under UTF a group name may hold letters and decimal digits of any script, as "(?<nämed>a)". |
 | `QuantifiedAccept` | 10.34 | "(*ACCEPT)" may be repeated, as "(*ACCEPT)??". |
+| `PossessiveRepeatOnceIsAtomic` | 10.34 | A possessive "{1}+" on a group or a subroutine call makes it atomic, where it was ignored as "{1}" is. |
 | `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |
 | `NonAtomicAssertionShortSyntax` | 10.35 | "(?*" and "(?<*" spell the non-atomic lookarounds. |
 | `LargeOpenCountIsText` | 10.37 | A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big. |

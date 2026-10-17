@@ -336,6 +336,31 @@ A byte the pattern reads as a character of its own is escaped, inside a class
 too. A byte after a backslash or in a comment, a pattern holding `\Q`, and a
 pattern built from more than one string are left as they are.
 
+### `PossessiveRepeatOnceRector`
+
+In the `RegexSetList::PCRE_UPGRADE` set. PCRE2 10.33 and earlier (PHP 7.3,
+and 7.4.0 to 7.4.5) ignore `{1}`, possessive or not; from 10.34 (PHP 7.4.6)
+a possessive `{1}+` makes the group it stands on atomic. The tree is the same
+on both sides, so only the release table tells the change. For code that
+targets PHP 7.3 or 7.4.0 to 7.4.5,
+
+```php
+preg_match('/(a|ab){1}+c/', $subject);  // finds "abc" in "abc" on PHP 7.4.0, nothing from 7.4.6
+```
+
+becomes
+
+```php
+preg_match('/(a|ab){1}c/', $subject);   // finds "abc" on every PHP
+```
+
+The `+` goes from a `{1}`, `{1,1}` or `{01}` on a group, a script run or a
+subroutine call, and the call changes only when the rewritten pattern reads
+alike on every PHP from the one your code targets to the newest the library
+knows. A repeat on a single character, an atomic group or a lookaround means
+the same on every release, and is left as written; so is code that targets
+PHP 7.4.6 or later.
+
 Documentation
 -------------
 

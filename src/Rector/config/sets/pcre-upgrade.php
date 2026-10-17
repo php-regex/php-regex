@@ -14,6 +14,7 @@ declare(strict_types=1);
 use PHPRegex\Rector\AlphabeticAssertionToClassicRector;
 use PHPRegex\Rector\EscapeLiteralBraceRector;
 use PHPRegex\Rector\EscapeNulByteRector;
+use PHPRegex\Rector\PossessiveRepeatOnceRector;
 use Rector\Config\RectorConfig;
 
 return static function (RectorConfig $rectorConfig): void {
@@ -21,5 +22,6 @@ return static function (RectorConfig $rectorConfig): void {
         EscapeLiteralBraceRector::class,
         AlphabeticAssertionToClassicRector::class,
         EscapeNulByteRector::class,
+        PossessiveRepeatOnceRector::class,
     ]);
 };

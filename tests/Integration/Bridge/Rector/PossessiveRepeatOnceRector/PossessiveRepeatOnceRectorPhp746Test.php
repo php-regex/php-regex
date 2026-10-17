@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace PHPRegex\Tests\Integration\Bridge\Rector\PossessiveRepeatOnceRector;
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
+use Rector\Testing\PHPUnit\AbstractRectorTestCase;
+
+/**
+ * A possessive "{1}+" on a group: PCRE2 10.33 and earlier ignore it, as
+ * they ignore "{1}", and 10.34 makes the group atomic. Fixtures in
+ * FixtureLater/, for a project on the PHP of config/php746.php.
+ */
+final class PossessiveRepeatOnceRectorPhp746Test extends AbstractRectorTestCase
+{
+    #[Test]
+    #[DataProvider('provideFixtures')]
+    public function test_fixture_is_rewritten_or_left_alone(string $filePath): void
+    {
+        $this->doTestFile($filePath);
+    }
+
+    /**
+     * @return iterable<string, array{filePath: string}>
+     */
+    public static function provideFixtures(): iterable
+    {
+        foreach (glob(__DIR__.'/FixtureLater/*.php.inc') ?: [] as $file) {
+            yield basename($file, '.php.inc') => ['filePath' => $file];
+        }
+    }
+
+    public function provideConfigFilePath(): string
+    {
+        return __DIR__.'/config/php746.php';
+    }
+}

@@ -18,3 +18,7 @@ CHANGELOG
    `RegexSetList::PCRE_UPGRADE` set: `/(*pla:a)b/`, which PHP 7.3 refuses,
    becomes `/(?=a)b/`, and a NUL byte, which PHP 8.1 and earlier refuse,
    `\x00`, for code that targets such a PHP.
+ * `PossessiveRepeatOnceRector`, in the `RegexSetList::PCRE_UPGRADE` set:
+   `/(a|ab){1}+c/`, which PHP 7.3 and 7.4.0 to 7.4.5 read as `/(a|ab)c/` and
+   7.4.6 and later as atomic, becomes `/(a|ab){1}c/` for code that targets
+   such a PHP.

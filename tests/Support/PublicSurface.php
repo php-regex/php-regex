@@ -66,7 +66,7 @@ final class PublicSurface
         ],
         'PHPStan' => ['RegexPatternRule', 'RegexPatternArgumentRule'],
         'Psalm' => ['Plugin'],
-        'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'EscapeLiteralBraceRector', 'AlphabeticAssertionToClassicRector', 'EscapeNulByteRector', 'Set/RegexSetList'],
+        'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'EscapeLiteralBraceRector', 'AlphabeticAssertionToClassicRector', 'EscapeNulByteRector', 'PossessiveRepeatOnceRector', 'Set/RegexSetList'],
         'Redos' => [
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',

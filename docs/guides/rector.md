@@ -72,6 +72,13 @@ brace of `/a{65536/`, which PHP 8.0 and earlier refuse, as `/a\{65536/`. Each
 call is rewritten only when the rewritten pattern reads alike on every PHP
 from the one Rector targets to the newest the library knows.
 
+`PossessiveRepeatOnceRector` keeps what an older PHP matched where a later one
+reads the same tree otherwise: PCRE2 10.33 and earlier (PHP 7.3, 7.4.0 to
+7.4.5) ignore a possessive `{1}+`, and 10.34 makes the group atomic, so
+`/(a|ab){1}+c/` finds `abc` in `"abc"` on PHP 7.4.0 and nothing from 7.4.6. For
+code that targets such a PHP, the call becomes `/(a|ab){1}c/`, which finds
+`abc` on every PHP.
+
 One rule alone is registered with `withRules()`:
 
 ```php
