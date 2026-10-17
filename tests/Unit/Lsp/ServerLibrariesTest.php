@@ -181,7 +181,7 @@ final class ServerLibrariesTest extends TestCase
     {
         $this->server = new Server(null, $this->input);
         $this->send(
-            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
             ['method' => 'initialized', 'params' => []],
         );
 

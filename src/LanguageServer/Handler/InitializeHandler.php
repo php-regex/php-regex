@@ -32,8 +32,9 @@ final class InitializeHandler
     public function handle(Message $message): void
     {
         // What the client can be asked for: the files the server reads are
-        // registered with a client that offers to watch them itself.
-        $capabilities = $message->params['clientCapabilities'] ?? null;
+        // registered with a client that offers to watch them itself. The
+        // protocol's InitializeParams carry them under "capabilities".
+        $capabilities = $message->params['capabilities'] ?? null;
         $workspace = \is_array($capabilities) ? ($capabilities['workspace'] ?? null) : null;
         $watched = \is_array($workspace) ? ($workspace['didChangeWatchedFiles'] ?? null) : null;
         $this->watchedFilesRegistration = \is_array($watched) && true === ($watched['dynamicRegistration'] ?? null);

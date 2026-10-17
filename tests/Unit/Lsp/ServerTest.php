@@ -505,7 +505,7 @@ final class ServerTest extends TestCase
     public function test_a_client_offering_dynamic_registration_is_asked_to_watch_the_registered_files(): void
     {
         $this->serve([
-            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
             ['method' => 'initialized'],
         ]);
 
@@ -556,7 +556,7 @@ final class ServerTest extends TestCase
         try {
             $server = new Server(null, $input);
             $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+                ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
                 ['method' => 'initialized'],
             );
 
@@ -591,7 +591,7 @@ final class ServerTest extends TestCase
         try {
             $server = new Server(null, $input);
             $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+                ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
                 ['method' => 'initialized'],
             );
             $registrations = $this->registrationRequests();
@@ -649,7 +649,7 @@ final class ServerTest extends TestCase
         $this->serve([
             ['id' => 1, 'method' => 'initialize', 'params' => [
                 'initializationOptions' => ['phpVersion' => '7.2'],
-                'clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]],
+                'capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]],
             ]],
             ['method' => 'initialized'],
         ]);
@@ -731,7 +731,7 @@ final class ServerTest extends TestCase
         try {
             $server = new Server(null, $input);
             $this->sendTo($server, $input,
-                ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+                ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
                 ['method' => 'initialized'],
             );
             $registrations = $this->registrationRequests();
@@ -757,7 +757,22 @@ final class ServerTest extends TestCase
     public function test_a_client_without_dynamic_registration_is_asked_for_nothing(): void
     {
         $this->serve([
-            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => []]]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => []]]],
+            ['method' => 'initialized'],
+        ]);
+
+        $this->assertSame([], $this->registrationRequests());
+    }
+
+    /**
+     * The client capabilities are read where the protocol's InitializeParams
+     * puts them, "capabilities": a key of another name offers nothing.
+     */
+    #[Test]
+    public function test_capabilities_under_another_key_offer_no_dynamic_registration(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
             ['method' => 'initialized'],
         ]);
 
