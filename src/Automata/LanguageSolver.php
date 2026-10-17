@@ -313,7 +313,12 @@ final class LanguageSolver
      * the first and finds "abc" in "xabc": "a" begins "ab", and the part is
      * not proven. A pattern a subroutine call may enter, a part inside a
      * lookbehind that matches strings of more than one length, or a pattern
-     * that holds a verb or a callout, is not read.
+     * that holds a verb or a callout, is not read. The branches at the top
+     * of a lookbehind are read together: there only the strings they match
+     * count, /(?<=a|bc|d)/ and /(?<=[ad]|bc)/ hold alike, each branch of one
+     * length. Two sequences of other counts are paired by the parts both
+     * keep, when read whole they are not proven: /(?<!x)-----.*-----/i and
+     * /(?<!x)-{5}.*-{5}/i differ in each run of dashes.
      *
      * @internal the check of a rewrite asks it where the match solver does not read the pattern
      *
@@ -334,7 +339,6 @@ final class LanguageSolver
             return false;
         }
 
-        $sites = RewriteSites::between($leftHir, $rightHir);
         $options ??= new SolverOptions();
         $full = new SolverOptions(
             matchMode: MatchMode::Full,
@@ -347,52 +351,21 @@ final class LanguageSolver
         );
         $unicode = $leftAst->isUnicode();
 
-        foreach ($sites as [$leftPart, $rightPart, $insideLookbehind]) {
-            if (!self::plainPart($leftPart) || !self::plainPart($rightPart)) {
-                return false;
+        // Runs of other counts are first read as one part each, then paired
+        // by the parts both keep: either way the rest is the same.
+        $sites = RewriteSites::between($leftHir, $rightHir);
+
+        try {
+            if ($this->sitesRunAlike($sites, $left, $right, $unicode, $full)) {
+                return true;
             }
-
-            // What a lookbehind may hold differs by release: a part of one
-            // length on both sides leaves every branch the length it had.
-            if ($insideLookbehind && !(self::oneLength($leftPart) && self::oneLength($rightPart))) {
-                return false;
-            }
-
-            // One string each, or one character of a set each: no string
-            // begins another, and the strings or the sets say it all.
-            [$leftText, $rightText] = [$leftPart->properties->literal, $rightPart->properties->literal];
-            if (null !== $leftText && null !== $rightText) {
-                if ($leftText !== $rightText) {
-                    return false;
-                }
-
-                continue;
-            }
-
-            [$leftSet, $rightSet] = [self::oneCharacterOf($leftPart), self::oneCharacterOf($rightPart)];
-            if (null !== $leftSet && null !== $rightSet) {
-                if (!$leftSet->subtract($rightSet)->isEmpty() || !$rightSet->subtract($leftSet)->isEmpty()) {
-                    return false;
-                }
-
-                continue;
-            }
-
-            $leftDfa = (new DfaBuilder())->determinize((new HirToNfaTransformer($left, $unicode))->transform($leftPart, $full), $full);
-            $rightDfa = (new DfaBuilder())->determinize((new HirToNfaTransformer($right, $unicode))->transform($rightPart, $full), $full);
-
-            $differ = static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept;
-            if (null !== $this->findExample($leftDfa, $rightDfa, $differ)) {
-                return false;
-            }
-
-            // Strings of one length never begin one another.
-            if (!self::oneLength($leftPart) && !$this->prefixFree($leftDfa)) {
-                return false;
-            }
+        } catch (ComplexityException) {
+            // A run read whole may outgrow the limits its paired parts keep to.
         }
 
-        return true;
+        $aligned = RewriteSites::between($leftHir, $rightHir, aligned: true);
+
+        return RewriteSites::shape($aligned) !== RewriteSites::shape($sites) && $this->sitesRunAlike($aligned, $left, $right, $unicode, $full);
     }
 
     /**
@@ -466,6 +439,97 @@ final class LanguageSolver
         ];
 
         return \hash('sha256', \implode('|', $parts));
+    }
+
+    /**
+     * Whether each pair of parts runs alike wherever it stands.
+     *
+     * @param list<array{Hir, Hir, bool, bool}> $sites
+     *
+     * @throws ComplexityException When a part outgrows the limits of the options
+     */
+    private function sitesRunAlike(array $sites, string $left, string $right, bool $unicode, SolverOptions $full): bool
+    {
+        foreach ($sites as [$leftPart, $rightPart, $insideLookbehind, $lookbehindBodies]) {
+            if (!self::plainPart($leftPart) || !self::plainPart($rightPart)) {
+                return false;
+            }
+
+            // A lookbehind holds where some string one of its branches
+            // matches ends: with no group in them, the order of the branches
+            // tells nothing. Branches of one length each stand on every
+            // release, and the same strings give them the same lengths.
+            if ($lookbehindBodies && self::branchesOfOneLength($leftPart) && self::branchesOfOneLength($rightPart)
+                && null === $this->findExample(self::partDfa($left, $leftPart, $unicode, $full), self::partDfa($right, $rightPart, $unicode, $full), static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept)) {
+                continue;
+            }
+
+            // What a lookbehind may hold differs by release: a part of one
+            // length on both sides leaves every branch the length it had.
+            if ($insideLookbehind && !(self::oneLength($leftPart) && self::oneLength($rightPart))) {
+                return false;
+            }
+
+            // One string each, or one character of a set each: no string
+            // begins another, and the strings or the sets say it all.
+            [$leftText, $rightText] = [$leftPart->properties->literal, $rightPart->properties->literal];
+            if (null !== $leftText && null !== $rightText) {
+                if ($leftText !== $rightText) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            [$leftSet, $rightSet] = [self::oneCharacterOf($leftPart), self::oneCharacterOf($rightPart)];
+            if (null !== $leftSet && null !== $rightSet) {
+                if (!$leftSet->subtract($rightSet)->isEmpty() || !$rightSet->subtract($leftSet)->isEmpty()) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            $leftDfa = self::partDfa($left, $leftPart, $unicode, $full);
+            $rightDfa = self::partDfa($right, $rightPart, $unicode, $full);
+
+            $differ = static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept;
+            if (null !== $this->findExample($leftDfa, $rightDfa, $differ)) {
+                return false;
+            }
+
+            // Strings of one length never begin one another.
+            if (!self::oneLength($leftPart) && !$this->prefixFree($leftDfa)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The automaton of the strings a part matches whole.
+     *
+     * @throws ComplexityException When the part outgrows the limits of the options
+     */
+    private static function partDfa(string $pattern, Hir $part, bool $unicode, SolverOptions $options): Dfa
+    {
+        return (new DfaBuilder())->determinize((new HirToNfaTransformer($pattern, $unicode))->transform($part, $options), $options);
+    }
+
+    /**
+     * Whether each branch of a lookbehind body, an alternation, or the body
+     * as one branch, matches strings of one length.
+     */
+    private static function branchesOfOneLength(Hir $body): bool
+    {
+        foreach ($body instanceof AlternationHir ? $body->branches : [$body] as $branch) {
+            if (!self::oneLength($branch)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -150,10 +150,20 @@ must not begin one another: `/(?:a|ab)/` and `/a/` write the same `$matches`, ye
 `/(?<=x)(?:a|ab)c/` finds `"abc"` in `"xabc"` and `/(?<=x)ac/` nothing, as the `c`
 backtracks into the alternation. An alternation that only lost the later copies of a
 branch, `\b(?:ab|cd|ab)` into `\b(?:ab|cd)`, is read branch by branch: a later copy is only
-tried where an earlier one ended and what follows failed. A part holding a group, an
-anchor, a lookaround, a backreference, `\K` or a verb, a part inside a lookbehind that
-matches strings of more than one length (what a lookbehind may hold differs by release),
-and a pattern holding a subroutine call, a verb or a callout are not proven alone.
+tried where an earlier one ended and what follows failed. Two runs of parts of other
+counts are paired by the parts both keep: `/(?<!x)-----.*-----/i` and
+`/(?<!x)-{5}.*-{5}/i` differ in each run of dashes, and each is proven alone. A part
+holding a group, an anchor, a lookaround, a backreference, `\K` or a verb, a part inside a
+lookbehind that matches strings of more than one length (what a lookbehind may hold
+differs by release), and a pattern holding a subroutine call, a verb or a callout are not
+proven alone. The branches at the top of a lookbehind are read together instead: the
+lookbehind holds where some string one of them matches ends, whatever their order, so
+`/(?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])/` becomes
+`/(?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])/` when no group stands in them and each
+branch matches strings of one length on both sides, which every release accepts there.
+The alternatives of a group inside the lookbehind, `(?<=(?:a|bc|d))`, are not its
+branches: releases before PCRE2 10.43 refuse them for their two lengths. The condition of a
+conditional, `(?(?='|").)`, is not read either.
 
 A rewrite must hold in every call the pattern may go to, not only in `preg_match()` from
 offset 0. From an offset, `^` and `\A` never hold: `/^[\s\S]|a/` and `/^[\s\S]|b/` write

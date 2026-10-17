@@ -125,22 +125,6 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Rewrite checks: what is left
-
-The determinization budget, the shared rewrite check and the bounded DFA
-cache are merged. Follow-ups:
-- where the match solver does not read a pattern, a rewrite is offered when
-  it reads alike or when each part it changed is proven alone; on the whole
-  corpus that brings the suggestions from 1,292 to 1,325 (33 of the 40 the
-  sounder check cost, the FAIL and WARN lines unchanged). The 7 still lost
-  are correct rewrites the proof does not read: a lookbehind whose branches
-  of other lengths merge, `(?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])`
-  into `(?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])` (only some string
-  ending where it stands counts there, not their order, but what a lookbehind
-  may hold differs by release); a pattern a subroutine call enters (the RFC
-  5322 address pattern of Swift Mailer and Symfony Mime); a class for an
-  alternation in the condition of a conditional, `(?(?='|").)`.
-
 ## PHP 8.1 floor: after the merge
 
 Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,

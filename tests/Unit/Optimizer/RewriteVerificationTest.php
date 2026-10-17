@@ -167,8 +167,30 @@ final class RewriteVerificationTest extends TestCase
         yield 'a rewritten part of more than one length inside a lookbehind' => ['original' => '/(?<=x(?:a|bc))y/', 'rewrite' => '/(?<=x(?:bc|a))y/', 'verdict' => false];
         yield 'branches of more than one length merged beside a word boundary' => ['original' => '/\b(?:a|bc|d)/', 'rewrite' => '/\b(?:[ad]|bc)/', 'verdict' => true];
         yield 'branches of more than one length merged inside a lookbehind' => ['original' => '/(?<=x(?:a|bc|d))y/', 'rewrite' => '/(?<=x(?:[ad]|bc))y/', 'verdict' => false];
+        // The branches of a lookbehind each have one length on every
+        // release: there, only which strings may end where it stands counts,
+        // not the order of the branches that match them.
+        yield 'branches of other lengths merged at the top of a lookbehind' => ['original' => '/(?<=a|bc|d)y/', 'rewrite' => '/(?<=[ad]|bc)y/', 'verdict' => true];
+        yield 'branches of other lengths merged at the top of a negative lookbehind' => ['original' => '/(?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])/', 'rewrite' => '/(?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])/', 'verdict' => true];
+        yield 'branches of other lengths merged inside a group a lookbehind holds' => ['original' => '/(?<=(?:a|bc|d))y/', 'rewrite' => '/(?<=(?:[ad]|bc))y/', 'verdict' => false];
+        yield 'branches of a lookbehind merged into other strings' => ['original' => '/(?<=a|bc|d)y/', 'rewrite' => '/(?<=[ae]|bc)y/', 'verdict' => false];
+        yield 'branches of a lookbehind merged beside a group' => ['original' => '/(?<=(a)|bc|d|e)y/', 'rewrite' => '/(?<=(a)|bc|[de])y/', 'verdict' => false];
+        yield 'branches of a lookbehind merged into one of two lengths' => ['original' => '/(?<=a|bc|d)y/', 'rewrite' => '/(?<=[ad]|b(?:c|cc))y/', 'verdict' => false];
+        yield 'branches of a backtracking lookbehind merged' => ['original' => '/(*naplb:a|bc|d)y/', 'rewrite' => '/(*naplb:[ad]|bc)y/', 'verdict' => false];
+        // Parts of other counts on each side are paired by what both keep:
+        // under "i" every character is a class, five of them for "-----"
+        // and one count for "-{5}".
+        yield 'caseless runs counted on both sides of a repeat' => ['original' => '/(?<!x)-----.*-----/i', 'rewrite' => '/(?<!x)-{5}.*-{5}/i', 'verdict' => true];
+        yield 'caseless runs counted around a repeat, captured and repeated' => ['original' => '/(.*-----BEGIN CERTIFICATE-----.*-----END CERTIFICATE-----){50}$/Uims', 'rewrite' => '/(.*-{5}BEGIN CERTIFICATE-{5}.*-{5}END CERTIFICATE-{5}){50}$/Uims', 'verdict' => true];
+        yield 'a class and a count paired around a repeat' => ['original' => '/(?<!x)(?:_|%).*-----/i', 'rewrite' => '/(?<!x)[_%].*-{5}/i', 'verdict' => true];
+        yield 'parts of other counts paired into other strings' => ['original' => '/(?<!x)-----.*-----/i', 'rewrite' => '/(?<!x)-{5}.*-{4}/i', 'verdict' => false];
+        yield 'parts of other counts swapped around a repeat' => ['original' => '/(?<!x)ab.*cde/', 'rewrite' => '/(?<!x)cde.*ab/', 'verdict' => false];
+        yield 'a part of another count dropped beside a repeat' => ['original' => '/(?<!x)a.*b.*c/', 'rewrite' => '/(?<!x)a.*c/', 'verdict' => false];
         yield 'a rewritten part beside a backtracking verb' => ['original' => '/(?<!x)(?:_|%)(*PRUNE)a/', 'rewrite' => '/(?<!x)[_%](*PRUNE)a/', 'verdict' => false];
         yield 'a rewritten part of a group only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>a|b))x(?&n)/', 'rewrite' => '/(?(DEFINE)(?<n>[ab]))x(?&n)/', 'verdict' => false];
+        // The condition of a conditional stays as written in the normal
+        // form: what it reads is not proven there.
+        yield 'a class for an alternation in the condition of a conditional' => ['original' => '/url\(\s*(?(?=\'|").)(.+?)\)/', 'rewrite' => '/url\(\s*(?(?=[\'"]).)(.+?)\)/', 'verdict' => false];
     }
 
     /**
@@ -214,6 +236,13 @@ final class RewriteVerificationTest extends TestCase
         yield 'a class for an alternation inside an atomic group' => ['original' => '/(?<!x)(?>(?:_|%))b/', 'rewrite' => '/(?<!x)(?>[_%])b/', 'letters' => '_%bx', 'length' => 4];
         yield 'branches of more than one length merged inside a group' => ['original' => '/\b((?:a|bc|d))/', 'rewrite' => '/\b((?:[ad]|bc))/', 'letters' => 'abcd ', 'length' => 4];
         yield 'a repeated branch dropped, another caseless copy kept' => ['original' => '/\b(?:ab|AB|cd|ab)/i', 'rewrite' => '/\b(?:ab|AB|cd)/i', 'letters' => 'aBcd ', 'length' => 4];
+        yield 'branches of other lengths merged at the top of a lookbehind' => ['original' => '/(?<=a|bc|d)y/', 'rewrite' => '/(?<=[ad]|bc)y/', 'letters' => 'abcdy', 'length' => 4];
+        yield 'branches of other lengths merged at the top of a negative lookbehind' => ['original' => '/(?<!a|bc|d)y/', 'rewrite' => '/(?<![ad]|bc)y/', 'letters' => 'abcdy', 'length' => 4];
+        yield 'branches of other lengths merged, bytes before the position' => ['original' => '/(?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])/', 'rewrite' => '/(?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])/', 'letters' => "\xC2\xE0\x80a", 'length' => 4];
+        yield 'branches of other lengths merged at the top of a caseless lookbehind' => ['original' => '/(?<=a|BC|d)y/i', 'rewrite' => '/(?<=[ad]|bc)y/i', 'letters' => 'aBcDy', 'length' => 4];
+        yield 'caseless runs counted on both sides of a repeat' => ['original' => '/(?<!x)--.*--/i', 'rewrite' => '/(?<!x)-{2}.*-{2}/i', 'letters' => '-ax', 'length' => 6];
+        yield 'a class and a count paired around a repeat' => ['original' => '/(?<!x)(?:_|%).*--/i', 'rewrite' => '/(?<!x)[_%].*-{2}/i', 'letters' => '_%-x', 'length' => 5];
+        yield 'caseless runs counted around a repeat, captured and repeated' => ['original' => '/(.*--A.*--){2}$/Uims', 'rewrite' => '/(.*-{2}A.*-{2}){2}$/Uims', 'letters' => "-a\n", 'length' => 7];
     }
 
     /**

@@ -36,23 +36,37 @@ use PHPRegex\Parser\Hir\RepetitionHir;
 final class RewriteSites
 {
     /**
-     * @var list<array{Hir, Hir, bool}>
+     * @var list<array{Hir, Hir, bool, bool}>
      */
     private array $sites = [];
 
     private bool $insideLookbehind = false;
 
-    private function __construct() {}
+    /**
+     * The bodies of the lookbehind being compared, when each holds its
+     * branches at its top.
+     *
+     * @var array{Hir, Hir}|null
+     */
+    private ?array $lookbehindBodies = null;
+
+    private function __construct(private readonly bool $aligned) {}
 
     /**
      * The pairs of parts that differ, each with whether it lies inside a
-     * lookbehind, where what a part may hold differs by release.
+     * lookbehind, where what a part may hold differs by release, and
+     * whether the parts are the whole bodies of one lookbehind, each
+     * alternation of the pair being the branches the lookbehind opens.
      *
-     * @return list<array{Hir, Hir, bool}>
+     * Aligned, two runs of parts of other counts are paired by the parts
+     * both keep, in order: "-----.*-----" and "-{5}.*-{5}" then differ in
+     * two places, each "-----" against its "-{5}", rather than in one.
+     *
+     * @return list<array{Hir, Hir, bool, bool}>
      */
-    public static function between(Hir $left, Hir $right): array
+    public static function between(Hir $left, Hir $right, bool $aligned = false): array
     {
-        $sites = new self();
+        $sites = new self($aligned);
         $sites->compare($left, $right);
 
         return $sites->sites;
@@ -105,13 +119,30 @@ final class RewriteSites
         }
 
         $outer = $this->insideLookbehind;
-        $this->insideLookbehind = $outer || ($left instanceof LookHir && \in_array($left->kind, [LookKind::Behind, LookKind::NegativeBehind], true));
+        $outerBodies = $this->lookbehindBodies;
+        $lookbehind = $left instanceof LookHir && \in_array($left->kind, [LookKind::Behind, LookKind::NegativeBehind], true);
+        $this->insideLookbehind = $outer || $lookbehind;
+        $this->lookbehindBodies = $lookbehind && $right instanceof LookHir && $left->atomic && self::opensBranches($left) && self::opensBranches($right)
+            ? [$left->body, $right->body]
+            : null;
 
         foreach ($pairs as [$leftChild, $rightChild]) {
             $this->compare($leftChild, $rightChild);
         }
 
         $this->insideLookbehind = $outer;
+        $this->lookbehindBodies = $outerBodies;
+    }
+
+    /**
+     * Whether an alternation the lookaround holds is its own, closed by
+     * its parenthesis: the branches of (?<=a|bc) are its branches, those of
+     * (?<=(?:a|bc)) the alternatives of a group, which the releases before
+     * 10.43 refuse for their two lengths. Any other body is one branch.
+     */
+    private static function opensBranches(LookHir $look): bool
+    {
+        return !$look->body instanceof AlternationHir || $look->body->endPosition + 1 === $look->endPosition;
     }
 
     /**
@@ -142,7 +173,67 @@ final class RewriteSites
             return;
         }
 
-        $this->site(self::concat($leftMiddle), self::concat($rightMiddle));
+        if (!$this->aligned) {
+            $this->site(self::concat($leftMiddle), self::concat($rightMiddle));
+
+            return;
+        }
+
+        foreach (self::runsBetweenKeptParts($leftMiddle, $rightMiddle) as [$leftRun, $rightRun]) {
+            if (\count($leftRun) === \count($rightRun)) {
+                foreach ($leftRun as $index => $part) {
+                    $this->compare($part, $rightRun[$index]);
+                }
+            } else {
+                $this->site(self::concat($leftRun), self::concat($rightRun));
+            }
+        }
+    }
+
+    /**
+     * The runs of parts either side has between the parts both keep, the
+     * longest common subsequence of the two by shape, in order; a pair of
+     * runs that are both empty is left out.
+     *
+     * @param list<Hir> $left
+     * @param list<Hir> $right
+     *
+     * @return list<array{list<Hir>, list<Hir>}>
+     */
+    private static function runsBetweenKeptParts(array $left, array $right): array
+    {
+        $leftShapes = array_map(static fn (Hir $part): string => serialize(self::shape($part)), $left);
+        $rightShapes = array_map(static fn (Hir $part): string => serialize(self::shape($part)), $right);
+        [$leftCount, $rightCount] = [\count($left), \count($right)];
+
+        // $kept[$i][$j]: how many parts the runs from $i and $j keep alike.
+        $kept = array_fill(0, $leftCount + 1, array_fill(0, $rightCount + 1, 0));
+        for ($i = $leftCount - 1; $i >= 0; $i--) {
+            for ($j = $rightCount - 1; $j >= 0; $j--) {
+                $kept[$i][$j] = $leftShapes[$i] === $rightShapes[$j] ? $kept[$i + 1][$j + 1] + 1 : max($kept[$i + 1][$j], $kept[$i][$j + 1]);
+            }
+        }
+
+        $runs = [];
+        [$i, $j, $leftRun, $rightRun] = [0, 0, [], []];
+        while ($i < $leftCount || $j < $rightCount) {
+            if ($i < $leftCount && $j < $rightCount && $leftShapes[$i] === $rightShapes[$j] && $kept[$i][$j] === $kept[$i + 1][$j + 1] + 1) {
+                if ([] !== $leftRun || [] !== $rightRun) {
+                    $runs[] = [$leftRun, $rightRun];
+                }
+                [$i, $j, $leftRun, $rightRun] = [$i + 1, $j + 1, [], []];
+            } elseif ($j >= $rightCount || ($i < $leftCount && $kept[$i + 1][$j] >= $kept[$i][$j + 1])) {
+                $leftRun[] = $left[$i++];
+            } else {
+                $rightRun[] = $right[$j++];
+            }
+        }
+
+        if ([] !== $leftRun || [] !== $rightRun) {
+            $runs[] = [$leftRun, $rightRun];
+        }
+
+        return $runs;
     }
 
     /**
@@ -224,6 +315,7 @@ final class RewriteSites
 
     private function site(Hir $left, Hir $right): void
     {
-        $this->sites[] = [$left, $right, $this->insideLookbehind];
+        $bodies = null !== $this->lookbehindBodies && $left === $this->lookbehindBodies[0] && $right === $this->lookbehindBodies[1];
+        $this->sites[] = [$left, $right, $this->insideLookbehind, $bodies];
     }
 }
