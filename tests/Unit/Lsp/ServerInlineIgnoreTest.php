@@ -170,6 +170,8 @@ final class ServerInlineIgnoreTest extends TestCase
             [4, 'regex.target.invalid', 1],
             [5, 'regex.group.syntax', 1],
         ], $this->diagnosed($uri));
+        $empty = array_values(array_filter($this->published($uri), static fn (array $diagnostic): bool => 'regex.target.empty' === ($diagnostic['code'] ?? null)));
+        $this->assertSame(['start' => ['line' => 3, 'character' => 27], 'end' => ['line' => 3, 'character' => 40]], $empty[0]['range'] ?? null);
     }
 
     /**
@@ -191,6 +193,7 @@ final class ServerInlineIgnoreTest extends TestCase
             preg_match('/(?a)\d+/', $s);
             if (PHP_VERSION_ID >= 80300) {
                 preg_match('/(?a)\d+/', $s); // @regex-target php<8.4
+                preg_match('/(?a)\d+/', $s); // @regex-target php>=8.4
             }
             CODE));
 

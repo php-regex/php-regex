@@ -153,17 +153,24 @@ final class TargetMarkerLintTest extends TestCase
             <?php
             preg_match('/(a/', $s); // @regex-target php>=9.0
             preg_match('/(?a)\d+/', $s); // @regex-target php>=eight
+            preg_match('/x/', $s); // @regex-target php>=8.4
+            preg_match('/x/', $s); // @regex-target php<=eight
             PHP);
 
         $this->assertSame([
             [2, 'regex.target.empty', null],
             [3, 'regex.group.syntax', null],
             [3, 'regex.target.invalid', null],
+            [5, 'regex.target.invalid', null],
         ], self::issues($report));
+        $markers = array_values(array_filter(array_merge([], ...array_column($report->results, 'issues')), static fn (array $issue): bool => str_starts_with($issue['issueId'] ?? '', 'regex.target.')));
+        $this->assertSame([[2, 28], [3, 33], [5, 27]], array_map(static fn (array $issue): array => [$issue['line'], $issue['column'] ?? null], $markers));
+        $this->assertSame('Widen the marker to versions of the range, or remove the code it covers if it never runs there.', $markers[0]['hint'] ?? null);
+        $this->assertSame('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.', $markers[1]['hint'] ?? null);
         $messages = array_column(array_merge([], ...array_column($report->results, 'issues')), 'message');
         $this->assertContains('The @regex-target marker "php>=9.0" keeps no version the project is judged for (PHP >=8.2 <9.0): the patterns it covers are not judged.', $messages);
         $this->assertContains('The @regex-target marker holds "php>=eight", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".', $messages);
-        $this->assertSame(3, $report->stats['errors']);
+        $this->assertSame(4, $report->stats['errors']);
     }
 
     /**

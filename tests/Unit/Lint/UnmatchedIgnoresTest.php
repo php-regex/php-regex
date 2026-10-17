@@ -16,12 +16,14 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PhpParser\ParserFactory;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternExtractor;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Parser\RegexParser;
@@ -160,6 +162,37 @@ final class UnmatchedIgnoresTest extends TestCase
         $report = $this->lint($strategy, "<?php\npreg_match('/x/', \$s); // @regex-ignore regex.lint.redos\n\$kept = 1; // @regex-ignore\n", false);
 
         $this->assertSame([], self::issues($report));
+    }
+
+    /**
+     * The report of a marker is on the marker's own column.
+     */
+    #[Test]
+    public function test_the_report_of_a_marker_is_on_its_column(): void
+    {
+        $report = $this->lint(TokenBasedExtractionStrategy::class, "<?php\n\$kept = 1; // @regex-ignore\n");
+
+        $this->assertSame(15, $report->results[0]['issues'][0]['column'] ?? null);
+    }
+
+    /**
+     * A run holds something to analyse when it holds a pattern, or a marker
+     * to report; an occurrence silenced whole with no markers known is left
+     * out, as before.
+     */
+    #[Test]
+    public function test_what_a_run_has_to_analyse(): void
+    {
+        $marker = InlineIgnores::markers("<?php\n// @regex-ignore\n");
+        $this->assertTrue(LintService::holdsNothing([], true));
+        $this->assertTrue(LintService::holdsNothing([PatternOccurrence::scanned('a.php', [])], true));
+        $this->assertFalse(LintService::holdsNothing([PatternOccurrence::scanned('a.php', $marker)], true));
+        $this->assertTrue(LintService::holdsNothing([PatternOccurrence::scanned('a.php', $marker)], false));
+        $this->assertFalse(LintService::holdsNothing([new PatternOccurrence('/a/', 'a.php', 1, 'preg_match')], false));
+
+        $service = self::service(TokenBasedExtractionStrategy::class);
+        $report = $service->analyze([new PatternOccurrence('/\d+[11]/i', 'a.php', 2, 'preg_match', isIgnored: true)], new LintRequest(['.'], [], 1, checkOptimizations: false));
+        $this->assertSame([], $report->results);
     }
 
     /**

@@ -175,6 +175,41 @@ final class TargetMarkersTest extends TestCase
         }
     }
 
+    /**
+     * A doc comment holds as many markers as it has lines; the open tag's
+     * line counts as a line the comment opens; prose after the marker's
+     * line is no part of its constraint; the text of a string is no marker.
+     */
+    #[Test]
+    public function test_every_marker_of_a_doc_comment_and_none_of_a_string(): void
+    {
+        $content = "<?php\n/**\n * @regex-target php>=8.3\n * @regex-target-next-line php<8.5\n * Runs on 8.3 and 8.4.\n */\nfunction f(): void\n{\n}\n\$s = <<<'TXT'\n@regex-target php>=8.4\nTXT;\n";
+
+        $this->assertSame(
+            [['@regex-target', 3, 7, 9, 'php>=8.3', 4], ['@regex-target-next-line', 4, 7, 7, 'php<8.5', 4]],
+            array_map(static fn (TargetMarker $marker): array => [$marker->marker, $marker->line, $marker->fromLine, $marker->toLine, $marker->text, $marker->column], TargetMarkers::read($content)),
+        );
+        $this->assertSame('>=8.3 <8.5', TargetMarker::constraintAt(TargetMarkers::read($content), 7)?->phpConstraint());
+        $this->assertSame('>=8.3', TargetMarker::constraintAt(TargetMarkers::read($content), 8)?->phpConstraint());
+        $this->assertNull(TargetMarker::constraintAt(TargetMarkers::read($content), 10));
+    }
+
+    /**
+     * A doc comment right after the open tag covers the declaration after
+     * it; a statement goes on through its "else" and its "catch"; one the
+     * file leaves open runs to its last token.
+     */
+    #[Test]
+    public function test_a_statement_runs_through_its_branches(): void
+    {
+        $content = "<?php /** @regex-target php>=8.4 */\nif (\$x) {\n    f();\n} else {\n    g();\n}\n/** @regex-target php>=8.4 */\ntry {\n    f();\n} catch (\\Exception \$e) {\n}\n/** @regex-target php>=8.4 */\npreg_match(\n    '/a/', \$s)\n";
+
+        $this->assertSame(
+            [[1, 2, 6, 11], [7, 8, 11, 5], [12, 13, 14, 5]],
+            array_map(static fn (TargetMarker $marker): array => [$marker->line, $marker->fromLine, $marker->toLine, $marker->column], TargetMarkers::read($content)),
+        );
+    }
+
     #[Test]
     public function test_a_source_without_a_marker_is_not_tokenized(): void
     {

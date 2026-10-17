@@ -60,6 +60,7 @@ final class AnalysisServiceGuardTest extends TestCase
         $this->assertCount(1, $analysis->analyzeRedos([self::occurrence('/(a+)+$/', 'php>=8.4')], RedosSeverity::Low));
         $this->assertSame([], $analysis->analyzeRedos([self::occurrence('/(a+)+$/', 'php>=9.0')], RedosSeverity::Low));
         $this->assertSame([], $analysis->analyzeRedos([PatternOccurrence::scanned('a.php', [])], RedosSeverity::Low));
+        $this->assertCount(1, $analysis->analyzeRedos([PatternOccurrence::scanned('a.php', []), new PatternOccurrence('/(a+)+$/', 'a.php', 3, 'preg_match')], RedosSeverity::Low));
     }
 
     /**
@@ -78,6 +79,29 @@ final class AnalysisServiceGuardTest extends TestCase
 
         $this->assertCount(2, $analyzed->byPattern);
         $this->assertSame([2, 3], array_column($suggestions, 'line'));
+    }
+
+    /**
+     * Two patterns a guard narrows alike each get the rewrite of their own
+     * tree; a pattern refused on the floor and accepted on the versions the
+     * guard keeps gets one under the guard only.
+     */
+    #[Test]
+    public function test_each_narrowed_pattern_takes_its_own_reading(): void
+    {
+        $analysis = $this->analysis();
+        $patterns = [
+            self::occurrence('/[0-9]+x/', 'php>=8.4'),
+            self::occurrence('/[0-9]+y/', 'php>=8.4'),
+            self::occurrence('/(?a)[0-9]+z/', 'php>=8.4'),
+            new PatternOccurrence('/(?a)[0-9]+z/', 'a.php', 5, 'preg_match'),
+        ];
+
+        [, $analyzed] = $analysis->lintForSuggestions($patterns);
+        $suggestions = $analysis->suggestOptimizations($patterns, 1, analyzed: $analyzed);
+
+        $this->assertSame(['/\d+x/', '/\d+y/', '/(?a)\d+z/'], array_map(static fn (array $entry): string => $entry['optimization']->optimized, $suggestions));
+        $this->assertSame([], $analysis->suggestOptimizations([PatternOccurrence::unread('a.php', 'Not read.'), PatternOccurrence::parserFallback('a.php', 'Broken.')], 1));
     }
 
     /**

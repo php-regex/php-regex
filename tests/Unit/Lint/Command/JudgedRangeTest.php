@@ -54,6 +54,10 @@ final class JudgedRangeTest extends TestCase
         yield 'above the range' => ['require' => '^8.2', 'constraint' => 'php>=9.0', 'expected' => []];
         yield 'below the range' => ['require' => '>=8.2', 'constraint' => 'php<8.2', 'expected' => []];
         yield 'an open range' => ['require' => '>=8.4', 'constraint' => 'php>=9.0', 'expected' => ['9.0/10.44']];
+        // The start of a stretch comes in order among the points.
+        yield 'an or with a gap inside a minor' => ['require' => '^8.2', 'constraint' => 'php<8.4 || >=8.4.50', 'expected' => ['8.2/10.40', '8.3/10.42', '8.4.50/10.44', '8.5/10.44', '8.5.10/10.44']];
+        // The release a version is judged with is read to the minor.
+        yield 'up to a release' => ['require' => '^8.2', 'constraint' => 'pcre<=10.42', 'expected' => ['8.2/10.40', '8.3/10.42']];
     }
 
     /**
@@ -114,6 +118,26 @@ final class JudgedRangeTest extends TestCase
         $this->assertSame(80400, $parser->target()->phpVersionId);
         $this->assertSame($floor->getCache(), $parser->getCache());
         $this->assertSame($parser, $judged->parserFor(new PcreTarget(80400, '10.44')));
+
+        // A version is the PHP and its PCRE2: another release, another parser.
+        $other = $judged->parserFor(new PcreTarget(80400, '10.42'));
+        $this->assertNotSame($parser, $other);
+        $this->assertSame('10.42', $other->target()->pcreVersion);
+        $this->assertNotSame($floor, $judged->parserFor(new PcreTarget($target->target()->phpVersionId, '10.42')));
+    }
+
+    /**
+     * The running PHP is judged with the PCRE2 it links, as the floor is,
+     * whatever release its version bundles.
+     */
+    #[Test]
+    public function test_the_running_php_keeps_the_pcre2_it_links(): void
+    {
+        $target = ProjectTarget::resolve(null, null, [], $this->makeProject(), []);
+        $judged = $target->judgedRange(RegexParser::create($target->regexOptions()));
+
+        $this->assertEquals([$target->target()], $judged->narrow(self::constraint('php>=7.3')));
+        $this->assertSame(PcreTarget::runtime()->pcreVersion, $judged->narrow(self::constraint('php>=7.3'))[0]->pcreVersion);
     }
 
     /**
@@ -130,6 +154,48 @@ final class JudgedRangeTest extends TestCase
         $this->assertSame('>=10.43', self::constraint('pcre>=10.43')->pcreConstraint());
         $this->assertSame('>=8.4 <8.5', self::constraint('php>=8.4')->intersect(self::constraint('php<8.5'))->phpConstraint());
         $this->assertSame('>=8.4', TargetConstraint::phpFrom(80400, null)->phpConstraint());
+    }
+
+    /**
+     * Two constraints meet where both admit: the lower ceiling of two, the
+     * stretches sorted whatever order they were written in.
+     */
+    #[Test]
+    public function test_an_intersection_keeps_the_versions_both_admit(): void
+    {
+        $this->assertSame('>=8.2 <8.4', self::constraint('php<8.5')->intersect(self::constraint('php>=8.2 <8.4'))->phpConstraint());
+        $this->assertSame('>=8.2 <8.4', self::constraint('php>=8.2 <8.4')->intersect(self::constraint('php<8.5'))->phpConstraint());
+        $this->assertSame('>=8.0 <8.3 || >=8.5', self::constraint('php>=8.0')->intersect(self::constraint('php>=8.5 || <8.3'))->phpConstraint());
+        $this->assertSame('>=10.43', self::constraint('php>=8.4')->intersect(self::constraint('pcre>=10.43'))->pcreConstraint());
+    }
+
+    /**
+     * Two constraints joined admit what either does: stretches that
+     * overlap or touch merge, a side that admits every version admits every
+     * one.
+     */
+    #[Test]
+    public function test_a_union_keeps_the_versions_either_admits(): void
+    {
+        $this->assertSame('<8.4', self::constraint('php<8.3')->union(self::constraint('php<8.4'))->phpConstraint());
+        $this->assertSame('>=8.2 <8.4', self::constraint('php>=8.2 <8.3')->union(self::constraint('php>=8.3 <8.4'))->phpConstraint());
+        $this->assertSame('>=8.2 <8.3 || >=8.4', self::constraint('php>=8.4')->union(self::constraint('php>=8.2 <8.3'))->phpConstraint());
+        $this->assertSame('>=8.2', self::constraint('php>=8.2 <8.4')->union(self::constraint('php>=8.3'))->phpConstraint());
+        $this->assertSame('>=8.2', self::constraint('php>=8.3')->union(self::constraint('php>=8.2 <8.4'))->phpConstraint());
+        $this->assertSame('<10.40 || >=10.43', self::constraint('pcre>=10.43')->union(self::constraint('pcre<10.40'))->pcreConstraint());
+        $both = self::constraint('php>=8.4')->union(self::constraint('pcre>=10.43'));
+        $this->assertNull($both->phpConstraint());
+        $this->assertNull($both->pcreConstraint());
+    }
+
+    /**
+     * A constraint whose either part cannot be read is none.
+     */
+    #[Test]
+    public function test_a_constraint_with_a_part_that_cannot_be_read_is_none(): void
+    {
+        $this->assertNull(TargetConstraint::fromMarker('php>=eight pcre>=10.43'));
+        $this->assertNull(TargetConstraint::fromMarker('php>=8.4 pcre>=ten'));
     }
 
     private static function constraint(string $text): TargetConstraint

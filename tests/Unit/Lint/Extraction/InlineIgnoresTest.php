@@ -114,6 +114,35 @@ final class InlineIgnoresTest extends TestCase
     }
 
     /**
+     * Each line of a doc comment may hold a marker; a marker on the line of
+     * the open tag is at its column there; the text of a string is never a
+     * marker, whatever line it starts.
+     */
+    #[Test]
+    public function test_every_marker_of_a_comment_and_none_of_a_string(): void
+    {
+        $content = "<?php // @regex-ignore\n/**\n * @regex-ignore regex.lint.a\n * @regex-ignore-next-line\n */\n\$s = <<<'TXT'\n@regex-ignore\nTXT;\n";
+
+        $this->assertSame(
+            [['@regex-ignore', 1, 10], ['@regex-ignore', 3, 4], ['@regex-ignore-next-line', 4, 4]],
+            array_map(static fn (IgnoreMarker $marker): array => [$marker->marker, $marker->line, $marker->column], InlineIgnores::markers($content)),
+        );
+    }
+
+    /**
+     * An identifier named twice is reported once.
+     */
+    #[Test]
+    public function test_an_identifier_named_twice_is_reported_once(): void
+    {
+        $markers = InlineIgnores::markers("<?php\n\$x = 1; // @regex-ignore regex.lint.a, regex.lint.a\n");
+
+        $this->assertCount(1, $markers);
+        $this->assertSame(['The @regex-ignore marker names regex.lint.a, which no issue reports on line 2. Remove the identifier.'], $markers[0]->unmatched([]));
+        $this->assertSame([], $markers[0]->unmatched(['regex.lint.a' => true]));
+    }
+
+    /**
      * Only a marker naming no identifier silences a whole line: one that
      * names some leaves the other issues of its line reported.
      */

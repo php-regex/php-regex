@@ -407,6 +407,33 @@ final class LintBaselineTest extends TestCase
         $this->assertSame(2, $filtered->stats['errors']);
         $this->assertSame([], $baseline->filter($report, ['src/c.php'])->results);
         $this->assertSame([], $baseline->filter($report)->results);
+        $this->assertSame(['regex.ignore.unmatched'], array_map(static fn (Diagnostic $problem): ?string => $problem->code, $filtered->results[0]['problems']));
+    }
+
+    /**
+     * The one issue left takes the entry on its line, whichever comes
+     * last, and the entries left are reported in file and line order among
+     * the results the baseline keeps.
+     */
+    #[Test]
+    public function test_filter_reports_the_entries_left_in_order_among_the_others(): void
+    {
+        $baseline = $this->baselineFrom(['version' => 1, 'issues' => [
+            self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 5),
+            self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 30),
+            self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 40),
+        ]]);
+        $issue = self::issue('regex.lint.known', 'Known issue', 'error', 'src/b.php');
+        $issue['line'] = 40;
+        $kept = self::lintResult([self::issue('regex.lint.other', 'Other issue', 'error', 'src/c.php')], []);
+        $kept['file'] = 'src/c.php';
+        $known = self::lintResult([$issue], []);
+        $known['file'] = 'src/b.php';
+        $known['line'] = 40;
+
+        $filtered = $baseline->filter(self::report([$kept, $known]), ['src/b.php']);
+
+        $this->assertSame([['src/b.php', 5], ['src/b.php', 30], ['src/c.php', 3]], array_map(static fn (array $result): array => [$result['file'], $result['line']], $filtered->results));
     }
 
     /**

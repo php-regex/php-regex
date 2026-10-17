@@ -59,6 +59,19 @@ final class GuardRegionsTest extends TestCase
         yield 'a call after an early exit in a namespace' => ['code' => "namespace A {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    function b() {}\n    f('@');\n}", 'expected' => '>=8.4'];
         yield 'the next case of a switch' => ['code' => "function g(\$x) {\n    switch (\$x) {\n        case 1:\n            if (PHP_VERSION_ID < 80400) {\n                break;\n            }\n            f(1);\n        case 2:\n            f('@');\n    }\n}", 'expected' => null];
         yield 'the rest of a case of a switch' => ['code' => "function g(\$x) {\n    switch (\$x) {\n        case 1:\n            if (PHP_VERSION_ID < 80400) {\n                break;\n            }\n            f('@');\n        case 2:\n            f(2);\n    }\n}", 'expected' => '>=8.4'];
+        yield 'the else of an elseif chain' => ['code' => "if (PHP_VERSION_ID >= 80500) {\n} elseif (PHP_VERSION_ID < 80300) {\n} else {\n    f('@');\n}", 'expected' => '>=8.3 <8.5'];
+        yield 'the third branch of an elseif chain' => ['code' => "if (PHP_VERSION_ID < 80300) {\n} elseif (PHP_VERSION_ID >= 80500) {\n} elseif (PHP_VERSION_ID >= 80400) {\n    f('@');\n}", 'expected' => '>=8.4 <8.5'];
+        yield 'an else of one statement' => ['code' => "if (PHP_VERSION_ID < 80400) {\n} else f('@');", 'expected' => '>=8.4'];
+        yield 'a comparison with no literal on the left' => ['code' => "if (\$x >= PHP_VERSION_ID) {\n    f('@');\n}", 'expected' => null];
+        yield 'a class constant named so in a file without a namespace' => ['code' => "final class A\n{\n    const PHP_VERSION_ID = 1;\n}\nif (PHP_VERSION_ID >= 80400) {\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'a statement before an early exit' => ['code' => "function g() {\n    f('@');\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n}", 'expected' => null];
+        yield 'a statement before the early exit it follows' => ['code' => "function g() {\n    f(1);\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'an early exit that is no guard, then one that is' => ['code' => "function g() {\n    if (\$x) {\n        return;\n    }\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'a call before a class after an early exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\n\$x = f('@');\nfinal class B\n{\n}", 'expected' => '>=8.4'];
+        yield 'a class after an assignment after an early exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\n\$x = 1;\nfinal class B\n{\n    const RE = '@';\n}", 'expected' => null];
+        yield 'an anonymous class after an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    \$b = new class {\n        public function c(): void\n        {\n            f('@');\n        }\n    };\n}", 'expected' => '>=8.4'];
+        yield 'the default of a switch' => ['code' => "function g(\$x) {\n    switch (\$x) {\n        case 1:\n            if (PHP_VERSION_ID < 80400) {\n                break;\n            }\n        default:\n            f('@');\n    }\n}", 'expected' => null];
+        yield 'version_compare with named arguments' => ['code' => "if (version_compare(version1: PHP_VERSION, version2: '8.4', operator: '>=')) {\n    f('@');\n}", 'expected' => null];
         yield 'an early exit that is no guard' => ['code' => "function g() {\n    if (\$x) {\n        return;\n    }\n    f('@');\n}", 'expected' => null];
         yield 'a closure, a class name and an anonymous class after an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    \$a = A::class;\n    \$b = new class {};\n    \$c = function () {\n        f('@');\n    };\n}", 'expected' => '>=8.4'];
         yield 'an interface after an early exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\ninterface I\n{\n    const RE = '@';\n}", 'expected' => null];
@@ -132,12 +145,13 @@ final class GuardRegionsTest extends TestCase
     #[Test]
     public function test_a_match_arm_is_a_guard_when_all_its_conditions_are(): void
     {
-        $content = "<?php\n\$r = match (true) {\n    PHP_VERSION_ID < 80300, PHP_VERSION_ID >= 80500 => f('@'),\n    PHP_VERSION_ID >= 80400, \$x => f('#'),\n    default => f('%'),\n};\n";
+        $content = "<?php\n\$r = match (true) {\n    PHP_VERSION_ID < 80300, PHP_VERSION_ID >= 80500 => f('@'),\n    PHP_VERSION_ID >= 80400, \$x => f('#'),\n    \$x, PHP_VERSION_ID >= 80400 => f('&'),\n    default => f('%'),\n};\n";
 
         $parser = self::parser($content);
         $this->assertSame('<8.3 || >=8.5', $parser->at((int) strpos($content, "'@'"))?->phpConstraint());
         $this->assertNull($parser->at((int) strpos($content, "'#'")));
         $this->assertNull($parser->at((int) strpos($content, "'%'")));
+        $this->assertNull($parser->at((int) strpos($content, "'&'")));
         $this->assertNull(self::tokens($content)->at((int) strpos($content, "'@'")));
     }
 
