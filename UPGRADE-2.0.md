@@ -504,7 +504,7 @@ of the comment, `// @regex-ignore legacy`.
 `regex lint`, Symfony's and Laravel's `regex:lint` and the language server
 report each `@regex-ignore` or `@regex-ignore-next-line` marker that
 silences nothing, and `regex lint --baseline` each entry no issue takes any
-more in a file the run reads, as an error, `regex.ignore.unmatched` (a
+more in a file the run reads or in a file gone from a path it lints, as an error, `regex.ignore.unmatched` (a
 warning in the editor). A project carrying such markers or entries fails its
 next run until they are removed. To keep them for now, turn the report off:
 `--no-report-unmatched-ignores` or `"reportUnmatchedIgnores": false` in

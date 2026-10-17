@@ -270,7 +270,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         // A baseline whose entries may match nothing any more is read even
         // when no pattern is left.
-        if (LintService::holdsNothing($patterns, $arguments->reportUnmatchedIgnores) && !(null !== $baseline && $arguments->reportUnmatchedIgnores && [] !== $patterns)) {
+        if (LintService::holdsNothing($patterns, $arguments->reportUnmatchedIgnores) && !(null !== $baseline && $arguments->reportUnmatchedIgnores)) {
             $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
             if (!$this->writeBaselineFile($arguments, $emptyReport)) {
                 return $this->failToWriteBaseline($output, $json, (string) $arguments->generateBaseline);
@@ -318,9 +318,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         // An entry no issue takes any more is reported, in the files the
-        // run read only.
+        // run read and the files gone from the paths it lints.
         if (null !== $baseline) {
-            $report = $baseline->filter($report, $arguments->reportUnmatchedIgnores ? self::scannedFiles($patterns) : null);
+            $report = $baseline->filter($report, $arguments->reportUnmatchedIgnores ? self::scannedFiles($patterns) : null, array_values($paths), array_values($exclude));
         }
 
         $this->writeReport($output, $format, $formatter->format($report));

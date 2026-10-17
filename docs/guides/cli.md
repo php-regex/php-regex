@@ -1739,8 +1739,9 @@ Both options take their file after a space or an `=`.
 - **Entries that match nothing.** An entry no issue takes any more, the
   issue fixed or its pattern removed, is reported as `regex.ignore.unmatched`
   on the entry's file and line: remove it, or generate the baseline again.
-  Only the files the run reads are judged, so a run over `src/Controller`
-  says nothing of the entries of `src/Legacy`. `--no-report-unmatched-ignores`
+  The entries of a file gone since, under a path the run lints and out of
+  those it excludes, are stale and reported too. A run over `src/Controller`
+  says nothing of the entries of `src/Legacy`, read or gone. `--no-report-unmatched-ignores`
   turns the report off, as it does for the inline markers.
 - **A 1.x baseline**, a plain list, is refused like any non-baseline file:
   exit code 2, `stage: "usage"` in JSON, before anything is scanned — even on

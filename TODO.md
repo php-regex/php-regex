@@ -359,9 +359,6 @@ guard reading are built. Follow-ups:
   polyfill runs there. Either accept Psalm's inference, or read the guards
   from the file's AST with the lint's reader (`PhpParserGuards`), which
   knows only comparisons and `version_compare()`.
-- a baseline entry whose file no longer exists is not reported: the run
-  does not read the file. Decide whether an entry under a linted path whose
-  file is gone should be.
 
 ## Checked and refused (do not re-litigate)
 

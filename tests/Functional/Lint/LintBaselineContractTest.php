@@ -593,6 +593,40 @@ final class LintBaselineContractTest extends TestCase
     }
 
     /**
+     * The entries of a file gone since the baseline, under a path the run
+     * lints, are stale: reported, as an entry no issue takes. Those of a
+     * file outside the paths linted, or under a path excluded, stay
+     * silent.
+     */
+    #[Test]
+    public function test_an_entry_of_a_file_gone_under_a_linted_path_is_reported(): void
+    {
+        $this->enterProject(self::FILES + ['lib/c.php' => "<?php\n\npreg_match('/(c/', \$s);\n", 'src/vendor/d.php' => "<?php\n\npreg_match('/(d/', \$s);\n"]);
+        $this->runRegex(['lint', 'src', 'lib', '--format=json', '--jobs=1', '--no-optimize', '--exclude=nothing', '--generate-baseline=baseline.json']);
+        unlink('src/a.php');
+        unlink('lib/c.php');
+        unlink('src/vendor/d.php');
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
+
+        $this->assertSame(1, $exitCode, $stdout);
+        $this->assertSame([
+            ['src/a.php', 3, 'regex.ignore.unmatched', 'error', 'The baseline entry for regex.group.unclosed matches no issue any more: remove it, or generate the baseline again.'],
+            ['src/a.php', 4, 'regex.ignore.unmatched', 'error', 'The baseline entry for regex.lint.quantifier.useless matches no issue any more: remove it, or generate the baseline again.'],
+        ], self::issuesOf($stdout));
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src/b.php', '--format=json', '--jobs=1', '--no-optimize', '--baseline=baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], self::issuesOf($stdout));
+
+        // No file left to read: the stale entries are reported all the same.
+        unlink('src/b.php');
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
+        $this->assertSame(1, $exitCode, $stdout);
+        $this->assertCount(4, self::issuesOf($stdout));
+    }
+
+    /**
      * @return list<list<mixed>> the file, line, identifier, severity and message of each issue
      */
     private static function issuesOf(string $stdout): array

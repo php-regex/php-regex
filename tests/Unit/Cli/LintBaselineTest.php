@@ -411,6 +411,34 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * An entry of a file gone from a path the run lints is stale and
+     * reported; one of a file outside the paths linted, or under a path
+     * the run excludes, or of a file still there, is not.
+     */
+    #[Test]
+    public function test_filter_reports_the_entries_of_a_file_gone_from_a_linted_path(): void
+    {
+        chdir($this->directory);
+        file_put_contents($this->directory.'/kept.php', "<?php\n");
+        $baseline = $this->baselineFrom(['version' => 1, 'issues' => [
+            self::entryFor('regex.lint.known', 'src/gone.php', '/a+b/', 5),
+            self::entryFor('regex.lint.known', 'lib/gone.php', '/a+b/', 6),
+            self::entryFor('regex.lint.known', 'src/vendor/gone.php', '/a+b/', 7),
+            self::entryFor('regex.lint.known', 'kept.php', '/a+b/', 8),
+        ]]);
+        $report = self::report([]);
+        $lines = static fn (LintReport $filtered): array => array_map(static fn (array $result): array => [$result['file'], $result['line']], $filtered->results);
+
+        $this->assertSame([['src/gone.php', 5]], $lines($baseline->filter($report, [], ['src'], ['vendor'])));
+        $this->assertSame([['src/gone.php', 5]], $lines($baseline->filter($report, [], ['./src/'], ['/vendor/'])));
+        $this->assertSame([['lib/gone.php', 6], ['src/gone.php', 5], ['src/vendor/gone.php', 7]], $lines($baseline->filter($report, [], ['.'])));
+        $this->assertSame([['lib/gone.php', 6], ['src/gone.php', 5], ['src/vendor/gone.php', 7]], $lines($baseline->filter($report, [], [$this->directory])));
+        $this->assertSame([['src/gone.php', 5]], $lines($baseline->filter($report, [], ['src/gone.php'])));
+        $this->assertSame([], $lines($baseline->filter($report, [], ['lib/other'])));
+        unlink($this->directory.'/kept.php');
+    }
+
+    /**
      * The one issue left takes the entry on its line, whichever comes
      * last, and the entries left are reported in file and line order among
      * the results the baseline keeps.

@@ -130,9 +130,12 @@ final class LintBaseline
      * and leaves the report once nothing is left in it.
      *
      * @param list<string>|null $scannedFiles the files the run read: given, each entry of one of
-     *                                        them that no issue takes is reported
+     *                                        them that no issue takes is reported, and so is each entry
+     *                                        of a file gone under a path the run lints
+     * @param list<string>      $lintedPaths  the paths the run lints
+     * @param list<string>      $excludePaths the paths it leaves out of them
      */
-    public function filter(LintReport $report, ?array $scannedFiles = null): LintReport
+    public function filter(LintReport $report, ?array $scannedFiles = null, array $lintedPaths = [], array $excludePaths = []): LintReport
     {
         $candidates = [];
         foreach (\array_values($report->results) as $r => $result) {
@@ -151,7 +154,7 @@ final class LintBaseline
             }
         }
 
-        $unmatched = null === $scannedFiles ? [] : $this->unmatched($candidates, $scannedFiles);
+        $unmatched = null === $scannedFiles ? [] : $this->unmatched($candidates, $scannedFiles, $lintedPaths, $excludePaths);
 
         // Read by position, as the candidates were: a report keyed by file
         // takes out the same issues as its list.
@@ -211,17 +214,19 @@ final class LintBaseline
     }
 
     /**
-     * A result for each entry of a file the run read that no issue takes:
-     * when a key has fewer issues than entries, the issues are aligned with
-     * the entries as the entries are with the issues, and the entries left
-     * out are the ones reported.
+     * A result for each entry no issue takes, of a file the run read or of
+     * a file gone from a path it lints: when a key has fewer issues than
+     * entries, the issues are aligned with the entries as the entries are
+     * with the issues, and the entries left out are the ones reported.
      *
      * @param array<string, list<array{int|string, int, int}>> $candidates   the issues of each key
      * @param list<string>                                     $scannedFiles
+     * @param list<string>                                     $lintedPaths
+     * @param list<string>                                     $excludePaths
      *
      * @return list<LintResult>
      */
-    private function unmatched(array $candidates, array $scannedFiles): array
+    private function unmatched(array $candidates, array $scannedFiles, array $lintedPaths, array $excludePaths): array
     {
         $scanned = [];
         foreach ($scannedFiles as $file) {
@@ -232,7 +237,7 @@ final class LintBaseline
         foreach ($this->lines as $key => $lines) {
             [$issueId, $file] = explode("\0", $key);
             $issues = $candidates[$key] ?? [];
-            if (!isset($scanned[$file]) || \count($lines) <= \count($issues)) {
+            if (!(isset($scanned[$file]) || self::goneUnder($file, $lintedPaths, $excludePaths)) || \count($lines) <= \count($issues)) {
                 continue;
             }
 
@@ -268,6 +273,40 @@ final class LintBaseline
         }
 
         return $results;
+    }
+
+    /**
+     * Whether an entry's file is gone from a path the run lints, out of
+     * the paths it excludes: the entry is stale.
+     *
+     * @param list<string> $lintedPaths
+     * @param list<string> $excludePaths
+     */
+    private static function goneUnder(string $file, array $lintedPaths, array $excludePaths): bool
+    {
+        if (file_exists($file)) {
+            return false;
+        }
+
+        foreach ($excludePaths as $exclude) {
+            $exclude = trim(str_replace('\\', '/', $exclude), '/');
+            if ('' !== $exclude && (str_starts_with($file, $exclude.'/') || str_contains($file, '/'.$exclude.'/'))) {
+                return false;
+            }
+        }
+
+        $cwd = getcwd();
+        $here = false === $cwd ? null : self::normalizePath($cwd);
+        foreach ($lintedPaths as $path) {
+            // Through a symbolic link too: the working directory is resolved.
+            $real = realpath($path);
+            $linted = self::relativePath(false === $real ? $path : $real);
+            if ('' === $linted || $here === $linted || $file === $linted || str_starts_with($file, $linted.'/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
