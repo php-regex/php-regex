@@ -5,12 +5,12 @@ description: "Every PHPRegex lint rule — when each fires, its message, its sev
 
 This reference documents every lint rule that PHPRegex produces. It serves as the authoritative guide for understanding what PHPRegex checks and how to fix issues. Validation error codes live in [Diagnostics: Error Codes](diagnostics.md#error-codes), and the optimizer's rewrite suggestions in [the API reference](api.md).
 
-<div class="rules-filter">
+<div class="page-filter">
   <label class="visually-hidden" for="rules-filter-input">Filter the rule reference</label>
-  <input type="search" id="rules-filter-input" placeholder="Filter by rule, message or identifier — e.g. useless flag, redos, backreference" autocomplete="off" spellcheck="false">
-  <span class="rules-count"></span>
+  <input type="search" id="rules-filter-input" data-unit="rules" placeholder="Filter by rule, message or identifier — e.g. useless flag, redos, backreference" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
 </div>
-<p class="rules-empty" role="status">No rule matches that filter — try a shorter fragment, or press Escape to see all of them again.</p>
+<p class="page-empty" role="status">No rule matches that filter — try a shorter fragment, or press Escape to see all of them again.</p>
 
 ## Table of Contents
 

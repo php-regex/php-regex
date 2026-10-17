@@ -2653,8 +2653,8 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
 }
 
-/* ---- Rule reference filter ------------------------------------------------
- * The rule reference is one page and fifty thousand pixels tall; a reader
+/* ---- Page filter ------------------------------------------------
+ * The deep reference pages — rules, diagnostics, recipes, symptoms — run
  * arrives with one identifier and one question. The filter row sticks
  * under the header so it is never more than a scroll away, matches are
  * counted aloud, and the hidden class (not the hidden attribute — the
@@ -2662,7 +2662,7 @@ main table::-webkit-scrollbar-thumb {
  * the attribute's user-agent rule) does the narrowing.
    -------------------------------------------------------------------------- */
 
-.rules-filter {
+.page-filter {
   position: sticky;
   top: calc(var(--header-h) + .75rem);
   z-index: 5;
@@ -2675,7 +2675,7 @@ main table::-webkit-scrollbar-thumb {
   border-bottom: 1px solid var(--line-soft);
 }
 
-.rules-filter input {
+.page-filter input {
   flex: 1;
   min-width: 0;
   min-height: 44px;
@@ -2693,22 +2693,22 @@ main table::-webkit-scrollbar-thumb {
   appearance: none;
 }
 
-.rules-filter input::placeholder {
+.page-filter input::placeholder {
   color: var(--ink-soft);
   opacity: 1;
 }
 
-.rules-filter input:focus {
+.page-filter input:focus {
   border-color: var(--amber);
   outline: none;
 }
 
-.rules-filter input:focus-visible {
+.page-filter input:focus-visible {
   outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
-.rules-count {
+.page-count {
   flex: none;
   font-size: .78rem;
   font-weight: 500;
@@ -2719,7 +2719,7 @@ main table::-webkit-scrollbar-thumb {
   white-space: nowrap;
 }
 
-.rules-empty {
+.page-empty {
   margin: -1rem 0 2rem;
   padding: 1rem 1.25rem;
   border: 1px solid var(--line);
@@ -2728,7 +2728,7 @@ main table::-webkit-scrollbar-thumb {
   font-size: .92rem;
 }
 
-main .rules-hidden {
+main .page-filter-hidden {
   display: none;
 }
 
@@ -4005,9 +4005,9 @@ main > section:not([class]) > p:not(:has(a.button)) {
   .anchor,
   .to-top,
   .site-footer,
-  .rules-filter,
-  .rules-count,
-  .rules-empty,
+  .page-filter,
+  .page-count,
+  .page-empty,
   .page-meta {
     display: none !important;
   }

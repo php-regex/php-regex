@@ -6,6 +6,12 @@ redirect_from:
 # Regex Cookbook: Practical Patterns for PHP
 
 This cookbook collects patterns for common validation and parsing tasks. Every pattern below is `safe (proven)`: the ReDoS analyzer proved that no input makes one match attempt backtrack beyond a linear number of steps. The only unsafe patterns here are the bad examples in [Building Your Own Patterns](#building-your-own-patterns), each shown as the thing to avoid. Review and adapt each pattern for your context.
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the cookbook</label>
+  <input type="search" id="page-filter-input" data-unit="recipes" placeholder="Filter by task — e.g. email, url, date, phone, slug" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">No recipe matches that filter — try a shorter fragment, or press Escape to see them all again.</p>
 
 > These recipes include a short explanation and a quick validation call so you can use them in tooling or code reviews.
 >

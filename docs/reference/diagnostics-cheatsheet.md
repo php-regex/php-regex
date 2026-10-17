@@ -4,6 +4,12 @@ description: "One fix per common PHPRegex diagnostic: unbounded lookbehinds, bad
 # Diagnostics Cheat Sheet
 
 Fast fixes for the most common PHPRegex diagnostics. Use this as a quick reference when you encounter an issue.
+<div class="page-filter">
+  <label class="visually-hidden" for="page-filter-input">Filter the cheat sheet</label>
+  <input type="search" id="page-filter-input" data-unit="sections" placeholder="Filter by construct or fix — e.g. delimiter, backreference, unicode" autocomplete="off" spellcheck="false">
+  <span class="page-count"></span>
+</div>
+<p class="page-empty" role="status">Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ## Quick Fix Index
 
