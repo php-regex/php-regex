@@ -8,6 +8,7 @@ redirect_from:
 This curated list of external resources provides authoritative information about regex syntax, engine behavior, and performance. These are the sources PHPRegex uses when verifying diagnostics and documenting edge cases.
 
 ## Table of Contents
+{: .filter-toc }
 
 | Category                                                | Resources                    |
 |---------------------------------------------------------|------------------------------|

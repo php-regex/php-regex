@@ -43,6 +43,13 @@
     var tag = node.tagName;
     if (tag === 'H2' || tag === 'H3') {
       current = { heading: node, nodes: [node], text: node.textContent };
+      /* A table of contents contains the name of every section, so it
+         matches every query and answers none of them: while a query is
+         active it is noise wearing the first screen. Tagged blocks never
+         match, and the empty query brings them back. */
+      if (node.classList.contains('filter-toc')) {
+        current.toc = true;
+      }
       if (tag === 'H2') {
         lastH2 = blocks.length;
       } else if (lastH2 !== null) {
@@ -73,7 +80,7 @@
 
     /* Direct hits: the query's own matches, before any propagation. */
     var direct = blocks.map(function (block) {
-      return !q || block.text.toLowerCase().indexOf(q) !== -1;
+      return !q || (!block.toc && block.text.toLowerCase().indexOf(q) !== -1);
     });
     var match = direct.slice();
 

@@ -13,6 +13,7 @@ This reference documents every lint rule that PHPRegex produces. It serves as th
 <p class="page-empty" role="status" hidden>No rule matches that filter — try a shorter fragment, or press Escape to see all of them again.</p>
 
 ## Table of Contents
+{: .filter-toc }
 
 | Section                                      | Description                       |
 |----------------------------------------------|-----------------------------------|

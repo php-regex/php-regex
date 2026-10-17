@@ -12,6 +12,7 @@ This comprehensive guide explains how PHPRegex reports errors and warnings, how 
 <p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
 
 ## Table of Contents
+{: .filter-toc }
 
 | Section                                             | Description                          |
 |-----------------------------------------------------|--------------------------------------|
