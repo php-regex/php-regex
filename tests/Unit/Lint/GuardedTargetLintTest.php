@@ -48,7 +48,7 @@ final class GuardedTargetLintTest extends TestCase
     private const CODE = <<<'PHP_WRAP'
         <?php
         namespace App;
-    
+
         final class Guarded
         {
             public function run(string $s): void
@@ -100,7 +100,7 @@ final class GuardedTargetLintTest extends TestCase
                 }
                 if (PHP_VERSION_ID >= 80400) preg_match('/(?a)\d+/', $s);
             }
-    
+
             public function early(string $s): void
             {
                 if (PHP_VERSION_ID < 80400) {
@@ -108,13 +108,13 @@ final class GuardedTargetLintTest extends TestCase
                 }
                 preg_match('/(?a)\d+/', $s);
             }
-    
+
             public function earlyThrow(string $s): void
             {
                 if (PHP_VERSION_ID < 80400) throw new \LogicException('8.4');
                 preg_match('/(?a)\d+/', $s);
             }
-    
+
             public function notAnEarlyExit(string $s): void
             {
                 if (PHP_VERSION_ID < 80400) {
@@ -123,12 +123,12 @@ final class GuardedTargetLintTest extends TestCase
                 }
                 preg_match('/(?a)\d+/', $s);
             }
-    
+
             public function ternary(string $s): int|false
             {
                 return PHP_VERSION_ID >= 80400 ? preg_match('/(?a)\d+/', $s) : preg_match('/(?<=a\Kb)c/', $s);
             }
-    
+
             public function matched(string $s): int|false
             {
                 return match (true) {
@@ -216,7 +216,7 @@ final class GuardedTargetLintTest extends TestCase
         $shadowed = <<<'PHP_WRAP'
             <?php
             namespace Shadow;
-        
+
             const PHP_VERSION_ID = 1;
             if (PHP_VERSION_ID >= 80400) {
                 preg_match('/(?a)\d+/', $s);
