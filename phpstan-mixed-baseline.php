@@ -23,10 +23,6 @@ return [
     'src/Cli/Command/RedosCommand.php' => [
         'PHPRegex\Cli\Command\RedosCommand::usageToMs()' => ['host-return', 2],
     ],
-    'src/Explain/Internal/RailroadLayoutVisitor.php' => [
-        'PHPRegex\Explain\Internal\RailroadLayoutVisitor' => ['template-identity', 1],
-        'PHPRegex\Explain\Internal\RailroadLayoutVisitor::assertLayout()' => ['validator-input', 1],
-    ],
     'src/LanguageServer/Protocol/Message.php' => [
         'PHPRegex\LanguageServer\Protocol\Message::__construct()' => ['protocol-slot', 1],
         'PHPRegex\LanguageServer\Protocol\Message::fromObject()' => ['json-decode', 1],
@@ -90,7 +86,7 @@ return [
         'PHPRegex\Linter\Config\ProjectTarget::at()' => ['json-decode', 2],
     ],
     'src/Linter/Extraction/InteropPresets.php' => [
-        'PHPRegex\Linter\Extraction\InteropPresets::notAStringWarning()' => ['validator-input', 1],
+        'PHPRegex\Linter\Extraction\InteropPresets::notAStringWarning()' => ['reflection-sink', 1],
     ],
     'src/Linter/Extraction/PendingPattern.php' => [
         'PHPRegex\Linter\Extraction\PendingPattern::__construct()' => ['template-identity', 1],
@@ -122,7 +118,7 @@ return [
     'src/Parser/Internal/LibraryPcre.php' => [
         'PHPRegex\Parser\Internal\LibraryPcre::match()' => ['preg-mirror', 1],
         'PHPRegex\Parser\Internal\LibraryPcre::matchAll()' => ['preg-mirror', 2],
-        'PHPRegex\Parser\Internal\LibraryPcre::quantity()' => ['template-identity', 1],
+        'PHPRegex\Parser\Internal\LibraryPcre::quantity()' => ['host-return', 1],
         'PHPRegex\Parser\Internal\LibraryPcre::quietly()' => ['template-identity', 1],
         'PHPRegex\Parser\Internal\LibraryPcre::replace()' => ['preg-mirror', 1],
         'PHPRegex\Parser\Internal\LibraryPcre::replaceCallback()' => ['preg-mirror', 1],

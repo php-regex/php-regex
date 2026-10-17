@@ -98,13 +98,6 @@ Parked, too large for upstream review: local branches
 `regex-negative-lookaround-groups`, `regex-quoted-sequence`,
 `regex-extended-mode`.
 
-## Declared-type tightening
-
-Every `mixed` type `src/` still declares sits in `phpstan-mixed-baseline.php`,
-one reason per symbol, and the analysis reports any new one. Left: review
-the reason given to each entry; a wrong reason is fixed in the baseline,
-and a type that can be narrowed is narrowed and its entry lowered.
-
 ## PHP 8.6 closeout and 8.7 canary
 
 The closeout is built: the analysis range reaches 8.6, both engine matrices

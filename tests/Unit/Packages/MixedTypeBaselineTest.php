@@ -33,7 +33,6 @@ final class MixedTypeBaselineTest extends TestCase
     private const PER_PACKAGE = [
         'Automata' => 2,
         'Cli' => 2,
-        'Explain' => 2,
         'LanguageServer' => 10,
         'Laravel' => 7,
         'Linter' => 34,

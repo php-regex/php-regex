@@ -76,7 +76,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
  *
  * @internal RailroadSvgRenderer draws the diagram; this is its layout, node by node
  *
- * @extends AbstractNodeVisitor<mixed>
+ * @extends AbstractNodeVisitor<string|SvgLayout>
  */
 final class RailroadLayoutVisitor extends AbstractNodeVisitor
 {
@@ -128,8 +128,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->renderSvg($layout);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitAlternation(AlternationNode $node)
+    public function visitAlternation(AlternationNode $node): array
     {
         $layouts = [];
         foreach ($node->alternatives as $child) {
@@ -139,8 +142,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->layoutAlternation($layouts);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitSequence(SequenceNode $node)
+    public function visitSequence(SequenceNode $node): array
     {
         $layouts = [];
         // The run shown so far, the last escape of it, and the literal text
@@ -182,8 +188,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->layoutSequence($layouts);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitGroup(GroupNode $node)
+    public function visitGroup(GroupNode $node): array
     {
         $label = $this->groupLabel($node);
         $result = $this->layoutGroupBox($this->layoutFor($node->child), $label);
@@ -191,14 +200,20 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $result;
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitQuantifier(QuantifierNode $node)
+    public function visitQuantifier(QuantifierNode $node): array
     {
         return $this->layoutQuantifier($node);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitLiteral(LiteralNode $node)
+    public function visitLiteral(LiteralNode $node): array
     {
         $value = DisplayEscaper::escapeText($node->value);
         if ('' === $value) {
@@ -208,26 +223,38 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->createNodeLayout("Literal ('".$value."')", $this->literalClass(), true);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitCharLiteral(CharLiteralNode $node)
+    public function visitCharLiteral(CharLiteralNode $node): array
     {
         return $this->createNodeLayout('CharLiteral ('.$node->originalRepresentation.')', $this->literalClass(), true);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitCharType(CharTypeNode $node)
+    public function visitCharType(CharTypeNode $node): array
     {
         return $this->createNodeLayout('CharType (\\'.$node->value.')', 'node control');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitDot(DotNode $node)
+    public function visitDot(DotNode $node): array
     {
         return $this->createNodeLayout('Dot (.)', 'node anychar');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitAnchor(AnchorNode $node)
+    public function visitAnchor(AnchorNode $node): array
     {
         if ($this->charClassDepth > 0) {
             return $this->createNodeLayout($node->value, $this->literalClass());
@@ -236,20 +263,29 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->createNodeLayout('Anchor ('.$node->value.')', 'node anchor');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitAssertion(AssertionNode $node)
+    public function visitAssertion(AssertionNode $node): array
     {
         return $this->createNodeLayout('Assertion (\\'.$node->value.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitKeep(KeepNode $node)
+    public function visitKeep(KeepNode $node): array
     {
         return $this->createNodeLayout('Keep (\\K)', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitCharClass(CharClassNode $node)
+    public function visitCharClass(CharClassNode $node): array
     {
         $this->charClassDepth++;
         if ($node->isNegated) {
@@ -268,8 +304,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->layoutLabelAbove($label, $expression, 'class-label');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitRange(RangeNode $node)
+    public function visitRange(RangeNode $node): array
     {
         return $this->layoutWithLabel('Range', [
             $this->layoutFor($node->start),
@@ -277,8 +316,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         ]);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitBackref(BackrefNode $node)
+    public function visitBackref(BackrefNode $node): array
     {
         $ref = $node->ref;
         $display = str_starts_with($ref, '\\') ? $ref : '\\'.$ref;
@@ -286,14 +328,20 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->createNodeLayout('Backref ('.$display.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitExtendedCharClass(ExtendedCharClassNode $node)
+    public function visitExtendedCharClass(ExtendedCharClassNode $node): array
     {
         return $this->layoutWithLabel('ExtendedCharClass', [$this->layoutFor($node->expression)]);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitClassSetOperation(ClassSetOperationNode $node)
+    public function visitClassSetOperation(ClassSetOperationNode $node): array
     {
         return $this->layoutWithLabel('ClassSetOperation ('.$node->operator->value.')', array_map(
             $this->layoutFor(...),
@@ -301,26 +349,38 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         ));
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitControlChar(ControlCharNode $node)
+    public function visitControlChar(ControlCharNode $node): array
     {
         return $this->createNodeLayout('ControlChar (\\c'.$node->char.')', 'node control');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitScriptRun(ScriptRunNode $node)
+    public function visitScriptRun(ScriptRunNode $node): array
     {
         return $this->createNodeLayout('ScriptRun ('.$node->script.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitVersionCondition(VersionConditionNode $node)
+    public function visitVersionCondition(VersionConditionNode $node): array
     {
         return $this->createNodeLayout('VersionCondition ('.$node->operator.' '.$node->version.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitUnicodeProp(UnicodePropNode $node)
+    public function visitUnicodeProp(UnicodePropNode $node): array
     {
         $inner = $node->hasBraces ? trim($node->prop, '{}') : $node->prop;
         $display = '{'.$inner.'}';
@@ -328,20 +388,29 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         return $this->createNodeLayout('UnicodeProperty (\\p'.$display.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitPosixClass(PosixClassNode $node)
+    public function visitPosixClass(PosixClassNode $node): array
     {
         return $this->createNodeLayout('PosixClass ([:'.$node->class.':])', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitComment(CommentNode $node)
+    public function visitComment(CommentNode $node): array
     {
         return $this->createNodeLayout('Comment', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitConditional(ConditionalNode $node)
+    public function visitConditional(ConditionalNode $node): array
     {
         $branches = [
             $this->layoutFor($node->yes),
@@ -356,32 +425,47 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
         ]);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitSubroutine(SubroutineNode $node)
+    public function visitSubroutine(SubroutineNode $node): array
     {
         return $this->createNodeLayout('Subroutine ('.$node->reference.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitPcreVerb(PcreVerbNode $node)
+    public function visitPcreVerb(PcreVerbNode $node): array
     {
         return $this->createNodeLayout('PCREVerb (*'.$node->verb.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitDefine(DefineNode $node)
+    public function visitDefine(DefineNode $node): array
     {
         return $this->layoutWithLabel('Define', [$this->layoutFor($node->content)]);
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitLimitMatch(LimitMatchNode $node)
+    public function visitLimitMatch(LimitMatchNode $node): array
     {
         return $this->createNodeLayout('LimitMatch (*LIMIT_MATCH='.$node->limit.')', 'node');
     }
 
+    /**
+     * @return SvgLayout
+     */
     #[\Override]
-    public function visitCallout(CalloutNode $node)
+    public function visitCallout(CalloutNode $node): array
     {
         if (null === $node->identifier) {
             $label = 'Callout (?C)';
@@ -427,9 +511,11 @@ final class RailroadLayoutVisitor extends AbstractNodeVisitor
     }
 
     /**
+     * @param string|SvgLayout $layout
+     *
      * @phpstan-assert SvgLayout $layout
      */
-    private function assertLayout(mixed $layout): void
+    private function assertLayout(string|array $layout): void
     {
         if (!\is_array($layout)) {
             throw new \LogicException('Expected layout array.');
