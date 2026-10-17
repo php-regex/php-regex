@@ -87,6 +87,26 @@ final class Response
     }
 
     /**
+     * Send a request to the client, whose answer carries the same id.
+     *
+     * @param array<string, mixed>|null $params
+     */
+    public static function request(int|string $id, string $method, ?array $params = null): void
+    {
+        $message = [
+            'jsonrpc' => '2.0',
+            'id' => $id,
+            'method' => $method,
+        ];
+
+        if (null !== $params) {
+            $message['params'] = $params;
+        }
+
+        self::send($message);
+    }
+
+    /**
      * Send a raw JSON-RPC message.
      *
      * @param array<string, mixed> $message

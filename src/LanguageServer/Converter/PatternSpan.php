@@ -98,6 +98,43 @@ final class PatternSpan
         ];
     }
 
+    /**
+     * The pattern byte offset a cursor at the given document byte offset
+     * has fully passed: the number of bytes of the pattern whose spelling
+     * ends at or before it. A cursor inside the spelling of an escape
+     * ("\x5", "\u{e") has passed none of it — it maps down to the byte
+     * before — and the bytes an escape spells together pass together.
+     * Null outside the literal token, from its opening quote to its
+     * closing one.
+     */
+    public function patternOffsetAt(int $documentByteOffset): ?int
+    {
+        $at = $documentByteOffset - $this->literalOffset;
+
+        // The token runs from its opening quote to its closing one, the
+        // last entry of the table.
+        if ($at < 0 || $at > $this->spelling[\count($this->spelling) - 1]) {
+            return null;
+        }
+
+        $passed = 0;
+        for ($entry = 1; $entry < \count($this->spelling); $entry++) {
+            // The entries do not shrink: past the cursor nothing passes again.
+            if ($this->spelling[$entry] > $at) {
+                break;
+            }
+
+            // A boundary, the first entry past a spelling, ends every byte
+            // that spelling covers; entry i of the table spells byte i, so
+            // the bytes before it have all passed.
+            if ($this->spelling[$entry] > $this->spelling[$entry - 1]) {
+                $passed = $entry;
+            }
+        }
+
+        return $passed;
+    }
+
     private static function continuesACharacter(string $text, int $offset): bool
     {
         return 0x80 === (\ord($text[$offset]) & 0xC0);

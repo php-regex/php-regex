@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp\Protocol;
 
 use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
+use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,7 +46,7 @@ final class MessageTest extends TestCase
     public function test_a_message_keeps_only_what_the_server_reads(): void
     {
         $this->assertSame(
-            ['jsonrpc', 'method', 'id', 'params'],
+            ['jsonrpc', 'method', 'id', 'params', 'clientError'],
             array_map(static fn (\ReflectionProperty $property): string => $property->getName(), (new \ReflectionClass(Message::class))->getProperties()),
         );
     }
@@ -156,6 +157,62 @@ final class MessageTest extends TestCase
     public function test_message_is_readonly(): void
     {
         $this->assertTrue(self::everyPropertyIsReadonly(Message::class));
+    }
+
+    #[Test]
+    public function test_an_error_response_is_told_apart_from_a_result_response(): void
+    {
+        $refusal = Message::readFrom($this->streamOf(self::frame(['jsonrpc' => '2.0', 'id' => 2, 'error' => ['code' => -32601, 'message' => 'Not supported.']])));
+
+        $this->assertInstanceOf(Message::class, $refusal);
+        $this->assertTrue($refusal->isErrorResponse());
+
+        $success = Message::readFrom($this->streamOf(self::frame(['jsonrpc' => '2.0', 'id' => 2, 'result' => null])));
+
+        $this->assertInstanceOf(Message::class, $success);
+        $this->assertFalse($success->isErrorResponse());
+
+        $request = Message::readFrom($this->streamOf(self::frame(['jsonrpc' => '2.0', 'id' => 2, 'method' => 'shutdown'])));
+
+        $this->assertInstanceOf(Message::class, $request);
+        $this->assertFalse($request->isErrorResponse());
+    }
+
+    #[Test]
+    public function test_a_drain_cut_short_by_the_end_of_the_stream_still_refuses_the_frame(): void
+    {
+        $stream = $this->streamOf("Content-Length: 65\r\n\r\nonly ten!");
+
+        $refused = Message::readFrom($stream, new MessageLimits(maxContentLength: 64));
+        $this->assertInstanceOf(InvalidMessage::class, $refused);
+
+        $this->assertNull(Message::readFrom($stream, new MessageLimits(maxContentLength: 64)));
+
+        fclose($stream);
+    }
+
+    #[Test]
+    public function test_a_single_header_line_past_the_cap_is_refused_without_reading_it_whole(): void
+    {
+        $stream = tmpfile();
+        $this->assertIsResource($stream);
+        fwrite($stream, 'X-Flood: ');
+        $chunk = str_repeat('a', 1024 * 1024);
+        for ($i = 0; $i < 32; $i++) {
+            fwrite($stream, $chunk);
+        }
+        rewind($stream);
+
+        $before = memory_get_peak_usage(true);
+        $refused = Message::readFrom($stream, new MessageLimits());
+        $this->assertInstanceOf(InvalidMessage::class, $refused);
+        $this->assertLessThan(
+            8 * 1024 * 1024,
+            memory_get_peak_usage(true) - $before,
+            'The endless header line was read into memory before being refused.',
+        );
+
+        fclose($stream);
     }
 
     #[Test]
@@ -308,6 +365,136 @@ final class MessageTest extends TestCase
         $this->assertNull(Message::readFrom($stream));
 
         fclose($stream);
+    }
+
+    /**
+     * A frame the caps refuse costs its declared bytes, not the session:
+     * the bytes are drained — skipping them desyncs the stream — and the
+     * frame after them in the same stream is read as ever.
+     */
+    #[Test]
+    public function test_a_content_length_past_the_cap_is_rejected_and_its_bytes_drained(): void
+    {
+        $next = '{"jsonrpc":"2.0","id":2,"method":"shutdown"}';
+        $stream = $this->streamOf(
+            "Content-Length: 65\r\n\r\n".str_repeat('a', 65)
+            .'Content-Length: '.\strlen($next)."\r\n\r\n".$next,
+        );
+
+        $limits = new MessageLimits(maxContentLength: 64);
+        $invalid = Message::readFrom($stream, $limits);
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32600, $invalid->code);
+        $this->assertNull($invalid->id);
+
+        $following = Message::readFrom($stream, $limits);
+        $this->assertInstanceOf(Message::class, $following);
+        $this->assertSame('shutdown', $following->method);
+        $this->assertSame(2, $following->id);
+
+        fclose($stream);
+    }
+
+    /**
+     * Exactly at the cap is not past it: the frame is read and refused for
+     * what it holds, here JSON that does not parse, never for its length.
+     */
+    #[Test]
+    public function test_a_content_length_exactly_at_the_cap_is_read(): void
+    {
+        $stream = $this->streamOf("Content-Length: 64\r\n\r\n".str_pad('{not json', 64));
+
+        $invalid = Message::readFrom($stream, new MessageLimits(maxContentLength: 64));
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32700, $invalid->code);
+
+        fclose($stream);
+    }
+
+    /**
+     * A header block that grows past its cap without ever naming a
+     * Content-Length is refused, and reading stops: the frame that follows
+     * in the stream is never read.
+     */
+    #[Test]
+    public function test_a_header_block_past_its_cap_is_refused_and_reading_stops(): void
+    {
+        $next = '{"jsonrpc":"2.0","id":2,"method":"shutdown"}';
+        $over = 'X-Cap: '.str_repeat('a', 65 - \strlen('X-Cap: ') - 4)."\r\n\r\n";
+        $this->assertSame(65, \strlen($over));
+        $stream = $this->streamOf($over.'Content-Length: '.\strlen($next)."\r\n\r\n".$next);
+
+        $limits = new MessageLimits(maxHeaderBlock: 64);
+        $invalid = Message::readFrom($stream, $limits);
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32600, $invalid->code);
+        $this->assertNull(Message::readFrom($stream, $limits), 'The reader went on past the block it had refused.');
+
+        fclose($stream);
+    }
+
+    /**
+     * The block counts every byte through the blank line that ends it:
+     * exactly at the cap it passes, and is refused for the header it holds
+     * — no Content-Length — as ever.
+     */
+    #[Test]
+    public function test_a_header_block_exactly_at_its_cap_is_read(): void
+    {
+        $atCap = 'X-Cap: '.str_repeat('a', 64 - \strlen('X-Cap: ') - 4)."\r\n\r\n";
+        $this->assertSame(64, \strlen($atCap));
+        $stream = $this->streamOf($atCap);
+
+        $invalid = Message::readFrom($stream, new MessageLimits(maxHeaderBlock: 64));
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32700, $invalid->code);
+
+        fclose($stream);
+    }
+
+    /**
+     * A flood that never ends is refused at the cap rather than read to the
+     * end of the input: the answer says why the session stopped.
+     */
+    #[Test]
+    public function test_an_endingless_header_flood_is_refused_at_the_cap(): void
+    {
+        $stream = $this->streamOf('X-Flood: '.str_repeat('a', 96));
+
+        $invalid = Message::readFrom($stream, new MessageLimits(maxHeaderBlock: 64));
+        $this->assertInstanceOf(InvalidMessage::class, $invalid);
+        $this->assertSame(-32600, $invalid->code);
+
+        fclose($stream);
+    }
+
+    #[Test]
+    public function test_a_header_block_at_the_cap_whose_blank_line_is_not_read_yet_is_refused(): void
+    {
+        // Header lines that already cost the whole cap, the blank line
+        // that would end the block still ahead: the block cannot end
+        // within the cap, so it is refused — not ended in silence.
+        $first = "Content-Length: 42\r\n";
+        $second = 'B: '.str_repeat('b', 64 - \strlen($first) - 3 - 2)."\r\n";
+        $stream = $this->streamOf($first.$second."\r\n{}");
+
+        $refused = Message::readFrom($stream, new MessageLimits(maxHeaderBlock: 64));
+
+        $this->assertInstanceOf(InvalidMessage::class, $refused);
+        $this->assertSame(-32600, $refused->code);
+
+        fclose($stream);
+    }
+
+    /**
+     * @param array<mixed> $body
+     */
+    private static function frame(array $body): string
+    {
+        $json = json_encode($body);
+        \assert(\is_string($json));
+
+        return \sprintf("Content-Length: %d\r\n\r\n%s", \strlen($json), $json);
     }
 
     /**

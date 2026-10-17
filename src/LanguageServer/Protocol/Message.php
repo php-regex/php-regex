@@ -23,17 +23,33 @@ use PHPRegex\Parser\Internal\LibraryPcre;
 final class Message
 {
     /**
+     * The bytes a refused frame is drained in, one read at a time.
+     */
+    private const DRAIN_CHUNK = 65536;
+
+    /**
      * A response a client sends is told apart by its id without a method:
-     * the server never reads its result or error.
+     * the server never reads its result or error payload, only whether
+     * the answer was an error at all.
      *
-     * @param array<array-key, mixed>|null $params positional or named, as JSON-RPC allows
+     * @param array<array-key, mixed>|null $params      positional or named, as JSON-RPC allows
+     * @param bool                         $clientError whether a response carries an error instead of a result
      */
     public function __construct(
         public readonly string $jsonrpc,
         public readonly ?string $method = null,
         public readonly int|string|null $id = null,
         public readonly ?array $params = null,
+        public readonly bool $clientError = false,
     ) {}
+
+    /**
+     * Whether this response answers with an error rather than a result.
+     */
+    public function isErrorResponse(): bool
+    {
+        return null === $this->method && $this->clientError;
+    }
 
     /**
      * Read a message from stdin following LSP protocol.
@@ -46,24 +62,54 @@ final class Message
     /**
      * Read a message from a stream following LSP protocol.
      *
-     * @param resource $stream
+     * @param resource           $stream
+     * @param MessageLimits|null $limits the caps the frame is read
+     *                                   under, the production ones
+     *                                   when null
      *
      * @return self|InvalidMessage|null null at the end of the input; an
      *                                  InvalidMessage for a message that was
      *                                  read but cannot be used, which the
      *                                  session answers and goes on
      */
-    public static function readFrom($stream): self|InvalidMessage|null
+    public static function readFrom($stream, ?MessageLimits $limits = null): self|InvalidMessage|null
     {
+        $limits ??= new MessageLimits();
         $contentLength = null;
         $inHeaders = false;
+        $headerBlock = 0;
 
         // Read headers until empty line
         while (true) {
-            $line = fgets($stream);
+            // Header lines that already cost the whole cap cannot be
+            // terminated within it: the blank line that would end the
+            // block costs bytes past the cap. Refused without waiting
+            // for it.
+            if ($headerBlock >= $limits->maxHeaderBlock) {
+                self::drainRest($stream);
+
+                return InvalidMessage::invalidRequest();
+            }
+
+            // A header line never costs more than the block's whole
+            // remaining budget: an endless one is refused the moment the
+            // budget is spent, not after it was buffered whole.
+            $budget = $limits->maxHeaderBlock - $headerBlock;
+            $line = fgets($stream, max(1, $budget + 1));
             if (false === $line) {
                 return null;
             }
+
+            if (!str_ends_with($line, "\n") && !feof($stream)) {
+                self::drainRest($stream);
+
+                return InvalidMessage::invalidRequest();
+            }
+
+            // The block counts every byte through the blank line that ends
+            // it: a line read under its remaining budget never brings the
+            // count past the cap, so the check above is the only refusal.
+            $headerBlock += \strlen($line);
 
             $line = trim($line, " \t\n\r\0\x0B");
             if ('' === $line) {
@@ -88,6 +134,14 @@ final class Message
 
         if (null === $contentLength) {
             return InvalidMessage::parseError();
+        }
+
+        // A body the cap refuses still costs its declared bytes: skipping
+        // them desyncs the stream the frame after it is read from.
+        if ($contentLength > $limits->maxContentLength) {
+            self::drainDeclared($stream, $contentLength);
+
+            return InvalidMessage::invalidRequest();
         }
 
         $content = '';
@@ -144,6 +198,37 @@ final class Message
     }
 
     /**
+     * Discard the rest of the input, in bounded reads: a header block past
+     * its cap is a flood whose end never comes, so nothing behind it is
+     * ever read as a frame again.
+     *
+     * @param resource $stream
+     */
+    private static function drainRest($stream): void
+    {
+        while (false !== ($chunk = fread($stream, self::DRAIN_CHUNK)) && '' !== $chunk) {
+        }
+    }
+
+    /**
+     * Discard the $length bytes a refused frame declared, in bounded reads:
+     * the stream goes on at the frame that follows them.
+     *
+     * @param resource $stream
+     */
+    private static function drainDeclared($stream, int $length): void
+    {
+        while ($length > 0) {
+            $chunk = fread($stream, min(self::DRAIN_CHUNK, $length));
+            if (false === $chunk || '' === $chunk) {
+                return;
+            }
+
+            $length -= \strlen($chunk);
+        }
+    }
+
+    /**
      * The message a JSON-RPC 2.0 object holds, or the invalid request it is.
      *
      * @param array<mixed> $data
@@ -174,6 +259,7 @@ final class Message
             method: \is_string($method) ? $method : null,
             id: $usableId,
             params: $params,
+            clientError: null === $method && \array_key_exists('error', $data),
         );
     }
 }

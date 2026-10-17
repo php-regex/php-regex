@@ -43,6 +43,12 @@ final class PatternDeclarations
      */
     public const FILE_LIMIT = 20000;
 
+    /**
+     * The manifest of the packages Composer installed, under the library
+     * directory: when it changes, the libraries are read again.
+     */
+    public const MANIFEST_SUFFIX = '/composer/installed.json';
+
     private const TEMPLATE_SUFFIXES = ['.tpl.php', '.blade.php', '.twig.php'];
 
     /**
@@ -253,7 +259,8 @@ final class PatternDeclarations
         }
 
         $library = $this->isLibrary($path);
-        if (!$library && !$this->inWorkspace($path)) {
+        $workspace = $this->inWorkspace($path);
+        if (!$library && !$workspace) {
             return false;
         }
 
@@ -269,7 +276,12 @@ final class PatternDeclarations
             if ([] === $specs) {
                 unset($this->libraries[$path]);
             }
-        } else {
+        }
+
+        // A vendor subtree the workspace's regex.json names among its
+        // paths is workspace as well as library: both stores carry it,
+        // and both must hear the change.
+        if ($workspace) {
             $this->workspacePaths[$path] = true;
             $this->files[$path] = $specs;
             if ([] === $specs) {
@@ -420,6 +432,17 @@ final class PatternDeclarations
 
         // parse_url() reads file:///C:/project as C:/project.
         return rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
+    }
+
+    /**
+     * Whether a path is one of the workspace's configured PHP files — the
+     * ones the editor's events keep fresh even under vendor/, where a
+     * subtree the workspace's regex.json names among its paths is
+     * workspace, not library.
+     */
+    public function readsWorkspacePath(string $path): bool
+    {
+        return $this->inWorkspace($path);
     }
 
     /**
@@ -678,7 +701,7 @@ final class PatternDeclarations
      */
     private function isLibraryManifest(string $path): bool
     {
-        return null !== $this->libraryDirectory && $this->libraryDirectory.'/composer/installed.json' === $path;
+        return null !== $this->libraryDirectory && $this->libraryDirectory.self::MANIFEST_SUFFIX === $path;
     }
 
     /**

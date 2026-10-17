@@ -74,12 +74,13 @@ final class TextDocumentHandler
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
         $text = isset($textDocument['text']) && \is_string($textDocument['text']) ? $textDocument['text'] : null;
+        $version = isset($textDocument['version']) && \is_int($textDocument['version']) ? $textDocument['version'] : null;
 
         if (null === $uri || null === $text) {
             return;
         }
 
-        $this->publishDiagnostics($uri, ...$this->documents->open($uri, $text));
+        $this->publishDiagnostics($uri, ...$this->documents->open($uri, $text, $version));
     }
 
     /**
@@ -88,9 +89,10 @@ final class TextDocumentHandler
     public function didChange(Message $message): void
     {
         $params = $message->params ?? [];
-        /** @var array{uri?: string} $textDocument */
+        /** @var array{uri?: string, version?: int} $textDocument */
         $textDocument = $params['textDocument'] ?? [];
         $uri = isset($textDocument['uri']) && \is_string($textDocument['uri']) ? $textDocument['uri'] : null;
+        $version = isset($textDocument['version']) && \is_int($textDocument['version']) ? $textDocument['version'] : null;
         /** @var array<int, array{text?: string}> $contentChanges */
         $contentChanges = isset($params['contentChanges']) && \is_array($params['contentChanges']) ? $params['contentChanges'] : [];
 
@@ -104,7 +106,7 @@ final class TextDocumentHandler
             return;
         }
 
-        $this->publishDiagnostics($uri, ...$this->documents->update($uri, $text));
+        $this->publishDiagnostics($uri, ...$this->documents->update($uri, $text, $version));
     }
 
     /**
@@ -168,6 +170,13 @@ final class TextDocumentHandler
             $uri = \is_array($change) && \is_string($change['uri'] ?? null) ? $change['uri'] : null;
             $path = null === $uri ? null : PatternDeclarations::pathOf($uri);
             if (null === $path) {
+                continue;
+            }
+
+            // A library's file is no file of the project: the event for it
+            // is not read. Composer's manifest, watched on its own, reads
+            // the libraries again — every file of theirs with it.
+            if (!$this->documents->readsWatchedChange($uri)) {
                 continue;
             }
 
@@ -327,10 +336,19 @@ final class TextDocumentHandler
             }
         }
 
-        Response::notification('textDocument/publishDiagnostics', [
+        $payload = [
             'uri' => $uri,
             'diagnostics' => $diagnostics,
-        ]);
+        ];
+
+        // The push names the state it diagnoses, as the client numbered
+        // it: the editor drops one that names a state the document left.
+        $version = $this->documents->getVersion($uri);
+        if (null !== $version) {
+            $payload['version'] = $version;
+        }
+
+        Response::notification('textDocument/publishDiagnostics', $payload);
     }
 
     /**

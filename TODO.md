@@ -275,6 +275,105 @@ library knows: the alphabetic assertion names (10.33) and an open count past
   (`(?<=\Ka)b` matches "ab" in "ab"); `${n}` respelled `\1` in a
   double-quoted replacement (`"\1"` is chr(1)).
 
+## Language server: hardening list from the symfony/language-tools review
+
+Reviewed 2026-10-17 against symfony/language-tools (their editor stack:
+amphp LSP server, per-feature providers, VS Code/Neovim/Zed extensions, a
+CLI checker with SARIF and baselines). What transfers is a dozen specific
+mechanisms, not the architecture. Built: the completion cursor fix, the
+lifecycle gates and framing caps, dynamic watcher registration, document
+versions on diagnostics pushes, the LSP/CLI parity test, and the
+not-analyzed severity aligned with `regex lint`. Remaining:
+
+1. **`$/setTrace` plus a stderr frame log**, UTF-8-safe truncation of
+   pattern text, level also settable from initializationOptions. Nine
+   editors are documented; today debugging them is printf-to-stderr.
+2. **Subprocess smoke tests of the real `bin/regex-lsp`** (stdio to temp
+   files, never pipes): garbage bytes answered -32700 with the session
+   surviving, exit-without-shutdown returning 1, one full round trip
+   asserting stdout never emits a non-frame byte. Every existing test
+   drives the server in-process over memory streams.
+3. **Honest degradation**: warn when vendor/ is absent on the host
+   (containerized projects: library patterns silently unavailable) and
+   when the 20000-file scan cap downgrades coverage; both are currently
+   at most one log line nobody reads.
+4. **Coding-agent configuration guide**: an OpenCode-class section in
+   `docs/guides/lsp.md` with a validated config snippet — the cheapest
+   new audience.
+5. **`regex lsp` dispatch** so the existing phar carries the server
+   (soft-gated on class_exists in the standalone CLI package); gives
+   Neovim/Helix/Zed a one-download install.
+6. **VS Code extension committed in-repo** (launch vendor/bin/regex-lsp
+   or the phar via a serverPath setting; no binary bundling, no
+   marketplace) replacing the hand-written-client section of
+   `docs/guides/lsp.md:325-356`; publish to the marketplace only when
+   someone asks.
+7. Later, on evidence: a content-keyed workspace index cache (cold start
+   re-reads up to 20000 files), didChangeConfiguration/regex.json reload
+   (configuration is frozen at initialize), workDoneProgress around the
+   initial scan (measure first — the initialize response already
+   precedes the scan, so the real cost is moving it past `initialized`).
+
+Decision needed: should partial analysis affect the `regex lint` exit
+code? A run that gives up on patterns (limits, memory budget) exits 0
+today; their checker has an explicit "incomplete" code that outranks
+findings and refuses to publish its report. Saying yes is a behavior
+change for every CI that treats 0 as clean.
+
+Refused, with reasons: amphp event loop and fabpot/json-rpc-peer (our
+protocol layer is ~200 dependency-free LOC already covered by a
+malformed-frame matrix; the valuable pieces are items 2-4, not a
+dependency); the runtime snapshot bridge and its consent gate (we never
+execute user code; static discovery suffices); the DI container (15
+hand-wired files); tree-sitter (ext-tokenizer already survives mid-edit
+PHP); debounced refresh (diagnostics are millisecond-scale); incremental
+text sync (full sync is spec-valid and we memoize); the nine-app dogfood
+matrix and editor E2E (we have the corpus; pin parity first, smoke-test
+the binary, E2E last); self-contained single-file binaries (platform QA
+the phar already covers for anyone who can run an editor); a SARIF
+formatter (the github formatter already annotates PRs; build it the day a
+code-scanning user asks); utf-8 positionEncoding (our UTF-16 path is
+correct and tested; revisit on a real encoding bug); a memory_limit floor
+(the scan is per-file bounded; revisit on a real OOM report).
+
+## PHPUnit companion package: regex-phpunit
+
+A distributable `php-regex/regex-phpunit` package under `src/PHPUnit` (a
+seventeenth split): PHPUnit constraints and assertions backed by the parser,
+used by this suite too. PcreGates stays internal whatever happens — its
+judged-matrix coupling is ours alone; reopen distribution of the gates
+themselves only on real maintainer demand, after guarded-targets ships.
+
+1. A constraint extending `PHPUnit\Framework\Constraint\Constraint` plus an
+   assertions trait: `assertPatternMatches($pattern, $subject, $expected)` —
+   the expected group names are validated against the parsed AST (a typo'd
+   name is a named failure, not a silent pass), the assertion runs the match
+   itself so capture semantics are exact under their flags (`null` requires
+   `PREG_UNMATCHED_AS_NULL`, `[value, offset]` requires
+   `PREG_OFFSET_CAPTURE`; no `''`-means-unmatched ambiguity), and a failure
+   renders a `ComparisonFailure` trimmed to the groups under test, saying
+   which construct failed.
+2. `assertPatternCompiles()` and `assertPatternIsLinear()` — compile and
+   prover verdicts, not guesses.
+2. Dogfood it in the parity suites first, replacing hand-written match-array
+   assertions file by file; that is also the cheapest real-world test of the
+   package.
+2. Spec decisions waiting: the PHPUnit matrix (`^10.5||^11||^12||^13` — CI on
+   all four; `Constraint::evaluate()` and diff rendering differ across
+   majors; 13.x needs PHP >=8.4.1, which per-consumer resolution costs the
+   8.1 floor nothing), phpunit in require vs require-dev, engine-relative
+   verdicts at the user's end (running engine vs declared target; a pattern
+   that does not compile there fails loudly, never silently skips), the
+   release train (post-2.0, so the tag is not hostage to a new package), and
+   registering the name on Packagist early — free today, first-come.
+
+Two internal test-support items on the way: a static-analysis fixture
+pinning the PcreGates contract (gate literals inside
+`PcreGateLimits::KNOWN_RELEASES`), and shared provider traits for the
+release-map idiom duplicated in
+`tests/Unit/NodeVisitor/UnicodePropertyReleaseTest.php:50` and `:78` and
+three `tests/Unit/Lint/Rule/` files.
+
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +

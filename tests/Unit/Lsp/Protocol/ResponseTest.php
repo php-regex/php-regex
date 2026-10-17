@@ -121,4 +121,53 @@ final class ResponseTest extends TestCase
 
         $this->assertTrue($reflection->isFinal());
     }
+
+    /**
+     * The server also asks the client to do things: a request carries the
+     * id its answer must repeat, beside the method and its params.
+     */
+    #[Test]
+    public function test_response_has_request_method(): void
+    {
+        $reflection = new \ReflectionClass(Response::class);
+
+        $this->assertTrue($reflection->hasMethod('request'));
+        $this->assertTrue($reflection->getMethod('request')->isStatic());
+        $this->assertTrue($reflection->getMethod('request')->isPublic());
+    }
+
+    #[Test]
+    public function test_request_method_signature(): void
+    {
+        $reflection = new \ReflectionMethod(Response::class, 'request');
+        $parameters = $reflection->getParameters();
+
+        $this->assertCount(3, $parameters);
+        $this->assertSame('id', $parameters[0]->getName());
+        $this->assertSame('method', $parameters[1]->getName());
+        $this->assertSame('params', $parameters[2]->getName());
+    }
+
+    #[Test]
+    public function test_a_request_frame_carries_its_id_and_params(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            Response::request(41, 'client/registerCapability', ['registrations' => []]);
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $body = substr($written, (int) strpos($written, "\r\n\r\n") + 4);
+
+        $this->assertSame(
+            ['jsonrpc' => '2.0', 'id' => 41, 'method' => 'client/registerCapability', 'params' => ['registrations' => []]],
+            json_decode($body, true, 512, \JSON_THROW_ON_ERROR),
+        );
+    }
 }

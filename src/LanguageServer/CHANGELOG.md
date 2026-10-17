@@ -30,3 +30,27 @@ CHANGELOG
    with a warning logged past that.
  * PHP's own warnings go to stderr, never between the JSON-RPC frames on
    stdout.
+ * A failing handler leaves one stderr line, for a request as for a
+   notification — the request is still answered Internal Error (-32603),
+   where it used to be answered in silence.
+ * The completion context is computed on the pattern's bytes: a cursor past
+   an escape the literal spells (`\x5b`, `\u{e9}`) or a multibyte character,
+   or on a later line of a multi-line pattern, offers what belongs there,
+   where columns used to be mixed with byte offsets.
+ * A second `initialize` is answered Invalid Request (-32600) instead of
+   re-initializing the whole session; notifications that arrive before
+   `initialize` are dropped — with a line on stderr, the `$/` ones
+   silently — instead of being served.
+ * A frame that declares more than 16 MiB of body, or a header block over
+   8 KiB, is refused: the oversized body is drained and the session goes
+   on, the unbounded header block ends it at exit 0 — exit 1 stays the
+   crash signal.
+ * A client that offers dynamic registration is asked, after `initialized`,
+   to watch the workspace's PHP files and `vendor/composer/installed.json`;
+   the events it then sends are read, vendor files aside, once per
+   notification.
+ * Every diagnostics push carries the document's `version` when the client
+   sent one, the clearing push on close aside.
+ * A pattern not analyzed for a limit is published as a Warning, the
+   severity `regex lint` reports for the same outcome, where it used to be
+   Information.

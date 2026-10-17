@@ -115,7 +115,8 @@ final class TextDocumentHandlerTest extends TestCase
 
     /**
      * A limit of the library is no error in the pattern: the editor shows
-     * it as information, the pattern not analyzed, never as an error.
+     * it as a warning — the severity `regex lint` reports for the same
+     * "Not analyzed" outcome — never as an error.
      */
     #[Test]
     public function test_a_pattern_past_a_limit_is_published_as_not_analyzed(): void
@@ -146,7 +147,7 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertCount(1, $diagnostics);
         $this->assertIsArray($diagnostics[0]);
         $this->assertSame('regex.nesting.too_deep', $diagnostics[0]['code'] ?? null);
-        $this->assertSame(3, $diagnostics[0]['severity'] ?? null, 'Information, not Error.');
+        $this->assertSame(2, $diagnostics[0]['severity'] ?? null, 'Warning, as `regex lint` reports it, never an Error.');
         $this->assertIsString($diagnostics[0]['message'] ?? null);
         $this->assertStringStartsWith('Not analyzed: ', $diagnostics[0]['message']);
     }
@@ -474,6 +475,113 @@ final class TextDocumentHandlerTest extends TestCase
 
         $codes = array_map(static fn (mixed $diagnostic): mixed => \is_array($diagnostic) ? ($diagnostic['code'] ?? null) : null, $diagnostics);
         $this->assertSame($reported, \in_array('regex.lint.literal.invisible', $codes, true));
+    }
+
+    /**
+     * The pushes carry the version of the document they diagnose, as the
+     * client numbered it: the editor drops a push that names a version the
+     * document no longer has.
+     */
+    #[Test]
+    public function test_a_push_carries_the_version_of_the_document_it_diagnoses(): void
+    {
+        $text = "<?php\npreg_match('/(/', \$s);\n";
+        [$open] = $this->handle(
+            new Message(jsonrpc: '2.0', method: 'textDocument/didOpen', id: null, params: ['textDocument' => ['uri' => 'file:///v.php', 'text' => $text, 'version' => 3]]),
+        );
+
+        $this->assertSame(3, $open['version'] ?? null);
+
+        [$change] = $this->handle(
+            new Message(jsonrpc: '2.0', method: 'textDocument/didChange', id: null, params: [
+                'textDocument' => ['uri' => 'file:///v.php', 'version' => 4],
+                'contentChanges' => [['text' => $text]],
+            ]),
+        );
+
+        $this->assertSame(4, $change['version'] ?? null);
+    }
+
+    /**
+     * A version that is not an integer names no document state: none is
+     * invented for the push.
+     *
+     * @return iterable<string, array{textDocument: array<string, mixed>}>
+     */
+    public static function provideVersionsThatAreNoInt(): iterable
+    {
+        yield 'absent' => ['textDocument' => ['uri' => 'file:///v.php', 'text' => "<?php\npreg_match('/(/', \$s);\n"]];
+        yield 'a string' => ['textDocument' => ['uri' => 'file:///v.php', 'text' => "<?php\npreg_match('/(/', \$s);\n", 'version' => '3']];
+        yield 'null' => ['textDocument' => ['uri' => 'file:///v.php', 'text' => "<?php\npreg_match('/(/', \$s);\n", 'version' => null]];
+    }
+
+    /**
+     * @param array<string, mixed> $textDocument
+     */
+    #[Test]
+    #[DataProvider('provideVersionsThatAreNoInt')]
+    public function test_a_version_that_is_no_int_is_left_out(array $textDocument): void
+    {
+        [$push] = $this->handle(new Message(jsonrpc: '2.0', method: 'textDocument/didOpen', id: null, params: ['textDocument' => $textDocument]));
+
+        $this->assertIsArray($push);
+        $this->assertArrayNotHasKey('version', $push);
+    }
+
+    /**
+     * The push that clears a closed document is empty and carries no
+     * version: VS Code ignores one there, and the empty push is all the
+     * editor needs to drop the diagnostics it holds.
+     */
+    #[Test]
+    public function test_the_push_that_clears_a_closed_document_is_empty_and_has_no_version(): void
+    {
+        [, $clear] = $this->handle(
+            new Message(jsonrpc: '2.0', method: 'textDocument/didOpen', id: null, params: ['textDocument' => ['uri' => 'file:///v.php', 'text' => "<?php\npreg_match('/(/', \$s);\n", 'version' => 3]]),
+            new Message(jsonrpc: '2.0', method: 'textDocument/didClose', id: null, params: ['textDocument' => ['uri' => 'file:///v.php']]),
+        );
+
+        $this->assertIsArray($clear);
+        $this->assertSame(['uri' => 'file:///v.php', 'diagnostics' => []], $clear);
+    }
+
+    /**
+     * The params of the publishDiagnostics pushes a sequence of messages
+     * writes, in order.
+     *
+     * @return non-empty-list<array<string, mixed>>
+     */
+    private function handle(Message ...$messages): array
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            $handler = new TextDocumentHandler($this->documents, Regex::create(['cache' => null]));
+            foreach ($messages as $message) {
+                $method = substr((string) $message->method, (int) strrpos((string) $message->method, '/') + 1);
+                $handler->{$method}($message);
+            }
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $written = (string) stream_get_contents($stream);
+        $params = [];
+        foreach (preg_split('/Content-Length: \d+\r\n\r\n/', $written) ?: [] as $body) {
+            $decoded = json_decode($body, true);
+            if (\is_array($decoded) && 'textDocument/publishDiagnostics' === ($decoded['method'] ?? null) && \is_array($decoded['params'] ?? null)) {
+                /** @var array<string, mixed> $push */
+                $push = $decoded['params'];
+                $params[] = $push;
+            }
+        }
+
+        $this->assertNotSame([], $params, 'No diagnostics were published.');
+
+        return $params;
     }
 
     /**

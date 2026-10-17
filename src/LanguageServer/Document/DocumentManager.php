@@ -26,6 +26,11 @@ final class DocumentManager
     private array $documents = [];
 
     /**
+     * @var array<string, int> URI => version, as the client numbered it
+     */
+    private array $versions = [];
+
+    /**
      * @var array<string, list<RegexOccurrence>> URI => occurrences
      */
     private array $occurrences = [];
@@ -46,25 +51,33 @@ final class DocumentManager
     }
 
     /**
-     * Open a document.
+     * Open a document, at the version the client numbers it with.
      *
      * @return list<string> the other open documents whose patterns changed,
      *                      as the declarations of this one count now
      */
-    public function open(string $uri, string $content): array
+    public function open(string $uri, string $content, ?int $version = null): array
     {
-        return $this->update($uri, $content);
+        return $this->update($uri, $content, $version);
     }
 
     /**
-     * Update a document's content.
+     * Update a document's content, at the version the client numbers it
+     * with: none sent names no state, and none is remembered of the
+     * states before.
      *
      * @return list<string> the other open documents whose patterns changed
      *                      with the declarations of this one
      */
-    public function update(string $uri, string $content): array
+    public function update(string $uri, string $content, ?int $version = null): array
     {
         $this->documents[$uri] = $content;
+        if (null === $version) {
+            unset($this->versions[$uri]);
+        } else {
+            $this->versions[$uri] = $version;
+        }
+
         if ($this->declarations->readDocument($uri, $content)) {
             return array_values(array_diff($this->refresh(), [$uri]));
         }
@@ -82,7 +95,7 @@ final class DocumentManager
      */
     public function close(string $uri): array
     {
-        unset($this->documents[$uri], $this->occurrences[$uri]);
+        unset($this->documents[$uri], $this->versions[$uri], $this->occurrences[$uri]);
 
         return $this->declarations->closeDocument($uri) ? $this->refresh() : [];
     }
@@ -118,6 +131,15 @@ final class DocumentManager
     }
 
     /**
+     * The version the client last numbered the document with, none when
+     * it sends none.
+     */
+    public function getVersion(string $uri): ?int
+    {
+        return $this->versions[$uri] ?? null;
+    }
+
+    /**
      * Get all regex occurrences in a document.
      *
      * @return list<RegexOccurrence>
@@ -150,6 +172,24 @@ final class DocumentManager
         $path = PatternDeclarations::pathOf($uri);
 
         return null !== $path && $this->declarations->isLibrary($path);
+    }
+
+    /**
+     * Whether a change the editor reports for a file outside the open
+     * documents is read for its declarations: a library's file is not —
+     * composer's manifest alone is, as reading it reads every library
+     * again, each file of theirs with them.
+     */
+    public function readsWatchedChange(string $uri): bool
+    {
+        if (!$this->isLibrary($uri)) {
+            return true;
+        }
+
+        $path = PatternDeclarations::pathOf($uri);
+
+        return null !== $path
+            && (str_ends_with($path, PatternDeclarations::MANIFEST_SUFFIX) || $this->declarations->readsWorkspacePath($path));
     }
 
     /**

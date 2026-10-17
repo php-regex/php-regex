@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Handler;
 
+use PHPRegex\LanguageServer\Converter\PatternSpan;
+use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
@@ -195,7 +197,7 @@ final class CompletionHandler
             return;
         }
 
-        $context = $this->getCompletionContext($occurrence, $character);
+        $context = $this->getCompletionContext($occurrence, new PositionConverter($content), $line, $character);
         $items = $this->getCompletionItems($context);
 
         Response::success($message->id, [
@@ -209,18 +211,17 @@ final class CompletionHandler
      *
      * @return CompletionContext
      */
-    private function getCompletionContext(RegexOccurrence $occurrence, int $character): array
+    private function getCompletionContext(RegexOccurrence $occurrence, PositionConverter $positions, int $line, int $character): array
     {
-        // Get text from pattern start to cursor
-        // The occurrence starts at the opening quote, one before the pattern.
-        $patternStart = $occurrence->start['character'] + 1;
-        $cursorInPattern = $character - $patternStart;
+        // Get the text before the cursor, in pattern bytes: the cursor's
+        // document offset mapped through the literal's spelling, so a
+        // multibyte character or an escape between the quote and the
+        // cursor — on whichever line either sits — skews no column
+        // arithmetic.
+        $cursor = $positions->positionToOffset($line, $character);
+        $typed = PatternSpan::of($occurrence, $positions)->patternOffsetAt($cursor);
 
-        if ($cursorInPattern < 0 || $cursorInPattern > \strlen($occurrence->pattern)) {
-            return ['type' => 'general', 'prefix' => ''];
-        }
-
-        $textBeforeCursor = substr($occurrence->pattern, 0, $cursorInPattern);
+        $textBeforeCursor = substr($occurrence->pattern, 0, $typed ?? 0);
 
         // Check for escape sequence start
         if (str_ends_with($textBeforeCursor, '\\')) {

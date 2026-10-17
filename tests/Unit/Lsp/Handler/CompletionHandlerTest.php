@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp\Handler;
 
+use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
@@ -74,6 +75,145 @@ final class CompletionHandlerTest extends TestCase
     }
 
     /**
+     * The context at the cursor, computed on the pattern's bytes. The source
+     * counts UTF-16 code units of what the literal spells — "é" one unit,
+     * "\x5b" four — while the pattern counts bytes of what PHP reads from
+     * it; any column arithmetic between the two skews the prefix as soon as
+     * a multibyte character or an escape stands before the cursor, on the
+     * cursor's own line or the line the pattern starts on.
+     *
+     * @param list<string> $offered
+     * @param list<string> $notOffered
+     */
+    #[Test]
+    #[DataProvider('provideDocumentsBeforeTheCursor')]
+    public function test_completion_computes_the_context_on_pattern_bytes(string $content, string $upTo, array $offered, array $notOffered, string $labelShape): void
+    {
+        $labels = $this->completeAt($content, $upTo);
+
+        $this->assertNotSame([], $labels);
+        foreach ($offered as $label) {
+            $this->assertContains($label, $labels);
+        }
+        foreach ($notOffered as $label) {
+            $this->assertNotContains($label, $labels);
+        }
+        foreach ($labels as $label) {
+            $this->assertMatchesRegularExpression($labelShape, $label);
+        }
+    }
+
+    /**
+     * The control rows pin the boundary: multibyte text or invalid UTF-8
+     * outside the literal, and a "b" before the quote, skew nothing.
+     *
+     * @return iterable<string, array{content: string, upTo: string, offered: list<string>, notOffered: list<string>, labelShape: string}>
+     */
+    public static function provideDocumentsBeforeTheCursor(): iterable
+    {
+        $property = '/^\\\\[pP]\\{[^}]++\\}$/';
+        $flag = '/^[a-zA-Z]$/';
+
+        yield 'a multibyte character inside the pattern' => [
+            'content' => "<?php\n\$x = 'é'; preg_match('/é/ix', \$s);\n",
+            'upTo' => '/é/i',
+            'offered' => ['m'],
+            'notOffered' => ['i', '\\d'],
+            'labelShape' => $flag,
+        ];
+        yield 'a multibyte character on the line, before the literal only' => [
+            'content' => "<?php\n\$x = 'é'; preg_match('/ab/ix', \$s);\n",
+            'upTo' => '/ab/i',
+            'offered' => ['m'],
+            'notOffered' => ['i', '\\d'],
+            'labelShape' => $flag,
+        ];
+        yield 'an escape the literal spells before the cursor' => [
+            'content' => "<?php\npreg_match(\"/ab\\x5b/i\", \$s);\n",
+            'upTo' => '/ab\\x5b/i',
+            'offered' => ['m'],
+            'notOffered' => ['i', '\\d'],
+            'labelShape' => $flag,
+        ];
+        yield 'a unicode escape before a property' => [
+            'content' => "<?php\npreg_match(\"/\\u{e9}\\p{Gr/\", \$s);\n",
+            'upTo' => '\\p{G',
+            'offered' => ['\\p{L}', '\\p{Script=Greek}'],
+            'notOffered' => ['\\d', '[:alpha:]'],
+            'labelShape' => $property,
+        ];
+        yield 'a pattern spanning lines, the cursor on the second one' => [
+            'content' => "<?php\npreg_match(\"/a\n\\p{Gr/\", \$s);\n",
+            'upTo' => '\\p{G',
+            'offered' => ['\\p{L}', '\\p{Script=Greek}'],
+            'notOffered' => ['\\d', '[:alpha:]'],
+            'labelShape' => $property,
+        ];
+        yield 'a line that is not valid UTF-8 before the literal' => [
+            'content' => "<?php\n\$x = \"\xFF\"; preg_match('/\\p{Gr/', \$s);\n",
+            'upTo' => '\\p{G',
+            'offered' => ['\\p{L}', '\\p{Script=Greek}'],
+            'notOffered' => ['\\d', '[:alpha:]'],
+            'labelShape' => $property,
+        ];
+        yield 'a b before the quote' => [
+            'content' => "<?php\npreg_match(b'/\\p{Gr/', \$s);\n",
+            'upTo' => '\\p{G',
+            'offered' => ['\\p{L}', '\\p{Script=Greek}'],
+            'notOffered' => ['\\d', '[:alpha:]'],
+            'labelShape' => $property,
+        ];
+    }
+
+    /**
+     * The cursor inside an escape's spelling rounds down: the prefix
+     * excludes the partially typed escape, so the context offered is the
+     * one before it, never one reading the escape's characters as pattern
+     * text.
+     *
+     * @param list<string> $offered
+     * @param list<string> $notOffered
+     */
+    #[Test]
+    #[DataProvider('provideCursorsInsideAnEscapeSpelling')]
+    public function test_completion_excludes_a_partially_typed_escape_from_the_prefix(string $content, string $upTo, array $offered, array $notOffered, string $labelShape): void
+    {
+        $labels = $this->completeAt($content, $upTo);
+
+        $this->assertNotSame([], $labels);
+        foreach ($offered as $label) {
+            $this->assertContains($label, $labels);
+        }
+        foreach ($notOffered as $label) {
+            $this->assertNotContains($label, $labels);
+        }
+        foreach ($labels as $label) {
+            $this->assertMatchesRegularExpression($labelShape, $label);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{content: string, upTo: string, offered: list<string>, notOffered: list<string>, labelShape: string}>
+     */
+    public static function provideCursorsInsideAnEscapeSpelling(): iterable
+    {
+        yield 'inside a unicode escape' => [
+            'content' => "<?php\npreg_match(\"/\\u{e9}\\p{Gr/\", \$s);\n",
+            'upTo' => '\\u{e9',
+            'offered' => ['\\d', '(?:...)'],
+            'notOffered' => ['\\p{L}', '[:alpha:]'],
+            'labelShape' => '/^\S+$/',
+        ];
+        yield 'right after the backslash of a hexadecimal escape' => [
+            'content' => "<?php\npreg_match(\"/x\\x5b\\p{Gr/\", \$s);\n",
+            'upTo' => '/x\\',
+            'offered' => ['\\d', '(?:...)'],
+            'notOffered' => ['\\p{L}', '[:alpha:]'],
+            'labelShape' => '/^\S+$/',
+        ];
+    }
+
+    /**
      * @return list<string>
      */
     private function complete(string $pattern, int $typed): array
@@ -90,6 +230,53 @@ final class CompletionHandlerTest extends TestCase
                 method: 'textDocument/completion',
                 id: 1,
                 params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => \strlen($prefix) + $typed]],
+            ));
+        } finally {
+            Response::writeTo(null);
+        }
+
+        rewind($stream);
+        $output = (string) stream_get_contents($stream);
+        $body = json_decode(substr($output, (int) strpos($output, "\r\n\r\n") + 4), true);
+        $this->assertIsArray($body);
+        $this->assertIsArray($body['result'] ?? null);
+        $this->assertIsArray($body['result']['items'] ?? null);
+
+        $labels = [];
+        foreach ($body['result']['items'] as $item) {
+            $this->assertIsArray($item);
+            $this->assertIsString($item['label'] ?? null);
+            $labels[] = $item['label'];
+        }
+
+        return $labels;
+    }
+
+    /**
+     * The labels offered with the cursor just after $upTo in $content, the
+     * position derived the way an editor derives it: UTF-16 columns of the
+     * document's bytes, bytes alone on a line that is not valid UTF-8.
+     *
+     * @return list<string>
+     */
+    private function completeAt(string $content, string $upTo): array
+    {
+        $cursor = strpos($content, $upTo);
+        $this->assertIsInt($cursor, 'The cursor marker is not in the document.');
+        $cursor += \strlen($upTo);
+        $position = (new PositionConverter($content))->offsetToPosition($cursor);
+
+        $this->documents->open('file:///a.php', $content);
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        Response::writeTo($stream);
+
+        try {
+            (new CompletionHandler($this->documents))->handle(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/completion',
+                id: 1,
+                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => $position],
             ));
         } finally {
             Response::writeTo(null);

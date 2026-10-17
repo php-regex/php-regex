@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
+use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Toolkit\Regex;
@@ -73,20 +74,34 @@ final class ServerTest extends TestCase
     #[Test]
     public function test_a_failing_handler_answers_an_error_and_keeps_serving(): void
     {
-        // A position the handler cannot read: the request fails, the session
-        // must not.
-        $this->serve([
-            ['id' => 1, 'method' => 'initialize', 'params' => []],
-            ['method' => 'initialized'],
-            ['id' => 2, 'method' => 'textDocument/completion', 'params' => [
-                'textDocument' => ['uri' => 'file:///a.php'],
-                'position' => ['line' => 'not-a-line', 'character' => null],
-            ]],
-            ['id' => 3, 'method' => 'textDocument/codeAction', 'params' => [
-                'textDocument' => ['uri' => 'file:///a.php'],
-                'range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 0]],
-            ]],
-        ]);
+        // A position the handler cannot read: the request fails, the
+        // session must not — and the failure leaves one stderr trace,
+        // captured here, never leaked to the real one.
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+
+        try {
+            $this->serve([
+                ['id' => 1, 'method' => 'initialize', 'params' => []],
+                ['method' => 'initialized'],
+                ['id' => 2, 'method' => 'textDocument/completion', 'params' => [
+                    'textDocument' => ['uri' => 'file:///a.php'],
+                    'position' => ['line' => 'not-a-line', 'character' => null],
+                ]],
+                ['id' => 3, 'method' => 'textDocument/codeAction', 'params' => [
+                    'textDocument' => ['uri' => 'file:///a.php'],
+                    'range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 0]],
+                ]],
+            ]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        rewind($errors);
+        $lines = (string) stream_get_contents($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"), 'One stderr trace for the failed request.');
 
         $this->assertSame(-32603, $this->errorCodeOf(2));
         $this->assertSame([], $this->answerTo(3)['result']);
@@ -201,12 +216,28 @@ final class ServerTest extends TestCase
     #[Test]
     public function test_a_response_from_the_client_is_not_answered(): void
     {
-        $this->serveRaw(
-            self::frame(['id' => 1, 'method' => 'initialize', 'params' => []])
-            .self::body('{"jsonrpc":"2.0","id":9,"result":null}')
-            .self::body('{"jsonrpc":"2.0","id":10,"error":{"code":-32601,"message":"Method not found"}}')
-            .self::frame(['id' => 2, 'method' => 'shutdown']),
-        );
+        // The stray responses are traced on stderr once: captured here,
+        // never leaked to the real one — a byte of stderr is enough for
+        // tooling to read the run as failed.
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+
+        try {
+            $this->serveRaw(
+                self::frame(['id' => 1, 'method' => 'initialize', 'params' => []])
+                .self::body('{"jsonrpc":"2.0","id":9,"result":null}')
+                .self::body('{"jsonrpc":"2.0","id":10,"error":{"code":-32601,"message":"Method not found"}}')
+                .self::frame(['id' => 2, 'method' => 'shutdown']),
+            );
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        rewind($errors);
+        $lines = (string) stream_get_contents($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"), 'One trace for both stray responses.');
 
         $this->assertSame([], $this->errorsWritten());
         $this->assertNull($this->findAnswer(9));
@@ -315,9 +346,494 @@ final class ServerTest extends TestCase
         $this->assertStringContainsString('textDocument/publishDiagnostics', $this->written());
     }
 
+    /**
+     * A second "initialize" re-serves nothing: no configuration is loaded
+     * again, the workspace is not read again, and the session answers what
+     * follows as ever.
+     */
+    #[Test]
+    public function test_a_second_initialize_request_is_answered_invalid_request(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['id' => 2, 'method' => 'initialize', 'params' => []],
+            ['id' => 3, 'method' => 'textDocument/hover', 'params' => [
+                'textDocument' => ['uri' => 'file:///a.php'],
+                'position' => ['line' => 0, 'character' => 0],
+            ]],
+        ]);
+
+        $this->assertSame(-32600, $this->errorCodeOf(2));
+        $error = $this->answerTo(2)['error'] ?? null;
+        $this->assertIsArray($error);
+        $this->assertSame('The server is already initialized.', $error['message'] ?? null);
+        $this->assertCount(1, $this->targetLogs(), 'The workspace was judged a second time.');
+        $this->assertArrayHasKey('result', $this->answerTo(3), 'A hover after the refused initialize was not answered.');
+    }
+
+    /**
+     * An "initialize" the client sends as a notification after the session
+     * started does no work either — no target is resolved again, nothing is
+     * read again — and costs one line on stderr.
+     */
+    #[Test]
+    public function test_an_initialize_notification_after_initialization_does_nothing(): void
+    {
+        // The seam the drop lines are written through, mirroring
+        // Response::writeTo(); null restores stderr.
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+
+        try {
+            $this->serve([
+                ['id' => 1, 'method' => 'initialize', 'params' => []],
+                ['method' => 'initialized'],
+                ['method' => 'initialize', 'params' => []],
+                ['id' => 2, 'method' => 'shutdown'],
+            ]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $this->assertArrayHasKey('result', $this->answerTo(2));
+        $this->assertCount(1, $this->targetLogs(), 'The notification initialized the session a second time.');
+        $this->assertSame(1, substr_count($this->linesWrittenTo($errors), "\n"), 'One stderr line was expected for the dropped notification.');
+        fclose($errors);
+    }
+
+    /**
+     * A notification that arrives before "initialize" is dropped: it costs
+     * one line on stderr and publishes nothing, so a mis-wired harness sees
+     * why its early didOpen gives no diagnostics.
+     */
+    #[Test]
+    public function test_a_notification_before_initialize_is_dropped(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+
+        try {
+            $this->serve([
+                ['method' => 'textDocument/didOpen', 'params' => ['textDocument' => [
+                    'uri' => 'file:///a.php',
+                    'languageId' => 'php',
+                    'version' => 1,
+                    'text' => "<?php\npreg_match('/(/', \$s);\n",
+                ]]],
+                ['id' => 1, 'method' => 'initialize', 'params' => []],
+                ['method' => 'initialized'],
+                ['id' => 2, 'method' => 'shutdown'],
+            ]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $this->assertStringNotContainsString('textDocument/publishDiagnostics', $this->written(), 'A notification before initialize was served.');
+        $this->assertArrayHasKey('result', $this->answerTo(2));
+        $this->assertSame(1, substr_count($this->linesWrittenTo($errors), "\n"), 'One stderr line was expected for the dropped notification.');
+        fclose($errors);
+    }
+
+    /**
+     * A frame past the caps the session reads with: one Invalid Request,
+     * the declared bytes drained — skipping them desyncs the stream — and
+     * the frame after it served as ever. Exactly at the cap is not past it.
+     *
+     * @param list<string> $frames the frames between "initialized" and the closing "shutdown"
+     */
+    #[Test]
+    #[DataProvider('provideCappedMessages')]
+    public function test_a_message_past_the_content_length_cap_is_answered_and_the_stream_goes_on(array $frames, int $code, string $message): void
+    {
+        $payload = self::frame(['id' => 1, 'method' => 'initialize', 'params' => []])
+            .self::frame(['method' => 'initialized'])
+            .implode('', $frames)
+            .self::frame(['id' => 2, 'method' => 'shutdown']);
+        $input = $this->stream($payload);
+
+        (new Server(null, $input, null, new MessageLimits(maxContentLength: 64)))->run();
+
+        $this->assertSame([['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => $code, 'message' => $message]]], $this->errorsWritten());
+        $this->assertArrayHasKey('result', $this->answerTo(2), 'The frame after the rejected one was not served.');
+    }
+
+    /**
+     * @return iterable<string, array{frames: list<string>, code: int, message: string}>
+     */
+    public static function provideCappedMessages(): iterable
+    {
+        yield 'a body one byte past the cap' => ['frames' => ["Content-Length: 65\r\n\r\n".str_repeat('a', 65)], 'code' => -32600, 'message' => 'Invalid Request'];
+        // Exactly 64 bytes: past the cap check, then refused as ever for
+        // the JSON it holds, not for its length.
+        yield 'a body exactly at the cap' => ['frames' => [self::body(str_pad('{not json', 64))], 'code' => -32700, 'message' => 'Parse error'];
+    }
+
+    /**
+     * A header block that grows past its cap without ever naming a
+     * Content-Length ends the session: one Invalid Request, nothing after
+     * it read, exit 0 — exit 1 stays the crash signal, not the answer to
+     * garbage.
+     */
+    #[Test]
+    public function test_a_header_block_past_its_cap_ends_the_session_with_zero(): void
+    {
+        // The header block counts every byte through the blank line that
+        // ends it: 104 here for a cap of 64.
+        $flood = 'X-Flood: '.str_repeat('a', 96)."\r\n\r\n";
+        $payload = self::frame(['id' => 1, 'method' => 'initialize', 'params' => []])
+            .self::frame(['method' => 'initialized'])
+            .$flood
+            .self::frame(['id' => 2, 'method' => 'shutdown']);
+        $input = $this->stream($payload);
+
+        $code = (new Server(null, $input, null, new MessageLimits(maxContentLength: 64, maxHeaderBlock: 64)))->run();
+
+        $this->assertSame(0, $code);
+        $this->assertSame([['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32600, 'message' => 'Invalid Request']]], $this->errorsWritten());
+        $this->assertNull($this->findAnswer(2), 'The session read past the flood it had refused.');
+    }
+
+    /**
+     * A client that offers dynamic registration of watched files is asked
+     * to watch exactly the files the server reads: the workspace's PHP
+     * files and Composer's manifest, once.
+     */
+    #[Test]
+    public function test_a_client_offering_dynamic_registration_is_asked_to_watch_the_registered_files(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['method' => 'initialized'],
+        ]);
+
+        $registrations = $this->registrationRequests();
+        $this->assertCount(1, $registrations, 'Exactly one client/registerCapability request was expected.');
+
+        [$request] = $registrations;
+        $this->assertSame('2.0', $request['jsonrpc'] ?? null);
+        $this->assertIsInt($request['id'] ?? null);
+        $params = $request['params'] ?? null;
+        $this->assertIsArray($params);
+        $entries = $params['registrations'] ?? null;
+        $this->assertIsArray($entries);
+
+        $globs = [];
+        foreach ($entries as $entry) {
+            $this->assertIsArray($entry);
+            $this->assertSame('workspace/didChangeWatchedFiles', $entry['method'] ?? null);
+            $options = $entry['registerOptions'] ?? null;
+            $this->assertIsArray($options);
+            $watchers = $options['watchers'] ?? [];
+            $this->assertIsArray($watchers);
+            foreach ($watchers as $watcher) {
+                $this->assertIsArray($watcher);
+                $kind = $watcher['kind'] ?? null;
+                $this->assertTrue(null === $kind || \in_array($kind, [1, 2, 3], true), 'A watcher kind must be Create, Change or Delete.');
+                $globs[] = $watcher['globPattern'] ?? null;
+            }
+        }
+
+        $this->assertContains('**/*.php', $globs);
+        $this->assertContains('vendor/composer/installed.json', $globs);
+    }
+
+    /**
+     * A client that refuses the registration is told so once on stderr, and
+     * never asked again; its refusal is matched to the request by the id
+     * the server sent.
+     */
+    #[Test]
+    public function test_a_registration_refusal_is_logged_once_and_not_retried(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+        $input = $this->stream('');
+
+        try {
+            $server = new Server(null, $input);
+            $this->sendTo($server, $input,
+                ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+                ['method' => 'initialized'],
+            );
+
+            $registrations = $this->registrationRequests();
+            $this->assertCount(1, $registrations);
+            $id = $registrations[0]['id'];
+            $this->assertNotNull($id);
+
+            // The refusal carries the id the server chose, as a response.
+            $this->sendTo($server, $input, ['id' => $id, 'error' => ['code' => -32601, 'message' => 'Window/showMessage is not supported.']]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $this->assertCount(1, $this->registrationRequests(), 'The registration was retried or duplicated.');
+        $this->assertSame(1, substr_count($this->linesWrittenTo($errors), "\n"), 'One stderr warning was expected for the refusal.');
+        fclose($errors);
+    }
+
+    /**
+     * A refusal to watch the registered files is a warning on stderr that
+     * names what it leaves behind.
+     */
+    #[Test]
+    public function test_a_registration_refusal_warns_on_stderr(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+        $input = $this->stream('');
+
+        try {
+            $server = new Server(null, $input);
+            $this->sendTo($server, $input,
+                ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+                ['method' => 'initialized'],
+            );
+            $registrations = $this->registrationRequests();
+            $this->assertCount(1, $registrations);
+            $id = $registrations[0]['id'];
+            $this->assertNotNull($id);
+            $this->sendTo($server, $input, ['id' => $id, 'error' => ['code' => -32601, 'message' => 'Not supported.']]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $lines = $this->linesWrittenTo($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"));
+        $this->assertStringContainsString('refused', $lines, 'A refusal must say it was refused.');
+    }
+
+    /**
+     * A response the client sends without the id the protocol requires is
+     * read, told apart from an answer to a request of ours, and ignored
+     * with one line.
+     */
+    #[Test]
+    public function test_a_response_with_no_id_is_ignored_with_one_line(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+        $input = $this->stream('');
+
+        try {
+            $server = new Server(null, $input);
+            $this->sendTo($server, $input,
+                ['id' => 1, 'method' => 'initialize', 'params' => []],
+                ['method' => 'initialized'],
+                ['result' => null],
+            );
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $lines = $this->linesWrittenTo($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"));
+        $this->assertStringContainsString('no id', $lines);
+    }
+
+    /**
+     * A session that refused its target judges nothing: it asks for no
+     * watchers either, for the events they would invite are dead air.
+     */
+    #[Test]
+    public function test_a_refused_session_registers_no_watchers(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => [
+                'initializationOptions' => ['phpVersion' => '7.2'],
+                'clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]],
+            ]],
+            ['method' => 'initialized'],
+        ]);
+
+        $this->assertSame([], $this->registrationRequests(), 'A refused session asked the client to watch files.');
+    }
+
+    /**
+     * An "initialized" notification that arrives before any "initialize"
+     * must not poison the session: the first real initialize is served.
+     */
+    #[Test]
+    public function test_a_stray_initialized_notification_does_not_poison_the_session(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+
+        try {
+            $this->serve([
+                ['method' => 'initialized'],
+                ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $lines = $this->linesWrittenTo($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"));
+        $this->assertStringContainsString('dropped', $lines);
+
+        $this->assertArrayHasKey('result', $this->answerTo(1), 'The first initialize was refused as a second one.');
+    }
+
+    /**
+     * Responses the server never asked for are logged once, however many
+     * arrive: the first line says the channel is noisy, the rest would
+     * only flood the editor's log panel.
+     */
+    #[Test]
+    public function test_stray_client_responses_are_logged_once(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+        $input = $this->stream('');
+
+        try {
+            $server = new Server(null, $input);
+            $this->sendTo($server, $input,
+                ['id' => 1, 'method' => 'initialize', 'params' => []],
+                ['method' => 'initialized'],
+                ['id' => 77, 'result' => null],
+                ['id' => 78, 'result' => null],
+                ['id' => 79, 'result' => null],
+            );
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $lines = $this->linesWrittenTo($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"), 'Every stray response was logged.');
+    }
+
+    /**
+     * An acceptance of the same registration is one plain line, no
+     * warning: the client watches the files, that is the expected path.
+     */
+    #[Test]
+    public function test_a_registration_acceptance_is_a_plain_line(): void
+    {
+        $errors = fopen('php://memory', 'r+');
+        $this->assertIsResource($errors);
+        Server::writeErrorsTo($errors);
+        $input = $this->stream('');
+
+        try {
+            $server = new Server(null, $input);
+            $this->sendTo($server, $input,
+                ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+                ['method' => 'initialized'],
+            );
+            $registrations = $this->registrationRequests();
+            $this->assertCount(1, $registrations);
+            $id = $registrations[0]['id'];
+            $this->assertNotNull($id);
+            $this->sendTo($server, $input, ['id' => $id, 'result' => null]);
+        } finally {
+            Server::writeErrorsTo(null);
+        }
+
+        $lines = $this->linesWrittenTo($errors);
+        fclose($errors);
+        $this->assertSame(1, substr_count($lines, "\n"));
+        $this->assertStringNotContainsString('refused', $lines, 'An acceptance is not a warning.');
+    }
+
+    /**
+     * A client that offers no dynamic registration is asked for nothing:
+     * no frame leaves the server uninvited.
+     */
+    #[Test]
+    public function test_a_client_without_dynamic_registration_is_asked_for_nothing(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => []]]],
+            ['method' => 'initialized'],
+        ]);
+
+        $this->assertSame([], $this->registrationRequests());
+    }
+
     private function serveRaw(string $payload): void
     {
         (new Server(null, $this->stream($payload)))->run();
+    }
+
+    /**
+     * The window/logMessage notifications that name the target the session
+     * judges for, once per "initialize" that did its work.
+     *
+     * @return list<string>
+     */
+    private function targetLogs(): array
+    {
+        $logs = [];
+        foreach (preg_split('/Content-Length: \d+\r\n\r\n/', $this->written()) ?: [] as $body) {
+            $decoded = json_decode($body, true);
+            $message = \is_array($decoded) && \is_array($decoded['params'] ?? null) ? ($decoded['params']['message'] ?? null) : null;
+            if (\is_array($decoded) && 'window/logMessage' === ($decoded['method'] ?? null) && \is_string($message) && str_contains($message, 'Target:')) {
+                $logs[] = $message;
+            }
+        }
+
+        return $logs;
+    }
+
+    /**
+     * The client/registerCapability requests on the wire, in order.
+     *
+     * @return list<non-empty-array<mixed>>
+     */
+    private function registrationRequests(): array
+    {
+        $requests = [];
+        foreach (preg_split('/Content-Length: \d+\r\n\r\n/', $this->written()) ?: [] as $body) {
+            $decoded = json_decode($body, true);
+            if (\is_array($decoded) && 'client/registerCapability' === ($decoded['method'] ?? null)) {
+                $requests[] = $decoded;
+            }
+        }
+
+        return $requests;
+    }
+
+    /**
+     * Hands the server the messages and lets it read them, as many times as
+     * a test needs: the input stream is written past what it has read.
+     *
+     * @param resource             $input
+     * @param array<string, mixed> ...$messages
+     */
+    private function sendTo(Server $server, $input, array ...$messages): void
+    {
+        $start = ftell($input);
+        foreach ($messages as $message) {
+            $json = (string) json_encode(['jsonrpc' => '2.0'] + $message);
+            fwrite($input, 'Content-Length: '.\strlen($json)."\r\n\r\n".$json);
+        }
+        fseek($input, (int) $start);
+
+        $server->run();
+    }
+
+    /**
+     * @param resource $stream
+     */
+    private function linesWrittenTo($stream): string
+    {
+        rewind($stream);
+
+        return (string) stream_get_contents($stream);
     }
 
     /**
@@ -336,7 +852,7 @@ final class ServerTest extends TestCase
     /**
      * The error answers written, in order.
      *
-     * @return list<array<string, mixed>>
+     * @return list<non-empty-array<mixed>>
      */
     private function errorsWritten(): array
     {

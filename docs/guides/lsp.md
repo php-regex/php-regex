@@ -306,9 +306,13 @@ The server finds the declarations in three places:
   documents are checked again.
 
 A saved document (`textDocument/didSave`) and a file the editor reports as
-created, changed or deleted (`workspace/didChangeWatchedFiles`, when the
-editor is set to send it) are read again. A file changed outside the editor
-that it does not report keeps its declarations until the server restarts.
+created, changed or deleted (`workspace/didChangeWatchedFiles`) are read
+again. A client that offers dynamic registration is asked, right after
+`initialized`, to watch the workspace's PHP files and
+`vendor/composer/installed.json` — the manifest above all, whose change
+reads the libraries again; a client without it sends the events only when
+configured to, as before. A file changed outside the editor that it does
+not report keeps its declarations until the server restarts.
 
 The calls are read as `regex lint` reads them: function calls and static
 calls that name their class, their names resolved through the namespace and
@@ -519,7 +523,7 @@ Add to your settings:
 
 | Method | Description |
 |--------|-------------|
-| `initialize` | Server capabilities negotiation |
+| `initialize` | Server capabilities negotiation; a second one is answered Invalid Request (-32600) |
 | `initialized` | Initialization complete |
 | `shutdown` | Graceful shutdown request: nothing else is served until `exit`, and a request sent in between, a second `shutdown` included, is answered Invalid Request (-32600) |
 | `exit` | Server exit: code 0 after `shutdown`, 1 without it |
@@ -527,21 +531,31 @@ Add to your settings:
 | `textDocument/didChange` | Document changed |
 | `textDocument/didClose` | Document closed |
 | `textDocument/didSave` | Document saved: its declarations are read again |
-| `workspace/didChangeWatchedFiles` | Files changed outside the editor: their declarations are read again |
+| `workspace/didChangeWatchedFiles` | Files changed outside the editor: their declarations are read again; the watcher is registered with the client when it offers dynamic registration |
 | `textDocument/hover` | Hover information |
 | `textDocument/codeAction` | Code actions (quick fixes) |
 | `textDocument/completion` | Completion suggestions |
-| `textDocument/publishDiagnostics` | Push diagnostics to client |
+| `textDocument/publishDiagnostics` | Push diagnostics to client, with the document's `version` when the client sent one |
+
+A notification that arrives before `initialize` is dropped with a line on
+stderr — the `$/` ones silently, the client's own plumbing — and a request
+is answered ServerNotInitialized (-32002), `shutdown` excepted, which is
+answered and ends the session as ever. A second `initialize` initializes
+nothing again: the request is answered Invalid Request (-32600), the
+notification dropped the same way.
 
 ### Malformed Messages
 
 A message the server cannot use is answered with a JSON-RPC error, and the
-session goes on:
+session goes on — except for a header block the reader cannot bound, which
+ends it:
 
 | Message | Answer |
 |---------|--------|
 | A body that is not JSON, or empty (`Content-Length: 0`) | `-32700` Parse error, `id` null |
-| Headers without a usable `Content-Length` | `-32700` Parse error, `id` null; the body has no known end, so reading starts again at the next `Content-Length` header |
+| Headers without a usable `Content-Length` | `-32700` Parse error, `id` null; the body has no known end, so reading starts again at the next `Content-Length` header — as long as the skipped bytes stay under the 8 KiB header cap; past it the session ends as the row below |
+| A declared `Content-Length` over 16 MiB | `-32600` Invalid Request, `id` null; the declared bytes are drained and the session goes on |
+| A header block over 8 KiB, an endless run of header lines above all | `-32600` Invalid Request, `id` null; the session ends there, exit 0 — exit 1 stays the crash signal, not the answer to garbage |
 | JSON that is not a JSON-RPC 2.0 object: a batch, a scalar, no `"jsonrpc": "2.0"`, a `method` that is not a string, an `id` that is neither an integer nor a string, `params` that are neither an object nor an array | `-32600` Invalid Request, with the message's `id` when it is an integer or a string, else null |
 
 ### Server Capabilities
@@ -565,6 +579,12 @@ session goes on:
   }
 }
 ```
+
+The watched-files watcher is not part of these capabilities: a client that
+offers `workspace.didChangeWatchedFiles` dynamic registration is asked to
+watch `**/*.php` and `vendor/composer/installed.json` with a
+`client/registerCapability` request after `initialized`; its answer, a
+refusal included, is never retried.
 
 ---
 
@@ -680,7 +700,10 @@ mapping as `regex lint` (see [Severity in Each Format](../reference/diagnostics.
 No diagnostic is sent as Hint, which editors tend to show faintly or not at all.
 The rules `checks.lint.rules` in the workspace's `regex.json` turns on or off
 (`{"checks": {"lint": {"rules": {"quantifier.nested": false}}}}`) are read at
-`initialize`, so the editor reports what `regex lint` reports.
+`initialize`, so the editor reports what `regex lint` reports. A pattern not
+analyzed for a limit is published as a Warning carrying the limit's code,
+`Not analyzed: ` before its message — the same outcome and severity
+`regex lint` reports.
 
 | Code | Severity | Description |
 |------|----------|-------------|

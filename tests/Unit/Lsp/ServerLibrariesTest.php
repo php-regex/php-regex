@@ -128,6 +128,170 @@ final class ServerLibrariesTest extends TestCase
         $this->assertCount(1, $warnings);
     }
 
+    /**
+     * A PHP file of vendor/ the editor reports changed is not read per
+     * event: composer's manifest, watched on its own, triggers the
+     * authoritative rescan, and no second read follows a composer update.
+     */
+    #[Test]
+    public function test_a_vendor_php_file_event_is_not_read(): void
+    {
+        $calls = $this->uri('src/Http/Controller.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($calls, self::CALLS));
+        $this->assertSame([], $this->diagnosedLines($calls));
+
+        $this->write('vendor/acme/support/src/Str.php', self::DECLARATIONS);
+        $this->send(['method' => 'workspace/didChangeWatchedFiles', 'params' => ['changes' => [['uri' => $this->uri('vendor/acme/support/src/Str.php'), 'type' => 2]]]]);
+
+        $this->assertSame([], $this->diagnosedLines($calls), 'A vendor file was read per event.');
+        $this->assertSame(1, $this->publishesFor($calls), 'The document was re-published for a vendor file event.');
+    }
+
+    /**
+     * A vendor subtree the workspace's regex.json names among its paths is
+     * workspace, not library: its watched events are read like any
+     * configured path's.
+     */
+    #[Test]
+    public function test_a_vendor_path_configured_as_workspace_keeps_its_events(): void
+    {
+        $this->write('regex.json', '{"paths": ["src", "vendor/lib"], "exclude": ["node_modules"]}');
+        $this->write('vendor/lib/Str.php', self::DECLARATIONS);
+        $calls = $this->uri('src/Http/Controller.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($calls, self::CALLS));
+        $this->assertSame([6], $this->diagnosedLines($calls));
+
+        $this->write('vendor/lib/Str.php', '<?php // the declaration is gone');
+        $this->send(['method' => 'workspace/didChangeWatchedFiles', 'params' => ['changes' => [['uri' => $this->uri('vendor/lib/Str.php'), 'type' => 2]]]]);
+
+        $this->assertSame([], $this->diagnosedLines($calls), 'The configured vendor path was not re-read.');
+    }
+
+    /**
+     * The manifest the rescan reads is watched on its own: a client that
+     * offers dynamic registration is asked for it, beside the workspace's
+     * PHP files.
+     */
+    #[Test]
+    public function test_the_installed_json_watcher_is_registered_when_the_client_offers_it(): void
+    {
+        $this->server = new Server(null, $this->input);
+        $this->send(
+            ['id' => 1, 'method' => 'initialize', 'params' => ['clientCapabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
+            ['method' => 'initialized', 'params' => []],
+        );
+
+        $globs = [];
+        foreach ($this->registrations() as $request) {
+            $params = $request['params'] ?? null;
+            $this->assertIsArray($params);
+            $entries = $params['registrations'] ?? null;
+            $this->assertIsArray($entries);
+            $this->assertIsArray($entries[0] ?? null);
+            $this->assertSame('workspace/didChangeWatchedFiles', $entries[0]['method'] ?? null);
+
+            $options = $entries[0]['registerOptions'] ?? null;
+            $this->assertIsArray($options);
+            $watchers = $options['watchers'] ?? [];
+            $this->assertIsArray($watchers);
+            foreach ($watchers as $watcher) {
+                $this->assertIsArray($watcher);
+                $globs[] = $watcher['globPattern'] ?? null;
+            }
+        }
+
+        $this->assertContains('vendor/composer/installed.json', $globs);
+        $this->assertContains('**/*.php', $globs);
+    }
+
+    /**
+     * The client groups the files it reports: one notification, whatever it
+     * holds, refreshes the declarations once and re-publishes each open
+     * document once.
+     */
+    #[Test]
+    public function test_two_file_events_in_one_notification_refresh_once(): void
+    {
+        $calls = $this->uri('src/Http/Controller.php');
+        $this->write('src/Str.php', self::DECLARATIONS);
+
+        $this->initialize();
+        $this->send($this->didOpen($calls, self::CALLS));
+        $this->assertSame([6], $this->diagnosedLines($calls));
+
+        // One notification: the declaration removed, a file created.
+        $this->write('src/Str.php', "<?php\n\n// no declaration anymore\n");
+        $this->write('src/Extra.php', "<?php\n\n// nothing declared\n");
+        $this->send(['method' => 'workspace/didChangeWatchedFiles', 'params' => ['changes' => [
+            ['uri' => $this->uri('src/Str.php'), 'type' => 2],
+            ['uri' => $this->uri('src/Extra.php'), 'type' => 1],
+        ]]]);
+
+        $this->assertSame([], $this->diagnosedLines($calls));
+        $this->assertSame(2, $this->publishesFor($calls), 'The burst refreshed the document once, not once per event.');
+    }
+
+    /**
+     * regex.json is no watched file: an event for it changes nothing, and
+     * the libraries are not read again behind it.
+     */
+    #[Test]
+    public function test_an_event_for_regex_json_changes_nothing(): void
+    {
+        $calls = $this->uri('src/Http/Controller.php');
+        $this->write('regex.json', '{}');
+
+        $this->initialize();
+        $this->send($this->didOpen($calls, self::CALLS));
+        $this->assertSame([], $this->diagnosedLines($calls));
+
+        $this->write('vendor/acme/support/src/Str.php', self::DECLARATIONS);
+        $this->send(['method' => 'workspace/didChangeWatchedFiles', 'params' => ['changes' => [['uri' => $this->uri('regex.json'), 'type' => 2]]]]);
+
+        $this->assertSame([], $this->diagnosedLines($calls), 'The libraries were read again behind a regex.json event.');
+        $this->assertSame(1, $this->publishesFor($calls));
+    }
+
+    /**
+     * How many publishDiagnostics batches a document received.
+     */
+    private function publishesFor(string $uri): int
+    {
+        $count = 0;
+        foreach ($this->notifications('textDocument/publishDiagnostics') as $params) {
+            if ($uri === ($params['uri'] ?? null)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * The client/registerCapability requests on the wire.
+     *
+     * @return list<non-empty-array<mixed>>
+     */
+    private function registrations(): array
+    {
+        rewind($this->output);
+        $written = (string) stream_get_contents($this->output);
+
+        $requests = [];
+        foreach (preg_split('/Content-Length: \d+\r\n\r\n/', $written) ?: [] as $body) {
+            $message = json_decode($body, true);
+            if (\is_array($message) && 'client/registerCapability' === ($message['method'] ?? null)) {
+                $requests[] = $message;
+            }
+        }
+
+        return $requests;
+    }
+
     private function initialize(?PatternDeclarations $declarations = null): void
     {
         $this->server = new Server(null, $this->input, $declarations);

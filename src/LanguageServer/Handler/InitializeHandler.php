@@ -24,11 +24,20 @@ use PHPRegex\Toolkit\Regex;
  */
 final class InitializeHandler
 {
+    private bool $watchedFilesRegistration = false;
+
     /**
      * Handle the initialize request.
      */
     public function handle(Message $message): void
     {
+        // What the client can be asked for: the files the server reads are
+        // registered with a client that offers to watch them itself.
+        $capabilities = $message->params['clientCapabilities'] ?? null;
+        $workspace = \is_array($capabilities) ? ($capabilities['workspace'] ?? null) : null;
+        $watched = \is_array($workspace) ? ($workspace['didChangeWatchedFiles'] ?? null) : null;
+        $this->watchedFilesRegistration = \is_array($watched) && true === ($watched['dynamicRegistration'] ?? null);
+
         if (null === $message->id) {
             return;
         }
@@ -61,5 +70,13 @@ final class InitializeHandler
             'capabilities' => $capabilities,
             'serverInfo' => $serverInfo,
         ]);
+    }
+
+    /**
+     * Whether the client offers to register the watched files itself.
+     */
+    public function watchedFilesRegistration(): bool
+    {
+        return $this->watchedFilesRegistration;
     }
 }

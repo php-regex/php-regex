@@ -71,7 +71,8 @@ final class DiagnosticConverter
 
     /**
      * A limit of the library met on the pattern: no error in it, the
-     * pattern is not analyzed. Shown as information over the whole body.
+     * pattern is not analyzed. Shown as a warning over the whole body,
+     * the severity `regex lint` reports for the same outcome.
      *
      * @return Diagnostic
      */
@@ -79,7 +80,7 @@ final class DiagnosticConverter
     {
         return [
             'range' => $span->range(0, $span->bodyLength()),
-            'severity' => self::SEVERITY_INFORMATION,
+            'severity' => self::SEVERITY_WARNING,
             'code' => $code->value,
             'source' => 'php-regex',
             'message' => 'Not analyzed: '.$message,

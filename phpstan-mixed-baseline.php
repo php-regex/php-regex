@@ -33,6 +33,7 @@ return [
     ],
     'src/LanguageServer/Protocol/Response.php' => [
         'PHPRegex\LanguageServer\Protocol\Response::notification()' => ['protocol-slot', 1],
+        'PHPRegex\LanguageServer\Protocol\Response::request()' => ['protocol-slot', 1],
         'PHPRegex\LanguageServer\Protocol\Response::send()' => ['reflection-sink', 1],
         'PHPRegex\LanguageServer\Protocol\Response::success()' => ['protocol-slot', 1],
     ],

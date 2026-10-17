@@ -22,6 +22,7 @@ use PHPRegex\LanguageServer\Handler\InitializeHandler;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
+use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
@@ -79,6 +80,19 @@ final class Server
     private const LOG_WARNING = 2;
     private const LOG_INFO = 3;
 
+    /**
+     * The id of the watched-files registration, the one an unregister
+     * request would name.
+     */
+    private const WATCHED_FILES_REGISTRATION = 'php-regex/did-change-watched-files';
+
+    /**
+     * Stream the error lines are written to, or null for stderr.
+     *
+     * @var resource|null
+     */
+    private static $errorStream;
+
     private bool $initialized = false;
 
     private bool $shutdown = false;
@@ -93,6 +107,22 @@ final class Server
      * then no pattern is.
      */
     private bool $refused = false;
+
+    /**
+     * The id the next request the server sends carries.
+     */
+    private int $nextRequestId = 1;
+
+    /**
+     * The watched-files registration request this session sent, never a
+     * second one: its answer, a refusal included, is only logged.
+     */
+    private ?int $registrationRequestId = null;
+
+    /**
+     * Whether a stray client response was already traced on stderr.
+     */
+    private bool $strayResponseTraced = false;
 
     private readonly InitializeHandler $initHandler;
 
@@ -111,11 +141,15 @@ final class Server
      *                                               for stdin
      * @param PatternDeclarations|null $declarations the declarations the
      *                                               workspace is read into
+     * @param MessageLimits|null       $limits       the caps the frames are
+     *                                               read under, the production
+     *                                               ones when null
      */
     public function __construct(
         private readonly ?Regex $givenRegex = null,
         private $input = null,
-        ?PatternDeclarations $declarations = null
+        ?PatternDeclarations $declarations = null,
+        private readonly ?MessageLimits $limits = null,
     ) {
         $this->documents = new DocumentManager(new RegexFinder(), $declarations ?? new PatternDeclarations());
 
@@ -153,7 +187,7 @@ final class Server
         }
 
         while (null === $this->exitCode) {
-            $message = Message::readFrom($input);
+            $message = Message::readFrom($input, $this->limits);
             if (null === $message) {
                 // EOF or read error
                 break;
@@ -180,21 +214,47 @@ final class Server
     }
 
     /**
-     * Answer a request whose handler failed, and leave a trace of a failed
-     * notification on stderr, where the editor collects the server log.
+     * Write the error lines somewhere else than stderr, which is what an
+     * embedding process — or a test — needs to read them back.
+     *
+     * @param resource|null $stream null restores stderr
      */
-    private function reportFailure(Message $message, \Throwable $failure): void
+    public static function writeErrorsTo($stream): void
     {
-        if ($message->isRequest() && null !== $message->id) {
-            Response::error($message->id, self::ERROR_INTERNAL, $failure->getMessage());
+        self::$errorStream = $stream;
+    }
+
+    /**
+     * Leave one line on stderr, where the editor collects the server log.
+     */
+    private static function writeErrorLine(string $message): void
+    {
+        $line = "regex-lsp: {$message}\n";
+
+        if (null !== self::$errorStream) {
+            fwrite(self::$errorStream, $line);
+            fflush(self::$errorStream);
 
             return;
         }
 
-        file_put_contents(
-            'php://stderr',
-            \sprintf("regex-lsp: %s: %s\n", $failure::class, $failure->getMessage()),
-        );
+        // Uncovered by design: writing to the process's real stderr is
+        // what tests must never do — one byte of it reads as a failure to
+        // the tooling around the suite. The seam above is the tested path.
+        file_put_contents('php://stderr', $line);
+    }
+
+    /**
+     * Answer a request whose handler failed, and leave a trace of every
+     * failure on stderr, where the editor collects the server log.
+     */
+    private function reportFailure(Message $message, \Throwable $failure): void
+    {
+        self::writeErrorLine(\sprintf('%s: %s', $failure::class, $failure->getMessage()));
+
+        if ($message->isRequest() && null !== $message->id) {
+            Response::error($message->id, self::ERROR_INTERNAL, $failure->getMessage());
+        }
     }
 
     /**
@@ -204,6 +264,8 @@ final class Server
     {
         $method = $message->method;
         if (null === $method) {
+            $this->handleClientResponse($message);
+
             return;
         }
 
@@ -233,23 +295,55 @@ final class Server
             return;
         }
 
-        // Handle initialize before anything else
+        // A second "initialize" judges nothing again: a request is
+        // answered Invalid Request, a notification dropped with one line
+        // on stderr.
         if ('initialize' === $method) {
+            if ($this->initialized) {
+                if (null !== $message->id) {
+                    Response::error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is already initialized.');
+                } else {
+                    self::writeErrorLine('the "initialize" notification was dropped: the server is already initialized.');
+                }
+
+                return;
+            }
+
             $this->handleInitialize($message);
 
             return;
         }
 
-        // Handle initialized notification
+        // Handle initialized notification: the files the server reads are
+        // registered with a client that offers to watch them itself. A
+        // stray one that no initialize served — the initialize request
+        // sets the flag itself — must not poison the session: it is
+        // dropped like any notification before initialize.
         if ('initialized' === $method) {
-            $this->initialized = true;
+            if (!$this->initialized) {
+                self::writeErrorLine('the "initialized" notification was dropped: the server is not initialized.');
+
+                return;
+            }
+
+            $this->registerWatchedFiles();
 
             return;
         }
 
-        // Reject requests before initialization (except shutdown)
-        if (!$this->initialized && $message->isRequest() && null !== $message->id) {
-            Response::error($message->id, -32002, 'Server not initialized');
+        // Before initialization nothing is served: a request is refused,
+        // a notification dropped — the "$/" ones silently, like the
+        // unknown notifications they are to this server.
+        if (!$this->initialized) {
+            if (null !== $message->id) {
+                Response::error($message->id, -32002, 'Server not initialized');
+
+                return;
+            }
+
+            if (!str_starts_with($method, '$/')) {
+                self::writeErrorLine(\sprintf('the "%s" notification was dropped: the server is not initialized.', $method));
+            }
 
             return;
         }
@@ -320,6 +414,65 @@ final class Server
         if (null !== $root) {
             $this->readDeclarations($root, $config);
         }
+    }
+
+    /**
+     * Ask a client that offers dynamic registration to watch the files the
+     * server reads: the workspace's PHP files and Composer's manifest. One
+     * request a session: its answer, a refusal included, is never retried.
+     */
+    private function registerWatchedFiles(): void
+    {
+        if ($this->refused || !$this->initHandler->watchedFilesRegistration() || null !== $this->registrationRequestId) {
+            return;
+        }
+
+        $this->registrationRequestId = $this->nextRequestId++;
+        Response::request($this->registrationRequestId, 'client/registerCapability', [
+            'registrations' => [
+                [
+                    'id' => self::WATCHED_FILES_REGISTRATION,
+                    'method' => 'workspace/didChangeWatchedFiles',
+                    'registerOptions' => [
+                        'watchers' => [
+                            ['globPattern' => '**/*.php'],
+                            ['globPattern' => 'vendor/composer/installed.json'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * A message with an id and no method is a response to a request the
+     * server sent: the watched-files registration. Whatever it answers, it
+     * costs one line on stderr — a refusal included — and asks for nothing
+     * again; an id this session never chose is ignored the same way.
+     */
+    private function handleClientResponse(Message $message): void
+    {
+        $id = $message->id;
+
+        if (null !== $this->registrationRequestId && $id === $this->registrationRequestId) {
+            self::writeErrorLine($message->isErrorResponse()
+                ? \sprintf('warning: the watched-files registration (request %d) was refused by the client: nothing is registered again, the editor sends no file events.', $this->registrationRequestId)
+                : \sprintf('the watched-files registration (request %d) was answered: nothing is registered again.', $this->registrationRequestId));
+
+            return;
+        }
+
+        // The first stray response says the channel is noisy; the rest
+        // would only flood the editor's log panel.
+        if ($this->strayResponseTraced) {
+            return;
+        }
+
+        $this->strayResponseTraced = true;
+
+        self::writeErrorLine(null === $id
+            ? 'a response with no id the server did not ask for was ignored.'
+            : \sprintf('a response with the id %s the server did not ask for was ignored.', \is_int($id) ? (string) $id : $id));
     }
 
     /**
