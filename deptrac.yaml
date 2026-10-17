@@ -101,7 +101,7 @@ deptrac:
     Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, RedosInternal, Transpiler, Linter, LinterInternal]
     LanguageServer: [Toolkit, Parser, ParserInternal, Explain, Optimizer, ReDoS, Linter, LinterInternal]
     PHPStan: [Parser, ParserInternal, Linter, ReDoS, Automata, Optimizer]
-    Psalm: [Parser, ParserInternal, Automata]
+    Psalm: [Parser, ParserInternal, Automata, Linter]
     Rector: [Parser, Automata]
     Symfony: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, LinterInternal]
     Laravel: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, LinterInternal]

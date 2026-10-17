@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A PHP below 7.3, which ships PCRE1, is judged as `regex lint` judges it:
+   refused when `phpRegex.phpVersion` or PHPStan's `phpVersion` names it,
+   judged from the lowest PHP on PCRE2 of a range or of the `composer.json`
+   PHPStan read it from.
  * PHPStan's `phpVersion: {min, max}` is read whole: each later PHP up to
    `max` where a rule changes validates the patterns too, reported as
    `regex.invalidForTarget`.

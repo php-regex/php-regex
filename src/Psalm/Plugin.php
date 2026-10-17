@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Psalm;
 
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Psalm\Internal\CallbackParameters;
 use PHPRegex\Psalm\Internal\PregCallAnalyzer;
@@ -26,8 +27,9 @@ use Psalm\Plugin\RegistrationInterface;
  * pattern and the flags, and reports the patterns the targeted PHP and PCRE2
  * refuse as InvalidRegexPattern.
  *
- * Patterns are judged for the PHP version Psalm analyses for, 8.2 at least,
- * with the PCRE2 it bundles, unless the plugin's options say otherwise:
+ * Patterns are judged for the PHP version Psalm analyses for, with the
+ * PCRE2 it bundles, unless the plugin's options say otherwise; a PHP below
+ * 7.3, which ships PCRE1, is judged as regex lint judges it:
  *
  *     <pluginClass class="PHPRegex\Psalm\Plugin">
  *         <phpVersion>8.4</phpVersion>
@@ -42,6 +44,7 @@ final class Plugin implements PluginEntryPointInterface
 {
     /**
      * @throws InvalidRegexOptionException when <phpVersion> or <pcreVersion> cannot be read; Psalm stops on it before reading any file
+     * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1, as regex lint refuses it
      */
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {

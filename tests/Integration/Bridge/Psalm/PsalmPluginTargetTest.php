@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -38,6 +39,8 @@ final class PsalmPluginTargetTest extends TestCase
     use PcreGates;
 
     private const FILE = 'Target/target.php';
+
+    private const PCRE1_REFUSAL = 'PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.';
 
     private const KEEP = '/(?=a\Ka)(a)/';
 
@@ -165,6 +168,48 @@ final class PsalmPluginTargetTest extends TestCase
             'reported' => $refusesKeep ? [self::KEEP => null] : [],
             'narrowed' => [...($refusesKeep ? [] : [self::KEEP]), self::ASCII, self::NO_AUTO_CAPTURE],
         ];
+    }
+
+    /**
+     * The plugin judges the target regex lint judges: a PHP below 7.3, which
+     * ships PCRE1, named for Psalm or for the plugin, is refused with the
+     * same error.
+     */
+    #[Test]
+    public function test_plugin_refuses_a_php_on_pcre1_named_for_psalm(): void
+    {
+        try {
+            PsalmRun::issues([self::FILE], '7.2', []);
+            $this->fail('A PHP on PCRE1 was judged.');
+        } catch (UnsupportedTargetException $e) {
+            $this->assertSame('Psalm phpVersion names PHP 7.2: '.self::PCRE1_REFUSAL, $e->getMessage());
+        }
+    }
+
+    #[Test]
+    public function test_plugin_refuses_a_php_on_pcre1_named_for_the_plugin(): void
+    {
+        try {
+            PsalmRun::issues([self::FILE], '8.4', ['phpVersion' => '7.2']);
+            $this->fail('A PHP on PCRE1 was judged.');
+        } catch (ConfigException $e) {
+            $this->assertInstanceOf(UnsupportedTargetException::class, $e->getPrevious(), $e->getMessage());
+            $this->assertSame('<phpVersion> names PHP 7.2: '.self::PCRE1_REFUSAL, $e->getPrevious()->getMessage());
+        }
+    }
+
+    /**
+     * Psalm reads ">=7.1 <7.3 || ^8.0" as PHP 7.1; read the way regex lint
+     * reads it, the range is judged from PHP 8.0, the lowest it allows on
+     * PCRE2, whose PCRE2 10.35 reads "(?*", which PHP 7.3 refuses.
+     */
+    #[Test]
+    public function test_plugin_judges_a_floor_psalm_read_from_composer_json_as_lint_does(): void
+    {
+        $baseDir = PsalmRun::FIXTURES.'/ComposerFloor';
+        $issues = PsalmRun::inFile(PsalmRun::issues(['floor.php'], '7.1', [], baseDir: $baseDir, phpVersionSource: 'composer'), 'floor.php', $baseDir);
+
+        $this->assertSame([], array_values(array_filter($issues, static fn (IssueData $issue): bool => 'InvalidRegexPattern' === $issue->type)));
     }
 
     #[Test]

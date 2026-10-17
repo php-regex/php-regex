@@ -365,8 +365,8 @@ other:
 
 ## The PHP version judged
 
-Patterns are judged for the PHP version Psalm analyses for, 7.3 at least,
-with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.4,
+Patterns are judged for the PHP version Psalm analyses for (below 7.3, see
+below), with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.4,
 10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2,
 10.42 for 8.3, 10.44 for 8.4 and 8.5. Two options of the plugin override it:
 
@@ -383,6 +383,22 @@ with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.4,
 `runtime`, the PHP running Psalm and the PCRE2 it links. `<pcreVersion>`
 takes a PCRE2 release, for a PHP linked against another PCRE2 than the one it
 bundles. A value the plugin cannot read stops Psalm before it reads any file.
+
+The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
+7.2 and earlier ship PCRE1, which the library does not judge. A
+`<phpVersion>` below 7.3 stops Psalm before it reads any file, and a PHP below
+7.3 Psalm was told to analyse for, by `--php-version` or `phpVersion` in
+`psalm.xml`, stops it at the first `preg_*()` call, with the error the lint
+gives:
+
+```text
+<phpVersion> names PHP 7.2: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.
+```
+
+When Psalm read its PHP from `composer.json`, the plugin reads `composer.json`
+as the lint does: a `require.php` that also allows 7.3 or later, `>=7.1 <7.3 ||
+^8.0` for one, is judged from the lowest PHP on PCRE2 it allows, 8.0 there;
+one that allows none is refused. Psalm shows no note.
 
 With `<phpVersion>8.2</phpVersion>`, Psalm running on PHP 8.4 reports the
 `(?a…)` options PCRE2 10.43 added, in `app/numbers.php`:

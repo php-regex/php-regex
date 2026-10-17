@@ -18,6 +18,7 @@ use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -177,11 +178,12 @@ final class PatternChecker
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion", "checks.redos.threshold" or
      *                                     "checks.complexity.threshold" cannot be read
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null, int|array|null $phpVersionRange = null)
     {
         // Built now, so that an unreadable version stops PHPStan before any file is read.
-        $this->regex = RegexParser::fromOptions(ParserOptions::fromArray(self::targetOptions($config, $phpVersion)));
+        $this->regex = RegexParser::fromOptions(ParserOptions::fromArray(self::targetOptions($config, $phpVersion, $phpVersionRange)));
         $target = $this->regex->target();
         $this->range = self::rangeParsers($config, $target, $phpVersionRange);
         $this->targetLabel = $target->isRunningEngine() ? null : \sprintf(
@@ -528,19 +530,38 @@ final class PatternChecker
      * the PCRE2 it links when that version is the running one or the setting
      * is "runtime", else the version the setting names.
      *
-     * @param ConfigArray $config
+     * A PHP below the first on PCRE2 is judged as regex lint judges it:
+     * refused when "phpVersion" or PHPStan names it, judged from the lowest
+     * PHP on PCRE2 of a range of PHPStan or of the composer.json PHPStan
+     * read it from, refused when they allow none.
+     *
+     * @param ConfigArray                        $config
+     * @param int|array{min: int, max: int}|null $phpVersionRange
+     *
+     * @throws InvalidRegexOptionException when "phpVersion" names no version
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
      *
      * @return array{php_version?: string|int, pcre_version?: string}
      */
-    private static function targetOptions(array $config, ?PhpVersion $phpVersion): array
+    private static function targetOptions(array $config, ?PhpVersion $phpVersion, int|array|null $phpVersionRange): array
     {
         $options = [];
+        $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
         $setting = $config['phpVersion'] ?? null;
         if (null === $setting) {
-            if (null !== $phpVersion && \PHP_VERSION_ID !== $phpVersion->getVersionId()) {
+            if (null !== $phpVersion && $phpVersion->getVersionId() < $firstOnPcre2) {
+                $target = \is_array($phpVersionRange)
+                    ? ProjectTarget::fromRange($phpVersionRange['min'], $phpVersionRange['max'], 'phpVersion')
+                    : ProjectTarget::belowPcre2($phpVersion->getVersionId(), 'phpVersion', PhpVersion::SOURCE_COMPOSER_PLATFORM_PHP === $phpVersion->getSource() ? (getcwd() ?: null) : null, getenv());
+                $options['php_version'] = $target->target()->phpVersionId;
+            } elseif (null !== $phpVersion && \PHP_VERSION_ID !== $phpVersion->getVersionId()) {
                 $options['php_version'] = $phpVersion->getVersionId();
             }
         } elseif ('runtime' !== $setting) {
+            $named = ParserOptions::fromArray(['php_version' => $setting])->target->phpVersionId;
+            if ($named < $firstOnPcre2) {
+                ProjectTarget::belowPcre2($named, 'phpRegex.phpVersion', null, []);
+            }
             $options['php_version'] = $setting;
         }
 

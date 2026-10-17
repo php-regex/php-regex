@@ -46,17 +46,18 @@ final class PsalmRun
     private static array $runs = [];
 
     /**
-     * @param list<string>               $files         paths relative to the fixture directory
-     * @param array<string, string>|null $pluginOptions the child elements of the plugin's <pluginClass>, or null to run Psalm without the plugin
-     * @param array<string, string>      $attributes    attributes of <psalm>, maxShapedArraySize for one
+     * @param list<string>                      $files            paths relative to the fixture directory
+     * @param array<string, string>|null        $pluginOptions    the child elements of the plugin's <pluginClass>, or null to run Psalm without the plugin
+     * @param array<string, string>             $attributes       attributes of <psalm>, maxShapedArraySize for one
+     * @param 'cli'|'config'|'composer'|'tests' $phpVersionSource where Psalm read its PHP version
      *
      * @return list<IssueData>
      */
-    public static function issues(array $files, string $phpVersion = '8.4', ?array $pluginOptions = [], array $attributes = [], bool $taint = false, string $baseDir = self::FIXTURES): array
+    public static function issues(array $files, string $phpVersion = '8.4', ?array $pluginOptions = [], array $attributes = [], bool $taint = false, string $baseDir = self::FIXTURES, string $phpVersionSource = 'tests'): array
     {
-        $key = serialize([$files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir]);
+        $key = serialize([$files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource]);
 
-        return self::$runs[$key] ??= self::run($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir);
+        return self::$runs[$key] ??= self::run($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource);
     }
 
     /**
@@ -143,13 +144,14 @@ final class PsalmRun
     }
 
     /**
-     * @param list<string>               $files
-     * @param array<string, string>|null $pluginOptions
-     * @param array<string, string>      $attributes
+     * @param list<string>                      $files
+     * @param array<string, string>|null        $pluginOptions
+     * @param array<string, string>             $attributes
+     * @param 'cli'|'config'|'composer'|'tests' $phpVersionSource
      *
      * @return list<IssueData>
      */
-    private static function run(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir): array
+    private static function run(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir, string $phpVersionSource): array
     {
         // Psalm reads the global $argv as the paths of a CLI run: PHPUnit's
         // arguments would become files to analyse, or a path it cannot find
@@ -158,27 +160,28 @@ final class PsalmRun
         $GLOBALS['argv'] = [];
 
         try {
-            return self::analyse($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir);
+            return self::analyse($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource);
         } finally {
             $GLOBALS['argv'] = $argv;
         }
     }
 
     /**
-     * @param list<string>               $files
-     * @param array<string, string>|null $pluginOptions
-     * @param array<string, string>      $attributes
+     * @param list<string>                      $files
+     * @param array<string, string>|null        $pluginOptions
+     * @param array<string, string>             $attributes
+     * @param 'cli'|'config'|'composer'|'tests' $phpVersionSource
      *
      * @return list<IssueData>
      */
-    private static function analyse(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir): array
+    private static function analyse(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir, string $phpVersionSource): array
     {
         $config = Config::loadFromXML($baseDir, self::xml($files, $pluginOptions, $attributes), $baseDir);
         $config->cache_directory = null;
         $config->setIncludeCollector(new IncludeCollector());
 
         $project = new ProjectAnalyzer($config, new Providers(new FileProvider()), new ReportOptions(), [], 1, 1, new VoidProgress());
-        $project->setPhpVersion($phpVersion, 'tests');
+        $project->setPhpVersion($phpVersion, $phpVersionSource);
         if ($taint) {
             $project->trackTaintedInputs();
         }

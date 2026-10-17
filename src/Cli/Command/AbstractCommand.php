@@ -15,6 +15,8 @@ namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
@@ -37,7 +39,21 @@ abstract class AbstractCommand implements CommandInterface
     protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
     {
         try {
+            // A PHP the command line names is the target, as lint takes it:
+            // one that ships PCRE1 is refused.
+            if (isset($options['php_version'])) {
+                $options = ProjectTarget::fromSources(['--php-version' => $options['php_version']], ['--pcre-version' => $options['pcre_version'] ?? null], null, [])->regexOptions();
+            }
+
             return Regex::fromOptions(ParserOptions::fromArray($options));
+        } catch (UnsupportedTargetException $e) {
+            if ($json) {
+                $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_TARGET));
+            } else {
+                $output->writeError($output->error('Error: '.$e->getMessage()."\n"));
+            }
+
+            return null;
         } catch (InvalidRegexOptionException $e) {
             $message = $this->invalidOptionMessage($e, $options);
             if ($json) {

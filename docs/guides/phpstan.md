@@ -76,6 +76,22 @@ Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lo
 
 A `phpRegex.phpVersion` naming one version judges that version alone.
 
+The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
+7.2 and earlier ship PCRE1, which the library does not judge. A version below
+7.3 named by `phpRegex.phpVersion` or by PHPStan's `phpVersion` stops the
+analysis when it starts, with the error the lint gives:
+
+```text
+phpVersion names PHP 7.1: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.
+```
+
+A range that starts below 7.3 and reaches it, `phpVersion: {min: 70100, max:
+80499}`, is judged from 7.3. When PHPStan read a PHP below 7.3 from
+`composer.json`, the extension reads `composer.json` as the lint does: a
+`require.php` that also allows 7.3 or later, or a `config.platform.php` below
+7.3 beside one, is judged from the lowest PHP on PCRE2 it allows; one that
+allows none is refused. PHPStan shows no note: the lint's note is not printed.
+
 ## Pattern parameters
 
 A function, a method or a constructor of your own that takes a pattern says

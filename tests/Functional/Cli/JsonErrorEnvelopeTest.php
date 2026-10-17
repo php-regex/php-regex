@@ -215,6 +215,46 @@ final class JsonErrorEnvelopeTest extends TestCase
     }
 
     /**
+     * The commands that read one pattern refuse a target on PCRE1 as lint
+     * does, with the same error and exit code 2, and judge PHP 7.3, the
+     * first on PCRE2.
+     *
+     * @param list<string> $command
+     */
+    #[Test]
+    #[DataProvider('providePatternCommands')]
+    public function test_a_pattern_command_refuses_a_target_on_pcre1_as_lint_does(array $command): void
+    {
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=7.2', ...$command]);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $this->assertSame("Error: --php-version names PHP 7.2: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.\n", $stderr);
+
+        [$exitCode, $stdout] = $this->runRegex(['--php-version=7.3', ...$command]);
+        $this->assertSame(0, $exitCode, $stdout);
+    }
+
+    /**
+     * @return iterable<string, array{command: list<string>}>
+     */
+    public static function providePatternCommands(): iterable
+    {
+        foreach (['validate', 'analyze', 'explain', 'parse', 'redos', 'highlight', 'debug', 'transpile', 'format', 'graph'] as $name) {
+            yield $name => ['command' => [$name, '/a/']];
+        }
+        yield 'compare' => ['command' => ['compare', '/a/', '/b/']];
+    }
+
+    #[Test]
+    public function test_a_pattern_command_refuses_a_target_on_pcre1_with_the_target_stage_in_json(): void
+    {
+        [$exitCode, $stdout] = $this->runRegex(['--php-version=5.6', 'analyze', '/a/', '--json']);
+
+        $this->assertSame(2, $exitCode, $stdout);
+        $this->assertSame(['error' => '--php-version names PHP 5.6: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.', 'stage' => 'target'], JsonContract::decodeDocument($stdout));
+    }
+
+    /**
      * --generate-baseline in a directory the process cannot write to is
      * refused before the run, as a usage error.
      */

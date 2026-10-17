@@ -26,6 +26,7 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\PrettyPrinter\Standard;
 use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunction;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
@@ -144,6 +145,7 @@ final class RegexPatternRule implements Rule
      *                                                            library changes, unless "phpVersion" names one version
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
     public function __construct(array $config = [], ?PhpVersion $phpVersion = null, int|array|null $phpVersionRange = null)
     {

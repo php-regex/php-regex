@@ -23,6 +23,7 @@ use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Attribute\RegexPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -69,6 +70,7 @@ final class RegexPatternArgumentRule implements Rule
      * @param int|array{min: int, max: int}|null $phpVersionRange PHPStan's "phpVersion" parameter
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
     public function __construct(
         private readonly ReflectionProvider $reflectionProvider,

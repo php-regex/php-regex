@@ -536,4 +536,24 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         yield 'php flag' => ['eight', null, []];
         yield 'pcre flag' => [null, 'latest', []];
     }
+    /**
+     * A range a static analyser names is read as lint reads a require.php
+     * range: from its lowest PHP on PCRE2, with the note when it starts
+     * below it, refused when it allows none.
+     */
+    #[Test]
+    public function test_a_range_an_analyser_names_is_judged_as_a_require_php_range(): void
+    {
+        $onPcre2 = ProjectTarget::fromRange(80100, 80499, 'phpVersion');
+        $this->assertSame(80100, $onPcre2->target()->phpVersionId);
+        $this->assertSame([], array_values(array_filter($onPcre2->notices(), static fn (string $notice): bool => str_contains($notice, 'PCRE1'))));
+
+        $fromBelow = ProjectTarget::fromRange(70100, 80499, 'phpVersion');
+        $this->assertSame(70300, $fromBelow->target()->phpVersionId);
+        $this->assertContains('phpVersion allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.', $fromBelow->notices());
+
+        $this->expectException(UnsupportedTargetException::class);
+        $this->expectExceptionMessage('phpVersion allows PHP 7.0: PHP 7.2 and earlier ship PCRE1');
+        ProjectTarget::fromRange(70000, 70299, 'phpVersion');
+    }
 }

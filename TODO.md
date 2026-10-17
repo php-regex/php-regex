@@ -233,17 +233,6 @@ an open count past 65535 and `\214748364` read as text (10.37). Left:
 - Discovery parity for the Rector rules: patterns folded from constants
   (as the `preg_match()` rule already does), calls of functions marked
   `#[RegexPattern]` or `Language('RegExp')`, and `preg_replace_callback_array()`.
-- The PHPStan and Psalm extensions judge a project for PHP 7.2 or earlier
-  instead of refusing it as `regex lint` does: PHPStan with the version as
-  given, Psalm raised to 7.3. Make both follow `regex lint`: refuse a
-  version named below 7.3 with the same error, and judge a floor read from
-  a `composer.json` range that also allows 7.3 or later from there, with
-  the same note, a `config.platform.php` below 7.3 giving way to such a
-  range.
-- `validate`, `analyze` and the other pattern commands take a
-  `--php-version` below 7.3 as given, with neither note nor refusal; only
-  `lint` and the bridges' lint commands resolve the project target. Make
-  them refuse it the same way, exit 2.
 - The article on which PCRE2 ships with which PHP quotes the former `\K`
   hint ("Move the \K out of the lookaround."): refresh its sample output.
 - Refused with a witness, do not build: the octal respell `\214748364` to

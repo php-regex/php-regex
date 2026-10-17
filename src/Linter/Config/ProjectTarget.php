@@ -175,6 +175,63 @@ final class ProjectTarget
         return new self($target, $source, $notices, $range);
     }
 
+    /**
+     * The target of a PHP version below the first on PCRE2 that a static
+     * analyser names or read from composer.json, judged as lint judges it:
+     * read again from the composer.json of $projectDir when the analyser
+     * read it from there, refused when it named it.
+     *
+     * @param string                $name       what named the version, as "phpVersion"
+     * @param string|null           $projectDir where the analyser read composer.json, null when it did not
+     * @param array<string, string> $env        the environment, for COMPOSER
+     *
+     * @throws UnsupportedTargetException when the PHP to judge for ships PCRE1
+     */
+    public static function belowPcre2(int $phpVersionId, string $name, ?string $projectDir, array $env): self
+    {
+        if (null !== $projectDir) {
+            $target = self::fromSources([], [], $projectDir, $env);
+            if ('running PHP' !== $target->source) {
+                return $target;
+            }
+        }
+
+        throw self::onPcre1($phpVersionId, $name.' names');
+    }
+
+    /**
+     * The target of a range of PHP versions a static analyser names, judged
+     * as lint judges a require.php range: from its lowest PHP on PCRE2, with
+     * a note when the range starts below it, refused when it allows none.
+     *
+     * @param string $name what named the range, as "phpVersion"
+     *
+     * @throws InvalidRegexOptionException when a bound names no version
+     * @throws UnsupportedTargetException  when the range allows no PHP on PCRE2
+     */
+    public static function fromRange(int $min, int $max, string $name): self
+    {
+        $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
+        if ($max < $firstOnPcre2) {
+            throw self::onPcre1($min, $name.' allows');
+        }
+
+        if ($min >= $firstOnPcre2) {
+            return self::fromSources([$name => $min], [], null, []);
+        }
+
+        $target = self::fromSources([$name => $firstOnPcre2], [], null, []);
+        $note = \sprintf(
+            '%s allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
+            $name,
+            intdiv($min, 10000),
+            intdiv($min, 100) % 100,
+            self::phpLabel($firstOnPcre2),
+        );
+
+        return new self($target->target, $target->source, [$note, ...$target->notices], $target->range);
+    }
+
     public function target(): PcreTarget
     {
         return $this->target;

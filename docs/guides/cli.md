@@ -1119,7 +1119,10 @@ A refused run exits with 2, and with `--format=json` prints the
 `target`, so that a pipeline never reads a project the command refused to
 judge as a clean one. The Symfony and Laravel `regex:lint` commands follow the
 same rule; the language server logs the note, or shows the refusal and judges
-no pattern. A constraint the command cannot read (`*`, `<9`, a branch name)
+no pattern. `validate`, `analyze` and the other commands that read one pattern
+refuse a `--php-version` below 7.3 the same way, with exit code 2 and, under
+`--json` where the command takes it, the envelope with stage `target`; the
+PHPStan extension and the Psalm plugin refuse one too. A constraint the command cannot read (`*`, `<9`, a branch name)
 falls back to the running PHP, with a note naming it: a `composer.json` the
 command cannot read never stops a run.
 

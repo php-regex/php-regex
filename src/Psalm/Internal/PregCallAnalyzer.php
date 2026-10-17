@@ -41,6 +41,8 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
@@ -181,14 +183,31 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     private static array $types = [];
 
     /**
-     * The plugin's <phpVersion> and <pcreVersion>, null when not given.
+     * The PHP each PHP below 7.3 Psalm analyses for is judged for, by the
+     * version and the directory of the composer.json Psalm read it from.
+     *
+     * @var array<string, int>
+     */
+    private static array $belowPcre2 = [];
+
+    /**
+     * The plugin's <phpVersion> and <pcreVersion>, null when not given. A
+     * PHP below 7.3 is refused as regex lint refuses it: it ships PCRE1.
      *
      * @throws InvalidRegexOptionException when either cannot be read
+     * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1
      */
     public static function configure(?string $phpVersion, ?string $pcreVersion): void
     {
         self::check('phpVersion', 'php_version', $phpVersion, 'a version like "8.4", a PHP_VERSION_ID like 80400, or "runtime"');
         self::check('pcreVersion', 'pcre_version', $pcreVersion, 'a PCRE2 release like "10.44"');
+
+        if (null !== $phpVersion && 'runtime' !== $phpVersion) {
+            $named = ParserOptions::fromArray(['php_version' => $phpVersion])->target->phpVersionId;
+            if ($named < PcreTarget::phpVersionBoundaries()[0]) {
+                ProjectTarget::belowPcre2($named, '<phpVersion>', null, []);
+            }
+        }
 
         self::$phpVersion = $phpVersion;
         self::$pcreVersion = $pcreVersion;
@@ -223,6 +242,10 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         try {
             self::analyse($event, $call, $function, $arguments);
+        } catch (UnsupportedTargetException $e) {
+            // A target on PCRE1 is no call the library cannot read: the
+            // run stops on it, as regex lint does.
+            throw $e;
         } catch (ExceptionInterface) {
             // The library could not read the call: Psalm's stub decides.
         }
@@ -771,13 +794,22 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * The parser judging patterns for the PHP Psalm analyses for, or the
-     * oldest the library judges, with the PCRE2 it bundles, or for what the
-     * options name.
+     * The parser judging patterns for the PHP Psalm analyses for, with the
+     * PCRE2 it bundles, or for what the options name. A PHP below 7.3 is
+     * judged as regex lint judges it: from the lowest PHP on PCRE2 of the
+     * composer.json Psalm read it from, refused when Psalm was told it.
+     *
+     * @throws UnsupportedTargetException when the PHP Psalm analyses for ships PCRE1
      */
     private static function parser(Codebase $codebase): RegexParser
     {
-        $options = ['php_version' => self::$phpVersion ?? max($codebase->analysis_php_version_id, PcreTarget::phpVersionBoundaries()[0])];
+        $phpVersion = self::$phpVersion ?? $codebase->analysis_php_version_id;
+        if (\is_int($phpVersion) && $phpVersion < PcreTarget::phpVersionBoundaries()[0]) {
+            $composer = 'composer' === $codebase->php_version_source ? $codebase->config->base_dir : null;
+            $phpVersion = self::$belowPcre2[$phpVersion.'@'.($composer ?? '')] ??= ProjectTarget::belowPcre2($phpVersion, 'Psalm phpVersion', $composer, getenv())->target()->phpVersionId;
+        }
+
+        $options = ['php_version' => $phpVersion];
         if (null !== self::$pcreVersion) {
             $options['pcre_version'] = self::$pcreVersion;
         }
