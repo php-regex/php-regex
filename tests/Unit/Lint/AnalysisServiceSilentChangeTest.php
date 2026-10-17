@@ -91,7 +91,7 @@ final class AnalysisServiceSilentChangeTest extends TestCase
         $this->assertCount(1, $otherTree);
         $message = $otherTree[0]['message'] ?? null;
         $this->assertIsString($message);
-        $this->assertStringContainsString('parses differently', $message);
+        $this->assertStringContainsString('parses differently', (string) $message);
 
         $refused = $this->rangeIssues($this->analysis('7.4', ['8.5']), '/(?<=a\Kb)(a|ab){1}+c/');
         $this->assertCount(1, $refused);
