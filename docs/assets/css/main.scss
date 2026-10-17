@@ -1788,7 +1788,9 @@ main table::-webkit-scrollbar-thumb {
    step of elevation. */
 .article-featured {
   margin: 0 0 3rem;
-  padding: 2rem 1.5rem;
+  /* A card's sides carry the measure; its top and bottom carry one
+     paragraph. The air goes where the reading is. */
+  padding: 1.75rem 2rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-l);
   background: var(--panel);
