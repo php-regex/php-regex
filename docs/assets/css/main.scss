@@ -427,8 +427,17 @@ main .task-list {
 
 main .task-list-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: .6rem;
+  /* A checklist line can carry a whole method signature in a code chip;
+     the row wraps and the chip itself may break mid-token rather than
+     push the page sideways (the same anywhere the table cells use). */
+  gap: .25rem .6rem;
+}
+
+main .task-list-item code {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 main .task-list-item-checkbox {
