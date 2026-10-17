@@ -17,8 +17,8 @@ declare(strict_types=1);
  * one more as much as one less, so the counts only go down.
  */
 return [
-    'src/Automata/LanguageSolver.php' => [
-        'PHPRegex\Automata\LanguageSolver::shape()' => ['reflection-sink', 2],
+    'src/Automata/Solver/RewriteSites.php' => [
+        'PHPRegex\Automata\Solver\RewriteSites::shape()' => ['reflection-sink', 2],
     ],
     'src/Cli/Command/RedosCommand.php' => [
         'PHPRegex\Cli\Command\RedosCommand::usageToMs()' => ['host-return', 2],

@@ -40,9 +40,9 @@ final class RewriteVerificationTest extends TestCase
     /**
      * Hundreds of short branches, as in a user-agent list: the match check
      * steps a thread per branch for every character class, so it gives up on
-     * its work budget, not after hundreds of configurations. The strings both
-     * match prove no $matches: the rewrite is not proven, and that is known
-     * at once. It took seconds.
+     * its work budget, not after hundreds of configurations. It took seconds.
+     * Each part the rewrite changed, a class for an alternation inside a
+     * group, is then proven alone, at once.
      */
     #[Test]
     public function test_a_wide_alternation_is_judged_without_a_long_match_search(): void
@@ -64,7 +64,7 @@ final class RewriteVerificationTest extends TestCase
         $verdict = $verify->invoke($optimizer, $original, $rewrite);
         $seconds = (hrtime(true) - $start) / 1e9;
 
-        $this->assertFalse($verdict);
+        $this->assertTrue($verdict);
         $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
     }
 
@@ -94,33 +94,38 @@ final class RewriteVerificationTest extends TestCase
 
     /**
      * The match check gives up on its configurations (2^14 for the last
-     * fourteen letters), and the rewrite does not read as the pattern does:
-     * it is unproven.
+     * fourteen letters), and so does the language check, while the rewrite
+     * does not read as the pattern does. A class for an alternation inside
+     * a group is proven alone; "x|xy" for "xy?" is not, as "x" begins "xy",
+     * and the second rewrite is unproven.
      */
     #[Test]
-    public function test_a_rewrite_both_solvers_give_up_on_is_not_offered(): void
+    public function test_a_rewrite_both_solvers_give_up_on_is_offered_only_when_its_parts_are_proven_alone(): void
     {
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
 
         $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/')->optimized, 'Unchecked, the rewrite is made.');
-        $this->assertSame('/^(a|b)*a(a|b){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/', ['verify_with_automata' => true])->optimized);
+        $this->assertSame('/^([ab])*a([ab]){14}$/', $optimizer->optimize('/^(a|b)*a(a|b){14}$/', ['verify_with_automata' => true])->optimized);
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+        $this->assertFalse($verify->invoke($optimizer, '/^(a|b)*a(a|b){14}(?:x|xy)$/', '/^(a|b)*a(a|b){14}xy?$/'));
     }
 
     /**
      * Under m the match check does not read the pattern (a "$" there looks
      * right only, so offset 0 says it all; the rewrite spells the repeat
-     * otherwise, so the two do not read alike), and the language
-     * check of [\pL0-9] writes a transition per range of an alphabet split
-     * into hundreds of them, for each of a few hundred states: past the work
-     * the check of a rewrite may spend, it proves nothing, though the
-     * solver's default budget would settle it.
+     * otherwise, so the two do not read alike), and the check of the part
+     * it changed, [\pL0-9]{80}, writes a transition per range of an
+     * alphabet split into hundreds of them, for each of some eighty states:
+     * past the work the check of a rewrite may spend, it proves nothing,
+     * though the solver's default budget would settle it.
      */
     #[Test]
     public function test_a_rewrite_whose_language_check_outgrows_its_work_is_not_offered(): void
     {
-        $original = '/[\pL0-9]*0[0-9]{6}$/um';
-        $rewrite = '/[\pL0-9]*0[0-9]{5}[0-9]$/um';
-        $this->assertTrue((new LanguageSolver())->equivalent($original, $rewrite)->isEquivalent, 'The default budget settles it.');
+        $original = '/[\pL0-9]*0[\pL0-9]{80}$/um';
+        $rewrite = '/[\pL0-9]*0[\pL0-9]{79}[\pL0-9]$/um';
+        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($original, $rewrite), 'The default budget settles it.');
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
 
@@ -145,6 +150,141 @@ final class RewriteVerificationTest extends TestCase
         yield 'a class for an alternation, anchored and matching empty' => ['original' => '/^(?:a|b)*/', 'rewrite' => '/^[ab]*/', 'verdict' => true];
         yield 'a useless flag dropped around a lookbehind' => ['original' => '/(?<!x)a/s', 'rewrite' => '/(?<!x)a/', 'verdict' => true];
         yield 'a useless flag dropped around a start of line' => ['original' => '/^\s*$/sm', 'rewrite' => '/^\s*$/m', 'verdict' => true];
+        yield 'a class for an alternation beside a lookbehind' => ['original' => '/(?<!\\\\)(?:_|%)/', 'rewrite' => '/(?<!\\\\)[_%]/', 'verdict' => true];
+        yield 'a class for an alternation inside a lookahead' => ['original' => '/(?=\s*(?:,|\n))/', 'rewrite' => '/(?=\s*[,\n])/', 'verdict' => true];
+        yield 'a count for a repeated character after a start of line' => ['original' => '/^\/\/\/\/x/m', 'rewrite' => '/^\/{4}x/m', 'verdict' => true];
+        yield 'a class for an alternation inside a group a backreference reads' => ['original' => '/(?<!x)((?:_|%)b)\1/', 'rewrite' => '/(?<!x)([_%]b)\1/', 'verdict' => true];
+        yield 'a class for an alternation inside a caseless group' => ['original' => '/(?<!x)(?i:a|b)c/', 'rewrite' => '/(?<!x)(?i:[ab])c/', 'verdict' => true];
+        yield 'a count for a repeated character beside a match start reset' => ['original' => '/(?<!x)a\Kbbbb/', 'rewrite' => '/(?<!x)a\Kb{4}/', 'verdict' => true];
+        yield 'a class for an alternation inside a lookbehind' => ['original' => '/(?<=(?:_|%))a/', 'rewrite' => '/(?<=[_%])a/', 'verdict' => true];
+        yield 'a repeated branch dropped beside a word boundary' => ['original' => '/\b(?:ab|cd|ab|abc)/', 'rewrite' => '/\b(?:ab|cd|abc)/', 'verdict' => true];
+        yield 'a branch moved where its first copy was' => ['original' => '/\b(?:a|ab|a)/', 'rewrite' => '/\b(?:ab|a)/', 'verdict' => false];
+        // Each would run alike, but the proof of a rewritten part does not
+        // read a pattern a subroutine call may enter elsewhere, a part of
+        // more than one length inside a lookbehind, whose length rules vary
+        // by release, or a pattern holding a backtracking verb.
+        yield 'a rewritten part a subroutine call enters' => ['original' => '/(?<!x)((?:_|%))(?1)/', 'rewrite' => '/(?<!x)([_%])(?1)/', 'verdict' => false];
+        yield 'a rewritten part of more than one length inside a lookbehind' => ['original' => '/(?<=x(?:a|bc))y/', 'rewrite' => '/(?<=x(?:bc|a))y/', 'verdict' => false];
+        yield 'branches of more than one length merged beside a word boundary' => ['original' => '/\b(?:a|bc|d)/', 'rewrite' => '/\b(?:[ad]|bc)/', 'verdict' => true];
+        yield 'branches of more than one length merged inside a lookbehind' => ['original' => '/(?<=x(?:a|bc|d))y/', 'rewrite' => '/(?<=x(?:[ad]|bc))y/', 'verdict' => false];
+        yield 'a rewritten part beside a backtracking verb' => ['original' => '/(?<!x)(?:_|%)(*PRUNE)a/', 'rewrite' => '/(?<!x)[_%](*PRUNE)a/', 'verdict' => false];
+        yield 'a rewritten part of a group only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>a|b))x(?&n)/', 'rewrite' => '/(?(DEFINE)(?<n>[ab]))x(?&n)/', 'verdict' => false];
+    }
+
+    /**
+     * Where the match solver does not read the pattern, the parts a rewrite
+     * changes are proven alone: each matches the strings the other does,
+     * and none begins another, so from any position it ends in one place
+     * at most, whatever the pattern around it does. Each rewrite writes
+     * what the pattern writes in every call, from every offset, on every
+     * subject over its letters.
+     */
+    #[Test]
+    #[DataProvider('provideRewritesProvenInPlace')]
+    public function test_a_rewrite_proven_in_place_agrees_with_the_engine_in_every_call(string $original, string $rewrite, string $letters, int $length): void
+    {
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+        $this->assertTrue($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), $original, $rewrite));
+
+        foreach (self::subjects($letters, $length) as $subject) {
+            foreach (['preg_match_all', 'preg_replace', 'preg_split'] as $call) {
+                $this->assertSame(self::called($call, $original, $subject), self::called($call, $rewrite, $subject), \sprintf('%s() on %s.', $call, json_encode($subject)));
+            }
+            for ($offset = 0; $offset <= \strlen($subject); $offset++) {
+                $this->assertSame(self::called('preg_match', $original, $subject, $offset), self::called('preg_match', $rewrite, $subject, $offset), \sprintf('preg_match() on %s from %d.', json_encode($subject), $offset));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{original: string, rewrite: string, letters: string, length: int}>
+     */
+    public static function provideRewritesProvenInPlace(): iterable
+    {
+        yield 'a class for an alternation beside a lookbehind' => ['original' => '/(?<!\\\\)(?:_|%)/', 'rewrite' => '/(?<!\\\\)[_%]/', 'letters' => '_%\\a', 'length' => 4];
+        yield 'a class for an alternation inside a lookahead' => ['original' => '/(?=\s*(?:,|\n))/', 'rewrite' => '/(?=\s*[,\n])/', 'letters' => " ,\na", 'length' => 4];
+        yield 'a count for a repeated character after a start of line' => ['original' => '/^\/\/\/\/x/m', 'rewrite' => '/^\/{4}x/m', 'letters' => "/x\n", 'length' => 6];
+        yield 'a class for an alternation inside a group a backreference reads' => ['original' => '/(?<!x)((?:_|%)b)\1/', 'rewrite' => '/(?<!x)([_%]b)\1/', 'letters' => '_%bx', 'length' => 5];
+        yield 'a class for an alternation inside a caseless group' => ['original' => '/(?<!x)(?i:a|b)c/', 'rewrite' => '/(?<!x)(?i:[ab])c/', 'letters' => 'aBcx', 'length' => 4];
+        yield 'a count for a repeated character beside a match start reset' => ['original' => '/(?<!x)a\Kbbbb/', 'rewrite' => '/(?<!x)a\Kb{4}/', 'letters' => 'abx', 'length' => 6];
+        yield 'a class for an alternation inside a lookbehind' => ['original' => '/(?<!:|\'|")\/\//', 'rewrite' => '/(?<![:\'"])\/\//', 'letters' => ':"/a', 'length' => 4];
+        yield 'a class for an alternation inside a group inside a lookbehind' => ['original' => '/(?<=(\}|;))a/', 'rewrite' => '/(?<=([};]))a/', 'letters' => '};a', 'length' => 4];
+        yield 'a repeated branch dropped beside a word boundary' => ['original' => '/\b(?:ab|cd|ab|abc)/', 'rewrite' => '/\b(?:ab|cd|abc)/', 'letters' => 'abcd ', 'length' => 4];
+        yield 'branches of more than one length merged beside a word boundary' => ['original' => '/\b(?:a|bc|d)/', 'rewrite' => '/\b(?:[ad]|bc)/', 'letters' => 'abcd ', 'length' => 4];
+        yield 'a repeated branch dropped, another caseless copy kept' => ['original' => '/\b(?:ab|AB|cd|ab)/i', 'rewrite' => '/\b(?:ab|AB|cd)/i', 'letters' => 'aBcd ', 'length' => 4];
+    }
+
+    /**
+     * A part whose own match check passes may still be told apart by the
+     * pattern around it: /(?:a|ab)/ and /a/ write the same $matches on
+     * every subject, yet after a lookbehind and before a "c" the first finds
+     * "abc" in "xabc" and the second nothing, as the "c" backtracks into
+     * the alternation. Each pair below differs in a part the proof does not
+     * read alone, and the engine tells it apart.
+     */
+    #[Test]
+    #[DataProvider('provideRewritesThePatternAroundTellsApart')]
+    public function test_a_rewrite_the_pattern_around_its_part_tells_apart_is_not_proven(string $original, string $rewrite, string $subject): void
+    {
+        $this->assertNotSame(self::called('preg_match', $original, $subject), self::called('preg_match', $rewrite, $subject), 'The engine tells them apart.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), $original, $rewrite));
+    }
+
+    #[Test]
+    public function test_a_part_whose_own_match_check_passes_is_not_proven_where_the_pattern_backtracks_into_it(): void
+    {
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null]));
+        $this->assertTrue($solver->matchEquivalent('/(?:a|ab)/', '/a/')->isEquivalent, 'Alone, the two parts write the same $matches.');
+        $this->assertNotSame(self::called('preg_match', '/(?<=x)(?:a|ab)c/', 'xabc'), self::called('preg_match', '/(?<=x)ac/', 'xabc'), 'The engine tells the patterns apart.');
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), '/(?<=x)(?:a|ab)c/', '/(?<=x)ac/'));
+    }
+
+    /**
+     * @return iterable<string, array{original: string, rewrite: string, subject: string}>
+     */
+    public static function provideRewritesThePatternAroundTellsApart(): iterable
+    {
+        yield 'a part the rest backtracks into' => ['original' => '/(?<=x)(?:a|ab)c/', 'rewrite' => '/(?<=x)ac/', 'subject' => 'xabc'];
+        yield 'a group in the part' => ['original' => '/(?<!x)(?:(a)|a)/', 'rewrite' => '/(?<!x)a/', 'subject' => 'a'];
+        yield 'a match start reset in the part' => ['original' => '/(?<!x)(?:a\Kb)/', 'rewrite' => '/(?<!x)ab/', 'subject' => 'ab'];
+        yield 'a verb in the part' => ['original' => '/(?<!x)(?:a(*COMMIT)b|ac)/', 'rewrite' => '/(?<!x)a[bc]/', 'subject' => 'ac'];
+        yield 'a lookahead in the part' => ['original' => '/(?<!x)a(?!b)/', 'rewrite' => '/(?<!x)a/', 'subject' => 'ab'];
+        yield 'an anchor in the part' => ['original' => '/(?<!x)a$/', 'rewrite' => '/(?<!x)a/', 'subject' => 'ab'];
+        yield 'a caseless option dropped from the part' => ['original' => '/(?<!x)(?i)(?:a|b)/', 'rewrite' => '/(?<!x)[ab]/', 'subject' => 'A'];
+        yield 'a possessive part' => ['original' => '/(?<!x)a+(?!b)/', 'rewrite' => '/(?<!x)a++(?!b)/', 'subject' => 'aab'];
+        yield 'a branch moved where its first copy was' => ['original' => '/\b(?:a|ab|a)/', 'rewrite' => '/\b(?:ab|a)/', 'subject' => 'ab'];
+        yield 'a branch dropped that is no copy' => ['original' => '/\b(?:a|b|c)/', 'rewrite' => '/\b(?:a|b)/', 'subject' => 'c'];
+        yield 'a part whose strings begin one another' => ['original' => '/\b(?:x|xy)/', 'rewrite' => '/\bxy?/', 'subject' => 'xy'];
+        yield 'a possessive part only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>\d+))(?&n)1/', 'rewrite' => '/(?(DEFINE)(?<n>\d++))(?&n)1/', 'subject' => '21'];
+    }
+
+    /**
+     * The three rewrites the check of the whole pattern cannot prove, a
+     * lookbehind, a lookahead and a start of line around them, are offered.
+     */
+    #[Test]
+    #[DataProvider('provideRewritesOfferedInPlace')]
+    public function test_a_rewrite_proven_in_place_is_offered(string $original, string $rewrite): void
+    {
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+
+        $this->assertSame($rewrite, $optimizer->optimize($original, ['verify_with_automata' => true])->optimized);
+    }
+
+    /**
+     * @return iterable<string, array{original: string, rewrite: string}>
+     */
+    public static function provideRewritesOfferedInPlace(): iterable
+    {
+        yield 'beside a lookbehind' => ['original' => '/(?<!\\\\)(?:_|%)/', 'rewrite' => '/(?<!\\\\)[_%]/'];
+        yield 'inside a lookahead' => ['original' => '/(?=\s*(?:,|\n))/', 'rewrite' => '/(?=\s*[,\n])/'];
+        yield 'after a start of line' => ['original' => '/^\/\/\/\/x/m', 'rewrite' => '/^\/{4}x/m'];
     }
 
     /**
@@ -268,6 +408,29 @@ final class RewriteVerificationTest extends TestCase
         yield 'a shorthand for a class, matching empty' => ['original' => '/[0-9]*/', 'rewrite' => '/\d*/', 'letters' => '0a'];
         yield 'a class for an alternation, anchored and matching empty' => ['original' => '/^(?:a|b)*/', 'rewrite' => '/^[ab]*/', 'letters' => 'abc'];
         yield 'a class for an alternation' => ['original' => '/(?:a|b)c/', 'rewrite' => '/[ab]c/', 'letters' => 'abc'];
+    }
+
+    /**
+     * Every subject of up to $length of the letters, the empty one first.
+     *
+     * @return list<string>
+     */
+    private static function subjects(string $letters, int $length): array
+    {
+        $subjects = [''];
+        $layer = [''];
+        for ($size = 1; $size <= $length; $size++) {
+            $next = [];
+            foreach ($layer as $prefix) {
+                foreach (str_split($letters) as $letter) {
+                    $next[] = $prefix.$letter;
+                }
+            }
+            $subjects = [...$subjects, ...$next];
+            $layer = $next;
+        }
+
+        return $subjects;
     }
 
     /**

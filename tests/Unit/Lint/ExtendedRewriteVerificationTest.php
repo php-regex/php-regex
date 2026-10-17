@@ -25,23 +25,29 @@ use PHPUnit\Framework\TestCase;
 /**
  * The rewrite of a pattern under /x is checked as the optimizer checks every
  * other rewrite: on the $matches it writes, or, where the match solver does
- * not read the pattern or gives up, on whether it reads as the pattern does.
- * The strings both match prove nothing, and neither does a check that gave
- * up on its budget, so the suggestion is not made. A rewrite that only respells a class, [0-9] as \d, reads as the
- * pattern does and needs no automaton: the rewrites here also spell a run
- * of x's as a repeat.
+ * not read the pattern or gives up, on whether it reads as the pattern does
+ * but for parts proven alone. The strings both match prove nothing, and
+ * neither does a check that gave up on its budget, so the suggestion is not
+ * made. A rewrite that only respells a class, [0-9] as \d, reads as the
+ * pattern does and needs no automaton; a run of x's spelled as a repeat is
+ * a part proven alone, and "x|xy" spelled "x(?:y)??" is not, as "x" begins
+ * "xy".
  */
 final class ExtendedRewriteVerificationTest extends TestCase
 {
     /**
      * Under m the match check does not read the pattern, and the run of x's
-     * spelled as a repeat keeps the rewrite from reading as it does.
+     * spelled as a repeat keeps the rewrite from reading as it does: the
+     * run is proven alone, and the rewrite is suggested. The branches
+     * spelled as a lazy option are not.
      */
     #[Test]
-    public function test_a_rewrite_the_language_check_gives_up_on_is_not_suggested(): void
+    public function test_a_rewrite_the_language_check_gives_up_on_is_suggested_only_when_its_parts_are_proven_alone(): void
     {
-        $this->assertSame([], $this->suggestions('/[0-9]*0[0-9]{14}xxxxxx$/mx', true));
-        $this->assertSame(['/\d*0\d{14}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{14}xxxxxx$/mx', false), 'Unchecked, the rewrite is suggested.');
+        $this->assertSame(['/\d*0\d{14}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{14}xxxxxx$/mx', true));
+
+        $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
+        $this->assertFalse($verify->invoke(new AnalysisService(RegexParser::create(['cache' => null])), '/[0-9]*0[0-9]{14}(?:x|xy)$/mx', '/\d*0\d{14}(?:x(?:y)??)$/mx'));
     }
 
     /**
@@ -76,32 +82,36 @@ final class ExtendedRewriteVerificationTest extends TestCase
     }
 
     /**
-     * Under m the match check does not read the pattern, and the strings
-     * both sides match, which the solver's default budget settles, prove no
-     * $matches.
+     * Under m the match check does not read the pattern, and the part the
+     * rewrite changed, eighty \pL spelled as a repeat, has a state for each
+     * of them over an alphabet of hundreds of ranges: past the work the
+     * check of a rewrite may spend, it proves nothing, though the solver's
+     * default budget would settle it.
      */
     #[Test]
     public function test_a_rewrite_whose_check_outgrows_its_work_is_not_suggested(): void
     {
-        $pattern = '/[\pL0-9]*0[0-9]{6}xxxxxx$/umx';
-        $this->assertTrue((new LanguageSolver())->equivalent($pattern, '/[0-9\pL]*0[0-9]{6}x{6}$/umx')->isEquivalent, 'The default budget settles it.');
+        $pattern = '/[\pL0-9]*0'.str_repeat('\pL', 80).'$/umx';
+        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($pattern, '/[0-9\pL]*0\pL{80}$/umx'), 'The default budget settles it.');
 
         $this->assertSame([], $this->suggestions($pattern, true));
-        $this->assertSame(['/[0-9\pL]*0[0-9]{6}x{6}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
+        $this->assertSame(['/[0-9\pL]*0\pL{80}$/umx'], $this->suggestions($pattern, false), 'Unchecked, the rewrite is suggested.');
     }
 
     /**
      * Under m the match check does not read the pattern: the two match the
-     * same strings, which proves no $matches, and the rewrite is not
-     * suggested.
+     * same strings, which proves no $matches, and "x" begins "xy", so the
+     * part the rewrite changed is not proven alone either: that rewrite is
+     * not proven.
      */
     #[Test]
     public function test_a_rewrite_only_the_strings_matched_agree_on_is_not_suggested(): void
     {
-        $this->assertTrue((new LanguageSolver())->equivalent('/[0-9]*0[0-9]{3}xxxxxx$/mx', '/\d*0\d{3}x{6}$/mx')->isEquivalent, 'The two match the same strings.');
+        $this->assertTrue((new LanguageSolver())->equivalent('/[0-9]*0[0-9]{3}(?:x|xy)$/mx', '/\d*0\d{3}(?:x(?:y)??)$/mx')->isEquivalent, 'The two match the same strings.');
 
-        $this->assertSame([], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', true));
-        $this->assertSame(['/\d*0\d{3}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', false), 'Unchecked, the rewrite is suggested.');
+        $verify = new \ReflectionMethod(AnalysisService::class, 'verifyOptimizationWithAutomata');
+        $this->assertFalse($verify->invoke(new AnalysisService(RegexParser::create(['cache' => null])), '/[0-9]*0[0-9]{3}(?:x|xy)$/mx', '/\d*0\d{3}(?:x(?:y)??)$/mx'));
+        $this->assertSame(['/\d*0\d{3}x{6}$/mx'], $this->suggestions('/[0-9]*0[0-9]{3}xxxxxx$/mx', true), 'A run of x\'s spelled as a repeat is proven alone.');
     }
 
     /**

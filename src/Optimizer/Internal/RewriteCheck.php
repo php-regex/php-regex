@@ -22,9 +22,10 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
  * The proof that a rewrite may replace its pattern, one verdict for the
  * optimizer and the lint: the $matches preg_match() writes on every subject,
  * or, where the match solver does not read a pattern or gives up, the same
- * normal form. The strings both match prove no $matches: /a(?!b)/ and /a/
- * match the same strings whole, yet not the same text in "ab". A check that
- * runs out of its budget proves nothing.
+ * normal form but for parts proven alone, each running alike wherever it
+ * stands. The strings both match prove no $matches: /a(?!b)/ and /a/ match
+ * the same strings whole, yet not the same text in "ab". A check that runs
+ * out of its budget proves nothing.
  *
  * @internal
  */
@@ -62,17 +63,16 @@ final class RewriteCheck
         // needs a search past the start of the subject, and an empty match
         // the retry those calls make after it. Two patterns that read alike
         // need no run at all.
+        $options = new SolverOptions(maxDfaStates: self::MATCH_CHECK_STATES, maxTransitionsProcessed: self::MATCH_CHECK_WORK);
         $runs = $this->solver->runsOfEveryCall($original, $optimized);
         if (null === $runs) {
-            return false;
+            return $this->provenInPlace($original, $optimized, $options);
         }
 
         // The same strings are not enough: a rewrite must write the same
         // $matches, which /(a|ab)/ and /(ab|a)/ do not on "ab". The same
         // $matches on every subject is the same answer on every subject,
         // so the strings preg_match() accepts agree as well.
-        $options = new SolverOptions(maxDfaStates: self::MATCH_CHECK_STATES, maxTransitionsProcessed: self::MATCH_CHECK_WORK);
-
         try {
             foreach ($runs as $run) {
                 if (!$this->solver->matchEquivalentIn($run, $original, $optimized, $options)->isEquivalent) {
@@ -86,6 +86,20 @@ final class RewriteCheck
             // not reading alike: the strings both match whole would prove no
             // $matches, a lookahead at the edge of the match or alternatives
             // taken in another order write other text.
+            return $this->provenInPlace($original, $optimized, $options);
+        }
+    }
+
+    /**
+     * Whether each part the rewrite changed runs alike wherever it stands,
+     * the rest of the pattern untouched: /(?<!\\)(?:_|%)/ into
+     * /(?<!\\)[_%]/, where the lookbehind keeps the match check out.
+     */
+    private function provenInPlace(string $original, string $optimized, SolverOptions $options): bool
+    {
+        try {
+            return $this->solver->rewritesAlikeInPlace($original, $optimized, $options);
+        } catch (ComplexityException) {
             return false;
         }
     }

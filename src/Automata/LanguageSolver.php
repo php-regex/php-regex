@@ -20,32 +20,47 @@ use PHPRegex\Automata\Match\MatchRun;
 use PHPRegex\Automata\Match\PriorityNfa;
 use PHPRegex\Automata\Match\PriorityNfaBuilder;
 use PHPRegex\Automata\Model\Dfa;
+use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
 use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
+use PHPRegex\Automata\Solver\RewriteSites;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
+use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Parser\Hir\ClassHir;
+use PHPRegex\Parser\Hir\ConcatHir;
 use PHPRegex\Parser\Hir\ConditionalHir;
+use PHPRegex\Parser\Hir\EmptyHir;
+use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
 use PHPRegex\Parser\Hir\LookKind;
+use PHPRegex\Parser\Hir\OpaqueHir;
+use PHPRegex\Parser\Hir\RepetitionHir;
 use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CalloutNode;
+use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\TraversalAction;
@@ -284,6 +299,103 @@ final class LanguageSolver
     }
 
     /**
+     * Whether two patterns differ only in parts that run alike wherever
+     * they stand: the rest of both normal forms is the same, and each part
+     * that changed matches the strings the other matches, none of which
+     * begins another. From any position such a part then ends in one place
+     * at most, the same on both sides, whatever the pattern around it does
+     * after or before it: /(?<!x)(?:_|%)/ and /(?<!x)[_%]/ run alike in
+     * every call, where the strings matched whole would prove nothing.
+     *
+     * A part holds characters, classes, alternatives and repetitions only:
+     * no group, anchor, lookaround, backreference, "\K" or verb. /(?:a|ab)/
+     * and /a/ write the same $matches, yet a "c" after them backtracks into
+     * the first and finds "abc" in "xabc": "a" begins "ab", and the part is
+     * not proven. A pattern a subroutine call may enter, a part inside a
+     * lookbehind that matches strings of more than one length, or a pattern
+     * that holds a verb or a callout, is not read.
+     *
+     * @internal the check of a rewrite asks it where the match solver does not read the pattern
+     *
+     * @throws ComplexityException When a part outgrows the limits of the options
+     */
+    public function rewritesAlikeInPlace(string $left, string $right, ?SolverOptions $options = null): bool
+    {
+        $leftAst = $this->parser()->parse($left);
+        $rightAst = $this->parser()->parse($right);
+        if (!self::sameSettings($leftAst, $rightAst)) {
+            return false;
+        }
+
+        $translator = new HirTranslator($this->parser()->target());
+        $leftHir = $translator->translate($leftAst);
+        $rightHir = $translator->translate($rightAst);
+        if (self::enters($leftHir) || self::enters($rightHir)) {
+            return false;
+        }
+
+        $sites = RewriteSites::between($leftHir, $rightHir);
+        $options ??= new SolverOptions();
+        $full = new SolverOptions(
+            matchMode: MatchMode::Full,
+            maxNfaStates: $options->maxNfaStates,
+            maxDfaStates: $options->maxDfaStates,
+            minimizeDfa: $options->minimizeDfa,
+            minimizationAlgorithm: $options->minimizationAlgorithm,
+            maxTransitionsProcessed: $options->maxTransitionsProcessed,
+            determinizationAlgorithm: $options->determinizationAlgorithm,
+        );
+        $unicode = $leftAst->isUnicode();
+
+        foreach ($sites as [$leftPart, $rightPart, $insideLookbehind]) {
+            if (!self::plainPart($leftPart) || !self::plainPart($rightPart)) {
+                return false;
+            }
+
+            // What a lookbehind may hold differs by release: a part of one
+            // length on both sides leaves every branch the length it had.
+            if ($insideLookbehind && !(self::oneLength($leftPart) && self::oneLength($rightPart))) {
+                return false;
+            }
+
+            // One string each, or one character of a set each: no string
+            // begins another, and the strings or the sets say it all.
+            [$leftText, $rightText] = [$leftPart->properties->literal, $rightPart->properties->literal];
+            if (null !== $leftText && null !== $rightText) {
+                if ($leftText !== $rightText) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            [$leftSet, $rightSet] = [self::oneCharacterOf($leftPart), self::oneCharacterOf($rightPart)];
+            if (null !== $leftSet && null !== $rightSet) {
+                if (!$leftSet->subtract($rightSet)->isEmpty() || !$rightSet->subtract($leftSet)->isEmpty()) {
+                    return false;
+                }
+
+                continue;
+            }
+
+            $leftDfa = (new DfaBuilder())->determinize((new HirToNfaTransformer($left, $unicode))->transform($leftPart, $full), $full);
+            $rightDfa = (new DfaBuilder())->determinize((new HirToNfaTransformer($right, $unicode))->transform($rightPart, $full), $full);
+
+            $differ = static fn (bool $leftAccept, bool $rightAccept): bool => $leftAccept !== $rightAccept;
+            if (null !== $this->findExample($leftDfa, $rightDfa, $differ)) {
+                return false;
+            }
+
+            // Strings of one length never begin one another.
+            if (!self::oneLength($leftPart) && !$this->prefixFree($leftDfa)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Whether some string starting with the input is matched, under the match
      * mode of the options: a half-typed "2026" begins a date that
      * /^\d{4}-\d{2}-\d{2}$/ matches, where preg_match() can only say 0. In
@@ -356,10 +468,37 @@ final class LanguageSolver
         return \hash('sha256', \implode('|', $parts));
     }
 
+    /**
+     * Whether every string the part matches, as written, has one length.
+     */
+    private static function oneLength(Hir $part): bool
+    {
+        return $part->properties->minLength === $part->properties->maxLength;
+    }
+
+    /**
+     * The characters a part matches when it matches one character, any of a
+     * set, and nothing else; null otherwise.
+     */
+    private static function oneCharacterOf(Hir $part): ?CharSet
+    {
+        return 1 === $part->properties->minLength && 1 === $part->properties->maxLength ? $part->properties->first : null;
+    }
+
     private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir): bool
     {
-        // The options a pattern opens with, (*UTF) or a newline
-        // convention, are no part of the normal form.
+        return self::sameSettings($leftAst, $rightAst) && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir);
+    }
+
+    /**
+     * Whether two patterns open with the same options, carry the same flags
+     * but for an "s" or an "m" their normal forms apply, and define the
+     * same groups: the options a pattern opens with, (*UTF) or a newline
+     * convention, are no part of the normal form, and neither is what a
+     * "(?(DEFINE)...)" holds, which only a subroutine call runs.
+     */
+    private static function sameSettings(RegexNode $leftAst, RegexNode $rightAst): bool
+    {
         if (StartOptions::of($leftAst->source ?? '') !== StartOptions::of($rightAst->source ?? '')) {
             return false;
         }
@@ -369,34 +508,109 @@ final class LanguageSolver
             return false;
         }
 
-        return self::shape($leftHir) === self::shape($rightHir);
+        return RewriteSites::shape(self::defines($leftAst)) === RewriteSites::shape(self::defines($rightAst));
     }
 
     /**
-     * A value with the positions of every node in it left out.
+     * @return list<DefineNode>
      */
-    private static function shape(mixed $value): mixed
+    private static function defines(RegexNode $ast): array
     {
-        if (\is_array($value)) {
-            return array_map(self::shape(...), $value);
+        $defines = [];
+        NodeWalker::walk($ast, static function (NodeInterface $node) use (&$defines): ?TraversalAction {
+            if ($node instanceof DefineNode) {
+                $defines[] = $node;
+            }
+
+            return null;
+        });
+
+        return $defines;
+    }
+
+    /**
+     * Whether the form holds a subroutine call, which may run any group
+     * again elsewhere, or a verb or a callout, which act on how the engine
+     * backtracks rather than on what it matches.
+     */
+    private static function enters(Hir $hir): bool
+    {
+        $pending = [$hir];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof OpaqueHir && ($node->node instanceof SubroutineNode || $node->node instanceof PcreVerbNode || $node->node instanceof CalloutNode)) {
+                return true;
+            }
+
+            array_push($pending, ...$node->children());
         }
 
-        if ($value instanceof \UnitEnum) {
-            return $value::class.'::'.$value->name;
+        return false;
+    }
+
+    /**
+     * Whether a part holds characters, classes, alternatives and repetitions
+     * that may give back only: the strings it matches say where it may end.
+     */
+    private static function plainPart(Hir $hir): bool
+    {
+        $pending = [$hir];
+        while (null !== $node = array_pop($pending)) {
+            $plain = $node instanceof LiteralHir || $node instanceof ClassHir || $node instanceof ConcatHir
+                || $node instanceof AlternationHir || $node instanceof EmptyHir
+                || ($node instanceof RepetitionHir && Greed::Possessive !== $node->greed);
+            if (!$plain) {
+                return false;
+            }
+
+            array_push($pending, ...$node->children());
         }
 
-        if (!\is_object($value)) {
-            return $value;
-        }
+        return true;
+    }
 
-        $shape = ['' => $value::class];
-        foreach ((array) $value as $property => $field) {
-            if ('startPosition' !== $property && 'endPosition' !== $property) {
-                $shape[$property] = self::shape($field);
+    /**
+     * Whether no string the automaton accepts begins another it accepts:
+     * no accepting state leads, in a step or more, to an accepting state.
+     */
+    private function prefixFree(Dfa $dfa): bool
+    {
+        $alphabet = $this->mergeAlphabetRanges($dfa, $dfa);
+        $next = [];
+        foreach ($dfa->states as $id => $state) {
+            $next[$id] = [];
+            foreach ($alphabet as [$start]) {
+                $target = $state->transitionFor($start);
+                if (null !== $target) {
+                    $next[$id][$target] = true;
+                }
             }
         }
 
-        return $shape;
+        // The states an accepting state may be reached from, in no step or
+        // more.
+        $live = [];
+        foreach ($dfa->states as $id => $state) {
+            if ($state->isAccepting) {
+                $live[$id] = true;
+            }
+        }
+        do {
+            $grown = false;
+            foreach ($next as $id => $targets) {
+                if (!isset($live[$id]) && [] !== array_intersect_key($targets, $live)) {
+                    $live[$id] = true;
+                    $grown = true;
+                }
+            }
+        } while ($grown);
+
+        foreach ($dfa->states as $id => $state) {
+            if ($state->isAccepting && [] !== array_intersect_key($next[$id], $live)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -134,9 +134,26 @@ The optimizer, with `verify_with_automata`, and the lint's suggestions put a rew
 works within a budget of its own (1,000 configurations, 200,000 units of work), and one that
 runs out proves nothing. Where the match solver does not read a pattern, or gives up,
 only a rewrite that reads as the pattern does is offered (the same normal form, as `[0-9]`
-and `\d`): the strings two patterns match prove no `$matches`. `/a(?!b)/` and `/a/` match
-the same strings whole, yet on `"ab"` only the second matches; `/(?:a|ab)(?!c)/` and
-`/(?:ab|a)(?!c)/` match `"a"` and `"ab"` there.
+and `\d`), or one whose changed parts are each proven alone: the strings two patterns
+match prove no `$matches`. `/a(?!b)/` and `/a/` match the same strings whole, yet on `"ab"`
+only the second matches; `/(?:a|ab)(?!c)/` and `/(?:ab|a)(?!c)/` match `"a"` and `"ab"`
+there. Two patterns read alike only when their `(?(DEFINE)...)` groups are written alike:
+the normal form leaves out what a DEFINE holds, which only a subroutine call runs.
+
+A changed part is proven alone when the rest of both patterns is the same and the part,
+made of characters, classes, alternatives and repetitions only, matches the strings the
+other matches, none of which begins another. From any position such a part ends in one
+place at most, the same on both sides, whatever the pattern around it does before or after
+it: `/(?<!\\)(?:_|%)/` becomes `/(?<!\\)[_%]/`, `/(?=\s*(?:,|\n))/` becomes
+`/(?=\s*[,\n])/`, and `/^\/\/\/\/x/m` becomes `/^\/{4}x/m`. The strings the part matches
+must not begin one another: `/(?:a|ab)/` and `/a/` write the same `$matches`, yet
+`/(?<=x)(?:a|ab)c/` finds `"abc"` in `"xabc"` and `/(?<=x)ac/` nothing, as the `c`
+backtracks into the alternation. An alternation that only lost the later copies of a
+branch, `\b(?:ab|cd|ab)` into `\b(?:ab|cd)`, is read branch by branch: a later copy is only
+tried where an earlier one ended and what follows failed. A part holding a group, an
+anchor, a lookaround, a backreference, `\K` or a verb, a part inside a lookbehind that
+matches strings of more than one length (what a lookbehind may hold differs by release),
+and a pattern holding a subroutine call, a verb or a callout are not proven alone.
 
 A rewrite must hold in every call the pattern may go to, not only in `preg_match()` from
 offset 0. From an offset, `^` and `\A` never hold: `/^[\s\S]|a/` and `/^[\s\S]|b/` write
@@ -149,7 +166,8 @@ subject, and one that may match empty in that retry as well, all by the match so
 which alone models them. A pattern that reads the text before where the search starts (a
 lookbehind, `\b`, `\B`, `^` under `m`) or that moves the start of its match (`\K`) is
 proven by no such check, and its rewrite is offered only when it reads as the pattern
-does: the same normal form, as `[0-9]` and `\d`, or a flag dropped that changes nothing.
+does (the same normal form, as `[0-9]` and `\d`, or a flag dropped that changes nothing),
+or when each part it changed is proven alone.
 The same holds for a route requirement, which the router splices into a larger pattern:
 `a|ab` and `ab|a` write the same `$matches` anchored at both ends, yet before a `b?` they
 capture other text.

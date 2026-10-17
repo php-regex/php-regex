@@ -136,16 +136,17 @@ cache are merged. Follow-ups:
   that nothing reads any more: the check of a rewrite builds no DFA since
   the strings both sides match no longer prove one. Keep it or drop it
   before the tag;
-- the strings matched no longer prove a rewrite: where the match solver
-  does not read a pattern (a lookahead, `m`, a backreference), only a
-  rewrite that reads alike is offered, and a pattern that looks before
-  the match start (a lookbehind, `\b`, `^` under `m`) gets the same rule.
-  On the whole corpus that costs 37 of 1,329 suggestions (40 lost, 3
-  gained, the FAIL and WARN lines unchanged), every lost one a correct
-  local rewrite: `(?<!\\)(?:_|%)` into `(?<!\\)[_%]`,
-  `(?=\s*(?:,|\n))` into `(?=\s*[,\n])`, `/^\/\/\/\/x/m` into
-  `/^\/{4}x/m`. Proving the rewritten subtree alone (it reads alike, or
-  its own match check passes, and it holds no group) would win them back;
+- where the match solver does not read a pattern, a rewrite is offered when
+  it reads alike or when each part it changed is proven alone; on the whole
+  corpus that brings the suggestions from 1,292 to 1,325 (33 of the 40 the
+  sounder check cost, the FAIL and WARN lines unchanged). The 7 still lost
+  are correct rewrites the proof does not read: a lookbehind whose branches
+  of other lengths merge, `(?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])`
+  into `(?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF])` (only some string
+  ending where it stands counts there, not their order, but what a lookbehind
+  may hold differs by release); a pattern a subroutine call enters (the RFC
+  5322 address pattern of Swift Mailer and Symfony Mime); a class for an
+  alternation in the condition of a conditional, `(?(?='|").)`;
 - the formatter writes a class under `(?xx)` without its spaces, so
   `(?xx)[\d -z]`, valid up to PCRE2 10.44 with a member `-`, comes back
   as `[\d-z]`, which reads back otherwise: `format()` throws
