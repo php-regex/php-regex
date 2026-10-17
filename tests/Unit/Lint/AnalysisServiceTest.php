@@ -643,7 +643,6 @@ final class AnalysisServiceTest extends TestCase
         $this->assertCount(1, $parallel);
         $this->assertInstanceOf(NodeInterface::class, $serial[0]->culpritNode);
         $read = $parallel[0];
-        $this->assertInstanceOf(RedosAnalysis::class, $read);
         $this->assertInstanceOf(NodeInterface::class, $read->culpritNode);
         $this->assertSame($serial[0]->severity, $read->severity);
         $this->assertCount(\count($serial[0]->findings), $read->findings);

@@ -159,9 +159,8 @@ final class CodeActionHandlerTest extends TestCase
     #[Test]
     public function test_handler_can_be_instantiated(): void
     {
-        $handler = new CodeActionHandler($this->documents, Regex::create());
-
-        $this->assertInstanceOf(CodeActionHandler::class, $handler);
+        $this->expectNotToPerformAssertions();
+        new CodeActionHandler($this->documents, Regex::create());
     }
 
     #[Test]

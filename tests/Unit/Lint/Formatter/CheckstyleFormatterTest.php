@@ -30,11 +30,6 @@ final class CheckstyleFormatterTest extends TestCase
         $this->formatter = new CheckstyleFormatter();
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(CheckstyleFormatter::class, new CheckstyleFormatter());
-    }
-
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);

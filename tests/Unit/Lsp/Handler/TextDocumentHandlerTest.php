@@ -34,24 +34,6 @@ final class TextDocumentHandlerTest extends TestCase
         $this->documents = new DocumentManager(new RegexFinder());
     }
 
-    #[Test]
-    public function test_handler_can_be_instantiated(): void
-    {
-        $handler = new TextDocumentHandler($this->documents, Regex::create());
-
-        $this->assertInstanceOf(TextDocumentHandler::class, $handler);
-    }
-
-    #[Test]
-    public function test_handler_requires_dependencies(): void
-    {
-        $documents = new DocumentManager(new RegexFinder());
-        $regex = Regex::create();
-        $handler = new TextDocumentHandler($documents, $regex);
-
-        $this->assertInstanceOf(TextDocumentHandler::class, $handler);
-    }
-
     /**
      * @return iterable<string, array{pattern: string, code: string}>
      */

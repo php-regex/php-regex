@@ -284,7 +284,6 @@ final class CompatibilityCheckerTest extends TestCase
     {
         // The same matrix whatever runs the check: two checkers agree.
         $this->assertEquals((new CompatibilityChecker())->check('/a/r'), (new CompatibilityChecker())->check('/a/r'));
-        $this->assertInstanceOf(PatternCompatibility::class, (new CompatibilityChecker())->check('/a/r'));
     }
 
     /**

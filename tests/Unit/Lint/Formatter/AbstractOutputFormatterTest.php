@@ -30,11 +30,6 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->formatter = new TestableAbstractOutputFormatter();
     }
 
-    public function test_construct_with_default_config(): void
-    {
-        $this->assertInstanceOf(TestableAbstractOutputFormatter::class, new TestableAbstractOutputFormatter());
-    }
-
     public function test_construct_with_custom_config(): void
     {
         $config = new OutputConfiguration(ansi: false);

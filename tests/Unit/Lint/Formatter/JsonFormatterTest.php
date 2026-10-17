@@ -37,11 +37,6 @@ final class JsonFormatterTest extends TestCase
         $this->formatter = new JsonFormatter();
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(JsonFormatter::class, new JsonFormatter());
-    }
-
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);

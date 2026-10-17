@@ -90,7 +90,6 @@ final class RegexFormatTest extends TestCase
     {
         $result = Regex::create()->format(self::URL);
 
-        $this->assertInstanceOf(FormatResult::class, $result);
         $this->assertSame(self::URL_FORMATTED, $result->pattern);
         $this->assertTrue($result->changed);
         $this->assertNull($result->refusal);
@@ -131,7 +130,6 @@ final class RegexFormatTest extends TestCase
     {
         $result = Regex::create()->compact(self::LAID_OUT);
 
-        $this->assertInstanceOf(FormatResult::class, $result);
         $this->assertSame('/(?<year>\d{4})-(?<month>\d{2})/', $result->pattern);
         $this->assertTrue($result->changed);
         $this->assertNull($result->refusal);

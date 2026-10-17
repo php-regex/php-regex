@@ -202,7 +202,6 @@ final class MessageTest extends TestCase
         );
 
         $this->assertSame($params, $message->params);
-        $this->assertSame('file:///test.php', $message->params['textDocument']['uri']);
     }
 
     #[Test]

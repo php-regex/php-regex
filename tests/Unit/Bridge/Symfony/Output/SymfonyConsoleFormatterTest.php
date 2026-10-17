@@ -37,15 +37,6 @@ final class SymfonyConsoleFormatterTest extends TestCase
         }
     }
 
-    public function test_construct(): void
-    {
-        $analysis = new AnalysisService(RegexParser::create());
-        $relativePathHelper = new RelativePathHelper();
-        $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-
-        $this->assertInstanceOf(SymfonyConsoleFormatter::class, new SymfonyConsoleFormatter($analysis, $linkFormatter));
-    }
-
     public function test_format_empty_report(): void
     {
         $analysis = new AnalysisService(RegexParser::create());

@@ -29,12 +29,6 @@ final class PatternSourceCollectionTest extends TestCase
 {
     use TemporaryProject;
 
-    public function test_construct(): void
-    {
-        $sources = [];
-        $this->assertInstanceOf(PatternSourceCollection::class, new PatternSourceCollection($sources));
-    }
-
     public function test_collect_with_empty_sources(): void
     {
         $collection = new PatternSourceCollection([]);

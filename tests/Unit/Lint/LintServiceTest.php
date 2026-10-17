@@ -48,12 +48,6 @@ final class LintServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(LintService::class, new LintService($this->analysis, $this->sources));
-    }
-
-    #[Test]
     public function test_collect_patterns(): void
     {
         $request = new LintRequest(['.'], [], 0);

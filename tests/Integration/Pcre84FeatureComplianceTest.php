@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration;
 
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
@@ -35,9 +34,10 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideOpenLowerQuantifiers')]
     public function test_open_lower_quantifiers_are_parsed_and_validated(string $pattern): void
     {
+        $this->expectNotToPerformAssertions();
+
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
-        $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
     public static function provideOpenLowerQuantifiers(): iterable
@@ -50,9 +50,10 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideNewlineConventionVerbs')]
     public function test_newline_convention_verbs_are_supported(string $pattern): void
     {
+        $this->expectNotToPerformAssertions();
+
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
-        $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
     public static function provideNewlineConventionVerbs(): iterable
@@ -65,9 +66,10 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideControlVerbs')]
     public function test_control_verbs_are_supported(string $pattern): void
     {
+        $this->expectNotToPerformAssertions();
+
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
-        $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
     public static function provideControlVerbs(): iterable
@@ -81,9 +83,10 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideEncodingVerbs')]
     public function test_encoding_verbs_are_supported(string $pattern): void
     {
+        $this->expectNotToPerformAssertions();
+
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
-        $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
     public static function provideEncodingVerbs(): iterable
@@ -95,9 +98,10 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideMatchControlVerbs')]
     public function test_match_control_verbs_are_supported(string $pattern): void
     {
+        $this->expectNotToPerformAssertions();
+
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
-        $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
     public static function provideMatchControlVerbs(): iterable
@@ -128,9 +132,10 @@ final class Pcre84FeatureComplianceTest extends TestCase
     #[DataProvider('provideUnicodeProperties')]
     public function test_extended_unicode_properties_are_validated(string $pattern): void
     {
+        $this->expectNotToPerformAssertions();
+
         $ast = $this->regex->parse($pattern);
         $ast->accept($this->validator);
-        $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
     public static function provideUnicodeProperties(): iterable

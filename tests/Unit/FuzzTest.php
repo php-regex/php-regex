@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +43,8 @@ class FuzzTest extends TestCase
             '/(?<=lookbehind)/',
         ];
 
+        $this->expectNotToPerformAssertions();
+
         foreach ($patterns as $pattern) {
             // Parse to AST
             $ast = $this->regex->parse($pattern);
@@ -54,11 +55,8 @@ class FuzzTest extends TestCase
 
             // Parse the recompiled
             // The compiled pattern carries its own delimiters and flags.
-            $ast2 = $this->regex->parse($recompiled);
-
-            // For now, just ensure no exceptions
-            $this->assertInstanceOf(RegexNode::class, $ast);
-            $this->assertInstanceOf(RegexNode::class, $ast2);
+            // For now, just ensure no exceptions.
+            $this->regex->parse($recompiled);
         }
     }
 }

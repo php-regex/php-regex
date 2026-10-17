@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Sweep;
 
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
@@ -37,10 +36,10 @@ final class ParserSweepTest extends TestCase
 
     public function test_parser_recursion_limit(): void
     {
+        $this->expectNotToPerformAssertions();
         $regex = Regex::create();
         // This pattern should not trigger recursion limit in normal parsing
-        $ast = $regex->parse('/a+/');
-        $this->assertInstanceOf(RegexNode::class, $ast);
+        $regex->parse('/a+/');
     }
 
     public function test_parser_various_delimiters(): void

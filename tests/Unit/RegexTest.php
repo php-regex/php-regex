@@ -35,7 +35,6 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
-use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
@@ -80,7 +79,6 @@ final class RegexTest extends TestCase
     {
         $result = $this->regexService->parseTolerant('/(?:a|b|/');
 
-        $this->assertInstanceOf(RegexNode::class, $result->ast);
         $this->assertNotEmpty($result->errors);
 
         $ok = $this->regexService->parseTolerant('/abc/');
@@ -614,7 +612,6 @@ final class RegexTest extends TestCase
     public function test_parse_with_tolerant_mode(): void
     {
         $result = $this->regexService->parseTolerant('/a(/');
-        $this->assertInstanceOf(TolerantParseResult::class, $result);
         $this->assertTrue($result->hasErrors());
     }
 

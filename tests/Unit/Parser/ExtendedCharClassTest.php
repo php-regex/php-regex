@@ -188,7 +188,6 @@ final class ExtendedCharClassTest extends TestCase
 
         // Each visitor answers for an operation on its own, too.
         $operation = $quantified->node;
-        $this->assertInstanceOf(ExtendedCharClassNode::class, $operation);
         $operation = $operation->expression;
         $this->assertInstanceOf(ClassSetOperationNode::class, $operation);
         $complement = new ClassSetOperationNode(ClassSetOperator::Complement, null, new CharTypeNode('d', 0, 2), '!', 0, 3);

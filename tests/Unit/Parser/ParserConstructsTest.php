@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -37,7 +36,6 @@ final class ParserConstructsTest extends TestCase
     {
         $ast = Regex::create()->parse($pattern);
 
-        $this->assertInstanceOf(RegexNode::class, $ast);
         $this->assertSame($recompiled, $ast->accept(new PatternPrinter()));
     }
 

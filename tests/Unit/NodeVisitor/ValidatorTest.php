@@ -216,7 +216,6 @@ final class ValidatorTest extends TestCase
         $this->assertNotFalse(@preg_match($pattern, ''), 'PCRE must accept the pattern');
 
         $this->validate($pattern);
-        $this->assertTrue(true);
     }
 
     /**

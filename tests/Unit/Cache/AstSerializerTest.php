@@ -106,9 +106,8 @@ final class AstSerializerTest extends TestCase
         Regex::create(['cache' => $cache])->parse($pattern);
 
         $reader = new FilesystemCache($this->cacheDir);
-        $ast = Regex::create(['cache' => $reader])->parse($pattern);
+        Regex::create(['cache' => $reader])->parse($pattern);
 
-        $this->assertInstanceOf(RegexNode::class, $ast);
         $this->assertSame(['hits' => 1, 'misses' => 0], $reader->getStats());
     }
 

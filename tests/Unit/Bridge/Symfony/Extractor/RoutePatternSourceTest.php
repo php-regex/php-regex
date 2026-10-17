@@ -39,18 +39,6 @@ final class RoutePatternSourceTest extends TestCase
         SymfonyExtractorFunctionOverrides::reset();
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(RoutePatternSource::class, new RoutePatternSource($this->normalizer));
-        // Source created successfully
-    }
-
-    public function test_construct_with_router(): void
-    {
-        $router = $this->createStub(RouterInterface::class);
-        $this->assertInstanceOf(RoutePatternSource::class, new RoutePatternSource($this->normalizer, $router));
-    }
-
     public function test_get_name(): void
     {
         $source = new RoutePatternSource($this->normalizer);

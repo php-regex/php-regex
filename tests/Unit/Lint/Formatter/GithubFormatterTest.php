@@ -31,11 +31,6 @@ final class GithubFormatterTest extends TestCase
         $this->formatter = new GithubFormatter();
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(GithubFormatter::class, new GithubFormatter());
-    }
-
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);

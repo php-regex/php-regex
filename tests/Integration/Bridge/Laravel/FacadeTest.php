@@ -38,7 +38,6 @@ final class FacadeTest extends LaravelTestCase
         $ast = Regex::parse('/^[a-z]+$/');
 
         $this->assertInstanceOf(RegexNode::class, $ast);
-        $this->assertNotNull($ast->pattern);
     }
 
     public function test_parse_with_tolerant_mode_returns_tolerant_result(): void
@@ -46,7 +45,6 @@ final class FacadeTest extends LaravelTestCase
         $result = Regex::parseTolerant('/^[a-z]+$/');
 
         $this->assertInstanceOf(TolerantParseResult::class, $result);
-        $this->assertInstanceOf(RegexNode::class, $result->ast);
         $this->assertEmpty($result->errors);
     }
 

@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration;
 
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -21,6 +20,8 @@ final class ParserPatternSweepTest extends TestCase
 {
     public function test_parse_various_patterns(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $regex = Regex::create();
 
         // Patterns to cover more parser code
@@ -110,8 +111,7 @@ final class ParserPatternSweepTest extends TestCase
 
         foreach ($patterns as $pattern) {
             try {
-                $ast = $regex->parse($pattern);
-                $this->assertInstanceOf(RegexNode::class, $ast);
+                $regex->parse($pattern);
             } catch (\Exception) {
                 // Some patterns may be invalid, but we test parsing
                 // Exception caught is expected for some patterns

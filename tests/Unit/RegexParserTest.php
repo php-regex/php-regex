@@ -80,7 +80,6 @@ final class RegexParserTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.3']);
 
-        $this->assertInstanceOf(RegexParser::class, $regex->parser());
         $this->assertSame($regex->target(), $regex->parser()->target());
         $this->assertInstanceOf(NullCache::class, $regex->parser()->getCache());
     }

@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
-use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\RegexParser;
@@ -96,7 +95,6 @@ final class LanguageSolverTest extends TestCase
     {
         $dfa = (new LanguageSolver())->compile('/[a-z]+/', new SolverOptions());
 
-        $this->assertInstanceOf(Dfa::class, $dfa);
         $start = $dfa->getState($dfa->startState);
         $this->assertFalse($start->isAccepting);
 

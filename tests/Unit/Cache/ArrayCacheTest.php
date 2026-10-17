@@ -33,7 +33,6 @@ final class ArrayCacheTest extends TestCase
 
         // The decoded AST must be served from the cache, not re-parsed:
         // hits return the same stored instance, structurally equal to a fresh parse.
-        $this->assertInstanceOf(RegexNode::class, $second);
         $this->assertSame($second, $third);
         $this->assertEquals($first, $second);
         $this->assertSame(['hits' => 2, 'misses' => 1], $cache->getStats());

@@ -42,14 +42,6 @@ final class InitializeHandlerTest extends TestCase
         $this->handler->handle($message);
 
         // If we get here without exception, the test passes
-        $this->assertTrue(true);
-    }
-
-    #[Test]
-    public function test_handler_can_be_instantiated(): void
-    {
-        $handler = new InitializeHandler();
-
-        $this->assertInstanceOf(InitializeHandler::class, $handler);
+        $this->expectNotToPerformAssertions();
     }
 }

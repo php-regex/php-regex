@@ -29,11 +29,6 @@ final class JunitFormatterTest extends TestCase
         $this->formatter = new JunitFormatter();
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(JunitFormatter::class, new JunitFormatter());
-    }
-
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);

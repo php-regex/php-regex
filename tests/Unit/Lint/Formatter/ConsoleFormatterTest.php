@@ -31,23 +31,6 @@ final class ConsoleFormatterTest extends TestCase
         $this->formatter = new ConsoleFormatter();
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(ConsoleFormatter::class, new ConsoleFormatter());
-    }
-
-    public function test_construct_with_config(): void
-    {
-        $config = new OutputConfiguration(ansi: false);
-        $this->assertInstanceOf(ConsoleFormatter::class, new ConsoleFormatter(config: $config));
-    }
-
-    public function test_construct_with_analysis_service(): void
-    {
-        // Since AnalysisService is final, we test with null
-        $this->assertInstanceOf(ConsoleFormatter::class, new ConsoleFormatter(null));
-    }
-
     public function test_format_empty_report(): void
     {
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);

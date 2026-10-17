@@ -31,23 +31,6 @@ final class CompletionHandlerTest extends TestCase
         $this->documents = new DocumentManager(new RegexFinder());
     }
 
-    #[Test]
-    public function test_handler_can_be_instantiated(): void
-    {
-        $handler = new CompletionHandler($this->documents);
-
-        $this->assertInstanceOf(CompletionHandler::class, $handler);
-    }
-
-    #[Test]
-    public function test_handler_requires_document_manager(): void
-    {
-        $documents = new DocumentManager(new RegexFinder());
-        $handler = new CompletionHandler($documents);
-
-        $this->assertInstanceOf(CompletionHandler::class, $handler);
-    }
-
     /**
      * The completion offered inside a "\p{" property, a POSIX class, or the
      * flags after the closing delimiter. The cursor stands one character

@@ -29,11 +29,6 @@ final class PhpFilePatternSourceTest extends TestCase
         $this->extractor = new PatternExtractor($this->createStub(ExtractorInterface::class));
     }
 
-    public function test_construct(): void
-    {
-        $this->assertInstanceOf(PhpFilePatternSource::class, new PhpFilePatternSource($this->extractor));
-    }
-
     public function test_get_name(): void
     {
         $source = new PhpFilePatternSource($this->extractor);
