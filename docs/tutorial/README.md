@@ -10,18 +10,89 @@ This tutorial takes you from your first pattern to PCRE features used in product
 
 ## What You'll Learn
 
-| Chapter | Topic                                            | What You Can Do After           |
-|---------|--------------------------------------------------|---------------------------------|
-| 1       | [Basics](01-basics.md)                           | Write simple literal patterns   |
-| 2       | [Character Classes](02-character-classes.md)     | Match sets of characters        |
-| 3       | [Anchors & Boundaries](03-anchors-boundaries.md) | Control where matches occur     |
-| 4       | [Quantifiers](04-quantifiers.md)                 | Control repetition              |
-| 5       | [Groups & Alternation](05-groups-alternation.md) | Capture and choose              |
-| 6       | [Lookarounds](06-lookarounds.md)                 | Match context without consuming |
-| 7       | [Backreferences](07-backreferences-recursion.md) | Match repeated patterns         |
-| 8       | [Performance & ReDoS](08-performance-redos.md)   | Write safe, fast patterns       |
-| 9       | [Testing & Debugging](09-testing-debugging.md)   | Find and fix issues             |
-| 10      | [Real-World PHP](10-real-world-php.md)           | Common patterns explained       |
+{% assign c1 = site.pages | where: "url", "/tutorial/01-basics/" | first %}
+{% assign m1 = c1.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c2 = site.pages | where: "url", "/tutorial/02-character-classes/" | first %}
+{% assign m2 = c2.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c3 = site.pages | where: "url", "/tutorial/03-anchors-boundaries/" | first %}
+{% assign m3 = c3.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c4 = site.pages | where: "url", "/tutorial/04-quantifiers/" | first %}
+{% assign m4 = c4.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c5 = site.pages | where: "url", "/tutorial/05-groups-alternation/" | first %}
+{% assign m5 = c5.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c6 = site.pages | where: "url", "/tutorial/06-lookarounds/" | first %}
+{% assign m6 = c6.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c7 = site.pages | where: "url", "/tutorial/07-backreferences-recursion/" | first %}
+{% assign m7 = c7.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c8 = site.pages | where: "url", "/tutorial/08-performance-redos/" | first %}
+{% assign m8 = c8.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c9 = site.pages | where: "url", "/tutorial/09-testing-debugging/" | first %}
+{% assign m9 = c9.content | number_of_words | divided_by: 200 | at_least: 1 %}
+{% assign c10 = site.pages | where: "url", "/tutorial/10-real-world-php/" | first %}
+{% assign m10 = c10.content | number_of_words | divided_by: 200 | at_least: 1 %}
+<div class="guide-grid">
+
+<div class="guide-entry">
+<h3><a href="01-basics.md">1 &middot; Regex basics</a></h3>
+<p>Write simple literal patterns.</p>
+<p class="guide-meta">{{ m1 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="02-character-classes.md">2 &middot; Character classes &amp; escapes</a></h3>
+<p>Match sets of characters.</p>
+<p class="guide-meta">{{ m2 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="03-anchors-boundaries.md">3 &middot; Anchors &amp; boundaries</a></h3>
+<p>Control where matches occur.</p>
+<p class="guide-meta">{{ m3 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="04-quantifiers.md">4 &middot; Quantifiers &amp; greediness</a></h3>
+<p>Control repetition.</p>
+<p class="guide-meta">{{ m4 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="05-groups-alternation.md">5 &middot; Groups &amp; alternation</a></h3>
+<p>Capture and choose.</p>
+<p class="guide-meta">{{ m5 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="06-lookarounds.md">6 &middot; Lookarounds &amp; assertions</a></h3>
+<p>Match context without consuming.</p>
+<p class="guide-meta">{{ m6 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="07-backreferences-recursion.md">7 &middot; Backreferences &amp; recursion</a></h3>
+<p>Match repeated patterns.</p>
+<p class="guide-meta">{{ m7 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="08-performance-redos.md">8 &middot; Performance &amp; ReDoS</a></h3>
+<p>Write safe, fast patterns.</p>
+<p class="guide-meta">{{ m8 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="09-testing-debugging.md">9 &middot; Testing &amp; debugging</a></h3>
+<p>Find and fix issues.</p>
+<p class="guide-meta">{{ m9 }} min</p>
+</div>
+
+<div class="guide-entry">
+<h3><a href="10-real-world-php.md">10 &middot; Real-world PHP</a></h3>
+<p>Common patterns explained.</p>
+<p class="guide-meta">{{ m10 }} min</p>
+</div>
+
+</div>
 
 ---
 

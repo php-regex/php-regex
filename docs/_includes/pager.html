@@ -45,6 +45,14 @@
     {% else %}
       <span class="pager-prev" aria-hidden="true"></span>
     {% endif %}
+    {% comment %}A numbered track (the tutorial) also says where the page
+      sits in it: the flat list opens with the track's own introduction,
+      so a chapter's index is its number, and the total is one less than
+      the list.{% endcomment %}
+    {% if include.numbered and idx > 0 %}
+      {% assign track_total = urls | size | minus: 1 %}
+      <span class="pager-position">Chapter {{ idx }} of {{ track_total }}</span>
+    {% endif %}
     {% if next_url != '' %}
       <a class="pager-next" rel="next" href="{{ next_url }}"><span class="pager-label">Next<svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3l5 5-5 5"/></svg></span><span class="pager-title">{{ next_title }}</span></a>
     {% else %}

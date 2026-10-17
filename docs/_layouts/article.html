@@ -38,21 +38,22 @@
           {% endif %}
           {% if page.published == false %}<span class="draft-tag">Draft — not yet published</span>{% endif %}
         </div>
+        {% comment %}
+          The glance panel carries what the byline above does not: the
+          topics and the update date. Reading time and publication date
+          already opened the page — repeating them in a panel cost the
+          first screen without telling the reader anything new, so an
+          article that is neither tagged nor updated prints no panel at
+          all.
+        {% endcomment %}
+        {% if page.tags or page.last_modified_at and page.last_modified_at != page.date %}
         <aside class="article-glance" aria-label="At a glance">
-          <div class="article-glance-item">
-            <span class="article-glance-label">Reading time</span>
-            <span class="article-glance-value">{{ article_minutes }} min</span>
-          </div>
           {% if page.tags %}
           <div class="article-glance-item">
             <span class="article-glance-label">Topics</span>
             <span class="article-glance-value">{% for tag in page.tags %}<span class="article-tag">{{ tag }}</span>{% unless forloop.last %} {% endunless %}{% endfor %}</span>
           </div>
           {% endif %}
-          <div class="article-glance-item">
-            <span class="article-glance-label">Published</span>
-            <span class="article-glance-value">{{ page.date | date: '%-d %B %Y' }}</span>
-          </div>
           {% if page.last_modified_at and page.last_modified_at != page.date %}
           <div class="article-glance-item">
             <span class="article-glance-label">Updated</span>
@@ -60,6 +61,7 @@
           </div>
           {% endif %}
         </aside>
+        {% endif %}
         <div class="article-content">{{ content }}</div>
         <footer class="article-footer">
           <div class="author-card">

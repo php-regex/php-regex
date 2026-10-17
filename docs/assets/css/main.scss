@@ -1412,7 +1412,9 @@ main table::-webkit-scrollbar-thumb {
    menu toggle need about 750px. The GitHub link goes - the docs areas
    stay, because the footer keeps the GitHub destination one click away.
    The version pill goes with it: it is brand chrome, and the header of a
-   768px tablet has no room left for it. */
+   768px tablet has no room left for it. Below 640px the nav is a dropdown
+   again, where space is vertical and free - the GitHub link returns with
+   it, so a phone reader reaches the code without scrolling to a footer. */
 @media (max-width: 899px) {
   .search-toggle kbd {
     display: none;
@@ -1421,7 +1423,9 @@ main table::-webkit-scrollbar-thumb {
   .brand .version-tag {
     display: none;
   }
+}
 
+@media (min-width: 640px) and (max-width: 899px) {
   .site-header nav a[href^='https://'] {
     display: none;
   }
@@ -2643,6 +2647,161 @@ main table::-webkit-scrollbar-thumb {
 .guide-entry p {
   margin: 0;
   color: var(--ink-soft);
+}
+
+/* ---- Rule reference filter ------------------------------------------------
+ * The rule reference is one page and fifty thousand pixels tall; a reader
+ * arrives with one identifier and one question. The filter row sticks
+ * under the header so it is never more than a scroll away, matches are
+ * counted aloud, and the hidden class (not the hidden attribute — the
+ * stylesheet owns `main table`'s display, and an author rule outranks
+ * the attribute's user-agent rule) does the narrowing.
+   -------------------------------------------------------------------------- */
+
+.rules-filter {
+  position: sticky;
+  top: calc(var(--header-h) + .75rem);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin: 0 0 2rem;
+  padding-block: .5rem;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.rules-filter input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: .35rem .9rem;
+  font: inherit;
+  font-size: .92rem;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+}
+
+.rules-filter input::placeholder {
+  color: var(--ink-soft);
+  opacity: 1;
+}
+
+.rules-filter input:focus {
+  border-color: var(--amber);
+  outline: none;
+}
+
+.rules-filter input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.rules-count {
+  flex: none;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rules-empty {
+  margin: -1rem 0 2rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  color: var(--ink-soft);
+  font-size: .92rem;
+}
+
+main .rules-hidden {
+  display: none;
+}
+
+/* ---- Track pager position -------------------------------------------------
+ * The tutorial's pager carries the chapter's place in the track, centered
+ * between the two steps: a commitment of ten chapters deserves a visible
+ * path, not just neighbouring doors.
+   -------------------------------------------------------------------------- */
+
+.pager-position {
+  align-self: center;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---- Verdict strip --------------------------------------------------------
+ * The three kinds of answers are the product's signature promise; the
+ * docs front door states them as one panel in the eyebrow language, not
+ * as three bullets lost mid-page.
+   -------------------------------------------------------------------------- */
+
+.verdict-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1px;
+  margin: 2rem 0;
+  padding: 0;
+  background: var(--line-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  list-style: none;
+}
+
+.verdict-item {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--paper);
+}
+
+.verdict-item dt {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .78rem;
+  font-weight: 650;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.verdict-item dt::before {
+  content: '';
+  width: .45rem;
+  height: .45rem;
+  flex: none;
+  background: var(--amber);
+}
+
+.verdict-item dd {
+  margin: 0;
+  font-size: .92rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* Chapter minutes beside a tutorial entry: the dateline register again. */
+.guide-meta {
+  margin: .35rem 0 0;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ==========================================================================

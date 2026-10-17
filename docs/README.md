@@ -58,9 +58,20 @@ Deeper in, the same paths continue:
 
 PHPRegex separates three kinds of answers:
 
-- **Proven** follows from the parser, AST, automaton, or running PCRE oracle.
-- **Heuristic** covers constructs outside the proof model or a budget stop.
-- **Unknown** records that the analysis refuses to guess.
+<dl class="verdict-grid">
+  <div class="verdict-item">
+    <dt>Proven</dt>
+    <dd>Follows from the parser, AST, automaton, or running PCRE oracle.</dd>
+  </div>
+  <div class="verdict-item">
+    <dt>Heuristic</dt>
+    <dd>Covers constructs outside the proof model or a budget stop.</dd>
+  </div>
+  <div class="verdict-item">
+    <dt>Unknown</dt>
+    <dd>Records that the analysis refuses to guess.</dd>
+  </div>
+</dl>
 
 The [correctness contracts](/reference/correctness-contracts/) define those boundaries feature by feature. Treat a ReDoS finding as a strong lead to investigate, not a substitute for reviewing the rewrite.
 
