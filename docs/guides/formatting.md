@@ -101,7 +101,8 @@ The formatter changes the layout, never the vocabulary. Escapes, group-name synt
 - under `u`, the characters PCRE also skips under `x` (NEL, LRM, RLM, LS, PS) become `\x{…}`; without `u`, a raw byte 0x85 is escaped, with the rest of its UTF-8 sequence when it is part of one (`Å` becomes `\xC3\x85`), so the output stays valid UTF-8;
 - a no-break space, which `x` skips under a locale that counts it as a space, is escaped too when `x` is added;
 - a `\E` or `\Q\E` written to part a reference from a digit, `\1\E0`, becomes the space `x` reads as nothing there, `\1 0`;
-- under an inline `(?xx)`, a space a `\Q…\E` run puts in a class is escaped, as `(?xx)` skips a bare one there.
+- under an inline `(?xx)`, a space a `\Q…\E` run puts in a class is escaped, as `(?xx)` skips a bare one there;
+- under an inline `(?xx)`, a hyphen a skipped space kept a member of a class is escaped: `(?xx)[\d -z]`, valid up to PCRE2 10.44, becomes `(?xx)[\d\-z]`, where `[\d-z]` would be a range no release accepts.
 
 `compact` only removes things. Where removing a comment or layout would fuse two tokens, it writes an empty group `(?:)` between them: `a{(?#c),2}` becomes `a{(?:),2}`, because `a{,2}` is a quantifier on PCRE2 10.43 and later.
 

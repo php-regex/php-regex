@@ -1492,6 +1492,44 @@ final class PatternFormatterTest extends TestCase
     }
 
     /**
+     * Up to PCRE2 10.44 a space under "(?xx)" keeps a hyphen from the class
+     * escape before it, and the hyphen is a member: "[\d -z]" is
+     * "[\d\-z]". Written without the space, "[\d-z]" is refused by every
+     * release. The hyphen is escaped instead: pcre2test 10.32 to 10.44, and
+     * PHP 7.3 to 8.5 with their bundled PCRE2, match what each input and its
+     * output match on every subject tried. From 10.45 the input is refused.
+     */
+    #[Test]
+    #[DataProvider('provideHyphensASpaceKeptAMember')]
+    public function test_format_and_compact_escape_a_hyphen_a_skipped_space_kept_a_member(string $pattern, string $compacted): void
+    {
+        foreach (['8.1', '8.2', '8.3', '8.4', '8.5'] as $phpVersion) {
+            $regex = Regex::create(['cache' => new NullCache(), 'php_version' => $phpVersion]);
+            $target = $regex->parser()->target();
+            $tree = $regex->parse($pattern);
+
+            $this->assertSame($compacted, (new PatternFormatter(80, $target))->compact($tree)->pattern, 'On PHP '.$phpVersion);
+            $laidOut = (new PatternFormatter(1, $target))->format($tree)->pattern;
+            $this->assertStringContainsString(substr($compacted, \strlen('/(?xx)'), -1), $laidOut, 'On PHP '.$phpVersion);
+            $this->assertSame(PatternEquivalence::structure($tree), PatternEquivalence::structure($regex->parse($laidOut)), 'On PHP '.$phpVersion);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, compacted: string}>
+     */
+    public static function provideHyphensASpaceKeptAMember(): iterable
+    {
+        yield 'after a class escape' => ['pattern' => '/(?xx)[\d -z]/', 'compacted' => '/(?xx)[\d\-z]/'];
+        yield 'spaces on both sides' => ['pattern' => '/(?xx)[\d - z]/', 'compacted' => '/(?xx)[\d\-z]/'];
+        yield 'a tab' => ['pattern' => "/(?xx)[\\d\t-z]/", 'compacted' => '/(?xx)[\d\-z]/'];
+        yield 'to a class escape' => ['pattern' => '/(?xx)[\w -\d]/', 'compacted' => '/(?xx)[\w\-\d]/'];
+        yield 'after a POSIX class' => ['pattern' => '/(?xx)[[:alpha:] -z]/', 'compacted' => '/(?xx)[[:alpha:]\-z]/'];
+        yield 'after a property' => ['pattern' => '/(?xx)[\pL -z]/', 'compacted' => '/(?xx)[\pL\-z]/'];
+        yield 'in a negated class' => ['pattern' => '/(?xx)[^\d -z]/', 'compacted' => '/(?xx)[^\d\-z]/'];
+    }
+
+    /**
      * The escape goes where "(?xx)" would skip the space, nowhere else: a
      * class without it, or under a "(?x:...)" that turns it off, keeps a
      * bare space, and a space outside a class is a literal without x.

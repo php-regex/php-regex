@@ -142,12 +142,7 @@ cache are merged. Follow-ups:
   ending where it stands counts there, not their order, but what a lookbehind
   may hold differs by release); a pattern a subroutine call enters (the RFC
   5322 address pattern of Swift Mailer and Symfony Mime); a class for an
-  alternation in the condition of a conditional, `(?(?='|").)`;
-- the formatter writes a class under `(?xx)` without its spaces, so
-  `(?xx)[\d -z]`, valid up to PCRE2 10.44 with a member `-`, comes back
-  as `[\d-z]`, which reads back otherwise: `format()` throws
-  `FormattingException` for it on those targets instead of escaping the
-  hyphen.
+  alternation in the condition of a conditional, `(?(?='|").)`.
 
 ## PHP 8.1 floor: after the merge
 

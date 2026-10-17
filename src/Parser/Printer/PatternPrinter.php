@@ -1986,6 +1986,13 @@ final class PatternPrinter extends AbstractNodeVisitor
         $result = $this->compileCharClassNode($members[0], $members[1] ?? null);
         for ($i = 1, $count = \count($members); $i < $count; $i++) {
             $next = $this->compileCharClassNode($members[$i], $members[$i + 1] ?? null);
+            // Under "(?xx)" a skipped space may be what kept a hyphen from
+            // the class escape before it, "[\d -z]": written without it,
+            // "[\d-z]" is a range every release refuses. An escaped hyphen
+            // is a member on every release.
+            if ('-' === $next && $i < $count - 1 && $members[$i] instanceof LiteralNode && str_contains($this->flags, self::EXTENDED_MORE)) {
+                $next = '\\-';
+            }
             $result .= $this->separator($result, $members[$i - 1], $members[$i], $next).$next;
         }
 
