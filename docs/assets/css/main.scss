@@ -1949,42 +1949,61 @@ main table::-webkit-scrollbar-thumb {
   }
 }
 
+/* The article's older/newer steps speak the pager's language: the
+   direction is the eyebrow with its arrow in the accent, the
+   destination is the display line under it, and no box frames either.
+   The footer's own hairline above already closes the page. */
 .article-nav-link {
   display: flex;
   flex-direction: column;
   gap: .35rem;
-  padding: 1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-m);
+  max-width: 30ch;
+  min-height: 44px;
+  padding: .55rem .1rem;
   text-decoration: none;
   color: var(--ink);
-  transition: background .15s ease, border-color .15s ease;
 }
 
 .article-nav-link:hover {
-  background: var(--amber-tint);
-  border-color: var(--amber);
-  box-shadow: var(--shadow-1);
+  background: none;
 }
 
 .article-nav-next {
   text-align: right;
+  align-items: flex-end;
+  justify-self: end;
 }
 
 .article-nav-label {
   font-size: .78rem;
-  font-weight: 600;
-  letter-spacing: .06em;
+  font-weight: 500;
+  letter-spacing: .08em;
   text-transform: uppercase;
+  color: var(--ink-soft);
+  transition: color .15s ease;
+}
+
+.article-nav-link:hover .article-nav-label {
   color: var(--amber);
 }
 
 .article-nav-title {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: .95rem;
+  font-weight: 650;
+  font-size: 1.05rem;
+  letter-spacing: -0.008em;
   line-height: 1.3;
   color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color .15s ease, color .15s ease;
+}
+
+.article-nav-link:hover .article-nav-title {
+  color: var(--amber-deep);
+  text-decoration-color: var(--amber);
 }
 
 .article-back {
