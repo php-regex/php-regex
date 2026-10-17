@@ -397,7 +397,7 @@ main a:hover {
 
 main blockquote {
   margin: 1.5em 0;
-  padding: .5em 1.25em;
+  padding: .75em 1.25em;
   border-left: 3px solid var(--amber);
   border-radius: 0 var(--radius-m) var(--radius-m) 0;
   background: var(--amber-tint);
@@ -510,7 +510,7 @@ main details > summary::marker {
 
 main :not(pre) > code,
 main :not(pre) > samp {
-  font-size: .95em;
+  font-size: .88em;
   background: var(--code-bg);
   color: var(--code-ink);
   padding: .15em .4em;
@@ -827,7 +827,7 @@ main div.highlighter-rouge::after {
   right: 0;
   bottom: -1.4rem;
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .78rem;
   letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink-soft);
@@ -864,7 +864,7 @@ main pre[data-file]::before {
   top: -1.3rem;
   left: 0;
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .78rem;
   letter-spacing: .04em;
   color: var(--ink-soft);
   pointer-events: none;
