@@ -27,10 +27,12 @@ The code is ready; what is left is the maintainer's, in this order.
    and register its Packagist webhook like the sixteen others — the split
    pushes to it, and without a webhook Packagist learns of the tag only
    through its two-week crawl.
-4. Push 2.x, wait for CI to pass, then `bin/release --dry-run 2.0.0` and
-   `bin/release 2.0.0`: it drafts the GitHub release and pushes the tag; the
-   phar workflow builds and attests the phar, attaches it and its checksum,
-   then publishes the draft; the split workflow tags the seventeen packages.
+4. Push 2.x and watch the first CI run on 2.x after the push, the PHP 8.1
+   prefer-lowest cell in particular; once it passes, `bin/release --dry-run
+   2.0.0` and `bin/release 2.0.0`: it drafts the GitHub release and pushes
+   the tag; the phar workflow builds and attests the phar, attaches it and
+   its checksum, then publishes the draft; the split workflow tags the
+   seventeen packages.
 5. After the tag: `bin/status` and Packagist show `v2.0.0` for all seventeen
    packages (they require each other at `self.version`: one missing tag
    leaves the others uninstallable), and the "Latest" release carries the
@@ -124,37 +126,6 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 `PHPRegexBundle`, so `composer require php-regex/regex-symfony` registers
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
-
-## PHP 8.1 floor: after the merge
-
-Merged into 2.x: every package requires `>=8.1`, Symfony `^6.4|^7.4|^8.0`,
-Laravel `^10.37|^11.0|^12.0|^13.0`, PCRE2 10.39 judged with its own rules.
-Left:
-- the first GitHub run on 2.x (03699c27fe) failed in the PHP 8.1
-  prefer-lowest cell (PHPUnit 10.5.0 runs regexes on every assertion, one
-  ran under a test's recursion limit), the 8.2 and 8.3 bundled-engine
-  cells (the capture-shape report compared patterns with `r` their engine
-  refuses), PHPStan on 8.5 and 8.6 (`$argv` in the 8.1 smoke test) and
-  PHPCS (four test files): each is fixed on its own commit; watch the next
-  run. Reproduced on 2026-10-16 as the cell runs (Ubuntu 24.04, PHP 8.1
-  from the ondrej PPA linking the system PCRE2 10.42, PHPUnit 10.5.0,
-  Symfony 6.4.0, Laravel 10.37.3, a plain user): the suite died on
-  `bin/corpus-lint` redeclaring `printUsage()` beside `bin/corpus`, and the
-  Symfony configuration threw a plain `InvalidArgumentException`; both
-  fixed, nothing else failed;
-- the official `php:8.1-cli` image (bundled PCRE2 10.39, no intl, no
-  pcntl) runs the suite to 168 failures and 24 errors, none of them a
-  verdict the library gets wrong for that engine: 100 PCRE2-suite cases
-  pinned to 10.40–10.48 (the library gives the verdict of 10.39 on all 100), tests
-  that expect the property and script semantics of 10.40 and later or ask
-  the running engine for a property it lacks, `Locale` and `pcntl_fork()`
-  missing, two linear-time ratios on a 2-CPU VM, the 10.39 spelling
-  "unknown property name after \P or \p" missing from the tests' message
-  table, and `RuntimePcreDetectionTest`'s oracle reading six patterns 10.39
-  refuses as compiled. No CI cell runs 10.39; gating those tests is left
-  for when one does;
-- PCRE2 10.39 also has matching bugs 10.40 fixed (`/[Aa]{2}/` misses `aa`):
-  engine defects the library does not model, documented.
 
 ## The articles section: what is left
 
