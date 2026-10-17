@@ -23,10 +23,12 @@ The code is ready; what is left is the maintainer's, in this order.
      `docs/tutorial/09-testing-debugging.md`;
    - `tests/Documentation/PackageSelectionDocumentationTest.php` pins the
      prerelease commands: it moves with them.
-3. Before the tag: create the `php-regex/regex-phpunit` repository on GitHub
-   and register its Packagist webhook like the sixteen others — the split
-   pushes to it, and without a webhook Packagist learns of the tag only
-   through its two-week crawl.
+3. Before the tag: `php-regex/regex-phpunit` exists on GitHub (empty, with
+   the metadata of the sixteen others) and the split fills it on the next
+   push of 2.x. Then submit it on Packagist and register its webhook like the
+   sixteen others: without one, Packagist learns of the tag only through its
+   two-week crawl. If `SPLIT_TOKEN` is limited to selected repositories, add
+   `regex-phpunit` to it before that push.
 4. Push 2.x and watch the first CI run on 2.x after the push, the PHP 8.1
    prefer-lowest cell in particular; once it passes, `bin/release --dry-run
    2.0.0` and `bin/release 2.0.0`: it drafts the GitHub release and pushes
