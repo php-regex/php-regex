@@ -558,19 +558,21 @@ main th {
      the rows, not their labels, carry the reading weight. */
   font-size: .78rem;
   font-weight: 650;
-  letter-spacing: .05em;
+  letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--ink-soft);
-  padding: .6em .6em .5em;
+  padding: .7em 1em .55em;
   border-top: 1px solid var(--line);
   border-bottom: 2px solid var(--ink);
 }
 
 main td {
-  padding: .6em;
-  /* Rows separate on the soft step of the line scale: a full-weight rule
-     under every row framed each one, and a matrix read as many small
-     tables instead of one. */
+  /* A column gutter needs a full em on each side: at .6em the words of
+     two neighbouring columns sat eighteen pixels apart and read as one
+     run of text. The line-height comes in half a step so the air lands
+     between the columns without making the rows taller. */
+  padding: .7em 1em;
+  line-height: 1.55;
   border-bottom: 1px solid var(--line-soft);
   vertical-align: top;
 }
@@ -2335,7 +2337,7 @@ main table::-webkit-scrollbar-thumb {
   display: grid;
   place-items: center;
   width: 100%;
-  min-height: 36px;
+  min-height: 44px;
   padding: 0;
   color: var(--ink-soft);
   cursor: pointer;
@@ -2675,13 +2677,18 @@ main table::-webkit-scrollbar-thumb {
   flex: 1;
   min-width: 0;
   min-height: 44px;
-  padding: .35rem .9rem;
+  padding: .45rem .9rem;
+  /* 16px, no less: iOS Safari zooms any focused field below that, and a
+     page that lurches on the first tap is disqualified. appearance none
+     takes iOS's rounded inner chrome off the search field with it. */
   font: inherit;
-  font-size: .92rem;
+  font-size: 1rem;
   color: var(--ink);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius-s);
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .rules-filter input::placeholder {
@@ -3910,8 +3917,34 @@ main > section:not([class]) > p:not(:has(a.button)) {
   .copy-btn,
   .anchor,
   .to-top,
-  .site-footer {
+  .site-footer,
+  .rules-filter,
+  .rules-count,
+  .rules-empty,
+  .page-meta {
     display: none !important;
+  }
+
+  /* The card grids read as one column on paper: a two-column spread cut
+     by a page break is two half-thoughts, and each entry is short enough
+     to keep whole. */
+  .guide-grid,
+  .task-grid,
+  .verdict-grid {
+    display: block;
+  }
+
+  .guide-entry,
+  .task-card,
+  .verdict-item {
+    break-inside: avoid;
+  }
+
+  .guide-entry + .guide-entry,
+  .task-card + .task-card,
+  .verdict-item + .verdict-item {
+    break-inside: avoid;
+    margin-top: 1rem;
   }
 
   .page-shell,
