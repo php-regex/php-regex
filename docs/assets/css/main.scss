@@ -1204,13 +1204,62 @@ main table::-webkit-scrollbar-thumb {
 }
 
 /* ---- Header on narrow screens ----
- * The nav steps aside below 640px and the drawer plus the footer carry the
- * same destinations at comfortable sizes. With the nav gone there is room
- * for the search toggle's word; the button keeps its own aria-label either
- * way, so nothing is lost. */
+ * The nav steps aside below 640px into a dropdown toggled by the hamburger
+ * button. The drawer carries the documentation map; this menu carries the
+ * section links (Docs, Guides, Tutorial, Blog, GitHub) so a mobile reader
+ * can still move between the site's top-level areas. With the nav gone
+ * there is room for the search toggle's word; the button keeps its own
+ * aria-label either way, so nothing is lost. */
+.nav-toggle {
+  display: none;
+}
+
 @media (max-width: 639px) {
+  .nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .nav-toggle:hover,
+  .nav-toggle:focus-visible {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
   .site-header nav {
     display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    flex-direction: column;
+    align-items: stretch;
+    padding: .5rem 0;
+    border-bottom: 3px solid var(--amber);
+  }
+
+  .site-header nav.open {
+    display: flex;
+  }
+
+  .site-header nav a {
+    padding: .85rem 1.5rem;
+    border-bottom: 0;
+    font-size: 1rem;
+  }
+
+  .site-header nav a[aria-current='page'] {
+    background: var(--amber-tint);
   }
 
   .brand .version-tag {

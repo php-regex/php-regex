@@ -15,7 +15,10 @@
     <span class="brand-name">PHPRegex</span>
     <span class="version-tag">{{ site.data.product.version_label }}</span>
   </a>
-  <nav aria-label="Main">
+  <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Main menu">
+    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg>
+  </button>
+  <nav aria-label="Main" id="main-nav">
     {%- comment -%}
       Which area the reader is already in. The guides area and the tutorial
       track have a link of their own; every other documentation page is the
