@@ -8,9 +8,9 @@ This reference documents every lint rule that PHPRegex produces. It serves as th
 <div class="rules-filter">
   <label class="visually-hidden" for="rules-filter-input">Filter the rule reference</label>
   <input type="search" id="rules-filter-input" placeholder="Filter by rule, message or identifier — e.g. useless flag, redos, backreference" autocomplete="off" spellcheck="false">
-  <span class="rules-count" aria-live="polite"></span>
+  <span class="rules-count"></span>
 </div>
-<p class="rules-empty" hidden>No rule matches that filter — try a shorter fragment, or clear the field to see all of them again.</p>
+<p class="rules-empty" role="status">No rule matches that filter — try a shorter fragment, or press Escape to see all of them again.</p>
 
 ## Table of Contents
 

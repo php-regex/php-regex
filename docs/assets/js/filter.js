@@ -96,4 +96,13 @@
   input.addEventListener('search', function () {
     apply(input.value);
   });
+  /* Firefox's search fields carry no clear control, so Escape clears for
+     everyone what the native button clears where it exists. */
+  input.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && input.value !== '') {
+      input.value = '';
+      apply('');
+      event.preventDefault();
+    }
+  });
 })();
