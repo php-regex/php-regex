@@ -68,13 +68,13 @@
             <nav class="article-nav" aria-label="Article navigation">
               {% if prev_article %}
               <a class="article-nav-link article-nav-prev" href="{{ prev_article.url }}">
-                <span class="article-nav-label">← Older</span>
+                <span class="article-nav-label"><span class="article-nav-arrow" aria-hidden="true">←</span> Older</span>
                 <span class="article-nav-title">{{ prev_article.title }}</span>
               </a>
               {% endif %}
               {% if next_article %}
               <a class="article-nav-link article-nav-next" href="{{ next_article.url }}">
-                <span class="article-nav-label">Newer →</span>
+                <span class="article-nav-label">Newer <span class="article-nav-arrow" aria-hidden="true">→</span></span>
                 <span class="article-nav-title">{{ next_article.title }}</span>
               </a>
               {% endif %}
@@ -85,7 +85,7 @@
           <section class="article-more" aria-labelledby="article-more-title">
             <div class="article-more-head">
               <h2 id="article-more-title" class="article-more-title">More articles</h2>
-              <a class="article-all" href="/blog/">All articles →</a>
+              <a class="article-all" href="/blog/">All articles <span class="article-nav-arrow" aria-hidden="true">→</span></a>
             </div>
             <ul class="article-more-list">
               {% assign more_count = 0 %}
