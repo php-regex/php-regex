@@ -273,6 +273,18 @@ parameters:
 		-
 			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
+			count: 3
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetMarkerTest.php
+
+		-
+			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 6
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetMarkerTest.php
+
+		-
+			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
 			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
 
@@ -291,13 +303,13 @@ parameters:
 		-
 			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 4
+			count: 5
 			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
 
 		-
 			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
 			identifier: parameter.internalClass
-			count: 2
+			count: 3
 			path: tests/Integration/Bridge/Psalm/PsalmPluginTargetTest.php
 
 		-
@@ -587,6 +599,12 @@ parameters:
 			identifier: property.internalClass
 			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmTypes.php
+
+		-
+			rawMessage: 'Parameter #1 $phpVersion of method Rector\Configuration\RectorConfigBuilder::withPhpVersion() expects 50200|50300|50400|50500|50600|70000|70100|70200|70300|70400|80000|80100|80200|80300|80400|80500|80600|100000, 70406 given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Integration/Bridge/Rector/PossessiveRepeatOnceRector/config/php746.php
 
 		-
 			rawMessage: 'Call to function is_subclass_of() with ''PHPRegex\\Rector\\EscapeLiteralBraceRector'' and ''Rector\\VersionBonding\\Contract\\MinPhpVersionInterface'' will always evaluate to false.'
