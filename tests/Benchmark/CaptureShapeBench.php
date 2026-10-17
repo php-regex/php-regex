@@ -23,6 +23,7 @@ use PhpBench\Attributes\Warmup;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 
 /**
  * The capture shape from the pattern string: parse, analyze, then write the
@@ -116,7 +117,7 @@ final class CaptureShapeBench
             throw new \UnexpectedValueException(\sprintf('The parser rejects %d of %d patterns PCRE compiles: %s', \count($rejected), \count($params['patterns']), implode('; ', \array_slice($rejected, 0, 5))));
         }
 
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

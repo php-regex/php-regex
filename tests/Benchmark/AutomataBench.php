@@ -41,6 +41,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Support\GrowthSeries;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Tests\Benchmark\Support\Workloads;
 
 /**
@@ -327,7 +328,7 @@ final class AutomataBench
         $this->setUpCold();
         Workloads::automata('/a/', $this->parser);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -341,7 +342,7 @@ final class AutomataBench
         $this->hir = $this->translate($this->pattern);
         $this->benchHirToNfa($params);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -355,7 +356,7 @@ final class AutomataBench
         $this->nfa = $this->buildNfa($this->translate($this->pattern));
         $this->benchDeterminize($params);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -367,7 +368,7 @@ final class AutomataBench
         $this->dfa = self::randomDfa();
         $this->benchMinimize($params);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -381,7 +382,7 @@ final class AutomataBench
         $this->nfa = $this->buildNfa($this->translate($this->pattern));
         $this->benchEffectiveAlphabet($params);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -391,7 +392,7 @@ final class AutomataBench
     {
         $this->coldNfa($params);
         $this->benchHirToNfaWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -401,7 +402,7 @@ final class AutomataBench
     {
         $this->coldEffectiveAlphabet($params);
         $this->benchEffectiveAlphabetWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -416,7 +417,7 @@ final class AutomataBench
         $this->setUpCold();
         Workloads::warmUp('automata', $this->pattern, $expect, $this->parser);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -428,7 +429,7 @@ final class AutomataBench
         $this->setUpCold();
         Workloads::warmUp('automata', $this->pattern, 'complete', $this->parser);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -445,7 +446,7 @@ final class AutomataBench
         $this->solver->equivalent($this->left, $this->right);
         $this->solver->subsetOf($this->left, $this->right);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -455,7 +456,7 @@ final class AutomataBench
     {
         $this->warmPair($params);
         $this->benchIntersectionWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -465,7 +466,7 @@ final class AutomataBench
     {
         $this->warmPair($params);
         $this->benchEquivalenceWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -475,7 +476,7 @@ final class AutomataBench
     {
         $this->warmPair($params);
         $this->benchSubsetWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

@@ -24,6 +24,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 
 /**
  * One theoretical ReDoS analysis per pattern of the lint corpus, each keyed
@@ -82,7 +83,7 @@ final class RedosCorpusBench
         $this->pattern = BenchCases::realistic()[$params['key']] ?? throw new \OutOfBoundsException(\sprintf('No corpus pattern "%s".', $params['key']));
         $this->analyzer = new RedosAnalyzer(RegexParser::create());
         $this->benchTheoreticalVerdictWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     public function setUpNoop(): void
@@ -91,7 +92,7 @@ final class RedosCorpusBench
         $this->analyzer = new RedosAnalyzer(RegexParser::create());
         $this->analyzer->analyze('/a/', null, RedosMode::Theoretical);
         $this->analyzer = new RedosAnalyzer(RegexParser::create());
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

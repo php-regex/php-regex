@@ -166,14 +166,6 @@ parameters:
             - classConstant.internalClass
             # PHPUnit assertions that PHPStan considers redundant
             - method.alreadyNarrowedType
-        # The benchmarks run on the PHP of the machine that measures, 8.2 or
-        # later, and a test that measures a peak skips below 8.2: each resets
-        # the peak it reports.
-        - message: '#^Function memory_reset_peak_usage not found\.$#'
-          identifier: function.notFound
-          paths:
-            - tests/Benchmark/*
-            - tests/Unit/Lint/Extraction/ResolutionLimitsTest.php
         # The bare (?flags) predicate does real work beyond the type it
         # asserts (group type, flags, span), so an argument already narrowed
         # to GroupNode does not make the call always true: visitGroup()

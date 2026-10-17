@@ -27,6 +27,7 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PhpFilePatternSource;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 
 /**
  * A whole lint run over a fixed directory of PHP files, in one process
@@ -91,6 +92,6 @@ final class LintBench
         $this->setUp();
         $this->benchLint();
         $this->setUp();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 }

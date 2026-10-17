@@ -24,6 +24,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
 use PHPRegex\Tests\Benchmark\Support\GrowthSeries;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Tests\Benchmark\Support\Workloads;
 
 /**
@@ -94,7 +95,7 @@ final class RedosBench
         $this->setUpCold();
         Workloads::redos('/a/', $this->parser);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -107,7 +108,7 @@ final class RedosBench
         $this->setUpCold();
         Workloads::warmUp('redos', $this->pattern, $case->expect ?? throw new \UnexpectedValueException(\sprintf('The case "%s" declares no outcome.', $case->key)), $this->parser);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -119,7 +120,7 @@ final class RedosBench
         $this->setUpCold();
         Workloads::warmUp('redos', $this->pattern, 'proven', $this->parser);
         $this->setUpCold();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

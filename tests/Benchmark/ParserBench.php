@@ -24,6 +24,7 @@ use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -178,7 +179,7 @@ final class ParserBench
         BenchCases::all();
         $this->regex->parse('/a/');
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     public function coldRealistic(): void
@@ -186,27 +187,27 @@ final class ParserBench
         $this->setUpRealistic();
         $this->benchParseRealistic();
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     public function warmCreate(): void
     {
         $this->benchCreate();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     public function warmPrint(): void
     {
         $this->setUpWarm();
         $this->benchParseAndPrintWarm();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     public function warmExplain(): void
     {
         $this->setUpWarm();
         $this->benchParseAndExplainWarm();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -218,7 +219,7 @@ final class ParserBench
         $this->regex = ColdStart::regex();
         $this->benchParseCase($params);
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -229,7 +230,7 @@ final class ParserBench
         $this->pattern = BenchCases::get($params['key'])->pattern;
         $this->setUpWarm();
         $this->benchParseCaseWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -241,7 +242,7 @@ final class ParserBench
         $this->regex = ColdStart::regex();
         $this->benchParseMicro($params);
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -252,7 +253,7 @@ final class ParserBench
         $this->pattern = self::MICRO[$params['key']] ?? throw new \OutOfBoundsException(\sprintf('No micro pattern "%s".', $params['key']));
         $this->setUpWarm();
         $this->benchParseMicroWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

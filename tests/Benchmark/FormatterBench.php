@@ -32,6 +32,7 @@ use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 
 /**
  * Writing a lint report of a thousand results, one issue, one optimization
@@ -96,7 +97,7 @@ final class FormatterBench
             default => throw new \OutOfBoundsException(\sprintf('No format "%s".', $params['format'])),
         };
         $this->benchFormat($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

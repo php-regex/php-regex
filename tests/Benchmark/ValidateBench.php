@@ -22,6 +22,7 @@ use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\ColdStart;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -105,7 +106,7 @@ final class ValidateBench
         BenchCases::all();
         $this->regex->validate('/a/');
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     public function coldRealistic(): void
@@ -113,7 +114,7 @@ final class ValidateBench
         $this->setUpRealistic();
         $this->benchValidateRealistic();
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -125,7 +126,7 @@ final class ValidateBench
         $this->regex = ColdStart::regex();
         $this->benchValidateCase($params);
         $this->regex = ColdStart::regex();
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**
@@ -136,7 +137,7 @@ final class ValidateBench
         $this->pattern = BenchCases::get($params['key'])->pattern;
         $this->regex = Regex::create();
         $this->benchValidateCaseWarm($params);
-        memory_reset_peak_usage();
+        PeakMemory::reset();
     }
 
     /**

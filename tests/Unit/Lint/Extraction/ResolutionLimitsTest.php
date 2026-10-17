@@ -19,6 +19,7 @@ use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,7 +49,7 @@ final class ResolutionLimitsTest extends TestCase
         $file = $this->makeProject(['blow.php' => $code]).'/blow.php';
 
         foreach ($this->strategies() as $name => $strategy) {
-            memory_reset_peak_usage();
+            PeakMemory::reset();
             $before = memory_get_peak_usage();
             $patterns = self::patterns($strategy, $file);
             $grown = memory_get_peak_usage() - $before;
