@@ -19,8 +19,7 @@ composer config prefer-stable true
 composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev</code></pre></div>
       </div>
       <div class="hero-foot">
-        <p class="hero-sub">New to regex? Start with the <a href="/tutorial/">ten-chapter tutorial</a>.</p>
-        <p class="hero-sub">PHP {{ site.data.product.php_floor }}+ · {{ site.data.product.license }} license · {{ site.data.product.corpus_codebases }} real-world codebases in the analysis corpus.</p>
+        <p class="hero-sub">New to regex? Start with the <a href="/tutorial/">ten-chapter tutorial</a>. Want the long reads? <a href="/blog/">The articles are measured</a>.</p>
       </div>
     </div>
     <div class="terminal">
@@ -80,33 +79,39 @@ composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev</
       <h3 class="proof-card-title"><a href="/reference/pcre2-conformance/">PCRE2 conformance</a></h3>
       <p>Validation verdicts are compared with PHP's own PCRE2 engine on the official test suite.</p>
     </article>
+    <article class="proof-card">
+      <h3 class="proof-card-title"><a href="/reference/feature-support-matrix/">Feature support matrix</a></h3>
+      <p>What each construct parses into, component by component — proved, heuristic, or out of model.</p>
+    </article>
+    <article class="proof-card">
+      <h3 class="proof-card-title"><a href="/reference/capture-shapes/">Capture shapes</a></h3>
+      <p>What <code>preg_match()</code> writes into <code>$matches</code>, derived from the tree.</p>
+    </article>
   </div>
-  <ul>
-    <li><a href="/reference/feature-support-matrix/">Feature support matrix</a> — what each construct parses into, component by component.</li>
-    <li><a href="/reference/capture-shapes/">Capture shapes</a> — what <code>preg_match()</code> writes into <code>$matches</code>.</li>
-  </ul>
 </section>
 
 <section class="constellation">
   <h2 class="section-title">Put the findings where you work</h2>
   <p>Every integration has its own Composer package. Pick the surface that fits your workflow.</p>
-  <div class="component-grid">
-    <article class="component">
-      <h3 class="component-name">CLI</h3>
-      <p class="component-desc">Explain, validate, diagram, lint, analyze ReDoS, compare patterns, and transpile from one binary.</p>
-      <pre><code class="language-bash">vendor/bin/regex lint src/</code></pre>
-      <a href="/guides/cli/">CLI guide →</a>
-    </article>
-    <article class="component">
-      <h3 class="component-name">PHPStan</h3>
-      <p class="component-desc">Reports invalid patterns and optional lint, ReDoS, and optimization findings during static analysis.</p>
-      <a href="/guides/phpstan/">PHPStan guide →</a>
-    </article>
-    <article class="component">
-      <h3 class="component-name">LSP</h3>
-      <p class="component-desc">Adds diagnostics, hover explanations, completion, and quick fixes to any Language Server Protocol editor.</p>
-      <a href="/guides/lsp/">LSP guide →</a>
-    </article>
-  </div>
-  <p>Psalm, Rector, Laravel, and Symfony have dedicated guides on the <a href="/guides/">integrations index</a>.</p>
+  <ul class="landing-rows">
+    <li><a class="landing-row" href="/guides/cli/"><span class="landing-row-name">CLI</span><p class="landing-row-desc">Explain, validate, diagram, lint, analyze ReDoS, compare patterns, and transpile from one binary.</p></a></li>
+    <li><a class="landing-row" href="/guides/phpstan/"><span class="landing-row-name">PHPStan</span><p class="landing-row-desc">Invalid patterns reported during static analysis; lint, ReDoS, and optimization findings on demand.</p></a></li>
+    <li><a class="landing-row" href="/guides/psalm/"><span class="landing-row-name">Psalm</span><p class="landing-row-desc">Types <code>$matches</code> from the pattern, for the PHP version your project targets.</p></a></li>
+    <li><a class="landing-row" href="/guides/rector/"><span class="landing-row-name">Rector</span><p class="landing-row-desc">Rewrites a <code>preg_*</code> call into a cheaper string function only when the automata prove them equal.</p></a></li>
+    <li><a class="landing-row" href="/guides/laravel/"><span class="landing-row-name">Laravel</span><p class="landing-row-desc">The <code>Regex</code> service and facade, plus Artisan commands for lint, routes, and transpilation.</p></a></li>
+    <li><a class="landing-row" href="/guides/symfony/"><span class="landing-row-name">Symfony</span><p class="landing-row-desc">The bundle, the <code>php_regex.regex</code> service, and console commands.</p></a></li>
+    <li><a class="landing-row" href="/guides/lsp/"><span class="landing-row-name">Language server</span><p class="landing-row-desc">Diagnostics, hover explanations, completion, and quick fixes in any LSP editor.</p></a></li>
+  </ul>
+</section>
+
+<section>
+  <h2 class="section-title">The measured reads</h2>
+  <p>Long-form pieces on PHP regular expressions — every example run against the engine it names, every release claim checked against that release's own sources.</p>
+  {% assign articles = site.articles | sort: date | reverse %}
+  <ul class="landing-rows">
+    {% for article in articles limit:3 %}
+    <li><a class="landing-row" href="{{ article.url }}"><span class="landing-row-name">{{ article.title }}</span><p class="landing-row-desc">{{ article.description }}</p><span class="landing-row-meta">{{ article.date | date: '%-d %B %Y' }}</span></a></li>
+    {% endfor %}
+  </ul>
+  <p>All of them live on <a href="/blog/">the articles page</a>.</p>
 </section>

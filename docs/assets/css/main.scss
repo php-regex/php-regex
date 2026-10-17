@@ -2813,6 +2813,91 @@ main .rules-hidden {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---- Landing rows ---------------------------------------------------------
+ * Two sections of framed cards in a row read as one long pitch; the
+ * lighter beat between them is a list - name, one line, an arrow -
+ * separated by the soft hairline, no chrome. The same row carries the
+ * deep dives: title, dek, dateline.
+   -------------------------------------------------------------------------- */
+
+.landing-rows {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+}
+
+.landing-row {
+  display: grid;
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  gap: .25rem 3rem;
+  align-items: baseline;
+  padding: .9rem 0;
+  border-top: 1px solid var(--line-soft);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.landing-rows .landing-row:last-child {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.landing-row:hover .landing-row-name {
+  color: var(--amber-deep);
+}
+
+.landing-row-name {
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.05rem;
+  letter-spacing: -0.008em;
+  text-decoration: none;
+}
+
+.landing-row-name::after {
+  content: '\2192';
+  margin-left: .45rem;
+  color: var(--amber);
+  opacity: .35;
+  transition: opacity .15s ease;
+}
+
+.landing-row:hover .landing-row-name::after {
+  opacity: 1;
+}
+
+.landing-row-desc {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.landing-row-meta {
+  grid-column: 2;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 639px) {
+  .landing-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .2rem;
+  }
+
+  .landing-row-meta {
+    grid-column: 1;
+  }
+}
+
+/* Paper keeps the rows whole and unframed. */
+.landing-row {
+  break-inside: avoid;
+}
+
 /* ==========================================================================
    Footer
    ========================================================================== */
