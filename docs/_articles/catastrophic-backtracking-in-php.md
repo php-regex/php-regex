@@ -289,6 +289,44 @@ $ php -d pcre.jit=0 rewrites.php
 ```
 {: data-copy="" }
 
+<figure class="pipeline-figure" role="group" aria-labelledby="fixes-chart-caption">
+<svg viewBox="0 0 640 220" role="img" aria-label="Bar chart of seven rewrite timings on the same input: about 537, 549 and 1,351 milliseconds for the original, the non-capturing and the bounded forms, and four bars at the axis - 0.006 milliseconds and less - for the possessive, atomic and flattened forms.">
+  <title>Same input, seven patterns</title>
+  <line x1="48" y1="180" x2="616" y2="180" stroke="var(--line-soft)" stroke-width="1"/>
+  <g>
+    <rect x="64" y="113" width="56" height="67" fill="var(--ink-soft)"/>
+    <rect x="148" y="113" width="56" height="67" fill="var(--ink-soft)"/>
+    <rect x="232" y="30" width="56" height="150" fill="var(--amber)"/>
+    <rect x="316" y="179" width="56" height="1" fill="var(--ink)"/>
+    <rect x="400" y="179" width="56" height="1" fill="var(--ink)"/>
+    <rect x="484" y="179" width="56" height="1" fill="var(--ink)"/>
+    <rect x="568" y="179" width="56" height="1" fill="var(--ink)"/>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink)">
+    <text x="92" y="105">537 ms</text>
+    <text x="176" y="105">549 ms</text>
+    <text x="260" y="22" style="font-weight: 600; fill: var(--amber);">1,351 ms</text>
+    <text x="344" y="171">0.006 ms</text>
+    <text x="428" y="171">0.003</text>
+    <text x="512" y="171">0.002</text>
+    <text x="596" y="171">0.002</text>
+  </g>
+  <g style="font-family: var(--font-mono); font-size: 11px;" text-anchor="middle" fill="var(--ink-soft)">
+    <text x="92" y="200">(\w+)+</text>
+    <text x="176" y="200">(?:\w+)+</text>
+    <text x="260" y="200">{1,100} bound</text>
+    <text x="344" y="200">\w++</text>
+    <text x="428" y="200">(\w++)+</text>
+    <text x="512" y="200">(?>\w+)+</text>
+    <text x="596" y="200">\w+</text>
+    <text x="332" y="218">one call, 24 letters and a &laquo;!&raquo;, JIT off</text>
+  </g>
+</svg>
+<figcaption id="fixes-chart-caption">
+  The last four bars do not leave the axis: that is the fix. The amber bar is the popular &laquo;just bound it&raquo; advice &mdash; slower than the disease, because <code>{1,100}</code> caps the rounds, not the choices per round.
+</figcaption>
+</figure>
+
 Removing the capture changes nothing: `(?:…)`, a group that does not capture, takes the same half-second.
 
 The bound makes things worse: about 1.4 seconds, 2.5 times the original. `{1,100}` limits the number of rounds, not the length of each round, and 24 letters never need more than 24 rounds. So all 2^23 ways to cut the letters are still there. With the JIT on, the bounded form is still the slowest of the three, at about twice the original.
