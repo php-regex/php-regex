@@ -334,7 +334,7 @@ final class PatternLinter extends AbstractNodeVisitor
     {
         $this->dispatch($node);
         $previousFlags = $this->context->activeFlags();
-        $standalone = NodePredicates::isStandaloneInlineFlagsGroup($node);
+        $standalone = NodePredicates::isStandaloneInlineFlags($node);
 
         if (GroupType::InlineFlags === $node->type && null !== $node->flags && !$standalone) {
             $this->context->setActiveFlags(NodePredicates::applyInlineFlags($previousFlags, $node->flags));

@@ -628,11 +628,11 @@ final class LinterFalsePositiveRegressionTest extends TestCase
     {
         $scoped = Regex::create()->parse('/(?s:b)/')->pattern;
         $this->assertInstanceOf(GroupNode::class, $scoped);
-        $this->assertFalse(NodePredicates::isStandaloneInlineFlagsGroup($scoped));
+        $this->assertFalse(NodePredicates::isStandaloneInlineFlags($scoped));
 
         $bare = Regex::create()->parse('/(?s)/')->pattern;
         $this->assertInstanceOf(GroupNode::class, $bare);
-        $this->assertTrue(NodePredicates::isStandaloneInlineFlagsGroup($bare));
+        $this->assertTrue(NodePredicates::isStandaloneInlineFlags($bare));
     }
 
     #[Test]

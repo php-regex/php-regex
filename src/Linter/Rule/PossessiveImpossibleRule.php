@@ -125,7 +125,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
     {
         $atomic = false;
         $node = $item;
-        while ($node instanceof GroupNode && \in_array($node->type, self::WRAPPERS, true) && !NodePredicates::isStandaloneInlineFlagsGroup($node)) {
+        while ($node instanceof GroupNode && \in_array($node->type, self::WRAPPERS, true) && !NodePredicates::isStandaloneInlineFlags($node)) {
             $atomic = $atomic || GroupType::Atomic === $node->type;
             $node = $node->child;
             if ($node instanceof SequenceNode) {

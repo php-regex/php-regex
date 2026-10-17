@@ -282,8 +282,18 @@ final class NodePredicates
      */
     public static function isStandaloneInlineFlagsGroup(NodeInterface $node): bool
     {
-        return $node instanceof GroupNode
-            && GroupType::InlineFlags === $node->type
+        return $node instanceof GroupNode && self::isStandaloneInlineFlags($node);
+    }
+
+    /**
+     * The kind half of isStandaloneInlineFlagsGroup(), for a node the
+     * narrowing has already recognised: the inline-flags type, flags set,
+     * and the span of the flags and three bytes that tells a bare "(?s)"
+     * from a scoped "(?s:)" with the same empty child.
+     */
+    public static function isStandaloneInlineFlags(GroupNode $node): bool
+    {
+        return GroupType::InlineFlags === $node->type
             && null !== $node->flags
             && $node->getEndPosition() - $node->getStartPosition() === \strlen($node->flags) + 3;
     }
