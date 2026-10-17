@@ -1226,12 +1226,27 @@ main table::-webkit-scrollbar-thumb {
  * can still move between the site's top-level areas. With the nav gone
  * there is room for the search toggle's word; the button keeps its own
  * aria-label either way, so nothing is lost. */
-.nav-toggle {
+/* The base button rule (.site-header button, 0-1-1) outguns a bare class
+   selector (0-1-0), so both hides below carry the .site-header prefix —
+   without it the toggle rendered at every width and the header overflowed
+   on tablets. */
+.site-header .nav-toggle {
   display: none;
 }
 
 @media (max-width: 639px) {
-  .nav-toggle {
+  /* A phone header carries four controls beside the wordmark; the row
+     tightens to .65rem and the icon buttons drop to .7rem of side padding
+     so everything fits inside 375px with room to spare. */
+  .site-header {
+    gap: .65rem;
+  }
+
+  .site-header button {
+    padding-inline: .7rem;
+  }
+
+  .site-header .nav-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1257,7 +1272,6 @@ main table::-webkit-scrollbar-thumb {
     left: 0;
     right: 0;
     background: var(--paper);
-    border-bottom: 1px solid var(--line);
     flex-direction: column;
     align-items: stretch;
     padding: .5rem 0;
@@ -1291,9 +1305,15 @@ main table::-webkit-scrollbar-thumb {
 /* Between 640 and 900px the nav is back beside the wordmark, and a
    wordmark, four nav links, a labelled search, the theme toggle and the
    menu toggle need about 750px. The GitHub link goes - the docs areas
-   stay, because the footer keeps the GitHub destination one click away. */
+   stay, because the footer keeps the GitHub destination one click away.
+   The version pill goes with it: it is brand chrome, and the header of a
+   768px tablet has no room left for it. */
 @media (max-width: 899px) {
   .search-toggle kbd {
+    display: none;
+  }
+
+  .brand .version-tag {
     display: none;
   }
 
@@ -1302,8 +1322,22 @@ main table::-webkit-scrollbar-thumb {
   }
 }
 
+/* Below 860px even the words go: the search and menu toggles keep their
+   aria-labels and turn icon-only, and the row breathes at .75rem so the
+   four controls still fit beside the wordmark at 640px. */
+@media (max-width: 859px) {
+  .site-header {
+    gap: .75rem;
+  }
+
+  .search-toggle .search-label,
+  .sidebar-toggle .sidebar-label {
+    display: none;
+  }
+}
+
 @media (min-width: 1024px) {
-  .sidebar-toggle {
+  .site-header .sidebar-toggle {
     display: none;
   }
 }
