@@ -140,6 +140,38 @@ final class ServerInlineIgnoreTest extends TestCase
         $this->assertSame('The @regex-ignore marker names regex.lint.redos, which no issue reports on line 3. Remove the identifier.', $unmatched[1]['message'] ?? null);
     }
 
+    /**
+     * "@regex-target" narrows the versions a pattern is judged for, as in
+     * `regex lint`: under composer.json's "^8.2", "(?a)" (which PHP 8.2
+     * and 8.3 refuse) is judged for 8.4 alone under "php>=8.4"; a marker
+     * that keeps no version of the range is an error on the marker, and so
+     * is one that cannot be read.
+     */
+    #[Test]
+    public function test_a_target_marker_narrows_the_versions_judged(): void
+    {
+        file_put_contents($this->root.'/composer.json', '{"require": {"php": "^8.2"}}');
+        $uri = $this->uri('src/Matcher.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($uri, <<<'CODE'
+            <?php
+            preg_match('/(?a)\d+/', $s); // @regex-target php>=8.4
+            preg_match('/(?a)\d+/', $s);
+            preg_match('/(a/', $s); // @regex-target php>=9.0
+            preg_match('/(a/', $s); // @regex-target php>=eight
+            preg_match('/(?a)\d+/', $s); // @regex-target php<8.4
+            CODE));
+
+        $this->assertSame([
+            [2, 'regex.group.syntax', 1],
+            [3, 'regex.target.empty', 1],
+            [4, 'regex.group.unclosed', 1],
+            [4, 'regex.target.invalid', 1],
+            [5, 'regex.group.syntax', 1],
+        ], $this->diagnosed($uri));
+    }
+
     #[Test]
     public function test_regex_json_turns_the_unmatched_report_off(): void
     {

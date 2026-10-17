@@ -44,7 +44,7 @@ use PHPRegex\Redos\RedosAnalysis;
  *     source: string|null,
  *     validation: ValidationResult|null,
  *     analysis: RedosAnalysis|null,
- *     target: TargetDescription|null,
+ *     target: array{php: string, pcre: string, guard: string|null, guard_pcre: string|null}|null,
  * }
  * @phpstan-type JsonOptimization array{
  *     file: string,
@@ -166,9 +166,25 @@ final class JsonFormatter extends AbstractOutputFormatter
             'validation' => $issue['validation'] ?? null,
             'analysis' => $issue['analysis'] ?? null,
             // The PHP and PCRE2 of the range that refuse a pattern the
-            // floor accepts; null when the issue is the floor's.
-            'target' => $issue['target'] ?? null,
+            // floor accepts, or that judged it under a guard or a marker,
+            // with the constraint of the guard; null when the issue is the
+            // floor's.
+            'target' => isset($issue['target']) ? self::target($issue['target']) : null,
         ];
+    }
+
+    /**
+     * An issue's target with every key of the contract: the constraint of
+     * the guard or the marker that narrowed the versions judged, null when
+     * none did.
+     *
+     * @param TargetDescription $target
+     *
+     * @return array{php: string, pcre: string, guard: string|null, guard_pcre: string|null}
+     */
+    private static function target(array $target): array
+    {
+        return ['php' => $target['php'], 'pcre' => $target['pcre'], 'guard' => $target['guard'] ?? null, 'guard_pcre' => $target['guard_pcre'] ?? null];
     }
 
     /**

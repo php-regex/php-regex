@@ -17,6 +17,7 @@ use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Psalm\Internal\CallbackParameters;
 use PHPRegex\Psalm\Internal\PregCallAnalyzer;
+use PHPRegex\Psalm\Internal\TargetMarkerAnalyzer;
 use Psalm\Plugin\PluginEntryPointInterface;
 use Psalm\Plugin\RegistrationInterface;
 
@@ -25,7 +26,9 @@ use Psalm\Plugin\RegistrationInterface;
  * preg_match_all(), the subject where preg_match() returned 1, the callback
  * of preg_replace_callback() and the pieces of preg_split(), from the
  * pattern and the flags, and reports the patterns the targeted PHP and PCRE2
- * refuse as InvalidRegexPattern.
+ * refuse as InvalidRegexPattern. A call a "@regex-target" marker covers is
+ * judged for the versions it keeps of the series of Psalm's PHP; a marker
+ * that cannot be read, or keeps none, is reported as InvalidRegexTarget.
  *
  * Patterns are judged for the PHP version Psalm analyses for, with the
  * PCRE2 it bundles, unless the plugin's options say otherwise; a PHP below
@@ -49,7 +52,7 @@ final class Plugin implements PluginEntryPointInterface
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {
         PregCallAnalyzer::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'));
-        foreach ([PregCallAnalyzer::class, CallbackParameters::class] as $hooks) {
+        foreach ([PregCallAnalyzer::class, CallbackParameters::class, TargetMarkerAnalyzer::class] as $hooks) {
             // Psalm registers a class only once it is loaded.
             class_exists($hooks);
             $registration->registerHooksFromClass($hooks);

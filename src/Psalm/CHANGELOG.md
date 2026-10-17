@@ -8,6 +8,9 @@ CHANGELOG
    `preg_match_all()` from the pattern and reports invalid patterns as
    `InvalidRegexPattern`; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `@regex-target` narrows the versions a call is judged for;
+   `InvalidRegexTarget` reports the markers that keep no version or cannot
+   be read.
  * A PHP below 7.3, which ships PCRE1, is judged as `regex lint` judges it:
    refused when `<phpVersion>` or Psalm's own PHP version names it, judged
    from the lowest PHP on PCRE2 of the `composer.json` Psalm read it from.

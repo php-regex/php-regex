@@ -213,12 +213,13 @@ final class LintCommand extends Command
             );
             $parser = Regex::fromOptions(ParserOptions::fromArray($this->regexOptions + $target->regexOptions()))->parser();
             $range = $target->rangeParsers($parser, $this->regexOptions);
+            $judged = $target->judgedRange($parser, $this->regexOptions);
         } catch (UnsupportedTargetException $e) {
             return $this->renderFailure($format, $output, $io, $e->getMessage(), JsonDocument::STAGE_TARGET, Command::INVALID);
         } catch (InvalidRegexOptionException $e) {
             return $this->renderFailure($format, $output, $io, 'Invalid option: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, Command::INVALID);
         }
-        $analysis = $this->analysis->withParser($parser, $range);
+        $analysis = $this->analysis->withParser($parser, $range, $judged);
         $lint = $this->lint->withAnalysis($analysis);
 
         $this->formatterRegistry->override(

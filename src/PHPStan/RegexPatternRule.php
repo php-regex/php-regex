@@ -86,6 +86,16 @@ final class RegexPatternRule implements Rule
 {
     public const IDENTIFIER_INVALID_FOR_TARGET = 'regex.invalidForTarget';
     public const IDENTIFIER_REDOS = 'regex.redos';
+
+    /**
+     * A "@regex-target" marker whose constraint cannot be read.
+     */
+    public const IDENTIFIER_TARGET_INVALID = 'regex.target.invalid';
+
+    /**
+     * A "@regex-target" marker that keeps no version of PHPStan's range.
+     */
+    public const IDENTIFIER_TARGET_EMPTY = 'regex.target.empty';
     public const IDENTIFIER_OPTIMIZATION = 'regex.optimization';
 
     public const IDENTIFIER_TRIVIAL_MATCH = 'regex.trivialMatch';

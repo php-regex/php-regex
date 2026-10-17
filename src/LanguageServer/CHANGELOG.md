@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `@regex-target` narrows the versions a pattern is judged for, as in
+   `regex lint`; a marker that keeps no version, or cannot be read, is an
+   error on the marker.
  * `@regex-ignore` and `@regex-ignore-next-line` may name the issues they
    silence; a marker that silences nothing is a warning on the marker,
    `regex.ignore.unmatched`, unless `reportUnmatchedIgnores` in `regex.json`

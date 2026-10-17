@@ -13,11 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
+use PHPRegex\Linter\Extraction\TargetMarker;
+use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Parser\Internal\Ascii;
 
@@ -34,6 +37,8 @@ final class PatternExtractor
     private const WORKER_ALLOWED_CLASSES = [
         PatternOccurrence::class,
         IgnoreMarker::class,
+        TargetMarker::class,
+        TargetConstraint::class,
     ];
 
     /**
@@ -452,7 +457,8 @@ final class PatternExtractor
 
     /**
      * The occurrences of one file, those a marker naming no issue silences
-     * marked; with $scanned, followed by the file's markers.
+     * marked, each judged for the versions its "@regex-target" markers
+     * keep; with $scanned, followed by the file's markers.
      *
      * @return list<PatternOccurrence>
      */
@@ -465,21 +471,22 @@ final class PatternExtractor
             $unread = $unread || ($occurrence instanceof PatternOccurrence && null !== $occurrence->unread);
         }
 
-        $result = $this->applyInlineIgnores($occurrences, $markers);
+        $result = $this->applyInlineMarkers($occurrences, $markers);
         if ($scanned && !$unread) {
-            $result[] = PatternOccurrence::scanned($file, $markers[$file] ?? $this->markersOf($file));
+            [$ignores, $targets] = $markers[$file] ?? $this->markersOf($file);
+            $result[] = PatternOccurrence::scanned($file, $ignores, $targets);
         }
 
         return $result;
     }
 
     /**
-     * @param list<PatternOccurrence>           $occurrences
-     * @param array<string, list<IgnoreMarker>> $markers     the markers read, by file
+     * @param list<PatternOccurrence>                                      $occurrences
+     * @param array<string, array{list<IgnoreMarker>, list<TargetMarker>}> $markers     the markers read, by file
      *
      * @return list<PatternOccurrence>
      */
-    private function applyInlineIgnores(array $occurrences, array &$markers): array
+    private function applyInlineMarkers(array $occurrences, array &$markers): array
     {
         $result = [];
         foreach ($occurrences as $occurrence) {
@@ -492,40 +499,30 @@ final class PatternExtractor
             }
 
             $file = $occurrence->file;
-            $markers[$file] ??= $this->markersOf($file);
+            [$ignores, $targets] = $markers[$file] ??= $this->markersOf($file);
             $silenced = false;
-            foreach ($markers[$file] as $marker) {
+            foreach ($ignores as $marker) {
                 $silenced = $silenced || ([] === $marker->identifiers && $marker->coveredLine === $occurrence->line);
             }
 
-            if ($silenced) {
-                $result[] = new PatternOccurrence(
-                    $occurrence->pattern,
-                    $occurrence->file,
-                    $occurrence->line,
-                    $occurrence->source,
-                    $occurrence->displayPattern,
-                    $occurrence->location,
-                    true,
-                    $occurrence->column,
-                    $occurrence->fileOffset,
-                );
-            } else {
-                $result[] = $occurrence;
-            }
+            $occurrence = $occurrence->guardedBy(TargetMarker::constraintAt($targets, $occurrence->line));
+            $result[] = $silenced ? $occurrence->ignoredWhole() : $occurrence;
         }
 
         return $result;
     }
 
     /**
-     * @return list<IgnoreMarker>
+     * The inline markers of a file: those that silence, those that narrow
+     * the versions judged.
+     *
+     * @return array{list<IgnoreMarker>, list<TargetMarker>}
      */
     private function markersOf(string $file): array
     {
         $content = @file_get_contents($file);
 
-        return false === $content ? [] : InlineIgnores::markers($content);
+        return false === $content ? [[], []] : [InlineIgnores::markers($content), TargetMarkers::read($content)];
     }
 
     /**

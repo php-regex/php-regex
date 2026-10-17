@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `@regex-target` narrows the versions a pattern is judged for, and an issue
+   of a narrowed pattern carries `target.guard` in the JSON report.
  * An inline marker may name the issues it silences, and the markers that
    silence nothing are reported (`reportUnmatchedIgnores`, on by default).
  * The workers take the files and the patterns a few at a time, as each one

@@ -145,6 +145,25 @@ final class DiagnosticConverter
         ];
     }
 
+    /**
+     * An error on a "@regex-target" marker that cannot be read, or keeps
+     * no version the project is judged for.
+     *
+     * @param Range $range
+     *
+     * @return Diagnostic
+     */
+    public function fromTargetMarker(string $code, string $message, array $range): array
+    {
+        return [
+            'range' => $range,
+            'severity' => self::SEVERITY_ERROR,
+            'code' => $code,
+            'source' => 'php-regex',
+            'message' => $message,
+        ];
+    }
+
     private static function withHint(string $message, ?string $hint): string
     {
         return null === $hint || '' === $hint || str_contains($message, $hint) ? $message : $message."\n".$hint;

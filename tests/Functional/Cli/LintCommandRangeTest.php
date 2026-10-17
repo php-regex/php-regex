@@ -72,7 +72,7 @@ final class LintCommandRangeTest extends TestCase
         $this->assertIsString($message);
         $this->assertStringContainsString('PHP 8.5 and later', (string) $message);
         // The lowest target that refuses it.
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44'], $issue['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $issue['target'] ?? null);
     }
 
     /**
@@ -131,7 +131,7 @@ final class LintCommandRangeTest extends TestCase
         $message = $issues[0]['message'] ?? null;
         $this->assertIsString($message);
         $this->assertStringContainsString('PHP 8.5.3 and later', (string) $message);
-        $this->assertSame(['php' => '8.5.3', 'pcre' => '10.44'], $issues[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5.3', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
     }
 
     #[Test]
@@ -208,7 +208,7 @@ final class LintCommandRangeTest extends TestCase
         $this->assertCount(1, $byPattern['/(?<=a\Kb)c(/'], $stdout);
         $this->assertNull($byPattern['/(?<=a\Kb)c(/'][0]['target']);
         $this->assertSame('regex.group.unclosed', $byPattern['/(?<=a\Kb)c(/'][0]['issue_id'] ?? null);
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44'], $byPattern['/(?<=a\Kb)c/'][0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $byPattern['/(?<=a\Kb)c/'][0]['target'] ?? null);
     }
 
     #[Test]
@@ -224,7 +224,7 @@ final class LintCommandRangeTest extends TestCase
         $pcres = array_values(array_map(static fn (mixed $entry): mixed => JsonContract::asArray($entry)['pcre'] ?? null, $range));
         $this->assertCount(\count(self::FULL_RANGE), $pcres);
         $this->assertSame(array_fill(0, \count($pcres), '10.43'), $pcres);
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.43'], self::issues($document)[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => '10.43', 'guard' => null, 'guard_pcre' => null], self::issues($document)[0]['target'] ?? null);
     }
 
     #[Test]

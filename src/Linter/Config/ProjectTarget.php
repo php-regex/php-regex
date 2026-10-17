@@ -55,7 +55,7 @@ use PHPRegex\Parser\Validation\RangeDiff;
  *
  * @internal
  *
- * @phpstan-type TargetDescription array{php: string, pcre: string}
+ * @phpstan-type TargetDescription array{php: string, pcre: string, guard?: string, guard_pcre?: string}
  *
  * @phpstan-import-type OptionsArray from ParserOptions
  * @phpstan-import-type LintConfig from LintConfigResult
@@ -63,14 +63,19 @@ use PHPRegex\Parser\Validation\RangeDiff;
 final class ProjectTarget
 {
     /**
-     * @param list<string>     $notices
-     * @param list<PcreTarget> $range   the target first
+     * @param list<string>                    $notices
+     * @param list<PcreTarget>                $range      the target first
+     * @param list<array{int, int|null}>|null $admitted   the PHP versions the project installs on, from
+     *                                                    require.php; the series of the target when null
+     * @param string|null                     $pinnedPcre the PCRE2 release named for every version
      */
     private function __construct(
         private readonly PcreTarget $target,
         private readonly string $source,
         private readonly array $notices,
         private readonly array $range,
+        private readonly ?array $admitted = null,
+        private readonly ?string $pinnedPcre = null,
     ) {}
 
     /**
@@ -163,6 +168,7 @@ final class ProjectTarget
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
         $target = new PcreTarget($phpVersionId, $pcreVersion);
         $range = self::rangeFor($target, $constraint, $pinnedPcre);
+        $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, self::intervals($constraint) ?? []);
 
         // A release older than the library knows in full is judged with
         // the rules of the oldest it does: said once for the whole range,
@@ -172,7 +178,7 @@ final class ProjectTarget
             $notices[] = $older;
         }
 
-        return new self($target, $source, $notices, $range);
+        return new self($target, $source, $notices, $range, $admitted, $pinnedPcre);
     }
 
     /**
@@ -229,7 +235,7 @@ final class ProjectTarget
             self::phpLabel($firstOnPcre2),
         );
 
-        return new self($target->target, $target->source, [$note, ...$target->notices], $target->range);
+        return new self($target->target, $target->source, [$note, ...$target->notices], $target->range, $target->admitted, $target->pinnedPcre);
     }
 
     public function target(): PcreTarget
@@ -276,6 +282,36 @@ final class ProjectTarget
         }
 
         return $parsers;
+    }
+
+    /**
+     * The versions a pattern is judged at, and those the project installs
+     * on, for a guard or a "@regex-target" marker to narrow: each version
+     * judged gets a parser with the options of the floor's, sharing its
+     * cache, as rangeParsers() builds them.
+     *
+     * @param RegexParser  $floor        the parser of the floor
+     * @param OptionsArray $regexOptions what the floor's parser was created with, its target aside
+     */
+    public function judgedRange(RegexParser $floor, array $regexOptions = []): JudgedRange
+    {
+        $admitted = $this->admitted ?? [[$this->target->phpVersionId, self::nextAt($this->target->phpVersionId, 2)]];
+
+        return new JudgedRange($this->range, $admitted, $this->pinnedPcre, $floor, $regexOptions);
+    }
+
+    /**
+     * The versions a Composer constraint allows, as intervals, a branch
+     * without a lower bound starting at the first version: what a guard or
+     * a "@regex-target" marker narrows a project range to, never the range
+     * itself. Null when the constraint is not one of the forms
+     * composer.json's require.php is read in.
+     *
+     * @return non-empty-list<array{int, int|null}>|null
+     */
+    public static function constraintIntervals(string $constraint): ?array
+    {
+        return self::intervals($constraint, true);
     }
 
     /**
@@ -350,6 +386,27 @@ final class ProjectTarget
             'source' => $this->source,
             'range' => array_map(self::describe(...), $this->range),
         ];
+    }
+
+    /**
+     * The intervals require.php allows, from the floor up: the versions on
+     * PCRE1 and those below a pinned platform are not installed on.
+     *
+     * @param list<array{int, int|null}> $intervals
+     *
+     * @return list<array{int, int|null}>
+     */
+    private static function admittedFrom(int $floor, array $intervals): array
+    {
+        $admitted = [];
+        foreach ($intervals as [$from, $below]) {
+            $from = max($from, $floor);
+            if (null === $below || $from < $below) {
+                $admitted[] = [$from, $below];
+            }
+        }
+
+        return $admitted;
     }
 
     /**
@@ -580,11 +637,11 @@ final class ProjectTarget
      *
      * @return non-empty-list<array{int, int|null}>|null
      */
-    private static function intervals(string $constraint): ?array
+    private static function intervals(string $constraint, bool $openBelow = false): ?array
     {
         $intervals = [];
         foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint, " \t\n\r\0\x0B")) ?: [] as $branch) {
-            $interval = self::branchInterval($branch);
+            $interval = self::branchInterval($branch, $openBelow);
             if (null === $interval) {
                 return null;
             }
@@ -595,9 +652,12 @@ final class ProjectTarget
     }
 
     /**
+     * @param bool $openBelow whether a branch without a lower bound starts at the first version, where
+     *                        it makes the constraint unreadable
+     *
      * @return array{int, int|null}|null
      */
-    private static function branchInterval(string $branch): ?array
+    private static function branchInterval(string $branch, bool $openBelow = false): ?array
     {
         // A partial upper version of a hyphen range allows its whole
         // branch: "8.2 - 8.4" is below 8.5; a full one is itself the last
@@ -642,6 +702,10 @@ final class ProjectTarget
             if (null !== $until) {
                 $below = null === $below ? $until : min($below, $until);
             }
+        }
+
+        if (null === $lowest && $openBelow && null !== $below) {
+            $lowest = 0;
         }
 
         return null === $lowest ? null : [$lowest, $below];

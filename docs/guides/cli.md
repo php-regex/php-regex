@@ -1213,6 +1213,57 @@ Symfony's and Laravel's `regex:lint` judge the same range when they read
 `composer.json`; their `php_version` setting names one version, as
 `--php-version` does.
 
+#### Code that runs on some PHP versions only
+
+A pattern the code only runs on some of the versions judged is judged for
+those alone: the lint narrows the versions, it never silences the pattern.
+`@regex-target` names them, as a Composer constraint after `php`, `pcre`, or
+both:
+
+```php
+preg_match('/(?a)\d+/', $s); // @regex-target php>=8.4
+
+// @regex-target-next-line pcre>=10.43
+preg_match('/(?a)\d+/', $s);
+
+/**
+ * @regex-target php>=8.4 pcre>=10.43
+ */
+final class AsciiMatcher
+{
+    // every pattern of the class is judged for 8.4 and later
+}
+```
+
+Under `require.php` `^8.2`, `(?a)` (an option PCRE2 10.43 added) is judged
+for 8.4, 8.4.25, 8.5 and 8.5.10, and not reported; without the marker, PHP
+8.2 refuses it. The versions judged are the lowest one the marker keeps, with
+the PCRE2 it bundles (or the one named), then each later version of the
+range it keeps. `pcre>=10.43` keeps the versions whose PCRE2 is 10.43 or
+later.
+
+- **Placement.** As for `@regex-ignore`: `@regex-target` covers the last line
+  of its comment, `@regex-target-next-line` the line after it. In a doc
+  comment that opens its line, `@regex-target` covers the statement or the
+  declaration after it, whole: a class, an interface, a trait, an enum, a
+  function, a method, a constant.
+- **Several markers.** Markers that cover one line all apply: the versions
+  judged are those every one keeps.
+- **A marker that keeps no version** of the range, `php>=9.0` under `^8.2`, is
+  an error, `regex.target.empty`, on the marker's line, and the patterns it
+  covers are not judged. Under one version named, `--php-version=8.2`, the
+  range is the 8.2 series.
+- **A marker that cannot be read**, `php>=eight`, is an error,
+  `regex.target.invalid`, and the patterns it covers are judged for the whole
+  range.
+- **In the JSON report**, an issue of a narrowed pattern names the version that
+  reported it in `target` and the constraint in `target.guard` (`>=8.4`), the
+  PCRE2 part in `target.guard_pcre`
+  ([JSON output](../reference/json-output.md#issue-target-lintresultsissuestarget)).
+
+The PHPStan extension, the Psalm plugin and the language server read the
+same markers.
+
 Single-pattern commands, such as `analyze` or `validate`, judge for the
 running PHP unless `--php-version` or `--pcre-version` is given; their
 banners show `Target PHP` / `Target PCRE2` rows only when those flags are

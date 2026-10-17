@@ -101,6 +101,18 @@ leaves the call unjudged: it never runs there. An unqualified
 and its guard is not read. With `phpRegex.phpVersion`, or one PHP version for
 PHPStan, nothing changes: PHPStan already treats the other branch as dead.
 
+A `@regex-target` marker narrows the versions a call is judged for as the
+lint reads it (see [the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)),
+with a guard the versions both keep. A marker that keeps no version of the
+range is reported as `regex.target.empty` on its line, and its calls are not
+judged; one that cannot be read as `regex.target.invalid`, and its calls are
+judged for the whole range:
+
+```text
+The @regex-target marker "php>=9.0" keeps no version the project is judged for (PHP >=8.2 <8.6): the patterns it covers are not judged.
+🪪 regex.target.empty
+```
+
 The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
 7.2 and earlier ship PCRE1, which the library does not judge. A version below
 7.3 named by `phpRegex.phpVersion` or by PHPStan's `phpVersion` stops the

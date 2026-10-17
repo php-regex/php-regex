@@ -420,6 +420,24 @@ When Psalm analyses for a PHP older than 8.2, a pattern with the `n` modifier,
 which PHP reads from 8.2 only, is not typed, and is reported as
 `InvalidRegexPattern`.
 
+### Code that runs on some PHP versions only
+
+A call under `@regex-target` is judged for the versions the marker keeps of
+the series Psalm analyses for, as `regex lint` reads the marker (see
+[the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)): with
+`<phpVersion>8.2</phpVersion>`, `// @regex-target php>=8.2.5` judges the call
+for PHP 8.2.5. A marker that keeps none of that series, `php>=8.4` there, is
+reported as `InvalidRegexTarget` on the marker, and its call is not judged;
+so is a marker whose constraint cannot be read, and its call is judged as if
+it held none. The types of `$matches` stay those of the PHP Psalm analyses
+for.
+
+The plugin does not read a guard on `PHP_VERSION_ID` around the call. Psalm
+narrows the constant there, but it narrows it under
+`function_exists('array_find')` too, to PHP 8.4 and later, a polyfill loaded
+or not: a call such a guard holds would go unjudged for the PHP versions the
+polyfill runs it on. Write the marker instead.
+
 ## Adopting the plugin
 
 The narrower types may show code that reads a key the pattern never writes,

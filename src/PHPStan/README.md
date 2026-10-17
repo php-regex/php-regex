@@ -110,7 +110,10 @@ Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: Invalid or unsupported PC
 
 Under a `phpVersion` range, a call PHPStan knows runs on some versions only,
 inside `if (PHP_VERSION_ID >= 80400)` say, is judged for those versions
-alone: the guard narrows the versions judged, it never silences the call.
+alone: the guard narrows the versions judged, it never silences the call. A
+`// @regex-target php>=8.4` marker does the same where no guard says it, and
+a marker that keeps no version, or cannot be read, is reported as
+`regex.target.empty` or `regex.target.invalid`.
 
 A replacement that refers to a missing group is reported with no configuration
 either:

@@ -20,8 +20,12 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Extraction\TargetMarker;
+use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -188,12 +192,25 @@ final class PatternChecker
     private readonly ?string $pinnedPcre;
 
     /**
-     * The parser of each lowest version a guard leaves, and its analysis,
-     * by PHP_VERSION_ID.
+     * The analysis of each lowest version a guard or a marker leaves, by
+     * PHP_VERSION_ID and PCRE2.
      *
-     * @var array<int, array{RegexParser, string, AnalysisService|null}>
+     * @var array<string, AnalysisService>
      */
     private array $guardedFloors = [];
+
+    /**
+     * The versions judged and those PHPStan's range admits, built once.
+     */
+    private ?JudgedRange $judged = null;
+
+    /**
+     * The "@regex-target" markers of the files last read, by path and time
+     * of change.
+     *
+     * @var array<string, list<TargetMarker>>
+     */
+    private array $markers = [];
 
     /**
      * @param ConfigArray                        $config             the "phpRegex" parameter: "phpVersion", "pcreVersion" and
@@ -330,7 +347,7 @@ final class PatternChecker
         // The floor first, then the later PHPs of PHPStan's range: the first
         // that refuses the pattern is reported. Under a guard on
         // PHP_VERSION_ID, those of the versions the call runs on.
-        $guarded = $this->guardedTargets($scope);
+        $guarded = $this->guardedTargets($scope, $lineNumber);
         if ([] === $guarded) {
             return [];
         }
@@ -544,6 +561,35 @@ final class PatternChecker
     }
 
     /**
+     * The errors of the "@regex-target" markers of a file: one that cannot
+     * be read, one that keeps no version of PHPStan's range, each on its
+     * line.
+     *
+     * @return list<IdentifierRuleError>
+     */
+    public function markerErrors(string $file): array
+    {
+        $errors = [];
+        foreach ($this->markersOf($file) as $marker) {
+            if (null === $marker->constraint) {
+                $errors[] = RuleErrorBuilder::message((string) $marker->error)
+                    ->line($marker->line)
+                    ->tip('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.')
+                    ->identifier(RegexPatternRule::IDENTIFIER_TARGET_INVALID)
+                    ->build();
+            } elseif ([] === $this->judged()->narrow($marker->constraint)) {
+                $errors[] = RuleErrorBuilder::message(\sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $this->judged()->describe()))
+                    ->line($marker->line)
+                    ->tip('Widen the marker to versions of the range, or remove the code it covers if it never runs there.')
+                    ->identifier(RegexPatternRule::IDENTIFIER_TARGET_EMPTY)
+                    ->build();
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
      * The offset just past the escape sequence a backslash at $offset opens:
      * "\x" with its braced code point or up to two hex digits; "\N" or "\o"
      * with its braced operand ("\N{U+41}"); "\p" or "\P" with its braced
@@ -695,50 +741,107 @@ final class PatternChecker
     }
 
     /**
-     * The versions a guard on PHP_VERSION_ID leaves the call to run on, of
-     * PHPStan's range: its lowest, judged with the PCRE2 it bundles or the
-     * one "pcreVersion" names, its label (null for the target of the
+     * The versions of PHPStan's range a call runs on, as a guard on
+     * PHP_VERSION_ID and the "@regex-target" markers covering its line say
+     * them, both at once: the lowest, judged with the PCRE2 it bundles or
+     * the one "pcreVersion" names, its label (null for the target of the
      * extension, when the running engine stands for it), the later PHPs of
-     * the range above it, and the analysis of the lowest. Null when no
-     * guard narrows the range; an empty list when the guard keeps no
+     * the range above it, and the analysis of the lowest. Null when nothing
+     * narrows the range; an empty list when what narrows it keeps no
      * version of it, the call never running on the versions judged.
      *
      * @return array{RegexParser, string|null, list<array{RegexParser, string}>, AnalysisService|null}|array{}|null
      */
-    private function guardedTargets(Scope $scope): ?array
+    private function guardedTargets(Scope $scope, int $lineNumber): ?array
     {
-        if (null === $this->guardable) {
+        $constraint = TargetMarker::constraintAt($this->markersOf($scope->getFile()), $lineNumber);
+        if (null !== $this->guardable) {
+            [$lowest, $highest] = $this->guardable;
+            $narrowed = self::admitted($this->versionType($scope), $lowest, $highest);
+            if (null === $narrowed) {
+                return [];
+            }
+
+            if ($narrowed !== [$lowest, $highest]) {
+                $guard = TargetConstraint::phpFrom($narrowed[0], $narrowed[1] + 1);
+                $constraint = $constraint?->intersect($guard) ?? $guard;
+            }
+        }
+
+        if (null === $constraint) {
             return null;
         }
 
-        [$lowest, $highest] = $this->guardable;
-        $narrowed = self::admitted($this->versionType($scope), $lowest, $highest);
-        if (null === $narrowed) {
+        $judged = $this->judged();
+        $targets = $judged->narrow($constraint);
+        if ([] === $targets) {
             return [];
         }
 
-        [$from, $to] = $narrowed;
-        if ($from === $lowest && $to === $highest) {
+        $key = static fn (PcreTarget $target): string => $target->phpVersionId.'/'.$target->pcreVersion;
+        if (array_map($key, $targets) === array_map($key, $judged->points())) {
             return null;
         }
 
-        $later = array_values(array_filter($this->range, static fn (array $target): bool => $target[0]->target()->phpVersionId > $from && $target[0]->target()->phpVersionId <= $to));
-        if ($from === $lowest) {
+        $later = [];
+        foreach (\array_slice($targets, 1) as $target) {
+            $later[] = [$judged->parserFor($target), self::label($target)];
+        }
+
+        $floor = $targets[0];
+        if ($key($floor) === $key($this->regex->target())) {
             return [$this->regex, $this->targetLabel, $later, null];
         }
 
-        if (!isset($this->guardedFloors[$from])) {
-            $pcre = $this->pinnedPcre ?? PcreTarget::bundledWith($from)->pcreVersion;
-            $this->guardedFloors[$from] = [
-                RegexParser::create(['php_version' => $from, 'pcre_version' => $pcre, 'runtime_pcre_validation' => false]),
-                \sprintf('PHP %s with PCRE2 %s', ProjectTarget::phpLabel($from), $pcre),
-                null,
-            ];
-        }
-        [$parser, $label, $analysis] = $this->guardedFloors[$from];
-        $analysis ??= $this->guardedFloors[$from][2] = $this->analysisFor($parser);
+        $this->guardedFloors[$key($floor)] ??= $this->analysisFor($judged->parserFor($floor));
+        $analysis = $this->guardedFloors[$key($floor)];
 
-        return [$parser, $label, $later, $analysis];
+        return [$analysis->getParser(), self::label($floor), $later, $analysis];
+    }
+
+    /**
+     * "PHP 8.4 with PCRE2 10.44".
+     */
+    private static function label(PcreTarget $target): string
+    {
+        return \sprintf('PHP %s with PCRE2 %s', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion);
+    }
+
+    /**
+     * The versions the extension judges, and those a marker or a guard may
+     * keep of them: PHPStan's range, or the series of its one version.
+     */
+    private function judged(): JudgedRange
+    {
+        if (null === $this->judged) {
+            $floor = $this->regex->target();
+            [$lowest, $highest] = $this->guardable ?? [$floor->phpVersionId, (intdiv($floor->phpVersionId, 100) + 1) * 100 - 1];
+            $this->judged = new JudgedRange(
+                [$floor, ...array_map(static fn (array $target): PcreTarget => $target[0]->target(), $this->range)],
+                [[$lowest, $highest + 1]],
+                $this->pinnedPcre,
+                $this->regex,
+            );
+        }
+
+        return $this->judged;
+    }
+
+    /**
+     * The "@regex-target" markers of a file, read once per version of it.
+     *
+     * @return list<TargetMarker>
+     */
+    private function markersOf(string $file): array
+    {
+        $modified = @filemtime($file);
+        $key = $file."\0".(false === $modified ? '' : (string) $modified);
+        if (!\array_key_exists($key, $this->markers)) {
+            $content = @file_get_contents($file);
+            $this->markers = [$key => false === $content ? [] : TargetMarkers::read($content)] + \array_slice($this->markers, 0, 63, true);
+        }
+
+        return $this->markers[$key];
     }
 
     /**

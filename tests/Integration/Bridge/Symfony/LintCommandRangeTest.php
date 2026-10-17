@@ -61,7 +61,7 @@ final class LintCommandRangeTest extends TestCase
         $message = $issues[0]['message'] ?? null;
         $this->assertIsString($message);
         $this->assertStringContainsString('PHP 8.5 and later', (string) $message);
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44'], $issues[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.5', 'pcre' => '10.44', 'guard' => null, 'guard_pcre' => null], $issues[0]['target'] ?? null);
         $range = JsonContract::asArray(JsonContract::asArray($document['target'] ?? null)['range'] ?? null);
         $this->assertSame(['php' => '8.2', 'pcre' => '10.40'], $range[0] ?? null);
     }

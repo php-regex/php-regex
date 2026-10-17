@@ -16,7 +16,9 @@ namespace PHPRegex\Linter;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\AnalyzedPatterns;
@@ -78,6 +80,14 @@ final class AnalysisService
     private readonly RedosMode $redosMode;
 
     /**
+     * The analysis of each set of versions a guard or a marker keeps, by
+     * the versions.
+     *
+     * @var array<string, self>
+     */
+    private array $narrowed = [];
+
+    /**
      * @param string                 $redosThreshold       the lowest severity reported: low, medium, high or
      *                                                     critical, in any case
      * @param array<string>          $ignoredPatterns
@@ -87,6 +97,9 @@ final class AnalysisService
      *                                                     pattern is validated at too (ProjectTarget::rangeParsers())
      * @param DfaCacheInterface|null $dfaCache             keeps the DFAs the lint rules and the optimizer's checks
      *                                                     build, for the whole run; the process's cache when null
+     * @param JudgedRange|null       $judged               the versions judged and those the project installs on,
+     *                                                     for a guard or a "@regex-target" marker to narrow; a
+     *                                                     pattern is judged for the whole range when null
      *
      * @throws InvalidRegexOptionException when the threshold names no severity
      */
@@ -105,6 +118,7 @@ final class AnalysisService
         private readonly array $lintRules = [],
         private readonly array $range = [],
         private readonly ?DfaCacheInterface $dfaCache = null,
+        private readonly ?JudgedRange $judged = null,
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
         $this->ignoredPatterns = $this->buildIgnoredPatterns($ignoredPatterns, $redosIgnoredPatterns);
@@ -132,10 +146,11 @@ final class AnalysisService
      * command judges for the project's target with the settings of the
      * application's service.
      *
-     * @param list<RegexParser> $range the parsers of the PHP versions after the floor a pattern is
-     *                                 validated at too (ProjectTarget::rangeParsers())
+     * @param list<RegexParser> $range  the parsers of the PHP versions after the floor a pattern is
+     *                                  validated at too (ProjectTarget::rangeParsers())
+     * @param JudgedRange|null  $judged the versions a guard or a marker narrows (ProjectTarget::judgedRange())
      */
-    public function withParser(RegexParser $parser, array $range = []): self
+    public function withParser(RegexParser $parser, array $range = [], ?JudgedRange $judged = null): self
     {
         return new self(
             $parser,
@@ -152,7 +167,16 @@ final class AnalysisService
             $this->lintRules,
             $range,
             $this->dfaCache,
+            $judged,
         );
+    }
+
+    /**
+     * The versions a guard or a marker narrows, when they are known.
+     */
+    public function judgedRange(): ?JudgedRange
+    {
+        return $this->judged;
     }
 
     /**
@@ -305,7 +329,27 @@ final class AnalysisService
         foreach ($patterns as $occurrence) {
             // A file read with the tokenizer instead of the PHP parser is
             // counted in the stats, never reported.
-            if ($occurrence->isIgnored || null !== $occurrence->parserFallback) {
+            if ($occurrence->isIgnored || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
+                if (null !== $done) {
+                    $done(1);
+                }
+
+                continue;
+            }
+
+            // Code that runs on some versions of the range only is judged
+            // for those, by the analysis of those versions; for none, it is
+            // dead code there, and not judged.
+            [$narrowed, $key] = $this->narrowedFor($occurrence);
+            if (null !== $narrowed) {
+                if ($narrowed instanceof self) {
+                    $found = null === $analyzed ? null : [];
+                    array_push($issues, ...self::underGuard($narrowed->lintChunk([$occurrence], null, $found), $narrowed, $occurrence->guard));
+                    foreach ($found ?? [] as $pattern => $read) {
+                        $analyzed[$key."\0".$pattern] = $read;
+                    }
+                }
+
                 if (null !== $done) {
                     $done(1);
                 }
@@ -575,6 +619,78 @@ final class AnalysisService
     }
 
     /**
+     * The analysis judging an occurrence a guard or a marker narrows: that
+     * of the versions it keeps, with their key, or false when it keeps
+     * none. Null when the occurrence is judged for the whole range: no
+     * guard, no versions known to narrow, or a guard that keeps them all.
+     *
+     * @return array{self|false|null, string}
+     */
+    private function narrowedFor(PatternOccurrence $occurrence): array
+    {
+        if (null === $occurrence->guard || null === $this->judged) {
+            return [null, ''];
+        }
+
+        $targets = $this->judged->narrow($occurrence->guard);
+        if ([] === $targets) {
+            return [false, ''];
+        }
+
+        $key = implode(',', array_map(static fn (PcreTarget $target): string => $target->phpVersionId.'/'.$target->pcreVersion, $targets));
+        if ($key === implode(',', array_map(static fn (PcreTarget $target): string => $target->phpVersionId.'/'.$target->pcreVersion, $this->judged->points()))) {
+            return [null, ''];
+        }
+
+        $this->narrowed[$key] ??= new self(
+            $this->judged->parserFor($targets[0]),
+            $this->extractor,
+            $this->warningThreshold,
+            $this->redosSeverityThreshold->value,
+            $this->ignoredPatterns,
+            [],
+            $this->ignoreParseErrors,
+            $this->redosMode,
+            $this->redosConfirmOptions,
+            RedosMode::Off !== $this->redosMode,
+            $this->lintEnabled,
+            $this->lintRules,
+            array_map($this->judged->parserFor(...), \array_slice($targets, 1)),
+            $this->dfaCache,
+        );
+
+        return [$this->narrowed[$key], $key];
+    }
+
+    /**
+     * The issues of a narrowed analysis, each naming the versions judged:
+     * the floor of that analysis for one the floor reports, the refusing
+     * version for one of the range, with the constraint they come from.
+     *
+     * @param list<LintIssue> $issues
+     *
+     * @return list<LintIssue>
+     */
+    private static function underGuard(array $issues, self $narrowed, ?TargetConstraint $guard): array
+    {
+        $constraint = [];
+        $php = $guard?->phpConstraint();
+        if (null !== $php) {
+            $constraint['guard'] = $php;
+        }
+        $pcre = $guard?->pcreConstraint();
+        if (null !== $pcre) {
+            $constraint['guard_pcre'] = $pcre;
+        }
+
+        return array_map(static function (array $issue) use ($narrowed, $constraint): array {
+            $issue['target'] = ($issue['target'] ?? ProjectTarget::describe($narrowed->regex->target())) + $constraint;
+
+            return $issue;
+        }, $issues);
+    }
+
+    /**
      * What the PHP versions of the range after the floor refuse in a
      * pattern the floor accepts: the lowest target that refuses it, the
      * versions that do ("8.5 and later"), and its verdict. Null when every
@@ -642,7 +758,16 @@ final class AnalysisService
         $issues = [];
 
         foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
+            if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
+                continue;
+            }
+
+            [$narrowed] = $this->narrowedFor($occurrence);
+            if (null !== $narrowed) {
+                if ($narrowed instanceof self) {
+                    array_push($issues, ...$narrowed->analyzeRedosChunk([$occurrence], $threshold));
+                }
+
                 continue;
             }
 
@@ -686,7 +811,12 @@ final class AnalysisService
         $suggestions = [];
 
         foreach ($patterns as $occurrence) {
-            $suggestion = $this->suggestOptimization($occurrence, $minSavings, $options, $analyzed[$occurrence->pattern] ?? null);
+            [$narrowed, $key] = $this->narrowedFor($occurrence);
+            $suggestion = match (true) {
+                null === $narrowed => $this->suggestOptimization($occurrence, $minSavings, $options, $analyzed[$occurrence->pattern] ?? null),
+                $narrowed instanceof self => $narrowed->suggestOptimization($occurrence, $minSavings, $options, $analyzed[$key."\0".$occurrence->pattern] ?? null),
+                default => null,
+            };
             if (null !== $suggestion) {
                 $suggestions[] = $suggestion;
             }
@@ -708,7 +838,7 @@ final class AnalysisService
     {
         $verifyWithAutomata = $options->verifyWithAutomata;
 
-        if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback) {
+        if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
             return null;
         }
 

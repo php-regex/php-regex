@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
+use PHPRegex\Linter\Extraction\TargetMarker;
 
 /**
  * Represents a regex pattern occurrence found in source code. One with an
@@ -25,6 +27,12 @@ use PHPRegex\Linter\Extraction\IgnoreMarker;
  * read: it holds no pattern, and carries the inline markers of the file, so
  * that the lint reports those that silence nothing and knows which files a
  * baseline entry may name.
+ *
+ * $guard holds the versions the code holding the pattern runs on, as a
+ * guard on PHP_VERSION_ID or a "@regex-target" marker says them: the
+ * pattern is judged for those of the project range alone. $targets, on a
+ * file read, holds its "@regex-target" markers, for the lint to report the
+ * malformed ones and those that keep no version.
  *
  * $isIgnored is set on an occurrence whose line a marker naming no issue
  * silences: an analysis given it alone leaves it out. The lint, given the
@@ -50,16 +58,40 @@ final class PatternOccurrence
          * @var list<IgnoreMarker>|null
          */
         public readonly ?array $ignores = null,
+        public readonly ?TargetConstraint $guard = null,
+        /**
+         * @var list<TargetMarker>
+         */
+        public readonly array $targets = [],
     ) {}
 
     /**
      * A PHP file the run read, and its inline markers.
      *
      * @param list<IgnoreMarker> $ignores
+     * @param list<TargetMarker> $targets
      */
-    public static function scanned(string $file, array $ignores): self
+    public static function scanned(string $file, array $ignores, array $targets = []): self
     {
-        return new self('', $file, 1, 'php', ignores: $ignores);
+        return new self('', $file, 1, 'php', ignores: $ignores, targets: $targets);
+    }
+
+    /**
+     * The same occurrence, its line silenced whole by a marker naming no
+     * issue.
+     */
+    public function ignoredWhole(): self
+    {
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets);
+    }
+
+    /**
+     * The same occurrence, judged for the versions a guard or a marker
+     * keeps.
+     */
+    public function guardedBy(?TargetConstraint $guard): self
+    {
+        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets);
     }
 
     /**
@@ -68,7 +100,7 @@ final class PatternOccurrence
      */
     public function analysed(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets);
     }
 
     /**

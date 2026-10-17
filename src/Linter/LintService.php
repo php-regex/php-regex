@@ -15,6 +15,7 @@ namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
+use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
@@ -44,6 +45,17 @@ final class LintService
      * An inline marker, or an identifier it names, that silences nothing.
      */
     public const ISSUE_ID_UNMATCHED_IGNORE = 'regex.ignore.unmatched';
+
+    /**
+     * A "@regex-target" marker whose constraint cannot be read.
+     */
+    public const ISSUE_ID_TARGET_INVALID = 'regex.target.invalid';
+
+    /**
+     * A "@regex-target" marker that keeps no version the project is judged
+     * for.
+     */
+    public const ISSUE_ID_TARGET_EMPTY = 'regex.target.empty';
 
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
 
@@ -109,7 +121,7 @@ final class LintService
      */
     public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null): LintReport
     {
-        [$patterns, $markers] = self::readScans($patterns);
+        [$patterns, $markers, $targets] = self::readScans($patterns);
         $progress?->step(LintProgress::STEP_ANALYSIS, \count($patterns));
         // The optimizations take what the analysis read: no pattern is
         // parsed or validated twice.
@@ -129,6 +141,7 @@ final class LintService
             $progress?->finish();
         }
 
+        array_push($issues, ...$this->targetMarkerIssues($targets));
         $used = [];
         $issues = self::silence(array_values($issues), $markers, $used, self::issueIdOf(...));
         $optimizations = self::silence(array_values($optimizations), $markers, $used, static fn (array $optimization): string => self::ISSUE_ID_OPTIMIZATION);
@@ -202,14 +215,16 @@ final class LintService
      *
      * @param array<PatternOccurrence> $patterns
      *
-     * @return array{list<PatternOccurrence>, array<string, list<IgnoreMarker>>}
+     * @return array{list<PatternOccurrence>, array<string, list<IgnoreMarker>>, array<string, list<TargetMarker>>}
      */
     private static function readScans(array $patterns): array
     {
         $markers = [];
+        $targets = [];
         foreach ($patterns as $pattern) {
             if (null !== $pattern->ignores) {
                 $markers[$pattern->file] = $pattern->ignores;
+                $targets[$pattern->file] = $pattern->targets;
             }
         }
 
@@ -222,7 +237,48 @@ final class LintService
             $occurrences[] = $pattern->isIgnored && isset($markers[$pattern->file]) ? $pattern->analysed() : $pattern;
         }
 
-        return [$occurrences, $markers];
+        return [$occurrences, $markers, $targets];
+    }
+
+    /**
+     * An error for each "@regex-target" marker that cannot be read, and for
+     * each that keeps no version the project is judged for, on its line.
+     *
+     * @param array<string, list<TargetMarker>> $targets
+     *
+     * @phpstan-return list<LintIssue>
+     */
+    private function targetMarkerIssues(array $targets): array
+    {
+        $judged = $this->analysis->judgedRange();
+        $issues = [];
+        foreach ($targets as $file => $fileTargets) {
+            foreach ($fileTargets as $marker) {
+                [$issueId, $message] = match (true) {
+                    null === $marker->constraint => [self::ISSUE_ID_TARGET_INVALID, (string) $marker->error],
+                    null !== $judged && [] === $judged->narrow($marker->constraint) => [self::ISSUE_ID_TARGET_EMPTY, \sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $judged->describe())],
+                    default => [null, ''],
+                };
+                if (null === $issueId) {
+                    continue;
+                }
+
+                $issues[] = [
+                    'type' => 'error',
+                    'file' => (string) $file,
+                    'line' => $marker->line,
+                    'column' => $marker->column,
+                    'issueId' => $issueId,
+                    'message' => $message,
+                    'hint' => self::ISSUE_ID_TARGET_INVALID === $issueId
+                        ? 'Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.'
+                        : 'Widen the marker to versions of the range, or remove the code it covers if it never runs there.',
+                    'source' => 'php',
+                ];
+            }
+        }
+
+        return $issues;
     }
 
     /**

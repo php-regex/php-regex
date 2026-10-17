@@ -256,7 +256,11 @@ call does not. A marker may name the issues it silences
 (`// @regex-ignore regex.lint.flag.useless.i`), and a marker that silences
 nothing is a warning on the marker, `regex.ignore.unmatched`, unless
 `"reportUnmatchedIgnores": false` in `regex.json` turns it off (see
-[the CLI guide](cli.md#markers-that-silence-nothing)). A namespace that declares its own function shadows a global
+[the CLI guide](cli.md#markers-that-silence-nothing)). A pattern under
+`@regex-target` is judged for the lowest version the marker keeps of the
+project's range (see
+[the CLI guide](cli.md#code-that-runs-on-some-php-versions-only)); a marker
+that keeps none, or cannot be read, is an error on the marker. A namespace that declares its own function shadows a global
 pattern function of the same name, as in the lint: an unqualified call in
 that namespace is not read.
 

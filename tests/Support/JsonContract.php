@@ -78,7 +78,7 @@ final class JsonContract
             'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'message', 'hint',
             'tip', 'source', 'validation', 'analysis', 'target',
         ],
-        'lint.results[].issues[].target' => ['php', 'pcre'],
+        'lint.results[].issues[].target' => ['php', 'pcre', 'guard', 'guard_pcre'],
         'lint.results[].optimizations[]' => ['file', 'line', 'column', 'file_offset', 'optimization', 'savings', 'source'],
         'lint.results[].optimizations[].optimization' => ['original', 'optimized', 'changes'],
 

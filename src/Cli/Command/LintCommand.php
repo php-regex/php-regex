@@ -149,6 +149,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             );
             $regex = Regex::create($target->regexOptions());
             $range = $target->rangeParsers($regex->parser());
+            $judged = $target->judgedRange($regex->parser());
         } catch (UnsupportedTargetException $e) {
             // Neither a usage error nor a finding: the project is not judged.
             return $this->fail($output, $json, $e->getMessage(), JsonDocument::STAGE_TARGET, self::INVALID);
@@ -215,6 +216,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             lintEnabled: $arguments->checkLint,
             lintRules: $arguments->lintRules,
             range: $range,
+            judged: $judged,
         );
 
         $formatter = $json ? new JsonFormatter(target: $target->toArray()) : $formatterRegistry->get($format);

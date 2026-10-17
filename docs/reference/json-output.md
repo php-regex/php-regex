@@ -386,14 +386,14 @@ An issue repeats the location of its result, so it can be read alone.
 | `column` | int \| null | As in the result |
 | `file_offset` | int \| null | As in the result |
 | `position` | int \| null | Where in the pattern body the issue lies, 0-based, in bytes; `null` when it concerns the whole pattern |
-| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
+| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
 | `tip` | string \| null | A further suggestion for an invalid pattern |
 | `source` | string \| null | As in the result |
 | `validation` | object \| null | For an invalid pattern, why: a [validation](#validation-validation) object; `null` otherwise |
 | `analysis` | object \| null | For a ReDoS issue, the verdict: a [ReDoS analysis](#redos-analysis-redos_analysis), whose `search_cost` holds the attack of a `regex.lint.redos.search` issue; `null` otherwise |
-| `target` | object \| null | For a pattern valid on the floor and refused by a later PHP of `lint.target.range`, the lowest PHP and PCRE2 that refuse it; `null` for every other issue, which the floor reports |
+| `target` | object \| null | For a pattern valid on the floor and refused by a later PHP of `lint.target.range`, the lowest PHP and PCRE2 that refuse it; for a pattern a guard or a `@regex-target` marker narrows, the version that reported the issue, with the constraint (see [Issue target](#issue-target-lintresultsissuestarget)); `null` for every other issue, which the floor reports |
 
 An issue whose `target` is not `null` has severity `error`, and its
 `validation` is the verdict of that target. A pattern the floor refuses is
@@ -406,6 +406,15 @@ baseline does not match on `target`.
 |---|---|---|
 | `php` | string | The PHP version, written as in [`lint.target.range[]`](#target-range-entry-linttargetrange) |
 | `pcre` | string | The PCRE2 release, as `major.minor` |
+| `guard` | string \| null | For a pattern a guard on `PHP_VERSION_ID` or a `@regex-target` marker narrows, the PHP versions it keeps, as a Composer constraint (`>=8.4`, `>=8.2 <8.4`, `<8.3 \|\| >=8.5`); `null` when nothing narrows the versions judged |
+| `guard_pcre` | string \| null | For a pattern a `@regex-target pcre…` marker narrows, the PCRE2 releases it keeps, as a Composer constraint (`>=10.43`); `null` otherwise |
+
+A pattern narrowed by a guard or a marker is judged from the lowest version
+the guard keeps: every issue it gets names the version that reported it in
+`target`, the lowest kept for an issue of that floor, with the constraint in
+`guard`. A guard or a marker that keeps no version leaves the pattern
+unjudged; a marker that does is reported as `regex.target.empty`, one whose
+constraint cannot be read as `regex.target.invalid`.
 
 ### Optimization entry: `lint.results[].optimizations[]`
 

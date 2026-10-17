@@ -22,9 +22,13 @@ use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Config\JudgedRange;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
+use PHPRegex\Linter\Extraction\TargetMarker;
+use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
@@ -53,10 +57,19 @@ final class TextDocumentHandler
     private readonly DiagnosticConverter $diagnosticConverter;
 
     /**
+     * The Regex of each lowest version a "@regex-target" marker keeps.
+     *
+     * @var array<string, Regex>
+     */
+    private array $narrowed = [];
+
+    /**
      * @param array<string, bool> $lintRules              the lint rules regex.json turns on or off, by id
      * @param RedosMode           $redosMode              the ReDoS analysis to run, none by default
      * @param RedosSeverity       $redosThreshold         the lowest ReDoS severity reported
      * @param bool                $reportUnmatchedIgnores whether a marker that silences nothing is a warning
+     * @param JudgedRange|null    $judged                 the versions the project is judged for, for a
+     *                                                    "@regex-target" marker to narrow
      */
     public function __construct(
         private readonly DocumentManager $documents,
@@ -65,6 +78,7 @@ final class TextDocumentHandler
         private readonly RedosMode $redosMode = RedosMode::Off,
         private readonly RedosSeverity $redosThreshold = RedosSeverity::High,
         private readonly bool $reportUnmatchedIgnores = true,
+        private readonly ?JudgedRange $judged = null,
     ) {
         $this->diagnosticConverter = new DiagnosticConverter();
     }
@@ -274,6 +288,7 @@ final class TextDocumentHandler
         $library = $this->documents->isLibrary($uri);
         $occurrences = $library ? [] : $this->documents->getOccurrences($uri);
         $markers = $library ? [] : InlineIgnores::markers($content);
+        $targets = $library ? [] : TargetMarkers::read($content);
 
         // "@regex-ignore" silences the issues of its line, as in `regex
         // lint`: every one, or those it names.
@@ -284,7 +299,10 @@ final class TextDocumentHandler
                 continue;
             }
 
-            foreach ($this->occurrenceDiagnostics($occurrence, $content, $positions) as $diagnostic) {
+            // "@regex-target" judges the pattern for the versions it keeps,
+            // from the lowest; for none, not at all.
+            $regex = $this->regexFor(TargetMarker::constraintAt($targets, $occurrence->line));
+            foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex) as $diagnostic) {
                 $silenced = false;
                 foreach ($covering as $index => $marker) {
                     if ($marker->silences($diagnostic['code'])) {
@@ -296,6 +314,18 @@ final class TextDocumentHandler
                 if (!$silenced) {
                     $diagnostics[] = $diagnostic;
                 }
+            }
+        }
+
+        // A "@regex-target" marker that cannot be read, or keeps no version
+        // the project is judged for: an error on the marker.
+        foreach ($targets as $marker) {
+            $message = null === $marker->constraint
+                ? $marker->error
+                : (null !== $this->judged && [] === $this->judged->narrow($marker->constraint) ? \sprintf('The %s marker "%s" keeps no version the project is judged for (PHP %s): the patterns it covers are not judged.', $marker->marker, $marker->text, $this->judged->describe()) : null);
+            if (null !== $message) {
+                $range = ['start' => $positions->offsetToPosition($marker->offset), 'end' => $positions->offsetToPosition($marker->offset + \strlen($marker->marker))];
+                $diagnostics[] = $this->diagnosticConverter->fromTargetMarker(null === $marker->constraint ? 'regex.target.invalid' : 'regex.target.empty', $message, $range);
             }
         }
 
@@ -327,7 +357,7 @@ final class TextDocumentHandler
      *
      * @return list<Diagnostic>
      */
-    private function occurrenceDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions): array
+    private function occurrenceDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions, Regex $regex): array
     {
         $diagnostics = [];
 
@@ -336,10 +366,10 @@ final class TextDocumentHandler
         $span = PatternSpan::of($occurrence, $positions);
 
         try {
-            $ast = $this->regex->parse($occurrence->pattern);
+            $ast = $regex->parse($occurrence->pattern);
 
             // A pattern PCRE refuses gets that error, and no lint issue.
-            $validation = $this->regex->validate($occurrence->pattern);
+            $validation = $regex->validate($occurrence->pattern);
             if (!$validation->isValid && null !== $validation->errorCode) {
                 return [$this->diagnosticConverter->fromValidationError(
                     $validation->error ?? 'Invalid regex.',
@@ -354,7 +384,7 @@ final class TextDocumentHandler
             $linter = new PatternLinter($this->lintRules);
             $ast->accept($linter);
 
-            $redos = RedosMode::Off === $this->redosMode ? null : $this->regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
+            $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
 
             foreach ($linter->getIssues() as $issue) {
                 // The heuristic rules guess what the analysis just proved:
@@ -386,11 +416,35 @@ final class TextDocumentHandler
                 $span,
                 $e->position,
                 // The fix comes with the validation's verdict on the same error.
-                $this->regex->validate($occurrence->pattern)->hint,
+                $regex->validate($occurrence->pattern)->hint,
             );
         }
 
         return $diagnostics;
+    }
+
+    /**
+     * The Regex judging a pattern a "@regex-target" constraint covers: that
+     * of the lowest version it keeps, the server's when it keeps it or when
+     * no constraint covers the pattern; null when it keeps no version.
+     */
+    private function regexFor(?TargetConstraint $constraint): ?Regex
+    {
+        if (null === $constraint || null === $this->judged) {
+            return $this->regex;
+        }
+
+        $lowest = $this->judged->narrow($constraint)[0] ?? null;
+        if (null === $lowest) {
+            return null;
+        }
+
+        $target = $this->regex->parser()->target();
+        if ($target->phpVersionId === $lowest->phpVersionId && $target->pcreVersion === $lowest->pcreVersion) {
+            return $this->regex;
+        }
+
+        return $this->narrowed[$lowest->phpVersionId.'/'.$lowest->pcreVersion] ??= Regex::create(['php_version' => $lowest->phpVersionId, 'pcre_version' => $lowest->pcreVersion, 'runtime_pcre_validation' => false]);
     }
 
     /**
