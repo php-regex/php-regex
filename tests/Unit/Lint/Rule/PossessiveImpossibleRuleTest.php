@@ -93,13 +93,9 @@ final class PossessiveImpossibleRuleTest extends TestCase
     public function test_an_atom_that_can_still_match_is_not_reported(string $pattern, string $subject, string $match): void
     {
         // The ASCII options and "(?r)" are PCRE2 10.43.
-        $verifiedAgainst = match ($pattern) {
-            '/(?aW)\w*+é/u', '/(?aD)\d*+٣/u', '/(?a)(?-aD)\w*+é/u', '/(?r)k*+\x{212A}/iu' => '10.43',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ['/(?aW)\w*+é/u', '/(?aD)\d*+٣/u', '/(?a)(?-aD)\w*+é/u', '/(?r)k*+\x{212A}/iu'],
+        ]);
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the pattern matches.
         $this->assertSame(1, preg_match($pattern, $subject, $matches), $pattern);

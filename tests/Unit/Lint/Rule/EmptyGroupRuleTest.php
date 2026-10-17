@@ -124,13 +124,9 @@ final class EmptyGroupRuleTest extends TestCase
     public function test_an_empty_group_that_keeps_braces_from_a_quantifier_is_not_reported(string $pattern, string $subject): void
     {
         // "{,2}" and a count padded with spaces repeat only from PCRE2 10.43.
-        $verifiedAgainst = match ($pattern) {
-            '/^a{(?:),2}$/', '/^a{ (?:) 2 }$/' => '10.43',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ['/^a{(?:),2}$/', '/^a{ (?:) 2 }$/'],
+        ]);
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49.
         $this->assertSame(1, preg_match($pattern, $subject), $pattern);

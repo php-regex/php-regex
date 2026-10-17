@@ -217,9 +217,3 @@ formatter (the github formatter already annotates PRs; build it the day a
 code-scanning user asks); utf-8 positionEncoding (our UTF-16 path is
 correct and tested; revisit on a real encoding bug); a memory_limit floor
 (the scan is per-file bounded; revisit on a real OOM report).
-
-## Test support for the PcreGates trait
-
-Shared provider traits for the release-map idiom duplicated in
-`tests/Unit/NodeVisitor/UnicodePropertyReleaseTest.php:50` and `:78` and
-three `tests/Unit/Lint/Rule/` files.

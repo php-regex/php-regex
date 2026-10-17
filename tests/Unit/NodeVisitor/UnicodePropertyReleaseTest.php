@@ -38,19 +38,23 @@ final class UnicodePropertyReleaseTest extends TestCase
     use PcreGates;
 
     /**
+     * The rows verified against a newer release than the floor: a "^"
+     * after spaces is PCRE2 10.45.
+     */
+    private const VERIFIED_AGAINST = [
+        '10.45' => ['/\\p{ ^Lu}/', '/\\p{  ^ L u }/'],
+    ];
+
+    /**
      * @param list<int> $refusedBy
      */
     #[Test]
     #[DataProvider('provideProperties')]
     public function test_a_property_is_judged_for_the_pcre2_the_target_bundles(string $pattern, array $refusedBy): void
     {
-        // A "^" after spaces is PCRE2 10.45: on an older running engine the
-        // live probe answers for the target that bundles it, and its verdict
-        // is not the table's.
-        $verifiedAgainst = str_contains($pattern, ' ^') ? '10.45' : null;
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        // On an older running engine the live probe answers for the target
+        // that bundles it, and its verdict is not the table's.
+        $this->requiresPcre2For($pattern, self::VERIFIED_AGAINST);
 
         foreach ([80100, 80200, 80300, 80400, 80500] as $phpVersion) {
             $result = Regex::create(['cache' => null, 'php_version' => $phpVersion])->validate($pattern);
@@ -75,10 +79,7 @@ final class UnicodePropertyReleaseTest extends TestCase
     {
         unset($refusedBy);
 
-        $verifiedAgainst = str_contains($pattern, ' ^') ? '10.45' : null;
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, self::VERIFIED_AGAINST);
 
         $this->assertSame(false !== @preg_match($pattern, ''), Regex::create(['cache' => null])->validate($pattern)->isValid, $pattern);
     }

@@ -544,20 +544,10 @@ final class DisplayEscaperPatternModeTest extends TestCase
         // A tab inside braces pads a count or an escape operand only from
         // PCRE2 10.43, and inside a class "\k{...}" reads as the letter only
         // from 10.45; before that the engine reports the braces as text.
-        $verifiedAgainst = match ($pattern) {
-            "/a{2,\t3}/",
-            "/\\x{\t41}/",
-            "/\\x{41\t}/",
-            "/\\o{\t101}/",
-            "/(a)\\g{\t1}/",
-            "/(a)\\g{1\t}/",
-            "/(?<n>a)\\k{\tn}/" => '10.43',
-            "/[a\\k{\t}]/" => '10.45',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ["/a{2,\t3}/", "/\\x{\t41}/", "/\\x{41\t}/", "/\\o{\t101}/", "/(a)\\g{\t1}/", "/(a)\\g{1\t}/", "/(?<n>a)\\k{\tn}/"],
+            '10.45' => ["/[a\\k{\t}]/"],
+        ]);
 
         $shown = DisplayEscaper::escape($pattern);
 

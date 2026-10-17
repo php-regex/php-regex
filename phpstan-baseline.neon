@@ -813,7 +813,7 @@ parameters:
 		-
 			rawMessage: Catching internal class PHPUnit\Framework\SkippedWithMessageException.
 			identifier: catch.internalClass
-			count: 11
+			count: 12
 			path: tests/Unit/Support/PcreGatesTest.php
 
 		-
@@ -830,6 +830,18 @@ parameters:
 
 		-
 			rawMessage: 'Parameter #1 $through of method PHPRegex\Tests\Unit\Support\PcreGatesTest::forbidsPhp() expects ''8.1''|''8.2''|''8.3''|''8.4''|''8.5''|''8.6'', ''5.0'' given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/PcreGatesTest.php
+
+		-
+			rawMessage: 'Parameter #2 $releases of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPcre2For() expects array<''10.39''|''10.40''|''10.41''|''10.42''|''10.43''|''10.44''|''10.45''|''10.46''|''10.47''|''10.48''|''10.49'', list<string>>, array{''10.40'': array{''/a/''}, ''10.99'': array{''/b/'', ''/(?-r)k*+\\x{212A}…''}} given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Unit/Support/PcreGatesTest.php
+
+		-
+			rawMessage: 'Parameter #2 $releases of method PHPRegex\Tests\Unit\Support\PcreGatesTest::requiresPcre2For() expects array<''10.39''|''10.40''|''10.41''|''10.42''|''10.43''|''10.44''|''10.45''|''10.46''|''10.47''|''10.48''|''10.49'', list<string>>, array{''10.99'': array{''/a/'', ''/b/''}} given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Support/PcreGatesTest.php

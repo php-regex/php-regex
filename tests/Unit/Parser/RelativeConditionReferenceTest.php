@@ -170,14 +170,10 @@ final class RelativeConditionReferenceTest extends TestCase
     {
         // PCRE2 10.43 pads a braced name with spaces; 10.47 reports a
         // called name left open past the "(" that stops it.
-        $verifiedAgainst = match ($pattern) {
-            '/\k{a b}/', '/\k{ a/' => '10.43',
-            '/(?&a(?:z)/', '/(?P>a(?:z)/' => '10.47',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ['/\k{a b}/', '/\k{ a/'],
+            '10.47' => ['/(?&a(?:z)/', '/(?P>a(?:z)/'],
+        ]);
 
         $this->assertFalse(@preg_match($pattern, ''), $pattern);
 

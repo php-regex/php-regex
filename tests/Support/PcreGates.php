@@ -40,6 +40,25 @@ trait PcreGates
     }
 
     /**
+     * The gate above for a data-provided pattern, read from the map the test
+     * keeps of the rows verified against a newer release than the floor:
+     * each release lists its patterns, and a pattern no release lists runs
+     * on every engine.
+     *
+     * @param array<value-of<PcreGateLimits::KNOWN_RELEASES>, list<string>> $releases
+     */
+    private function requiresPcre2For(string $pattern, array $releases): void
+    {
+        foreach ($releases as $release => $patterns) {
+            if (\in_array($pattern, $patterns, true)) {
+                $this->requiresPcre2($release, $pattern);
+
+                return;
+            }
+        }
+    }
+
+    /**
      * Skip unless the running PHP is the floor or newer.
      *
      * @param value-of<PcreGateLimits::KNOWN_PHP_VERSIONS> $floor

@@ -77,14 +77,9 @@ final class LanguageQuestionsTest extends TestCase
     {
         // The "r" modifier and the ASCII options are PCRE2 10.43: a parser
         // for an older release refuses the pattern before the flags are read.
-        $verifiedAgainst = match ($pattern) {
-            '/k/ir', '/(?r)k/i', '/(?-r:k)/ir', '/(?r)(?^i)k/', '/(?^i)k/r',
-            '/(?a)\w/u', '/(?aD:\d)/u', '/(?-a)\w/u' => '10.43',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ['/k/ir', '/(?r)k/i', '/(?-r:k)/ir', '/(?r)(?^i)k/', '/(?^i)k/r', '/(?a)\w/u', '/(?aD:\d)/u', '/(?-a)\w/u'],
+        ]);
         // The "r" modifier is read from PHP 8.4 only: an older PHP refuses
         // the flag, whatever its engine. The inline "(?r)" needs no PHP.
         $flags = substr($pattern, (int) strrpos($pattern, $pattern[0]) + 1);

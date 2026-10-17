@@ -97,13 +97,9 @@ final class ImpossibleLookaroundRuleTest extends TestCase
     public function test_a_lookahead_the_continuation_can_satisfy_is_not_reported(string $pattern, string $subject): void
     {
         // The ASCII digit option and "(?r)" are PCRE2 10.43.
-        $verifiedAgainst = match ($pattern) {
-            '/(?aD)(?!\d)٣/u', '/(?r)(?!k)\x{212A}/iu', '/(?r)(?^i)(?=k)\x{212A}/u', '/(?=k)(?r:\x{212A})/iu' => '10.43',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ['/(?aD)(?!\d)٣/u', '/(?r)(?!k)\x{212A}/iu', '/(?r)(?^i)(?=k)\x{212A}/u', '/(?=k)(?r:\x{212A})/iu'],
+        ]);
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the subject matches.
         $this->assertSame(1, preg_match($pattern, $subject), $pattern);

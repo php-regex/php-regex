@@ -99,6 +99,24 @@ final class PcreGateCallSitesTest extends TestCase
     }
 
     #[Test]
+    public function test_a_release_map_naming_a_release_the_suite_does_not_judge_is_a_violation(): void
+    {
+        $directory = sys_get_temp_dir().'/regex-gate-call-sites-'.bin2hex(random_bytes(4));
+        mkdir($directory);
+        $file = $directory.'/MapTest.php';
+        file_put_contents($file, "<?php\n\$this->requiresPcre2For(\$pattern, ['10.43' => ['/a/'], '10.50' => ['/b/']]);\n");
+
+        try {
+            $violations = $this->violations($this->gateCallSites($directory));
+        } finally {
+            unlink($file);
+            rmdir($directory);
+        }
+
+        $this->assertSame(['MapTest.php calls requiresPcre2() with "10.50", which the suite does not judge.'], $violations);
+    }
+
+    #[Test]
     public function test_the_known_releases_stop_at_the_ceiling(): void
     {
         $releases = PcreGateLimits::KNOWN_RELEASES;
@@ -109,9 +127,10 @@ final class PcreGateCallSitesTest extends TestCase
     /**
      * The gate call sites under a directory whose first argument is a
      * literal string, plus every quoted release literal in a file that also
-     * feeds requiresPcre2() a computed release — the match arms and
-     * ternaries those files gate from are call sites the same way, and a
-     * typo in one of them skips its rows on every engine forever.
+     * feeds requiresPcre2() a computed release or requiresPcre2For() a
+     * release map — the map keys, match arms and ternaries those files gate
+     * from are call sites the same way, and a typo in one of them skips its
+     * rows on every engine forever.
      *
      * @return list<array{file: string, method: string, argument: string}>
      */
@@ -149,7 +168,7 @@ final class PcreGateCallSitesTest extends TestCase
                 ];
             }
 
-            if (1 === \preg_match('/->requiresPcre2\s*\(\s*\$/', $source)) {
+            if (1 === \preg_match('/->requiresPcre2(?:For)?\s*\(\s*\$/', $source)) {
                 \preg_match_all("/(['\"])(10\.\d+)\\1/", $source, $releases, \PREG_SET_ORDER);
 
                 foreach ($releases as $release) {

@@ -83,13 +83,9 @@ final class ImpossibleBoundaryRuleTest extends TestCase
     public function test_a_boundary_that_can_hold_is_not_reported(string $pattern, string $subject): void
     {
         // The ASCII options are PCRE2 10.43.
-        $verifiedAgainst = match ($pattern) {
-            '/(?aW)é\bx/u', '/(?a)(?-aD)é\bx/u' => '10.43',
-            default => null,
-        };
-        if (null !== $verifiedAgainst) {
-            $this->requiresPcre2($verifiedAgainst, $pattern);
-        }
+        $this->requiresPcre2For($pattern, [
+            '10.43' => ['/(?aW)é\bx/u', '/(?a)(?-aD)é\bx/u'],
+        ]);
 
         // Oracle, PHP 8.4.26 / PCRE2 10.49: the subject matches.
         $this->assertSame(1, preg_match($pattern, $subject), $pattern);

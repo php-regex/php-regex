@@ -139,6 +139,41 @@ final class PcreGatesTest extends TestCase
     }
 
     #[Test]
+    public function test_a_pattern_the_release_map_names_skips_with_the_verbatim_pcre2_message(): void
+    {
+        $subject = '/(?-r)k*+\x{212A}/iur/';
+
+        try {
+            $this->requiresPcre2For($subject, ['10.40' => ['/a/'], '10.99' => ['/b/', $subject]]);
+            $this->fail('A pattern the map names under a release no engine has did not skip.');
+        } catch (SkippedWithMessageException $skip) {
+            $this->assertSame(
+                \sprintf('%s is verified against PCRE2 %s and later; PCRE2 %s reports it differently.', $subject, '10.99', \PCRE_VERSION),
+                $skip->getMessage(),
+            );
+        }
+    }
+
+    #[Test]
+    public function test_a_pattern_the_release_map_does_not_name_runs_everywhere(): void
+    {
+        $this->requiresPcre2For('/c/', ['10.99' => ['/a/', '/b/']]);
+        $this->requiresPcre2For('/c/', []);
+
+        // Reached on an engine the map's release would have skipped: no
+        // gate applied, since neither map names the pattern.
+        $this->assertFalse(PcreTarget::runtime()->pcreAtLeast('10.99'));
+    }
+
+    #[Test]
+    public function test_a_pattern_the_release_map_names_under_the_floor_does_not_skip(): void
+    {
+        $this->requiresPcre2For('/a/', ['10.40' => ['/a/'], PcreGateLimits::MAX_KNOWN_RELEASE => ['/b/']]);
+
+        $this->assertTrue(PcreTarget::runtime()->pcreAtLeast('10.40'));
+    }
+
+    #[Test]
     public function test_a_release_the_engine_has_does_not_skip(): void
     {
         $this->requiresPcre2('10.40', '/(?-r)k*+\x{212A}/iur/');
