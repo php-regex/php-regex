@@ -1895,45 +1895,27 @@ main table::-webkit-scrollbar-thumb {
   border-top: 1px solid var(--line);
 }
 
-.author-card {
-  margin: 0 0 2rem;
-  padding: 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  background: var(--amber-tint);
-}
-
-.author-card-label {
-  margin: 0 0 .35rem;
-  font-size: .78rem;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-
-.author-card-name {
-  margin: 0 0 .35rem;
-  font-family: var(--font-display);
-  font-weight: 650;
-  font-size: 1.05rem;
-}
-
-.author-card-name a {
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.author-card-name a:hover {
-  color: var(--amber);
-  text-decoration: underline;
-  text-decoration-color: var(--amber);
-}
-
-.author-card-meta {
-  margin: 0;
-  font-size: .85rem;
+/* The signature: one quiet line where a panel used to introduce the
+   author the byline had already named, with an avatar nobody needed
+   on a single-author site. */
+.article-signature {
+  margin: 0 0 1.75rem;
+  font-size: .92rem;
   color: var(--ink-soft);
+}
+
+.article-signature a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--link-line);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color .15s ease;
+}
+
+.article-signature a:hover {
+  text-decoration-color: var(--amber);
 }
 
 .article-nav {
@@ -2006,21 +1988,6 @@ main table::-webkit-scrollbar-thumb {
   text-decoration-color: var(--amber);
 }
 
-.article-back {
-  margin: 0;
-  font-size: .9rem;
-}
-
-.article-back a {
-  color: var(--amber);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.article-back a:hover {
-  text-decoration: underline;
-  text-decoration-color: var(--amber);
-}
 
 /* ---- Reading progress ---------------------------------------------------- */
 
@@ -2069,35 +2036,13 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 1.25rem;
 }
 
-.article-glance {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 1rem 1.5rem;
-  margin: 0 0 2.5rem;
-  padding: 1.25rem 1.5rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-m);
-  background: var(--amber-tint);
-}
-
-.article-glance-item {
+/* The topics line: what the byline does not say, said quietly - pills
+   on the line under the dateline, no panel, no frame. */
+.article-topics {
   display: flex;
-  flex-direction: column;
-  gap: .25rem;
-}
-
-.article-glance-label {
-  font-size: .78rem;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-
-.article-glance-value {
-  font-size: .92rem;
-  color: var(--ink);
-  line-height: 1.3;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin: .4rem 0 2rem;
 }
 
 .article-tag {
@@ -2113,48 +2058,42 @@ main table::-webkit-scrollbar-thumb {
   white-space: nowrap;
 }
 
-/* Author card with initials avatar. */
-.author-card {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1rem 1.25rem;
-  align-items: start;
-}
-
-.author-card-avatar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
-  color: var(--amber);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: .02em;
-}
-
-.author-card-label,
-.author-card-name,
-.author-card-meta {
-  grid-column: 2;
-}
 
 /* More articles. */
 .article-more {
   margin: 0 0 2rem;
 }
 
+.article-more-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .article-more-title {
-  margin: 0 0 1rem;
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 650;
   font-size: 1.1rem;
   line-height: 1.2;
   color: var(--ink);
+}
+
+.article-all {
+  flex: none;
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--amber);
+  text-decoration: none;
+}
+
+.article-all:hover {
+  color: var(--amber-deep);
+  text-decoration: underline;
+  text-decoration-color: var(--amber);
+  text-underline-offset: 3px;
 }
 
 .article-more-list {

@@ -39,37 +39,18 @@
           {% if page.published == false %}<span class="draft-tag">Draft — not yet published</span>{% endif %}
         </div>
         {% comment %}
-          The glance panel carries what the byline above does not: the
-          topics and the update date. Reading time and publication date
-          already opened the page — repeating them in a panel cost the
-          first screen without telling the reader anything new, so an
-          article that is neither tagged nor updated prints no panel at
-          all.
+          What the byline does not say, the topics line says quietly:
+          pills on the line under the dateline, no panel, no frame. The
+          update date already lives in the byline itself.
         {% endcomment %}
-        {% if page.tags or page.last_modified_at and page.last_modified_at != page.date %}
-        <aside class="article-glance" aria-label="At a glance">
-          {% if page.tags %}
-          <div class="article-glance-item">
-            <span class="article-glance-label">Topics</span>
-            <span class="article-glance-value">{% for tag in page.tags %}<span class="article-tag">{{ tag }}</span>{% unless forloop.last %} {% endunless %}{% endfor %}</span>
-          </div>
-          {% endif %}
-          {% if page.last_modified_at and page.last_modified_at != page.date %}
-          <div class="article-glance-item">
-            <span class="article-glance-label">Updated</span>
-            <span class="article-glance-value">{{ page.last_modified_at | date: '%-d %B %Y' }}</span>
-          </div>
-          {% endif %}
-        </aside>
+        {% if page.tags %}
+        <div class="article-topics">
+          {% for tag in page.tags %}<span class="article-tag">{{ tag }}</span>{% unless forloop.last %} {% endunless %}{% endfor %}
+        </div>
         {% endif %}
         <div class="article-content">{{ content }}</div>
         <footer class="article-footer">
-          <div class="author-card">
-            <div class="author-card-avatar" aria-hidden="true">{{ article_author.name | slice: 0,1 }}{{ article_author.name | split: ' ' | last | slice: 0,1 }}</div>
-            <p class="author-card-label">Written by</p>
-            <p class="author-card-name"><a href="{{ article_author.url }}">{{ article_author.name }}</a></p>
-            <p class="author-card-meta">{{ page.date | date: '%-d %B %Y' }}{% if page.last_modified_at and page.last_modified_at != page.date %} · updated {{ page.last_modified_at | date: '%-d %B %Y' }}{% endif %}</p>
-          </div>
+          <p class="article-signature">Written by <a href="{{ article_author.url }}">{{ article_author.name }}</a></p>
           {% assign sorted_articles = site.articles | sort: 'date' %}
           {% assign current_index = nil %}
           {% for a in sorted_articles %}
@@ -102,7 +83,10 @@
           {% endif %}
           {% assign more_articles = site.articles | sort: 'date' | reverse %}
           <section class="article-more" aria-labelledby="article-more-title">
-            <h2 id="article-more-title" class="article-more-title">More articles</h2>
+            <div class="article-more-head">
+              <h2 id="article-more-title" class="article-more-title">More articles</h2>
+              <a class="article-all" href="/blog/">All articles →</a>
+            </div>
             <ul class="article-more-list">
               {% assign more_count = 0 %}
               {% for a in more_articles %}
@@ -116,7 +100,6 @@
               {% endfor %}
             </ul>
           </section>
-          <p class="article-back"><a href="/blog/">← All articles</a></p>
         </footer>
       </main>
       {% include toc.html %}
