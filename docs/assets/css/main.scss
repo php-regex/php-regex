@@ -3,8 +3,13 @@
 /* PHPRegex.com — paper-and-ink design system.
  *
  * Identity rules that hold everywhere in this file:
- *   - square corners only: no border-radius anywhere;
- *   - flat: no drop shadows, 1px borders carry the structure;
+ *   - a modest radius scale, declared as tokens (--radius-s/m/l/pill)
+ *     and never as ad-hoc values: chips take the small step, buttons and
+ *     panels the middle one, cards and featured surfaces the large one;
+ *     editorial surfaces that read as rules (tables, the header and
+ *     footer bars, hairline dividers) stay square;
+ *   - flat: 1px borders carry the structure, and only a surface that
+ *     floats above the page (dialog, drawer, back-to-top) earns a shadow;
  *   - generous whitespace, sentence case, rem-only text sizes;
  *   - raw colors live ONLY in the token sections below (theme palettes,
  *     code-token palette, terminal palette) — never inline.
@@ -155,6 +160,14 @@
   /* Page gutter: flush on small screens, aligned to the centered 87.5rem
      column on wide ones (43.75rem = half the column). */
   --gutter: max(1rem, calc(50vw - 43.75rem));
+
+  /* The radius scale — the one place a corner is allowed to be round.
+     s for chips and inline affordances, m for buttons and panels, l for
+     cards and featured surfaces, pill for the version and tag chips. */
+  --radius-s: 4px;
+  --radius-m: 8px;
+  --radius-l: 12px;
+  --radius-pill: 999px;
 }
 
 /* ==========================================================================
@@ -343,6 +356,7 @@ main blockquote {
   margin: 1.5em 0;
   padding: .5em 1.25em;
   border-left: 3px solid var(--amber);
+  border-radius: var(--radius-m);
   background: var(--code-bg);
   /* A callout is content, not a whisper: the amber rule and the cream
      panel already mark it as an aside, so the text keeps full ink. */
@@ -456,6 +470,7 @@ main :not(pre) > samp {
   background: var(--code-bg);
   color: var(--code-ink);
   padding: .15em .4em;
+  border-radius: var(--radius-s);
 }
 
 main kbd {
@@ -464,6 +479,7 @@ main kbd {
   color: var(--ink);
   padding: .15em .45em;
   border: 1px solid var(--line);
+  border-radius: var(--radius-s);
 }
 
 /* Tables — horizontal rules only, wide ones scroll inside the cell box.
@@ -656,6 +672,7 @@ main pre,
   margin: 0;
   background: var(--code-bg);
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   padding: 1.1rem 1.25rem;
   overflow-x: auto;
   font-family: var(--font-mono);
@@ -832,10 +849,10 @@ main pre[data-file] {
 
 /* ---- Scrollbars inside the wide boxes -----------------------------------
  * Long lines and wide tables scroll; the platform scrollbar is a bright
- * foreign object inside a panel of paper. A thin, square thumb in --line on
- * the panel's own background, the same language as the 1px borders. The
- * ::-webkit- rules need no @supports: engines that do not know the
- * pseudo-element drop the block whole.
+ * foreign object inside a panel of paper. A thin, round-capped thumb in
+ * --line on the panel's own background, the same language as the 1px
+ * borders. The ::-webkit- rules need no @supports: engines that do not
+ * know the pseudo-element drop the block whole.
    -------------------------------------------------------------------------- */
 
 main pre,
@@ -866,6 +883,7 @@ main pre::-webkit-scrollbar-thumb,
 .terminal-body::-webkit-scrollbar-thumb {
   background: var(--line);
   border: 3px solid var(--code-bg);
+  border-radius: var(--radius-pill);
 }
 
 .toc::-webkit-scrollbar-track,
@@ -877,6 +895,7 @@ main pre::-webkit-scrollbar-thumb,
 .site-sidebar::-webkit-scrollbar-thumb {
   background: var(--line);
   border: 3px solid var(--paper);
+  border-radius: var(--radius-pill);
 }
 
 /* Tables live on the paper too. */
@@ -926,6 +945,7 @@ main table::-webkit-scrollbar-thumb {
   background: var(--paper);
   color: var(--ink-soft);
   border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   cursor: pointer;
   opacity: 1;
   transition: opacity .15s ease;
@@ -979,6 +999,10 @@ main table::-webkit-scrollbar-thumb {
   --term-hairline: rgba(237, 241, 247, 0.18);
   background: var(--code-bg);
   border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  /* The bar's hairline and the body's mask both meet the panel's rounded
+     corners; clipping at the panel keeps every child inside the curve. */
+  overflow: hidden;
 }
 
 .terminal-bar {
@@ -1125,13 +1149,13 @@ main table::-webkit-scrollbar-thumb {
 }
 
 /* The version pill beside the brand name: reads as part of the wordmark,
-   stays a quiet outline so it never competes with the nav. Square corners
-   like every other chip in the sheet — the kbd chip is its closest
-   relative — because this file honours no border-radius anywhere. */
+   stays a quiet outline so it never competes with the nav. The pill step
+   of the radius scale — the one chip whose shape says "label". */
 .version-tag {
   flex: none;
   padding: .08rem .5rem;
   border: 1px solid var(--amber);
+  border-radius: var(--radius-pill);
   color: var(--amber);
   font-size: .72rem;
   font-weight: 600;
@@ -1181,6 +1205,7 @@ main table::-webkit-scrollbar-thumb {
   background: transparent;
   color: var(--ink-soft);
   border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   cursor: pointer;
 }
 
@@ -1224,6 +1249,7 @@ main table::-webkit-scrollbar-thumb {
   font-size: .72rem;
   padding: .15em .4em;
   border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   background: var(--code-bg);
   color: var(--ink-soft);
 }
@@ -1403,6 +1429,7 @@ main table::-webkit-scrollbar-thumb {
   margin-block: 0 2rem;
   padding: .75rem 1rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   background: var(--amber-tint);
 }
 
@@ -1461,6 +1488,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 2rem 0 0;
   padding: 1.25rem .75rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   color: var(--ink-soft);
   font-size: .92rem;
   line-height: 1.5;
@@ -1474,6 +1502,7 @@ main table::-webkit-scrollbar-thumb {
   margin-left: .35rem;
   padding: .1rem .5rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
   background: var(--amber-tint);
   color: var(--amber);
   font-size: .72rem;
@@ -1662,6 +1691,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 3rem;
   padding: 2rem 1.5rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-l);
   background: var(--amber-tint);
 }
 
@@ -1739,6 +1769,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 2rem;
   padding: 1.25rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-l);
   background: var(--amber-tint);
 }
 
@@ -1794,6 +1825,7 @@ main table::-webkit-scrollbar-thumb {
   gap: .35rem;
   padding: 1rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   text-decoration: none;
   color: var(--ink);
   transition: background .15s ease, border-color .15s ease;
@@ -1894,6 +1926,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 2.5rem;
   padding: 1.25rem 1.5rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   background: var(--amber-tint);
 }
 
@@ -1922,6 +1955,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 .35rem .25rem 0;
   padding: .1rem .5rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
   background: var(--paper);
   color: var(--ink-soft);
   font-size: .72rem;
@@ -1944,6 +1978,7 @@ main table::-webkit-scrollbar-thumb {
   width: 3rem;
   height: 3rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
   background: var(--paper);
   color: var(--amber);
   font-family: var(--font-display);
@@ -2052,6 +2087,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 1rem;
   padding: .5rem .75rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   background: transparent;
   color: var(--ink);
   font: inherit;
@@ -2144,6 +2180,7 @@ main table::-webkit-scrollbar-thumb {
   min-height: 44px;
   padding: .25rem .75rem;
   border-left: 3px solid transparent;
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
   color: var(--ink-soft);
   font-size: .95rem;
   text-decoration: none;
@@ -2303,6 +2340,7 @@ main table::-webkit-scrollbar-thumb {
   min-height: 44px;
   padding: .5rem .75rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   color: var(--ink);
   text-decoration: none;
 }
@@ -2468,6 +2506,7 @@ main table::-webkit-scrollbar-thumb {
   background: var(--code-bg);
   color: var(--code-ink);
   border: 1px solid var(--line);
+  border-radius: var(--radius-s);
   padding: .6rem .8rem;
   overflow-wrap: anywhere;
 }
@@ -2514,10 +2553,13 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--line);
+  /* The input and the results list below it are one unit: the input
+     carries the top corners of the pair, the list or panel the bottom
+     ones, and the -1px margins collapse the seam between them. */
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
   /* The platform search field brings its own rounded chrome and its own
-     clear button, neither of which belongs to a square-corner system;
-     the dialog handles clearing on Escape, and the panel below offers
-     the way out. */
+     clear button, neither of which belongs to this system; the dialog
+     handles clearing on Escape, and the panel below offers the way out. */
   -webkit-appearance: none;
   appearance: none;
 }
@@ -2541,6 +2583,7 @@ main table::-webkit-scrollbar-thumb {
   padding: 0;
   background: var(--paper);
   border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
 }
 
 .search-dialog ul:empty {
@@ -2620,6 +2663,7 @@ main table::-webkit-scrollbar-thumb {
   padding: .25rem 0 .5rem;
   background: var(--paper);
   border: 1px solid var(--line);
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
 }
 
 .search-panel[hidden] {
@@ -2681,6 +2725,7 @@ main table::-webkit-scrollbar-thumb {
   background: transparent;
   color: var(--ink);
   border: 1.5px solid var(--ink);
+  border-radius: var(--radius-m);
   cursor: pointer;
 }
 
@@ -2869,6 +2914,7 @@ main > section:not([class]) p > a.button:focus-visible {
   font-size: .95rem;
   background: var(--code-bg);
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
   padding: 1rem 4rem 1rem 1.25rem;
   overflow-x: auto;
 }
@@ -3088,6 +3134,7 @@ main > section:not([class]) > p:not(:has(a.button)) {
   display: grid;
   place-items: center;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
 }
 
 .step-mark::before {
@@ -3114,6 +3161,8 @@ main > section:not([class]) > p:not(:has(a.button)) {
 .pipeline-figure {
   margin: 2.5rem 0 0;
   border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  overflow: hidden;
 }
 
 .pipeline-figure img {
@@ -3146,6 +3195,7 @@ main > section:not([class]) > p:not(:has(a.button)) {
   gap: .5rem;
   padding: 1.5rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-l);
   color: var(--ink);
   text-decoration: none;
 }
@@ -3211,6 +3261,7 @@ main > section:not([class]) > p:not(:has(a.button)) {
 .proof-card {
   padding: 1.5rem;
   border: 1px solid var(--line);
+  border-radius: var(--radius-l);
 }
 
 /* The whole card is the target, so the whole card answers. */
@@ -3564,6 +3615,7 @@ body.search-open {
   background: var(--paper);
   color: var(--ink-soft);
   border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
   cursor: pointer;
 }
 
@@ -3599,6 +3651,12 @@ body.search-open {
   .pager a.pager-next {
     margin-left: 0;
     text-align: left;
+  }
+
+  /* The copy chip is 2rem wide; four of headroom beside it spends a third
+     of a phone's install panel on nothing the reader can read. */
+  .install {
+    padding-right: 3rem;
   }
 }
 
