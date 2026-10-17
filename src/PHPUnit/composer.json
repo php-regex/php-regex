@@ -1,0 +1,41 @@
+{
+    "name": "php-regex/regex-phpunit",
+    "type": "library",
+    "description": "PHPUnit assertions backed by the PHPRegex parser: match with exact capture semantics, compilation against the running engine, and proven-linear ReDoS verdicts.",
+    "keywords": [
+        "regex",
+        "pcre",
+        "phpunit",
+        "testing"
+    ],
+    "homepage": "https://php-regex.com",
+    "license": "MIT",
+    "support": {
+        "issues": "https://github.com/php-regex/php-regex/issues",
+        "source": "https://github.com/php-regex/php-regex",
+        "docs": "https://php-regex.com/guides/phpunit/"
+    },
+    "authors": [
+        {
+            "name": "Younes ENNAJI",
+            "email": "younes.ennaji.pro@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "phpunit/phpunit": "^9.6 || ^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "php-regex/regex-parser": "self.version",
+        "php-regex/regex-redos": "self.version",
+        "php-regex/regex-toolkit": "self.version"
+    },
+    "autoload": {
+        "psr-4": {
+            "PHPRegex\\PHPUnit\\": ""
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-2.x": "2.x-dev"
+        }
+    }
+}
