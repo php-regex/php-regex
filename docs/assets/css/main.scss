@@ -3588,3 +3588,30 @@ body.search-open {
     border-width: 2px;
   }
 }
+
+/* ---- High contrast -------------------------------------------------------
+ * The palette already meets WCAG 2.2, but a reader who asks for more
+ * contrast gets it: borders thicken, the soft ink moves toward full ink,
+ * and the amber accent deepens toward its --amber-deep step.
+ -------------------------------------------------------------------------- */
+
+@media (prefers-contrast: more) {
+  :root {
+    --ink-soft: var(--ink);
+    --line: var(--ink);
+  }
+
+  main blockquote {
+    border-left-width: 4px;
+  }
+
+  main table th,
+  main table td {
+    border-width: 2px;
+  }
+
+  a:hover,
+  a:focus-visible {
+    text-decoration-thickness: 3px;
+  }
+}
