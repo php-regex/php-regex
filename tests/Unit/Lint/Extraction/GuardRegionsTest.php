@@ -52,6 +52,17 @@ final class GuardRegionsTest extends TestCase
         yield 'a body that is no exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    f(2);\n}\nf('@');", 'expected' => null];
         yield 'an early exit with an else' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n} else {\n}\nf('@');", 'expected' => null];
         yield 'past the block of an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n}\nf('@');", 'expected' => null];
+        // A function or a class declared at the top of a file exists
+        // whatever the file returns before it: PHP declares it first.
+        yield 'an early exit at the top of a file' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\nfunction g() {\n    f('@');\n}", 'expected' => null];
+        yield 'a class after an early exit in a namespace' => ['code' => "namespace A {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    f(1);\n    final class B\n    {\n        public function c(): void\n        {\n            f('@');\n        }\n    }\n}", 'expected' => null];
+        yield 'a call after an early exit in a namespace' => ['code' => "namespace A {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    function b() {}\n    f('@');\n}", 'expected' => '>=8.4'];
+        yield 'the next case of a switch' => ['code' => "function g(\$x) {\n    switch (\$x) {\n        case 1:\n            if (PHP_VERSION_ID < 80400) {\n                break;\n            }\n            f(1);\n        case 2:\n            f('@');\n    }\n}", 'expected' => null];
+        yield 'the rest of a case of a switch' => ['code' => "function g(\$x) {\n    switch (\$x) {\n        case 1:\n            if (PHP_VERSION_ID < 80400) {\n                break;\n            }\n            f('@');\n        case 2:\n            f(2);\n    }\n}", 'expected' => '>=8.4'];
+        yield 'an early exit that is no guard' => ['code' => "function g() {\n    if (\$x) {\n        return;\n    }\n    f('@');\n}", 'expected' => null];
+        yield 'a closure, a class name and an anonymous class after an early exit' => ['code' => "function g() {\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    \$a = A::class;\n    \$b = new class {};\n    \$c = function () {\n        f('@');\n    };\n}", 'expected' => '>=8.4'];
+        yield 'an interface after an early exit' => ['code' => "if (PHP_VERSION_ID < 80400) {\n    return;\n}\ninterface I\n{\n    const RE = '@';\n}", 'expected' => null];
+        yield 'a label a goto may jump to' => ['code' => "function g() {\n    goto later;\n    if (PHP_VERSION_ID < 80400) {\n        return;\n    }\n    later:\n    f('@');\n}", 'expected' => null];
     }
 
     #[Test]
@@ -99,6 +110,18 @@ final class GuardRegionsTest extends TestCase
         $content = "<?php\n".$code."\n";
 
         $this->assertNull(self::tokens($content)->at((int) strpos($content, "'@'")));
+    }
+
+    /**
+     * A "function" with no body the tokenizer meets in a broken file
+     * declares nothing it could carve out: the rest stays narrowed.
+     */
+    #[Test]
+    public function test_a_function_without_a_body_declares_nothing(): void
+    {
+        $content = "<?php\nif (PHP_VERSION_ID < 80400) {\n    return;\n}\nfunction g();\nf('@');\nfunction h()\n";
+
+        $this->assertSame('>=8.4', self::tokens($content)->at((int) strpos($content, "'@'"))?->phpConstraint());
     }
 
     /**

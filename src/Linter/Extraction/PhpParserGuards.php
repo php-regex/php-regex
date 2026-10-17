@@ -38,12 +38,16 @@ use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt;
 use PhpParser\Node\Stmt\Break_;
+use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\Continue_;
 use PhpParser\Node\Stmt\ElseIf_;
 use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Stmt\Function_;
+use PhpParser\Node\Stmt\Goto_;
 use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Return_;
+use PhpParser\NodeFinder;
 use PHPRegex\Linter\Config\TargetConstraint;
 
 /**
@@ -76,7 +80,7 @@ final class PhpParserGuards
      */
     private bool $unqualifiedIsGlobal = true;
 
-    private function __construct(private readonly bool $shadowed)
+    private function __construct(private readonly bool $shadowed, private readonly bool $jumps)
     {
         $this->regions = new GuardRegions();
     }
@@ -86,7 +90,7 @@ final class PhpParserGuards
      */
     public static function regions(array $ast, string $content): GuardRegions
     {
-        $guards = new self(VersionGuard::shadowedIn($content));
+        $guards = new self(VersionGuard::shadowedIn($content), null !== (new NodeFinder())->findFirstInstanceOf($ast, Goto_::class));
         $guards->visitAll(array_values($ast));
 
         return $guards->regions;
@@ -189,21 +193,33 @@ final class PhpParserGuards
 
     /**
      * After "if (<guard>) { return; }", the rest of the block runs where
-     * the guard fails.
+     * the guard fails, but for the functions and the classes declared
+     * there: PHP declares those of a file before running it, whatever it
+     * returns. A file holding a "goto" reads no early exit: a label after
+     * one may be jumped to.
      *
      * @param list<Stmt> $statements
      */
     private function earlyExits(array $statements): void
     {
-        $end = $statements[\count($statements) - 1]->getEndFilePos();
-        foreach ($statements as $statement) {
+        if ($this->jumps) {
+            return;
+        }
+
+        foreach ($statements as $index => $statement) {
             if (!$statement instanceof If_ || [] !== $statement->elseifs || null !== $statement->else || !self::leaves($statement->stmts)) {
                 continue;
             }
 
             $guard = $this->guard($statement->cond);
-            if (null !== $guard) {
-                $this->regions->add($statement->getEndFilePos() + 1, $end, $guard->fails);
+            if (null === $guard) {
+                continue;
+            }
+
+            foreach (\array_slice($statements, $index + 1) as $after) {
+                if (!$after instanceof Function_ && !$after instanceof ClassLike) {
+                    $this->cover($after, $guard->fails);
+                }
             }
         }
     }

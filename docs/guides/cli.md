@@ -1242,7 +1242,10 @@ The guards the lint reads:
 on the branches of an `if`, an `elseif` and an `else` (each where its
 condition holds and the ones before it fail), and on the rest of a block
 after `if (<guard>) { return; }`, `throw`, `continue`, `break` or `exit` alone
-in the body. With `nikic/php-parser` installed, the lint also reads them on
+in the body, up to the next `case` of a `switch`. A function or a class
+declared after such an exit is judged for the whole range: PHP declares those
+of a file before running it, whatever the file returns. A file holding a
+`goto` reads no early exit. With `nikic/php-parser` installed, the lint also reads them on
 the branches of a ternary, on the arms of `match (true)` and in the
 alternative syntax (`if (...): ... endif;`); the tokenizer, which reads the
 files otherwise, does not, and judges those for the whole range. Anything else is no guard, and the pattern is judged for the whole

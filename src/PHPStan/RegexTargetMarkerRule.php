@@ -28,6 +28,8 @@ use PHPStan\Rules\Rule;
  * PHPStan's range (regex.target.empty), on the marker's line. The calls a
  * marker covers are judged by RegexPatternRule and RegexPatternArgumentRule.
  *
+ * @internal registered by extension.neon
+ *
  * @phpstan-import-type ConfigArray from RegexPatternRule
  *
  * @implements Rule<FileNode>

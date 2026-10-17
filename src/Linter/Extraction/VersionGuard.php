@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\Config\TargetConstraint;
+use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\LibraryPcre;
 
 /**
@@ -90,7 +91,7 @@ final class VersionGuard
         $id = (int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0);
         $series = !isset($parts[3]);
 
-        [$holds, $fails] = match (strtolower($operator)) {
+        [$holds, $fails] = match (Ascii::lower($operator)) {
             '>=', 'ge' => [[[$id, null]], [[0, $series ? $id : $id + 1]]],
             '>', 'gt' => [[[$series ? $id : $id + 1, null]], [[0, $series ? $id : $id + 1]]],
             '<', 'lt' => [[[0, $series ? $id : $id + 1]], [[$id, null]]],

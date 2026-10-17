@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Linter\Config\TargetConstraint;
+use PHPRegex\Parser\Internal\Ascii;
+
 /**
  * The guards on the PHP version of a file the tokenizer read, as the
  * stretches they hold over: the branches of an "if", an "elseif" and an
@@ -39,6 +42,8 @@ final class TokenGuards
 
     private const EXITS = [\T_RETURN => true, \T_THROW => true, \T_CONTINUE => true, \T_BREAK => true, \T_EXIT => true];
 
+    private const DECLARATIONS = [\T_FUNCTION, \T_CLASS, \T_INTERFACE, \T_TRAIT, \T_ENUM];
+
     private readonly GuardRegions $regions;
 
     /**
@@ -53,6 +58,12 @@ final class TokenGuards
      * @var array<int, int|null>
      */
     private array $enclosing = [];
+
+    /**
+     * Whether the file holds a "goto": a label after an early exit may be
+     * jumped to, and no early exit is read.
+     */
+    private readonly bool $jumps;
 
     /**
      * @param array<int, array{int, string, int}|string> $tokens
@@ -75,6 +86,11 @@ final class TokenGuards
             }
         }
         $this->unqualifiedIsGlobal = !$namespaced || !VersionGuard::shadowedIn($content);
+        $jumps = false;
+        foreach ($tokens as $token) {
+            $jumps = $jumps || (\is_array($token) && \T_GOTO === $token[0]);
+        }
+        $this->jumps = $jumps;
     }
 
     /**
@@ -177,10 +193,94 @@ final class TokenGuards
 
         // "if (<guard>) { return; }" alone: the rest of the block runs
         // where the guard fails.
-        if ($leaves && 1 === $branches && null !== $failed) {
-            $blockEnd = $this->enclosing[$index] ?? null;
-            $this->regions->add($this->offsets[$end] + 1, null === $blockEnd ? \PHP_INT_MAX : $this->offsets[$blockEnd], $failed);
+        if ($leaves && 1 === $branches && null !== $failed && !$this->jumps) {
+            $this->restOfBlock($index, $end, $failed);
         }
+    }
+
+    /**
+     * The rest of the block holding the "if" at $if, after the token at
+     * $after, as far as the next "case" or
+     * "default" of a switch, but for the functions and the classes declared
+     * there: PHP declares those of a file before running it, whatever it
+     * returns.
+     */
+    private function restOfBlock(int $if, int $after, TargetConstraint $constraint): void
+    {
+        $blockEnd = $this->enclosing[$if] ?? \count($this->tokens);
+        $from = $this->offsets[$after] + 1;
+        $boundary = $from;
+        for ($i = $after + 1; $i < $blockEnd; $i++) {
+            $token = $this->tokens[$i];
+            if (isset($this->closers[$i])) {
+                $i = $this->closers[$i];
+                $boundary = '}' === $this->tokens[$i] ? $this->offsets[$i] + 1 : $boundary;
+
+                continue;
+            }
+
+            if (';' === $token) {
+                $boundary = $this->offsets[$i] + 1;
+
+                continue;
+            }
+
+            if (!\is_array($token)) {
+                continue;
+            }
+
+            if (\T_CASE === $token[0] || \T_DEFAULT === $token[0]) {
+                $this->regions->add($from, $this->offsets[$i] - 1, $constraint);
+
+                return;
+            }
+
+            $body = $this->declarationBody($i);
+            if (null !== $body) {
+                $this->regions->add($from, $boundary - 1, $constraint);
+                $i = $body;
+                $from = $this->offsets[$body] + 1;
+                $boundary = $from;
+            }
+        }
+
+        $this->regions->add($from, $blockEnd < \count($this->tokens) ? $this->offsets[$blockEnd] : \PHP_INT_MAX, $constraint);
+    }
+
+    /**
+     * The "}" closing the body of the function, the class, the interface,
+     * the trait or the enum a token declares; null when it declares none.
+     */
+    private function declarationBody(int $index): ?int
+    {
+        $token = $this->tokens[$index];
+        if (!\is_array($token) || !\in_array($token[0], self::DECLARATIONS, true)) {
+            return null;
+        }
+
+        $next = $this->tokens[$this->next($index)] ?? null;
+        $previous = $this->tokens[$this->previous($index)] ?? null;
+        $declares = match ($token[0]) {
+            // A closure takes its parameters right away.
+            \T_FUNCTION => '(' !== $next,
+            // "Foo::class" and "new class" declare nothing.
+            \T_CLASS => !(\is_array($previous) && (\T_DOUBLE_COLON === $previous[0] || \T_NEW === $previous[0])),
+            default => true,
+        };
+        if (!$declares) {
+            return null;
+        }
+
+        for ($i = $index + 1, $count = \count($this->tokens); $i < $count; $i++) {
+            if ('{' === $this->tokens[$i]) {
+                return $this->closers[$i] ?? null;
+            }
+            if (';' === $this->tokens[$i]) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -379,7 +479,7 @@ final class TokenGuards
 
         $digits = str_replace('_', '', $token[1]);
 
-        return ctype_digit($digits) && ('0' === $digits || '0' !== $digits[0]) ? (int) $digits : null;
+        return Ascii::isDigit($digits) && ('0' === $digits || '0' !== $digits[0]) ? (int) $digits : null;
     }
 
     /**
