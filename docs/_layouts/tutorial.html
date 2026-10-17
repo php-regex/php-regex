@@ -2,18 +2,19 @@
 <html lang="en">
 {% include head.html %}
 {% comment %}
-  The tutorial track: same chrome as the default layout, but the sidebar,
-  the breadcrumb and the pager all read nav-tutorial.yml, so the ten
-  chapters navigate within the track instead of the global reading order.
-  The track's banner is a component of the stylesheet (.tutorial-banner),
-  not of this file.
+  The tutorial track: same chrome as the default layout. The sidebar
+  shows the full documentation map — a tutorial reader is still a
+  reader, and the track's own submenu opens on every chapter — while
+  the breadcrumb and the pager read nav-tutorial.yml, so the two
+  orientation devices that belong to the track (where am I in the ten
+  chapters, what comes next) still speak its order.
 {% endcomment %}
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   {% include header.html %}
   {% assign tutorial_nav = site.data['nav-tutorial'] %}
   <div class="page-shell">
-    {% include sidebar.html nav=tutorial_nav %}
+    {% include sidebar.html %}
     <div class="page-main">
       <main id="main" tabindex="-1">
         {% include breadcrumb.html nav=tutorial_nav %}
