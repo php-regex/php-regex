@@ -167,9 +167,6 @@ lifecycle gates and framing caps, dynamic watcher registration, document
 versions on diagnostics pushes, the LSP/CLI parity test, and the
 not-analyzed severity aligned with `regex lint`. Remaining:
 
-1. **`$/setTrace` plus a stderr frame log**, UTF-8-safe truncation of
-   pattern text, level also settable from initializationOptions. Nine
-   editors are documented; today debugging them is printf-to-stderr.
 2. **Subprocess smoke tests of the real `bin/regex-lsp`** (stdio to temp
    files, never pipes): garbage bytes answered -32700 with the session
    surviving, exit-without-shutdown returning 1, one full round trip

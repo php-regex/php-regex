@@ -20,10 +20,12 @@ use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
 use PHPRegex\LanguageServer\Handler\InitializeHandler;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
+use PHPRegex\LanguageServer\Protocol\FrameTrace;
 use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\TraceLevel;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
@@ -95,6 +97,13 @@ final class Server
     private static $errorStream;
 
     private bool $initialized = false;
+
+    /**
+     * How much of each frame the stderr frame log writes: set at
+     * "initialize" from initializationOptions.trace, else the protocol's
+     * "trace", and by "$/setTrace" after it.
+     */
+    private TraceLevel $trace = TraceLevel::Off;
 
     private bool $shutdown = false;
 
@@ -187,12 +196,39 @@ final class Server
             stream_set_read_buffer($input, 0);
         }
 
+        Response::observeWith($this->traceOutbound(...));
+
+        try {
+            return $this->serve($input);
+        } finally {
+            Response::observeWith(null);
+        }
+    }
+
+    /**
+     * Write the error lines somewhere else than stderr, which is what an
+     * embedding process — or a test — needs to read them back.
+     *
+     * @param resource|null $stream null restores stderr
+     */
+    public static function writeErrorsTo($stream): void
+    {
+        self::$errorStream = $stream;
+    }
+
+    /**
+     * @param resource $input
+     */
+    private function serve($input): int
+    {
         while (null === $this->exitCode) {
             $message = Message::readFrom($input, $this->limits);
             if (null === $message) {
                 // EOF or read error
                 break;
             }
+
+            $this->traceInbound($message);
 
             // A message that cannot be used costs one error answer, not the
             // session.
@@ -215,17 +251,6 @@ final class Server
     }
 
     /**
-     * Write the error lines somewhere else than stderr, which is what an
-     * embedding process — or a test — needs to read them back.
-     *
-     * @param resource|null $stream null restores stderr
-     */
-    public static function writeErrorsTo($stream): void
-    {
-        self::$errorStream = $stream;
-    }
-
-    /**
      * Leave one line on stderr, where the editor collects the server log.
      */
     private static function writeErrorLine(string $message): void
@@ -243,6 +268,65 @@ final class Server
         // what tests must never do — one byte of it reads as a failure to
         // the tooling around the suite. The seam above is the tested path.
         file_put_contents('php://stderr', $line);
+    }
+
+    private function traceInbound(Message|InvalidMessage $message): void
+    {
+        $line = FrameTrace::inbound($message, $this->trace);
+        if (null !== $line) {
+            self::writeErrorLine($line);
+        }
+    }
+
+    private function traceOutbound(string $json): void
+    {
+        $line = FrameTrace::outbound($json, $this->trace);
+        if (null !== $line) {
+            self::writeErrorLine($line);
+        }
+    }
+
+    /**
+     * "$/setTrace": the frame log's level from now on; a value that is not
+     * one is ignored, with one line on stderr.
+     */
+    private function setTrace(Message $message): void
+    {
+        $value = $message->params['value'] ?? null;
+        $level = \is_string($value) ? TraceLevel::tryFrom($value) : null;
+        if (null === $level) {
+            self::writeErrorLine(\sprintf('$/setTrace value %s is not off, messages or verbose: ignored.', \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
+
+            return;
+        }
+
+        $this->trace = $level;
+    }
+
+    /**
+     * The level "initialize" asks for: initializationOptions.trace, else the
+     * protocol's "trace", else off. A value that is not a level is ignored,
+     * with a warning, and the next source is read.
+     */
+    private static function traceLevel(Message $initialize): TraceLevel
+    {
+        $params = $initialize->params ?? [];
+        $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
+
+        foreach (['initializationOptions.trace' => $options['trace'] ?? null, 'trace' => $params['trace'] ?? null] as $source => $value) {
+            if (null === $value) {
+                continue;
+            }
+
+            $level = \is_string($value) ? TraceLevel::tryFrom($value) : null;
+            if (null !== $level) {
+                return $level;
+            }
+
+            self::log(self::LOG_WARNING, \sprintf('%s %s is not off, messages or verbose: ignored.', $source, \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
+        }
+
+        return TraceLevel::Off;
     }
 
     /**
@@ -369,6 +453,7 @@ final class Server
             'textDocument/hover' => $this->textDocHandler->hover($message),
             'textDocument/codeAction' => $this->codeActionHandler->handle($message),
             'textDocument/completion' => $this->completionHandler->handle($message),
+            '$/setTrace' => $this->setTrace($message),
             '$/cancelRequest' => null, // Ignore cancellation
             default => $this->handleUnknownMethod($message),
         };
@@ -376,6 +461,10 @@ final class Server
 
     private function handleInitialize(Message $message): void
     {
+        // The frame log starts with the request that turns it on.
+        $this->trace = self::traceLevel($message);
+        $this->traceInbound($message);
+
         $this->initHandler->handle($message);
         $this->initialized = true;
 

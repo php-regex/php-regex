@@ -552,6 +552,7 @@ Add to your settings:
 | `textDocument/codeAction` | Code actions (quick fixes) |
 | `textDocument/completion` | Completion suggestions |
 | `textDocument/publishDiagnostics` | Push diagnostics to client, with the document's `version` when the client sent one |
+| `$/setTrace` | The level of the [frame log](#tracing-the-frames) from now on |
 
 A notification that arrives before `initialize` is dropped with a line on
 stderr — the `$/` ones silently, the client's own plumbing — and a request
@@ -647,6 +648,38 @@ refusal included, is never retried.
    The `Target:` line is the PHP and PCRE2 release the server judges for (see
    [Target PHP and PCRE2](#target-php-and-pcre2)). Silence here means the
    framing is wrong, not that the server is broken.
+
+### Tracing the Frames
+
+The server can log every frame it reads and writes on stderr, which editors
+collect in the language server's log panel. The level is the protocol's
+trace value: `off` (the default), `messages`, one line per frame with its
+kind, method and id, or `verbose`, which adds the frame's payload as JSON,
+cut past 1 KiB on a character boundary so a document's text never floods
+the log. Most editors send their trace setting with `initialize`; to set it
+whatever the editor sends, pass it in the initialization options:
+
+```json
+{
+  "initializationOptions": {
+    "trace": "messages"
+  }
+}
+```
+
+`initializationOptions.trace` wins over the request's `trace`, and a
+`$/setTrace` notification changes the level for the rest of the session. A
+value that is not one of the three is ignored with a warning. With
+`messages`, a session starts like this:
+
+```text
+regex-lsp: trace: received request "initialize" (id 1)
+regex-lsp: trace: sent response (id 1)
+regex-lsp: trace: sent notification "window/logMessage"
+regex-lsp: trace: received notification "initialized"
+```
+
+Stdout carries the frames only, traced or not.
 
 ### No Diagnostics Appearing
 

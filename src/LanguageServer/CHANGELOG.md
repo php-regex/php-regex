@@ -63,3 +63,12 @@ CHANGELOG
  * A pattern not analyzed for a limit is published as a Warning, the
    severity `regex lint` reports for the same outcome, where it used to be
    Information.
+ * The client capabilities are read from `capabilities`, where the
+   `initialize` request carries them: the watched-files registration is
+   offered to the clients that really offer dynamic registration.
+ * A frame log on stderr: the protocol's `trace` setting at `initialize`,
+   `initializationOptions.trace` over it, and `$/setTrace` after it turn it
+   on — `messages` writes one line per frame read or written, its kind,
+   method and id; `verbose` adds its payload as JSON, cut past 1 KiB on a
+   character boundary. A value that is not `off`, `messages` or `verbose`
+   is ignored with a warning.

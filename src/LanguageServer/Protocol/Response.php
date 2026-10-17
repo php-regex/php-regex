@@ -28,6 +28,13 @@ final class Response
     private static $stream;
 
     /**
+     * Called with the JSON text of each message written, for the frame log.
+     *
+     * @var (\Closure(string): void)|null
+     */
+    private static ?\Closure $observer = null;
+
+    /**
      * Write the responses somewhere else than stdout, which is what an
      * embedding process — or a test — needs to read them back.
      *
@@ -36,6 +43,17 @@ final class Response
     public static function writeTo($stream): void
     {
         self::$stream = $stream;
+    }
+
+    /**
+     * Hand the JSON text of each message written to the observer, after
+     * its frame.
+     *
+     * @param (\Closure(string): void)|null $observer null observes nothing
+     */
+    public static function observeWith(?\Closure $observer): void
+    {
+        self::$observer = $observer;
     }
 
     /**
@@ -122,5 +140,9 @@ final class Response
         $contentLength = \strlen($json);
         fwrite($stream, "Content-Length: {$contentLength}\r\n\r\n{$json}");
         fflush($stream);
+
+        if (null !== self::$observer) {
+            (self::$observer)($json);
+        }
     }
 }
