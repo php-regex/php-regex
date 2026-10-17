@@ -879,6 +879,22 @@ main table::-webkit-scrollbar-thumb {
   border-color: var(--paper);
 }
 
+/* ---- Tables on small screens ----------------------------------------------
+ * Wide tables scroll horizontally; the cut-edge mask tells the reader there
+ * more to see. On phones the mask is strengthened and the table font is
+ * slightly reduced so more columns fit before the scroll begins.
+ -------------------------------------------------------------------------- */
+@media (max-width: 639px) {
+  main table[data-scroll] {
+    -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) calc(100% - 2rem), rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) calc(100% - 2rem), rgba(0, 0, 0, 0) 100%);
+  }
+
+  main table {
+    font-size: .88rem;
+  }
+}
+
 /* Copy buttons injected into code blocks (and .install blocks). The
    script swaps the label to "Copied"; [data-copied] is the styling hook
    for a brief amber flash if the confirmation ever carries a state
