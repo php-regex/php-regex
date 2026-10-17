@@ -102,7 +102,7 @@ final class AnalysisServiceSilentChangeTest extends TestCase
             'pattern' => '/\p{Katakana}+/u',
             'floor' => '8.1',
             'later' => '8.2',
-            'message' => 'From PHP 8.2 (PCRE2 10.40) \p{Katakana} holds the characters whose script extensions name the script, not only those of the script: U+30FB matches /\p{Katakana}/u from PHP 8.2 and not on PHP 8.1.',
+            'message' => 'From PHP 8.2 (PCRE2 10.40) \p{Katakana} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.',
             'hint' => 'No spelling reads alike on both: "\p{sc:Katakana}" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.',
             'php' => '8.2',
             'pcre' => '10.40',
