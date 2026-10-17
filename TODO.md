@@ -345,6 +345,17 @@ release-map idiom duplicated in
 `tests/Unit/NodeVisitor/UnicodePropertyReleaseTest.php:50` and `:78` and
 three `tests/Unit/Lint/Rule/` files.
 
+## Documentation tests red on 2.x
+
+Two documentation tests fail since the landing and install rewrites:
+- `DocumentationExperienceTest::test_the_landing_page_keeps_its_first_visit_short`:
+  the landing page now has five `<section>` elements, the test allows four.
+  Merge two sections or raise the limit on purpose.
+- `PackageSelectionDocumentationTest::test_onboarding_installs_the_focused_cli_package`:
+  the quick start no longer shows `composer config minimum-stability dev`
+  (the install include renders it now). Read the include in the test, or
+  keep the command in the page.
+
 ## Checked and refused (do not re-litigate)
 
 - A compile-once `Pattern` handle: parses are already cached per pattern +
