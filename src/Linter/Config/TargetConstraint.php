@@ -74,6 +74,18 @@ final class TargetConstraint
     }
 
     /**
+     * The versions either admits. A PCRE2 constraint holds only when both
+     * name one: a guard on PHP_VERSION_ID names none.
+     */
+    public function union(self $other): self
+    {
+        $php = null === $this->php || null === $other->php ? null : self::merge([...$this->php, ...$other->php]);
+        $pcre = null === $this->pcre || null === $other->pcre ? null : self::merge([...$this->pcre, ...$other->pcre]);
+
+        return new self($php, $pcre);
+    }
+
+    /**
      * Whether the target is one of the versions admitted.
      */
     public function admits(PcreTarget $target): bool
@@ -150,6 +162,30 @@ final class TargetConstraint
         }
 
         return [] === $branches ? '<0' : implode(' || ', $branches);
+    }
+
+    /**
+     * Intervals that overlap or touch made one, sorted by lowest version.
+     *
+     * @param list<array{int, int|null}> $intervals
+     *
+     * @return list<array{int, int|null}>
+     */
+    private static function merge(array $intervals): array
+    {
+        usort($intervals, static fn (array $a, array $b): int => $a[0] <=> $b[0]);
+        $merged = [];
+        foreach ($intervals as [$from, $below]) {
+            $last = \count($merged) - 1;
+            if ($last >= 0 && (null === $merged[$last][1] || $from <= $merged[$last][1])) {
+                $merged[$last][1] = null === $merged[$last][1] || null === $below ? null : max($merged[$last][1], $below);
+
+                continue;
+            }
+            $merged[] = [$from, $below];
+        }
+
+        return $merged;
     }
 
     /**

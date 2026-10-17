@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A guard on `PHP_VERSION_ID` or `version_compare(PHP_VERSION, …)` around a
+   pattern narrows the versions it is judged for, in both extraction
+   strategies.
  * `@regex-target` narrows the versions a pattern is judged for, and an issue
    of a narrowed pattern carries `target.guard` in the JSON report.
  * An inline marker may name the issues it silences, and the markers that

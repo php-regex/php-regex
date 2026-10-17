@@ -181,7 +181,8 @@ final class PhpParserExtractionStrategy implements ExtractorInterface, PatternFu
             $this->extractFromNode($node, $file, $content, $found);
         }
 
-        return $this->settle($found, $ast, $file, $content);
+        // Each pattern judged for the versions the guards around it keep.
+        return PhpParserGuards::regions($ast, $content)->apply($this->settle($found, $ast, $file, $content));
     }
 
     /**

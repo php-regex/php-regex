@@ -172,6 +172,31 @@ final class ServerInlineIgnoreTest extends TestCase
         ], $this->diagnosed($uri));
     }
 
+    /**
+     * A guard on PHP_VERSION_ID narrows the versions a pattern is judged
+     * for, as in `regex lint`, which reads the same tokens.
+     */
+    #[Test]
+    public function test_a_guard_narrows_the_versions_judged(): void
+    {
+        file_put_contents($this->root.'/composer.json', '{"require": {"php": "^8.2"}}');
+        $uri = $this->uri('src/Matcher.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($uri, <<<'CODE'
+            <?php
+            if (PHP_VERSION_ID >= 80400) {
+                preg_match('/(?a)\d+/', $s);
+            }
+            preg_match('/(?a)\d+/', $s);
+            if (PHP_VERSION_ID >= 80300) {
+                preg_match('/(?a)\d+/', $s); // @regex-target php<8.4
+            }
+            CODE));
+
+        $this->assertSame([[4, 'regex.group.syntax', 1], [6, 'regex.group.syntax', 1]], $this->diagnosed($uri));
+    }
+
     #[Test]
     public function test_regex_json_turns_the_unmatched_report_off(): void
     {

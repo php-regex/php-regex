@@ -120,6 +120,7 @@ final class RegexFinder
                 literal: $literal,
                 ignored: isset($suppressed[$occurrence->line]),
                 line: $occurrence->line,
+                guard: $occurrence->guard,
             );
         }
 

@@ -1217,8 +1217,46 @@ Symfony's and Laravel's `regex:lint` judge the same range when they read
 
 A pattern the code only runs on some of the versions judged is judged for
 those alone: the lint narrows the versions, it never silences the pattern.
-`@regex-target` names them, as a Composer constraint after `php`, `pcre`, or
-both:
+The guard around it says which:
+
+```php
+if (PHP_VERSION_ID >= 80400) {
+    preg_match('/a{,3}/', $s);   // judged for 8.4 and later: a quantifier everywhere
+}
+preg_match('/a{,3}/', $s);       // regex.lint.compat.meaningChanges: text on 8.2 and 8.3
+```
+
+Under `require.php` `^8.2`, the first `a{,3}` is judged for 8.4, 8.4.25, 8.5
+and 8.5.10, which all read a quantifier there, and is not reported; the
+second is judged for the whole range, and PCRE2 before 10.43 (PHP 8.2 and
+8.3) reads it as text.
+
+The guards the lint reads:
+
+- `PHP_VERSION_ID` or `\PHP_VERSION_ID` compared to an integer literal, on
+  either side, with `>=`, `>`, `<`, `<=`, `===`, `!==`, `==` or `!=`;
+- `version_compare(PHP_VERSION, '8.4', '>=')`, with a literal version (`x.y`
+  or `x.y.z`) and one of `>=`, `ge`, `>`, `gt`, `<`, `lt`, `<=`, `le`;
+- `&&` of those, in parentheses or not;
+
+on the branches of an `if`, an `elseif` and an `else` (each where its
+condition holds and the ones before it fail), and on the rest of a block
+after `if (<guard>) { return; }`, `throw`, `continue`, `break` or `exit` alone
+in the body. With `nikic/php-parser` installed, the lint also reads them on
+the branches of a ternary, on the arms of `match (true)` and in the
+alternative syntax (`if (...): ... endif;`); the tokenizer, which reads the
+files otherwise, does not, and judges those for the whole range. Anything else is no guard, and the pattern is judged for the whole
+range: a negation (`!(PHP_VERSION_ID >= 80400)`), an `||`, a comparison with
+anything but a literal, an `&&` one side of which is no guard,
+`version_compare()` with `==` or `!=`, a guard in the calling function. In a
+namespace, an unqualified `PHP_VERSION_ID` is read only when the file
+declares no constant of that name. A pattern held in a constant or a property
+is judged where its literal is written, as for `@regex-ignore`: a guard
+around the call does not narrow it. A guard that keeps no version of the
+range leaves the pattern unjudged: the code never runs there.
+
+Where no guard says it, `@regex-target` names the versions, as a Composer
+constraint after `php`, `pcre`, or both:
 
 ```php
 preg_match('/(?a)\d+/', $s); // @regex-target php>=8.4
@@ -1247,8 +1285,8 @@ later.
   comment that opens its line, `@regex-target` covers the statement or the
   declaration after it, whole: a class, an interface, a trait, an enum, a
   function, a method, a constant.
-- **Several markers.** Markers that cover one line all apply: the versions
-  judged are those every one keeps.
+- **Several markers.** Markers that cover one line all apply, and so does
+  the guard around them: the versions judged are those every one keeps.
 - **A marker that keeps no version** of the range, `php>=9.0` under `^8.2`, is
   an error, `regex.target.empty`, on the marker's line, and the patterns it
   covers are not judged. Under one version named, `--php-version=8.2`, the
@@ -1256,7 +1294,7 @@ later.
 - **A marker that cannot be read**, `php>=eight`, is an error,
   `regex.target.invalid`, and the patterns it covers are judged for the whole
   range.
-- **In the JSON report**, an issue of a narrowed pattern names the version that
+- **In the JSON report**, an issue of a pattern a guard or a marker narrows names the version that
   reported it in `target` and the constraint in `target.guard` (`>=8.4`), the
   PCRE2 part in `target.guard_pcre`
   ([JSON output](../reference/json-output.md#issue-target-lintresultsissuestarget)).

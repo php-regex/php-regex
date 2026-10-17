@@ -299,9 +299,11 @@ final class TextDocumentHandler
                 continue;
             }
 
-            // "@regex-target" judges the pattern for the versions it keeps,
-            // from the lowest; for none, not at all.
-            $regex = $this->regexFor(TargetMarker::constraintAt($targets, $occurrence->line));
+            // A guard on PHP_VERSION_ID and "@regex-target" judge the pattern
+            // for the versions they keep, from the lowest; for none, not at
+            // all.
+            $marker = TargetMarker::constraintAt($targets, $occurrence->line);
+            $regex = $this->regexFor(null === $occurrence->guard ? $marker : ($marker?->intersect($occurrence->guard) ?? $occurrence->guard));
             foreach (null === $regex ? [] : $this->occurrenceDiagnostics($occurrence, $content, $positions, $regex) as $diagnostic) {
                 $silenced = false;
                 foreach ($covering as $index => $marker) {
