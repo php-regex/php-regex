@@ -167,11 +167,6 @@ lifecycle gates and framing caps, dynamic watcher registration, document
 versions on diagnostics pushes, the LSP/CLI parity test, and the
 not-analyzed severity aligned with `regex lint`. Remaining:
 
-2. **Subprocess smoke tests of the real `bin/regex-lsp`** (stdio to temp
-   files, never pipes): garbage bytes answered -32700 with the session
-   surviving, exit-without-shutdown returning 1, one full round trip
-   asserting stdout never emits a non-frame byte. Every existing test
-   drives the server in-process over memory streams.
 3. **Honest degradation**: warn when vendor/ is absent on the host
    (containerized projects: library patterns silently unavailable) and
    when the 20000-file scan cap downgrades coverage; both are currently
