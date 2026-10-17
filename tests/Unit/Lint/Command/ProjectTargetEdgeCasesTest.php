@@ -536,6 +536,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         yield 'php flag' => ['eight', null, []];
         yield 'pcre flag' => [null, 'latest', []];
     }
+
     /**
      * A range a static analyser names is read as lint reads a require.php
      * range: from its lowest PHP on PCRE2, with the note when it starts
