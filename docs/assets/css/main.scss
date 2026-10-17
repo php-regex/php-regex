@@ -8,8 +8,9 @@
  *     panels the middle one, cards and featured surfaces the large one;
  *     editorial surfaces that read as rules (tables, the header and
  *     footer bars, hairline dividers) stay square;
- *   - flat: 1px borders carry the structure, and only a surface that
- *     floats above the page (dialog, drawer, back-to-top) earns a shadow;
+ *   - flat at rest: 1px borders carry the structure; a surface that
+ *     floats above the page (dialog, drawer, back-to-top) earns a shadow,
+ *     and a card lifts one step on hover;
  *   - generous whitespace, sentence case, rem-only text sizes;
  *   - raw colors live ONLY in the token sections below (theme palettes,
  *     code-token palette, terminal palette) — never inline.
@@ -81,6 +82,9 @@
   --amber-tint: rgba(168, 74, 8, 0.06);
   --amber-deep: #8F3F06;
   --scrim: rgba(24, 43, 69, 0.55);
+  /* Elevations, in the ink the borders already speak. */
+  --shadow-1: 0 1px 2px rgba(24, 43, 69, 0.06), 0 2px 8px rgba(24, 43, 69, 0.05);
+  --shadow-2: 0 2px 6px rgba(24, 43, 69, 0.10), 0 12px 32px rgba(24, 43, 69, 0.14);
 }
 
 @mixin tokens-dark {
@@ -96,6 +100,10 @@
   --amber-tint: rgba(233, 118, 37, 0.10);
   --amber-deep: #F08A3C;
   --scrim: rgba(2, 6, 12, 0.62);
+  /* The same two steps, deepened for navy paper: an ink-tinted shadow
+     would vanish against it. */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.30);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.40), 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 /* Code-token palette (the second raw-color block): one restrained,
@@ -1834,6 +1842,7 @@ main table::-webkit-scrollbar-thumb {
 .article-nav-link:hover {
   background: var(--amber-tint);
   border-color: var(--amber);
+  box-shadow: var(--shadow-1);
 }
 
 .article-nav-next {
@@ -2066,6 +2075,9 @@ main table::-webkit-scrollbar-thumb {
   padding: 1.25rem;
   background: var(--paper);
   border-right: 1px solid var(--line);
+  /* Below 1024px this panel slides over the page; above it, it is a
+     static rail and the shadow would point at nothing. */
+  box-shadow: var(--shadow-2);
   overflow-y: auto;
   /* The drawer's list must not drag the page with it once it reaches its
      own end: contain stops the scroll from chaining out of the rail. */
@@ -2123,6 +2135,7 @@ main table::-webkit-scrollbar-thumb {
     padding: 0;
     background: transparent;
     border-right: 0;
+    box-shadow: none;
     transform: none;
     transition: none;
   }
@@ -2343,12 +2356,14 @@ main table::-webkit-scrollbar-thumb {
   border-radius: var(--radius-m);
   color: var(--ink);
   text-decoration: none;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
 
 .pager a.pager-prev:hover,
 .pager a.pager-next:hover {
   border-color: var(--ink);
   background: var(--amber-tint);
+  box-shadow: var(--shadow-1);
 }
 
 .pager a.pager-next {
@@ -2557,6 +2572,9 @@ main table::-webkit-scrollbar-thumb {
      carries the top corners of the pair, the list or panel the bottom
      ones, and the -1px margins collapse the seam between them. */
   border-radius: var(--radius-m) var(--radius-m) 0 0;
+  /* It floats over the scrim: the one surface on the page whose shadow
+     is not a hover state. */
+  box-shadow: var(--shadow-2);
   /* The platform search field brings its own rounded chrome and its own
      clear button, neither of which belongs to this system; the dialog
      handles clearing on Escape, and the panel below offers the way out. */
@@ -2584,6 +2602,7 @@ main table::-webkit-scrollbar-thumb {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 0 0 var(--radius-m) var(--radius-m);
+  box-shadow: var(--shadow-2);
 }
 
 .search-dialog ul:empty {
@@ -2664,6 +2683,7 @@ main table::-webkit-scrollbar-thumb {
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 0 0 var(--radius-m) var(--radius-m);
+  box-shadow: var(--shadow-2);
 }
 
 .search-panel[hidden] {
@@ -3198,12 +3218,15 @@ main > section:not([class]) > p:not(:has(a.button)) {
   border-radius: var(--radius-l);
   color: var(--ink);
   text-decoration: none;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
 }
 
-/* Hover is a wash plus the amber rule: flat, but the card answers. */
+/* Hover is a wash, the amber rule, and one step of elevation: the card
+   answers without ever leaving the flat language of the page. */
 .component:hover {
   border-color: var(--amber);
   background: var(--amber-tint);
+  box-shadow: var(--shadow-1);
 }
 
 .component-name {
@@ -3262,11 +3285,13 @@ main > section:not([class]) > p:not(:has(a.button)) {
   padding: 1.5rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-l);
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
 
 /* The whole card is the target, so the whole card answers. */
 .proof-card:hover {
   border-color: var(--ink);
+  box-shadow: var(--shadow-1);
 }
 
 .proof-card-title {
@@ -3616,6 +3641,7 @@ body.search-open {
   color: var(--ink-soft);
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-1);
   cursor: pointer;
 }
 
