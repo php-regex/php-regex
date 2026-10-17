@@ -126,7 +126,7 @@ final class ServerInlineIgnoreTest extends TestCase
         $uri = $this->uri('src/Matcher.php');
 
         $this->initialize();
-        $this->send($this->didOpen($uri, "<?php\n\$kept = 1; // @regex-ignore\npreg_match('/(a/', \$s); // @regex-ignore regex.lint.redos\n"));
+        $this->send($this->didOpen($uri, "<?php\n\$kept = 1; // @regex-ignore\npreg_match('/(a/', \$s); // @regex-ignore regex.lint.no.such.rule\npreg_match('/x/', \$s); // @regex-ignore regex.lint.redos, regex.optimization, regex.lint.charclass.single\n"));
 
         $this->assertSame([
             [1, 'regex.ignore.unmatched', 2],
@@ -137,7 +137,7 @@ final class ServerInlineIgnoreTest extends TestCase
         $this->assertCount(2, $unmatched);
         $this->assertSame(['start' => ['line' => 1, 'character' => 14], 'end' => ['line' => 1, 'character' => 27]], $unmatched[0]['range'] ?? null);
         $this->assertSame('The @regex-ignore marker silences nothing: no issue is reported on line 2. Remove it.', $unmatched[0]['message'] ?? null);
-        $this->assertSame('The @regex-ignore marker names regex.lint.redos, which no issue reports on line 3. Remove the identifier.', $unmatched[1]['message'] ?? null);
+        $this->assertSame('The @regex-ignore marker names regex.lint.no.such.rule, which no issue reports on line 3. Remove the identifier.', $unmatched[1]['message'] ?? null);
     }
 
     /**

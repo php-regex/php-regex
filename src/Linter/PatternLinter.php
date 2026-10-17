@@ -136,7 +136,7 @@ final class PatternLinter extends AbstractNodeVisitor
     /**
      * @param array<string, bool> $enabledRules the rules to turn on or off by id; the others keep their default
      */
-    public function __construct(private array $enabledRules = [])
+    public function __construct(private readonly array $enabledRules = [])
     {
         $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->groups = PcreGroups::empty();
@@ -433,6 +433,33 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * Whether a rules map, as regex.json's checks.lint.rules writes it,
+     * turns a lint rule on: as it says, else as the rule is by default.
+     *
+     * @param array<string, bool> $enabledRules
+     */
+    public static function enables(array $enabledRules, string $ruleId): bool
+    {
+        // Remove the 'regex.lint.' prefix if present for lookup
+        $shortId = str_starts_with($ruleId, 'regex.lint.')
+            ? substr($ruleId, \strlen('regex.lint.'))
+            : $ruleId;
+
+        // Explicit config takes precedence
+        if (\array_key_exists($shortId, $enabledRules)) {
+            return $enabledRules[$shortId];
+        }
+
+        // Check default disabled rules
+        if (\array_key_exists($shortId, self::DEFAULT_DISABLED_RULES)) {
+            return self::DEFAULT_DISABLED_RULES[$shortId];
+        }
+
+        // All other rules enabled by default
+        return true;
+    }
+
     private function createContext(): LintContext
     {
         $numbering = $this->groups->numbering();
@@ -491,23 +518,7 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     private function isRuleEnabled(string $ruleId): bool
     {
-        // Remove the 'regex.lint.' prefix if present for lookup
-        $shortId = str_starts_with($ruleId, 'regex.lint.')
-            ? substr($ruleId, \strlen('regex.lint.'))
-            : $ruleId;
-
-        // Explicit config takes precedence
-        if (\array_key_exists($shortId, $this->enabledRules)) {
-            return $this->enabledRules[$shortId];
-        }
-
-        // Check default disabled rules
-        if (\array_key_exists($shortId, self::DEFAULT_DISABLED_RULES)) {
-            return self::DEFAULT_DISABLED_RULES[$shortId];
-        }
-
-        // All other rules enabled by default
-        return true;
+        return self::enables($this->enabledRules, $ruleId);
     }
 
     /**

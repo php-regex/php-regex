@@ -165,6 +165,63 @@ final class UnmatchedIgnoresTest extends TestCase
     }
 
     /**
+     * An identifier naming a check this run leaves off is passed over: lint
+     * and ReDoS often run apart on the same code. A marker whose every
+     * identifier is passed over is not reported; one that names no check
+     * at all still is.
+     */
+    #[Test]
+    public function test_an_identifier_of_a_check_the_run_leaves_off_is_passed_over(): void
+    {
+        $code = <<<'PHP'
+            <?php
+            preg_match('/x/', $s); // @regex-ignore regex.lint.redos, regex.lint.redos.search
+            preg_match('/x/', $s); // @regex-ignore regex.optimization, regex.lint.complexity
+            preg_match('/x/', $s); // @regex-ignore regex.lint.charclass.single
+            preg_match('/x/', $s); // @regex-ignore regex.lint.quantifier.nested
+            preg_match('/x/', $s); // @regex-ignore regex.group.unclosed
+            preg_match('/x/', $s); // @regex-ignore regex.lint.compat.meaningChanges
+            preg_match('/x/', $s); // @regex-ignore regex.lint.no.such.rule, regex.lint.redos
+            PHP;
+        $project = $this->makeProject(['src/a.php' => $code]);
+        $parser = RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44', 'runtime_pcre_validation' => false]);
+        $sources = new PatternSourceCollection([new PhpFilePatternSource(new PatternExtractor(new TokenBasedExtractionStrategy()))]);
+
+        // Lint with quantifier.nested turned off, without ReDoS, optimizations, complexity nor validation.
+        $lint = new LintService(new AnalysisService($parser, lintRules: ['quantifier.nested' => false]), $sources);
+        $request = new LintRequest([$project.'/src'], [], 1, checkValidation: false, checkOptimizations: false, analysisWorkers: 1);
+        $report = $lint->analyze($lint->collectPatterns($request), $request);
+        $this->assertSame([[8, 'regex.ignore.unmatched']], self::issues($report));
+        $this->assertSame('The @regex-ignore marker names regex.lint.no.such.rule, which no issue reports on line 8. Remove the identifier.', $report->results[0]['issues'][0]['message'] ?? null);
+
+        // Every check on: each identifier silencing nothing is reported.
+        $lint = new LintService(new AnalysisService($parser, redosEnabled: true, lintRules: ['charclass.single' => true]), $sources);
+        $request = new LintRequest([$project.'/src'], [], 1, checkRedos: true, checkOptimizations: true, analysisWorkers: 1, checkComplexity: true);
+        $report = $lint->analyze($lint->collectPatterns($request), $request);
+        $lines = array_count_values(array_column(array_filter(array_merge([], ...array_column($report->results, 'issues')), static fn (array $issue): bool => 'regex.ignore.unmatched' === ($issue['issueId'] ?? null)), 'line'));
+        ksort($lines);
+        $this->assertSame([2 => 2, 3 => 2, 4 => 1, 5 => 1, 6 => 1, 8 => 2], $lines);
+    }
+
+    /**
+     * The search cost of the ReDoS check is left off with the check, or
+     * by its rule, in full or short.
+     */
+    #[Test]
+    public function test_the_search_cost_is_left_off_by_its_rule(): void
+    {
+        $parser = RegexParser::create();
+
+        $this->assertTrue((new AnalysisService($parser))->leavesOff('regex.lint.redos.search'));
+        $this->assertFalse((new AnalysisService($parser, redosEnabled: true))->leavesOff('regex.lint.redos.search'));
+        $this->assertTrue((new AnalysisService($parser, redosEnabled: true, lintRules: ['redos.search' => false]))->leavesOff('regex.lint.redos.search'));
+        $this->assertTrue((new AnalysisService($parser, redosEnabled: true, lintRules: ['regex.lint.redos.search' => false]))->leavesOff('regex.lint.redos.search'));
+        $this->assertFalse((new AnalysisService($parser, redosEnabled: true))->leavesOff('regex.lint.redos'));
+        $this->assertTrue((new AnalysisService($parser, lintEnabled: false))->leavesOff('regex.lint.quantifier.nested'));
+        $this->assertFalse((new AnalysisService($parser))->leavesOff('regex.lint.no.such.rule'));
+    }
+
+    /**
      * The report of a marker is on the marker's own column.
      */
     #[Test]

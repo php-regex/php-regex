@@ -22,6 +22,7 @@ use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -146,7 +147,7 @@ final class LintService
         $issues = self::silence(array_values($issues), $markers, $used, self::issueIdOf(...));
         $optimizations = self::silence(array_values($optimizations), $markers, $used, static fn (array $optimization): string => self::ISSUE_ID_OPTIMIZATION);
         if ($request->reportUnmatchedIgnores) {
-            array_push($issues, ...self::unmatchedIgnores($markers, $used));
+            array_push($issues, ...self::unmatchedIgnores($markers, $used, fn (string $identifier): bool => $this->leavesOff($identifier, $request)));
         }
 
         $results = $this->combineResults($issues, $optimizations, $patterns);
@@ -334,15 +335,16 @@ final class LintService
      *
      * @param array<string, list<IgnoreMarker>>              $markers
      * @param array<string, array<int, array<string, true>>> $used
+     * @param \Closure(string): bool                         $leftOff whether the run leaves off the check an identifier names
      *
      * @phpstan-return list<LintIssue>
      */
-    private static function unmatchedIgnores(array $markers, array $used): array
+    private static function unmatchedIgnores(array $markers, array $used, \Closure $leftOff): array
     {
         $issues = [];
         foreach ($markers as $file => $fileMarkers) {
             foreach ($fileMarkers as $index => $marker) {
-                $messages = $marker->unmatched($used[$file][$index] ?? []);
+                $messages = $marker->unmatched($used[$file][$index] ?? [], $leftOff);
                 foreach ($messages as $message) {
                     $issues[] = [
                         'type' => 'error',
@@ -359,6 +361,23 @@ final class LintService
         }
 
         return $issues;
+    }
+
+    /**
+     * Whether the run leaves off the check an issue identifier names: the
+     * validation, the ReDoS analysis, the optimizations, the complexity
+     * report, or what the analysis leaves off itself. An identifier the
+     * library does not know is no check left off.
+     */
+    private function leavesOff(string $identifier, LintRequest $request): bool
+    {
+        return match (true) {
+            null !== ErrorCode::tryFrom($identifier) => !$request->checkValidation,
+            RedosVerdict::ISSUE_ID === $identifier, RedosVerdict::SEARCH_ISSUE_ID === $identifier => !$request->checkRedos || $this->analysis->leavesOff($identifier),
+            self::ISSUE_ID_OPTIMIZATION === $identifier => !$request->checkOptimizations,
+            self::ISSUE_ID_COMPLEXITY === $identifier => !$request->checkComplexity,
+            default => $this->analysis->leavesOff($identifier),
+        };
     }
 
     /**

@@ -44,12 +44,16 @@ final class IgnoreMarker
      * when it names no issue and silenced none, one for each identifier it
      * names that silenced none; nothing when all it holds silenced one.
      *
-     * @param array<string, true> $silenced the identifiers it silenced issues under, "" for a marker
-     *                                      that names none
+     * An identifier naming a check the run leaves off is passed over: the
+     * run cannot tell whether it silences something.
+     *
+     * @param array<string, true>           $silenced the identifiers it silenced issues under, "" for a
+     *                                                marker that names none
+     * @param (\Closure(string): bool)|null $leftOff  whether the run leaves off the check an identifier names
      *
      * @return list<string>
      */
-    public function unmatched(array $silenced): array
+    public function unmatched(array $silenced, ?\Closure $leftOff = null): array
     {
         if ([] === $this->identifiers) {
             return [] === $silenced ? [\sprintf('The %s marker silences nothing: no issue is reported on line %d. Remove it.', $this->marker, $this->coveredLine)] : [];
@@ -57,7 +61,7 @@ final class IgnoreMarker
 
         $messages = [];
         foreach (array_unique($this->identifiers) as $identifier) {
-            if (!isset($silenced[$identifier])) {
+            if (!isset($silenced[$identifier]) && !(null !== $leftOff && $leftOff($identifier))) {
                 $messages[] = \sprintf('The %s marker names %s, which no issue reports on line %d. Remove the identifier.', $this->marker, $identifier, $this->coveredLine);
             }
         }

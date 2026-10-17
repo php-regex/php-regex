@@ -17,6 +17,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
 use PHPRegex\Linter\Config\JudgedRange;
+use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
@@ -172,6 +173,26 @@ final class AnalysisService
     }
 
     /**
+     * Whether the analysis leaves off the check an issue identifier names:
+     * a lint rule turned off, or all of them; the ReDoS analysis and its
+     * search cost when off; the change of meaning across the range when
+     * the check is off or the range is one version. False for every other
+     * identifier, one the library does not know included.
+     */
+    public function leavesOff(string $identifier): bool
+    {
+        $short = str_starts_with($identifier, 'regex.lint.') ? substr($identifier, \strlen('regex.lint.')) : null;
+
+        return match (true) {
+            RedosVerdict::ISSUE_ID === $identifier => RedosMode::Off === $this->redosMode,
+            RedosVerdict::SEARCH_ISSUE_ID === $identifier => RedosMode::Off === $this->redosMode || !$this->shouldReportSearchCostRule(),
+            self::ISSUE_ID_MEANING_CHANGES === $identifier => !$this->comparesTrees() || [] === $this->range,
+            null !== $short && \in_array($short, LintConfigSchema::lintRuleIds(), true) => !$this->lintEnabled || !PatternLinter::enables($this->lintRules, $short),
+            default => false,
+        };
+    }
+
+    /**
      * The versions a guard or a marker narrows, when they are known.
      */
     public function judgedRange(): ?JudgedRange
@@ -309,6 +330,15 @@ final class AnalysisService
         $ast = $this->regex->parsePattern($body, $flags, $delimiter);
 
         return $ast->accept(new ConsoleHighlighter());
+    }
+
+    /**
+     * Whether the rules map leaves the search cost of the ReDoS check on.
+     */
+    private function shouldReportSearchCostRule(): bool
+    {
+        return false !== ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
+            && false !== ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null);
     }
 
     /**
@@ -1452,8 +1482,7 @@ final class AnalysisService
      */
     private function shouldReportSearchCost(RedosSearchCost $cost): bool
     {
-        if (false === ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
-            || false === ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null)) {
+        if (!$this->shouldReportSearchCostRule()) {
             return false;
         }
 

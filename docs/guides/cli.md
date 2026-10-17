@@ -1441,12 +1441,17 @@ src/Legacy.php:14  The @regex-ignore marker silences nothing: no issue is report
 src/Legacy.php:20  The @regex-ignore marker names regex.lint.redos, which no issue reports on line 20. Remove the identifier.
 ```
 
-The report judges the markers against the checks the run performs: a marker
-naming `regex.lint.redos` in a run without `--redos` silences nothing in that
-run, and is reported. A run that leaves a check off on purpose passes
-`--no-report-unmatched-ignores`, and `"reportUnmatchedIgnores": false` in
-`regex.json` turns the report off for every run. The report itself is never
-silenced by a marker.
+An identifier naming a check the run leaves off is passed over, as CI often
+runs the lint and the ReDoS analysis apart on the same code: `regex.lint.redos`
+in a run without `--redos`, a lint rule `checks.lint.rules` turns off (or one
+off by default and not turned on), `regex.optimization` under `--no-optimize`,
+`regex.lint.complexity` without `checks.complexity`, an error code under
+`--no-validate`, `regex.lint.compat.meaningChanges` when one PHP version is
+judged. A marker whose every identifier is passed over is not reported. An
+identifier that names no check the library knows is reported all the same,
+by name. `--no-report-unmatched-ignores` turns the report off for one run,
+and `"reportUnmatchedIgnores": false` in `regex.json` for every run. The
+report itself is never silenced by a marker.
 
 ### Config Exclude
 

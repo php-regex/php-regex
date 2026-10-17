@@ -23,6 +23,7 @@ use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\Linter\Config\JudgedRange;
+use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
@@ -334,7 +335,7 @@ final class TextDocumentHandler
         // A marker that silences nothing: a warning on the marker.
         foreach ($this->reportUnmatchedIgnores ? $markers : [] as $index => $marker) {
             $range = ['start' => $positions->offsetToPosition($marker->offset), 'end' => $positions->offsetToPosition($marker->offset + \strlen($marker->marker))];
-            foreach ($marker->unmatched($used[$index] ?? []) as $message) {
+            foreach ($marker->unmatched($used[$index] ?? [], $this->leavesOff(...)) as $message) {
                 $diagnostics[] = $this->diagnosticConverter->fromUnmatchedIgnore($message, $range);
             }
         }
@@ -423,6 +424,26 @@ final class TextDocumentHandler
         }
 
         return $diagnostics;
+    }
+
+    /**
+     * Whether the editor leaves off the check an issue identifier names: a
+     * lint rule the rules map turns off, the ReDoS analysis when off, and
+     * what it never reports, the optimizations, the complexity score and
+     * the changes of meaning across a range.
+     */
+    private function leavesOff(string $identifier): bool
+    {
+        return match ($identifier) {
+            RedosVerdict::ISSUE_ID => RedosMode::Off === $this->redosMode,
+            RedosVerdict::SEARCH_ISSUE_ID => RedosMode::Off === $this->redosMode
+                || false === ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
+                || false === ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null),
+            'regex.optimization', 'regex.lint.complexity', 'regex.lint.compat.meaningChanges' => true,
+            default => str_starts_with($identifier, 'regex.lint.')
+                && \in_array(substr($identifier, \strlen('regex.lint.')), LintConfigSchema::lintRuleIds(), true)
+                && !PatternLinter::enables($this->lintRules, $identifier),
+        };
     }
 
     /**
