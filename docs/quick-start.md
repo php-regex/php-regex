@@ -7,13 +7,9 @@ redirect_from:
 
 This page is the shortest path from installation to a useful result. It does not teach regular expressions; the [tutorial](/tutorial/) does that. When this page ends, the linked guide picks up the deeper workflow.
 
-## Install
+## Installation
 
-```bash
-composer config minimum-stability dev
-composer config prefer-stable true
-composer require --dev php-regex/regex-cli:{{ site.data.product.release }}-dev
-```
+{% include install-prerelease.html package="php-regex/regex-cli" dev=true %}
 
 You need PHP {{ site.data.product.php_floor }} or later with the `mbstring` and `tokenizer` extensions. The first two Composer commands run once: while the focused packages are `{{ site.data.product.release }}-dev`, they allow those prerelease versions while still preferring stable releases for everything else. The CLI package provides the `regex` binary and pulls in the toolkit facade, so this page can use both the terminal and the PHP API. For another surface, [choose the right package](/packages/).
 
