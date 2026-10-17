@@ -233,15 +233,6 @@ an open count past 65535 and `\214748364` read as text (10.37). Left:
 - Discovery parity for the Rector rules: patterns folded from constants
   (as the `preg_match()` rule already does), calls of functions marked
   `#[RegexPattern]` or `Language('RegExp')`, and `preg_replace_callback_array()`.
-- Report-only verdicts, second wave: a bare `\p{Script}` is the script on
-  PCRE2 10.39 (PHP 8.1) and its script extensions from 10.40 (U+30FB for
-  `\p{Katakana}`, U+00B7 for `\p{Latin}`), which the tree comparison does not
-  see; UCP casing through `(*UCP)` between 7.4 and 8.0; de-atomisation (the
-  witness pair works on the named recursion `(?P>g)`); the repeat of an
-  assertion, which PCRE2 before 10.35 clamps to one. Flag only: none has a
-  spelling every release reads alike. Script runs, the non-atomic
-  lookarounds, a repeated `(*ACCEPT)` and group names past ASCII are refused
-  below the release that added them: no verdict is left to report there.
 - The PHPStan and Psalm extensions judge a project for PHP 7.2 or earlier
   instead of refusing it as `regex lint` does: PHPStan with the version as
   given, Psalm raised to 7.3. Make both follow `regex lint`: refuse a
@@ -258,8 +249,10 @@ an open count past 65535 and `\214748364` read as text (10.37). Left:
 - Refused with a witness, do not build: the octal respell `\214748364` to
   `\x{8C}748364` (PHP 7.3.33 and 7.4.33 match nothing with the first on
   "\x8c748364" and match with the second); loose script names respelled
-  canonically (U+00B7 is in `\p{latin}` from 10.40, where it means the
-  script extension, and not on 10.39); moving any `\K` out of a lookaround
+  canonically (U+30FB is in `\p{katakana}` from 10.40, where it means the
+  script extensions, and not in `\p{Katakana}` on 10.39; U+00B7, once given
+  as the witness, is in neither `\p{latin}` nor `\p{scx:Latin}` on 10.40 to
+  10.44, only on the newer Unicode tables of 10.49); moving any `\K` out of a lookaround
   (`(?<=\Ka)b` matches "ab" in "ab"); `${n}` respelled `\1` in a
   double-quoted replacement (`"\1"` is chr(1)).
 

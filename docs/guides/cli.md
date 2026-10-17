@@ -1185,7 +1185,11 @@ What runs where:
   into another meaning: `/a{,3}/` is the text `a{,3}` under PCRE2 before 10.43
   (PHP 8.2 and 8.3) and `a` zero to three times from 10.43 (PHP 8.4). Write
   `a{0,3}` or `a\{,3}`, which every version reads alike; `"compat.meaningChanges":
-  false` in `checks.lint.rules` turns the check off.
+  false` in `checks.lint.rules` turns the check off. The same warning names a
+  change of meaning that keeps the tree, from the release table: a possessive
+  `{1}+` on a group (PCRE2 10.34), a group that refers to itself, a repeated
+  assertion holding a group and `(*UCP)` casing without UTF (10.35), a bare
+  script name (10.40); see [the rules reference](../reference/rules.md#meaning-that-changes-across-php-versions).
 
 The console banner still names the floor. The JSON report lists every PHP and
 PCRE2 it validated at under `target.range`, and the issue carries the lowest

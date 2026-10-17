@@ -22,6 +22,7 @@ use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Internal\AnalyzedPatterns;
 use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\Internal\RedosVerdict;
+use PHPRegex\Linter\Internal\SilentMeaningChange;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\Internal\LayoutSplicer;
@@ -417,8 +418,27 @@ final class AnalysisService
             }
 
             // Accepted everywhere, the pattern may still read otherwise on a
-            // later PHP: the same text, another tree.
+            // later PHP: the same text, another tree, or the same tree that
+            // a later release matches otherwise.
             $readsOtherwise = $diff?->readsOtherwise;
+            $silentChange = null === $diff || null !== $readsOtherwise || null !== $rangeError || !$this->comparesTrees()
+                ? null
+                : SilentMeaningChange::first($ast, $this->regex->target(), array_map(static fn (RegexParser $parser): PcreTarget => $parser->target(), $this->range));
+            if (null !== $silentChange) {
+                $issues[] = [
+                    'type' => 'warning',
+                    'file' => $occurrence->file,
+                    'line' => $occurrence->line,
+                    'column' => $this->resolveColumn($occurrence),
+                    'fileOffset' => $occurrence->fileOffset,
+                    'issueId' => self::ISSUE_ID_MEANING_CHANGES,
+                    'message' => \sprintf('From PHP %s (PCRE2 %s) %s', ProjectTarget::phpLabel($silentChange->target->phpVersionId), $silentChange->target->pcreVersion, $silentChange->message),
+                    'hint' => $silentChange->hint,
+                    'source' => $source,
+                    'target' => ProjectTarget::describe($silentChange->target),
+                ];
+            }
+
             if (null !== $readsOtherwise) {
                 $issues[] = [
                     'type' => 'warning',

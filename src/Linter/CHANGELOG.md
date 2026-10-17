@@ -76,7 +76,11 @@ CHANGELOG
    `grep()`, declared or configured, does not capture the call.
  * `regex.lint.compat.meaningChanges`: a pattern a later PHP of the
    project's range parses into another meaning, `/a{,3}/` from PHP 8.4, at
-   severity `warning`, on by default.
+   severity `warning`, on by default. It also names a change of meaning
+   that keeps the tree, from the release table, with its witness: a
+   possessive `{1}+` on a group (PCRE2 10.34), a group that refers to
+   itself, a repeated assertion holding a group and `(*UCP)` casing without
+   UTF (10.35), a bare script name (10.40).
  * `regex.lint.group.alwaysEmptyCapture`: a capturing group that is empty or
    unset wherever the pattern matches, `a+(a*)`, proven by the automata, at
    severity `warning`, on by default.

@@ -56,6 +56,21 @@ enum PcreFeature
     case NonAtomicAssertionShortSyntax;
 
     /**
+     * A group that holds a reference to itself may be backtracked into, where it was atomic.
+     */
+    case GroupHoldingItsOwnReferenceBacktracks;
+
+    /**
+     * A repeated assertion runs as many times as its count asks, where it ran once.
+     */
+    case RepeatedAssertionKeepsItsCount;
+
+    /**
+     * Under "(*UCP)" without UTF, caseless matching folds the characters past ASCII by their Unicode properties.
+     */
+    case UcpFoldsPastAsciiWithoutUtf;
+
+    /**
      * A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big.
      */
     case LargeOpenCountIsText;
@@ -238,7 +253,10 @@ enum PcreFeature
             self::QuantifiedAccept,
             self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames => '10.34',
-            self::NonAtomicAssertionShortSyntax => '10.35',
+            self::NonAtomicAssertionShortSyntax,
+            self::GroupHoldingItsOwnReferenceBacktracks,
+            self::RepeatedAssertionKeepsItsCount,
+            self::UcpFoldsPastAsciiWithoutUtf => '10.35',
             self::LargeOpenCountIsText,
             self::OverflowingBackslashNumberIsOctal => '10.37',
             self::LoosePropertyNames => '10.40',
