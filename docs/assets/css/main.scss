@@ -2467,52 +2467,85 @@ main table::-webkit-scrollbar-thumb {
 .pager {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-top: 3rem;
-  padding-top: 1.25rem;
+  padding-top: 1.5rem;
   border-top: 1px solid var(--line);
 }
 
-/* Only the links are boxes. When a page has no neighbour, the template
-   leaves an empty span in its place: styling that span would draw a
-   bordered rectangle with nothing in it. The link keeps its geometry, the
-   placeholder stays a zero-width item, and space-between still puts the
-   surviving link on its own side. */
+/* The pager is typography, not chrome: two bordered boxes ended every
+   page of the site on the language of a form control. The direction is
+   the eyebrow, the destination is the display line under it, and the
+   section's own hairline above carries the structure the boxes used to
+   pretend to carry. When a page has no neighbour, the template leaves
+   an empty span in its place: with no boxes, an empty placeholder is
+   simply nothing, and space-between still puts the surviving link on
+   its own side. */
 .pager a.pager-prev,
 .pager a.pager-next {
   display: flex;
   flex-direction: column;
-  gap: .2rem;
+  gap: .35rem;
+  max-width: 26ch;
   min-height: 44px;
-  padding: .5rem .75rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-m);
+  padding: .55rem .1rem;
   color: var(--ink);
   text-decoration: none;
-  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
-}
-
-.pager a.pager-prev:hover,
-.pager a.pager-next:hover {
-  border-color: var(--ink);
-  background: var(--amber-tint);
-  box-shadow: var(--shadow-1);
 }
 
 .pager a.pager-next {
   margin-left: auto;
   text-align: right;
+  align-items: flex-end;
 }
 
+/* The direction speaks in the eyebrow language, its arrow carries the
+   accent and answers the hover by taking a step in its own direction. */
 .pager-label {
-  font-size: .75rem;
-  letter-spacing: .06em;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 
+.pager-label .icon {
+  color: var(--amber);
+  transition: transform .15s ease;
+}
+
+.pager a.pager-prev:hover .pager-label .icon,
+.pager a.pager-prev:focus-visible .pager-label .icon {
+  transform: translateX(-3px);
+}
+
+.pager a.pager-next:hover .pager-label .icon,
+.pager a.pager-next:focus-visible .pager-label .icon {
+  transform: translateX(3px);
+}
+
+/* The destination is a display line that takes the site's link language
+   on hover: the amber underline, at the weight a heading answers with. */
 .pager-title {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.05rem;
+  letter-spacing: -0.008em;
+  line-height: 1.3;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color .15s ease, color .15s ease;
+}
+
+.pager a:hover .pager-title,
+.pager a:focus-visible .pager-title {
+  color: var(--amber-deep);
+  text-decoration-color: var(--amber);
 }
 
 /* ---- On this page ---- */
