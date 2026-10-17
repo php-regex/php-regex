@@ -78,7 +78,7 @@ final class RegexPatternArgumentRule implements Rule
         ?PhpVersion $phpVersion = null,
         int|array|null $phpVersionRange = null,
     ) {
-        $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange);
+        $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange, $reflectionProvider);
     }
 
     public function getNodeType(): string

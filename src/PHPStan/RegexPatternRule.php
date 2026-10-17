@@ -36,6 +36,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
+use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
@@ -133,23 +134,25 @@ final class RegexPatternRule implements Rule
     private ?TrivialMatchClassifier $trivialMatches = null;
 
     /**
-     * @param ConfigArray                        $config          the "phpRegex" parameter: "phpVersion", "pcreVersion",
-     *                                                            "interop" (the presets read, every one when null) and
-     *                                                            "checks" ("lint", "redos", "optimizations"),
-     *                                                            every key optional
-     * @param PhpVersion|null                    $phpVersion      the PHP version PHPStan analyses the project for: patterns are
-     *                                                            judged for it, with the PCRE2 it bundles, unless "phpVersion"
-     *                                                            is "runtime" or names a version, and "pcreVersion" a release
-     * @param int|array{min: int, max: int}|null $phpVersionRange PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
-     *                                                            also validated at each later PHP up to max where a rule of the
-     *                                                            library changes, unless "phpVersion" names one version
+     * @param ConfigArray                        $config             the "phpRegex" parameter: "phpVersion", "pcreVersion",
+     *                                                               "interop" (the presets read, every one when null) and
+     *                                                               "checks" ("lint", "redos", "optimizations"),
+     *                                                               every key optional
+     * @param PhpVersion|null                    $phpVersion         the PHP version PHPStan analyses the project for: patterns are
+     *                                                               judged for it, with the PCRE2 it bundles, unless "phpVersion"
+     *                                                               is "runtime" or names a version, and "pcreVersion" a release
+     * @param int|array{min: int, max: int}|null $phpVersionRange    PHPStan's "phpVersion" parameter: with {min, max}, a pattern is
+     *                                                               also validated at each later PHP up to max where a rule of the
+     *                                                               library changes, unless "phpVersion" names one version
+     * @param ReflectionProvider|null            $reflectionProvider tells whether PHP_VERSION_ID names the global constant
+     *                                                               in a namespace, for a guard written without a leading backslash
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
-    public function __construct(array $config = [], ?PhpVersion $phpVersion = null, int|array|null $phpVersionRange = null)
+    public function __construct(array $config = [], ?PhpVersion $phpVersion = null, int|array|null $phpVersionRange = null, ?ReflectionProvider $reflectionProvider = null)
     {
-        $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange);
+        $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange, $reflectionProvider);
         $interop = $config['interop'] ?? null;
         $this->registry = PatternFunctionRegistry::native()->withPresets(
             \is_array($interop) ? array_values(array_filter($interop, \is_string(...))) : InteropPresets::DEFAULT_PRESETS,

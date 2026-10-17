@@ -108,6 +108,10 @@ Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: Invalid or unsupported PC
 🪪 regex.invalidForTarget
 ```
 
+Under a `phpVersion` range, a call PHPStan knows runs on some versions only,
+inside `if (PHP_VERSION_ID >= 80400)` say, is judged for those versions
+alone: the guard narrows the versions judged, it never silences the call.
+
 A replacement that refers to a missing group is reported with no configuration
 either:
 

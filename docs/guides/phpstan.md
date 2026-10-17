@@ -76,6 +76,31 @@ Regex pattern is invalid for PHP 8.5 with PCRE2 10.44: \K is not allowed in a lo
 
 A `phpRegex.phpVersion` naming one version judges that version alone.
 
+### Guarded calls
+
+A call that runs on some PHP versions of the range only is judged for those.
+PHPStan narrows `PHP_VERSION_ID` under a guard, and the extension reads that
+narrowed type at the call: the versions judged are the lowest one the guard
+keeps, with the PCRE2 it bundles (or `phpRegex.pcreVersion`), then each later
+version of the range above it. Under `phpVersion: {min: 80200, max: 80599}`:
+
+```php
+if (PHP_VERSION_ID >= 80400) {
+    preg_match('/(?a)\d+/', $s);   // judged for 8.4 and 8.5: not reported
+}
+preg_match('/(?a)\d+/', $s);       // "(?a)" needs PCRE2 10.43: reported for 8.2
+```
+
+Every guard PHPStan narrows on counts: an `if`, an `elseif` chain, a ternary,
+an early `return`, `&&`, a negation, guards nested inside each other.
+`version_compare(PHP_VERSION, '8.4', '>=')` and `||` narrow nothing, so the
+whole range is judged, as it is for a comparison with a variable. A guard that
+keeps no version of the range (`PHP_VERSION_ID >= 90000` under 8.2 to 8.5)
+leaves the call unjudged: it never runs there. An unqualified
+`PHP_VERSION_ID` that names a constant of its namespace is no PHP version,
+and its guard is not read. With `phpRegex.phpVersion`, or one PHP version for
+PHPStan, nothing changes: PHPStan already treats the other branch as dead.
+
 The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
 7.2 and earlier ship PCRE1, which the library does not judge. A version below
 7.3 named by `phpRegex.phpVersion` or by PHPStan's `phpVersion` stops the
