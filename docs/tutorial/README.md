@@ -33,61 +33,61 @@ This tutorial takes you from your first pattern to PCRE features used in product
 <div class="guide-grid">
 
 <div class="guide-entry">
-<h3><a href="01-basics.md">1 &middot; Regex basics</a></h3>
+<h3><a href="/tutorial/01-basics/">1 &middot; Regex basics</a></h3>
 <p>Write simple literal patterns.</p>
 <p class="guide-meta">{{ m1 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="02-character-classes.md">2 &middot; Character classes &amp; escapes</a></h3>
+<h3><a href="/tutorial/02-character-classes/">2 &middot; Character classes &amp; escapes</a></h3>
 <p>Match sets of characters.</p>
 <p class="guide-meta">{{ m2 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="03-anchors-boundaries.md">3 &middot; Anchors &amp; boundaries</a></h3>
+<h3><a href="/tutorial/03-anchors-boundaries/">3 &middot; Anchors &amp; boundaries</a></h3>
 <p>Control where matches occur.</p>
 <p class="guide-meta">{{ m3 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="04-quantifiers.md">4 &middot; Quantifiers &amp; greediness</a></h3>
+<h3><a href="/tutorial/04-quantifiers/">4 &middot; Quantifiers &amp; greediness</a></h3>
 <p>Control repetition.</p>
 <p class="guide-meta">{{ m4 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="05-groups-alternation.md">5 &middot; Groups &amp; alternation</a></h3>
+<h3><a href="/tutorial/05-groups-alternation/">5 &middot; Groups &amp; alternation</a></h3>
 <p>Capture and choose.</p>
 <p class="guide-meta">{{ m5 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="06-lookarounds.md">6 &middot; Lookarounds &amp; assertions</a></h3>
+<h3><a href="/tutorial/06-lookarounds/">6 &middot; Lookarounds &amp; assertions</a></h3>
 <p>Match context without consuming.</p>
 <p class="guide-meta">{{ m6 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="07-backreferences-recursion.md">7 &middot; Backreferences &amp; recursion</a></h3>
+<h3><a href="/tutorial/07-backreferences-recursion/">7 &middot; Backreferences &amp; recursion</a></h3>
 <p>Match repeated patterns.</p>
 <p class="guide-meta">{{ m7 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="08-performance-redos.md">8 &middot; Performance &amp; ReDoS</a></h3>
+<h3><a href="/tutorial/08-performance-redos/">8 &middot; Performance &amp; ReDoS</a></h3>
 <p>Write safe, fast patterns.</p>
 <p class="guide-meta">{{ m8 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="09-testing-debugging.md">9 &middot; Testing &amp; debugging</a></h3>
+<h3><a href="/tutorial/09-testing-debugging/">9 &middot; Testing &amp; debugging</a></h3>
 <p>Find and fix issues.</p>
 <p class="guide-meta">{{ m9 }} min</p>
 </div>
 
 <div class="guide-entry">
-<h3><a href="10-real-world-php.md">10 &middot; Real-world PHP</a></h3>
+<h3><a href="/tutorial/10-real-world-php/">10 &middot; Real-world PHP</a></h3>
 <p>Common patterns explained.</p>
 <p class="guide-meta">{{ m10 }} min</p>
 </div>
