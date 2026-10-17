@@ -268,11 +268,6 @@ tasks:
     desc: Serve the docs site at localhost:4000 with live reload
     dir: docs
     cmds:
-      # bundle check is instant and silent when the gems are installed and
-      # non-zero when they are not; the bare jekyll binary dies on the
-      # default-gem json conflict, so the server always runs under bundler.
-      # force_polling watches the files instead of trusting macOS file
-      # events, which go silent after bursts of writes.
       - bundle check || bundle install
       - bundle exec jekyll serve --livereload --future --unpublished --force_polling
 
