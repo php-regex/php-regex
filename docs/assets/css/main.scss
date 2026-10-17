@@ -1285,9 +1285,35 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .github-link svg {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
   fill: currentColor;
+}
+
+/* The repository's way out of the header: a slot in the same grammar
+   as the theme toggle's square - bordered, centered, quiet ink, the
+   wash on hover. The octocat is a brand mark, the one filled glyph
+   among the drawn ones, and earns the exemption every brand mark
+   gets - at a matched optical weight and in a matched frame. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.icon-btn:hover,
+.icon-btn:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink);
+  background: var(--amber-tint);
 }
 
 .theme-toggle {
@@ -2640,11 +2666,32 @@ a:focus-visible .article-nav-arrow {
   border-bottom: 1px solid var(--line-soft);
 }
 
+/* A search field should look like one before it is read: the house
+   magnifier, masked and tinted like the theme toggle's glyph, sitting
+   inside the field's left edge. */
+.page-filter::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(.9rem + 1px);
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  background-color: var(--ink-soft);
+  pointer-events: none;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75'%3E%3Ccircle cx='6.5' cy='6.5' r='4.75'/%3E%3Cpath d='M10.2 10.2 14 14'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.75'%3E%3Ccircle cx='6.5' cy='6.5' r='4.75'/%3E%3Cpath d='M10.2 10.2 14 14'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.page-filter:focus-within::before {
+  background-color: var(--amber);
+}
+
 .page-filter input {
   flex: 1;
   min-width: 0;
   min-height: 44px;
-  padding: .45rem .9rem;
+  padding: .45rem .9rem .45rem 2.5rem;
   /* 16px, no less: iOS Safari zooms any focused field below that, and a
      page that lurches on the first tap is disqualified. appearance none
      takes iOS's rounded inner chrome off the search field with it. */
