@@ -27,3 +27,7 @@ CHANGELOG
    `/(a|ab){1}+c/`, which PHP 7.3 and 7.4.0 to 7.4.5 read as `/(a|ab)c/` and
    7.4.6 and later as atomic, becomes `/(a|ab){1}c/` for code that targets
    such a PHP.
+ * The rules of `RegexSetList::PCRE_UPGRADE` rewrite the declaration of a
+   private class constant its class reads only as a pattern they read,
+   written `self::NAME`. Public, protected and global constants are left as
+   they are.

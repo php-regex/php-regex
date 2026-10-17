@@ -14,12 +14,15 @@ declare(strict_types=1);
 namespace PHPRegex\Rector;
 
 use PhpParser\Node;
+use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Stmt\Class_;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Validation\RangeDiff;
+use PHPRegex\Rector\Internal\PrivateConstants;
 use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
@@ -50,25 +53,27 @@ final class EscapeNulByteRector extends AbstractRector
      */
     public function getNodeTypes(): array
     {
-        return [FuncCall::class, StaticCall::class];
+        return [FuncCall::class, StaticCall::class, Class_::class];
     }
 
     /**
-     * @param FuncCall|StaticCall $node
+     * @param FuncCall|StaticCall|Class_ $node
      *
-     * @return FuncCall|StaticCall|null the same call, its pattern literals rewritten
+     * @return FuncCall|StaticCall|Class_|null the same call, its pattern literals rewritten, or the same class, the private constants it reads as patterns only rewritten
      */
     public function refactor(Node $node): ?Node
     {
         $range = TargetRange::from($this->phpVersionProvider->provide());
 
-        return TargetRange::rewriteEach(
-            $node,
-            $node instanceof FuncCall && $this->isNames($node, TargetRange::FUNCTIONS),
-            $node instanceof FuncCall && $this->isName($node, 'preg_replace_callback_array'),
-            $this->reflectionResolver,
-            static fn (string $pattern): ?string => !str_contains($pattern, "\0") || str_contains($pattern, '\Q') ? null : self::escaped($pattern, $range),
-        );
+        $rewrite = static fn (string $pattern): ?string => !str_contains($pattern, "\0") || str_contains($pattern, '\Q') ? null : self::escaped($pattern, $range);
+        $pregCall = fn (CallLike $call): bool => $call instanceof FuncCall && $this->isNames($call, TargetRange::FUNCTIONS);
+        $callbackArray = fn (CallLike $call): bool => $call instanceof FuncCall && $this->isName($call, 'preg_replace_callback_array');
+
+        if ($node instanceof Class_) {
+            return PrivateConstants::rewrite($node, $pregCall, $callbackArray, $this->reflectionResolver, $rewrite);
+        }
+
+        return TargetRange::rewriteEach($node, $pregCall($node), $callbackArray($node), $this->reflectionResolver, $rewrite);
     }
 
     /**

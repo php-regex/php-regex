@@ -75,8 +75,17 @@ from the one Rector targets to the newest the library knows.
 The set reads the patterns `regex lint` reads: the first argument of a
 `preg_*()` call, the keys of the array `preg_replace_callback_array()` takes,
 and the arguments a function or a static method marks with `#[RegexPattern]`
-or `#[Language('RegExp')]`. A pattern held by a constant is left as it is, as
-rewriting the call would inline the constant.
+or `#[Language('RegExp')]`. A pattern held by a private class constant is
+rewritten where it is declared, when each place its class reads it is one of
+those, written `self::NAME`: a private constant is read in its class only, so
+no other reader sees the change. Any other constant is left as it is, as
+rewriting the call would inline the constant and rewriting a public,
+protected or global one would change what code elsewhere reads; so is a
+private one its class also reads another way (`strlen(self::NAME)`,
+`static::NAME`, by its class name, in another constant or an attribute, by
+name through `constant()` or a call whose function is a variable), and every
+private constant of a class that uses a trait, whose methods may read it
+from another file.
 
 `PossessiveRepeatOnceRector` keeps what an older PHP matched where a later one
 reads the same tree otherwise: PCRE2 10.33 and earlier (PHP 7.3, 7.4.0 to

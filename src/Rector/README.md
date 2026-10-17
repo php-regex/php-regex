@@ -273,9 +273,27 @@ function matches(#[RegexPattern] string $pattern, string $subject): bool { /* ..
 matches('/a{,3}/', $subject);   // becomes matches('/a\{,3}/', $subject) for PHP 8.3 and earlier
 ```
 
-Each is a string literal rewritten in place. A pattern held by a constant is
-left as it is: rewriting the call would inline the constant, and rewriting the
-declaration would change every other reader of it.
+Each is a string literal rewritten in place, or the declaration of a private
+class constant its class reads only there, written `self::NAME`:
+
+```php
+final class Version
+{
+    private const PATTERN = '/a{,3}/';   // becomes '/a\{,3}/' for PHP 8.3 and earlier
+
+    public function matches(string $subject): bool
+    {
+        return 1 === preg_match(self::PATTERN, $subject);
+    }
+}
+```
+
+Any other constant is left as it is: rewriting the call would inline the
+constant, and rewriting a public, protected or global constant would change
+what code elsewhere reads. A private constant its class also reads another way
+(a string function, `static::NAME`, its class name, another constant, an
+attribute, `constant()` or a call whose function is a variable) is left too,
+and so is every private constant of a class that uses a trait.
 
 ### `EscapeLiteralBraceRector`
 

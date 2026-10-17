@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Rector\Internal;
 
 use PhpParser\Node\Arg;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Scalar\String_;
@@ -31,8 +32,8 @@ use Rector\Reflection\ReflectionResolver;
  * the keys of the array preg_replace_callback_array() takes, and each
  * argument a function or a static method marks with #[RegexPattern] or
  * PhpStorm's #[Language('RegExp')] receives. A pattern held by a constant
- * is left alone: rewriting the call would inline the constant, and
- * rewriting its declaration would change every other reader of it.
+ * is left alone here: rewriting the call would inline the constant (see
+ * PrivateConstants for the declaration of a private one).
  *
  * @internal
  */
@@ -50,6 +51,28 @@ final class PatternLiterals
      */
     public static function of(CallLike $call, bool $pregCall, bool $callbackArray, ReflectionResolver $reflection): array
     {
+        $literals = [];
+        foreach (self::positions($call, $pregCall, $callbackArray, $reflection) as [$value, $replace]) {
+            if ($value instanceof String_) {
+                $literals[] = [$value, $replace];
+            }
+        }
+
+        return $literals;
+    }
+
+    /**
+     * What the call hands to a regex engine where a pattern goes, whatever
+     * it is written as, each with the way to put a string literal in its
+     * place.
+     *
+     * @param bool $pregCall      whether the call is one of TargetRange::FUNCTIONS
+     * @param bool $callbackArray whether the call is preg_replace_callback_array()
+     *
+     * @return list<array{Expr, \Closure(String_): void}>
+     */
+    public static function positions(CallLike $call, bool $pregCall, bool $callbackArray, ReflectionResolver $reflection): array
+    {
         if ($call->isFirstClassCallable()) {
             return [];
         }
@@ -57,9 +80,8 @@ final class PatternLiterals
         $args = $call->getArgs();
         if ($pregCall) {
             $first = $args[0] ?? null;
-            $literal = null === $first || null !== $first->name ? null : self::literal($first);
 
-            return null === $first || null === $literal ? [] : [[$literal, static function (String_ $pattern) use ($first): void {
+            return null === $first || null !== $first->name || $first->unpack ? [] : [[$first->value, static function (String_ $pattern) use ($first): void {
                 $first->value = $pattern;
             }]];
         }
@@ -73,26 +95,25 @@ final class PatternLiterals
             return [];
         }
 
-        $literals = [];
+        $positions = [];
         foreach (self::markedParameters($callee->getVariants()) as $position => [$name, $variadic]) {
             foreach ($args as $index => $arg) {
                 $receives = null === $arg->name ? ($index === $position || ($variadic && $index > $position)) : $arg->name->toString() === $name;
-                $literal = $receives ? self::literal($arg) : null;
-                if (null !== $literal) {
-                    $literals[] = [$literal, static function (String_ $pattern) use ($arg): void {
+                if ($receives && !$arg->unpack) {
+                    $positions[] = [$arg->value, static function (String_ $pattern) use ($arg): void {
                         $arg->value = $pattern;
                     }];
                 }
             }
         }
 
-        return $literals;
+        return $positions;
     }
 
     /**
-     * The string keys of the array an argument is, written in place.
+     * The keys of the array an argument is, written in place.
      *
-     * @return list<array{String_, \Closure(String_): void}>
+     * @return list<array{Expr, \Closure(String_): void}>
      */
     private static function keys(?Arg $array): array
     {
@@ -100,21 +121,16 @@ final class PatternLiterals
             return [];
         }
 
-        $literals = [];
+        $keys = [];
         foreach ($array->value->items as $item) {
-            if ($item->key instanceof String_) {
-                $literals[] = [$item->key, static function (String_ $pattern) use ($item): void {
+            if (null !== $item->key) {
+                $keys[] = [$item->key, static function (String_ $pattern) use ($item): void {
                     $item->key = $pattern;
                 }];
             }
         }
 
-        return $literals;
-    }
-
-    private static function literal(Arg $arg): ?String_
-    {
-        return $arg->unpack || !$arg->value instanceof String_ ? null : $arg->value;
+        return $keys;
     }
 
     /**

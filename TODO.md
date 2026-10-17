@@ -181,51 +181,8 @@ Left:
 - The pre-release install include renders its own `## Installation`
   heading, which splits an article's closing library section; an inline
   variant for articles would read better.
-
-## Legacy targets (PHP 7.3 to 8.0): what is left
-
-PHP 7.3 is the oldest PHP judged, each PHP with the PCRE2 its x.y.0 bundled
-(8.1 with 10.39); PHP 7.2 and earlier ship PCRE1 and are never judged: a
-`require.php` that also allows 7.3 or later is judged from the lowest such
-PHP, with a note, and a version named below 7.3, or a `composer.json` that
-allows nothing from 7.3 on, is refused. A release
-older than 10.39 is judged with the 10.39 rules but for the changes the
-library knows, each verified on pcre2test 10.32 to 10.40: the alphabetic
-assertion names, script runs and group names past ASCII (10.33), a repeated
-`(*ACCEPT)` and the non-atomic lookarounds (10.34), `(?*` and `(?<*` (10.35),
-an open count past 65535 and `\214748364` read as text (10.37). Left:
-
-- Not modelled, documented: the Unicode tables of each release (`\p{...}`
-  names and membership below 10.39 are a blind spot), and the matching bugs
-  of old releases, such as a `(?(DEFINE)...)` inside a lookbehind before
-  10.35 (pcre2test 10.32 to 10.34 refuse `/(?<=b(?(DEFINE)))c/` and
-  `/(?<=(?(DEFINE)(?<a>x+))b)c/`, accept `/(?<=(?(DEFINE)(?<a>x))b)c/`, and
-  find nothing with `/(?<=b(?(DEFINE)(?<a>x)))c/` in "bc"). `\K` in a
-  lookaround stays a rule of PHP 8.5, never one of a PCRE2 release. The
-  10.34 limit of 65535 capturing groups changes no verdict: 10.32 and 10.33
-  refuse 65,536 groups as a pattern too large, only with another message.
-- The `{1}+` pair, the other direction: `PossessiveRepeatOnceRector` keeps
-  the meaning of PHP 7.3 and 7.4.0-7.4.5 (`(G){1}+` into `(G){1}`) for code
-  leaving them. Code going to them keeps the later meaning with `(?>G)`
-  (pcre2test 10.32 and 10.33 find nothing with `/(?>(a|ab))c/` in "abc", as
-  10.34 and later with `/(a|ab){1}+c/`), but no rule lowers a target: the
-  upgrade set runs from the targeted PHP up. Build it when a mouth for a
-  lowered target exists.
-- The upgrade rules leave a pattern held by a constant (`preg_match(self::P,
-  $s)`) as it is: rewriting the call inlines the constant, and rewriting its
-  declaration changes every other reader. Rewrite the declaration when every
-  reader of the constant in the project is a pattern argument.
 - The article on which PCRE2 ships with which PHP quotes the former `\K`
   hint ("Move the \K out of the lookaround."): refresh its sample output.
-- Refused with a witness, do not build: the octal respell `\214748364` to
-  `\x{8C}748364` (PHP 7.3.33 and 7.4.33 match nothing with the first on
-  "\x8c748364" and match with the second); loose script names respelled
-  canonically (U+30FB is in `\p{katakana}` from 10.40, where it means the
-  script extensions, and not in `\p{Katakana}` on 10.39; U+00B7, once given
-  as the witness, is in neither `\p{latin}` nor `\p{scx:Latin}` on 10.40 to
-  10.44, only on the newer Unicode tables of 10.49); moving any `\K` out of a lookaround
-  (`(?<=\Ka)b` matches "ab" in "ab"); `${n}` respelled `\1` in a
-  double-quoted replacement (`"\1"` is chr(1)).
 
 ## Language server: hardening list from the symfony/language-tools review
 
