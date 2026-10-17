@@ -2390,12 +2390,18 @@ main table::-webkit-scrollbar-thumb {
 }
 
 /* Nested lists (tutorial chapters and reference task groups): a guide line
-   carries the indent. */
+   carries the indent. The list is a sibling of the details, so it is a
+   grid item of the item row and spans both columns; the closed details
+   keeps it out of the page and out of the accessibility tree. */
 .nav-list .nav-list {
   grid-column: 1 / -1;
   margin-left: .75rem;
   padding-left: .75rem;
   border-left: 1px solid var(--line);
+}
+
+.nav-group:not([open]) + .nav-list {
+  display: none;
 }
 
 .nav-list .nav-list a {

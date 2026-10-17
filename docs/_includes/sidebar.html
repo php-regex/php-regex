@@ -19,12 +19,18 @@
           <summary class="nav-group-toggle" aria-label='Toggle {{ item.title }} submenu'>
             <span class="nav-group-marker" aria-hidden="true"></span>
           </summary>
-          <ul class="nav-list">
-            {% for child in item.pages %}
-            <li><a href="{{ child.url }}"{% if page.url == child.url %} aria-current="page"{% endif %}>{{ child.title }}</a></li>
-            {% endfor %}
-          </ul>
         </details>
+        {% comment %}The submenu list is a sibling of the details, never a
+          child of it: the details is a one-column grid item (the toggle
+          slot beside the link), and a list inside it would inherit the
+          toggle's thirty-six pixels — every chapter stacked in a
+          letter-wide column. As a sibling the list is a grid item of its
+          own and spans the whole item; the closed details hides it.{% endcomment %}
+        <ul class="nav-list">
+          {% for child in item.pages %}
+          <li><a href="{{ child.url }}"{% if child.url == page.url %} aria-current="page"{% endif %}>{{ child.title }}</a></li>
+          {% endfor %}
+        </ul>
         {% endif %}
       </li>
       {% endfor %}
