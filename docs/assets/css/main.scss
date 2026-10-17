@@ -72,11 +72,16 @@
 @mixin tokens-light {
   color-scheme: light;
   --paper: #F8F7F2;
+  --panel: #FCFBF7;
   --ink: #182B45;
   --amber: #A84A08;
   --ink-soft: #46586E;
   --line: #64748B;
-  --code-bg: #EFEDE4;
+  /* The quiet half of the line scale: rules that separate peers inside a
+     framed thing (table rows) must not carry the weight of the rules that
+     frame the thing itself. */
+  --line-soft: rgba(100, 116, 139, 0.32);
+  --code-bg: #EBE7DA;
   --code-ink: #22344E;
   --link-line: #AD6430;
   --amber-tint: rgba(168, 74, 8, 0.06);
@@ -90,10 +95,12 @@
 @mixin tokens-dark {
   color-scheme: dark;
   --paper: #0F1B2E;
+  --panel: #16263E;
   --ink: #EDF1F7;
   --amber: #E97625;
   --ink-soft: #A3B0C4;
   --line: #6E82A0;
+  --line-soft: rgba(110, 130, 160, 0.34);
   --code-bg: #0B1524;
   --code-ink: #E4EAF2;
   --link-line: #B8763A;
@@ -151,12 +158,12 @@
   --font-display: 'Inter Display', 'Inter Var', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --fs-h1: clamp(1.75rem, 1.3rem + 2vw, 2.25rem);
+  --fs-h1: clamp(1.875rem, 1.4rem + 2vw, 2.5rem);
   /* An article's headline owns one size above the docs h1: the fluid value
      stays in a custom property, which the Pages Sass engine passes through
      verbatim. */
-  --fs-article: clamp(1.875rem, 1.35rem + 2.3vw, 2.5rem);
-  --fs-article-title: clamp(2.2rem, 1.6rem + 3vw, 3rem);
+  --fs-article: clamp(1.875rem, 1.4rem + 2vw, 2.5rem);
+  --fs-article-title: clamp(2.2rem, 1.7rem + 2.6vw, 2.75rem);
   --fs-article-main-h1: clamp(1.9rem, 1.4rem + 2.6vw, 2.6rem);
   --fs-hero: clamp(2rem, 1.4rem + 3.2vw, 3.4rem);
   --fs-section: clamp(1.5rem, 1.3rem + 1vw, 2rem);
@@ -165,9 +172,11 @@
   --pad-blog: clamp(2rem, 1.5rem + 3vw, 3.5rem);
 
   --header-h: 4rem;
-  /* Page gutter: flush on small screens, aligned to the centered 87.5rem
-     column on wide ones (43.75rem = half the column). */
-  --gutter: max(1rem, calc(50vw - 43.75rem));
+  /* Page gutter: the aligned column is 75rem (1200px), centered — a width
+     the most common laptop viewport can frame with real margins (32px at
+     1440px, growing outward from there); aligned on wide ones to the
+     centered column (37.5rem = half the column). */
+  --gutter: max(2rem, calc(50vw - 37.5rem));
 
   /* The radius scale — the one place a corner is allowed to be round.
      s for chips and inline affordances, m for buttons and panels, l for
@@ -259,6 +268,10 @@ body {
 
 main {
   min-width: 0;
+  /* The prose step of the scale: one size above the chrome (nav, rails,
+     tables) the reading voice carries, so a doc page reads as an article
+     set inside its furniture, not as furniture all the way down. */
+  font-size: 1.0625rem;
 }
 
 main h1,
@@ -273,20 +286,26 @@ main h6 {
   text-wrap: balance;
 }
 
+/* Display weight is 650, not the 800 the variable face offers: at reading
+   distances the extra 150 reads as shouting, and the hierarchy holds by
+   size and space alone. The tracking tightens one notch with it. */
 main h1 {
   font-size: var(--fs-h1);
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  line-height: 1.18;
   margin: 0 0 1em;
 }
 
-/* The paragraph that opens a page is its premise: one step larger than
-   the body it introduces, still full ink. A page that opens on a quote or
-   a list keeps its own opening, so the rule only fires on a paragraph. */
+/* The paragraph that opens a page is its premise: a full lede step larger
+   than the body it introduces, in the soft ink a standfirst carries. A
+   page that opens on a quote or a list keeps its own opening, so the rule
+   only fires on a paragraph. */
 main h1 + p {
-  font-size: 1.075rem;
-  line-height: 1.6;
+  font-size: 1.1875rem;
+  line-height: 1.58;
+  max-width: 62ch;
+  color: var(--ink-soft);
 }
 
 /* A page that goes straight from title to section does not need the
@@ -295,18 +314,32 @@ main h1 + h2 {
   margin-top: 1.5em;
 }
 
+/* A section owns its flight of space and an amber tick — a rule full-width
+   across the measure spoke louder than the heading it served; the tick
+   marks the section without framing it. The utility h2s (the install
+   eyebrow, the blog list titles, the article-footer headers) keep their
+   own quieter register and are excluded here. */
 main h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 2.5em 0 .75em;
-  padding-bottom: .35em;
-  border-bottom: 1px solid var(--line);
+  font-size: 1.5625rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  margin: 3.25rem 0 .875rem;
+}
+
+main h2:not(.blog-section-title):not(.article-more-title):not(.article-featured-title)::before {
+  content: '';
+  display: block;
+  width: 1.375rem;
+  height: 2px;
+  margin-bottom: .55rem;
+  background: var(--amber);
 }
 
 main h3 {
   font-family: var(--font-body);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 600;
+  letter-spacing: -0.008em;
   margin: 2em 0 .6em;
 }
 
@@ -351,9 +384,11 @@ main a {
   color: var(--ink);
   text-decoration: underline;
   text-decoration-color: var(--link-line);
-  text-decoration-thickness: 1px;
+  /* A hairline at .2em whispers; a point and a half at the same offset is
+     the thinnest line that still reads as an affordance in running text. */
+  text-decoration-thickness: 1.5px;
   text-decoration-skip-ink: auto;
-  text-underline-offset: .2em;
+  text-underline-offset: 3px;
 }
 
 main a:hover {
@@ -364,9 +399,9 @@ main blockquote {
   margin: 1.5em 0;
   padding: .5em 1.25em;
   border-left: 3px solid var(--amber);
-  border-radius: var(--radius-m);
-  background: var(--code-bg);
-  /* A callout is content, not a whisper: the amber rule and the cream
+  border-radius: 0 var(--radius-m) var(--radius-m) 0;
+  background: var(--amber-tint);
+  /* A callout is content, not a whisper: the amber rule and the tinted
      panel already mark it as an aside, so the text keeps full ink. */
   color: var(--ink);
 }
@@ -413,12 +448,12 @@ main h4:target {
   background: var(--amber-tint);
 }
 
-/* The heading a fragment lands on answers once it is the target: its rule
-   takes the accent and its anchor glyph shows, so the end of the jump is
-   visible without a flash. The state stays only while the hash points
-   there — a mark, not an animation. */
-main h2:target {
-  border-bottom-color: var(--amber);
+/* The heading a fragment lands on answers once it is the target: the tick
+   above it widens to the accent rule's full register and its anchor glyph
+   shows, so the end of the jump is visible without a flash. The state
+   stays only while the hash points there — a mark, not an animation. */
+main h2:target:not(.blog-section-title):not(.article-more-title):not(.article-featured-title)::before {
+  width: 3.5rem;
 }
 
 main h2:target .anchor,
@@ -499,6 +534,8 @@ main table {
   overflow-x: auto;
   border-collapse: collapse;
   margin: 2em 0;
+  /* A table is data, not prose: it keeps the chrome step of the scale. */
+  font-size: .9375rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -517,24 +554,41 @@ main td {
 
 main th {
   text-align: left;
-  font-weight: 600;
-  /* Horizontal padding is counted once per column, so on a five-column
-     table in the 75ch measure it was a quarter of the table's width. The
-     vertical padding keeps the air; the horizontal one stops spending the
-     measure on the gutters. */
-  padding: .6em .7em;
+  /* Column heads speak the eyebrow language — small, tracked, soft — so
+     the rows, not their labels, carry the reading weight. */
+  font-size: .78rem;
+  font-weight: 650;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: .6em .6em .5em;
   border-top: 1px solid var(--line);
   border-bottom: 2px solid var(--ink);
 }
 
 main td {
-  padding: .6em .7em;
-  border-bottom: 1px solid var(--line);
+  padding: .6em;
+  /* Rows separate on the soft step of the line scale: a full-weight rule
+     under every row framed each one, and a matrix read as many small
+     tables instead of one. */
+  border-bottom: 1px solid var(--line-soft);
   vertical-align: top;
 }
 
+/* The first and last cells sit on the measure's edges, flush with the
+   prose above them. */
+main th:first-child,
+main td:first-child {
+  padding-left: 0;
+}
+
+main th:last-child,
+main td:last-child {
+  padding-right: 0;
+}
+
 main tbody tr:hover {
-  background: var(--code-bg);
+  background: var(--amber-tint);
 }
 
 /* Cookbook quick reference: a three-column table puts the longest regex and
@@ -580,7 +634,7 @@ main tbody tr:hover {
 .recipe-verdict {
   color: var(--amber);
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .78rem;
   line-height: 1.35;
   letter-spacing: .03em;
   text-transform: uppercase;
@@ -685,7 +739,9 @@ main pre,
   padding: 1.1rem 1.25rem;
   overflow-x: auto;
   font-family: var(--font-mono);
-  font-size: .95rem;
+  /* Code keeps its own step of the scale — a size below prose, a line and
+     a half of air: the panel reads as output beside the reading voice. */
+  font-size: .875rem;
   line-height: 1.7;
   color: var(--code-ink);
 }
@@ -1166,17 +1222,21 @@ main table::-webkit-scrollbar-thumb {
   border: 1px solid var(--amber);
   border-radius: var(--radius-pill);
   color: var(--amber);
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   line-height: 1.5;
   letter-spacing: .02em;
   white-space: nowrap;
 }
 
+/* The nav centers between the brand and the action cluster: auto margins
+   on both sides soak the free space equally, which puts the links on the
+   page's axis (the clusters differ by a few pixels, less than the eye
+   carries) instead of packed against the search button. */
 .site-header nav {
   display: flex;
   align-items: center;
-  margin-inline-start: auto;
+  margin-inline: auto;
 }
 
 .site-header nav a {
@@ -1186,8 +1246,9 @@ main table::-webkit-scrollbar-thumb {
   padding-inline: .75rem;
   color: var(--ink-soft);
   text-decoration: none;
-  /* A rule that is always there, so hovering costs no reflow. */
-  border-bottom: 1px solid transparent;
+  /* A rule that is always there, so hovering costs no reflow. Two pixels:
+     at one, the current page's mark read as a rendering seam. */
+  border-bottom: 2px solid transparent;
 }
 
 .site-header nav a:hover,
@@ -1255,7 +1316,7 @@ main table::-webkit-scrollbar-thumb {
 .search-toggle kbd,
 .search-dialog kbd {
   font-family: var(--font-mono);
-  font-size: .72rem;
+  font-size: .78rem;
   padding: .15em .4em;
   border: 1px solid var(--line);
   border-radius: var(--radius-s);
@@ -1410,12 +1471,14 @@ main table::-webkit-scrollbar-thumb {
   gap: 2rem;
 }
 
-/* Documentation column: generous but bounded line length. The container
-   query context lets components adapt to their own width rather than the
-   viewport, so a component behaves the same in a narrow column as in a
-   wide one. */
+/* Documentation column: generous but bounded line length. 66ch of Inter
+   is about 66 average characters — the editorial measure — where the old
+   75ch counted the figure's zero, a full em wider than the letters, and
+   quietly delivered ninety characters a line. The container query context
+   lets components adapt to their own width rather than the viewport, so a
+   component behaves the same in a narrow column as in a wide one. */
 .page-main > main {
-  max-width: 75ch;
+  max-width: 66ch;
   container-type: inline-size;
 }
 
@@ -1461,13 +1524,18 @@ main table::-webkit-scrollbar-thumb {
  * piece leads with. The index date is the same register on the blog index.
    -------------------------------------------------------------------------- */
 
+/* A dateline is metadata the reader weighs at a glance: the tracked-
+   capitals register, one step quieter than the headline it sits under. */
 .article-byline {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: .35rem .5rem;
   margin: 0 0 .75rem;
-  font-size: .88rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--ink-soft);
 }
 
@@ -1514,7 +1582,7 @@ main table::-webkit-scrollbar-thumb {
   border-radius: var(--radius-pill);
   background: var(--amber-tint);
   color: var(--amber);
-  font-size: .72rem;
+  font-size: .78rem;
   line-height: 1.4;
   vertical-align: .12rem;
   white-space: nowrap;
@@ -1607,7 +1675,10 @@ main table::-webkit-scrollbar-thumb {
      tags beside the date. */
   flex-wrap: wrap;
   flex-shrink: 0;
-  font-size: .88rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1649,27 +1720,32 @@ main table::-webkit-scrollbar-thumb {
 .blog-title {
   margin: 0 0 1rem;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 650;
   font-size: var(--fs-section);
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
   text-wrap: balance;
 }
 
 .blog-lead {
   max-width: 70ch;
   margin: 0 0 1.25rem;
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1.1875rem;
+  line-height: 1.58;
   color: var(--ink-soft);
 }
 
+/* The hero's meta row speaks the same tracked-capitals register as every
+   dateline on the site. */
 .blog-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: .5rem;
-  font-size: .88rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--ink-soft);
 }
 
@@ -1700,12 +1776,22 @@ main table::-webkit-scrollbar-thumb {
 
 /* ---- Featured article ---------------------------------------------------- */
 
+/* The featured article is a card, not a callout: a panel one step off the
+   paper — not the amber wash, which the site reserves for "you are here" —
+   and it answers a hover the way every card does, with a rule and one
+   step of elevation. */
 .article-featured {
   margin: 0 0 3rem;
   padding: 2rem 1.5rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-l);
-  background: var(--amber-tint);
+  background: var(--panel);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.article-featured:hover {
+  border-color: var(--ink);
+  box-shadow: var(--shadow-1);
 }
 
 .article-featured-kicker {
@@ -1720,10 +1806,10 @@ main table::-webkit-scrollbar-thumb {
 .article-featured-title {
   margin: 0 0 .75rem;
   font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.5rem;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  font-weight: 650;
+  font-size: 2rem;
+  line-height: 1.18;
+  letter-spacing: -0.018em;
 }
 
 .article-featured-title a {
@@ -1751,7 +1837,10 @@ main table::-webkit-scrollbar-thumb {
   align-items: baseline;
   gap: .35rem .5rem;
   margin: 0 0 1.25rem;
-  font-size: .85rem;
+  font-size: .78rem;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
@@ -1916,14 +2005,15 @@ main table::-webkit-scrollbar-thumb {
 .article-title {
   margin: 0 0 1rem;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 650;
   font-size: var(--fs-article-title);
-  line-height: 1.05;
-  letter-spacing: -0.025em;
+  line-height: 1.08;
+  letter-spacing: -0.022em;
   text-wrap: balance;
   color: var(--ink);
-  padding-bottom: .75rem;
-  border-bottom: 1px solid var(--line);
+  /* No rule under a headline: the dateline below it already separates it
+     from the body, and a full-width line under display type re-frames the
+     opening as a section. */
 }
 
 .article-main > h1 {
@@ -1950,7 +2040,7 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .article-glance-label {
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -1971,7 +2061,7 @@ main table::-webkit-scrollbar-thumb {
   border-radius: var(--radius-pill);
   background: var(--paper);
   color: var(--ink-soft);
-  font-size: .72rem;
+  font-size: .78rem;
   line-height: 1.4;
   white-space: nowrap;
 }
@@ -2050,7 +2140,9 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .article-more-meta {
-  font-size: .82rem;
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -2153,7 +2245,7 @@ main table::-webkit-scrollbar-thumb {
   }
 
   .page-shell {
-    grid-template-columns: 17rem minmax(0, 1fr);
+    grid-template-columns: 15rem minmax(0, 1fr);
     column-gap: 3rem;
   }
 }
@@ -2170,7 +2262,7 @@ main table::-webkit-scrollbar-thumb {
   gap: .5rem;
   margin: 0 0 .5rem;
   padding-inline: .75rem;
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2195,24 +2287,27 @@ main table::-webkit-scrollbar-thumb {
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding: .25rem .75rem;
-  border-left: 3px solid transparent;
+  padding: .2rem .75rem;
+  border-left: 2px solid transparent;
   border-radius: 0 var(--radius-s) var(--radius-s) 0;
   color: var(--ink-soft);
-  font-size: .95rem;
+  /* The rail's step of the scale: a size below the prose, so the page the
+     reader is on outranks the pages they could go to. */
+  font-size: .875rem;
   text-decoration: none;
 }
 
 .nav-list a:hover {
   color: var(--ink);
-  background: var(--code-bg);
 }
 
+/* The current page carries the accent wash and the amber rule: the one
+   panel the site reserves for "you are here". */
 .nav-list a[aria-current='page'] {
   color: var(--ink);
   font-weight: 600;
   border-left-color: var(--amber);
-  background: var(--code-bg);
+  background: var(--amber-tint);
 }
 
 /* An item with children keeps its primary destination as the left link and
@@ -2277,7 +2372,7 @@ main table::-webkit-scrollbar-thumb {
 
 .nav-list .nav-list a {
   min-height: 44px;
-  font-size: .9rem;
+  font-size: .8125rem;
 }
 
 /* ---- Breadcrumb & pager (generated from the sidebar order) ---- */
@@ -2395,7 +2490,7 @@ main table::-webkit-scrollbar-thumb {
   @include rail-height;
   overflow-y: auto;
   overscroll-behavior: contain;
-  font-size: .9rem;
+  font-size: .8125rem;
 }
 
 /* The rail earns a title: a bare list next to the page reads as a second
@@ -2406,7 +2501,7 @@ main table::-webkit-scrollbar-thumb {
   margin: 0 0 .35rem;
   padding: 0 .5rem .6rem .75rem;
   border-bottom: 1px solid var(--line);
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2458,22 +2553,154 @@ main table::-webkit-scrollbar-thumb {
   }
 }
 
+/* ---- Task cards ------------------------------------------------------------
+ * The documentation's front door. A reader arriving here is choosing what
+ * to do next, so the four ways in are cards — title, one sentence, the
+ * amber link — and everything else stays in the map below. A card is the
+ * landing .component card at the docs' own scale: the same frame, the
+ * same hover answer, one step tighter.
+   -------------------------------------------------------------------------- */
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  gap: 1.25rem;
+  margin: 2rem 0 2.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.task-card {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-l);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+.task-card:hover {
+  border-color: var(--amber);
+  background: var(--amber-tint);
+  box-shadow: var(--shadow-1);
+}
+
+.task-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.15rem;
+  line-height: 1.25;
+}
+
+.task-card p {
+  margin: 0;
+  flex-grow: 1;
+  color: var(--ink-soft);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+.task-card span {
+  margin-top: .25rem;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+/* ---- Guide grids -----------------------------------------------------------
+ * The guides index lists seven integrations, each a heading and one
+ * sentence: a single column of those is a page of air. From 1100px the
+ * entries pair up — the descriptions are short enough that the second
+ * column costs nothing in scanning, and the groups stay visually whole.
+   -------------------------------------------------------------------------- */
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem 3rem;
+}
+
+@media (min-width: 1100px) {
+  .guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.guide-entry {
+  min-width: 0;
+}
+
+.guide-entry h3 {
+  margin: 0 0 .4rem;
+}
+
+.guide-entry p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
 /* ==========================================================================
    Footer
    ========================================================================== */
 
+/* The footer is a way out, not a second sitemap: the brand block (mark,
+   one sentence, the install command) and three groups carry every
+   destination the old five-group grid held, at half the height — the
+   baseline row closes it with the license facts. */
 .site-footer {
   border-top: 1px solid var(--line);
-  padding-block: 2.5rem 3rem;
+  padding-block: 2.5rem 1.75rem;
   padding-inline: var(--gutter);
+}
+
+.footer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: 2rem;
+}
+
+.footer-brand {
+  min-width: 0;
+}
+
+.footer-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.footer-wordmark .mark {
+  width: 24px;
+  height: 24px;
+}
+
+.footer-wordmark:hover .mark {
+  color: var(--amber);
+}
+
+.footer-blurb {
+  margin: .6rem 0 1rem;
+  max-width: 26ch;
+  font-size: .92rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 
 .footer-group {
   /* A grid item's automatic minimum is its longest unbreakable run, so a
-     column holding the composer command could outgrow the 13rem track it
+     column holding the composer command could outgrow the 11rem track it
      was given. The wrap rule on the code below already breaks the command
      itself; this stops the column from being asked to hold more than its
      share while it does. */
@@ -2485,7 +2712,7 @@ main table::-webkit-scrollbar-thumb {
   align-items: center;
   gap: .5rem;
   margin: 0 0 .75rem;
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2509,7 +2736,8 @@ main table::-webkit-scrollbar-thumb {
 
 .footer-list a {
   display: inline-block;
-  padding-block: .3rem;
+  padding-block: .25rem;
+  font-size: .92rem;
   color: var(--ink-soft);
   text-decoration: none;
 }
@@ -2521,13 +2749,48 @@ main table::-webkit-scrollbar-thumb {
 .footer-install code {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: .9rem;
+  font-size: .85rem;
   background: var(--code-bg);
   color: var(--code-ink);
   border: 1px solid var(--line);
   border-radius: var(--radius-s);
   padding: .6rem .8rem;
   overflow-wrap: anywhere;
+}
+
+.footer-install a {
+  text-decoration: none;
+}
+
+/* The closing line: the license facts, centered on the column, separated
+   by middots the datelines already use. */
+.footer-baseline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .35rem .6rem;
+  margin-top: 2.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-soft);
+  font-size: .78rem;
+  letter-spacing: .04em;
+  color: var(--ink-soft);
+}
+
+.footer-baseline a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.footer-baseline a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-baseline-sep {
+  color: var(--line);
+  user-select: none;
 }
 
 /* ==========================================================================
@@ -2697,7 +2960,7 @@ main table::-webkit-scrollbar-thumb {
 .search-panel-title {
   margin: 0;
   padding: .6rem 1rem .4rem;
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -2884,10 +3147,10 @@ main > section:not([class]) p > a.button:focus-visible {
 .hero-claim {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 800;
+  font-weight: 650;
   font-size: var(--fs-hero);
   line-height: 1.08;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.022em;
   text-wrap: balance;
 }
 
@@ -2935,7 +3198,7 @@ main > section:not([class]) p > a.button:focus-visible {
 .install {
   position: relative;
   font-family: var(--font-mono);
-  font-size: .95rem;
+  font-size: .875rem;
   background: var(--code-bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-m);
@@ -2986,7 +3249,7 @@ main > section:not([class]) p > a.button:focus-visible {
   padding: 0;
   border-bottom: 0;
   font-family: var(--font-body);
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -3026,10 +3289,10 @@ main > section:not([class]) p > a.button:focus-visible {
 .fact strong {
   display: block;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 650;
   font-size: 1.4rem;
   line-height: 1.2;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
@@ -3047,9 +3310,9 @@ main > section:not([class]) p > a.button:focus-visible {
 .section-title {
   margin: 0 0 1.25rem;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 650;
   font-size: var(--fs-section);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
   line-height: 1.2;
   text-wrap: balance;
 }
@@ -3087,7 +3350,7 @@ main > section:not([class]) > p:not(:has(a.button)) {
   padding-bottom: .6rem;
   border-bottom: 1px solid var(--line);
   font-family: var(--font-body);
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;

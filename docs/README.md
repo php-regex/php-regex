@@ -18,17 +18,41 @@ PHPRegex parses a PCRE pattern into an AST and gives structured answers about va
 
 ## Choose your path
 
-| Goal | Start here |
-|------|------------|
-| Install and run one analysis | [Quick Start](/quick-start/) |
-| Choose between the monorepo and focused packages | [Choose a package](/packages/) |
-| Learn regular expressions from zero | [Tutorial](/tutorial/) |
-| Lint a PHP codebase | [CLI guide](/guides/cli/) |
-| Put findings in PHPStan, Psalm, Rector, Laravel, Symfony, or an editor | [Guides](/guides/) |
-| Call the library from PHP | [API reference](/reference/api/) |
-| Understand a specific warning | [Lint rules](/reference/rules/) |
-| Check what is proved or heuristic | [Correctness contracts](/reference/correctness-contracts/) |
-| Extend or embed the engine | [Architecture](/architecture/) |
+<div class="task-grid">
+
+<a class="task-card" href="/quick-start/">
+  <h3>Install and run</h3>
+  <p>One package, five minutes to a first verdict on a pattern of your own.</p>
+  <span>Quick start</span>
+</a>
+
+<a class="task-card" href="/tutorial/">
+  <h3>Learn the toolchain</h3>
+  <p>Regular expressions from zero, then the AST, visitors, and proofs on top.</p>
+  <span>Tutorial</span>
+</a>
+
+<a class="task-card" href="/guides/">
+  <h3>Put it in your stack</h3>
+  <p>Findings where you already work: PHPStan, Rector, Laravel, Symfony, your editor.</p>
+  <span>Guides</span>
+</a>
+
+<a class="task-card" href="/reference/rules/">
+  <h3>Understand a warning</h3>
+  <p>Every diagnostic, what it means, and what stands behind it.</p>
+  <span>Lint rules</span>
+</a>
+
+</div>
+
+Deeper in, the same paths continue:
+
+- [Choose a package](/packages/) — the monorepo or the focused packages, per integration.
+- [Call the library from PHP](/reference/api/) — the API reference.
+- [Check what is proved or heuristic](/reference/correctness-contracts/) — the correctness contracts.
+- [Extend or embed the engine](/architecture/) — architecture and internals.
+- [Lint a codebase from the terminal](/guides/cli/) — the CLI guide.
 
 ## Read findings correctly
 

@@ -9,37 +9,77 @@ PHPRegex reports where you already work. Pick one surface below; each guide inst
 
 ## Static analysis
 
+<div class="guide-grid" markdown="1">
+
+<div class="guide-entry" markdown="1">
+
 ### [PHPStan](phpstan.md)
 
 Reports regex patterns your target PHP refuses and, on demand, lint, ReDoS, and optimization findings during static analysis.
+
+</div>
+
+<div class="guide-entry" markdown="1">
 
 ### [Psalm](psalm.md)
 
 Types `$matches` from the pattern and reports invalid patterns for the PHP version your project targets.
 
+</div>
+
+<div class="guide-entry" markdown="1">
+
 ### [Rector](rector.md)
 
 Rewrites a `preg_*` call into a cheaper string function only when the automata prove the two behave alike.
 
+</div>
+
+</div>
+
 ## Applications
+
+<div class="guide-grid" markdown="1">
+
+<div class="guide-entry" markdown="1">
 
 ### [Laravel](laravel.md)
 
 Adds the `Regex` service and facade plus Artisan commands for linting, routes, explanations, comparisons, and transpilation.
 
+</div>
+
+<div class="guide-entry" markdown="1">
+
 ### [Symfony](symfony.md)
 
 Adds the bundle, `php_regex.regex` service, and console commands for linting, routes, security analysis, comparisons, and transpilation.
 
+</div>
+
+</div>
+
 ## Editors and terminal
+
+<div class="guide-grid" markdown="1">
+
+<div class="guide-entry" markdown="1">
 
 ### [Language server](lsp.md)
 
 Diagnostics, hover explanations, completion, and quick fixes for PHP files in any editor that speaks the Language Server Protocol.
 
+</div>
+
+<div class="guide-entry" markdown="1">
+
 ### [CLI](cli.md)
 
 One binary for parsing, validation, explanations, diagrams, linting, ReDoS analysis, pattern comparison, and transpilation.
+
+</div>
+
+</div>
 
 ## Deep dives
 

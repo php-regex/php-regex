@@ -1,52 +1,64 @@
 <footer class="site-footer">
-  <div class="footer-group">
-    <h2 class="footer-title">Docs</h2>
-    <ul class="footer-list">
-      <li><a href="/docs/">Documentation</a></li>
-      <li><a href="/quick-start/">Quick Start</a></li>
-      <li><a href="/cookbook/">Cookbook</a></li>
-      <li><a href="/reference/diagnostics/">Diagnostics</a></li>
-      <li><a href="/guides/redos/">ReDoS guide</a></li>
-      <li><a href="/troubleshooting/">Troubleshooting</a></li>
-    </ul>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a class="footer-wordmark" href="/" aria-label="PHPRegex home">
+        <svg class="mark" viewBox="-168 -120 336 240" aria-hidden="true" focusable="false">
+          <g fill="none" stroke="currentColor" stroke-width="27" stroke-linecap="round">
+            <path d="M-112-120H-168V120H-112"/>
+            <path d="M112-120H168V120H112"/>
+          </g>
+          <g transform="translate(0 14)">
+            <path d="M0-78L-64 58M0-78L64 58" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round"/>
+            <circle class="mark-node" cx="0" cy="-78" r="38"/>
+            <circle class="mark-node" cx="-64" cy="58" r="30"/>
+            <circle class="mark-node" cx="64" cy="58" r="30"/>
+          </g>
+        </svg>
+        PHPRegex
+      </a>
+      <p class="footer-blurb">A PCRE parser you can reason about — AST, visitors, proofs.</p>
+      <p class="footer-install"><a href="/packages/"><code>composer require php-regex/regex-parser</code></a></p>
+    </div>
+    <div class="footer-group">
+      <h2 class="footer-title">Learn</h2>
+      <ul class="footer-list">
+        <li><a href="/docs/">Documentation</a></li>
+        <li><a href="/quick-start/">Quick Start</a></li>
+        <li><a href="/tutorial/">Tutorial</a></li>
+        <li><a href="/cookbook/">Cookbook</a></li>
+        <li><a href="/guides/redos/">ReDoS guide</a></li>
+        <li><a href="/reference/diagnostics/">Diagnostics</a></li>
+        <li><a href="/troubleshooting/">Troubleshooting</a></li>
+      </ul>
+    </div>
+    <div class="footer-group">
+      <h2 class="footer-title">Integrate</h2>
+      <ul class="footer-list">
+        <li><a href="/guides/cli/">CLI</a></li>
+        <li><a href="/guides/phpstan/">PHPStan</a></li>
+        <li><a href="/guides/psalm/">Psalm</a></li>
+        <li><a href="/guides/rector/">Rector</a></li>
+        <li><a href="/guides/laravel/">Laravel</a></li>
+        <li><a href="/guides/symfony/">Symfony</a></li>
+        <li><a href="/guides/lsp/">Language server</a></li>
+      </ul>
+    </div>
+    <div class="footer-group">
+      <h2 class="footer-title">Project</h2>
+      <ul class="footer-list">
+        <li><a href="https://github.com/php-regex/php-regex">GitHub</a></li>
+        <li><a href="https://github.com/php-regex/php-regex/issues">Issues</a></li>
+        <li><a href="https://packagist.org/packages/php-regex/php-regex">Packagist</a></li>
+        <li><a href="/blog/">Articles</a></li>
+        <li><a href="/feed/articles.xml">RSS feed</a></li>
+      </ul>
+    </div>
   </div>
-  <div class="footer-group">
-    <h2 class="footer-title">Integrations</h2>
-    <ul class="footer-list">
-      <li><a href="/guides/phpstan/">PHPStan</a></li>
-      <li><a href="/guides/psalm/">Psalm</a></li>
-      <li><a href="/guides/rector/">Rector</a></li>
-      <li><a href="/guides/laravel/">Laravel</a></li>
-      <li><a href="/guides/symfony/">Symfony</a></li>
-      <li><a href="/guides/lsp/">LSP</a></li>
-      <li><a href="/guides/cli/">CLI</a></li>
-    </ul>
-  </div>
-  <div class="footer-group">
-    <h2 class="footer-title">Tutorial</h2>
-    <ul class="footer-list">
-      <li><a href="/tutorial/">Regex 101 tutorial</a></li>
-    </ul>
-  </div>
-  <div class="footer-group">
-    <h2 class="footer-title">Articles</h2>
-    <ul class="footer-list">
-      <li><a href="/blog/">All articles</a></li>
-      <li><a href="/feed/articles.xml">RSS feed</a></li>
-    </ul>
-  </div>
-  <div class="footer-group">
-    <h2 class="footer-title">Project</h2>
-    <ul class="footer-list">
-      <li><a href="https://github.com/php-regex/php-regex">GitHub</a></li>
-      <li><a href="https://github.com/php-regex/php-regex/issues">Issues</a></li>
-      <li><a href="https://packagist.org/packages/php-regex/php-regex">Packagist</a></li>
-      <li><a href="https://github.com/php-regex/php-regex/blob/2.x/LICENSE">MIT license</a></li>
-      <li><a href="/llms.txt">llms.txt</a></li>
-    </ul>
-  </div>
-  <div class="footer-group">
-    <h2 class="footer-title">Install</h2>
-    <p class="footer-install"><a href="/packages/"><code>Install the PHPRegex package you need</code></a></p>
+  <div class="footer-baseline">
+    <span>MIT license</span>
+    <span class="footer-baseline-sep" aria-hidden="true">·</span>
+    <a href="/llms.txt">llms.txt</a>
+    <span class="footer-baseline-sep" aria-hidden="true">·</span>
+    <span>php-regex.com</span>
   </div>
 </footer>
