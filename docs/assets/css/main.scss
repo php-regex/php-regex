@@ -389,9 +389,10 @@ main hr {
 /* Per-heading anchor links (added to h2/h3 by the page script): quiet
    until the heading is hovered or the link itself is focused. */
 main .anchor {
-  margin-inline-start: .4em;
+  margin-inline-start: .2em;
+  padding: .15em .3em;
   font-family: var(--font-mono);
-  font-size: .8em;
+  font-size: .85em;
   font-weight: 400;
   color: var(--ink-soft);
   text-decoration: none;
@@ -1601,6 +1602,10 @@ main table::-webkit-scrollbar-thumb {
   display: inline-flex;
   align-items: baseline;
   gap: .35rem;
+  /* Each token (date, reading time, the tag group) stays on one line of
+     its own — the row itself wraps when a phone has no room for the
+     tags beside the date. */
+  flex-wrap: wrap;
   flex-shrink: 0;
   font-size: .88rem;
   color: var(--ink-soft);
@@ -1909,7 +1914,7 @@ main table::-webkit-scrollbar-thumb {
 }
 
 .article-title {
-  margin: 0 0 .75rem;
+  margin: 0 0 1rem;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: var(--fs-article-title);
@@ -1919,7 +1924,6 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink);
   padding-bottom: .75rem;
   border-bottom: 1px solid var(--line);
-  margin-bottom: 1rem;
 }
 
 .article-main > h1 {
