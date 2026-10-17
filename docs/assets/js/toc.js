@@ -228,64 +228,6 @@
   }
 })();
 
-// Mobile nav dropdown: the hamburger toggles the main navigation on narrow
-// screens. The menu closes on link click, Escape, or when the viewport grows
-// past the desktop breakpoint.
-
-(function () {
-  var navToggle = document.getElementById('nav-toggle');
-  var nav = document.getElementById('main-nav');
-  if (!navToggle || !nav) {
-    return;
-  }
-
-  var desktop = window.matchMedia ? window.matchMedia('(min-width: 640px)') : null;
-
-  function closeNav() {
-    nav.classList.remove('open');
-    navToggle.setAttribute('aria-expanded', 'false');
-  }
-
-  function openNav() {
-    nav.classList.add('open');
-    navToggle.setAttribute('aria-expanded', 'true');
-  }
-
-  navToggle.addEventListener('click', function () {
-    if (nav.classList.contains('open')) {
-      closeNav();
-    } else {
-      openNav();
-    }
-  });
-
-  nav.addEventListener('click', function (event) {
-    if (event.target.tagName === 'A') {
-      closeNav();
-    }
-  });
-
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && nav.classList.contains('open')) {
-      closeNav();
-      navToggle.focus();
-    }
-  });
-
-  if (desktop) {
-    var onBreakpoint = function (event) {
-      if (event.matches) {
-        closeNav();
-      }
-    };
-    if (typeof desktop.addEventListener === 'function') {
-      desktop.addEventListener('change', onBreakpoint);
-    } else if (typeof desktop.addListener === 'function') {
-      desktop.addListener(onBreakpoint);
-    }
-  }
-})();
-
 (function () {
   var nav = document.getElementById('toc-nav');
   var main = document.getElementById('main');

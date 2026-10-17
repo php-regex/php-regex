@@ -15,34 +15,25 @@
     <span class="brand-name">PHPRegex</span>
     <span class="version-tag">{{ site.data.product.version_label }}</span>
   </a>
-  <button type="button" class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Main menu">
-    <svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg>
-  </button>
-  <nav aria-label="Main" id="main-nav">
-    {%- comment -%}
-      Three destinations, three intents - consult, learn, read - each a
-      word a visitor holds a meaning for. The header once listed Docs,
-      Guides and Tutorial side by side: three near-synonyms speaking the
-      site's org chart, not the reader's intent. The guides live inside
-      the docs now - the Docs front door routes to them by task, the
-      sidebar carries them as its Integrations section - and the blog
-      takes the name its own page and the footer already use: Articles.
-      The area marked current is where the reader already is; every
-      documentation page that is neither the tutorial track nor the
-      articles belongs to the docs area.
-    {%- endcomment -%}
-    {%- assign here = 'docs' -%}
-    {%- if page.url contains '/tutorial/' %}{% assign here = 'learn' %}{% endif -%}
-    {%- if page.url contains '/blog/' %}{% assign here = 'articles' %}{% endif -%}
-    {%- if page.layout == 'landing' or page.layout == 'error' %}{% assign here = '' %}{% endif -%}
-    <a href="/docs/"{% if here == 'docs' %} aria-current="page"{% endif %}>Docs</a>
-    <a href="/tutorial/"{% if here == 'learn' %} aria-current="page"{% endif %}>Learn</a>
-    <a href="/blog/"{% if here == 'articles' %} aria-current="page"{% endif %}>Articles</a>
-    <a href="https://github.com/php-regex/php-regex">GitHub</a>
-  </nav>
-  <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
-  <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false"></button>
-  {% unless page.layout == 'landing' or page.layout == 'error' %}
-  <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-expanded="false" aria-controls="site-sidebar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg><span class="sidebar-label">Menu</span></button>
-  {% endunless %}
+  {%- comment -%}
+    The header carries no menu: the sidebar already holds the whole
+    documentation map, on every page, on the desktop rail and the mobile
+    drawer alike - a second list here answered nothing the first one had
+    not. What remains is what the sidebar cannot do: search, the theme,
+    the way to the repository, and the drawer's handle below 1024px.
+    The repository is the octocat mark alone, one icon with its label,
+    where a word would compete with the wordmark for the same eye.
+  {%- endcomment -%}
+  <div class="header-actions">
+    <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false"></button>
+    <a class="icon-btn github-link" href="https://github.com/php-regex/php-regex" aria-label="GitHub repository">
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+      </svg>
+    </a>
+    {% unless page.layout == 'landing' or page.layout == 'error' %}
+    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-expanded="false" aria-controls="site-sidebar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 4.5h12M2 8h12M2 11.5h12"/></svg><span class="sidebar-label">Menu</span></button>
+    {% endunless %}
+  </div>
 </header>

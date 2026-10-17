@@ -1251,41 +1251,6 @@ main table::-webkit-scrollbar-thumb {
   white-space: nowrap;
 }
 
-/* The nav centers between the brand and the action cluster: auto margins
-   on both sides soak the free space equally, which puts the links on the
-   page's axis (the clusters differ by a few pixels, less than the eye
-   carries) instead of packed against the search button. */
-.site-header nav {
-  display: flex;
-  align-items: center;
-  margin-inline: auto;
-}
-
-.site-header nav a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding-inline: .75rem;
-  color: var(--ink-soft);
-  text-decoration: none;
-  /* A rule that is always there, so hovering costs no reflow. Two pixels:
-     at one, the current page's mark read as a rendering seam. */
-  border-bottom: 2px solid transparent;
-}
-
-.site-header nav a:hover,
-.site-header nav a:focus-visible {
-  color: var(--ink);
-  border-bottom-color: var(--amber);
-}
-
-/* The destination the reader is already in keeps the hover rule, so the
-   nav reads as navigation rather than as a menu of choices. */
-.site-header nav a[aria-current='page'] {
-  color: var(--ink);
-  border-bottom-color: var(--amber);
-}
-
 .site-header button {
   display: inline-flex;
   align-items: center;
@@ -1306,8 +1271,23 @@ main table::-webkit-scrollbar-thumb {
   border-color: var(--ink);
 }
 
-.site-header button + button {
+.site-header button + button,
+.header-actions > * + * {
   margin-inline-start: .5rem;
+}
+
+/* The header's actions cluster to the right: search, theme, repository,
+   and below 1024px the drawer's handle. */
+.header-actions {
+  display: flex;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+.github-link svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 
 .theme-toggle {
@@ -1346,77 +1326,18 @@ main table::-webkit-scrollbar-thumb {
   color: var(--ink-soft);
 }
 
-/* ---- Header on narrow screens ----
- * The nav steps aside below 640px into a dropdown toggled by the hamburger
- * button. The drawer carries the documentation map; this menu carries the
- * section links (Docs, Guides, Tutorial, Blog, GitHub) so a mobile reader
- * can still move between the site's top-level areas. With the nav gone
- * there is room for the search toggle's word; the button keeps its own
- * aria-label either way, so nothing is lost. */
-/* The base button rule (.site-header button, 0-1-1) outguns a bare class
-   selector (0-1-0), so both hides below carry the .site-header prefix —
-   without it the toggle rendered at every width and the header overflowed
-   on tablets. */
-.site-header .nav-toggle {
-  display: none;
-}
+/* ---- Header on narrow screens ---- */
 
 @media (max-width: 639px) {
-  /* A phone header carries four controls beside the wordmark; the row
-     tightens to .65rem and the icon buttons drop to .7rem of side padding
-     so everything fits inside 375px with room to spare. */
+  /* A phone header carries its controls beside the wordmark; the row
+     tightens to .65rem and the icon buttons drop to .7rem of side
+     padding so everything fits inside 375px with room to spare. */
   .site-header {
     gap: .65rem;
   }
 
   .site-header button {
     padding-inline: .7rem;
-  }
-
-  .site-header .nav-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--ink);
-    cursor: pointer;
-  }
-
-  .nav-toggle:hover,
-  .nav-toggle:focus-visible {
-    border-color: var(--amber);
-    color: var(--amber);
-  }
-
-  .site-header nav {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--paper);
-    flex-direction: column;
-    align-items: stretch;
-    padding: .5rem 0;
-    border-bottom: 3px solid var(--amber);
-  }
-
-  .site-header nav.open {
-    display: flex;
-  }
-
-  .site-header nav a {
-    padding: .85rem 1.5rem;
-    border-bottom: 0;
-    font-size: 1rem;
-  }
-
-  .site-header nav a[aria-current='page'] {
-    background: var(--amber-tint);
   }
 
   .brand .version-tag {
@@ -1429,23 +1350,6 @@ main table::-webkit-scrollbar-thumb {
   }
 }
 
-/* Between 640 and 900px the nav is back beside the wordmark, and a
-   wordmark, four nav links, a labelled search, the theme toggle and the
-   menu toggle need about 750px. The GitHub link goes - the docs areas
-   stay, because the footer keeps the GitHub destination one click away.
-   The version pill goes with it: it is brand chrome, and the header of a
-   768px tablet has no room left for it. Below 640px the nav is a dropdown
-   again, where space is vertical and free - the GitHub link returns with
-   it, so a phone reader reaches the code without scrolling to a footer. */
-@media (max-width: 899px) {
-  .search-toggle kbd {
-    display: none;
-  }
-
-  .brand .version-tag {
-    display: none;
-  }
-}
 
 @media (min-width: 640px) and (max-width: 899px) {
   .site-header nav a[href^='https://'] {
