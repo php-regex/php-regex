@@ -16,7 +16,8 @@ namespace PHPRegex\Linter\Source;
 use PHPRegex\Linter\PatternExtractor;
 
 /**
- * Extracts regex patterns from PHP source files.
+ * Extracts regex patterns from PHP source files, and hands the lint the
+ * inline markers of each file read (PatternOccurrence::scanned()).
  *
  * @internal
  */
@@ -36,7 +37,7 @@ final class PhpFilePatternSource implements PatternSourceInterface
 
     public function extract(PatternSourceContext $context): array
     {
-        return $this->extractor->extract(
+        return $this->extractor->scan(
             $context->paths,
             $context->excludePaths,
             $context->progress,

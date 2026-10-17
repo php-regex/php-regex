@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
@@ -39,7 +40,14 @@ use PHPRegex\Redos\RedosSeverity;
  */
 final class LintService
 {
+    /**
+     * An inline marker, or an identifier it names, that silences nothing.
+     */
+    public const ISSUE_ID_UNMATCHED_IGNORE = 'regex.ignore.unmatched';
+
     private const ISSUE_ID_COMPLEXITY = 'regex.lint.complexity';
+
+    private const ISSUE_ID_OPTIMIZATION = 'regex.optimization';
 
     /**
      * A route constraint is a fragment that carries no flag of its own: the
@@ -101,6 +109,7 @@ final class LintService
      */
     public function analyze(array $patterns, LintRequest $request, ?LintProgress $progress = null): LintReport
     {
+        [$patterns, $markers] = self::readScans($patterns);
         $progress?->step(LintProgress::STEP_ANALYSIS, \count($patterns));
         // The optimizations take what the analysis read: no pattern is
         // parsed or validated twice.
@@ -120,11 +129,35 @@ final class LintService
             $progress?->finish();
         }
 
+        $used = [];
+        $issues = self::silence(array_values($issues), $markers, $used, self::issueIdOf(...));
+        $optimizations = self::silence(array_values($optimizations), $markers, $used, static fn (array $optimization): string => self::ISSUE_ID_OPTIMIZATION);
+        if ($request->reportUnmatchedIgnores) {
+            array_push($issues, ...self::unmatchedIgnores($markers, $used));
+        }
+
         $results = $this->combineResults($issues, $optimizations, $patterns);
 
         $stats = LintStatsCounter::count($results, $patterns);
 
         return new LintReport($results, $stats);
+    }
+
+    /**
+     * Whether a run has nothing to analyse: no pattern, and no inline
+     * marker to report.
+     *
+     * @param array<PatternOccurrence> $patterns
+     */
+    public static function holdsNothing(array $patterns, bool $reportUnmatchedIgnores): bool
+    {
+        foreach ($patterns as $pattern) {
+            if (null === $pattern->ignores || ($reportUnmatchedIgnores && [] !== $pattern->ignores)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -160,6 +193,127 @@ final class LintService
         }
 
         return $absolute;
+    }
+
+    /**
+     * The occurrences to analyse, and the inline markers of each file read:
+     * an occurrence a marker silences whole is analysed all the same when
+     * the markers of its file are known, its issues dropped afterwards.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return array{list<PatternOccurrence>, array<string, list<IgnoreMarker>>}
+     */
+    private static function readScans(array $patterns): array
+    {
+        $markers = [];
+        foreach ($patterns as $pattern) {
+            if (null !== $pattern->ignores) {
+                $markers[$pattern->file] = $pattern->ignores;
+            }
+        }
+
+        $occurrences = [];
+        foreach ($patterns as $pattern) {
+            if (null !== $pattern->ignores) {
+                continue;
+            }
+
+            $occurrences[] = $pattern->isIgnored && isset($markers[$pattern->file]) ? $pattern->analysed() : $pattern;
+        }
+
+        return [$occurrences, $markers];
+    }
+
+    /**
+     * The entries no marker silences; each marker that silences one is
+     * recorded, with the identifier it silenced it under ("" for a marker
+     * that names none).
+     *
+     * @template T of array{file: string, line: int, ...}
+     *
+     * @param list<T>                                        $entries
+     * @param array<string, list<IgnoreMarker>>              $markers
+     * @param array<string, array<int, array<string, true>>> $used    by file, the index of the marker, then the identifier
+     * @param \Closure(T): ?string                           $idOf
+     *
+     * @return list<T>
+     */
+    private static function silence(array $entries, array $markers, array &$used, \Closure $idOf): array
+    {
+        if ([] === $markers) {
+            return $entries;
+        }
+
+        $kept = [];
+        foreach ($entries as $entry) {
+            $id = $idOf($entry);
+            $silenced = false;
+            foreach ($markers[$entry['file']] ?? [] as $index => $marker) {
+                if ($marker->coveredLine !== $entry['line']) {
+                    continue;
+                }
+
+                if ([] === $marker->identifiers) {
+                    $used[$entry['file']][$index][''] = true;
+                    $silenced = true;
+                } elseif (null !== $id && $marker->silences($id)) {
+                    $used[$entry['file']][$index][$id] = true;
+                    $silenced = true;
+                }
+            }
+
+            if (!$silenced) {
+                $kept[] = $entry;
+            }
+        }
+
+        return $kept;
+    }
+
+    /**
+     * An error for each marker that silenced nothing, and for each
+     * identifier of a marker that silenced nothing under it, on the line of
+     * the marker.
+     *
+     * @param array<string, list<IgnoreMarker>>              $markers
+     * @param array<string, array<int, array<string, true>>> $used
+     *
+     * @phpstan-return list<LintIssue>
+     */
+    private static function unmatchedIgnores(array $markers, array $used): array
+    {
+        $issues = [];
+        foreach ($markers as $file => $fileMarkers) {
+            foreach ($fileMarkers as $index => $marker) {
+                $messages = $marker->unmatched($used[$file][$index] ?? []);
+                foreach ($messages as $message) {
+                    $issues[] = [
+                        'type' => 'error',
+                        'file' => (string) $file,
+                        'line' => $marker->line,
+                        'column' => $marker->column,
+                        'issueId' => self::ISSUE_ID_UNMATCHED_IGNORE,
+                        'message' => $message,
+                        'hint' => 'A marker left in place would silence the next issue of its line unseen.',
+                        'source' => 'php',
+                    ];
+                }
+            }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * The identifier an issue is silenced under: its own, else the error
+     * code of a pattern that does not compile.
+     *
+     * @phpstan-param LintIssue $issue
+     */
+    private static function issueIdOf(array $issue): ?string
+    {
+        return $issue['issueId'] ?? ($issue['validation'] ?? null)?->errorCode?->value;
     }
 
     /**

@@ -19,8 +19,11 @@ use PHPRegex\LanguageServer\Converter\PatternSpan;
 use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
+use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Extraction\IgnoreMarker;
+use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
 use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\PatternLinter;
@@ -50,9 +53,10 @@ final class TextDocumentHandler
     private readonly DiagnosticConverter $diagnosticConverter;
 
     /**
-     * @param array<string, bool> $lintRules      the lint rules regex.json turns on or off, by id
-     * @param RedosMode           $redosMode      the ReDoS analysis to run, none by default
-     * @param RedosSeverity       $redosThreshold the lowest ReDoS severity reported
+     * @param array<string, bool> $lintRules              the lint rules regex.json turns on or off, by id
+     * @param RedosMode           $redosMode              the ReDoS analysis to run, none by default
+     * @param RedosSeverity       $redosThreshold         the lowest ReDoS severity reported
+     * @param bool                $reportUnmatchedIgnores whether a marker that silences nothing is a warning
      */
     public function __construct(
         private readonly DocumentManager $documents,
@@ -60,6 +64,7 @@ final class TextDocumentHandler
         private readonly array $lintRules = [],
         private readonly RedosMode $redosMode = RedosMode::Off,
         private readonly RedosSeverity $redosThreshold = RedosSeverity::High,
+        private readonly bool $reportUnmatchedIgnores = true,
     ) {
         $this->diagnosticConverter = new DiagnosticConverter();
     }
@@ -266,73 +271,39 @@ final class TextDocumentHandler
         $positions = new PositionConverter($content);
         // A library's file is no file of the project: `regex lint` leaves
         // vendor/ out, and so does the editor.
-        $occurrences = $this->documents->isLibrary($uri) ? [] : $this->documents->getOccurrences($uri);
+        $library = $this->documents->isLibrary($uri);
+        $occurrences = $library ? [] : $this->documents->getOccurrences($uri);
+        $markers = $library ? [] : InlineIgnores::markers($content);
 
+        // "@regex-ignore" silences the issues of its line, as in `regex
+        // lint`: every one, or those it names.
+        $used = [];
         foreach ($occurrences as $occurrence) {
-            // "@regex-ignore" silences it, as in `regex lint`.
-            if ($occurrence->ignored) {
+            $covering = array_filter($markers, static fn (IgnoreMarker $marker): bool => $marker->coveredLine === $occurrence->line);
+            if ($occurrence->ignored && [] === $covering) {
                 continue;
             }
 
-            // Offsets count in bytes of the pattern body; the span places
-            // them through the literal's escapes, in UTF-16 columns.
-            $span = PatternSpan::of($occurrence, $positions);
-
-            try {
-                $ast = $this->regex->parse($occurrence->pattern);
-
-                // A pattern PCRE refuses gets that error, and no lint issue.
-                $validation = $this->regex->validate($occurrence->pattern);
-                if (!$validation->isValid && null !== $validation->errorCode) {
-                    $diagnostics[] = $this->diagnosticConverter->fromValidationError(
-                        $validation->error ?? 'Invalid regex.',
-                        $validation->errorCode,
-                        $span,
-                        $validation->offset,
-                        $validation->hint,
-                    );
-
-                    continue;
-                }
-
-                // Run linter
-                $linter = new PatternLinter($this->lintRules);
-                $ast->accept($linter);
-
-                $redos = RedosMode::Off === $this->redosMode ? null : $this->regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
-
-                foreach ($linter->getIssues() as $issue) {
-                    // The heuristic rules guess what the analysis just proved:
-                    // once it shows the pattern linear, their warnings go.
-                    if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
-                        continue;
+            foreach ($this->occurrenceDiagnostics($occurrence, $content, $positions) as $diagnostic) {
+                $silenced = false;
+                foreach ($covering as $index => $marker) {
+                    if ($marker->silences($diagnostic['code'])) {
+                        $used[$index][[] === $marker->identifiers ? '' : $diagnostic['code']] = true;
+                        $silenced = true;
                     }
-
-                    // A raw character the literal spells with an escape, as
-                    // a double-quoted "\t", is no raw character in the source.
-                    if (InvisibleCharacterRule::ID === $issue->id
-                        && !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))
-                    ) {
-                        continue;
-                    }
-
-                    $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);
                 }
 
-                if (null !== $redos) {
-                    array_push($diagnostics, ...$this->redosDiagnostics($redos, $span));
+                if (!$silenced) {
+                    $diagnostics[] = $diagnostic;
                 }
-            } catch (LimitException $e) {
-                $diagnostics[] = $this->diagnosticConverter->fromLimit($e->getMessage(), $e->errorCode, $span);
-            } catch (LexerException|ParserException $e) {
-                $diagnostics[] = $this->diagnosticConverter->fromParseError(
-                    $e->getMessage(),
-                    $e->errorCode,
-                    $span,
-                    $e->position,
-                    // The fix comes with the validation's verdict on the same error.
-                    $this->regex->validate($occurrence->pattern)->hint,
-                );
+            }
+        }
+
+        // A marker that silences nothing: a warning on the marker.
+        foreach ($this->reportUnmatchedIgnores ? $markers : [] as $index => $marker) {
+            $range = ['start' => $positions->offsetToPosition($marker->offset), 'end' => $positions->offsetToPosition($marker->offset + \strlen($marker->marker))];
+            foreach ($marker->unmatched($used[$index] ?? []) as $message) {
+                $diagnostics[] = $this->diagnosticConverter->fromUnmatchedIgnore($message, $range);
             }
         }
 
@@ -349,6 +320,77 @@ final class TextDocumentHandler
         }
 
         Response::notification('textDocument/publishDiagnostics', $payload);
+    }
+
+    /**
+     * What `regex lint` reports for one pattern, before any marker.
+     *
+     * @return list<Diagnostic>
+     */
+    private function occurrenceDiagnostics(RegexOccurrence $occurrence, string $content, PositionConverter $positions): array
+    {
+        $diagnostics = [];
+
+        // Offsets count in bytes of the pattern body; the span places
+        // them through the literal's escapes, in UTF-16 columns.
+        $span = PatternSpan::of($occurrence, $positions);
+
+        try {
+            $ast = $this->regex->parse($occurrence->pattern);
+
+            // A pattern PCRE refuses gets that error, and no lint issue.
+            $validation = $this->regex->validate($occurrence->pattern);
+            if (!$validation->isValid && null !== $validation->errorCode) {
+                return [$this->diagnosticConverter->fromValidationError(
+                    $validation->error ?? 'Invalid regex.',
+                    $validation->errorCode,
+                    $span,
+                    $validation->offset,
+                    $validation->hint,
+                )];
+            }
+
+            // Run linter
+            $linter = new PatternLinter($this->lintRules);
+            $ast->accept($linter);
+
+            $redos = RedosMode::Off === $this->redosMode ? null : $this->regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
+
+            foreach ($linter->getIssues() as $issue) {
+                // The heuristic rules guess what the analysis just proved:
+                // once it shows the pattern linear, their warnings go.
+                if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
+                    continue;
+                }
+
+                // A raw character the literal spells with an escape, as
+                // a double-quoted "\t", is no raw character in the source.
+                if (InvisibleCharacterRule::ID === $issue->id
+                    && !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))
+                ) {
+                    continue;
+                }
+
+                $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);
+            }
+
+            if (null !== $redos) {
+                array_push($diagnostics, ...$this->redosDiagnostics($redos, $span));
+            }
+        } catch (LimitException $e) {
+            $diagnostics[] = $this->diagnosticConverter->fromLimit($e->getMessage(), $e->errorCode, $span);
+        } catch (LexerException|ParserException $e) {
+            $diagnostics[] = $this->diagnosticConverter->fromParseError(
+                $e->getMessage(),
+                $e->errorCode,
+                $span,
+                $e->position,
+                // The fix comes with the validation's verdict on the same error.
+                $this->regex->validate($occurrence->pattern)->hint,
+            );
+        }
+
+        return $diagnostics;
     }
 
     /**

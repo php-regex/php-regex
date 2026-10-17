@@ -67,6 +67,7 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind `regex:compare` |
 | `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
 | `paths`, `exclude`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, and the editor behind its clickable links |
+| `report_unmatched_ignores` | `true` | `regex:lint` reports each `@regex-ignore` marker, or issue identifier it names, that silences nothing, as `regex.ignore.unmatched` |
 | `extraction.interop`, `extraction.functions` | `null`, `[]` | The libraries whose calls `regex:lint` reads patterns from (`null` for every preset, those a later release adds included; a list for exactly those; `[]` for the native calls only), and your own helpers carrying a pattern, as `extraction` of `regex.json` |
 
 The package does not read `regex.json`: `extraction` is set here. A name in `extraction.interop` that is no preset stops `regex:lint` with `Invalid config/php-regex.php: Unknown extraction preset "…"`, naming the preset it most likely means.

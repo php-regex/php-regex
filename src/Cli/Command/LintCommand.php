@@ -57,7 +57,7 @@ use PHPRegex\Toolkit\Regex;
  */
 final class LintCommand extends AbstractCommand implements JsonCommandInterface
 {
-    private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
+    private const USAGE = "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n";
 
     public function __construct(
         private readonly HelpCommand $helpCommand,
@@ -255,6 +255,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 declarationPaths: self::declarationPaths($lintDefaults, $paths),
                 vendorPaths: [(getcwd() ?: '.').'/vendor'],
                 checkComplexity: $arguments->checkComplexity,
+                reportUnmatchedIgnores: $arguments->reportUnmatchedIgnores,
             );
             $patterns = $lint->collectPatterns($request, $progress);
         } catch (\Throwable $e) {
@@ -265,7 +266,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
 
         $progress?->endScan();
 
-        if ([] === $patterns) {
+        // A baseline whose entries may match nothing any more is read even
+        // when no pattern is left.
+        if (LintService::holdsNothing($patterns, $arguments->reportUnmatchedIgnores) && !(null !== $baseline && $arguments->reportUnmatchedIgnores && [] !== $patterns)) {
             $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
             if (!$this->writeBaselineFile($arguments, $emptyReport)) {
                 return $this->failToWriteBaseline($output, $json, (string) $arguments->generateBaseline);
@@ -293,7 +296,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         if (null !== $progress && $showSteps) {
-            $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
+            $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
             $output->writeError('  '.$output->dim("Scanned {$progress->files()} files, found {$patternCount} patterns.")."\n\n");
         }
 
@@ -312,8 +315,10 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return $this->failToWriteBaseline($output, $json, (string) $arguments->generateBaseline);
         }
 
+        // An entry no issue takes any more is reported, in the files the
+        // run read only.
         if (null !== $baseline) {
-            $report = $baseline->filter($report);
+            $report = $baseline->filter($report, $arguments->reportUnmatchedIgnores ? self::scannedFiles($patterns) : null);
         }
 
         $this->writeReport($output, $format, $formatter->format($report));
@@ -335,6 +340,25 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         return $report->stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
+    }
+
+    /**
+     * The PHP files the run read.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<string>
+     */
+    private static function scannedFiles(array $patterns): array
+    {
+        $files = [];
+        foreach ($patterns as $pattern) {
+            if (null !== $pattern->ignores) {
+                $files[] = $pattern->file;
+            }
+        }
+
+        return $files;
     }
 
     /**

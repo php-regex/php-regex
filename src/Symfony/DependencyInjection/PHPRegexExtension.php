@@ -88,6 +88,7 @@ final class PHPRegexExtension extends Extension
          *     },
          *     paths: array<int, string>,
          *     exclude: array<int, string>,
+         *     report_unmatched_ignores: bool,
          *     ide: string|null,
          * } $config
          */
@@ -123,6 +124,7 @@ final class PHPRegexExtension extends Extension
             'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
         ]);
         $container->setParameter('php_regex.paths', $config['paths']);
+        $container->setParameter('php_regex.report_unmatched_ignores', $config['report_unmatched_ignores']);
         $container->setParameter('php_regex.exclude', $config['exclude']);
         $container->setParameter('php_regex.editor_format', $editorFormat);
 

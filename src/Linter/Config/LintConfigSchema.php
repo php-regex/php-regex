@@ -224,6 +224,11 @@ final class LintConfigSchema
                 ],
                 'format' => self::enumProperty('Output format for lint results.', self::FORMATS, 'console'),
                 'ide' => self::ide(),
+                'reportUnmatchedIgnores' => [
+                    'type' => 'boolean',
+                    'description' => 'Report as regex.ignore.unmatched each @regex-ignore marker, each issue identifier it names, and each baseline entry of a file the run reads, that silences nothing. The --no-report-unmatched-ignores option turns it off for one run.',
+                    'default' => true,
+                ],
                 'checks' => [
                     'type' => 'object',
                     'description' => 'Which checks run, and how.',

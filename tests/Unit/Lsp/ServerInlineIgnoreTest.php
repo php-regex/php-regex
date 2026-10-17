@@ -96,8 +96,60 @@ final class ServerInlineIgnoreTest extends TestCase
             }
             CODE));
 
-        // A marker on the call does nothing for a pattern its declaration holds.
-        $this->assertSame([7, 15], $this->diagnosedLines($uri));
+        // A marker on the call does nothing for a pattern its declaration
+        // holds: it silences nothing, and is reported on its own line.
+        $this->assertSame([7, 15, 17], $this->diagnosedLines($uri));
+    }
+
+    /**
+     * A marker naming an identifier silences only that issue: "/\d+[11]/i"
+     * also reports the "1" written twice in its class.
+     */
+    #[Test]
+    public function test_a_marker_naming_an_identifier_silences_only_that_issue(): void
+    {
+        $uri = $this->uri('src/Matcher.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($uri, "<?php\npreg_match('/\\d+[11]/i', \$s); // @regex-ignore regex.lint.flag.useless.i\n"));
+
+        $this->assertSame([[1, 'regex.lint.charclass.redundant', 2]], $this->diagnosed($uri));
+    }
+
+    /**
+     * A marker that silences nothing is a warning on the marker itself; an
+     * identifier that silences nothing too, named in the message.
+     */
+    #[Test]
+    public function test_a_marker_that_silences_nothing_is_a_warning_on_the_marker(): void
+    {
+        $uri = $this->uri('src/Matcher.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($uri, "<?php\n\$kept = 1; // @regex-ignore\npreg_match('/(a/', \$s); // @regex-ignore regex.lint.redos\n"));
+
+        $this->assertSame([
+            [1, 'regex.ignore.unmatched', 2],
+            [2, 'regex.group.unclosed', 1],
+            [2, 'regex.ignore.unmatched', 2],
+        ], $this->diagnosed($uri));
+        $unmatched = array_values(array_filter($this->published($uri), static fn (array $diagnostic): bool => 'regex.ignore.unmatched' === ($diagnostic['code'] ?? null)));
+        $this->assertCount(2, $unmatched);
+        $this->assertSame(['start' => ['line' => 1, 'character' => 14], 'end' => ['line' => 1, 'character' => 27]], $unmatched[0]['range'] ?? null);
+        $this->assertSame('The @regex-ignore marker silences nothing: no issue is reported on line 2. Remove it.', $unmatched[0]['message'] ?? null);
+        $this->assertSame('The @regex-ignore marker names regex.lint.redos, which no issue reports on line 3. Remove the identifier.', $unmatched[1]['message'] ?? null);
+    }
+
+    #[Test]
+    public function test_regex_json_turns_the_unmatched_report_off(): void
+    {
+        file_put_contents($this->root.'/regex.json', '{"reportUnmatchedIgnores": false}');
+        $uri = $this->uri('src/Matcher.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($uri, "<?php\n\$kept = 1; // @regex-ignore\n"));
+
+        $this->assertSame([], $this->diagnosedLines($uri));
     }
 
     /**
@@ -127,6 +179,52 @@ preg_match('/(a/', \$subject); // @regex-ignore
 preg_match('/(a/', \$subject);
 "));
         $this->assertSame([2], $this->diagnosedLines($uri));
+    }
+
+    /**
+     * The line, code and severity of each diagnostic last published, sorted.
+     *
+     * @return list<array{int, mixed, mixed}>
+     */
+    private function diagnosed(string $uri): array
+    {
+        $diagnosed = [];
+        foreach ($this->published($uri) as $diagnostic) {
+            $range = $diagnostic['range'] ?? null;
+            $this->assertIsArray($range);
+            $start = $range['start'] ?? null;
+            $this->assertIsArray($start);
+            $line = $start['line'] ?? null;
+            $this->assertIsInt($line);
+            $diagnosed[] = [$line, $diagnostic['code'] ?? null, $diagnostic['severity'] ?? null];
+        }
+        sort($diagnosed);
+
+        return $diagnosed;
+    }
+
+    /**
+     * The diagnostics last published for a document, in the order sent.
+     *
+     * @return list<array<array-key, mixed>>
+     */
+    private function published(string $uri): array
+    {
+        $published = null;
+        foreach ($this->notifications('textDocument/publishDiagnostics') as $params) {
+            if ($uri === ($params['uri'] ?? null) && \is_array($params['diagnostics'] ?? null)) {
+                $published = $params['diagnostics'];
+            }
+        }
+        $this->assertIsArray($published, 'The server published no diagnostics for '.$uri.'.');
+
+        $diagnostics = [];
+        foreach ($published as $diagnostic) {
+            $this->assertIsArray($diagnostic);
+            $diagnostics[] = $diagnostic;
+        }
+
+        return $diagnostics;
     }
 
     /**

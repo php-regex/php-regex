@@ -13,13 +13,22 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Extraction\IgnoreMarker;
+
 /**
  * Represents a regex pattern occurrence found in source code. One with an
  * $unread reason stands for a file the extractor could not read: it holds
  * no pattern, and the lint reports it as regex.lint.source.unreadable. One
  * with a $parserFallback reason stands for a file the PHP parser could not
  * read and the tokenizer read instead: it holds no pattern either, and the
- * lint only counts it.
+ * lint only counts it. One with $ignores stands for a PHP file the run
+ * read: it holds no pattern, and carries the inline markers of the file, so
+ * that the lint reports those that silence nothing and knows which files a
+ * baseline entry may name.
+ *
+ * $isIgnored is set on an occurrence whose line a marker naming no issue
+ * silences: an analysis given it alone leaves it out. The lint, given the
+ * markers of the file, analyses it and drops its issues itself.
  *
  * @internal
  */
@@ -37,7 +46,30 @@ final class PatternOccurrence
         public readonly ?int $fileOffset = null,
         public readonly ?string $unread = null,
         public readonly ?string $parserFallback = null,
+        /**
+         * @var list<IgnoreMarker>|null
+         */
+        public readonly ?array $ignores = null,
     ) {}
+
+    /**
+     * A PHP file the run read, and its inline markers.
+     *
+     * @param list<IgnoreMarker> $ignores
+     */
+    public static function scanned(string $file, array $ignores): self
+    {
+        return new self('', $file, 1, 'php', ignores: $ignores);
+    }
+
+    /**
+     * The same occurrence, analysed whatever a marker says: the lint drops
+     * its issues itself.
+     */
+    public function analysed(): self
+    {
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores);
+    }
 
     /**
      * A file the extractor could not read, and why.

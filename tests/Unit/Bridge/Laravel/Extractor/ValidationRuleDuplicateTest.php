@@ -52,7 +52,7 @@ final class ValidationRuleDuplicateTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->line.' '.$occurrence->pattern,
-            $collection->collect(new PatternSourceContext([$project.'/app'], [])),
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/app'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
         );
 
         $this->assertSame(['3 /^[a-z]+$/', '4 /^[a-z]+$/'], $read);

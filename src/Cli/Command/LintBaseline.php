@@ -14,9 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\CliException;
+use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Internal\LintStatsCounter;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -35,6 +38,10 @@ use PHPRegex\Parser\Validation\ValidationResult;
  * issues than entries sharing these three: the entries and the issues are
  * aligned in line order, as a diff aligns two versions of a file, and the
  * copies of a pattern inserted since the baseline are reported.
+ *
+ * An entry no issue takes, in a file the run read, is reported when asked:
+ * regex.ignore.unmatched on the entry's file and line. The entries of the
+ * files the run did not read are left alone.
  *
  * @internal
  *
@@ -121,8 +128,11 @@ final class LintBaseline
      * The report without the issues the baseline knows: a result keeps its
      * column and file offset, loses the problem entry of each known issue,
      * and leaves the report once nothing is left in it.
+     *
+     * @param list<string>|null $scannedFiles the files the run read: given, each entry of one of
+     *                                        them that no issue takes is reported
      */
-    public function filter(LintReport $report): LintReport
+    public function filter(LintReport $report, ?array $scannedFiles = null): LintReport
     {
         $candidates = [];
         foreach (\array_values($report->results) as $r => $result) {
@@ -140,6 +150,8 @@ final class LintBaseline
                 $known[$r][$i] = true;
             }
         }
+
+        $unmatched = null === $scannedFiles ? [] : $this->unmatched($candidates, $scannedFiles);
 
         // Read by position, as the candidates were: a report keyed by file
         // takes out the same issues as its list.
@@ -182,6 +194,13 @@ final class LintBaseline
             $results[] = $result;
         }
 
+        if ([] !== $unmatched) {
+            // Sorted in with the others by file and line, the order of
+            // results that share both kept.
+            array_push($results, ...$unmatched);
+            usort($results, static fn (array $left, array $right): int => [strcmp($left['file'], $right['file']) <=> 0, $left['line']] <=> [0, $right['line']]);
+        }
+
         // The files read with the tokenizer are no issue a baseline knows.
         $stats = LintStatsCounter::count($results);
         if (isset($report->stats['parserFallbacks'])) {
@@ -189,6 +208,66 @@ final class LintBaseline
         }
 
         return new LintReport($results, $stats);
+    }
+
+    /**
+     * A result for each entry of a file the run read that no issue takes:
+     * when a key has fewer issues than entries, the issues are aligned with
+     * the entries as the entries are with the issues, and the entries left
+     * out are the ones reported.
+     *
+     * @param array<string, list<array{int|string, int, int}>> $candidates   the issues of each key
+     * @param list<string>                                     $scannedFiles
+     *
+     * @return list<LintResult>
+     */
+    private function unmatched(array $candidates, array $scannedFiles): array
+    {
+        $scanned = [];
+        foreach ($scannedFiles as $file) {
+            $scanned[self::escape(self::relativePath($file))] = true;
+        }
+
+        $results = [];
+        foreach ($this->lines as $key => $lines) {
+            [$issueId, $file] = explode("\0", $key);
+            $issues = $candidates[$key] ?? [];
+            if (!isset($scanned[$file]) || \count($lines) <= \count($issues)) {
+                continue;
+            }
+
+            $entries = array_map(static fn (int $at, int $line): array => [$at, 0, $line], array_keys($lines), array_values($lines));
+            $taken = [] === $issues ? [] : array_column(self::align(array_column($issues, 2), $entries), 0);
+            foreach ($entries as [$at, , $line]) {
+                if (\in_array($at, $taken, true)) {
+                    continue;
+                }
+
+                $message = \sprintf('The baseline entry for %s matches no issue any more: remove it, or generate the baseline again.', '' === $issueId ? 'an issue' : $issueId);
+                $hint = 'An entry left in place would take out the next issue of its kind unseen.';
+                $results[] = [
+                    'file' => $file,
+                    'line' => $line,
+                    'column' => null,
+                    'fileOffset' => null,
+                    'source' => null,
+                    'pattern' => null,
+                    'location' => null,
+                    'issues' => [[
+                        'type' => 'error',
+                        'file' => $file,
+                        'line' => $line,
+                        'issueId' => LintService::ISSUE_ID_UNMATCHED_IGNORE,
+                        'message' => $message,
+                        'hint' => $hint,
+                    ]],
+                    'optimizations' => [],
+                    'problems' => [new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, $message, LintService::ISSUE_ID_UNMATCHED_IGNORE, null, null, $hint)],
+                ];
+            }
+        }
+
+        return $results;
     }
 
     /**

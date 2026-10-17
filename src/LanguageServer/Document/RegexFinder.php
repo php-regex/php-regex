@@ -119,6 +119,7 @@ final class RegexFinder
                 byteOffset: $offset,
                 literal: $literal,
                 ignored: isset($suppressed[$occurrence->line]),
+                line: $occurrence->line,
             );
         }
 

@@ -80,6 +80,7 @@ php_regex:
         min_quantifier_count: 4
     paths: [src]
     exclude: [vendor]
+    report_unmatched_ignores: true  # report the @regex-ignore markers that silence nothing
     ide: '%env(default::SYMFONY_IDE)%'
 ```
 

@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `lint` reports the inline markers and the baseline entries that silence
+   nothing, as `regex.ignore.unmatched`; `--no-report-unmatched-ignores`
+   turns the report off for one run.
  * `validate`, `analyze` and the other commands that read one pattern refuse
    a `--php-version` below 7.3 as `lint` does, with exit code 2.
  * `regex.phar` is built from the release tag by a GitHub Actions workflow

@@ -136,7 +136,11 @@ final class LintServiceProgressTest extends TestCase
 
         $patterns = $service->collectPatterns(new LintRequest([$project.'/lib'], [], 0, analysisWorkers: $workers), $progress);
 
-        $this->assertSame(['/(a+)+/', '/[0-9]/'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $patterns));
+        $this->assertSame(['/(a+)+/', '/[0-9]/'], array_values(array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, array_filter($patterns, static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores))));
+        // Each file read comes with its inline markers, a file without a pattern too.
+        $scanned = array_values(array_map(static fn (PatternOccurrence $occurrence): string => basename($occurrence->file), array_filter($patterns, static fn (PatternOccurrence $occurrence): bool => [] === $occurrence->ignores)));
+        sort($scanned);
+        $this->assertSame(['a.php', 'b.php'], $scanned);
         $this->assertSame([
             [LintProgress::STEP_FILES, null, 2],
             [LintProgress::STEP_DECLARATIONS, 2, 2],
@@ -181,7 +185,7 @@ final class LintServiceProgressTest extends TestCase
 
         $patterns = $service->collectPatterns(new LintRequest([$project.'/lib'], [], 0, analysisWorkers: 8), $progress);
 
-        $this->assertSame(['/(a+)+/', '/[0-9]/'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $patterns));
+        $this->assertSame(['/(a+)+/', '/[0-9]/'], array_values(array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, array_filter($patterns, static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores))));
         $this->assertSame([2], $progress->workerCountsIn(LintProgress::STEP_DECLARATIONS));
         $this->assertSame([2], $progress->workerCountsIn(LintProgress::STEP_PATTERNS));
         $this->assertSame([], $progress->workerCountsIn(LintProgress::STEP_FILES), 'The walk runs in the parent.');

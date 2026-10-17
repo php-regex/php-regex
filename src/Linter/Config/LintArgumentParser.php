@@ -86,6 +86,12 @@ final class LintArgumentParser
                 continue;
             }
 
+            if ('--report-unmatched-ignores' === $arg || '--no-report-unmatched-ignores' === $arg) {
+                $arguments = $this->withReportUnmatchedIgnores($arguments, '--report-unmatched-ignores' === $arg);
+
+                continue;
+            }
+
             if ('--no-interop' === $arg) {
                 $arguments = $this->withInterop($arguments, []);
 
@@ -149,6 +155,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -179,6 +186,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -213,6 +221,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -251,6 +260,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
                 $i++;
 
@@ -287,6 +297,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -327,6 +338,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
                 $i++;
 
@@ -358,6 +370,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -388,6 +401,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -422,6 +436,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -456,6 +471,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -512,6 +528,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -548,6 +565,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
                 $i++;
 
@@ -579,6 +597,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -613,6 +632,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -648,6 +668,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
                 $i++;
 
@@ -687,6 +708,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
                 $i++;
 
@@ -718,6 +740,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
 
                 continue;
@@ -752,6 +775,7 @@ final class LintArgumentParser
                     $arguments->patternFunctions,
                     $arguments->checkComplexity,
                     $arguments->complexityThreshold,
+                    $arguments->reportUnmatchedIgnores,
                 );
                 $i++;
 
@@ -792,6 +816,7 @@ final class LintArgumentParser
                 $arguments->patternFunctions,
                 $arguments->checkComplexity,
                 $arguments->complexityThreshold,
+                $arguments->reportUnmatchedIgnores,
             );
         }
 
@@ -862,6 +887,7 @@ final class LintArgumentParser
             $arguments->patternFunctions,
             $arguments->checkComplexity,
             $arguments->complexityThreshold,
+            $arguments->reportUnmatchedIgnores,
         );
     }
 
@@ -894,6 +920,7 @@ final class LintArgumentParser
             $arguments->patternFunctions,
             $arguments->checkComplexity,
             $arguments->complexityThreshold,
+            $arguments->reportUnmatchedIgnores,
         );
     }
 
@@ -952,6 +979,7 @@ final class LintArgumentParser
             $arguments->patternFunctions,
             $arguments->checkComplexity,
             $arguments->complexityThreshold,
+            $arguments->reportUnmatchedIgnores,
         );
     }
 
@@ -994,6 +1022,7 @@ final class LintArgumentParser
             $patternFunctions,
             $arguments->checkComplexity,
             $arguments->complexityThreshold,
+            $arguments->reportUnmatchedIgnores,
         );
     }
 
@@ -1023,6 +1052,37 @@ final class LintArgumentParser
             $arguments->patternFunctions,
             $arguments->checkComplexity,
             $arguments->complexityThreshold,
+            $arguments->reportUnmatchedIgnores,
+        );
+    }
+
+    private function withReportUnmatchedIgnores(LintArguments $arguments, bool $report): LintArguments
+    {
+        return new LintArguments(
+            $arguments->paths,
+            $arguments->exclude,
+            $arguments->minSavings,
+            $arguments->verbosity,
+            $arguments->format,
+            $arguments->quiet,
+            $arguments->checkRedos,
+            $arguments->checkValidation,
+            $arguments->checkOptimizations,
+            $arguments->checkLint,
+            $arguments->jobs,
+            $arguments->output,
+            $arguments->baseline,
+            $arguments->generateBaseline,
+            $arguments->ide,
+            $arguments->optimizations,
+            $arguments->redosMode,
+            $arguments->redosThreshold,
+            $arguments->lintRules,
+            $arguments->interop,
+            $arguments->patternFunctions,
+            $arguments->checkComplexity,
+            $arguments->complexityThreshold,
+            $report,
         );
     }
 
@@ -1055,6 +1115,7 @@ final class LintArgumentParser
             $arguments->patternFunctions,
             $arguments->checkComplexity,
             $arguments->complexityThreshold,
+            $arguments->reportUnmatchedIgnores,
         );
     }
 }

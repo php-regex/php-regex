@@ -60,7 +60,7 @@ final class PatternSourceCollectionDuplicateTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->source.' '.$occurrence->pattern,
-            $collection->collect(new PatternSourceContext([$project.'/src'], [])),
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
         );
 
         $this->assertSame(['other:another-pattern /kept/', 'other:another-file /read/', 'preg_match() /read/'], $read);
@@ -83,7 +83,7 @@ final class PatternSourceCollectionDuplicateTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->source,
-            $collection->collect(new PatternSourceContext([$project.'/src'], [], ['php'])),
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [], ['php'])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
         );
 
         $this->assertSame(['other:same'], $read);
@@ -106,7 +106,7 @@ final class PatternSourceCollectionDuplicateTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): string => $occurrence->source,
-            $collection->collect(new PatternSourceContext([$project.'/src'], [])),
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
         );
 
         $this->assertSame(['preg_match()', 'other:same'], $read);

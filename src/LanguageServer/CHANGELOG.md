@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `@regex-ignore` and `@regex-ignore-next-line` may name the issues they
+   silence; a marker that silences nothing is a warning on the marker,
+   `regex.ignore.unmatched`, unless `reportUnmatchedIgnores` in `regex.json`
+   is `false`.
  * `vendor/bin/regex-lsp` loads the autoloader Composer names, so a package
    installed from a symlinked path repository runs on the project's
    dependencies.

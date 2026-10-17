@@ -31,6 +31,7 @@ use PHPRegex\Linter\Internal\WorkerCount;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
@@ -194,6 +195,7 @@ final class LintCommand extends Command
                 optimizations: $defaultOptimizations,
                 checkRedos: true === config('php-regex.redos.enabled'),
                 checkComplexity: true === config('php-regex.analysis.complexity'),
+                reportUnmatchedIgnores: false !== config('php-regex.report_unmatched_ignores'),
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths, the linted ones when none are, as
                 // `regex lint` reads them, and in vendor/, whatever paths are
@@ -220,14 +222,14 @@ final class LintCommand extends Command
 
         // A file read with the tokenizer holds no pattern of its own: it is
         // counted in the stats only.
-        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
+        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
         if (null !== $progress) {
             $progress->close();
             $this->line('  <fg=gray>Scanned '.$progress->filesFound().' files, found '.$patternCount.' patterns.</>');
             $this->newLine();
         }
 
-        if (empty($patterns) && [] === $unreadFiles) {
+        if (LintService::holdsNothing($patterns, false !== config('php-regex.report_unmatched_ignores')) && [] === $unreadFiles) {
             return $this->renderEmptyResults($format);
         }
 

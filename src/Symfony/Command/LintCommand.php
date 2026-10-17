@@ -91,14 +91,15 @@ final class LintCommand extends Command
     /**
      * @param array<string>           $defaultPaths
      * @param array<string>           $defaultExcludePaths
-     * @param array<string, bool|int> $defaultOptimizations the bundle's optimizations, in snake_case
-     * @param RegexOptions            $regexOptions         what Regex::create() takes, but the target and the
-     *                                                      runtime validation: the settings patterns are read with
-     * @param string|int|null         $phpVersion           the bundle's php_version
-     * @param string|null             $pcreVersion          the bundle's pcre_version
-     * @param string|null             $projectDir           where composer.json is read; null reads none
-     * @param array<string>           $warnings             what the bundle's configuration holds that the run
-     *                                                      ignores, printed before the report
+     * @param array<string, bool|int> $defaultOptimizations   the bundle's optimizations, in snake_case
+     * @param RegexOptions            $regexOptions           what Regex::create() takes, but the target and the
+     *                                                        runtime validation: the settings patterns are read with
+     * @param string|int|null         $phpVersion             the bundle's php_version
+     * @param string|null             $pcreVersion            the bundle's pcre_version
+     * @param string|null             $projectDir             where composer.json is read; null reads none
+     * @param array<string>           $warnings               what the bundle's configuration holds that the run
+     *                                                        ignores, printed before the report
+     * @param bool                    $reportUnmatchedIgnores the bundle's report_unmatched_ignores
      */
     public function __construct(
         private readonly LintService $lint,
@@ -115,6 +116,7 @@ final class LintCommand extends Command
         private readonly bool $checkRedos = false,
         private readonly bool $checkComplexity = false,
         private readonly array $warnings = [],
+        private readonly bool $reportUnmatchedIgnores = true,
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -264,6 +266,7 @@ final class LintCommand extends Command
                 optimizations: $this->defaultOptimizations,
                 checkRedos: $this->checkRedos,
                 checkComplexity: $this->checkComplexity,
+                reportUnmatchedIgnores: $this->reportUnmatchedIgnores,
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths and in vendor/, whatever paths are linted.
                 declarationPaths: $this->defaultPaths,
@@ -278,13 +281,13 @@ final class LintCommand extends Command
 
         // A file read with the tokenizer holds no pattern of its own: it is
         // counted in the stats only.
-        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback));
+        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
         if (null !== $progress) {
             $progress->endLine();
             $io->writeln('  <fg=gray>Scanned '.$progress->files().' files, found '.$patternCount.' patterns.</>');
         }
 
-        if (empty($patterns)) {
+        if (LintService::holdsNothing($patterns, $this->reportUnmatchedIgnores)) {
             return $this->renderEmptyResults($format, $output, $io);
         }
 

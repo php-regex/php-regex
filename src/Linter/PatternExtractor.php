@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
@@ -32,6 +33,7 @@ final class PatternExtractor
 {
     private const WORKER_ALLOWED_CLASSES = [
         PatternOccurrence::class,
+        IgnoreMarker::class,
     ];
 
     /**
@@ -77,6 +79,40 @@ final class PatternExtractor
      */
     public function extract(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
     {
+        return $this->collect(false, $paths, $excludePaths, $progress, $workers, $declarationPaths, $vendorPaths);
+    }
+
+    /**
+     * What extract() gives, and for each PHP file read, a
+     * PatternOccurrence::scanned() holding its inline markers: a file that
+     * could not be read gets none.
+     *
+     * @param array<string>      $paths
+     * @param array<string>|null $excludePaths
+     * @param array<string>      $declarationPaths
+     * @param array<string>      $vendorPaths
+     *
+     * @throws LintException when a worker fails
+     *
+     * @return array<PatternOccurrence>
+     */
+    public function scan(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
+    {
+        return $this->collect(true, $paths, $excludePaths, $progress, $workers, $declarationPaths, $vendorPaths);
+    }
+
+    /**
+     * @param array<string>      $paths
+     * @param array<string>|null $excludePaths
+     * @param array<string>      $declarationPaths
+     * @param array<string>      $vendorPaths
+     *
+     * @throws LintException when a worker fails
+     *
+     * @return array<PatternOccurrence>
+     */
+    private function collect(bool $scanned, array $paths, ?array $excludePaths, ?LintProgress $progress, int $workers, array $declarationPaths, array $vendorPaths): array
+    {
         $excludePaths ??= ['vendor'];
         $progress?->step(LintProgress::STEP_FILES, null);
         $phpFiles = $this->collectPhpFiles($paths, $excludePaths, $progress);
@@ -104,7 +140,7 @@ final class PatternExtractor
         // never spans two chunks.
         $progress?->step(LintProgress::STEP_PATTERNS, \count($phpFiles));
         $occurrences = [];
-        foreach ($this->readEach($phpFiles, $workers, fn (string $file): array => $this->applyInlineIgnores($extractor->extract([$file])), $progress) as $fileOccurrences) {
+        foreach ($this->readEach($phpFiles, $workers, fn (string $file): array => $this->read($extractor, $file, $scanned), $progress) as $fileOccurrences) {
             array_push($occurrences, ...$fileOccurrences);
         }
         $progress?->finish();
@@ -415,17 +451,36 @@ final class PatternExtractor
     }
 
     /**
-     * @param array<PatternOccurrence> $occurrences
+     * The occurrences of one file, those a marker naming no issue silences
+     * marked; with $scanned, followed by the file's markers.
      *
-     * @return array<PatternOccurrence>
+     * @return list<PatternOccurrence>
      */
-    private function applyInlineIgnores(array $occurrences): array
+    private function read(ExtractorInterface $extractor, string $file, bool $scanned): array
     {
-        if ([] === $occurrences) {
-            return [];
+        $occurrences = array_values($extractor->extract([$file]));
+        $markers = [];
+        $unread = false;
+        foreach ($occurrences as $occurrence) {
+            $unread = $unread || ($occurrence instanceof PatternOccurrence && null !== $occurrence->unread);
         }
 
-        $suppressedCache = [];
+        $result = $this->applyInlineIgnores($occurrences, $markers);
+        if ($scanned && !$unread) {
+            $result[] = PatternOccurrence::scanned($file, $markers[$file] ?? $this->markersOf($file));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param list<PatternOccurrence>           $occurrences
+     * @param array<string, list<IgnoreMarker>> $markers     the markers read, by file
+     *
+     * @return list<PatternOccurrence>
+     */
+    private function applyInlineIgnores(array $occurrences, array &$markers): array
+    {
         $result = [];
         foreach ($occurrences as $occurrence) {
             // A file read with the tokenizer, or not read at all, holds no
@@ -437,11 +492,13 @@ final class PatternExtractor
             }
 
             $file = $occurrence->file;
-            if (!\array_key_exists($file, $suppressedCache)) {
-                $suppressedCache[$file] = $this->collectSuppressedLines($file);
+            $markers[$file] ??= $this->markersOf($file);
+            $silenced = false;
+            foreach ($markers[$file] as $marker) {
+                $silenced = $silenced || ([] === $marker->identifiers && $marker->coveredLine === $occurrence->line);
             }
 
-            if (isset($suppressedCache[$file][$occurrence->line])) {
+            if ($silenced) {
                 $result[] = new PatternOccurrence(
                     $occurrence->pattern,
                     $occurrence->file,
@@ -462,13 +519,13 @@ final class PatternExtractor
     }
 
     /**
-     * @return array<int, bool>
+     * @return list<IgnoreMarker>
      */
-    private function collectSuppressedLines(string $file): array
+    private function markersOf(string $file): array
     {
         $content = @file_get_contents($file);
 
-        return false === $content ? [] : InlineIgnores::suppressedLines($content);
+        return false === $content ? [] : InlineIgnores::markers($content);
     }
 
     /**

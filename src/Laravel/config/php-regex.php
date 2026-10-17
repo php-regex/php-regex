@@ -258,6 +258,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Unmatched Inline Ignores
+    |--------------------------------------------------------------------------
+    |
+    | Whether regex:lint reports as regex.ignore.unmatched each @regex-ignore
+    | marker, or issue identifier it names, that silences nothing.
+    |
+    */
+    'report_unmatched_ignores' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | IDE Integration
     |--------------------------------------------------------------------------
     |

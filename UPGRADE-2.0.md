@@ -494,6 +494,24 @@ The 1.x comment `@regex-suppress`, an undocumented second spelling of
 preg_match('/(a+)+$/', $input); // @regex-ignore
 ```
 
+### Markers and baseline entries that silence nothing
+
+A marker is read where it starts a comment (after `//`, `#`, `/*` or `/**`)
+or a line of a doc comment. One written in the middle of a sentence,
+`// legacy, @regex-ignore`, no longer silences its line: move it to the start
+of the comment, `// @regex-ignore legacy`.
+
+`regex lint`, Symfony's and Laravel's `regex:lint` and the language server
+report each `@regex-ignore` or `@regex-ignore-next-line` marker that
+silences nothing, and `regex lint --baseline` each entry no issue takes any
+more in a file the run reads, as an error, `regex.ignore.unmatched` (a
+warning in the editor). A project carrying such markers or entries fails its
+next run until they are removed. To keep them for now, turn the report off:
+`--no-report-unmatched-ignores` or `"reportUnmatchedIgnores": false` in
+`regex.json`, `report_unmatched_ignores: false` under `php_regex` in Symfony,
+`'report_unmatched_ignores' => false` in Laravel's `config/php-regex.php`. See
+[the CLI guide](docs/guides/cli.md#markers-that-silence-nothing).
+
 ### Breaking Changes
 
 #### One way to do each thing on the facade

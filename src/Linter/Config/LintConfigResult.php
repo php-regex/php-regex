@@ -28,6 +28,7 @@ namespace PHPRegex\Linter\Config;
  *     jobs?: int,
  *     format?: string,
  *     ide?: string,
+ *     reportUnmatchedIgnores?: bool,
  *     checks?: array{
  *         validation?: bool,
  *         redos?: array{enabled?: bool, mode?: string, threshold?: string},

@@ -129,6 +129,47 @@ final class LintBaselineContractTest extends TestCase
     }
 
     /**
+     * An entry no issue takes any more, in a file the run read, is an error
+     * of its own: regex.ignore.unmatched, on the entry's file and line. The
+     * issues the other entries still take stay out.
+     */
+    #[Test]
+    public function test_an_entry_that_matches_nothing_in_a_scanned_file_is_reported(): void
+    {
+        $this->enterProject(self::FILES);
+        $this->runRegex([...self::LINT, '--generate-baseline=baseline.json']);
+        file_put_contents('src/a.php', "<?php\n\npreg_match('/(a/', \$s);\n");
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json']);
+
+        $this->assertSame(1, $exitCode, $stdout);
+        $this->assertSame(
+            [['src/a.php', 4, 'regex.ignore.unmatched', 'error', 'The baseline entry for regex.lint.quantifier.useless matches no issue any more: remove it, or generate the baseline again.']],
+            self::issuesOf($stdout),
+        );
+    }
+
+    /**
+     * A run over a part of the project reads no other file: the entries of
+     * those files are not reported, and the opt-out silences the report.
+     */
+    #[Test]
+    public function test_an_entry_of_a_file_the_run_did_not_read_is_not_reported(): void
+    {
+        $this->enterProject(self::FILES);
+        $this->runRegex([...self::LINT, '--generate-baseline=baseline.json']);
+        file_put_contents('src/a.php', "<?php\n\npreg_match('/(a/', \$s);\n");
+
+        [$exitCode, $stdout] = $this->runRegex(['lint', 'src/b.php', '--format=json', '--jobs=1', '--no-optimize', '--baseline=baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], self::issuesOf($stdout));
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=baseline.json', '--no-report-unmatched-ignores']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], self::issuesOf($stdout));
+    }
+
+    /**
      * A baseline written as the 1.x list, well-formed entries included, is
      * refused before any analysis: exit 2, the stage "usage", the one
      * message that says what a baseline is — never a silent pass-all.
@@ -549,6 +590,22 @@ final class LintBaselineContractTest extends TestCase
         $this->assertSame(0, $exitCode, $stdout);
         $this->assertSame(1, BaselineStream::$reads);
         $this->assertSame([], $this->reportedIssues($stdout));
+    }
+
+    /**
+     * @return list<list<mixed>> the file, line, identifier, severity and message of each issue
+     */
+    private static function issuesOf(string $stdout): array
+    {
+        $issues = [];
+        foreach (JsonContract::asArray(JsonContract::decodeDocument($stdout)['results'] ?? null) as $result) {
+            foreach (JsonContract::asArray(JsonContract::asArray($result)['issues'] ?? null) as $issue) {
+                $issue = JsonContract::asArray($issue);
+                $issues[] = [$issue['file'] ?? null, $issue['line'] ?? null, $issue['issue_id'] ?? null, $issue['severity'] ?? null, $issue['message'] ?? null];
+            }
+        }
+
+        return $issues;
     }
 
     /**

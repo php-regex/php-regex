@@ -83,7 +83,7 @@ final class ValidatorDuplicateTest extends TestCase
 
         $read = array_map(
             static fn (PatternOccurrence $occurrence): array => [$occurrence->pattern, str_starts_with($occurrence->source, 'validator:') ? 'validator' : 'file'],
-            $collection->collect(new PatternSourceContext([(string) realpath(self::FIXTURE_DIRECTORY)], [])),
+            array_values(array_filter($collection->collect(new PatternSourceContext([(string) realpath(self::FIXTURE_DIRECTORY)], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
         );
         sort($read);
 

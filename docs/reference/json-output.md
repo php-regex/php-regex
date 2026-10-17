@@ -369,7 +369,7 @@ Every count is present on every run, `0` when there is none.
 | `column` | int \| null | The column of the pattern, 1-based, in bytes; `null` when unknown |
 | `file_offset` | int \| null | The byte offset of the pattern in the file, 0-based; `null` when unknown |
 | `source` | string \| null | What the pattern was read from: the call, as `preg_match()` or `Preg::match()`; a constructor, as `new RegexIterator()` or `new Regex()`; an attribute, as `#[Regex]`; or a framework source, as `route:<name>:<parameter>` |
-| `pattern` | string | The pattern as written |
+| `pattern` | string \| null | The pattern as written; `null` for a result no pattern holds: an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`) |
 | `location` | string \| null | How the pattern was reached when the file and line do not say it alone: a route's name and controller, or, for a pattern a call reads through a name, `via ` and that name as the first call writes it (`via self::RE`, `via static::RE`, `via Patterns::RE`, `via RE`, `via $re`, `via $this->re`); `null` for a pattern written in the call |
 | `issues` | list of objects | The issues found in the pattern, possibly empty |
 | `optimizations` | list of objects | The optimizations suggested for the pattern, possibly empty |
@@ -386,7 +386,7 @@ An issue repeats the location of its result, so it can be read alone.
 | `column` | int \| null | As in the result |
 | `file_offset` | int \| null | As in the result |
 | `position` | int \| null | Where in the pattern body the issue lies, 0-based, in bytes; `null` when it concerns the whole pattern |
-| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
+| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
 | `tip` | string \| null | A further suggestion for an invalid pattern |

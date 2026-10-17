@@ -70,6 +70,7 @@ return [
     ],
     'paths' => ['app'],
     'exclude' => ['vendor', 'node_modules', 'storage'],
+    'report_unmatched_ignores' => true, // report the @regex-ignore markers that silence nothing
     'ide' => env('PHP_REGEX_IDE', env('APP_EDITOR', null)),
 ];
 ```

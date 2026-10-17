@@ -127,6 +127,24 @@ final class DiagnosticConverter
      * The fix on the line under the error, unless the message already
      * suggests it.
      */
+    /**
+     * A warning on an inline marker that silences nothing.
+     *
+     * @param Range $range
+     *
+     * @return Diagnostic
+     */
+    public function fromUnmatchedIgnore(string $message, array $range): array
+    {
+        return [
+            'range' => $range,
+            'severity' => self::SEVERITY_WARNING,
+            'code' => 'regex.ignore.unmatched',
+            'source' => 'php-regex',
+            'message' => $message,
+        ];
+    }
+
     private static function withHint(string $message, ?string $hint): string
     {
         return null === $hint || '' === $hint || str_contains($message, $hint) ? $message : $message."\n".$hint;

@@ -49,6 +49,7 @@ namespace PHPRegex\Linter\Config;
  *     lintRules?: array<string, bool>,
  *     checkComplexity?: bool,
  *     complexityThreshold?: int,
+ *     reportUnmatchedIgnores?: bool,
  * }
  *
  * @phpstan-import-type LintConfig from LintConfigResult
@@ -80,6 +81,9 @@ final class LintDefaultsBuilder
         }
         if (isset($config['ide'])) {
             $defaults['ide'] = $config['ide'];
+        }
+        if (isset($config['reportUnmatchedIgnores'])) {
+            $defaults['reportUnmatchedIgnores'] = $config['reportUnmatchedIgnores'];
         }
 
         $extraction = $config['extraction'] ?? [];

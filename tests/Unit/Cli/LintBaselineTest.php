@@ -384,6 +384,32 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
+     * Asked for, the entries no issue takes in a file the run read are
+     * reported on their own lines: the one issue takes the entry nearest
+     * to it, the two others are left, and the entries of a file the run
+     * did not read are not reported.
+     */
+    #[Test]
+    public function test_filter_reports_the_entries_left_in_a_file_the_run_read(): void
+    {
+        $baseline = $this->baselineFrom(['version' => 1, 'issues' => [
+            self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 5),
+            self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 30),
+            self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 40),
+            self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 7),
+        ]]);
+        $report = self::report([self::lintResult([self::issueOnLine(10)], [])]);
+
+        $filtered = $baseline->filter($report, ['src/a.php']);
+
+        $this->assertSame([['src/a.php', 30], ['src/a.php', 40]], array_map(static fn (array $result): array => [$result['file'], $result['line']], $filtered->results));
+        $this->assertSame(['regex.ignore.unmatched'], array_unique(array_column(array_merge([], ...array_column($filtered->results, 'issues')), 'issueId')));
+        $this->assertSame(2, $filtered->stats['errors']);
+        $this->assertSame([], $baseline->filter($report, ['src/c.php'])->results);
+        $this->assertSame([], $baseline->filter($report)->results);
+    }
+
+    /**
      * The entries of one rule, file and pattern are aligned with its
      * issues in line order, as a diff aligns two versions of a file: the
      * issues no entry is aligned with are the inserted copies, and they are

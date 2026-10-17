@@ -391,7 +391,7 @@ final class Server
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
-            $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold);
+            $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores);
         } else {
             try {
                 $target = $this->resolveTarget($params, $root, $config);
@@ -408,7 +408,7 @@ final class Server
             }
             self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()));
 
-            $this->judgeWith(Regex::create($target->regexOptions()), $lintRules, $redosMode, $redosThreshold);
+            $this->judgeWith(Regex::create($target->regexOptions()), $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores);
         }
 
         if (null !== $root) {
@@ -641,11 +641,12 @@ final class Server
     }
 
     /**
-     * @param array<string, bool> $lintRules the lint rules turned on or off by id
+     * @param array<string, bool> $lintRules              the lint rules turned on or off by id
+     * @param bool                $reportUnmatchedIgnores whether a marker that silences nothing is a warning
      */
-    private function judgeWith(Regex $regex, array $lintRules = [], RedosMode $redosMode = RedosMode::Off, RedosSeverity $redosThreshold = RedosSeverity::High): void
+    private function judgeWith(Regex $regex, array $lintRules = [], RedosMode $redosMode = RedosMode::Off, RedosSeverity $redosThreshold = RedosSeverity::High, bool $reportUnmatchedIgnores = true): void
     {
-        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex, $lintRules, $redosMode, $redosThreshold);
+        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex, $lintRules, $redosMode, $redosThreshold, $reportUnmatchedIgnores);
         $this->codeActionHandler = new CodeActionHandler($this->documents, $regex, $lintRules);
     }
 

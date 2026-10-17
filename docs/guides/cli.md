@@ -988,6 +988,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `format`                        | string           | Output format (console, json, github, checkstyle, junit) |
 | `jobs`                          | int              | Number of parallel workers, at least 1 (default: the logical CPUs the process may use, see [Parallel workers](#parallel-workers)) |
 | `ide`                           | string           | IDE for clickable links                                  |
+| `reportUnmatchedIgnores`        | boolean          | Report the inline markers and baseline entries that silence nothing, as `regex.ignore.unmatched` (default `true`, see [Markers that silence nothing](#markers-that-silence-nothing)) |
 | `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
 | `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` the native calls only) |
@@ -1306,8 +1307,15 @@ Enable clickable file links in lint output:
 
 ### Inline Comments
 
+`// @regex-ignore` at the end of a line silences the issues of that line;
+`// @regex-ignore-next-line` silences those of the line after the comment.
+A marker starts its comment (after `//`, `#`, `/*` or `/**`) or a line of a
+doc comment: one quoted or met in the middle of a sentence is prose about the
+markers, and does nothing.
+
 ```php
-preg_match('/pattern/', $input); // @regex-ignore-next-line
+// @regex-ignore-next-line
+preg_match('/(a+)+$/', $input);
 ```
 
 A pattern read through a constant, a variable or a property is silenced on
@@ -1316,6 +1324,37 @@ the line of its literal, where it is reported, not on the call:
 ```php
 private const LEGACY = '/(a+)+$/'; // @regex-ignore
 ```
+
+A marker may name the issues it silences, comma-separated, right after it.
+The other issues of the line are still reported:
+
+```php
+preg_match('/\d+[11]/i', $input); // @regex-ignore regex.lint.flag.useless.i
+```
+
+The identifiers are the `issue_id` of the JSON report (the error code, such
+as `regex.group.unclosed`, for a pattern that does not compile). Anything
+after the list, or after a marker that names none, is a note for the reader:
+`// @regex-ignore legacy input, see #12` silences the whole line.
+
+#### Markers that silence nothing
+
+A marker left behind once its issue is fixed would silence the next issue of
+its line unseen. The lint reports each marker that silences nothing, and each
+identifier of a marker that silences no issue of that name, as an error,
+`regex.ignore.unmatched`, on the line of the marker:
+
+```text
+src/Legacy.php:14  The @regex-ignore marker silences nothing: no issue is reported on line 14. Remove it.
+src/Legacy.php:20  The @regex-ignore marker names regex.lint.redos, which no issue reports on line 20. Remove the identifier.
+```
+
+The report judges the markers against the checks the run performs: a marker
+naming `regex.lint.redos` in a run without `--redos` silences nothing in that
+run, and is reported. A run that leaves a check off on purpose passes
+`--no-report-unmatched-ignores`, and `"reportUnmatchedIgnores": false` in
+`regex.json` turns the report off for every run. The report itself is never
+silenced by a marker.
 
 ### Config Exclude
 
@@ -1477,6 +1516,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--output <file>`   | Also write the report to a file                    |
 | `--baseline <file>` | Leave out the issues a baseline file lists (see [Baseline](#baseline)); `--baseline=<file>` works too |
 | `--generate-baseline <file>` | Write every issue of this run to a baseline file; `--generate-baseline=<file>` works too |
+| `--no-report-unmatched-ignores` | Do not report the inline markers and baseline entries that silence nothing |
+| `--report-unmatched-ignores` | Report them when `regex.json` turns the report off (the default) |
 | `--redos`           | Run the ReDoS analysis, off by default             |
 | `--no-redos`        | Skip it when `regex.json` turns it on              |
 | `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
@@ -1598,6 +1639,12 @@ Both options take their file after a space or an `=`.
   `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
   lists them. Bytes that are not valid UTF-8 are written `\xHH`, so the file
   is always valid JSON.
+- **Entries that match nothing.** An entry no issue takes any more, the
+  issue fixed or its pattern removed, is reported as `regex.ignore.unmatched`
+  on the entry's file and line: remove it, or generate the baseline again.
+  Only the files the run reads are judged, so a run over `src/Controller`
+  says nothing of the entries of `src/Legacy`. `--no-report-unmatched-ignores`
+  turns the report off, as it does for the inline markers.
 - **A 1.x baseline**, a plain list, is refused like any non-baseline file:
   exit code 2, `stage: "usage"` in JSON, before anything is scanned — even on
   a run that also passes `--generate-baseline`. Regenerate it once.

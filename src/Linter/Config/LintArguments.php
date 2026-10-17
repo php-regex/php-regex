@@ -28,10 +28,12 @@ final class LintArguments
      * @param "debug"|"normal"|"quiet"|"verbose" $verbosity
      * @param array<string, bool|int>            $optimizations
      * @param array<string, bool>                $lintRules
-     * @param array<int, string>                 $interop             enabled wrapper presets
-     * @param array<int, string>                 $patternFunctions    extra calls carrying a pattern
-     * @param int                                $complexityThreshold the complexity score from which a pattern is
-     *                                                                reported, once checkComplexity turns it on
+     * @param array<int, string>                 $interop                enabled wrapper presets
+     * @param array<int, string>                 $patternFunctions       extra calls carrying a pattern
+     * @param int                                $complexityThreshold    the complexity score from which a pattern is
+     *                                                                   reported, once checkComplexity turns it on
+     * @param bool                               $reportUnmatchedIgnores whether an inline marker or a baseline entry
+     *                                                                   that silences nothing is reported
      */
     public function __construct(
         public readonly array $paths,
@@ -57,6 +59,7 @@ final class LintArguments
         public readonly array $patternFunctions = [],
         public readonly bool $checkComplexity = false,
         public readonly int $complexityThreshold = 50,
+        public readonly bool $reportUnmatchedIgnores = true,
     ) {}
 
     /**
@@ -144,6 +147,11 @@ final class LintArguments
         $complexityThreshold = $defaults['complexityThreshold'] ?? 50;
         if (!\is_int($complexityThreshold) || $complexityThreshold < 1) {
             $complexityThreshold = 50;
+        }
+
+        $reportUnmatchedIgnores = $defaults['reportUnmatchedIgnores'] ?? true;
+        if (!\is_bool($reportUnmatchedIgnores)) {
+            $reportUnmatchedIgnores = true;
         }
 
         $jobs = $defaults['jobs'] ?? -1; // -1 means auto-detect
@@ -243,6 +251,7 @@ final class LintArguments
             $patternFunctions,
             $checkComplexity,
             $complexityThreshold,
+            $reportUnmatchedIgnores,
         );
     }
 
