@@ -20,20 +20,24 @@
   </button>
   <nav aria-label="Main" id="main-nav">
     {%- comment -%}
-      Which area the reader is already in. The guides area and the tutorial
-      track have a link of their own; every other documentation page is the
-      docs area. The landing and the error page belong to none, so
-      none is marked there.
+      Three destinations, three intents - consult, learn, read - each a
+      word a visitor holds a meaning for. The header once listed Docs,
+      Guides and Tutorial side by side: three near-synonyms speaking the
+      site's org chart, not the reader's intent. The guides live inside
+      the docs now - the Docs front door routes to them by task, the
+      sidebar carries them as its Integrations section - and the blog
+      takes the name its own page and the footer already use: Articles.
+      The area marked current is where the reader already is; every
+      documentation page that is neither the tutorial track nor the
+      articles belongs to the docs area.
     {%- endcomment -%}
     {%- assign here = 'docs' -%}
-    {%- if page.url contains '/guides/' %}{% assign here = 'guides' %}{% endif -%}
-    {%- if page.url contains '/tutorial/' %}{% assign here = 'tutorial' %}{% endif -%}
-    {%- if page.url contains '/blog/' %}{% assign here = 'blog' %}{% endif -%}
+    {%- if page.url contains '/tutorial/' %}{% assign here = 'learn' %}{% endif -%}
+    {%- if page.url contains '/blog/' %}{% assign here = 'articles' %}{% endif -%}
     {%- if page.layout == 'landing' or page.layout == 'error' %}{% assign here = '' %}{% endif -%}
     <a href="/docs/"{% if here == 'docs' %} aria-current="page"{% endif %}>Docs</a>
-    <a href="/guides/"{% if here == 'guides' %} aria-current="page"{% endif %}>Guides</a>
-    <a href="/tutorial/"{% if here == 'tutorial' %} aria-current="page"{% endif %}>Tutorial</a>
-    <a href="/blog/"{% if here == 'blog' %} aria-current="page"{% endif %}>Blog</a>
+    <a href="/tutorial/"{% if here == 'learn' %} aria-current="page"{% endif %}>Learn</a>
+    <a href="/blog/"{% if here == 'articles' %} aria-current="page"{% endif %}>Articles</a>
     <a href="https://github.com/php-regex/php-regex">GitHub</a>
   </nav>
   <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
