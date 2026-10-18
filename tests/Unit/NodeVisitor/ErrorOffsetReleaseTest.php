@@ -89,6 +89,26 @@ final class ErrorOffsetReleaseTest extends TestCase
     }
 
     /**
+     * A count PCRE2 refuses right after "\N" is refused where the "\N" ends:
+     * check_escape() reads the count to tell it from a character name and
+     * keeps its own place (php:8.0-cli, 8.1, 8.3 and 8.5, PCRE2 10.35 to
+     * 10.44, and PHP 8.4.26 with PCRE2 10.49: the same offsets).
+     */
+    #[Test]
+    public function test_a_count_refused_after_n_is_refused_where_the_n_ends(): void
+    {
+        foreach (['10.35', '10.39', '10.42', '10.44', '10.49'] as $release) {
+            $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release]);
+
+            foreach (['/a\N{0,65536}/' => 3, '/\N{65536}/' => 2, '/a\N{2,1}/' => 3, '/a\N{70000,}/' => 3] as $pattern => $offset) {
+                $result = $regex->validate($pattern);
+                $this->assertFalse($result->isValid, $pattern.' on PCRE2 '.$release);
+                $this->assertSame($offset, $result->offset, $pattern.' on PCRE2 '.$release);
+            }
+        }
+    }
+
+    /**
      * "\o" with no "{" after it is refused where the "{" should be, but on
      * the "o" when the pattern ends there: check_escape() steps back from
      * the end (pcre2test 10.32, 10.39, 10.44 and 10.45: offset 1 for "/\o/",

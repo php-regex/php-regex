@@ -356,6 +356,7 @@ final class BadEscapeIsLiteralTest extends TestCase
         yield 'x past Unicode, its braces a count past 65535' => ['pattern' => '/\x{110000}/u', 'offset' => 9];
         yield 'o naming a surrogate, its braces a count past 65535' => ['pattern' => '/\o{154000}/u', 'offset' => 9];
         yield 'g past 214748363, its braces a count past 65535' => ['pattern' => '/\g{214748364}/', 'offset' => 9];
+        yield 'N and a count past 65535, read again as a count' => ['pattern' => '/a\N{0,65536}/', 'offset' => 11];
     }
 
     /**

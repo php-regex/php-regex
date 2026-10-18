@@ -738,10 +738,15 @@ final class Validator extends AbstractNodeVisitor
         // PCRE caps repetition counts at 65535, and checks each number as
         // it reads it, before it compares the two.
         [$minEnd, $maxEnd] = $this->quantifierNumberEnds($node);
+
+        // Right after "\N", PCRE reads the count to tell it from a character
+        // name, and refuses it where the "\N" ends.
+        $afterN = $node->node instanceof CharTypeNode && 'N' === $node->node->value && null !== $this->source
+            && '{' === ($this->source[$node->node->getEndPosition()] ?? '') ? $node->node->getEndPosition() : null;
         if ($min > 65535 || $max > 65535) {
             $this->raiseSemanticError(
                 \sprintf('Number too big in "%s" quantifier: PCRE allows at most 65535 repetitions.', $node->quantifier),
-                $min > 65535 ? $minEnd : $maxEnd,
+                $afterN ?? ($min > 65535 ? $minEnd : $maxEnd),
                 ErrorCode::QuantifierTooBig,
             );
         }
@@ -749,7 +754,7 @@ final class Validator extends AbstractNodeVisitor
         if (-1 !== $max && $min > $max) {
             $this->raiseSemanticError(
                 \sprintf('Invalid quantifier range "%s": min > max.', $node->quantifier),
-                $maxEnd,
+                $afterN ?? $maxEnd,
                 ErrorCode::QuantifierInvalidRange,
                 \sprintf('Write the smaller count first: "{%d,%d}".', $max, $min),
             );

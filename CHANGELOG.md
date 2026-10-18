@@ -329,6 +329,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A count PCRE2 refuses right after `\N`, `\N{65536}` or `a\N{2,1}`, is refused where the `\N` ends, as PCRE2 10.35 to 10.49 report it (`a\N{0,65536}`: offset 3), where the offset pointed past the number.
 - A `\o` that ends the pattern, with no `{` after it, is refused on the `o` for PCRE2 10.46 and earlier, as PCRE2 reports it (pcre2test 10.32 to 10.45: offset 1 for `/\o/`), where the offset pointed past it.
 - A braced property name left open, as `\p{aaa…`, is malformed where PCRE2 10.39 and older stop reading it, 31 bytes past the brace and its `^`, spaces counted, for PHP 8.1 and older: it was reported where 10.40 stops, up to 49 characters on, skipping spaces.
 - `format()`, `compact()` and `regex format` escape a hyphen that a space skipped under `(?xx)` kept a member of a class, `(?xx)[\d -z]` into `(?xx)[\d\-z]`, for the targets up to PCRE2 10.44 that accept the pattern: they wrote `[\d-z]`, a range every release refuses, and threw `FormattingException`. The escaped form matches what the pattern matches on pcre2test 10.32 to 10.44 and on PHP 7.3 to 8.5 with their bundled PCRE2.
