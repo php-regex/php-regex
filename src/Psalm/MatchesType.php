@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Psalm\Internal;
+namespace PHPRegex\Psalm;
 
 use PHPRegex\Parser\Analysis\CaptureGroupShape;
 use PHPRegex\Parser\Analysis\CaptureShape;

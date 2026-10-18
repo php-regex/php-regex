@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Psalm\Internal;
+namespace PHPRegex\Psalm;
 
 use PhpParser\Error;
 use PhpParser\Node\Arg;
@@ -72,7 +72,6 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Psalm\Plugin;
 use Psalm\Codebase;
 use Psalm\CodeLocation;
 use Psalm\Config;

@@ -15,9 +15,6 @@ namespace PHPRegex\Psalm;
 
 use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Psalm\Internal\CallbackParameters;
-use PHPRegex\Psalm\Internal\PregCallAnalyzer;
-use PHPRegex\Psalm\Internal\TargetMarkerAnalyzer;
 use Psalm\Plugin\PluginEntryPointInterface;
 use Psalm\Plugin\RegistrationInterface;
 

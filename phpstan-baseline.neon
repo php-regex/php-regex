@@ -10,61 +10,61 @@ parameters:
 			rawMessage: Instanceof references internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
 			identifier: instanceof.internalClass
 			count: 1
-			path: src/Psalm/Internal/CallbackParameters.php
+			path: src/Psalm/CallbackParameters.php
 
 		-
 			rawMessage: 'Call to function method_exists() with Psalm\Internal\Codebase\Functions and ''functionExists'' will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 1
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Call to function method_exists() with Psalm\Internal\Provider\NodeDataProvider and ''setIfFalseAssertions'' will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 2
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Call to function method_exists() with Psalm\Internal\Provider\NodeDataProvider and ''setIfTrueAssertions'' will always evaluate to true.'
 			identifier: function.alreadyNarrowedType
 			count: 2
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Call to method functionExists() of internal class Psalm\Internal\Codebase\Functions from outside its root namespace Psalm.'
 			identifier: method.internalClass
 			count: 1
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Call to method setIfFalseAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
 			identifier: method.internalClass
 			count: 2
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Call to method setIfTrueAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
 			identifier: method.internalClass
 			count: 2
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Call to static method analyze() of internal class Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer from outside its root namespace Psalm.'
 			identifier: staticMethod.internalClass
 			count: 1
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: Instanceof references internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
 			identifier: instanceof.internalClass
 			count: 2
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: Instanceof references internal class Psalm\Internal\Provider\NodeDataProvider.
 			identifier: instanceof.internalClass
 			count: 2
-			path: src/Psalm/Internal/PregCallAnalyzer.php
+			path: src/Psalm/PregCallAnalyzer.php
 
 		-
 			rawMessage: 'Parameter #1 $config of class PHPRegex\PHPStan\PatternChecker constructor expects array{phpVersion?: int|string|null, pcreVersion?: string|null, interop?: list<string>|null, checks?: array{lint?: array{enabled?: bool}, redos?: array{enabled?: bool, threshold?: string}, optimizations?: array{enabled?: bool, minSavings?: int, options?: array{digits?: bool, word?: bool, ranges?: bool, canonicalizeCharClasses?: bool, possessive?: bool, factorize?: bool, minQuantifierCount?: int, verifyWithAutomata?: bool}}, complexity?: array{enabled?: bool, threshold?: int}}, noNewMixed?: array{enabled?: bool, baseline?: string|null, paths?: list<string>}}, array{checks: array{complexity: array{enabled: false, threshold: mixed}}} given.'

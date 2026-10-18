@@ -17,7 +17,7 @@ use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Psalm\Internal\MatchesType;
+use PHPRegex\Psalm\MatchesType;
 use PHPRegex\Tests\Integration\Bridge\PHPStan\EngineMatches;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
