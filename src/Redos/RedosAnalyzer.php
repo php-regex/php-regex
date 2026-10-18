@@ -15,8 +15,8 @@ namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Backtrack\ModelLimit;
 use PHPRegex\Redos\Backtrack\ProofResult;

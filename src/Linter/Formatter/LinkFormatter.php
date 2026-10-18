@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Formatter;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * @internal

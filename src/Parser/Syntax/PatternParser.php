@@ -11,12 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Syntax;
 
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\PhpVersionGates;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * @internal

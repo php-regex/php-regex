@@ -48,8 +48,6 @@ use PHPRegex\Parser\Hir\LookHir;
 use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CalloutNode;
@@ -63,6 +61,8 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\TraversalAction;
 
 /**

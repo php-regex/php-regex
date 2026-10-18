@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The value of a constant PHP string literal, read as PHP reads it.

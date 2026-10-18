@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Whether a source file fits in the memory left for analysing it.

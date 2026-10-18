@@ -20,7 +20,7 @@ use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
-use PHPRegex\Parser\Internal\JsonEncodingFailure;
+use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;

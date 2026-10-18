@@ -16,8 +16,6 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\Analysis\ByteCharSet;
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -27,6 +25,8 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * A "$" that ends a pattern anchored at its start, read without D and

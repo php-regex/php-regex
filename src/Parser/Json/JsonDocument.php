@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Json;
 
 /**
  * One JSON document as every command prints it: pretty-printed, slashes and

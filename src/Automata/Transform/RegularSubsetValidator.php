@@ -15,15 +15,15 @@ namespace PHPRegex\Automata\Transform;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * The gate in front of the automata solver: the flags it reads, the

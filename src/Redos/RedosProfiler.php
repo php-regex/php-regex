@@ -15,7 +15,6 @@ namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
-use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -50,6 +49,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Analyzes the AST to detect ReDoS vulnerabilities.

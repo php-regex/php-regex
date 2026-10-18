@@ -15,7 +15,7 @@ namespace PHPRegex\LanguageServer\Document;
 
 use PHPRegex\Linter\Extraction\MemoryBudget;
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The functions and static methods that declare a parameter with

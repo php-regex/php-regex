@@ -16,7 +16,7 @@ namespace PHPRegex\Laravel\Extractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * Extracts regex patterns from Laravel validation rules.

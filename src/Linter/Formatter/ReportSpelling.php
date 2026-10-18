@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Formatter;
 
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\DisplayEscaper;
-use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * How a report spells the text it quotes.

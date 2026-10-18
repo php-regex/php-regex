@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Internal\GroupIndex;
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;

@@ -33,7 +33,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * what production sees, so it stays out of the engine.
      */
     private const OWN_REGEX_FILES = [
-        'src/Parser/Internal/LibraryPcre.php',
+        'src/Parser/Engine/LibraryPcre.php',
         'src/Parser/Analysis/CharSetAnalyzer.php',
         'src/Automata/Transform/HirToNfaTransformer.php',
         'src/Automata/Transform/RegularSubsetValidator.php',
@@ -47,14 +47,14 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Cli/Command/LintCommand.php',
         'src/Cli/Command/RedosCommand.php',
         'src/Cli/SelfUpdate/SelfUpdater.php',
-        'src/Parser/Internal/CodePointReader.php',
-        'src/Parser/Internal/DisplayEscaper.php',
-        'src/Parser/Internal/ExtendedClassReader.php',
-        'src/Parser/Internal/GroupNameReader.php',
-        'src/Parser/Internal/InlineFlags.php',
-        'src/Parser/Internal/PatternParser.php',
-        'src/Parser/Internal/PcreVerb.php',
-        'src/Parser/Internal/VersionCondition.php',
+        'src/Parser/Syntax/CodePointReader.php',
+        'src/Parser/Text/DisplayEscaper.php',
+        'src/Parser/Syntax/ExtendedClassReader.php',
+        'src/Parser/Syntax/GroupNameReader.php',
+        'src/Parser/Syntax/InlineFlags.php',
+        'src/Parser/Syntax/PatternParser.php',
+        'src/Parser/Syntax/PcreVerb.php',
+        'src/Parser/Syntax/VersionCondition.php',
         'src/Parser/Lexer.php',
         'src/Linter/Config/LintConfigValidator.php',
         'src/Linter/Config/ProjectTarget.php',
@@ -102,7 +102,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * The one place a regex the library owns runs: under at least PHP's
      * default backtrack and recursion limits, whatever the caller set.
      */
-    private const LIBRARY_PCRE = 'src/Parser/Internal/LibraryPcre.php';
+    private const LIBRARY_PCRE = 'src/Parser/Engine/LibraryPcre.php';
 
     /**
      * The CLI benchmark runs the user's pattern with the JIT and the
@@ -121,7 +121,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
      * the engine, the Lexer for its own tokenizing regexes, the benchmark.
      */
     private const LAST_ERROR_READERS = [
-        'src/Parser/Internal/LibraryPcre.php',
+        'src/Parser/Engine/LibraryPcre.php',
         'src/Parser/Lexer.php',
         'src/Cli/Command/RedosCommand.php',
     ];

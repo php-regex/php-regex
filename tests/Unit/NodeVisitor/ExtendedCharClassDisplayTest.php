@@ -24,7 +24,7 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\Analysis\ComplexityScorer;
 use PHPRegex\Parser\Analysis\MetricsCollector;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\NodeDumper;

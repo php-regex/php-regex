@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
-use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -27,6 +26,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Detects duplicate alternation branches.

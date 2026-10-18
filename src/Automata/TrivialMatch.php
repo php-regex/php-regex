@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata;
 
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * A string function that returns true for exactly the subjects preg_match()

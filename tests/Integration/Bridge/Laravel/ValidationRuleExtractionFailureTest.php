@@ -18,7 +18,7 @@ use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -110,7 +110,7 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
     {
         $project = $this->makeProject(['app/Rules.php' => "<?php\n\$rules = ['code' => 'regex:/^[a-z]+$/'];\n"]);
         $script = 'require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
-            .'use PHPRegex\Parser\Internal\LibraryPcre;'
+            .'use PHPRegex\Parser\Engine\LibraryPcre;'
             .'LibraryPcre::useIniSetter(static fn (string $key, string $value): string|false => ini_set($key, "pcre.recursion_limit" === $key && (string) LibraryPcre::RECURSION_LIMIT_FLOOR === $value ? "1" : $value));'
             .'ini_set("pcre.recursion_limit", (string) (LibraryPcre::RECURSION_LIMIT_FLOOR - 1));'
             .'$source = new \PHPRegex\Laravel\Extractor\ValidationRulePatternSource();'

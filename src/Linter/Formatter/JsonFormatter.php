@@ -17,8 +17,8 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
-use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\JsonEncodingFailure;
+use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 

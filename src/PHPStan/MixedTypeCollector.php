@@ -25,7 +25,7 @@ use PhpParser\Node\Stmt\ClassLike;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Function_;
 use PhpParser\Node\Stmt\Property;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
 use PHPStan\PhpDocParser\Ast\AbstractNodeVisitor;

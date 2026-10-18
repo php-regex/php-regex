@@ -98,7 +98,7 @@ final class CaseWithoutIntlTest extends TestCase
         }
         sort($readers);
 
-        $this->assertSame(['src/Linter/Rule/SuspiciousEscapeRule.php', 'src/Parser/Internal/CodePointReader.php'], $readers);
+        $this->assertSame(['src/Linter/Rule/SuspiciousEscapeRule.php', 'src/Parser/Syntax/CodePointReader.php'], $readers);
     }
 
     /**

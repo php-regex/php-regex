@@ -17,7 +17,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
-use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -11,7 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Text;
+
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * Escapes bytes that would break the layout of a terminal or a rendered

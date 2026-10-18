@@ -14,8 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CodePoints;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -25,6 +24,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Detects a useless 'i' flag: the pattern contains no case-sensitive

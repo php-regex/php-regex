@@ -19,11 +19,8 @@ use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Exception\RegexException;
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Internal\StartOptions;
-use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -36,6 +33,9 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * The questions lint rules put to the automata, about patterns built from

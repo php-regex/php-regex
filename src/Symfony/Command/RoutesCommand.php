@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Command;
 
-use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Symfony\Routing\RouteConflictReport;
 use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;

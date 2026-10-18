@@ -18,7 +18,7 @@ use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Finds regex patterns in PHP source code as `regex lint` finds them: the

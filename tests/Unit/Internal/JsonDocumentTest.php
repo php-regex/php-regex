@@ -15,8 +15,8 @@ namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\JsonEncodingFailure;
+use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Json\JsonEncodingFailure;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Stops the proof: the pattern holds a construct the model leaves out, or

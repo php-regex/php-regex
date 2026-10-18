@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\CaptureKey;
-use PHPRegex\Parser\Internal\CaptureLayout;
 
 /**
  * What a successful preg_match() writes into $matches, read from the pattern

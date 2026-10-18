@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser;
 
 /**
  * Every PHP version a rule of the library changes at, by name: the parser

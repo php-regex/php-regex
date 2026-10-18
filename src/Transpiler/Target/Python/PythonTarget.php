@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\Python;
 
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Transpiler\Target\TargetInterface;
 use PHPRegex\Transpiler\TranspileContext;
 use PHPRegex\Transpiler\TranspileException;

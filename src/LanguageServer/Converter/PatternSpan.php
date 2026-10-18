@@ -15,7 +15,7 @@ namespace PHPRegex\LanguageServer\Converter;
 
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\Linter\Extraction\PhpStringLiteral;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Where the text of a pattern lies in its document. The library counts in

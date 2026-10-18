@@ -16,7 +16,7 @@ namespace PHPRegex\Laravel\Command;
 use Illuminate\Console\Command;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;

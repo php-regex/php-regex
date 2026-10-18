@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\TestUtils;
 
 use PHPRegex\Linter\SilentMeaningChange;
-use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Integration\Bridge\Rector\PossessiveRepeatOnceRector\PossessiveRepeatOnceWitnessTest;
 use PHPRegex\Tests\Support\ReplaySubjects;

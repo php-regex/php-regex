@@ -17,7 +17,7 @@ use Illuminate\Console\Command;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Output\OutputInterface;
 

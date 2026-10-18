@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Hir;
 
-use PHPRegex\Parser\Internal\Bytes;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Code points to and from the subject's bytes: UTF-8 under /u, one byte

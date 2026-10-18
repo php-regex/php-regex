@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

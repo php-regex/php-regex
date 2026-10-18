@@ -20,9 +20,9 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Validation\ValidationResult;
 
 /**

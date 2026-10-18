@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Linter\Extraction\InteropPresets;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\NearMiss;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\NearMiss;
 
 /**
  * Checks a decoded regex.json against LintConfigSchema::definition().

@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Code-point parsing and hint-formatting helpers shared by lint rules.

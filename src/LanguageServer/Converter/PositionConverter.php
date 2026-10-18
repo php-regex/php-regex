@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\LanguageServer\Converter;
 
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * Converts between byte offsets and LSP line/column positions.

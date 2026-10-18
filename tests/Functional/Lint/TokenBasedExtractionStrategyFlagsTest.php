@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Functional\Lint;
 
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPUnit\Framework\TestCase;
 
 /**

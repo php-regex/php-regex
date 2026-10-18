@@ -16,7 +16,7 @@ namespace PHPRegex\Symfony\Extractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use Symfony\Component\Config\Resource\FileResource;
 use Symfony\Component\Routing\Route;

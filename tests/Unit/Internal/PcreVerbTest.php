@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\Internal\PcreVerb;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;

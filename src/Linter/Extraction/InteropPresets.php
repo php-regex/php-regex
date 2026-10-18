@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\NearMiss;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\NearMiss;
 
 /**
  * Known regex wrappers shipped by third-party libraries.

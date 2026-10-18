@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
-use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\RegexParser;

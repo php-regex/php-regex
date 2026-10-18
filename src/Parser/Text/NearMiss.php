@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Text;
 
 /**
  * The names a near miss most likely meant, for a "Did you mean": a

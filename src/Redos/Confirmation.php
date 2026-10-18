@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos;
 
-use PHPRegex\Parser\Internal\IniFlag;
+use PHPRegex\Parser\Engine\IniFlag;
 
 /**
  * Represents evidence gathered from a bounded confirmation run.

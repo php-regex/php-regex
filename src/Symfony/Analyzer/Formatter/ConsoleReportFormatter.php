@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Analyzer\Formatter;
 
-use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Symfony\Analyzer\AnalysisNotice;
 use PHPRegex\Symfony\Analyzer\CheckOutcome;
 use PHPRegex\Symfony\Analyzer\IssueDetail;

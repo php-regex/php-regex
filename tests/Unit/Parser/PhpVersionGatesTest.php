@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
-use PHPRegex\Parser\Internal\PhpVersionGates;
+use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class PhpVersionGatesTest extends TestCase
 {
-    private const GATE_CLASS = 'src/Parser/Internal/PhpVersionGates.php';
+    private const GATE_CLASS = 'src/Parser/PhpVersionGates.php';
 
     private const COMPARISONS = [\T_IS_SMALLER_OR_EQUAL, \T_IS_GREATER_OR_EQUAL, \T_IS_EQUAL, \T_IS_IDENTICAL, \T_IS_NOT_EQUAL, \T_IS_NOT_IDENTICAL, \T_SPACESHIP];
 

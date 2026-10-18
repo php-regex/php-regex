@@ -14,12 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\InlineFlags;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\StartOptions;
-use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -53,6 +49,10 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Compiler that recompiles regex AST back into optimized strings.

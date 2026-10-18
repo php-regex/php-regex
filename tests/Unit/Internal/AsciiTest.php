@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Internal;
 
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\Bytes;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -164,7 +164,7 @@ final class AsciiTest extends TestCase
     public function test_packages_on_php_8_1_call_no_locale_dependent_case_mapping(): void
     {
         $forbidden = ['strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'ucwords', 'stripos', 'stristr', 'strripos', 'str_ireplace', 'str_split'];
-        $helpers = [realpath(__DIR__.'/../../../src/Parser/Internal/Ascii.php'), realpath(__DIR__.'/../../../src/Parser/Internal/Bytes.php')];
+        $helpers = [realpath(__DIR__.'/../../../src/Parser/Text/Ascii.php'), realpath(__DIR__.'/../../../src/Parser/Text/Bytes.php')];
         // Psalm keys its functions by strtolower(): the plugin asks for a
         // name lowered the same way.
         $sameAsTheHost = ['Psalm/PregCallAnalyzer.php:'];

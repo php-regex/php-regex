@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPUnit\Framework\TestCase;
 
 final class ParserInternalErrorTest extends TestCase

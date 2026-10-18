@@ -16,8 +16,6 @@ namespace PHPRegex\Redos\Backtrack;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\Utf8;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -37,6 +35,8 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Redos\RedosSearchCost;
 
 /**

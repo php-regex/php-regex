@@ -16,10 +16,10 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\NearMiss;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Text\NearMiss;
 
 /**
  * @internal

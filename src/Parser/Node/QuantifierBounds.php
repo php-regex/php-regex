@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Node;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * Canonical parsed form of a quantifier token.

@@ -36,7 +36,7 @@ use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;

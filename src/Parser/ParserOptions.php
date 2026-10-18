@@ -17,9 +17,9 @@ use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Cache\FilesystemCache;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Configuration options for Regex parser.

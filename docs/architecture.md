@@ -24,7 +24,7 @@ PHPRegex treats a regex literal as structured input:
 - Delimiter (the chosen boundary character)
 - Flags (`i`, `m`, `s`, `u`, `x`, and more)
 
-This happens in `PHPRegex\Parser\Internal\PatternParser`. The output is then passed to the lexer.
+This happens in `PHPRegex\Parser\Syntax\PatternParser`. The output is then passed to the lexer.
 
 ## Step 2: Lexer (Tokenization)
 

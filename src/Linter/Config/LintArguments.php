@@ -15,7 +15,7 @@ namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * @internal

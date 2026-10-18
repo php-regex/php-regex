@@ -11,7 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Syntax;
+
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The escapes PCRE2 refuses as it reads them, which PHP 7.3 and 7.4 read as

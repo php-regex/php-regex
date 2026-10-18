@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
-use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -35,6 +34,7 @@ use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * @internal

@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lexer;
 
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Token\TokenType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

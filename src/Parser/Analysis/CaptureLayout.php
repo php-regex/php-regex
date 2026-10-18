@@ -11,11 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
-
-use PHPRegex\Parser\Analysis\CaptureGroupShape;
-use PHPRegex\Parser\Analysis\CaptureShape;
-use PHPRegex\Parser\Analysis\Participation;
+namespace PHPRegex\Parser\Analysis;
 
 /**
  * The keys preg_match() or preg_match_all() writes into $matches, in the

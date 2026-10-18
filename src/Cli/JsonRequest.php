@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Whether a command line asks for JSON: --format=json, --format json or

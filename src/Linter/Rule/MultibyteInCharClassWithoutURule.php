@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\LintSeverity;
-use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Detects a multibyte character written in a character class without /u:

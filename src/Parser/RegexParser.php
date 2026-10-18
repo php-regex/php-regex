@@ -21,6 +21,7 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\LexerException;
@@ -30,16 +31,15 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Exception\VisualContextInterface;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Internal\PcreVerb;
-use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\TokenParser;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -73,7 +73,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-9982f1b80e892a4ed381970abc8f19a0';
+    public const CACHE_VERSION = 'ast-697a2deff5f965d4cfdd96e22ceaffe5';
 
     /**
      * Default maximum allowed regex pattern length.

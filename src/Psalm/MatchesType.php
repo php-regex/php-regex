@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Psalm;
 
 use PHPRegex\Parser\Analysis\CaptureGroupShape;
+use PHPRegex\Parser\Analysis\CaptureKey;
+use PHPRegex\Parser\Analysis\CaptureLayout;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\CaptureKey;
-use PHPRegex\Parser\Internal\CaptureLayout;
 use Psalm\Config;
 use Psalm\Type;
 use Psalm\Type\Atomic\TArray;

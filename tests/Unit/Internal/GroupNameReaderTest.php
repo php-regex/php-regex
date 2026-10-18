@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\GroupNameReader;
+use PHPRegex\Parser\Syntax\GroupNameReader;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;

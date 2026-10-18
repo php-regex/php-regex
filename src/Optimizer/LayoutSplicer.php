@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\Exception\RegexException;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -25,6 +24,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 
 /**
  * A rewritten tree written into the text of the tree it was rewritten from:

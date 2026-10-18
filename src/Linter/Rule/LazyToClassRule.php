@@ -16,8 +16,6 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
-use PHPRegex\Parser\Internal\PatternParser;
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -25,6 +23,8 @@ use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * A perf rule: '".*?"' backtracks one character at a time where

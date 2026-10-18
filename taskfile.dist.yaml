@@ -67,20 +67,25 @@ tasks:
       - cmd: php tests/Tools/update_cache_version.php
     sources:
       - src/Parser/Lexer.php
-      - src/Parser/Syntax/TokenParser.php
+      - src/Parser/Syntax/*.php
+      - src/Parser/Text/*.php
       - src/Parser/Token/Token.php
       - src/Parser/Token/TokenStream.php
       - src/Parser/Token/TokenType.php
       - src/Parser/Node/**/*.php
-      - src/Parser/Internal/**/*.php
       - src/Parser/Validation/Validator.php
       - src/Parser/PcreTarget.php
       - src/Parser/PcreFeature.php
+      - src/Parser/PhpVersionGates.php
       - src/Parser/NodeWalker.php
       - src/Parser/TraversalAction.php
       - src/Parser/Analysis/GroupNumbering*.php
       - src/Parser/Analysis/LengthRangeCalculator.php
+      - src/Parser/Analysis/GroupIndex.php
+      - src/Parser/Analysis/LookbehindLength.php
       - src/Parser/Engine/PcreEngine.php
+      - src/Parser/Engine/LibraryPcre.php
+      - src/Parser/Engine/NoJit.php
       - src/Parser/RegexParser.php
       - src/Parser/Hir/*.php
       - src/Automata/LanguageSolver.php

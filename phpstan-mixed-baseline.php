@@ -109,20 +109,20 @@ return [
     'src/Parser/Cache/PsrSimpleCacheAdapter.php' => [
         'PHPRegex\Parser\Cache\PsrSimpleCacheAdapter::__construct()' => ['callback-opaque', 1],
     ],
-    'src/Parser/Internal/JsonDocument.php' => [
-        'PHPRegex\Parser\Internal\JsonDocument::encode()' => ['reflection-sink', 1],
-        'PHPRegex\Parser\Internal\JsonDocument::error()' => ['reflection-sink', 1],
-        'PHPRegex\Parser\Internal\JsonDocument::escapeArray()' => ['reflection-sink', 2],
-        'PHPRegex\Parser\Internal\JsonDocument::escapeValue()' => ['reflection-sink', 2],
+    'src/Parser/Json/JsonDocument.php' => [
+        'PHPRegex\Parser\Json\JsonDocument::encode()' => ['reflection-sink', 1],
+        'PHPRegex\Parser\Json\JsonDocument::error()' => ['reflection-sink', 1],
+        'PHPRegex\Parser\Json\JsonDocument::escapeArray()' => ['reflection-sink', 2],
+        'PHPRegex\Parser\Json\JsonDocument::escapeValue()' => ['reflection-sink', 2],
     ],
-    'src/Parser/Internal/LibraryPcre.php' => [
-        'PHPRegex\Parser\Internal\LibraryPcre::match()' => ['preg-mirror', 1],
-        'PHPRegex\Parser\Internal\LibraryPcre::matchAll()' => ['preg-mirror', 2],
-        'PHPRegex\Parser\Internal\LibraryPcre::quantity()' => ['host-return', 1],
-        'PHPRegex\Parser\Internal\LibraryPcre::quietly()' => ['template-identity', 1],
-        'PHPRegex\Parser\Internal\LibraryPcre::replace()' => ['preg-mirror', 1],
-        'PHPRegex\Parser\Internal\LibraryPcre::replaceCallback()' => ['preg-mirror', 1],
-        'PHPRegex\Parser\Internal\LibraryPcre::run()' => ['template-identity', 1],
+    'src/Parser/Engine/LibraryPcre.php' => [
+        'PHPRegex\Parser\Engine\LibraryPcre::match()' => ['preg-mirror', 1],
+        'PHPRegex\Parser\Engine\LibraryPcre::matchAll()' => ['preg-mirror', 2],
+        'PHPRegex\Parser\Engine\LibraryPcre::quantity()' => ['host-return', 1],
+        'PHPRegex\Parser\Engine\LibraryPcre::quietly()' => ['template-identity', 1],
+        'PHPRegex\Parser\Engine\LibraryPcre::replace()' => ['preg-mirror', 1],
+        'PHPRegex\Parser\Engine\LibraryPcre::replaceCallback()' => ['preg-mirror', 1],
+        'PHPRegex\Parser\Engine\LibraryPcre::run()' => ['template-identity', 1],
     ],
     'src/Parser/ParserOptions.php' => [
         'PHPRegex\Parser\ParserOptions::createCache()' => ['validator-input', 1],

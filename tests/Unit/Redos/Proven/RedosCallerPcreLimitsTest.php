@@ -15,10 +15,10 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Generator\SampleGenerationException;
 use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\RegexException;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;

@@ -14,8 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\PhpVersionGates;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The PHP version and the PCRE2 release a pattern is judged for.

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Analyzer\Formatter;
 
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
 
 /**

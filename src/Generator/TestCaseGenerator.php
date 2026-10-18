@@ -15,7 +15,6 @@ namespace PHPRegex\Generator;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\PcreEngine;
-use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -47,6 +46,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Generates test cases (matching and non-matching strings) for a regex pattern.

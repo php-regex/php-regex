@@ -16,7 +16,7 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * JUnit XML output formatter.

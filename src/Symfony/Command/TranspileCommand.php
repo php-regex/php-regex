@@ -15,7 +15,7 @@ namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;

@@ -11,9 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Syntax;
 
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\CharLiteralType;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Reads the code point an escape stands for.

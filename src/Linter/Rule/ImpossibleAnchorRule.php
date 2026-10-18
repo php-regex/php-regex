@@ -16,7 +16,6 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -25,6 +24,7 @@ use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * Detects start anchors after consuming characters and end anchors before

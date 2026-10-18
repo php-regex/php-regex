@@ -15,12 +15,12 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PcreGates;

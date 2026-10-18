@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Solver;
 
 use PHPRegex\Automata\Model\Dfa;
-use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Cache\StaticCaches;
 
 /**
  * In-memory cache for DFAs. It keeps as many automata as the library's other

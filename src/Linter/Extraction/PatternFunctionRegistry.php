@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The set of calls an extractor treats as carrying a regex pattern.

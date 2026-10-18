@@ -13,10 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
-use PHPRegex\Parser\Internal\GroupIndex;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PropertyNames;
-use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -34,6 +32,8 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\PropertyNames;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\TraversalAction;
 
 /**

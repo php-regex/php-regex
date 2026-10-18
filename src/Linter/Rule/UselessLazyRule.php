@@ -17,11 +17,11 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * A style rule: a lazy quantifier whose greedy form writes the same

@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\NodePredicates;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\DotNode;
@@ -24,6 +22,8 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Detects (.|\n) anti-patterns, overlapping literal alternatives, and

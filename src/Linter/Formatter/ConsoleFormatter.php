@@ -16,10 +16,10 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\DisplayEscaper;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationResult;
 
 /**

@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Token\TokenType;
 
 /**

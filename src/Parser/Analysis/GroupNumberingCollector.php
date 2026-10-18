@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
-use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Node\RegexNode;
 
 /**

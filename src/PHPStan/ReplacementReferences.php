@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\PHPStan;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * The group references of a preg_replace() replacement, read as PHP reads

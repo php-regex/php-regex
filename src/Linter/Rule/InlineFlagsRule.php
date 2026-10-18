@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
-use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Detects redundant inline flags and inline flags that override a global

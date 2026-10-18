@@ -15,8 +15,8 @@ namespace PHPRegex\Cli\SelfUpdate;
 
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Output;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * @internal

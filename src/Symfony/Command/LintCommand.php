@@ -29,7 +29,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Symfony\Output\LintProgressBar;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;

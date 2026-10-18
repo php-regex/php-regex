@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
-use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

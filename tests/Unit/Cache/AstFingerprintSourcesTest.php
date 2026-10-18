@@ -15,9 +15,10 @@ namespace PHPRegex\Tests\Unit\Cache;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\ComplexityScorer;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\AstFingerprint;
@@ -58,6 +59,8 @@ final class AstFingerprintSourcesTest extends TestCase
         AbstractNodeVisitor::class,
         // Empties the process-wide caches.
         StaticCaches::class,
+        // Escapes the text of an error message.
+        DisplayEscaper::class,
         // Explores two automata for a witness, never stored in a cache.
         'PHPRegex\\Automata\\Match\\',
         // The store the trees go to, not what they hold.
@@ -75,9 +78,19 @@ final class AstFingerprintSourcesTest extends TestCase
         $root = AstFingerprint::root();
         $fingerprinted = array_map(static fn (string $file): string => substr($file, \strlen($root) + 1), AstFingerprint::files());
 
+        // A helper is a class of the parser package that says @internal,
+        // wherever its namespace puts it: a call to one in the same
+        // namespace needs no import, so the import check below misses it.
         $helpers = [];
-        foreach ((array) glob($root.'/src/Parser/Internal/*.php') as $file) {
-            $helpers[basename((string) $file, '.php')] = 'src/Parser/Internal/'.basename((string) $file);
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/src/Parser', \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
+                continue;
+            }
+            if (1 === preg_match('~(/\*\*(?:(?!\*/).)*\*/)\s*(?:#\[[^\]]*\]\s*)*(?:final |abstract |readonly )*(?:class|interface|trait|enum) (\w+)~s', (string) file_get_contents($file->getPathname()), $declaration)
+                && 1 === preg_match('~^\s*\*\s*@internal\b~m', $declaration[1])) {
+                $helpers[$declaration[2]] = substr($file->getPathname(), \strlen($root) + 1);
+            }
         }
         $this->assertArrayHasKey('Ascii', $helpers);
 
@@ -89,7 +102,7 @@ final class AstFingerprintSourcesTest extends TestCase
                     continue;
                 }
 
-                if (1 === preg_match('/(?:\\\\Internal\\\\|\b)'.$class.'::/', $code)) {
+                if (1 === preg_match('/\b'.$class.'::/', $code)) {
                     $missing[$path][] = substr($file, \strlen($root) + 1);
                 }
             }
@@ -179,7 +192,7 @@ final class AstFingerprintSourcesTest extends TestCase
     #[Test]
     public function test_the_fingerprint_changes_with_the_delimiter_trimming(): void
     {
-        $this->assertContains(AstFingerprint::root().'/src/Parser/Internal/Ascii.php', AstFingerprint::files());
-        $this->assertContains(AstFingerprint::root().'/src/Parser/Internal/PatternParser.php', AstFingerprint::files());
+        $this->assertContains(AstFingerprint::root().'/src/Parser/Text/Ascii.php', AstFingerprint::files());
+        $this->assertContains(AstFingerprint::root().'/src/Parser/Syntax/PatternParser.php', AstFingerprint::files());
     }
 }

@@ -15,7 +15,7 @@ namespace PHPRegex\Linter\Parallel;
 
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintProgress;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * Shares the linter's work out between long-lived forked workers.

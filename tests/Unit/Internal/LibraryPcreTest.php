@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Internal;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -616,7 +616,7 @@ final class LibraryPcreTest extends TestCase
             .'echo function_exists("ini_get") ? "ini_get enabled" : "ini_get disabled", "\n";'
             .'$ast = \PHPRegex\Toolkit\Regex::create(["cache" => null])->parse("/a+(b|c)\\\\d/");'
             .'echo $ast->accept(new \PHPRegex\Parser\Printer\PatternPrinter()), "\n";'
-            .'echo \PHPRegex\Parser\Internal\LibraryPcre::match("/b+/", "abbc"), "\n";';
+            .'echo \PHPRegex\Parser\Engine\LibraryPcre::match("/b+/", "abbc"), "\n";';
 
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'disable_functions=ini_get', '-r', $code],

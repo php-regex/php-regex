@@ -13,9 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\StartOptions;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -30,6 +28,8 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Approximates leading/trailing character sets for AST nodes.

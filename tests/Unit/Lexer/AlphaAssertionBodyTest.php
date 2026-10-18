@@ -14,12 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lexer;
 
 use PHPRegex\Explain\AsciiTreeRenderer;
+use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\StaticCaches;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;

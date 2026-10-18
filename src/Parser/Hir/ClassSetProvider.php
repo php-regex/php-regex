@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Hir;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\NoJit;
-use PHPRegex\Parser\Internal\PropertyNames;
-use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\PropertyNames;
 
 /**
  * The exact set of characters one atom matches, asked of the running PCRE:

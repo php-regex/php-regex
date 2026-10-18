@@ -13,13 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
-use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Transpiler\Target\TargetInterface;
 use PHPRegex\Transpiler\TranspileContext;
 use PHPRegex\Transpiler\TranspileException;

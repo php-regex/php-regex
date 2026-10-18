@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Node;
 
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * Root node of the regex AST.

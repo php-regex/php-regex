@@ -28,7 +28,6 @@ use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
-use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
@@ -38,6 +37,7 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Tells when a preg_match() is a string function in disguise: "/^foo/" is

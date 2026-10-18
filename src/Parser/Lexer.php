@@ -13,17 +13,16 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser;
 
+use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\LexerException;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\BadEscape;
-use PHPRegex\Parser\Internal\CodePointReader;
-use PHPRegex\Parser\Internal\ExtendedClassReader;
-use PHPRegex\Parser\Internal\InlineFlags;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PcreVerb;
-use PHPRegex\Parser\Internal\PhpVersionGates;
-use PHPRegex\Parser\Internal\StartOptions;
-use PHPRegex\Parser\Internal\StaticCaches;
+use PHPRegex\Parser\Syntax\BadEscape;
+use PHPRegex\Parser\Syntax\CodePointReader;
+use PHPRegex\Parser\Syntax\ExtendedClassReader;
+use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\PcreVerb;
+use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;

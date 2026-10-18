@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\Analysis\CaptureKey;
+use PHPRegex\Parser\Analysis\CaptureLayout;
 use PHPRegex\Parser\Analysis\CaptureShape;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
-use PHPRegex\Parser\Internal\CaptureKey;
-use PHPRegex\Parser\Internal\CaptureLayout;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;

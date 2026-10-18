@@ -14,10 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\Bytes;
-use PHPRegex\Parser\Internal\DisplayEscaper;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -50,6 +47,9 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Generates a basic railroad-style SVG diagram of the regex AST.

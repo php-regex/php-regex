@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Transpiler\Target;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;

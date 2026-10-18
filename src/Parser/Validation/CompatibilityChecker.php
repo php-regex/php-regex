@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\Cache\ArrayCache;
-use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 
 /**

@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule\Support;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
-use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -23,6 +22,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Character-class decomposition and CharSet construction helpers shared by

@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\TestUtils;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Toolkit\Regex;
 

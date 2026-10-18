@@ -16,9 +16,9 @@ namespace PHPRegex\Cli;
 use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\JsonCommandInterface;
-use PHPRegex\Parser\Internal\IniFlag;
-use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\NearMiss;
+use PHPRegex\Parser\Engine\IniFlag;
+use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Text\NearMiss;
 
 /**
  * @internal

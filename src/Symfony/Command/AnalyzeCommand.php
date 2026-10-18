@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Analyzer\AnalysisContext;
 use PHPRegex\Symfony\Analyzer\AnalyzerRegistry;

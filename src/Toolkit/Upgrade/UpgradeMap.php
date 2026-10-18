@@ -170,7 +170,7 @@ final class UpgradeMap
         'RegexParser\\Exception\\VisualContextTrait' => 'PHPRegex\\Parser\\Exception\\VisualContextTrait',
         'RegexParser\\GroupNumbering' => 'PHPRegex\\Parser\\Analysis\\GroupNumbering',
         'RegexParser\\GroupNumberingCollector' => 'PHPRegex\\Parser\\Analysis\\GroupNumberingCollector',
-        'RegexParser\\Internal\\PatternParser' => 'PHPRegex\\Parser\\Internal\\PatternParser',
+        'RegexParser\\Internal\\PatternParser' => 'PHPRegex\\Parser\\Syntax\\PatternParser',
         'RegexParser\\Lexer' => 'PHPRegex\\Parser\\Lexer',
         'RegexParser\\LintIssue' => 'PHPRegex\\Linter\\Rule\\RuleViolation',
         'RegexParser\\Lint\\Command\\LintArgumentParser' => 'PHPRegex\\Linter\\Config\\LintArgumentParser',

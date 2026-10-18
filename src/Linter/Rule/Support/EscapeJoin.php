@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule\Support;
 
 use PHPRegex\Linter\Rule\LintContext;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Whether taking the parentheses of a group out, or the brackets of a

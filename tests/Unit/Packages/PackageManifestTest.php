@@ -90,8 +90,8 @@ final class PackageManifestTest extends TestCase
             'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir',
             'Parser\Hir\Greed', 'Parser\Hir\Hir', 'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir',
             'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir',
-            'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StartOptions',
-            'Parser\Internal\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
+            'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\StartOptions',
+            'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
         'Cli' => [
             'Automata\Model\Nfa', 'Automata\Model\NfaState', 'Automata\Transform\HirToNfaTransformer',
@@ -106,13 +106,13 @@ final class PackageManifestTest extends TestCase
             'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\LintService', 'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator',
-            'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag',
-            'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss',
-            'Parser\Internal\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
+            'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\IniFlag',
+            'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss',
+            'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
         ],
-        'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
-        'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
+        'Explain' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre'],
+        'Generator' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Cache\StaticCaches'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
@@ -125,8 +125,8 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\RedosVerdict',
-            'Linter\Rule\InvisibleCharacterRule', 'Parser\Internal\Ascii', 'Parser\Internal\IniFlag',
-            'Parser\Internal\LibraryPcre',
+            'Linter\Rule\InvisibleCharacterRule', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
+            'Parser\Engine\LibraryPcre',
         ],
         'Laravel' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
@@ -139,7 +139,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintReport', 'Linter\LintRequest', 'Linter\LintService', 'Linter\PatternExtractor',
             'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
-            'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre',
+            'Parser\Text\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Transpiler\Target\TargetRegistry',
         ],
         // The lint writes its rewrite of a pattern under x into the
@@ -148,33 +148,33 @@ final class PackageManifestTest extends TestCase
         'Linter' => [
             'Optimizer\LayoutSplicer', 'Optimizer\RewriteCheck', 'Optimizer\Rewriter',
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
-            'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper',
-            'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure',
-            'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser',
-            'Parser\Internal\PropertyNames', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches',
+            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\DisplayEscaper',
+            'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument', 'Parser\Json\JsonEncodingFailure',
+            'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\PatternParser',
+            'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
-        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
+        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
             'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunction',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
-            'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Internal\Ascii',
-            'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre',
+            'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Text\Ascii',
+            'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
         ],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
         'Psalm' => [
             'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\GuardRegions', 'Linter\Extraction\PhpParserGuards', 'Linter\Extraction\TargetMarker',
-            'Linter\Extraction\TargetMarkers', 'Parser\Internal\Ascii', 'Parser\Internal\CaptureKey',
-            'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre',
+            'Linter\Extraction\TargetMarkers', 'Parser\Text\Ascii', 'Parser\Analysis\CaptureKey',
+            'Parser\Analysis\CaptureLayout', 'Parser\Engine\LibraryPcre',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',
-            'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes',
-            'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser',
+            'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Text\Ascii', 'Parser\Text\Bytes',
+            'Parser\Engine\IniFlag', 'Parser\Syntax\PatternParser',
         ],
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
@@ -187,15 +187,15 @@ final class PackageManifestTest extends TestCase
             'Linter\PatternOccurrence', 'Linter\Source\OverlappingPatternSourceInterface',
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
-            'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre',
+            'Parser\Text\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Transpiler\Target\TargetRegistry',
         ],
-        'Toolkit' => ['Parser\Internal\PatternParser'],
+        'Toolkit' => ['Parser\Syntax\PatternParser'],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
         'Transpiler' => [
             'Parser\Exception\VisualContextTrait', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
-            'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre',
+            'Parser\Hir\Utf8', 'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre',
         ],
     ];
 

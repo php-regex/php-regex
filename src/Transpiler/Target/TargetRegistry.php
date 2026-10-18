@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target;
 
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Transpiler\Target\JavaScript\HtmlPatternTarget;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
 use PHPRegex\Transpiler\Target\Python\PythonTarget;

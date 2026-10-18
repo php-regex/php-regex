@@ -15,7 +15,7 @@ namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;

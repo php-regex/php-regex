@@ -13,9 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\NoJit;
-
 /**
  * The one door a pattern the library was given goes through to the running
  * PCRE2 engine.

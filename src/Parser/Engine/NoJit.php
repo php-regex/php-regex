@@ -11,7 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Engine;
+
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * A pattern the engine runs without its JIT, which crashes PHP on some

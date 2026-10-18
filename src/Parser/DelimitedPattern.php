@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser;
 
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 
 /**
  * Represents a regex pattern with its components.

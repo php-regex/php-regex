@@ -20,7 +20,7 @@ use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\PatternFormatter;
 

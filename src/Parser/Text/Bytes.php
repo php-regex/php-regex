@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Text;
 
 /**
  * A string cut into bytes the same way on every PHP: str_split() gives [""]

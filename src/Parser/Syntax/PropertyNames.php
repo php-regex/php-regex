@@ -11,7 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Syntax;
+
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The property names PCRE2 read before 10.40, which PHP 8.1 bundles (10.39):

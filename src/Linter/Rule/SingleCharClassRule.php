@@ -16,13 +16,13 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\Rule\Support\EscapeJoin;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\LibraryPcre;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * A style rule: "[a]" is "a". A class holding one metacharacter ("[.]",

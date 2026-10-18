@@ -19,7 +19,6 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
-use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -29,6 +28,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\TraversalAction;
 
 /**

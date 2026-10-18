@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\TestUtils;
 
-use PHPRegex\Parser\Internal\GroupNameReader;
+use PHPRegex\Parser\Syntax\GroupNameReader;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;

@@ -22,8 +22,8 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Cli\ConsoleStyle;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\DisplayEscaper;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * @internal

@@ -23,11 +23,11 @@ use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\DisplayEscaper;
-use PHPRegex\Parser\Internal\JsonDocument;
-use PHPRegex\Parser\Internal\PatternParser;
+use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Toolkit\Regex;
 

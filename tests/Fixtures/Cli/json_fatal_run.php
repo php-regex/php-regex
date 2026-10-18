@@ -28,7 +28,7 @@ use PHPRegex\Cli\Command\JsonCommandInterface;
 use PHPRegex\Cli\GlobalOptionsParser;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
-use PHPRegex\Parser\Internal\JsonDocument;
+use PHPRegex\Parser\Json\JsonDocument;
 
 register_shutdown_function(static function (): void {
     $code = Application::reportFatalError();

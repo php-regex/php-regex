@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Cli;
 
-use PHPRegex\Parser\Internal\Ascii;
-use PHPRegex\Parser\Internal\IniFlag;
+use PHPRegex\Parser\Engine\IniFlag;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * @internal

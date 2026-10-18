@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Internal;
 
-use PHPRegex\Parser\Internal\VersionCondition;
+use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

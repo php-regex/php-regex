@@ -23,9 +23,6 @@ use PHPRegex\Parser\Hir\ConcatHir;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Hir\RepetitionHir;
-use PHPRegex\Parser\Internal\GroupIndex;
-use PHPRegex\Parser\Internal\LookbehindLength;
-use PHPRegex\Parser\Internal\StartOptions;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
@@ -39,6 +36,7 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * Reads, from the tree alone, the facts PCRE2 computes on a compiled pattern

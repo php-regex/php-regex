@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\LanguageServer\Protocol;
 
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * Represents a JSON-RPC message in the Language Server Protocol.

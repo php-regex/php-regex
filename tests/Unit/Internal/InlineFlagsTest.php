@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Internal;
 
 use PHPRegex\Linter\PatternLinter;
-use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

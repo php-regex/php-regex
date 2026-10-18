@@ -27,7 +27,7 @@ use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Attribute\RegexPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Text\Ascii;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\AttributeReflection;

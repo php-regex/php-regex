@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Internal;
 
-use PHPRegex\Parser\Internal\GroupIndex;
-use PHPRegex\Parser\Internal\LookbehindLength;
+use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\Analysis\LookbehindLength;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;

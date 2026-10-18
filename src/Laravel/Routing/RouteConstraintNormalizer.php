@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Routing;
 
 use Illuminate\Routing\Route;
-use PHPRegex\Parser\Internal\LibraryPcre;
+use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
  * The pattern Laravel's router matches a route constraint with. A route

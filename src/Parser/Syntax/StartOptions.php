@@ -11,7 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Internal;
+namespace PHPRegex\Parser\Syntax;
+
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The options a pattern opens with, such as "(*UTF)(*LIMIT_MATCH=10)": PCRE
