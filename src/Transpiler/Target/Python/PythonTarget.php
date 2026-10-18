@@ -79,6 +79,12 @@ final class PythonTarget implements TargetInterface
                 continue;
             }
 
+            if ('S' === $flag) {
+                $context->addNote('Dropped /S: PHP has ignored it since 7.3, under PCRE2.');
+
+                continue;
+            }
+
             $unsupported[] = $flag;
         }
 

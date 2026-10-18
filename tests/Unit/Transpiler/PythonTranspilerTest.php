@@ -36,6 +36,19 @@ final class PythonTranspilerTest extends TestCase
     }
 
     #[Test]
+    public function test_drops_the_study_flag(): void
+    {
+        // Oracle: /S changes nothing since PHP 7.3.
+        $this->assertSame(1, preg_match('/ab+c/S', 'xabbc'));
+
+        $result = Regex::create(['cache' => null])->transpile('/ab+c/S', 'python');
+
+        $this->assertSame("r'ab+c'", $result->literal);
+        $this->assertSame('', $result->flags);
+        $this->assertContains('Dropped /S: PHP has ignored it since 7.3, under PCRE2.', $result->notes);
+    }
+
+    #[Test]
     public function test_keeps_python_style_named_groups_and_backrefs(): void
     {
         $result = Regex::create()->transpile('/(?P<w>\w+)(?P=w)/', 'python');

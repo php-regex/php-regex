@@ -28,7 +28,7 @@ Features
 
 - Three targets, `javascript` (alias `js`), `html-pattern` (alias `html`) and `python` (alias `py`), each producing a paste-ready literal and a constructor call
 - Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes, atomic groups are emulated in Python
-- Flags are mapped per target: JavaScript keeps `i`, `m`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/x` applied then dropped; Python keeps `i`, `m`, `s`, `x` and spells flags inline or as `re` constants
+- Flags are mapped per target: JavaScript keeps `i`, `m`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/x` applied then dropped; Python keeps `i`, `m`, `s`, `x` and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
 - Warnings list every rewrite to review; notes list run-time caveats, such as ASCII-based `\w` in JavaScript
 - A construct the target cannot express — a possessive quantifier, `\p{...}` in Python — throws a `TranspileException` carrying the position in the pattern
 

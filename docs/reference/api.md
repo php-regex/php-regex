@@ -589,7 +589,7 @@ Notes:
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
 - `/x` is dropped after comments/whitespace are normalized.
-- `/S` is dropped with a note in the JavaScript and `html-pattern` targets: PHP has ignored it since 7.3.
+- `/S` is dropped with a note in the JavaScript, `html-pattern` and Python targets: PHP has ignored it since 7.3.
 - `/U` and `(?U)` are carried by swapping greedy and lazy in the quantifiers they govern (`/<.+>/U` is `/<.+?>/`);
   a possessive quantifier is refused as before. JavaScript takes no other inline flag.
 - `TranspileOptions` lets you disable JS lookbehind support (`allowLookbehind: false`).
