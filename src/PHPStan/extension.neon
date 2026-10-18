@@ -90,16 +90,16 @@ parameters:
             paths: []
 
 conditionalTags:
-    PHPRegex\PHPStan\Internal\MixedTypeCollector:
+    PHPRegex\PHPStan\MixedTypeCollector:
         phpstan.collector: %phpRegex.noNewMixed.enabled%
-    PHPRegex\PHPStan\Internal\NoNewMixedRule:
+    PHPRegex\PHPStan\NoNewMixedRule:
         phpstan.rules.rule: %phpRegex.noNewMixed.enabled%
 
 services:
     -
-        class: PHPRegex\PHPStan\Internal\MixedTypeCollector
+        class: PHPRegex\PHPStan\MixedTypeCollector
     -
-        class: PHPRegex\PHPStan\Internal\NoNewMixedRule
+        class: PHPRegex\PHPStan\NoNewMixedRule
         arguments:
             baseline: %phpRegex.noNewMixed.baseline%
             paths: %phpRegex.noNewMixed.paths%

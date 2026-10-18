@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
-use PHPRegex\PHPStan\Internal\NoNewMixedRule;
+use PHPRegex\PHPStan\NoNewMixedRule;
 use PHPUnit\Framework\TestCase;
 
 /**

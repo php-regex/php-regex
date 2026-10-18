@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
-use PHPRegex\PHPStan\Internal\MixedTypeCollector;
-use PHPRegex\PHPStan\Internal\NoNewMixedRule;
+use PHPRegex\PHPStan\MixedTypeCollector;
+use PHPRegex\PHPStan\NoNewMixedRule;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use PHPUnit\Framework\Attributes\Test;
