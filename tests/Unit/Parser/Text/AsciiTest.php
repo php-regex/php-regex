@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Internal;
+namespace PHPRegex\Tests\Unit\Parser\Text;
 
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -71,7 +71,7 @@ final class AsciiTest extends TestCase
     public function test_library_calls_no_locale_dependent_ctype_function(): void
     {
         $calls = [];
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(__DIR__.'/../../../src', \FilesystemIterator::SKIP_DOTS));
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(__DIR__.'/../../../../src', \FilesystemIterator::SKIP_DOTS));
         foreach ($files as $file) {
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
                 continue;
@@ -164,12 +164,12 @@ final class AsciiTest extends TestCase
     public function test_packages_on_php_8_1_call_no_locale_dependent_case_mapping(): void
     {
         $forbidden = ['strtolower', 'strtoupper', 'ucfirst', 'lcfirst', 'ucwords', 'stripos', 'stristr', 'strripos', 'str_ireplace', 'str_split'];
-        $helpers = [realpath(__DIR__.'/../../../src/Parser/Text/Ascii.php'), realpath(__DIR__.'/../../../src/Parser/Text/Bytes.php')];
+        $helpers = [realpath(__DIR__.'/../../../../src/Parser/Text/Ascii.php'), realpath(__DIR__.'/../../../../src/Parser/Text/Bytes.php')];
         // Psalm keys its functions by strtolower(): the plugin asks for a
         // name lowered the same way.
         $sameAsTheHost = ['Psalm/PregCallAnalyzer.php:'];
         $calls = [];
-        foreach (glob(__DIR__.'/../../../src/*', \GLOB_ONLYDIR) ?: [] as $package) {
+        foreach (glob(__DIR__.'/../../../../src/*', \GLOB_ONLYDIR) ?: [] as $package) {
             if (\in_array(basename($package), ['Laravel', 'Symfony'], true)) {
                 continue;
             }

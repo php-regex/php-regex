@@ -179,8 +179,8 @@ parameters:
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleTargetMarkerTest.php
             - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
             - tests/Unit/Hir/ClassSetProviderCacheTest.php
-            - tests/Unit/Internal/InlineFlagsTest.php
-            - tests/Unit/Internal/StartOptionsTest.php
+            - tests/Unit/Parser/Syntax/InlineFlagsTest.php
+            - tests/Unit/Parser/Syntax/StartOptionsTest.php
             - tests/Unit/Lint/AnalysisServiceGuardTest.php
             - tests/Unit/Lint/Rule/ImpossibleLookaroundRuleTest.php
             - tests/Unit/Lint/Rule/PossessiveImpossibleRuleTest.php

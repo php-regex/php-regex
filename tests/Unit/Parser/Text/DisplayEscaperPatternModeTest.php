@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Internal;
+namespace PHPRegex\Tests\Unit\Parser\Text;
 
 use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Tests\Support\PcreGates;

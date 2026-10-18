@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Lint\Internal;
+namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Redos\Confirmation;

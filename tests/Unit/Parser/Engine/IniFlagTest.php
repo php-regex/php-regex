@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Internal;
+namespace PHPRegex\Tests\Unit\Parser\Engine;
 
 use PHPRegex\Parser\Engine\IniFlag;
 use PHPUnit\Framework\Attributes\DataProvider;

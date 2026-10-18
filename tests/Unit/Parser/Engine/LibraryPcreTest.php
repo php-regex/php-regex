@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Internal;
+namespace PHPRegex\Tests\Unit\Parser\Engine;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -612,7 +612,7 @@ final class LibraryPcreTest extends TestCase
     #[Test]
     public function test_a_disabled_ini_get_leaves_the_calls_as_they_are(): void
     {
-        $code = 'require '.var_export(\dirname(__DIR__, 3).'/vendor/autoload.php', true).';'
+        $code = 'require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
             .'echo function_exists("ini_get") ? "ini_get enabled" : "ini_get disabled", "\n";'
             .'$ast = \PHPRegex\Toolkit\Regex::create(["cache" => null])->parse("/a+(b|c)\\\\d/");'
             .'echo $ast->accept(new \PHPRegex\Parser\Printer\PatternPrinter()), "\n";'

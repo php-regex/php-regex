@@ -13,21 +13,24 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
  * A namespace says what its classes do; @internal alone says who may use
- * them, so making a class public is removing the tag, never a move.
+ * them, so making a class public is removing the tag, never a move. The
+ * tests mirror the namespaces of the code they test.
  */
 final class NamespaceNamesTest extends TestCase
 {
     #[Test]
-    public function test_no_namespace_under_src_is_named_internal(): void
+    #[DataProvider('provideDirectories')]
+    public function test_no_namespace_is_named_internal(string $directory): void
     {
         $root = \dirname(__DIR__, 3);
         $found = [];
-        $entries = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/src', \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
+        $entries = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::SELF_FIRST);
         foreach ($entries as $entry) {
             if (!$entry instanceof \SplFileInfo) {
                 continue;
@@ -42,5 +45,14 @@ final class NamespaceNamesTest extends TestCase
         sort($found);
 
         $this->assertSame([], $found, 'Name the namespace for what its classes do, and keep @internal on each class.');
+    }
+
+    /**
+     * @return iterable<string, array{directory: string}>
+     */
+    public static function provideDirectories(): iterable
+    {
+        yield 'src' => ['directory' => 'src'];
+        yield 'tests' => ['directory' => 'tests'];
     }
 }

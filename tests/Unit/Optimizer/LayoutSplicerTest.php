@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Optimizer\Internal;
+namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\LayoutSplicer;
 use PHPRegex\Optimizer\Rewriter;
