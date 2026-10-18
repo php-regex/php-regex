@@ -361,7 +361,7 @@ Two results were checked again in Docker: the switch from 18 to 19 letters, and 
 
 PHPRegex, the library behind this site, reads a pattern and reports this problem without running an attack. Install its command-line tool in your project:
 
-{% include install-prerelease.html package="php-regex/php-regex" dev=true %}
+{% include install-prerelease.html package="php-regex/php-regex" dev=true inline=true %}
 
 Ask it about the original pattern (output trimmed where you see `…`):
 

@@ -289,7 +289,7 @@ Both patterns that failed above compile on the Mac used here: PCRE2 10.49, and a
 
 PHPRegex, the library behind this site, does that. It reads the regex patterns in your PHP files and judges each one for a target PHP and PCRE2 version. Its command-line tool is a dev dependency:
 
-{% include install-prerelease.html package="php-regex/php-regex" dev=true %}
+{% include install-prerelease.html package="php-regex/php-regex" dev=true inline=true %}
 
 Take a project whose `composer.json` requires `"php": ">=8.2"`, with this file:
 

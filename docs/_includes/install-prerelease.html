@@ -2,11 +2,18 @@
   The one installation story shared by every page: the focused package that
   page is about. Parameters: package — the Composer package to install; dev —
   true for a development tool (CLI, static analysis, editor), left out for a
-  package the application runs in production.
+  package the application runs in production; inline — true to write the
+  commands alone, without the "Installation" heading, inside a section of
+  the page's own (an article's closing one).
 {% endcomment %}
+{% capture install_commands %}composer config minimum-stability dev
+composer config prefer-stable true
+composer require {% if include.dev %}--dev {% endif %}{{ include.package }}:{{ site.data.product.release }}-dev{% endcapture %}
+{% if include.inline %}
+<div class="install"><pre><code>{{ install_commands }}</code></pre></div>
+{% else %}
 <section class="install-block">
   <h2 id="installation">Installation</h2>
-  <div class="install"><pre><code>composer config minimum-stability dev
-composer config prefer-stable true
-composer require {% if include.dev %}--dev {% endif %}{{ include.package }}:{{ site.data.product.release }}-dev</code></pre></div>
+  <div class="install"><pre><code>{{ install_commands }}</code></pre></div>
 </section>
+{% endif %}
