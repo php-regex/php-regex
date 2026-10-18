@@ -3,8 +3,6 @@
 ## Before the 2.0.0 tag: verified defects
 
 Each one reproduced against the code and the engine (PHP 8.4, PCRE2 10.49).
-- `parse()` accepts `(?(VERSION<10.0)…)` and the JSON dump writes
-  `"operator": "<"`, outside the `=`/`>=` enum of `ast.schema.json`.
 - `CharSetAnalyzer::quantifierMin()` reads `{2}?` as 0 and `{,5}` as 1;
   delegate to `QuantifierBounds::parse()`.
 - `ConfirmationOptions` clamps out-of-range values in silence where

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser\Printer;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonDumperTest extends TestCase
 {
+    /**
+     * Every comparison the parser reads after VERSION.
+     */
+    private const VERSION_OPERATORS = ['=', '>=', '>', '<=', '<', '==', '!='];
+
     private const SCHEMA = __DIR__.'/../../../../src/Parser/ast.schema.json';
 
     #[Test]
@@ -393,6 +399,57 @@ final class JsonDumperTest extends TestCase
         $json = json_encode(self::export($pattern), \JSON_THROW_ON_ERROR);
 
         $this->assertSame([], (new JsonSchemaSubsetValidator())->validate(self::schema(), json_decode($json, false, 512, \JSON_THROW_ON_ERROR)));
+    }
+
+    /**
+     * PCRE2 compiles only "=" and ">=" after VERSION; the parser reads the
+     * other comparisons too, for the validator to refuse, and the export
+     * writes the one it read.
+     */
+    #[Test]
+    #[DataProvider('provideVersionOperators')]
+    public function test_every_version_operator_the_parser_reads_conforms_to_the_schema(string $operator): void
+    {
+        $export = self::export('/(?(VERSION'.$operator.'10.0)a|b)/');
+        $json = json_encode($export, \JSON_THROW_ON_ERROR);
+
+        $this->assertStringContainsString('"operator":'.json_encode($operator, \JSON_THROW_ON_ERROR), $json);
+        $this->assertSame([], (new JsonSchemaSubsetValidator())->validate(self::schema(), json_decode($json, false, 512, \JSON_THROW_ON_ERROR)));
+    }
+
+    #[Test]
+    public function test_the_schema_lists_the_version_operators_the_parser_reads(): void
+    {
+        $definitions = self::schema()['$defs'];
+        $this->assertIsArray($definitions);
+        $condition = $definitions['version_condition'];
+        $this->assertIsArray($condition);
+        $properties = $condition['properties'];
+        $this->assertIsArray($properties);
+        $operator = $properties['operator'];
+        $this->assertIsArray($operator);
+
+        $read = (new \ReflectionClassConstant(VersionCondition::class, 'OPERATORS'))->getValue();
+        $this->assertIsArray($read);
+        $enum = $operator['enum'];
+        $this->assertIsArray($enum);
+        sort($read);
+        sort($enum);
+
+        $this->assertSame($read, $enum);
+        $covered = self::VERSION_OPERATORS;
+        sort($covered);
+        $this->assertSame($enum, $covered);
+    }
+
+    /**
+     * @return iterable<string, array{operator: string}>
+     */
+    public static function provideVersionOperators(): iterable
+    {
+        foreach (self::VERSION_OPERATORS as $operator) {
+            yield $operator => ['operator' => $operator];
+        }
     }
 
     /**

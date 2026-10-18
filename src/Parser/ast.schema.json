@@ -773,9 +773,15 @@
           "$ref": "#/$defs/offset"
         },
         "operator": {
+          "description": "The comparison as written. PCRE2 compiles only = and >=; the parser reads the others too, and validation refuses them.",
           "enum": [
             "=",
-            ">="
+            ">=",
+            ">",
+            "<=",
+            "<",
+            "==",
+            "!="
           ]
         },
         "version": {
