@@ -24,16 +24,25 @@
   {% else %}
   <meta property="og:type" content="website">
   {% endif %}
+  {% comment %}
+    The card's version: an article's own last change, so a deploy that does
+    not touch it leaves the card platforms cached; the build time elsewhere.
+  {% endcomment %}
+  {% if page.layout == 'article' %}
+  {% assign head_image_version = page.last_modified_at | default: page.date | date: '%s' %}
+  {% else %}
+  {% assign head_image_version = site.time | date: '%s' %}
+  {% endif %}
   <meta property="og:site_name" content="PHPRegex">
   <meta property="og:url" content="{{ page.url | absolute_url }}">
-  <meta property="og:image" content="{{ '/assets/img/social.png' | absolute_url }}?v={{ site.time | date: '%s' }}">
+  <meta property="og:image" content="{{ '/assets/img/social.png' | absolute_url }}?v={{ head_image_version }}">
   <meta property="og:image:width" content="1280">
   <meta property="og:image:height" content="640">
   <meta property="og:image:alt" content="PHPRegex — static analysis, linter and logic solver for PHP regular expressions.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{% if page.title %}{{ page.title | strip_html | escape }} — {% endif %}PHPRegex">
   <meta name="twitter:description" content="{{ page.description | default: site.description | strip_html | escape }}">
-  <meta name="twitter:image" content="{{ '/assets/img/social.png' | absolute_url }}?v={{ site.time | date: '%s' }}">
+  <meta name="twitter:image" content="{{ '/assets/img/social.png' | absolute_url }}?v={{ head_image_version }}">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.png" sizes="512x512">
   <link rel="apple-touch-icon" href="/favicon.png">

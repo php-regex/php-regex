@@ -139,9 +139,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
   `str_contains()` measured, Symfony route requirements audited.
 - Re-check the 8.6 row of the published version matrix against the
   PHP-8.6 branch before GA on 19 November 2026; the article promises it.
-- The og:image URL is cache-busted by the build time (`head.html`), which
-  re-caches social cards on every deploy; decide whether the manual `?v=`
-  ratchet fits articles too.
 - An articles pager (previous / next) once a second article exists.
 - Publishing the four drafts: flip `published`, add each article's line
   under `## Articles` in `docs/llms.txt`, and give each `/blog/<slug>` its
