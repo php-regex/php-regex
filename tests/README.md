@@ -43,7 +43,7 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 - All: `phpunit`
 
 ### CI/CD
-- Tests run in GitHub Actions (see `.github/workflows/ci.yml`).
+- Tests run in GitHub Actions (see `.github/workflows/tests.yml`, and `engines.yml` for the runs on each engine).
 - Lint and static analysis via PHPStan and PHPLint.
 
 For contributions, ensure new tests fit the pyramid: prefer Unit > Integration > Functional.

@@ -1,0 +1,141 @@
+name: Static analysis
+
+# The dev tools under tools/, each on one PHP of its own: they judge the code
+# for the range phpstan.dist.neon and rector.php declare, whatever PHP runs
+# them.
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday, against the week's tool releases, which no lock file pins.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpstan:
+    # Two PHPs, for what the running PHP changes in the analysis: the bridge
+    # dependencies tools/phpunit resolves for it, the bridges' APIs being
+    # read from them (Symfony 7.4, Laravel 12 and PHPUnit 11 on 8.2; Symfony
+    # 8.1, Laravel 13 and PHPUnit 12 on 8.6), the deprecations the running
+    # PHP declares, and the test patterns judged for the running PHP
+    # (phpRegex.phpVersion: runtime). The PHPs between bring no major these
+    # two do not, and the root has no dependency for prefer-lowest to lower.
+    name: PHPStan (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.6', '8.2' ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP ${{ matrix.php }} and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: ${{ matrix.php }}
+          ini-values: phar.readonly=0
+          tools: phpunit phpstan phpbench
+
+      - name: Run PHPStan
+        run: tools/phpstan/vendor/bin/phpstan analyse
+
+  phpcs:
+    name: PHPCS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          tools: php-cs-fixer
+
+      - name: Run PHP-CS-Fixer
+        run: tools/php-cs-fixer/vendor/bin/php-cs-fixer fix --dry-run --diff
+
+  rector:
+    name: Rector
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          tools: rector
+
+      - name: Run Rector
+        run: tools/rector/vendor/bin/rector process --dry-run --ansi
+
+  phplint:
+    name: PHPLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          ini-values: phar.readonly=0
+          tools: phplint
+
+      - name: Run PHPLint
+        run: tools/phplint/vendor/bin/phplint
+
+  deptrac:
+    # One layer per future package: the core depends on nothing, the
+    # libraries on the core, the applications and bridges on the libraries.
+    name: Deptrac
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          dependencies: none
+          tools: deptrac
+
+      - name: Run Deptrac
+        run: tools/deptrac/vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress

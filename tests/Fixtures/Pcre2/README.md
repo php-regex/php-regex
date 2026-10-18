@@ -114,7 +114,7 @@ When a newer PCRE2 release should be measured instead:
    refresh `testdata/LICENCE.md` from the same tag.
 2. Update `PCRE2_PIN` in `tests/TestUtils/Pcre2TestdataExtractor.php`, then
    re-run the extraction, generation and verification commands above on a
-   PHP linked to the new release. In `.github/workflows/ci.yml`, update the
+   PHP linked to the new release. In `.github/workflows/engines.yml`, update the
    `pcre2-fixture` job's version list, its binary paths and its cache key.
 3. Check the cases adjusted to PHP's compile context. The consistency test
    (`tests/Integration/Pcre2ExtractorFidelityTest.php`) pins them by id —

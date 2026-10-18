@@ -1,0 +1,90 @@
+name: Set up PHP and the project
+description: >
+  Installs PHP, restores the Composer download cache, installs the root
+  dependencies and the dev tools named under tools/.
+
+inputs:
+  php-version:
+    description: The PHP version, as setup-php reads it ("8.4", "8.7").
+    required: true
+  ini-values:
+    description: The ini values setup-php sets, comma-separated.
+    required: false
+    default: ''
+  coverage:
+    description: The coverage driver, "pcov" or "xdebug"; setup-php's default when empty.
+    required: false
+    default: ''
+  dependencies:
+    description: >
+      How the root dependencies are installed: "install", or "prefer-lowest"
+      and "prefer-stable" for an update in that direction, or "none".
+    required: false
+    default: install
+  tools:
+    description: The directories under tools/ to install, space-separated, as "phpunit phpstan".
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Setup PHP ${{ inputs.php-version }}
+      uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+      with:
+        php-version: ${{ inputs.php-version }}
+        extensions: mbstring, intl, pcre, tokenizer, xml
+        ini-values: ${{ inputs.ini-values }}
+        coverage: ${{ inputs.coverage }}
+
+    - name: Locate the Composer cache
+      id: composer-cache
+      shell: bash
+      run: echo "dir=$(composer config --global cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+    # Downloads only: no lock file is committed, the root and the tools
+    # resolve afresh on every run, so a stale archive costs a download and
+    # never pins a version.
+    - name: Restore the Composer cache
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-${{ inputs.dependencies }}-${{ hashFiles('composer.json', 'tools/*/composer.json') }}
+        restore-keys: |
+          composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-${{ inputs.dependencies }}-
+          composer-${{ runner.os }}-${{ github.job }}-php${{ inputs.php-version }}-
+
+    - name: Install the root dependencies (${{ inputs.dependencies }})
+      if: inputs.dependencies != 'none'
+      shell: bash
+      env:
+        DEPENDENCIES: ${{ inputs.dependencies }}
+      run: |
+        case "$DEPENDENCIES" in
+          install) composer install --prefer-dist --no-interaction --no-progress ;;
+          prefer-lowest|prefer-stable) composer update "--$DEPENDENCIES" --prefer-dist --no-interaction --no-progress ;;
+          *) echo "Unknown dependencies input: $DEPENDENCIES" >&2; exit 1 ;;
+        esac
+
+    - name: Install the tools (${{ inputs.tools }})
+      if: inputs.tools != ''
+      shell: bash
+      env:
+        PHP_VERSION_INPUT: ${{ inputs.php-version }}
+        TOOLS: ${{ inputs.tools }}
+      # On a PHP not released yet, some dependencies of the tools have
+      # not raised their PHP ceiling (nette/schema, the nette packages Laravel
+      # pulls): the platform PHP requirement is ignored there, and only there.
+      # Take 8.6 off the list once the tools' dependencies admit it.
+      #
+      # No --prefer-dist: tools/phpunit/composer.json installs orchestra/canvas
+      # and canvas-core from git, as GitHub serves no archive of some of the
+      # commits their tags name; its preferred-install takes dist for the rest.
+      run: |
+        flags=()
+        case "$PHP_VERSION_INPUT" in
+          8.6*|8.7*) flags+=(--ignore-platform-req=php+) ;;
+        esac
+        for tool in $TOOLS; do
+          composer install -d "tools/$tool" --no-interaction --no-progress "${flags[@]}"
+        done

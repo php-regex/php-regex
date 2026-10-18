@@ -82,20 +82,24 @@ do, for each: `git push origin <branch>`, then open the PR against
 Branches 2, 3 and 5 touch adjacent grammar lines: rebase each later one once
 the earlier is merged. Branch 6 merges cleanly with all the others.
 
-## PHP 8.6 closeout and 8.7 canary
+## PHP 8.6 closeout and the experimental 8.7 cell
 
 The closeout is built: the analysis range reaches 8.6, both engine matrices
 carry 8.6, the `preg_grep()` array-to-false boundary is pinned by tests, the
 trim family keeps its pre-8.6 character set on every PHP, a scoped listener
-fails the suite only on deprecations under `src/`, and a scheduled 8.7 canary
-watches the future without gating anything. Left, dated:
+fails the suite only on deprecations under `src/`, and an experimental 8.7
+cell of the tests workflow watches the future without gating anything.
+Left, dated:
 
-1. **2026-11-19, GA day** — rename the `8.6-rc` row in `engines-bundled` to
-   `'8.6'`: the `-rc` docker aliases vanish that day and an unrenamed row
-   breaks CI. The `startsWith(matrix.php, '8.6')` conditions already match
-   either spelling, and `engines-latest` needs no change. Re-verify the
-   renamed image still bundles 10.44, and if it ships mbstring again, try
-   removing the "Install multibyte support" step.
+1. **2026-11-19, GA day** — rename the `8.6-rc` row in `engines-bundled`
+   (`.github/workflows/engines.yml`) to `'8.6'`: the `-rc` docker aliases
+   vanish that day and an unrenamed row breaks CI. The
+   `startsWith(matrix.php, '8.6')` conditions already match either
+   spelling, and `engines-latest` needs no change. Re-verify the renamed
+   image still bundles 10.44, and if it ships mbstring again, try removing
+   the "Install multibyte support" step. Once the tools' dependencies admit
+   8.6, drop it from the `--ignore-platform-req=php+` cases of
+   `.github/actions/setup-php-project` and of `engines-bundled`.
 2. Until then, watch `ext/pcre/pcre2lib` on the PHP-8.6 branch and master:
    a late PCRE2 bump would reopen the engine maps. If it moves, re-run the
    engine-scoped corpus rows before anything else.

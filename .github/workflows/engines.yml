@@ -1,0 +1,186 @@
+name: Engines
+
+# Patterns are judged for a PHP version and the PCRE2 it runs. The jobs here
+# put the library's verdicts in front of real engines: the PCRE2 each PHP
+# bundles, the latest PCRE2, and pcre2test built from release tarballs.
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday, against the week's tool releases, which no lock file pins.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  engines-bundled:
+    # Part of the suite asks the running engine. The official images build
+    # PHP with the PCRE2 php-src bundles, so each supported PHP runs here on
+    # its own engine; the "tests" job runs them all on Ubuntu's system PCRE2.
+    name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container: php:${{ matrix.php }}-cli
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '8.2', pcre: '10.40' }
+          - { php: '8.3', pcre: '10.42' }
+          - { php: '8.4', pcre: '10.44' }
+          - { php: '8.5', pcre: '10.44' }
+          # 8.6-rc is the rolling alias of the official image; it becomes plain
+          # '8.6' on the 8.6 GA day (2026-11-19), when the alias disappears —
+          # rename the row that day or this job breaks.
+          - { php: '8.6-rc', pcre: '10.44' }
+
+    steps:
+      - name: Install Git
+        # Before the checkout: without git, it downloads an archive, which
+        # leaves out what .gitattributes marks export-ignore, tests included.
+        run: apt-get update && apt-get install -y --no-install-recommends git unzip
+
+      - name: Install multibyte support
+        # The 8.6-rc image ships without mbstring, and compiling it needs
+        # oniguruma; the GA image may restore the extension — try removing
+        # this step then.
+        if: startsWith(matrix.php, '8.6')
+        run: |
+          apt-get update && apt-get install -y --no-install-recommends libonig-dev
+          docker-php-ext-install mbstring
+
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check the engine
+        # An image that moves to another PCRE2 fails here, not in the suite.
+        env:
+          PCRE: ${{ matrix.pcre }}
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL; exit(str_starts_with(PCRE_VERSION, getenv("PCRE")." ") ? 0 : 1);'
+
+      - name: Install Composer
+        run: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+      - name: Install Dependencies
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          composer install --prefer-dist --no-interaction --no-progress
+          # Without --prefer-dist: tools/phpunit/composer.json installs
+          # orchestra/canvas and canvas-core from git, as GitHub serves no
+          # archive of some of the commits their tags name.
+          # 8.6 ships no locked nette/schema release that admits it yet.
+          composer install -d tools/phpunit --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpstan --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
+          composer install -d tools/phpbench --prefer-dist --no-interaction --no-progress ${{ startsWith(matrix.php, '8.6') && '--ignore-platform-req=php+' || '' }}
+
+      - name: Run Test Suite
+        # As a plain user: a container job runs as root, who may write where
+        # the tests check that nothing can.
+        run: |
+          useradd --create-home tester
+          chown -R tester "$GITHUB_WORKSPACE"
+          su tester --shell /bin/sh --command 'php -d phar.readonly=0 tools/phpunit/vendor/bin/phpunit --colors=always'
+
+      - name: Prove the formatter on this engine
+        # Formatted and compacted patterns must match exactly what the input
+        # matches, on every engine the library supports, the 10.40 floor
+        # included. Too slow for the default suite.
+        run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group formatter-corpus'
+
+      - name: Compare the capture shapes with PHPStan
+        # The type PHPStan infers for $matches next to the shape PHPRegex
+        # writes, for every case of the capture shape corpus, written to
+        # var/capture-shape-parity.md. It fails only when a shape refuses a
+        # $matches this engine writes. Left out of the default suite.
+        run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group capture-shape-parity'
+
+  engines-latest:
+    # Every supported PHP on the latest PCRE2: on macOS, PHP links Homebrew's.
+    name: Tests (PHP ${{ matrix.php }}, latest PCRE2)
+    runs-on: macos-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.6 runs under setup-php's nightly-of-branch build until GA
+        # (2026-11-19), then the same plain '8.6' serves the stable release.
+        php: [ '8.6', '8.5', '8.4', '8.3', '8.2' ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP ${{ matrix.php }} and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: ${{ matrix.php }}
+          ini-values: phar.readonly=0
+          tools: phpunit phpstan phpbench
+
+      - name: Show the engine
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL;'
+
+      - name: Run Test Suite
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
+
+  pcre2-fixture:
+    # The PCRE2 conformance fixture records what PCRE2 10.40 (the engine of the
+    # oldest supported PHP) and PCRE2 10.48 (the pinned suite) do with every
+    # case. Rebuild both engines from their release tarballs and re-observe the
+    # committed records, so the published counts rest on real engine runs.
+    name: PCRE2 Conformance Fixture
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+
+      - name: Cache PCRE2 Builds
+        id: pcre2-cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/pcre2
+          key: pcre2test-10.40-10.48-v1
+
+      - name: Build pcre2test 10.40 and 10.48
+        if: steps.pcre2-cache.outputs.cache-hit != 'true'
+        run: |
+          for version in 10.40 10.48; do
+            (
+              mkdir -p "$RUNNER_TEMP/pcre2" && cd "$RUNNER_TEMP/pcre2"
+              curl -fsSL -o "pcre2-$version.tar.gz" "https://github.com/PCRE2Project/pcre2/releases/download/pcre2-$version/pcre2-$version.tar.gz"
+              tar xzf "pcre2-$version.tar.gz"
+              cd "pcre2-$version" && ./configure --disable-shared --enable-unicode && make pcre2test
+            )
+          done
+
+      - name: Verify the Fixture Against Both Engines
+        run: >
+          php tests/Tools/verify_pcre2_fixture.php
+          --floor-pcre2test="$RUNNER_TEMP/pcre2/pcre2-10.40/pcre2test"
+          --pin-pcre2test="$RUNNER_TEMP/pcre2/pcre2-10.48/pcre2test"

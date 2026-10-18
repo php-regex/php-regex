@@ -72,8 +72,12 @@ if [ "$skip_ci" -eq 0 ]; then
     if ! command -v gh >/dev/null 2>&1; then
         problems+=("gh is not installed: it checks CI and publishes the release (or pass --skip-ci).")
     else
-        conclusion=$(gh run list --commit "$head" --workflow ci.yml --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
-        [ "$conclusion" = "success" ] || problems+=("CI on $(git rev-parse --short HEAD) is \"${conclusion:-not found}\", not \"success\".")
+        # The workflows that gate a release; the experimental and scheduled
+        # ones do not.
+        for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml; do
+            conclusion=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
+            [ "$conclusion" = "success" ] || problems+=("$workflow on $(git rev-parse --short HEAD) is \"${conclusion:-not found}\", not \"success\".")
+        done
     fi
 fi
 

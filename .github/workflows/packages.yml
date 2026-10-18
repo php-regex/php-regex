@@ -1,0 +1,122 @@
+name: Packages
+
+# Each of the seventeen packages as Packagist will serve it, out of the
+# monorepo.
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday, against the week's releases, which no lock file pins.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  standalone:
+    # Each package as Packagist serves it: its directory alone, required in a
+    # bare project, its php-regex siblings reached through path repositories
+    # at the branch's version. A requirement the monorepo's root composer.json
+    # hides, a sibling missing from its require or an autoload path that
+    # leaves the package directory fails here, before a tag publishes it.
+    name: Install ${{ matrix.package }} alone
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [ Parser, Explain, Optimizer, Generator, Automata, Redos, Transpiler, Linter, Toolkit, Cli, LanguageServer, PHPStan, PHPUnit, Psalm, Rector, Symfony, Laravel ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          dependencies: none
+
+      - name: Install the package in a bare project
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: |
+          project="$(mktemp -d)"
+          # shellcheck disable=SC2016 # the single quotes hold PHP, not shell
+          php -r '
+              $repositories = [];
+              foreach (glob("src/*/composer.json") as $manifest) {
+                  $repositories[] = ["type" => "path", "url" => realpath(dirname($manifest)), "options" => ["symlink" => false, "versions" => [json_decode(file_get_contents($manifest), true)["name"] => "2.x-dev"]]];
+              }
+              $name = json_decode(file_get_contents("src/".$argv[1]."/composer.json"), true)["name"];
+              file_put_contents($argv[2]."/composer.json", json_encode(["repositories" => $repositories, "require" => [$name => "2.x-dev"], "minimum-stability" => "dev", "prefer-stable" => true], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+          ' "$PACKAGE" "$project"
+          composer install -d "$project" --no-interaction --no-progress
+          echo "project=$project" >> "$GITHUB_ENV"
+
+      - name: Validate a pattern with what it installed
+        run: |
+          # shellcheck disable=SC2016 # the single quotes hold PHP, not shell
+          php -r 'require $argv[1]."/vendor/autoload.php"; exit(PHPRegex\Parser\RegexParser::create()->validate("/a+/")->isValid ? 0 : 1);' "$project"
+
+  phpunit-matrix:
+    # The assertion package runs on five PHPUnit majors the monorepo suite
+    # never runs together: each cell installs it alone, with the cell's
+    # PHPUnit, in a bare project, and asks the four assertions to answer
+    # and to fail — a failing assertion that stops failing, or a passing
+    # one that starts failing, is what this job is here to catch.
+    name: PHPUnit bridge (PHPUnit ${{ matrix.phpunit }}, PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { phpunit: '^9.6', php: '8.1' }
+          - { phpunit: '^10.0', php: '8.1' }
+          - { phpunit: '^11.0', php: '8.2' }
+          - { phpunit: '^12.0', php: '8.3' }
+          - { phpunit: '^13.0', php: '8.4' }
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP ${{ matrix.php }}
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: ${{ matrix.php }}
+          dependencies: none
+
+      - name: Install the package in a bare project
+        env:
+          PHPUNIT: ${{ matrix.phpunit }}
+        run: |
+          project="$(mktemp -d)"
+          # shellcheck disable=SC2016 # the single quotes hold PHP, not shell
+          php -r '
+              $repositories = [];
+              foreach (glob("src/*/composer.json") as $manifest) {
+                  $repositories[] = ["type" => "path", "url" => realpath(dirname($manifest)), "options" => ["symlink" => false, "versions" => [json_decode(file_get_contents($manifest), true)["name"] => "2.x-dev"]]];
+              }
+              file_put_contents($argv[2]."/composer.json", json_encode(["repositories" => $repositories, "require" => ["php-regex/regex-phpunit" => "2.x-dev", "phpunit/phpunit" => $argv[1]], "minimum-stability" => "dev", "prefer-stable" => true], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+          ' "$PHPUNIT" "$project"
+          composer install -d "$project" --no-interaction --no-progress
+          echo "project=$project" >> "$GITHUB_ENV"
+
+      - name: Check the four assertions answer and fail
+        run: php tests/Tools/phpunit_bridge_selfcheck.php "$project"

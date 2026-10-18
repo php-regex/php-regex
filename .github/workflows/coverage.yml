@@ -1,0 +1,78 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday: the mutation run over the parser.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    # The suite under PCOV on one engine: line coverage must not drop below
+    # the percentage in .github/coverage-threshold, raised by hand as the
+    # coverage grows. The mutations run on that same coverage: those of the
+    # lines a pull request or a push changes, and every Monday those of the
+    # parser, each held to the scores infection.json.dist declares.
+    name: Coverage and Mutations
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          # The whole history: the changed lines are read against the base.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          ini-values: phar.readonly=0
+          coverage: pcov
+          tools: phpunit phpstan phpbench infection
+
+      - name: Run Test Suite with Coverage
+        # The XML report and the JUnit log are what the mutation runs read
+        # instead of running the suite again.
+        run: >
+          tools/phpunit/vendor/bin/phpunit --colors=always
+          --coverage-clover var/coverage/clover.xml
+          --coverage-xml var/coverage/coverage-xml
+          --log-junit var/coverage/junit.xml
+
+      - name: Check the Line Coverage
+        run: php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-threshold
+
+      - name: Mutate the Changed Lines
+        if: github.event_name != 'schedule'
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: >
+          tools/infection/vendor/bin/infection
+          --coverage=var/coverage --skip-initial-tests
+          --git-diff-lines --git-diff-base="$BASE"
+          --ignore-msi-with-no-mutations
+          --only-covering-test-cases --threads=max
+
+      - name: Mutate the Parser
+        if: github.event_name == 'schedule'
+        run: >
+          tools/infection/vendor/bin/infection
+          --coverage=var/coverage --skip-initial-tests
+          --filter=src/Parser/
+          --only-covering-test-cases --threads=max

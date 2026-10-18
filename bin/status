@@ -68,12 +68,15 @@ if ! command -v gh >/dev/null 2>&1; then
 fi
 
 head=$(git -C "$root" rev-parse HEAD)
-ci=$(gh run list --commit "$head" --workflow ci.yml --json conclusion,status --jq '.[0] | "\(.status) \(.conclusion)"' 2>/dev/null)
-case "$ci" in
-    "completed success") ok "CI passed on $(git -C "$root" rev-parse --short HEAD)" ;;
-    "") ko "no CI run on $(git -C "$root" rev-parse --short HEAD)" ;;
-    *) ko "CI on $(git -C "$root" rev-parse --short HEAD): $ci" ;;
-esac
+short=$(git -C "$root" rev-parse --short HEAD)
+for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml; do
+    ci=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion,status --jq '.[0] | "\(.status) \(.conclusion)"' 2>/dev/null)
+    case "$ci" in
+        "completed success") ok "$workflow passed on $short" ;;
+        "") ko "no $workflow run on $short" ;;
+        *) ko "$workflow on $short: $ci" ;;
+    esac
+done
 
 echo
 echo "Monorepo"

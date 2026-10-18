@@ -1,0 +1,168 @@
+name: Tests
+
+# The suite on every PHP the library supports, 8.1 through 8.6, with the
+# lowest and the latest dependencies, and on the next PHP as an experiment.
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday, against the week's tool releases, which no lock file pins.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (PHP ${{ matrix.php }}, ${{ matrix.dependency }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '8.6', '8.5', '8.4', '8.3', '8.2' ]
+        dependency: [ prefer-lowest, prefer-stable ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # PHPStan too, and PHPBench whose sources its configuration scans: a
+      # test analyses a fixture with the repository's own configuration.
+      - name: Setup PHP ${{ matrix.php }} and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: ${{ matrix.php }}
+          ini-values: phar.readonly=0
+          dependencies: ${{ matrix.dependency }}
+          tools: phpunit phpstan phpbench
+
+      - name: Lower Symfony in the PHPUnit Tooling
+        # The lowest Symfony the latest Laravel takes: 7.4.0, with the
+        # components Laravel does not hold at 6.4.0. The tooling's PHPUnit
+        # stays what this PHP runs; Symfony 6.4 with Laravel 10 is the PHP 8.1
+        # job's lowest row.
+        if: matrix.dependency == 'prefer-lowest'
+        run: |
+          composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }} 'symfony/*'
+
+      - name: Run Test Suite
+        # The whole tests/ tree, so that the functional, regression and
+        # documentation tests are not left to rot outside of CI.
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
+
+  tests-php81:
+    # PHPUnit 12 needs PHP 8.3: PHPUnit 10.5, from tools/phpunit-81, runs the
+    # suite on PHP 8.1. The lowest row runs Symfony 6.4.0, Laravel 10.37.3
+    # (the first Laravel 10 that Testbench 8.18, the first with the attributes
+    # the tests use, takes) and PHPUnit 10.5.0.
+    name: Tests (PHP 8.1, ${{ matrix.dependency }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        dependency: [ prefer-lowest, prefer-stable ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.1 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.1'
+          ini-values: phar.readonly=0
+
+      - name: Lint for PHP 8.1
+        # PHP 8.1 lints one file per call.
+        shell: bash
+        run: |
+          find src -name '*.php' -print0 \
+            | xargs -0 -n1 php -l | (grep -v '^No syntax errors detected' || true)
+
+      - name: Install the PHPUnit 10.5 Tooling (${{ matrix.dependency }})
+        run: composer update -d tools/phpunit-81 --${{ matrix.dependency }} --prefer-stable --no-interaction --no-progress
+
+      - name: Smoke test
+        run: php tests/Tools/php81_smoke.php --phpstan=tools/phpunit-81/vendor/bin/phpstan
+
+      - name: Run Test Suite
+        run: tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist --colors=always
+
+  tests-experimental:
+    # A watchtower, not readiness: PHP 8.7 is a moving branch and nothing is
+    # promised on it yet. The cell runs with the others and never gates them:
+    # a red here is a signal to read, never a broken build — an upstream
+    # snapshot that stopped installing, a bridge dependency not admitting the
+    # branch yet, or the known PCRE2 JIT crash (releases 10.40 through 10.49
+    # and main; 8.7-dev bundles 10.44). The documented workaround for that
+    # last one is the pcre.jit=0 ini, to be set the day the crash actually
+    # fires — not before, or the signal goes dark. No static analysis: the
+    # analyser range stops at 8.6. No coverage: no driver builds on this
+    # branch.
+    name: Tests (PHP 8.7, experimental)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.7 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.7'
+          ini-values: phar.readonly=0
+          tools: phpunit phpstan phpbench
+
+      - name: Show the engine
+        run: |
+          php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL;'
+
+      - name: Run Test Suite
+        run: tools/phpunit/vendor/bin/phpunit --colors=always
+
+  validation:
+    name: Validation & Feature Completeness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          ini-values: phar.readonly=0
+          tools: phpunit
+
+      - name: Run Library Validation
+        run: php tests/Tools/validate_library.php
+
+      - name: Run PCRE Feature Completeness Tests
+        run: tools/phpunit/vendor/bin/phpunit tests/Unit/PcreFeatureCompletenessTest.php --testdox
+
+      - name: Run ReDoS Detection Tests
+        run: tools/phpunit/vendor/bin/phpunit tests/Unit/Redos/RedosEdgeCasesTest.php --testdox

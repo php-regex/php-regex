@@ -1,0 +1,44 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [ 2.x ]
+  pull_request:
+    branches: [ 2.x ]
+  schedule:
+    # Every Monday, against the week's tool releases, which no lock file pins.
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  benchmarks:
+    # Every benchmark subject once, each variant one revolution: a subject
+    # that throws, or one that runs for minutes, fails here before anyone
+    # compares numbers. No timing is asserted: shared runners are too noisy.
+    name: Benchmarks (one run of each)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          tools: phpbench
+
+      - name: Run Every Subject Once
+        run: tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
