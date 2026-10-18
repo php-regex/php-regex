@@ -194,10 +194,9 @@ final class RouteControllerFileResolverTest extends TestCase
 
     private function createMockRoute(mixed $controller): Route
     {
-        $route = $this->createMock(Route::class);
+        $route = $this->createStub(Route::class);
         $route->method('getDefault')
-              ->with('_controller')
-              ->willReturn($controller);
+              ->willReturnMap([['_controller', $controller]]);
 
         return $route;
     }
