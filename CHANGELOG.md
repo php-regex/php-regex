@@ -329,6 +329,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A braced property name left open, as `\p{aaa…`, is malformed where PCRE2 10.39 and older stop reading it, 31 bytes past the brace and its `^`, spaces counted, for PHP 8.1 and older: it was reported where 10.40 stops, up to 49 characters on, skipping spaces.
 - `format()`, `compact()` and `regex format` escape a hyphen that a space skipped under `(?xx)` kept a member of a class, `(?xx)[\d -z]` into `(?xx)[\d\-z]`, for the targets up to PCRE2 10.44 that accept the pattern: they wrote `[\d-z]`, a range every release refuses, and threw `FormattingException`. The escaped form matches what the pattern matches on pcre2test 10.32 to 10.44 and on PHP 7.3 to 8.5 with their bundled PCRE2.
 - `LanguageSolver` no longer reads a possessive quantifier as its greedy spelling when one iteration of its atom may match more than one way: `/^(?:ab?)++b$/` and `/^(?:ab?)+b$/` were called equivalent, though only the second matches `ab`, and so were `/^(?:a{2,3})++b$/` and `/^(?:a{2,3})+b$/` on `aaaab`. Such a pattern is refused, as any possessive the solver cannot prove inert.
 - Without nikic/php-parser, the lint ends a `do` whose body is a control structure without braces, `do if ($s) preg_match($re, $s); while ($s);`, at its `while`, as the parser-based reading does: an assignment after the loop no longer reaches a read inside it, and is no longer reported as a pattern the call may receive.

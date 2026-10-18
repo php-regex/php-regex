@@ -3079,6 +3079,19 @@ final class Validator extends AbstractNodeVisitor
     private function malformedPropertyNameEnd(string $source, int $brace): ?int
     {
         $length = \strlen($source);
+
+        // Before PCRE2 10.40, the name is read as written, spaces included,
+        // into a buffer of PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40 bytes.
+        if (!$this->supports(PcreFeature::LoosePropertyNames)) {
+            $start = $brace + 1 + ('^' === ($source[$brace + 1] ?? '') ? 1 : 0);
+            $close = strpos($source, '}', $start);
+            if (false !== $close && $close - $start < PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40) {
+                return null;
+            }
+
+            return min($length, $start + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40);
+        }
+
         $position = $brace + 1;
         $negated = false;
         $read = 0;
