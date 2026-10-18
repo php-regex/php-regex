@@ -255,7 +255,8 @@ vendor/bin/regex lint app/ --format=json
         "redos_errors": 0,
         "infos": 0,
         "lint_errors": 0,
-        "parser_fallbacks": 0
+        "parser_fallbacks": 0,
+        "not_analyzed": 0
     },
     "results": [
         {
