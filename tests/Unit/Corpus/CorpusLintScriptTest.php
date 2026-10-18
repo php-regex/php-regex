@@ -50,7 +50,7 @@ final class CorpusLintScriptTest extends TestCase
         }
 
         file_put_contents($this->root.'/corpus/ownerA/repoNew/patterns.php', "<?php\n\npreg_match('/ab{1}c/', \$x);\n");
-        file_put_contents($this->root.'/corpus/ownerB/repoOld/patterns.php', "<?php\n\npreg_match('/\\p{scx:Greek}/u', \$x);\n");
+        file_put_contents($this->root.'/corpus/ownerB/repoOld/patterns.php', "<?php\n\npreg_match('/[\\p{scx:Greek}]/u', \$x);\n");
         file_put_contents($this->root.'/corpus/ownerC/repoBare/patterns.php', "<?php\n\npreg_match('/cd{1}e/', \$x);\n");
         file_put_contents($this->root.'/corpus/ownerD/repoClean/patterns.php', "<?php\n\npreg_match('/^\\d{4}-\\d{2}-\\d{2}\$/', \$x);\n");
     }

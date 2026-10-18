@@ -481,7 +481,7 @@ final class AnalysisService
                     'message' => $message,
                     'source' => $source,
                     'validation' => $rangeValidation,
-                    'tip' => $this->getTipForValidationError($message, $occurrence->pattern, $rangeValidation),
+                    'tip' => $this->badEscapeTip($occurrence->pattern) ?? $this->getTipForValidationError($message, $occurrence->pattern, $rangeValidation),
                     'target' => ProjectTarget::describe($target),
                 ];
             }
@@ -756,6 +756,22 @@ final class AnalysisService
         }
 
         return [$lowest->target, implode('; ', $runs), $lowest->validation];
+    }
+
+    /**
+     * The tip for a pattern a later PHP of the range refuses that the floor
+     * accepts only because it reads an escape its PCRE2 refuses as the
+     * character after the backslash, as PHP 7.3 and 7.4 do: the "X"
+     * modifier, which tells them not to, makes the floor refuse it too.
+     * Null otherwise.
+     */
+    private function badEscapeTip(string $pattern): ?string
+    {
+        if ($this->regex->validate($pattern.'X')->isValid) {
+            return null;
+        }
+
+        return 'The lowest PHP of the range reads an escape its PCRE2 refuses as the character after the backslash, as PHP 7.3 and 7.4 do without the "X" modifier, and a later one refuses it: write that character without the backslash, or "\\\\" for a backslash before it.';
     }
 
     /**

@@ -84,19 +84,20 @@ final class EngineClaimsTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, phpVersionId: int, release: string, verdict: bool|int|string}>
+     * @return iterable<string, array{pattern: string, phpVersionId: int, release: string, verdict: bool|int}>
      */
     public static function provideVerdicts(): iterable
     {
         yield 'compiles' => ['pattern' => '/a/', 'phpVersionId' => 80400, 'release' => '10.44', 'verdict' => true];
         yield 'refused at an offset' => ['pattern' => '/(*pla:a)a/', 'phpVersionId' => 70300, 'release' => '10.32', 'verdict' => 5];
-        yield 'accepted without a warning by PHP 7.3' => ['pattern' => '/\p{Bogus}/u', 'phpVersionId' => 70300, 'release' => '10.32', 'verdict' => 'silent'];
+        yield 'read as text by PHP 7.3' => ['pattern' => '/\p{Bogus}/u', 'phpVersionId' => 70300, 'release' => '10.32', 'verdict' => true];
+        yield 'refused by PHP 7.3 under X' => ['pattern' => '/\p{Bogus}/uX', 'phpVersionId' => 70300, 'release' => '10.32', 'verdict' => 9];
         yield 'warned of by PHP 8.0' => ['pattern' => '/\p{Bogus}/u', 'phpVersionId' => 80000, 'release' => '10.35', 'verdict' => 9];
     }
 
     #[Test]
     #[DataProvider('provideVerdicts')]
-    public function test_a_verdict_is_what_the_validator_says_for_the_target(string $pattern, int $phpVersionId, string $release, bool|int|string $verdict): void
+    public function test_a_verdict_is_what_the_validator_says_for_the_target(string $pattern, int $phpVersionId, string $release, bool|int $verdict): void
     {
         $this->assertSame($verdict, EngineClaims::verdict($pattern, $phpVersionId, $release));
     }

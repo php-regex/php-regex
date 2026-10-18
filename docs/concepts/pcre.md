@@ -104,12 +104,32 @@ spot below 10.39. Neither are the matching bugs of an old release, such as a
 `(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse
 and others read with the wrong length.
 
-PHP 7.3 and 7.4 compile some patterns their PCRE2 refuses, without a warning:
-an unknown property outside a class, `\p{Bogus}`, and a backslash and digits
-past 214748363, `\214748364`. The branch that holds either then never matches:
-`/\p{Bogus}|a/u` finds `a`, `/\p{Bogus}?a/u` finds nothing in `"a"`. The
-library refuses them for those targets as PCRE2 does, and its message says
-so. PHP 8.0 warns on them.
+PHP 7.3 and 7.4 compile every pattern with `PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL`,
+unless it has the `X` modifier: an escape PCRE2 refuses as it reads it is the
+character after the backslash, and what follows is read again as pattern text.
+`\y` is `y`, `\U` is `U`, `\x{zz}` is the text `x{zz}`, `\p{Bogus}` the text
+`p{Bogus}`, `\214748364` the digits `214748364`, `\g{-1}` with no group open
+the text `g{-1}`, and `\o{8}` is `o` repeated eight times, as the braces read
+again make a count. PHP 8.0 compiles without the option and ignores `X`, so it
+refuses all of them. The library judges a 7.3 or 7.4 target the same way, and
+reads the escape as that character in the tree it builds:
+
+```php
+$regex = Regex::create(['php_version' => '7.4']);
+$regex->validate('/\y/')->isValid;   // true: the letter "y"
+$regex->validate('/\y/X')->isValid;  // false: "X" turns the option off
+Regex::create(['php_version' => '8.0'])->validate('/\y/')->isValid; // false
+```
+
+What PCRE2 refuses after it has read the escape stays refused: a reference to
+a group that does not exist (`\8`, `\g{9}`, `\k<x>`), a property in a class
+(`[\p{Bogus}]`), a class escape before a hyphen (`[\d-z]`), a count past 65535
+that the braces read again make (`\x{110000}` under `u`). PCRE2 10.32, PHP 7.3,
+also reads an escape a class refuses once read as its letter: `[\B]`, `[\N]`,
+`[\k]` and the `\d` of `[a-\d]`; 10.33 refuses them, the option set or not.
+Over a range of PHP versions, `regex lint` reports such a pattern where PHP 8.0
+refuses it, with a tip: write the character without the backslash, or `\\`
+for a backslash before it.
 
 PHP 7.2 and earlier ship PCRE1, a different engine that reads some patterns
 otherwise; `regex lint` never judges for them as if they ran PCRE2. A
@@ -229,6 +249,7 @@ and a target has it from the release it arrived in on
 | `AlphabeticAssertionNames` | 10.33 | The assertions and the atomic group take alphabetic names: "(*pla:", "(*positive_lookahead:", "(*nla:", "(*plb:", "(*nlb:", "(*atomic:" and their long forms. |
 | `ScriptRuns` | 10.33 | Script runs: "(*script_run:", "(*sr:", "(*atomic_script_run:" and "(*asr:". |
 | `NonAsciiGroupNames` | 10.33 | Under UTF a group name may hold letters and decimal digits of any script, as "(?<nämed>a)". |
+| `BadEscapeInClassStaysRefused` | 10.33 | Under PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, as PHP 7.3 and 7.4 compile, an escape a class refuses once it has read it, as "[\B]", "[\N]" or the "\d" of "[a-\d]", stays refused, where it was read as its letter. |
 | `QuantifiedAccept` | 10.34 | "(*ACCEPT)" may be repeated, as "(*ACCEPT)??". |
 | `PossessiveRepeatOnceIsAtomic` | 10.34 | A possessive "{1}+" on a group or a subroutine call makes it atomic, where it was ignored as "{1}" is. |
 | `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |

@@ -148,10 +148,12 @@ final class CompatibilityCheckerTest extends TestCase
         ];
         // PCRE2 10.39, which PHP 8.1 bundles, knows a script by its exact
         // name only (preg_match() on PHP 8.1.34 / PCRE2 10.39: unknown
-        // property name at offset 9).
+        // property name at offset 9). PHP 7.3 and 7.4 read the escape they
+        // refuse as the text "p{greek}" (php:7.3-cli and php:7.4-cli:
+        // preg_match('/\p{greek}/u', 'p{greek}') is 1); PHP 8.0 refuses it.
         yield 'a script in lower case, from PCRE2 10.40' => [
             'regex' => '/\\p{greek}/u',
-            'valid' => static fn (int $php, int $pcre): bool => $pcre >= 40,
+            'valid' => static fn (int $php, int $pcre): bool => $pcre >= 40 || $php < 80000,
             'errorCode' => 'regex.unicode.property_invalid',
         ];
         yield 'valid everywhere' => [

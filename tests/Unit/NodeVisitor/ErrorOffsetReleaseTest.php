@@ -89,6 +89,24 @@ final class ErrorOffsetReleaseTest extends TestCase
     }
 
     /**
+     * "\o" with no "{" after it is refused where the "{" should be, but on
+     * the "o" when the pattern ends there: check_escape() steps back from
+     * the end (pcre2test 10.32, 10.39, 10.44 and 10.45: offset 1 for "/\o/",
+     * 2 for "/\ox/"). PCRE2 10.49 reports past the "o" (PHP 8.4.26, PCRE2
+     * 10.49: offset 2).
+     */
+    #[Test]
+    public function test_o_ending_the_pattern_is_refused_on_its_letter_before_pcre2_10_47(): void
+    {
+        foreach (['10.32' => 1, '10.39' => 1, '10.44' => 1, '10.45' => 1, '10.49' => 2] as $release => $offset) {
+            $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => (string) $release]);
+
+            $this->assertSame($offset, $regex->validate('/\o/')->offset, '/\o/ on PCRE2 '.$release);
+            $this->assertSame(2, $regex->validate('/\ox/')->offset, '/\ox/ on PCRE2 '.$release);
+        }
+    }
+
+    /**
      * @param array<string, int> $quirks offsets of a release that fits
      *                                   neither the older nor the newer one
      */

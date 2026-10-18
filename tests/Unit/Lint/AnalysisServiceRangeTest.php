@@ -62,6 +62,41 @@ final class AnalysisServiceRangeTest extends TestCase
         $this->assertNull($issue['tip']);
     }
 
+    /**
+     * PHP 7.3 and 7.4 read "\y" as "y" (php:7.3-cli: preg_match('/a\y/',
+     * 'ay') is 1), as they compile with PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL;
+     * PHP 8.0 refuses it (php:8.0-cli: "unrecognized character follows \"
+     * at offset 2). The error says how to write it so that every PHP of the
+     * range reads it alike.
+     */
+    #[Test]
+    public function test_a_bad_escape_php_7_reads_as_its_character_is_refused_from_php_8_0_with_a_tip(): void
+    {
+        $analysis = $this->analysis('7.3', [['7.4', null], ['8.0', null], ['8.4', null]]);
+
+        $issues = $this->rangeIssues($analysis, '/a\y/');
+
+        $this->assertCount(1, $issues);
+        $this->assertSame('error', $issues[0]['type']);
+        $this->assertSame('On PHP 8.0 and later: Unrecognized escape sequence "\y".', $issues[0]['message']);
+        $this->assertSame(['php' => '8.0', 'pcre' => '10.35'], $issues[0]['target'] ?? null);
+        $this->assertSame(
+            'The lowest PHP of the range reads an escape its PCRE2 refuses as the character after the backslash, as PHP 7.3 and 7.4 do without the "X" modifier, and a later one refuses it: write that character without the backslash, or "\\\\" for a backslash before it.',
+            $issues[0]['tip'] ?? null,
+        );
+    }
+
+    #[Test]
+    public function test_a_pattern_php_7_reads_without_a_bad_escape_gets_no_bad_escape_tip(): void
+    {
+        $analysis = $this->analysis('7.3', [['8.5', null]]);
+
+        $issues = $this->rangeIssues($analysis, self::KEEP_IN_LOOKBEHIND);
+
+        $this->assertCount(1, $issues);
+        $this->assertNull($issues[0]['tip'] ?? null);
+    }
+
     #[Test]
     public function test_a_stretch_of_refusing_versions_that_ends_is_named_with_its_end(): void
     {

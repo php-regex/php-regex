@@ -21,6 +21,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\BadEscape;
 use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\GroupIndex;
 use PHPRegex\Parser\Internal\LibraryPcre;
@@ -299,6 +300,19 @@ final class Validator extends AbstractNodeVisitor
     private bool $unicodeFlag = false;
 
     /**
+     * Whether the pattern is compiled with PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL,
+     * as PHP 7.3 and 7.4 compile it without "X": an escape PCRE2 refuses as
+     * it reads it is the character after the backslash, which the lexer
+     * gave as that character.
+     */
+    private bool $badEscapeIsLiteral = false;
+
+    /**
+     * Whether the node visited ends a range of a class.
+     */
+    private bool $endsRange = false;
+
+    /**
      * The pattern body the tree was parsed from, for what no node records:
      * whether a letter was escaped, and what follows an escape the lexer did
      * not recognize. Null where positions do not point into it.
@@ -467,6 +481,7 @@ final class Validator extends AbstractNodeVisitor
         $this->charClassDepth = 0;
         $this->unicodeFlag = str_contains($flags, 'u');
         $this->unicodeMode = $this->unicodeFlag || 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $source);
+        $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags);
 
         // Before PCRE2 10.45, "\N" ending a range is refused as the range.
         $nEndsRange = !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN);
@@ -484,6 +499,7 @@ final class Validator extends AbstractNodeVisitor
                     continue;
                 }
 
+                $this->endsRange = $afterRange;
                 $afterRange = TokenType::Range === $token->type
                     || ($afterRange && \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true));
 
@@ -972,7 +988,13 @@ final class Validator extends AbstractNodeVisitor
             $this->validateBracketInClass($this->source, $node->end->startPosition, true);
         }
 
-        $node->end->accept($this);
+        $this->endsRange = true;
+
+        try {
+            $node->end->accept($this);
+        } finally {
+            $this->endsRange = false;
+        }
 
         // 3. Validation: order check, on the code points of both endpoints.
         // PCRE reports it where the range ends.
@@ -1650,6 +1672,7 @@ final class Validator extends AbstractNodeVisitor
         $this->unicodeFlag = str_contains($node->flags, 'u');
         $this->unicodeMode = $this->unicodeFlag
             || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
+        $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $node->flags);
         $this->groups = GroupIndex::of($node->pattern);
         $this->groupNumbering = $this->groups->numbering();
         $this->lookbehindBranchMeasures = 0;
@@ -1808,7 +1831,7 @@ final class Validator extends AbstractNodeVisitor
 
             $close = strpos($source, '}', $at);
             if (false === $close || $close - $at >= PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40) {
-                $this->raiseMalformedPropertyAt($letter, min(\strlen($source), $at + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40), false === $close ? '' : $this->silentRefusalNote());
+                $this->raiseMalformedPropertyAt($letter, min(\strlen($source), $at + PropertyNames::MAX_NAME_LENGTH_BEFORE_10_40));
             }
 
             $name = substr($source, $at, $close - $at);
@@ -1822,7 +1845,7 @@ final class Validator extends AbstractNodeVisitor
         $unprefixed = LibraryPcre::replace('/^\s*+(?:sc|script|scx|script[\s_-]*+extensions)\s*+[:=]/i', '', $name) ?? $name;
         $spelling = PropertyNames::spellingBefore1040($unprefixed);
         $this->raiseSemanticError(
-            \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.%s', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion, $this->silentRefusalNote()),
+            \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
             $end,
             ErrorCode::UnicodePropertyInvalid,
             null === $spelling
@@ -2984,6 +3007,12 @@ final class Validator extends AbstractNodeVisitor
      */
     private function validateEscapedLetter(string $source, string $letter, int $start): void
     {
+        // PHP 7.3 and 7.4 read an escape PCRE2 refuses as it reads it as its
+        // letter.
+        if ($this->badEscapeIsLiteral && BadEscape::at($source, $start, $this->charClassDepth > 0, $this->unicodeMode, !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused), null, $this->endsRange)) {
+            return;
+        }
+
         $end = $start + 2;
 
         if (isset(self::UNRECOGNIZED_ESCAPES[$letter])) {
@@ -3049,20 +3078,10 @@ final class Validator extends AbstractNodeVisitor
         $this->raiseMalformedPropertyAt($letter, $offset);
     }
 
-    /**
-     * What a refusal adds where the PHP judged compiles the pattern without
-     * a warning: PHP 7.3 and 7.4 do so for a property they do not know,
-     * outside a class.
-     */
-    private function silentRefusalNote(): string
-    {
-        return 0 === $this->charClassDepth && $this->target->phpVersionId < PhpVersionGates::WARNS_ON_EVERY_REFUSAL ? ' '.PhpVersionGates::SILENT_REFUSAL_NOTE : '';
-    }
-
-    private function raiseMalformedPropertyAt(string $letter, int $offset, string $note = ''): never
+    private function raiseMalformedPropertyAt(string $letter, int $offset): never
     {
         $this->raiseSemanticError(
-            \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.%s', $letter, $note),
+            \sprintf('Malformed \\%s sequence: a property letter or a braced name must follow it.', $letter),
             $offset,
             ErrorCode::UnicodePropertyMalformed,
             \sprintf('Name a property, as in "\\%1$sL" or "\\%1$s{Lu}", or drop the backslash for a literal "%1$s".', $letter),
@@ -3136,10 +3155,12 @@ final class Validator extends AbstractNodeVisitor
      */
     private function validateOctalBraces(string $source, int $position): void
     {
+        // At the end of the pattern PCRE steps back onto the "o", before
+        // PCRE2 10.47.
         if ('{' !== ($source[$position] ?? '')) {
             $this->raiseSemanticError(
                 'Missing opening brace after \o.',
-                $position,
+                $position >= \strlen($source) && !$this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $position - 1 : $position,
                 ErrorCode::OctalMissingBrace,
             );
         }

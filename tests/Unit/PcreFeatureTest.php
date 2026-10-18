@@ -51,6 +51,7 @@ final class PcreFeatureTest extends TestCase
         yield 'large open count as text' => [PcreFeature::LargeOpenCountIsText, '10.36', '10.37'];
         yield 'script runs' => [PcreFeature::ScriptRuns, '10.32', '10.33'];
         yield 'group names past ASCII' => [PcreFeature::NonAsciiGroupNames, '10.32', '10.33'];
+        yield 'bad escape in a class stays refused' => [PcreFeature::BadEscapeInClassStaysRefused, '10.32', '10.33'];
         yield 'repeated accept' => [PcreFeature::QuantifiedAccept, '10.33', '10.34'];
         yield 'possessive repeat once' => [PcreFeature::PossessiveRepeatOnceIsAtomic, '10.33', '10.34'];
         yield 'non-atomic assertion names' => [PcreFeature::NonAtomicAssertionNames, '10.33', '10.34'];

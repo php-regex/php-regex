@@ -36,6 +36,11 @@ enum PcreFeature
     case NonAsciiGroupNames;
 
     /**
+     * Under PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, as PHP 7.3 and 7.4 compile, an escape a class refuses once it has read it, as "[\B]", "[\N]" or the "\d" of "[a-\d]", stays refused, where it was read as its letter.
+     */
+    case BadEscapeInClassStaysRefused;
+
+    /**
      * "(*ACCEPT)" may be repeated, as "(*ACCEPT)??".
      */
     case QuantifiedAccept;
@@ -249,7 +254,8 @@ enum PcreFeature
         return match ($this) {
             self::AlphabeticAssertionNames,
             self::ScriptRuns,
-            self::NonAsciiGroupNames => '10.33',
+            self::NonAsciiGroupNames,
+            self::BadEscapeInClassStaysRefused => '10.33',
             self::QuantifiedAccept,
             self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames => '10.34',

@@ -49,16 +49,13 @@ final class PhpVersionGates
     public const BUNDLES_PCRE2_10_35 = 80000;
 
     /**
-     * PHP 8.0 warns on every pattern its PCRE2 refuses. PHP 7.3.33 and
-     * 7.4.33 compile "\p{Bogus}" outside a class and "\214748364" without a
-     * warning, and the branch holding either then never matches.
+     * PHP 8.0 compiles without PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, and reads
+     * the "X" modifier as nothing. PHP 7.3 and 7.4 compile with it unless
+     * the pattern has the "X" modifier (php_pcre.c): an escape PCRE2 refuses
+     * as it reads it, "\y", "\x{zz}" or "\p{Bogus}", is then the character
+     * after the backslash, and what follows it is read again.
      */
-    public const WARNS_ON_EVERY_REFUSAL = 80000;
-
-    /**
-     * What a refusal of such a pattern adds for PHP 7.3 and 7.4.
-     */
-    public const SILENT_REFUSAL_NOTE = 'PHP 7.3 and 7.4 accept this pattern without a warning, and the branch that holds it then never matches.';
+    public const BAD_ESCAPE_IS_REFUSED = 80000;
 
     /**
      * PHP 8.1.1 and later bundle PCRE2 10.39; 8.1.0 bundled 10.37, judged
@@ -138,6 +135,15 @@ final class PhpVersionGates
         self::NO_KEEP_IN_LOOKAROUND,
         self::NEVER_BACKSLASH_C_UNDER_UTF_8_5,
     ];
+
+    /**
+     * Whether PHP compiles a pattern with these modifiers with
+     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: 7.3 and 7.4, without "X".
+     */
+    public static function badEscapeIsLiteral(int $phpVersionId, string $flags): bool
+    {
+        return $phpVersionId < self::BAD_ESCAPE_IS_REFUSED && !str_contains($flags, 'X');
+    }
 
     /**
      * Whether PHP compiles a "u" pattern with PCRE2_NEVER_BACKSLASH_C: 8.4

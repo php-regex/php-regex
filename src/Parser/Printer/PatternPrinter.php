@@ -1459,9 +1459,11 @@ final class PatternPrinter extends AbstractNodeVisitor
                 continue;
             }
 
+            // "\c" at the end of the pattern, the letter "c" on PHP 7.3 and
+            // 7.4, takes no character after it.
             $escape = $source[$start + 1] ?? '';
             if ('Q' !== $escape) {
-                $offset = $start + ('c' === $escape ? 3 : 2);
+                $offset = min($length, $start + ('c' === $escape ? 3 : 2));
 
                 continue;
             }

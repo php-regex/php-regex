@@ -268,10 +268,8 @@ final class BeforePcre2Ten39Test extends TestCase
      */
     public static function provideFullRefusals(): iterable
     {
-        $silent = ' PHP 7.3 and 7.4 accept this pattern without a warning, and the branch that holds it then never matches.';
-
-        yield 'unknown property' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '7.3', 'release' => '10.32', 'error' => 'Invalid or unsupported Unicode property: \p{Bogus}. PCRE2 10.32 knows a property by one exact name only.'.$silent];
-        yield 'backslash number' => ['pattern' => '/\214748364/', 'phpVersion' => '7.3', 'release' => '10.32', 'error' => 'Number too big at position 10: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.'.$silent];
+        yield 'unknown property' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '8.0', 'release' => '10.35', 'error' => 'Invalid or unsupported Unicode property: \p{Bogus}. PCRE2 10.35 knows a property by one exact name only.'];
+        yield 'backslash number' => ['pattern' => '/\214748364/', 'phpVersion' => '8.0', 'release' => '10.35', 'error' => 'Number too big at position 10: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.'];
         yield 'repeated accept' => ['pattern' => '/a(*ACCEPT)?b/', 'phpVersion' => '7.4', 'release' => '10.33', 'error' => 'Quantifier "?" cannot be applied to assertion or verb "(*ACCEPT)" at position 10: PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))?", which every release reads'];
         yield 'short non-atomic lookahead' => ['pattern' => '/x(?*a)a/', 'phpVersion' => '7.4', 'release' => '10.34', 'error' => 'Invalid group modifier syntax at position 3: PCRE2 10.35 added "(?*" for "(*napla:"; write "(*napla:" instead.'];
         yield 'script run' => ['pattern' => '/x(*sr:a)/', 'phpVersion' => '7.3', 'release' => '10.32', 'error' => 'Unknown verb "(*sr:": PCRE2 10.33 added script runs.'];
@@ -279,35 +277,37 @@ final class BeforePcre2Ten39Test extends TestCase
 
     /**
      * PHP 7.3.33 and 7.4.33 compile "\p{Bogus}" and "\214748364", which
-     * their PCRE2 refuses, without a warning, and the branch holding one
-     * never matches: "/\p{Bogus}|a/u" finds "a", "/\p{Bogus}?a/u" finds
-     * nothing in "a". PHP 8.0 warns. In a class, 7.3 and 7.4 warn too. The
-     * refusal stays, and says so.
+     * their PCRE2 refuses, without a warning: they compile with
+     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, under which the backslash and the
+     * letter or digit after it are that character, and the rest is read
+     * again. "/\p{Bogus}|a/u" finds "a" in "a" and "p{Bogus}" in
+     * "p{Bogus}"; "/\p{Bogus}?a/u" finds nothing in "a" and "p{Bogusa" in
+     * "p{Bogusa", the "?" making the "}" optional. PHP 8.0 refuses both. In
+     * a class, 7.3 and 7.4 refuse a property PCRE2 does not know.
      */
     #[Test]
-    #[DataProvider('provideSilentlyAcceptedRefusals')]
-    public function test_a_refusal_php_7_accepts_silently_says_so(string $pattern, string $phpVersion, bool $says): void
+    #[DataProvider('provideEscapesPhp7ReadsAsText')]
+    public function test_php_7_reads_an_escape_its_pcre2_refuses_as_text(string $pattern, string $phpVersion, bool $accepted): void
     {
         $validation = RegexParser::create(['php_version' => $phpVersion, 'runtime_pcre_validation' => false])->validate($pattern);
 
-        $this->assertFalse($validation->isValid);
-        $note = 'PHP 7.3 and 7.4 accept this pattern without a warning, and the branch that holds it then never matches.';
-        $says ? $this->assertStringContainsString($note, (string) $validation->error) : $this->assertStringNotContainsString($note, (string) $validation->error);
+        $this->assertSame($accepted, $validation->isValid, $pattern.' on PHP '.$phpVersion.': '.($validation->error ?? ''));
+        $this->assertStringNotContainsString('without a warning', (string) $validation->error);
     }
 
     /**
-     * @return iterable<string, array{pattern: string, phpVersion: string, says: bool}>
+     * @return iterable<string, array{pattern: string, phpVersion: string, accepted: bool}>
      */
-    public static function provideSilentlyAcceptedRefusals(): iterable
+    public static function provideEscapesPhp7ReadsAsText(): iterable
     {
-        yield 'unknown property, PHP 7.3' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '7.3', 'says' => true];
-        yield 'unknown property, PHP 7.4' => ['pattern' => '/\p{Bogus}|a/u', 'phpVersion' => '7.4', 'says' => true];
-        yield 'property name too long, PHP 7.3' => ['pattern' => '/\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|a/u', 'phpVersion' => '7.3', 'says' => true];
-        yield 'unknown property, PHP 8.0' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '8.0', 'says' => false];
-        yield 'unknown property in a class, PHP 7.4' => ['pattern' => '/[\p{Bogus}a]/u', 'phpVersion' => '7.4', 'says' => false];
-        yield 'backslash and nine digits, PHP 7.3' => ['pattern' => '/\214748364/', 'phpVersion' => '7.3', 'says' => true];
-        yield 'backslash and nine digits, PHP 7.4' => ['pattern' => '/b\214748364|a/', 'phpVersion' => '7.4', 'says' => true];
-        yield 'backslash and nine digits, PHP 8.0' => ['pattern' => '/\214748364/', 'phpVersion' => '8.0', 'says' => false];
+        yield 'unknown property, PHP 7.3' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '7.3', 'accepted' => true];
+        yield 'unknown property, PHP 7.4' => ['pattern' => '/\p{Bogus}|a/u', 'phpVersion' => '7.4', 'accepted' => true];
+        yield 'property name too long, PHP 7.3' => ['pattern' => '/\p{aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}|a/u', 'phpVersion' => '7.3', 'accepted' => true];
+        yield 'unknown property, PHP 8.0' => ['pattern' => '/\p{Bogus}/u', 'phpVersion' => '8.0', 'accepted' => false];
+        yield 'unknown property in a class, PHP 7.4' => ['pattern' => '/[\p{Bogus}a]/u', 'phpVersion' => '7.4', 'accepted' => false];
+        yield 'backslash and nine digits, PHP 7.3' => ['pattern' => '/\214748364/', 'phpVersion' => '7.3', 'accepted' => true];
+        yield 'backslash and nine digits, PHP 7.4' => ['pattern' => '/b\214748364|a/', 'phpVersion' => '7.4', 'accepted' => true];
+        yield 'backslash and nine digits, PHP 8.0' => ['pattern' => '/\214748364/', 'phpVersion' => '8.0', 'accepted' => false];
     }
 
     #[Test]
@@ -321,8 +321,13 @@ final class BeforePcre2Ten39Test extends TestCase
         $this->assertSame(['10.32' => true], $refused);
     }
 
+    /**
+     * A release judged for PHP 8.0, which compiles without
+     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: PHP 7.3 and 7.4 read an escape the
+     * release refuses as text (BadEscapeIsLiteralTest).
+     */
     private static function parser(string $release): RegexParser
     {
-        return RegexParser::create(['php_version' => PcreTarget::bundledWith(70300)->phpVersionId, 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
+        return RegexParser::create(['php_version' => PcreTarget::bundledWith(80000)->phpVersionId, 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
     }
 }

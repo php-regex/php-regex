@@ -127,6 +127,22 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
+## PHP 7.3 and 7.4 escapes: what is left
+
+- A range ending in `\z`, `\Z`, `\A`, `\G` or `\K`, as `[a-\z]`, is
+  refused before PCRE2 10.45 as an invalid range past the escape
+  (php:8.0-cli: "invalid range in character class at offset 5"); the
+  library refuses the escape itself at offset 4. Only `\B`, `\R` and `\X`
+  are refused there as escapes. The verdict is right, the offset is not.
+- `\g{+n}` with `n` past 65535 less the groups open, as `(a)\g{+65535}`,
+  is "g", then "{" repeated by the "+", then "65535}" on PHP 7.3 and 7.4
+  (php:7.3-cli compiles it); the library reads a group number past 65535
+  and refuses it. Reading it right needs the rest of the escape lexed again
+  from the parser.
+- A property name PCRE2 10.32 to 10.35 do not know yet but 10.39 does, as
+  `\p{Vithkuqi}`, is text on PHP 7.3 and 7.4; the library, which judges
+  them with the 10.39 table, reads the property.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across

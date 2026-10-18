@@ -23,6 +23,7 @@ use PHPRegex\Tests\Support\ReplaySubjects;
 use PHPRegex\Tests\Unit\NodeVisitor\ErrorOffsetReleaseTest;
 use PHPRegex\Tests\Unit\NodeVisitor\PaddedBraceVersionTest;
 use PHPRegex\Tests\Unit\NodeVisitor\PcreVersionGatingTest;
+use PHPRegex\Tests\Unit\Parser\BadEscapeIsLiteralTest;
 use PHPRegex\Tests\Unit\Parser\BeforePcre2Ten39Test;
 use PHPRegex\Tests\Unit\Parser\GroupNameLengthReleaseTest;
 use PHPRegex\Tests\Unit\Parser\NulByteBeforePhp82Test;
@@ -35,10 +36,12 @@ use PHPRegex\Tests\Unit\Parser\NulByteBeforePhp82Test;
  * Three kinds of claim, each for the PCRE2 releases the official php:X-cli
  * images run, and for the PHP versions where the claim depends on them:
  *  - compile: the verdict the validator gives the pattern, judged for that
- *    PHP and that release: it compiles, PHP compiles it without a word
- *    though PCRE2 refuses it ("silent"), or it is refused at an offset;
+ *    PHP and that release: it compiles, or it is refused at an offset;
  *  - match: what a pattern whose meaning changed finds in a subject, before
  *    and from the release the change arrived in, as the lint reports it;
+ *    and what a pattern PHP 7.3 and 7.4 read through
+ *    PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL finds, where the validator accepts
+ *    it, false where it refuses it;
  *  - same: a rewrite a Rector rule makes for a PHP finds what the call it
  *    replaces finds, on the engine of that PHP.
  *
@@ -80,7 +83,8 @@ final class EngineClaims
      * rest from the release the library knows in full.
      */
     private const PROVIDERS = [
-        [BeforePcre2Ten39Test::class, ['provideRefusals', 'provideRefusalsWhereReadingStopped', 'provideAcceptedEverywhere', 'provideClassicSpellings', 'provideFullRefusals', 'provideSilentlyAcceptedRefusals'], '10.32'],
+        [BeforePcre2Ten39Test::class, ['provideRefusals', 'provideRefusalsWhereReadingStopped', 'provideAcceptedEverywhere', 'provideClassicSpellings', 'provideFullRefusals', 'provideEscapesPhp7ReadsAsText'], '10.32'],
+        [BadEscapeIsLiteralTest::class, ['provideBadEscapes', 'provideClassEscapesOnlyPcre2Ten32Reads', 'provideRefusalsTheOptionKeeps', 'provideEscapesTheOptionLeavesAlone'], '10.32'],
         [NulByteBeforePhp82Test::class, ['providePatternsHoldingANul'], '10.32'],
         [PcreVersionGatingTest::class, ['provideVariableLengthLookbehinds', 'provideFixedLengthLookbehinds'], self::KNOWN_IN_FULL],
         [PaddedBraceVersionTest::class, ['providePaddedEscapes'], self::KNOWN_IN_FULL],
@@ -93,6 +97,7 @@ final class EngineClaims
      * provider row spells.
      */
     private const FEATURE_WITNESSES = [
+        'BadEscapeInClassStaysRefused' => ['/[\B]/', '/[a-\d]/'],
         'LoosePropertyNames' => ['/\p{greek}/u', '/\p{sc:Greek}/u', '/\p{Katakana}/u'],
         'CaselessRestrictModifier' => ['/(?r)k/i', '/k/ir'],
         'AsciiOptions' => ['/(?aD)\d/', '/(?a)\w/u'],
@@ -110,6 +115,12 @@ final class EngineClaims
         'UcpFoldsPastAsciiWithoutUtf' => ['pattern' => '/(*UCP)\xC9/i', 'subject' => "\xE9", 'group' => 0, 'before' => null, 'from' => "\xE9"],
         'LoosePropertyNames' => ['pattern' => '/\p{Katakana}/u', 'subject' => "\u{30FB}", 'group' => 0, 'before' => null, 'from' => "\u{30FB}"],
     ];
+
+    /**
+     * Bad escapes with the "X" modifier, which makes PHP 7.3 and 7.4 refuse
+     * them as PHP 8.0 does.
+     */
+    private const BAD_ESCAPES_UNDER_X = ['/\y/X', '/[\y]/X', '/\p{Bogus}/X', '/\x{zz}/X', '/\214748364/X'];
 
     private const RECTOR_TESTS = __DIR__.'/../Integration/Bridge/Rector';
 
@@ -158,21 +169,16 @@ final class EngineClaims
 
     /**
      * The verdict the validator gives the pattern for a PHP version and a
-     * PCRE2 release: true when it compiles, "silent" when PHP compiles it
-     * without a warning though PCRE2 refuses it, else the offset of the
-     * refusal, or false when the refusal names none.
+     * PCRE2 release: true when it compiles, else the offset of the refusal,
+     * or false when the refusal names none.
      */
-    public static function verdict(string $pattern, int $phpVersionId, string $release): bool|int|string
+    public static function verdict(string $pattern, int $phpVersionId, string $release): bool|int
     {
         static $parsers = [];
         $parser = $parsers[$phpVersionId.'/'.$release] ??= RegexParser::create(['php_version' => $phpVersionId, 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
         $validation = $parser->validate($pattern);
         if ($validation->isValid) {
             return true;
-        }
-
-        if (str_contains((string) $validation->error, PhpVersionGates::SILENT_REFUSAL_NOTE)) {
-            return 'silent';
         }
 
         return $validation->offset ?? false;
@@ -224,8 +230,13 @@ final class EngineClaims
         foreach (self::FEATURE_WITNESSES as $feature => $patterns) {
             foreach ($patterns as $pattern) {
                 $sources[$pattern] ??= 'PcreFeature::'.$feature;
-                $floors[$pattern] ??= self::KNOWN_IN_FULL;
+                $floors[$pattern] ??= version_compare(\constant(PcreFeature::class.'::'.$feature)->release(), self::KNOWN_IN_FULL, '<') ? self::releases()[0] : self::KNOWN_IN_FULL;
             }
+        }
+
+        foreach (self::BAD_ESCAPES_UNDER_X as $pattern) {
+            $sources[$pattern] ??= 'The "X" modifier';
+            $floors[$pattern] ??= self::releases()[0];
         }
 
         foreach (self::rewrites() as $rewrite) {
@@ -280,6 +291,42 @@ final class EngineClaims
                 $match[$release] = version_compare($release, $feature->release(), '<') ? $witness['before'] : $witness['from'];
             }
             $claims[] = ['source' => 'PcreFeature::'.$name, 'pattern' => $witness['pattern'], 'subject' => $witness['subject'], 'group' => $witness['group'], 'match' => $match];
+        }
+
+        // What a bad escape PHP 7.3 and 7.4 read as its character finds, on
+        // each target the validator accepts it for through that reading, and
+        // false where it refuses it. A release on which a later PHP accepts
+        // it, as "\214748364" from 10.37, means something else there and
+        // makes no claim. An escape the option leaves alone finds the same
+        // on every target.
+        $witnesses = [];
+        foreach ([...BadEscapeIsLiteralTest::provideBadEscapes(), ...BadEscapeIsLiteralTest::provideClassEscapesOnlyPcre2Ten32Reads()] as $name => $witness) {
+            $witnesses[] = [$name, $witness, true];
+        }
+        foreach (BadEscapeIsLiteralTest::provideEscapesTheOptionLeavesAlone() as $name => $witness) {
+            $witnesses[] = [$name, $witness, false];
+        }
+
+        foreach ($witnesses as [$name, $witness, $readAsCharacter]) {
+            $match = [];
+            foreach (self::releases() as $release) {
+                $byPhp = [];
+                $last = null;
+                foreach (PcreTarget::phpVersionBoundaries() as $phpVersionId) {
+                    $valid = true === self::verdict($witness['pattern'], $phpVersionId, $release);
+                    if ($readAsCharacter && $valid && !PhpVersionGates::badEscapeIsLiteral($phpVersionId, '')) {
+                        continue 2;
+                    }
+
+                    $found = $valid ? $witness['match'] : false;
+                    if ([] === $byPhp || $found !== $last) {
+                        $byPhp[(string) $phpVersionId] = $found;
+                        $last = $found;
+                    }
+                }
+                $match[$release] = 1 === \count($byPhp) ? $last : ['php' => $byPhp];
+            }
+            $claims[] = ['source' => 'BadEscapeIsLiteralTest: '.$name, 'pattern' => $witness['pattern'], 'subject' => $witness['subject'], 'group' => 0, 'match' => $match];
         }
 
         // The "{1}+" flips: before 10.34 the pattern finds what its plain

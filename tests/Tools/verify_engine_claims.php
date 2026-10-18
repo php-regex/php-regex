@@ -143,9 +143,6 @@ function engine_claims_verdict($verdict): string
     if (true === $verdict) {
         return 'compiles';
     }
-    if ('silent' === $verdict) {
-        return 'compiles without a warning (PCRE2 refuses it, PHP does not tell)';
-    }
     if (is_int($verdict)) {
         return 'refused at offset '.$verdict;
     }
@@ -163,7 +160,7 @@ function engine_claims_check_compile(array $claim, $expected): ?string
 {
     $pattern = engine_claims_string($claim['pattern']);
     $actual = engine_claims_compile($pattern);
-    $expectsCompiling = true === $expected || 'silent' === $expected;
+    $expectsCompiling = true === $expected;
 
     if ($expectsCompiling && $actual['compiles']) {
         return null;
@@ -183,19 +180,26 @@ function engine_claims_check_compile(array $claim, $expected): ?string
 
 /**
  * @param array<mixed> $claim
- * @param mixed        $expected the text the group holds, null for no match
+ * @param mixed        $expected the text the group holds, null for no match,
+ *                               false for a pattern the engine refuses
  */
 function engine_claims_check_match(array $claim, $expected): ?string
 {
     $pattern = engine_claims_string($claim['pattern']);
     $subject = engine_claims_string($claim['subject']);
     $group = isset($claim['group']) && is_int($claim['group']) ? $claim['group'] : 0;
-    $expected = null === $expected ? null : engine_claims_string($expected);
+    $refused = false === $expected;
+    $expected = null === $expected || $refused ? null : engine_claims_string($expected);
 
     $run = engine_claims_run($pattern, $subject);
     $groups = $run['groups'];
     if (null !== $run['warning'] || false === $run['result']) {
+        if ($refused && null !== $run['warning']) {
+            return null;
+        }
         $actual = 'an error ('.($run['warning'] ?? 'preg_last_error() '.preg_last_error()).')';
+    } elseif ($refused) {
+        $actual = 1 === $run['result'] ? 'a match' : 'no match';
     } elseif (0 === $run['result']) {
         if (null === $expected) {
             return null;
@@ -214,7 +218,7 @@ function engine_claims_check_match(array $claim, $expected): ?string
         engine_claims_show($pattern),
         engine_claims_show($subject),
         0 === $group ? '' : ', group '.$group,
-        null === $expected ? 'no match' : engine_claims_show($expected),
+        $refused ? 'an error' : (null === $expected ? 'no match' : engine_claims_show($expected)),
         $actual,
     );
 }

@@ -15,6 +15,7 @@ namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\BadEscape;
 use PHPRegex\Parser\Internal\CodePointReader;
 use PHPRegex\Parser\Internal\ExtendedClassReader;
 use PHPRegex\Parser\Internal\InlineFlags;
@@ -408,10 +409,20 @@ final class Lexer
     private readonly bool $overflowingNumberIsOctal;
 
     /**
-     * Whether the PHP judged warns on every pattern its PCRE2 refuses; PHP
-     * 7.3 and 7.4 compile some without a word.
+     * The PHP judged, and whether its PCRE2 is 10.32, which reads more
+     * escapes as literals in a class than the later releases.
      */
-    private readonly bool $warnsOnEveryRefusal;
+    private readonly int $phpVersionId;
+
+    private readonly bool $pcre2Ten32;
+
+    /**
+     * Whether the pattern read is compiled with
+     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: PHP 7.3 and 7.4 without "X". An
+     * escape PCRE2 refuses as it reads it is then the character after the
+     * backslash.
+     */
+    private bool $badEscapeIsLiteral = false;
 
     /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
@@ -424,7 +435,8 @@ final class Lexer
         $this->readsNonAtomicAssertions = $target->supports(PcreFeature::NonAtomicAssertionNames);
         $this->readsNonAtomicShortSyntax = $target->supports(PcreFeature::NonAtomicAssertionShortSyntax);
         $this->overflowingNumberIsOctal = $target->supports(PcreFeature::OverflowingBackslashNumberIsOctal);
-        $this->warnsOnEveryRefusal = $target->phpVersionId >= PhpVersionGates::WARNS_ON_EVERY_REFUSAL;
+        $this->phpVersionId = $target->phpVersionId;
+        $this->pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $this->largeOpenCountIsText = $target->supports(PcreFeature::LargeOpenCountIsText);
         $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
         $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
@@ -520,6 +532,7 @@ final class Lexer
         $this->pattern = $pattern;
         $this->length = \strlen($this->pattern);
         $this->extendedMode = str_contains($flags, 'x');
+        $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->phpVersionId, $flags);
         $this->extendedMoreMode = $extendedMore;
         $this->newline = StartOptions::newline($this->wholePattern);
         $this->newlineUtf = $this->utf || StartOptions::turnUtfOn($this->wholePattern);
@@ -706,6 +719,16 @@ final class Lexer
         if ($this->extendedMoreMode && $this->inCharClass
             && \in_array($this->pattern[$this->position], [' ', "\t"], true)) {
             $this->position++;
+
+            return true;
+        }
+
+        // PHP 7.3 and 7.4 read an escape PCRE2 refuses as it reads it as the
+        // character after the backslash, then what follows as pattern text.
+        if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$this->position]
+            && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->utf, $this->pcre2Ten32, null, $this->startsRangeEnd($tokens))) {
+            $tokens[] = new Token(TokenType::LiteralEscaped, $this->pattern[$this->position + 1], $this->position, 2);
+            $this->position += 2;
 
             return true;
         }
@@ -939,6 +962,14 @@ final class Lexer
             }
 
             if ($this->opensUnclosedProperty($at)) {
+                $at += 2;
+
+                continue;
+            }
+
+            // An escape PHP 7.3 and 7.4 read as its character takes no more:
+            // "\p{L)}" is "p{L" then the ")" that closes the body.
+            if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$at] && BadEscape::at($this->pattern, $at, false, $this->utf, $this->pcre2Ten32)) {
                 $at += 2;
 
                 continue;
@@ -1482,7 +1513,7 @@ final class Lexer
                     $overflow = $startPos + 2 + $index;
 
                     throw LexerException::withContext(
-                        \sprintf('Number too big at position %d: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.%s', $overflow, $this->warnsOnEveryRefusal ? '' : ' '.PhpVersionGates::SILENT_REFUSAL_NOTE),
+                        \sprintf('Number too big at position %d: PCRE2 before 10.37 reads the digits after a backslash as one number, at most 214748363.', $overflow),
                         ErrorCode::GroupNumberTooBig,
                         $overflow,
                         $this->pattern,
@@ -2012,6 +2043,45 @@ final class Lexer
         }
 
         return null !== $previous && TokenType::GroupModifierOpen === $previous->type && $previous->end() === $position;
+    }
+
+    /**
+     * Whether what the cursor reads in a class of PCRE2 10.32 ends a range:
+     * a character, then a "-" that starts a range from it. A class escape
+     * there is refused, and read as its letter under
+     * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL.
+     *
+     * @param list<Token> $tokens
+     */
+    private function startsRangeEnd(array $tokens): bool
+    {
+        // Only a class escape may be refused there; a character never is.
+        if (!$this->pcre2Ten32 || !$this->inCharClass || !str_contains(BadEscape::CLASS_ESCAPE_LETTERS, $this->pattern[$this->position + 1] ?? '')) {
+            return false;
+        }
+
+        $classStart = $this->charClassStartPositions[\count($this->charClassStartPositions) - 1];
+        $first = \count($tokens);
+        while ($first > 0 && !(TokenType::CharClassOpen === $tokens[$first - 1]->type && $tokens[$first - 1]->position === $classStart)) {
+            $first--;
+        }
+
+        $state = 'none';
+        foreach (\array_slice($tokens, $first) as $token) {
+            $state = match ($token->type) {
+                TokenType::QuoteModeStart, TokenType::QuoteModeEnd, TokenType::Negation => $state,
+                TokenType::Range => match ($state) {
+                    'character' => 'range',
+                    'range' => 'none',
+                    default => 'character',
+                },
+                TokenType::Literal, TokenType::LiteralEscaped, TokenType::Unicode, TokenType::Octal, TokenType::OctalLegacy,
+                TokenType::UnicodeNamed, TokenType::ControlChar => 'range' === $state ? 'none' : 'character',
+                default => 'none',
+            };
+        }
+
+        return 'range' === $state;
     }
 
     /**

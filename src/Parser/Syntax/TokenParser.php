@@ -21,6 +21,7 @@ use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Internal\Ascii;
+use PHPRegex\Parser\Internal\BadEscape;
 use PHPRegex\Parser\Internal\Bytes;
 use PHPRegex\Parser\Internal\CodePointReader;
 use PHPRegex\Parser\Internal\ExtendedClassReader;
@@ -28,6 +29,7 @@ use PHPRegex\Parser\Internal\GroupNameReader;
 use PHPRegex\Parser\Internal\InlineFlags;
 use PHPRegex\Parser\Internal\LibraryPcre;
 use PHPRegex\Parser\Internal\PcreVerb;
+use PHPRegex\Parser\Internal\PhpVersionGates;
 use PHPRegex\Parser\Internal\VersionCondition;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -172,6 +174,20 @@ final class TokenParser
     private bool $inQuoteMode = false;
 
     /**
+     * Whether the pattern is compiled with PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL,
+     * as PHP 7.3 and 7.4 compile it without "X": an escape PCRE2 refuses as
+     * it reads it is the character after the backslash. The lexer reads
+     * those it can; a reference counted back past the groups opened so far,
+     * or an octal escape past a byte, is known here.
+     */
+    private bool $badEscapeIsLiteral = false;
+
+    /**
+     * Whether the PCRE2 judged is 10.32.
+     */
+    private readonly bool $pcre2Ten32;
+
+    /**
      * Whether the pattern is read as UTF-8: "u", or "(*UTF)" at the start.
      */
     private bool $unicodeMode = false;
@@ -261,6 +277,7 @@ final class TokenParser
     {
         $this->maxRecursionDepth = $maxRecursionDepth ?? self::MAX_RECURSION_DEPTH;
         $this->target = $target ?? PcreTarget::runtime();
+        $this->pcre2Ten32 = !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
     }
 
     public function parse(TokenStream $stream, string $flags = '', string $delimiter = '/', int $patternLength = 0): RegexNode
@@ -326,6 +343,7 @@ final class TokenParser
         $this->extendedMode = str_contains($flags, 'x');
         $this->extendedMoreMode = $this->extendedMoreBefore;
         $this->noAutoCapture = str_contains($flags, 'n');
+        $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags);
         $this->inQuoteMode = false;
         $this->recursionDepth = $this->depthBefore;
         $this->captureCount = $this->capturesBefore;
@@ -1009,7 +1027,7 @@ final class TokenParser
     private function guardNamedReferenceEscape(): void
     {
         $token = $this->stream->current();
-        if (TokenType::LiteralEscaped !== $token->type || 'k' !== $token->value || $this->inQuoteMode) {
+        if (TokenType::LiteralEscaped !== $token->type || 'k' !== $token->value || $this->inQuoteMode || $this->readsBadEscapeAt($token->position)) {
             return;
         }
 
@@ -1089,6 +1107,10 @@ final class TokenParser
     private function atomFromToken(Token $token, TokenType $type, int $startPosition): NodeInterface
     {
         if (TokenType::Backref === $type) {
+            if ($this->readsBadEscapeAt($token->position)) {
+                return $this->badEscapeLiteral($token, $startPosition);
+            }
+
             $octal = $this->digitsFromUnreadReference($token, $startPosition)
                 ?? $this->octalEscapeFromReference($token, $startPosition);
             if (null !== $octal) {
@@ -1301,6 +1323,10 @@ final class TokenParser
     private function parseGReference(int $startPosition): NodeInterface
     {
         $token = $this->stream->previous();
+        if ($this->readsBadEscapeAt($token->position)) {
+            return $this->badEscapeLiteral($token, $startPosition);
+        }
+
         $endPosition = $startPosition + \strlen($token->value);
         $value = self::withoutBracePadding($token->value);
         $this->guardReferenceNameLength($token->value, $token->position);
@@ -1500,6 +1526,35 @@ final class TokenParser
     private function isNegatedPropertySyntax(int $startPosition): bool
     {
         return 'P' === ($this->pattern[$startPosition + 1] ?? 'p');
+    }
+
+    /**
+     * Whether PHP 7.3 and 7.4 read the escape whose backslash stands at
+     * $position, outside a class, as the character after the backslash,
+     * knowing the groups opened so far.
+     */
+    private function readsBadEscapeAt(int $position): bool
+    {
+        return $this->badEscapeIsLiteral && !$this->inQuoteMode
+            && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->pcre2Ten32, $this->captureCount);
+    }
+
+    /**
+     * An escape read as the character after its backslash: "\g{-1}" with
+     * no group open is "g" then the text "{-1}", "\400" without UTF is "4"
+     * then "00". What follows the character is plain text in either.
+     */
+    private function badEscapeLiteral(Token $token, int $startPosition): SequenceNode
+    {
+        $characterEnd = $startPosition + 2;
+        $character = new LiteralNode($this->pattern[$startPosition + 1], $startPosition, $characterEnd);
+        $this->splitEscape = new SequenceNode(
+            [$character, new LiteralNode(substr($this->pattern, $characterEnd, $token->end() - $characterEnd), $characterEnd, $token->end())],
+            $startPosition,
+            $token->end(),
+        );
+
+        return $this->splitEscape;
     }
 
     private function sourceTextOf(Token $token): string
@@ -3379,9 +3434,14 @@ final class TokenParser
      * an assertion such as "\B", "\R", "\X", or "\N" that names no code
      * point, or a letter with no meaning there, as "\j".
      */
-    private function isClassInvalidEscapeAt(int $position): bool
+    private function isClassInvalidEscapeAt(int $position, bool $endsRange = false): bool
     {
         if ('\\' !== ($this->pattern[$position] ?? '')) {
+            return false;
+        }
+
+        // PHP 7.3 and 7.4 read one PCRE2 refuses as it reads it as its letter.
+        if ($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $position, true, $this->unicodeMode, $this->pcre2Ten32, null, $endsRange)) {
             return false;
         }
 
@@ -3555,7 +3615,7 @@ final class TokenParser
         }
 
         $endAt = $this->stream->current()->position;
-        if ($this->isClassInvalidEscapeAt($endAt)) {
+        if ($this->isClassInvalidEscapeAt($endAt, true)) {
             // Before PCRE2 10.45, "\N" ends a range as a type does: the
             // range is refused past its letter.
             if ('N' === $this->pattern[$endAt + 1] && !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN)) {
