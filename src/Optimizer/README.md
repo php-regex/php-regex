@@ -32,7 +32,7 @@ Features
 - A quantifier becomes possessive where nothing after it can take back what it matched, `/[0-9]+;/` becoming `/\d++;/` — opt-in
 - Each rewrite can be proven by the automata engine to write the same `$matches`, or at least to match the same strings, before it is offered — opt-in
 - `RedosRepairer` repairs a pattern open to catastrophic backtracking, `/href="([^"]+)*"/` becoming `/href="([^"]*)"/`, each repair proven linear and, when the automata can tell, proven to match the same subjects
-- A `Modernizer` visitor cleans legacy syntax: unneeded escapes dropped, redundant non-capturing groups unwrapped
+- A `Modernizer` visitor cleans legacy syntax: unneeded escapes dropped, redundant non-capturing groups unwrapped, `\1` written `\g{1}`
 - A pattern that cannot be improved comes back unchanged, with an empty change log
 
 Installation

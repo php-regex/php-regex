@@ -232,10 +232,11 @@ echo $pattern;  // '/foo/'
 | `[0-9]`    | `\d`        | The shorthand says it shorter             |
 | `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing |
 | `\-`       | `-`         | An escape of a character that needs none  |
+| `\1`       | `\g{1}`     | The braces end the number: no digit after it can join it |
 
 Its scope is deliberately narrow: it leaves inline flags (`(?i)foo`), legacy
-escapes that PCRE2 still reads (`\0`) and redundant quantifiers (`a{1}`) alone —
-those pass through unchanged.
+escapes that PCRE2 still reads (`\0`), redundant quantifiers (`a{1}`) and the
+reference of a condition (`(?(1)a|b)`) alone — those pass through unchanged.
 
 ```php
 use PHPRegex\Toolkit\Regex;

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Visitor;
 use PHPRegex\Optimizer\Modernizer;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ModernizerTest extends TestCase
@@ -50,8 +51,59 @@ final class ModernizerTest extends TestCase
         $original = '/(a)\1/';
         $modernized = $this->modernize($original);
 
-        $this->assertSame('/(a)\1/', $modernized);
+        $this->assertSame('/(a)\g{1}/', $modernized);
         $this->assertMatchesOriginalBehavior($original, $modernized);
+    }
+
+    /**
+     * Every PCRE2 from 10.32 to 10.49 matches "\N" and "\g{N}" alike: caseless,
+     * forward, in a lookbehind, past nine groups, in a branch-reset group.
+     */
+    #[DataProvider('provideNumericBackrefs')]
+    public function test_numeric_backref_becomes_braced_reference(string $pattern, string $expected, string $subject): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame($expected, $modernized);
+        $this->assertSame(preg_match($pattern, $subject, $original), preg_match($modernized, $subject, $rewritten));
+        $this->assertSame($original, $rewritten);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, subject: string}>
+     */
+    public static function provideNumericBackrefs(): iterable
+    {
+        yield 'caseless' => ['pattern' => '/(a)\1/i', 'expected' => '/(a)\g{1}/i', 'subject' => 'aA'];
+        yield 'forward reference' => ['pattern' => '/(?:\1b|(a))+/', 'expected' => '/(?:\g{1}b|(a))+/', 'subject' => 'aab'];
+        yield 'in a lookbehind' => ['pattern' => '/(a)(?<=\1)/', 'expected' => '/(a)(?<=\g{1})/', 'subject' => 'a'];
+        yield 'eleventh group' => ['pattern' => '/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\11/', 'expected' => '/(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\g{11}/', 'subject' => 'abcdefghijkk'];
+        yield 'branch reset' => ['pattern' => '/(?|(a)|(b))\1/', 'expected' => '/(?|(a)|(b))\g{1}/', 'subject' => 'bb'];
+        yield 'quantified' => ['pattern' => '/(a)\1{2,}+/', 'expected' => '/(a)\g{1}{2,}+/', 'subject' => 'aaaa'];
+    }
+
+    /**
+     * "(?(\g{1})b)" is no condition: PCRE2 refuses it. The reference of a
+     * condition keeps the spelling it was written with.
+     */
+    #[DataProvider('provideConditionReferences')]
+    public function test_condition_reference_is_left_as_written(string $pattern): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame($pattern, $modernized);
+        $this->assertNotFalse(@preg_match($modernized, ''));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideConditionReferences(): iterable
+    {
+        yield 'absolute' => ['pattern' => '/(a)?(?(1)b|c)/'];
+        yield 'relative forward' => ['pattern' => '/(?(+1)b|c)(a)/'];
+        yield 'relative backward' => ['pattern' => '/(a)?(?(-1)b|c)/'];
+        yield 'recursion' => ['pattern' => '/(a(?(R1)b|c))/'];
     }
 
     public function test_complex_modernization(): void

@@ -45,6 +45,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Modernizes legacy or messy regular expressions into clean, concise PCRE2-compliant patterns.
@@ -154,10 +155,11 @@ final class Modernizer extends AbstractNodeVisitor
     #[\Override]
     public function visitBackref(BackrefNode $node): NodeInterface
     {
-        $ref = $node->ref;
-        // Convert \1 to \g{1}
-        if (is_numeric($ref)) {
-            return new BackrefNode('\g{'.$ref.'}', $node->getStartPosition(), $node->getEndPosition());
+        // "\1" becomes "\g{1}": the braces end the number, so no digit after
+        // it can turn it into another reference or an octal escape.
+        $digits = ltrim($node->ref, '\\');
+        if (\strlen($node->ref) - \strlen($digits) <= 1 && Ascii::isDigit($digits)) {
+            return new BackrefNode('\g{'.$digits.'}', $node->getStartPosition(), $node->getEndPosition());
         }
 
         return $node;
@@ -249,8 +251,12 @@ final class Modernizer extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node)
     {
+        // The reference of a condition is no back reference: "(?(\g{1})…)"
+        // is refused, so it keeps the spelling it was written with.
+        $condition = $node->condition instanceof BackrefNode ? $node->condition : $node->condition->accept($this);
+
         return new ConditionalNode(
-            $node->condition->accept($this),
+            $condition,
             $node->yes->accept($this),
             $node->no->accept($this),
             $node->getStartPosition(),

@@ -3,8 +3,6 @@
 ## Before the 2.0.0 tag: verified defects
 
 Each one reproduced against the code and the engine (PHP 8.4, PCRE2 10.49).
-- The Modernizer rewrites a condition reference `(?(1)…)` into `(?(\g{1})…)`,
-  which PCRE2 refuses, and leaves a real `\1` as it is.
 - The Modernizer rewrites a class of the five raw control characters
   `\t\n\r\f\v` into `\s`, which also matches a space.
 - `parse()` accepts `(?(VERSION<10.0)…)` and the JSON dump writes
