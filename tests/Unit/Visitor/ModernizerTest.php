@@ -167,6 +167,7 @@ final class ModernizerTest extends TestCase
         yield 'six members' => ['pattern' => '/[\t\n\x0B\f\r ]/', 'shorthand' => true];
         yield 'six members in another order' => ['pattern' => '/[ \r\f\x0B\n\t]/', 'shorthand' => true];
         yield 'a range and the space' => ['pattern' => '/[\t-\r ]/', 'shorthand' => true];
+        yield 'a member written twice' => ['pattern' => '/[\t\n\x0B\f\r \x20]/', 'shorthand' => true];
         yield 'raw controls and the space' => ['pattern' => "/[\t\n\r\f\v ]/", 'shorthand' => true];
         yield 'raw controls without the space' => ['pattern' => "/[\t\n\r\f\v]/", 'shorthand' => false];
         yield 'without the vertical tab' => ['pattern' => '/[\t\n\f\r ]/', 'shorthand' => false];

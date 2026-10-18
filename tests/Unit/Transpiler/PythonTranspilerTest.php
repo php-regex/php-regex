@@ -49,6 +49,14 @@ final class PythonTranspilerTest extends TestCase
     }
 
     #[Test]
+    public function test_keeps_the_flags_after_the_study_flag(): void
+    {
+        $result = Regex::create(['cache' => null])->transpile('/ab+c/Si', 'python');
+
+        $this->assertSame("r'(?i)ab+c'", $result->literal);
+    }
+
+    #[Test]
     public function test_keeps_python_style_named_groups_and_backrefs(): void
     {
         $result = Regex::create()->transpile('/(?P<w>\w+)(?P=w)/', 'python');

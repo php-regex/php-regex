@@ -158,11 +158,12 @@ final class PsrSimpleCacheAdapterTest extends TestCase
         $key = $adapter->generateKey('test');
         $adapter->write($key, $this->tree('/test/'));
         $adapter->load($key);
+        $adapter->load($key);
         $adapter->load($adapter->generateKey('nonexistent'));
 
         $stats = $adapter->getStats();
 
-        $this->assertSame(1, $stats['hits']);
+        $this->assertSame(2, $stats['hits']);
         $this->assertSame(1, $stats['misses']);
     }
 

@@ -157,11 +157,12 @@ final class PsrCacheAdapterTest extends TestCase
         $key = $cache->generateKey('test');
         $cache->write($key, Regex::create(['cache' => null])->parse('/test/'));
         $cache->load($key);
+        $cache->load($key);
         $cache->load($cache->generateKey('nonexistent'));
 
         $stats = $cache->getStats();
 
-        $this->assertSame(1, $stats['hits']);
+        $this->assertSame(2, $stats['hits']);
         $this->assertSame(1, $stats['misses']);
     }
 }
