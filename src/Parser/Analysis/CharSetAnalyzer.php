@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -24,6 +23,7 @@ use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -276,26 +276,13 @@ final class CharSetAnalyzer
         return \ord($node->value[0]);
     }
 
+    /**
+     * The tree already reads "{,5}" as the target does: a quantifier from
+     * PCRE2 10.43, text before.
+     */
     private function isOptional(QuantifierNode $node): bool
     {
-        return 0 === $this->quantifierMin($node->quantifier);
-    }
-
-    private function quantifierMin(string $quantifier): int
-    {
-        if (str_contains($quantifier, '*') || str_contains($quantifier, '?')) {
-            return 0;
-        }
-
-        if (str_contains($quantifier, '+')) {
-            return 1;
-        }
-
-        if (LibraryPcre::match('/\{(\d++)(?:,(\d++)?)?\}/', $quantifier, $matches)) {
-            return (int) $matches[1];
-        }
-
-        return 1;
+        return 0 === QuantifierBounds::parse($node->quantifier)?->min;
     }
 
     private function isOptionalNode(NodeInterface $node, bool $fromStart): bool

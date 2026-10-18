@@ -18,6 +18,8 @@ use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
@@ -123,12 +125,14 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertTrue($set->isUnknown());
     }
 
-    public function test_quantifier_min_returns_default_for_invalid(): void
+    public function test_an_unreadable_quantifier_is_not_optional(): void
     {
-        $analyzer = new CharSetAnalyzer();
-        $method = (new \ReflectionClass($analyzer))->getMethod('quantifierMin');
+        $quantified = new SequenceNode([
+            new QuantifierNode(new LiteralNode('x', 0, 1), 'invalid', QuantifierType::Greedy, 0, 8),
+            new LiteralNode('y', 8, 9),
+        ], 0, 9);
 
-        $this->assertSame(1, $method->invoke($analyzer, 'invalid'));
+        $this->assertFalse((new CharSetAnalyzer())->firstChars($quantified)->intersects(ByteCharSet::fromChar('y')));
     }
 
     public function test_is_optional_node_sequence_returns_true_when_all_optional(): void
@@ -188,5 +192,54 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertTrue($analyzer->withFlags('')->firstChars(new DotNode(0, 0))->intersects(ByteCharSet::fromChar("\n")));
         $this->assertFalse($analyzer->withFlags('')->firstChars(new DotNode(0, 0))->intersects(ByteCharSet::fromChar("\0")));
         $this->assertTrue($analyzer->withFlags('s')->firstChars(new DotNode(0, 0))->intersects(ByteCharSet::fromChar("\0")));
+    }
+
+    /**
+     * A counted quantifier repeats its atom at least its minimum, lazy or
+     * not: "/^x{2}?y$/" does not match "y". "{,5}" is a quantifier from
+     * PCRE2 10.43, with no minimum ("/^x{,5}y$/" matches "y" on 10.49), and
+     * text before it ("x{,5}y" on 10.42).
+     *
+     * @param list<string> $first
+     */
+    #[Test]
+    #[DataProvider('provideCountedQuantifiers')]
+    public function test_a_counted_quantifier_keeps_its_minimum(string $pattern, string $target, array $first): void
+    {
+        $regex = RegexParser::create(['cache' => null, 'pcre_version' => $target])->parse($pattern);
+        $set = CharSetAnalyzer::forRegex($regex)->firstChars($regex);
+
+        foreach (['x', 'y', '{'] as $char) {
+            $this->assertSame(\in_array($char, $first, true), $set->intersects(ByteCharSet::fromChar($char)), $pattern.' on '.$target.': '.$char);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, target: string, first: list<string>}>
+     */
+    public static function provideCountedQuantifiers(): iterable
+    {
+        foreach (['10.42', '10.43'] as $target) {
+            yield 'lazy exact count on '.$target => ['pattern' => '/x{2}?y/', 'target' => $target, 'first' => ['x']];
+            yield 'lazy range on '.$target => ['pattern' => '/x{2,4}?y/', 'target' => $target, 'first' => ['x']];
+            yield 'lazy open range on '.$target => ['pattern' => '/x{2,}?y/', 'target' => $target, 'first' => ['x']];
+            yield 'spaced zero count on '.$target => ['pattern' => '/x{ 0 }y/', 'target' => $target, 'first' => '10.42' === $target ? ['x'] : ['x', 'y']];
+        }
+
+        yield 'no minimum on 10.42' => ['pattern' => '/x{,5}y/', 'target' => '10.42', 'first' => ['x']];
+        yield 'no minimum on 10.43' => ['pattern' => '/x{,5}y/', 'target' => '10.43', 'first' => ['x', 'y']];
+    }
+
+    #[Test]
+    public function test_a_lazy_count_written_with_its_suffix_keeps_its_minimum(): void
+    {
+        $quantified = new SequenceNode([
+            new QuantifierNode(new LiteralNode('x', 0, 1), '{2}?', QuantifierType::Lazy, 0, 5),
+            new LiteralNode('y', 5, 6),
+        ], 0, 6);
+
+        $set = (new CharSetAnalyzer())->firstChars($quantified);
+
+        $this->assertFalse($set->intersects(ByteCharSet::fromChar('y')));
     }
 }
