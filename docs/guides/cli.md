@@ -1769,11 +1769,16 @@ The `column` of a JSON result is a 1-based byte column in its line, and
 name: regex-lint
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   regex:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
