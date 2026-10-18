@@ -644,6 +644,8 @@ corpus/Automattic/jetpack/tools/stubs/zero-bs-crm-stub-defs.php:16:20
 
 
 
+### corpus/BabDev/Pagerfanta — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
 ### corpus/BitbucketPHP/Client — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
 ### corpus/CarbonPHP/carbon — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
@@ -654,38 +656,38 @@ corpus/CarbonPHP/carbon/phpdoc.php:47:44
        - /(\/\/ <methods[\s\S]*>)([\s\S]+)(<\/methods>)/mU
        + /(\/\/ <methods[\s\S]*>)([\s\S]+)(<\/methods>)/U
 
-corpus/CarbonPHP/carbon/phpdoc.php:755:43
+corpus/CarbonPHP/carbon/phpdoc.php:763:43
     → /(<autodoc[\s\S]*>)([\s\S]+)(<\/autodoc>)/mU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /(<autodoc[\s\S]*>)([\s\S]+)(<\/autodoc>)/mU
        + /(<autodoc[\s\S]*>)([\s\S]+)(<\/autodoc>)/U
 
-corpus/CarbonPHP/carbon/phpdoc.php:872:5
+corpus/CarbonPHP/carbon/phpdoc.php:882:5
     → /(\/\/ <methods[\s\S]*>)([\s\S]+)(<\/methods>)/mU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /(\/\/ <methods[\s\S]*>)([\s\S]+)(<\/methods>)/mU
        + /(\/\/ <methods[\s\S]*>)([\s\S]+)(<\/methods>)/U
 
-corpus/CarbonPHP/carbon/phpdoc.php:890:9
+corpus/CarbonPHP/carbon/phpdoc.php:900:9
     → /(<autodoc[\s\S]*>)([\s\S]+)(<\/autodoc>)/mU
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /(<autodoc[\s\S]*>)([\s\S]+)(<\/autodoc>)/mU
        + /(<autodoc[\s\S]*>)([\s\S]+)(<\/autodoc>)/U
 
-corpus/CarbonPHP/carbon/src/Carbon/CarbonInterval.php:1002:20
+corpus/CarbonPHP/carbon/src/Carbon/CarbonInterval.php:1011:20
     → /(-?\d+(?:\.\d+)?)\h*([^\d\h]*)/i
    ↳ via $pattern
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/CarbonPHP/carbon/src/Carbon/CarbonInterval.php:1305:24
+corpus/CarbonPHP/carbon/src/Carbon/CarbonInterval.php:1314:24
     → /^(?:\h*-?\d+(?:\.\d+)?\h*[a-z]+)+$/i
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
-corpus/CarbonPHP/carbon/src/Carbon/CarbonPeriod.php:781:25
+corpus/CarbonPHP/carbon/src/Carbon/CarbonPeriod.php:782:25
     → /^(-?\d(\d(?![\/-])|[^\d\/-]([\/-])?)*|P[T\d].*|(?:\h*\d+(?:\.\d+)?\h*[a-z]+)+)$/i
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -963,6 +965,9 @@ corpus/Humbug/php-scoper/src/Scoper/Symfony/YamlScoper.php:37:35
 
 
 
+### corpus/Incenteev/ParameterHandler — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 0
+Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+
 ### corpus/JakubOnderka/PHP-Parallel-Lint — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
@@ -980,6 +985,20 @@ corpus/Jumping-Beaver/PHP_Static_Type_Checker/php_static_type_checker.php:2547:3
     → |/(\./)+|
    INFO  Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+
+
+
+### corpus/KnpLabs/Gaufrette — Target: PHP 8.0, PCRE2 10.35 (composer.json require.php) — exit 0
+Note: PCRE2 10.35 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+
+### corpus/KnpLabs/KnpMenu — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
+### corpus/KnpLabs/snappy — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+corpus/KnpLabs/snappy/src/Knp/Snappy/AbstractGenerator.php:26:52
+    → /^[a-z]:(?:[\\\/]?(?:[\w\s!#()-]+|[\.]{1,2})+)*[\\\/]?/i
+   ↳ via self::WINDOWS_LOCAL_FILENAME_REGEX
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
 
 
 
@@ -1062,6 +1081,10 @@ corpus/PHP-FFMpeg/PHP-FFMpeg/src/FFMpeg/Media/AbstractVideo.php:236:40
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
 
+
+### corpus/PHPCSStandards/PHPCSExtra — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 5.4, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/PHPCSStandards/PHP_CodeSniffer — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
@@ -2471,6 +2494,12 @@ corpus/Shopify/shopify-api-php/src/Rest/Base.php:142:35
 
 
 
+### corpus/Spomky-Labs/base64url — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+
+### corpus/Spomky-Labs/otphp — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+
 ### corpus/Sylius/Sylius — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/Sylius/Sylius/src/Sylius/Behat/Context/Transform/LexicalContext.php:49:25
     → /^\d{1,3}(,\d{3})*\.\d{2}$/
@@ -3042,14 +3071,14 @@ corpus/WordPress/wordpress-develop/src/wp-admin/includes/class-wp-filesystem-bas
        - |^([a-z]{1}):|i
        + |^([a-z]):|i
 
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3059:15
+corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3086:15
     → |\((.*)\)|ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - |\((.*)\)|ms
        + |\((.*)\)|s
 
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3096:7
+corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3123:7
     → /^ (?P<index_type> PRIMARY\s+KEY|(?:UNIQUE|FULLTEXT|SPATIAL)\s+(?:KEY|INDEX)|KEY|INDEX ) \s+ (?: `? (?P<index_name> (?:[0-9a-zA-Z$_-]|[\xC2-\xDF][\x80-\xBF])+ ) `? \s+ )* \( (?P<index_columns> .+? ) \) $/imx
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -4362,6 +4391,8 @@ Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest th
 
 ### corpus/cloudevents/sdk-php — Target: PHP 7.4.15, PCRE2 10.33 (composer.json require.php) — exit 0
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+
+### corpus/code-lts/doctum — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
 
 ### corpus/codeigniter4/CodeIgniter4 — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/codeigniter4/CodeIgniter4/admin/update-upgrade-guide.php:161:16
