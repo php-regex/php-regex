@@ -20,7 +20,6 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Parser\Printer\Internal\StructuralFingerprint;
 use PHPRegex\Parser\RegexParser;
 
 /**

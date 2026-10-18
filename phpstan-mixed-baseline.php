@@ -137,11 +137,11 @@ return [
         'PHPRegex\Parser\ParserOptions::validateOptionKeys()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::validatePatternStrings()' => ['validator-input', 1],
     ],
-    'src/Parser/Printer/Internal/StructuralFingerprint.php' => [
-        'PHPRegex\Parser\Printer\Internal\StructuralFingerprint::canonical()' => ['reflection-sink', 3],
-        'PHPRegex\Parser\Printer\Internal\StructuralFingerprint::canonicalSequence()' => ['reflection-sink', 1],
-        'PHPRegex\Parser\Printer\Internal\StructuralFingerprint::isEmptyLiteral()' => ['reflection-sink', 1],
-        'PHPRegex\Parser\Printer\Internal\StructuralFingerprint::isLiteral()' => ['reflection-sink', 1],
+    'src/Parser/Printer/StructuralFingerprint.php' => [
+        'PHPRegex\Parser\Printer\StructuralFingerprint::canonical()' => ['reflection-sink', 3],
+        'PHPRegex\Parser\Printer\StructuralFingerprint::canonicalSequence()' => ['reflection-sink', 1],
+        'PHPRegex\Parser\Printer\StructuralFingerprint::isEmptyLiteral()' => ['reflection-sink', 1],
+        'PHPRegex\Parser\Printer\StructuralFingerprint::isLiteral()' => ['reflection-sink', 1],
     ],
     'src/Parser/Printer/JsonDumper.php' => [
         'PHPRegex\Parser\Printer\JsonDumper' => ['reflection-sink', 1],

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Printer\Internal;
+namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CommentNode;
