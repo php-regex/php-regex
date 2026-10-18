@@ -135,6 +135,7 @@ final class ModernizerTest extends TestCase
     {
         yield 'under u' => ['pattern' => '/[0-9]/u'];
         yield 'under UCP' => ['pattern' => '/(*UCP)[0-9]/'];
+        yield 'under UCP after other options' => ['pattern' => '/(*UTF)(*LIMIT_MATCH=10)(*UCP)[0-9]/'];
     }
 
     /**
@@ -173,6 +174,7 @@ final class ModernizerTest extends TestCase
         yield 'one more member' => ['pattern' => '/[\t\n\x0B\f\r a]/', 'shorthand' => false];
         yield 'under u' => ['pattern' => '/[\t\n\x0B\f\r ]/u', 'shorthand' => false];
         yield 'under UCP' => ['pattern' => '/(*UCP)[\t\n\x0B\f\r ]/', 'shorthand' => false];
+        yield 'under UCP after other options' => ['pattern' => '/(*LIMIT_MATCH=10)(*UCP)[\t\n\x0B\f\r ]/', 'shorthand' => false];
         yield 'negated' => ['pattern' => '/[^\t\n\x0B\f\r ]/', 'shorthand' => false];
     }
 

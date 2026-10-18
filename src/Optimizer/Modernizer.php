@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -45,8 +46,6 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
-use PHPRegex\Parser\Syntax\StartOptions;
-use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Modernizes legacy or messy regular expressions into clean, concise PCRE2-compliant patterns.
@@ -71,7 +70,9 @@ final class Modernizer extends AbstractNodeVisitor
     public function visitRegex(RegexNode $node)
     {
         $this->delimiter = $node->delimiter;
-        $this->unicodeProperties = str_contains($node->flags, 'u') || \in_array('UCP', StartOptions::items($node->source ?? ''), true);
+        // "(*UCP)" counts only in the run of options the pattern opens with.
+        $this->unicodeProperties = str_contains($node->flags, 'u')
+            || 1 === LibraryPcre::match('/^(?:\(\*[A-Z_0-9]++(?:=\d++)?\))*?\(\*UCP\)/', $node->source ?? '');
 
         return new RegexNode(
             $node->pattern->accept($this),
@@ -164,7 +165,7 @@ final class Modernizer extends AbstractNodeVisitor
         // "\1" becomes "\g{1}": the braces end the number, so no digit after
         // it can turn it into another reference or an octal escape.
         $digits = ltrim($node->ref, '\\');
-        if (\strlen($node->ref) - \strlen($digits) <= 1 && Ascii::isDigit($digits)) {
+        if (\strlen($node->ref) - \strlen($digits) <= 1 && '' !== $digits && \strlen($digits) === strspn($digits, '0123456789')) {
             return new BackrefNode('\g{'.$digits.'}', $node->getStartPosition(), $node->getEndPosition());
         }
 
