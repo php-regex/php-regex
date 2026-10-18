@@ -136,10 +136,20 @@ parameters:
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
 
     ignoreErrors:
-        # Two entries live here because no single machine can see them
+        # Three entries live here because no single machine can see them
         # whole; everything else the analysis still tolerates is named,
         # one finding per line, in phpstan-baseline.neon: fix a finding,
         # regenerate the baseline, the line goes.
+        #
+        # PHPUnit 13 deprecates expectExceptionMessage() for
+        # expectExceptionMessageIs(), which PHPUnit 10.5 to 12 do not have;
+        # the suite runs on all four, so the call stays until 12 is the
+        # oldest PHPUnit it runs on. The tools install PHPUnit 13 only on the
+        # PHP that takes it.
+        - message: '#^Call to deprecated method expectExceptionMessage\(\) of class PHPUnit\\Framework\\TestCase#'
+          identifier: method.deprecated
+          path: tests/*
+          reportUnmatched: false
         #
         # Symfony 8.1 validates through validateInContext(); the bundle also
         # supports 7.4, which has no such method, so the test drives the
