@@ -1,5 +1,33 @@
 # TODO
 
+## Before the 2.0.0 tag: verified defects
+
+Each one reproduced against the code and the engine (PHP 8.4, PCRE2 10.49).
+- The Modernizer rewrites a condition reference `(?(1)…)` into `(?(\g{1})…)`,
+  which PCRE2 refuses, and leaves a real `\1` as it is.
+- The Modernizer rewrites a class of the five raw control characters
+  `\t\n\r\f\v` into `\s`, which also matches a space.
+- `parse()` accepts `(?(VERSION<10.0)…)` and the JSON dump writes
+  `"operator": "<"`, outside the `=`/`>=` enum of `ast.schema.json`.
+- `CharSetAnalyzer::quantifierMin()` reads `{2}?` as 0 and `{,5}` as 1;
+  delegate to `QuantifierBounds::parse()`.
+- `ConfirmationOptions` clamps out-of-range values in silence where
+  `RedosOptions` and `SolverOptions` throw `InvalidRegexOptionException`:
+  throw too, before the tag makes the clamp a contract.
+- The PSR cache adapters return zero hits and misses although
+  `RemovableCacheInterface` says the cache counts them: count them.
+- The Python target refuses `/S`, which the JavaScript target drops with a note.
+- `Regex::literals()` gives the suffix `b` for `/(*sr:a(*ACCEPT))b/`, which
+  matches `"a"`: `LiteralExtractor` does not look inside a script run for an
+  `(*ACCEPT)`.
+- The Laravel validation-rule extractor wraps a pattern delimited by `{}`,
+  `()`, `[]`, `<>`, `+`… in `/…/`, so it lints another pattern than the one
+  Laravel runs (`{^a$}` matches "a", `/{^a$}/` does not).
+- Docs: the Linter CHANGELOG misses three off-by-default rules
+  (`anchor.dollarNewline`, `lookaround.redundant`,
+  `unicode.shorthandWithoutU`); the Linter, CLI and PHPStan READMEs say 40
+  lint rules where 53 are registered.
+
 ## Release 2.0.0
 
 The code is ready; what is left is the maintainer's, in this order.
