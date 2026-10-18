@@ -147,10 +147,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
   under `## Articles` in `docs/llms.txt`, and give each `/blog/<slug>` its
   entry in the sitemap navigation-coverage check, with the blog-index
   justification.
-- `head.html` writes `page.description` into the description, og and
-  Twitter meta tags with `strip_html` only: a `"` in an article
-  description cuts the attribute (the JSON-LD escapes it). Add `escape`,
-  or forbid double quotes in descriptions.
 - The pre-release install include renders its own `## Installation`
   heading, which splits an article's closing library section; an inline
   variant for articles would read better.
