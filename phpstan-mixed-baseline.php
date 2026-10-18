@@ -194,16 +194,16 @@ return [
         'PHPRegex\PHPUnit\Constraint\MatchesPattern::additionalFailureDescription()' => ['host-contract', 1],
         'PHPRegex\PHPUnit\Constraint\MatchesPattern::failWithDiff()' => ['host-contract', 1],
     ],
-    'src/PHPUnit/Internal/Expectation.php' => [
-        'PHPRegex\PHPUnit\Internal\Expectation::__construct()' => ['validator-input', 1],
+    'src/PHPUnit/Expectation.php' => [
+        'PHPRegex\PHPUnit\Expectation::__construct()' => ['validator-input', 1],
     ],
-    'src/PHPUnit/Internal/MatchAttempt.php' => [
-        'PHPRegex\PHPUnit\Internal\MatchAttempt::__construct()' => ['validator-input', 2],
+    'src/PHPUnit/MatchAttempt.php' => [
+        'PHPRegex\PHPUnit\MatchAttempt::__construct()' => ['validator-input', 2],
     ],
-    'src/PHPUnit/Internal/PatternLab.php' => [
-        'PHPRegex\PHPUnit\Internal\PatternLab::run()' => ['validator-input', 1],
-        'PHPRegex\PHPUnit\Internal\PatternLab::export()' => ['validator-input', 1],
-        'PHPRegex\PHPUnit\Internal\PatternLab::judge()' => ['validator-input', 1],
+    'src/PHPUnit/PatternLab.php' => [
+        'PHPRegex\PHPUnit\PatternLab::run()' => ['validator-input', 1],
+        'PHPRegex\PHPUnit\PatternLab::export()' => ['validator-input', 1],
+        'PHPRegex\PHPUnit\PatternLab::judge()' => ['validator-input', 1],
     ],
     'src/Symfony/Command/AnalyzeCommand.php' => [
         'PHPRegex\Symfony\Command\AnalyzeCommand::normalizeLowercaseList()' => ['host-return', 1],

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\PHPUnit\Internal;
+namespace PHPRegex\PHPUnit;
 
 use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Engine\PcreEngine;

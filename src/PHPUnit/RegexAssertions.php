@@ -16,7 +16,6 @@ namespace PHPRegex\PHPUnit;
 use PHPRegex\PHPUnit\Constraint\CompilesPattern;
 use PHPRegex\PHPUnit\Constraint\IsLinearPattern;
 use PHPRegex\PHPUnit\Constraint\MatchesPattern;
-use PHPRegex\PHPUnit\Internal\PatternLab;
 use PHPUnit\Framework\Constraint\LogicalNot;
 use PHPUnit\Framework\ExpectationFailedException;
 

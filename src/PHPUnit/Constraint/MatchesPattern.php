@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\PHPUnit\Constraint;
 
-use PHPRegex\PHPUnit\Internal\MatchAttempt;
-use PHPRegex\PHPUnit\Internal\PatternLab;
+use PHPRegex\PHPUnit\MatchAttempt;
+use PHPRegex\PHPUnit\PatternLab;
 use PHPUnit\Framework\Constraint\Constraint;
 use PHPUnit\Framework\ExpectationFailedException;
 use SebastianBergmann\Comparator\ComparisonFailure;

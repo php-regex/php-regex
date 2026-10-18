@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\PHPUnit\Constraint;
 
-use PHPRegex\PHPUnit\Internal\PatternLab;
+use PHPRegex\PHPUnit\PatternLab;
 use PHPUnit\Framework\Constraint\Constraint;
 
 /**
