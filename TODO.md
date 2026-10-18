@@ -48,6 +48,18 @@ The code is ready; what is left is the maintainer's, in this order.
    2.0 `regex.phar`, which `self-update` and `releases/latest` serve.
 6. `bin/bump --next 2.0.1`.
 
+## Split token: let it write workflows
+
+`SPLIT_TOKEN` may not write workflows: the push of the hardened
+`src/*/.github/workflows/close-pull-request.yml` (no default permissions,
+`pull-requests: write` for its job, the action named by commit, a timeout;
+commit ced976d0b2) was refused by every read-only repository, so the
+seventeen copies are back to their earlier text. Give the token the
+`workflow` scope (classic) or "Workflows: read and write" (fine-grained),
+then restore the hardened copy in all seventeen packages, put `src/*/.github`
+back among the zizmor inputs of `.github/workflows/workflows.yml` and `/src/*`
+among the github-actions directories of `.github/dependabot.yml`.
+
 ## Phar provenance: the GitHub side
 
 `.github/workflows/phar.yml` builds, attests and attaches the phar on a

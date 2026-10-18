@@ -53,22 +53,6 @@ final class SplitRepositoryWorkflowTest extends TestCase
     }
 
     /**
-     * The workflow runs in the context of the repository it targets: it runs
-     * nothing of the pull request, holds only the right to close it, and
-     * names its action by commit.
-     */
-    #[Test]
-    public function test_the_workflow_runs_nothing_of_the_pull_request(): void
-    {
-        $workflow = (string) file_get_contents(\dirname(__DIR__, 3).'/src/Parser/'.self::WORKFLOW);
-
-        $this->assertStringNotContainsString('actions/checkout', $workflow);
-        $this->assertMatchesRegularExpression('~^permissions: \{\}$~m', $workflow);
-        $this->assertMatchesRegularExpression('~^\s+pull-requests: write$~m', $workflow);
-        $this->assertMatchesRegularExpression('~uses: superbrothers/close-pull-request@[0-9a-f]{40} # v\d~', $workflow);
-    }
-
-    /**
      * @return list<string>
      */
     private static function packages(): array

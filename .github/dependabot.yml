@@ -4,15 +4,30 @@ version: 2
 # first days never reaches a pull request.
 
 updates:
-  # The demo applications commit their lock files: their minor and patch
-  # updates come as one pull request per application. The root and the dev
-  # tools under tools/ commit none, and resolve the newest release on every
-  # run: they get a pull request only when a release leaves the range they
-  # require, as a new major does.
+  # The root and the dev tools under tools/ commit no lock file and resolve
+  # the newest release on every run: they get a pull request only when a
+  # release leaves the range they require, as a new major does, and the
+  # range is widened, not replaced, as "^11.0|^12.0" follows the PHP each CI
+  # cell runs.
   - package-ecosystem: composer
     directories:
       - /
       - /tools/*
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    versioning-strategy: widen
+    groups:
+      minor-and-patch:
+        update-types: [ minor, patch ]
+    open-pull-requests-limit: 10
+
+  # The demo applications commit their lock files: their minor and patch
+  # updates come as one pull request per application.
+  - package-ecosystem: composer
+    directories:
       - /demo/*
     schedule:
       interval: weekly
@@ -23,16 +38,16 @@ updates:
     groups:
       minor-and-patch:
         update-types: [ minor, patch ]
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
 
-  # The workflows, the local action, and the workflow each package carries
-  # for its read-only repository: one pull request per action, across every
-  # file that names it, so the seventeen package copies stay identical.
+  # The workflows and the local action: one pull request per action, across
+  # every file that names it. The workflow each package carries for its
+  # read-only repository is left out: the split token may not write
+  # workflows, so a change to it would stop the split.
   - package-ecosystem: github-actions
     directories:
       - /
       - /.github/actions/*
-      - /src/*
     schedule:
       interval: weekly
       day: monday

@@ -2,8 +2,9 @@ name: Workflows
 
 # The workflows and the local action under .github/, and the workflow each
 # package carries for its read-only repository: actionlint for their syntax,
-# expressions and shell scripts, zizmor for their security. They run when one
-# of them changes, and every Monday, when a new finding may name old code.
+# expressions and shell scripts, zizmor for the security of the first. They
+# run when one of them changes, and every Monday, when a new finding may name
+# old code.
 
 on:
   push:
@@ -71,10 +72,12 @@ jobs:
       - name: Run zizmor
         # .github/zizmor.yml holds the pinning policy. The findings go to the
         # log and the run's annotations, not to code scanning: no write
-        # permission is granted.
+        # permission is granted. The workflow of the read-only repositories,
+        # under src/*/.github, waits for a split token that may write
+        # workflows: until then it cannot change, so it is not audited.
         uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
         with:
           version: '1.31.1'
-          inputs: .github src/*/.github
+          inputs: .github
           advanced-security: false
           annotations: true
