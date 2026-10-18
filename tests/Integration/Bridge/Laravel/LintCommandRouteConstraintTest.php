@@ -41,7 +41,10 @@ final class LintCommandRouteConstraintTest extends LaravelTestCase
     public function test_lint_reports_no_finding_on_the_flags_the_router_adds(): void
     {
         Route::get('/x/{id}', static fn (): string => '')->where('id', '\d+')->name('numeric');
-        Route::get('/y/{v}', static fn (): string => '')->where('v', '[a-z]+')->domain('{account}.example.com')->where('account', '[0-9]+')->name('tenant');
+        // Laravel 12 types domain() as a getter too: its result is not chained.
+        $tenant = Route::get('/y/{v}', static fn (): string => '')->where('v', '[a-z]+');
+        $tenant->domain('{account}.example.com');
+        $tenant->where('account', '[0-9]+')->name('tenant');
 
         $ids = [...$this->routeIssueIds('route:numeric:id'), ...$this->routeIssueIds('route:tenant:account')];
 

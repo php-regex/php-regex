@@ -149,12 +149,6 @@ parameters:
           identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
           reportUnmatched: false
-        # PHPUnit 12.5 brought the attribute that lets the mocks of Symfony's
-        # validator context go without an expectation; PHPUnit 11, the one
-        # PHP 8.2 installs, reads past it as an unknown one.
-        - identifier: attribute.notFound
-          path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
-          reportUnmatched: false
         # These tests probe the running engine for syntax newer PCRE2 releases
         # added, as (?[...]), (*scs:...), (?^i), a \K inside a lookbehind or a
         # group name past 32 code units, and only match with it when it
@@ -168,14 +162,17 @@ parameters:
           paths:
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleExtensionNeonRangeTest.php
             - tests/Integration/Bridge/PHPStan/RegexPatternRuleReplacementGroupEdgeTest.php
+            - tests/Integration/Bridge/PHPStan/RegexPatternRuleTargetMarkerTest.php
             - tests/Unit/Automata/SolverOnHirAdversaryFixesTest.php
             - tests/Unit/Hir/ClassSetProviderCacheTest.php
             - tests/Unit/Internal/InlineFlagsTest.php
             - tests/Unit/Internal/StartOptionsTest.php
+            - tests/Unit/Lint/AnalysisServiceGuardTest.php
             - tests/Unit/Lint/Rule/ImpossibleLookaroundRuleTest.php
             - tests/Unit/Lint/Rule/PossessiveImpossibleRuleTest.php
             - tests/Unit/NodeVisitor/CasingSettingsTest.php
             - tests/Unit/NodeVisitor/ExtendedCharClassDisplayTest.php
+            - tests/Unit/NodeVisitor/KeepInLookaroundTest.php
             - tests/Unit/NodeVisitor/SampleGeneratorEndAnchorTest.php
             - tests/Unit/NodeVisitor/SampleGeneratorVisitorTest.php
             - tests/Unit/Parser/ExtendedCharClassTest.php
