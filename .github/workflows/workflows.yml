@@ -1,0 +1,80 @@
+name: Workflows
+
+# The workflows and the local action under .github/, and the workflow each
+# package carries for its read-only repository: actionlint for their syntax,
+# expressions and shell scripts, zizmor for their security. They run when one
+# of them changes, and every Monday, when a new finding may name old code.
+
+on:
+  push:
+    branches: [ 2.x ]
+    paths:
+      - '.github/**'
+      - 'src/*/.github/**'
+  pull_request:
+    branches: [ 2.x ]
+    paths:
+      - '.github/**'
+      - 'src/*/.github/**'
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a scheduled run on 2.x neither cancels a push's
+  # run nor is cancelled by one.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install actionlint
+        # The release archive, checked against its published checksum; the
+        # runner's shellcheck reads the run: scripts.
+        env:
+          VERSION: '1.7.12'
+          SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          archive="actionlint_${VERSION}_linux_amd64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$archive" "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/$archive"
+          echo "$SHA256  $RUNNER_TEMP/$archive" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP" actionlint
+
+      - name: Run actionlint
+        run: |
+          "$RUNNER_TEMP/actionlint" -color .github/workflows/*.yml src/*/.github/workflows/*.yml
+
+  zizmor:
+    name: zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        # .github/zizmor.yml holds the pinning policy. The findings go to the
+        # log and the run's annotations, not to code scanning: no write
+        # permission is granted.
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          version: '1.31.1'
+          inputs: .github src/*/.github
+          advanced-security: false
+          annotations: true

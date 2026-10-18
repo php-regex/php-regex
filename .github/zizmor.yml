@@ -1,0 +1,16 @@
+# zizmor's configuration for the workflows and actions under .github/ and the
+# workflow each package carries under src/*/.github/.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # GitHub's own actions follow their major tag, which GitHub moves;
+        # every other action is named by the commit its release tag points
+        # to, the version in a trailing comment.
+        "actions/*": ref-pin
+        "github/*": ref-pin
+        "*": hash-pin
+  self-repository:
+    # The "$/" form of a local action is too recent for actionlint and act,
+    # which refuse it; the "./" form stays until they read it.
+    disable: true
