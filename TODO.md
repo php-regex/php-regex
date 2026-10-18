@@ -11,18 +11,24 @@ The code is ready; what is left is the maintainer's, in this order.
 2. **The bump commit.** `bin/bump 2.0.0` sets `Regex::VERSION`,
    `Regex::VERSION_ID` and dates the CHANGELOG section. In the same commit,
    the install story moves from `2.x-dev` to the stable release:
-   - `docs/_includes/install-prerelease.html` (17 pages): drop the two
-     `composer config` lines and the `:{{ site.data.product.release }}-dev`
-     suffix;
+   - `docs/_includes/install-prerelease.html` (23 pages, the four articles
+     through its `inline=true` form): drop the two `composer config` lines
+     and the `:{{ site.data.product.release }}-dev` suffix, written once in
+     its `install_commands` capture;
    - outside the include: `docs/index.md` (hero install block),
      `docs/packages.md`, `docs/quick-start.md`, `README.md` ("2.0 is coming"
      and "Getting started"), `docs/llms.txt`;
    - `docs/_data/product.yml`: `version_label`;
    - the `PHPRegex 2.0.0-DEV` sample outputs in `docs/guides/cli.md`,
-     `docs/tutorial/README.md`, `docs/tutorial/08-performance-redos.md` and
-     `docs/tutorial/09-testing-debugging.md`;
-   - `tests/Documentation/PackageSelectionDocumentationTest.php` pins the
-     prerelease commands: it moves with them.
+     `docs/tutorial/README.md`, `docs/tutorial/08-performance-redos.md`,
+     `docs/tutorial/09-testing-debugging.md` and the articles
+     `docs/_articles/which-pcre2-ships-with-which-php.md` and
+     `docs/_articles/why-pcre2-is-a-separate-library.md`, and the
+     `"version":"2.0.0-DEV"` of the `initialize` answer in
+     `docs/guides/lsp.md`;
+   - `tests/Documentation/PackageSelectionDocumentationTest.php` and
+     `tests/Documentation/ArticleInstallIncludeTest.php` pin the prerelease
+     commands: they move with them.
 3. Before the tag: `php-regex/regex-phpunit` exists on GitHub (empty, with
    the metadata of the sixteen others) and the split fills it on the next
    push of 2.x. Then submit it on Packagist and register its webhook like the
@@ -32,8 +38,9 @@ The code is ready; what is left is the maintainer's, in this order.
 4. Push 2.x and watch the first CI run on 2.x after the push, the PHP 8.1
    prefer-lowest cell in particular; once it passes, `bin/release --dry-run
    2.0.0` and `bin/release 2.0.0`: it drafts the GitHub release and pushes
-   the tag; the phar workflow builds and attests the phar, attaches it and
-   its checksum, then publishes the draft; the split workflow tags the
+   the tag; the phar workflow builds the phar, checks that its version is
+   the tag's and that `regex.phar lsp` answers `initialize`, attests it,
+   attaches it and its checksum, then publishes the draft; the split workflow tags the
    seventeen packages.
 5. After the tag: `bin/status` and Packagist show `v2.0.0` for all seventeen
    packages (they require each other at `self.version`: one missing tag
