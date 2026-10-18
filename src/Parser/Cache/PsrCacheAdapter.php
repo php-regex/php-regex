@@ -18,10 +18,15 @@ use Psr\Cache\CacheItemPoolInterface;
 
 /**
  * Keeps trees in a PSR-6 pool, as serialized strings the adapter reads back
- * itself: the pool never has to rebuild an object.
+ * itself: the pool never has to rebuild an object. A load that gives a tree
+ * back is a hit, any other a miss, counted for this adapter alone.
  */
 final class PsrCacheAdapter implements RemovableCacheInterface
 {
+    private int $hits = 0;
+
+    private int $misses = 0;
+
     /**
      * @param (\Closure(string): mixed)|null $keyFactory receives the seed generateKey() gets and
      *                                                   returns the key body: a string is prefixed as is,
@@ -53,8 +58,11 @@ final class PsrCacheAdapter implements RemovableCacheInterface
     {
         $item = $this->pool->getItem($key);
         $data = $item->isHit() ? $item->get() : null;
+        $ast = \is_string($data) ? AstSerializer::unserialize($data) : null;
 
-        return \is_string($data) ? AstSerializer::unserialize($data) : null;
+        null === $ast ? $this->misses++ : $this->hits++;
+
+        return $ast;
     }
 
     public function clear(): void
@@ -64,6 +72,6 @@ final class PsrCacheAdapter implements RemovableCacheInterface
 
     public function getStats(): array
     {
-        return ['hits' => 0, 'misses' => 0];
+        return ['hits' => $this->hits, 'misses' => $this->misses];
     }
 }

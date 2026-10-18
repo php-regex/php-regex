@@ -150,7 +150,7 @@ final class PsrSimpleCacheAdapterTest extends TestCase
     }
 
     #[Test]
-    public function test_get_stats_returns_zero_stats_after_cache_operations(): void
+    public function test_get_stats_counts_the_hits_and_the_misses(): void
     {
         $cache = new InMemorySimpleCache();
         $adapter = new PsrSimpleCacheAdapter($cache);
@@ -162,8 +162,8 @@ final class PsrSimpleCacheAdapterTest extends TestCase
 
         $stats = $adapter->getStats();
 
-        $this->assertSame(0, $stats['hits']);
-        $this->assertSame(0, $stats['misses']);
+        $this->assertSame(1, $stats['hits']);
+        $this->assertSame(1, $stats['misses']);
     }
 
     private function tree(string $pattern): RegexNode

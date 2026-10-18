@@ -173,16 +173,34 @@ final class CacheContractTest extends TestCase
         yield 'PSR-6' => [static fn (): CacheInterface => new PsrCacheAdapter(new InMemoryCachePool())];
     }
 
+    /**
+     * @param \Closure(): RemovableCacheInterface $make
+     */
+    #[DataProvider('provideCountingCaches')]
     #[Test]
-    public function test_the_hits_count_trees_given_back(): void
+    public function test_the_hits_count_trees_given_back(\Closure $make): void
     {
-        $cache = new ArrayCache();
-        $regex = Regex::create(['cache' => $cache]);
+        $cache = $make();
 
-        $regex->parse('/a{2,3}/');
-        $regex->parse('/a{2,3}/');
+        // Two parsers: each keeps the trees a persistent cache gave it in
+        // memory, so the second one asks the cache again.
+        Regex::create(['cache' => $cache])->parse('/a{2,3}/');
+        Regex::create(['cache' => $cache])->parse('/a{2,3}/');
 
         $this->assertSame(['hits' => 1, 'misses' => 1], $cache->getStats());
+    }
+
+    /**
+     * Every cache that keeps trees counts them, as RemovableCacheInterface
+     * says.
+     *
+     * @return iterable<string, array{\Closure(): RemovableCacheInterface}>
+     */
+    public static function provideCountingCaches(): iterable
+    {
+        yield 'in memory' => [static fn (): RemovableCacheInterface => new ArrayCache()];
+        yield 'PSR-6' => [static fn (): RemovableCacheInterface => new PsrCacheAdapter(new InMemoryCachePool())];
+        yield 'PSR-16' => [static fn (): RemovableCacheInterface => new PsrSimpleCacheAdapter(new InMemorySimpleCache())];
     }
 
     #[Test]

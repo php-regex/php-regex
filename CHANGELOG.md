@@ -698,6 +698,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `Modernizer` keeps `[0-9]` under `/u` or `(*UCP)`, where `\d` matches every decimal digit: `/[0-9]/u` became `/\d/u`, which matches `"٣"`.
 - `ast.schema.json` lists every comparison the parser reads in a version condition, `=`, `>=`, `>`, `<=`, `<`, `==` and `!=`, where it listed `=` and `>=` only: `parse()` reads `(?(VERSION<10.0)a|b)`, which `validate()` refuses as PCRE2 does, and its JSON export wrote an `operator` outside the schema.
 - The character sets the ReDoS analysis and the lint read at the edges of a quantified atom take its minimum from the quantifier as the parser reads it: `{,5}`, a quantifier from PCRE2 10.43, and `{ 0 }` were read as a minimum of 1, so what follows them was left out of the first characters of `x{,5}y`, and a lazy count written with its suffix, `{2}?`, as a minimum of 0.
+- `PsrCacheAdapter` and `PsrSimpleCacheAdapter` count their hits and misses, as `RemovableCacheInterface` says a cache does, where `getStats()` always returned zeros: a load that gives a tree back is a hit, any other a miss. A tree the parser already holds in memory in front of the pool asks the pool nothing, and counts in neither.
 
 ### Documentation
 

@@ -149,7 +149,7 @@ final class PsrCacheAdapterTest extends TestCase
     }
 
     #[Test]
-    public function test_get_stats_returns_zero_stats_after_cache_operations(): void
+    public function test_get_stats_counts_the_hits_and_the_misses(): void
     {
         $pool = new InMemoryCachePool();
         $cache = new PsrCacheAdapter($pool);
@@ -161,7 +161,7 @@ final class PsrCacheAdapterTest extends TestCase
 
         $stats = $cache->getStats();
 
-        $this->assertSame(0, $stats['hits']);
-        $this->assertSame(0, $stats['misses']);
+        $this->assertSame(1, $stats['hits']);
+        $this->assertSame(1, $stats['misses']);
     }
 }
