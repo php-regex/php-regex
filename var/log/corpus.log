@@ -1495,7 +1495,7 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Xlsx.php:1973:78
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:771:46
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:816:46
     → /((\w*|'[^!]*')!)?(\$?\d+):(\$?\d+)/mui
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
@@ -1503,21 +1503,21 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:771:46
        - /((\w*|'[^!]*')!)?(\$?\d+):(\$?\d+)/mui
        + /((\w*|'[^!]*')!)?(\$?\d+):(\$?\d+)/ui
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:795:46
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:840:46
     → /((\w*|'[^!]*')!)?(\$?[a-z]{1,3}):(\$?[a-z]{1,3})/mui
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /((\w*|'[^!]*')!)?(\$?[a-z]{1,3}):(\$?[a-z]{1,3})/mui
        + /((\w*|'[^!]*')!)?(\$?[a-z]{1,3}):(\$?[a-z]{1,3})/ui
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:819:46
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:864:46
     → /((\w*|'[^!]*')!)?(\$?[a-z]{1,3}\$?\d+):(\$?[a-z]{1,3}\$?\d+)/mui
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /((\w*|'[^!]*')!)?(\$?[a-z]{1,3}\$?\d+):(\$?[a-z]{1,3}\$?\d+)/mui
        + /((\w*|'[^!]*')!)?(\$?[a-z]{1,3}\$?\d+):(\$?[a-z]{1,3}\$?\d+)/ui
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:845:46
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:890:46
     → /((\w*|'[^!]*')!)?(?<![:a-z1-9_\.\$])(\$?[a-z]{1,3}\$?\d+)(?=[^:!\d'])/mui
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -3003,14 +3003,14 @@ corpus/WordPress/WordPress-Coding-Standards/WordPress/Sniffs/WP/I18nSniff.php:71
 
 ### corpus/WordPress/wordpress-develop — Target: PHP 7.4, PCRE2 10.33 (composer.json require.php) — exit 1
 Note: PCRE2 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/ajax-actions.php:4358:30
+corpus/WordPress/wordpress-develop/src/wp-admin/includes/ajax-actions.php:4288:30
     → /[^A-z0-9_\-]/
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (covered by range 'A'-'z')
    WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
        ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
 
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/ajax-actions.php:4453:30
+corpus/WordPress/wordpress-develop/src/wp-admin/includes/ajax-actions.php:4383:30
     → /[^A-z0-9_\-]/
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '_' (covered by range 'A'-'z')
@@ -3042,14 +3042,14 @@ corpus/WordPress/wordpress-develop/src/wp-admin/includes/class-wp-filesystem-bas
        - |^([a-z]{1}):|i
        + |^([a-z]):|i
 
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3053:15
+corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3059:15
     → |\((.*)\)|ms
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - |\((.*)\)|ms
        + |\((.*)\)|s
 
-corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3090:7
+corpus/WordPress/wordpress-develop/src/wp-admin/includes/upgrade.php:3096:7
     → /^ (?P<index_type> PRIMARY\s+KEY|(?:UNIQUE|FULLTEXT|SPATIAL)\s+(?:KEY|INDEX)|KEY|INDEX ) \s+ (?: `? (?P<index_name> (?:[0-9a-zA-Z$_-]|[\xC2-\xDF][\x80-\xBF])+ ) `? \s+ )* \( (?P<index_columns> .+? ) \) $/imx
    WARN  Nested quantifiers can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
@@ -3557,7 +3557,7 @@ corpus/WordPress/wordpress-develop/src/wp-includes/rest-api/endpoints/class-wp-r
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/WordPress/wordpress-develop/src/wp-includes/script-loader.php:4599:24
+corpus/WordPress/wordpress-develop/src/wp-includes/script-loader.php:4571:24
     → :^\s*(/\*# sourceURL=\S+? \*/\s*)?$:s
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
    TIP 
@@ -7055,7 +7055,7 @@ corpus/invoiceninja/invoiceninja/app/Console/Commands/ImportHarvest.php:1350:13
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The second quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/invoiceninja/invoiceninja/app/PaymentDrivers/StripePaymentDriver.php:1130:38
+corpus/invoiceninja/invoiceninja/app/PaymentDrivers/StripePaymentDriver.php:1186:38
     → #\\u([0-9a-f]{4})#ism
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -7063,7 +7063,7 @@ corpus/invoiceninja/invoiceninja/app/PaymentDrivers/StripePaymentDriver.php:1130
        - #\\u([0-9a-f]{4})#ism
        + #\\u([0-9a-f]{4})#i
 
-corpus/invoiceninja/invoiceninja/app/Services/Pdf/Purify.php:341:24
+corpus/invoiceninja/invoiceninja/app/Services/Pdf/Purify.php:346:24
     → /^\d{1,3}(\.\d{1,3}){3}\./
    INFO  Quantified capturing group "(...)" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -17807,7 +17807,7 @@ corpus/symfony/symfony/src/Symfony/Component/Console/Command/Command.php:731:25
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:620:45
+corpus/symfony/symfony/src/Symfony/Component/Console/Helper/Table.php:653:45
     → /^<(\w+|(\w+=[\w,]+;?)*)>.+<\/(\w+|(\w+=\w+;?)*)?>$/
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -17888,12 +17888,6 @@ corpus/symfony/symfony/src/Symfony/Component/ExpressionLanguage/Lexer.php:41:28
     → / (?(DEFINE)(?P<LNUM>[0-9]+(_[0-9]+)*)) (?:\.(?&LNUM)|(?&LNUM)(?:\.(?!\.)(?&LNUM)?)?)(?:[eE][+-]?(?&LNUM))?/Ax
    INFO  Quantified capturing group "(...)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-
-corpus/symfony/symfony/src/Symfony/Component/Finder/Gitignore.php:105:40
-    → ~\\\[((?:\\!)?)([^\[\]]*)\\\]~
-   TIP 
-       - ~\\\[((?:\\!)?)([^\[\]]*)\\\]~
-       + ~\\\[((?:\\!)?)([^[\]]*)\\\]~
 
 corpus/symfony/symfony/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php:262:44
     → /^[*<]|(Host: )/
