@@ -45,6 +45,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -54,12 +55,23 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class Modernizer extends AbstractNodeVisitor
 {
+    /**
+     * The code points "\s" matches without Unicode properties.
+     */
+    private const SPACES = [9, 10, 11, 12, 13, 32];
+
     private string $delimiter = '/';
+
+    /**
+     * Whether "\s" and "\d" read Unicode properties: "/u", or "(*UCP)".
+     */
+    private bool $unicodeProperties = false;
 
     #[\Override]
     public function visitRegex(RegexNode $node)
     {
         $this->delimiter = $node->delimiter;
+        $this->unicodeProperties = str_contains($node->flags, 'u') || \in_array('UCP', StartOptions::items($node->source ?? ''), true);
 
         return new RegexNode(
             $node->pattern->accept($this),
@@ -86,18 +98,11 @@ final class Modernizer extends AbstractNodeVisitor
             }
         }
 
-        // Check for \s equivalent: [\t\n\r\f\v]
-        if (!$node->isNegated && 5 === \count($parts)) {
-            $whitespaceChars = ["\t", "\n", "\r", "\f", "\v"];
-            $foundChars = [];
-            foreach ($parts as $part) {
-                if ($part instanceof LiteralNode && \in_array($part->value, $whitespaceChars, true)) {
-                    $foundChars[] = $part->value;
-                }
-            }
-            if (5 === \count($foundChars) && $foundChars === $whitespaceChars) {
-                return new CharTypeNode('s', $node->getStartPosition(), $node->getEndPosition());
-            }
+        // "\s" matches HT, LF, VT, FF, CR and the space, and nothing else, on
+        // every PCRE2 release; with Unicode properties, under "/u" or
+        // "(*UCP)", it matches more, as U+00A0.
+        if (!$node->isNegated && !$this->unicodeProperties && self::SPACES === $this->codePoints($parts)) {
+            return new CharTypeNode('s', $node->getStartPosition(), $node->getEndPosition());
         }
 
         // For other cases, keep as is but modernize parts
@@ -328,5 +333,54 @@ final class Modernizer extends AbstractNodeVisitor
     public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
     {
         return $node;
+    }
+
+    /**
+     * The code points a class's members match, sorted, each once; null when
+     * a member is not a single character or a range of them.
+     *
+     * @param array<NodeInterface> $parts
+     *
+     * @return list<int>|null
+     */
+    private function codePoints(array $parts): ?array
+    {
+        $codePoints = [];
+        foreach ($parts as $part) {
+            if ($part instanceof RangeNode) {
+                $start = $this->codePoint($part->start);
+                $end = $this->codePoint($part->end);
+                // A member above 255 is no member of "\s", which is read without
+                // Unicode properties here.
+                if (null === $start || null === $end || $start > $end || $end > 0xFF) {
+                    return null;
+                }
+
+                array_push($codePoints, ...range($start, $end));
+
+                continue;
+            }
+
+            $codePoint = $this->codePoint($part);
+            if (null === $codePoint) {
+                return null;
+            }
+
+            $codePoints[] = $codePoint;
+        }
+
+        $codePoints = array_values(array_unique($codePoints));
+        sort($codePoints);
+
+        return $codePoints;
+    }
+
+    private function codePoint(NodeInterface $node): ?int
+    {
+        if ($node instanceof CharLiteralNode) {
+            return $node->codePoint;
+        }
+
+        return $node instanceof LiteralNode && 1 === \strlen($node->value) ? \ord($node->value) : null;
     }
 }

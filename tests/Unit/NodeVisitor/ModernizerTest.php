@@ -307,6 +307,7 @@ final class ModernizerTest extends TestCase
                     new LiteralNode("\r", 9, 12),
                     new LiteralNode("\f", 13, 16),
                     new LiteralNode("\v", 17, 20),
+                    new LiteralNode(' ', 20, 21),
                 ],
                 0, 21,
             ),
@@ -318,5 +319,51 @@ final class ModernizerTest extends TestCase
 
         $this->assertInstanceOf(CharTypeNode::class, $result);
         $this->assertSame('s', $result->value);
+    }
+
+    public function test_keeps_whitespace_class_without_the_space(): void
+    {
+        $controls = new CharClassNode(
+            new AlternationNode(
+                [
+                    new LiteralNode("\t", 1, 4),
+                    new LiteralNode("\n", 5, 8),
+                    new LiteralNode("\r", 9, 12),
+                    new LiteralNode("\f", 13, 16),
+                    new LiteralNode("\v", 17, 20),
+                ],
+                0, 21,
+            ),
+            false,
+            0, 22,
+        );
+
+        $result = $controls->accept($this->visitor);
+
+        $this->assertInstanceOf(CharClassNode::class, $result);
+        $this->assertFalse($result->isNegated);
+    }
+
+    public function test_keeps_class_whose_range_runs_past_a_byte(): void
+    {
+        $wide = new CharClassNode(
+            new AlternationNode(
+                [
+                    new RangeNode(
+                        new CharLiteralNode('\x09', 9, CharLiteralType::Unicode, 1, 5),
+                        new CharLiteralNode('\x{10FFFF}', 0x10FFFF, CharLiteralType::Unicode, 6, 16),
+                        1, 16,
+                    ),
+                    new LiteralNode(' ', 16, 17),
+                ],
+                1, 17,
+            ),
+            false,
+            0, 18,
+        );
+
+        $result = $wide->accept($this->visitor);
+
+        $this->assertInstanceOf(CharClassNode::class, $result);
     }
 }

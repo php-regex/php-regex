@@ -233,6 +233,7 @@ echo $pattern;  // '/foo/'
 | `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing |
 | `\-`       | `-`         | An escape of a character that needs none  |
 | `\1`       | `\g{1}`     | The braces end the number: no digit after it can join it |
+| `[\t\n\x0B\f\r ]` | `\s` | The same six characters; kept under `/u` and `(*UCP)`, where `\s` matches more |
 
 Its scope is deliberately narrow: it leaves inline flags (`(?i)foo`), legacy
 escapes that PCRE2 still reads (`\0`), redundant quantifiers (`a{1}`) and the

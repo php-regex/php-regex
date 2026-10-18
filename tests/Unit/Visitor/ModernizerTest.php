@@ -116,6 +116,45 @@ final class ModernizerTest extends TestCase
         $this->assertMatchesOriginalBehavior($original, $modernized);
     }
 
+    /**
+     * "\s" matches HT, LF, VT, FF, CR and the space on every PCRE2 from 10.32
+     * to 10.49, and nothing else below 256; under "/u" or "(*UCP)" it also
+     * matches U+0085, U+00A0, U+2028 and U+3000.
+     */
+    #[DataProvider('provideWhitespaceClasses')]
+    public function test_whitespace_class_becomes_shorthand_only_when_it_matches_alike(string $pattern, bool $shorthand): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame($shorthand, str_contains($modernized, '\s'), $modernized);
+        $subjects = array_map(chr(...), range(0, 255));
+        if (str_ends_with($pattern, 'u') || str_contains($pattern, '(*UCP)')) {
+            $subjects = ["\u{85}", "\u{A0}", "\u{2028}", "\u{3000}", ' ', "\v"];
+        }
+
+        foreach ($subjects as $subject) {
+            $this->assertSame(preg_match($pattern, $subject), preg_match($modernized, $subject), \sprintf('%s and %s on %s', $pattern, $modernized, bin2hex($subject)));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, shorthand: bool}>
+     */
+    public static function provideWhitespaceClasses(): iterable
+    {
+        yield 'six members' => ['pattern' => '/[\t\n\x0B\f\r ]/', 'shorthand' => true];
+        yield 'six members in another order' => ['pattern' => '/[ \r\f\x0B\n\t]/', 'shorthand' => true];
+        yield 'a range and the space' => ['pattern' => '/[\t-\r ]/', 'shorthand' => true];
+        yield 'raw controls and the space' => ['pattern' => "/[\t\n\r\f\v ]/", 'shorthand' => true];
+        yield 'raw controls without the space' => ['pattern' => "/[\t\n\r\f\v]/", 'shorthand' => false];
+        yield 'without the vertical tab' => ['pattern' => '/[\t\n\f\r ]/', 'shorthand' => false];
+        yield 'escaped v is vertical space' => ['pattern' => '/[\t\n\v\f\r ]/', 'shorthand' => false];
+        yield 'one more member' => ['pattern' => '/[\t\n\x0B\f\r a]/', 'shorthand' => false];
+        yield 'under u' => ['pattern' => '/[\t\n\x0B\f\r ]/u', 'shorthand' => false];
+        yield 'under UCP' => ['pattern' => '/(*UCP)[\t\n\x0B\f\r ]/', 'shorthand' => false];
+        yield 'negated' => ['pattern' => '/[^\t\n\x0B\f\r ]/', 'shorthand' => false];
+    }
+
     private function assertMatchesOriginalBehavior(string $original, string $modernized): void
     {
         // Simple test: both should match or not match the same test strings
