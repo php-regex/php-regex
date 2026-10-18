@@ -331,11 +331,11 @@ Recursion : 100000
     FAIL On PHP 8.5 and later: \K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.
          ↳         (?<=a\Kb)c
                              ^
-         ↳ Move the \K out of the lookaround.
+         ↳ Up to PHP 8.4 a \K in a lookaround resets the start of the match from inside it: "(?=\Ka)" matches an empty string in "a", and "(?<=\Ka)b" matches "ab" in "ab". No spelling keeps that in general: r...
 
 
   FAIL 2 invalid patterns, 0 warnings, 0 optimizations.
-  Time: 0.08s  Memory: 12 MB  Processes: 2
+  Time: 0.07s  Memory: 12 MB  Processes: 2
   If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex
 ```
 {: data-copy="" }

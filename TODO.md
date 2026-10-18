@@ -143,5 +143,3 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
   under `## Articles` in `docs/llms.txt`, and give each `/blog/<slug>` its
   entry in the sitemap navigation-coverage check, with the blog-index
   justification.
-- The article on which PCRE2 ships with which PHP quotes the former `\K`
-  hint ("Move the \K out of the lookaround."): refresh its sample output.
