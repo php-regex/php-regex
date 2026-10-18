@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser;
 
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Text\Ascii;
 
@@ -35,6 +36,16 @@ final class PcreTarget
     private const KNOWN_IN_FULL = 10_039;
 
     public readonly string $pcreVersion;
+
+    /**
+     * What supports() answered, by release number and feature name: the
+     * lexer and the parser ask it many times per pattern, and the answer
+     * depends on nothing else. As many entries as releases asked about times
+     * features.
+     *
+     * @var array<int, array<string, bool>>
+     */
+    private static array $supported = [];
 
     private readonly int $release;
 
@@ -134,7 +145,15 @@ final class PcreTarget
      */
     public function supports(PcreFeature $feature): bool
     {
-        return $this->pcreAtLeast($feature->release());
+        if (isset(self::$supported[$this->release][$feature->name])) {
+            return self::$supported[$this->release][$feature->name];
+        }
+
+        StaticCaches::register(self::class, static function (): void {
+            self::$supported = [];
+        });
+
+        return self::$supported[$this->release][$feature->name] = $this->pcreAtLeast($feature->release());
     }
 
     /**

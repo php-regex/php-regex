@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
@@ -63,6 +64,53 @@ final class PcreFeatureTest extends TestCase
         yield 'variable-length lookbehind' => [PcreFeature::VariableLengthLookbehind, '10.42', '10.43'];
         yield 'long group names' => [PcreFeature::LongGroupNames, '10.43', '10.44'];
         yield 'unclosed brace at the end' => [PcreFeature::UnclosedBraceAtPatternEnd, '10.47', '10.48'];
+    }
+
+    /**
+     * What a target answers depends on its release alone, never on the
+     * targets asked before it: releases are walked up, then down, every
+     * feature asked of each, and each answer held to the release it names.
+     */
+    #[Test]
+    public function test_a_target_answers_for_its_own_release_whatever_was_asked_before(): void
+    {
+        $releases = array_map(static fn (int $minor): string => '10.'.$minor, range(30, 50));
+
+        foreach ([$releases, array_reverse($releases)] as $walk) {
+            foreach ($walk as $release) {
+                $target = new PcreTarget(80400, $release);
+                foreach (PcreFeature::cases() as $feature) {
+                    $expected = version_compare($release, $feature->release(), '>=');
+                    $this->assertSame($expected, $target->supports($feature), $release.' '.$feature->name);
+                    $this->assertSame($expected, $target->pcreAtLeast($feature->release()), $release.' '.$feature->name);
+                }
+            }
+        }
+    }
+
+    #[Test]
+    public function test_a_target_answers_the_same_once_the_process_caches_are_emptied(): void
+    {
+        $older = new PcreTarget(80400, '10.44');
+        $newer = new PcreTarget(80400, '10.45');
+        $this->assertFalse($older->supports(PcreFeature::ScanSubstring));
+        $this->assertTrue($newer->supports(PcreFeature::ScanSubstring));
+
+        StaticCaches::clear();
+
+        $this->assertTrue($newer->supports(PcreFeature::ScanSubstring));
+        $this->assertFalse($older->supports(PcreFeature::ScanSubstring));
+    }
+
+    #[Test]
+    public function test_a_malformed_release_is_still_refused_after_supports_answered(): void
+    {
+        $target = new PcreTarget(80400, '10.40');
+        $target->supports(PcreFeature::ScanSubstring);
+
+        $this->expectException(InvalidRegexOptionException::class);
+
+        $target->pcreAtLeast('10.4');
     }
 
     /**
