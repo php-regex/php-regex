@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer\Internal;
 
-use PHPRegex\Optimizer\Internal\LayoutSplicer;
+use PHPRegex\Optimizer\LayoutSplicer;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;

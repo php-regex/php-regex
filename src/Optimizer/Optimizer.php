@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Automata\LanguageSolver;
-use PHPRegex\Optimizer\Internal\LayoutSplicer;
-use PHPRegex\Optimizer\Internal\RewriteCheck;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;

@@ -146,7 +146,7 @@ final class PackageManifestTest extends TestCase
         // pattern's own layout, as the optimizer does, and checks it as
         // the optimizer checks its own.
         'Linter' => [
-            'Optimizer\Internal\LayoutSplicer', 'Optimizer\Internal\RewriteCheck', 'Optimizer\Rewriter',
+            'Optimizer\LayoutSplicer', 'Optimizer\RewriteCheck', 'Optimizer\Rewriter',
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
             'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper',
             'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure',
