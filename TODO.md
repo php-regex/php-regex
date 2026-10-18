@@ -1,13 +1,5 @@
 # TODO
 
-## Before the 2.0.0 tag: verified defects
-
-Each one reproduced against the code and the engine (PHP 8.4, PCRE2 10.49).
-- Docs: the Linter CHANGELOG misses three off-by-default rules
-  (`anchor.dollarNewline`, `lookaround.redundant`,
-  `unicode.shorthandWithoutU`); the Linter, CLI and PHPStan READMEs say 40
-  lint rules where 53 are registered.
-
 ## Composer manifests: the pre-tag review
 
 Every manifest passes `composer validate --strict`; the integration

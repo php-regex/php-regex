@@ -98,9 +98,20 @@ CHANGELOG
  * `regex.lint.lookaround.edgeQuantifier`: a repeat past its minimum at the
    end of a lookahead or the start of a lookbehind, `(?=a{2,6})`, proven by
    the automata, at severity `perf`, off by default.
- * The rules off by default are `unicode.shorthandWithoutU`,
-   `charclass.single`, `literal.multipleSpaces`, `quantifier.lazyToClass`,
-   `quantifier.uselessLazy` and `lookaround.edgeQuantifier`;
+ * `regex.lint.anchor.dollarNewline`: a `$` that ends a pattern anchored at
+   its start, read without `D` or `m`, which also matches before a trailing
+   newline, `/^\d+$/` on `"123\n"`, at severity `info`, off by default; the
+   tip is `\z` or the `D` modifier.
+ * `regex.lint.lookaround.redundant`: a positive lookahead that ends a
+   lookahead, or a positive lookbehind that starts a lookbehind,
+   `(?=a(?=b))` for `(?=ab)`, at severity `style`, off by default.
+ * `regex.lint.unicode.shorthandWithoutU`, renamed from
+   `unicode.shorthand_without_u`, is off by default: most code means the
+   ASCII `\w`, `\d` and `\s` it reports, at severity `style`.
+ * The rules off by default are `anchor.dollarNewline`,
+   `unicode.shorthandWithoutU`, `charclass.single`, `literal.multipleSpaces`,
+   `quantifier.lazyToClass`, `quantifier.uselessLazy`,
+   `lookaround.edgeQuantifier` and `lookaround.redundant`;
    `true` for its id in the rules map of `regex.json` turns one on.
  * `regex.lint.quantifier.lazyEnd` also reports a lazy quantifier followed
    only by items that may match nothing and hold no test that can fail,
