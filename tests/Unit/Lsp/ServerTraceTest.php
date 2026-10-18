@@ -138,6 +138,37 @@ final class ServerTraceTest extends TestCase
     }
 
     #[Test]
+    public function test_a_set_trace_level_that_is_not_one_keeps_the_level(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => ['trace' => 'messages']],
+            ['method' => '$/setTrace', 'params' => ['value' => 'loud']],
+            ['id' => 2, 'method' => 'shutdown'],
+        ]);
+
+        $lines = array_values(array_filter(explode("\n", $this->errorText()), static fn (string $line): bool => !str_starts_with($line, 'regex-lsp: trace: ') && '' !== $line));
+        $this->assertSame(['regex-lsp: $/setTrace value "loud" is not off, messages or verbose: ignored.'], $lines);
+        $this->assertContains('regex-lsp: trace: sent response (id 2)', $this->traceLines());
+    }
+
+    /**
+     * The frame log is the session's: once it ends, a frame written by
+     * anything else is not traced.
+     */
+    #[Test]
+    public function test_the_frame_log_ends_with_the_session(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => ['trace' => 'messages']],
+        ]);
+        $traced = \count($this->traceLines());
+
+        Response::notification('window/logMessage', ['type' => 3, 'message' => 'after the session']);
+
+        $this->assertCount($traced, $this->traceLines());
+    }
+
+    #[Test]
     public function test_a_traced_session_writes_only_frames_on_stdout(): void
     {
         $this->serve([

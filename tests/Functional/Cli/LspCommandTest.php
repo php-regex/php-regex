@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Functional\Cli;
 
+use PHPRegex\Cli\ApplicationFactory;
+use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\LspCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
@@ -99,6 +101,21 @@ final class LspCommandTest extends TestCase
         yield 'a session ended after shutdown' => ['sessionCode' => 0, 'exitCode' => 0];
         yield 'a session ended without shutdown' => ['sessionCode' => 1, 'exitCode' => 1];
         yield 'a server answering no code' => ['sessionCode' => 'done', 'exitCode' => 1];
+    }
+
+    #[Test]
+    public function test_the_help_page_says_where_the_target_comes_from(): void
+    {
+        $help = (new HelpCommand())->withCommands(ApplicationFactory::commands(new HelpCommand()));
+
+        ob_start();
+        $help->run(new Input('help', ['lsp'], new GlobalOptions(false, null, false, false, null, null), []), new Output(false, false));
+        $page = (string) ob_get_clean();
+
+        $this->assertStringContainsString('Run the language server over stdio', $page);
+        $this->assertStringContainsString('Speaks the Language Server Protocol on stdin and stdout, as vendor/bin/regex-lsp does.', $page);
+        $this->assertStringContainsString("The target is read from the editor's initializationOptions, regex.json or composer.json.", $page);
+        $this->assertStringContainsString('Start the server, as an editor does', $page);
     }
 
     #[Test]
