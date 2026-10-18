@@ -38,7 +38,7 @@ use PHPUnit\Framework\TestCase;
 final class SummaryLineRenderingTest extends TestCase
 {
     /**
-     * @return iterable<string, array{stats: array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int}, plain: string, ansi: string, quiet: string, tags: string}>
+     * @return iterable<string, array{stats: array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, notAnalyzed?: int}, plain: string, ansi: string, quiet: string, tags: string}>
      */
     public static function provideSummaries(): iterable
     {
@@ -63,6 +63,29 @@ final class SummaryLineRenderingTest extends TestCase
             'quiet' => "PASS: No issues found, 3 optimizations available.\n",
             'tags' => "\n  <bg=green;fg=white;options=bold> PASS </> <fg=green;options=bold>No issues found</><fg=gray>, 3 optimizations available.</>\n",
         ];
+        // A pattern the library gave up on is a warning, counted apart
+        // inside the warnings: the run has no verdict on it.
+        yield 'warnings with patterns not analyzed' => [
+            'stats' => ['errors' => 0, 'warnings' => 2, 'optimizations' => 1, 'notAnalyzed' => 1],
+            'plain' => "\n  PASS 2 warnings (1 not analyzed) found, 1 optimizations available.\n",
+            'ansi' => "\n  \e[43m\e[30m\e[1m PASS \e[0m \e[33m\e[1m2 warnings (1 not analyzed) found\e[0m\e[90m, 1 optimizations available.\e[0m\n",
+            'quiet' => "WARN: 2 warnings (1 not analyzed) found, 1 optimizations available.\n",
+            'tags' => "\n  <bg=yellow;fg=black;options=bold> PASS </> <fg=yellow;options=bold>2 warnings (1 not analyzed) found</><fg=gray>, 1 optimizations available.</>\n",
+        ];
+        yield 'errors with patterns not analyzed' => [
+            'stats' => ['errors' => 1, 'warnings' => 1, 'optimizations' => 0, 'notAnalyzed' => 1],
+            'plain' => "\n  FAIL 1 invalid patterns, 1 warnings (1 not analyzed), 0 optimizations.\n",
+            'ansi' => "\n  \e[41m\e[37m\e[1m FAIL \e[0m \e[31m\e[1m1 invalid patterns\e[0m\e[90m, 1 warnings (1 not analyzed), 0 optimizations.\e[0m\n",
+            'quiet' => "FAIL: 1 invalid patterns, 1 warnings (1 not analyzed), 0 optimizations.\n",
+            'tags' => "\n  <bg=red;fg=white;options=bold> FAIL </> <fg=red;options=bold>1 invalid patterns</><fg=gray>, 1 warnings (1 not analyzed), 0 optimizations.</>\n",
+        ];
+        yield 'infos and patterns not analyzed' => [
+            'stats' => ['errors' => 0, 'warnings' => 1, 'optimizations' => 0, 'infos' => 2, 'notAnalyzed' => 1],
+            'plain' => "\n  PASS 1 warnings (1 not analyzed), 2 infos found, 0 optimizations available.\n",
+            'ansi' => "\n  \e[43m\e[30m\e[1m PASS \e[0m \e[33m\e[1m1 warnings (1 not analyzed), 2 infos found\e[0m\e[90m, 0 optimizations available.\e[0m\n",
+            'quiet' => "WARN: 1 warnings (1 not analyzed), 2 infos found, 0 optimizations available.\n",
+            'tags' => "\n  <bg=yellow;fg=black;options=bold> PASS </> <fg=yellow;options=bold>1 warnings (1 not analyzed), 2 infos found</><fg=gray>, 0 optimizations available.</>\n",
+        ];
         yield 'infos only' => [
             'stats' => ['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'infos' => 2],
             'plain' => "\n  PASS 0 warnings, 2 infos found, 0 optimizations available.\n",
@@ -73,7 +96,7 @@ final class SummaryLineRenderingTest extends TestCase
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int} $stats
+     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, notAnalyzed?: int} $stats
      */
     #[Test]
     #[DataProvider('provideSummaries')]
@@ -84,7 +107,7 @@ final class SummaryLineRenderingTest extends TestCase
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int} $stats
+     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, notAnalyzed?: int} $stats
      */
     #[Test]
     #[DataProvider('provideSummaries')]
@@ -94,7 +117,7 @@ final class SummaryLineRenderingTest extends TestCase
     }
 
     /**
-     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int} $stats
+     * @param array{errors: int, warnings: int, optimizations: int, redos?: int, infos?: int, lintErrors?: int, notAnalyzed?: int} $stats
      */
     #[Test]
     #[DataProvider('provideSummaries')]
@@ -138,7 +161,7 @@ final class SummaryLineRenderingTest extends TestCase
         $json = json_decode((new JsonFormatter())->format(new LintReport([], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'redos' => 1])), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($json);
 
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 1, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0], $json['stats'] ?? null);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 1, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $json['stats'] ?? null);
     }
 
     /**

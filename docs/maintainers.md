@@ -246,7 +246,8 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
     "redos_errors": 0,
     "infos": 0,
     "lint_errors": 0,
-    "parser_fallbacks": 0
+    "parser_fallbacks": 0,
+    "not_analyzed": 0
   },
   "results": [
     {

@@ -20,6 +20,10 @@ CHANGELOG
  * A PHP file the lint cannot read, or that does not fit in `memory_limit`,
    is reported as `regex.lint.source.unreadable`, an error, instead of being
    left out.
+ * The patterns past one of the library's own limits are counted among the
+   warnings in `stats.not_analyzed` of the JSON report and in the console
+   summaries (`1 warnings (1 not analyzed) found`); the exit code is
+   unchanged.
  * A PHP file the PHP parser cannot read is read with the tokenizer instead
    of being left out, and counted once in `stats.parser_fallbacks` of the
    JSON report; a first-class callable such as `preg_match(...)` or a

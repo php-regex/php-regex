@@ -178,12 +178,6 @@ not-analyzed severity aligned with `regex lint`. Remaining:
    initial scan (measure first — the initialize response already
    precedes the scan, so the real cost is moving it past `initialized`).
 
-Decision needed: should partial analysis affect the `regex lint` exit
-code? A run that gives up on patterns (limits, memory budget) exits 0
-today; their checker has an explicit "incomplete" code that outranks
-findings and refuses to publish its report. Saying yes is a behavior
-change for every CI that treats 0 as clean.
-
 Refused, with reasons: amphp event loop and fabpot/json-rpc-peer (our
 protocol layer is ~200 dependency-free LOC already covered by a
 malformed-frame matrix; the valuable pieces are items 2-4, not a

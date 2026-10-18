@@ -72,7 +72,7 @@ final class JsonContract
         'lint.host' => ['php', 'pcre'],
         'lint.target' => ['php', 'pcre', 'source', 'range'],
         'lint.target.range[]' => ['php', 'pcre'],
-        'lint.stats' => ['errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks'],
+        'lint.stats' => ['errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks', 'not_analyzed'],
         'lint.results[]' => ['file', 'line', 'column', 'file_offset', 'source', 'pattern', 'location', 'issues', 'optimizations'],
         'lint.results[].issues[]' => [
             'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'message', 'hint',

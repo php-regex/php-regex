@@ -257,7 +257,7 @@ short for `--format=json`.
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
     "host": {"php": "8.4.26", "pcre": "10.49"},
-    "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0},
+    "stats": {"errors": 1, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0},
     "results": [
         {
             "file": "src/Example.php",
@@ -359,6 +359,7 @@ Every count is present on every run, `0` when there is none.
 | `infos` | int | Issues of severity `info` |
 | `lint_errors` | int | Lint rules of error severity that fired, counted among `errors` |
 | `parser_fallbacks` | int | Files the PHP parser could not read, read with the tokenizer instead; their patterns are linted, and the count is no error (`--verbose` names each file) |
+| `not_analyzed` | int | Patterns past one of the library's own limits, counted among `warnings`: no verdict on them, and the exit code stays what the warnings leave |
 
 ### Result: `lint.results[]`
 

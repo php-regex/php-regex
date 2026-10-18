@@ -1502,7 +1502,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "redos_errors": 1,
         "infos": 0,
         "lint_errors": 0,
-        "parser_fallbacks": 0
+        "parser_fallbacks": 0,
+        "not_analyzed": 0
     },
     "results": [
         {
@@ -1558,7 +1559,11 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
 `stats.errors` counts every error; `stats.redos_errors` counts the ReDoS errors
 among them and `stats.lint_errors` the lint rules of error severity that fired;
 `stats.infos` counts the issues of severity `info`; `stats.parser_fallbacks` counts
-the files the PHP parser could not read, whose patterns the tokenizer read instead.
+the files the PHP parser could not read, whose patterns the tokenizer read instead;
+`stats.not_analyzed` counts the patterns past one of the library's own limits,
+among the warnings: the run has no verdict on them, and the summary says so,
+`PASS 1 warnings (1 not analyzed) found`. Such a run still exits as its warnings
+leave it, 0 when nothing else fails.
 Every key is always present,
 `0` when there is none, and every issue carries every key, `null` when it does
 not apply. An issue's `severity` is `error`, `warning` or `info`, from the

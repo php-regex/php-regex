@@ -58,7 +58,8 @@ final class LintSummary
     /**
      * What a failing run counts after its errors: "1 warnings, 0
      * optimizations", the infos between them once there are some ("1
-     * warnings, 2 infos found, 0 optimizations").
+     * warnings, 2 infos found, 0 optimizations"), the patterns not
+     * analyzed beside the warnings they are ("1 warnings (1 not analyzed)").
      *
      * @phpstan-param LintStats $stats
      */
@@ -66,10 +67,10 @@ final class LintSummary
     {
         $infos = $stats['infos'] ?? 0;
         if ($infos > 0) {
-            return \sprintf('%d warnings, %d infos found, %d optimizations', $stats['warnings'], $infos, $stats['optimizations']);
+            return \sprintf('%s, %d infos found, %d optimizations', self::warnings($stats), $infos, $stats['optimizations']);
         }
 
-        return \sprintf('%d warnings, %d optimizations', $stats['warnings'], $stats['optimizations']);
+        return \sprintf('%s, %d optimizations', self::warnings($stats), $stats['optimizations']);
     }
 
     /**
@@ -83,13 +84,28 @@ final class LintSummary
     {
         $infos = $stats['infos'] ?? 0;
         if ($infos > 0) {
-            return \sprintf('%d warnings, %d infos found', $stats['warnings'], $infos);
+            return \sprintf('%s, %d infos found', self::warnings($stats), $infos);
         }
 
         if ($stats['warnings'] > 0) {
-            return \sprintf('%d warnings found', $stats['warnings']);
+            return \sprintf('%s found', self::warnings($stats));
         }
 
         return 'No issues found';
+    }
+
+    /**
+     * "2 warnings", and among them the patterns the library gave up on
+     * once there are some: "2 warnings (1 not analyzed)".
+     *
+     * @phpstan-param LintStats $stats
+     */
+    private static function warnings(array $stats): string
+    {
+        $notAnalyzed = $stats['notAnalyzed'] ?? 0;
+
+        return $notAnalyzed > 0
+            ? \sprintf('%d warnings (%d not analyzed)', $stats['warnings'], $notAnalyzed)
+            : \sprintf('%d warnings', $stats['warnings']);
     }
 }

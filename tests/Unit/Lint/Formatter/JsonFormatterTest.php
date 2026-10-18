@@ -45,7 +45,7 @@ final class JsonFormatterTest extends TestCase
 
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 0, 'warnings' => 0, 'optimizations' => 0, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $decoded['stats']);
         $this->assertSame([], $decoded['results']);
     }
 
@@ -58,6 +58,17 @@ final class JsonFormatterTest extends TestCase
         $this->assertIsArray($decoded);
         $this->assertIsArray($decoded['stats']);
         $this->assertSame(2, $decoded['stats']['parser_fallbacks'] ?? null);
+    }
+
+    public function test_format_counts_the_patterns_not_analyzed(): void
+    {
+        $report = new LintReport([], ['errors' => 0, 'warnings' => 3, 'optimizations' => 0, 'notAnalyzed' => 2]);
+
+        $decoded = json_decode($this->formatter->format($report), true);
+
+        $this->assertIsArray($decoded);
+        $this->assertIsArray($decoded['stats']);
+        $this->assertSame(2, $decoded['stats']['not_analyzed'] ?? null);
     }
 
     /**
@@ -194,7 +205,7 @@ final class JsonFormatterTest extends TestCase
         /** @var array{stats: array<string, int>, results: array<array<string, mixed>>} $decoded */
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded);
-        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0], $decoded['stats']);
+        $this->assertSame(['errors' => 1, 'warnings' => 0, 'optimizations' => 1, 'redos_errors' => 0, 'infos' => 0, 'lint_errors' => 0, 'parser_fallbacks' => 0, 'not_analyzed' => 0], $decoded['stats']);
         $this->assertIsArray($decoded['results']);
         $this->assertCount(2, $decoded['results']);
 

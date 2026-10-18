@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Internal;
 
 use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -49,6 +50,32 @@ final class LintStatsCounterTest extends TestCase
             ['errors' => 3, 'warnings' => 1, 'optimizations' => 0, 'redos' => 1, 'infos' => 2, 'lintErrors' => 1],
             LintStatsCounter::count($results),
         );
+    }
+
+    #[Test]
+    public function test_count_names_the_warnings_of_the_patterns_not_analyzed(): void
+    {
+        $regex = Regex::create(['cache' => null, 'max_pattern_length' => 3]);
+        $limit = $regex->validate('/abcd/');
+        $this->assertSame(ValidationErrorCategory::Limit, $limit->category);
+
+        $results = [
+            [
+                'file' => 'a.php',
+                'line' => 1,
+                'pattern' => '/abcd/',
+                'issues' => [
+                    ['type' => 'warning', 'message' => 'Not analyzed: too long', 'file' => 'a.php', 'line' => 1, 'validation' => $limit],
+                    // A warning of a validation that is no limit is not one.
+                    ['type' => 'warning', 'message' => 'warning', 'file' => 'a.php', 'line' => 1, 'validation' => $regex->validate('/a/')],
+                    ['type' => 'warning', 'message' => 'warning', 'file' => 'a.php', 'line' => 1],
+                ],
+                'optimizations' => [],
+                'problems' => [],
+            ],
+        ];
+
+        $this->assertSame(['errors' => 0, 'warnings' => 3, 'optimizations' => 0, 'notAnalyzed' => 1], LintStatsCounter::count($results));
     }
 
     #[Test]

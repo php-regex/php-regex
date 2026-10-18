@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Internal;
 
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Validation\ValidationErrorCategory;
 
 /**
  * The stats of a lint run, counted the same way wherever results are
@@ -30,9 +31,11 @@ final class LintStatsCounter
     /**
      * Errors, warnings and optimizations; among the errors, the ReDoS ones
      * and the lint rules at Error are counted again apart ("redos",
-     * "lintErrors"), and infos on their own; of the patterns collected, the
-     * files the tokenizer read because the PHP parser could not
-     * ("parserFallbacks"). A kind that counts zero is left out.
+     * "lintErrors"), and infos on their own; among the warnings, the
+     * patterns the library gave up on at one of its own limits
+     * ("notAnalyzed"); of the patterns collected, the files the tokenizer
+     * read because the PHP parser could not ("parserFallbacks"). A kind that
+     * counts zero is left out.
      *
      * @param array<PatternOccurrence> $patterns
      *
@@ -46,6 +49,7 @@ final class LintStatsCounter
         $redos = 0;
         $infos = 0;
         $lintErrors = 0;
+        $notAnalyzed = 0;
 
         foreach ($results as $result) {
             foreach ($result['issues'] as $issue) {
@@ -61,6 +65,9 @@ final class LintStatsCounter
                     }
                 } elseif ('warning' === $issue['type']) {
                     $stats['warnings']++;
+                    if (ValidationErrorCategory::Limit === ($issue['validation'] ?? null)?->category) {
+                        $notAnalyzed++;
+                    }
                 } elseif ('info' === $issue['type']) {
                     $infos++;
                 }
@@ -79,6 +86,10 @@ final class LintStatsCounter
 
         if ($lintErrors > 0) {
             $stats['lintErrors'] = $lintErrors;
+        }
+
+        if ($notAnalyzed > 0) {
+            $stats['notAnalyzed'] = $notAnalyzed;
         }
 
         $parserFallbacks = \count(self::parserFallbacks($patterns));
