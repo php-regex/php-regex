@@ -98,6 +98,15 @@ esac
 
 echo
 echo "Packages"
+# What Packagist serves for one package on one channel: "<count><tab><latest>",
+# empty when Packagist does not answer at all — a package page that answers
+# 200 with no versions, and a dev version the stable page never lists, are
+# both read as what they are.
+packagist_channel() { # <package> <url>
+    curl -sf "$2" 2>/dev/null | php -r '$d = json_decode(stream_get_contents(STDIN), true) ?: [];
+        $versions = ($d["packages"] ?? [])[$argv[1]] ?? [];
+        echo count($versions), "\t", $versions[0]["version"] ?? "";' "$1" 2>/dev/null
+}
 for repository in $repositories; do
     github="✗ repository"
     # Until the rename, php-regex/regex-parser is the monorepo itself; after
@@ -112,6 +121,21 @@ for repository in $repositories; do
     elif gh api "repos/php-regex/$repository" --jq .name >/dev/null 2>&1; then
         github="· repository, no 2.x yet"
     fi
-    if curl -sf -o /dev/null "https://repo.packagist.org/p2/php-regex/$repository.json"; then packagist="✓ Packagist"; else packagist="✗ Packagist"; fi
+    stable=$(packagist_channel "php-regex/$repository" "https://repo.packagist.org/p2/php-regex/$repository.json")
+    dev=$(packagist_channel "php-regex/$repository" "https://repo.packagist.org/p2/php-regex/$repository~dev.json")
+    stable_count=${stable%%$'\t'*}
+    dev_count=${dev%%$'\t'*}
+    if [ -n "$stable$dev" ]; then
+        if [ "${stable_count:-0}" -gt 0 ] 2>/dev/null; then
+            packagist="✓ Packagist ${stable#*$'\t'}"
+            if [ "${dev_count:-0}" -gt 0 ] 2>/dev/null; then packagist="$packagist, ${dev#*$'\t'}"; fi
+        elif [ "${dev_count:-0}" -gt 0 ] 2>/dev/null; then
+            packagist="✗ Packagist: ${dev#*$'\t'} only, no stable yet"
+        else
+            packagist="✗ Packagist: registered, no versions"
+        fi
+    else
+        packagist="✗ Packagist"
+    fi
     printf '  %-34s %-38s %s\n' "php-regex/$repository" "$github" "$packagist"
 done

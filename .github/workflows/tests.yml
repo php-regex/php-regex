@@ -67,7 +67,9 @@ jobs:
     # PHPUnit 12 needs PHP 8.3: PHPUnit 10.5, from tools/phpunit-81, runs the
     # suite on PHP 8.1. The lowest row runs Symfony 6.4.0, Laravel 10.37.3
     # (the first Laravel 10 that Testbench 8.18, the first with the attributes
-    # the tests use, takes) and PHPUnit 10.5.0.
+    # the tests use, takes) and PHPUnit 10.5.0. That sandbox's Rector floor is
+    # 2.6.3, the first release that resets the PHP version between test
+    # classes; tools/phpunit, on the 8.4 stack, keeps the bridge's own 2.4.
     name: Tests (PHP 8.1, ${{ matrix.dependency }})
     runs-on: ubuntu-latest
     timeout-minutes: 40

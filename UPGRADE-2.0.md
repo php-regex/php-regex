@@ -50,6 +50,9 @@ and run Rector twice:
 $rectorConfig->sets([__DIR__.'/vendor/php-regex/regex-toolkit/Resources/rector/upgrade-2.0.php']);
 ```
 
+Under the `php-regex/php-regex` install the set lives one level deeper, at
+`vendor/php-regex/php-regex/src/Toolkit/Resources/rector/upgrade-2.0.php`.
+
 It renames classes, enum cases and the renamed methods; the second run catches
 the methods called on an object whose class the first run renamed. It does not change
 what the tables mark as removed, the configuration keys below, the error codes
