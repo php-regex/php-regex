@@ -71,6 +71,74 @@ final class TokenStreamCursorTest extends TestCase
     }
 
     #[Test]
+    public function test_match_on_eof_never_steps_past_it(): void
+    {
+        $stream = $this->streamOf('a');
+        $stream->advance();
+
+        $this->assertTrue($stream->match(TokenType::Eof));
+        $this->assertSame(1, $stream->getPosition());
+        $this->assertFalse($stream->match(TokenType::Literal));
+        $this->assertSame(1, $stream->getPosition());
+        $this->assertSame(TokenType::Eof, $stream->current()->type);
+    }
+
+    #[Test]
+    public function test_a_stream_read_past_its_last_token_answers_as_at_eof(): void
+    {
+        // No end-of-pattern token closes this list: past its last token the
+        // stream answers what it answers on one, and has no current token.
+        $stream = new TokenStream([new Token(TokenType::Literal, 'a', 0)], 'a');
+
+        $this->assertTrue($stream->match(TokenType::Literal));
+        $this->assertSame(1, $stream->getPosition());
+        $this->assertTrue($stream->isAtEnd());
+        $this->assertTrue($stream->check(TokenType::Eof));
+        $this->assertFalse($stream->check(TokenType::Literal));
+        $this->assertTrue($stream->match(TokenType::Eof));
+        $this->assertFalse($stream->match(TokenType::Literal));
+        $this->assertFalse($stream->checkLiteral('a'));
+        $this->assertFalse($stream->matchLiteral('a'));
+        $this->assertSame(1, $stream->getPosition());
+
+        $stream->advance();
+        $this->assertSame(1, $stream->getPosition());
+
+        $this->expectException(\LogicException::class);
+        $stream->current();
+    }
+
+    #[Test]
+    public function test_consume_has_no_eof_token_to_give_past_the_last_token(): void
+    {
+        $stream = new TokenStream([], '');
+
+        $this->expectException(\LogicException::class);
+        $stream->consume(TokenType::Eof, 'Expected the end', ErrorCode::TokenUnexpected);
+    }
+
+    #[Test]
+    public function test_consume_steps_over_no_eof_token(): void
+    {
+        $stream = $this->streamOf();
+
+        $this->assertSame(TokenType::Eof, $stream->consume(TokenType::Eof, 'Expected the end', ErrorCode::TokenUnexpected)->type);
+        $this->assertSame(0, $stream->getPosition());
+    }
+
+    #[Test]
+    public function test_an_empty_stream_is_at_its_end(): void
+    {
+        $stream = new TokenStream([], '');
+
+        $this->assertTrue($stream->isAtEnd());
+        $this->assertTrue($stream->check(TokenType::Eof));
+        $this->assertTrue($stream->match(TokenType::Eof));
+        $this->assertFalse($stream->match(TokenType::Literal));
+        $this->assertSame(0, $stream->getPosition());
+    }
+
+    #[Test]
     public function test_previous_gives_the_token_just_stepped_over(): void
     {
         $stream = $this->streamOf('a', 'b');

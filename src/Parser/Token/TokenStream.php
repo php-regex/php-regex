@@ -142,11 +142,11 @@ final class TokenStream
      */
     public function check(TokenType $type): bool
     {
-        if ($this->isAtEnd()) {
-            return TokenType::Eof === $type;
-        }
+        // The parser asks this once or more per token: the list is read
+        // directly, past its end as on its end-of-pattern token.
+        $token = $this->tokens[$this->position] ?? null;
 
-        return $this->current()->type === $type;
+        return null === $token ? TokenType::Eof === $type : $token->type === $type;
     }
 
     /**
@@ -154,13 +154,9 @@ final class TokenStream
      */
     public function checkLiteral(string $value): bool
     {
-        if ($this->isAtEnd()) {
-            return false;
-        }
+        $token = $this->tokens[$this->position] ?? null;
 
-        $token = $this->current();
-
-        return TokenType::Literal === $token->type && $token->value === $value;
+        return null !== $token && TokenType::Literal === $token->type && $token->value === $value;
     }
 
     /**
@@ -168,11 +164,19 @@ final class TokenStream
      */
     public function match(TokenType $type): bool
     {
-        if (!$this->check($type)) {
+        $token = $this->tokens[$this->position] ?? null;
+        if (null === $token) {
+            return TokenType::Eof === $type;
+        }
+
+        if ($token->type !== $type) {
             return false;
         }
 
-        $this->advance();
+        // The end-of-pattern token is never stepped over.
+        if (TokenType::Eof !== $type) {
+            $this->position++;
+        }
 
         return true;
     }
@@ -196,8 +200,9 @@ final class TokenStream
      */
     public function advance(): void
     {
-        if (!$this->isAtEnd()) {
-            $this->next();
+        $token = $this->tokens[$this->position] ?? null;
+        if (null !== $token && TokenType::Eof !== $token->type) {
+            $this->position++;
         }
     }
 
@@ -219,11 +224,19 @@ final class TokenStream
      */
     public function consume(TokenType $type, string $error, ErrorCode $code): Token
     {
-        if ($this->check($type)) {
-            $token = $this->current();
-            $this->advance();
+        $token = $this->tokens[$this->position] ?? null;
+        if (null !== $token && $token->type === $type) {
+            if (TokenType::Eof !== $type) {
+                $this->position++;
+            }
 
             return $token;
+        }
+
+        if (null === $token && TokenType::Eof === $type) {
+            // Past the end of a list no end-of-pattern token closes: there
+            // is no token to give.
+            throw new \LogicException('Token stream is exhausted');
         }
 
         throw $this->unexpected($error, '(found '.$this->current()->type->value.')', $code);
@@ -254,8 +267,9 @@ final class TokenStream
 
     public function isAtEnd(): bool
     {
-        return $this->position > $this->maxPosition
-               || TokenType::Eof === $this->tokens[$this->position]->type;
+        $token = $this->tokens[$this->position] ?? null;
+
+        return null === $token || TokenType::Eof === $token->type;
     }
 
     private function unexpected(string $error, string $found, ErrorCode $code): SyntaxErrorException
