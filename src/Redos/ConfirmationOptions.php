@@ -13,44 +13,52 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos;
 
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+
 /**
  * Limits and controls the confirmation (runtime) probe.
  */
 final class ConfirmationOptions
 {
-    public readonly int $minInputLength;
-
-    public readonly int $maxInputLength;
-
-    public readonly int $steps;
-
-    public readonly int $iterations;
-
-    public readonly float $timeoutMs;
-
-    public readonly int $backtrackLimit;
-
-    public readonly int $recursionLimit;
-
-    public readonly int $previewLength;
-
+    /**
+     * @param int   $minInputLength the shortest subject probed
+     * @param int   $maxInputLength the longest subject probed, at least $minInputLength
+     * @param int   $steps          the subject lengths probed, doubling up to the longest
+     * @param int   $iterations     the runs per length
+     * @param float $timeoutMs      the average duration of a run that stops the probe, at least 1.0
+     * @param int   $backtrackLimit pcre.backtrack_limit during the probe
+     * @param int   $recursionLimit pcre.recursion_limit during the probe
+     * @param int   $previewLength  the subject bytes kept per sample; 0 keeps none
+     *
+     * @throws InvalidRegexOptionException when a length, a count or a limit is below 1, the longest subject below the shortest, the timeout below 1.0 or not a number, or the preview below 0
+     */
     public function __construct(
-        int $minInputLength = 16,
-        int $maxInputLength = 128,
-        int $steps = 3,
-        int $iterations = 3,
-        float $timeoutMs = 50.0,
-        int $backtrackLimit = 100_000,
-        int $recursionLimit = 10_000,
-        int $previewLength = 64,
+        public readonly int $minInputLength = 16,
+        public readonly int $maxInputLength = 128,
+        public readonly int $steps = 3,
+        public readonly int $iterations = 3,
+        public readonly float $timeoutMs = 50.0,
+        public readonly int $backtrackLimit = 100_000,
+        public readonly int $recursionLimit = 10_000,
+        public readonly int $previewLength = 64,
     ) {
-        $this->minInputLength = max(1, $minInputLength);
-        $this->maxInputLength = max($this->minInputLength, $maxInputLength);
-        $this->steps = max(1, $steps);
-        $this->iterations = max(1, $iterations);
-        $this->timeoutMs = max(1.0, $timeoutMs);
-        $this->backtrackLimit = max(1, $backtrackLimit);
-        $this->recursionLimit = max(1, $recursionLimit);
-        $this->previewLength = max(0, $previewLength);
+        $floors = [
+            'minInputLength' => [$minInputLength, 1],
+            'maxInputLength' => [$maxInputLength, max(1, $minInputLength)],
+            'steps' => [$steps, 1],
+            'iterations' => [$iterations, 1],
+            'backtrackLimit' => [$backtrackLimit, 1],
+            'recursionLimit' => [$recursionLimit, 1],
+            'previewLength' => [$previewLength, 0],
+        ];
+        foreach ($floors as $name => [$value, $floor]) {
+            if ($value < $floor) {
+                throw new InvalidRegexOptionException(\sprintf('"%s" must be at least %d, %d given.', $name, $floor, $value));
+            }
+        }
+
+        if (!($timeoutMs >= 1.0)) {
+            throw new InvalidRegexOptionException(\sprintf('"timeoutMs" must be at least 1.0, %s given.', var_export($timeoutMs, true)));
+        }
     }
 }

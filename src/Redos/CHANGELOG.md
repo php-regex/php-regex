@@ -15,3 +15,5 @@ CHANGELOG
  * The confirmed replay tries each witness once more at 5,000 bytes or just
    past, where PCRE2 stops looking for the code unit an anchored pattern
    requires.
+ * `ConfirmationOptions` throws `InvalidRegexOptionException` for a value
+   below its floor, as `RedosOptions` does, where it clamped it.

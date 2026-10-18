@@ -3,9 +3,6 @@
 ## Before the 2.0.0 tag: verified defects
 
 Each one reproduced against the code and the engine (PHP 8.4, PCRE2 10.49).
-- `ConfirmationOptions` clamps out-of-range values in silence where
-  `RedosOptions` and `SolverOptions` throw `InvalidRegexOptionException`:
-  throw too, before the tag makes the clamp a contract.
 - The PSR cache adapters return zero hits and misses although
   `RemovableCacheInterface` says the cache counts them: count them.
 - The Python target refuses `/S`, which the JavaScript target drops with a note.

@@ -73,6 +73,9 @@ steps, never in time — the same pattern gets the same verdict on every machine
 | `backtrackLimit`, `recursionLimit` | `100_000`, `10_000` | engine limits during the probe |
 | `previewLength` | `64` | subject bytes kept per sample; `0` keeps none |
 
+A value below its floor, as `steps: 0` or a `maxInputLength` below
+`minInputLength`, throws `InvalidRegexOptionException` naming the option.
+
 `analyze()` also takes `threshold` (the constructor one by default), `mode` and
 `confirmOptions`. `RedosMode::Off` skips the analysis, `RedosMode::Theoretical`
 reads the AST, and runs the pattern only to check a witness through a

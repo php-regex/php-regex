@@ -1492,6 +1492,15 @@ turned the JIT off is gone: `regex analyze` and `regex debug` refuse
 `ReDoSConfirmation` no longer carries `jitDisableRequested`
 (`jit_disable_requested` in its JSON). Drop them; nothing else changes.
 
+#### The ReDoS confirmation options refuse a value they clamped
+
+`ReDoSConfirmOptions`, now `ConfirmationOptions`, raised an out-of-range value
+to its floor in silence; it now throws `InvalidRegexOptionException` naming
+the option, as `RedosOptions` and `SolverOptions` do: a subject length, a step
+count, an iteration count or a PCRE limit below 1, a `maxInputLength` below
+`minInputLength`, a `timeoutMs` below 1.0 (or `NAN`), a `previewLength` below 0.
+Pass the floor you meant: `minInputLength: 1`, `timeoutMs: 1.0`, and so on.
+
 #### `clearCaches()` replaces `clearValidatorCaches()`
 
 `RegexParser::clearValidatorCaches()` and `Regex::clearValidatorCaches()` are
