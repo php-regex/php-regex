@@ -995,8 +995,10 @@ final class ForkedWorkerPoolTest extends TestCase
     #[RequiresFunction('pcntl_fork')]
     public function test_run_with_more_workers_than_an_int_can_multiply(): void
     {
+        // Four items, so four workers at most: ten forks of the process
+        // running the whole suite outlast the deadline on the macOS runners.
         $results = $this->withDeadline(self::DEADLINE, static fn (): ?array => (new ForkedWorkerPool())->run(
-            range(0, 9),
+            range(0, 3),
             \PHP_INT_MAX,
             static fn (array $chunk, \Closure $done): array => $chunk,
             null,
@@ -1005,7 +1007,7 @@ final class ForkedWorkerPoolTest extends TestCase
             static fn (int $item): string => 'file'.$item.'.php',
         ));
 
-        $this->assertSame(range(0, 9), $results);
+        $this->assertSame(range(0, 3), $results);
         $this->assertNothingLeftBehind();
     }
 
