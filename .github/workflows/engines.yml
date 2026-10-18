@@ -28,6 +28,9 @@ jobs:
     # Part of the suite asks the running engine. The official images build
     # PHP with the PCRE2 php-src bundles, so each supported PHP runs here on
     # its own engine; the "tests" job runs them all on Ubuntu's system PCRE2.
+    # PHP 8.1 and its 10.39 are left to the engine-claims job: the suite fails
+    # there where it expects 10.40 and later of the running engine, in tests
+    # that no verdict for 10.39 depends on.
     name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -107,6 +110,64 @@ jobs:
         # var/capture-shape-parity.md. It fails only when a shape refuses a
         # $matches this engine writes. Left out of the default suite.
         run: su tester --shell /bin/sh --command 'tools/phpunit/vendor/bin/phpunit --colors=always --group capture-shape-parity'
+
+  engine-claims:
+    # Patterns are judged for targets down to PHP 7.3, which the library
+    # cannot run on. tests/Fixtures/EngineClaims/engine-claims.json writes
+    # down what it claims of each engine an official image runs (compiles or
+    # refused at an offset, what a pattern whose meaning changed finds, a
+    # rewrite that finds what the original found), and a test fails when the
+    # fixture no longer says what the library says. A script written for PHP
+    # 7.3, with no dependency, checks those claims inside each image: a claim
+    # the engine contradicts fails the cell with its pattern, its subject,
+    # the claim and what the engine does. The 7.4 image runs PCRE2 10.35, not
+    # the 10.33 of 7.4.0: claims are keyed by release, never by PHP version.
+    name: Engine claims (PHP ${{ matrix.php }}, PCRE2 ${{ matrix.pcre }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '7.3', pcre: '10.32' }
+          - { php: '7.4', pcre: '10.35' }
+          - { php: '8.0', pcre: '10.35' }
+          - { php: '8.1', pcre: '10.39' }
+          - { php: '8.2', pcre: '10.40' }
+          - { php: '8.3', pcre: '10.42' }
+          - { php: '8.4', pcre: '10.44' }
+          - { php: '8.5', pcre: '10.44' }
+          # Renamed '8.6' on the 8.6 GA day (2026-11-19), as engines-bundled's.
+          - { php: '8.6-rc', pcre: '10.44' }
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Pull the image
+        env:
+          IMAGE: php:${{ matrix.php }}-cli
+        run: docker pull --quiet "$IMAGE"
+
+      - name: Check the engine
+        # An image that moves to another PCRE2 fails here, not in the claims.
+        env:
+          IMAGE: php:${{ matrix.php }}-cli
+          PCRE: ${{ matrix.pcre }}
+        run: |
+          docker run --rm --env PCRE "$IMAGE" php -r 'echo PHP_VERSION, " / PCRE2 ", PCRE_VERSION, PHP_EOL; exit(0 === strpos(PCRE_VERSION, getenv("PCRE")." ") ? 0 : 1);'
+
+      - name: Lint the verifier on this PHP
+        env:
+          IMAGE: php:${{ matrix.php }}-cli
+        run: docker run --rm --volume "$PWD/tests:/app/tests:ro" --workdir /app "$IMAGE" php -l tests/Tools/verify_engine_claims.php
+
+      - name: Verify the claims on this engine
+        env:
+          IMAGE: php:${{ matrix.php }}-cli
+        run: docker run --rm --volume "$PWD/tests:/app/tests:ro" --workdir /app "$IMAGE" php tests/Tools/verify_engine_claims.php
 
   engines-latest:
     # Every supported PHP on the latest PCRE2: on macOS, PHP links Homebrew's.

@@ -91,9 +91,11 @@ fails the suite only on deprecations under `src/`, and an experimental 8.7
 cell of the tests workflow watches the future without gating anything.
 Left, dated:
 
-1. **2026-11-19, GA day** — rename the `8.6-rc` row in `engines-bundled`
-   (`.github/workflows/engines.yml`) to `'8.6'`: the `-rc` docker aliases
-   vanish that day and an unrenamed row breaks CI. The
+1. **2026-11-19, GA day** — rename the `8.6-rc` rows of `engines-bundled`
+   and `engine-claims` (`.github/workflows/engines.yml`), and the `8.6-rc`
+   key of `EngineClaims::IMAGES` (`tests/TestUtils/EngineClaims.php`), to
+   `'8.6'`: the `-rc` docker aliases vanish that day and an unrenamed row
+   breaks CI. The
    `startsWith(matrix.php, '8.6')` conditions already match either
    spelling, and `engines-latest` needs no change. Re-verify the renamed
    image still bundles 10.44, and if it ships mbstring again, try removing

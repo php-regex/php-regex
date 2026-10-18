@@ -31,6 +31,9 @@ $finder = (new PhpCsFixer\Finder())
     ->exclude('Bridge/Laravel')
     ->notPath('Unit/Cache/FilesystemCacheTest.php')
     ->notPath('Unit/Lint/TokenBasedExtractionStrategyTest.php')
+    // Runs on PHP 7.3 inside the official images: the migration rule sets
+    // would write syntax that release cannot read.
+    ->notPath('Tools/verify_engine_claims.php')
     ->name('*.php')
     ->ignoreDotFiles(true)
     ->ignoreVCS(true);

@@ -44,6 +44,7 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 
 ### CI/CD
 - Tests run in GitHub Actions (see `.github/workflows/tests.yml`, and `engines.yml` for the runs on each engine).
+- The engine claims, `tests/Fixtures/EngineClaims/engine-claims.json`, are what the library claims of the engines PHP 7.3 to 8.6 run; `engines.yml` checks them inside each official `php:X-cli` image with `tests/Tools/verify_engine_claims.php`, which needs no dependency and runs on PHP 7.3. When a verdict moves, `EngineClaimsTest` fails until `php tests/Tools/write_engine_claims.php` writes them again.
 - Lint and static analysis via PHPStan and PHPLint.
 
 For contributions, ensure new tests fit the pyramid: prefer Unit > Integration > Functional.

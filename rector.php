@@ -58,6 +58,9 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/tests/Integration/Bridge/Psalm/Fixtures',
         // Laravel bridge tests use facades which must be called statically
         __DIR__.'/tests/Integration/Bridge/Laravel',
+        // Runs on PHP 7.3 inside the official images: the PHP 8.1 level set
+        // would write syntax that release cannot read.
+        __DIR__.'/tests/Tools/verify_engine_claims.php',
         __DIR__.'/src/Laravel',
         // The upgrade map names classes in full: imported, two CharSet would collide
         __DIR__.'/src/Toolkit/Upgrade/UpgradeMap.php',

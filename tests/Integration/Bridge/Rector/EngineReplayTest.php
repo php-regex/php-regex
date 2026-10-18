@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Rector;
 
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\ReplaySubjects;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,8 +32,6 @@ final class EngineReplayTest extends TestCase
 
     private const SPLIT = "\n-----\n";
 
-    private const SUBJECTS = ['', "\n", "\r\n", "\xff", "\x80", "\0", 'x', ',', ',,', 'foo', 'FOO', 'GET', 'POST', 'aaa', "foo\n", 'it\'s', 'a$b'];
-
     #[Test]
     #[DataProvider('provideRewrites')]
     public function test_rewrite_answers_as_the_call_it_replaces(string $fixture): void
@@ -46,7 +45,7 @@ final class EngineReplayTest extends TestCase
         $original = self::load($before, $fixture, 'Before');
         $rewritten = self::load($after, $fixture, 'After');
 
-        foreach (self::subjects($content) as $subject) {
+        foreach (ReplaySubjects::of($content) as $subject) {
             $this->assertSame(
                 self::outcome($original, $subject),
                 self::outcome($rewritten, $subject),
@@ -160,55 +159,5 @@ final class EngineReplayTest extends TestCase
         } finally {
             restore_error_handler();
         }
-    }
-
-    /**
-     * The shared subjects, and around every string literal of the fixture:
-     * the literal, repeated, surrounded, cut, with a newline, between high
-     * bytes and upper-cased.
-     *
-     * @return list<string>
-     */
-    private static function subjects(string $content): array
-    {
-        $subjects = self::SUBJECTS;
-        foreach (token_get_all($content) as $token) {
-            if (!\is_array($token) || \T_CONSTANT_ENCAPSED_STRING !== $token[0]) {
-                continue;
-            }
-
-            $literal = self::value($token[1]);
-            if ('' === $literal) {
-                continue;
-            }
-
-            array_push(
-                $subjects,
-                $literal,
-                $literal.$literal,
-                $literal.$literal.$literal,
-                'x'.$literal,
-                $literal.'x',
-                'x'.$literal.'y'.$literal.'z',
-                $literal."\n",
-                "\n".$literal,
-                "\xff".$literal."\x80",
-                substr($literal, 1),
-                substr($literal, 0, -1),
-                strtoupper($literal),
-            );
-        }
-
-        return array_values(array_unique($subjects));
-    }
-
-    /**
-     * The value of a quoted PHP string token without interpolation.
-     */
-    private static function value(string $token): string
-    {
-        $body = substr($token, 1, -1);
-
-        return "'" === $token[0] ? strtr($body, ['\\\\' => '\\', "\\'" => "'"]) : stripcslashes($body);
     }
 }
