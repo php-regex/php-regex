@@ -632,6 +632,31 @@ PCRE engine compiles each pattern (or refuses it, for a case marked
 `'invalid' => true`), the library parses it, and every growth series stays
 under the limits.
 
+### Comparing two revisions on more patterns
+
+A change meant to make the library faster must not change what it says.
+Two scripts compare two revisions on as many patterns as you can gather:
+
+```bash
+# the distinct patterns of a tree of PHP code: the preg_* calls, or (--literals)
+# every string literal that reads as a delimited pattern, the tests' included
+php tests/Tools/harvest_patterns.php --out=var/patterns.json path/to/projects
+php tests/Tools/harvest_patterns.php --literals --out=var/test-patterns.json tests
+
+# per pattern and per target (the running engine, each PHP version boundary,
+# PHP 8.4 on the later PCRE2 releases): tokens, tree, tolerant tree and its
+# errors, every field of the validation result
+php tests/Tools/behaviour_fingerprint.php --out=var/after.txt fixture var/patterns.json var/test-patterns.json
+php tests/Tools/behaviour_fingerprint.php --autoload=../other-checkout/vendor/autoload.php \
+    --out=var/before.txt fixture var/patterns.json var/test-patterns.json
+diff var/before.txt var/after.txt
+```
+
+The harvest reads directories in a fixed order and keeps each pattern once,
+where it is first met, so the same code gives the same list on every machine;
+`--sample=N --seed=S` draws a reproducible subset. The patterns of
+third-party code are not committed: only the corpus fixture is.
+
 ## Pattern Info Next to pcre2test
 
 The exact facts of `PatternInfo` (capture count, names, max back reference,
