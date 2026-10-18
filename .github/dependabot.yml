@@ -1,25 +1,45 @@
 version: 2
+
+# Weekly, a week behind the releases: a version yanked or compromised in its
+# first days never reaches a pull request.
+
 updates:
-  - package-ecosystem: "composer"
-    directory: "/"
+  # The demo applications commit their lock files: their minor and patch
+  # updates come as one pull request per application. The root and the dev
+  # tools under tools/ commit none, and resolve the newest release on every
+  # run: they get a pull request only when a release leaves the range they
+  # require, as a new major does.
+  - package-ecosystem: composer
+    directories:
+      - /
+      - /tools/*
+      - /demo/*
     schedule:
-      interval: "weekly"
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    versioning-strategy: increase-if-necessary
+    groups:
+      minor-and-patch:
+        update-types: [ minor, patch ]
     open-pull-requests-limit: 10
 
-  - package-ecosystem: "composer"
-    directory: "/demo/symfony"
+  # The workflows, the local action, and the workflow each package carries
+  # for its read-only repository: one pull request per action, across every
+  # file that names it, so the seventeen package copies stay identical.
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/*
+      - /src/*
     schedule:
-      interval: "weekly"
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: [ '*' ]
+        group-by: dependency-name
     open-pull-requests-limit: 5
-
-  - package-ecosystem: "composer"
-    directory: "/demo/laravel"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
