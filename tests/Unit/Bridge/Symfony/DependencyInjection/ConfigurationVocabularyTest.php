@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
 use PHPRegex\Symfony\DependencyInjection\Configuration;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,8 @@ use Symfony\Component\Config\Definition\Processor;
  */
 final class ConfigurationVocabularyTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_runtime_pcre_validation_defaults_to_false(): void
     {
@@ -106,7 +109,7 @@ final class ConfigurationVocabularyTest extends TestCase
     public function test_redos_threshold_refuses_what_is_no_threshold(string $value): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('php_regex.redos.threshold');
+        $this->expectExceptionMessageIsOrContains('php_regex.redos.threshold');
 
         $this->process(['redos' => ['threshold' => $value]]);
     }

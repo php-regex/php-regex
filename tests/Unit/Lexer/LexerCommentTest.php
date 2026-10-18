@@ -16,10 +16,13 @@ namespace PHPRegex\Tests\Unit\Lexer;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 final class LexerCommentTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Tests an empty comment (?#)
      */
@@ -41,7 +44,7 @@ final class LexerCommentTest extends TestCase
     public function test_lexer_unclosed_comment_at_eof(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed comment ")" at end of input');
+        $this->expectExceptionMessageIsOrContains('Unclosed comment ")" at end of input');
 
         (new Lexer())->tokenize('/(?#oups');
     }

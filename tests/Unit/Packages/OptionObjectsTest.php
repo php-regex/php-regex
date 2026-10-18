@@ -17,6 +17,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosOptions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class OptionObjectsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @param \Closure(): object $build
      */
@@ -36,7 +39,7 @@ final class OptionObjectsTest extends TestCase
     public function test_an_option_object_refuses_a_meaningless_limit(\Closure $build, string $option): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage($option);
+        $this->expectExceptionMessageIsOrContains($option);
 
         $build();
     }

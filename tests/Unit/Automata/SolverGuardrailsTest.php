@@ -21,6 +21,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverGuardrailsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Oracle: each pattern fails to compile in the running engine ("UTF-8
      * codepoints ... are not supported" for the surrogate block), so no
@@ -49,7 +52,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertFalse(@\preg_match($pattern, 'a'), $pattern.' must not compile.');
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::SURROGATE_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::SURROGATE_MESSAGE);
 
         (new LanguageSolver())->subsetOf($pattern, '/a/', $this->fullMatchOptions());
     }
@@ -77,7 +80,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertTrue($this->matchesFull(\str_replace('++', '+', $pattern), $subject), 'the greedy spelling must accept "'.$subject.'".');
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::POSSESSIVE_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::POSSESSIVE_MESSAGE);
 
         (new LanguageSolver())->intersection($pattern, '/a/', $this->fullMatchOptions());
     }
@@ -146,7 +149,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertTrue($this->matchesFull(\str_replace('++', '+', $pattern), $subject), 'the greedy spelling must accept "'.$subject.'".');
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::POSSESSIVE_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::POSSESSIVE_MESSAGE);
 
         (new LanguageSolver())->compile($pattern, $this->fullMatchOptions());
     }
@@ -172,7 +175,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertSame(0, @\preg_match('/^\P{Any}++x$/', 'x'));
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::POSSESSIVE_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::POSSESSIVE_MESSAGE);
 
         (new LanguageSolver())->compile('/\P{Any}++x/', $this->fullMatchOptions());
     }
@@ -189,7 +192,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertTrue((bool) @\preg_match('/^(?:[b]x)++b$/', 'bxb'));
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::POSSESSIVE_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::POSSESSIVE_MESSAGE);
 
         (new LanguageSolver())->compile('/(?:[b]x)++b/', $this->fullMatchOptions());
     }
@@ -204,7 +207,7 @@ final class SolverGuardrailsTest extends TestCase
     public function test_a_possessive_of_an_opaque_body_names_the_opaque_reason(): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::OPAQUE_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::OPAQUE_MESSAGE);
 
         $this->nfaOf('/(?:\1)+/');
     }
@@ -226,7 +229,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertCount(2, $dfa->states);
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('NFA state limit exceeded (3).');
+        $this->expectExceptionMessageIsOrContains('NFA state limit exceeded (3).');
 
         $solver->compile('/a*/', new SolverOptions(maxNfaStates: 3));
     }
@@ -311,7 +314,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertNotFalse(@\preg_match('/(a\G)b/', ''));
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::ASSERTION_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::ASSERTION_MESSAGE);
 
         (new LanguageSolver())->compile('/(a\G)b/', $this->fullMatchOptions());
     }
@@ -328,7 +331,7 @@ final class SolverGuardrailsTest extends TestCase
         $this->assertNotFalse(@\preg_match($pattern, ''), $pattern.' must compile.');
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage(HirToNfaTransformer::ASSERTION_MESSAGE);
+        $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::ASSERTION_MESSAGE);
 
         $this->nfaOf($pattern);
     }

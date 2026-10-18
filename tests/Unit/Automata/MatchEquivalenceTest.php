@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,8 @@ use PHPUnit\Framework\TestCase;
 final class MatchEquivalenceTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     private const FLAGS = \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
 
@@ -121,7 +124,7 @@ final class MatchEquivalenceTest extends TestCase
     public function test_patterns_outside_the_readable_fragment_are_refused(string $left, string $right, string $reason): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage($reason);
+        $this->expectExceptionMessageIsOrContains($reason);
 
         (new LanguageSolver())->matchEquivalent($left, $right);
     }
@@ -130,7 +133,7 @@ final class MatchEquivalenceTest extends TestCase
     public function test_the_search_stops_at_its_budget(): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('The match solver explored more than 2 configurations for these patterns.');
+        $this->expectExceptionMessageIsOrContains('The match solver explored more than 2 configurations for these patterns.');
 
         (new LanguageSolver())->matchEquivalent('/(a|b)+c/', '/(?:a|b)+c/', new SolverOptions(maxDfaStates: 2));
     }
@@ -160,7 +163,7 @@ final class MatchEquivalenceTest extends TestCase
     public function test_the_automaton_stops_at_its_budget(): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('The match solver needs more than 5 states for this pattern.');
+        $this->expectExceptionMessageIsOrContains('The match solver needs more than 5 states for this pattern.');
 
         (new LanguageSolver())->matchEquivalent('/a{50}/', '/a{50}/', new SolverOptions(maxNfaStates: 5));
     }

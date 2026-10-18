@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class TokenStreamCursorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_check_looks_at_the_token_without_stepping_over_it(): void
     {
@@ -95,7 +98,7 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf('a');
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected a dot at position 0 (found literal)');
+        $this->expectExceptionMessageIsOrContains('Expected a dot at position 0 (found literal)');
 
         $stream->consume(TokenType::Dot, 'Expected a dot', ErrorCode::TokenUnexpected);
     }
@@ -106,7 +109,7 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected something at end of input (found eof)');
+        $this->expectExceptionMessageIsOrContains('Expected something at end of input (found eof)');
 
         $stream->consume(TokenType::Literal, 'Expected something', ErrorCode::TokenUnexpected);
     }
@@ -117,7 +120,7 @@ final class TokenStreamCursorTest extends TestCase
         $stream = $this->streamOf('b');
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected error at position 0 (found literal with value b)');
+        $this->expectExceptionMessageIsOrContains('Expected error at position 0 (found literal with value b)');
 
         $stream->consumeLiteral('a', 'Expected error', ErrorCode::GroupNameUnterminated);
     }

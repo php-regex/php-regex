@@ -16,30 +16,33 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_throws_on_invalid_quantifier_range(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid quantifier range "{3,1}": min > max.');
+        $this->expectExceptionMessageIsOrContains('Invalid quantifier range "{3,1}": min > max.');
         $this->validate('/foo{3,1}/');
     }
 
     public function test_throws_on_invalid_flags(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "z"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z"');
         $this->validate('/foo/imz');
     }
 
     public function test_throws_on_invalid_unicode_property(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid or unsupported Unicode property: \p{Invalid}.');
+        $this->expectExceptionMessageIsOrContains('Invalid or unsupported Unicode property: \p{Invalid}.');
         $this->validate('/\p{Invalid}/');
     }
 
@@ -47,7 +50,7 @@ final class ValidatorTest extends TestCase
     {
         $this->expectException(SemanticErrorException::class);
         // Note: Suggestion may not be implemented yet
-        $this->expectExceptionMessage('Invalid or unsupported Unicode property: \p{Letter}.');
+        $this->expectExceptionMessageIsOrContains('Invalid or unsupported Unicode property: \p{Letter}.');
         $this->validate('/\p{Letter}/');
     }
 
@@ -56,14 +59,14 @@ final class ValidatorTest extends TestCase
         // PCRE2 supports no "\N{name}", a known name or not: preg_match()
         // warns "PCRE2 does not support ... \N{name} ... at offset 3".
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('PCRE does not support the escape "\N{"');
+        $this->expectExceptionMessageIsOrContains('PCRE does not support the escape "\N{"');
         $this->validate('/\N{INVALID}/');
     }
 
     public function test_throws_on_invalid_range(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid range "z-a": start character comes after end character.');
+        $this->expectExceptionMessageIsOrContains('Invalid range "z-a": start character comes after end character.');
         $this->validate('/[z-a]/');
     }
 
@@ -77,7 +80,7 @@ final class ValidatorTest extends TestCase
     public function test_throws_on_invalid_backref(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference to non-existent group: \2.');
+        $this->expectExceptionMessageIsOrContains('Backreference to non-existent group: \2.');
         $this->validate('/\2/'); // No group 2
     }
 
@@ -85,28 +88,28 @@ final class ValidatorTest extends TestCase
     {
         // "81" starts with a non-octal digit: neither a group nor an octal escape.
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference to non-existent group: \81.');
+        $this->expectExceptionMessageIsOrContains('Backreference to non-existent group: \81.');
         $this->validate('/\81/');
     }
 
     public function test_throws_on_invalid_unicode_prop(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid or unsupported Unicode property: \p{invalid}.');
+        $this->expectExceptionMessageIsOrContains('Invalid or unsupported Unicode property: \p{invalid}.');
         $this->validate('/\p{invalid}/');
     }
 
     public function test_throws_on_invalid_numeric_subroutine(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Subroutine call to non-existent group: 1.');
+        $this->expectExceptionMessageIsOrContains('Subroutine call to non-existent group: 1.');
         $this->validate('/(?1)/'); // No group 1
     }
 
     public function test_throws_on_invalid_named_subroutine(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Subroutine call to non-existent named group: "name".');
+        $this->expectExceptionMessageIsOrContains('Subroutine call to non-existent named group: "name".');
         $this->validate('/(?&name)/'); // No group "name"
     }
 
@@ -114,14 +117,14 @@ final class ValidatorTest extends TestCase
     {
         $this->expectException(ParserException::class);
         // PHP: "two named subpatterns have the same name ... at offset 18".
-        $this->expectExceptionMessage('Duplicate group name "name" at position 18.');
+        $this->expectExceptionMessageIsOrContains('Duplicate group name "name" at position 18.');
         $this->validate('/(?<name>a)(?<name>b)/');
     }
 
     public function test_allows_variable_length_quantifier_in_lookbehind(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Lookbehind is unbounded');
+        $this->expectExceptionMessageIsOrContains('Lookbehind is unbounded');
         $this->validate('/(?<=a*b)/');
     }
 
@@ -152,7 +155,7 @@ final class ValidatorTest extends TestCase
     public function test_throws_on_backref_to_non_existent_named_group(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference to non-existent named group: "name".');
+        $this->expectExceptionMessageIsOrContains('Backreference to non-existent named group: "name".');
         $this->validate('/a\k<name>/');
     }
 
@@ -166,14 +169,14 @@ final class ValidatorTest extends TestCase
     public function test_throws_on_relative_backref_out_of_bounds(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference relative reference -2 is outside the range of available capture groups.');
+        $this->expectExceptionMessageIsOrContains('Backreference relative reference -2 is outside the range of available capture groups.');
         $this->validate('/(a)\g{-2}/');
     }
 
     public function test_throws_on_conditional_invalid_condition_type(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE).');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional construct. Condition must be a group reference, lookaround, or (DEFINE).');
         // A literal is not a valid condition
         $this->validate('/(?(a)b|c)/');
     }
@@ -181,7 +184,7 @@ final class ValidatorTest extends TestCase
     public function test_throws_on_invalid_pcre_verb(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid or unsupported PCRE verb: "INVALID"');
+        $this->expectExceptionMessageIsOrContains('Invalid or unsupported PCRE verb: "INVALID"');
         $this->validate('/(*INVALID)/');
     }
 
@@ -189,7 +192,7 @@ final class ValidatorTest extends TestCase
     {
         $this->expectException(SemanticErrorException::class);
         // Codepoint U+110000 is beyond the valid Unicode range U+10FFFF
-        $this->expectExceptionMessage('Invalid Unicode codepoint "\u{110000}" (out of range).');
+        $this->expectExceptionMessageIsOrContains('Invalid Unicode codepoint "\u{110000}" (out of range).');
         $this->validate('/\u{110000}/u');
     }
 
@@ -197,14 +200,14 @@ final class ValidatorTest extends TestCase
     {
         $this->expectException(SemanticErrorException::class);
         // Octal 77777777 = 16777215 decimal = 0xFFFFFF, which exceeds 0xFF (PCRE limit for \o{})
-        $this->expectExceptionMessage('Invalid octal codepoint "\o{77777777}" (out of Unicode range).');
+        $this->expectExceptionMessageIsOrContains('Invalid octal codepoint "\o{77777777}" (out of Unicode range).');
         $this->validate('/\o{77777777}/u');
     }
 
     public function test_throws_on_invalid_octal_legacy_codepoint(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference to non-existent group: \999.');
+        $this->expectExceptionMessageIsOrContains('Backreference to non-existent group: \999.');
         $this->validate('/\999/');
     }
 

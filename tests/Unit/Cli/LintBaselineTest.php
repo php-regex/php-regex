@@ -22,6 +22,7 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Validation\ValidationResult;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintBaselineTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private const WRAPPER = 'lint-baseline-unreadable';
 
     private string $directory = '';
@@ -95,7 +98,7 @@ final class LintBaselineTest extends TestCase
         $this->assertTrue(is_file($file));
 
         $this->expectException(CliException::class);
-        $this->expectExceptionMessage('Could not read the baseline file: '.$file);
+        $this->expectExceptionMessageIsOrContains('Could not read the baseline file: '.$file);
 
         LintBaseline::load($file);
     }
@@ -109,7 +112,7 @@ final class LintBaselineTest extends TestCase
         $file = $this->directory.'/missing.json';
 
         $this->expectException(CliException::class);
-        $this->expectExceptionMessage('Baseline file not found: '.$file);
+        $this->expectExceptionMessageIsOrContains('Baseline file not found: '.$file);
 
         LintBaseline::load($file);
     }
@@ -122,7 +125,7 @@ final class LintBaselineTest extends TestCase
         file_put_contents($file, $content);
 
         $this->expectException(CliException::class);
-        $this->expectExceptionMessage(\sprintf('The file %s is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $file));
+        $this->expectExceptionMessageIsOrContains(\sprintf('The file %s is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $file));
 
         LintBaseline::load($file);
     }
@@ -155,7 +158,7 @@ final class LintBaselineTest extends TestCase
         file_put_contents($file, '{"version": '.$version.', "issues": []}');
 
         $this->expectException(CliException::class);
-        $this->expectExceptionMessage(\sprintf('The baseline file %s is not of version 1, the one this version reads: regenerate it with --generate-baseline.', $file));
+        $this->expectExceptionMessageIsOrContains(\sprintf('The baseline file %s is not of version 1, the one this version reads: regenerate it with --generate-baseline.', $file));
 
         LintBaseline::load($file);
     }
@@ -616,7 +619,7 @@ final class LintBaselineTest extends TestCase
         file_put_contents($file, json_encode([$entry], \JSON_THROW_ON_ERROR));
 
         $this->expectException(CliException::class);
-        $this->expectExceptionMessage(\sprintf('The file %s is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $file));
+        $this->expectExceptionMessageIsOrContains(\sprintf('The file %s is not a lint baseline: expected {"version": 1, "issues": [...]}, as written by --generate-baseline.', $file));
 
         LintBaseline::load($file);
     }

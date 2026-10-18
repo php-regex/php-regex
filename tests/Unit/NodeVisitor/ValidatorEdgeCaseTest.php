@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
 final class ValidatorEdgeCaseTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     private Regex $regex;
 
@@ -42,7 +45,7 @@ final class ValidatorEdgeCaseTest extends TestCase
     public function test_invalid_quantifier_range(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('min > max');
+        $this->expectExceptionMessageIsOrContains('min > max');
         $this->validate('/a{5,2}/');
     }
 
@@ -56,28 +59,28 @@ final class ValidatorEdgeCaseTest extends TestCase
     public function test_invalid_backreference_out_of_bounds(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference to non-existent group');
+        $this->expectExceptionMessageIsOrContains('Backreference to non-existent group');
         $this->validate('/\5/'); // Group 5 doesn't exist
     }
 
     public function test_invalid_relative_backref(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('relative reference');
+        $this->expectExceptionMessageIsOrContains('relative reference');
         $this->validate('/(a)\g{-5}/');
     }
 
     public function test_invalid_named_backref(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('non-existent named group');
+        $this->expectExceptionMessageIsOrContains('non-existent named group');
         $this->validate('/(a)\k<foo>/');
     }
 
     public function test_variable_quantifier_in_lookbehind(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Lookbehind is unbounded');
+        $this->expectExceptionMessageIsOrContains('Lookbehind is unbounded');
         $this->validate('/(?<=a*)/');
     }
 
@@ -91,7 +94,7 @@ final class ValidatorEdgeCaseTest extends TestCase
     public function test_invalid_posix_class(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid POSIX class');
+        $this->expectExceptionMessageIsOrContains('Invalid POSIX class');
         $this->validate('/[[:fake:]]/');
     }
 
@@ -105,7 +108,7 @@ final class ValidatorEdgeCaseTest extends TestCase
     public function test_invalid_conditional_condition(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid conditional construct');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional construct');
         // Literal 'a' is not a valid condition
         $this->validate('/(?(a)b)/');
     }
@@ -113,14 +116,14 @@ final class ValidatorEdgeCaseTest extends TestCase
     public function test_invalid_unicode_codepoint(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('out of range');
+        $this->expectExceptionMessageIsOrContains('out of range');
         $this->validate('/\u{110000}/u');
     }
 
     public function test_invalid_unicode_property(): void
     {
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid or unsupported Unicode property');
+        $this->expectExceptionMessageIsOrContains('Invalid or unsupported Unicode property');
         $this->validate('/\p{InvalidProp}/u');
     }
 

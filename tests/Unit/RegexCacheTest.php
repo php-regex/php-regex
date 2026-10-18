@@ -16,11 +16,14 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class RegexCacheTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_normalize_cache_accepts_directory_path(): void
     {
         $dir = sys_get_temp_dir().'/regex-parser-cache-'.uniqid('', true);
@@ -39,7 +42,7 @@ final class RegexCacheTest extends TestCase
     public function test_normalize_cache_throws_on_empty_string(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "cache" option cannot be an empty string.');
+        $this->expectExceptionMessageIsOrContains('The "cache" option cannot be an empty string.');
 
         Regex::create(['cache' => '  ']);
     }
@@ -47,7 +50,7 @@ final class RegexCacheTest extends TestCase
     public function test_normalize_cache_throws_on_invalid_type(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('The "cache" option must be null, a cache path, or a CacheInterface implementation.');
+        $this->expectExceptionMessageIsOrContains('The "cache" option must be null, a cache path, or a CacheInterface implementation.');
 
         Regex::fromOptions(ParserOptions::fromArray(['cache' => new \stdClass()]));
     }

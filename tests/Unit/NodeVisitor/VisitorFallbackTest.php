@@ -23,11 +23,14 @@ use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class VisitorFallbackTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_sample_generator_backref_not_found(): void
     {
         // Access a backreference that hasn't been captured yet
@@ -68,7 +71,7 @@ final class VisitorFallbackTest extends TestCase
         $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid backreference syntax');
+        $this->expectExceptionMessageIsOrContains('Invalid backreference syntax');
 
         $node->accept($validator);
     }

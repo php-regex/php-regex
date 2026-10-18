@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class HtmlPatternTargetTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @param array<int|string, bool> $verdicts subject => whether preg_match() and the attribute accept it
      */
@@ -118,7 +121,7 @@ final class HtmlPatternTargetTest extends TestCase
     public function test_an_atom_the_engine_cannot_probe_is_refused(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('PCRE cannot tell which characters');
+        $this->expectExceptionMessageIsOrContains('PCRE cannot tell which characters');
 
         // The class holds every delimiter the probe could be written with.
         Regex::create(['cache' => null])->transpile("/^[\\/#~%!@;\x01]$/i", 'html-pattern');
@@ -136,7 +139,7 @@ final class HtmlPatternTargetTest extends TestCase
     public function test_a_reference_under_the_caseless_flag_cannot_be_carried(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('A backreference under /i cannot be carried into the HTML pattern attribute: it would match its group\'s text in one case only.');
+        $this->expectExceptionMessageIsOrContains('A backreference under /i cannot be carried into the HTML pattern attribute: it would match its group\'s text in one case only.');
 
         Regex::create(['cache' => null])->transpile('/(a)\1/i', 'html-pattern');
     }
@@ -145,7 +148,7 @@ final class HtmlPatternTargetTest extends TestCase
     public function test_an_inline_flag_the_attribute_cannot_take_is_refused(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('The HTML pattern attribute cannot carry the inline flags (?n).');
+        $this->expectExceptionMessageIsOrContains('The HTML pattern attribute cannot carry the inline flags (?n).');
 
         Regex::create(['cache' => null])->transpile('/a(?n)(b)+/', 'html-pattern');
     }
@@ -154,7 +157,7 @@ final class HtmlPatternTargetTest extends TestCase
     public function test_a_flag_the_attribute_cannot_take_is_refused(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('The HTML pattern attribute takes no flags: /A cannot be carried.');
+        $this->expectExceptionMessageIsOrContains('The HTML pattern attribute takes no flags: /A cannot be carried.');
 
         Regex::create(['cache' => null])->transpile('/ab+/iA', 'html-pattern');
     }

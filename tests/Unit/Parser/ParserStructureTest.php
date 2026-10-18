@@ -15,11 +15,14 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserStructureTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Teste la limite de longueur du pattern.
      */
@@ -29,7 +32,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create(['max_pattern_length' => 10]);
 
         $this->expectException(ResourceLimitException::class);
-        $this->expectExceptionMessage('Regex pattern exceeds maximum length');
+        $this->expectExceptionMessageIsOrContains('Regex pattern exceeds maximum length');
 
         $regex->parse('/this_is_too_long/');
     }
@@ -42,7 +45,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Regex is too short');
+        $this->expectExceptionMessageIsOrContains('Regex is too short');
 
         $regex->parse('/'); // Juste un caractère
     }
@@ -55,7 +58,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #abc#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #abc#.');
 
         $regex->parse('/abc'); // Pas de slash final
     }
@@ -68,7 +71,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #abc\\/#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #abc\\/#.');
 
         // Ici le dernier slash est échappé, donc ce n'est pas un délimiteur valide
         $regex->parse('/abc\/');
@@ -82,7 +85,7 @@ final class ParserStructureTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "k"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "k"');
 
         $regex->parse('/abc/k'); // 'k' n'est pas un flag valide
     }

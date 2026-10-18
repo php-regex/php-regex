@@ -19,11 +19,14 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserOptionsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_create_with_unknown_option_throws(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
@@ -83,21 +86,21 @@ final class ParserOptionsTest extends TestCase
     public function test_from_array_invalid_php_version(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => 'invalid']);
     }
 
     public function test_from_array_invalid_php_version_int_zero(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => 0]);
     }
 
     public function test_from_array_invalid_php_version_empty_string(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => '   ']);
     }
 
@@ -106,21 +109,21 @@ final class ParserOptionsTest extends TestCase
         // PHP 8.6 trim() also strips \f: a form feed stays an invalid
         // version spelling there, exactly as through 8.5.
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => "\f8.2"]);
     }
 
     public function test_from_array_invalid_php_version_form_feed_before_runtime(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => "\fruntime"]);
     }
 
     public function test_from_array_invalid_php_version_digits_low(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => '8000']);
     }
 
@@ -177,7 +180,7 @@ final class ParserOptionsTest extends TestCase
     public function test_the_pcre_version_must_name_a_release(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"pcre_version" must be a PCRE2 release like "10.44", not a float.');
+        $this->expectExceptionMessageIsOrContains('"pcre_version" must be a PCRE2 release like "10.44", not a float.');
         ParserOptions::fromArray(['pcre_version' => 10.42]);
     }
 
@@ -186,70 +189,70 @@ final class ParserOptionsTest extends TestCase
         $this->assertTrue(ParserOptions::fromArray(['runtime_pcre_validation' => true])->runtimePcreValidation);
 
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (PHP 8.4, PCRE2 10.100)');
+        $this->expectExceptionMessageIsOrContains('"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (PHP 8.4, PCRE2 10.100)');
         ParserOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => '8.4', 'pcre_version' => '10.100']);
     }
 
     public function test_from_array_invalid_max_pattern_length(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"max_pattern_length" must be a positive integer.');
+        $this->expectExceptionMessageIsOrContains('"max_pattern_length" must be a positive integer.');
         ParserOptions::fromArray(['max_pattern_length' => 0]);
     }
 
     public function test_from_array_invalid_max_pattern_length_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"max_pattern_length" must be a positive integer.');
+        $this->expectExceptionMessageIsOrContains('"max_pattern_length" must be a positive integer.');
         ParserOptions::fromArray(['max_pattern_length' => 'invalid']);
     }
 
     public function test_from_array_invalid_max_lookbehind_length(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"max_lookbehind_length" must be a non-negative integer.');
+        $this->expectExceptionMessageIsOrContains('"max_lookbehind_length" must be a non-negative integer.');
         ParserOptions::fromArray(['max_lookbehind_length' => -1]);
     }
 
     public function test_from_array_invalid_max_lookbehind_length_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"max_lookbehind_length" must be a non-negative integer.');
+        $this->expectExceptionMessageIsOrContains('"max_lookbehind_length" must be a non-negative integer.');
         ParserOptions::fromArray(['max_lookbehind_length' => 'invalid']);
     }
 
     public function test_from_array_invalid_runtime_pcre_validation(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"runtime_pcre_validation" must be a boolean.');
+        $this->expectExceptionMessageIsOrContains('"runtime_pcre_validation" must be a boolean.');
         ParserOptions::fromArray(['runtime_pcre_validation' => 'invalid']);
     }
 
     public function test_from_array_invalid_max_recursion_depth(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"max_recursion_depth" must be a positive integer.');
+        $this->expectExceptionMessageIsOrContains('"max_recursion_depth" must be a positive integer.');
         ParserOptions::fromArray(['max_recursion_depth' => 0]);
     }
 
     public function test_from_array_invalid_max_recursion_depth_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"max_recursion_depth" must be a positive integer.');
+        $this->expectExceptionMessageIsOrContains('"max_recursion_depth" must be a positive integer.');
         ParserOptions::fromArray(['max_recursion_depth' => 'invalid']);
     }
 
     public function test_from_array_invalid_cache(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('The "cache" option must be null, a cache path, or a CacheInterface implementation.');
+        $this->expectExceptionMessageIsOrContains('The "cache" option must be null, a cache path, or a CacheInterface implementation.');
         ParserOptions::fromArray(['cache' => 123]);
     }
 
     public function test_from_array_empty_cache_path(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('The "cache" option cannot be an empty string.');
+        $this->expectExceptionMessageIsOrContains('The "cache" option cannot be an empty string.');
         ParserOptions::fromArray(['cache' => '']);
     }
 
@@ -262,14 +265,14 @@ final class ParserOptionsTest extends TestCase
     public function test_from_array_invalid_redos_ignored_patterns(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"redos_ignored_patterns" must be a list of strings.');
+        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" must be a list of strings.');
         ParserOptions::fromArray(['redos_ignored_patterns' => 'invalid']);
     }
 
     public function test_from_array_invalid_redos_ignored_patterns_elements(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"redos_ignored_patterns" must contain only strings.');
+        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" must contain only strings.');
         ParserOptions::fromArray(['redos_ignored_patterns' => [123]]);
     }
 
@@ -282,7 +285,7 @@ final class ParserOptionsTest extends TestCase
     public function test_from_array_invalid_php_version_type(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
+        $this->expectExceptionMessageIsOrContains('"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".');
         ParserOptions::fromArray(['php_version' => []]);
     }
 

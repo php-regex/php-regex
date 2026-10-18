@@ -45,6 +45,7 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
@@ -53,6 +54,8 @@ use PHPUnit\Framework\TestCase;
 
 final class ParserTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regex;
 
     protected function setUp(): void
@@ -430,7 +433,7 @@ final class ParserTest extends TestCase
     public function test_throws_on_unmatched_group(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected )');
+        $this->expectExceptionMessageIsOrContains('Expected )');
         $this->parse('/(foo/');
     }
 
@@ -438,7 +441,7 @@ final class ParserTest extends TestCase
     public function test_throws_on_missing_closing_delimiter(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo#.');
         $this->parse('/foo');
     }
 
@@ -825,7 +828,7 @@ final class ParserTest extends TestCase
     public function test_max_pattern_length(): void
     {
         $this->expectException(ResourceLimitException::class);
-        $this->expectExceptionMessage('Regex pattern exceeds maximum length');
+        $this->expectExceptionMessageIsOrContains('Regex pattern exceeds maximum length');
 
         // maxPatternLength is now enforced by the Regex class
         $regex = Regex::create(['max_pattern_length' => 5]);
@@ -971,7 +974,7 @@ final class ParserTest extends TestCase
     {
         $this->expectException(ParserException::class);
         // PHP: "two named subpatterns have the same name ... at offset 13".
-        $this->expectExceptionMessage('Duplicate group name "a" at position 13.');
+        $this->expectExceptionMessageIsOrContains('Duplicate group name "a" at position 13.');
 
         $this->regex->parse('/(?<a>.) (?<a>.)/');
     }

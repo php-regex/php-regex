@@ -20,10 +20,13 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorLogicTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_octal_invalid_digits(): void
     {
         $validator = new Validator();
@@ -32,7 +35,7 @@ final class ValidatorLogicTest extends TestCase
         $node = new CharLiteralNode('\o{8}', 0x100, CharLiteralType::Octal, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid octal codepoint');
+        $this->expectExceptionMessageIsOrContains('Invalid octal codepoint');
         $node->accept($validator);
     }
 

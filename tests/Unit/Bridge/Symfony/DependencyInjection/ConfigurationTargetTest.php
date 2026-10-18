@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
 use PHPRegex\Symfony\DependencyInjection\Configuration;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,8 @@ use Symfony\Component\Config\Definition\Processor;
  */
 final class ConfigurationTargetTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_php_version_takes_a_version_id(): void
     {
@@ -44,7 +47,7 @@ final class ConfigurationTargetTest extends TestCase
     {
         // YAML reads "php_version: 8.2" as the float 8.2, and 8.10 as 8.1.
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('quoted');
+        $this->expectExceptionMessageIsOrContains('quoted');
 
         $this->process(['php_version' => 8.2]);
     }
@@ -53,7 +56,7 @@ final class ConfigurationTargetTest extends TestCase
     public function test_a_threshold_that_is_no_string_is_refused(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('php_regex.redos.threshold');
+        $this->expectExceptionMessageIsOrContains('php_regex.redos.threshold');
 
         $this->process(['redos' => ['threshold' => 3]]);
     }
@@ -76,7 +79,7 @@ final class ConfigurationTargetTest extends TestCase
     public function test_an_unreadable_version_is_refused(array $settings, string $path): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage($path);
+        $this->expectExceptionMessageIsOrContains($path);
 
         $this->process($settings);
     }

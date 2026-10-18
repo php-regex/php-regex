@@ -15,12 +15,15 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class PcreTargetTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_the_runtime_target_is_the_running_php_and_the_pcre2_it_links(): void
     {
@@ -141,7 +144,7 @@ final class PcreTargetTest extends TestCase
     public function test_a_release_that_names_none_is_refused(string $written): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $written));
+        $this->expectExceptionMessageIsOrContains(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $written));
 
         new PcreTarget(80400, $written);
     }

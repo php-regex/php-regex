@@ -18,6 +18,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Parser\Validation\TargetVerdict;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RangeDiffTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_the_range_holds_every_boundary_from_the_first_php_to_the_last(): void
     {
@@ -75,7 +78,7 @@ final class RangeDiffTest extends TestCase
     public function test_a_range_that_ends_before_it_starts_is_refused(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('A range of PHP versions ends at or after its start, not at 8.2 from 8.4.');
+        $this->expectExceptionMessageIsOrContains('A range of PHP versions ends at or after its start, not at 8.2 from 8.4.');
 
         RangeDiff::between(80400, 80200);
     }
@@ -84,7 +87,7 @@ final class RangeDiffTest extends TestCase
     public function test_a_range_that_ends_before_it_starts_names_the_patch_releases(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('A range of PHP versions ends at or after its start, not at 8.4.25 from 8.4.26.');
+        $this->expectExceptionMessageIsOrContains('A range of PHP versions ends at or after its start, not at 8.4.25 from 8.4.26.');
 
         RangeDiff::between(80426, 80425);
     }

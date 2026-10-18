@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -33,6 +34,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class DuplicateNameScopeTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideScopes')]
     public function test_a_repeated_name_is_refused_where_pcre_refuses_it(string $pattern, bool $accepted): void
@@ -43,7 +46,7 @@ final class DuplicateNameScopeTest extends TestCase
 
         if (!$accepted) {
             $this->expectException(ParserException::class);
-            $this->expectExceptionMessage('Duplicate group name');
+            $this->expectExceptionMessageIsOrContains('Duplicate group name');
         }
 
         $ast = $regex->parse($pattern);

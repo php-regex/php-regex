@@ -17,12 +17,15 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LexerTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_tokenize_simple_literal(): void
     {
         $tokens = (new Lexer())->tokenize('foo')->getTokens();
@@ -239,7 +242,7 @@ final class LexerTest extends TestCase
     public function test_throws_on_trailing_backslash(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unable to tokenize');
+        $this->expectExceptionMessageIsOrContains('Unable to tokenize');
         (new Lexer())->tokenize('foo\\');
     }
 
@@ -366,7 +369,7 @@ final class LexerTest extends TestCase
     public function test_tokenize_unclosed_char_class_error_with_end_of_input(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed character class "]" at end of input.');
+        $this->expectExceptionMessageIsOrContains('Unclosed character class "]" at end of input.');
         (new Lexer())->tokenize('[a');
     }
 

@@ -19,6 +19,7 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
 final class AnchorsAnywhereTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     #[Test]
     #[DataProvider('providePatterns')]
@@ -55,7 +58,7 @@ final class AnchorsAnywhereTest extends TestCase
     public function test_a_newline_convention_the_solver_does_not_read_is_refused(string $pattern): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('A newline convention other than');
+        $this->expectExceptionMessageIsOrContains('A newline convention other than');
 
         (new LanguageSolver())->compile($pattern, new SolverOptions(matchMode: MatchMode::Partial));
     }
@@ -64,7 +67,7 @@ final class AnchorsAnywhereTest extends TestCase
     public function test_the_anchored_flag_stays_refused(): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('Unsupported regex flags for automata: A.');
+        $this->expectExceptionMessageIsOrContains('Unsupported regex flags for automata: A.');
 
         (new LanguageSolver())->compile('/a/A');
     }

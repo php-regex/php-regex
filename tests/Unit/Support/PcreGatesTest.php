@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Support;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\PcreGateLimits;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\SkippedWithMessageException;
@@ -39,6 +40,8 @@ use PHPUnit\Framework\TestCase;
 final class PcreGatesTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     #[Test]
     public function test_the_ceiling_constant_pins_the_newest_known_release(): void
@@ -316,7 +319,7 @@ final class PcreGatesTest extends TestCase
     public function test_a_php_version_the_gates_cannot_read_is_refused(string $version): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage($version);
+        $this->expectExceptionMessageIsOrContains($version);
 
         self::pcreGatePhpVersionId($version);
     }

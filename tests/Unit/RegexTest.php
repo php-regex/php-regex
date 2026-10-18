@@ -37,6 +37,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\OutputFormat;
 use PHPRegex\Toolkit\Regex;
@@ -47,6 +48,8 @@ use PHPUnit\Framework\TestCase;
 final class RegexTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     private Regex $regexService;
 
@@ -141,7 +144,7 @@ final class RegexTest extends TestCase
         $this->requiresPhpReading($pattern);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage($exceptionMessage);
+        $this->expectExceptionMessageIsOrContains($exceptionMessage);
         $this->regexService->parse($pattern);
     }
 
@@ -149,7 +152,7 @@ final class RegexTest extends TestCase
     public function test_parse_method_with_invalid_regex_lexing(string $pattern, string $exceptionMessage): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage($exceptionMessage);
+        $this->expectExceptionMessageIsOrContains($exceptionMessage);
         $this->regexService->parse($pattern);
     }
 
@@ -245,7 +248,7 @@ final class RegexTest extends TestCase
         // A lower limit must still refuse the pattern: the cache entry was
         // built under conditions this instance does not share.
         $this->expectException(RecursionLimitException::class);
-        $this->expectExceptionMessage('Recursion limit of 3 exceeded');
+        $this->expectExceptionMessageIsOrContains('Recursion limit of 3 exceeded');
 
         Regex::create(['max_recursion_depth' => 3])->parse($nestedRegex);
     }

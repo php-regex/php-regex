@@ -17,6 +17,7 @@ use PHPRegex\Generator\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexGenerateTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideUnmatchable')]
     public function test_no_sample_is_given_for_a_pattern_the_samples_miss(string $pattern): void
@@ -223,7 +226,7 @@ final class RegexGenerateTest extends TestCase
         $this->assertFalse(@preg_match($pattern, ''));
 
         $this->expectException(SampleGenerationException::class);
-        $this->expectExceptionMessage($message);
+        $this->expectExceptionMessageIsOrContains($message);
 
         Regex::create(['cache' => null])->generate($pattern);
     }

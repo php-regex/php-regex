@@ -17,6 +17,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPStan\PatternChecker;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPStan\Analyser\Error;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -33,6 +34,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleComplexityTest extends RuleTestCase
 {
+    use PhpUnitForwardCompat;
+
     private const FIXTURE = __DIR__.'/Fixtures/ComplexityFixture.php';
 
     private const TIP = 'Read more: https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#complexity-threshold';
@@ -147,7 +150,7 @@ final class RegexPatternRuleComplexityTest extends RuleTestCase
     public function test_an_unreadable_threshold_is_refused_even_while_off(mixed $threshold): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"checks.complexity.threshold" must be an integer of at least 1');
+        $this->expectExceptionMessageIsOrContains('"checks.complexity.threshold" must be an integer of at least 1');
 
         new PatternChecker(['checks' => ['complexity' => ['enabled' => false, 'threshold' => $threshold]]]);
     }

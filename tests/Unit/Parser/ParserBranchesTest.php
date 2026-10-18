@@ -19,6 +19,7 @@ use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ParserBranchesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Test Parser.parseCallout() invalid argument path
      * This triggers the else clause that throws for invalid callout arguments
@@ -48,7 +51,7 @@ final class ParserBranchesTest extends TestCase
         $accessor->advance();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid callout argument: @invalid at position 0');
+        $this->expectExceptionMessageIsOrContains('Invalid callout argument: @invalid at position 0');
 
         // Call parseCallout which should throw for invalid argument
         $accessor->callPrivateMethod('parseCallout');
@@ -66,7 +69,7 @@ final class ParserBranchesTest extends TestCase
         $token = new Token(TokenType::Literal, 'test', 0);
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Unsupported character literal token type.');
+        $this->expectExceptionMessageIsOrContains('Unsupported character literal token type.');
 
         // Call createCharLiteralNodeFromToken with unsupported type
         $accessor->callPrivateMethod('createCharLiteralNodeFromToken', [$token, TokenType::Literal, 0]);
@@ -83,7 +86,7 @@ final class ParserBranchesTest extends TestCase
         $nestedRegex = str_repeat('(', 5).'a'.str_repeat(')', 5);
 
         $this->expectException(RecursionLimitException::class);
-        $this->expectExceptionMessage('Recursion limit of 3 exceeded');
+        $this->expectExceptionMessageIsOrContains('Recursion limit of 3 exceeded');
 
         // Parse the deeply nested regex with low recursion limit
         Regex::create(['max_recursion_depth' => 3])->parse($nestedRegex);
@@ -112,7 +115,7 @@ final class ParserBranchesTest extends TestCase
         $accessor->advance();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unexpected token "^" in character class at position 1');
+        $this->expectExceptionMessageIsOrContains('Unexpected token "^" in character class at position 1');
 
         // Call parseCharClassPart which should throw for unexpected token
         $accessor->callPrivateMethod('parseCharClassPart');
@@ -186,7 +189,7 @@ final class ParserBranchesTest extends TestCase
         $accessor->setTokens($tokens);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unexpected token "^" in character class range at position 2');
+        $this->expectExceptionMessageIsOrContains('Unexpected token "^" in character class range at position 2');
 
         // Call parseCharClassPart which should throw for unexpected token in range
         $accessor->callPrivateMethod('parseCharClassPart');
@@ -219,7 +222,7 @@ final class ParserBranchesTest extends TestCase
 
         // Expect exception because after rewind, no valid modifier is found
         $this->expectException(SyntaxErrorException::class);
-        $this->expectExceptionMessage('Invalid group modifier syntax');
+        $this->expectExceptionMessageIsOrContains('Invalid group modifier syntax');
 
         // Call parseGroupModifier which should match 'R', not find ), rewind, then fail
         $accessor->callPrivateMethod('parseGroupModifier');
@@ -255,7 +258,7 @@ final class ParserBranchesTest extends TestCase
 
         // Expect exception because after break, consume expects ) but finds ^
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected ) to close PCRE verb');
+        $this->expectExceptionMessageIsOrContains('Expected ) to close PCRE verb');
 
         // Call parseGroupModifier which should match * and call parsePcreVerbInGroup with verb collection break
         $accessor->callPrivateMethod('parseGroupModifier');
@@ -296,7 +299,7 @@ final class ParserBranchesTest extends TestCase
 
         // Expect exception because after break, consume expects ) but finds ^
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected ) to close PCRE verb');
+        $this->expectExceptionMessageIsOrContains('Expected ) to close PCRE verb');
 
         // Call parseGroupModifier which should match * and call parsePcreVerbInGroup with argument collection break
         $accessor->callPrivateMethod('parseGroupModifier');

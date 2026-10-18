@@ -31,10 +31,13 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorEdgeCasesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_range_fallbacks_for_non_literal_nodes(): void
     {
         $generator = new SampleGenerator();
@@ -114,7 +117,7 @@ final class SampleGeneratorEdgeCasesTest extends TestCase
         $this->setPrivate($generator, 'rootPattern', new LiteralNode('a', 0, 0));
 
         $this->expectException(SampleGenerationException::class);
-        $this->expectExceptionMessage('Sample generation for subroutines is not supported.');
+        $this->expectExceptionMessageIsOrContains('Sample generation for subroutines is not supported.');
 
         (new SubroutineNode('99', '99', 0, 0))->accept($generator);
     }

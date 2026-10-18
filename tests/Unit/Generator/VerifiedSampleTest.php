@@ -17,6 +17,7 @@ use PHPRegex\Generator\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class VerifiedSampleTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Oracle: preg_match('/(?!^)a/', 'a') is 0 and 'aa' is 1. The tree
      * alone draws "a"; the engine asks for text before it.
@@ -94,7 +97,7 @@ final class VerifiedSampleTest extends TestCase
     public function test_a_pattern_the_parser_judges_invalid_has_no_sample(): void
     {
         $this->expectException(SampleGenerationException::class);
-        $this->expectExceptionMessage('No sample matching /a\j/ can be drawn: ');
+        $this->expectExceptionMessageIsOrContains('No sample matching /a\j/ can be drawn: ');
 
         (new SampleGenerator())->generate('/a\j/');
     }

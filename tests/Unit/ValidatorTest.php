@@ -15,11 +15,14 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_validator_visitor_rejects_invalid_quantifier_range(): void
     {
         $regex = Regex::create();
@@ -27,7 +30,7 @@ final class ValidatorTest extends TestCase
         $visitor = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid quantifier range');
+        $this->expectExceptionMessageIsOrContains('Invalid quantifier range');
 
         $ast->accept($visitor);
     }

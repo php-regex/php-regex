@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class OptimizerOptionsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_defaults(): void
     {
@@ -71,7 +74,7 @@ final class OptimizerOptionsTest extends TestCase
     public function test_from_array_refuses_what_it_cannot_read(array $options, string $message): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage($message);
+        $this->expectExceptionMessageIsOrContains($message);
 
         OptimizerOptions::fromArray($options);
     }

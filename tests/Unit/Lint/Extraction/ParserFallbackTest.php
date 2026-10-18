@@ -26,6 +26,7 @@ use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -43,6 +44,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ParserFallbackTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @var list<string>
      */
@@ -235,7 +238,7 @@ final class ParserFallbackTest extends TestCase
         $file = $this->writeFile("<?php\npreg_match('/a+/', \$s);\n");
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('A bug of the extractor.');
+        $this->expectExceptionMessageIsOrContains('A bug of the extractor.');
 
         self::strategyWith($parser)->extract([$file]);
     }

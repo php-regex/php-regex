@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Sweep;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LexerSweepTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_lexer_unicode_prop_normalization(): void
     {
         $tokens = (new Lexer())->tokenize('/\p{L}/')->getTokens();
@@ -165,7 +168,7 @@ final class LexerSweepTest extends TestCase
     public function test_lexer_trailing_backslash(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unable to tokenize');
+        $this->expectExceptionMessageIsOrContains('Unable to tokenize');
 
         (new Lexer())->tokenize('abc\\');
     }
@@ -173,7 +176,7 @@ final class LexerSweepTest extends TestCase
     public function test_lexer_unclosed_character_class(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed character class');
+        $this->expectExceptionMessageIsOrContains('Unclosed character class');
 
         (new Lexer())->tokenize('[abc');
     }
@@ -181,7 +184,7 @@ final class LexerSweepTest extends TestCase
     public function test_lexer_unclosed_comment(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed comment');
+        $this->expectExceptionMessageIsOrContains('Unclosed comment');
 
         (new Lexer())->tokenize('(?#comment without closing');
     }

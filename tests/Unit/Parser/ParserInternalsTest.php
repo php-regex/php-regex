@@ -15,14 +15,17 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 final class ParserInternalsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_extract_pattern_throws_on_preg_replace_error(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Regex is too short');
+        $this->expectExceptionMessageIsOrContains('Regex is too short');
         PatternParser::extractPatternAndFlags('/');
     }
 
@@ -30,7 +33,7 @@ final class ParserInternalsTest extends TestCase
     {
         // Calling public method directly to ensure this specific exception path is hit
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Regex is too short');
+        $this->expectExceptionMessageIsOrContains('Regex is too short');
         PatternParser::extractPatternAndFlags('/');
     }
 
@@ -38,14 +41,14 @@ final class ParserInternalsTest extends TestCase
     {
         // Forces the loop to finish without finding the delimiter
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #abc#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #abc#.');
         PatternParser::extractPatternAndFlags('/abc');
     }
 
     public function test_extract_pattern_too_short(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Regex is too short');
+        $this->expectExceptionMessageIsOrContains('Regex is too short');
         PatternParser::extractPatternAndFlags('/');
     }
 }

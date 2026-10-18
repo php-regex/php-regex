@@ -17,6 +17,7 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Json\JsonEncodingFailure;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
 
 final class JsonDocumentTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_encode_prints_one_pretty_document_ending_with_one_newline(): void
     {
@@ -85,7 +88,7 @@ final class JsonDocumentTest extends TestCase
     public function test_encode_refuses_an_object_with_no_mapping(): void
     {
         $this->expectException(JsonEncodingFailure::class);
-        $this->expectExceptionMessage('No JSON mapping for an object of class stdClass.');
+        $this->expectExceptionMessageIsOrContains('No JSON mapping for an object of class stdClass.');
 
         JsonDocument::encode(['value' => new \stdClass()]);
     }
@@ -94,7 +97,7 @@ final class JsonDocumentTest extends TestCase
     public function test_encode_reports_a_value_json_cannot_hold_as_an_encoding_failure(): void
     {
         $this->expectException(JsonEncodingFailure::class);
-        $this->expectExceptionMessage('Failed to encode JSON');
+        $this->expectExceptionMessageIsOrContains('Failed to encode JSON');
 
         JsonDocument::encode(['value' => \NAN]);
     }

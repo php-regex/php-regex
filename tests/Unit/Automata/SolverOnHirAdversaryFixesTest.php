@@ -24,6 +24,7 @@ use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,6 +41,8 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
 {
     use PcreGates;
 
+    use PhpUnitForwardCompat;
+
     /**
      * Oracle: preg_match('/[a\x{D800}]/u', 'a') is false and the compile
      * fails ("disallowed Unicode code point"): no subject the engine can
@@ -55,7 +58,7 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
         $this->assertFalse(@\preg_match($pattern, 'a'), $pattern.' must not compile.');
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.');
+        $this->expectExceptionMessageIsOrContains('PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.');
 
         $solver->subsetOf($pattern, $other, $this->fullMatchOptions());
     }
@@ -150,7 +153,7 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
         $this->assertFalse((bool) @\preg_match($pattern, 'aa'), $pattern.' must refuse "aa".');
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.');
+        $this->expectExceptionMessageIsOrContains('Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.');
 
         $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
     }

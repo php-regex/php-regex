@@ -14,11 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserEdgeCasesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regex;
 
     protected function setUp(): void
@@ -30,7 +33,7 @@ final class ParserEdgeCasesTest extends TestCase
     {
         // ^+ est invalide
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier "+" cannot be applied to assertion or verb "^"');
+        $this->expectExceptionMessageIsOrContains('Quantifier "+" cannot be applied to assertion or verb "^"');
         $this->regex->parse('/^+/');
     }
 
@@ -38,7 +41,7 @@ final class ParserEdgeCasesTest extends TestCase
     {
         // (*FAIL)+ est invalide
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier "+" cannot be applied to assertion or verb "(*FAIL)"');
+        $this->expectExceptionMessageIsOrContains('Quantifier "+" cannot be applied to assertion or verb "(*FAIL)"');
         $this->regex->parse('/(*FAIL)+/');
     }
 
@@ -46,7 +49,7 @@ final class ParserEdgeCasesTest extends TestCase
     {
         // (?(?~)...) -> ?~ n'est pas une condition valide (ni lookaround, ni assertion)
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional condition');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional condition');
         $this->regex->parse('/(?(?~a)b)/');
     }
 
@@ -54,7 +57,7 @@ final class ParserEdgeCasesTest extends TestCase
     {
         // (??) est invalide
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid group modifier syntax');
+        $this->expectExceptionMessageIsOrContains('Invalid group modifier syntax');
         $this->regex->parse('/(??)/');
     }
 

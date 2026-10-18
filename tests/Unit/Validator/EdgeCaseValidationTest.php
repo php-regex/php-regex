@@ -14,11 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Validator;
 
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class EdgeCaseValidationTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regexService;
 
     protected function setUp(): void
@@ -132,7 +135,7 @@ final class EdgeCaseValidationTest extends TestCase
         // Test that invalid flags are properly rejected.
         // The pattern '/foo/z' has an invalid flag 'z' which should trigger validation.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "z"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z"');
 
         $this->regexService->parse('/foo/z');
     }

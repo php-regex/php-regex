@@ -20,12 +20,15 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class SampleGeneratorVisitorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regex;
 
     private SampleGenerator $generator;
@@ -449,7 +452,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     public function test_generate_throws_on_subroutine(): void
     {
         $this->expectException(SampleGenerationException::class);
-        $this->expectExceptionMessage('Sample generation for subroutines is not supported.');
+        $this->expectExceptionMessageIsOrContains('Sample generation for subroutines is not supported.');
         $this->generateSample('/(?R)/');
     }
 
@@ -457,7 +460,7 @@ final class SampleGeneratorVisitorTest extends TestCase
     {
         // Empty character class /[]/ is actually a lexer error (unclosed class with ] as literal)
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed character class');
+        $this->expectExceptionMessageIsOrContains('Unclosed character class');
         $this->generateSample('/[]/');
     }
 

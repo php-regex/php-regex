@@ -35,6 +35,7 @@ use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,6 +48,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CallerMistakeExceptionsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_an_unknown_explain_format_is_an_invalid_option(): void
     {
@@ -70,7 +73,7 @@ final class CallerMistakeExceptionsTest extends TestCase
     public function test_an_unknown_formatter_is_a_lint_exception(): void
     {
         $this->expectException(LintException::class);
-        $this->expectExceptionMessage('Formatter "nope" not found.');
+        $this->expectExceptionMessageIsOrContains('Formatter "nope" not found.');
 
         (new FormatterRegistry())->get('nope');
     }

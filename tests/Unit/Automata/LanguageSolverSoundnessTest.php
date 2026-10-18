@@ -18,12 +18,15 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class LanguageSolverSoundnessTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideDeterminizationAlgorithms')]
     public function test_solver_matches_pcre_for_bounded_language(DeterminizationAlgorithm $determinization): void
@@ -105,7 +108,7 @@ final class LanguageSolverSoundnessTest extends TestCase
         $this->assertSame(1, preg_match($greedy, $subject));
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('Possessive quantifiers never give back');
+        $this->expectExceptionMessageIsOrContains('Possessive quantifiers never give back');
 
         (new LanguageSolver())->equivalent($possessive, $greedy);
     }

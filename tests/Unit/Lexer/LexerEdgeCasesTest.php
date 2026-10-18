@@ -17,6 +17,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LexerEdgeCasesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_match_at_position_with_invalid_regex_throws(): void
     {
         $lexer = new Lexer();
@@ -142,7 +145,7 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setInQuoteMode(true);
 
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('PCRE Error while reading a quoted run');
+        $this->expectExceptionMessageIsOrContains('PCRE Error while reading a quoted run');
 
         $accessor->callPrivateMethod('consumeQuoteMode');
     }
@@ -202,7 +205,7 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setInCommentMode(true);
 
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('PCRE Error while reading a comment');
+        $this->expectExceptionMessageIsOrContains('PCRE Error while reading a comment');
 
         $accessor->callPrivateMethod('consumeCommentMode');
     }

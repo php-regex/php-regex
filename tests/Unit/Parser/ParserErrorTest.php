@@ -14,16 +14,19 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserErrorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_throws_on_too_short_regex(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #a#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #a#.');
 
         $regex = $this->createRegex();
         $regex->parse('/a');
@@ -32,7 +35,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_missing_closing_delimiter_non_standard(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "#" found. You opened with "#"; expected closing "#". Tip: escape "#" inside the pattern (\\#) or use a different delimiter, e.g. ~foo~.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "#" found. You opened with "#"; expected closing "#". Tip: escape "#" inside the pattern (\\#) or use a different delimiter, e.g. ~foo~.');
 
         $regex = $this->createRegex();
         $regex->parse('#foo');
@@ -41,7 +44,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_missing_closing_delimiter_brace(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "}" found. You opened with "{"; expected closing "}". Tip: escape "}" inside the pattern (\\}) or use a different delimiter, e.g. #foo#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "}" found. You opened with "{"; expected closing "}". Tip: escape "}" inside the pattern (\\}) or use a different delimiter, e.g. #foo#.');
 
         $regex = $this->createRegex();
         $regex->parse('{foo');
@@ -50,7 +53,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_unknown_flag(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "z"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "z"');
 
         $regex = $this->createRegex();
         $regex->parse('/abc/z');
@@ -59,7 +62,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_escaped_delimiter_as_last_char(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo\\/#.');
+        $this->expectExceptionMessageIsOrContains('No closing delimiter "/" found. You opened with "/"; expected closing "/". Tip: escape "/" inside the pattern (\\/) or use a different delimiter, e.g. #foo\\/#.');
 
         $regex = $this->createRegex();
         // The parser sees this as "/foo\/flags", without an unescaped ending delimiter.
@@ -71,7 +74,7 @@ final class ParserErrorTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP: "quantifier does not follow a repeatable item", at offset 2
         // from PCRE2 10.47, 1 before.
-        $this->expectExceptionMessage(\sprintf('Quantifier "*" cannot be applied to assertion or verb "^" at position %d', PhpErrorOffset::of('/^*a/')));
+        $this->expectExceptionMessageIsOrContains(\sprintf('Quantifier "*" cannot be applied to assertion or verb "^" at position %d', PhpErrorOffset::of('/^*a/')));
 
         $regex = $this->createRegex();
         $regex->parse('/^*a/');
@@ -82,7 +85,7 @@ final class ParserErrorTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP: "quantifier does not follow a repeatable item", at offset 3
         // from PCRE2 10.47, 2 before.
-        $this->expectExceptionMessage(\sprintf('Quantifier "+" cannot be applied to assertion or verb "\A" at position %d', PhpErrorOffset::of('/\A+a/')));
+        $this->expectExceptionMessageIsOrContains(\sprintf('Quantifier "+" cannot be applied to assertion or verb "\A" at position %d', PhpErrorOffset::of('/\A+a/')));
 
         $regex = $this->createRegex();
         $regex->parse('/\A+a/');
@@ -93,7 +96,7 @@ final class ParserErrorTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP: "quantifier does not follow a repeatable item", at offset 4
         // from PCRE2 10.47, 3 before.
-        $this->expectExceptionMessage(\sprintf('Quantifier "?" cannot be applied to assertion or verb "\K" at position %d', PhpErrorOffset::of('/a\K?/')));
+        $this->expectExceptionMessageIsOrContains(\sprintf('Quantifier "?" cannot be applied to assertion or verb "\K" at position %d', PhpErrorOffset::of('/a\K?/')));
 
         $regex = $this->createRegex();
         $regex->parse('/a\K?/');
@@ -104,7 +107,7 @@ final class ParserErrorTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP: "unrecognized character after (?P", past the ")" from PCRE2
         // 10.47, on it before.
-        $this->expectExceptionMessage(\sprintf('Invalid syntax after (?P at position %d', PhpErrorOffset::of('/(?P)/')));
+        $this->expectExceptionMessageIsOrContains(\sprintf('Invalid syntax after (?P at position %d', PhpErrorOffset::of('/(?P)/')));
 
         $regex = $this->createRegex();
         $regex->parse('/(?P)/');
@@ -113,7 +116,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_python_backref_without_name(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected group name');
+        $this->expectExceptionMessageIsOrContains('Expected group name');
 
         $regex = $this->createRegex();
         $regex->parse('/(?P=)/');
@@ -122,7 +125,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_invalid_token_in_group_name(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unexpected token "|" in group name');
+        $this->expectExceptionMessageIsOrContains('Unexpected token "|" in group name');
 
         $regex = $this->createRegex();
         $regex->parse('/(?<a|b>)/');

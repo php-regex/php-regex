@@ -21,6 +21,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
 final class CaptureShapeAnalyzerTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     private const FLAG_SETS = [0, \PREG_UNMATCHED_AS_NULL, \PREG_OFFSET_CAPTURE, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL];
 
@@ -303,7 +306,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $shape = $this->analyze('/(a)/');
 
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage(\sprintf('got flags %d.', $flags));
+        $this->expectExceptionMessageIsOrContains(\sprintf('got flags %d.', $flags));
 
         $shape->matchShape($flags);
     }
@@ -873,7 +876,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $shape = $this->analyze('/(a)/');
 
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage(\sprintf('got flags %d.', $flags));
+        $this->expectExceptionMessageIsOrContains(\sprintf('got flags %d.', $flags));
 
         $shape->matchAllShape($flags);
     }

@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
 final class KeepInLookaroundTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     #[Test]
     #[DataProvider('provideKeepsInLookarounds')]
@@ -108,7 +111,7 @@ final class KeepInLookaroundTest extends TestCase
         $lookahead = Regex::create(['php_version' => 80500])->parse('/(?=a\\K)/')->pattern;
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('not allowed in a lookaround');
+        $this->expectExceptionMessageIsOrContains('not allowed in a lookaround');
 
         $lookahead->accept(new Validator(target: PcreTarget::bundledWith(80500)));
     }

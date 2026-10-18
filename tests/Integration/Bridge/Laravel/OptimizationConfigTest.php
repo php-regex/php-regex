@@ -53,7 +53,7 @@ final class OptimizationConfigTest extends LaravelTestCase
     public function test_an_unknown_config_key_is_refused(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('Unknown optimizer option "canonicalizeCharClasses"');
+        $this->expectExceptionMessageIsOrContains('Unknown optimizer option "canonicalizeCharClasses"');
 
         $this->optionsFrom(['canonicalizeCharClasses' => false]);
     }

@@ -17,10 +17,13 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorImpossibleTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_unicode_out_of_bounds_manual(): void
     {
         $validator = new Validator();
@@ -30,7 +33,7 @@ final class ValidatorImpossibleTest extends TestCase
         $node = new CharLiteralNode('\u{110000}', 0x110000, CharLiteralType::Unicode, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('out of range');
+        $this->expectExceptionMessageIsOrContains('out of range');
         $node->accept($validator);
     }
 
@@ -42,7 +45,7 @@ final class ValidatorImpossibleTest extends TestCase
         $node = new CharLiteralNode('\o{4000000}', 0x4000000, CharLiteralType::Octal, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid octal codepoint');
+        $this->expectExceptionMessageIsOrContains('Invalid octal codepoint');
         $node->accept($validator);
     }
 
@@ -54,7 +57,7 @@ final class ValidatorImpossibleTest extends TestCase
         $node = new CharLiteralNode('\o{9}', 0x100, CharLiteralType::Octal, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid octal codepoint');
+        $this->expectExceptionMessageIsOrContains('Invalid octal codepoint');
         $node->accept($validator);
     }
 }

@@ -17,6 +17,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,6 +30,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectTargetEdgeCasesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
     use TemporaryProject;
 
     #[Test]
@@ -441,7 +443,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^7.1 || ^8.0"}}']);
 
         $this->expectException(UnsupportedTargetException::class);
-        $this->expectExceptionMessage('regex.json names PHP 7.1: ');
+        $this->expectExceptionMessageIsOrContains('regex.json names PHP 7.1: ');
 
         ProjectTarget::fromSources(['regex.json' => '7.1'], [], $directory, []);
     }
@@ -563,7 +565,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         $this->assertSame(70300, ProjectTarget::fromRange(70100, 70300, 'phpVersion')->target()->phpVersionId);
 
         $this->expectException(UnsupportedTargetException::class);
-        $this->expectExceptionMessage('phpVersion allows PHP 7.0: PHP 7.2 and earlier ship PCRE1');
+        $this->expectExceptionMessageIsOrContains('phpVersion allows PHP 7.0: PHP 7.2 and earlier ship PCRE1');
         ProjectTarget::fromRange(70000, 70299, 'phpVersion');
     }
 }

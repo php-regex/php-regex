@@ -23,12 +23,15 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class AdvancedPcreFeaturesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[DataProvider('provideCalloutPatterns')]
     public function test_it_parses_and_compiles_callouts_correctly(string $pattern, ?string $expectedIdentifier): void
     {
@@ -94,7 +97,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
 
         // Invalid numeric callout (too high)
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Callout identifier must be between 0 and 255, got 256.');
+        $this->expectExceptionMessageIsOrContains('Callout identifier must be between 0 and 255, got 256.');
         $ast = $regexService->parse('/(?C256)abc/');
         $ast->accept($validator);
     }
@@ -201,7 +204,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP: "two named subpatterns have the same name ... at offset 19",
         // past the ">" that closes the second name.
-        $this->expectExceptionMessage('Duplicate group name "name" at position 19.');
+        $this->expectExceptionMessageIsOrContains('Duplicate group name "name" at position 19.');
 
         $pattern = '/(?<name>a)|(?<name>b)/';
         $regexService = Regex::create();
@@ -229,7 +232,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP: "two named subpatterns have the same name ... at offset 27",
         // past the ">" that closes the second name.
-        $this->expectExceptionMessage('Duplicate group name "name" at position 27.');
+        $this->expectExceptionMessageIsOrContains('Duplicate group name "name" at position 27.');
 
         // J is enabled globally, then disabled for the second group
         $pattern = '/(?J)(?<name>a)(?-J)(?<name>b)/';
@@ -273,7 +276,7 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $regexService = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid group modifier syntax');
+        $this->expectExceptionMessageIsOrContains('Invalid group modifier syntax');
 
         $regexService->parse('/(?z)a/');
     }

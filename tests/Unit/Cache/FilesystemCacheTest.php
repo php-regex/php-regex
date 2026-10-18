@@ -16,12 +16,15 @@ namespace PHPRegex\Tests\Unit\Cache {
     use PHPRegex\Parser\Cache\AstSerializer;
     use PHPRegex\Parser\Exception\CacheException;
     use PHPRegex\Parser\Node\RegexNode;
+    use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
     use PHPRegex\Toolkit\Regex;
     use PHPUnit\Framework\Attributes\Test;
     use PHPUnit\Framework\TestCase;
 
     final class FilesystemCacheTest extends TestCase
     {
+        use PhpUnitForwardCompat;
+
         private string $cacheDir;
 
         protected function setUp(): void
@@ -95,7 +98,7 @@ namespace PHPRegex\Tests\Unit\Cache {
             chmod($fileDir, 0o444); // Make the file's directory read-only
 
             $this->expectException(CacheException::class);
-            $this->expectExceptionMessage('Unable to write the cache file');
+            $this->expectExceptionMessageIsOrContains('Unable to write the cache file');
 
             $cache->write($key, $this->tree('/test/'));
         }
@@ -193,7 +196,7 @@ namespace PHPRegex\Tests\Unit\Cache {
             $cache = new FilesystemCache($filePath);
 
             $this->expectException(CacheException::class);
-            $this->expectExceptionMessage('Unable to create the cache directory');
+            $this->expectExceptionMessageIsOrContains('Unable to create the cache directory');
             $cache->write($cache->generateKey('/file/'), $this->tree('/file/'));
         }
 

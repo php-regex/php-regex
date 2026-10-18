@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexPatternRuleThresholdTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -43,7 +46,7 @@ final class RegexPatternRuleThresholdTest extends TestCase
     public function test_rule_refuses_a_threshold_that_names_no_severity(string $threshold): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"'.$threshold.'"');
+        $this->expectExceptionMessageIsOrContains('"'.$threshold.'"');
 
         new RegexPatternRule(['checks' => ['redos' => ['enabled' => true, 'threshold' => $threshold]]]);
     }

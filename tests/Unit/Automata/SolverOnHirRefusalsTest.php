@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverOnHirRefusalsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * The merged message list. One message per Hir reason: an opaque
      * construct, a conditional, a lookaround, an atomic group, a refused
@@ -97,7 +100,7 @@ final class SolverOnHirRefusalsTest extends TestCase
         $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']));
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage($expected);
+        $this->expectExceptionMessageIsOrContains($expected);
 
         $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
     }
@@ -119,7 +122,7 @@ final class SolverOnHirRefusalsTest extends TestCase
         $this->assertTrue((bool) @\preg_match('/^b++(?i:B)$/', 'bB'));
 
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage('Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.');
+        $this->expectExceptionMessageIsOrContains('Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.');
 
         $solver->intersection('/b++(?i:B)/', '/bB/', $this->fullMatchOptions());
     }

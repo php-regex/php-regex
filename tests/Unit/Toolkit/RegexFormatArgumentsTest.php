@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Toolkit;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\OutputFormat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
@@ -27,12 +28,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexFormatArgumentsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideRefusedHighlightFormats')]
     public function test_highlight_refuses_a_format_it_has_no_highlighter_for(string|OutputFormat $format): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('expected console or html');
+        $this->expectExceptionMessageIsOrContains('expected console or html');
 
         Regex::create()->highlight('/a+/', $format);
     }
@@ -60,7 +63,7 @@ final class RegexFormatArgumentsTest extends TestCase
     public function test_explain_names_the_formats_it_takes(string|OutputFormat $format): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('expected text or html');
+        $this->expectExceptionMessageIsOrContains('expected text or html');
 
         Regex::create()->explain('/a+/', $format);
     }
@@ -78,7 +81,7 @@ final class RegexFormatArgumentsTest extends TestCase
     public function test_transpile_names_the_targets_it_takes(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('Unknown transpile target: bogus. Expected one of: html, html-pattern, javascript, js, py, python.');
+        $this->expectExceptionMessageIsOrContains('Unknown transpile target: bogus. Expected one of: html, html-pattern, javascript, js, py, python.');
 
         Regex::create()->transpile('/a+/', 'bogus');
     }

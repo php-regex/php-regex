@@ -28,6 +28,7 @@ use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,8 @@ use PHPUnit\Framework\TestCase;
 final class RedosSearchCostTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     #[Test]
     #[DataProvider('provideQuadraticSearches')]
@@ -975,7 +978,7 @@ final class RedosSearchCostTest extends TestCase
         };
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('A bug in the replay.');
+        $this->expectExceptionMessageIsOrContains('A bug in the replay.');
 
         self::findSearchCost('/\s+$/', $failing);
     }

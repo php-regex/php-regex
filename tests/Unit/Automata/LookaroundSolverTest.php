@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LookaroundSolverTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_the_automaton_accepts_what_the_engine_matches(string $pattern, string $letters, int $length): void
@@ -71,7 +74,7 @@ final class LookaroundSolverTest extends TestCase
     public function test_a_lookaround_the_solver_cannot_read_is_refused(string $pattern, string $reason): void
     {
         $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessage($reason);
+        $this->expectExceptionMessageIsOrContains($reason);
 
         (new LanguageSolver())->compile($pattern);
     }

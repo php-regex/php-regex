@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,6 +21,8 @@ use PHPUnit\Framework\TestCase;
 
 final class PythonTranspilerTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_transpiles_basic_pattern_to_python_raw_string(): void
     {
@@ -89,7 +92,7 @@ final class PythonTranspilerTest extends TestCase
     public function test_rejects_keep_escape(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('\K is not supported in Python re.');
+        $this->expectExceptionMessageIsOrContains('\K is not supported in Python re.');
 
         Regex::create()->transpile('/a\Kb/', 'python');
     }

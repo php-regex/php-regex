@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\PHPStan\MixedTypeCollector;
 use PHPRegex\PHPStan\NoNewMixedRule;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\PhpDocParser;
 use PHPStan\Rules\Rule;
@@ -32,6 +33,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class NoNewMixedRuleTest extends RuleTestCase
 {
+    use PhpUnitForwardCompat;
+
     private const FIXTURES = __DIR__.'/Fixtures/NoNewMixed';
 
     private const NS = 'PHPRegex\Tests\Integration\Bridge\PHPStan\Fixtures\NoNewMixed\\';
@@ -114,7 +117,7 @@ final class NoNewMixedRuleTest extends RuleTestCase
     public function test_a_baseline_that_names_no_file_stops_the_analysis(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"noNewMixed.baseline" names no file: '.self::FIXTURES.'/missing.php.');
+        $this->expectExceptionMessageIsOrContains('"noNewMixed.baseline" names no file: '.self::FIXTURES.'/missing.php.');
 
         new NoNewMixedRule(self::FIXTURES.'/missing.php', []);
     }

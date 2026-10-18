@@ -16,12 +16,15 @@ namespace PHPRegex\Tests\Unit\Lexer;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class LexerUtf8Test extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_lexer_tokenizes_invalid_utf8_in_byte_mode(): void
     {
         // Invalid UTF-8 sequence (0xC3 without a following byte): PCRE
@@ -37,7 +40,7 @@ final class LexerUtf8Test extends TestCase
     public function test_lexer_throws_on_invalid_utf8_with_u_flag(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Input string is not valid UTF-8');
+        $this->expectExceptionMessageIsOrContains('Input string is not valid UTF-8');
 
         (new Lexer())->tokenize("abc\xC3", 'u');
     }

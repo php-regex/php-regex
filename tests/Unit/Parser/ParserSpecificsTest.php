@@ -14,18 +14,21 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserSpecificsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_subroutine_name_unexpected_token(): void
     {
         // (?&name!) -> '!' is not allowed in subroutine name
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unexpected token');
+        $this->expectExceptionMessageIsOrContains('Unexpected token');
 
         $regex->parse('/(?&name!)/');
     }
@@ -37,7 +40,7 @@ final class ParserSpecificsTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier without target');
+        $this->expectExceptionMessageIsOrContains('Quantifier without target');
 
         $regex->parse('/+abc/');
     }

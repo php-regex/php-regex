@@ -16,10 +16,13 @@ namespace PHPRegex\Tests\Unit;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\TestCase;
 
 final class TokenStreamTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_iteration_and_positions(): void
     {
         $tokens = [
@@ -75,7 +78,7 @@ final class TokenStreamTest extends TestCase
         $stream->next();
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Cannot rewind 2 tokens, would go before start of stream');
+        $this->expectExceptionMessageIsOrContains('Cannot rewind 2 tokens, would go before start of stream');
         $stream->rewind(2);
     }
 
@@ -91,7 +94,7 @@ final class TokenStreamTest extends TestCase
         $stream->next(); // consume EOF, buffer exhausted
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Token stream is exhausted');
+        $this->expectExceptionMessageIsOrContains('Token stream is exhausted');
         $stream->next();
     }
 
@@ -150,7 +153,7 @@ final class TokenStreamTest extends TestCase
         $stream = new TokenStream($tokens, 'a');
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Position -1 is out of bounds [0, 2]');
+        $this->expectExceptionMessageIsOrContains('Position -1 is out of bounds [0, 2]');
         $stream->setPosition(-1);
     }
 
@@ -163,7 +166,7 @@ final class TokenStreamTest extends TestCase
         $stream = new TokenStream($tokens, 'a');
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Position 3 is out of bounds [0, 2]');
+        $this->expectExceptionMessageIsOrContains('Position 3 is out of bounds [0, 2]');
         $stream->setPosition(3);
     }
 
@@ -210,7 +213,7 @@ final class TokenStreamTest extends TestCase
         $stream->next(); // consume EOF, buffer exhausted
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('Token stream is exhausted');
+        $this->expectExceptionMessageIsOrContains('Token stream is exhausted');
         $stream->current();
     }
 }

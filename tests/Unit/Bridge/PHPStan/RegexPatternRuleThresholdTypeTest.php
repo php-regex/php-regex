@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\PHPStan;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\PHPStan\PatternChecker;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -25,11 +26,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexPatternRuleThresholdTypeTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_rule_refuses_a_threshold_that_is_no_string(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('checks.redos.threshold');
+        $this->expectExceptionMessageIsOrContains('checks.redos.threshold');
 
         new RegexPatternRule(['checks' => ['redos' => ['enabled' => true, 'threshold' => 3]]]);
     }

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosSeverityFromConfigTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @return iterable<string, array{string, RedosSeverity}>
      */
@@ -66,7 +69,7 @@ final class RedosSeverityFromConfigTest extends TestCase
     public function test_from_config_refuses_what_is_no_threshold(string $value): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"'.$value.'"');
+        $this->expectExceptionMessageIsOrContains('"'.$value.'"');
 
         RedosSeverity::fromConfig($value);
     }

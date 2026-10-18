@@ -16,11 +16,14 @@ namespace PHPRegex\Tests\Unit\Parser\Syntax;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class PatternParserTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_extracts_flags_including_modifier_r_when_supported(): void
     {
         [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80400));
@@ -33,7 +36,7 @@ final class PatternParserTest extends TestCase
     public function test_rejects_modifier_r_when_target_php_is_older(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
 
         PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
@@ -41,7 +44,7 @@ final class PatternParserTest extends TestCase
     public function test_rejects_modifier_e_with_improved_message(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
+        $this->expectExceptionMessageIsOrContains('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
 
         PatternParser::extractPatternAndFlags('/a/e');
     }
@@ -55,7 +58,7 @@ final class PatternParserTest extends TestCase
     public function test_pattern_ends_at_the_first_unescaped_delimiter(string $regex): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unescaped delimiter');
+        $this->expectExceptionMessageIsOrContains('Unescaped delimiter');
 
         PatternParser::extractPatternAndFlags($regex);
     }
@@ -104,7 +107,7 @@ final class PatternParserTest extends TestCase
     public function test_unknown_flag_letters_keep_the_flag_message(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "q"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "q"');
 
         PatternParser::extractPatternAndFlags('/abc/q');
     }
@@ -143,7 +146,7 @@ final class PatternParserTest extends TestCase
             $this->assertCount(3, $result);
         } else {
             $this->expectException(ParserException::class);
-            $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
+            $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
             PatternParser::extractPatternAndFlags('/a/r');
         }
     }
@@ -153,7 +156,7 @@ final class PatternParserTest extends TestCase
         // This test triggers the runtime detection code in supportsModifierE
         // On PHP 7.0+, this should reject 'e' modifier
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
+        $this->expectExceptionMessageIsOrContains('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
 
         // This call will trigger the runtime detection code
         PatternParser::extractPatternAndFlags('/a/e');
@@ -171,7 +174,7 @@ final class PatternParserTest extends TestCase
             $this->assertSame('r', $result[1]);
         } else {
             $this->expectException(ParserException::class);
-            $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
+            $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
             PatternParser::extractPatternAndFlags('/a/r');
         }
     }
@@ -182,7 +185,7 @@ final class PatternParserTest extends TestCase
         // where phpVersionId is null for modifier 'e'
         // PHP 7.0+ should reject the 'e' modifier at runtime
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
+        $this->expectExceptionMessageIsOrContains('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
 
         // This call will trigger the runtime detection code
         PatternParser::extractPatternAndFlags('/a/e');
@@ -212,7 +215,7 @@ final class PatternParserTest extends TestCase
         $this->assertSame(['a', 'r', '/'], PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(90000)));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
         PatternParser::extractPatternAndFlags('/a/r', PcreTarget::bundledWith(80300));
     }
 
@@ -222,7 +225,7 @@ final class PatternParserTest extends TestCase
         $this->assertSame(['a', 'e', '/'], PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(50500)));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
+        $this->expectExceptionMessageIsOrContains('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.');
         PatternParser::extractPatternAndFlags('/a/e', PcreTarget::bundledWith(70000));
     }
 
@@ -244,7 +247,7 @@ final class PatternParserTest extends TestCase
 
         // PHP 8.4 on Ubuntu 24.04 links PCRE2 10.42, and refuses "r".
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
 
         PatternParser::extractPatternAndFlags('/a/r', new PcreTarget(80400, '10.42'));
     }
@@ -255,7 +258,7 @@ final class PatternParserTest extends TestCase
 
         // PHP 8.1: "Unknown modifier 'n'".
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "n"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "n"');
 
         PatternParser::extractPatternAndFlags('/(a)/n', PcreTarget::bundledWith(80100));
     }

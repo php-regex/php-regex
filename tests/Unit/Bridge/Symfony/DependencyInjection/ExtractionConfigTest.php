@@ -19,6 +19,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Symfony\DependencyInjection\Configuration;
 use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class ExtractionConfigTest extends TestCase
 {
+    use PhpUnitForwardCompat;
     use TemporaryProject;
 
     private const CALLS = <<<'PHP'
@@ -133,7 +135,7 @@ final class ExtractionConfigTest extends TestCase
     public function test_an_unknown_preset_is_a_configuration_error(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Invalid configuration for path "php_regex.extraction.interop": Unknown extraction preset "laravel-str": did you mean "illuminate-support"?');
+        $this->expectExceptionMessageIsOrContains('Invalid configuration for path "php_regex.extraction.interop": Unknown extraction preset "laravel-str": did you mean "illuminate-support"?');
 
         $this->container(['interop' => ['laravel-str', 'nette-utils']], $this->makeProject());
     }
@@ -157,7 +159,7 @@ final class ExtractionConfigTest extends TestCase
     public function test_a_list_made_only_of_an_unknown_preset_is_a_configuration_error(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Unknown extraction preset "acme": the presets are composer-pcre, ');
+        $this->expectExceptionMessageIsOrContains('Unknown extraction preset "acme": the presets are composer-pcre, ');
 
         $this->container(['interop' => 'acme'], $this->makeProject());
     }

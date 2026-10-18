@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\TestUtils;
 
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,6 +25,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class JsonSchemaSubsetValidatorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private const SCHEMA = <<<'JSON'
         {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -107,7 +110,7 @@ final class JsonSchemaSubsetValidatorTest extends TestCase
     public function test_validate_refuses_a_keyword_it_does_not_implement(): void
     {
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('"patternProperties"');
+        $this->expectExceptionMessageIsOrContains('"patternProperties"');
 
         (new JsonSchemaSubsetValidator())->validate(['patternProperties' => []], new \stdClass());
     }

@@ -16,11 +16,14 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\TestCase;
 
 final class FormatterRegistryTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private FormatterRegistry $registry;
 
     protected function setUp(): void
@@ -49,7 +52,7 @@ final class FormatterRegistryTest extends TestCase
     public function test_get_throws_exception_for_unknown_formatter(): void
     {
         $this->expectException(LintException::class);
-        $this->expectExceptionMessage('Formatter "unknown" not found. Available formatters: console, json, github, checkstyle, junit');
+        $this->expectExceptionMessageIsOrContains('Formatter "unknown" not found. Available formatters: console, json, github, checkstyle, junit');
 
         $this->registry->get('unknown');
     }

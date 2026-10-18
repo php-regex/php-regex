@@ -24,6 +24,7 @@ use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPRegex\Toolkit\Regex;
@@ -36,6 +37,8 @@ use PHPUnit\Framework\TestCase;
 final class ParserUtilityTest extends TestCase
 {
     use PcreGates;
+
+    use PhpUnitForwardCompat;
 
     private ParserAccessor $accessor;
 
@@ -90,7 +93,7 @@ final class ParserUtilityTest extends TestCase
     public function test_extract_pattern_throws_on_malformed_flags(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "!"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "!"');
 
         PatternParser::extractPatternAndFlags('/abc/i!');
     }
@@ -108,7 +111,7 @@ final class ParserUtilityTest extends TestCase
         }
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unknown regex flag(s) found: "r"');
+        $this->expectExceptionMessageIsOrContains('Unknown regex flag(s) found: "r"');
 
         PatternParser::extractPatternAndFlags('/a/r');
     }
@@ -179,7 +182,7 @@ final class ParserUtilityTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP reports "/*/" past the "*" from PCRE2 10.47, on it before:
         // "quantifier does not follow a repeatable item".
-        $this->expectExceptionMessage(\sprintf('Quantifier without target at position %d', PhpErrorOffset::of('/*/')));
+        $this->expectExceptionMessageIsOrContains(\sprintf('Quantifier without target at position %d', PhpErrorOffset::of('/*/')));
 
         $this->accessor->callPrivateMethod('parseQuantifiedAtom');
     }
@@ -195,7 +198,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unexpected token ")" (group_close) at position 0.');
+        $this->expectExceptionMessageIsOrContains('Unexpected token ")" (group_close) at position 0.');
 
         $this->accessor->callPrivateMethod('parseAtom');
     }
@@ -241,7 +244,7 @@ final class ParserUtilityTest extends TestCase
         $this->expectException(ParserException::class);
         // PHP on PCRE2 10.47 and later reports "(?P[)" past the "[":
         // "unrecognized character after (?P at offset 4"; before, on it.
-        $this->expectExceptionMessage(\sprintf('Invalid syntax after (?P at position %d', version_compare(explode(' ', \PCRE_VERSION)[0], '10.47', '>=') ? 4 : 3));
+        $this->expectExceptionMessageIsOrContains(\sprintf('Invalid syntax after (?P at position %d', version_compare(explode(' ', \PCRE_VERSION)[0], '10.47', '>=') ? 4 : 3));
 
         $this->accessor->callPrivateMethod('parseGroupModifier');
     }
@@ -293,7 +296,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional construct at position 2. Condition must be a group reference, lookaround, or (DEFINE).');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional construct at position 2. Condition must be a group reference, lookaround, or (DEFINE).');
 
         $this->accessor->callPrivateMethod('parseConditionalCondition');
     }

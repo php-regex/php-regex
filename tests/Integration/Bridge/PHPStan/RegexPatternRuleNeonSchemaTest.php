@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPStan\DependencyInjection\Container;
 use PHPStan\DependencyInjection\ContainerFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexPatternRuleNeonSchemaTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private string $configDirectory;
 
     protected function setUp(): void
@@ -63,7 +66,7 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     public function test_schema_refuses_a_removed_key(string $neon, string $path): void
     {
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("Unexpected item 'parameters\u{A0}›\u{A0}".$path."'");
+        $this->expectExceptionMessageIsOrContains("Unexpected item 'parameters\u{A0}›\u{A0}".$path."'");
 
         $this->loadExtensionWith($neon);
     }
@@ -72,7 +75,7 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     public function test_schema_refuses_a_threshold_outside_the_severities(): void
     {
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}threshold'");
+        $this->expectExceptionMessageIsOrContains("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}threshold'");
 
         $this->loadExtensionWith("checks:\n            redos:\n                threshold: severe");
     }
@@ -94,7 +97,7 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     public function test_schema_refuses_an_unreadable_complexity_setting(string $neon): void
     {
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}complexity\u{A0}›\u{A0}");
+        $this->expectExceptionMessageIsOrContains("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}complexity\u{A0}›\u{A0}");
 
         $this->loadExtensionWith($neon);
     }
@@ -169,7 +172,7 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     public function test_schema_refuses_a_version_the_library_cannot_read(string $neon, string $key): void
     {
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}".$key."'");
+        $this->expectExceptionMessageIsOrContains("'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}".$key."'");
 
         $this->loadExtensionWith($neon);
     }

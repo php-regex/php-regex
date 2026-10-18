@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Transpiler;
 
 use PHPRegex\PHPUnit\RegexAssertions;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 
 final class JavaScriptTranspilerTest extends TestCase
 {
+    use PhpUnitForwardCompat;
     use RegexAssertions;
 
     #[Test]
@@ -178,7 +180,7 @@ final class JavaScriptTranspilerTest extends TestCase
     public function test_rejects_a_bidi_class(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('Bidi_Class properties are not supported in JavaScript.');
+        $this->expectExceptionMessageIsOrContains('Bidi_Class properties are not supported in JavaScript.');
 
         Regex::create(['cache' => null])->transpile('/\p{bc:L}/u', 'javascript');
     }
@@ -187,7 +189,7 @@ final class JavaScriptTranspilerTest extends TestCase
     public function test_rejects_a_script_javascript_does_not_name(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('The script Nope has no JavaScript name.');
+        $this->expectExceptionMessageIsOrContains('The script Nope has no JavaScript name.');
 
         Regex::create(['cache' => null])->transpile('/\p{sc:Nope}/u', 'javascript');
     }
@@ -248,7 +250,7 @@ final class JavaScriptTranspilerTest extends TestCase
     public function test_rejects_inline_flags_beyond_ungreedy(): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('Inline flags groups are not supported in JavaScript.');
+        $this->expectExceptionMessageIsOrContains('Inline flags groups are not supported in JavaScript.');
 
         Regex::create(['cache' => null])->transpile('/a(?Ui)b/', 'javascript');
     }

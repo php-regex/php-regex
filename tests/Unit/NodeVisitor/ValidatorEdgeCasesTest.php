@@ -33,11 +33,14 @@ use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ValidatorEdgeCasesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_clear_caches_resets_static_state(): void
     {
         $ref = new \ReflectionClass(Validator::class);
@@ -60,7 +63,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node = new AssertionNode('X', 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid assertion');
+        $this->expectExceptionMessageIsOrContains('Invalid assertion');
 
         $node->accept($validator);
     }
@@ -71,7 +74,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $range = new RangeNode(new LiteralNode('ab', 0, 0), new LiteralNode('c', 0, 0), 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('start char must be a single character');
+        $this->expectExceptionMessageIsOrContains('start char must be a single character');
 
         $range->accept($validator);
     }
@@ -82,7 +85,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $range = new RangeNode(new LiteralNode('a', 0, 0), new LiteralNode('bc', 0, 0), 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('end char must be a single character');
+        $this->expectExceptionMessageIsOrContains('end char must be a single character');
 
         $range->accept($validator);
     }
@@ -92,7 +95,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference \\0 is not valid.');
+        $this->expectExceptionMessageIsOrContains('Backreference \\0 is not valid.');
         (new BackrefNode('\\0', 0, 0))->accept($validator);
     }
 
@@ -101,7 +104,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Backreference 0 is not valid.');
+        $this->expectExceptionMessageIsOrContains('Backreference 0 is not valid.');
         (new BackrefNode('0', 0, 0))->accept($validator);
     }
 
@@ -110,7 +113,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('non-existent named group');
+        $this->expectExceptionMessageIsOrContains('non-existent named group');
         (new BackrefNode('\\k<missing>', 0, 0))->accept($validator);
     }
 
@@ -119,7 +122,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('non-existent named group');
+        $this->expectExceptionMessageIsOrContains('non-existent named group');
         (new BackrefNode('missing', 0, 0))->accept($validator);
     }
 
@@ -128,7 +131,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $validator = new Validator();
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('non-existent group');
+        $this->expectExceptionMessageIsOrContains('non-existent group');
         (new BackrefNode('\\g{2}', 0, 0))->accept($validator);
     }
 
@@ -138,7 +141,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $method = (new \ReflectionClass($validator))->getMethod('assertRelativeReferenceExists');
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('relative reference cannot be zero');
+        $this->expectExceptionMessageIsOrContains('relative reference cannot be zero');
 
         $method->invoke($validator, 0, 0, ErrorCode::BackrefRelative, 'Backreference');
     }
@@ -157,7 +160,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node = new ControlCharNode('A', 0x1FF, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid control character');
+        $this->expectExceptionMessageIsOrContains('Invalid control character');
 
         $node->accept($validator);
     }
@@ -174,7 +177,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         );
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid conditional construct');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional construct');
 
         $node->accept($validator);
     }
@@ -301,7 +304,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $node = new CharLiteralNode('\\777', 0x200, CharLiteralType::OctalLegacy, 0, 0);
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Invalid legacy octal codepoint');
+        $this->expectExceptionMessageIsOrContains('Invalid legacy octal codepoint');
 
         $node->accept($validator);
     }

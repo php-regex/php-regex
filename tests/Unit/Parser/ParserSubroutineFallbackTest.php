@@ -16,11 +16,14 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\ParserAccessor;
 use PHPUnit\Framework\TestCase;
 
 final class ParserSubroutineFallbackTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Tests the case where an unexpected token (non-literal) appears in a subroutine name.
      * E.g. (?&...) with a T_GROUP_OPEN token '(' instead of a literal.
@@ -39,7 +42,7 @@ final class ParserSubroutineFallbackTest extends TestCase
         $accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Unexpected token');
+        $this->expectExceptionMessageIsOrContains('Unexpected token');
 
         $accessor->callPrivateMethod('parseSubroutineName');
     }
@@ -61,7 +64,7 @@ final class ParserSubroutineFallbackTest extends TestCase
         $accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected subroutine name');
+        $this->expectExceptionMessageIsOrContains('Expected subroutine name');
 
         $accessor->callPrivateMethod('parseSubroutineName');
     }

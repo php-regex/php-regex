@@ -25,6 +25,7 @@ use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ParserRejectionsTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regexService;
 
     protected function setUp(): void
@@ -68,7 +71,7 @@ final class ParserRejectionsTest extends TestCase
     {
         $this->expectException(ParserException::class);
         // Same message as every other way of spelling a group name.
-        $this->expectExceptionMessage('Unexpected token "\\d" in group name');
+        $this->expectExceptionMessageIsOrContains('Unexpected token "\\d" in group name');
 
         // "(?P'name'...)" is refused before its name is read (preg_match() on
         // PCRE2 10.48: "unrecognized character after (?P at offset 4"), so
@@ -108,7 +111,7 @@ final class ParserRejectionsTest extends TestCase
     {
         // Couvre le "Invalid group modifier syntax" à la fin de parseGroupModifier
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid group modifier syntax');
+        $this->expectExceptionMessageIsOrContains('Invalid group modifier syntax');
         $this->regexService->parse('/(??)/'); // Syntaxe invalide (??)
     }
 
@@ -116,7 +119,7 @@ final class ParserRejectionsTest extends TestCase
     {
         // Couvre "Invalid syntax after (?P"
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid syntax after (?P');
+        $this->expectExceptionMessageIsOrContains('Invalid syntax after (?P');
         $this->regexService->parse('/(?Px)/'); // P suivi de x n'est pas valide
     }
 
@@ -153,7 +156,7 @@ final class ParserRejectionsTest extends TestCase
     {
         // Couvre le dernier else de parseConditionalCondition
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional condition');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional condition');
         // (?(?...) où le ? n'est ni = ni ! ni <
         $this->regexService->parse('/(?(?~a)b)/');
     }
@@ -196,7 +199,7 @@ final class ParserRejectionsTest extends TestCase
     public function test_a_conditional_condition_must_be_a_condition(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional condition');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional condition');
 
         $this->regexService->parse('/(?(?x)yes|no)/');
     }
@@ -205,7 +208,7 @@ final class ParserRejectionsTest extends TestCase
     public function test_a_bare_g_reference_is_refused(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid \\g reference syntax');
+        $this->expectExceptionMessageIsOrContains('Invalid \\g reference syntax');
 
         $this->regexService->parse('/\\g/');
     }
@@ -238,7 +241,7 @@ final class ParserRejectionsTest extends TestCase
     public function test_a_quantifier_cannot_apply_to_an_assertion(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Quantifier "+" cannot be applied to assertion');
+        $this->expectExceptionMessageIsOrContains('Quantifier "+" cannot be applied to assertion');
 
         $this->regexService->parse('/\\b+/');
     }

@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Sweep;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Printer\NodeDumper;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ParserSweepTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regexService;
 
     protected function setUp(): void
@@ -293,7 +296,7 @@ final class ParserSweepTest extends TestCase
     public function test_parser_conditional_with_invalid_syntax_after_question(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional condition');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional condition');
 
         $this->regexService->parse('/(?(?x)yes|no)/');
     }
@@ -303,7 +306,7 @@ final class ParserSweepTest extends TestCase
         // Test conditional with an atom that's not a valid condition type
         // This should trigger the fallback parsing and validation error
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional construct');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional construct');
 
         $this->regexService->parse('/(?([a-z])yes|no)/');
     }
@@ -312,7 +315,7 @@ final class ParserSweepTest extends TestCase
     {
         // PCRE: "subpattern name expected" on the quote.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected group name at position 4');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position 4');
 
         $this->regexService->parse("/(?P<'name>x)/");
     }
@@ -321,7 +324,7 @@ final class ParserSweepTest extends TestCase
     {
         // PCRE: "subpattern name expected" on the quote.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected group name at position 4');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position 4');
 
         $this->regexService->parse('/(?P<"name>x)/');
     }

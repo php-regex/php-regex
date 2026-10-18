@@ -16,11 +16,14 @@ namespace PHPRegex\Tests\Unit\Lexer;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPUnit\Framework\TestCase;
 
 final class LexerErrorTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_reset_tokenizes_invalid_utf8_in_byte_mode(): void
     {
         $lexer = new Lexer();
@@ -36,7 +39,7 @@ final class LexerErrorTest extends TestCase
     public function test_tokenize_throws_on_unclosed_char_class(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed character class "]" at end of input.');
+        $this->expectExceptionMessageIsOrContains('Unclosed character class "]" at end of input.');
 
         (new Lexer())->tokenize('[a-z');
     }

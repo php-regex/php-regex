@@ -18,6 +18,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class AnalysisServiceThresholdTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @return iterable<string, array{string}>
      */
@@ -45,7 +48,7 @@ final class AnalysisServiceThresholdTest extends TestCase
     public function test_the_service_refuses_a_threshold_that_names_no_severity(string $threshold): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('"'.$threshold.'"');
+        $this->expectExceptionMessageIsOrContains('"'.$threshold.'"');
 
         new AnalysisService(RegexParser::create(), redosThreshold: $threshold);
     }

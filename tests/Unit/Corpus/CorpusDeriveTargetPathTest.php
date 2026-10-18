@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Corpus;
 
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +26,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CorpusDeriveTargetPathTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @param array{url: string, target: ?string, exception: ?string} $row
      */
@@ -34,7 +37,7 @@ final class CorpusDeriveTargetPathTest extends TestCase
     {
         if (null !== $row['exception']) {
             $this->expectException(\RuntimeException::class);
-            $this->expectExceptionMessage($row['exception']);
+            $this->expectExceptionMessageIsOrContains($row['exception']);
         }
 
         $target = deriveTargetPath($row['url']);

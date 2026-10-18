@@ -15,11 +15,14 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserEdgeCaseTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private Regex $regex;
 
     protected function setUp(): void
@@ -40,7 +43,7 @@ final class ParserEdgeCaseTest extends TestCase
     {
         // Case: (?&) -> subroutine call without name
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected subroutine name');
+        $this->expectExceptionMessageIsOrContains('Expected subroutine name');
         $this->regex->parse('/(?&)/');
     }
 
@@ -48,7 +51,7 @@ final class ParserEdgeCaseTest extends TestCase
     {
         // Case: (?<>) -> Empty named group
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected group name');
+        $this->expectExceptionMessageIsOrContains('Expected group name');
         $this->regex->parse('/(?<>)/');
     }
 

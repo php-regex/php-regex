@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\ValidatorErrorCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -35,6 +36,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ErrorPrecedenceTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * @param list<int> $offsets
      */
@@ -72,7 +75,7 @@ final class ErrorPrecedenceTest extends TestCase
         $define = Regex::create()->parse('/(?(DEFINE)a|b)/')->pattern;
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('more than one branch');
+        $this->expectExceptionMessageIsOrContains('more than one branch');
 
         $define->accept(new Validator());
     }
@@ -88,7 +91,7 @@ final class ErrorPrecedenceTest extends TestCase
         $lookbehind = Regex::create()->parse('/(?<=a+)/')->pattern;
 
         $this->expectException(SemanticErrorException::class);
-        $this->expectExceptionMessage('Lookbehind is unbounded');
+        $this->expectExceptionMessageIsOrContains('Lookbehind is unbounded');
 
         $lookbehind->accept(new Validator());
     }

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
 use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +31,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class ExtractionWarningTest extends TestCase
 {
+    use PhpUnitForwardCompat;
     use TemporaryProject;
 
     #[Test]
@@ -52,7 +54,7 @@ final class ExtractionWarningTest extends TestCase
     public function test_an_unknown_preset_is_named_as_written(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Unknown extraction preset "50%-off": the presets are composer-pcre, ');
+        $this->expectExceptionMessageIsOrContains('Unknown extraction preset "50%-off": the presets are composer-pcre, ');
 
         $this->container(['extraction' => ['interop' => ['50%-off', 'nette-utils', '50%-off']]], $this->makeProject());
     }

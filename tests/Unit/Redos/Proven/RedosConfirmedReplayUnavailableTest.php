@@ -25,6 +25,7 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosConfirmedReplayUnavailableTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     private const LIMITS_UNAVAILABLE = 'engine limits unavailable';
 
     private const JIT_STAYS_ON = 'JIT cannot be turned off';
@@ -100,7 +103,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
         $analyzer = new RedosAnalyzer(confirmationRunner: self::throwingRunner($thrown));
 
         $this->expectException($class);
-        $this->expectExceptionMessage($thrown->getMessage());
+        $this->expectExceptionMessageIsOrContains($thrown->getMessage());
 
         $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
     }

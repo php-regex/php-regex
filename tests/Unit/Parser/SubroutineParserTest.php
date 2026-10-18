@@ -15,11 +15,14 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class SubroutineParserTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_parse_recursion(): void
     {
         $regex = Regex::create();
@@ -71,7 +74,7 @@ final class SubroutineParserTest extends TestCase
     public function test_throws_on_incomplete_subroutine(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected ) to close subroutine call');
+        $this->expectExceptionMessageIsOrContains('Expected ) to close subroutine call');
         $regex = Regex::create();
         // The regex must be validly delimited for the parser to run
         $regex->parse('/(?&name/i');

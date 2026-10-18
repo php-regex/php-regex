@@ -25,6 +25,7 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -41,7 +42,9 @@ use PHPUnit\Framework\TestCase;
 final class AlphaAssertionBodyTest extends TestCase
 {
     use LinearTimeAssertions;
+
     use PcreGates;
+    use PhpUnitForwardCompat;
 
     /**
      * The rows below hold what PCRE2 10.45 reports: the POSIX-class and
@@ -764,7 +767,7 @@ final class AlphaAssertionBodyTest extends TestCase
         $this->assertInstanceOf(RecursionLimitException::class, $reference, 'Nested "(?=" no longer reach the recursion limit.');
 
         $this->expectException(RecursionLimitException::class);
-        $this->expectExceptionMessage($reference->getMessage());
+        $this->expectExceptionMessageIsOrContains($reference->getMessage());
 
         Regex::create(['cache' => null])->parse($nested($opener));
     }

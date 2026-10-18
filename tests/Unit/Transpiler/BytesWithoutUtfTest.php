@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class BytesWithoutUtfTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('provideTargets')]
     public function test_a_multibyte_character_stays_that_character(string $target): void
@@ -43,7 +46,7 @@ final class BytesWithoutUtfTest extends TestCase
     public function test_a_byte_above_ascii_is_refused(string $pattern, string $target): void
     {
         $this->expectException(TranspileException::class);
-        $this->expectExceptionMessage('reads characters, not bytes');
+        $this->expectExceptionMessageIsOrContains('reads characters, not bytes');
 
         Regex::create()->transpile($pattern, $target);
     }

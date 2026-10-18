@@ -19,6 +19,7 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexCaptureShapeTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     #[DataProvider('providePatterns')]
     public function test_regex_facade_returns_the_capture_shape(string $pattern, string $expected): void
@@ -84,7 +87,7 @@ final class RegexCaptureShapeTest extends TestCase
         }
 
         $this->expectException($expected::class);
-        $this->expectExceptionMessage($expected->getMessage());
+        $this->expectExceptionMessageIsOrContains($expected->getMessage());
 
         $regex->captureShape($pattern);
     }

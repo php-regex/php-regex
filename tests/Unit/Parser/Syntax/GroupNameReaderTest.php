@@ -18,6 +18,7 @@ use PHPRegex\Parser\Syntax\GroupNameReader;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class GroupNameReaderTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_a_plain_name_is_read_up_to_its_closing_bracket(): void
     {
@@ -53,7 +56,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf("'", 'name', "'", '>'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected group name at position 0');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position 0');
 
         $reader->read();
     }
@@ -64,7 +67,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf('>', 'a', ')'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected group name at position');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position');
 
         $reader->read();
     }
@@ -75,7 +78,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf('1st', '>'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid group name "1st"');
+        $this->expectExceptionMessageIsOrContains('Invalid group name "1st"');
 
         $reader->read();
     }
@@ -86,7 +89,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf("'", 'name', '>'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Expected closing quote');
+        $this->expectExceptionMessageIsOrContains('Expected closing quote');
 
         $reader->read(quoted: true);
     }
@@ -105,7 +108,7 @@ final class GroupNameReaderTest extends TestCase
         $reader->allowDuplicates(false);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Duplicate group name "name" at position 9.');
+        $this->expectExceptionMessageIsOrContains('Duplicate group name "name" at position 9.');
 
         $reader->register('name', 9);
     }

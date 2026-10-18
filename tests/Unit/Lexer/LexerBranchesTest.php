@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class LexerBranchesTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     public function test_escaped_tab_character(): void
     {
         $tokens = (new Lexer())->tokenize('\t')->getTokens();
@@ -746,7 +749,7 @@ final class LexerBranchesTest extends TestCase
     public function test_unclosed_character_class_throws(): void
     {
         $this->expectException(LexerException::class);
-        $this->expectExceptionMessage('Unclosed character class');
+        $this->expectExceptionMessageIsOrContains('Unclosed character class');
 
         (new Lexer())->tokenize('[abc');
     }

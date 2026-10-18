@@ -104,7 +104,7 @@ final class ExtractionWarningTest extends LaravelTestCase
         $this->assertNotNull($this->app);
 
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessage('Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?');
+        $this->expectExceptionMessageIsOrContains('Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?');
 
         PHPRegexServiceProvider::extraction($this->application());
     }

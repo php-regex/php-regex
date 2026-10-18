@@ -16,11 +16,14 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserUnsupportedSyntaxTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     /**
      * Teste la syntaxe de backreference nommée (?P=name).
      */
@@ -44,7 +47,7 @@ final class ParserUnsupportedSyntaxTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid syntax after (?P');
+        $this->expectExceptionMessageIsOrContains('Invalid syntax after (?P');
 
         $regex->parse('/(?P!)/');
     }
@@ -58,7 +61,7 @@ final class ParserUnsupportedSyntaxTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessage('Invalid conditional condition');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional condition');
 
         // (? ( ? ~ ) ) -> ~ n'est pas = ou ! ou <
         $regex->parse('/(?(?~))/');

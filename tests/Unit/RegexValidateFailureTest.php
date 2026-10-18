@@ -18,6 +18,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeVisitorInterface;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexValidateFailureTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_a_failure_of_the_library_is_not_reported_as_an_invalid_pattern(): void
     {
@@ -72,7 +75,7 @@ final class RegexValidateFailureTest extends TestCase
         };
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('A visitor failed.');
+        $this->expectExceptionMessageIsOrContains('A visitor failed.');
 
         Regex::create(['cache' => $cache])->validate('/a/');
     }
