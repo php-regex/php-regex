@@ -40,8 +40,8 @@ The code is ready; what is left is the maintainer's, in this order.
    2.0.0` and `bin/release 2.0.0`: it drafts the GitHub release and pushes
    the tag; the phar workflow builds the phar, checks that its version is
    the tag's and that `regex.phar lsp` answers `initialize`, attests it,
-   attaches it and its checksum, then publishes the draft; the split workflow tags the
-   seventeen packages.
+   attaches it and its checksum, then publishes the draft; the split
+   workflow tags the seventeen packages.
 5. After the tag: `bin/status` and Packagist show `v2.0.0` for all seventeen
    packages (they require each other at `self.version`: one missing tag
    leaves the others uninstallable), and the "Latest" release carries the
@@ -57,57 +57,30 @@ After the 2.0.0 tag, check that the release went from draft to published
 with both assets, and that `gh attestation verify regex.phar --repo
 php-regex/php-regex` passes on the downloaded phar.
 
-## Upstream PHPStan fixes (fork `php-regex/phpstan-src`)
+## Upstream PHPStan fixes: push the branches and open the PRs
 
-PHPStan types `preg_match()` `$matches` with its own Hoa grammar
-(`resources/RegexGrammar.pp`). A third-party extension cannot override it:
-PHPStan's type-specifying extension always runs first and `$matches` out-types
-are unioned (checked on 2.3.1). So the fixes go upstream, as small PRs: one
-grammar fix plus one regression test each, official PCRE2 and PHP manual
-references in the description, never a large rewrite.
+Six branches are ready in the local `../phpstan-src` checkout (fork
+`php-regex/phpstan-src`), one commit each on `2.3.x` (62ed20078), not pushed:
+one grammar fix in `resources/RegexGrammar.pp` and one nsrt regression test
+each, the official PCRE2 and PHP manual references in the commit message. To
+do, for each: `git push origin <branch>`, then open the PR against
+`phpstan/phpstan-src:2.3.x`.
 
-Four branches are ready in the local `../phpstan-src` checkout, one commit each
-on `2.3.x` (62ed20078), not pushed. To do: `git push origin <branch>`, then
-open each PR against `phpstan/phpstan-src:2.3.x`.
-
-1. `regex-grammar-backreference`: *Parse back references in regex patterns*
-   (`\1`, `\g{-1}`, `\k<name>`… were read as literals: `/(a)(\1)/` typed
-   group 2 as `'1'`).
+1. `regex-grammar-backreference`: *Parse back references in regex patterns*.
 2. `regex-grammar-short-escapes`: *Parse \x with fewer than two hexadecimal
-   digits and short \0 escapes in regex patterns* (`/(\x4)/` gave `'x4'`,
-   `/(\0)/` gave `''`).
+   digits and short \0 escapes in regex patterns*.
 3. `regex-grammar-single-letter-property`: *Parse single-letter Unicode
-   properties like \pL in regex patterns* (`/(\pL)/u` gave `'pL'`).
+   properties like \pL in regex patterns*.
 4. `regex-lookaround-zero-width`: *Do not count regex lookarounds as matched
-   characters* (`/(?=a)/` gave `non-empty-string`, `/\d+(?=px)/`
-   `non-falsy-string` for `'0'`).
+   characters*.
+5. `regex-grammar-octal-brace-escape`: *Parse \o{...} octal escapes in regex
+   patterns* (`/(\o{141})/` typed its group as `'o'` repeated 141 times; it
+   matches `'a'`).
+6. `regex-grammar-subroutine-call`: *Parse subroutine calls like \g<1> in
+   regex patterns* (`/(a)(\g<1>)/` typed group 2 as `'g<1>'`).
 
-PRs 2 and 3 touch adjacent grammar lines: rebase the second once the first is
-merged.
-
-Checked before publishing: every test pattern behaves the same on PCRE2 10.35
-(PHP 7.4) to 10.49; the regex tests pass on PHP 8.2, 8.3 and 8.5; on 11,628
-constant `preg_match()` patterns from `corpus/`, with subjects from
-`SampleGenerator`, no branch rejects a real match result that 2.3.x accepted
-(2.3.x already rejects 209).
-
-Left for later PRs, each verified against the engine:
-
-- `\x30`, `\060` and `\o{60}` match `'0'` but are typed non-falsy; `\o{}` is
-  not parsed (needs that fix first).
-- `\Q...\E` is not parsed (`/\Q(a)\E(b)/` sees two groups); a grammar-only fix
-  is not possible.
-- Inline `(?x)`, `(?-x)` and `[#]` under `x` (upstream issue #11746).
-- Inline `(?i)` keeps lowercase constants (`/(?i)(a)/` gives `'a'`).
-- Groups inside a negative lookaround are typed as set (`/x(?!(a))(b)/`
-  gives `'a'`, the engine `''`).
-- A quantifier with a minimum of one over a maybe-empty atom is non-empty
-  (`/((?:a?)+)/`).
-- `\g<1>` and `\g'1'` (subroutine calls) are read as literals.
-
-Parked, too large for upstream review: local branches
-`regex-negative-lookaround-groups`, `regex-quoted-sequence`,
-`regex-extended-mode`.
+Branches 2, 3 and 5 touch adjacent grammar lines: rebase each later one once
+the earlier is merged. Branch 6 merges cleanly with all the others.
 
 ## PHP 8.6 closeout and 8.7 canary
 
