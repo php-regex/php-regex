@@ -181,7 +181,7 @@ Diagnostics codes and explanations are documented in [docs/reference/diagnostics
 
 ReDoS analysis uses the AST and never executes the regex (unless confirmed mode is asked for). `RedosAnalyzer` does two things with the tree:
 
-1. It builds a prioritized NFA of PCRE's backtracking (`Redos\Internal\Backtrack`): ε-transitions ordered as PCRE tries them, character sets exact (computed from the running PCRE2 under `/u` and `/i`), atomic groups, possessive quantifiers and lookaround bodies as separate sub-automata. Ambiguity in that automaton proves the complexity class of one match attempt, linear, polynomial of degree k or exponential, and yields the witness `prefix . pump x n . suffix`. The work is bounded by `RedosOptions`, in states and steps.
+1. It builds a prioritized NFA of PCRE's backtracking (`Redos\Backtrack`): ε-transitions ordered as PCRE tries them, character sets exact (computed from the running PCRE2 under `/u` and `/i`), atomic groups, possessive quantifiers and lookaround bodies as separate sub-automata. Ambiguity in that automaton proves the complexity class of one match attempt, linear, polynomial of degree k or exponential, and yields the witness `prefix . pump x n . suffix`. The work is bounded by `RedosOptions`, in states and steps.
 2. It runs `RedosProfiler`, the structural heuristics, with a `CharSetAnalyzer`. They decide when the pattern holds a construct outside the model (backreferences, conditionals, recursion, verbs, callouts) or the model runs out of budget, and they provide the findings, hotspots and recommendations of every result.
 
 `RedosAnalysis::$proof` says which one decided. Core heuristics include:

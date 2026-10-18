@@ -108,7 +108,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator',
             'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag',
             'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss',
-            'Parser\Internal\PatternParser', 'Redos\Heatmap', 'Redos\Internal\InputGenerator',
+            'Parser\Internal\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
         ],
         'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],

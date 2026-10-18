@@ -32,7 +32,7 @@ use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\Heatmap;
-use PHPRegex\Redos\Internal\InputGenerator;
+use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;

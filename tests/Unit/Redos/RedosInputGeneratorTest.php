@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos;
 
-use PHPRegex\Redos\Internal\InputGenerator;
+use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;

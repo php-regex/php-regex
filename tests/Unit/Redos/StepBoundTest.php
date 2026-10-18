@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
-use PHPRegex\Redos\Internal\Backtrack\Budget;
-use PHPRegex\Redos\Internal\Backtrack\ItemAutomaton;
-use PHPRegex\Redos\Internal\Backtrack\PnfaBuilder;
+use PHPRegex\Redos\Backtrack\BacktrackProver;
+use PHPRegex\Redos\Backtrack\Budget;
+use PHPRegex\Redos\Backtrack\ItemAutomaton;
+use PHPRegex\Redos\Backtrack\PnfaBuilder;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;

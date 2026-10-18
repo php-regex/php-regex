@@ -16,8 +16,7 @@ namespace PHPRegex\Redos;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
-use PHPRegex\Redos\Internal\Backtrack\WitnessReplayer;
-use PHPRegex\Redos\Internal\InputGenerator;
+use PHPRegex\Redos\Backtrack\WitnessReplayer;
 
 /**
  * Runs the pattern on inputs growing in length, through the engine: without

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Redos\Internal\Backtrack;
+namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Node\NodeInterface;

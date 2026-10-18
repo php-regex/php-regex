@@ -28,7 +28,7 @@ use PHPRegex\Parser\Internal\DisplayEscaper;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Redos\Internal\InputGenerator;
+use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Toolkit\Regex;
 
 /**

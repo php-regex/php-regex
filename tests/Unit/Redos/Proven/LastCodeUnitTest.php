@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Redos\Internal\LastCodeUnit;
+use PHPRegex\Redos\Backtrack\LastCodeUnit;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

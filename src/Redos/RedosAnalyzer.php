@@ -17,11 +17,11 @@ use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Internal\PatternParser;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
-use PHPRegex\Redos\Internal\Backtrack\ModelLimit;
-use PHPRegex\Redos\Internal\Backtrack\ProofResult;
-use PHPRegex\Redos\Internal\Backtrack\WitnessReplayer;
-use PHPRegex\Redos\Internal\SearchCostProver;
+use PHPRegex\Redos\Backtrack\BacktrackProver;
+use PHPRegex\Redos\Backtrack\ModelLimit;
+use PHPRegex\Redos\Backtrack\ProofResult;
+use PHPRegex\Redos\Backtrack\SearchCostProver;
+use PHPRegex\Redos\Backtrack\WitnessReplayer;
 
 /**
  * The ReDoS verdict of a pattern. The backtracking model proves the

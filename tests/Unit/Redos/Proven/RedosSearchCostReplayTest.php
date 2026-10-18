@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos\Proven;
 
-use PHPRegex\Redos\Internal\SearchCostReplayer;
+use PHPRegex\Redos\Backtrack\SearchCostReplayer;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
@@ -249,6 +249,6 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertInstanceOf(RedosSearchCost::class, $cost);
         $this->assertTrue($cost->replayed);
         $this->assertFalse((new \ReflectionClass(RedosSearchCost::class))->hasProperty('jitLinear'));
-        $this->assertSame([], LibrarySource::functionCalls(LibrarySource::files()['src/Redos/Internal/SearchCostReplayer.php'], '/^preg_/'));
+        $this->assertSame([], LibrarySource::functionCalls(LibrarySource::files()['src/Redos/Backtrack/SearchCostReplayer.php'], '/^preg_/'));
     }
 }

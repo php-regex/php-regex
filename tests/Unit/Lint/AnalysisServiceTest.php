@@ -22,7 +22,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Redos\Internal\Backtrack\ProofResult;
+use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LintFunctionOverrides;

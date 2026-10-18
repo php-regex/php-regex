@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos;
 
-use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
+use PHPRegex\Redos\Backtrack\WitnessRenderer;
 
 /**
  * The cost of an unanchored search whose every attempt is linear: an

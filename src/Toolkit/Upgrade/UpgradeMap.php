@@ -279,7 +279,7 @@ final class UpgradeMap
         'RegexParser\\ReDoS\\ReDoSFinding' => 'PHPRegex\\Redos\\Finding',
         'RegexParser\\ReDoS\\ReDoSHeatmap' => 'PHPRegex\\Redos\\Heatmap',
         'RegexParser\\ReDoS\\ReDoSHotspot' => 'PHPRegex\\Redos\\Hotspot',
-        'RegexParser\\ReDoS\\ReDoSInputGenerator' => 'PHPRegex\\Redos\\Internal\\InputGenerator',
+        'RegexParser\\ReDoS\\ReDoSInputGenerator' => 'PHPRegex\\Redos\\InputGenerator',
         'RegexParser\\ReDoS\\ReDoSMode' => 'PHPRegex\\Redos\\RedosMode',
         'RegexParser\\ReDoS\\ReDoSSeverity' => 'PHPRegex\\Redos\\RedosSeverity',
         'RegexParser\\Regex' => 'PHPRegex\\Toolkit\\Regex',

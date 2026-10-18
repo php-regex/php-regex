@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos\Proven;
 
+use PHPRegex\Redos\Backtrack\WitnessReplayer;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\ConfirmationOptions;
-use PHPRegex\Redos\Internal\Backtrack\WitnessReplayer;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;

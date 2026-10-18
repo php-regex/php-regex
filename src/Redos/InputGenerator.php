@@ -11,12 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Redos\Internal;
+namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Redos\RedosSeverity;
 
 /**
  * Generates a heuristic input string to demonstrate potential backtracking.

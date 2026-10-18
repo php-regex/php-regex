@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos;
 
-use PHPRegex\Redos\Internal\Backtrack\WitnessRenderer;
+use PHPRegex\Redos\Backtrack\WitnessRenderer;
 
 /**
  * The input that drives a match attempt into its worst case: the prefix,

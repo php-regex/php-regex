@@ -43,7 +43,7 @@ use PHPRegex\Parser\ParserOptions;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\ReplacementReferences;
 use PHPRegex\Psalm\PregCallAnalyzer;
-use PHPRegex\Redos\Internal\Backtrack\AmbiguityFinder;
+use PHPRegex\Redos\Backtrack\AmbiguityFinder;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;

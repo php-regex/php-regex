@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Redos\Internal;
+namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Hir\CharSet;
@@ -37,11 +37,6 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
-use PHPRegex\Redos\Internal\Backtrack\BacktrackProver;
-use PHPRegex\Redos\Internal\Backtrack\Budget;
-use PHPRegex\Redos\Internal\Backtrack\ItemAutomaton;
-use PHPRegex\Redos\Internal\Backtrack\ModelLimit;
-use PHPRegex\Redos\Internal\Backtrack\Pnfa;
 use PHPRegex\Redos\RedosSearchCost;
 
 /**
