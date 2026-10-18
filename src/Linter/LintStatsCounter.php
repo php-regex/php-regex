@@ -11,10 +11,8 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Linter\Internal;
+namespace PHPRegex\Linter;
 
-use PHPRegex\Linter\LintReport;
-use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 
 /**

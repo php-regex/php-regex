@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Internal;
 
-use PHPRegex\Linter\Internal\RedosVerdict;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\ConfirmationSample;
 use PHPRegex\Redos\RedosAnalysis;

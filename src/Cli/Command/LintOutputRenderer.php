@@ -16,7 +16,7 @@ namespace PHPRegex\Cli\Command;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Internal\LintSummary;
+use PHPRegex\Linter\Formatter\LintSummary;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;

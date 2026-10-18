@@ -655,13 +655,13 @@ parameters:
 			path: tests/Unit/Internal/LibraryPcreTest.php
 
 		-
-			rawMessage: 'Parameter #3 $work of method PHPRegex\Linter\Internal\ForkedWorkerPool::run() expects Closure(list<''a''|''b''>, Closure(int): void): list<mixed>, Closure(array, Closure): ''not a list'' given.'
+			rawMessage: 'Parameter #3 $work of method PHPRegex\Linter\Parallel\ForkedWorkerPool::run() expects Closure(list<''a''|''b''>, Closure(int): void): list<mixed>, Closure(array, Closure): ''not a list'' given.'
 			identifier: argument.type
 			count: 1
 			path: tests/Unit/Lint/ForkedWorkerPoolTest.php
 
 		-
-			rawMessage: 'Unable to resolve the template type R in call to method PHPRegex\Linter\Internal\ForkedWorkerPool::run()'
+			rawMessage: 'Unable to resolve the template type R in call to method PHPRegex\Linter\Parallel\ForkedWorkerPool::run()'
 			identifier: argument.templateType
 			count: 1
 			path: tests/Unit/Lint/ForkedWorkerPoolTest.php

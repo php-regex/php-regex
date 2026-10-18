@@ -17,7 +17,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
-use PHPRegex\Linter\Internal\RedosVerdict;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Internal\JsonDocument;
 use PHPRegex\Parser\ParserOptions;

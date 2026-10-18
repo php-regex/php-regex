@@ -21,7 +21,7 @@ use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Linter\Extraction\PatternFunctionAwareInterface;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Parser\Internal\Ascii;
 
 /**

@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Internal\LintSummary;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Internal\DisplayEscaper;

@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\DiagnosticType;
-use PHPRegex\Linter\Internal\LintSummary;
+use PHPRegex\Linter\Formatter\LintSummary;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;

@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
@@ -699,7 +699,7 @@ final class ForkedWorkerPoolTest extends TestCase
             require %s;
             ob_start();
             echo "buffered by the parent";
-            $results = (new PHPRegex\Linter\Internal\ForkedWorkerPool())->run(
+            $results = (new PHPRegex\Linter\Parallel\ForkedWorkerPool())->run(
                 [1, 2],
                 2,
                 static fn (array $chunk, Closure $done): array => $chunk,
@@ -739,7 +739,7 @@ final class ForkedWorkerPoolTest extends TestCase
                 public function __construct(private int $parent) {}
                 public function __destruct() { if (getmypid() !== $this->parent) { file_put_contents(%2$s, 'destructor ran in a worker', FILE_APPEND); } }
             };
-            $results = (new PHPRegex\Linter\Internal\ForkedWorkerPool())->run(
+            $results = (new PHPRegex\Linter\Parallel\ForkedWorkerPool())->run(
                 [1, 2],
                 2,
                 static fn (array $chunk, Closure $done): array => $chunk,

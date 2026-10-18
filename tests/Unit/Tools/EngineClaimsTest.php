@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Tools;
 
-use PHPRegex\Linter\Internal\SilentMeaningChange;
+use PHPRegex\Linter\SilentMeaningChange;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Tests\TestUtils\EngineClaims;
 use PHPUnit\Framework\Attributes\DataProvider;

@@ -91,8 +91,8 @@ return [
     'src/Linter/Extraction/PendingPattern.php' => [
         'PHPRegex\Linter\Extraction\PendingPattern::__construct()' => ['template-identity', 1],
     ],
-    'src/Linter/Internal/ForkedWorkerPool.php' => [
-        'PHPRegex\Linter\Internal\ForkedWorkerPool::payload()' => ['json-decode', 1],
+    'src/Linter/Parallel/ForkedWorkerPool.php' => [
+        'PHPRegex\Linter\Parallel\ForkedWorkerPool::payload()' => ['json-decode', 1],
     ],
     'src/Optimizer/OptimizerOptions.php' => [
         'PHPRegex\Optimizer\OptimizerOptions::fromArray()' => ['validator-input', 1],

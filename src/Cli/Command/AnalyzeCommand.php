@@ -19,7 +19,7 @@ use PHPRegex\Cli\JsonRequest;
 use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
-use PHPRegex\Linter\Internal\RedosVerdict;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;

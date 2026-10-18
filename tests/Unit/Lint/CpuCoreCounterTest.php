@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
-use PHPRegex\Linter\Internal\CpuCoreCounter;
+use PHPRegex\Linter\Parallel\CpuCoreCounter;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

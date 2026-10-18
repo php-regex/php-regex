@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\Command\AbstractCommand;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
-use PHPRegex\Linter\Internal\RedosVerdict;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\ConfirmationSample;
 use PHPRegex\Redos\RedosAnalysis;

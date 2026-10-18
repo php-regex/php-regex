@@ -16,8 +16,6 @@ namespace PHPRegex\Linter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\TargetMarker;
-use PHPRegex\Linter\Internal\LintStatsCounter;
-use PHPRegex\Linter\Internal\RedosVerdict;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;

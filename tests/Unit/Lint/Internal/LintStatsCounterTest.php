@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Internal;
 
-use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
-use PHPRegex\Linter\Internal\WorkerCount;
+use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -296,7 +296,7 @@ final class LintFunctionOverrides
     }
 }
 
-namespace PHPRegex\Linter\Internal;
+namespace PHPRegex\Linter\Parallel;
 
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 

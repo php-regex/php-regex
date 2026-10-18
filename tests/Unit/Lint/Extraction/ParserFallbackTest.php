@@ -21,7 +21,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PHPRegex\Linter\Internal\LintStatsCounter;
+use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
-use PHPRegex\Linter\Internal\ForkedWorkerPool;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Tests\Support\LibrarySource;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,7 +36,7 @@ final class LibraryExitTest extends TestCase
             }
         }
 
-        $this->assertSame(['src/Linter/Internal/ForkedWorkerPool.php' => 1], $exits);
+        $this->assertSame(['src/Linter/Parallel/ForkedWorkerPool.php' => 1], $exits);
     }
 
     /**
@@ -47,7 +47,7 @@ final class LibraryExitTest extends TestCase
     {
         $file = (string) (new \ReflectionClass(ForkedWorkerPool::class))->getFileName();
 
-        $this->assertStringEndsWith('src/Linter/Internal/ForkedWorkerPool.php', str_replace('\\', '/', $file));
+        $this->assertStringEndsWith('src/Linter/Parallel/ForkedWorkerPool.php', str_replace('\\', '/', $file));
     }
 
     #[Test]
