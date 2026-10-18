@@ -236,6 +236,12 @@ final class PackageManifestTest extends TestCase
         $this->assertFileExists(self::root().'/src/Linter/regex.schema.json');
         // The parser exports trees as JSON, so it ships the document's schema.
         $this->assertFileExists(self::root().'/src/Parser/ast.schema.json');
+        // The IDE completion files ship with the package whose API they
+        // complete: an install of it, split or monorepo, carries the file
+        // the editor reads from the vendor tree.
+        foreach (['Parser', 'Redos', 'Toolkit'] as $directory) {
+            $this->assertFileExists(self::root().'/src/'.$directory.'/.phpstorm.meta.php');
+        }
 
         foreach (['Cli' => 'bin/regex', 'LanguageServer' => 'bin/regex-lsp'] as $directory => $script) {
             $this->assertSame([$script], self::dig(self::manifest($directory), 'bin'));
@@ -272,6 +278,28 @@ final class PackageManifestTest extends TestCase
         // The PHPUnit bridge's floor is 9.6, the oldest the assertions still
         // serve, so the monorepo refuses every host older than that.
         $this->assertSame('<9.6', self::dig($root, 'conflict', 'phpunit/phpunit'));
+        // The PHPStan bridge's neon is written on the config keys PHPStan 2
+        // alone reads, and the extension installer includes it on every
+        // PHPStan it finds: the host is refused before it loads it.
+        $this->assertSame('<2.0', self::dig($root, 'conflict', 'phpstan/phpstan'));
+    }
+
+    /**
+     * The monorepo package carries every bridge, but only its own manifest
+     * reaches the project that installs it: the discovery keys the bridges'
+     * packages carry — Laravel's package discovery, the PHPStan extension
+     * installer, the psalm-plugin CLI — are aggregated here, and nothing
+     * else lives in extra.
+     */
+    #[Test]
+    public function test_the_monorepo_package_aggregates_its_bridges_discovery_keys(): void
+    {
+        $root = self::decode(self::root().'/composer.json');
+
+        $this->assertSame(['branch-alias', 'laravel', 'phpstan', 'psalm'], self::keysOf($root, 'extra'));
+        $this->assertSame(self::dig(self::manifest('Laravel'), 'extra', 'laravel'), self::dig($root, 'extra', 'laravel'));
+        $this->assertSame(['src/PHPStan/extension.neon'], self::dig($root, 'extra', 'phpstan', 'includes'));
+        $this->assertSame(Plugin::class, self::dig($root, 'extra', 'psalm', 'pluginClass'));
     }
 
     #[Test]
@@ -557,6 +585,24 @@ final class PackageManifestTest extends TestCase
     }
 
     /**
+     * Every package is a page of its own on Packagist: the author and the
+     * funding link the monorepo declares, the seventeen packages declare
+     * too.
+     */
+    #[Test]
+    public function test_every_package_carries_the_monorepos_author_and_funding(): void
+    {
+        $root = self::decode(self::root().'/composer.json');
+
+        foreach (array_keys(self::PACKAGES) as $directory) {
+            $manifest = self::manifest($directory);
+
+            $this->assertSame(self::dig($root, 'authors'), self::dig($manifest, 'authors'), $directory);
+            $this->assertSame(self::dig($root, 'funding'), self::dig($manifest, 'funding'), $directory);
+        }
+    }
+
+    /**
      * @return iterable<string, array{string, string}>
      */
     public static function providePackages(): iterable
@@ -606,6 +652,22 @@ final class PackageManifestTest extends TestCase
         }
 
         return $typed;
+    }
+
+    /**
+     * The keys of the block a path of keys leads to, narrowed from the
+     * mixed the manifest decodes to.
+     *
+     * @param array<string, mixed> $data
+     *
+     * @return list<string>
+     */
+    private static function keysOf(array $data, string ...$keys): array
+    {
+        $block = self::dig($data, ...$keys);
+        self::assertIsArray($block);
+
+        return array_map(strval(...), array_keys($block));
     }
 
     /**

@@ -16,10 +16,18 @@
         "source": "https://github.com/php-regex/php-regex",
         "docs": "https://php-regex.com/guides/psalm/"
     },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/yoeunes"
+        }
+    ],
     "authors": [
         {
             "name": "Younes ENNAJI",
-            "email": "younes.ennaji.pro@gmail.com"
+            "email": "younes.ennaji.pro@gmail.com",
+            "homepage": "https://www.linkedin.com/in/yoeunes/",
+            "role": "Developer"
         }
     ],
     "require": {

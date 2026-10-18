@@ -60,6 +60,7 @@
             "PHPRegex\\Tests\\": "tests/"
         },
         "exclude-from-classmap": [
+            "tests/Benchmark/Fixtures/",
             "tests/Fixtures/",
             "tests/Integration/Bridge/PHPStan/Fixtures/",
             "tests/Integration/Bridge/Psalm/Fixtures/",
@@ -113,27 +114,34 @@
                 "src/PHPStan/extension.neon"
             ]
         },
-        "ide": {
-            "regex.dist.json": "./src/Linter/regex.schema.json"
+        "psalm": {
+            "pluginClass": "PHPRegex\\Psalm\\Plugin"
         }
     },
     "conflict": {
         "nikic/php-parser": "<4.18",
+        "phpstan/phpstan": "<2.0",
         "phpunit/phpunit": "<9.6",
         "rector/rector": "<2.4",
         "vimeo/psalm": "<6.19"
     },
     "suggest": {
-        "psr/cache": "To share AST cache via PSR-6 pools.",
-        "psr/simple-cache": "To share AST cache via PSR-16 caches.",
-        "phpstan/phpstan": "To run static analysis and detect invalid regex patterns.",
+        "ext-intl": "To resolve \\N{...} escapes by Unicode name.",
+        "ext-pcntl": "To lint in parallel worker processes.",
+        "ext-posix": "For TTY detection and worker signaling.",
+        "illuminate/console": "Required for Laravel Artisan commands.",
+        "illuminate/contracts": "Required for Laravel integration.",
+        "illuminate/routing": "Required for Laravel route analysis.",
+        "illuminate/support": "Required for Laravel integration.",
         "nikic/php-parser": "To extract regex patterns from PHP sources with a real parser instead of the tokenizer.",
         "phpstan/extension-installer": "To automatically enable the PHPStan rule for regex validation.",
+        "phpstan/phpstan": "To run static analysis and detect invalid regex patterns.",
         "phpunit/phpunit": "To assert on regex patterns in your test suite (php-regex/regex-phpunit).",
+        "psr/cache": "To share AST cache via PSR-6 pools.",
+        "psr/simple-cache": "To share AST cache via PSR-16 caches.",
         "rector/rector": "To rewrite preg_* calls into the string functions the automata prove they match.",
-        "vimeo/psalm": "To type $matches from the pattern and report invalid patterns in Psalm (php-regex/regex-psalm).",
-        "illuminate/support": "Required for Laravel integration.",
-        "illuminate/console": "Required for Laravel Artisan commands.",
-        "illuminate/routing": "Required for Laravel route analysis."
+        "symfony/routing": "To analyze route requirements with regex:routes.",
+        "symfony/validator": "To lint the patterns of Regex constraints, and to validate submitted patterns with ValidRegex.",
+        "vimeo/psalm": "To type $matches from the pattern and report invalid patterns in Psalm (php-regex/regex-psalm)."
     }
 }

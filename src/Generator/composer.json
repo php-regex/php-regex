@@ -16,14 +16,23 @@
         "source": "https://github.com/php-regex/php-regex",
         "docs": "https://php-regex.com/reference/api/"
     },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/yoeunes"
+        }
+    ],
     "authors": [
         {
             "name": "Younes ENNAJI",
-            "email": "younes.ennaji.pro@gmail.com"
+            "email": "younes.ennaji.pro@gmail.com",
+            "homepage": "https://www.linkedin.com/in/yoeunes/",
+            "role": "Developer"
         }
     ],
     "require": {
         "php": ">=8.1",
+        "ext-mbstring": "*",
         "php-regex/regex-parser": "self.version"
     },
     "autoload": {
