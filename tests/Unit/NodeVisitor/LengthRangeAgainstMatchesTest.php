@@ -79,6 +79,7 @@ final class LengthRangeAgainstMatchesTest extends TestCase
         yield 'accept in a lookahead ends only the lookahead' => ['pattern' => '/(?=a(*ACCEPT))ab/', 'subject' => 'ab', 'expected' => [2, 2]];
         yield 'accept in a repeated group' => ['pattern' => '/(?:a(*ACCEPT))+b/', 'subject' => 'ab', 'expected' => [1, null]];
         yield 'accept in a branch' => ['pattern' => '/(A(A|B(*ACCEPT)|C)D)(E)/', 'subject' => 'AB', 'expected' => [2, 4]];
+        yield 'accept in a script run' => ['pattern' => '/(*sr:a(*ACCEPT))b/', 'subject' => 'a', 'expected' => [1, 2]];
     }
 
     #[Test]

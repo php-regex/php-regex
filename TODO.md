@@ -3,9 +3,6 @@
 ## Before the 2.0.0 tag: verified defects
 
 Each one reproduced against the code and the engine (PHP 8.4, PCRE2 10.49).
-- `Regex::literals()` gives the suffix `b` for `/(*sr:a(*ACCEPT))b/`, which
-  matches `"a"`: `LiteralExtractor` does not look inside a script run for an
-  `(*ACCEPT)`.
 - The Laravel validation-rule extractor wraps a pattern delimited by `{}`,
   `()`, `[]`, `<>`, `+`… in `/…/`, so it lints another pattern than the one
   Laravel runs (`{^a$}` matches "a", `/{^a$}/` does not).

@@ -35,7 +35,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
-use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
@@ -118,7 +117,7 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
             if (!$accepted) {
                 $totalMin += $childMin;
             }
-            $accepted = $accepted || $this->mayAccept($child);
+            $accepted = $accepted || AcceptVerb::mayEndMatch($child);
 
             if (null === $childMax) {
                 $hasInfinite = true;
@@ -326,40 +325,6 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     public function visitKeep(KeepNode $node): array
     {
         return [0, 0];
-    }
-
-    /**
-     * Whether a "(*ACCEPT)" inside the node may end the match there: not one
-     * in a lookaround, which only ends the assertion, nor in a (DEFINE),
-     * which is never run in place.
-     */
-    private function mayAccept(NodeInterface $node): bool
-    {
-        if ($node instanceof PcreVerbNode) {
-            return str_starts_with($node->verb, 'ACCEPT');
-        }
-
-        if ($node instanceof GroupNode && \in_array($node->type, self::LOOKAROUNDS, true)) {
-            return false;
-        }
-
-        $children = match (true) {
-            $node instanceof GroupNode => [$node->child],
-            $node instanceof SequenceNode => $node->children,
-            $node instanceof AlternationNode => $node->alternatives,
-            $node instanceof QuantifierNode => [$node->node],
-            $node instanceof ConditionalNode => [$node->yes, $node->no],
-            $node instanceof ScriptRunNode => null === $node->content ? [] : [$node->content],
-            default => [],
-        };
-
-        foreach ($children as $child) {
-            if ($this->mayAccept($child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

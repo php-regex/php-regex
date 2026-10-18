@@ -35,7 +35,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
-use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
@@ -117,7 +116,7 @@ final class LiteralExtractor extends AbstractNodeVisitor
             /** @var LiteralSet $childSet */
             $childSet = $child->accept($this);
             $result = $result->concat($childSet);
-            $accepted = $accepted || $this->mayAccept($child);
+            $accepted = $accepted || AcceptVerb::mayEndMatch($child);
 
             // Safety valve
             if (\count($result->prefixes) > self::MAX_LITERALS_COUNT) {
@@ -390,34 +389,6 @@ final class LiteralExtractor extends AbstractNodeVisitor
     {
         // Callouts do not match characters, so they don't contribute to literal extraction.
         return LiteralSet::fromString('');
-    }
-
-    /**
-     * Whether a "(*ACCEPT)" inside the node may end the match there: not one
-     * in a lookaround, which only ends the assertion.
-     */
-    private function mayAccept(NodeInterface $node): bool
-    {
-        if ($node instanceof PcreVerbNode) {
-            return str_starts_with($node->verb, 'ACCEPT');
-        }
-
-        $children = match (true) {
-            $node instanceof GroupNode => \in_array($node->type, self::LOOKAROUNDS, true) ? [] : [$node->child],
-            $node instanceof SequenceNode => $node->children,
-            $node instanceof AlternationNode => $node->alternatives,
-            $node instanceof QuantifierNode => [$node->node],
-            $node instanceof ConditionalNode => [$node->yes, $node->no],
-            default => [],
-        };
-
-        foreach ($children as $child) {
-            if ($this->mayAccept($child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

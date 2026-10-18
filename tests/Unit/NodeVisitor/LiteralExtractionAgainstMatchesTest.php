@@ -64,6 +64,9 @@ final class LiteralExtractionAgainstMatchesTest extends TestCase
 
         // "(*ACCEPT)" ends the match where it stands.
         yield 'accept' => ['pattern' => '/(A(A|B(*ACCEPT)|C)D)(E)/', 'subject' => 'AB'];
+        yield 'accept in a script run' => ['pattern' => '/(*sr:a(*ACCEPT))b/', 'subject' => 'a'];
+        yield 'accept in an atomic script run' => ['pattern' => '/(*asr:a(*ACCEPT))b/', 'subject' => 'a'];
+        yield 'accept in a conditional in a script run' => ['pattern' => '/(*sr:(a)?(?(1)(*ACCEPT)|c))b/', 'subject' => 'a'];
 
         // More variants than the set keeps: the set cannot claim to list them.
         yield 'counted class' => ['pattern' => '/^[abc]{12}/', 'subject' => 'cccccccccccc'];

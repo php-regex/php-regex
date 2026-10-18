@@ -700,6 +700,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The character sets the ReDoS analysis and the lint read at the edges of a quantified atom take its minimum from the quantifier as the parser reads it: `{,5}`, a quantifier from PCRE2 10.43, and `{ 0 }` were read as a minimum of 1, so what follows them was left out of the first characters of `x{,5}y`, and a lazy count written with its suffix, `{2}?`, as a minimum of 0.
 - `PsrCacheAdapter` and `PsrSimpleCacheAdapter` count their hits and misses, as `RemovableCacheInterface` says a cache does, where `getStats()` always returned zeros: a load that gives a tree back is a hit, any other a miss. A tree the parser already holds in memory in front of the pool asks the pool nothing, and counts in neither.
 - The Python target drops `/S` with a note, as the JavaScript target does, where it refused the pattern: PHP has ignored the flag since 7.3.
+- `Regex::literals()` looks for an `(*ACCEPT)` inside a script run, as the length analysis does: `/(*sr:a(*ACCEPT))b/` matches `"a"`, and its suffix was `b`. Both analyses now ask the same question of the same nodes.
 
 ### Documentation
 
