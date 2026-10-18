@@ -77,6 +77,12 @@ final class ExitCodeContractTest extends TestCase
         yield 'version with an argument' => [['version', 'extra']];
         yield 'self-update with an unknown option' => [['self-update', '--bogus']];
         yield 'self-update with an argument' => [['self-update', 'extra']];
+        yield 'lsp with an unknown option' => [['lsp', '--bogus']];
+        yield 'lsp with an argument' => [['lsp', 'extra']];
+        // The server reads its target from the editor, regex.json and
+        // composer.json: a target on the command line would be ignored.
+        yield 'lsp with a --php-version' => [['--php-version=8.2', 'lsp']];
+        yield 'lsp with a --pcre-version' => [['--pcre-version=10.40', 'lsp']];
         yield 'help with an unknown option' => [['help', '--bogus']];
         yield 'help with a second argument' => [['help', 'analyze', 'extra']];
 

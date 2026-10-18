@@ -76,6 +76,7 @@ PHPRegex CLI provides these commands:
 | `transpile`   | Transpile a PCRE regex to JavaScript (`js`), an HTML `pattern` attribute (`html`) or Python (`py`) |
 | `format`      | Lay a pattern out over lines under `x`, or `--compact` it to one line |
 | `lint`        | Lint entire codebase for regex issues                    |
+| `lsp`         | Run the [language server](lsp.md) over stdio             |
 | `version`     | Display version information                              |
 | `self-update` | Update PHAR to latest version                            |
 | `help`        | Show help message                                        |
@@ -1345,7 +1346,8 @@ Code 2 covers an unknown command or option, an option without its value or
 with a value the command does not accept (an unknown `--format`, `--target`,
 `--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
 a missing pattern, an argument the command does not take (one pattern more
-than it reads, or anything after `version` or `self-update`), an
+than it reads, or anything after `version`, `self-update` or `lsp`), a
+target given to `lsp` (the server reads it from the editor), an
 `--input-file` that cannot be read, an `--output` file that cannot be written,
 a `regex.json` that cannot be read (`lint` and `debug`), and, for `lint`, a
 target PHP of 7.2 or earlier, which ships PCRE1: one named outright, or a
@@ -1877,6 +1879,22 @@ vendor/bin/regex highlight '/test/' --ansi
 
 New to regex? Start with [the tutorial](../tutorial/README.md), or read
 [Regex in PHP](regex-in-php.md) for the PHP fundamentals first.
+
+---
+
+## Language Server
+
+`regex lsp` runs the [language server](lsp.md) on stdin and stdout, as
+`vendor/bin/regex-lsp` does: the phar carries it, so one download serves the
+editor too. Point the editor's server command at it:
+
+```bash
+php regex.phar lsp
+```
+
+The CLI package installed alone does not carry the server: there, the
+command exits with code 2 and names the package to install,
+`php-regex/regex-language-server`.
 
 ---
 

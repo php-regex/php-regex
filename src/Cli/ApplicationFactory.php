@@ -25,6 +25,7 @@ use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\HighlightCommand;
 use PHPRegex\Cli\Command\LintCommand;
 use PHPRegex\Cli\Command\LintOutputRenderer;
+use PHPRegex\Cli\Command\LspCommand;
 use PHPRegex\Cli\Command\ParseCommand;
 use PHPRegex\Cli\Command\RedosCommand;
 use PHPRegex\Cli\Command\SelfUpdateCommand;
@@ -88,6 +89,7 @@ final class ApplicationFactory
                 new LintExtractorFactory(),
                 new LintOutputRenderer(),
             ),
+            new LspCommand(),
         ];
     }
 }

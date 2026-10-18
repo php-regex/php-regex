@@ -12,6 +12,7 @@ declare(strict_types=1);
  */
 
 use Rector\Config\RectorConfig;
+use Rector\Php55\Rector\String_\StringClassNameToClassConstantRector;
 use Rector\Php73\Rector\FuncCall\RegexDashEscapeRector;
 use Rector\PHPUnit\CodeQuality\Rector\ClassMethod\AddInstanceofAssertForNullableInstanceRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
@@ -60,5 +61,8 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/src/Laravel',
         // The upgrade map names classes in full: imported, two CharSet would collide
         __DIR__.'/src/Toolkit/Upgrade/UpgradeMap.php',
+        // The CLI package runs without the language server: it names the
+        // server's class, never imports it
+        StringClassNameToClassConstantRector::class => [__DIR__.'/src/Cli/Command/LspCommand.php'],
     ]);
 };

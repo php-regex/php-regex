@@ -39,6 +39,11 @@ The server binary is `vendor/bin/regex-lsp`. Run it with
 vendor/bin/regex-lsp --help
 ```
 
+The [phar](cli.md) carries the server too: `php regex.phar lsp`
+runs it, one download for Neovim, Helix, Zed or any editor that starts a
+command. Wherever the sections below name `vendor/bin/regex-lsp`, the phar's
+command works the same way.
+
 ### Configure Your IDE
 
 See the IDE-specific sections below for configuration instructions.

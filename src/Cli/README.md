@@ -65,6 +65,7 @@ Commands
 | `redos` | Benchmark patterns for ReDoS | `self-update` | Update the phar in place |
 | `diagram` | AST diagram, text or SVG | `help` | Display the help message |
 | `graph` | NFA graph, DOT or Mermaid | `format` | Lay a pattern out over lines, or compact it |
+| `lsp` | Run the language server (the phar carries it) | | |
 
 Configuration
 -------------

@@ -32,6 +32,9 @@
         "php-regex/regex-toolkit": "self.version",
         "php-regex/regex-transpiler": "self.version"
     },
+    "suggest": {
+        "php-regex/regex-language-server": "To run the language server with regex lsp."
+    },
     "autoload": {
         "psr-4": {
             "PHPRegex\\Cli\\": ""

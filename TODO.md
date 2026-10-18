@@ -167,9 +167,6 @@ lifecycle gates and framing caps, dynamic watcher registration, document
 versions on diagnostics pushes, the LSP/CLI parity test, and the
 not-analyzed severity aligned with `regex lint`. Remaining:
 
-5. **`regex lsp` dispatch** so the existing phar carries the server
-   (soft-gated on class_exists in the standalone CLI package); gives
-   Neovim/Helix/Zed a one-download install.
 6. **VS Code extension committed in-repo** (launch vendor/bin/regex-lsp
    or the phar via a serverPath setting; no binary bundling, no
    marketplace) replacing the hand-written-client section of

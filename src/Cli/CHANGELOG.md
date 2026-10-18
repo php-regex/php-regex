@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex lsp` runs the language server over stdio, so `regex.phar` carries
+   it; installed without `php-regex/regex-language-server`, the command
+   exits with code 2 and names the package.
  * `lint` reports the inline markers and the baseline entries that silence
    nothing, as `regex.ignore.unmatched`; `--no-report-unmatched-ignores`
    turns the report off for one run.

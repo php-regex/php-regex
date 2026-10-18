@@ -63,6 +63,13 @@ jobs:
       - name: Build
         run: phar/build
 
+      - name: Check the phar carries the language server
+        run: |
+          message='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}'
+          printf 'Content-Length: %d\r\n\r\n%s' "${#message}" "$message" > "$RUNNER_TEMP/lsp-in"
+          php bin/regex.phar lsp < "$RUNNER_TEMP/lsp-in" > "$RUNNER_TEMP/lsp-out"
+          grep -q '"serverInfo":{"name":"php-regex-lsp"' "$RUNNER_TEMP/lsp-out" || { echo "bin/regex.phar lsp did not answer initialize:" >&2; cat "$RUNNER_TEMP/lsp-out" >&2; exit 1; }
+
       - name: Check the version and write the checksum
         run: |
           version="${TAG#v}"

@@ -34,8 +34,8 @@ final class HelpCommand extends AbstractCommand
      */
     private const DOCUMENTED_COMMANDS = [
         'parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram',
-        'graph', 'highlight', 'validate', 'transpile', 'format', 'lint', 'version',
-        'self-update', 'help',
+        'graph', 'highlight', 'validate', 'transpile', 'format', 'lint', 'lsp',
+        'version', 'self-update', 'help',
     ];
 
     /**
@@ -464,6 +464,17 @@ final class HelpCommand extends AbstractCommand
                     [[$this->resolveInvocation(), 'graph', "'/a+b/'", '--format=mermaid'], 'Render it as Mermaid'],
                 ],
             ),
+            'lsp' => self::commandHelp(
+                description: 'Run the language server over stdio',
+                options: [],
+                notes: [
+                    'Speaks the Language Server Protocol on stdin and stdout, as vendor/bin/regex-lsp does.',
+                    'The target is read from the editor\'s initializationOptions, regex.json or composer.json.',
+                ],
+                examples: [
+                    [[$this->resolveInvocation(), 'lsp'], 'Start the server, as an editor does'],
+                ],
+            ),
             'version' => self::commandHelp(
                 description: 'Display version information',
                 options: [],
@@ -677,7 +688,7 @@ final class HelpCommand extends AbstractCommand
             return $output->color($token, Output::GREEN);
         }
 
-        if (\in_array($token, ['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'highlight', 'validate', 'transpile', 'format', 'lint', 'self-update', 'help'], true)) {
+        if (\in_array($token, ['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'highlight', 'validate', 'transpile', 'format', 'lint', 'lsp', 'self-update', 'help'], true)) {
             return $output->color($token, Output::YELLOW.Output::BOLD);
         }
 
