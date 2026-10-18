@@ -155,8 +155,10 @@ final class ForkedWorkerPoolTest extends TestCase
             2,
             static function (array $chunk, \Closure $done): array {
                 foreach ($chunk as $item) {
+                    // Long enough that forking the process running the
+                    // whole suite, a second on the macOS runners, ends first.
                     if (0 === $item) {
-                        usleep(600_000);
+                        usleep(3_000_000);
                     }
                     $done(1);
                 }
@@ -173,7 +175,7 @@ final class ForkedWorkerPoolTest extends TestCase
         $advances = $this->calls('advance');
         $this->assertNotSame([], $advances);
         $this->assertSame(6, array_sum(array_map(static fn (array $call): int => (int) $call['count'], $advances)));
-        $this->assertLessThan($start + 0.6, $advances[0]['at'], 'The first progress waited for the slowest chunk.');
+        $this->assertLessThan($start + 3.0, $advances[0]['at'], 'The first progress waited for the slowest chunk.');
     }
 
     /**
