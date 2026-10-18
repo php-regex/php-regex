@@ -109,7 +109,7 @@ PHP 7.3 is the first PHP on PCRE2 (10.32); PHP 7.2 and earlier ship PCRE1
 (8.x), a different engine that reads some patterns otherwise and whose last
 release came out in 2021. `regex lint` never judges such a PHP as if it ran
 PCRE2. A project whose `composer.json` allows PHP 7.3 or later as well,
-`^7.1 || ^8.0` or `>=5.4`, is judged from the lowest such PHP, and a note
+`^7.1|^8.0` or `>=5.4`, is judged from the lowest such PHP, and a note
 says the versions below 7.3 are not judged, even under a
 `config.platform.php` below 7.3. A PHP below 7.3 named outright
 (`--php-version`, `phpVersion`, a bridge setting), or a `composer.json` that

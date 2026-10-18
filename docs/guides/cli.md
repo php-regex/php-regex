@@ -1054,7 +1054,7 @@ pattern for one target, chosen in this order:
 2. `phpVersion` and `pcreVersion` in `regex.json`;
 3. `composer.json` in the working directory: `config.platform.php` if set
    (one below 7.3 gives way to `require.php`, see below), else the lowest
-   version `require.php` allows (`^8.2 || ^8.3` is PHP 8.2),
+   version `require.php` allows (`^8.2|^8.3` is PHP 8.2),
    and then the patterns are also validated on the later PHP versions the
    constraint allows ([Several PHP versions](#several-php-versions));
    The `COMPOSER` environment variable names another file, as it does for
@@ -1087,7 +1087,7 @@ on PCRE2 (10.32), with no release in between. What happens to a project that
 allows such a PHP depends on where the version comes from:
 
 - A `require.php` that starts below 7.3 but also allows PHP 7.3 or later,
-  `^7.1 || ^8.0` or `>=5.4` for instance, is judged from the lowest PHP of
+  `^7.1|^8.0` or `>=5.4` for instance, is judged from the lowest PHP of
   7.3 or later it allows, usually 7.3, as any other floor. The versions below
   7.3 are left out, and a note says so; the note does not change the exit
   code:

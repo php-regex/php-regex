@@ -311,7 +311,35 @@ final class PackageManifestTest extends TestCase
         // 9.6 is the settled floor, the oldest the assertions still serve;
         // every major from it runs on some PHP the package runs on, so all
         // five are required, not suggested.
-        $this->assertSame('^9.6 || ^10.0 || ^11.0 || ^12.0 || ^13.0', self::dig($manifest, 'require', 'phpunit/phpunit'));
+        $this->assertSame('^9.6|^10.0|^11.0|^12.0|^13.0', self::dig($manifest, 'require', 'phpunit/phpunit'));
+    }
+
+    #[Test]
+    public function test_every_manifest_writes_its_alternatives_with_a_single_pipe(): void
+    {
+        $root = self::root();
+        $manifests = [$root.'/composer.json', ...glob($root.'/{src,tools,demo}/*/composer.json', \GLOB_BRACE) ?: []];
+        $this->assertGreaterThan(25, \count($manifests));
+
+        // Composer reads "|" and "||" alike; the manifests keep one spelling,
+        // the "^6.4|^7.4" one, and a dependency update that writes " || "
+        // is rewritten before it lands.
+        $spelled = [];
+        foreach ($manifests as $file) {
+            $manifest = json_decode((string) file_get_contents($file), true, 512, \JSON_THROW_ON_ERROR);
+            \assert(\is_array($manifest));
+            foreach (['require', 'require-dev', 'conflict', 'replace', 'provide'] as $section) {
+                $links = $manifest[$section] ?? [];
+                \assert(\is_array($links));
+                foreach ($links as $package => $constraint) {
+                    if (\is_string($constraint) && (str_contains($constraint, '||') || str_contains($constraint, ' |') || str_contains($constraint, '| '))) {
+                        $spelled[] = substr($file, \strlen($root) + 1).' '.$section.' '.$package.': '.$constraint;
+                    }
+                }
+            }
+        }
+
+        $this->assertSame([], $spelled);
     }
 
     #[Test]
