@@ -37,6 +37,7 @@ jobs:
   phar:
     name: Build the phar
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
       id-token: write
@@ -53,7 +54,7 @@ jobs:
 
       # The lowest PHP the phar runs on, so nothing newer reaches it.
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.2'
           extensions: mbstring, tokenizer

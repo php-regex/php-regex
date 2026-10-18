@@ -22,6 +22,7 @@ jobs:
     name: Split the packages
     if: vars.SPLIT_ENABLED == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
         with:
