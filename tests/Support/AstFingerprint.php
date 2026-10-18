@@ -45,6 +45,7 @@ final class AstFingerprint
         // version it holds is left out of its own fingerprint.
         'src/Parser/RegexParser.php',
         'src/Parser/Analysis/LengthRangeCalculator.php',
+        'src/Parser/Analysis/AcceptVerb.php',
         'src/Parser/Engine/PcreEngine.php',
         'src/Parser/PcreTarget.php',
         'src/Parser/PcreFeature.php',
