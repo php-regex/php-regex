@@ -701,6 +701,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PsrCacheAdapter` and `PsrSimpleCacheAdapter` count their hits and misses, as `RemovableCacheInterface` says a cache does, where `getStats()` always returned zeros: a load that gives a tree back is a hit, any other a miss. A tree the parser already holds in memory in front of the pool asks the pool nothing, and counts in neither.
 - The Python target drops `/S` with a note, as the JavaScript target does, where it refused the pattern: PHP has ignored the flag since 7.3.
 - `Regex::literals()` looks for an `(*ACCEPT)` inside a script run, as the length analysis does: `/(*sr:a(*ACCEPT))b/` matches `"a"`, and its suffix was `b`. Both analyses now ask the same question of the same nodes.
+- Laravel `regex:lint` reads the validation rules as Laravel's `ValidationRuleParser` does. A rules string is split on every `|`: the `regex:` after `nullable|string|` in `'nullable|string|regex:/^#[0-9a-f]{6}$/'` was not read, and `'required|regex:/^(?:a|b)$/'` is linted as the `/^(?:a` Laravel runs, which preg_match() refuses; an element of a rules array is one rule, its `|` kept. The pattern is linted as written: one between `{}`, `()`, `[]`, `<>`, `+` or another delimiter PHP takes, or with none, was wrapped in `/…/`, another pattern than the one Laravel runs (`{^a$}` matches `"a"`, `/{^a$}/` does not).
 
 ### Documentation
 

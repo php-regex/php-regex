@@ -282,6 +282,14 @@ whatever `exclude` says; a project declaration wins over a copy in
 [the CLI guide](cli.md#patterns-behind-a-wrapper)); every rule it can report
 is catalogued in [Lint rules](../reference/rules.md).
 
+A `regex:` or `not_regex:` validation rule is linted as Laravel's validator
+reads it. A rules string is split on every `|`, one inside the pattern
+included: `'code' => 'required|regex:/^(?:a|b)$/'` hands `/^(?:a` to
+`preg_match()`, and the lint reports it as invalid. Write such a rule as an
+array element, `['required', 'regex:/^(?:a|b)$/']`, which keeps its `|`. The
+pattern is linted as written, between any delimiter PHP takes: `{^a$}` is
+the pattern between braces, not `/{^a$}/`.
+
 A route constraint is judged as the router compiles it: stripped of a
 leading `^` or `\A` and a trailing `$` or `\z`, its groups made
 non-capturing, in a group named after the parameter, between braces and

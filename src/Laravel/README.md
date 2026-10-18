@@ -33,6 +33,9 @@ Features
 * Five artisan commands: `regex:lint`, `regex:routes`, `regex:explain`, `regex:compare` and `regex:transpile`, with the options of the same commands in the CLI and the Symfony bundle
 * `regex:lint` reads your PHP files, your route constraints and your validator rules in one pass, a route constraint
   anchored and flagged as the router matches it
+* A `regex:` or `not_regex:` validation rule is read as Laravel reads it: a rules string is split on every `|`, one
+  inside the pattern included, so `'code' => 'required|regex:/^(?:a|b)$/'` is linted as the `/^(?:a` Laravel runs (write
+  such a rule as an array element); the pattern is linted as written, `{^a$}` between its braces
 * In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, Laravel's `Str::match()` and the other wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it

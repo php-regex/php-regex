@@ -18,6 +18,10 @@ CHANGELOG
  * `regex:compare --method intersection|subset|equivalence`, defaulting to
    `intersection` as the CLI and Symfony do; the JSON report names the
    method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.
+ * `regex:lint` reads a `regex:` or `not_regex:` validation rule as Laravel
+   reads it: a rules string is split on every `|`, so the rule after
+   `nullable|string|` is read, and the parameter is linted as written,
+   between braces or any other delimiter PHP takes.
  * `regex:explain` no longer stops with an error on a pattern the optimizer
    shortens.
  * A route constraint is judged as the router compiles it: between braces,

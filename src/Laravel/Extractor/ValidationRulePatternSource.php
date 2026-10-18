@@ -29,14 +29,20 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 final class ValidationRulePatternSource implements PatternSourceInterface
 {
     /**
-     * A 'regex:' or 'not_regex:' rule in a single- or double-quoted literal,
-     * up to the quote that opened it, on one line. Group 1 is the quote,
-     * group 2 the rule's pattern as written in the literal. An escaped
-     * character (a backslash and the character after it) and any other
-     * character but a backslash, the quote and a newline are disjoint, so
-     * a run of backslashes is read in one pass.
+     * A single- or double-quoted literal on one line that holds a 'regex:'
+     * or 'not_regex:' rule, at its start or after a "|", up to the quote
+     * that opened it. Group 1 is the quote, group 2 the literal as written.
+     * An escaped character (a backslash and the character after it) and any
+     * other character but a backslash, the quote and a newline are
+     * disjoint, so a run of backslashes is read in one pass.
      */
-    private const RULE_PATTERN = '/(?|(\')(?:not_)?regex:((?:\\\\.|[^\'\\\\\n])++)\'|(")(?:not_)?regex:((?:\\\\.|[^"\\\\\n])++)")/';
+    private const RULE_PATTERN = '/(?|(\')(?=(?:(?:\\\\.|[^\'\\\\\n|])*+\|)*(?:not_)?regex:)((?:\\\\.|[^\'\\\\\n])++)\'|(")(?=(?:(?:\\\\.|[^"\\\\\n|])*+\|)*(?:not_)?regex:)((?:\\\\.|[^"\\\\\n])++)")/';
+
+    /**
+     * A regex rule as Laravel's ValidationRuleParser reads one rule: the
+     * name, then all the text after the first ":".
+     */
+    private const RULE = '/^(not_)?regex:/';
 
     /**
      * The files the last extract() could not read, each with why.
@@ -146,34 +152,65 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         }
 
         foreach ($matches[2] as $index => $match) {
-            $pattern = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
+            $literal = $this->unescapeStringLiteral($match[0], $matches[1][$index][0]);
             $offset = $match[1];
-
-            // Calculate line number from offset
             $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
 
-            // Normalize pattern (ensure it has delimiters)
-            $normalized = $this->normalizePattern($pattern);
-            if (null === $normalized) {
-                continue;
+            // Laravel splits a rules string on every "|", one inside a
+            // pattern included; an element of a rules array is one rule.
+            $rules = $this->isRulesString($literal, substr($content, 0, $offset - 1)) ? explode('|', $literal) : [$literal];
+
+            foreach ($rules as $rule) {
+                if (1 !== LibraryPcre::match(self::RULE, $rule, $name)) {
+                    continue;
+                }
+
+                // preg_match() gets the parameter as it is, delimiters and
+                // all: it is linted as written.
+                $pattern = substr($rule, \strlen($name[0]));
+                $trimmed = trim($pattern, " \t\n\r\0\x0B");
+                if ('' === $trimmed) {
+                    continue;
+                }
+
+                $patterns[] = new PatternOccurrence(
+                    $trimmed,
+                    $filePath,
+                    $lineNumber,
+                    'validation:'.('' === ($name[1] ?? '') ? 'regex' : 'not_regex'),
+                    $pattern,
+                    'Laravel validation rule',
+                );
             }
-
-            // Get the full rule match for context
-            $fullMatch = $matches[0][$index][0];
-            $isNotRegex = str_starts_with($fullMatch, "'not_regex:") || str_starts_with($fullMatch, '"not_regex:');
-            $ruleType = $isNotRegex ? 'not_regex' : 'regex';
-
-            $patterns[] = new PatternOccurrence(
-                $normalized,
-                $filePath,
-                $lineNumber,
-                'validation:'.$ruleType,
-                $pattern,
-                'Laravel validation rule',
-            );
         }
 
         return $patterns;
+    }
+
+    /**
+     * Whether the literal is a rules string, which Laravel splits on "|",
+     * rather than one element of a rules array: a rule before the regex one,
+     * as "nullable|regex:/a/", or a literal given to a key ('a' => '…') or
+     * assigned ($rules['a'] = '…'), where $rules['a'][] = '…' pushes one
+     * element.
+     */
+    private function isRulesString(string $literal, string $before): bool
+    {
+        if (1 !== LibraryPcre::match(self::RULE, $literal)) {
+            return true;
+        }
+
+        $before = rtrim($before, " \t\n\r\0\x0B");
+        if (str_ends_with($before, '=>')) {
+            return true;
+        }
+
+        // "==", "!=", "<=" and ">=" compare; "=", ".=" and "??=" assign.
+        if (!str_ends_with($before, '=') || 1 === LibraryPcre::match('/[=!<>]=$/', $before)) {
+            return false;
+        }
+
+        return !str_ends_with(rtrim(substr($before, 0, -1), " \t\n\r\0\x0B"), '[]');
     }
 
     /**
@@ -183,44 +220,5 @@ final class ValidationRulePatternSource implements PatternSourceInterface
     private function unescapeStringLiteral(string $pattern, string $quote): string
     {
         return str_replace(['\\'.$quote, '\\\\'], [$quote, '\\'], $pattern);
-    }
-
-    private function normalizePattern(string $pattern): ?string
-    {
-        $pattern = trim($pattern, " \t\n\r\0\x0B");
-
-        if ('' === $pattern) {
-            return null;
-        }
-
-        // Laravel validation regex rules typically include delimiters
-        if ($this->hasDelimiters($pattern)) {
-            return $pattern;
-        }
-
-        // Wrap in delimiters if missing
-        return '/'.addcslashes($pattern, '/').'/';
-    }
-
-    /**
-     * Check if a pattern has regex delimiters.
-     */
-    private function hasDelimiters(string $pattern): bool
-    {
-        if (\strlen($pattern) < 2) {
-            return false;
-        }
-
-        $firstChar = $pattern[0];
-        $validDelimiters = ['/', '#', '~', '!', '@', '%', '`'];
-
-        if (!\in_array($firstChar, $validDelimiters, true)) {
-            return false;
-        }
-
-        // Check if it ends with the same delimiter (possibly with flags)
-        $lastDelimiterPos = strrpos($pattern, $firstChar);
-
-        return false !== $lastDelimiterPos && $lastDelimiterPos > 0;
     }
 }
