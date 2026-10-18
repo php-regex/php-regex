@@ -6,24 +6,42 @@ deptrac:
   layers:
     - name: Parser
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Parser\\(?!Internal\\)'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Parser\\#'
+          must_not:
+            - type: tagValueRegex
+              tag: '@internal'
     - name: ParserInternal
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Parser\\Internal\\'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Parser\\#'
+            - type: tagValueRegex
+              tag: '@internal'
     - name: Explain
       collectors:
         - type: classLike
           value: '^PHPRegex\\Explain\\'
     - name: Optimizer
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Optimizer\\(?!Internal\\)'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Optimizer\\#'
+          must_not:
+            - type: tagValueRegex
+              tag: '@internal'
     - name: OptimizerInternal
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Optimizer\\Internal\\'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Optimizer\\#'
+            - type: tagValueRegex
+              tag: '@internal'
     - name: Generator
       collectors:
         - type: classLike
@@ -34,24 +52,42 @@ deptrac:
           value: '^PHPRegex\\Automata\\'
     - name: ReDoS
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Redos\\(?!Internal\\)'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Redos\\#'
+          must_not:
+            - type: tagValueRegex
+              tag: '@internal'
     - name: RedosInternal
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Redos\\Internal\\'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Redos\\#'
+            - type: tagValueRegex
+              tag: '@internal'
     - name: Transpiler
       collectors:
         - type: classLike
           value: '^PHPRegex\\Transpiler\\'
     - name: Linter
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Linter\\(?!Internal\\)'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Linter\\#'
+          must_not:
+            - type: tagValueRegex
+              tag: '@internal'
     - name: LinterInternal
       collectors:
-        - type: classLike
-          value: '^PHPRegex\\Linter\\Internal\\'
+        - type: bool
+          must:
+            - type: classNameRegex
+              value: '#^PHPRegex\\Linter\\#'
+            - type: tagValueRegex
+              tag: '@internal'
     - name: Toolkit
       collectors:
         - type: classLike
@@ -100,13 +136,13 @@ deptrac:
     RedosInternal: [ReDoS, Parser, ParserInternal]
     Transpiler: [Parser, ParserInternal]
     Linter: [Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer, OptimizerInternal, LinterInternal]
-    LinterInternal: [Linter, Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer]
+    LinterInternal: [Linter, Parser, ParserInternal, Explain, ReDoS, Automata, Optimizer, OptimizerInternal]
     Toolkit: [Parser, ParserInternal, Explain, Optimizer, Generator, ReDoS, Transpiler, Linter]
     Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, RedosInternal, Transpiler, Linter, LinterInternal]
     LanguageServer: [Toolkit, Parser, ParserInternal, Explain, Optimizer, ReDoS, Linter, LinterInternal]
-    PHPStan: [Parser, ParserInternal, Linter, ReDoS, Automata, Optimizer]
+    PHPStan: [Parser, ParserInternal, Linter, LinterInternal, ReDoS, Automata, Optimizer]
     PHPUnit: [Toolkit, Parser, ReDoS]
-    Psalm: [Parser, ParserInternal, Automata, Linter]
+    Psalm: [Parser, ParserInternal, Automata, Linter, LinterInternal]
     Rector: [Parser, Automata]
     Symfony: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, LinterInternal]
     Laravel: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Generator, Automata, ReDoS, Transpiler, Linter, LinterInternal]

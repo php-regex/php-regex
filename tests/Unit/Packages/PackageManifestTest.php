@@ -72,49 +72,131 @@ final class PackageManifestTest extends TestCase
     ];
 
     /**
-     * The uses of a sibling's internal classes 2.0 ships with. Siblings always
-     * run at the same version, so these may change in any release; a new entry
-     * here is still a new cross-package dependency on code that promises
-     * nothing: make the class public instead, or keep it. Ascii and Bytes
-     * map case and split strings the same way on every PHP the packages
-     * run on. Parser\Hir is
-     * watched the same way: it stays @internal while the analyses move onto
-     * the normalized form.
+     * The uses of a sibling's internal classes 2.0 ships with: every class
+     * of another package whose docblock says @internal, wherever its
+     * namespace puts it. Siblings always run at the same version, so these
+     * may change in any release; a new entry here is still a new
+     * cross-package dependency on code that promises nothing: make the class
+     * public instead, or keep it. Ascii and Bytes map case and split strings
+     * the same way on every PHP the packages run on. Parser\Hir stays internal
+     * while the analyses move onto the normalized form.
      */
     private const INTERNAL_USES = [
         // The solver reads the whole normalized form: every class of
         // it, and the translator that builds the tree.
         'Automata' => [
-            'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir', 'Parser\Hir\AssertionKind', 'Parser\Hir\AtomicHir',
-            'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet', 'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir',
-            'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir', 'Parser\Hir\Greed', 'Parser\Hir\Hir',
-            'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir', 'Parser\Hir\LookHir', 'Parser\Hir\LookKind',
-            'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre',
-            'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches',
+            'Parser\Exception\VisualContextTrait', 'Parser\Hir\AlternationHir', 'Parser\Hir\AssertionHir',
+            'Parser\Hir\AssertionKind', 'Parser\Hir\AtomicHir', 'Parser\Hir\CaptureHir', 'Parser\Hir\CharSet',
+            'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir',
+            'Parser\Hir\Greed', 'Parser\Hir\Hir', 'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir',
+            'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir',
+            'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StartOptions',
+            'Parser\Internal\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
-        'Cli' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict', 'Linter\Internal\WorkerCount', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator', 'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Redos\Internal\InputGenerator'],
+        'Cli' => [
+            'Automata\Model\Nfa', 'Automata\Model\NfaState', 'Automata\Transform\HirToNfaTransformer',
+            'LanguageServer\Server', 'Linter\AnalysisService', 'Linter\Config\LintArgumentParser',
+            'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader', 'Linter\Config\LintDefaultsBuilder',
+            'Linter\Config\LintExtractorFactory', 'Linter\Config\ProjectTarget',
+            'Linter\Config\UnsupportedTargetException', 'Linter\Diagnostic', 'Linter\DiagnosticType',
+            'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
+            'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
+            'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper',
+            'Linter\Internal\LintStatsCounter', 'Linter\Internal\LintSummary', 'Linter\Internal\RedosVerdict',
+            'Linter\Internal\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
+            'Linter\LintService', 'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection',
+            'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator',
+            'Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\IniFlag',
+            'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss',
+            'Parser\Internal\PatternParser', 'Redos\Heatmap', 'Redos\Internal\InputGenerator',
+            'Transpiler\Target\TargetRegistry',
+        ],
         'Explain' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
         'Generator' => ['Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre', 'Parser\Internal\StaticCaches'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
         // internal they all use for it.
-        'LanguageServer' => ['Linter\Internal\RedosVerdict', 'Parser\Internal\Ascii', 'Parser\Internal\IniFlag', 'Parser\Internal\LibraryPcre'],
-        'Laravel' => ['Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
+        'LanguageServer' => [
+            'Linter\Config\JudgedRange', 'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader',
+            'Linter\Config\LintConfigResult', 'Linter\Config\LintConfigSchema', 'Linter\Config\LintDefaultsBuilder',
+            'Linter\Config\ProjectTarget', 'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Extraction\IgnoreMarker', 'Linter\Extraction\InlineIgnores', 'Linter\Extraction\LiteralSpelling',
+            'Linter\Extraction\MemoryBudget', 'Linter\Extraction\PatternAttributeScanner',
+            'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
+            'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
+            'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\Internal\RedosVerdict',
+            'Linter\Rule\InvisibleCharacterRule', 'Parser\Internal\Ascii', 'Parser\Internal\IniFlag',
+            'Parser\Internal\LibraryPcre',
+        ],
+        'Laravel' => [
+            'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Diagnostic', 'Linter\DiagnosticType', 'Linter\Extraction\ExtractorInterface',
+            'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunctionRegistry',
+            'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\TokenBasedExtractionStrategy',
+            'Linter\Formatter\AbstractConsoleTagFormatter', 'Linter\Formatter\FormatterRegistry',
+            'Linter\Formatter\JsonFormatter', 'Linter\Formatter\LinkFormatter', 'Linter\Formatter\RelativePathHelper',
+            'Linter\Internal\LintStatsCounter', 'Linter\Internal\WorkerCount', 'Linter\LintProgress',
+            'Linter\LintReport', 'Linter\LintRequest', 'Linter\LintService', 'Linter\PatternExtractor',
+            'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
+            'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
+            'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre',
+            'Transpiler\Target\TargetRegistry',
+        ],
         // The lint writes its rewrite of a pattern under x into the
         // pattern's own layout, as the optimizer does, and checks it as
         // the optimizer checks its own.
-        'Linter' => ['Optimizer\Internal\LayoutSplicer', 'Optimizer\Internal\RewriteCheck', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure', 'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser', 'Parser\Internal\PropertyNames', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches'],
-        'Optimizer' => ['Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser'],
-        'PHPStan' => ['Parser\Internal\Ascii', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre'],
+        'Linter' => [
+            'Optimizer\Internal\LayoutSplicer', 'Optimizer\Internal\RewriteCheck', 'Optimizer\Rewriter',
+            'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
+            'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\DisplayEscaper',
+            'Parser\Internal\GroupIndex', 'Parser\Internal\JsonDocument', 'Parser\Internal\JsonEncodingFailure',
+            'Parser\Internal\LibraryPcre', 'Parser\Internal\NearMiss', 'Parser\Internal\PatternParser',
+            'Parser\Internal\PropertyNames', 'Parser\Internal\StartOptions', 'Parser\Internal\StaticCaches',
+            'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
+        ],
+        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Internal\LibraryPcre', 'Parser\Internal\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
+        'PHPStan' => [
+            'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
+            'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunction',
+            'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
+            'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Internal\Ascii',
+            'Parser\Internal\DisplayEscaper', 'Parser\Internal\LibraryPcre',
+        ],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
-        'Psalm' => ['Parser\Internal\Ascii', 'Parser\Internal\CaptureKey', 'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre'],
-        'Redos' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser'],
-        'Symfony' => ['Linter\Internal\WorkerCount', 'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre'],
+        'Psalm' => [
+            'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Extraction\GuardRegions', 'Linter\Extraction\PhpParserGuards', 'Linter\Extraction\TargetMarker',
+            'Linter\Extraction\TargetMarkers', 'Parser\Internal\Ascii', 'Parser\Internal\CaptureKey',
+            'Parser\Internal\CaptureLayout', 'Parser\Internal\LibraryPcre',
+        ],
+        'Redos' => [
+            'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',
+            'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes',
+            'Parser\Internal\IniFlag', 'Parser\Internal\PatternParser',
+        ],
+        'Symfony' => [
+            'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
+            'Linter\Extraction\ExtractorInterface', 'Linter\Extraction\InteropPresets',
+            'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpParserExtractionStrategy',
+            'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\Formatter\AbstractConsoleTagFormatter',
+            'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter', 'Linter\Formatter\LinkFormatter',
+            'Linter\Formatter\RelativePathHelper', 'Linter\Internal\WorkerCount', 'Linter\LintProgress',
+            'Linter\LintReport', 'Linter\LintRequest', 'Linter\LintService', 'Linter\PatternExtractor',
+            'Linter\PatternOccurrence', 'Linter\Source\OverlappingPatternSourceInterface',
+            'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
+            'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
+            'Parser\Internal\DisplayEscaper', 'Parser\Internal\JsonDocument', 'Parser\Internal\LibraryPcre',
+            'Transpiler\Target\TargetRegistry',
+        ],
         'Toolkit' => ['Parser\Internal\PatternParser'],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
-        'Transpiler' => ['Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre'],
+        'Transpiler' => [
+            'Parser\Exception\VisualContextTrait', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
+            'Parser\Hir\Utf8', 'Parser\Internal\Ascii', 'Parser\Internal\Bytes', 'Parser\Internal\LibraryPcre',
+        ],
     ];
 
     #[Test]
@@ -374,13 +456,16 @@ final class PackageManifestTest extends TestCase
     public function test_deptrac_has_a_layer_and_a_ruleset_per_package(): void
     {
         $config = (string) file_get_contents(self::root().'/deptrac.yaml');
-        // A package layer leaves out its Internal namespace when a sibling
-        // uses it: that namespace is a layer of its own.
-        preg_match_all("~- name: (\\w+)\\s+collectors:\\s+- type: classLike\\s+value: '\\^PHPRegex\\W+(\\w+)\\W+(?:\\(\\?!Internal\\W+\\))?'~", $config, $layers, \PREG_SET_ORDER);
+        $layers = self::deptracLayers($config);
 
         $byDirectory = [];
-        foreach ($layers as [, $layer, $directory]) {
-            $byDirectory[$directory] = $layer;
+        $internalOf = [];
+        foreach ($layers as $layer => ['directory' => $directory, 'internal' => $internal]) {
+            if ($internal) {
+                $internalOf[$directory] = $layer;
+            } else {
+                $byDirectory[$directory] = $layer;
+            }
         }
         ksort($byDirectory);
         $expected = array_keys(self::PACKAGES);
@@ -388,8 +473,19 @@ final class PackageManifestTest extends TestCase
 
         $this->assertSame($expected, array_keys($byDirectory));
 
+        // A package with an internal layer splits on the tag, not on a
+        // namespace: its public layer is the package minus what says
+        // @internal, so a class changes layer by losing the tag, never by
+        // moving.
+        foreach ($internalOf as $directory => $layer) {
+            $this->assertArrayHasKey($directory, $byDirectory, \sprintf('deptrac.yaml: the %s layer has no public layer beside it.', $layer));
+            $public = $layers[$byDirectory[$directory]]['block'];
+            $this->assertMatchesRegularExpression("~must_not:\\s+- type: tagValueRegex\\s+tag: '@internal'~", $public, \sprintf('deptrac.yaml: the %s layer must leave out what says @internal.', $byDirectory[$directory]));
+            $this->assertMatchesRegularExpression("~must:\\s+- type: classNameRegex\\s+value: '[^']+'\\s+- type: tagValueRegex\\s+tag: '@internal'~", $layers[$layer]['block'], \sprintf('deptrac.yaml: the %s layer must be its package and @internal.', $layer));
+        }
+
         $ruleset = substr($config, (int) strpos($config, "\n  ruleset:"));
-        foreach ($byDirectory as $directory => $layer) {
+        foreach ([...$byDirectory, ...array_values($internalOf)] as $directory => $layer) {
             $this->assertMatchesRegularExpression('~^    '.$layer.': ~m', $ruleset, \sprintf('deptrac.yaml: the %s layer (src/%s) has no ruleset entry.', $layer, $directory));
         }
     }
@@ -398,6 +494,7 @@ final class PackageManifestTest extends TestCase
     public function test_no_new_use_of_another_package_internals(): void
     {
         $allowed = self::INTERNAL_USES;
+        $internal = self::internalClasses();
 
         $found = [];
         foreach (array_keys(self::PACKAGES) as $directory) {
@@ -405,17 +502,10 @@ final class PackageManifestTest extends TestCase
             $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::root().'/src/'.$directory, \FilesystemIterator::SKIP_DOTS));
             foreach ($files as $file) {
                 if ($file instanceof \SplFileInfo && 'php' === $file->getExtension()) {
-                    // Parser\Hir counts as internal: its shape may change
-                    // while the analyses migrate onto it.
-                    preg_match_all('~PHPRegex\\\\(Parser\\\\Hir\\\\\w+)|PHPRegex\\\\((\w+)\\\\Internal\\\\\w+)~', (string) file_get_contents($file->getPathname()), $matches, \PREG_SET_ORDER);
-                    foreach ($matches as $match) {
-                        // The first alternative catches Parser\Hir uses (its
-                        // package is Parser), the second the Internal ones.
-                        $isHir = '' !== ($match[1] ?? '');
-                        $use = $isHir ? $match[1] : ($match[2] ?? '');
-                        $package = $isHir ? 'Parser' : ($match[3] ?? '');
-                        if ($package !== $directory) {
-                            $uses[] = $use;
+                    preg_match_all('~PHPRegex\\\\(\w+(?:\\\\\w+)+)~', (string) file_get_contents($file->getPathname()), $matches);
+                    foreach ($matches[1] as $name) {
+                        if (isset($internal[$name]) && $internal[$name] !== $directory) {
+                            $uses[] = $name;
                         }
                     }
                 }
@@ -435,17 +525,20 @@ final class PackageManifestTest extends TestCase
 
     /**
      * The architecture rules say the same at the package level: a package may
-     * reach a sibling's Internal layer exactly when it uses a listed class of
+     * reach a sibling's internal layer exactly when it uses a listed class of
      * it, so a new import of one fails there too.
      */
     #[Test]
     public function test_deptrac_grants_a_sibling_internal_layer_only_to_its_listed_users(): void
     {
         $config = (string) file_get_contents(self::root().'/deptrac.yaml');
-        preg_match_all("~- name: (\\w+)\\s+collectors:\\s+- type: classLike\\s+value: '\\^PHPRegex\\W+(\\w+)\\W+(?:\\(\\?!Internal\\W+\\))?'~", $config, $layers, \PREG_SET_ORDER);
         $directoryOf = [];
-        foreach ($layers as [, $layer, $directory]) {
+        $internalOf = [];
+        foreach (self::deptracLayers($config) as $layer => ['directory' => $directory, 'internal' => $internal]) {
             $directoryOf[$layer] = $directory;
+            if ($internal) {
+                $internalOf[$directory] = $layer;
+            }
         }
 
         $ruleset = substr($config, (int) strpos($config, "\n  ruleset:"));
@@ -453,17 +546,20 @@ final class PackageManifestTest extends TestCase
         $granted = [];
         foreach ($rules as [, $layer, $targets]) {
             foreach (array_map(trim(...), explode(',', $targets)) as $target) {
-                if (isset($directoryOf[$layer]) && $directoryOf[$layer].'Internal' !== $target && str_ends_with($target, 'Internal')) {
+                if (isset($directoryOf[$layer], $directoryOf[$target]) && \in_array($target, $internalOf, true) && $directoryOf[$target] !== $directoryOf[$layer]) {
                     $granted[$directoryOf[$layer]][] = $target;
                 }
             }
         }
 
+        // A use of a package without an internal layer is listed above and
+        // needs no grant: that package's layer holds all of it.
         $expected = [];
         foreach (self::INTERNAL_USES as $directory => $uses) {
             foreach ($uses as $use) {
-                if (str_contains($use, '\\Internal\\')) {
-                    $expected[$directory][] = strstr($use, '\\', true).'Internal';
+                $package = explode('\\', $use)[0];
+                if (isset($internalOf[$package])) {
+                    $expected[$directory][] = $internalOf[$package];
                 }
             }
         }
@@ -476,7 +572,7 @@ final class PackageManifestTest extends TestCase
             }
         }
 
-        $this->assertSame($expected, $granted, 'deptrac.yaml grants a sibling\'s Internal layer to a package that does not use it, or misses one it uses.');
+        $this->assertSame($expected, $granted, 'deptrac.yaml grants a sibling\'s internal layer to a package that does not use it, or misses one it uses.');
     }
 
     #[Test]
@@ -724,6 +820,57 @@ final class PackageManifestTest extends TestCase
         }
 
         return array_values(array_unique($found));
+    }
+
+    /**
+     * Each deptrac layer, with the src/ directory its classes come from and
+     * whether it collects the package's @internal classes.
+     *
+     * @return array<string, array{directory: string, internal: bool, block: string}>
+     */
+    private static function deptracLayers(string $config): array
+    {
+        $section = substr($config, 0, (int) strpos($config, "\n  ruleset:"))."\n";
+        preg_match_all('~^    - name: (\w+)\n((?:      .*\n)+)~m', $section, $blocks, \PREG_SET_ORDER);
+
+        $layers = [];
+        foreach ($blocks as [, $layer, $block]) {
+            if (1 === preg_match('~PHPRegex\W+(\w+)~', $block, $directory)) {
+                $layers[$layer] = [
+                    'directory' => $directory[1],
+                    'internal' => str_contains($block, 'tagValueRegex') && !str_contains($block, 'must_not'),
+                    'block' => $block,
+                ];
+            }
+        }
+
+        return $layers;
+    }
+
+    /**
+     * Every class under src/ whose docblock says @internal, by its name
+     * without the PHPRegex prefix, with the package it belongs to.
+     *
+     * @return array<string, string>
+     */
+    private static function internalClasses(): array
+    {
+        $internal = [];
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(self::root().'/src', \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()) {
+                continue;
+            }
+            $code = (string) file_get_contents($file->getPathname());
+            if (1 !== preg_match('~^namespace PHPRegex\\\\((\w+)[\w\\\\]*);~m', $code, $namespace)
+                || 1 !== preg_match('~(/\*\*(?:(?!\*/).)*\*/)\s*(?:#\[[^\]]*\]\s*)*(?:final |abstract |readonly )*(?:class|interface|trait|enum) (\w+)~s', $code, $declaration)
+                || 1 !== preg_match('~^\s*\*\s*@internal\b~m', $declaration[1])) {
+                continue;
+            }
+            $internal[$namespace[1].'\\'.$declaration[2]] = $namespace[2];
+        }
+
+        return $internal;
     }
 
     /**
