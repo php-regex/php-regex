@@ -192,17 +192,16 @@ final class SourceDeprecationListenerTest extends TestCase
     }
 
     /**
-     * The probe runs under the stack the test itself runs under: the 8.1
-     * rows drive the PHPUnit 10.5 of tools/phpunit-81, everyone else the
-     * PHPUnit 12 of tools/phpunit.
+     * The probe runs under the PHPUnit the test itself runs under: the
+     * PHPUnit 10.5 of tools/phpunit-81 on PHP 8.1, the PHPUnit of
+     * tools/phpunit, 11 or 12 as the PHP takes, everywhere else.
      *
      * @return array{0: int, 1: string}
      */
     private function runProbe(string $config, string $filter): array
     {
-        $phpunit = \PHP_VERSION_ID < 80300
-            ? \dirname(__DIR__, 3).'/tools/phpunit-81/vendor/bin/phpunit'
-            : \dirname(__DIR__, 3).'/tools/phpunit/vendor/bin/phpunit';
+        // vendor/phpunit/phpunit/src/Framework/TestCase.php
+        $phpunit = \dirname((string) (new \ReflectionClass(TestCase::class))->getFileName(), 5).'/bin/phpunit';
 
         $command = [\PHP_BINARY, $phpunit, '--configuration', $config, '--filter', $filter, '--no-progress'];
         $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);

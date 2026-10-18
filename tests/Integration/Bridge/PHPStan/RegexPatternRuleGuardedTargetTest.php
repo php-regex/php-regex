@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
@@ -25,7 +26,9 @@ use PHPUnit\Framework\Attributes\Test;
  * runs on: PHPStan narrows PHP_VERSION_ID under a guard, and the floor and
  * the later versions judged are those of the narrowed range, its lowest
  * version first. A guard PHPStan does not narrow on keeps the whole range,
- * and a guard that keeps no version of the range judges nothing.
+ * and a guard that keeps no version of the range judges nothing. What the
+ * engine running the analysis refuses is PHPStan's to report, never the
+ * rule's: a refusal is expected only of a pattern that engine compiles.
  *
  * @extends RuleTestCase<RegexPatternRule>
  *
@@ -33,6 +36,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
 {
+    use PcreGates;
+
     private const ASCII = '/(?a)\d+/';
 
     private const KEEP_IN_LOOKBEHIND = '/(?<=a\Kb)c/';
@@ -54,14 +59,14 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_a_guard_judges_the_versions_its_branch_runs_on(): void
     {
-        $this->analyse([__DIR__.'/Fixtures/GuardedTargetFixture.php'], [
-            self::refusal(self::ASCII, '8.2', '10.40', 28),
-            self::refusal(self::ASCII, '8.3', '10.42', 57),
-            self::refusal(self::KEEP_IN_LOOKBEHIND, '8.5', '10.44', 60),
-            self::refusal(self::KEEP_IN_LOOKBEHIND, '8.5', '10.44', 70),
-            self::refusal(self::ASCII, '8.2', '10.40', 84),
-            self::refusal(self::ASCII, '8.2', '10.40', 91),
-        ]);
+        $this->analyse([__DIR__.'/Fixtures/GuardedTargetFixture.php'], self::refusals([
+            [self::ASCII, '8.2', '10.40', 28],
+            [self::ASCII, '8.3', '10.42', 57],
+            [self::KEEP_IN_LOOKBEHIND, '8.5', '10.44', 60],
+            [self::KEEP_IN_LOOKBEHIND, '8.5', '10.44', 70],
+            [self::ASCII, '8.2', '10.40', 84],
+            [self::ASCII, '8.2', '10.40', 91],
+        ]));
     }
 
     /**
@@ -71,9 +76,9 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_a_namespaced_constant_of_the_same_name_is_not_read(): void
     {
-        $this->analyse([__DIR__.'/Fixtures/ShadowedVersionFixture.php'], [
-            self::refusal(self::KEEP_IN_LOOKBEHIND, '8.5', '10.44', 27),
-        ]);
+        $this->analyse([__DIR__.'/Fixtures/ShadowedVersionFixture.php'], self::refusals([
+            [self::KEEP_IN_LOOKBEHIND, '8.5', '10.44', 27],
+        ]));
     }
 
     /**
@@ -84,6 +89,7 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_without_the_reflection_provider_an_unqualified_guard_of_a_namespace_is_not_read(): void
     {
+        $this->requiresCompile(self::ASCII);
         $this->withReflection = false;
 
         $lines = array_map(static fn ($error): ?int => $error->getLine(), $this->gatherAnalyserErrors([__DIR__.'/Fixtures/GuardedTargetFixture.php']));
@@ -121,6 +127,7 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_a_guard_that_keeps_only_the_versions_on_pcre1_judges_nothing(): void
     {
+        $this->requiresCompile(self::ASCII);
         $this->range = ['min' => 70100, 'max' => 80499];
         $this->phpVersion = 70100;
 
@@ -137,6 +144,7 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
     #[Test]
     public function test_the_pcre_version_named_judges_the_lowest_version_of_the_narrowed_range(): void
     {
+        $this->requiresCompile(self::ASCII);
         $this->config = ['pcreVersion' => '10.42'];
         [$message, $line] = self::refusal(self::ASCII, '8.4', '10.42', 26);
 
@@ -156,24 +164,35 @@ final class RegexPatternRuleGuardedTargetTest extends RuleTestCase
         $this->range = ['min' => 80200, 'max' => 80599];
         $this->config = ['phpVersion' => '8.2'];
 
-        $this->analyse([__DIR__.'/Fixtures/GuardedTargetFixture.php'], [
-            self::refusal(self::ASCII, '8.2', '10.40', 26),
-            self::refusal(self::ASCII, '8.2', '10.40', 28),
-            self::refusal(self::ASCII, '8.2', '10.40', 36),
-            self::refusal(self::ASCII, '8.2', '10.40', 41),
-            self::refusal(self::ASCII, '8.2', '10.40', 47),
-            self::refusal(self::ASCII, '8.2', '10.40', 57),
-            self::refusal(self::ASCII, '8.2', '10.40', 59),
-            self::refusal(self::ASCII, '8.2', '10.40', 84),
-            self::refusal(self::ASCII, '8.2', '10.40', 91),
-            self::refusal(self::ASCII, '8.2', '10.40', 98),
-            self::refusal(self::ASCII, '8.2', '10.40', 113),
-        ]);
+        $this->analyse([__DIR__.'/Fixtures/GuardedTargetFixture.php'], self::refusals(array_map(
+            static fn (int $line): array => [self::ASCII, '8.2', '10.40', $line],
+            [26, 28, 36, 41, 47, 57, 59, 84, 91, 98, 113],
+        )));
     }
 
     protected function getRule(): Rule
     {
         return new RegexPatternRule(config: $this->config, phpVersion: new PhpVersion($this->phpVersion), phpVersionRange: $this->range, reflectionProvider: $this->withReflection ? $this->createReflectionProvider() : null);
+    }
+
+    /**
+     * The refusals of the rows whose pattern the engine running the
+     * analysis compiles.
+     *
+     * @param list<array{string, string, string, int}> $rows the pattern, the PHP, the PCRE2 and the line
+     *
+     * @return list<array{0: string, 1: int, 2?: string|null}>
+     */
+    private static function refusals(array $rows): array
+    {
+        $refusals = [];
+        foreach ($rows as [$pattern, $php, $pcre, $line]) {
+            if (false !== @preg_match($pattern, '')) {
+                $refusals[] = self::refusal($pattern, $php, $pcre, $line);
+            }
+        }
+
+        return $refusals;
     }
 
     /**

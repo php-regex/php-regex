@@ -84,7 +84,8 @@ final class AnalysisServiceGuardTest extends TestCase
     /**
      * Two patterns a guard narrows alike each get the rewrite of their own
      * tree; a pattern refused on the floor and accepted on the versions the
-     * guard keeps gets one under the guard only.
+     * guard keeps gets one under the guard only, where the engine running
+     * the analysis compiles it to check the rewrite.
      */
     #[Test]
     public function test_each_narrowed_pattern_takes_its_own_reading(): void
@@ -100,7 +101,8 @@ final class AnalysisServiceGuardTest extends TestCase
         [, $analyzed] = $analysis->lintForSuggestions($patterns);
         $suggestions = $analysis->suggestOptimizations($patterns, 1, analyzed: $analyzed);
 
-        $this->assertSame(['/\d+x/', '/\d+y/', '/(?a)\d+z/'], array_map(static fn (array $entry): string => $entry['optimization']->optimized, $suggestions));
+        $expected = false === @preg_match('/(?a)[0-9]+z/', '') ? ['/\d+x/', '/\d+y/'] : ['/\d+x/', '/\d+y/', '/(?a)\d+z/'];
+        $this->assertSame($expected, array_map(static fn (array $entry): string => $entry['optimization']->optimized, $suggestions));
         $this->assertSame([], $analysis->suggestOptimizations([PatternOccurrence::unread('a.php', 'Not read.'), PatternOccurrence::parserFallback('a.php', 'Broken.')], 1));
     }
 

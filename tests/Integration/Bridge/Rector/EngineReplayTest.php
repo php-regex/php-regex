@@ -37,6 +37,13 @@ final class EngineReplayTest extends TestCase
     public function test_rewrite_answers_as_the_call_it_replaces(string $fixture): void
     {
         $this->requiresPhpReadingCode((string) file_get_contents($fixture));
+        // A pattern held by a constant is no literal of a preg_* call: a NUL
+        // byte in it is refused before PHP 8.2 all the same.
+        foreach (ReplaySubjects::literals((string) file_get_contents($fixture)) as $literal) {
+            if (str_contains($literal, "\0")) {
+                $this->requiresPhpReading($literal);
+            }
+        }
 
         $content = (string) file_get_contents($fixture);
         [$before, $after] = explode(self::SPLIT, $content, 2);

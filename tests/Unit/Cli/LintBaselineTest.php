@@ -260,7 +260,8 @@ final class LintBaselineTest extends TestCase
 
     /**
      * With no working directory to read (it was removed), a path is written
-     * with its backslashes turned to slashes and nothing taken off.
+     * with its backslashes turned to slashes and nothing taken off. PHP 8.5
+     * and older then give no working directory, PHP 8.6 the removed one.
      */
     #[Test]
     public function test_generate_keeps_the_path_when_the_working_directory_is_gone(): void
@@ -269,7 +270,7 @@ final class LintBaselineTest extends TestCase
         mkdir($gone);
         chdir($gone);
         rmdir($gone);
-        $this->assertFalse(getcwd());
+        $this->assertDirectoryDoesNotExist($gone);
 
         $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'C:\\app\\src\\a.php')], [])]);
 

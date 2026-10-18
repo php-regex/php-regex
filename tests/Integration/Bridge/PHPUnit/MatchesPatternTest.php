@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPUnit;
 
 use PHPRegex\PHPUnit\Constraint\MatchesPattern;
 use PHPRegex\Tests\Support\MatchesPatternCases;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Constraint\LogicalNot;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 final class MatchesPatternTest extends TestCase
 {
     use MatchesPatternCases;
+    use PcreGates;
 
     /**
      * @param array<int|string, mixed> $expected
@@ -39,6 +41,8 @@ final class MatchesPatternTest extends TestCase
     #[Test]
     public function test_matches_pattern_accepts_each_vocabulary_spelling(string $pattern, string $subject, array $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         $this->assertThat($subject, new MatchesPattern($pattern, $expected));
     }
 
@@ -84,6 +88,8 @@ final class MatchesPatternTest extends TestCase
     #[Test]
     public function test_matches_pattern_refuses_a_numeric_expectation_under_the_n_modifier(): void
     {
+        $this->requiresPhpReading('/(a)/n');
+
         $failure = $this->failingMessage(function (): void {
             $this->assertThat('a', new MatchesPattern('/(a)/n', [1 => true]));
         });
@@ -203,6 +209,8 @@ final class MatchesPatternTest extends TestCase
     #[Test]
     public function test_matches_pattern_fails_on_a_group_the_engine_does_not_capture_under_n(): void
     {
+        $this->requiresPhpReading('/(a)(?<x>b)/n');
+
         $failure = $this->failingMessage(function (): void {
             $this->assertThat('ab', new MatchesPattern('/(a)(?<x>b)/n', [2 => true]));
         });

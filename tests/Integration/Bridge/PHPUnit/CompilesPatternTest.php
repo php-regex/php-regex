@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPUnit;
 
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\PHPUnit\Constraint\CompilesPattern;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -101,10 +103,14 @@ final class CompilesPatternTest extends TestCase
         yield 'unbalanced group' => ['pattern' => '/(a/', 'fragment' => 'missing closing parenthesis', 'offset' => 'at offset 2'];
         // The reversed bounds are refused before any quantifying happens.
         yield 'quantifier bounds out of order' => ['pattern' => '/x{2,1}/', 'fragment' => 'numbers out of order', 'offset' => 'at offset 5'];
+        // PCRE2 10.47 reports these two past the character at fault, where
+        // 10.46 and older report them on it: the offset is the running
+        // engine's.
+        $past = PcreTarget::runtime()->supports(PcreFeature::ErrorOffsetPastTheFault) ? 1 : 0;
         // Nothing repeatable precedes the quantifier.
-        yield 'quantifier on nothing' => ['pattern' => '/*a/', 'fragment' => 'quantifier does not follow', 'offset' => 'at offset 1'];
+        yield 'quantifier on nothing' => ['pattern' => '/*a/', 'fragment' => 'quantifier does not follow', 'offset' => 'at offset '.$past];
         // The group the backreference names is defined only later.
-        yield 'backreference to a later group' => ['pattern' => '/\2(a)/', 'fragment' => 'reference to non-existent subpattern', 'offset' => 'at offset 2'];
+        yield 'backreference to a later group' => ['pattern' => '/\2(a)/', 'fragment' => 'reference to non-existent subpattern', 'offset' => 'at offset '.(1 + $past)];
     }
 
     /**

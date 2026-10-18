@@ -42,10 +42,16 @@ final class RouteActionTest extends LaravelTestCase
         $router = $this->application()->make('router');
         $this->assertInstanceOf(Router::class, $router);
 
-        $occurrences = (new RoutePatternSource($router))->extract(new PatternSourceContext([base_path('app')], []));
+        // Only the route under test: Laravel 12 registers routes of its own,
+        // the local disk's storage/{path} among them.
+        $extracted = (new RoutePatternSource($router))->extract(new PatternSourceContext([base_path('app')], []));
+        $this->assertContainsOnlyInstancesOf(PatternOccurrence::class, $extracted);
+        $occurrences = array_values(array_filter(
+            $extracted,
+            static fn (PatternOccurrence $occurrence): bool => null !== $occurrence->location && str_starts_with($occurrence->location, 'Route "action"'),
+        ));
 
         $this->assertCount(1, $occurrences);
-        $this->assertInstanceOf(PatternOccurrence::class, $occurrences[0]);
         $this->assertSame(null === $named ? 'Route "action"' : \sprintf('Route "action" (controller: %s)', $named), $occurrences[0]->location);
         $this->assertSame('' === $file ? base_path('routes/web.php') : $file, $occurrences[0]->file);
     }
@@ -63,9 +69,11 @@ final class RouteActionTest extends LaravelTestCase
         $document = json_decode(Artisan::output(), true);
         $this->assertIsArray($document);
         $this->assertIsArray($document['routes'] ?? null);
-        $this->assertIsArray($document['routes'][0] ?? null);
+        $routes = array_values(array_filter($document['routes'], static fn (mixed $route): bool => \is_array($route) && 'action' === ($route['name'] ?? null)));
+        $this->assertCount(1, $routes);
+        $this->assertIsArray($routes[0]);
 
-        $this->assertSame($named ?? 'Unknown', $document['routes'][0]['action'] ?? null);
+        $this->assertSame($named ?? 'Unknown', $routes[0]['action'] ?? null);
     }
 
     /**

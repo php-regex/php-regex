@@ -149,12 +149,19 @@ parameters:
           identifier: method.deprecated
           path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
           reportUnmatched: false
+        # PHPUnit 12.5 brought the attribute that lets the mocks of Symfony's
+        # validator context go without an expectation; PHPUnit 11, the one
+        # PHP 8.2 installs, reads past it as an unknown one.
+        - identifier: attribute.notFound
+          path: tests/Unit/Bridge/Symfony/Validator/ValidRegexValidatorTest.php
+          reportUnmatched: false
         # These tests probe the running engine for syntax newer PCRE2 releases
-        # added, as (?[...]), (*scs:...), (?^i) or a \K inside a lookbehind,
-        # and only match with it when it compiles: the analysis, run on an
-        # older PCRE2, cannot compile them. Revisit once PHPStan's own regexp
-        # rule learns to read the engine version instead of refusing. On a
-        # recent PCRE2 every pattern compiles and nothing is left to ignore.
+        # added, as (?[...]), (*scs:...), (?^i), a \K inside a lookbehind or a
+        # group name past 32 code units, and only match with it when it
+        # compiles: the analysis, run on an older PCRE2, cannot compile them.
+        # Revisit once PHPStan's own regexp rule learns to read the engine
+        # version instead of refusing. On a recent PCRE2 every pattern
+        # compiles and nothing is left to ignore.
         - identifiers:
             - regexp.pattern
           reportUnmatched: false
@@ -172,6 +179,7 @@ parameters:
             - tests/Unit/NodeVisitor/SampleGeneratorEndAnchorTest.php
             - tests/Unit/NodeVisitor/SampleGeneratorVisitorTest.php
             - tests/Unit/Parser/ExtendedCharClassTest.php
+            - tests/Unit/Parser/GroupNameLengthReleaseTest.php
             - tests/Unit/Parser/Printer/PatternFormatterTest.php
             - tests/Unit/Parser/ScanSubstringTest.php
             - tests/Unit/Parser/ValidationHintTest.php

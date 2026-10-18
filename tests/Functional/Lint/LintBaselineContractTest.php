@@ -377,7 +377,9 @@ final class LintBaselineContractTest extends TestCase
         yield 'a JSON string' => ['content' => '"baseline"', 'error' => $noBaseline];
         yield 'a number' => ['content' => '42', 'error' => $noBaseline];
         yield 'null' => ['content' => 'null', 'error' => $noBaseline];
-        yield 'not JSON' => ['content' => '[{"file": ', 'error' => 'The baseline file baseline.json is not valid JSON: Syntax error.'];
+        // The running PHP words the syntax error: PHP 8.6 adds where it is.
+        json_decode('[{"file": ');
+        yield 'not JSON' => ['content' => '[{"file": ', 'error' => 'The baseline file baseline.json is not valid JSON: '.json_last_error_msg().'.'];
     }
 
     /**

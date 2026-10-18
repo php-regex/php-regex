@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Corpus;
 
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -236,6 +237,7 @@ final class CorpusLintScriptTest extends TestCase
     }
 
     #[Test]
+    #[RequiresPhpExtension('pcntl')]
     public function test_run_command_returns_when_the_child_exits_even_if_a_worker_holds_the_descriptors(): void
     {
         $this->loadScriptFunctions();

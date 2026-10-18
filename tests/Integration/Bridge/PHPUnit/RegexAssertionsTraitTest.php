@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPUnit;
 
 use PHPRegex\PHPUnit\RegexAssertions;
 use PHPRegex\Tests\Support\MatchesPatternCases;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PlainRegexAssert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 final class RegexAssertionsTraitTest extends TestCase
 {
     use MatchesPatternCases;
+    use PcreGates;
     use RegexAssertions;
 
     /**
@@ -40,6 +42,8 @@ final class RegexAssertionsTraitTest extends TestCase
     #[Test]
     public function test_assert_pattern_matches_accepts_each_vocabulary_spelling(string $pattern, string $subject, array $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         self::assertPatternMatches($pattern, $subject, $expected);
     }
 
@@ -50,6 +54,8 @@ final class RegexAssertionsTraitTest extends TestCase
     #[Test]
     public function test_assert_pattern_matches_works_on_a_bare_assert_subclass(string $pattern, string $subject, array $expected): void
     {
+        $this->requiresPhpReading($pattern);
+
         PlainRegexAssert::assertPatternMatches($pattern, $subject, $expected);
     }
 

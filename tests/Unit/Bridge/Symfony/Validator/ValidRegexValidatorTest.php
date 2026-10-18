@@ -18,6 +18,7 @@ use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegex;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Validator\Constraint;
@@ -31,8 +32,13 @@ use Symfony\Component\Validator\Test\ConstraintValidatorTestCase;
  * library's message and hint, the service's limits. The ReDoS check is off
  * unless asked for, and then rejects from the threshold up.
  *
+ * The context Symfony 6.4 and early 7.4 build mocks its translator and its
+ * validator without an expectation, which PHPUnit 12.5 reports; PHPUnit 10
+ * and 11 have no such attribute and read past it.
+ *
  * @extends ConstraintValidatorTestCase<ValidRegexValidator>
  */
+#[AllowMockObjectsWithoutExpectations]
 final class ValidRegexValidatorTest extends ConstraintValidatorTestCase
 {
     private ?Regex $regex = null;

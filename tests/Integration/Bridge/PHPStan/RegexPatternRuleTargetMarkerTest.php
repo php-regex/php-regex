@@ -24,7 +24,8 @@ use PHPUnit\Framework\Attributes\Test;
  * "@regex-target" narrows the versions of PHPStan's range a call is
  * judged for, as in `regex lint`, and with a guard on PHP_VERSION_ID the
  * versions both keep: a marker that keeps none leaves its calls unjudged,
- * a malformed one judges them for the whole range.
+ * a malformed one judges them for the whole range. What the engine running
+ * the analysis refuses is PHPStan's to report, never the rule's.
  *
  * @extends RuleTestCase<RegexPatternRule>
  */
@@ -39,7 +40,7 @@ final class RegexPatternRuleTargetMarkerTest extends RuleTestCase
         $message = 'Regex pattern is invalid for PHP 8.2 with PCRE2 10.40: '.$reason.(str_ends_with($reason, '.') ? '' : '.');
         $tip = null === $refusal->hint || '' === $refusal->hint ? [] : [$refusal->hint];
 
-        $this->analyse([__DIR__.'/Fixtures/TargetMarkerFixture.php'], [
+        $this->analyse([__DIR__.'/Fixtures/TargetMarkerFixture.php'], false === @preg_match('/(?a)\d+/', '') ? [] : [
             [$message, 25, ...$tip],
             [$message, 29, ...$tip],
         ]);
