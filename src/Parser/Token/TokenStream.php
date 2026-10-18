@@ -150,6 +150,14 @@ final class TokenStream
     }
 
     /**
+     * The type of the token under the cursor; past the end, T_EOF.
+     */
+    public function currentType(): TokenType
+    {
+        return isset($this->tokens[$this->position]) ? $this->tokens[$this->position]->type : TokenType::Eof;
+    }
+
+    /**
      * Whether the token under the cursor is a literal with this text.
      */
     public function checkLiteral(string $value): bool

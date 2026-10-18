@@ -412,14 +412,16 @@ final class TokenParser
         $nodes = [];
         $startPosition = $this->stream->current()->position;
 
-        while (!$this->stream->isAtEnd() && !$this->stream->check(TokenType::GroupClose) && !$this->stream->check(TokenType::Alternation)) {
-            if ($this->stream->match(TokenType::QuoteModeStart)) {
-                $this->inQuoteMode = true;
-
-                continue;
+        // The type of the token under the cursor decides each step: it is
+        // read once per item.
+        while (TokenType::Eof !== $type = $this->stream->currentType()) {
+            if (TokenType::GroupClose === $type || TokenType::Alternation === $type) {
+                break;
             }
-            if ($this->stream->match(TokenType::QuoteModeEnd)) {
-                $this->inQuoteMode = false;
+
+            if (TokenType::QuoteModeStart === $type || TokenType::QuoteModeEnd === $type) {
+                $this->inQuoteMode = TokenType::QuoteModeStart === $type;
+                $this->stream->advance();
 
                 continue;
             }
@@ -431,7 +433,7 @@ final class TokenParser
                 continue;
             }
 
-            if (!$this->quantifyPreviousItem($nodes)) {
+            if (TokenType::Quantifier !== $type || !$this->quantifyPreviousItem($nodes)) {
                 $nodes[] = $this->parseQuantifiedAtom();
             }
 
@@ -902,42 +904,48 @@ final class TokenParser
         $token = $this->stream->current();
         $startPosition = $token->position;
 
-        if ($this->stream->match(TokenType::ExtendedClass)) {
-            return $this->parseExtendedClass($token);
+        // Each type of token opens one kind of item, so the type alone
+        // picks the reader; a type that opens none falls through to the
+        // errors below. "\Q" and "\E" never get here: the sequence reads
+        // them before it asks for an item.
+        switch ($token->type) {
+            case TokenType::ExtendedClass:
+                $this->stream->advance();
+
+                return $this->parseExtendedClass($token);
+            case TokenType::CommentOpen:
+                $this->stream->advance();
+
+                return $this->parseComment();
+            case TokenType::Callout:
+                $this->stream->advance();
+
+                return $this->parseCallout();
+            case TokenType::GroupOpen:
+                $this->stream->advance();
+
+                return $this->parsePlainGroup($token);
+            case TokenType::GroupModifierOpen:
+                $this->stream->advance();
+
+                return $this->parseGroupModifier();
+            case TokenType::CharClassOpen:
+                $this->stream->advance();
+
+                return $this->parseWordBoundaryClass() ?? $this->parseCharClass();
+            case TokenType::PcreVerb:
+                $this->stream->advance();
+
+                return $this->verbNode($token, $startPosition);
+            case TokenType::Quantifier:
+                break;
+            default:
+                if (null !== $node = $this->parseSimpleAtom($startPosition)) {
+                    return $node;
+                }
         }
 
-        if ($this->stream->match(TokenType::CommentOpen)) {
-            return $this->parseComment();
-        }
-
-        if ($this->stream->match(TokenType::Callout)) {
-            return $this->parseCallout();
-        }
-
-        if ($this->stream->match(TokenType::QuoteModeStart)) {
-            $this->inQuoteMode = true;
-
-            return $this->parseAtom();
-        }
-        if ($this->stream->match(TokenType::QuoteModeEnd)) {
-            $this->inQuoteMode = false;
-
-            return $this->parseAtom();
-        }
-
-        if (null !== $node = $this->parseSimpleAtom($startPosition)) {
-            return $node;
-        }
-
-        if (null !== $node = $this->parseGroupOrCharClassAtom()) {
-            return $node;
-        }
-
-        if (null !== $node = $this->parseVerbAtom($startPosition)) {
-            return $node;
-        }
-
-        if ($this->stream->check(TokenType::Quantifier)) {
+        if (TokenType::Quantifier === $token->type) {
             $position = $this->stream->current()->position;
 
             $this->guardQuantifierCount($this->stream->current());
@@ -1088,13 +1096,14 @@ final class TokenParser
      */
     private function matchAtom(int $startPosition, array $extraTypes = []): ?NodeInterface
     {
-        foreach ([...self::ATOM_TYPES, ...$extraTypes] as $type) {
-            if ($this->stream->match($type)) {
-                return $this->atomFromToken($this->stream->previous(), $type, $startPosition);
-            }
+        $type = $this->stream->currentType();
+        if (!\in_array($type, self::ATOM_TYPES, true) && !\in_array($type, $extraTypes, true)) {
+            return null;
         }
 
-        return null;
+        $this->stream->advance();
+
+        return $this->atomFromToken($this->stream->previous(), $type, $startPosition);
     }
 
     private function atomFromToken(Token $token, TokenType $type, int $startPosition): NodeInterface
@@ -1146,38 +1155,27 @@ final class TokenParser
      * Transforms a stream of Tokens into an Abstract Syntax Tree (AST).
      * Implements a Recursive Descent Parser based on PCRE grammar.
      */
-    private function parseGroupOrCharClassAtom(): ?NodeInterface
+    /**
+     * The group a plain "(" opens, the "(" read.
+     */
+    private function parsePlainGroup(Token $startToken): NodeInterface
     {
-        if ($this->stream->match(TokenType::GroupOpen)) {
-            $startToken = $this->stream->previous();
-
-            // Under "n" a plain group groups and nothing more, as "(?:...)"
-            // does; the compiler gives back the "(" it was written with.
-            $captures = !$this->noAutoCapture;
-            if ($captures) {
-                $this->captureCount++;
-            }
-
-            $expr = $this->parseScopedAlternation();
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
-
-            return $this->createGroupNode(
-                $expr,
-                $captures ? GroupType::Capturing : GroupType::NonCapturing,
-                $startToken->position,
-                $endToken,
-            );
+        // Under "n" a plain group groups and nothing more, as "(?:...)"
+        // does; the compiler gives back the "(" it was written with.
+        $captures = !$this->noAutoCapture;
+        if ($captures) {
+            $this->captureCount++;
         }
 
-        if ($this->stream->match(TokenType::GroupModifierOpen)) {
-            return $this->parseGroupModifier();
-        }
+        $expr = $this->parseScopedAlternation();
+        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected )', ErrorCode::GroupUnclosed);
 
-        if ($this->stream->match(TokenType::CharClassOpen)) {
-            return $this->parseWordBoundaryClass() ?? $this->parseCharClass();
-        }
-
-        return null;
+        return $this->createGroupNode(
+            $expr,
+            $captures ? GroupType::Capturing : GroupType::NonCapturing,
+            $startToken->position,
+            $endToken,
+        );
     }
 
     /**
@@ -1215,15 +1213,6 @@ final class TokenParser
             $start,
             $end,
         );
-    }
-
-    private function parseVerbAtom(int $startPosition): ?NodeInterface
-    {
-        if (!$this->stream->match(TokenType::PcreVerb)) {
-            return null;
-        }
-
-        return $this->verbNode($this->stream->previous(), $startPosition);
     }
 
     /**
