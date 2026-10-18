@@ -22,6 +22,9 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 - Test methods follow camelCase: `testMethodName()`.
 - Data providers use `#[DataProvider('methodName')]` and are static methods.
 
+### PHPUnit Versions
+- The suite runs on PHPUnit 10.5 (PHP 8.1, `tools/phpunit-81`) through the newest major `tools/phpunit` installs. A test that needs a method only the newest PHPUnit has, such as `expectExceptionMessageIsOrContains()`, uses the `PhpUnitForwardCompat` trait from `tests/Support/PhpUnitCompat/`: the native method runs where PHPUnit has it, a polyfill on the older API elsewhere. Its docblock says how to polyfill one more method.
+
 ### Unit Tests
 - Focus on isolated logic; mock external dependencies (filesystem, network) using PHPUnit mocks or stubs.
 - Avoid touching real files or databases.

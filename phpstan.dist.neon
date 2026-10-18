@@ -119,8 +119,11 @@ parameters:
     scanDirectories:
         - tools/phpbench/vendor/phpbench/phpbench/lib/Attributes
 
+    # Each PHPUnit compatibility trait is the implementation the installed
+    # PHPUnit calls for, aliased at run time: the analysis reads that one.
     bootstrapFiles:
         - tools/phpunit/vendor/autoload.php
+        - tests/Support/PhpUnitCompat/bootstrap.php
 
     excludePaths:
         - tests/Benchmark/Fixtures/*
@@ -141,9 +144,10 @@ parameters:
 
     ignoreErrors:
         # Three entries live here because no single machine can see them
-        # whole; everything else the analysis still tolerates is named,
-        # one finding per line, in phpstan-baseline.neon: fix a finding,
-        # regenerate the baseline, the line goes.
+        # whole, and the last one because it is no finding; everything else
+        # the analysis still tolerates is named, one finding per line, in
+        # phpstan-baseline.neon: fix a finding, regenerate the baseline, the
+        # line goes.
         #
         # PHPUnit 13 deprecates expectExceptionMessage() for
         # expectExceptionMessageIs(), which PHPUnit 10.5 to 12 do not have;
@@ -195,5 +199,13 @@ parameters:
             - tests/Unit/Parser/ScanSubstringTest.php
             - tests/Unit/Parser/ValidationHintTest.php
             - tests/Unit/Redos/Proven/RedosInlineOptionsTest.php
+        # The tests use each PHPUnit compatibility trait by its feature's
+        # name, which class_alias() gives the implementation the installed
+        # PHPUnit calls for: the analysis reads that one through the alias,
+        # yet counts no use of either implementation by its own name.
+        - identifier: trait.unused
+          paths:
+            - tests/Support/PhpUnitCompat/Native/*
+            - tests/Support/PhpUnitCompat/Polyfill/*
 
     reportUnmatchedIgnoredErrors: true

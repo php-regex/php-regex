@@ -18,6 +18,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Testing\PendingCommand;
 use Orchestra\Testbench\TestCase;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use Symfony\Component\Console\Command\Command;
 
 /**
@@ -28,6 +29,8 @@ use Symfony\Component\Console\Command\Command;
  */
 abstract class LaravelTestCase extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     protected function application(): Application
     {
         $app = $this->app;
