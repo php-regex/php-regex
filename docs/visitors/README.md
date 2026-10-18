@@ -229,7 +229,7 @@ echo $pattern;  // '/foo/'
 
 | Before     | After       | Why                                       |
 |------------|-------------|-------------------------------------------|
-| `[0-9]`    | `\d`        | The shorthand says it shorter             |
+| `[0-9]`    | `\d`        | The shorthand says it shorter; kept under `/u` and `(*UCP)`, where `\d` matches every decimal digit |
 | `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing |
 | `\-`       | `-`         | An escape of a character that needs none  |
 | `\1`       | `\g{1}`     | The braces end the number: no digit after it can join it |

@@ -694,6 +694,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The confirmed replay of an exponential witness tries each candidate once more at 5,000 bytes or just past: below, PCRE2 rejects a subject without the code unit an anchored pattern requires before any backtracking, so `#^<iframe(?:"[^"]*"|'[^']*'|[^>])*>#i` was reported as not reproduced.
 - The `Modernizer` no longer rewrites the reference of a condition: `(?(1)b|c)` became `(?(\g{1})b|c)`, which PCRE2 refuses. It now writes a numeric back reference `\1` as `\g{1}` where it left it as it was: both spellings match alike on every PCRE2 from 10.32 to 10.49.
 - The `Modernizer` rewrites a class into `\s` only when it holds the six characters `\s` matches, the space among them: it turned the five controls `[\t\n\r\f\v]`, written raw, into `\s`, which also matches a space, and the six into nothing. Under `/u` or `(*UCP)`, where `\s` also matches U+00A0 and the other Unicode spaces, the class stays as written.
+- The `Modernizer` keeps `[0-9]` under `/u` or `(*UCP)`, where `\d` matches every decimal digit: `/[0-9]/u` became `/\d/u`, which matches `"٣"`.
 
 ### Documentation
 

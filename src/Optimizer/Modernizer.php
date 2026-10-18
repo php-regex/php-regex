@@ -89,8 +89,9 @@ final class Modernizer extends AbstractNodeVisitor
             ? $node->expression->alternatives
             : [$node->expression];
 
-        // Check for \d equivalent: [0-9]
-        if (!$node->isNegated && 1 === \count($parts) && $parts[0] instanceof RangeNode) {
+        // "\d" matches the ten ASCII digits; with Unicode properties it
+        // matches every decimal digit, as U+0663.
+        if (!$node->isNegated && !$this->unicodeProperties && 1 === \count($parts) && $parts[0] instanceof RangeNode) {
             $range = $parts[0];
             if ($range->start instanceof LiteralNode && $range->end instanceof LiteralNode
                 && '0' === $range->start->value && '9' === $range->end->value) {

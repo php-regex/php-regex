@@ -117,6 +117,27 @@ final class ModernizerTest extends TestCase
     }
 
     /**
+     * Under "/u" or "(*UCP)", "\d" matches every decimal digit, as U+0663.
+     */
+    #[DataProvider('provideUnicodeDigitClasses')]
+    public function test_digit_range_stays_a_class_under_unicode_properties(string $pattern): void
+    {
+        $modernized = $this->modernize($pattern);
+
+        $this->assertSame($pattern, $modernized);
+        $this->assertSame(0, preg_match($modernized, "\u{663}"));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideUnicodeDigitClasses(): iterable
+    {
+        yield 'under u' => ['pattern' => '/[0-9]/u'];
+        yield 'under UCP' => ['pattern' => '/(*UCP)[0-9]/'];
+    }
+
+    /**
      * "\s" matches HT, LF, VT, FF, CR and the space on every PCRE2 from 10.32
      * to 10.49, and nothing else below 256; under "/u" or "(*UCP)" it also
      * matches U+0085, U+00A0, U+2028 and U+3000.
