@@ -84,7 +84,7 @@ jobs:
 
       - name: Attest the build provenance
         if: env.PUBLISH == 'true'
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: bin/regex.phar
 
