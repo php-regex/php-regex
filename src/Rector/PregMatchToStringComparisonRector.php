@@ -50,8 +50,6 @@ use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\While_;
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchKind;
-use PHPRegex\Rector\Internal\PregCall;
-use PHPRegex\Rector\Internal\ProvenLiterals;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
 use Rector\ValueObject\PhpVersion;

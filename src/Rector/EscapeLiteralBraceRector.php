@@ -23,8 +23,6 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Validation\RangeDiff;
-use PHPRegex\Rector\Internal\PrivateConstants;
-use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
 use Rector\Reflection\ReflectionResolver;

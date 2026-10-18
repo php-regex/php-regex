@@ -29,8 +29,6 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Validation\RangeDiff;
-use PHPRegex\Rector\Internal\PrivateConstants;
-use PHPRegex\Rector\Internal\TargetRange;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
 use Rector\Reflection\ReflectionResolver;

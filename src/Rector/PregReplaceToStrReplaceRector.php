@@ -17,8 +17,6 @@ use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ErrorSuppress;
 use PhpParser\Node\Expr\FuncCall;
-use PHPRegex\Rector\Internal\PregCall;
-use PHPRegex\Rector\Internal\ProvenLiterals;
 use Rector\Php\PhpVersionProvider;
 use Rector\Rector\AbstractRector;
 

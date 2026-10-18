@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Rector\Internal;
+namespace PHPRegex\Rector;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\CallLike;
