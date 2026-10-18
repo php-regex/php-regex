@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain;
 
-use PHPRegex\Explain\Internal\RailroadLayoutVisitor;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Node\RegexNode;
 

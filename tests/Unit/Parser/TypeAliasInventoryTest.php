@@ -21,7 +21,7 @@ use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\Command\CompareCommand;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\RedosCommand;
-use PHPRegex\Explain\Internal\RailroadLayoutVisitor;
+use PHPRegex\Explain\RailroadLayoutVisitor;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\LanguageServer\Converter\DiagnosticConverter;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;

@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Explain;
 
-use PHPRegex\Explain\Internal\InlineSetting;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Internal\Ascii;
 use PHPRegex\Parser\Internal\DisplayEscaper;
