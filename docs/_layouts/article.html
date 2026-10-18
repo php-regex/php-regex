@@ -82,6 +82,8 @@
             {% endif %}
           {% endif %}
           {% assign more_articles = site.articles | sort: 'date' | reverse %}
+          {% comment %}With one article published, there is no other to list.{% endcomment %}
+          {% if more_articles.size > 1 %}
           <section class="article-more" aria-labelledby="article-more-title">
             <div class="article-more-head">
               <h2 id="article-more-title" class="article-more-title">More articles</h2>
@@ -100,6 +102,7 @@
               {% endfor %}
             </ul>
           </section>
+          {% endif %}
         </footer>
       </main>
       {% include toc.html %}
