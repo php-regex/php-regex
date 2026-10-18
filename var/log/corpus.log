@@ -1880,6 +1880,9 @@ corpus/PrestaShop/PrestaShop/classes/Tools.php:1853:28
     → /(.*-----BEGIN CERTIFICATE-----.*-----END CERTIFICATE-----){50}$/Uims
    INFO  Quantified capturing group "(...)" with "{50}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
+   TIP 
+       - /(.*-----BEGIN CERTIFICATE-----.*-----END CERTIFICATE-----){50}$/Uims
+       + /(.*-{5}BEGIN CERTIFICATE-{5}.*-{5}END CERTIFICATE-{5}){50}$/Uims
 
 corpus/PrestaShop/PrestaShop/classes/Validate.php:373:28
     → /[<>{}]/i
@@ -9553,7 +9556,19 @@ corpus/mmoreram/php-formatter/src/PHPFormatter/Fixer/UseSortFixer.php:187:18
 
 ### corpus/mockery/mockery — Target: PHP 7.12.99, PCRE2 10.33 (composer.json config.platform.php) — exit 0
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/mockery/mockery/library/Mockery/Generator/MockConfiguration.php:441:55
+corpus/mockery/mockery/library/Mockery/Generator/ClassName.php:28:43
+    → #^\\?(?:[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*\\)*[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*@anonymous\x00.+:\d+\$.+$#
+   ↳ via self::ANONYMOUS_CLASS_REGEX
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
+corpus/mockery/mockery/library/Mockery/Generator/ClassName.php:35:38
+    → #^\\?(?:[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*\\)*[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$#
+   ↳ via self::CLASS_NAME_REGEX
+   WARN  Nested quantifiers can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.
+
+corpus/mockery/mockery/library/Mockery/Generator/MockConfiguration.php:442:55
     → /^\?Iterator(|Aggregate)$/i
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
@@ -12974,6 +12989,24 @@ corpus/nikic/PHP-Parser/lib/PhpParser/PrettyPrinter/Standard.php:1112:18
    ↳ via $regex
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{C0}' and '\x{C1}' explicitly instead of a range.
+   TIP 
+         /(
+                       [\x00-\x08\x0E-\x1F] # Control characters
+                     | [\xC0-\xC1] # Invalid UTF-8 Bytes
+                     | [\xF5-\xFF] # Invalid UTF-8 Bytes
+                     | \xE0(?=[\x80-\x9F]) # Overlong encoding of prior code point
+                     | \xF0(?=[\x80-\x8F]) # Overlong encoding of prior code point
+                     | [\xC2-\xDF](?![\x80-\xBF]) # Invalid UTF-8 Sequence Start
+                     | [\xE0-\xEF](?![\x80-\xBF]{2}) # Invalid UTF-8 Sequence Start
+                     | [\xF0-\xF4](?![\x80-\xBF]{3}) # Invalid UTF-8 Sequence Start
+                     | (?<=[\x00-\x7F\xF5-\xFF])[\x80-\xBF] # Invalid UTF-8 Sequence Middle
+       -             | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]|[\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] # Overlong Sequence
+       ---
+       +             | (?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]|[\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] # Overlong Sequence
+                     | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) # Short 3 byte sequence
+                     | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) # Short 4 byte sequence
+                     | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) # Short 4 byte sequence (2)
+                 )/x
 
 
 
@@ -14108,6 +14141,24 @@ corpus/phpstan/phpdoc-parser/src/Ast/ConstExpr/ConstExprStringNode.php:56:12
    ↳ via $regex
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{C0}' and '\x{C1}' explicitly instead of a range.
+   TIP 
+         /(
+                       [\x00-\x08\x0E-\x1F] # Control characters
+                     | [\xC0-\xC1] # Invalid UTF-8 Bytes
+                     | [\xF5-\xFF] # Invalid UTF-8 Bytes
+                     | \xE0(?=[\x80-\x9F]) # Overlong encoding of prior code point
+                     | \xF0(?=[\x80-\x8F]) # Overlong encoding of prior code point
+                     | [\xC2-\xDF](?![\x80-\xBF]) # Invalid UTF-8 Sequence Start
+                     | [\xE0-\xEF](?![\x80-\xBF]{2}) # Invalid UTF-8 Sequence Start
+                     | [\xF0-\xF4](?![\x80-\xBF]{3}) # Invalid UTF-8 Sequence Start
+                     | (?<=[\x00-\x7F\xF5-\xFF])[\x80-\xBF] # Invalid UTF-8 Sequence Middle
+       -             | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]|[\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] # Overlong Sequence
+       ---
+       +             | (?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]|[\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] # Overlong Sequence
+                     | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) # Short 3 byte sequence
+                     | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) # Short 4 byte sequence
+                     | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) # Short 4 byte sequence (2)
+                 )/x
 
 
 
@@ -18738,6 +18789,24 @@ corpus/wikimedia/mediawiki/includes/Debug/MWDebug.php:575:4
     → /( [\xC0-\xC1] | [\xF5-\xFF] | \xE0[\x80-\x9F] | \xF0[\x80-\x8F] | [\xC2-\xDF](?![\x80-\xBF]) | [\xE0-\xEF](?![\x80-\xBF]{2}) | [\xF0-\xF4](?![\x80-\xBF]{3}) | (?<=[\x0-\x7F\xF5-\xFF])[\x80-\xBF] | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4] | [\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) )/x
    WARN  Character range is unnecessary; list the characters explicitly.
        ↳ Use '\x{C0}' and '\x{C1}' explicitly instead of a range.
+   TIP 
+         /(
+                         [\xC0-\xC1] # Invalid UTF-8 Bytes
+                         | [\xF5-\xFF] # Invalid UTF-8 Bytes
+                         | \xE0[\x80-\x9F] # Overlong encoding of prior code point
+                         | \xF0[\x80-\x8F] # Overlong encoding of prior code point
+                         | [\xC2-\xDF](?![\x80-\xBF]) # Invalid UTF-8 Sequence Start
+                         | [\xE0-\xEF](?![\x80-\xBF]{2}) # Invalid UTF-8 Sequence Start
+                         | [\xF0-\xF4](?![\x80-\xBF]{3}) # Invalid UTF-8 Sequence Start
+                         | (?<=[\x0-\x7F\xF5-\xFF])[\x80-\xBF] # Invalid UTF-8 Sequence Middle
+       -                 | (?<![\xC2-\xDF]|[\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]
+       ---
+       +                 | (?<![\xC2-\xDF\xE0-\xEF]|[\xE0-\xEF][\x80-\xBF]|[\xF0-\xF4]
+                             | [\xF0-\xF4][\x80-\xBF]|[\xF0-\xF4][\x80-\xBF]{2})[\x80-\xBF] # Overlong Sequence
+                         | (?<=[\xE0-\xEF])[\x80-\xBF](?![\x80-\xBF]) # Short 3 byte sequence
+                         | (?<=[\xF0-\xF4])[\x80-\xBF](?![\x80-\xBF]{2}) # Short 4 byte sequence
+                         | (?<=[\xF0-\xF4][\x80-\xBF])[\x80-\xBF](?![\x80-\xBF]) # Short 4 byte sequence (2)
+                     )/x
 
 corpus/wikimedia/mediawiki/includes/Installer/WebInstallerReleaseNotes.php:19:21
     → /^(\d+)\.(\d+).*/i
