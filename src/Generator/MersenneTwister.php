@@ -11,9 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Generator\Internal;
-
-use PHPRegex\Generator\SampleGenerationException;
+namespace PHPRegex\Generator;
 
 /**
  * PHP's Mersenne Twister, held by the generator alone: a seed draws the same

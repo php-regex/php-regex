@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Generator;
 
-use PHPRegex\Generator\Internal\MersenneTwister;
+use PHPRegex\Generator\MersenneTwister;
 use PHPRegex\Generator\SampleGenerationException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;

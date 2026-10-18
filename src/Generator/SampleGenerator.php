@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Generator;
 
-use PHPRegex\Generator\Internal\MersenneTwister;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
