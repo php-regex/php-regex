@@ -58,6 +58,11 @@
         <exclude>
             <directory>src/Parser/Exception</directory>
             <directory>src/Automata/Exception</directory>
+            <!-- The IDE completion files are the editor's own DSL: never
+                 executed, so never counted -->
+            <file>src/Parser/.phpstorm.meta.php</file>
+            <file>src/Redos/.phpstorm.meta.php</file>
+            <file>src/Toolkit/.phpstorm.meta.php</file>
         </exclude>
     </source>
 </phpunit>

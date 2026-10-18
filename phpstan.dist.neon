@@ -131,6 +131,10 @@ parameters:
         - tests/Tools/validate_library.php
         # The Rector set is read by Rector, whose classes live in its own vendor
         - src/Toolkit/Resources/rector/*
+        # The IDE completion files are the editor's own DSL: their functions
+        # exist only inside the editor
+        - src/*/.phpstorm.meta.php
+        - tests/Support/.phpstorm.meta.php
 
 
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'

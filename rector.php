@@ -64,6 +64,12 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/src/Laravel',
         // The upgrade map names classes in full: imported, two CharSet would collide
         __DIR__.'/src/Toolkit/Upgrade/UpgradeMap.php',
+        // The IDE completion files are the editor's own DSL: their functions
+        // exist only inside the editor
+        __DIR__.'/src/Parser/.phpstorm.meta.php',
+        __DIR__.'/src/Redos/.phpstorm.meta.php',
+        __DIR__.'/src/Toolkit/.phpstorm.meta.php',
+        __DIR__.'/tests/Support/.phpstorm.meta.php',
         // The CLI package runs without the language server: it names the
         // server's class, never imports it
         StringClassNameToClassConstantRector::class => [__DIR__.'/src/Cli/Command/LspCommand.php'],

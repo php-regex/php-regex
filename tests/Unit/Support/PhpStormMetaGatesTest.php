@@ -17,22 +17,38 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * What the IDE may suggest, stayed honest — read from the completion file
- * itself, never executed: its Class::method() references are signatures to
- * the IDE, calls to PHP, and a dead reference must fail here, not in the
+ * What the IDE may suggest, stayed honest — read from the completion files
+ * themselves, never executed: their Class::method() references are signatures
+ * to the IDE, calls to PHP, and a dead reference must fail here, not in the
  * editor. The gate releases and PHP versions are the very lists the gates
  * judge, the option keys the ones the parser accepts, the highlight formats
  * the ones the toolkit answers, the severity cases the ones the enum spells.
+ * Every file ships with the package its API belongs to; the gate lists stay
+ * with the gates.
  */
 final class PhpStormMetaGatesTest extends TestCase
 {
-    private const META_FILE = __DIR__.'/../../../.phpstorm.meta.php';
+    private const PARSER_META_FILE = __DIR__.'/../../../src/Parser/.phpstorm.meta.php';
+    private const REDOS_META_FILE = __DIR__.'/../../../src/Redos/.phpstorm.meta.php';
+    private const META_FILE = __DIR__.'/../../../src/Toolkit/.phpstorm.meta.php';
+    private const GATES_META_FILE = __DIR__.'/../../Support/.phpstorm.meta.php';
 
-    private string $meta;
+    /**
+     * Every set lives with the package that owns the concept it lists.
+     */
+    private const SET_OWNERS = [
+        'regex_option_keys' => self::PARSER_META_FILE,
+        'optimize_option_keys' => self::META_FILE,
+        'explanation_formats' => self::META_FILE,
+        'highlight_formats' => self::META_FILE,
+        'redos_thresholds' => self::REDOS_META_FILE,
+    ];
+
+    private string $gatesMeta;
 
     protected function setUp(): void
     {
-        $this->meta = (string) \file_get_contents(self::META_FILE);
+        $this->gatesMeta = (string) \file_get_contents(self::GATES_META_FILE);
     }
 
     #[Test]
@@ -40,7 +56,7 @@ final class PhpStormMetaGatesTest extends TestCase
     {
         $this->assertMatchesRegularExpression(
             '/expectedArguments\(\s*\\\\PHPRegex\\\\Tests\\\\Support\\\\PcreGates::requiresPcre2\(\),\s*0,\s*\\\\PHPRegex\\\\Tests\\\\Support\\\\PcreGateLimits::KNOWN_RELEASES\s*\)/',
-            $this->meta,
+            $this->gatesMeta,
         );
     }
 
@@ -50,7 +66,7 @@ final class PhpStormMetaGatesTest extends TestCase
         foreach (['requiresPhp', 'forbidsPhp'] as $method) {
             $this->assertMatchesRegularExpression(
                 \sprintf('/expectedArguments\(\s*\\\\PHPRegex\\\\Tests\\\\Support\\\\PcreGates::%s\(\),\s*0,\s*\\\\PHPRegex\\\\Tests\\\\Support\\\\PcreGateLimits::KNOWN_PHP_VERSIONS\s*\)/', $method),
-                $this->meta,
+                $this->gatesMeta,
                 $method,
             );
         }
@@ -82,11 +98,14 @@ final class PhpStormMetaGatesTest extends TestCase
     }
 
     /**
-     * The body of one registerArgumentsSet() call, by the name it registers.
+     * The body of one registerArgumentsSet() call, by the name it registers,
+     * read from the file of the package that owns the set.
      */
     private function argumentsSet(string $set): string
     {
-        \preg_match(\sprintf('/registerArgumentsSet\(\s*\'%s\'(.*?)\);/s', \preg_quote($set, '/')), $this->meta, $match);
+        $source = (string) \file_get_contents(self::SET_OWNERS[$set]);
+
+        \preg_match(\sprintf('/registerArgumentsSet\(\s*\'%s\'(.*?)\);/s', \preg_quote($set, '/')), $source, $match);
 
         return $match[1] ?? '';
     }

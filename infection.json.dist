@@ -7,7 +7,10 @@
             "Exception",
             "Laravel",
             "Symfony",
-            "PHPStan"
+            "PHPStan",
+            "Parser/.phpstorm.meta.php",
+            "Redos/.phpstorm.meta.php",
+            "Toolkit/.phpstorm.meta.php"
         ]
     },
     "timeout": 10,
