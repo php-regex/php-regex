@@ -18,9 +18,10 @@ use PHPRegex\Parser\Text\Ascii;
 /**
  * Whether a source file fits in the memory left for analysing it.
  *
- * Tokenizing costs around 55 times the size of the file and building an AST
- * roughly twice that, so a couple of megabytes of generated PHP — a call map,
- * a fixture dump — is enough to exhaust a default 128M limit. A fatal error
+ * Tokenizing costs up to TOKENIZE_FACTOR (60) times the size of the file and
+ * building an AST roughly twice that, so a couple of megabytes of generated
+ * PHP — a call map, a fixture dump — is enough to exhaust a default 128M
+ * limit. A fatal error
  * cannot be caught: it takes down the worker, and with it every result of the
  * run. Skipping the file loses the patterns of that one file instead.
  *
