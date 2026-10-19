@@ -113,7 +113,8 @@ final class ClassSetCompositionTest extends TestCase
         $this->assertEquals(ClassSetProvider::query('\d', true, ''), ClassSetProvider::query('\d', true, 'ix'));
         $this->assertNull(ClassSetProvider::query('\p', true, ''));
 
-        $this->assertSame(['u|:\p{L}', 'u|:\P{N}', 'u|:\d', 'u|:\p'], self::keptKeys());
+        // "\P{N}" is the rest of "\p{N}", asked first.
+        $this->assertSame(['u|:\p{L}', 'u|:\p{N}', 'u|:\P{N}', 'u|:\d', 'u|:\p'], self::keptKeys());
     }
 
     #[Test]

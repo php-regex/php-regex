@@ -49,11 +49,13 @@ final class ClassSetProviderCacheTest extends TestCase
         }
         StaticCaches::clear();
         LibraryPcre::useIniSetter(null);
+        self::useJit(true);
     }
 
     protected function tearDown(): void
     {
         LibraryPcre::useIniSetter(null);
+        self::useJit(true);
         foreach ($this->saved as $key => $value) {
             if (false !== $value) {
                 ini_set($key, $value);
@@ -64,8 +66,9 @@ final class ClassSetProviderCacheTest extends TestCase
 
     /**
      * Under a backtrack limit of 2, the raise refused, the probe "\x{61}"
-     * gives up on the first block (the probe runs without the JIT, so the
-     * limit bites whatever ran before). Nothing is kept: the second query
+     * gives up on the first block (the probe is asked to run without the
+     * JIT, whose count of the limit no small pattern reaches, so the limit
+     * bites whatever ran before). Nothing is kept: the second query
      * asks the engine again, and once the limit is back the third one gets
      * the set. A class of characters and ranges needs no probe at all: it
      * is read from its members.
@@ -73,6 +76,7 @@ final class ClassSetProviderCacheTest extends TestCase
     #[Test]
     public function test_query_scans_again_after_the_engine_gave_up(): void
     {
+        self::useJit(false);
         $raises = 0;
         $work = static function () use (&$raises): array {
             LibraryPcre::useIniSetter(static function () use (&$raises): bool {
@@ -108,6 +112,7 @@ final class ClassSetProviderCacheTest extends TestCase
     #[DataProvider('provideCaselessClasses')]
     public function test_a_caseless_class_is_not_kept_when_a_member_scan_gave_up(string $atom): void
     {
+        self::useJit(false);
         $work = static function () use ($atom): ?CharSet {
             LibraryPcre::useIniSetter(static fn (): bool => false);
 
@@ -232,6 +237,11 @@ final class ClassSetProviderCacheTest extends TestCase
         $this->assertSame([[0x4B, 0x4B], [0x6B, 0x6B]], $restricted->ranges);
         $this->assertInstanceOf(CharSet::class, $alreadyThere);
         $this->assertSame($restricted->ranges, $alreadyThere->ranges);
+    }
+
+    private static function useJit(bool $jit): void
+    {
+        (new \ReflectionClass(ClassSetProvider::class))->setStaticPropertyValue('jit', $jit);
     }
 
     /**

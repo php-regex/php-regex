@@ -123,7 +123,31 @@ final class CharSet
             return $other;
         }
 
-        return self::fromRanges([...$this->ranges, ...$other->ranges]);
+        // Both lists are sorted: merged in one pass, the next range the one
+        // starting first, joined to the last kept when they meet or touch.
+        $left = $this->ranges;
+        $right = $other->ranges;
+        $leftCount = \count($left);
+        $rightCount = \count($right);
+        $i = 0;
+        $j = 0;
+        $merged = [];
+        $last = -1;
+        while ($i < $leftCount || $j < $rightCount) {
+            $next = $j >= $rightCount || ($i < $leftCount && $left[$i][0] <= $right[$j][0]) ? $left[$i++] : $right[$j++];
+            if ($last >= 0 && $next[0] <= $merged[$last][1] + 1) {
+                if ($next[1] > $merged[$last][1]) {
+                    $merged[$last][1] = $next[1];
+                }
+
+                continue;
+            }
+
+            $merged[] = $next;
+            $last++;
+        }
+
+        return new self($merged);
     }
 
     public function intersect(self $other): self

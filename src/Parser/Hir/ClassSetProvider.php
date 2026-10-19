@@ -43,13 +43,15 @@ use PHPRegex\Parser\Text\Ascii;
  * with the library's other caches. The probe is the library's own regex: it
  * runs under the library's floor of PCRE limits, whatever the caller set.
  *
- * Two kinds of atom are answered without a scan of their own. A class that
+ * Under /u some atoms are answered without a scan of their own. A class that
  * is not caseless is the union of its members: each type, property or POSIX
  * class asked as an atom of its own, so scanned once whatever class holds
  * it, each character and range read as written, a negated class the rest of
- * the alphabet, but under the ASCII options. Under /u a caseless ASCII
- * character is itself and its other case, but "k" and "s", which Unicode
- * folds with a third character: those are scanned. A class the parser does
+ * the alphabet, but under the ASCII options. A caseless ASCII character is
+ * itself and its other case, but "k" and "s", which Unicode folds with a
+ * third character: those are scanned. A negated type or property is the
+ * rest of the alphabet, the dot under "s" is all of it, and every general
+ * category is read from one scan of all of them. A class the parser does
  * not read as members it knows is scanned whole.
  *
  * @internal
@@ -86,6 +88,43 @@ final class ClassSetProvider
         'Z', 'Zs', 'Zl', 'Zp', 'C', 'Cc', 'Cf', 'Cs', 'Co', 'Cn',
     ];
 
+    /**
+     * The general categories each character has exactly one of, and the
+     * ones they make up.
+     */
+    private const LEAF_CATEGORIES = [
+        'Lu', 'Ll', 'Lt', 'Lm', 'Lo', 'Mn', 'Mc', 'Me', 'Nd', 'Nl', 'No',
+        'Pc', 'Pd', 'Ps', 'Pe', 'Pi', 'Pf', 'Po', 'Sm', 'Sc', 'Sk', 'So',
+        'Zs', 'Zl', 'Zp', 'Cc', 'Cf', 'Cs', 'Co', 'Cn',
+    ];
+
+    private const MAJOR_CATEGORIES = [
+        'L' => ['Lu', 'Ll', 'Lt', 'Lm', 'Lo'],
+        'M' => ['Mn', 'Mc', 'Me'],
+        'N' => ['Nd', 'Nl', 'No'],
+        'P' => ['Pc', 'Pd', 'Ps', 'Pe', 'Pi', 'Pf', 'Po'],
+        'S' => ['Sm', 'Sc', 'Sk', 'So'],
+        'Z' => ['Zs', 'Zl', 'Zp'],
+        'C' => ['Cc', 'Cf', 'Cs', 'Co', 'Cn'],
+    ];
+
+    /**
+     * The POSIX classes UCP reads as general categories (PCRE2's
+     * pcre2pattern: [:alpha:] becomes \p{L}, [:alnum:] \p{Xan}, which is
+     * L and N, [:digit:] \p{Nd}, [:lower:] \p{Ll}, [:upper:] \p{Lu},
+     * [:cntrl:] \p{Cc}).
+     */
+    private const POSIX_CATEGORIES = [
+        '[[:alpha:]]' => ['L'],
+        '[[:alnum:]]' => ['L', 'N'],
+        '[[:digit:]]' => ['Nd'],
+        '[[:lower:]]' => ['Ll'],
+        '[[:upper:]]' => ['Lu'],
+        '[[:cntrl:]]' => ['Cc'],
+    ];
+
+    private const NEGATED_TYPES = ['\\D', '\\S', '\\W', '\\H', '\\V'];
+
     private static ?string $unicodeSubject = null;
 
     private static ?string $byteSubject = null;
@@ -96,6 +135,19 @@ final class ClassSetProvider
     private static array $sets = [];
 
     private static ?RegexParser $parser = null;
+
+    /**
+     * The leaf general categories read from one scan, false when the scan
+     * could not read them.
+     *
+     * @var array<string, CharSet>|false|null
+     */
+    private static array|false|null $categories = null;
+
+    /**
+     * Whether a Unicode probe may run with the JIT.
+     */
+    private static bool $jit = true;
 
     /**
      * Whether a bare script name, "\p{Han}", means the script alone for the
@@ -162,6 +214,7 @@ final class ClassSetProvider
             // A scan of the 256 bytes costs less than reading the atom: only
             // the Unicode scans, over every code point, are worth saving.
             $set = ($unicode && $unicodeFlag ? self::caselessAscii($atom, $modifiers) : null)
+                ?? ($unicode ? self::derived($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
                 ?? ($unicode ? self::composed($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
                 ?? self::scan($atom, $unicode, $modifiers, $global, $startVerbs);
             if (null === $set) {
@@ -210,7 +263,8 @@ final class ClassSetProvider
      * The options that can change what the atom matches: "s" only for a
      * dot, "x" only where the atom holds a space or a "#", "xx" only where
      * it holds a space or a tab, "i" not for a type, which holds every case
-     * of what it holds, nor for a general category but Lu, Ll and Lt (each
+     * of what it holds, nor for the dot, which holds every character but
+     * the newlines, nor for a general category but Lu, Ll and Lt (each
      * holds the same set with "i" and without on PCRE2 10.39 to 10.49).
      * The others stay as given: "r" alone is refused before PCRE2 10.43,
      * and the scan says so.
@@ -221,7 +275,7 @@ final class ClassSetProvider
             $modifiers = str_replace('s', '', $modifiers);
         }
 
-        if (\in_array($atom, ['\\d', '\\D', '\\s', '\\S', '\\w', '\\W', '\\h', '\\H', '\\v', '\\V'], true)
+        if (\in_array($atom, ['.', '\\d', '\\D', '\\s', '\\S', '\\w', '\\W', '\\h', '\\H', '\\v', '\\V'], true)
             || (str_starts_with($atom, '\\p{') || str_starts_with($atom, '\\P{')) && \in_array(substr($atom, 3, -1), self::CASE_FREE_CATEGORIES, true)) {
             $modifiers = str_replace('i', '', $modifiers);
         }
@@ -237,9 +291,141 @@ final class ClassSetProvider
     private static function clear(): void
     {
         self::$sets = [];
+        self::$categories = null;
         self::$parser = null;
         self::$unicodeSubject = null;
         self::$byteSubject = null;
+    }
+
+    /**
+     * The set of an atom read from others under /u, null for any other: a
+     * negated type, "\P{X}" or "\p{^X}" not caseless is the rest of the
+     * alphabet (each pair of types parts it in two, and a property is
+     * matched or not), the dot under "s" is all of it, and a general
+     * category, or a POSIX class UCP reads as one, comes from the one scan
+     * of them all. A category is read so with no option and no start verb
+     * only: each changes what some category or POSIX class matches.
+     */
+    private static function derived(string $atom, string $modifiers, string $startVerbs, bool $unicodeFlag): ?CharSet
+    {
+        if ('.' === $atom) {
+            return str_contains($modifiers, 's') ? CharSet::universe(true) : null;
+        }
+
+        $positive = null;
+        if (\in_array($atom, self::NEGATED_TYPES, true)) {
+            $positive = '\\'.Ascii::lower($atom[1]);
+        } elseif (!str_contains($modifiers, 'i') && str_ends_with($atom, '}')) {
+            if (str_starts_with($atom, '\\P{') && !str_starts_with($atom, '\\P{^')) {
+                $positive = '\\p{'.substr($atom, 3);
+            } elseif (str_starts_with($atom, '\\p{^')) {
+                $positive = '\\p{'.substr($atom, 4);
+            }
+        }
+
+        if (null !== $positive) {
+            $set = self::query($positive, true, $modifiers, $startVerbs, $unicodeFlag);
+
+            return null === $set ? null : CharSet::universe(true)->subtract($set);
+        }
+
+        if ('' !== $modifiers || '' !== $startVerbs || !$unicodeFlag) {
+            return null;
+        }
+
+        $names = self::POSIX_CATEGORIES[$atom] ?? null;
+        if (null === $names && str_starts_with($atom, '\\p{') && str_ends_with($atom, '}')) {
+            $name = substr($atom, 3, -1);
+            $names = isset(self::MAJOR_CATEGORIES[$name]) || \in_array($name, self::LEAF_CATEGORIES, true) ? [$name] : null;
+        }
+
+        $categories = null === $names ? null : self::categories();
+        if (null === $names || null === $categories) {
+            return null;
+        }
+
+        $set = CharSet::empty();
+        foreach ($names as $name) {
+            foreach (self::MAJOR_CATEGORIES[$name] ?? [$name] as $leaf) {
+                $set = $set->union($categories[$leaf]);
+            }
+        }
+
+        return $set;
+    }
+
+    /**
+     * The leaf general categories, each the characters the engine reads in
+     * it; null when they make no partition the engine reads, or it gave up
+     * on them under its limits: each category is then scanned alone. A
+     * partition, or its absence, is kept for the process; a scan given up
+     * is not.
+     *
+     * @return array<string, CharSet>|null
+     */
+    private static function categories(): ?array
+    {
+        if (null === self::$categories) {
+            $categories = self::partition(self::LEAF_CATEGORIES);
+            if (null === $categories) {
+                return null;
+            }
+
+            self::$categories = $categories;
+        }
+
+        return false === self::$categories ? null : self::$categories;
+    }
+
+    /**
+     * The characters the engine reads in each category, from one scan:
+     * each run of characters of one category is a match of the branch that
+     * names it. False when the engine refuses a name, or the matches leave
+     * characters out (the categories are no partition: a character two of
+     * them hold goes to the first only, which only a partition rules out,
+     * and every character of the alphabet has one general category); null
+     * when the engine gave up under its limits.
+     *
+     * @param list<string> $names
+     *
+     * @return array<string, CharSet>|false|null
+     */
+    private static function partition(array $names): array|false|null
+    {
+        // Captures, no backreference: the JIT may run it (see probe()).
+        $pattern = '/'.(self::$jit ? '' : NoJit::VERB).'(?:('.implode(')|(', array_map(static fn (string $name): string => '\\p{'.$name.'}++', $names)).'))/u';
+        $subject = self::unicodeSubject();
+        $ranges = array_fill_keys($names, []);
+        foreach (self::blocks(true, \strlen($subject)) as [$blockStart, $blockLength]) {
+            $runs = self::runs($pattern, substr($subject, $blockStart, $blockLength));
+            if (!\is_array($runs)) {
+                return $runs;
+            }
+
+            // The runs follow each other: they cover the block when their
+            // lengths add up to it.
+            $covered = 0;
+            foreach ($runs as $run) {
+                $length = \strlen($run[0][0] ?? '');
+                $offset = $run[0][1] ?? 0;
+                foreach ($names as $index => $name) {
+                    if (null !== ($run[$index + 1][0] ?? null)) {
+                        $ranges[$name][] = [self::codePointAt($blockStart + $offset), self::codePointAt($blockStart + $offset + $length) - 1];
+                        $covered += $length;
+
+                        break;
+                    }
+                }
+            }
+
+            if ($covered !== $blockLength) {
+                return false;
+            }
+        }
+
+        // A run ending before U+E000 reads as ending at U+DFFF: the
+        // surrogates, which the subject leaves out, are taken off.
+        return array_map(static fn (array $runs): CharSet => CharSet::fromRanges($runs)->intersect(CharSet::universe(true)), $ranges);
     }
 
     /**
@@ -307,11 +493,12 @@ final class ClassSetProvider
         }
 
         $members = $class->expression instanceof AlternationNode ? $class->expression->alternatives : [$class->expression];
-        // A class of one POSIX class is the atom asked; so is one caseless
-        // range, written by code point, which only the engine folds.
+        // A class of one POSIX class is the atom asked, but negated; so is
+        // one caseless range, written by code point, which only the engine
+        // folds.
         $caseless = str_contains($modifiers, 'i');
         $only = 1 === \count($members) ? $members[0] : null;
-        if ($only instanceof PosixClassNode || ($caseless && $only instanceof RangeNode && $atom === self::rangeAtom($only))) {
+        if (($only instanceof PosixClassNode && !$class->isNegated) || ($caseless && $only instanceof RangeNode && $atom === self::rangeAtom($only))) {
             return null;
         }
 
@@ -475,9 +662,7 @@ final class ClassSetProvider
             return false;
         }
 
-        // Without the JIT, which crashes PHP on some pattern and subject pairs:
-        // no delimiter here is one the verb holds.
-        $pattern = $delimiter.NoJit::VERB.$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
+        $pattern = self::probe($atom, $unicode, $modifiers, $global, $startVerbs, $delimiter);
         $subject = $unicode ? self::unicodeSubject() : self::byteSubject();
         $ranges = [];
 
@@ -510,6 +695,24 @@ final class ClassSetProvider
         }
 
         return CharSet::fromRanges($ranges)->intersect(CharSet::universe($unicode));
+    }
+
+    /**
+     * The pattern that scans for the atom. A Unicode probe runs with the JIT
+     * (about seven times faster over the million code points) when its atom
+     * holds no parenthesis: the JIT crashes PHP on some pattern and subject
+     * pairs, and every known one needs a capture and a backreference, which
+     * a probe without a parenthesis cannot hold. A byte probe runs without
+     * it: compiling it costs more than reading 256 bytes. No delimiter here
+     * is one the verb holds.
+     *
+     * @return non-empty-string
+     */
+    private static function probe(string $atom, bool $unicode, string $modifiers, string $global, string $startVerbs, string $delimiter): string
+    {
+        $jit = self::$jit && $unicode && !str_contains($atom, '(');
+
+        return $delimiter.($jit ? '' : NoJit::VERB).$startVerbs.'(?'.$modifiers.':'.$atom.')++'.$delimiter.$global;
     }
 
     /**
@@ -549,6 +752,34 @@ final class ClassSetProvider
 
         if (false !== $result) {
             return $matches[0] ?? [];
+        }
+
+        return \in_array($error, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR, \PREG_JIT_STACKLIMIT_ERROR], true) ? null : false;
+    }
+
+    /**
+     * Every run the categories probe matches in the block, each with the
+     * group of its branch and their byte offsets, a branch it did not take
+     * null; false when PCRE refuses the probe, null when the engine gave up
+     * under its limits.
+     *
+     * @param non-empty-string $pattern
+     *
+     * @return list<array<array{?string, int}>>|false|null
+     */
+    private static function runs(string $pattern, string $block): array|false|null
+    {
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $result = LibraryPcre::matchAll($pattern, $block, $matches, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL);
+            $error = LibraryPcre::lastError();
+        } finally {
+            restore_error_handler();
+        }
+
+        if (false !== $result) {
+            return $matches;
         }
 
         return \in_array($error, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR, \PREG_JIT_STACKLIMIT_ERROR], true) ? null : false;
