@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Minimization;
 
 use PHPRegex\Automata\Model\Dfa;
-use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Support\WorkBudget;
 
 /**
@@ -65,12 +64,12 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
         }
 
         if (\count($partitions) <= 1) {
-            $stateToGroup = $this->buildStateToGroup($partitions);
+            $stateToGroup = PartitionQuotient::groupOf($partitions);
 
-            return $this->buildMinimizedDfa($dfa, $partitions, $stateToGroup);
+            return PartitionQuotient::build($dfa, $partitions, $stateToGroup);
         }
 
-        $stateToGroup = $this->buildStateToGroup($partitions);
+        $stateToGroup = PartitionQuotient::groupOf($partitions);
         $inverse = $this->buildInverseTransitions($dfa, $alphabet);
 
         $worklist = [];
@@ -159,25 +158,7 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
             }
         }
 
-        return $this->buildMinimizedDfa($dfa, $partitions, $stateToGroup);
-    }
-
-    /**
-     * @param array<int, array<int, int>> $partitions
-     *
-     * @return array<int, int>
-     */
-    private function buildStateToGroup(array $partitions): array
-    {
-        $lookup = [];
-
-        foreach ($partitions as $groupId => $states) {
-            foreach ($states as $stateId) {
-                $lookup[$stateId] = $groupId;
-            }
-        }
-
-        return $lookup;
+        return PartitionQuotient::build($dfa, $partitions, $stateToGroup);
     }
 
     /**
@@ -220,45 +201,5 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
         }
 
         return $inverse;
-    }
-
-    /**
-     * @param array<int, array<int, int>> $partitions
-     * @param array<int, int>             $stateToGroup
-     */
-    private function buildMinimizedDfa(Dfa $dfa, array $partitions, array $stateToGroup): Dfa
-    {
-        $newStates = [];
-
-        foreach ($partitions as $newId => $group) {
-            $representative = $dfa->states[$group[0]];
-            $transitions = [];
-            $ranges = [];
-
-            foreach ($representative->byteTransitions() as $symbol => $target) {
-                $transitions[(int) $symbol] = $stateToGroup[$target];
-            }
-
-            $packed = $representative->packedRanges();
-            if ([] !== $packed) {
-                for ($at = 0, $count = \count($packed); $at < $count; $at += 3) {
-                    $ranges[] = $packed[$at];
-                    $ranges[] = $packed[$at + 1];
-                    $ranges[] = $stateToGroup[$packed[$at + 2]];
-                }
-            } else {
-                foreach ($transitions as $symbol => $target) {
-                    $ranges[] = $symbol;
-                    $ranges[] = $symbol;
-                    $ranges[] = $target;
-                }
-            }
-
-            $newStates[$newId] = new DfaState($newId, $transitions, $representative->isAccepting, $ranges);
-        }
-
-        $startState = $stateToGroup[$dfa->startState];
-
-        return new Dfa($startState, $newStates, $dfa->alphabetRanges, $dfa->minCodePoint, $dfa->maxCodePoint);
     }
 }

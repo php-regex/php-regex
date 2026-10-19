@@ -83,6 +83,58 @@ final class DfaMinimizerTest extends TestCase
         $this->assertNotNull($minimized->states[$minimized->startState]->transitionFor($snowman));
     }
 
+    /**
+     * Every state accepting: one group, one state, looping on itself.
+     */
+    #[Test]
+    #[DataProvider('provideAlgorithms')]
+    public function test_minimize_folds_states_that_all_accept_into_one(MinimizationAlgorithmInterface $algorithm): void
+    {
+        $alphabet = [97, 98];
+        $states = [
+            0 => new DfaState(0, $this->transitions($alphabet, 1), true),
+            1 => new DfaState(1, $this->transitions($alphabet, 0), true),
+        ];
+
+        $minimized = (new DfaMinimizer($algorithm))->minimize(new Dfa(0, $states));
+
+        $this->assertCount(1, $minimized->states);
+        $only = $minimized->getState($minimized->startState);
+        $this->assertTrue($only->isAccepting);
+        $this->assertSame($minimized->startState, $only->transitionFor(97));
+        $this->assertSame($minimized->startState, $only->transitionFor(98));
+    }
+
+    /**
+     * A state of ranges keeps them, each range led to the group of its
+     * target: "[a-z]" and "[0-9]" stay ranges, the two accepting states
+     * they reach merge.
+     */
+    #[Test]
+    #[DataProvider('provideAlgorithms')]
+    public function test_minimize_keeps_ranges_and_leads_them_to_groups(MinimizationAlgorithmInterface $algorithm): void
+    {
+        $states = [
+            0 => new DfaState(0, [], false, [48, 57, 1, 97, 122, 2]),
+            1 => new DfaState(1, [], true, [48, 57, 3, 97, 122, 3]),
+            2 => new DfaState(2, [], true, [48, 57, 3, 97, 122, 3]),
+            3 => new DfaState(3, [], false, [48, 57, 3, 97, 122, 3]),
+        ];
+
+        $dfa = new Dfa(0, $states, [[48, 57], [97, 122]]);
+        $minimized = (new DfaMinimizer($algorithm))->minimize($dfa);
+
+        $this->assertCount(3, $minimized->states);
+        $start = $minimized->getState($minimized->startState);
+        $this->assertSame(2, $start->rangeCount());
+        $this->assertSame($start->transitionFor(\ord('5')), $start->transitionFor(\ord('q')));
+        $this->assertNull($start->transitionFor(\ord('-')));
+
+        foreach (['', '5', 'q', '5q', 'z', '9', '-', 'qq'] as $input) {
+            $this->assertSame($this->accepts($dfa, $input), $this->accepts($minimized, $input), $input);
+        }
+    }
+
     public static function provideAlgorithms(): \Generator
     {
         yield 'moore' => [new MoorePartitionRefinement()];
