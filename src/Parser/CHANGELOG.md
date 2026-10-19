@@ -11,3 +11,5 @@ CHANGELOG
  * `RegexParser::validate()` keeps the results of the last 1024 patterns an
    instance validated, and `clearCaches()` empties them: a pattern validated
    again costs a lookup.
+ * `ArrayCache` drops the tree read or written longest ago, where it dropped
+   the one written first.

@@ -255,6 +255,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The language server keeps what it found in each pattern, per target, for the session (the latest 4096 patterns): a change analyses only the patterns whose text it changed and moves the findings of the others, where it linted every pattern of the document again. An edit to one pattern of a document holding about 330 takes about 20 ms where it took about 380 ms.
 
+- `ArrayCache`, the default AST cache and the memory in front of a directory or a PSR pool, drops the tree read or written longest ago, where it dropped the one written first: a pattern read again and again stays among patterns met once.
+
 - A lint rule whose every identifier is off, by default or in `checks.lint.rules`, no longer runs: it ran on every pattern and its findings were dropped. `quantifier.uselessLazy` was the costly one; with it, the default lint rules on the same patterns take about 9.5 s.
 
 - The internal classes moved out of the `Internal` namespaces, each to the namespace of what it does (`Parser\Syntax\PatternParser`, `Parser\Text\Ascii`, `Linter\Parallel\WorkerCount`, `Redos\Backtrack\BacktrackProver`, …) or to its package root; they stay `@internal`, and the tag alone marks a class outside the API.

@@ -38,6 +38,38 @@ final class ArrayCacheTest extends TestCase
         $this->assertSame(['hits' => 2, 'misses' => 1], $cache->getStats());
     }
 
+    /**
+     * Past its size the cache drops the tree read longest ago: one read
+     * again stays, the next one goes.
+     */
+    #[Test]
+    public function test_the_tree_read_longest_ago_goes_first(): void
+    {
+        $cache = new ArrayCache(2);
+        $cache->write('a', $this->tree('/a/'));
+        $cache->write('b', $this->tree('/b/'));
+
+        $this->assertInstanceOf(RegexNode::class, $cache->load('a'));
+        $cache->write('c', $this->tree('/c/'));
+
+        $this->assertInstanceOf(RegexNode::class, $cache->load('a'));
+        $this->assertNull($cache->load('b'));
+        $this->assertInstanceOf(RegexNode::class, $cache->load('c'));
+    }
+
+    #[Test]
+    public function test_a_tree_written_again_is_the_latest(): void
+    {
+        $cache = new ArrayCache(2);
+        $cache->write('a', $this->tree('/a/'));
+        $cache->write('b', $this->tree('/b/'));
+        $cache->write('a', $this->tree('/a/'));
+        $cache->write('c', $this->tree('/c/'));
+
+        $this->assertInstanceOf(RegexNode::class, $cache->load('a'));
+        $this->assertNull($cache->load('b'));
+    }
+
     #[Test]
     public function test_generate_key_returns_hash(): void
     {

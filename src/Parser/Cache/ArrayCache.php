@@ -16,9 +16,9 @@ namespace PHPRegex\Parser\Cache;
 use PHPRegex\Parser\Node\RegexNode;
 
 /**
- * Trees kept in memory for the life of the process, the latest ones first:
- * past the given number, the oldest is dropped. Trees are immutable, so the
- * same instance is handed out on every hit.
+ * Trees kept in memory for the life of the process: past the given number,
+ * the one read or written longest ago is dropped. Trees are immutable, so
+ * the same instance is handed out on every hit.
  *
  * @phpstan-import-type CacheStats from RemovableCacheInterface
  */
@@ -62,8 +62,11 @@ final class ArrayCache implements RemovableCacheInterface
         }
 
         $this->hits++;
+        // Read again, it is the latest.
+        $tree = $this->trees[$key];
+        unset($this->trees[$key]);
 
-        return $this->trees[$key];
+        return $this->trees[$key] = $tree;
     }
 
     #[\Override]
