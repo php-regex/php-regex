@@ -96,6 +96,27 @@ final class RegexFinderEditTest extends TestCase
      * among them, or anywhere in the file. Each finds what a fresh read
      * finds.
      */
+    /**
+     * The finder lives as long as the server: an edit read in place keeps
+     * nothing of the text, whose tokens may take sixty times its size.
+     */
+    #[Test]
+    public function test_an_edit_read_in_place_keeps_nothing_of_the_text(): void
+    {
+        $finder = new RegexFinder();
+        $before = "<?php\n".str_repeat("preg_match('/a/', \$s);\n", 2000);
+        $after = "<?php\npreg_match('/ab/', \$s);\n".str_repeat("preg_match('/a/', \$s);\n", 1999);
+        $reads = self::reads($finder);
+
+        $this->assertCount(2000, $finder->findAfterEdit($before, $finder->find($before), $after));
+        $this->assertSame($reads + 1, self::reads($finder));
+
+        foreach ((new \ReflectionClass(RegexFinder::class))->getProperties() as $property) {
+            $value = $property->getValue($finder);
+            $this->assertLessThan(100, \is_array($value) ? \count($value, \COUNT_RECURSIVE) : 0, $property->getName().' holds the text.');
+        }
+    }
+
     #[Test]
     public function test_random_edits_find_what_a_fresh_read_finds(): void
     {

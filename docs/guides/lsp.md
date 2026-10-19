@@ -97,7 +97,7 @@ the others move with them. A keystroke inside a pattern that a call takes
 whole, as in `preg_match('/a+b/', $s)`, is read in place, the rest of the
 document standing as it stood; any other change reads the document again.
 In a file holding about 330 patterns, a keystroke inside one of them takes
-about 4 ms.
+about 5 ms.
 
 ### Hover Information
 

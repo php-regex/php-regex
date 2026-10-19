@@ -67,14 +67,6 @@ final class RegexFinder
     private int $reads = 0;
 
     /**
-     * The last text an edit was read in place into, and its tokens: the
-     * next keystroke edits it.
-     *
-     * @var array{string, list<array{int, string, int}|string>}|null
-     */
-    private ?array $tokenized = null;
-
-    /**
      * @param PatternFunctionRegistry|null $registry the calls read, every preset by default
      */
     public function __construct(?PatternFunctionRegistry $registry = null)
@@ -176,7 +168,8 @@ final class RegexFinder
         $literal = substr($after, $at, \strlen($edited->literal) + $delta);
         $tokens = token_get_all($after);
         $index = self::stringTokenAt($tokens, $at, $literal);
-        if (null === $index || !self::isWholeArgument($tokens, $index) || !self::tokenizeAlike($this->tokensOf($before), $tokens, $index)) {
+        // The tokens of neither text are kept: they take many times its size.
+        if (null === $index || !self::isWholeArgument($tokens, $index) || !self::tokenizeAlike(token_get_all($before), $tokens, $index)) {
             return null;
         }
 
@@ -185,7 +178,6 @@ final class RegexFinder
             return null;
         }
 
-        $this->tokenized = [$after, $tokens];
         $end = PositionConverter::positionIn($after, $at + \strlen($literal));
         $read = [];
         foreach ($occurrences as $occurrence) {
@@ -210,17 +202,6 @@ final class RegexFinder
         }
 
         return $read;
-    }
-
-    /**
-     * The tokens of the text, kept from the last edit read in place when it
-     * is that text.
-     *
-     * @return list<array{int, string, int}|string>
-     */
-    private function tokensOf(string $content): array
-    {
-        return null !== $this->tokenized && $this->tokenized[0] === $content ? $this->tokenized[1] : token_get_all($content);
     }
 
     /**
