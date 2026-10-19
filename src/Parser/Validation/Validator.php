@@ -1212,21 +1212,22 @@ final class Validator extends AbstractNodeVisitor
             $this->validateUnicodeNamed($node);
         }
 
-        $this->validatePaddedBraces($node);
-
         // "\x" with no digit: NUL up to PCRE2 10.44, refused from 10.45.
         if ('\\x' === $node->originalRepresentation && null !== $this->source) {
             $this->validateHexBraces($this->source, $node->startPosition + 2);
         }
 
         // The Lexer/Parser combination already ensures these are
-        // syntactically valid. We validate the *value*.
+        // syntactically valid. We validate the *value*, which PCRE reads
+        // before it looks at what follows the digits.
         match ($node->type) {
             CharLiteralType::Unicode => $this->validateUnicode($node),
             CharLiteralType::Octal => $this->validateOctal($node),
             CharLiteralType::OctalLegacy => $this->validateOctalLegacy($node),
             CharLiteralType::UnicodeNamed => null,
         };
+
+        $this->validatePaddedBraces($node);
 
         // UTF-8 cannot encode the UTF-16 surrogates. PCRE reports it at the
         // closing brace.
@@ -2156,21 +2157,21 @@ final class Validator extends AbstractNodeVisitor
             return; // Invalid format, skip
         }
 
-        // PCRE reads every digit before it refuses the value, and reports it
-        // at the closing brace.
-        if ($codePoint > 0x10FFFF) {
+        // PCRE refuses the value where codePointOverflow() says.
+        $overflow = '{' === ($rep[2] ?? '') ? $this->codePointOverflow($rep, 3, self::HEX_DIGITS) : null;
+        if (null !== $overflow && $codePoint > 0x10FFFF) {
             $this->raiseSemanticError(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
-                $node->getEndPosition() - 1,
+                $node->startPosition + $overflow,
                 ErrorCode::UnicodeOutOfRange,
             );
         }
 
         // Without Unicode mode a character is one byte, as for "\o{400}".
-        if (!$this->unicodeMode && $codePoint > 0xFF) {
+        if (null !== $overflow) {
             $this->raiseSemanticError(
                 \sprintf('Invalid code point "%s": without the "u" flag, a character is at most \xFF.', $node->originalRepresentation),
-                $node->getEndPosition() - 1,
+                $node->startPosition + $overflow,
                 ErrorCode::OctalOutOfRange,
                 'Add the "u" flag, or use a code point up to \xFF.',
             );
@@ -2187,26 +2188,48 @@ final class Validator extends AbstractNodeVisitor
     private function validateOctal(CharLiteralNode $node): void
     {
         // Without /u, PCRE limits \o{} to single-byte values (0-255); in
-        // Unicode mode any valid codepoint is allowed.
-        if ($this->unicodeMode) {
-            if ($node->codePoint > 0x10FFFF) {
-                $this->raiseSemanticError(
-                    \sprintf('Invalid octal codepoint "%s" (out of Unicode range).', $node->originalRepresentation),
-                    $node->getEndPosition() - 1,
-                    ErrorCode::OctalOutOfRange,
-                );
-            }
-
-            return;
-        }
-
-        if ($node->codePoint > 0xFF) {
+        // Unicode mode any valid codepoint is allowed. It refuses the value
+        // where codePointOverflow() says.
+        // A node built by hand may hold a value its spelling does not: it is
+        // refused at its closing brace.
+        $overflow = $this->codePointOverflow($node->originalRepresentation, 3, self::OCTAL_DIGITS)
+            ?? ($node->codePoint > ($this->unicodeMode ? 0x10FFFF : 0xFF) ? $node->getEndPosition() - 1 - $node->startPosition : null);
+        if (null !== $overflow) {
             $this->raiseSemanticError(
-                \sprintf('Invalid octal codepoint "%s".', $node->originalRepresentation),
-                $node->getEndPosition() - 1,
+                \sprintf($this->unicodeMode ? 'Invalid octal codepoint "%s" (out of Unicode range).' : 'Invalid octal codepoint "%s".', $node->originalRepresentation),
+                $node->startPosition + $overflow,
                 ErrorCode::OctalOutOfRange,
             );
         }
+    }
+
+    /**
+     * Where PCRE refuses a code point too large among the digits of
+     * "\x{...}", "\o{...}" or "\N{U+...}" that start at $at in $text, past
+     * the spaces and tabs after the "{" from PCRE2 10.43: it stops on the
+     * digit that takes the value past U+10FFFF under UTF, past 0xFF
+     * otherwise, skips the spaces and tabs after it from 10.43, then the
+     * digits left, and refuses it there, whatever follows. Null when no
+     * digit takes it past.
+     */
+    private function codePointOverflow(string $text, int $at, string $digits): ?int
+    {
+        $padded = $this->supports(PcreFeature::PaddedBracedEscapes);
+        $at += $padded ? strspn($text, self::BRACE_PADDING, $at) : 0;
+        $base = self::HEX_DIGITS === $digits ? 16 : 8;
+        $max = $this->unicodeMode ? 0x10FFFF : 0xFF;
+        $value = 0;
+        while (1 === strspn($text, $digits, $at, 1)) {
+            $value = $value * $base + (int) hexdec($text[$at]);
+            $at++;
+            if ($value > $max) {
+                $at += $padded ? strspn($text, self::BRACE_PADDING, $at) : 0;
+
+                return $at + strspn($text, $digits, $at);
+            }
+        }
+
+        return null;
     }
 
     private function validateOctalLegacy(CharLiteralNode $node): void
@@ -2245,13 +2268,13 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        // As for "\x{...}", PCRE reads every digit before it refuses a value
-        // above U+10FFFF, and reports it at the closing brace.
-        if (1 === LibraryPcre::match('/^[ \t]*+U\+0*+([0-9A-Fa-f]++)[ \t]*+$/', $name, $digits)
-            && (\strlen($digits[1]) > 6 || hexdec($digits[1]) > 0x10FFFF)) {
+        // As for "\x{...}", PCRE refuses a value above U+10FFFF where
+        // codePointOverflow() says.
+        $overflow = $this->codePointOverflow($node->originalRepresentation, 3 + strspn($name, self::BRACE_PADDING) + 2, self::HEX_DIGITS);
+        if (null !== $overflow) {
             $this->raiseSemanticError(
                 \sprintf('Invalid Unicode codepoint "%s" (out of range).', $node->originalRepresentation),
-                $node->getEndPosition() - 1,
+                $node->startPosition + $overflow,
                 ErrorCode::UnicodeOutOfRange,
             );
         }
@@ -3390,6 +3413,16 @@ final class Validator extends AbstractNodeVisitor
                 \sprintf('Digits missing in %s.', $escape),
                 $position,
                 ErrorCode::EscapeDigitsMissing,
+            );
+        }
+
+        // A value too large is refused first, whatever follows its digits.
+        $overflow = $this->codePointOverflow($source, $position, $digits);
+        if (null !== $overflow) {
+            $this->raiseSemanticError(
+                \sprintf('Code point too large in %s.', $escape),
+                $overflow,
+                '\o{}' === $escape || ('\x{}' === $escape && !$this->unicodeMode) ? ErrorCode::OctalOutOfRange : ErrorCode::UnicodeOutOfRange,
             );
         }
 

@@ -78,5 +78,26 @@ final class BracedDigitsPaddingTest extends TestCase
         yield 'spaces before and after U+' => ['pattern' => '/\N{ U+ 41}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::UnicodeNamedRequiresUtf, 'offset' => 7];
         yield 'space after U+ in a class' => ['pattern' => '/[\N{U+ 41}]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::UnicodeNamedRequiresUtf, 'offset' => 7];
         yield 'space between code point digits ending a range' => ['pattern' => '/[a-\N{U+4 1}]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::UnicodeNamedRequiresUtf, 'offset' => 10];
+
+        // A code point too large: PCRE2 stops on the digit that takes it
+        // past U+10FFFF under UTF, past 0xFF otherwise, skips the spaces
+        // after it from 10.43, then the digits left, and refuses it there,
+        // whatever follows ("character code point value in \x{} or \o{} is
+        // too large").
+        yield 'hex too large before a space' => ['pattern' => '/\x{110000 }/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 9];
+        yield 'hex too large before a space under UTF, PCRE2 10.40' => ['pattern' => '/\x{110000 }/u', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 9];
+        yield 'hex too large on its last digit before a space under UTF' => ['pattern' => '/\x{110000 }/u', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 10];
+        yield 'padded hex too large' => ['pattern' => '/\x{ 10FFFF }/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 10];
+        yield 'many hex digits before a space under UTF' => ['pattern' => '/\x{FFFFFFFFF }/u', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 12];
+        yield 'leading zeros and hex too large before a space' => ['pattern' => '/\x{0000100 }/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 10];
+        yield 'code point too large before a space' => ['pattern' => '/\N{U+110000 }/u', 'php' => '8.3', 'release' => '10.42', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 11];
+        yield 'hex too large before a space and a letter' => ['pattern' => '/\x{65536 x}/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 8];
+        yield 'hex too large before a comma' => ['pattern' => '/\x{65536,}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 8];
+        yield 'hex too large on its last digit before a space and a letter' => ['pattern' => '/\x{100 x}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 7];
+        yield 'hex too large on its last digit before a space and a letter, PCRE2 10.40' => ['pattern' => '/\x{100 x}/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 6];
+        yield 'octal too large before a space and a letter' => ['pattern' => '/\o{400 x}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 7];
+        yield 'octal too large before a space under UTF, PCRE2 10.40' => ['pattern' => '/\o{7777777 }/u', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 10];
+        yield 'hex too large before a letter under UTF' => ['pattern' => '/\x{110000x}/u', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 9];
+        yield 'code point too large before a letter' => ['pattern' => '/\N{U+110000x}/u', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 11];
     }
 }

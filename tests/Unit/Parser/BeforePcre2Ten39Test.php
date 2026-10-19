@@ -146,6 +146,14 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'non-atomic lookahead as a condition on 10.33' => ['pattern' => '/(?(*napla:a)a|b)/', 'releases' => ['10.33'], 'offset' => 9, 'code' => ErrorCode::VerbInvalid];
         yield 'unclosed non-atomic lookahead' => ['pattern' => '/(*napla:a/', 'releases' => ['10.32', '10.33'], 'offset' => 7, 'code' => ErrorCode::VerbInvalid];
         yield 'unclosed short non-atomic lookahead' => ['pattern' => '/(?*a/', 'releases' => ['10.32', '10.33', '10.34'], 'offset' => 2, 'code' => ErrorCode::GroupSyntax];
+        // A count past 65535 PCRE2 never reads as one: the name, condition
+        // or "(?" it stands in is refused first (pcre2test 10.32 to 10.36).
+        yield 'padded count in a group name' => ['pattern' => '/(?<n{65536 }>a)/', 'releases' => ['10.32', '10.35', '10.36'], 'offset' => 4, 'code' => ErrorCode::GroupNameUnterminated];
+        yield 'padded count in a named reference' => ['pattern' => '/(?<n>a)(?P=n{65536 })/', 'releases' => ['10.35'], 'offset' => 12, 'code' => ErrorCode::GroupNameUnterminated];
+        yield 'padded count in a condition' => ['pattern' => '/(?(1{65536 })a)/', 'releases' => ['10.36'], 'offset' => 4, 'code' => ErrorCode::ConditionalUnclosed];
+        yield 'padded count as a called name' => ['pattern' => '/(?P>{65536 })/', 'releases' => ['10.32'], 'offset' => 4, 'code' => ErrorCode::GroupNameExpected];
+        yield 'padded count after (?' => ['pattern' => '/(?{65536 })/', 'releases' => ['10.35'], 'offset' => 2, 'code' => ErrorCode::GroupSyntax];
+        yield 'open count as a called name' => ['pattern' => '/(?&{65536)/', 'releases' => ['10.33'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
     }
 
     /**

@@ -988,11 +988,39 @@ final class TokenParser
         );
     }
 
+    /**
+     * Before PCRE2 10.37, the digits after a "{" read as text are still read
+     * as a count, before anything checks that a "}" closes it, and one past
+     * 65535 is refused there: "a{65536", "a{65536 }". PCRE2 reads the "{"
+     * where the pattern reads an item, so a name or a condition it stands
+     * in is refused first.
+     *
+     * @throws ParserException
+     */
+    private function guardOpenCountBeforeTen37(Token $token): void
+    {
+        if (TokenType::Literal !== $token->type || $this->inQuoteMode || '{' !== ($this->pattern[$token->position] ?? '')
+            || $this->supports(PcreFeature::LargeOpenCountIsText)) {
+            return;
+        }
+
+        $overflow = RepeatCount::overflowBeforeTen37($this->pattern, $token->position);
+        if (null !== $overflow) {
+            throw $this->parserException(
+                \sprintf('Number too big in "{" at position %d: PCRE2 before 10.37 reads the digits after it as a count, at most 65535.', $overflow),
+                ErrorCode::QuantifierTooBig,
+                $overflow,
+            );
+        }
+    }
+
     private function parseSimpleAtom(int $startPosition): ?NodeInterface
     {
         $this->guardNamedReferenceEscape();
 
         if (null !== $atom = $this->matchAtom($startPosition, self::OUTSIDE_ATOM_TYPES)) {
+            $this->guardOpenCountBeforeTen37($this->stream->previous());
+
             // Without UTF mode "x" skips a 0x85 byte inside a character too.
             if ($atom instanceof LiteralNode && $this->extendedMode && !$this->unicodeMode && !$this->inQuoteMode
                 && TokenType::Literal === $this->stream->previous()->type && \strlen($atom->value) > 1 && str_contains($atom->value, "\x85")) {

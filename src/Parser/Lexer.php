@@ -21,7 +21,6 @@ use PHPRegex\Parser\Syntax\CodePointReader;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreVerb;
-use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\Token;
@@ -395,12 +394,6 @@ final class Lexer
     private readonly bool $readsAlphabeticAssertions;
 
     /**
-     * Whether a count past 65535 in a brace that is no quantifier is text;
-     * before, it is refused as too big a count.
-     */
-    private readonly bool $largeOpenCountIsText;
-
-    /**
      * Whether "(*sr:" and the other names of a script run are read.
      */
     private readonly bool $readsScriptRuns;
@@ -458,7 +451,6 @@ final class Lexer
         $this->phpVersionId = $target->phpVersionId;
         $this->target = $target;
         $this->pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
-        $this->largeOpenCountIsText = $target->supports(PcreFeature::LargeOpenCountIsText);
         $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
         $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
         $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring);
@@ -1563,22 +1555,6 @@ final class Lexer
     ): ?Token {
         if (!$this->inCharClass) {
             $this->trackExtendedModeScope($type);
-        }
-
-        // Before PCRE2 10.37, the digits after a "{" that opens no quantifier
-        // are still read as a count, and one past 65535 refused there: a
-        // count padded before its "}" included, which is text up to 10.42.
-        if (!$this->largeOpenCountIsText && !$this->inCharClass && '{' === $matchedValue[0]
-            && (TokenType::Literal === $type || (TokenType::Quantifier === $type && !self::isPlainCount($matchedValue) && !$this->followsNamedCharacterEscape($currentTokens, $startPos)))) {
-            $overflow = RepeatCount::overflowBeforeTen37($this->pattern, $startPos);
-            if (null !== $overflow) {
-                throw LexerException::withContext(
-                    \sprintf('Number too big in "{" at position %d: PCRE2 before 10.37 reads the digits after it as a count, at most 65535.', $overflow),
-                    ErrorCode::QuantifierTooBig,
-                    $overflow,
-                    $this->pattern,
-                );
-            }
         }
 
         // Before PCRE2 10.37 a backslash and its digits are one number, refused
