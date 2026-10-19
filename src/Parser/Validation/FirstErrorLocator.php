@@ -111,8 +111,7 @@ final class FirstErrorLocator
 
         $laterErrors = [
             $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
-            $error instanceof LexerException && \in_array($error->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true)
-                ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter, $position) : null,
+            $error instanceof LexerException ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter, $error) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
@@ -415,15 +414,16 @@ final class FirstErrorLocator
     }
 
     /**
-     * The first error in the class the tokens leave open at the end of the
-     * pattern: PCRE reads it item by item before it meets that end, so an
-     * item it refuses comes before the missing "]", or before a reversed
-     * range after it, at $position. The class is parsed alone, as if a "]"
-     * closed it there, and judged.
+     * The first error in the class the tokens leave open where the lexer
+     * stopped: PCRE reads it item by item before it meets that point, so an
+     * item it refuses comes before the missing "]", before a reversed range
+     * after it, or before an escape it refuses there, as a "\c" the pattern
+     * ends in. The class is parsed alone, as if a "]" closed it at the end
+     * of the pattern, and judged; null when no class is left open.
      *
      * @param list<Token> $tokens
      */
-    private function firstErrorInClassLeftOpen(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
+    private function firstErrorInClassLeftOpen(array $tokens, string $pattern, string $flags, string $delimiter, LexerException $lexerError): ?SemanticErrorException
     {
         // The tokens from the "[" no "]" closes; none should the lexer ever
         // report a class left open it has not read.
@@ -437,6 +437,14 @@ final class FirstErrorLocator
             }
         }
 
+        if ($opening === \count($tokens)) {
+            return null;
+        }
+
+        // The missing "]" and a reversed range the lexer found come after
+        // every item read; an escape it refuses, after those before it.
+        $position = $lexerError->position ?? 0;
+        $atTheEnd = \in_array($lexerError->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true);
         $end = \strlen($pattern);
         $class = [...\array_slice($tokens, $opening), new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)];
 
@@ -444,10 +452,10 @@ final class FirstErrorLocator
             $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(new TokenStream($class, $pattern), $flags, $delimiter, $end);
             $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
         } catch (SemanticErrorException $error) {
-            return $error;
+            return $atTheEnd || ($error->position ?? $position) < $position ? $error : null;
         } catch (LexerException|LimitException|ParserException $classError) {
             // A range the parser refuses leaves the items before it, and
-            // before the reversed range the lexer found, if any.
+            // before the error the lexer found.
             return $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($classError->position ?? $end, $position));
         }
 

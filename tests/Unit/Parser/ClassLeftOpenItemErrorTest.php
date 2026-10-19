@@ -73,6 +73,25 @@ final class ClassLeftOpenItemErrorTest extends TestCase
         yield 'unknown POSIX class after a member' => ['pattern' => '/[a[:foo:]/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::PosixInvalid, 'offset' => 4];
         yield 'code point past a byte after a closed class' => ['pattern' => '/[a][\x{100}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 10];
         yield 'unknown negated POSIX class' => ['pattern' => '/[[:^foo:]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 4];
+
+        // A "\c" PCRE refuses after the item, at the end of the pattern or
+        // before a character past ASCII, comes later (pcre2test 10.32 to
+        // 10.49: "unknown POSIX class name at offset 3" for "[[:foo:]\c" up
+        // to 10.44, at offset 8 from 10.45; "range out of order in
+        // character class at offset 3" for "[z-a\c" up to 10.46, at offset 4
+        // from 10.47; php:7.3-cli and php:7.4-cli under "X" give offset 3).
+        yield 'unknown POSIX class before a \c ending the pattern' => ['pattern' => '/[[:foo:]\c/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 3];
+        yield 'unknown POSIX class before a \c ending the pattern, PCRE2 10.45' => ['pattern' => '/[[:foo:]\c/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::PosixInvalid, 'offset' => 8];
+        yield 'unknown POSIX class and a hyphen before a \c ending the pattern' => ['pattern' => '/[[:foo:]-\c/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::PosixInvalid, 'offset' => 3];
+        yield 'unknown POSIX class and a hyphen before a \c ending the pattern, PCRE2 10.47' => ['pattern' => '/[[:foo:]-\c/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::PosixInvalid, 'offset' => 8];
+        yield 'unknown POSIX class after a quote end, before a \c ending the pattern' => ['pattern' => '/[\E[:foo:]\c/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 5];
+        yield 'reversed range before a \c ending the pattern' => ['pattern' => '/[z-a\c/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeReversed, 'offset' => 3];
+        yield 'reversed range before a \c ending the pattern, PCRE2 10.47' => ['pattern' => '/[z-a\c/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'reversed range before a \c ending the pattern under X, PCRE2 10.32' => ['pattern' => '/[z-a\c/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeReversed, 'offset' => 3];
+        yield 'reversed range before a \c and a character past ASCII' => ['pattern' => '/[z-a\cé]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'code point past a byte before a \c ending the pattern' => ['pattern' => '/[\x{100}\c/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 7];
+        yield 'unknown POSIX class in a class closed before a \c ending the pattern' => ['pattern' => '/[[:foo:]]\c/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::PosixInvalid, 'offset' => 8];
+        yield 'a \c ending the pattern after a class closed' => ['pattern' => '/[a]\c/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 5];
     }
 
     /**
