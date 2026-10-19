@@ -1,0 +1,20 @@
+{%- comment -%}
+  Minutes of reading for one rendered article: the prose only, at 200
+  words a minute. Code blocks and the charts' SVG text are skipped - a
+  reader scans a listing, they do not read it word by word, and counting
+  them put every byline far above the time the article actually takes.
+  Parameter: html - the rendered content.
+{%- endcomment -%}
+{%- assign rm_prose = '' -%}
+{%- assign rm_parts = include.html | split: '<pre' -%}
+{%- for rm_part in rm_parts -%}
+  {%- if forloop.first -%}{%- assign rm_prose = rm_prose | append: rm_part -%}{%- else -%}{%- assign rm_after = rm_part | split: '</pre>' | last -%}{%- assign rm_prose = rm_prose | append: ' ' | append: rm_after -%}{%- endif -%}
+{%- endfor -%}
+{%- assign rm_text = '' -%}
+{%- assign rm_parts = rm_prose | split: '<svg' -%}
+{%- for rm_part in rm_parts -%}
+  {%- if forloop.first -%}{%- assign rm_text = rm_text | append: rm_part -%}{%- else -%}{%- assign rm_after = rm_part | split: '</svg>' | last -%}{%- assign rm_text = rm_text | append: ' ' | append: rm_after -%}{%- endif -%}
+{%- endfor -%}
+{%- assign rm_minutes = rm_text | number_of_words | divided_by: 200 -%}
+{%- if rm_minutes < 1 -%}{%- assign rm_minutes = 1 -%}{%- endif -%}
+{{- rm_minutes -}}

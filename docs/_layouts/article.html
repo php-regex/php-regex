@@ -22,9 +22,7 @@
       <main id="main" class="article-main" tabindex="-1">
         {% include breadcrumb.html %}
         {% assign article_author = site.data.authors[page.author] %}
-        {% assign article_words = content | number_of_words %}
-        {% assign article_minutes = article_words | divided_by: 200 %}
-        {% if article_minutes < 1 %}{% assign article_minutes = 1 %}{% endif %}
+        {% capture article_minutes %}{% include reading-minutes.html html=content %}{% endcapture %}
         <h1 class="article-title">{{ page.title }}</h1>
         <div class="article-byline">
           <span class="article-byline-author">{{ article_author.name }}</span>

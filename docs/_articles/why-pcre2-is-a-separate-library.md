@@ -3,7 +3,7 @@ date: 2026-10-16 15:38:00 +00:00
 author: younes
 published: false
 tags: [PCRE2, History]
-description: "PCRE2 is a separate library with a new API, not PCRE 9; the old PCRE ended at 8.45 in 2021. Check which one your PHP runs and which patterns PHP 7.3 broke or let through, measured in the official PHP 7.2, 7.3 and 7.4 images."
+description: "PCRE2 is a separate library with a new API, not PCRE 9. How to tell which one your PHP runs, and the patterns PHP 7.3 broke or let through when it switched."
 ---
 # PCRE vs PCRE2: why PCRE2 is a separate library
 
@@ -13,7 +13,7 @@ PCRE2 is not a new version of PCRE. It is a separate library, first released as 
 
 - **You should already know:** what `preg_match()` does, and what a character class `[abc]` is (the [character classes chapter](../tutorial/02-character-classes.md) covers the rules). Every other term — bundled, API, lookaround — is defined where it first appears. New to regex? Start with the [basics chapter](../tutorial/01-basics.md).
 - **You will learn:** why PCRE2 is a separate library and not "PCRE 9", which patterns PHP 7.3 changed in both directions, and how to check before you upgrade.
-- **Running the examples:** plain PHP 7.2 or newer, nothing to install; the comparison runs use the official `php:<version>-cli` Docker images, and only the last section needs Composer and PHP 8.1. Reading time: about 12 minutes.
+- **Running the examples:** plain PHP 7.2 or newer, nothing to install; the comparison runs use the official `php:<version>-cli` Docker images, and only the last section needs Composer and PHP 8.1.
 
 ## Which library does my PHP use?
 

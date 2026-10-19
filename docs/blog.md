@@ -29,9 +29,7 @@ permalink: /blog/
   <p class="article-featured-desc">{{ featured.description }}</p>
   <div class="article-featured-meta">
     <time datetime="{{ featured.date | date_to_xmlschema }}">{{ featured.date | date: '%-d %B %Y' }}</time>
-    {% assign featured_words = featured.content | number_of_words %}
-    {% assign featured_minutes = featured_words | divided_by: 200 %}
-    {% if featured_minutes < 1 %}{% assign featured_minutes = 1 %}{% endif %}
+    {% capture featured_minutes %}{% include reading-minutes.html html=featured.content %}{% endcapture %}
     <span class="article-meta-sep" aria-hidden="true">·</span>
     <span>{{ featured_minutes }} min read</span>
     {% if featured.tags %}
@@ -55,9 +53,7 @@ permalink: /blog/
       <a class="article-entry-title" href="{{ article.url }}">{{ article.title }}</a>{% if article.published == false %} <span class="draft-tag">Draft</span>{% endif %}
       <span class="article-entry-meta">
         <time class="article-entry-date" datetime="{{ article.date | date_to_xmlschema }}">{{ article.date | date: '%-d %B %Y' }}</time>
-        {% assign entry_words = article.content | number_of_words %}
-        {% assign entry_minutes = entry_words | divided_by: 200 %}
-        {% if entry_minutes < 1 %}{% assign entry_minutes = 1 %}{% endif %}
+        {% capture entry_minutes %}{% include reading-minutes.html html=article.content %}{% endcapture %}
         <span class="article-meta-sep" aria-hidden="true">·</span>
         <span class="article-entry-reading">{{ entry_minutes }} min</span>
         {% if article.tags %}

@@ -224,6 +224,17 @@ body {
   overflow-wrap: break-word;
 }
 
+/* Code shows the characters the reader types. JetBrains Mono draws
+   contextual ligatures by default: -> becomes an arrow, === a long bar,
+   and a lookbehind's (?<= reads as (?≤ - glyphs no keyboard produces,
+   on a site whose subject is exactly those characters. */
+code,
+kbd,
+samp,
+pre {
+  font-variant-ligatures: none;
+}
+
 ::selection {
   background: var(--amber);
   color: var(--paper);
@@ -3715,6 +3726,12 @@ main > section:not([class]) > p:not(:has(a.button)) {
   border: 1px solid var(--line);
   border-radius: var(--radius-m);
   overflow: hidden;
+}
+
+/* An article sets its charts between paragraphs: the figure keeps the
+   landing page's flush bottom there, and the text after it needs air. */
+.article-content .pipeline-figure {
+  margin-bottom: 2rem;
 }
 
 .pipeline-figure img {

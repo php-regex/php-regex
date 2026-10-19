@@ -4,7 +4,7 @@ last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
 tags: [PCRE2, Compatibility]
-description: "Which PCRE2 version each PHP release bundles, from 7.3 to 8.6, and how to check yours with PCRE_VERSION, since phpversion('pcre') prints the PHP version; then why a lookbehind fails on 8.3 but not 8.4, and why 8.5 refuses \\K in lookarounds."
+description: "The PCRE2 version each PHP release bundles, 7.3 to 8.6, how to check yours with PCRE_VERSION, and the lookbehind and \\K patterns that change between them."
 ---
 # Which PCRE2 ships with which PHP, and how to check yours
 
@@ -14,7 +14,7 @@ PHP 8.4 and 8.5 run every `preg_*` call on PCRE2 10.44. PHP 8.3 runs them on 10.
 
 - **You should already know:** what `preg_match()` does, and what a lookbehind `(?<=…)` is ([the lookarounds chapter](../tutorial/06-lookarounds.md) teaches them). Every other term — bundled, external linking, lookaround — is defined where it first appears. New to regex? Start with the [basics chapter](../tutorial/01-basics.md).
 - **You will learn:** which PCRE2 version your PHP really runs, how to check it in one line, and the patterns that change between PHP versions.
-- **Running the examples:** plain PHP 8.1 or newer, nothing to install; the side-by-side runs also use Docker and the official `php:X.Y-cli` images. Reading time: about 12 minutes.
+- **Running the examples:** plain PHP 8.1 or newer, nothing to install; the side-by-side runs also use Docker and the official `php:X.Y-cli` images.
 
 ## One pattern, two PHP versions
 
@@ -114,7 +114,7 @@ So your regex *dialect*, the set of patterns the engine accepts, depends on your
 
 Three things the table tells you:
 
-- **PHP 7.3 is the first PHP with PCRE2.** PHP 7.2 and older used the original PCRE library, which ended at 8.41 in PHP 7.2. [Why PCRE2 is a separate library](why-pcre2-is-a-separate-library.md) tells that story.
+- **PHP 7.3 is the first PHP with PCRE2.** PHP 7.2 and older used the original PCRE library; the last version PHP bundled was 8.41, in PHP 7.2. [Why PCRE2 is a separate library](why-pcre2-is-a-separate-library.md) tells that story.
 - **Only two series changed engine after their first release:** 7.4 (twice) and 8.1 (once, in 8.1.1). For every other series, the patch number does not change the engine.
 - **No PHP release bundles anything newer than PCRE2 10.44**, released on 7 June 2024. PHP 8.5 kept it, and so does the 8.6.0 release candidate. Newer engines reach PHP only through a system library, as shown below.
 
@@ -243,7 +243,7 @@ Up to 8.4, PHP passed that option, so `\K` kept working. PHP 8.5 compiles your p
 
 ## Try it yourself
 
-- Run the probe above on every `php:X.Y-cli` image you deploy to, and keep the output next to your `composer.json`: that table is your compatibility contract.
+- Run the `matrix.php` probe from [How this was measured](#how-this-was-measured) on every `php:X.Y-cli` image you deploy to, and keep the output next to your `composer.json`: that table is your compatibility contract.
 - Lint a real pattern from your own project for your oldest server: `vendor/bin/regex lint src/ --php-version=8.2`.
 - Add `/(?<=a\Kb)c/` to a project that targets PHP 8.5, and read the linter's answer before your users find it for you.
 

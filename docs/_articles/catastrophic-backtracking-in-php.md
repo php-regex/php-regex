@@ -4,7 +4,7 @@ last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
 tags: [Performance, ReDoS]
-description: 'How catastrophic backtracking makes /^(\w+)+$/ double its time with each character, why preg_match() then returns false (Backtrack limit exhausted), and which rewrites fix it: measured on PHP 8.4, with the JIT on and off.'
+description: 'Why /^(\w+)+$/ doubles its time with each letter, why preg_match() then returns false, and the one-character fix. Measured on PHP 8.4, JIT on and off.'
 ---
 # Catastrophic backtracking in PHP: why one regex takes seconds
 
@@ -14,7 +14,7 @@ The pattern `/^(\w+)+$/` needs about 2 seconds to reject 26 letters followed by 
 
 - **You should already know:** what `preg_match()` does, and the basics of a pattern: delimiters, literal characters, and `^`, `$` and `\w`. Every other term — quantifier, backtrack limit, JIT — is defined where it first appears. New to regex? The [basics chapter](../tutorial/01-basics.md) covers each of those in a few pages.
 - **You will learn:** why `/^(\w+)+$/` doubles its time with each letter, why `preg_match()` then returns `false` instead of `0`, which popular fixes do not work, and the two that do.
-- **Running the examples:** plain PHP 8.1 or newer, nothing to install; each script finishes in a few seconds. Reading time: about 12 minutes.
+- **Running the examples:** plain PHP 8.1 or newer, nothing to install; each script finishes in a few seconds.
 
 ## Each extra character doubles the time
 
@@ -51,7 +51,7 @@ n=26     2179.66 ms  ret=0  No error
 `ret=0` means "no match", the correct answer. It took more than 2 seconds for a 27-character string. Here are other lengths, each time the median of three runs:
 
 | Letters (n) | Time, JIT off |
-|---|---|
+|---:|---:|
 | 18 | 8.50 ms |
 | 20 | 34.27 ms |
 | 22 | 136.42 ms |
@@ -101,7 +101,7 @@ Here the inner `\w+` can take all 26 letters. Or it can take 25 and leave 1 for 
 A run of n letters can be cut in 2^(n−1) ways:
 
 | Letters (n) | 1 | 2 | 3 | 4 | 22 | 26 |
-|---|---|---|---|---|---|---|
+|---|---:|---:|---:|---:|---:|---:|
 | Ways to cut | 1 | 2 | 4 | 8 | 2,097,152 | 33,554,432 |
 
 That is the doubling in the timing table. At 22 and at 26 letters, the times work out to about 15 million paths per second. The engine is not broken. It searches a space that doubles with each letter.
@@ -184,7 +184,7 @@ The short subject matches `ok`. The long one also ends with `ok`, but the engine
 The *JIT* (just-in-time compiler) turns the pattern into machine code. Without it, PCRE2 walks the pattern step by step in its *interpreter*. PHP turns the JIT on by default. Here is the same `splits.php`, run with each setting and the limit raised, each time the median of three runs:
 
 | Letters (n) | JIT off | JIT on |
-|---|---|---|
+|---:|---:|---:|
 | 18 | 8.50 ms | 1.24 ms |
 | 20 | 34.27 ms | 4.74 ms |
 | 22 | 136.42 ms | 19.40 ms |
@@ -207,14 +207,14 @@ The *JIT* (just-in-time compiler) turns the pattern into machine code. Without i
     <rect x="386" y="175" width="26" height="5" fill="var(--ink)"/>
     <rect x="456" y="30" width="26" height="150" fill="var(--ink-soft)"/>
     <rect x="488" y="159" width="26" height="21" fill="var(--ink)"/>
-    <rect x="590" y="179" width="26" height="1" fill="var(--ink)"/>
+    <rect x="590" y="96" width="26" height="84" fill="var(--ink)"/>
   </g>
   <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink)">
     <text x="61" y="172">8.5</text>
     <text x="93" y="170">1.2</text>
     <text x="469" y="24">2,180</text>
     <text x="501" y="152">303</text>
-    <text x="603" y="172" style="font-weight: 600;">1,224</text>
+    <text x="603" y="88" style="font-weight: 600;">1,224</text>
   </g>
   <g style="font-family: var(--font-mono); font-size: 12px;" text-anchor="middle" fill="var(--ink-soft)">
     <text x="77" y="200">18</text>
@@ -227,7 +227,7 @@ The *JIT* (just-in-time compiler) turns the pattern into machine code. Without i
   </g>
 </svg>
 <figcaption id="jit-chart-caption">
-  Interpreter bars in grey, JIT bars in ink, labelled in milliseconds. The JIT staircase is seven times lower and climbs at the same slope: <code>not run</code> marks where the interpreter column stopped.
+  Interpreter bars in grey, JIT bars in ink, labelled in milliseconds. The JIT staircase is seven times lower and climbs at the same slope; at 28 letters only the JIT ran.
 </figcaption>
 </figure>
 

@@ -4,7 +4,7 @@ last_modified_at: 2026-10-16 12:00:00 +00:00
 author: younes
 published: false
 tags: [Engines, Linear time]
-description: "Why one regex makes PHP give up and Node.js stall while RE2-style engines answer at once, and how to write PHP patterns that cannot backtrack. RE2 vs PCRE2, measured, with the price of linear time: backreferences and lookarounds."
+description: "Why one regex makes PHP give up and Node.js stall while RE2-style engines answer at once, what linear time costs, and how to write PHP patterns that cannot backtrack."
 ---
 # RE2 vs PCRE2: why some regex engines never hang
 
@@ -16,7 +16,7 @@ PCRE2 is a *backtracking* engine: when a guess fails, it goes back and tries ano
 
 - **You should already know:** what `preg_match()` does, and the basics of a pattern: delimiters, literal characters, `^`, `$` and `\w`. Every other term — backreference, lookaround, JIT — is defined where it first appears. New to regex? Start with the [basics chapter](../tutorial/01-basics.md).
 - **You will learn:** why one pattern makes PHP give up while ripgrep answers at once, what linear-time engines give up for it, and the three layers that protect your PHP patterns.
-- **Running the examples:** the PHP snippets run with plain PHP 8.1 or newer, nothing to install. The Node.js and ripgrep rows need those two tools, only if you want to rerun them. Running everything takes about five minutes. Reading time: about 12 minutes.
+- **Running the examples:** the PHP snippets run with plain PHP 8.1 or newer, nothing to install. The Node.js and ripgrep rows need those two tools, only if you want to rerun them. Running everything takes about five minutes.
 
 ## One pattern, three engines
 
@@ -42,7 +42,7 @@ printf("%s  n=%d  result=%s  %s  %.2f ms\n",
 ```
 {: data-file="same-pattern.php" data-copy="" }
 
-Run it twice. The second run raises the backtrack limit — the number of retries PHP allows before it gives up — a thousand times:
+Run it twice. The second run raises the backtrack limit — the number of search steps PHP allows before it gives up — a thousand times:
 
 ```console
 $ php same-pattern.php
@@ -93,7 +93,7 @@ exit 2
 The Rust engine reads a million letters and answers "no match" in about the time it takes to start the program. A search for `zzz`, a word that is not in the file, costs the same. PCRE2, inside the same program, gives up on 27 bytes.
 
 | Engine | Kind | Answer on 26 letters and `!` | Time |
-|---|---|---|---|
+|---|---|---|---:|
 | PHP 8.4.26, PCRE2 10.49, default limit | backtracking | gave up: `false` | 2.37 ms |
 | PHP 8.4.26, PCRE2 10.49, limit × 1,000 | backtracking | no match | 306.16 ms |
 | Node.js 24.18.0, V8 | backtracking | no match | 2,818 ms |
