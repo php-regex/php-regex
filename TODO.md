@@ -143,25 +143,15 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Class ranges and `\g`: offsets left wrong
+## Padded counts before PCRE2 10.37
 
-The verdict is right in each case, the offset or the code is not.
-
-- A reversed range in a class the pattern leaves open, as `[z-a`,
-  `[z-\cA` or `[!-\a{`, is refused one character earlier up to PCRE2 10.46
-  (offset 3 for `[z-a` on php:7.3-cli, php:8.4-cli and pcre2test 10.45; 4
-  on pcre2test 10.48 and PCRE2 10.49); the library reports 4 for every
-  release.
-- `[!-\N` and `[!-\w`, the class left open, are "invalid range" at 5 on
-  PCRE2 10.33 to 10.44; the library says the class is unclosed, at 5.
-  `[!-\N{]` is `escape.unsupported` on 10.44, the library says
-  `range.invalid_bounds`; `[!-\N{` is refused at 6 from 10.48, the
-  library says 5.
-- `[\w-\p{Foo}]` and `[\w-\p]` from PCRE2 10.45: offsets 11 and 7, the
-  library says 4.
-- `()\g+0`: offset 6 on PHP 8 and 7.x under `X`, the library says 5.
-  `()\g{+65535`, `()\g<+65535` and `\g{+65536` from PCRE2 10.47 are "subpattern
-  number is too big" at 4 or 2; the library refuses the syntax at 11 or 9.
+PCRE2 10.32 to 10.36 read the digits of a brace before they check that a
+count closes it, so a number past 65535 followed by a space is still "number
+too big in {} quantifier": `a{65536 }` at offset 7 (pcre2test 10.32 to
+10.36, php:8.0-cli), and `\g{65536 }` for PHP 7.3 and 7.4 without `X`,
+which read `\g` as the letter g (php:7.3-cli, php:7.4-cli: offset 8). The
+library accepts both. 10.37 to 10.42 read the brace as text, 10.43 and
+later as a padded count, as the library does.
 
 ## The articles section: what is left
 
