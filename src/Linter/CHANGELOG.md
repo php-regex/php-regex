@@ -10,6 +10,8 @@ CHANGELOG
    when no subject built from the pattern shows the engine filling it, and
    keeps each answer per pattern and target: the same findings, about eight
    times less time.
+ * A rule whose every identifier is turned off, by default or in the
+   configuration, no longer runs: it ran and its findings were dropped.
  * A guard on `PHP_VERSION_ID` or `version_compare(PHP_VERSION, …)` around a
    pattern narrows the versions it is judged for, in both extraction
    strategies.

@@ -629,7 +629,13 @@ final class PatternLinter extends AbstractNodeVisitor
 
     private function useRules(LintRuleRegistry $registry): void
     {
-        $this->rules = $registry->all();
+        // A rule whose every identifier is off would only find what
+        // append() drops: it is not run. No rule leaves anything in the
+        // context for another one to read.
+        $this->rules = array_values(array_filter(
+            $registry->all(),
+            fn (LintRuleInterface $rule): bool => [] !== array_filter($rule->getRuleIds(), $this->isRuleEnabled(...)),
+        ));
         $this->dispatchMap = [];
         foreach ($this->rules as $rule) {
             foreach ($rule->getNodeTypes() as $nodeType) {
