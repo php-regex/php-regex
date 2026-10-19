@@ -228,6 +228,41 @@ final class UnclosedClassRangeOrderTest extends TestCase
     }
 
     /**
+     * PHP 7.3 and 7.4 without "X" read a "\x{" PCRE2 refuses as the letter
+     * x, then the brace as text: the range ends on x, not on NUL as a bare
+     * "\x" does (php:7.3-cli, php:7.4.0-cli, php:7.4-cli: "missing
+     * terminating ] for character class at offset 10" for "[a-\x{100}",
+     * "range out of order in character class at offset 4" for "[z-\x{").
+     */
+    #[Test]
+    #[DataProvider('provideFailedHexBracesEndingARange')]
+    public function test_php_7_ends_a_range_on_the_x_of_a_hex_brace_it_refuses(string $pattern, string $php, string $release, ErrorCode $code, int $offset): void
+    {
+        $result = self::parser($php, $release)->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+        $this->assertSame($code, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, php: string, release: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideFailedHexBracesEndingARange(): iterable
+    {
+        foreach ([['7.3', '10.32'], ['7.4', '10.33'], ['7.4', '10.35']] as [$php, $release]) {
+            yield \sprintf('code point too large, PCRE2 %s', $release) => ['pattern' => '/[a-\x{100}/', 'php' => $php, 'release' => $release, 'code' => ErrorCode::CharclassUnclosed, 'offset' => 10];
+        }
+
+        yield 'brace with no digits' => ['pattern' => '/[!-\x{/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 6];
+        yield 'empty braces' => ['pattern' => '/[!-\x{}/', 'php' => '7.4', 'release' => '10.33', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 7];
+        yield 'brace left open' => ['pattern' => '/[!-\x{41/', 'php' => '7.4', 'release' => '10.35', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 8];
+        yield 'code point too large under u' => ['pattern' => '/[a-\x{110000}/u', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 13];
+        yield 'x below the start' => ['pattern' => '/[z-\x{/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'bare x, NUL' => ['pattern' => '/[!-\x/', 'php' => '7.4', 'release' => '10.35', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, offset: int}>
      */
     public static function provideUnclosedClasses(): iterable
