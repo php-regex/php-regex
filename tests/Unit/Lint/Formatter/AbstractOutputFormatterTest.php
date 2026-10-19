@@ -48,62 +48,6 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame($message, $result);
     }
 
-    public function test_get_severity_badge_for_error(): void
-    {
-        $result = $this->formatter->getSeverityBadge('error');
-
-        $this->assertSame('FAIL', $result);
-    }
-
-    public function test_get_severity_badge_for_warning(): void
-    {
-        $result = $this->formatter->getSeverityBadge('warning');
-
-        $this->assertSame('WARN', $result);
-    }
-
-    public function test_get_severity_badge_for_info(): void
-    {
-        $result = $this->formatter->getSeverityBadge('info');
-
-        $this->assertSame('INFO', $result);
-    }
-
-    public function test_get_severity_badge_for_unknown(): void
-    {
-        $result = $this->formatter->getSeverityBadge('unknown');
-
-        $this->assertSame('NOTE', $result);
-    }
-
-    public function test_get_severity_color_for_error(): void
-    {
-        $result = $this->formatter->getSeverityColor('error');
-
-        $this->assertSame('red', $result);
-    }
-
-    public function test_get_severity_color_for_warning(): void
-    {
-        $result = $this->formatter->getSeverityColor('warning');
-
-        $this->assertSame('yellow', $result);
-    }
-
-    public function test_get_severity_color_for_info(): void
-    {
-        $result = $this->formatter->getSeverityColor('info');
-
-        $this->assertSame('blue', $result);
-    }
-
-    public function test_get_severity_color_for_unknown(): void
-    {
-        $result = $this->formatter->getSeverityColor('unknown');
-
-        $this->assertSame('gray', $result);
-    }
-
     public function test_format_hint_when_hints_disabled(): void
     {
         $config = new OutputConfiguration(showHints: false);
@@ -172,42 +116,6 @@ final class AbstractOutputFormatterTest extends TestCase
         $this->assertSame(210, \strlen($result));
     }
 
-    public function test_format_redos_hint_when_hints_disabled(): void
-    {
-        $config = new OutputConfiguration(showHints: false);
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $result = $formatter->formatReDoSHint('Test ReDoS hint');
-
-        $this->assertSame('', $result);
-    }
-
-    public function test_format_redos_hint_with_normal_verbosity(): void
-    {
-        $config = new OutputConfiguration(
-            verbosity: OutputConfiguration::VERBOSITY_NORMAL,
-            showHints: true,
-        );
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $result = $formatter->formatReDoSHint('Test ReDoS hint');
-
-        $this->assertSame('Nested quantifiers detected. Suggested (verify behavior): use atomic groups (?>...) or possessive quantifiers (*+, ++).', $result);
-    }
-
-    public function test_format_redos_hint_with_verbose_verbosity(): void
-    {
-        $config = new OutputConfiguration(
-            verbosity: OutputConfiguration::VERBOSITY_VERBOSE,
-            showHints: true,
-        );
-        $formatter = new TestableAbstractOutputFormatter($config);
-
-        $result = $formatter->formatReDoSHint('Test ReDoS hint');
-
-        $this->assertSame('Test ReDoS hint', $result);
-    }
-
     public function test_group_results_when_group_by_file_disabled(): void
     {
         $config = new OutputConfiguration(groupByFile: false);
@@ -263,24 +171,9 @@ final class TestableAbstractOutputFormatter extends AbstractOutputFormatter
         return $this->config;
     }
 
-    public function getSeverityBadge(string $type): string
-    {
-        return parent::getSeverityBadge($type);
-    }
-
-    public function getSeverityColor(string $type): string
-    {
-        return parent::getSeverityColor($type);
-    }
-
     public function formatHint(string $hint): string
     {
         return parent::formatHint($hint);
-    }
-
-    public function formatReDoSHint(string $hint): string
-    {
-        return parent::formatReDoSHint($hint);
     }
 
     /**

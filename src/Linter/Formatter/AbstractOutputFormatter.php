@@ -40,32 +40,6 @@ abstract class AbstractOutputFormatter implements OutputFormatterInterface
     }
 
     /**
-     * Get the severity badge for an issue.
-     */
-    protected function getSeverityBadge(string $type): string
-    {
-        return match ($type) {
-            'error' => 'FAIL',
-            'warning' => 'WARN',
-            'info' => 'INFO',
-            default => 'NOTE',
-        };
-    }
-
-    /**
-     * Get the color for a severity level.
-     */
-    protected function getSeverityColor(string $type): string
-    {
-        return match ($type) {
-            'error' => 'red',
-            'warning' => 'yellow',
-            'info' => 'blue',
-            default => 'gray',
-        };
-    }
-
-    /**
      * Format a hint based on verbosity level.
      */
     protected function formatHint(string $hint): string
@@ -82,23 +56,6 @@ abstract class AbstractOutputFormatter implements OutputFormatterInterface
         // In normal mode, truncate very long hints
         if (\strlen($hint) > 200) {
             return substr($hint, 0, 197).'...';
-        }
-
-        return $hint;
-    }
-
-    /**
-     * Format ReDoS hint based on verbosity.
-     */
-    protected function formatReDoSHint(string $hint): string
-    {
-        if (!$this->config->shouldShowHints()) {
-            return '';
-        }
-
-        // In normal mode, provide a concise ReDoS hint
-        if (!$this->config->shouldShowDetailedReDoS()) {
-            return 'Nested quantifiers detected. Suggested (verify behavior): use atomic groups (?>...) or possessive quantifiers (*+, ++).';
         }
 
         return $hint;
