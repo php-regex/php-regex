@@ -220,6 +220,20 @@ final class Lexer
     private const INLINE_FLAG_LETTERS = InlineFlags::LETTERS.'r';
 
     /**
+     * The ASCII characters that are text wherever they stand outside a class
+     * and outside "x": no token of the regex below starts with one but the
+     * literal. A run of them is most of what patterns hold.
+     */
+    private const PLAIN_TEXT = ' !"%&\',-/0123456789:;<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ_`abcdefghijklmnopqrstuvwxyz~';
+
+    /**
+     * PLAIN_TEXT as a set of bytes, the digits keyed as integers.
+     *
+     * @var array<int|string, true>|null
+     */
+    private static ?array $plainBytes = null;
+
+    /**
      * Token patterns compiled once per byte mode.
      *
      * @var array<int, string>
@@ -550,6 +564,12 @@ final class Lexer
                         continue;
                     }
 
+                    if (!$this->inCharClass && !$this->extendedMode && !$this->extendedMoreMode && null !== $text = $this->plainCharacter()) {
+                        $tokens[] = $text;
+
+                        continue;
+                    }
+
                     [$regex, $tokenMap] = $this->getCurrentContext();
                     [$matchedValue, $startPos, $matches] = $this->matchAtPosition($regex);
                     $tokens[] = $this->createToken($tokenMap, $matches, $matchedValue, $startPos, $tokens);
@@ -564,6 +584,43 @@ final class Lexer
         $tokens[] = new Token(TokenType::Eof, '', $this->position);
 
         return new TokenStream($tokens, $pattern);
+    }
+
+    /**
+     * The character at the cursor as a literal token, when nothing but the
+     * literal of the token regex can read it there: a plain ASCII character,
+     * a byte of a pattern that is not UTF-8, a whole UTF-8 character of one
+     * that is. Null for anything else, which the token regex reads.
+     */
+    private function plainCharacter(): ?Token
+    {
+        $at = $this->position;
+        $byte = $this->pattern[$at];
+        $ord = \ord($byte);
+
+        if ($ord < 0x80) {
+            if (!isset((self::$plainBytes ??= array_fill_keys(str_split(self::PLAIN_TEXT), true))[$byte])) {
+                return null;
+            }
+
+            $this->position++;
+
+            return new Token(TokenType::Literal, $byte, $at, 1);
+        }
+
+        if ($this->byteMode) {
+            $this->position++;
+
+            return new Token(TokenType::Literal, $byte, $at, 1);
+        }
+
+        // A valid UTF-8 pattern, read a character at a time: every token
+        // ends between two characters, so the cursor stands on a lead byte,
+        // which gives the length.
+        $length = $ord >= 0xF0 ? 4 : ($ord >= 0xE0 ? 3 : 2);
+        $this->position += $length;
+
+        return new Token(TokenType::Literal, substr($this->pattern, $at, $length), $at, $length);
     }
 
     private function getRegexOutside(): string
