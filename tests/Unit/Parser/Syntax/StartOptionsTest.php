@@ -90,6 +90,78 @@ final class StartOptionsTest extends TestCase
     }
 
     /**
+     * The name of every start option, and where PCRE2 10.32 ends it: it
+     * reads a verb name as a run of letters only.
+     *
+     * @return iterable<string, array{name: string, lettersEnd: int}>
+     */
+    public static function provideStartOptionNames(): iterable
+    {
+        foreach ([
+            'UTF', 'UTF8', 'UCP',
+            'CR', 'LF', 'CRLF', 'ANYCRLF', 'ANY', 'NUL',
+            'BSR_ANYCRLF', 'BSR_UNICODE',
+            'NOTEMPTY', 'NOTEMPTY_ATSTART',
+            'NO_AUTO_POSSESS', 'NO_DOTSTAR_ANCHOR', 'NO_JIT', 'NO_START_OPT',
+            'LIMIT_MATCH', 'LIMIT_DEPTH', 'LIMIT_HEAP', 'LIMIT_RECURSION',
+            'CASELESS_RESTRICT', 'TURKISH_CASING',
+        ] as $name) {
+            yield $name => ['name' => $name, 'lettersEnd' => strspn($name, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')];
+        }
+    }
+
+    /**
+     * PCRE2 reads a start option only as it is written, "(*UTF)" or
+     * "(*LIMIT_MATCH=10)": given an argument, "(*UTF:x)", it is a verb PCRE2
+     * does not know, refused where its name ends, at the start of the
+     * pattern or past it, before a ")" it leaves unmatched (pcre2test 10.32
+     * to 10.49, each release).
+     */
+    #[Test]
+    #[DataProvider('provideStartOptionNames')]
+    public function test_a_start_option_given_an_argument_is_a_verb_pcre_does_not_know(string $name, int $lettersEnd): void
+    {
+        $nameLength = \strlen($name);
+        $patterns = [
+            '/(*'.$name.':x)a/' => 2,
+            '/(*UTF)(*'.$name.':)a/' => 8,
+            '/a(*'.$name.':x)/' => 3,
+            '/(*'.$name.':x))/' => 2,
+        ];
+
+        foreach ($patterns as $pattern => $nameStart) {
+            // Oracle: PHP's PCRE refuses it.
+            $this->assertFalse(@preg_match($pattern, 'a'), $pattern);
+
+            foreach (['10.32', '10.33', '10.40', '10.44', '10.45', '10.47', '10.49'] as $release) {
+                $result = RegexParser::create(['php_version' => '8.0', 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+                $this->assertFalse($result->isValid, $pattern.' on PCRE2 '.$release);
+                $this->assertSame($nameStart + ('10.32' === $release ? $lettersEnd : $nameLength), $result->offset, $pattern.' on PCRE2 '.$release);
+                $this->assertSame(ErrorCode::VerbInvalid, $result->errorCode, $pattern.' on PCRE2 '.$release);
+            }
+        }
+    }
+
+    /**
+     * As the condition of "(?(", a start option given an argument is no
+     * assertion: PCRE2 refuses it on its "(", from 10.47 past it (pcre2test
+     * 10.33 to 10.49).
+     */
+    #[Test]
+    public function test_a_start_option_given_an_argument_as_a_condition_is_no_assertion(): void
+    {
+        $this->assertFalse(@preg_match('/(?(*UTF:x)a)/', 'a'));
+
+        foreach (['10.33' => 2, '10.44' => 2, '10.46' => 2, '10.47' => 3, '10.49' => 3] as $release => $offset) {
+            $result = RegexParser::create(['php_version' => '8.0', 'pcre_version' => (string) $release, 'runtime_pcre_validation' => false])->validate('/(?(*UTF:x)a)/');
+
+            $this->assertSame($offset, $result->offset, (string) $release);
+            $this->assertSame(ErrorCode::ConditionalAssertionExpected, $result->errorCode, (string) $release);
+        }
+    }
+
+    /**
      * The newline convention set after a casing setting is the one the
      * dot reads: under (*CR) it takes "\n".
      *

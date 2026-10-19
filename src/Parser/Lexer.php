@@ -2175,7 +2175,8 @@ final class Lexer
             $last = $tokens[\count($tokens) - 1] ?? null;
         }
 
-        if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $at)) {
+        $condition = $this->opensCondition($tokens, $at);
+        if (!$this->readsAlphabeticAssertions && $condition) {
             $previous = $tokens[\count($tokens) - 1] ?? null;
             if (null !== $previous && TokenType::GroupModifierOpen === $previous->type && $at === $start) {
                 throw self::conditionWantsAName($start + 1, $this->pattern);
@@ -2196,6 +2197,11 @@ final class Lexer
                     $start + 2 + $length,
                     $this->pattern,
                 );
+            }
+
+            // As the condition, the parser refuses it on its "(".
+            if (!$condition) {
+                $this->refuseSettingWithArgument($name, $length, $start);
             }
 
             return;
@@ -2229,6 +2235,30 @@ final class Lexer
                 $this->pattern,
             );
         }
+
+        $this->refuseSettingWithArgument($name, $letters, $start);
+    }
+
+    /**
+     * PCRE reads a setting only as it is written, "(*UTF)": given an
+     * argument, "(*UTF:x)", it is a verb PCRE does not know, refused where
+     * its name ends, wherever it stands.
+     *
+     * @param string $name   the verb as written between "(*" and ")"
+     * @param int    $length the length of its name, as the release reads it
+     */
+    private function refuseSettingWithArgument(string $name, int $length, int $start): void
+    {
+        if (':' !== ($name[$length] ?? '') || !isset(StartOptions::NAMES[substr($name, 0, $length)])) {
+            return;
+        }
+
+        throw LexerException::withContext(
+            \sprintf('Invalid or unsupported PCRE verb at position %d: "(*%s)" is a setting, which takes no argument.', $start + 2 + $length, substr($name, 0, $length)),
+            ErrorCode::VerbInvalid,
+            $start + 2 + $length,
+            $this->pattern,
+        );
     }
 
     /**
