@@ -174,6 +174,27 @@ literal 99,999,999 times: it runs for many seconds where PCRE2 refuses the
 count. A count past 65535, or a product of counts past a bound, should end
 the extraction before it is expanded.
 
+## Lookbehind measures still reported wrong
+
+Each checked with pcre2test 10.32 to 10.49.
+
+- Up to 10.34, where a `(?(DEFINE)` group in a lookbehind opens with a
+  group, PCRE2 reads every later `)` one level up: `(?<=(?(DEFINE)(a))b+)`,
+  `(?<=x(?(DEFINE)(a))b+)c` and `(?<=(?:(?(DEFINE)(a)))b+)` compile there,
+  and `(?<=(?<=(?(DEFINE)(a))d+)b)` is "lookbehind assertion is not fixed
+  length" at offset 0, on the outer lookbehind; the library refuses the
+  first three at 0 and the last at 4, as 10.35 does. Following it means
+  measuring the rest of the pattern one level up through every group and
+  lookbehind that holds the DEFINE group, which the tree the library
+  measures does not hold.
+- Up to 10.42 a repeat of variable count has no fixed length whatever it
+  repeats, an empty group included: `(?<=(?:)?)`, `(?<=()?)`,
+  `(?<=(?:){1,2})`, `(?<=(?<=a)?)`, `(?<=(?:(?=a))?)` and, from 10.34,
+  `(?<=(*ACCEPT)?)` and `(?<=a(*ACCEPT:x)??)` are "lookbehind assertion is
+  not fixed length" at offset 0; the library accepts them. A lookahead
+  repeated directly, `(?<=(?=a)?)`, stays fixed. The measure needs an
+  outcome for a length that is neither fixed nor unbounded.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
