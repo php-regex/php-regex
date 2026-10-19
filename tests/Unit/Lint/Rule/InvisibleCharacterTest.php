@@ -87,6 +87,7 @@ final class InvisibleCharacterTest extends TestCase
         yield 'a line separator ending a range' => ['pattern' => "/[\u{2027}-\u{2028}]/u", 'rewrite' => '/[\x{2027}-\x{2028}]/u', 'issues' => [
             ['offset' => 5, 'message' => 'The pattern holds a raw line separator U+2028, which does not show where the pattern is read.', 'hint' => 'Write "\x{2028}".'],
         ]];
+        yield 'a right-to-left override read as bytes, ending a range before one from its last byte' => ['pattern' => "/[!-\u{202E}-\\xff]/", 'rewrite' => '/[!-\xE2\x80\xAE-\xff]/', 'issues' => [$format(3, '202E', '\xE2\x80\xAE')]];
         yield 'a tab in a class under x, which x keeps' => ['pattern' => "/[\t]/x", 'rewrite' => '/[\t]/x', 'issues' => [$control(1, '0009', '\t')]];
         yield 'a raw tab after a backslash' => ['pattern' => "/a\\\tb/", 'rewrite' => '/a\tb/', 'issues' => [$control(1, '0009', '\t')]];
         yield 'a tab in a quote' => ['pattern' => "/\\Qa\tb\\E/", 'rewrite' => '/\Qa\E\t\Qb\E/', 'issues' => [

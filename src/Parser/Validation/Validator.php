@@ -72,6 +72,7 @@ use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Text\NearMiss;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
@@ -3695,11 +3696,13 @@ final class Validator extends AbstractNodeVisitor
 
     private function describeRange(RangeNode $node): string
     {
-        if (null !== $this->source) {
-            return substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
-        }
+        $text = null === $this->source
+            ? $this->describeRangeEndpoint($node->start).'-'.$this->describeRangeEndpoint($node->end)
+            : substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
 
-        return $this->describeRangeEndpoint($node->start).'-'.$this->describeRangeEndpoint($node->end);
+        // A range from the last byte of a character, without UTF, starts in
+        // the middle of it: its bytes are spelled.
+        return mb_check_encoding($text, 'UTF-8') ? $text : DisplayEscaper::escapeFragment($text, false);
     }
 
     private function describeRangeEndpoint(NodeInterface $node): string

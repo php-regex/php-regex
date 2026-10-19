@@ -46,35 +46,47 @@ final class MultibyteInCharClassWithoutURule extends AbstractLintRule
             return [];
         }
 
-        $literal = self::firstMultibyteLiteral($node->expression);
-        if (null === $literal) {
+        $character = self::firstMultibyteCharacter($node->expression, $context->pattern->source);
+        if (null === $character) {
             return [];
         }
+
+        [$value, $start, $end] = $character;
 
         return [new RuleViolation(
             self::ID,
             \sprintf(
                 'Character class holds "%s", which without /u is the bytes %s: the class matches each byte on its own.',
-                $literal->value,
-                implode(' ', array_map(static fn (string $byte): string => \sprintf('\x%02X', \ord($byte)), Bytes::split($literal->value))),
+                $value,
+                implode(' ', array_map(static fn (string $byte): string => \sprintf('\x%02X', \ord($byte)), Bytes::split($value))),
             ),
-            $literal->getStartPosition(),
+            $start,
             'Add the /u flag; write the bytes as \x escapes if bytes are meant.',
             LintSeverity::Error,
-            end: $literal->getEndPosition(),
+            end: $end,
         )];
     }
 
-    private static function firstMultibyteLiteral(NodeInterface $node): ?LiteralNode
+    /**
+     * The first multibyte character of the class, where it stands: a
+     * literal, or the bytes of one the tree holds apart.
+     *
+     * @return array{string, int, int}|null
+     */
+    private static function firstMultibyteCharacter(NodeInterface $node, string $source): ?array
     {
         if ($node instanceof LiteralNode) {
-            return \strlen($node->value) > 1 && 1 === mb_strlen($node->value, 'UTF-8') && mb_check_encoding($node->value, 'UTF-8') ? $node : null;
+            if (\strlen($node->value) > 1 && 1 === mb_strlen($node->value, 'UTF-8') && mb_check_encoding($node->value, 'UTF-8')) {
+                return [$node->value, $node->getStartPosition(), $node->getEndPosition()];
+            }
+
+            return SplitCharacter::startedBy($source, $node);
         }
 
         foreach ($node->getChildren() as $child) {
-            $literal = self::firstMultibyteLiteral($child);
-            if (null !== $literal) {
-                return $literal;
+            $character = self::firstMultibyteCharacter($child, $source);
+            if (null !== $character) {
+                return $character;
             }
         }
 

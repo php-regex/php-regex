@@ -139,14 +139,23 @@ final class InvisibleCharacterRule extends AbstractLintRule
     {
         $source = $context->pattern->source;
         $start = $literal->getStartPosition();
-        $written = substr($source, $start, $literal->getEndPosition() - $start);
+        $value = $literal->value;
+        $end = $literal->getEndPosition();
+        // The first byte of a character the tree holds apart stands for all
+        // of it.
+        $split = SplitCharacter::startedBy($source, $literal);
+        if (null !== $split) {
+            [$value, , $end] = $split;
+        }
+
+        $written = substr($source, $start, $end - $start);
 
         $issues = [];
         for ($i = 0, $length = \strlen($written); $i < $length;) {
             $character = self::characterAt($written, $i);
             $offset = $start + $i;
             $i += \strlen($character);
-            if (!self::isInvisible($character) || !str_contains($literal->value, $character)) {
+            if (!self::isInvisible($character) || !str_contains($value, $character)) {
                 continue;
             }
 

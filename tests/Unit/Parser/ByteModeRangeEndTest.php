@@ -92,6 +92,32 @@ final class ByteModeRangeEndTest extends TestCase
         yield 'two-byte character ending a range before a range to a property, PCRE2 10.45' => ['pattern' => '/[a-é-\pL]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 9];
     }
 
+    /**
+     * The range runs from the middle of a character: its text is spelled a
+     * byte at a time, so the message stays valid UTF-8.
+     */
+    #[Test]
+    #[DataProvider('provideRangesFromTheLastByte')]
+    public function test_a_range_from_the_last_byte_is_described_in_valid_utf8(string $pattern, string $range): void
+    {
+        foreach ([['8.4', '10.44'], ['8.5', '10.49']] as [$php, $release]) {
+            $error = (string) self::parser($php, $release)->validate($pattern)->error;
+
+            $this->assertTrue(mb_check_encoding($error, 'UTF-8'), \sprintf('%s on PCRE2 %s: %s', $pattern, $release, bin2hex($error)));
+            $this->assertStringContainsString('"'.$range.'"', $error, $pattern);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, range: string}>
+     */
+    public static function provideRangesFromTheLastByte(): iterable
+    {
+        yield 'two-byte character' => ['pattern' => '/[a-é-a]/', 'range' => '\xA9-a'];
+        yield 'two-byte character after another range to it' => ['pattern' => '/[!-é-é-a]/', 'range' => '\xA9-a'];
+        yield 'three-byte character' => ['pattern' => '/[a-€-\x01]/', 'range' => '\xAC-\x01'];
+    }
+
     #[Test]
     #[DataProvider('provideAccepted')]
     public function test_a_range_from_the_last_byte_in_order_compiles(string $pattern): void

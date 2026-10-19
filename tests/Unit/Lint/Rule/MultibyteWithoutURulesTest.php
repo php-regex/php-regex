@@ -105,6 +105,10 @@ final class MultibyteWithoutURulesTest extends TestCase
         yield 'negated' => ['pattern' => '/[^é]/', 'character' => 'é'];
         yield 'range ends' => ['pattern' => '/[é-ü]/', 'character' => 'é'];
         yield 'next to ascii' => ['pattern' => '/[a-zé]/', 'character' => 'é'];
+        // PCRE ends the range on its first byte and starts one from its
+        // last: "[ -é-\xff]" matches "\xC3" and "\xA9", not "-".
+        yield 'range end before a range from its last byte' => ['pattern' => '/[ -é-\xff]/', 'character' => 'é'];
+        yield 'three-byte range end before a range from its last byte' => ['pattern' => '/[!-€-\xff]/', 'character' => '€'];
     }
 
     /**
