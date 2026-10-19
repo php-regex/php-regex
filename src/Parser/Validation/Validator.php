@@ -504,10 +504,11 @@ final class Validator extends AbstractNodeVisitor
                 }
 
                 // A "-" right after a range that ended is a member, a quote
-                // between them or not: "[a-c-\pL]", "[a-c\E-\pL]".
+                // between them or not: "[a-c-\pL]", "[a-c\E-\pL]". So is a
+                // "-" that ends one, "[!--\pL]".
                 $endsRange = $afterRange;
                 $quote = \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true);
-                $afterRange = (TokenType::Range === $token->type && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
+                $afterRange = (TokenType::Range === $token->type && !$endsRange && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
                 $rangeEnded = $quote ? $rangeEnded || $endsRange : $endsRange;
                 $classEscapeThenQuote = $quoteKeepsHyphen && $quote && ($classEscape || $classEscapeThenQuote);
                 $classEscape = \in_array($token->type, [TokenType::CharType, TokenType::PosixClass, TokenType::UnicodeProp], true);
