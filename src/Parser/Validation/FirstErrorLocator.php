@@ -111,7 +111,8 @@ final class FirstErrorLocator
 
         $laterErrors = [
             $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
-            ErrorCode::CharclassUnclosed === $error->errorCode ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter) : null,
+            $error instanceof LexerException && \in_array($error->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true)
+                ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
@@ -391,9 +392,15 @@ final class FirstErrorLocator
             try {
                 $ast = (new TokenParser($this->maxRecursionDepth, $this->target))
                     ->parse(new TokenStream([...$class, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
-            } catch (LexerException|LimitException|ParserException) {
+            } catch (LexerException|LimitException|ParserException $classError) {
                 // A class read alone opens no group, so no limit is met
-                // here today; one would escape the error being reported.
+                // here today; one would escape the error being reported. A
+                // range the parser refuses leaves the items before it.
+                $error = $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($position, $classError->position ?? $position));
+                if (null !== $error) {
+                    return $error;
+                }
+
                 continue;
             }
 
@@ -410,8 +417,9 @@ final class FirstErrorLocator
     /**
      * The first error in the class the tokens leave open at the end of the
      * pattern: PCRE reads it item by item before it meets that end, so an
-     * item it refuses comes before the missing "]". The class is parsed
-     * alone, as if a "]" closed it there, and judged.
+     * item it refuses comes before the missing "]", or before a reversed
+     * range after it. The class is parsed alone, as if a "]" closed it
+     * there, and judged.
      *
      * @param list<Token> $tokens
      */
@@ -437,9 +445,43 @@ final class FirstErrorLocator
             $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
         } catch (SemanticErrorException $error) {
             return $error;
-        } catch (LexerException|LimitException|ParserException) {
-            // A class the parser cannot read alone, "[" with nothing after
-            // it: the missing "]" stands.
+        } catch (LexerException|LimitException|ParserException $classError) {
+            // A range the parser refuses leaves the items before it.
+            return $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, $classError->position ?? $end);
+        }
+
+        return null;
+    }
+
+    /**
+     * The first item of a class, its tokens from its "[", that PCRE refuses
+     * as it reads it before $limit, where the parser could not read the
+     * class whole: a code point or a POSIX class, each judged alone. A
+     * quote stops the reading: what it holds is no item.
+     *
+     * @param list<Token> $class
+     */
+    private function firstItemErrorBefore(array $class, string $pattern, string $flags, string $delimiter, int $limit): ?SemanticErrorException
+    {
+        $items = [TokenType::Unicode, TokenType::UnicodeNamed, TokenType::Octal, TokenType::OctalLegacy, TokenType::PosixClass];
+        foreach (\array_slice($class, 1) as $token) {
+            if ($token->position >= $limit || TokenType::QuoteModeStart === $token->type) {
+                break;
+            }
+
+            if (!\in_array($token->type, $items, true)) {
+                continue;
+            }
+
+            try {
+                (new TokenParser($this->maxRecursionDepth, $this->target))
+                    ->parse(new TokenStream([$class[0], $token, new Token(TokenType::CharClassClose, ']', $token->end(), 0), new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern))
+                    ->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
+            } catch (SemanticErrorException $error) {
+                if (($error->position ?? $limit) < $limit) {
+                    return $error;
+                }
+            }
         }
 
         return null;
