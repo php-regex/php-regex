@@ -197,6 +197,11 @@ enum PcreFeature
     case ClassEscapeEndingRangeRefusedAsEscape;
 
     /**
+     * "\N{" in a class is refused as a character name whatever follows the brace, where a count after "\N" was read as one.
+     */
+    case NamedCharacterBraceRefusedInClass;
+
+    /**
      * The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits.
      */
     case VersionConditionWholeNumbers;
@@ -286,7 +291,8 @@ enum PcreFeature
             self::ClassBackslashKIsLetter,
             self::HexEscapeNeedsDigits,
             self::EmptyQuoteOpeningClassIsUnclosed,
-            self::ClassEscapeEndingRangeRefusedAsEscape => '10.45',
+            self::ClassEscapeEndingRangeRefusedAsEscape,
+            self::NamedCharacterBraceRefusedInClass => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
             self::GReferenceNumberReadBeforeClosing,

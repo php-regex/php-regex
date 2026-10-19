@@ -3427,8 +3427,9 @@ final class TokenParser
      * an assertion such as "\B", "\R", "\X", or "\N" that names no code
      * point, or a letter with no meaning there, as "\j".
      */
-    private function isClassInvalidEscapeAt(int $position, bool $endsRange = false): bool
+    private function isClassInvalidEscapeAt(Token $token, bool $endsRange = false): bool
     {
+        $position = $token->position;
         if ('\\' !== ($this->pattern[$position] ?? '')) {
             return false;
         }
@@ -3440,8 +3441,17 @@ final class TokenParser
 
         $letter = $this->pattern[$position + 1] ?? '';
 
+        // "\N{" is refused where check_escape() refuses the brace, but for
+        // a count it reads, which leaves "\N", and a code point the lexer
+        // read as one.
         if ('N' === $letter) {
-            return '{' !== ($this->pattern[$position + 2] ?? '');
+            if ('{' !== ($this->pattern[$position + 2] ?? '')) {
+                return true;
+            }
+
+            return NamedCharacterBrace::namesCodePoint($this->pattern, $position + 2, $this->target)
+                ? TokenType::UnicodeNamed !== $token->type
+                : null !== NamedCharacterBrace::errorInClass($this->pattern, $position + 2, $this->target);
         }
 
         // An assertion, or a letter PCRE gives no meaning in a class; "\k" is
@@ -3576,7 +3586,7 @@ final class TokenParser
 
         // PCRE refuses such an escape as soon as it reads it, before any "-"
         // after it could make a range.
-        if ($this->isClassInvalidEscapeAt($startPosition)) {
+        if ($this->isClassInvalidEscapeAt($startToken)) {
             return $startNode;
         }
 
@@ -3657,8 +3667,9 @@ final class TokenParser
             $this->throwEscapeEndingRange($endAt);
         }
 
-        if ($this->isClassInvalidEscapeAt($endAt, true)) {
-            if ($endsAsInvalidRange && 'N' === $this->pattern[$endAt + 1]) {
+        if ($this->isClassInvalidEscapeAt($this->stream->current(), true)) {
+            // A "\N{" check_escape() refuses is refused before the range.
+            if ($endsAsInvalidRange && 'N' === $this->pattern[$endAt + 1] && '{' !== ($this->pattern[$endAt + 2] ?? '')) {
                 $this->throwEscapeEndingRange($endAt);
             }
 

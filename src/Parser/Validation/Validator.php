@@ -63,6 +63,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\BadEscape;
+use PHPRegex\Parser\Syntax\NamedCharacterBrace;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PropertyNames;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -480,7 +481,11 @@ final class Validator extends AbstractNodeVisitor
                 $afterRange = (TokenType::Range === $token->type && !$rangeEnded) || ($endsRange && $quote);
                 $rangeEnded = $endsRange && !$quote;
 
-                if ($nEndsRange && $endsRange && TokenType::CharType === $token->type && 'N' === $token->value) {
+                // "\N" ending a range is refused as the range, but for a "\N{"
+                // check_escape() refuses first.
+                if ($nEndsRange && $endsRange && TokenType::CharType === $token->type && 'N' === $token->value
+                    && ('{' !== ($source[$token->end()] ?? '') || (!NamedCharacterBrace::namesCodePoint($source, $token->end(), $this->target)
+                        && null === NamedCharacterBrace::errorInClass($source, $token->end(), $this->target)))) {
                     continue;
                 }
 
@@ -825,13 +830,20 @@ final class Validator extends AbstractNodeVisitor
                 return;
             }
 
-            // From PCRE2 10.47, "\N{" there is a character name, which PCRE
-            // does not support, refused past the "{".
-            if ('{' === ($this->source[$node->getEndPosition()] ?? '') && $this->supports(PcreFeature::ErrorOffsetPastTheFault)) {
+            // "\N{" that is no count PCRE2 reads there, and any from 10.45,
+            // is a character name, which PCRE does not support; a count it
+            // reads is refused for its numbers. Where the "\N" ends, past the
+            // "{" from 10.47.
+            $braceError = null !== $this->source && '{' === ($this->source[$node->getEndPosition()] ?? '') ? NamedCharacterBrace::errorInClass($this->source, $node->getEndPosition(), $this->target) : null;
+            if (null !== $braceError) {
                 $this->raiseSemanticError(
-                    'PCRE does not support the escape "\N{" (\F, \L, \l, \N{name}, \U and \u are not supported), in a character class either.',
-                    $node->getEndPosition() + 1,
-                    ErrorCode::EscapeUnsupported,
+                    match ($braceError) {
+                        ErrorCode::QuantifierTooBig => 'Number too big in the count after \N: PCRE allows at most 65535 repetitions.',
+                        ErrorCode::QuantifierInvalidRange => 'Invalid count after \N: min > max.',
+                        default => 'PCRE does not support the escape "\N{" (\F, \L, \l, \N{name}, \U and \u are not supported), in a character class either.',
+                    },
+                    $this->pastTheFault($node->getEndPosition() + 1),
+                    $braceError,
                 );
             }
 

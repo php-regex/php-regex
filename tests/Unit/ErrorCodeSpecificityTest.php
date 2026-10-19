@@ -689,7 +689,7 @@ final class ErrorCodeSpecificityTest extends TestCase
             str_contains($pattern, '(*scs:') => PcreFeature::ScanSubstring,
             1 === preg_match('/\(\?(?:R|[+-]?\d+)\(/', $pattern) => PcreFeature::CallsReturnCaptureGroups,
             1 === preg_match('/\{(?: |,)/', $pattern) => PcreFeature::OpenAndPaddedRepeatCounts,
-            str_contains($pattern, '[\\N{') => PcreFeature::ErrorOffsetPastTheFault,
+            str_contains($pattern, '[\\N{') => PcreFeature::NamedCharacterBraceRefusedInClass,
             1 === preg_match('/\(\?<\w{33,128}\W/', $pattern) => PcreFeature::LongGroupNames,
             str_contains($pattern, '(?(VERSION') => PcreFeature::VersionConditionLeftOpenIsVersionError,
             default => null,
