@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintConfigSchema;
+use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -47,6 +48,31 @@ final class LintConfigSchemaTest extends TestCase
     {
         $this->assertStringNotContainsString('removed', (string) file_get_contents(self::ROOT.'/src/Linter/regex.schema.json'));
         $this->assertStringContainsString('checks.redos.enabled', (string) file_get_contents(self::ROOT.'/src/Linter/regex.schema.json'));
+    }
+
+    /**
+     * Each IDE name the ide key takes opens the links with the template
+     * the schema documents for it, and no other name has one.
+     */
+    #[Test]
+    public function test_every_ide_the_schema_offers_has_the_template_the_links_use(): void
+    {
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['properties'] ?? null);
+        $this->assertIsArray($definition['properties']['ide'] ?? null);
+        $this->assertIsArray($definition['properties']['ide']['oneOf'] ?? null);
+
+        $documented = [];
+        foreach ($definition['properties']['ide']['oneOf'] as $choice) {
+            $this->assertIsArray($choice);
+            if (isset($choice['const']) && '' !== $choice['const']) {
+                $this->assertIsString($choice['const']);
+                $this->assertIsString($choice['description'] ?? null);
+                $documented[$choice['const']] = substr($choice['description'], \strlen('Use '));
+            }
+        }
+
+        $this->assertSame(LinkFormatter::IDE_LINK_FORMATS, $documented);
     }
 
     #[Test]

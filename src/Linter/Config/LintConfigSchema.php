@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Linter\Formatter\LinkFormatter;
+
 /**
  * What regex.json and regex.dist.json may hold, as one JSON Schema.
  *
@@ -130,16 +132,6 @@ final class LintConfigSchema
         'medium' => 'Report medium and higher.',
         'high' => 'Report high and higher.',
         'critical' => 'Report only critical.',
-    ];
-
-    private const IDES = [
-        'phpstorm' => 'phpstorm://open?file=%f&line=%l',
-        'vscode' => 'vscode://file/%f:%l',
-        'textmate' => 'txmt://open?url=file://%f&line=%l',
-        'sublime' => 'subl://open?url=file://%f&line=%l',
-        'emacs' => 'emacs://open?url=file://%f&line=%l',
-        'atom' => 'atom://core/open/file?filename=%f&line=%l',
-        'macvim' => 'mvim://open?url=file://%f&line=%l',
     ];
 
     /**
@@ -523,7 +515,7 @@ final class LintConfigSchema
     private static function ide(): array
     {
         $choices = [['const' => '', 'description' => 'Disable clickable links.']];
-        foreach (self::IDES as $name => $template) {
+        foreach (LinkFormatter::IDE_LINK_FORMATS as $name => $template) {
             $choices[] = ['const' => $name, 'description' => 'Use '.$template];
         }
         $choices[] = [
@@ -535,7 +527,7 @@ final class LintConfigSchema
 
         return [
             'description' => 'IDE name or custom URL template for clickable file links. Use placeholders like %f, %l, %c, or %relFile%.',
-            'x-expected' => 'one of '.implode(', ', array_keys(self::IDES)).', an empty string, or a URL template holding %f or %l',
+            'x-expected' => 'one of '.implode(', ', array_keys(LinkFormatter::IDE_LINK_FORMATS)).', an empty string, or a URL template holding %f or %l',
             'default' => '',
             'oneOf' => $choices,
             'examples' => ['phpstorm', 'vscode', 'vscode://file/%f:%l'],
