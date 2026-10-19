@@ -118,7 +118,6 @@ return [
     'src/Parser/Engine/LibraryPcre.php' => [
         'PHPRegex\Parser\Engine\LibraryPcre::match()' => ['preg-mirror', 1],
         'PHPRegex\Parser\Engine\LibraryPcre::matchAll()' => ['preg-mirror', 2],
-        'PHPRegex\Parser\Engine\LibraryPcre::outsideTheWindow()' => ['template-identity', 1],
         'PHPRegex\Parser\Engine\LibraryPcre::quantity()' => ['host-return', 1],
         'PHPRegex\Parser\Engine\LibraryPcre::quietly()' => ['template-identity', 1],
         'PHPRegex\Parser\Engine\LibraryPcre::replace()' => ['preg-mirror', 1],

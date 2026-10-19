@@ -72,18 +72,25 @@ final class LibraryPcreWindowTest extends TestCase
         ini_set('pcre.backtrack_limit', '19');
 
         try {
-            $result = LibraryPcre::run(static fn (): int|false => LibraryPcre::outsideTheWindow(
-                static fn (): int|false => LibraryPcre::match(self::PROBE, self::SUBJECT),
-            ));
+            [$caller, $result] = LibraryPcre::run(static function (): array {
+                $left = LibraryPcre::leaveTheWindow();
+
+                try {
+                    return [ini_get('pcre.backtrack_limit'), LibraryPcre::match(self::PROBE, self::SUBJECT)];
+                } finally {
+                    LibraryPcre::reenterTheWindow($left);
+                }
+            });
         } finally {
             ini_set('pcre.backtrack_limit', '1000000');
         }
 
+        $this->assertSame('19', $caller);
         $this->assertSame(1, $result);
     }
 
     #[Test]
-    public function test_outside_any_window_the_call_runs_as_it_is(): void
+    public function test_outside_any_window_leaving_it_changes_nothing(): void
     {
         $writes = [];
         LibraryPcre::useIniSetter(static function (string $key, string $value) use (&$writes): string|false {
@@ -94,12 +101,16 @@ final class LibraryPcreWindowTest extends TestCase
         ini_set('pcre.backtrack_limit', '19');
 
         try {
-            $limit = LibraryPcre::outsideTheWindow(static fn (): string|false => ini_get('pcre.backtrack_limit'));
+            $left = LibraryPcre::leaveTheWindow();
+            $limit = ini_get('pcre.backtrack_limit');
+            LibraryPcre::reenterTheWindow($left);
+            $after = ini_get('pcre.backtrack_limit');
         } finally {
             ini_set('pcre.backtrack_limit', '1000000');
         }
 
         $this->assertSame('19', $limit);
+        $this->assertSame('19', $after);
         $this->assertSame([], $writes);
     }
 
@@ -110,11 +121,13 @@ final class LibraryPcreWindowTest extends TestCase
 
         try {
             $inside = LibraryPcre::run(static function (): string|false {
+                $left = LibraryPcre::leaveTheWindow();
+
                 try {
-                    LibraryPcre::outsideTheWindow(static function (): void {
-                        throw new \RuntimeException('user code failed');
-                    });
+                    throw new \RuntimeException('user code failed');
                 } catch (\RuntimeException) {
+                } finally {
+                    LibraryPcre::reenterTheWindow($left);
                 }
 
                 return ini_get('pcre.backtrack_limit');

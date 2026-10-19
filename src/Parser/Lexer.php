@@ -599,7 +599,7 @@ final class Lexer
         $ord = \ord($byte);
 
         if ($ord < 0x80) {
-            if (!isset((self::$plainBytes ??= array_fill_keys(str_split(self::PLAIN_TEXT), true))[$byte])) {
+            if (!isset((self::$plainBytes ??= self::plainBytes())[$byte])) {
                 return null;
             }
 
@@ -621,6 +621,19 @@ final class Lexer
         $this->position += $length;
 
         return new Token(TokenType::Literal, substr($this->pattern, $at, $length), $at, $length);
+    }
+
+    /**
+     * @return array<int|string, true>
+     */
+    private static function plainBytes(): array
+    {
+        $bytes = [];
+        for ($i = 0, $count = \strlen(self::PLAIN_TEXT); $i < $count; $i++) {
+            $bytes[self::PLAIN_TEXT[$i]] = true;
+        }
+
+        return $bytes;
     }
 
     private function getRegexOutside(): string

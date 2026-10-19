@@ -30,7 +30,7 @@ use PHPRegex\Parser\Text\Ascii;
  *
  * Only regexes the library owns go through here: a user's pattern keeps
  * the caller's limits, also when the library meets it inside a window
- * (outsideTheWindow()).
+ * (leaveTheWindow()).
  *
  * @internal
  */
@@ -135,42 +135,49 @@ final class LibraryPcre
     }
 
     /**
-     * Runs a call that is not the library's own regex, a pattern the
-     * library was given, under the caller's limits: inside a window, the
-     * limits it raised are set back for the call, then raised again, also
-     * when the call throws. The library's regexes the call runs take a
-     * window of their own. Outside a window, the call runs as it is.
+     * Leaves the open window for a call that is not the library's own
+     * regex, a pattern the library was given, which must run under the
+     * caller's limits: the limits the window raised are set back, and what
+     * is returned is what reenterTheWindow() needs to raise them again, which
+     * the caller does in a finally block. The library's regexes run in
+     * between take a window of their own. Outside a window, nothing changes.
      *
-     * @template T
-     *
-     * @param \Closure(): T $call
-     *
-     * @return T
+     * @return array{int, array<string, string>}
      */
-    public static function outsideTheWindow(\Closure $call): mixed
+    public static function leaveTheWindow(): array
     {
+        $left = [self::$depth, self::$windowRaised];
         if (0 === self::$depth) {
-            return $call();
+            return $left;
         }
 
-        $depth = self::$depth;
-        $raised = self::$windowRaised;
+        self::restore(self::$windowRaised);
         self::$depth = 0;
         self::$windowRaised = [];
 
-        try {
-            self::restore($raised);
+        return $left;
+    }
 
-            return $call();
-        } finally {
-            try {
-                foreach (array_keys($raised) as $key) {
-                    self::set($key, (string) self::FLOORS[$key]);
-                }
-            } finally {
-                self::$depth = $depth;
-                self::$windowRaised = $raised;
+    /**
+     * Raises again the limits leaveTheWindow() set back, and opens the
+     * window it left, also when raising one throws.
+     *
+     * @param array{int, array<string, string>} $left what leaveTheWindow() returned
+     */
+    public static function reenterTheWindow(array $left): void
+    {
+        [$depth, $raised] = $left;
+        if (0 === $depth) {
+            return;
+        }
+
+        try {
+            foreach (array_keys($raised) as $key) {
+                self::set($key, (string) self::FLOORS[$key]);
             }
+        } finally {
+            self::$depth = $depth;
+            self::$windowRaised = $raised;
         }
     }
 

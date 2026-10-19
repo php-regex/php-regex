@@ -208,7 +208,13 @@ final class PcreEngine
     {
         // The pattern is the caller's: it never runs under the limits the
         // library raises for its own regexes.
-        return LibraryPcre::outsideTheWindow(fn (): array => $this->runUnderTheCallersLimits($pattern, $call, $limits));
+        $left = LibraryPcre::leaveTheWindow();
+
+        try {
+            return $this->runUnderTheCallersLimits($pattern, $call, $limits);
+        } finally {
+            LibraryPcre::reenterTheWindow($left);
+        }
     }
 
     /**
