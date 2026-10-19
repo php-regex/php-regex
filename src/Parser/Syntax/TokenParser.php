@@ -3717,11 +3717,14 @@ final class TokenParser
         // PCRE skips "\E" and an empty "\Q\E" after the "-": "[a-\Ec]" is
         // the range a-c, and in "[a-\Q\E]" the "-" is a plain member. From
         // 10.45 a "-" after a class escape that the pattern ends after, past
-        // them, is one too: the "]" is missing.
+        // them or in a "\Q" that quotes nothing, is one too: the "]" is
+        // missing.
         $this->skipEmptyQuotes();
+        $quoteEndingThePattern = $this->stream->check(TokenType::QuoteModeStart)
+            && TokenType::Eof === $this->stream->peek()->type && $this->stream->peek()->position >= $length;
 
         if ($this->stream->check(TokenType::CharClassClose)
-            || ($rangeFromType && $this->stream->isAtEnd() && $this->stream->current()->position >= $length)) {
+            || ($rangeFromType && (($this->stream->isAtEnd() && $this->stream->current()->position >= $length) || $quoteEndingThePattern))) {
             $this->stream->setPosition($rangePosition);
 
             return $startNode;

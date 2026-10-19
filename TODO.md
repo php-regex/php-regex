@@ -155,8 +155,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   it at offset 5 (7 from 10.47). `\g{--1}` and `\g{-+1}` have the right
   offset but say `regex.backref.relative` where PCRE2 says "subpattern name
   expected".
-- From 10.45 a range from a type ending in a `\Q` the pattern ends in,
-  `[\d-\Q`, misses its `]` at the end of the pattern; the library says 4.
 - Up to 10.44 `([a-z\E-\pL]` misses its `)` at 12: the library reads a range
   ending on `\pL` there (a quote after a range resets the range read).
 - `\k{1 }` and `\k{1n }` up to 10.42: PCRE2 says "subpattern name must start

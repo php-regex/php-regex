@@ -151,6 +151,19 @@ final class ClassEscapeStartingRangeTest extends TestCase
         yield 'type, then an empty quoted run and the end of the pattern, PCRE2 10.47' => ['pattern' => '/[\w-\Q\E/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 8];
         yield 'type, then quotes and the end of the pattern, PCRE2 10.49' => ['pattern' => '/[\w-\Q\E\E/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 10];
         yield 'POSIX class, then a quote end and the end of the pattern, PCRE2 10.45' => ['pattern' => '/[[:alpha:]-\E/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 13];
+
+        // A "\Q" the pattern ends in quotes nothing: the "]" is missing from
+        // 10.45, where 10.44 refuses the range on its hyphen ("missing
+        // terminating ] for character class at offset 6" for "[\d-\Q" from
+        // 10.45, "invalid range in character class at offset 3" up to
+        // 10.44, pcre2test 10.32 to 10.49).
+        yield 'type, then a quote the pattern ends in, PCRE2 10.44' => ['pattern' => '/[\d-\Q/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 3];
+        yield 'type, then a quote the pattern ends in, PCRE2 10.45' => ['pattern' => '/[\d-\Q/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 6];
+        yield 'type, then a quote the pattern ends in, PCRE2 10.49' => ['pattern' => '/[\d-\Q/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 6];
+        yield 'member and a type, then a quote the pattern ends in, PCRE2 10.47' => ['pattern' => '/[a\d-\Q/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 7];
+        yield 'POSIX class, then a quote the pattern ends in, PCRE2 10.45' => ['pattern' => '/[[:alpha:]-\Q/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 13];
+        yield 'property, then a quote end and a quote the pattern ends in, PCRE2 10.46' => ['pattern' => '/[\pL-\E\Q/', 'php' => '8.4', 'release' => '10.46', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 9];
+        yield 'type, then a quoted bracket, PCRE2 10.45' => ['pattern' => '/[\d-\Q]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
     }
 
     private static function parser(string $php, string $release): RegexParser
