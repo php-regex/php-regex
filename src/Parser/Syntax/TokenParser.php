@@ -1325,6 +1325,14 @@ final class TokenParser
             return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
         }
 
+        // PCRE reads the number after "\g{", "\g<" or "\g'" before it looks
+        // for what closes it, and refuses one it cannot read right after
+        // the "g", on every release.
+        $numberError = $this->gReferenceNumberError($token->position);
+        if (null !== $numberError) {
+            throw $this->parserException(\sprintf('Invalid \\g reference %s at position %d: %s.', $value, $token->position + 2, $numberError[1]), $numberError[0], $token->position + 2);
+        }
+
         // "\g<5fg>": PCRE reads a number after "\g<" or "\g'", and wants the
         // closing character right after it; before PCRE2 10.47, it refuses
         // the "\g" itself.
@@ -1347,14 +1355,6 @@ final class TokenParser
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
-        // "\g{-2" with fewer groups open: PCRE counts back first and refuses
-        // the reference on its "{", before it looks for the "}".
-        if (1 === LibraryPcre::match('/\G\\\\g\{[ \t]*+-(\d++)/', $this->pattern, $back, 0, $token->position) && (int) $back[1] > $this->captureCount) {
-            $position = $token->position + 2;
-
-            throw $this->parserException(\sprintf('Backreference relative reference -%s is outside the range of available capture groups.', $back[1]), ErrorCode::BackrefRelative, $position);
-        }
-
         $position = $this->gReferenceErrorOffset($token->position);
         $code = $this->gReferenceErrorCode($token->position, $position);
 
@@ -1367,6 +1367,44 @@ final class TokenParser
             $code,
             $position,
         );
+    }
+
+    /**
+     * The error PCRE's read_number() gives the number after the "\g{",
+     * "\g<" or "\g'" whose backslash stands at $start, and its reason: a
+     * number past 65535, a forward one counted from the groups opened before
+     * it included; a relative zero; a backward one past the groups opened.
+     * Null when it reads the number, or none stands there. Only "\g{" takes
+     * spaces and tabs before it, from PCRE2 10.43.
+     *
+     * @return array{ErrorCode, string}|null
+     */
+    private function gReferenceNumberError(int $start): ?array
+    {
+        $opener = $this->pattern[$start + 2] ?? '';
+        if (!\in_array($opener, ['{', '<', "'"], true)) {
+            return null;
+        }
+
+        $at = $start + 3;
+        if ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+            $at += strspn($this->pattern, " \t", $at);
+        }
+
+        if (1 !== LibraryPcre::match('/\G([+-]?)(\d++)/', $this->pattern, $number, 0, $at)) {
+            return null;
+        }
+
+        [, $sign, $digits] = $number;
+        $value = (int) $digits;
+        $call = '{' !== $opener;
+
+        return match (true) {
+            \strlen(ltrim($digits, '0')) > 5 || $value > 65535 || ('+' === $sign && $value + $this->captureCount > 65535) => [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'],
+            '' !== $sign && 0 === $value => [$call ? ErrorCode::SubroutineRelativeZero : ErrorCode::BackrefZero, 'a relative number may not be zero'],
+            '-' === $sign && $value > $this->captureCount => [$call ? ErrorCode::SubroutineRelativeMissing : ErrorCode::BackrefRelative, \sprintf('-%d counts back past the %d groups opened before it', $value, $this->captureCount)],
+            default => null,
+        };
     }
 
     /**
@@ -1383,7 +1421,9 @@ final class TokenParser
             return ErrorCode::BackrefInvalidSyntax;
         }
 
-        $nameStart = $start + 3 + ('{' === $opener ? strspn($this->pattern, " \t", $start + 3) : 0);
+        // Only "\g{" takes spaces and tabs before a name or number, from
+        // PCRE2 10.43.
+        $nameStart = $start + 3 + ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($this->pattern, " \t", $start + 3) : 0);
 
         return match (true) {
             1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart) => ErrorCode::BackrefInvalidSyntax,

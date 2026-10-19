@@ -1139,7 +1139,7 @@ final class Validator extends AbstractNodeVisitor
                     ErrorCode::BackrefInvalidSyntax,
                 );
             }
-            if ('0' === $numStr || '+0' === $numStr || '-0' === $numStr) {
+            if (1 === LibraryPcre::match('/^[+-]?0++$/', $numStr)) {
                 $this->raiseSemanticError(
                     'Backreference \\g{0} is not valid.',
                     $this->missingReferenceOffset($node),
@@ -2827,7 +2827,7 @@ final class Validator extends AbstractNodeVisitor
             // included, is refused where it ends.
             $number = (int) $matches[4] + ('+' === $matches[3] ? ($this->groups->nextNumberAt($node) ?? 1) - 1 : 0);
 
-            return '-' === $matches[3] || 0 === $number || $number > 65535 ? $end : $this->pastTheFault($end);
+            return $failsWhileRead || 0 === $number || $number > 65535 ? $end : $this->pastTheFault($end);
         }
 
         // "\1", "\81"; a number past 65535 is refused where it ends.
