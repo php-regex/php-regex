@@ -2,22 +2,8 @@
 
 ## Composer manifests: the pre-tag review
 
-Every manifest passes `composer validate --strict`; the integration
-entries with a real consumer are all in place (`extra.laravel`,
-`extra.phpstan.includes`, the Psalm plugin class, the Rector and Symfony
-types, the `bin` entries); the monorepo package refuses every host its
-bridges refuse, aggregates the bridges' discovery keys, and every split
-carries the author and funding of the root; the packages that call
-`mb_*` themselves require the extension, and `PackageManifestTest` and
-`MbstringRequirementTest` pin it all. The IDE completion file ships with
-the facade package (`src/Toolkit/.phpstorm.meta.php`), its gate lists
-with the gates. What remains is on the release side:
+The manifests are ready; what remains is on the release side:
 
-- `php-regex/php-regex` already serves the 1.x lineage on Packagist
-  (77 stable versions, v0.1.0–v1.3.0): an unpinned
-  `composer require php-regex/php-regex` installs 1.x today. Every
-  pre-tag install instruction must stay pinned (`install-prerelease.html`
-  is), and UPGRADE-2.0.md should say the new name carries 1.x too.
 - `yoeunes/regex-parser` lists a phantom `2.x-dev` in its dev channel
   (a stale crawl from the old name): after the repoint, check the dev
   channel lists 1.x only.
@@ -26,13 +12,6 @@ with the gates. What remains is on the release side:
   siblings. Before `bin/release`, confirm every split repo carries a
   fresh 2.x head and a crawled dev version (`bin/status` reads both
   Packagist channels now); after, v2.0.0 on every stable endpoint.
-- The v1 tags and the 1.x branch stay in the monorepo: they anchor the
-  1.x dists of both Packagist entries. Record the policy so a future tag
-  cleanup cannot delete them.
-- UPGRADE-2.0.md ships only in the aggregate dist: none of the seventeen
-  splits carries a migration doc. Copy a trimmed one into each split, or
-  point each split README at the upgrade guide and check the target
-  exists.
 - Post-tag: submit `regex.schema.json` to schemastore.org (`fileMatch`:
   `regex.json`, `regex.dist.json`) for zero-config editor support — it
   needs a stable public URL, so it waits for the tag.
