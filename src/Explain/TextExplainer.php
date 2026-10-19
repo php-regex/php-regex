@@ -40,7 +40,6 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
-use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -59,59 +58,6 @@ use PHPRegex\Parser\Text\DisplayEscaper;
  */
 final class TextExplainer extends AbstractNodeVisitor
 {
-    private const CHAR_TYPE_MAP = [
-        'd' => 'A digit: [0-9]',
-        'D' => 'A non-digit: [^0-9]',
-        'h' => 'A horizontal whitespace character: [ \\t\\xA0\\u1680\\u180e\\u2000-\\u200a\\u202f\\u205f\\u3000]',
-        'H' => 'A non-horizontal whitespace character: [^\\h]',
-        's' => 'A whitespace character: [ \\t\\n\\x0B\\f\\r]',
-        'S' => 'A non-whitespace character: [^\\s]',
-        'v' => 'A vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]',
-        'V' => 'A non-vertical whitespace character: [^\\v]',
-        'w' => 'A word character: [a-zA-Z_0-9]',
-        'W' => 'A non-word character: [^\\w]',
-        'R' => 'Any Unicode linebreak sequence (\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])',
-    ];
-
-    private const ANCHOR_MAP = [
-        '^' => 'the beginning of a line',
-        '$' => 'the end of a line',
-    ];
-
-    private const ASSERTION_MAP = [
-        'A' => 'the beginning of the input',
-        'z' => 'the end of the input',
-        'Z' => 'the end of the input but for the final terminator, if any',
-        'G' => 'the end of the previous match',
-        'b' => 'a word boundary',
-        'B' => 'a non-word boundary',
-    ];
-
-    private const UNICODE_PROPERTY_MAP = [
-        'lower' => 'A lower-case alphabetic character: [a-z]',
-        'upper' => 'An upper-case alphabetic character: [A-Z]',
-        'ascii' => 'All ASCII: [\\x00-\\x7F]',
-        'alpha' => 'An alphabetic character: [\\p{Lower}\\p{Upper}]',
-        'digit' => 'A decimal digit: [0-9]',
-        'alnum' => 'An alphanumeric character: [\\p{Alpha}\\p{Digit}]',
-        'punct' => 'Punctuation: One of !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~',
-        'graph' => 'A visible character: [\\p{Alnum}\\p{Punct}]',
-        'print' => 'A printable character: [\\p{Graph}\\x20]',
-        'blank' => 'A space or a tab: [ \\t]',
-        'cntrl' => 'A control character: [\\x00-\\x1F\\x7F]',
-        'xdigit' => 'A hexadecimal digit: [0-9a-fA-F]',
-        'space' => 'A whitespace character: [ \\t\\n\\x0B\\f\\r]',
-        'javalowercase' => 'Equivalent to java.lang.Character.isLowerCase()',
-        'javauppercase' => 'Equivalent to java.lang.Character.isUpperCase()',
-        'javawhitespace' => 'Equivalent to java.lang.Character.isWhitespace()',
-        'javamirrored' => 'Equivalent to java.lang.Character.isMirrored()',
-        'islatin' => 'A Latin script character (script)',
-        'ingreek' => 'A character in the Greek block (block)',
-        'lu' => 'An uppercase letter (category)',
-        'isalphabetic' => 'An alphabetic character (binary property)',
-        'sc' => 'A currency symbol',
-    ];
-
     private int $indentLevel = 0;
 
     /**
@@ -209,7 +155,7 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitQuantifier(QuantifierNode $node): string
     {
         $childExplain = $this->explainAt($node->node, $this->indentLevel);
-        $quantExplain = $this->explainQuantifierValue($node->quantifier, $node->type->value);
+        $quantExplain = Vocabulary::quantifier($node->quantifier, $node->type);
 
         // If the child is simple (one line), put it on one line.
         if (!str_contains($childExplain, "\n")) {
@@ -229,13 +175,13 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitLiteral(LiteralNode $node): string
     {
-        return $this->line($this->explainLiteral($node->value));
+        return $this->line(Vocabulary::literal($node->value));
     }
 
     #[\Override]
     public function visitCharType(CharTypeNode $node): string
     {
-        return $this->line('Character Type: '.(self::CHAR_TYPE_MAP[$node->value] ?? 'unknown (\\'.$node->value.')'));
+        return $this->line('Character Type: '.(Vocabulary::CHAR_TYPES[$node->value] ?? 'unknown (\\'.$node->value.')'));
     }
 
     #[\Override]
@@ -247,13 +193,13 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitAnchor(AnchorNode $node): string
     {
-        return $this->line('Anchor: '.(self::ANCHOR_MAP[$node->value] ?? $node->value));
+        return $this->line('Anchor: '.(Vocabulary::ANCHORS[$node->value] ?? $node->value));
     }
 
     #[\Override]
     public function visitAssertion(AssertionNode $node): string
     {
-        return $this->line('Assertion: '.(self::ASSERTION_MAP[$node->value] ?? '\\'.$node->value));
+        return $this->line('Assertion: '.(Vocabulary::ASSERTIONS[$node->value] ?? '\\'.$node->value));
     }
 
     #[\Override]
@@ -279,11 +225,11 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitRange(RangeNode $node): string
     {
         $start = ($node->start instanceof LiteralNode)
-            ? $this->explainLiteral($node->start->value)
+            ? Vocabulary::literal($node->start->value)
             : $node->start->accept($this); // Fallback
 
         $end = ($node->end instanceof LiteralNode)
-            ? $this->explainLiteral($node->end->value)
+            ? Vocabulary::literal($node->end->value)
             : $node->end->accept($this); // Fallback
 
         return $this->line(\sprintf('Range: from %s to %s', $start, $end));
@@ -359,16 +305,8 @@ final class TextExplainer extends AbstractNodeVisitor
         $prop = ltrim($inner, '^');
         $key = Ascii::lower($prop);
 
-        if (isset(self::UNICODE_PROPERTY_MAP[$key])) {
-            $description = self::UNICODE_PROPERTY_MAP[$key];
-            if ($isNegated) {
-                if ('ingreek' === $key) {
-                    return $this->line('Any character except one in the Greek block (block)');
-                }
-
-                return $this->line('Any character except '.Ascii::lowerFirst($description));
-            }
-
+        $description = Vocabulary::unicodeProperty($key, $isNegated);
+        if (null !== $description) {
             return $this->line($description);
         }
 
@@ -381,10 +319,10 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): string
     {
         return match ($node->type) {
-            CharLiteralType::Unicode => $this->line('Character with hexadecimal value 0x'.$this->formatUnicodeHexValue($node)),
+            CharLiteralType::Unicode => $this->line('Character with hexadecimal value 0x'.Vocabulary::unicodeHexValue($node)),
             CharLiteralType::UnicodeNamed => $this->line('Unicode named character: '.$this->extractCharLiteralDetail($node)),
-            CharLiteralType::Octal => $this->line('Character with octal value '.$this->formatOctalValue($node)),
-            CharLiteralType::OctalLegacy => $this->line('Character with octal value '.$this->formatLegacyOctalValue($node->originalRepresentation)),
+            CharLiteralType::Octal => $this->line('Character with octal value '.Vocabulary::octalValue($node)),
+            CharLiteralType::OctalLegacy => $this->line('Character with octal value '.Vocabulary::legacyOctalValue($node->originalRepresentation)),
         };
     }
 
@@ -486,100 +424,9 @@ final class TextExplainer extends AbstractNodeVisitor
         return $this->line(\sprintf('Callout: passes control to user function with argument %s', $arg));
     }
 
-    private function explainQuantifierValue(string $q, string $type): string
-    {
-        $bounds = QuantifierBounds::parse($q);
-        $desc = match (true) {
-            '*' === $q => 'zero or more times',
-            '+' === $q => 'one or more times',
-            '?' === $q => 'once or not at all',
-            null === $bounds => 'with quantifier '.$q, // Fallback
-            $bounds->min === $bounds->max => \sprintf('exactly %d times', $bounds->min),
-            null === $bounds->max => \sprintf('at least %d times', $bounds->min),
-            default => \sprintf('at least %d but not more than %d times', $bounds->min, $bounds->max),
-        };
-
-        $desc .= match ($type) {
-            'lazy' => ' (as few as possible)',
-            'possessive' => ' (and do not backtrack)',
-            default => '',
-        };
-
-        return $desc;
-    }
-
     private function indent(bool $withExtra = true): string
     {
         return str_repeat('  ', $this->indentLevel).($withExtra ? '  ' : '');
-    }
-
-    private function explainLiteral(string $value): string
-    {
-        return match ($value) {
-            '' => "'' (empty string)",
-            ' ' => "' ' (space)",
-            "\t" => "'\\t' (tab)",
-            "\n" => "'\\n' (newline)",
-            "\r" => "'\\r' (carriage return)",
-            "\f" => "'\\f' (form feed)",
-            "\x07" => "'\\a' (bell)",
-            "\x1B" => "'\\e' (escape)",
-            default => $this->formatCharLiteral($value),
-        };
-    }
-
-    private function formatCharLiteral(string $value): string
-    {
-        // The first byte, as ord() read it before PHP 8.5 deprecated
-        // passing it anything but one byte.
-        $ord = '' === $value ? 0 : \ord($value[0]);
-
-        // Handle control characters and extended ASCII as hex codes
-        if ($ord < 32 || 127 === $ord || $ord >= 128) {
-            return "'\\x".Ascii::upper(str_pad(dechex($ord), 2, '0', \STR_PAD_LEFT))."'";
-        }
-
-        // Printable characters
-        return "'".$value."'";
-    }
-
-    private function formatUnicodeHexValue(CharLiteralNode $node): string
-    {
-        $rep = $node->originalRepresentation;
-        if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $rep, $matches)) {
-            return Ascii::upper($matches[1]);
-        }
-
-        if (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $matches)) {
-            return Ascii::upper($matches[1]);
-        }
-
-        if (LibraryPcre::match('/^\\\\[xu]\\{([0-9a-fA-F]+)\\}$/', $rep, $matches)) {
-            return Ascii::upper($matches[1]);
-        }
-
-        if (1 === \strlen($rep)) {
-            return Ascii::upper(str_pad(dechex(\ord($rep)), 2, '0', \STR_PAD_LEFT));
-        }
-
-        return Ascii::upper($rep);
-    }
-
-    private function formatOctalValue(CharLiteralNode $node): string
-    {
-        $rep = $node->originalRepresentation;
-        if (LibraryPcre::match('/^\\\\o\\{([0-7]+)\\}$/', $rep, $matches)) {
-            return '0'.$matches[1];
-        }
-
-        return $this->formatLegacyOctalValue($rep);
-    }
-
-    private function formatLegacyOctalValue(string $value): string
-    {
-        $raw = str_starts_with($value, '\\') ? substr($value, 1) : $value;
-
-        return str_starts_with($raw, '0') ? $raw : '0'.$raw;
     }
 
     private function extractCharLiteralDetail(CharLiteralNode $node): string
