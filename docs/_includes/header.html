@@ -16,14 +16,21 @@
     <span class="version-tag">{{ site.data.product.version_label }}</span>
   </a>
   {%- comment -%}
-    The header carries no menu: the sidebar already holds the whole
-    documentation map, on every page, on the desktop rail and the mobile
-    drawer alike - a second list here answered nothing the first one had
-    not. What remains is what the sidebar cannot do: search, the theme,
-    the way to the repository, and the drawer's handle below 1024px.
-    The repository is the octocat mark alone, one icon with its label,
-    where a word would compete with the wordmark for the same eye.
+    The sidebar maps the documentation; the header names the three
+    places a reader moves between - the docs, the tutorial, the articles -
+    on the pages that have no sidebar (the landing page, an article) as
+    much as on those that do. The current place carries aria-current.
+    Below 1024px the drawer's handle takes over and the words go.
   {%- endcomment -%}
+  {%- assign nav_place = 'docs' -%}
+  {%- if page.url == '/' -%}{%- assign nav_place = '' -%}{%- endif -%}
+  {%- if page.url contains '/tutorial/' -%}{%- assign nav_place = 'tutorial' -%}{%- endif -%}
+  {%- if page.url contains '/blog/' or page.collection == 'articles' -%}{%- assign nav_place = 'blog' -%}{%- endif -%}
+  <nav class="header-nav" aria-label="Sections">
+    <a href="/docs/"{% if nav_place == 'docs' %} aria-current="true"{% endif %}>Docs</a>
+    <a href="/tutorial/"{% if nav_place == 'tutorial' %} aria-current="true"{% endif %}>Tutorial</a>
+    <a href="/blog/"{% if nav_place == 'blog' %} aria-current="true"{% endif %}>Blog</a>
+  </nav>
   <div class="header-actions">
     <button type="button" class="search-toggle" id="search-toggle" aria-haspopup="dialog" aria-expanded="false" aria-label="Search"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.75"/><path d="M10.2 10.2 14 14"/></svg><span class="search-label">Search</span> <kbd>Ctrl/⌘K</kbd> <kbd>/</kbd></button>
     <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false"></button>

@@ -828,7 +828,9 @@ main pre code,
 .highlight .nx, .highlight .nt, .highlight .nv, .highlight .vc,
 .highlight .vg, .highlight .vi, .highlight .vm {
   color: var(--tk-fn);
-  font-weight: 600;
+  /* Color tells the roles apart; a bold weight on every name made a PHP
+     listing - where nearly every token is a name - read as all bold. */
+  font-weight: 500;
 }
 
 .highlight .o, .highlight .p, .highlight .err {
@@ -1285,6 +1287,45 @@ main table::-webkit-scrollbar-thumb {
 .site-header button + button,
 .header-actions > * + * {
   margin-inline-start: .5rem;
+}
+
+/* The section links sit beside the wordmark, in the chrome step of the
+   scale: soft ink at rest, full ink when hovered or current, and the
+   accent only as the current place's underline. */
+.header-nav {
+  display: none;
+  align-items: center;
+  gap: .25rem;
+  margin-inline-start: 1.25rem;
+}
+
+.header-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: .75rem;
+  font-size: .95rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  text-underline-offset: .55em;
+  text-decoration-thickness: 2px;
+}
+
+.header-nav a:hover {
+  color: var(--ink);
+}
+
+.header-nav a[aria-current] {
+  color: var(--ink);
+  text-decoration-line: underline;
+  text-decoration-color: var(--amber);
+}
+
+@media (min-width: 1024px) {
+  .header-nav {
+    display: flex;
+  }
 }
 
 /* The header's actions cluster to the right: search, theme, repository,
@@ -2560,6 +2601,39 @@ a:focus-visible .article-nav-arrow {
 
   .page-main {
     grid-template-columns: minmax(0, 1fr) 14rem;
+  }
+}
+
+/* ---- Article reading layout -----------------------------------------------
+ * An article is read, not consulted: on wide screens the documentation rail
+ * steps aside (the header's section links and the breadcrumb lead back) and
+ * the column sits centered, with the on-this-page rail beside it. Below
+ * 1024px nothing changes - the map is the drawer it already was.
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 1024px) {
+  .page-shell-article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-shell-article .site-sidebar {
+    display: none;
+  }
+
+  .page-shell-article .page-main {
+    justify-content: center;
+  }
+
+  .page-shell-article .page-main > main {
+    width: 66ch;
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-shell-article .page-main {
+    grid-template-columns: minmax(0, 66ch) 14rem;
+    column-gap: 4rem;
   }
 }
 
