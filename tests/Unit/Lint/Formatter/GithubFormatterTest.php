@@ -47,7 +47,6 @@ final class GithubFormatterTest extends TestCase
             LintSeverity::Error,
             'Invalid regex pattern',
             'regex.syntax.error',
-            5,
             'some snippet',
             'Fix the pattern',
         );
@@ -85,7 +84,6 @@ final class GithubFormatterTest extends TestCase
             'regex.lint.quantifier.nested',
             null,
             null,
-            null,
         );
 
         $result = [
@@ -115,7 +113,6 @@ final class GithubFormatterTest extends TestCase
             null,
             null,
             null,
-            null,
         );
 
         $result = [
@@ -142,7 +139,6 @@ final class GithubFormatterTest extends TestCase
             LintSeverity::Critical,
             'Critical security issue',
             'regex.redos',
-            2,
             'vulnerable pattern',
             'Use atomic groups',
         );
@@ -169,8 +165,8 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_multiple_problems(): void
     {
-        $problem1 = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null, null);
-        $problem2 = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null, null);
+        $problem1 = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null);
+        $problem2 = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null);
 
         $result1 = [
             'file' => 'file1.php',
@@ -203,7 +199,7 @@ final class GithubFormatterTest extends TestCase
     #[Test]
     public function test_format_leaves_the_column_property_out_when_the_key_is_absent(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Invalid regex pattern', 'regex.syntax.error', 5, 'some snippet', 'Fix the pattern');
+        $problem = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Invalid regex pattern', 'regex.syntax.error', 'some snippet', 'Fix the pattern');
 
         // As the JUnit build writes it: no column key at all.
         $result = [
@@ -225,7 +221,7 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_empty_file(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => '',
@@ -255,7 +251,6 @@ final class GithubFormatterTest extends TestCase
             'regex.lint.test',
             null,
             null,
-            null,
         );
 
         $result = [
@@ -280,7 +275,6 @@ final class GithubFormatterTest extends TestCase
             DiagnosticType::Security,
             LintSeverity::Error,
             'Test message',
-            null,
             null,
             null,
             null,
@@ -311,7 +305,6 @@ final class GithubFormatterTest extends TestCase
             null,
             null,
             null,
-            null,
         );
 
         $result = [
@@ -339,7 +332,7 @@ final class GithubFormatterTest extends TestCase
     #[DataProvider('providePropertySeparators')]
     public function test_format_escapes_property_separators(string $file, ?string $code, string $expected): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Message: a, b', $code, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Message: a, b', $code, null, null);
         $report = new LintReport([[
             'file' => $file,
             'line' => 1,
@@ -378,7 +371,6 @@ final class GithubFormatterTest extends TestCase
             null,
             null,
             null,
-            null,
         );
 
         $result = [
@@ -406,7 +398,6 @@ final class GithubFormatterTest extends TestCase
             'code with % and \n',
             null,
             null,
-            null,
         );
 
         $result = [
@@ -427,7 +418,7 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_percent_in_data(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Matches 100% of the inputs', null, null, '50%0A', null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Matches 100% of the inputs', null, '50%0A', null);
 
         $result = [
             'file' => 'test.php',
@@ -463,7 +454,6 @@ final class GithubFormatterTest extends TestCase
             null,
             null,
             null,
-            null,
         );
 
         $result = [
@@ -488,7 +478,6 @@ final class GithubFormatterTest extends TestCase
             DiagnosticType::Lint,
             LintSeverity::Warning,
             'Warning message',
-            null,
             null,
             'code snippet here',
             'fix suggestion',

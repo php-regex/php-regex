@@ -25,38 +25,7 @@ final class Diagnostic
         public readonly LintSeverity $severity,
         public readonly string $message,
         public readonly ?string $code = null,
-        public readonly ?int $position = null,
         public readonly ?string $snippet = null,
         public readonly ?string $suggestion = null,
-        public readonly ?string $docsAnchor = null,
-        public readonly ?string $tip = null,
     ) {}
-
-    /**
-     * @return array{
-     *     type: string,
-     *     severity: string,
-     *     message: string,
-     *     code: ?string,
-     *     position: ?int,
-     *     snippet: ?string,
-     *     suggestion: ?string,
-     *     docsAnchor: ?string,
-     *     tip: ?string
-     * }
-     */
-    public function toArray(): array
-    {
-        return [
-            'type' => $this->type->value,
-            'severity' => $this->severity->value,
-            'message' => $this->message,
-            'code' => $this->code,
-            'position' => $this->position,
-            'snippet' => $this->snippet,
-            'suggestion' => $this->suggestion,
-            'docsAnchor' => $this->docsAnchor,
-            'tip' => $this->tip,
-        ];
-    }
 }

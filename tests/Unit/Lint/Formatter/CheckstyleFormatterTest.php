@@ -49,7 +49,6 @@ final class CheckstyleFormatterTest extends TestCase
             LintSeverity::Error,
             'Invalid regex pattern',
             'regex.syntax.error',
-            5,
             'some > snippet',
             'Fix the pattern',
         );
@@ -91,7 +90,6 @@ final class CheckstyleFormatterTest extends TestCase
             'regex.lint.quantifier.nested',
             null,
             null,
-            null,
         );
 
         $problem2 = new Diagnostic(
@@ -99,7 +97,6 @@ final class CheckstyleFormatterTest extends TestCase
             LintSeverity::Error,
             'ReDoS risk',
             'regex.redos',
-            2,
             'vulnerable pattern',
             'Use atomic groups',
         );
@@ -137,10 +134,10 @@ final class CheckstyleFormatterTest extends TestCase
     public function test_format_with_different_severities(): void
     {
         $problems = [
-            new Diagnostic(DiagnosticType::Lint, LintSeverity::Info, 'Info message', null, null, null, null),
-            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning message', null, null, null, null),
-            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error message', null, null, null, null),
-            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical message', null, null, null, null),
+            new Diagnostic(DiagnosticType::Lint, LintSeverity::Info, 'Info message', null, null, null),
+            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning message', null, null, null),
+            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error message', null, null, null),
+            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical message', null, null, null),
         ];
 
         $result = [
@@ -167,7 +164,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_file_paths(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'C:\\Windows\\test.php',
@@ -187,7 +184,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_line_numbers(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -211,7 +208,7 @@ final class CheckstyleFormatterTest extends TestCase
      */
     public function test_format_normalizes_column_positions(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, 5, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -232,7 +229,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_writes_the_column_of_the_pattern_in_the_file(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, 3, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -257,7 +254,6 @@ final class CheckstyleFormatterTest extends TestCase
             DiagnosticType::Lint,
             LintSeverity::Error,
             'Message with <tags> & "quotes"',
-            null,
             null,
             null,
             null,
@@ -301,7 +297,6 @@ final class CheckstyleFormatterTest extends TestCase
             null,
             null,
             null,
-            null,
         );
 
         $result = [
@@ -329,7 +324,6 @@ final class CheckstyleFormatterTest extends TestCase
             LintSeverity::Error,
             'Invalid regex pattern',
             'regex.syntax.error',
-            5,
             'some > snippet',
             'Fix the pattern',
         );

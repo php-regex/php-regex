@@ -126,7 +126,6 @@ final class FormatterBench
             LintSeverity::Warning,
             'Nested quantifier detected',
             'regex.lint.quantifier.nested',
-            1,
             '^',
             'Consider making the quantifier possessive',
         );

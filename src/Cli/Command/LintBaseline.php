@@ -267,7 +267,7 @@ final class LintBaseline
                         'hint' => $hint,
                     ]],
                     'optimizations' => [],
-                    'problems' => [new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, $message, LintService::ISSUE_ID_UNMATCHED_IGNORE, null, null, $hint)],
+                    'problems' => [new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, $message, LintService::ISSUE_ID_UNMATCHED_IGNORE, null, $hint)],
                 ];
             }
         }

@@ -47,7 +47,6 @@ final class JunitFormatterTest extends TestCase
             LintSeverity::Critical,
             'Critical security issue',
             'regex.redos',
-            5,
             'vulnerable pattern',
             'Use atomic groups',
         );
@@ -83,7 +82,6 @@ final class JunitFormatterTest extends TestCase
             LintSeverity::Error,
             'Syntax error',
             'regex.syntax',
-            3,
             'bad syntax',
             'Fix syntax',
         );
@@ -115,7 +113,6 @@ final class JunitFormatterTest extends TestCase
             'regex.lint',
             null,
             null,
-            null,
         );
 
         $result = [
@@ -145,7 +142,6 @@ final class JunitFormatterTest extends TestCase
             null,
             null,
             null,
-            null,
         );
 
         $result = [
@@ -168,9 +164,9 @@ final class JunitFormatterTest extends TestCase
     public function test_format_with_multiple_problems(): void
     {
         $problems = [
-            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null, null),
-            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null, null),
-            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical 1', null, null, null, null),
+            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null),
+            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null),
+            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical 1', null, null, null),
         ];
 
         $result = [
@@ -197,7 +193,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_normalizes_file_paths(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'C:\\Windows\\test.php',
@@ -217,7 +213,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_normalizes_line_numbers(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -237,7 +233,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_calculates_column_positions(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, 5, null, null);
+        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
 
         $result = [
             'file' => 'test.php',
@@ -264,7 +260,6 @@ final class JunitFormatterTest extends TestCase
             DiagnosticType::Lint,
             LintSeverity::Error,
             'Message with <tags> & "quotes"',
-            null,
             null,
             null,
             null,
@@ -295,7 +290,6 @@ final class JunitFormatterTest extends TestCase
             'regex.lint.test',
             null,
             null,
-            null,
         );
 
         $result = [
@@ -320,7 +314,6 @@ final class JunitFormatterTest extends TestCase
             DiagnosticType::Security,
             LintSeverity::Error,
             'Test message',
-            null,
             null,
             null,
             null,

@@ -777,7 +777,6 @@ final class LintService
                 DiagnosticType::Limit === $type ? LintSeverity::Warning : LintSeverity::Error,
                 $message,
                 $validation->errorCode?->value,
-                $validation->offset,
                 $validation->caretSnippet,
                 $validation->hint,
             );
@@ -792,7 +791,6 @@ final class LintService
                 $this->mapIssueSeverity($issue['type']),
                 $issue['message'],
                 $issue['issueId'],
-                null,
                 implode("\n", RedosVerdict::searchEvidence($analysis->searchCost, $analysis->pcreVersion)),
                 null,
             );
@@ -809,20 +807,16 @@ final class LintService
                 $this->mapRedosSeverity($analysis),
                 $issue['message'],
                 $issue['issueId'] ?? null,
-                null,
                 [] !== $evidence ? implode("\n", $evidence) : null,
                 $suggestion,
             );
         }
-
-        $position = isset($issue['position']) && \is_int($issue['position']) ? $issue['position'] : null;
 
         return new Diagnostic(
             DiagnosticType::Lint,
             $this->mapIssueSeverity($issue['type'] ?? 'info'),
             $issue['message'],
             $issue['issueId'] ?? null,
-            $position,
             null,
             $issue['hint'] ?? null,
         );
@@ -841,7 +835,6 @@ final class LintService
             LintSeverity::Info,
             $message,
             'regex.optimization',
-            null,
             null,
             $suggestion,
         );

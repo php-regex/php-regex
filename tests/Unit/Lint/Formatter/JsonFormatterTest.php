@@ -185,7 +185,7 @@ final class JsonFormatterTest extends TestCase
             'issues' => [['type' => 'error', 'message' => 'Error 1', 'file' => 'file1.php', 'line' => 10]],
             'optimizations' => [['file' => 'file1.php', 'line' => 10, 'optimization' => new OptimizationResult('/test1/', '/optimized/', ['test']), 'savings' => 5]],
             'problems' => [
-                new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Problem 1', null, null, null, null),
+                new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Problem 1', null, null, null),
             ],
         ];
 
