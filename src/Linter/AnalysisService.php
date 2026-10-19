@@ -16,6 +16,8 @@ namespace PHPRegex\Linter;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Explain\Highlighter\ConsoleHighlighter;
+use PHPRegex\Linter\Advice\RedosHints;
+use PHPRegex\Linter\Advice\ValidationTips;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Config\ProjectTarget;
@@ -440,7 +442,7 @@ final class AnalysisService
                     'message' => $message,
                     'source' => $source,
                     'validation' => $validation,
-                    'tip' => $this->getTipForValidationError($message, $occurrence->pattern, $validation),
+                    'tip' => ValidationTips::forError($message, $occurrence->pattern, $validation),
                 ];
 
                 if (null !== $done) {
@@ -467,7 +469,7 @@ final class AnalysisService
                     'message' => $message,
                     'source' => $source,
                     'validation' => $rangeValidation,
-                    'tip' => $this->badEscapeTip($occurrence->pattern) ?? $this->getTipForValidationError($message, $occurrence->pattern, $rangeValidation),
+                    'tip' => $this->badEscapeTip($occurrence->pattern) ?? ValidationTips::forError($message, $occurrence->pattern, $rangeValidation),
                     'target' => ProjectTarget::describe($target),
                 ];
             }
@@ -600,7 +602,7 @@ final class AnalysisService
                         'fileOffset' => $occurrence->fileOffset,
                         'issueId' => RedosVerdict::ISSUE_ID,
                         'message' => RedosVerdict::message($redos),
-                        'hint' => $this->getReDoSHint($redos, $occurrence->pattern),
+                        'hint' => RedosHints::forAnalysis($redos, $occurrence->pattern),
                         'source' => $source,
                         'analysis' => $redos,
                     ];
@@ -1186,216 +1188,6 @@ final class AnalysisService
         return str_contains($flags, 'x');
     }
 
-    private function getTipForValidationError(string $message, string $pattern, ValidationResult $validation): ?string
-    {
-        // Try to provide intelligent, pattern-specific tips
-        $intelligentTip = $this->generateIntelligentTip($message, $pattern, $validation);
-        if (null !== $intelligentTip) {
-            return $intelligentTip;
-        }
-
-        // Fallback to generic tips
-        return $this->getGenericTipForValidationError($message);
-    }
-
-    private function generateIntelligentTip(string $message, string $pattern, ValidationResult $validation): ?string
-    {
-        if (str_contains($message, 'No closing delimiter')) {
-            return $this->suggestDelimiterFix($pattern);
-        }
-
-        if (str_contains($message, 'Unclosed character class')) {
-            return $this->suggestCharacterClassFix($pattern);
-        }
-
-        if (str_contains($message, 'Invalid quantifier range')) {
-            return $this->suggestQuantifierRangeFix($pattern);
-        }
-
-        if (str_contains($message, 'Backreference to non-existent group')) {
-            return $this->suggestBackreferenceFix($pattern);
-        }
-
-        if (str_contains($message, 'Lookbehind is unbounded')) {
-            return $this->suggestLookbehindFix($pattern, $validation);
-        }
-
-        return null;
-    }
-
-    private function suggestDelimiterFix(string $pattern): string
-    {
-        // Find the delimiter used
-        if (!LibraryPcre::match('/^([#~\-%@!])(.*)$/', $pattern, $matches)) {
-            $matches = ['', '/', $pattern];
-        }
-
-        $delimiter = $matches[1];
-        $content = $matches[2];
-
-        // Check if delimiter appears in content
-        if (str_contains($content, $delimiter)) {
-            return "Your pattern contains the delimiter '$delimiter' inside. Either escape it as \\$delimiter or use a different delimiter like #pattern#.";
-        }
-
-        // Missing closing delimiter
-        $suggested = $pattern.$delimiter;
-
-        return "Add the missing closing delimiter: $suggested";
-    }
-
-    private function suggestCharacterClassFix(string $pattern): ?string
-    {
-        // For patterns like /[a-z/ we need to add ] before the final delimiter
-        if (str_contains($pattern, '[') && !str_contains($pattern, ']')) {
-            // Find the last delimiter
-            $lastDelimiterPos = strrpos($pattern, '/');
-            if (false !== $lastDelimiterPos) {
-                $suggested = substr_replace($pattern, ']', $lastDelimiterPos, 0);
-
-                return "Add missing closing bracket: $suggested";
-            }
-        }
-
-        return null;
-    }
-
-    private function suggestQuantifierRangeFix(string $pattern): ?string
-    {
-        // Look for quantifier ranges in the pattern
-        if (LibraryPcre::match('/\{(\d+),(\d+)\}/', $pattern, $matches)) {
-            $min = (int) $matches[1];
-            $max = (int) $matches[2];
-
-            if ($min > $max) {
-                $fixed = '{'.$max.','.$min.'}';
-                $suggested = str_replace($matches[0], $fixed, $pattern);
-
-                return "Swap min and max values: $suggested";
-            }
-        }
-
-        return null;
-    }
-
-    private function suggestBackreferenceFix(string $pattern): ?string
-    {
-        // Find all backreferences in the pattern
-        if (LibraryPcre::matchAll('/\\\\(\d+)/', $pattern, $matches)) {
-            // Count opening parentheses (capturing groups)
-            $openCount = substr_count($pattern, '(');
-
-            foreach ($matches[1] as $match) {
-                $refNum = (int) $match;
-                if ($refNum > $openCount) {
-                    return "Backreference \\$refNum refers to group $refNum, but only $openCount capturing groups exist in the pattern. Valid backreferences are \\1 through \\$openCount.";
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private function suggestLookbehindFix(string $pattern, ValidationResult $validation): ?string
-    {
-        $offset = $validation->offset ?? 0;
-
-        // Find the lookbehind content
-        $before = substr($pattern, 0, $offset);
-        $lookbehindStart = strrpos($before, '(?<=');
-
-        if (false === $lookbehindStart) {
-            $lookbehindStart = strrpos($before, '(?<!');
-        }
-
-        if (false === $lookbehindStart) {
-            return null;
-        }
-
-        $lookbehindContent = substr($pattern, $lookbehindStart, $offset - $lookbehindStart);
-
-        // Check for unbounded quantifiers in lookbehind
-        if (LibraryPcre::match('/[+*][?]?/', $lookbehindContent)) {
-            return "Replace unbounded quantifiers in lookbehind with fixed-length alternatives. For example, change (?<=\w*) to (?<=\w{0,10}) with an appropriate maximum length.";
-        }
-
-        return null;
-    }
-
-    private function getGenericTipForValidationError(string $message): ?string
-    {
-        if (str_contains($message, 'No closing delimiter')) {
-            return 'Escape "/" inside the pattern (\/) or use a different delimiter, e.g. #pattern#.';
-        }
-
-        if (str_contains($message, 'Unclosed character class')) {
-            return 'Character classes must be closed with "]". Check for missing or extra "[".';
-        }
-
-        if (str_contains($message, 'Invalid quantifier range')) {
-            return 'Quantifier ranges must have min <= max. For example, {3,2} is invalid; use {2,3} or {2} instead.';
-        }
-
-        if (str_contains($message, 'Unknown regex flag')) {
-            return 'Only valid PCRE flags are: i (case-insensitive), m (multiline), s (dot matches newline), x (extended), U (ungreedy), J (duplicate names).';
-        }
-
-        if (str_contains($message, 'Backreference to non-existent group')) {
-            return 'Backreferences like \\1 refer to capturing groups. Make sure the group number exists.';
-        }
-
-        if (str_contains($message, 'Lookbehind is unbounded')) {
-            return 'Variable-length lookbehinds are not allowed in PCRE. Use fixed-length alternatives like (?<=\w{3}) instead of (?<=\w*).';
-        }
-
-        if (str_contains($message, 'Invalid conditional construct')) {
-            return 'Conditionals need a valid condition: group reference (?(1)...), lookaround (?(?=...)...), or (?(DEFINE)...).';
-        }
-
-        return null;
-    }
-
-    private function getReDoSHint(RedosAnalysis $analysis, string $pattern): string
-    {
-        // The attack and its replay first: a hint cut short still shows them.
-        $hints = RedosVerdict::evidence($analysis);
-        $evidenceCount = \count($hints);
-
-        if (!empty($analysis->recommendations)) {
-            $hints = array_merge($hints, $analysis->recommendations);
-        }
-
-        if (null !== $analysis->vulnerablePart) {
-            $hints[] = \sprintf('The risky part is: %s', $analysis->vulnerablePart);
-        }
-
-        $hotspot = $analysis->primaryHotspot();
-        if (null !== $hotspot) {
-            $hints[] = \sprintf('Hotspot offsets: %d-%d', $hotspot->start, $hotspot->end);
-        }
-
-        // Try to suggest specific fixes based on the pattern
-        $patternHints = $this->suggestReDoSFixes($pattern, $analysis);
-        if (!empty($patternHints)) {
-            $hints = array_merge($hints, $patternHints);
-        }
-
-        if (\count($hints) === $evidenceCount) {
-            $hints[] = 'Use possessive quantifiers (*+ instead of *, ++ instead of +, or {m,n}+ instead of {m,n}) to prevent ReDoS.';
-        }
-
-        // A replayed witness already says what the engine did, in its own line.
-        // Any other reported confirmation that did not confirm is a skipped
-        // one, which ran no check: its message gives the cause.
-        if (RedosMode::Confirmed === $analysis->mode && null === $analysis->replayed && true === $analysis->confirmation?->confirmed) {
-            $hints[] = 'Confirmation: bounded runtime checks observed evidence of excessive backtracking.';
-        }
-
-        $hints[] = 'Test with adversarial inputs like repeated strings followed by a non-matching character.';
-
-        return implode(' ', $hints);
-    }
-
     /**
      * The DFAs kept for the run: the one given, else the process's.
      */
@@ -1418,38 +1210,6 @@ final class AnalysisService
         } catch (ExceptionInterface) {
             return false;
         }
-    }
-
-    /**
-     * @return array<string>
-     */
-    private function suggestReDoSFixes(string $pattern, RedosAnalysis $analysis): array
-    {
-        $hints = [];
-
-        // Look for common vulnerable patterns and suggest fixes
-        if (LibraryPcre::match('/\((?:(?:[^()][^)]*)?\)\+|\([^)]*(?:\+\)\)|\)\+))/', $pattern)) {
-            $hints[] = 'Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++.';
-        }
-
-        if (str_contains($pattern, '.*') && str_contains($pattern, '+')) {
-            $hints[] = 'Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking.';
-        }
-
-        if (LibraryPcre::match('/\([^)]*\*\)/', $pattern)) {
-            $hints[] = 'Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...).';
-        }
-
-        // If we have a vulnerable subpattern, try to suggest a specific fix
-        if (null !== $analysis->vulnerablePart) {
-            $vulnerable = $analysis->vulnerablePart;
-            if (LibraryPcre::match('/(\w+)\+(\)\+)/', $vulnerable, $matches)) {
-                $char = $matches[1];
-                $hints[] = "Suggested (verify behavior): replace ($char+)+ with atomic group (?>$char+) or possessive $char++.";
-            }
-        }
-
-        return $hints;
     }
 
     /**

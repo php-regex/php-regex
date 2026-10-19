@@ -13,12 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
-use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Advice\RedosHints;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
-use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,12 +36,10 @@ final class RedosConfirmationHintTest extends TestCase
     #[DataProvider('provideAnalyses')]
     public function test_redos_hint_names_the_runtime_checks_only_when_they_confirmed(RedosAnalysis $analysis, bool $observed): void
     {
-        $service = new AnalysisService(Regex::create(['cache' => null])->parser());
-        $hint = (new \ReflectionClass($service))->getMethod('getReDoSHint')->invoke($service, $analysis, '/(a+)+$/');
+        $hint = RedosHints::forAnalysis($analysis, '/(a+)+$/');
 
-        $this->assertIsString($hint);
         $this->assertSame($observed, str_contains($hint, self::OBSERVED), $hint);
-        $this->assertStringNotContainsString('found no evidence', (string) $hint);
+        $this->assertStringNotContainsString('found no evidence', $hint);
     }
 
     /**

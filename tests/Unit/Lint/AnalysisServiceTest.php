@@ -21,7 +21,6 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
@@ -29,7 +28,6 @@ use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
 
@@ -648,142 +646,6 @@ final class AnalysisServiceTest extends TestCase
         $this->assertContains(ProofResult::class, $allowed);
         $this->assertContains(RedosAnalysis::class, $allowed);
         $this->assertNotContains(NodeInterface::class, $allowed);
-    }
-
-    public function test_validation_tip_helpers(): void
-    {
-        $validation = new ValidationResult(false, 'No closing delimiter', 0, null, 0);
-        $tip = $this->invokePrivate('getTipForValidationError', 'No closing delimiter', '#foo', $validation);
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Add the missing closing delimiter', (string) $tip);
-
-        $validation = new ValidationResult(false, 'Unclosed character class', 0, null, 0);
-        $tip = $this->invokePrivate('getTipForValidationError', 'Unclosed character class', '/[a-z/', $validation);
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Add missing closing bracket', (string) $tip);
-
-        $validation = new ValidationResult(false, 'Invalid quantifier range', 0, null, 0);
-        $tip = $this->invokePrivate('getTipForValidationError', 'Invalid quantifier range', '/a{3,2}/', $validation);
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Swap min and max values', (string) $tip);
-
-        $validation = new ValidationResult(false, 'Backreference to non-existent group', 0, null, 0);
-        $tip = $this->invokePrivate('getTipForValidationError', 'Backreference to non-existent group', '/(a)\\2/', $validation);
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Backreference', (string) $tip);
-
-        $offset = \strlen('/(?<=\\w*)foo/');
-        $validation = new ValidationResult(false, 'Lookbehind is unbounded', 0, null, $offset);
-        $tip = $this->invokePrivate('getTipForValidationError', 'Lookbehind is unbounded', '/(?<=\\w*)foo/', $validation);
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Replace unbounded quantifiers', (string) $tip);
-    }
-
-    public function test_validation_tip_helpers_return_null_for_valid_cases(): void
-    {
-        $this->assertNull($this->invokePrivate('suggestCharacterClassFix', '/[a-z]/'));
-
-        $this->assertNull($this->invokePrivate('suggestQuantifierRangeFix', '/a{1,2}/'));
-
-        $this->assertNull($this->invokePrivate('suggestBackreferenceFix', '/(a)\\1/'));
-
-        $validation = new ValidationResult(false, 'Lookbehind is unbounded', 0, null, 0);
-        $this->assertNull($this->invokePrivate('suggestLookbehindFix', '/abc/', $validation));
-
-        $offset = \strlen('/(?<=\\w{2})foo/');
-        $validation = new ValidationResult(false, 'Lookbehind is unbounded', 0, null, $offset);
-        $this->assertNull($this->invokePrivate('suggestLookbehindFix', '/(?<=\\w{2})foo/', $validation));
-    }
-
-    /**
-     * @return iterable<string, array{pattern: string, expected: string}>
-     */
-    public static function provideQuantifierRangeTips(): iterable
-    {
-        yield 'bounds swapped in the pattern' => ['pattern' => '/a{3,2}/', 'expected' => 'Swap min and max values: /a{2,3}/'];
-        yield 'leading zero on the lower bound' => ['pattern' => '/a{03,2}/', 'expected' => 'Swap min and max values: /a{2,3}/'];
-        yield 'leading zero on the upper bound' => ['pattern' => '/a{3,02}/', 'expected' => 'Swap min and max values: /a{2,3}/'];
-    }
-
-    /**
-     * Each pattern is refused by PCRE: "numbers out of order in {}
-     * quantifier". The tip gives the whole pattern back with the bounds
-     * swapped, written as numbers.
-     */
-    #[DataProvider('provideQuantifierRangeTips')]
-    public function test_validation_tip_quantifier_range_spells_the_swapped_pattern(string $pattern, string $expected): void
-    {
-        $validation = new ValidationResult(false, 'Invalid quantifier range', 0, null, 0);
-
-        $this->assertSame($expected, $this->invokePrivate('getTipForValidationError', 'Invalid quantifier range', $pattern, $validation));
-    }
-
-    /**
-     * @return iterable<string, array{pattern: string, expected: string}>
-     */
-    public static function provideBackreferenceTips(): iterable
-    {
-        yield 'one group, reference to the second' => [
-            'pattern' => '/(a)\\2/',
-            'expected' => 'Backreference \\2 refers to group 2, but only 1 capturing groups exist in the pattern. Valid backreferences are \\1 through \\1.',
-        ];
-        yield 'valid reference before the missing one' => [
-            'pattern' => '/(a)(b)\\1\\3/',
-            'expected' => 'Backreference \\3 refers to group 3, but only 2 capturing groups exist in the pattern. Valid backreferences are \\1 through \\2.',
-        ];
-    }
-
-    #[DataProvider('provideBackreferenceTips')]
-    public function test_validation_tip_backreference_names_the_missing_group(string $pattern, string $expected): void
-    {
-        $validation = new ValidationResult(false, 'Backreference to non-existent group', 0, null, 0);
-
-        $this->assertSame($expected, $this->invokePrivate('getTipForValidationError', 'Backreference to non-existent group', $pattern, $validation));
-    }
-
-    public function test_generic_tip_helpers_cover_other_messages(): void
-    {
-        $tip = $this->invokePrivate('getGenericTipForValidationError', 'No closing delimiter');
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Escape "/"', (string) $tip);
-
-        $tip = $this->invokePrivate('getGenericTipForValidationError', 'Unclosed character class');
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Character classes must be closed', (string) $tip);
-
-        $tip = $this->invokePrivate('getGenericTipForValidationError', 'Invalid quantifier range');
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Quantifier ranges must have min <= max', (string) $tip);
-
-        $tip = $this->invokePrivate('getGenericTipForValidationError', 'Backreference to non-existent group');
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Backreferences like', (string) $tip);
-
-        $tip = $this->invokePrivate('getGenericTipForValidationError', 'Unknown regex flag');
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Only valid PCRE flags', (string) $tip);
-
-        $tip = $this->invokePrivate('getGenericTipForValidationError', 'Invalid conditional construct');
-        $this->assertIsString($tip);
-        $this->assertStringContainsString('Conditionals need a valid condition', (string) $tip);
-    }
-
-    public function test_redos_hint_helpers(): void
-    {
-        $analysis = new RedosAnalysis(RedosSeverity::High, 10);
-        $hint = $this->invokePrivate('getReDoSHint', $analysis, '/abc/');
-        $this->assertIsString($hint);
-        $this->assertStringContainsString('Use possessive quantifiers', (string) $hint);
-        $this->assertStringContainsString('*+', (string) $hint);
-        $this->assertStringContainsString('++', (string) $hint);
-        $this->assertStringContainsString('{m,n}+', (string) $hint);
-
-        $analysis = new RedosAnalysis(RedosSeverity::High, 10, 'a+)+', ['Keep it linear'], null);
-        $hint = $this->invokePrivate('getReDoSHint', $analysis, '/(a+)+.*+/');
-        $this->assertIsString($hint);
-        $this->assertStringContainsString('Keep it linear', (string) $hint);
-        $this->assertStringContainsString('Suggested (verify behavior)', (string) $hint);
-        $this->assertStringContainsString('possessive', (string) $hint);
     }
 
     /**
