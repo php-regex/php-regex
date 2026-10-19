@@ -22,6 +22,7 @@ use PHPRegex\Parser\Cache\PsrCacheAdapter;
 use PHPRegex\Parser\Cache\PsrSimpleCacheAdapter;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\LexerException;
@@ -73,7 +74,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-3eb48d3c8998e85fac0cdcb1cf88661a';
+    public const CACHE_VERSION = 'ast-a1b7334230699bcfd2e3fc7a8adba692';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -192,11 +193,16 @@ final class RegexParser
     public function validate(string $regex): ValidationResult
     {
         try {
-            $extractedPattern = $this->extractPatternSafely($regex);
             $ast = $this->parse($regex);
 
-            $this->validateAst($ast, $extractedPattern);
-            $complexityScore = $this->calculateComplexity($ast);
+            // The walk and the score run the library's regexes only: one
+            // window of limits for all of them.
+            [$extractedPattern, $complexityScore] = LibraryPcre::run(function () use ($regex, $ast): array {
+                $extractedPattern = $this->extractPatternSafely($regex);
+                $this->validateAst($ast, $extractedPattern);
+
+                return [$extractedPattern, $this->calculateComplexity($ast)];
+            });
 
             if ($this->runtimePcreValidation) {
                 $runtimeResult = $this->checkRuntimeCompilation($regex, $extractedPattern, $complexityScore);
@@ -246,9 +252,11 @@ final class RegexParser
      */
     public function tokenize(string $regex): array
     {
-        [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $this->target);
+        return LibraryPcre::run(function () use ($regex): array {
+            [$pattern, $flags] = PatternParser::extractPatternAndFlags($regex, $this->target);
 
-        return (new Lexer($this->target))->tokenize($pattern, $flags)->getTokens();
+            return (new Lexer($this->target))->tokenize($pattern, $flags)->getTokens();
+        });
     }
 
     /**
@@ -1108,11 +1116,15 @@ final class RegexParser
      */
     private function parseFromScratch(string $regex): RegexNode
     {
-        [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
-        $tokenStream = (new Lexer($this->target))->tokenize($pattern, $flags);
-        $parser = new TokenParser($this->maxRecursionDepth, $this->target);
+        // Only the library's regexes run while a pattern is read, the cache
+        // being read and written around it: one window of limits for all.
+        return LibraryPcre::run(function () use ($regex): RegexNode {
+            [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
+            $tokenStream = (new Lexer($this->target))->tokenize($pattern, $flags);
+            $parser = new TokenParser($this->maxRecursionDepth, $this->target);
 
-        return $parser->parse($tokenStream, $flags, $delimiter, \strlen($pattern));
+            return $parser->parse($tokenStream, $flags, $delimiter, \strlen($pattern));
+        });
     }
 
     /**

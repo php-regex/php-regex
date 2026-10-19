@@ -29,7 +29,8 @@ use PHPRegex\Parser\Text\Ascii;
  * error of the wrapped call.
  *
  * Only regexes the library owns go through here: a user's pattern keeps
- * the caller's limits.
+ * the caller's limits, also when the library meets it inside a window
+ * (outsideTheWindow()).
  *
  * @internal
  */
@@ -56,6 +57,14 @@ final class LibraryPcre
      * code runs, so the limits stay where it put them.
      */
     private static int $depth = 0;
+
+    /**
+     * What the open window raised, each limit with the caller's value:
+     * what a call made outside it sets back for its time.
+     *
+     * @var array<string, string>
+     */
+    private static array $windowRaised = [];
 
     /**
      * Replaces ini_set for the raise and the restore; null brings the
@@ -104,6 +113,10 @@ final class LibraryPcre
                 }
             }
 
+            if (1 === self::$depth) {
+                self::$windowRaised = $raised;
+            }
+
             return $call();
         } finally {
             self::$lastError = preg_last_error();
@@ -113,7 +126,50 @@ final class LibraryPcre
                 // warned when it was set, if it reads it loosely.
                 self::restore($raised);
             } finally {
+                if (1 === self::$depth) {
+                    self::$windowRaised = [];
+                }
                 self::$depth--;
+            }
+        }
+    }
+
+    /**
+     * Runs a call that is not the library's own regex, a pattern the
+     * library was given, under the caller's limits: inside a window, the
+     * limits it raised are set back for the call, then raised again, also
+     * when the call throws. The library's regexes the call runs take a
+     * window of their own. Outside a window, the call runs as it is.
+     *
+     * @template T
+     *
+     * @param \Closure(): T $call
+     *
+     * @return T
+     */
+    public static function outsideTheWindow(\Closure $call): mixed
+    {
+        if (0 === self::$depth) {
+            return $call();
+        }
+
+        $depth = self::$depth;
+        $raised = self::$windowRaised;
+        self::$depth = 0;
+        self::$windowRaised = [];
+
+        try {
+            self::restore($raised);
+
+            return $call();
+        } finally {
+            try {
+                foreach (array_keys($raised) as $key) {
+                    self::set($key, (string) self::FLOORS[$key]);
+                }
+            } finally {
+                self::$depth = $depth;
+                self::$windowRaised = $raised;
             }
         }
     }

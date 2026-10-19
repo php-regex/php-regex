@@ -206,6 +206,18 @@ final class PcreEngine
      */
     private function run(string $pattern, \Closure $call, ?PcreLimits $limits = null): array
     {
+        // The pattern is the caller's: it never runs under the limits the
+        // library raises for its own regexes.
+        return LibraryPcre::outsideTheWindow(fn (): array => $this->runUnderTheCallersLimits($pattern, $call, $limits));
+    }
+
+    /**
+     * @param \Closure(string): (int|false) $call
+     *
+     * @return array{result: int|false, error: PcreError|null, lastError: int, lastErrorMessage: string}
+     */
+    private function runUnderTheCallersLimits(string $pattern, \Closure $call, ?PcreLimits $limits): array
+    {
         $canSet = \function_exists('ini_set');
         if (null !== $limits && !$canSet) {
             // Reached only where ini_set() is disabled; the tests run that case in a child PHP process.
