@@ -146,7 +146,8 @@ final class FirstErrorLocator
                     && (ErrorCode::GroupUnclosed === $error->errorCode
                         || (ErrorCode::CharclassUnclosed === $error->errorCode && null !== $last
                             && !\in_array($last->type, [TokenType::Range, TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)));
-                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))) {
+                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))
+                    && !($error instanceof LexerException && $this->rangeEndsWhereTokenizingStopped($syntaxError, $syntaxTokens))) {
                     return $this->escapeErrorEndingRange($syntaxError, $syntaxTokens, $pattern, $flags) ?? $syntaxError;
                 }
             }
@@ -177,6 +178,31 @@ final class FirstErrorLocator
         // The escapes read up to that end, which starts before the limit.
         return (new Validator($this->maxLookbehindLength, $pattern, $this->target))
             ->firstEscapeErrorBefore($tokens, $pattern, $flags, $end->position + ($this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? 2 : 1));
+    }
+
+    /**
+     * Whether $error refuses, from PCRE2 10.45, a range from a type, a POSIX
+     * class or a property whose end is where tokenizing stopped: PCRE reads
+     * that end first, so the escape the lexer refused there, as "\c" before
+     * a character past ASCII, comes before the range.
+     *
+     * @param list<Token> $tokens
+     */
+    private function rangeEndsWhereTokenizingStopped(RegexException $error, array $tokens): bool
+    {
+        if (ErrorCode::RangeInvalidBounds !== $error->errorCode || !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
+            return false;
+        }
+
+        // The last token read but the quotes PCRE skips after the hyphen.
+        $last = null;
+        foreach ($tokens as $token) {
+            if (!\in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)) {
+                $last = $token;
+            }
+        }
+
+        return null !== $last && TokenType::Range === $last->type && $last->end() === $error->position;
     }
 
     /**

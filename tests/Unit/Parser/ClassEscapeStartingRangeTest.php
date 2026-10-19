@@ -76,6 +76,16 @@ final class ClassEscapeStartingRangeTest extends TestCase
         yield 'unknown property, class left open' => ['pattern' => '/[\w-\p{Foo}/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::UnicodePropertyInvalid, 'offset' => 11];
         yield 'property with no name, class left open' => ['pattern' => '/[\w-\p/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::UnicodePropertyMalformed, 'offset' => 6];
 
+        // A "\c" before a character past ASCII ("\c must be followed by a
+        // printable ASCII character at offset 6" for "[\d-\cé]" on 10.45 and
+        // 10.46, at offset 7 from 10.47; "invalid range in character class
+        // at offset 3" up to 10.44).
+        yield 'control escape before a character past ASCII, PCRE2 10.45' => ['pattern' => '/[\d-\cé]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 6];
+        yield 'control escape before a character past ASCII, PCRE2 10.47' => ['pattern' => '/[\d-\cé]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 7];
+        yield 'control escape before a character past ASCII, PCRE2 10.44' => ['pattern' => '/[\d-\cé]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 3];
+        yield 'control escape past a quote end, from a POSIX class' => ['pattern' => '/[[:alpha:]-\E\cé]/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 16];
+        yield 'control escape from a property, class left open' => ['pattern' => '/([\pL-\cé/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::ControlCharInvalid, 'offset' => 8];
+
         // An end PCRE2 reads leaves the range refused, past its hyphen; a
         // property ending a range is refused past it.
         yield 'property ending a range' => ['pattern' => '/[!-\p{L}]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
