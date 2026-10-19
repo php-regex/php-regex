@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
 use PHPRegex\Symfony\Output\ConsoleWriter;
+use PHPRegex\Symfony\Security\AccessRuleSummary;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
@@ -154,7 +155,7 @@ final class SecurityCommand extends Command
                 continue;
             }
 
-            if (!$this->isYamlFile($path)) {
+            if (!AccessRuleSummary::isYamlFile($path)) {
                 $skippedFiles[] = ['file' => $path, 'reason' => 'Only YAML security config files are supported.'];
 
                 continue;
@@ -229,13 +230,6 @@ final class SecurityCommand extends Command
 
             return null;
         }
-    }
-
-    private function isYamlFile(string $path): bool
-    {
-        $extension = strtolower(pathinfo($path, \PATHINFO_EXTENSION));
-
-        return 'yaml' === $extension || 'yml' === $extension;
     }
 
     private function showBanner(SymfonyStyle $io): void
@@ -540,67 +534,7 @@ final class SecurityCommand extends Command
      */
     private function formatRuleSummary(array $rule): string
     {
-        $location = $this->formatLocation($rule['file'], $rule['line']);
-        $parts = [
-            \sprintf('#%d %s', $rule['index'], $location),
-            'path='.$this->formatPathValue($rule['path']),
-            'roles='.$this->formatListValue($rule['roles'], 'any'),
-        ];
-
-        $scope = $this->formatScope($rule['methods'], $rule['host'], $rule['ips'], $rule['requiresChannel']);
-        if ('any' !== $scope) {
-            $parts[] = 'scope='.$scope;
-        }
-
-        return implode('  ', $parts);
-    }
-
-    /**
-     * @param array<int, string> $methods
-     * @param array<int, string> $ips
-     */
-    private function formatScope(array $methods, ?string $host, array $ips, ?string $requiresChannel): string
-    {
-        if ([] === $methods && [] === $ips && null === $host && null === $requiresChannel) {
-            return 'any';
-        }
-
-        $parts = [];
-        if ([] !== $methods) {
-            $parts[] = 'methods='.implode('|', $methods);
-        }
-        if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
-            $parts[] = 'host='.$host;
-        }
-        if ([] !== $ips) {
-            $parts[] = 'ips='.implode('|', $ips);
-        }
-        if (null !== $requiresChannel && '' !== trim($requiresChannel, " \t\n\r\0\x0B")) {
-            $parts[] = 'channel='.$requiresChannel;
-        }
-
-        return implode(' • ', $parts);
-    }
-
-    private function formatPathValue(?string $path): string
-    {
-        if (null === $path || '' === $path) {
-            return '(any)';
-        }
-
-        return $path;
-    }
-
-    /**
-     * @param array<int, string> $values
-     */
-    private function formatListValue(array $values, string $emptyLabel): string
-    {
-        if ([] === $values) {
-            return $emptyLabel;
-        }
-
-        return implode('|', $values);
+        return AccessRuleSummary::of($rule, $this->formatLocation($rule['file'], $rule['line']));
     }
 
     private function formatLocation(string $file, int $line): string
