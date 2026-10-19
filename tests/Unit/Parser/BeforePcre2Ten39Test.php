@@ -194,6 +194,8 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'recursion condition name past 32 characters' => ['pattern' => '/(a)(?(R&abcdefghijklmnopqrstuvwxyzABCDEFGHIJ)b)/', 'releases' => ['10.32'], 'offset' => 41, 'code' => ErrorCode::GroupNameTooLong];
         yield 'quoted condition name past 32 characters' => ['pattern' => "/(a)(?('abcdefghijklmnopqrstuvwxyzABCDEFGHIJ')b)/", 'releases' => ['10.32'], 'offset' => 40, 'code' => ErrorCode::GroupNameTooLong];
         yield 'condition name past 32 characters before a hyphen' => ['pattern' => '/(a)(?(abcdefghijklmnopqrstuvwxyzABCDEFGHIJ-)b)/', 'releases' => ['10.32'], 'offset' => 39, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'limit with no value' => ['pattern' => '/(*CRLF)(*LIMIT_MATCH=)abc/', 'releases' => ['10.32', '10.33'], 'offset' => 21, 'code' => ErrorCode::VerbInvalid];
+        yield 'limit with letters in its value' => ['pattern' => '/(*LIMIT_MATCH=12bc)abc/', 'releases' => ['10.32', '10.33'], 'offset' => 17, 'code' => ErrorCode::VerbInvalid];
         yield 'verb with no name' => ['pattern' => '/a(*)/', 'releases' => ['10.32', '10.33'], 'offset' => 2, 'code' => ErrorCode::QuantifierNothingToRepeat];
         yield 'casing setting after the opening settings' => ['pattern' => '/(*NOTEMPTY_ATSTART)(*TURKISH_CASING)a/', 'releases' => ['10.32'], 'offset' => 28, 'code' => ErrorCode::VerbInvalid];
         yield 'condition name past 32 characters' => ['pattern' => '/(a)(?(<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ>)b)/', 'releases' => ['10.32'], 'offset' => 40, 'code' => ErrorCode::GroupNameTooLong];
@@ -295,6 +297,100 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'octal escape and digits' => ['pattern' => '/\0214748364/'];
         yield 'opening settings holding an underscore' => ['pattern' => '/(*LIMIT_MATCH=10)(*NO_JIT)a/'];
         yield 'ASCII group name under UTF' => ['pattern' => '/(?<name>a)\k<name>/u'];
+    }
+
+    /**
+     * How the older releases measure a lookbehind, each row as pcre2test
+     * 10.32 to 10.35 compile it: null where the release compiles the
+     * pattern, else the offset of its error 125, "lookbehind assertion is
+     * not fixed length".
+     *
+     * Up to 10.33 a lookahead met while a lookbehind is measured is skipped
+     * whole: a lookbehind inside it is never measured. Up to 10.34 a
+     * (?(DEFINE)...) group in a lookbehind is measured as a group, its
+     * first item skipped: when that item opens a group, the end of the
+     * DEFINE group ends the lookbehind, and what follows it is not measured.
+     *
+     * @param array<string, int|null> $outcomes
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindMeasures')]
+    public function test_an_older_release_measures_a_lookbehind_as_it_did(string $pattern, array $outcomes): void
+    {
+        foreach ($outcomes as $release => $offset) {
+            $validation = self::parser($release)->validate($pattern);
+            if (null === $offset) {
+                $this->assertTrue($validation->isValid, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, $validation->error ?? ''));
+
+                continue;
+            }
+
+            $this->assertFalse($validation->isValid, $pattern.' on PCRE2 '.$release);
+            $this->assertSame($offset, $validation->offset, $pattern.' on PCRE2 '.$release);
+            $this->assertContains($validation->errorCode, [ErrorCode::LookbehindUnbounded, ErrorCode::LookbehindVariableLengthNotSupported], $pattern.' on PCRE2 '.$release);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, outcomes: array<string, int|null>}>
+     */
+    public static function provideLookbehindMeasures(): iterable
+    {
+        yield 'unbounded lookbehind in a lookahead in a lookbehind' => ['pattern' => '/(?<=(?=(?<=a+)))b/', 'outcomes' => ['10.32' => null, '10.33' => null, '10.34' => 7]];
+        yield 'in a negative lookahead' => ['pattern' => '/(?<=(?!(?<=a+)))b/', 'outcomes' => ['10.33' => null, '10.34' => 7]];
+        yield 'after a character' => ['pattern' => '/(?<=x(?=y(?<=a+)))/', 'outcomes' => ['10.33' => null, '10.34' => 9]];
+        yield 'in an alphabetic lookahead' => ['pattern' => '/(?<=(*pla:(?<=a+)))b/', 'outcomes' => ['10.33' => null, '10.34' => 10]];
+        yield 'in a lookahead as a condition' => ['pattern' => '/(?<=(?(?=(?<=a+))x|y))/', 'outcomes' => ['10.33' => null, '10.34' => 9]];
+        yield 'repeated reference in a lookahead' => ['pattern' => '/(a)(?<=(?=(?<=\1+)))/', 'outcomes' => ['10.33' => null, '10.34' => 10]];
+        yield 'reference reached through a lookahead' => ['pattern' => '/(\2)((?=(?<=\1)))/', 'outcomes' => ['10.32' => null, '10.33' => null, '10.34' => 8]];
+        yield 'lookbehind in a lookbehind' => ['pattern' => '/(?<=a(?<=b+))/', 'outcomes' => ['10.33' => 5, '10.34' => 5]];
+        yield 'lookbehind as a condition' => ['pattern' => '/(?<=(?(?<=a+)x|y))/', 'outcomes' => ['10.33' => 6, '10.34' => 6]];
+        yield 'lookbehind in a lookahead' => ['pattern' => '/(?=(?<=a+))/', 'outcomes' => ['10.33' => 3, '10.34' => 3]];
+        yield 'unbounded DEFINE group' => ['pattern' => '/(?<=X(?(DEFINE)(.*))Y)./', 'outcomes' => ['10.32' => 0, '10.34' => 0, '10.35' => null]];
+        yield 'DEFINE group of branches of two lengths' => ['pattern' => '/(?<=(?(DEFINE)(?:a|bc)))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'named DEFINE group of branches of two lengths' => ['pattern' => '/(?<=(?(DEFINE)(?<n>a|bc)))/', 'outcomes' => ['10.33' => 0, '10.35' => null]];
+        yield 'DEFINE group after a character' => ['pattern' => '/(?<=x(?(DEFINE)(a|bc)))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'empty DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'empty DEFINE group before a character' => ['pattern' => '/(?<=(?(DEFINE))a)/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'repeated character in a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)x*))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'counted character in a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)x{2}))/', 'outcomes' => ['10.34' => null, '10.35' => null]];
+        yield 'DEFINE group of two branches, the first a character' => ['pattern' => '/(?<=(?(DEFINE)a|b))/', 'outcomes' => ['10.34' => 0]];
+        yield 'DEFINE group of two branches of two characters' => ['pattern' => '/(?<=(?(DEFINE)ab|cd))/', 'outcomes' => ['10.34' => 0]];
+        yield 'repeated type in a named DEFINE group' => ['pattern' => '/(?<=a(?(DEFINE)(?<x>\d+))b)c/', 'outcomes' => ['10.33' => 0, '10.35' => null]];
+        yield 'type in a named DEFINE group' => ['pattern' => '/(?<=a(?(DEFINE)(?<x>\d))b)c/', 'outcomes' => ['10.33' => null, '10.35' => null]];
+        yield 'lookahead opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(?=a*)b))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'repeat after the group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(a)b+))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'repeated group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(a)+))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'counted group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(a){2}))/', 'outcomes' => ['10.34' => null, '10.35' => null]];
+        yield 'repeat after a DEFINE group opened by a group' => ['pattern' => '/(?<=(?(DEFINE)(a))b+)/', 'outcomes' => ['10.32' => null, '10.34' => null, '10.35' => 0]];
+        yield 'branch after a DEFINE group opened by a group' => ['pattern' => '/(?<=(?(DEFINE)(a))b|c+)/', 'outcomes' => ['10.34' => null, '10.35' => 0]];
+        yield 'repeat after a DEFINE group opened by a non-capturing group' => ['pattern' => '/(?<=(?(DEFINE)(?:a))b*)/', 'outcomes' => ['10.34' => null, '10.35' => 0]];
+        yield 'repeat after a DEFINE group opened by a character' => ['pattern' => '/(?<=(?(DEFINE)a)b*)/', 'outcomes' => ['10.34' => 0, '10.35' => 0]];
+        yield 'DEFINE group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(?(DEFINE)(.*))))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
+        yield 'DEFINE group before the lookbehind' => ['pattern' => '/(?(DEFINE)(?<foo>bar))(?<![-a-z0-9])word/', 'outcomes' => ['10.32' => null, '10.35' => null]];
+    }
+
+    /**
+     * Up to 10.34 the lookbehind is refused before the branches of the
+     * DEFINE group are counted, where its measure fails: from 10.35 the
+     * group is skipped, and refused for its second branch (error 154).
+     */
+    #[Test]
+    public function test_an_older_release_refuses_the_lookbehind_before_the_branches_of_a_define_group(): void
+    {
+        $old = self::parser('10.34')->validate('/(?<=(?(DEFINE)a|bc))/');
+        $this->assertSame(0, $old->offset);
+        $this->assertSame(ErrorCode::LookbehindVariableLengthNotSupported, $old->errorCode);
+
+        $new = self::parser('10.35')->validate('/(?<=(?(DEFINE)a|bc))/');
+        $this->assertSame(7, $new->offset);
+        $this->assertSame(ErrorCode::DefineTooManyBranches, $new->errorCode);
+
+        // Its first character skipped, "ab|c" is two branches of one: the
+        // lookbehind is measured, and the group refused for its branches.
+        $measured = self::parser('10.34')->validate('/(?<=(?(DEFINE)ab|c))/');
+        $this->assertSame(7, $measured->offset);
+        $this->assertSame(ErrorCode::DefineTooManyBranches, $measured->errorCode);
     }
 
     #[Test]

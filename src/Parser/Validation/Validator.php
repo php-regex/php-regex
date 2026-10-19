@@ -363,6 +363,12 @@ final class Validator extends AbstractNodeVisitor
     private int $lookbehindDepth = 0;
 
     /**
+     * How many lookaheads inside a lookbehind the walk is in: before PCRE2
+     * 10.34, PCRE never measures a lookbehind there.
+     */
+    private int $lookaheadsInLookbehinds = 0;
+
+    /**
      * @var list<GroupNode> the lookbehinds around the node visited, innermost last
      */
     private array $lookbehinds = [];
@@ -659,6 +665,11 @@ final class Validator extends AbstractNodeVisitor
             $this->keepsInLookarounds[] = false;
         }
 
+        $lookaheadInLookbehind = $isLookaround && !$isLookbehind && $this->lookbehindDepth > 0;
+        if ($lookaheadInLookbehind) {
+            $this->lookaheadsInLookbehinds++;
+        }
+
         // "(?i)" sets options for what follows and opens nothing.
         $nests = !$this->setsOptionsOnly($node);
         if ($nests) {
@@ -676,6 +687,9 @@ final class Validator extends AbstractNodeVisitor
             if ($isLookbehind) {
                 $this->lookbehindDepth--;
                 array_pop($this->lookbehinds);
+            }
+            if ($lookaheadInLookbehind) {
+                $this->lookaheadsInLookbehinds--;
             }
             $holdsKeep = false;
             if ($isLookaround) {
@@ -1718,6 +1732,7 @@ final class Validator extends AbstractNodeVisitor
         $this->previousNode = null;
         $this->nextNode = null;
         $this->lookbehindDepth = 0;
+        $this->lookaheadsInLookbehinds = 0;
         $this->lookbehinds = [];
         $this->nestingDepth = 0;
         $this->keepsInLookarounds = [];
@@ -2443,6 +2458,12 @@ final class Validator extends AbstractNodeVisitor
 
                     $this->validateLookbehindBranchLength($node, $length, true);
                 }
+
+                // Before PCRE2 10.35 a "(?(DEFINE)" group can end the
+                // measure: the branches after it are not measured.
+                if ($this->lookbehindLength->ended()) {
+                    break;
+                }
             }
         } finally {
             $this->measuredLookbehind = $around;
@@ -2582,6 +2603,8 @@ final class Validator extends AbstractNodeVisitor
             $this->validateNestedLookbehinds(...),
             $this->countLookbehindBranches(...),
             $this->checkMeasuredReference(...),
+            $this->supports(PcreFeature::LookbehindInLookaheadMeasured),
+            $this->supports(PcreFeature::DefineSkippedInLookbehind),
         );
     }
 
@@ -4066,6 +4089,12 @@ final class Validator extends AbstractNodeVisitor
      */
     private function measureLookbehind(GroupNode $node): void
     {
+        // Before PCRE2 10.34 the measure of a lookbehind skips a lookahead
+        // whole: a lookbehind inside it is never measured.
+        if ($this->lookaheadsInLookbehinds > 0 && !$this->supports(PcreFeature::LookbehindInLookaheadMeasured)) {
+            return;
+        }
+
         if (!$this->walkingPattern) {
             // Off a walk, the nodes measured on an earlier visit may be gone
             // and their ids taken by others.

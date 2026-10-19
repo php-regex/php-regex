@@ -80,6 +80,8 @@
         {"source":"BeforePcre2Ten39Test: recursion condition name past 32 characters","pattern":"/(a)(?(R&abcdefghijklmnopqrstuvwxyzABCDEFGHIJ)b)/","compile":{"10.32":41,"10.35":44,"10.39":44,"10.40":44,"10.42":44,"10.44":8}},
         {"source":"BeforePcre2Ten39Test: quoted condition name past 32 characters","pattern":"/(a)(?('abcdefghijklmnopqrstuvwxyzABCDEFGHIJ')b)/","compile":{"10.32":40,"10.35":43,"10.39":43,"10.40":43,"10.42":43,"10.44":7}},
         {"source":"BeforePcre2Ten39Test: condition name past 32 characters before a hyphen","pattern":"/(a)(?(abcdefghijklmnopqrstuvwxyzABCDEFGHIJ-)b)/","compile":{"10.32":39,"10.35":42,"10.39":42,"10.40":42,"10.42":42,"10.44":42}},
+        {"source":"BeforePcre2Ten39Test: limit with no value","pattern":"/(*CRLF)(*LIMIT_MATCH=)abc/","compile":{"10.32":21,"10.35":21,"10.39":21,"10.40":21,"10.42":21,"10.44":21}},
+        {"source":"BeforePcre2Ten39Test: limit with letters in its value","pattern":"/(*LIMIT_MATCH=12bc)abc/","compile":{"10.32":17,"10.35":17,"10.39":17,"10.40":17,"10.42":17,"10.44":17}},
         {"source":"BeforePcre2Ten39Test: verb with no name","pattern":"/a(*)/","compile":{"10.32":2,"10.35":2,"10.39":2,"10.40":2,"10.42":2,"10.44":2}},
         {"source":"BeforePcre2Ten39Test: casing setting after the opening settings","pattern":"/(*NOTEMPTY_ATSTART)(*TURKISH_CASING)a/","compile":{"10.32":28,"10.35":35,"10.39":35,"10.40":35,"10.42":35,"10.44":35}},
         {"source":"BeforePcre2Ten39Test: condition name past 32 characters","pattern":"/(a)(?(<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ>)b)/","compile":{"10.32":40,"10.35":43,"10.39":43,"10.40":43,"10.42":43,"10.44":7}},

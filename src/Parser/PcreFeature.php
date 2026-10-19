@@ -61,6 +61,11 @@ enum PcreFeature
     case NonAtomicAssertionNames;
 
     /**
+     * A lookbehind inside a lookahead met while a lookbehind is measured is measured too, where the lookahead was skipped whole.
+     */
+    case LookbehindInLookaheadMeasured;
+
+    /**
      * "(?*" and "(?<*" spell the non-atomic lookarounds.
      */
     case NonAtomicAssertionShortSyntax;
@@ -79,6 +84,11 @@ enum PcreFeature
      * Under "(*UCP)" without UTF, caseless matching folds the characters past ASCII by their Unicode properties.
      */
     case UcpFoldsPastAsciiWithoutUtf;
+
+    /**
+     * A "(?(DEFINE)...)" group in a lookbehind adds nothing to its length, where it was measured as a group with its first item skipped.
+     */
+    case DefineSkippedInLookbehind;
 
     /**
      * A count past 65535 in a brace that opens no quantifier, as "a{65536", is text instead of a count too big.
@@ -269,11 +279,13 @@ enum PcreFeature
             self::NamesReadWhole => '10.33',
             self::QuantifiedAccept,
             self::PossessiveRepeatOnceIsAtomic,
-            self::NonAtomicAssertionNames => '10.34',
+            self::NonAtomicAssertionNames,
+            self::LookbehindInLookaheadMeasured => '10.34',
             self::NonAtomicAssertionShortSyntax,
             self::GroupHoldingItsOwnReferenceBacktracks,
             self::RepeatedAssertionKeepsItsCount,
-            self::UcpFoldsPastAsciiWithoutUtf => '10.35',
+            self::UcpFoldsPastAsciiWithoutUtf,
+            self::DefineSkippedInLookbehind => '10.35',
             self::LargeOpenCountIsText,
             self::OverflowingBackslashNumberIsOctal => '10.37',
             self::LoosePropertyNames => '10.40',

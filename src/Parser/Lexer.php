@@ -2125,7 +2125,10 @@ final class Lexer
             return;
         }
 
-        if ($start < $this->leadingSettingsEnd()) {
+        // A limit that ends the opening settings is read as one, whatever
+        // its value: the settings reader refuses a value it cannot take.
+        $settingsEnd = $this->leadingSettingsEnd();
+        if ($start < $settingsEnd || ($start === $settingsEnd && 1 === LibraryPcre::match('/^LIMIT_(?:MATCH|DEPTH|HEAP|RECURSION)=/', $name))) {
             return;
         }
 

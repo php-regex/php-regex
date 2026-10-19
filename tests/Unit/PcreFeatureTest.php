@@ -57,6 +57,8 @@ final class PcreFeatureTest extends TestCase
         yield 'repeated accept' => [PcreFeature::QuantifiedAccept, '10.33', '10.34'];
         yield 'possessive repeat once' => [PcreFeature::PossessiveRepeatOnceIsAtomic, '10.33', '10.34'];
         yield 'non-atomic assertion names' => [PcreFeature::NonAtomicAssertionNames, '10.33', '10.34'];
+        yield 'lookbehind in a lookahead measured' => [PcreFeature::LookbehindInLookaheadMeasured, '10.33', '10.34'];
+        yield 'DEFINE skipped in a lookbehind' => [PcreFeature::DefineSkippedInLookbehind, '10.34', '10.35'];
         yield 'non-atomic assertion short syntax' => [PcreFeature::NonAtomicAssertionShortSyntax, '10.34', '10.35'];
         yield 'overflowing backslash number as octal' => [PcreFeature::OverflowingBackslashNumberIsOctal, '10.36', '10.37'];
         yield 'scan substring' => [PcreFeature::ScanSubstring, '10.44', '10.45'];
