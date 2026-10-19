@@ -147,24 +147,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
 
-- `(a)\g{1-}` compiles for the library on every PHP 8 target; PCRE2 refuses
-  it at offset 5 (7 from 10.47). `\g{--1}` and `\g{-+1}` have the right
-  offset but say `regex.backref.relative` where PCRE2 says "subpattern name
-  expected".
-- A reversed range before a range the parser refuses, in a closed class:
-  `[z-a\d-b]` is refused at 3 (4 from 10.47) by PCRE2, later by the library.
-- An empty `\Q\E` before an item PCRE2 refuses hides it when a range the
-  parser refuses follows: `[\Q\E[:foo:]\d-z]` is offset 7 (12 from 10.45).
-- From 10.45 a range from a type ending in a `\Q` the pattern ends in,
-  `[\d-\Q`, misses its `]` at the end of the pattern; the library says 4.
-- Up to 10.44 `([a-z\E-\pL]` misses its `)` at 12: the library reads a range
-  ending on `\pL` there (a quote after a range resets the range read).
-- A `\c` ending a class left open hides an earlier error in it: `[[:foo:]\c`,
-  `[z-a\c`.
-- `\k{1 }` and `\k{1n }` up to 10.42: PCRE2 says "subpattern name must start
-  with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
-  reported one byte early.
-- `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10.
 - A `\p{` or `\P{` no `}` closes in a class hides an earlier error in it up
   to 10.44: `[z-aa-\p{L]` is "range out of order" at offset 3, the library
   says 8 (invalid range); on every release `([z-a\P{]` is offset 4 (5 from
@@ -178,9 +160,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   from 10.47), the library accepts it.
 - Up to 10.44 a quoted hyphen starts a range: `([\Q-\E--\pL]` misses its `)`
   at 13 (the range `-` to `-`, then `\pL`), the library says 11.
-- `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10; `[-[=a=]`
-  up to 10.44: offset 2, the library says 3.
-- `[-[=a=]` up to 10.44: offset 2, the library says 3.
 - A name nothing closes in a call by name, `(?<n>a)(?&n )` or
   `(?<n>a)(?P>n )`, is "syntax error in subpattern name (missing
   terminator?)" from 10.33 to 10.46, at the offset the library gives, where
