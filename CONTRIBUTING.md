@@ -175,10 +175,12 @@ GitHub pre-release.
 
 The 1.x tags (`v0.1.0` to `v1.3.0`) and the `1.x` branch stay in this
 repository for good, whatever a later cleanup of tags or branches removes:
-Packagist reads both `php-regex/php-regex` and `yoeunes/regex-parser` from
-here, and those tags are the 1.x versions of both. Deleting one takes that
-version off Packagist under both names, and a `composer update` that needs
-it fails. Only `v2.*` tags start the split workflow, so the split
+those tags are the 1.x versions of `php-regex/php-regex` on Packagist, and
+the 1.x archives Packagist serves under both that name and
+`yoeunes/regex-parser` point at their commits here, so the lock files
+written from them download from this repository, even once
+`yoeunes/regex-parser` reads another one. Deleting a tag takes that version
+off Packagist, and a `composer update` that needs it fails. Only `v2.*` tags start the split workflow, so the split
 repositories never receive the 1.x ones.
 
 ## 🎉 Recognition
