@@ -112,7 +112,7 @@ final class FirstErrorLocator
         $laterErrors = [
             $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $error instanceof LexerException && \in_array($error->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true)
-                ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter) : null,
+                ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter, $position) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
@@ -418,12 +418,12 @@ final class FirstErrorLocator
      * The first error in the class the tokens leave open at the end of the
      * pattern: PCRE reads it item by item before it meets that end, so an
      * item it refuses comes before the missing "]", or before a reversed
-     * range after it. The class is parsed alone, as if a "]" closed it
-     * there, and judged.
+     * range after it, at $position. The class is parsed alone, as if a "]"
+     * closed it there, and judged.
      *
      * @param list<Token> $tokens
      */
-    private function firstErrorInClassLeftOpen(array $tokens, string $pattern, string $flags, string $delimiter): ?SemanticErrorException
+    private function firstErrorInClassLeftOpen(array $tokens, string $pattern, string $flags, string $delimiter, int $position): ?SemanticErrorException
     {
         // The tokens from the "[" no "]" closes; none should the lexer ever
         // report a class left open it has not read.
@@ -446,8 +446,9 @@ final class FirstErrorLocator
         } catch (SemanticErrorException $error) {
             return $error;
         } catch (LexerException|LimitException|ParserException $classError) {
-            // A range the parser refuses leaves the items before it.
-            return $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, $classError->position ?? $end);
+            // A range the parser refuses leaves the items before it, and
+            // before the reversed range the lexer found, if any.
+            return $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($classError->position ?? $end, $position));
         }
 
         return null;

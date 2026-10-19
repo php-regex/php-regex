@@ -1319,18 +1319,18 @@ final class TokenParser
             return new BackrefNode($value, $startPosition, $endPosition);
         }
 
-        // \g{name} is a back reference, like \k{name}; it is recorded that
-        // way, and the compiler gives back the spelling the pattern used.
-        if (LibraryPcre::match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
-            return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
-        }
-
         // PCRE reads the number after "\g{", "\g<" or "\g'" before it looks
         // for what closes it, and refuses one it cannot read right after
         // the "g", on every release.
         $numberError = $this->gReferenceNumberError($token->position);
         if (null !== $numberError) {
             throw $this->parserException(\sprintf('Invalid \\g reference %s at position %d: %s.', $value, $token->position + 2, $numberError[1]), $numberError[0], $token->position + 2);
+        }
+
+        // \g{name} is a back reference, like \k{name}; it is recorded that
+        // way, and the compiler gives back the spelling the pattern used.
+        if (LibraryPcre::match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
+            return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
         }
 
         // "\g<5fg>": PCRE reads a number after "\g<" or "\g'", and wants the

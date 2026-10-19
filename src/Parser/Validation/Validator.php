@@ -2673,7 +2673,8 @@ final class Validator extends AbstractNodeVisitor
         // A space first leaves no name; one after a number ends "\g", whose
         // number PCRE reads first; one after a name ends the name.
         $digits = [];
-        $number = 'g' === $matches[1] && 1 === LibraryPcre::match('/^([+-]?)(\d++)$/', $matches[3], $digits);
+        // "\g" reads a number first, whatever follows its digits.
+        $number = 'g' === $matches[1] && 1 === LibraryPcre::match('/^([+-]?)(\d++)/', $matches[3], $digits);
         [$offset, $code] = match (true) {
             '' !== $matches[2] => [3, ErrorCode::GroupNameExpected],
             $number => [2, $this->braceNumberError($node, $digits[1] ?? '', $digits[2] ?? '') ?? ErrorCode::BackrefInvalidSyntax],

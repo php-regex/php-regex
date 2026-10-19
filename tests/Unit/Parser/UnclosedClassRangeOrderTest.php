@@ -165,6 +165,12 @@ final class UnclosedClassRangeOrderTest extends TestCase
         yield 'multibyte end under u' => ['pattern' => '/[ü-é/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 5];
         yield 'multibyte end under u, PCRE2 10.47' => ['pattern' => '/[ü-é/u', 'php' => '8.4', 'release' => '10.47', 'offset' => 6];
         yield 'named code point under u' => ['pattern' => '/[z-\N{U+41}/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 10];
+        // Before an item PCRE refuses and a range the parser refuses
+        // (pcre2test 10.32 to 10.49: offset 3 up to 10.46, 4 from 10.47).
+        yield 'before an unknown POSIX class starting a range' => ['pattern' => '/[k-a[:foo:]-b/', 'php' => '8.4', 'release' => '10.44', 'offset' => 3];
+        yield 'before an unknown POSIX class starting a range, PCRE2 10.47' => ['pattern' => '/[k-a[:foo:]-b/', 'php' => '8.4', 'release' => '10.47', 'offset' => 4];
+        yield 'before an unknown POSIX class and a range from a type, PCRE2 10.45' => ['pattern' => '/[z-a[:foo:]\d-z/', 'php' => '8.4', 'release' => '10.45', 'offset' => 3];
+        yield 'before an octal past a byte and a range from a property, PCRE2 10.49' => ['pattern' => '/[z-a\400\pL-a/', 'php' => '8.5', 'release' => '10.49', 'offset' => 4];
     }
 
     /**

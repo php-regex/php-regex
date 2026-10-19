@@ -157,6 +157,8 @@ final class PaddedReferenceBracesTest extends TestCase
         yield 'space after a number' => ['pattern' => '/(a)\\g{1 }/', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
         yield 'space after a relative zero' => ['pattern' => '/(a)\\g{+0 }/', 'code' => ErrorCode::BackrefZero, 'offset' => 5];
         yield 'space after a number back past the groups' => ['pattern' => '/(a)\\g{-3 }/', 'code' => ErrorCode::BackrefRelative, 'offset' => 5];
+        yield 'space after digits then a letter' => ['pattern' => '/(a)\\g{12n }/', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'space after a number too big then a letter' => ['pattern' => '/(a)\\g{65536n }/', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 5];
         yield 'space after a number too big' => ['pattern' => '/(a)\\g{65536 }/', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 5];
         yield 'space after a name after g' => ['pattern' => '/(?<n>a)\\g{n }/', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 11];
         yield 'space after a name after k' => ['pattern' => '/(?<n>a)\\k{n }/', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 11];

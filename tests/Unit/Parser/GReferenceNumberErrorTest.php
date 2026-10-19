@@ -84,6 +84,8 @@ final class GReferenceNumberErrorTest extends TestCase
         yield 'braced backward number too big left open' => ['pattern' => '/\g{-65536/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 2];
         yield 'braced relative number too big past two groups' => ['pattern' => '/()()\g{+65534/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 6];
         yield 'braced relative number with many digits' => ['pattern' => '/()\g{+99999999999/', 'php' => '8.4', 'release' => '10.48', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 4];
+        yield 'braced number too big before a letter and a space' => ['pattern' => '/(a)\g{65536n }/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 5];
+        yield 'braced number too big before a letter and a space, PCRE2 10.47' => ['pattern' => '/(a)\g{65536n }/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 5];
         yield 'braced relative number too big before a letter' => ['pattern' => '/()\g{+65535a/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 4];
         yield 'angled relative number too big before a letter' => ['pattern' => '/\g<+65536a/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 2];
         yield 'braced relative zero left open' => ['pattern' => '/()\g{+0/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::BackrefZero, 'offset' => 4];
