@@ -116,6 +116,13 @@ tasks:
       - .task/phpunit.success
     method: checksum
 
+  paratest:
+    desc: Run the test suite in parallel processes, one per CPU core
+    cmds:
+      # Each worker is a PHP process of its own: the setting the phar
+      # tests need is passed on to them.
+      - cmd: php -d phar.readonly=0 tools/paratest/vendor/bin/paratest --passthru-php="'-d' 'phar.readonly=0'" {{.CLI_ARGS}}
+
   phpbench:
     cmds:
       - cmd: tools/phpbench/vendor/bin/phpbench run tests/Benchmark --report=default {{.CLI_ARGS}}
@@ -210,6 +217,7 @@ tasks:
       - composer install -d tools/rector --ignore-platform-req=php+
       - composer install -d tools/infection --ignore-platform-req=php+
       - composer install -d tools/phpunit --ignore-platform-req=php+
+      - composer install -d tools/paratest --ignore-platform-req=php+
       - composer install -d tools/deptrac --ignore-platform-req=php+
 
       - task: link
@@ -256,6 +264,10 @@ tasks:
       - composer outdated --direct -d tools/phpunit
       - composer audit -d tools/phpunit || true
 
+      - composer update -W -d tools/paratest
+      - composer outdated --direct -d tools/paratest
+      - composer audit -d tools/paratest || true
+
       - composer update -W -d tools/deptrac
       - composer outdated --direct -d tools/deptrac
       - composer audit -d tools/deptrac || true
@@ -300,3 +312,6 @@ tasks:
 
       - ln -sf ../../tools/phpunit/vendor/bin/phpunit ./vendor/bin/phpunit
       - ln -sf ../tools/phpunit/vendor/bin/phpunit ./bin/phpunit
+
+      - ln -sf ../../tools/paratest/vendor/bin/paratest ./vendor/bin/paratest
+      - ln -sf ../tools/paratest/vendor/bin/paratest ./bin/paratest

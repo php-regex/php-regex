@@ -446,6 +446,25 @@ final class PackageManifestTest extends TestCase
         $this->assertSame('^9.6|^10.0|^11.0|^12.0|^13.0', self::dig($manifest, 'require', 'phpunit/phpunit'));
     }
 
+    /**
+     * ParaTest runs the suite with the classes of its own vendor: it needs
+     * every package the suite needs, at the same constraints as the PHPUnit
+     * tool, and ParaTest itself.
+     */
+    #[Test]
+    public function test_paratest_tool_requires_what_the_phpunit_tool_requires(): void
+    {
+        $phpunit = self::decode(self::root().'/tools/phpunit/composer.json');
+        $paratest = self::decode(self::root().'/tools/paratest/composer.json');
+        $required = self::dig($paratest, 'require-dev');
+        $this->assertIsArray($required);
+        $this->assertSame('^7.8', $required['brianium/paratest'] ?? null);
+        unset($required['brianium/paratest']);
+
+        $this->assertSame(self::dig($phpunit, 'require-dev'), $required);
+        $this->assertSame(self::dig($phpunit, 'config'), self::dig($paratest, 'config'));
+    }
+
     #[Test]
     public function test_every_manifest_writes_its_alternatives_with_a_single_pipe(): void
     {

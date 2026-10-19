@@ -42,6 +42,21 @@ task install
 task lint
 ```
 
+### Running the Tests
+
+```bash
+composer phpunit          # the whole suite in one process
+composer test:parallel    # the same suite in parallel, one process per CPU core
+```
+
+`composer test:parallel` runs the suite through ParaTest, installed in its own
+vendor under `tools/paratest` by `task install`. It takes the arguments
+PHPUnit does (`--filter`, a test path, `--group`) and a few of its own:
+`--processes=4` sets the number of processes. Each process runs whole test
+classes, so a test must leave nothing behind that another test class reads: a
+file it writes goes in a temporary directory of its own, and a static it sets
+is reset in `tearDown()`.
+
 ## Coding Standards
 
 - **Strict types** required for all PHP files

@@ -16,7 +16,7 @@ The PHP snippets below use the `Regex` facade, which ships in `regex-toolkit`. I
 If you are new to the codebase, this short checklist helps you get oriented quickly:
 
 - Read [docs/architecture.md](architecture.md) and [docs/extending.md](extending.md).
-- Install everything with `task -t taskfile.dist.yaml install` — Composer dependencies plus the dev tools, each in its own vendor under `tools/` — then verify `composer phpunit` passes before changes.
+- Install everything with `task -t taskfile.dist.yaml install` — Composer dependencies plus the dev tools, each in its own vendor under `tools/` — then verify `composer phpunit` passes before changes (`composer test:parallel` runs the same suite across one process per CPU core).
 - When touching Lexer/Parser or AST nodes, update relevant visitors and add tests.
 - Preserve byte offsets in diagnostics and update [docs/reference/diagnostics.md](reference/diagnostics.md) for new codes.
 - Keep docs in sync with behavior changes, especially [docs/reference/rules.md](reference/rules.md).

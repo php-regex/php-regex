@@ -40,10 +40,13 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 - Keep fixture loading clean and minimal.
 
 ### Running Tests
-- Unit: `phpunit --testsuite Unit`
-- Integration: `phpunit --testsuite Integration`
-- Functional: `phpunit --testsuite Functional`
-- All: `phpunit`
+- All, in one process: `composer phpunit`
+- All, in parallel: `composer test:parallel` (ParaTest, one process per CPU core; `--processes=N` to choose)
+- One directory or one file: `composer phpunit -- tests/Unit/Lexer`
+
+A test runs alone in a process or beside any other test class: each test
+writes its files under a temporary directory of its own, and resets in
+`tearDown()` any static state it changes.
 
 ### CI/CD
 - Tests run in GitHub Actions (see `.github/workflows/tests.yml`, and `engines.yml` for the runs on each engine).

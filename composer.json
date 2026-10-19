@@ -74,6 +74,7 @@
     ],
     "scripts": {
         "phpunit": "tools/phpunit/vendor/bin/phpunit",
+        "test:parallel": "php -d phar.readonly=0 tools/paratest/vendor/bin/paratest --passthru-php=\"'-d' 'phar.readonly=0'\"",
         "phpstan": "tools/phpstan/vendor/bin/phpstan analyse",
         "rector": "tools/rector/vendor/bin/rector process",
         "phpcs": "tools/php-cs-fixer/vendor/bin/php-cs-fixer fix",
