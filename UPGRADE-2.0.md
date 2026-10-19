@@ -25,6 +25,20 @@ The other packages (`regex-explain`, `regex-optimizer`, `regex-generator`,
 `regex-automata`, `regex-redos`, `regex-transpiler`, `regex-linter`) come with
 the toolkit, or alone when only that part is needed.
 
+`php-regex/php-regex`, the package that installs all seventeen at once,
+carries the 1.x line as well: Packagist lists under that name the same
+v0.1.0 to v1.3.0 releases as `yoeunes/regex-parser`. Until 2.0.0 is tagged,
+`composer require php-regex/php-regex` with no version installs 1.3, and a
+`php-regex/regex-*` package with no version installs nothing, having no
+stable release yet. Before the tag, pin the development branch, as the
+installation commands of the documentation do:
+
+```bash
+composer config minimum-stability dev
+composer config prefer-stable true
+composer require php-regex/regex-toolkit:2.x-dev
+```
+
 Every package runs on PHP 8.1 or later, `php-regex/php-regex` included:
 `regex-symfony` on Symfony 6.4, 7.4 and 8, `regex-laravel` on Laravel 10.37
 to 13.
