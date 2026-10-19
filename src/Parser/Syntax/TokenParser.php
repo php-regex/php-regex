@@ -3464,6 +3464,21 @@ final class TokenParser
         );
     }
 
+    /**
+     * Whether the node is a code point PCRE refuses where it reads it: past
+     * \xFF without UTF, past U+10FFFF or a surrogate under it.
+     */
+    private function refusesCodePoint(NodeInterface $node): bool
+    {
+        if (!$node instanceof CharLiteralNode) {
+            return false;
+        }
+
+        $codePoint = $node->codePoint;
+
+        return $this->unicodeMode ? $codePoint > 0x10FFFF || ($codePoint >= 0xD800 && $codePoint <= 0xDFFF) : $codePoint > 0xFF;
+    }
+
     private function isNonRangeEndpointType(NodeInterface $node): bool
     {
         return $node instanceof CharTypeNode
@@ -3597,6 +3612,15 @@ final class TokenParser
         // "[\d -z]" is "[\d\-z]". From 10.45 the range forms and fails.
         if ($classEscapeStart && $this->stream->previous()->position > $startNode->getEndPosition()
             && !$this->supports(PcreFeature::SpacedHyphenAfterClassEscapeMakesRange)) {
+            $this->stream->setPosition($rangePosition);
+
+            return $startNode;
+        }
+
+        // A code point PCRE refuses as it reads it, "[\x{100}-\z]" without
+        // UTF, is refused before the "-": the range is not read, and the
+        // validator reports the character.
+        if ($this->refusesCodePoint($startNode)) {
             $this->stream->setPosition($rangePosition);
 
             return $startNode;

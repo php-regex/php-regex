@@ -464,6 +464,7 @@ final class Validator extends AbstractNodeVisitor
         $nEndsRange = !$this->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape);
         $pcre2Ten32 = !$this->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $afterRange = false;
+        $rangeEnded = false;
 
         try {
             foreach ($tokens as $token) {
@@ -473,11 +474,17 @@ final class Validator extends AbstractNodeVisitor
                     break;
                 }
 
-                if ($nEndsRange && $afterRange && TokenType::CharType === $token->type && 'N' === $token->value) {
+                // A "-" right after a range that ended is a member: "[a-c-\pL]".
+                $endsRange = $afterRange;
+                $quote = \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true);
+                $afterRange = (TokenType::Range === $token->type && !$rangeEnded) || ($endsRange && $quote);
+                $rangeEnded = $endsRange && !$quote;
+
+                if ($nEndsRange && $endsRange && TokenType::CharType === $token->type && 'N' === $token->value) {
                     continue;
                 }
 
-                if ($nEndsRange && $afterRange && \in_array($token->type, [TokenType::LiteralEscaped, TokenType::CharType, TokenType::UnicodeProp], true)
+                if ($nEndsRange && $endsRange && \in_array($token->type, [TokenType::LiteralEscaped, TokenType::CharType, TokenType::UnicodeProp], true)
                     && BadEscape::endsRangeAsInvalidRange($source, $token->position, $pcre2Ten32)
                     && !($this->badEscapeIsLiteral && BadEscape::at($source, $token->position, true, $this->unicodeMode, $this->target, null, true))) {
                     $this->raiseSemanticError(
@@ -487,10 +494,7 @@ final class Validator extends AbstractNodeVisitor
                     );
                 }
 
-                $this->endsRange = $afterRange;
-                $afterRange = TokenType::Range === $token->type
-                    || ($afterRange && \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true));
-
+                $this->endsRange = $endsRange;
                 $this->validateEscapeToken($token, $source);
             }
         } catch (SemanticErrorException $error) {

@@ -136,6 +136,54 @@ final class ClassEscapeEndingRangeTest extends TestCase
         yield 'z after an empty quote' => ['pattern' => '/[a-\E\z]/'];
     }
 
+    /**
+     * PCRE2 reads the start of a range before the hyphen: a code point it
+     * refuses there is reported first, whatever ends the range, on every
+     * release (php:7.3-cli under "X", php:8.4-cli, pcre2test 10.45:
+     * "character code point value in \x{} or \o{} is too large at offset 7"
+     * for "[\x{100}-\z]"). A hyphen after a range that ended is a member,
+     * so what follows it starts no range: "[a-c-\p{L}](" is refused for its
+     * "(" (php:7.3-cli under "X", php:7.4-cli, php:8.4-cli, pcre2test 10.45:
+     * "missing closing parenthesis at offset 12").
+     */
+    #[Test]
+    #[DataProvider('provideEarlierErrors')]
+    public function test_an_error_before_the_end_of_the_range_comes_first(string $pattern, string $php, string $release, int $offset): void
+    {
+        $result = self::parser($php, $release)->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+        $this->assertNotSame(ErrorCode::RangeInvalidBounds, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, php: string, release: string, offset: int}>
+     */
+    public static function provideEarlierErrors(): iterable
+    {
+        yield 'code point past a byte, then z' => ['pattern' => '/[\x{100}-\z]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past a byte, then z, under X' => ['pattern' => '/[\x{100}-\z]/X', 'php' => '7.4', 'release' => '10.35', 'offset' => 7];
+        yield 'code point past a byte, then B, under X, PCRE2 10.32' => ['pattern' => '/[\x{100}-\B]/X', 'php' => '7.3', 'release' => '10.32', 'offset' => 7];
+        yield 'octal past a byte, then z' => ['pattern' => '/[\777-\z]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 5];
+        yield 'braced octal past a byte, then z' => ['pattern' => '/[\o{400}-\z]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past Unicode, then z' => ['pattern' => '/[\x{110000}-\z]/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 10];
+        yield 'surrogate, then z' => ['pattern' => '/[\x{d800}-\z]/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 8];
+        yield 'code point past a byte, then A' => ['pattern' => '/[\x{100}-\A]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past a byte, then N' => ['pattern' => '/[\x{100}-\N]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past a byte, then a property' => ['pattern' => '/[\x{100}-\p{L}]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past a byte, then a type' => ['pattern' => '/[\x{100}-\w]/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past a byte, then a type, PCRE2 10.45' => ['pattern' => '/[\x{100}-\w]/', 'php' => '8.4', 'release' => '10.45', 'offset' => 7];
+        yield 'code point past a byte, then z, before a group left open' => ['pattern' => '/[\x{100}-\z](/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'code point past a byte, then a property, before a group left open' => ['pattern' => '/[\x{100}-\pL](/', 'php' => '8.4', 'release' => '10.44', 'offset' => 7];
+        yield 'property after a range that ended, before a group left open' => ['pattern' => '/[a-c-\p{L}](/', 'php' => '8.4', 'release' => '10.44', 'offset' => 12];
+        yield 'property after a range that ended, under X' => ['pattern' => '/[a-c-\p{L}](/X', 'php' => '7.3', 'release' => '10.32', 'offset' => 12];
+        yield 'property after a range that ended, class left open' => ['pattern' => '/[a-c-\p{L}/', 'php' => '7.4', 'release' => '10.35', 'offset' => 10];
+        yield 'property letter after a range that ended, class left open' => ['pattern' => '/[a-c-\pL/', 'php' => '8.4', 'release' => '10.44', 'offset' => 8];
+        yield 'negated property after a range of one character that ended' => ['pattern' => '/[!-!-\P{L}](/', 'php' => '8.4', 'release' => '10.44', 'offset' => 12];
+        yield 'property after a range that ended and an empty quote' => ['pattern' => '/[!-!-\Q\E\p{L}](/', 'php' => '8.4', 'release' => '10.44', 'offset' => 16];
+    }
+
     private static function parser(string $php, string $release): RegexParser
     {
         return RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
