@@ -21,14 +21,12 @@ use PHPRegex\Redos\RedosSeverity;
 final class AnalysisContext
 {
     /**
-     * @param array<int, string> $only
      * @param array<int, string> $securityConfigPaths
      */
     public function __construct(
         public readonly ?string $projectDir,
         public readonly ?string $environment,
         public readonly bool $includeOverlaps = false,
-        public readonly array $only = [],
         public readonly array $securityConfigPaths = [],
         public readonly RedosSeverity $redosThreshold = RedosSeverity::High,
         public readonly bool $skipFirewalls = false,

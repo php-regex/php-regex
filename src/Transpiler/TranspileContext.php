@@ -52,11 +52,6 @@ final class TranspileContext
         $this->requiredFlags[$flag] ??= $reason;
     }
 
-    public function requiresFlag(string $flag): bool
-    {
-        return isset($this->requiredFlags[$flag]);
-    }
-
     /**
      * @return array<string, string>
      */

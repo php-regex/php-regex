@@ -164,7 +164,6 @@ final class AnalyzeCommand extends Command
             $projectDir,
             $environment,
             (bool) $input->getOption('show-overlaps'),
-            $only,
             $configPaths,
             $threshold,
             (bool) $input->getOption('skip-firewalls'),
