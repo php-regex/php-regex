@@ -150,6 +150,7 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertSame(2, $diagnostics[0]['severity'] ?? null, 'Warning, as `regex lint` reports it, never an Error.');
         $this->assertIsString($diagnostics[0]['message'] ?? null);
         $this->assertStringStartsWith('Not analyzed: ', $diagnostics[0]['message']);
+        $this->assertStringContainsString('Recursion limit of 3 exceeded', (string) $diagnostics[0]['message']);
     }
 
     /**

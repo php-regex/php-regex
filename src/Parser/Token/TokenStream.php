@@ -241,12 +241,8 @@ final class TokenStream
             return $token;
         }
 
-        if (null === $token && TokenType::Eof === $type) {
-            // Past the end of a list no end-of-pattern token closes: there
-            // is no token to give.
-            throw new \LogicException('Token stream is exhausted');
-        }
-
+        // Past the end of a list no end-of-pattern token closes, there is
+        // no token to give: current() says so.
         throw $this->unexpected($error, '(found '.$this->current()->type->value.')', $code);
     }
 
