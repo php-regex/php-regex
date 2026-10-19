@@ -15,6 +15,8 @@ namespace PHPRegex\Psalm;
 
 use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Hir\ClassSetProvider;
+use Psalm\Config;
 use Psalm\Plugin\PluginEntryPointInterface;
 use Psalm\Plugin\RegistrationInterface;
 
@@ -49,6 +51,10 @@ final class Plugin implements PluginEntryPointInterface
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {
         PregCallAnalyzer::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'));
+        // What the engine answers about Unicode classes, kept in Psalm's
+        // cache directory, which --clear-cache empties; none under --no-cache.
+        $cacheDirectory = Config::getInstance()->getCacheDirectory();
+        ClassSetProvider::persistIn(null === $cacheDirectory ? null : $cacheDirectory.\DIRECTORY_SEPARATOR.'php-regex');
         foreach ([PregCallAnalyzer::class, CallbackParameters::class, TargetMarkerAnalyzer::class] as $hooks) {
             // Psalm registers a class only once it is loaded.
             class_exists($hooks);

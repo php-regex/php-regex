@@ -451,6 +451,11 @@ so is a marker whose constraint cannot be read, and its call is judged as if
 it held none. The types of `$matches` stay those of the PHP Psalm analyses
 for.
 
+The characters a Unicode class matches, which the plugin reads from the
+running PCRE2 to type a subject, are kept in Psalm's cache directory, in
+`php-regex/`, for the next run and the other threads: `--clear-cache`
+removes them, and `--no-cache` keeps none.
+
 ## Adopting the plugin
 
 The narrower types may show code that reads a key the pattern never writes,

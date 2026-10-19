@@ -125,6 +125,11 @@ final class ClassSetProvider
 
     private const NEGATED_TYPES = ['\\D', '\\S', '\\W', '\\H', '\\V'];
 
+    /**
+     * The key the general categories are kept under between processes.
+     */
+    private const CATEGORIES_KEY = 'general categories';
+
     private static ?string $unicodeSubject = null;
 
     private static ?string $byteSubject = null;
@@ -148,6 +153,23 @@ final class ClassSetProvider
      * Whether a Unicode probe may run with the JIT.
      */
     private static bool $jit = true;
+
+    /**
+     * Where the engine's answers are kept between processes, if anywhere.
+     */
+    private static ?ClassSetStore $store = null;
+
+    /**
+     * Keep what the engine answers, its Unicode scans and its general
+     * categories, under the directory, for the next process to read
+     * instead of scanning again; null, or the empty string, keeps them in
+     * memory only. Process-wide, as the answers are; emptying the caches
+     * does not change it.
+     */
+    public static function persistIn(?string $directory): void
+    {
+        self::$store = null === $directory || '' === $directory ? null : new ClassSetStore($directory);
+    }
 
     /**
      * Whether a bare script name, "\p{Han}", means the script alone for the
@@ -216,7 +238,7 @@ final class ClassSetProvider
             $set = ($unicode && $unicodeFlag ? self::caselessAscii($atom, $modifiers) : null)
                 ?? ($unicode ? self::derived($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
                 ?? ($unicode ? self::composed($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
-                ?? self::scan($atom, $unicode, $modifiers, $global, $startVerbs);
+                ?? self::scanned($atom, $unicode, $modifiers, $global, $startVerbs, $key);
             if (null === $set) {
                 return null;
             }
@@ -366,9 +388,14 @@ final class ClassSetProvider
     private static function categories(): ?array
     {
         if (null === self::$categories) {
-            $categories = self::partition(self::LEAF_CATEGORIES);
+            $kept = self::$store?->load(self::CATEGORIES_KEY);
+            $categories = null !== $kept && self::LEAF_CATEGORIES === array_keys($kept) ? $kept : self::partition(self::LEAF_CATEGORIES);
             if (null === $categories) {
                 return null;
+            }
+
+            if (\is_array($categories) && $categories !== $kept) {
+                self::$store?->save(self::CATEGORIES_KEY, $categories);
             }
 
             self::$categories = $categories;
@@ -649,6 +676,27 @@ final class ClassSetProvider
         $codePoints = Utf8::decode($member->value, true);
 
         return null === $codePoints || [] === $codePoints ? null : $codePoints;
+    }
+
+    /**
+     * The set the engine answers for the atom: a Unicode scan is read from
+     * the store when a former process kept it, and kept there once made. A
+     * byte scan, over 256 bytes, costs less than reading a file.
+     */
+    private static function scanned(string $atom, bool $unicode, string $modifiers, string $global, string $startVerbs, string $key): CharSet|false|null
+    {
+        $store = $unicode ? self::$store : null;
+        $kept = $store?->load($key)['set'] ?? null;
+        if (null !== $kept) {
+            return $kept;
+        }
+
+        $set = self::scan($atom, $unicode, $modifiers, $global, $startVerbs);
+        if ($set instanceof CharSet) {
+            $store?->save($key, ['set' => $set]);
+        }
+
+        return $set;
     }
 
     /**

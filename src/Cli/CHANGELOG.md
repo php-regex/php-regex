@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `--cache-dir <dir>` keeps what the running PCRE2 answered about Unicode
+   classes in `<dir>`, for the next run to read instead of asking again.
  * `regex lsp` runs the language server over stdio, so `regex.phar` carries
    it; installed without `php-regex/regex-language-server`, the command
    exits with code 2 and names the package.

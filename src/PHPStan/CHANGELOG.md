@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * What the running PCRE2 answers about Unicode classes is kept under
+   PHPStan's `tmpDir`, in `php-regex/`, for the next run and the other
+   workers: `RegexPatternRule` takes it as its new `cacheDirectory`
+   argument.
  * `@regex-target` narrows the versions a call is judged for;
    `regex.target.empty` and `regex.target.invalid` report the markers that
    keep no version or cannot be read.

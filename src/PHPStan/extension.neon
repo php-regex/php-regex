@@ -110,6 +110,9 @@ services:
             # PHPStan's own phpVersion: with {min, max}, each later PHP of
             # the range validates the patterns too.
             phpVersionRange: %phpVersion%
+            # What the engine answers about Unicode classes, kept for the
+            # next run and the other workers.
+            cacheDirectory: %tmpDir%/php-regex
         tags:
             - phpstan.rules.rule
     -

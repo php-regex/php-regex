@@ -199,7 +199,10 @@ about 1.5 milliseconds. ReDoS analysis is the expensive check: the same
 corpus judged for ReDoS takes about 4 seconds, 2.4 milliseconds per pattern
 on average, and its worst real-world pattern about 230 milliseconds.
 PHPStan's result cache does the rest: a file it does not analyse again costs
-the extension nothing.
+the extension nothing. The characters a Unicode class matches, which the
+ReDoS analysis and the lint rules read from the PCRE2 running PHPStan, are
+kept under PHPStan's `tmpDir`, in `php-regex/`, for the next run and the
+other workers: a new PHP, PCRE2 or library release reads them again.
 
 ## ReDoS findings
 

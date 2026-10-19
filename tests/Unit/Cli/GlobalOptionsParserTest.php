@@ -63,6 +63,17 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --pcre-version.', $parser->parse(['--pcre-version'])->options->error);
     }
 
+    public function test_parse_collects_the_cache_directory(): void
+    {
+        $parser = new GlobalOptionsParser();
+
+        $this->assertSame('var/regex', $parser->parse(['--cache-dir', 'var/regex', 'lint'])->options->cacheDirectory);
+        $this->assertSame(['lint', 'src'], $parser->parse(['lint', '--cache-dir=/tmp/regex', 'src'])->args);
+        $this->assertSame('/tmp/regex', $parser->parse(['lint', '--cache-dir=/tmp/regex', 'src'])->options->cacheDirectory);
+        $this->assertNull($parser->parse(['lint'])->options->cacheDirectory);
+        $this->assertSame('Missing value for --cache-dir.', $parser->parse(['--cache-dir'])->options->error);
+    }
+
     public function test_parse_disables_visuals(): void
     {
         $parser = new GlobalOptionsParser();

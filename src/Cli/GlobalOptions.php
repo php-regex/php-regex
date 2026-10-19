@@ -26,5 +26,10 @@ final class GlobalOptions
         public readonly ?string $phpVersion,
         public readonly ?string $error,
         public readonly ?string $pcreVersion = null,
+        /**
+         * Where the engine's answers about Unicode classes are kept between
+         * runs, nowhere by default.
+         */
+        public readonly ?string $cacheDirectory = null,
     ) {}
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
+use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\PHPStan\MixedTypeCollector;
 use PHPRegex\PHPStan\NoNewMixedRule;
 use PHPRegex\PHPStan\RegexPatternRule;
@@ -30,12 +31,31 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class RegexPatternRuleExtensionNeonTest extends RuleTestCase
 {
+    protected function tearDown(): void
+    {
+        ClassSetProvider::persistIn(null);
+    }
+
     public static function getAdditionalConfigFiles(): array
     {
         return [
             ...parent::getAdditionalConfigFiles(),
             __DIR__.'/../../../../src/PHPStan/extension.neon',
         ];
+    }
+
+    /**
+     * What the engine answers about Unicode classes is kept in PHPStan's
+     * own temporary directory, for the next run and the other workers.
+     */
+    #[Test]
+    public function test_extension_neon_keeps_the_class_scans_in_phpstan_temporary_directory(): void
+    {
+        $tmpDir = self::getContainer()->getParameter('tmpDir');
+        $this->assertIsString($tmpDir);
+
+        $rule = self::getContainer()->getByType(RegexPatternRule::class);
+        $this->assertSame($tmpDir.'/php-regex', (new \ReflectionProperty(RegexPatternRule::class, 'cacheDirectory'))->getValue($rule));
     }
 
     #[Test]

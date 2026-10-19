@@ -8,6 +8,9 @@ CHANGELOG
    `preg_match_all()` from the pattern and reports invalid patterns as
    `InvalidRegexPattern`; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * What the running PCRE2 answers about Unicode classes is kept in Psalm's
+   cache directory, in `php-regex/`, for the next run: `--clear-cache`
+   removes it, `--no-cache` keeps none.
  * `@regex-target` narrows the versions a call is judged for;
    `InvalidRegexTarget` reports the markers that keep no version or cannot
    be read.

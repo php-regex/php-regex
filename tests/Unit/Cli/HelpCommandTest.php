@@ -64,6 +64,7 @@ final class HelpCommandTest extends TestCase
 
         $this->assertArrayHasKey('lint', self::section($overview, 'Commands'));
         $this->assertArrayHasKey('--php-version <ver>', self::section($overview, 'Global Options'));
+        $this->assertArrayHasKey('--cache-dir <dir>', self::section($overview, 'Global Options'));
         $this->assertMatchesRegularExpression('/^  Run \S+ help <command> for the options of a command\.$/m', $overview);
         foreach (['Lint', 'Diagram', 'Transpile', 'Format', 'Analyze', 'Debug', 'ReDoS Benchmark'] as $section) {
             $this->assertStringNotContainsString($section.' Options:', $overview);
@@ -505,7 +506,8 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
-     * The binary configures no cache that outlives a run, so there is no
+     * The binary keeps nothing between runs but in the directory
+     * "--cache-dir" names, which removing empties, so there is no
      * clear-cache command: the overview does not list one and its page is
      * an unknown command's.
      */

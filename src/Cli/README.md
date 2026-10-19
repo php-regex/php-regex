@@ -79,6 +79,7 @@ Global options:
 | `--no-visuals` | Disable banner and section visuals |
 | `--php-version <ver>` | Target PHP version for validation |
 | `--pcre-version <ver>` | Target PCRE2 release for validation |
+| `--cache-dir <dir>` | Keep the Unicode class scans in `<dir>` for the next run |
 
 `lint` reads defaults from `regex.json` or `regex.dist.json` in the working directory — paths, excludes, extraction interop, which checks run. Command-line options win; `--output <file>` writes the report to a file.
 

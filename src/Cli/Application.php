@@ -17,6 +17,7 @@ use PHPRegex\Cli\Command\CommandInterface;
 use PHPRegex\Cli\Command\HelpCommand;
 use PHPRegex\Cli\Command\JsonCommandInterface;
 use PHPRegex\Parser\Engine\IniFlag;
+use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\NearMiss;
 
@@ -89,6 +90,10 @@ final class Application
         $args = $parsed->args;
 
         $this->configureOutput($options);
+
+        // What the engine answers about Unicode classes, kept between runs
+        // where asked; forked lint workers inherit the directory.
+        ClassSetProvider::persistIn($options->cacheDirectory);
 
         // The command's own options are not read yet: whether JSON was asked
         // for is read from the whole command line.

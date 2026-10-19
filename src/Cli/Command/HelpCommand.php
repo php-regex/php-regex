@@ -141,6 +141,7 @@ final class HelpCommand extends AbstractCommand
             ['--no-visuals', 'Disable banner and section visuals'],
             ['--php-version <ver>', 'Target PHP version for validation'],
             ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+            ['--cache-dir <dir>', 'Keep the Unicode class scans in <dir> for the next run'],
             ['--help', 'Display this help message'],
         ];
         $this->renderTableSection($output, 'Global Options', $globalOptions, fn (string $value): string => $this->formatOption($output, $value));
