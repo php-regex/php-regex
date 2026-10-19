@@ -90,7 +90,7 @@ final class LintSeverityContractTest extends TestCase
     public function test_problem_severity_follows_the_rule_severity(string $pattern, string $issueId, string $type, LintSeverity $severity, array $lintRules): void
     {
         $service = new LintService(new AnalysisService(RegexParser::create(), lintRules: $lintRules), new PatternSourceCollection([]));
-        $report = $service->analyze([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')], new LintRequest(['.'], [], 0, lintRules: $lintRules), null);
+        $report = $service->analyze([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')], new LintRequest(['.'], [], 0), null);
 
         $severities = [];
         foreach ($report->results as $result) {
@@ -174,7 +174,7 @@ final class LintSeverityContractTest extends TestCase
         // The Diagnostic carries the one mapping: no Style or Perf survives
         // the pipeline, they are infos like Info.
         $service = new LintService(new AnalysisService(RegexParser::create(), lintRules: ['unicode.shorthandWithoutU' => true]), new PatternSourceCollection([]));
-        $report = $service->analyze([new PatternOccurrence('/\w/', 'test.php', 1, 'preg_match')], new LintRequest(['.'], [], 0, lintRules: ['unicode.shorthandWithoutU' => true]), null);
+        $report = $service->analyze([new PatternOccurrence('/\w/', 'test.php', 1, 'preg_match')], new LintRequest(['.'], [], 0), null);
 
         $severities = [];
         foreach ($report->results as $result) {
