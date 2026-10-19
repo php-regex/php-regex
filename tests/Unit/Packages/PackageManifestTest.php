@@ -178,6 +178,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',
             'Parser\Hir\ClassSetProvider', 'Parser\Hir\Utf8', 'Parser\Text\Ascii', 'Parser\Text\Bytes',
             'Parser\Engine\IniFlag', 'Parser\Syntax\PatternParser',
+            // The verb the engine puts in front of the pattern, which the
+            // witness replays swap for their own run of verbs.
+            'Parser\Engine\NoJit',
         ],
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
