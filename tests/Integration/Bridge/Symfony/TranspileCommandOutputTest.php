@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\TranspileCommand;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -170,7 +171,44 @@ final class TranspileCommandOutputTest extends TestCase
     }
 
     /**
-     * @param array<string, string> $input
+     * As the CLI: --target with no value is a usage error, where it fell
+     * back to JavaScript in silence.
+     */
+    #[Test]
+    public function test_a_target_option_without_a_value_is_a_usage_error(): void
+    {
+        [$status, $display] = $this->transpile(['pattern' => '/a/', '--target' => null]);
+
+        $this->assertSame(2, $status);
+        $this->assertStringContainsString('Missing value for --target.', $display);
+        $this->assertStringNotContainsString('Transpilation Result', $display);
+    }
+
+    #[Test]
+    public function test_json_target_option_without_a_value_prints_the_usage_envelope(): void
+    {
+        [$status, $display] = $this->transpile(['pattern' => '/a/', '--target' => null, '--format' => 'json']);
+
+        $this->assertSame(2, $status);
+        $document = json_decode($display, true, flags: \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($document);
+        $this->assertSame('Missing value for --target.', $document['error'] ?? null);
+        $this->assertSame('usage', $document['stage'] ?? null);
+    }
+
+    /**
+     * The help names every target the transpiler takes, aliases included.
+     */
+    #[Test]
+    public function test_the_target_option_lists_every_target(): void
+    {
+        $description = (new TranspileCommand(Regex::create()))->getDefinition()->getOption('target')->getDescription();
+
+        $this->assertSame('Target dialect ('.implode(', ', (new TargetRegistry())->listTargets()).')', $description);
+    }
+
+    /**
+     * @param array<string, string|null> $input
      *
      * @return array{int, string}
      */

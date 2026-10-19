@@ -46,7 +46,7 @@ final class TranspileCommand extends Command
     {
         $this
             ->addArgument('pattern', InputArgument::REQUIRED, 'The PCRE pattern to transpile.')
-            ->addOption('target', 't', InputOption::VALUE_OPTIONAL, 'Target dialect (js, python)', 'js')
+            ->addOption('target', 't', InputOption::VALUE_OPTIONAL, 'Target dialect ('.implode(', ', (new TargetRegistry())->listTargets()).')', 'js')
             ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Output format (console, json)', 'console');
     }
 
@@ -67,9 +67,10 @@ final class TranspileCommand extends Command
             return $this->fail($output, $io, $json, 'Pattern must be a string.', JsonDocument::STAGE_USAGE, Command::INVALID);
         }
 
+        // A bare --target holds no value: as the CLI, a usage error.
         $target = $input->getOption('target');
         if (!\is_string($target)) {
-            $target = 'js'; // Default fallback if something weird happens, though definition says default is 'js'
+            return $this->fail($output, $io, $json, 'Missing value for --target.', JsonDocument::STAGE_USAGE, Command::INVALID);
         }
 
         try {
