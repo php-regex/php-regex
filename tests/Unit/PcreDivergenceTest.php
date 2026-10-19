@@ -42,7 +42,7 @@ final class PcreDivergenceTest extends TestCase
     public function test_validate_reports_the_code_and_offset_pcre_reports(string $pattern, string $release, string $message, int $offset, ErrorCode $code): void
     {
         $this->assertArrayHasKey($message, PcreMessageCodes::CODES, \sprintf('"%s" is not a message the code map knows.', $message));
-        $this->assertContains($code->value, PcreMessageCodes::CODES[$message], \sprintf('%s does not name "%s".', $code->value, $message));
+        $this->assertContains($code->value, PcreMessageCodes::codesFor($message, $release), \sprintf('%s does not name "%s" on %s.', $code->value, $message, $release));
 
         if (self::runtimePin() === $release) {
             $this->assertSame(

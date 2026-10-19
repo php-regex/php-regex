@@ -88,7 +88,7 @@ final class VersionConditionValidationTest extends TestCase
         $this->assertArrayHasKey($pcre['message'], PcreMessageCodes::CODES, \sprintf('Oracle: %s, "%s" is not a message the code map knows.', $pattern, $pcre['message']));
         if ('10.49' === self::runningRelease()) {
             $this->assertSame($offset, $pcre['offset'], \sprintf('Oracle: %s (%s).', $pattern, $pcre['message']));
-            $this->assertContains($code->value, PcreMessageCodes::CODES[$pcre['message']], \sprintf('Oracle: %s does not name "%s".', $code->value, $pcre['message']));
+            $this->assertContains($code->value, PcreMessageCodes::codesFor($pcre['message'], '10.49'), \sprintf('Oracle: %s does not name "%s".', $code->value, $pcre['message']));
         }
 
         $result = Regex::create(['cache' => new NullCache()])->validate($pattern);

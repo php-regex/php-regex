@@ -24,7 +24,9 @@ namespace PHPRegex\Tests\TestUtils;
  *
  * The keys are the texts PHP 8.4 with PCRE2 10.49 prints between
  * "Compilation failed: " and " at offset N". A message listed with no code
- * is one whose code is still to be decided.
+ * is one whose code is still to be decided. A code that names what only
+ * some releases report under its message is held to them in RELEASES:
+ * codesFor() gives the codes a message allows on one release.
  */
 final class PcreMessageCodes
 {
@@ -171,6 +173,40 @@ final class PcreMessageCodes
         'branch too long in variable-length lookbehind assertion' => ['regex.lookbehind.too_long'],
         'lookbehind is too complicated' => ['regex.lookbehind.too_complex'],
     ];
+
+    /**
+     * The codes of a message that name what only some releases report under
+     * it: the first and the last of those releases, null for no bound.
+     */
+    public const RELEASES = [
+        // Up to 10.33 a lookbehind too long is "not fixed length" too.
+        'lookbehind assertion is not fixed length' => ['regex.lookbehind.too_long' => [null, '10.33']],
+        // The extended classes and the lists of groups arrived in 10.45; from
+        // 10.47 an alphabetic name the pattern ends with misses its ")".
+        'missing closing parenthesis' => ['regex.extended_class.unclosed_paren' => ['10.45', null], 'regex.verb.unclosed' => ['10.47', null]],
+        'missing terminating ] for character class' => ['regex.extended_class.unclosed' => ['10.45', null]],
+        'unmatched closing parenthesis' => ['regex.extended_class.unmatched_close' => ['10.45', null]],
+        'reference to non-existent subpattern' => ['regex.group_list.missing_group' => ['10.45', null]],
+        'a relative value of zero is not allowed' => ['regex.group_list.relative_zero' => ['10.45', null]],
+    ];
+
+    /**
+     * The codes that may report the message on a PCRE2 release.
+     *
+     * @return list<string>
+     */
+    public static function codesFor(string $message, string $release): array
+    {
+        $codes = [];
+        foreach (self::CODES[$message] ?? [] as $code) {
+            [$first, $last] = self::RELEASES[$message][$code] ?? [null, null];
+            if ((null === $first || version_compare($release, $first, '>=')) && (null === $last || version_compare($release, $last, '<='))) {
+                $codes[] = $code;
+            }
+        }
+
+        return $codes;
+    }
 
     /**
      * The message and offset of PHP's "Compilation failed" warning, or the

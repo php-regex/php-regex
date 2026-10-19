@@ -153,7 +153,7 @@ final class Pcre2ReleaseOutcomesTest extends TestCase
         }
 
         $message = self::message($number, $release);
-        $codes = PcreMessageCodes::CODES[$message] ?? [];
+        $codes = PcreMessageCodes::codesFor($message, $release);
         if ([] !== $codes && !\in_array($result->errorCode?->value, $codes, true)) {
             return $context.\sprintf('code %s, where PCRE2 reports "%s" (%s)', $result->errorCode->value ?? 'none', $message, implode(', ', $codes));
         }

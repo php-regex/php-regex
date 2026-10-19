@@ -478,7 +478,7 @@ final class ErrorCodeSpecificityTest extends TestCase
 
         $this->assertArrayHasKey($message, PcreMessageCodes::CODES, \sprintf('%s (%s): PCRE message "%s" is missing from the message table.', $id, $pattern, $message));
 
-        $allowed = PcreMessageCodes::CODES[$message];
+        $allowed = PcreMessageCodes::codesFor($message, self::runtimePin());
 
         $this->assertNotSame([], $allowed, \sprintf('%s (%s): no code is decided yet for PCRE message "%s".', $id, $pattern, $message));
 
