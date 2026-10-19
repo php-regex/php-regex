@@ -166,6 +166,36 @@ final class ClassEscapeStartingRangeTest extends TestCase
         yield 'type, then a quoted bracket, PCRE2 10.45' => ['pattern' => '/[\d-\Q]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
     }
 
+    /**
+     * Up to PCRE2 10.44 a hyphen after a range that ended is a member, a
+     * quote between them or not: "[a-z\E-\pL]" holds a, z, "-" and the
+     * letters, and "([a-z\E-\pL]" misses its ")" (pcre2test 10.32 to 10.49:
+     * "missing closing parenthesis at offset 12").
+     */
+    #[Test]
+    #[DataProvider('provideHyphensAfterARange')]
+    public function test_a_hyphen_after_a_range_and_a_quote_is_a_member(string $pattern, string $php, string $release, ErrorCode $code, int $offset): void
+    {
+        $result = self::parser($php, $release)->validate($pattern);
+
+        $this->assertSame($code, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, php: string, release: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideHyphensAfterARange(): iterable
+    {
+        foreach ([['7.3', '10.32'], ['8.2', '10.40'], ['8.4', '10.44'], ['8.4', '10.45'], ['8.5', '10.49']] as [$php, $release]) {
+            yield \sprintf('range, a quote end, a hyphen and a property, PCRE2 %s', $release) => ['pattern' => '/([a-z\E-\pL]/'.('7.3' === $php ? 'X' : ''), 'php' => $php, 'release' => $release, 'code' => ErrorCode::GroupUnclosed, 'offset' => 12];
+        }
+
+        yield 'range, an empty quoted run, a hyphen, a quote end and a property' => ['pattern' => '/([a-z\Q\E-\E\pL]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::GroupUnclosed, 'offset' => 16];
+        yield 'range of escapes, a quote end, a hyphen and a property' => ['pattern' => '/([a-\x{7a}\E-\pL]/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::GroupUnclosed, 'offset' => 17];
+        yield 'range, a quote end, a hyphen and a property, class left open' => ['pattern' => '/[a-z\E-\pL/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 10];
+    }
+
     private static function parser(string $php, string $release): RegexParser
     {
         return RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false]);

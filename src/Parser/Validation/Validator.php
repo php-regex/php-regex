@@ -480,11 +480,12 @@ final class Validator extends AbstractNodeVisitor
                     break;
                 }
 
-                // A "-" right after a range that ended is a member: "[a-c-\pL]".
+                // A "-" right after a range that ended is a member, a quote
+                // between them or not: "[a-c-\pL]", "[a-c\E-\pL]".
                 $endsRange = $afterRange;
                 $quote = \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true);
                 $afterRange = (TokenType::Range === $token->type && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
-                $rangeEnded = $endsRange && !$quote;
+                $rangeEnded = $quote ? $rangeEnded || $endsRange : $endsRange;
                 $classEscapeThenQuote = $quoteKeepsHyphen && $quote && ($classEscape || $classEscapeThenQuote);
                 $classEscape = \in_array($token->type, [TokenType::CharType, TokenType::PosixClass, TokenType::UnicodeProp], true);
 
