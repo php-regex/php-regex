@@ -912,7 +912,9 @@ final class Lexer
             // Before PCRE2 10.33 no verb has a lowercase name.
             default => $this->readsAlphabeticAssertions ? null : \sprintf('Invalid or unsupported PCRE verb: "%s".', $name),
         };
-        if (null !== $why) {
+        // Where a name is due, as after "(?<", PCRE wants it on the "(" and
+        // reads no verb: the parser refuses it there.
+        if (null !== $why && !$this->followsNameOpener($this->position)) {
             // Before PCRE2 10.33 no name is alphabetic: as a condition PCRE
             // wants a group name on its "*", elsewhere a verb name ends with
             // its run of letters, and is not one PCRE knows. From 10.33 a
@@ -2103,12 +2105,30 @@ final class Lexer
     private function refuseVerbName(string $verb, int $start, array $tokens): void
     {
         $name = substr($verb, 2, -1);
-        if ('' === $name) {
+        if ('' === $name || $this->followsNameOpener($start)) {
             return;
         }
 
-        if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $start)) {
-            throw self::conditionWantsAName($start + 1, $this->pattern);
+        // As the condition, 10.32 wants a name on the "*" right after "(?(";
+        // after a callout the condition must be an assertion, which the
+        // parser refuses on the "(" of the verb, before its name is read.
+        // Under "x" a space or a line break between them reads nothing.
+        $at = $start;
+        $last = $tokens[\count($tokens) - 1] ?? null;
+        while ($this->extendedMode && null !== $last && TokenType::Literal === $last->type
+            && '' === trim($last->value, " \t\n\r\f\v") && $last->end() === $at) {
+            array_pop($tokens);
+            $at = $last->position;
+            $last = $tokens[\count($tokens) - 1] ?? null;
+        }
+
+        if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $at)) {
+            $previous = $tokens[\count($tokens) - 1] ?? null;
+            if (null !== $previous && TokenType::GroupModifierOpen === $previous->type && $at === $start) {
+                throw self::conditionWantsAName($start + 1, $this->pattern);
+            }
+
+            return;
         }
 
         // From 10.33 the name is the run of word characters, held to the
@@ -2192,6 +2212,20 @@ final class Lexer
         }
 
         return \strlen($settings);
+    }
+
+    /**
+     * Whether $position stands where PCRE reads a name: after "(?<", "(?'",
+     * "(?P<", a call by name, "(?&" or "(?P>", a reference, "(?P=", or the
+     * name of a condition, "(?(", "(?(<", "(?('", "(?(R&", and the start of
+     * a name, which a "(" ends.
+     */
+    private function followsNameOpener(int $position): bool
+    {
+        $window = min($position, 2 * self::NAME_LENGTH);
+        $before = substr($this->pattern, $position - $window, $window);
+
+        return 1 === LibraryPcre::match('/\(\?(?:[<\'&]|P[<>=]|\((?:[<\']|R&)?)\w*+\z/', $before);
     }
 
     private static function conditionWantsAName(int $offset, string $pattern): LexerException

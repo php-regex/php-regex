@@ -2501,11 +2501,6 @@ final class Validator extends AbstractNodeVisitor
                     $this->validateLookbehindBranchLength($node, $length, true);
                 }
 
-                // Before PCRE2 10.35 a "(?(DEFINE)" group can end the
-                // measure: the branches after it are not measured.
-                if ($this->lookbehindLength->ended()) {
-                    break;
-                }
             }
         } finally {
             $this->measuredLookbehind = $around;

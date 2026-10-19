@@ -176,6 +176,19 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'verb name of 129 characters' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).'g)/', 'releases' => ['10.44', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
         yield 'verb name of 128 characters' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).')/', 'releases' => ['10.44', '10.49'], 'offset' => 130, 'code' => ErrorCode::VerbInvalid];
         yield 'verb name of 34 characters' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh_)/', 'releases' => ['10.33', '10.43'], 'offset' => 37, 'code' => ErrorCode::GroupNameTooLong];
+        // Where a name is due, PCRE wants it on the "(" of a verb, before
+        // it reads the verb.
+        yield 'verb where a group name is due' => ['pattern' => '/(?<(*1))/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
+        yield 'verb where a call name is due' => ['pattern' => '/(?&(*abcdefghijklmnopqrstuvwxyzABCDEFGH))/', 'releases' => ['10.32', '10.33', '10.40'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
+        yield 'alphabetic assertion where a group name is due' => ['pattern' => '/(?<(*pla:a))/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
+        yield 'substring scan where a group name is due' => ['pattern' => '/(?<(*scs:a))/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
+        // After a callout the condition must be an assertion, refused on the
+        // "(" of the verb.
+        yield 'verb as a condition after a callout' => ['pattern' => '/(?(?C1)(*ACCEPT)a)/', 'releases' => ['10.32'], 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'verb as a condition after a callout and a space under x' => ['pattern' => '/(?(?C1) (*1)a)/x', 'releases' => ['10.32', '10.33'], 'offset' => 8, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'verb as a condition after a space under x' => ['pattern' => '/(?( (*1))a)/x', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::ConditionalInvalid];
+        yield 'verb inside a condition name' => ['pattern' => '/(?(<a(*1))a)/', 'releases' => ['10.32'], 'offset' => 5, 'code' => ErrorCode::GroupNameUnterminated];
+        yield 'verb name opening with a digit as a condition after a callout' => ['pattern' => '/(?(?C1)(*1)a)/', 'releases' => ['10.32'], 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
         // As a condition, 10.32 wants a group name on the "*" of any verb.
         yield 'verb as a condition' => ['pattern' => '/(?(*ACCEPT)xxx)/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::ConditionalInvalid];
         yield 'substring scan as a condition' => ['pattern' => '/(\w++)=(?(*scs:(1)(abc))pqr|xyz)(\w++)/', 'releases' => ['10.32'], 'offset' => 10, 'code' => ErrorCode::ConditionalInvalid];
@@ -308,8 +321,11 @@ final class BeforePcre2Ten39Test extends TestCase
      * Up to 10.33 a lookahead met while a lookbehind is measured is skipped
      * whole: a lookbehind inside it is never measured. Up to 10.34 a
      * (?(DEFINE)...) group in a lookbehind is measured as a group, its
-     * first item skipped: when that item opens a group, the end of the
-     * DEFINE group ends the lookbehind, and what follows it is not measured.
+     * first item skipped. When that item opens a group, PCRE then reads
+     * each later ")" one level up, which the library does not follow: it
+     * refuses "(?<=(?(DEFINE)(a))b+)", which 10.34 compiles, as 10.35 does,
+     * and reports "(?<=(?<=(?(DEFINE)(a))d+)b)" on the inner lookbehind, at
+     * 4, where 10.34 reports the outer one, at 0.
      *
      * @param array<string, int|null> $outcomes
      */
@@ -362,9 +378,12 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'repeat after the group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(a)b+))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
         yield 'repeated group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(a)+))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
         yield 'counted group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(a){2}))/', 'outcomes' => ['10.34' => null, '10.35' => null]];
-        yield 'repeat after a DEFINE group opened by a group' => ['pattern' => '/(?<=(?(DEFINE)(a))b+)/', 'outcomes' => ['10.32' => null, '10.34' => null, '10.35' => 0]];
-        yield 'branch after a DEFINE group opened by a group' => ['pattern' => '/(?<=(?(DEFINE)(a))b|c+)/', 'outcomes' => ['10.34' => null, '10.35' => 0]];
-        yield 'repeat after a DEFINE group opened by a non-capturing group' => ['pattern' => '/(?<=(?(DEFINE)(?:a))b*)/', 'outcomes' => ['10.34' => null, '10.35' => 0]];
+        yield 'option setting opening a DEFINE group before a repeat' => ['pattern' => '/(?<=(?(DEFINE)(?i))b+)/', 'outcomes' => ['10.32' => 0, '10.34' => 0, '10.35' => 0]];
+        yield 'option unsetting opening a DEFINE group before a repeat' => ['pattern' => '/(?<=(?(DEFINE)(?-i)a)b+)/', 'outcomes' => ['10.32' => 0, '10.34' => 0]];
+        yield 'repeat after a group holding a DEFINE group' => ['pattern' => '/(?<=(?:(?(DEFINE)(a))d+)b)/', 'outcomes' => ['10.33' => 0]];
+        yield 'repeat beside a call to a lookbehind holding a DEFINE group' => ['pattern' => '/(?<=(?1)c+)((?<=(?(DEFINE)(a)))b)/', 'outcomes' => ['10.33' => 0]];
+        yield 'branch beside a call to a lookbehind holding a DEFINE group' => ['pattern' => '/(?<=(?1)|c+)((?<=(?(DEFINE)(a)))b)/', 'outcomes' => ['10.34' => 0]];
+        yield 'unbounded second branch of a DEFINE group opened by a group' => ['pattern' => '/(?<=(?(DEFINE)(a)|x+))b/', 'outcomes' => ['10.34' => 0]];
         yield 'repeat after a DEFINE group opened by a character' => ['pattern' => '/(?<=(?(DEFINE)a)b*)/', 'outcomes' => ['10.34' => 0, '10.35' => 0]];
         yield 'DEFINE group opening a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(?(DEFINE)(.*))))/', 'outcomes' => ['10.34' => 0, '10.35' => null]];
         yield 'DEFINE group before the lookbehind' => ['pattern' => '/(?(DEFINE)(?<foo>bar))(?<![-a-z0-9])word/', 'outcomes' => ['10.32' => null, '10.35' => null]];
@@ -391,6 +410,12 @@ final class BeforePcre2Ten39Test extends TestCase
         $measured = self::parser('10.34')->validate('/(?<=(?(DEFINE)ab|c))/');
         $this->assertSame(7, $measured->offset);
         $this->assertSame(ErrorCode::DefineTooManyBranches, $measured->errorCode);
+
+        // Past a group, "|xy" is read as a branch of the lookbehind: one
+        // branch of its own length, bounded.
+        $branches = self::parser('10.34')->validate('/(?<=(?(DEFINE)(a)|xy))/');
+        $this->assertSame(7, $branches->offset);
+        $this->assertSame(ErrorCode::DefineTooManyBranches, $branches->errorCode);
     }
 
     #[Test]

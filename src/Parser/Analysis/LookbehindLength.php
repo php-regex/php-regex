@@ -98,12 +98,6 @@ final class LookbehindLength
     private int $recursions = 0;
 
     /**
-     * Whether the measure of the lookbehind ended early: before PCRE2 10.35,
-     * at the end of a "(?(DEFINE)" group opened by a group.
-     */
-    private bool $ended = false;
-
-    /**
      * @param bool                                                               $unicode        whether lengths count characters
      * @param bool                                                               $variableLength whether the PCRE2 judged (10.43+) measures a group repeated zero times as empty
      * @param (\Closure(GroupNode, array<int, true>): void)|null                 $onLookaround   told of a lookaround met inside a branch
@@ -137,7 +131,6 @@ final class LookbehindLength
     {
         if ($outermost) {
             $this->called = [];
-            $this->ended = false;
         }
 
         $id = spl_object_id($lookbehind);
@@ -158,16 +151,6 @@ final class LookbehindLength
             $this->measuredLookbehinds[$id] = $this->called;
         }
         $this->called += $calledAround;
-    }
-
-    /**
-     * Whether the measure of the lookbehind ended before its end, as PCRE2
-     * before 10.35 ends it at a "(?(DEFINE)" group opened by a group: what
-     * follows is not measured.
-     */
-    public function ended(): bool
-    {
-        return $this->ended;
     }
 
     /**
@@ -197,7 +180,7 @@ final class LookbehindLength
                 $max = null === $childMax ? null : $max + $childMax;
 
                 // PCRE stops measuring at the first item it cannot bound.
-                if (null === $max || $this->ended) {
+                if (null === $max) {
                     break;
                 }
             }
@@ -219,7 +202,7 @@ final class LookbehindLength
                 $min = min($min, $altMin);
                 $max = null === $altMax ? null : max($max, $altMax);
 
-                if (null === $max || $this->ended) {
+                if (null === $max) {
                     break;
                 }
             }
@@ -358,9 +341,14 @@ final class LookbehindLength
      * class has no length; where the body is empty, the measure runs past
      * its end; where a quantifier follows the item, it repeats nothing, and
      * only a count leaves a length. Where the item opens a group, a DEFINE
-     * group among them, the body of that group is measured as the DEFINE group, what follows it in the
-     * branch as items of the lookbehind, and the end of the DEFINE group
-     * ends the lookbehind: nothing after it is measured.
+     * group among them, the body of that group is measured in its place.
+     *
+     * There PCRE then reads every later ")" one level up, so that the end of
+     * the DEFINE group closes what holds it, and ends the lookbehind early
+     * where the DEFINE group stands in it directly: what follows it there
+     * goes unmeasured, as in "(?<=(?(DEFINE)(a))b+)", which 10.34 compiles.
+     * That reading is not followed: what follows is measured, and such a
+     * pattern refused.
      *
      * @param array<int, true> $expanding
      *
@@ -380,30 +368,38 @@ final class LookbehindLength
         }
         $item = $first instanceof QuantifierNode ? $first->node : $first;
 
+        // What is left of the first item once it is skipped.
+        $head = [0, 0];
         if ($item instanceof GroupNode || $item instanceof DefineNode) {
             [$min, $max] = $this->of($item instanceof GroupNode ? $item->child : $item->content, $expanding);
-            [$min, $max] = $first instanceof QuantifierNode
+            $head = $first instanceof QuantifierNode
                 ? (null === $count || null === $max ? [0, null] : [$min * $count, $max * $count])
                 : [$min, $max];
-            if (null !== $max) {
-                [$restMin, $restMax] = $this->of($rest, $expanding);
-                [$min, $max] = [$min + $restMin, null === $restMax ? null : $max + $restMax];
-            }
-            $this->ended = true;
-
-            return [$min, $max];
+        } elseif (null === $item || $item instanceof CharClassNode || ($item instanceof LiteralNode && '' === $item->value)
+            || ($first instanceof QuantifierNode && null === $count)) {
+            return [0, null];
+        } elseif ($item instanceof LiteralNode && !$first instanceof QuantifierNode) {
+            // A run of characters, past its first one.
+            $length = $this->unicode ? mb_strlen($item->value, 'UTF-8') : \strlen($item->value);
+            $head = [$length - 1, $length - 1];
         }
 
-        if (null === $item || $item instanceof CharClassNode || ($item instanceof LiteralNode && '' === $item->value)
-            || ($first instanceof QuantifierNode && null === $count)) {
+        if (null === $head[1]) {
             return [0, null];
         }
 
-        // What is left of a run of characters after its first one.
-        $head = [0, 0];
-        if ($item instanceof LiteralNode && !$first instanceof QuantifierNode) {
-            $length = $this->unicode ? mb_strlen($item->value, 'UTF-8') : \strlen($item->value);
-            $head = [$length - 1, $length - 1];
+        // Past a group, the later branches of the DEFINE group are read as
+        // branches of the lookbehind: each must be bounded, whatever its length.
+        if ($item instanceof GroupNode || $item instanceof DefineNode) {
+            foreach (\array_slice($branches, 1) as $branch) {
+                if (null === $this->of($branch, $expanding)[1]) {
+                    return [0, null];
+                }
+            }
+
+            [$restMin, $restMax] = $this->of($rest, $expanding);
+
+            return [$head[0] + $restMin, null === $restMax ? null : $head[1] + $restMax];
         }
 
         [$min, $max] = [\PHP_INT_MAX, 0];
