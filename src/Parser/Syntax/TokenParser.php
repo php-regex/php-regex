@@ -1091,6 +1091,12 @@ final class TokenParser
             );
         }
 
+        // PCRE measures the name before it looks for what closes it.
+        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
+        if (null !== $tooLong) {
+            throw $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
+        }
+
         if ($nameEnd === $nameStart) {
             throw $this->parserException(
                 \sprintf('Group name expected after \k%s at position %d.', $opener, $nameStart),
@@ -1459,9 +1465,17 @@ final class TokenParser
         // PCRE2 10.43.
         $nameStart = $start + 3 + ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($this->pattern, " \t", $start + 3) : 0);
 
-        return 1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart)
-            ? ErrorCode::BackrefInvalidSyntax
-            : $this->groupNames->nameFault($nameStart, $position);
+        if (1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart)) {
+            return ErrorCode::BackrefInvalidSyntax;
+        }
+
+        // PCRE measures the name before it looks for what closes it.
+        if (!$this->groupNames->startsWithDigit($nameStart)
+            && $position === $this->groupNames->tooLongAt($nameStart, $this->groupNames->invalidNameOffset($nameStart))) {
+            return ErrorCode::GroupNameTooLong;
+        }
+
+        return $this->groupNames->nameFault($nameStart, $position);
     }
 
     /**
@@ -1472,8 +1486,25 @@ final class TokenParser
      */
     private function guardReferenceNameLength(string $reference, int $start): void
     {
-        if (1 === LibraryPcre::match('/^\\\\[gk][<{\'][ \t]*+([^\d+\- \t>}\'][^ \t>}\']*+)/', $reference, $matches, \PREG_OFFSET_CAPTURE)) {
-            $this->guardNameLength($matches[1][0], $start + $matches[1][1]);
+        if (1 !== LibraryPcre::match('/^\\\\[gk]([<{\'])/', $reference, $matches)) {
+            return;
+        }
+
+        // Only braces take spaces and tabs before the name, from PCRE2 10.43;
+        // the name ends where the characters a name holds end.
+        $nameStart = $start + 3;
+        if ('{' === $matches[1] && $this->supports(PcreFeature::PaddedBracedEscapes)) {
+            $nameStart += strspn($this->pattern, " \t", $nameStart);
+        }
+
+        if ($this->groupNames->startsWithDigit($nameStart)) {
+            return;
+        }
+
+        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
+        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
+        if (null !== $tooLong) {
+            throw $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
         }
     }
 
@@ -1482,12 +1513,9 @@ final class TokenParser
      */
     private function guardNameLength(string $name, int $nameStart): void
     {
-        if (\strlen($name) > $this->groupNames->maxNameLength()) {
-            throw $this->parserException(
-                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->groupNames->maxNameLength()),
-                ErrorCode::GroupNameTooLong,
-                $this->groupNames->tooLongAt($nameStart, $nameStart + \strlen($name)),
-            );
+        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameStart + \strlen($name));
+        if (null !== $tooLong) {
+            throw $this->groupNames->tooLongError($nameStart, $nameStart + \strlen($name), $tooLong);
         }
     }
 
@@ -1532,8 +1560,16 @@ final class TokenParser
             }
 
             $position += \strlen($matches[0]);
+        } elseif ($this->groupNames->startsWithDigit($position)) {
+            // A digit first is refused there, before any padding.
+            return $this->groupNames->invalidNameOffset($position);
         } else {
+            $nameStart = $position;
             $position = $this->groupNames->invalidNameOffset($position);
+            $tooLong = $this->groupNames->tooLongAt($nameStart, $position);
+            if (null !== $tooLong) {
+                return $tooLong;
+            }
         }
 
         return $position + strspn($this->pattern, $blanks, $position);
@@ -2606,11 +2642,13 @@ final class TokenParser
      */
     private function readReturnedGroups(): ?array
     {
-        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) || !$this->stream->check(TokenType::GroupOpen)) {
+        // Whatever the lexer made of the "(" and what follows it, as "(?:".
+        $open = $this->stream->current()->position;
+        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) || $this->stream->isAtEnd() || '(' !== ($this->pattern[$open] ?? '')) {
             return null;
         }
 
-        [$groups, $at] = $this->readGroupList($this->stream->current()->position + 1);
+        [$groups, $at] = $this->readGroupList($open + 1);
 
         while (!$this->stream->isAtEnd() && $this->stream->current()->position < $at) {
             $this->stream->advance();
@@ -3193,6 +3231,13 @@ final class TokenParser
         if ($this->stream->matchLiteral('&')) {
             $name = $this->groupNames->read(false);
 
+            // The name is closed by the ")" of the condition.
+            if (!$this->stream->check(TokenType::GroupClose)) {
+                $position = $this->stream->current()->position;
+
+                throw $this->parserException(\sprintf('Missing ")" to close the condition name at position %d.', $position), ErrorCode::GroupNameUnterminated, $position);
+            }
+
             return new SubroutineNode('R&'.$name, '', $startPosition, $this->stream->previous()->position);
         }
 
@@ -3299,7 +3344,7 @@ final class TokenParser
 
         // Under /u no name starts with a digit of any script, as in "(?(٣)":
         // PCRE refuses the digit, past it from PCRE2 10.47.
-        if ($this->unicodeMode && 1 === LibraryPcre::match('/\G\p{Nd}/u', $this->pattern, $matches, 0, $startPosition)) {
+        if ($this->unicodeMode && $this->groupNames->startsWithDigit($startPosition)) {
             $position = $this->groupNames->invalidNameOffset($startPosition);
 
             throw $this->parserException(
@@ -3344,17 +3389,13 @@ final class TokenParser
     private function conditionNameError(int $nameStart): ?ParserException
     {
         $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
-        $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
-        if ($nameEnd === $nameStart || 1 === LibraryPcre::match($digit, $this->pattern, $matches, 0, $nameStart)) {
+        if ($nameEnd === $nameStart || $this->groupNames->startsWithDigit($nameStart)) {
             return null;
         }
 
-        if ($nameEnd - $nameStart > $this->groupNames->maxNameLength()) {
-            return $this->parserException(
-                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $nameEnd - $nameStart, $this->groupNames->maxNameLength()),
-                ErrorCode::GroupNameTooLong,
-                $this->groupNames->tooLongAt($nameStart, $nameEnd),
-            );
+        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
+        if (null !== $tooLong) {
+            return $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
         }
 
         if (')' === ($this->pattern[$nameEnd] ?? '')) {
@@ -3934,51 +3975,52 @@ final class TokenParser
     }
 
     /**
-     * parses a subroutine name consisting of alphanumeric characters and underscores
+     * Reads the name of "(?&name)" or "(?P>name)" as PCRE2's read_name()
+     * does: a digit first is refused, then the characters a name holds are
+     * read, the name measured, an empty one refused, and, up to PCRE2 10.46,
+     * the ")" that must close it looked for right after it. From 10.47 the
+     * name is read alone: the caller looks for the groups it returns and the
+     * ")".
      */
     private function parseSubroutineName(): string
     {
         $nameStart = $this->stream->current()->position;
-        $name = '';
-        while (
-            !$this->stream->check(TokenType::GroupClose)
-            && !$this->stream->isAtEnd()
-            // "(?&name(<g>))": the groups the call returns, PCRE2 10.47 on.
-            && !('' !== $name && $this->stream->check(TokenType::GroupOpen) && $this->supports(PcreFeature::CallsReturnCaptureGroups))
-        ) {
-            $isLiteral = $this->stream->check(TokenType::Literal) || $this->stream->check(TokenType::LiteralEscaped);
-            $char = $this->stream->current()->value;
-            if (!$isLiteral || 1 !== LibraryPcre::match('/^[\p{L}\p{Nd}_]$/u', $char)) {
-                throw $this->subroutineNameError($name, $nameStart, $char);
-            }
+        $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
 
-            $name .= $char;
+        if ($this->groupNames->startsWithDigit($nameStart)) {
+            throw $this->parserException(
+                \sprintf('Invalid subroutine name at position %d: a group name must not start with a digit.', $nameEnd),
+                ErrorCode::GroupNameInvalid,
+                $nameEnd,
+            );
+        }
+
+        $tooLong = $this->groupNames->tooLongAt($nameStart, $nameEnd);
+        if (null !== $tooLong) {
+            throw $this->groupNames->tooLongError($nameStart, $nameEnd, $tooLong);
+        }
+
+        if ($nameEnd === $nameStart) {
+            throw $this->parserException(
+                \sprintf('Expected subroutine name at position %d.', $nameStart),
+                ErrorCode::GroupNameExpected,
+                $nameStart,
+            );
+        }
+
+        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups) && ')' !== ($this->pattern[$nameEnd] ?? '')) {
+            throw $this->parserException(
+                \sprintf('Missing ")" to close subroutine call: the name ends at position %d.', $nameEnd),
+                ErrorCode::GroupNameUnterminated,
+                $nameEnd,
+            );
+        }
+
+        while (!$this->stream->isAtEnd() && $this->stream->current()->position < $nameEnd) {
             $this->stream->advance();
         }
-        if ('' === $name) {
-            throw $this->parserException(
-                'Expected subroutine name at position '.$this->stream->current()->position,
-                ErrorCode::GroupNameExpected,
-                $this->stream->current()->position,
-            );
-        }
 
-        // A name that starts with a digit names no group: PCRE stops past the
-        // digit.
-        if (1 === LibraryPcre::match('/^\p{Nd}/u', $name)) {
-            throw $this->parserException(
-                \sprintf(
-                    'Invalid group name "%s": names must contain only word characters and must not start with a digit.',
-                    $name,
-                ),
-                ErrorCode::GroupNameInvalid,
-                $this->groupNames->invalidNameOffset($nameStart),
-            );
-        }
-
-        $this->guardNameLength($name, $nameStart);
-
-        return $name;
+        return substr($this->pattern, $nameStart, $nameEnd - $nameStart);
     }
 
     /**
@@ -3992,41 +4034,6 @@ final class TokenParser
         [$position, $code, $message] = $this->unreadableGroupFault($start);
 
         return $this->parserException(\sprintf($message, $position), $code, $position);
-    }
-
-    /**
-     * A character that cannot be part of the name of "(?&name)" or
-     * "(?P>name)": PCRE reads the name, then wants ")". With no name read,
-     * a name is expected; a name starting with a digit is refused first.
-     */
-    private function subroutineNameError(string $name, int $nameStart, string $found): ParserException
-    {
-        $position = $this->stream->current()->position;
-
-        if ('' === $name) {
-            return $this->parserException(\sprintf('Unexpected token "%s" at position %d: a subroutine name is expected there.', $found, $position), ErrorCode::GroupNameExpected, $position);
-        }
-
-        if (1 === LibraryPcre::match('/^\p{Nd}/u', $name)) {
-            $position = $this->groupNames->invalidNameOffset($nameStart);
-
-            return $this->parserException(\sprintf('Invalid subroutine name "%s" at position %d: a group name must not start with a digit.', $name, $position), ErrorCode::GroupNameInvalid, $position);
-        }
-
-        // Before PCRE2 10.47 PCRE wants ")" right after the name of a call,
-        // as after any name it reads.
-        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups)) {
-            return $this->parserException(\sprintf('Unexpected token "%s" after the subroutine name at position %d: ")" is expected to end the name.', $found, $position), ErrorCode::GroupNameUnterminated, $position);
-        }
-
-        // A "(" after the name: PCRE stops past it, a name or number expected.
-        if (str_starts_with($found, '(')) {
-            $position = $this->pastTheFault($position + 1);
-
-            return $this->parserException(\sprintf('Unexpected "(" after the subroutine name at position %d: a group name or number is expected.', $position), ErrorCode::GroupNameExpected, $position);
-        }
-
-        return $this->parserException(\sprintf('Unexpected token "%s" after the subroutine name at position %d: ")" is expected to close the call.', $found, $position), ErrorCode::GroupUnclosed, $position);
     }
 
     /**

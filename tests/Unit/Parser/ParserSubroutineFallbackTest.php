@@ -26,7 +26,8 @@ final class ParserSubroutineFallbackTest extends TestCase
 
     /**
      * Tests the case where an unexpected token (non-literal) appears in a subroutine name.
-     * E.g. (?&...) with a T_GROUP_OPEN token '(' instead of a literal.
+     * E.g. (?&...) with a T_GROUP_OPEN token '(' instead of a literal: no
+     * name is read.
      */
     public function test_parse_subroutine_name_unexpected_token_type(): void
     {
@@ -42,7 +43,7 @@ final class ParserSubroutineFallbackTest extends TestCase
         $accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unexpected token');
+        $this->expectExceptionMessageIsOrContains('Expected subroutine name');
 
         $accessor->callPrivateMethod('parseSubroutineName');
     }

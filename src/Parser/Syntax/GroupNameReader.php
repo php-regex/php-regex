@@ -98,16 +98,6 @@ final class GroupNameReader
     }
 
     /**
-     * Where PCRE refuses a name too long that starts at $nameStart and ends
-     * at $nameEnd: where it ends, or before PCRE2 10.33 at the character
-     * that takes it past the limit.
-     */
-    public function tooLongAt(int $nameStart, int $nameEnd): int
-    {
-        return $this->readsWhole ? $nameEnd : $nameStart + $this->maxNameLength + 1;
-    }
-
-    /**
      * Whether the pattern currently allows two groups to share a name, which
      * the "J" modifier says — globally, or inside a "(?J:...)" group.
      */
@@ -187,12 +177,9 @@ final class GroupNameReader
             throw $this->invalidName($name, $nameStart);
         }
 
-        if (\strlen($name) > $this->maxNameLength) {
-            throw $this->error(
-                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->maxNameLength),
-                ErrorCode::GroupNameTooLong,
-                $this->tooLongAt($nameStart, $nameEnd),
-            );
+        $tooLong = $this->tooLongAt($nameStart, $nameEnd);
+        if (null !== $tooLong) {
+            throw $this->tooLongError($nameStart, $nameEnd, $tooLong);
         }
 
         // Only then the quote: "(?'a-" is refused on the "-", and "(?'1" on
@@ -224,6 +211,43 @@ final class GroupNameReader
         }
 
         return $name;
+    }
+
+    /**
+     * Where PCRE refuses as too long the name that runs from $nameStart to
+     * $nameEnd, or null when it is not: where it ends, PCRE2 measuring it
+     * once read whole; on PCRE2 10.32, which counts its characters as it
+     * reads them, past the one that passes the limit.
+     */
+    public function tooLongAt(int $nameStart, int $nameEnd): ?int
+    {
+        if ($nameEnd - $nameStart <= $this->maxNameLength) {
+            return null;
+        }
+
+        return $this->readsWhole ? $nameEnd : $nameStart + $this->maxNameLength + 1;
+    }
+
+    /**
+     * The error for the name from $nameStart to $nameEnd that PCRE refuses as
+     * too long at $offset.
+     */
+    public function tooLongError(int $nameStart, int $nameEnd, int $offset): SyntaxErrorException
+    {
+        return $this->error(
+            \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $nameEnd - $nameStart, $this->maxNameLength),
+            ErrorCode::GroupNameTooLong,
+            $offset,
+        );
+    }
+
+    /**
+     * Whether a decimal digit starts the name at $position: any decimal
+     * digit when names take Unicode letters, an ASCII one otherwise.
+     */
+    public function startsWithDigit(int $position): bool
+    {
+        return 1 === LibraryPcre::match($this->unicodeNames ? '/\G\p{Nd}/u' : '/\G[0-9]/', $this->stream->getPattern(), $matches, 0, $position);
     }
 
     /**
@@ -280,10 +304,8 @@ final class GroupNameReader
      */
     public function nameFault(int $nameStart, int $stop): ErrorCode
     {
-        $digit = $this->unicodeNames ? '/\G\p{Nd}/u' : '/\G[0-9]/';
-
         return match (true) {
-            1 === LibraryPcre::match($digit, $this->stream->getPattern(), $matches, 0, $nameStart) => ErrorCode::GroupNameInvalid,
+            $this->startsWithDigit($nameStart) => ErrorCode::GroupNameInvalid,
             $stop === $nameStart => ErrorCode::GroupNameExpected,
             default => ErrorCode::GroupNameUnterminated,
         };
@@ -299,12 +321,9 @@ final class GroupNameReader
         $fault = $this->nameFault($nameStart, $offset);
 
         // PCRE measures the name it read before it looks for what closes it.
-        if (ErrorCode::GroupNameUnterminated === $fault && $offset - $nameStart > $this->maxNameLength) {
-            return $this->error(
-                \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $offset - $nameStart, $this->maxNameLength),
-                ErrorCode::GroupNameTooLong,
-                $this->tooLongAt($nameStart, $offset),
-            );
+        $tooLong = ErrorCode::GroupNameUnterminated === $fault ? $this->tooLongAt($nameStart, $offset) : null;
+        if (null !== $tooLong) {
+            return $this->tooLongError($nameStart, $offset, $tooLong);
         }
 
         return $this->error(
@@ -354,7 +373,7 @@ final class GroupNameReader
                 // A name too long is too long on the token itself: PCRE
                 // measures the name before it looks at what stops it.
                 $stop = $this->invalidNameOffset($nameStart);
-                if ($stop < $token->position || $stop - $nameStart > $this->maxNameLength) {
+                if ($stop < $token->position || null !== $this->tooLongAt($nameStart, $stop)) {
                     throw $this->invalidName($name, $nameStart);
                 }
 

@@ -24,11 +24,12 @@ final class ParserSpecificsTest extends TestCase
 
     public function test_subroutine_name_unexpected_token(): void
     {
-        // (?&name!) -> '!' is not allowed in subroutine name
+        // (?&name!) -> '!' is not allowed in subroutine name: the name ends
+        // there, and the ")" is missing
         $regex = Regex::create();
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unexpected token');
+        $this->expectExceptionMessageIsOrContains('to close subroutine call');
 
         $regex->parse('/(?&name!)/');
     }
