@@ -280,7 +280,7 @@ and a target has it from the release it arrived in on
 | `ClassBackslashKIsLetter` | 10.45 | "\k" in a class is the letter k, not an invalid escape. |
 | `HexEscapeNeedsDigits` | 10.45 | "\x" with no hexadecimal digit is an error, not a NUL. |
 | `EmptyQuoteOpeningClassIsUnclosed` | 10.45 | "[\E" or "[\Q\E" at the end of the pattern is a class left open, not a trailing backslash. |
-| `ClassNEndingRangeRefusedAsN` | 10.45 | "\N" ending a range in a class is refused as "\N", not as an invalid range. |
+| `ClassEscapeEndingRangeRefusedAsEscape` | 10.45 | An escape a class refuses, as "\N" or "\z", ending a range is refused as that escape, not as an invalid range. |
 | `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
 | `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
 | `GReferenceNumberReadBeforeClosing` | 10.47 | An unclosed "\g<3" or "\g{3" is refused after the number, not at "\g". |

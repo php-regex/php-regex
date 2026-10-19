@@ -165,7 +165,7 @@
         {"source":"BadEscapeIsLiteralTest: type ending a range","pattern":"/[a-\\d]/","compile":{"10.32":{"php":{"70300":true,"80000":5}},"10.35":5,"10.39":5,"10.40":5,"10.42":5,"10.44":5}},
         {"source":"BadEscapeIsLiteralTest: property ending a range","pattern":"/[a-\\p{L}]/","compile":{"10.32":{"php":{"70300":true,"80000":5}},"10.35":5,"10.39":5,"10.40":5,"10.42":5,"10.44":5}},
         {"source":"BadEscapeIsLiteralTest: assertion starting a range","pattern":"/[\\B-z]/","compile":{"10.32":{"php":{"70300":true,"80000":2}},"10.35":2,"10.39":2,"10.40":2,"10.42":2,"10.44":2}},
-        {"source":"BadEscapeIsLiteralTest: assertion ending a range","pattern":"/[A-\\B]/","compile":{"10.32":{"php":{"70300":true,"80000":4}},"10.35":4,"10.39":4,"10.40":4,"10.42":4,"10.44":4}},
+        {"source":"BadEscapeIsLiteralTest: assertion ending a range","pattern":"/[A-\\B]/","compile":{"10.32":{"php":{"70300":true,"80000":5}},"10.35":4,"10.39":4,"10.40":4,"10.42":4,"10.44":4}},
         {"source":"BadEscapeIsLiteralTest: assertion after a class escape","pattern":"/[\\d\\B]/","compile":{"10.32":{"php":{"70300":true,"80000":4}},"10.35":4,"10.39":4,"10.40":4,"10.42":4,"10.44":4}},
         {"source":"BadEscapeIsLiteralTest: name past ASCII under UTF","pattern":"/\\k<é>/u","compile":{"10.32":{"php":{"70300":true,"80000":3}},"10.35":3,"10.39":3,"10.40":3,"10.42":3,"10.44":3}},
         {"source":"BadEscapeIsLiteralTest: reference to no group","pattern":"/\\8/","compile":{"10.32":1,"10.35":1,"10.39":1,"10.40":1,"10.42":1,"10.44":1}},

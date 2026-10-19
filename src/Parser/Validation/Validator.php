@@ -459,8 +459,10 @@ final class Validator extends AbstractNodeVisitor
         $this->unicodeMode = $this->unicodeFlag || StartOptions::turnUtfOn($source);
         $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags);
 
-        // Before PCRE2 10.45, "\N" ending a range is refused as the range.
-        $nEndsRange = !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN);
+        // Before PCRE2 10.45, "\N", "\z" or "\p" ending a range is refused as
+        // the range, before what follows its letter is read.
+        $nEndsRange = !$this->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape);
+        $pcre2Ten32 = !$this->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $afterRange = false;
 
         try {
@@ -473,6 +475,16 @@ final class Validator extends AbstractNodeVisitor
 
                 if ($nEndsRange && $afterRange && TokenType::CharType === $token->type && 'N' === $token->value) {
                     continue;
+                }
+
+                if ($nEndsRange && $afterRange && \in_array($token->type, [TokenType::LiteralEscaped, TokenType::CharType, TokenType::UnicodeProp], true)
+                    && BadEscape::endsRangeAsInvalidRange($source, $token->position, $pcre2Ten32)
+                    && !($this->badEscapeIsLiteral && BadEscape::at($source, $token->position, true, $this->unicodeMode, $pcre2Ten32, null, true))) {
+                    $this->raiseSemanticError(
+                        \sprintf('Invalid range in character class: "\%s" cannot end a range, at position %d.', $source[$token->position + 1], $token->position + 2),
+                        $token->position + 2,
+                        ErrorCode::RangeInvalidBounds,
+                    );
                 }
 
                 $this->endsRange = $afterRange;

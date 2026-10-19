@@ -192,9 +192,9 @@ enum PcreFeature
     case EmptyQuoteOpeningClassIsUnclosed;
 
     /**
-     * "\N" ending a range in a class is refused as "\N", not as an invalid range.
+     * An escape a class refuses, as "\N" or "\z", ending a range is refused as that escape, not as an invalid range.
      */
-    case ClassNEndingRangeRefusedAsN;
+    case ClassEscapeEndingRangeRefusedAsEscape;
 
     /**
      * The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits.
@@ -286,7 +286,7 @@ enum PcreFeature
             self::ClassBackslashKIsLetter,
             self::HexEscapeNeedsDigits,
             self::EmptyQuoteOpeningClassIsUnclosed,
-            self::ClassNEndingRangeRefusedAsN => '10.45',
+            self::ClassEscapeEndingRangeRefusedAsEscape => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
             self::GReferenceNumberReadBeforeClosing,

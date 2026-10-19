@@ -75,6 +75,21 @@ final class BadEscape
     private const CLASS_SET_LETTERS = 'DHSVWdhsvw';
 
     /**
+     * Whether the escape whose backslash stands at $at, ending a range in a
+     * class, is refused as an invalid range past its letter before PCRE2
+     * 10.45: an assertion, "\C", "\k", or "\p" and "\P", whose name is not
+     * read then. From 10.33 check_escape() refuses "\B", "\R" and "\X" in a
+     * class first, on their letter; 10.32 does not. A type and "\N" are
+     * judged where they are read.
+     */
+    public static function endsRangeAsInvalidRange(string $pattern, int $at, bool $pcre2Ten32): bool
+    {
+        $letter = $pattern[$at + 1] ?? '';
+
+        return '\\' === ($pattern[$at] ?? '') && '' !== $letter && str_contains($pcre2Ten32 ? 'ABCGKRXZkzpP' : 'ACGKZkzpP', $letter);
+    }
+
+    /**
      * Whether the escape whose backslash stands at $at is one PCRE2 refuses
      * as it reads it, so that PHP 7.3 and 7.4 read the backslash and the
      * character after it as that character. A decision that hangs on the

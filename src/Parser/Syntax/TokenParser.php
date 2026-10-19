@@ -3437,6 +3437,21 @@ final class TokenParser
         return '' !== $letter && (str_contains('ABCFGIJKLMORTUXYZijlmquyz', $letter) || ('k' === $letter && !$this->supports(PcreFeature::ClassBackslashKIsLetter)));
     }
 
+    /**
+     * Refuses the range an escape that names no character ends, past the
+     * escape's letter, as PCRE2 does before 10.45.
+     *
+     * @throws ParserException
+     */
+    private function throwEscapeEndingRange(int $endAt): never
+    {
+        throw $this->parserException(
+            \sprintf('Invalid range in character class: "\%s" cannot end a range, at position %d.', $this->pattern[$endAt + 1], $endAt + 2),
+            ErrorCode::RangeInvalidBounds,
+            $endAt + 2,
+        );
+    }
+
     private function isNonRangeEndpointType(NodeInterface $node): bool
     {
         return $node instanceof CharTypeNode
@@ -3595,16 +3610,20 @@ final class TokenParser
             $this->guardRangeEndpoint($startNode, $afterHyphen, false);
         }
 
+        // Before PCRE2 10.45, an escape that names no character ends a range
+        // as a type does: the range is refused past its letter, before a
+        // name after it is read. A property PCRE reads is left to
+        // guardRangeEndpoint().
         $endAt = $this->stream->current()->position;
+        $endsAsInvalidRange = !$this->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape)
+            && !($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $endAt, true, $this->unicodeMode, $this->pcre2Ten32, null, true));
+        if ($endsAsInvalidRange && TokenType::UnicodeProp !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->pcre2Ten32)) {
+            $this->throwEscapeEndingRange($endAt);
+        }
+
         if ($this->isClassInvalidEscapeAt($endAt, true)) {
-            // Before PCRE2 10.45, "\N" ends a range as a type does: the
-            // range is refused past its letter.
-            if ('N' === $this->pattern[$endAt + 1] && !$this->supports(PcreFeature::ClassNEndingRangeRefusedAsN)) {
-                throw $this->parserException(
-                    \sprintf('Invalid range in character class: "\N" cannot end a range, at position %d.', $endAt + 2),
-                    ErrorCode::RangeInvalidBounds,
-                    $endAt + 2,
-                );
+            if ($endsAsInvalidRange && 'N' === $this->pattern[$endAt + 1]) {
+                $this->throwEscapeEndingRange($endAt);
             }
 
             $this->stream->setPosition($rangePosition);
