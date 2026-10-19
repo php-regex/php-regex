@@ -215,6 +215,12 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'alphabetic name followed by a four-byte character' => ['pattern' => '/(*a😀)/u', 'bundled' => 3, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'known alphabetic name followed by a two-byte letter' => ['pattern' => '/(*plaé:x)/u', 'bundled' => 5, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'alphabetic name followed by a two-byte letter never closed' => ['pattern' => '/(*aé/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
+        // A script run takes a body: its name closed with no colon is an
+        // alphabetic name PCRE refuses.
+        yield 'script run name closed with no colon' => ['pattern' => '/(*sr)/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'atomic script run name closed with no colon' => ['pattern' => '/x(*asr)y/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'long script run name closed with no colon' => ['pattern' => '/x(*script_run)y/', 'bundled' => 13, 'newer' => 14, 'movedIn' => '10.47'];
+        yield 'long atomic script run name closed with no colon' => ['pattern' => '/(*atomic_script_run)/', 'bundled' => 19, 'newer' => 20, 'movedIn' => '10.47'];
         yield 'unknown verb name' => ['pattern' => '/(*FOO)/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
         yield 'verb name of a digit at the end' => ['pattern' => '/(*9/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
         yield 'verb name of a digit before a colon' => ['pattern' => '/(*9:/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
@@ -354,6 +360,36 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'count too big after a possessive quantifier' => ['pattern' => '/a++{65536}/', 'bundled' => 9, 'newer' => 9, 'movedIn' => '10.40'];
         yield 'count too big after a callout' => ['pattern' => '/(?C){70000}/', 'bundled' => 10, 'newer' => 10, 'movedIn' => '10.40'];
         yield 'count too big at the start' => ['pattern' => '/{65536}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+    }
+
+    /**
+     * An alphabetic name closed with no colon is refused as PCRE reads it,
+     * before the end of the pattern says a group is left open: from 10.47
+     * past its ")", where the pattern ends, with the code of the name
+     * (pcre2test 10.46, 10.47 and 10.49).
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideAlphabeticNamesEndingAnOpenGroup(): iterable
+    {
+        yield 'in a group' => ['pattern' => '/(?:(*m)/'];
+        yield 'in a capture inside another' => ['pattern' => '/((?:(*m)/'];
+        yield 'known name' => ['pattern' => '/(?:(*pla)/'];
+        yield 'after a branch' => ['pattern' => '/(?:x|(*m)/'];
+        yield 'in a lookbehind' => ['pattern' => '/(?<=(*m)/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideAlphabeticNamesEndingAnOpenGroup')]
+    public function test_an_alphabetic_name_ending_an_open_group_is_refused_as_a_name(string $pattern): void
+    {
+        $end = \strlen($pattern) - 2;
+        foreach (['10.46' => $end - 1, '10.47' => $end, '10.49' => $end] as $release => $offset) {
+            $result = Regex::create(['cache' => null, 'php_version' => 80400, 'pcre_version' => (string) $release])->validate($pattern);
+
+            $this->assertSame($offset, $result->offset, $pattern.' on '.$release);
+            $this->assertSame(ErrorCode::VerbInvalid, $result->errorCode, $pattern.' on '.$release);
+        }
     }
 
     #[Test]

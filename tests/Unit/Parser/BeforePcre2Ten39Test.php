@@ -186,6 +186,9 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'alphabetic name of 34 letters and a body never closed' => ['pattern' => '/(*abcdefghijklmnopqrstuvwxyzabcdefgh:x/', 'releases' => ['10.33', '10.43'], 'offset' => 36, 'code' => ErrorCode::GroupNameTooLong];
         yield 'verb name of 129 characters never closed' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).'g/', 'releases' => ['10.44', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
         yield 'alphabetic name of 129 letters never closed' => ['pattern' => '/(*'.str_repeat('abcdefghijklmnopqrstuvwxyzabcdef', 4).'g/', 'releases' => ['10.44', '10.47', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
+        // A script run name closed with no colon is no verb either.
+        yield 'script run name closed with no colon' => ['pattern' => '/(*sr)/', 'releases' => ['10.32', '10.33'], 'offset' => 4, 'code' => ErrorCode::VerbInvalid];
+        yield 'atomic script run name closed with no colon' => ['pattern' => '/(*asr)/', 'releases' => ['10.32', '10.33'], 'offset' => 5, 'code' => ErrorCode::VerbInvalid];
         // 10.32 reads the name of a verb no ")" closes as letters too.
         yield 'verb name holding a digit never closed' => ['pattern' => '/(*UTF8/', 'releases' => ['10.32'], 'offset' => 5, 'code' => ErrorCode::VerbUnclosed];
         yield 'verb name with an underscore and a name never closed' => ['pattern' => '/a(*NO_JIT:x/', 'releases' => ['10.32'], 'offset' => 5, 'code' => ErrorCode::VerbUnclosed];

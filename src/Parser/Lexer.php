@@ -2199,6 +2199,7 @@ final class Lexer
             // As the condition, the parser refuses it on its "(".
             if (!$condition) {
                 $this->refuseSettingWithArgument($name, $length, $start);
+                $this->refuseAlphabeticNameEndingThePattern($name, $length, $start);
             }
 
             return;
@@ -2254,6 +2255,28 @@ final class Lexer
             \sprintf('Invalid or unsupported PCRE verb at position %d: "(*%s)" is a setting, which takes no argument.', $start + 2 + $length, substr($name, 0, $length)),
             ErrorCode::VerbInvalid,
             $start + 2 + $length,
+            $this->pattern,
+        );
+    }
+
+    /**
+     * From PCRE2 10.47 an alphabetic name closed with no colon, "(*pla)", is
+     * refused past its ")". Where that ")" ends the pattern, PCRE refuses
+     * the name before it finds a group left open there.
+     *
+     * @param string $name   the verb as written between "(*" and ")"
+     * @param int    $length the length of its name
+     */
+    private function refuseAlphabeticNameEndingThePattern(string $name, int $length, int $start): void
+    {
+        if (!$this->reportsPastTheFault || $length !== \strlen($name) || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $start + $length + 3 !== $this->length) {
+            return;
+        }
+
+        throw LexerException::withContext(
+            \sprintf('Unknown alphabetic assertion "(*%s)" at position %d: an alphabetic name is followed by ":".', $name, $this->length),
+            ErrorCode::VerbInvalid,
+            $this->length,
             $this->pattern,
         );
     }

@@ -1529,7 +1529,11 @@ final class Validator extends AbstractNodeVisitor
         $verbName = LibraryPcre::split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
 
         $setting = isset(StartOptions::NAMES[$verbName]);
-        if (!isset(self::VALID_PCRE_VERBS[$verbName])
+        // A script run takes a body: its name closed with no colon is an
+        // alphabetic name PCRE does not know.
+        $known = isset(self::VALID_PCRE_VERBS[$verbName])
+            && (1 !== LibraryPcre::match('/^[a-z]/', $verbName) || '' !== substr($node->verb, \strlen($verbName), 1));
+        if (!$known
             && !($setting && (!isset(self::PCRE_1045_SETTINGS[$verbName]) || $this->supports(PcreFeature::CasingSettingVerbs)))) {
             // "(*)" is a "*" with nothing to repeat, refused past it from
             // PCRE2 10.47.
