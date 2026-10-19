@@ -165,6 +165,34 @@ final class PaddedReferenceBracesTest extends TestCase
         yield 'space before a name, left open' => ['pattern' => '/(a)\\g{ n/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
     }
 
+    /**
+     * From PCRE2 10.43 a name past the padding that names no group is
+     * refused where the name starts (pcre2test 10.43 to 10.49: "reference to
+     * non-existent subpattern at offset 6" for "()\\k{ n}", 7 for
+     * "()\\k{  n }").
+     */
+    #[Test]
+    #[DataProvider('provideMissingPaddedNames')]
+    public function test_a_padded_name_naming_no_group_is_refused_where_it_starts(string $pattern, string $release, int $offset): void
+    {
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame(ErrorCode::BackrefMissingNamedGroup, $result->errorCode, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s on PCRE2 %s', $pattern, $release));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, release: string, offset: int}>
+     */
+    public static function provideMissingPaddedNames(): iterable
+    {
+        yield 'after g' => ['pattern' => '/\\g{ n}/', 'release' => '10.43', 'offset' => 4];
+        yield 'after k' => ['pattern' => '/()\\k{ n}/', 'release' => '10.44', 'offset' => 6];
+        yield 'after g, another group named' => ['pattern' => '/(?<n>a)\\g{ m}/', 'release' => '10.47', 'offset' => 11];
+        yield 'two spaces after k' => ['pattern' => '/()\\k{  n }/', 'release' => '10.49', 'offset' => 7];
+        yield 'tab after k' => ['pattern' => "/()\\k{\tn}/", 'release' => '10.44', 'offset' => 6];
+    }
+
     #[Test]
     public function test_validate_accepts_braces_without_padding_before_php_8_4(): void
     {

@@ -1346,12 +1346,13 @@ final class TokenParser
             );
         }
 
-        // \g<name> and \g'name' (non-numeric) call the group -> Subroutine
-        if (LibraryPcre::match('/^\\\\g<([+-]?[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
+        // \g<name> and \g'name' (non-numeric) call the group -> Subroutine;
+        // a sign before a name is no name.
+        if (LibraryPcre::match('/^\\\\g<([+-]?\d++|[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
-        if (LibraryPcre::match('/^\\\\g\'([+-]?[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
+        if (LibraryPcre::match('/^\\\\g\'([+-]?\d++|[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 

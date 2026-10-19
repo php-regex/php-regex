@@ -2817,8 +2817,9 @@ final class Validator extends AbstractNodeVisitor
 
         // "\g{2}", "\g-1", "\k<name>", "\g<name>", "\g'1'", ...
         if (1 === LibraryPcre::match('/^\\\\([gk])([{<\'])?\s*+([+-]?)(\d*)/', $text, $matches)) {
+            // A name, past the spaces and tabs a brace takes from 10.43.
             if ('' === $matches[4]) {
-                return $start + 3;
+                return $start + 3 + ('{' === $matches[2] && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($text, " \t", 3) : 0);
             }
 
             // "\k<5ghj>" names no group: a name cannot start with a digit.

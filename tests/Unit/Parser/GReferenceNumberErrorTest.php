@@ -104,6 +104,12 @@ final class GReferenceNumberErrorTest extends TestCase
         yield 'padded backward number, PCRE2 10.42' => ['pattern' => '/()\g{ -2/', 'php' => '8.3', 'release' => '10.42', 'code' => ErrorCode::GroupNameExpected, 'offset' => 5];
         yield 'padded backward number under X, PCRE2 10.32' => ['pattern' => '/()\g{ -2/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::GroupNameExpected, 'offset' => 5];
 
+        // A sign is no name: "subpattern name expected at offset 5" for
+        // "()\g<+n>" (pcre2test 10.32 to 10.49).
+        yield 'angled sign before a name' => ['pattern' => '/()\g<+n>/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::GroupNameExpected, 'offset' => 5];
+        yield 'quoted sign before a name, PCRE2 10.47' => ['pattern' => "/()\\g'-n'/", 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::GroupNameExpected, 'offset' => 5];
+        yield 'angled sign before a name, PCRE2 10.32' => ['pattern' => '/()\g<+n>/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::GroupNameExpected, 'offset' => 5];
+
         // No number at all.
         yield 'a letter after g' => ['pattern' => '/()\gx/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 4];
 
