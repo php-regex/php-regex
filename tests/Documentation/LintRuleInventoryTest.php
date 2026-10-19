@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
-use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -69,11 +69,10 @@ final class LintRuleInventoryTest extends TestCase
      */
     public static function provideRulesOffByDefault(): iterable
     {
-        $disabled = (new \ReflectionClassConstant(PatternLinter::class, 'DEFAULT_DISABLED_RULES'))->getValue();
-        self::assertIsArray($disabled);
-
-        foreach (array_keys($disabled) as $rule) {
-            yield (string) $rule => ['rule' => (string) $rule];
+        foreach (LintConfigSchema::LINT_RULES as $rule => [, $default]) {
+            if (!$default) {
+                yield $rule => ['rule' => $rule];
+            }
         }
     }
 
