@@ -74,7 +74,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-a1b7334230699bcfd2e3fc7a8adba692';
+    public const CACHE_VERSION = 'ast-4430cdb7972dad36504c3daf080b4f8a';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -97,6 +97,17 @@ final class RegexParser
     private const MAX_CONTEXT_WIDTH = 80;
     private const ELLIPSIS_LENGTH = 3;
 
+    /**
+     * How many validate() results a parser keeps, the latest read first.
+     */
+    private const MAX_KEPT_RESULTS = 1024;
+
+    /**
+     * Past this length a pattern's result is kept under a hash of it, so
+     * the results kept hold no more than a bounded copy of the patterns.
+     */
+    private const MAX_LITERAL_KEY_LENGTH = 256;
+
     // Cache seed patterns
     private const CACHE_VERSION_PREFIX = '#cache=';
     private const TARGET_PREFIX = '#target=';
@@ -105,6 +116,15 @@ final class RegexParser
      * The trees a persistent cache gave or took in this process.
      */
     private readonly ?ArrayCache $front;
+
+    /**
+     * What validate() answered, by pattern: a result depends only on the
+     * pattern and on this parser's options and target, all fixed. The
+     * least recently read goes first past MAX_KEPT_RESULTS.
+     *
+     * @var array<string, ValidationResult>
+     */
+    private array $results = [];
 
     /**
      * @param int            $maxPatternLength      Maximum allowed pattern length
@@ -186,43 +206,33 @@ final class RegexParser
     /**
      * Validate a regular expression and return detailed validation results.
      *
+     * The parser keeps the results of the last 1 024 patterns it judged: a
+     * pattern judged again gets the same result object, at the cost of a
+     * lookup, without reading the tree cache again. clearCaches() empties
+     * them.
+     *
      * @param string $regex The regular expression to validate
      *
      * @return ValidationResult Detailed validation result
      */
     public function validate(string $regex): ValidationResult
     {
-        try {
-            $ast = $this->parse($regex);
+        $key = \strlen($regex) <= self::MAX_LITERAL_KEY_LENGTH ? 'p'.$regex : 'h'.hash('sha256', $regex);
+        if (isset($this->results[$key])) {
+            $result = $this->results[$key];
+            // Read again, it is the latest.
+            unset($this->results[$key]);
 
-            // The walk and the score run the library's regexes only: one
-            // window of limits for all of them.
-            [$extractedPattern, $complexityScore] = LibraryPcre::run(function () use ($regex, $ast): array {
-                $extractedPattern = $this->extractPatternSafely($regex);
-                $this->validateAst($ast, $extractedPattern);
-
-                return [$extractedPattern, $this->calculateComplexity($ast)];
-            });
-
-            if ($this->runtimePcreValidation) {
-                $runtimeResult = $this->checkRuntimeCompilation($regex, $extractedPattern, $complexityScore);
-                if (null !== $runtimeResult) {
-                    return $runtimeResult;
-                }
-            }
-
-            return new ValidationResult(true, null, $complexityScore);
-        } catch (LimitException $e) {
-            // The library's own limits: the pattern is not read further,
-            // and no verdict is given on it.
-            return $this->buildValidationFailure($e);
-        } catch (LexerException|ParserException $e) {
-            return $this->buildValidationFailure($this->firstParseError($regex, $e));
-        } catch (ExceptionInterface $e) {
-            // Only a judgement on the pattern; a failure of the library
-            // surfaces, never reported as a pattern error.
-            return $this->buildValidationFailure($e);
+            return $this->results[$key] = $result;
         }
+
+        $result = $this->judge($regex);
+        $this->results[$key] = $result;
+        if (\count($this->results) > self::MAX_KEPT_RESULTS) {
+            unset($this->results[array_key_first($this->results)]);
+        }
+
+        return $result;
     }
 
     /**
@@ -292,13 +302,15 @@ final class RegexParser
      * Empty every process-wide cache the library keeps (useful for
      * long-running processes): the validator's, and every other one a class
      * filled so far (the lexer's, the compiler's, the scorer's, the sample
-     * generator's, the automata's).
+     * generator's, the automata's), and the validate() results this parser
+     * kept.
      */
     public function clearCaches(): void
     {
         Validator::clearCaches();
         StaticCaches::clear();
         $this->front?->clear();
+        $this->results = [];
     }
 
     /**
@@ -344,6 +356,44 @@ final class RegexParser
             ."\n".self::CACHE_VERSION_PREFIX.self::CACHE_VERSION
             ."\n".self::TARGET_PREFIX.$target->cacheKey()
             ."\n#depth=".$maxRecursionDepth;
+    }
+
+    /**
+     * The verdict on a pattern, worked out.
+     */
+    private function judge(string $regex): ValidationResult
+    {
+        try {
+            $ast = $this->parse($regex);
+
+            // The walk and the score run the library's regexes only: one
+            // window of limits for all of them.
+            [$extractedPattern, $complexityScore] = LibraryPcre::run(function () use ($regex, $ast): array {
+                $extractedPattern = $this->extractPatternSafely($regex);
+                $this->validateAst($ast, $extractedPattern);
+
+                return [$extractedPattern, $this->calculateComplexity($ast)];
+            });
+
+            if ($this->runtimePcreValidation) {
+                $runtimeResult = $this->checkRuntimeCompilation($regex, $extractedPattern, $complexityScore);
+                if (null !== $runtimeResult) {
+                    return $runtimeResult;
+                }
+            }
+
+            return new ValidationResult(true, null, $complexityScore);
+        } catch (LimitException $e) {
+            // The library's own limits: the pattern is not read further,
+            // and no verdict is given on it.
+            return $this->buildValidationFailure($e);
+        } catch (LexerException|ParserException $e) {
+            return $this->buildValidationFailure($this->firstParseError($regex, $e));
+        } catch (ExceptionInterface $e) {
+            // Only a judgement on the pattern; a failure of the library
+            // surfaces, never reported as a pattern error.
+            return $this->buildValidationFailure($e);
+        }
     }
 
     /**

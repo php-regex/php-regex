@@ -103,7 +103,7 @@ A library that only reads and validates patterns needs nothing else.
 
 ### clearCaches(): void
 
-Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. The method is called on an instance, and `$regex->parser()->clearCaches()` does the same.
+Empties every process-wide cache the library keeps: the validator's, the lexer's, the compiler's, the complexity scorer's, the sample generator's and the automata's, and the `validate()` results the instance kept. Each is bounded, so memory does not grow without end: a cache keyed by what patterns hold keeps 1000 entries and drops the older half when full, the others hold a fixed handful. A long-running process may still empty them between batches. The method is called on an instance, and `$regex->parser()->clearCaches()` does the same.
 
 ```php
 use PHPRegex\Toolkit\Regex;
@@ -293,6 +293,8 @@ echo $result->errors[0]->getMessage();  // First error
 ### validate(string $regex): ValidationResult
 
 Returns a structured validation result without throwing exceptions.
+
+An instance keeps the results of the last 1024 patterns it validated: a pattern validated again returns the same `ValidationResult` object at the cost of a lookup (well under a microsecond), where it walked the tree again. The result depends only on the pattern and on the instance's options and target, which never change. A pattern answered this way does not reach the AST cache, so `getCacheStats()` counts no hit for it. `clearCaches()` empties the results.
 
 ```php
 use PHPRegex\Toolkit\Regex;

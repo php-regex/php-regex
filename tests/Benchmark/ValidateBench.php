@@ -78,6 +78,22 @@ final class ValidateBench
     }
 
     /**
+     * A thousand patterns of the realistic corpus validated again by the
+     * parser that validated them once: what a pipeline judging a pattern
+     * twice pays the second time. A parser keeps 1024 results, fewer than
+     * the corpus holds, so the subject reads a working set it can keep.
+     */
+    #[BeforeMethods('warmRealistic')]
+    #[Revs(10)]
+    #[Iterations(5)]
+    public function benchValidateRealisticWarm(): void
+    {
+        foreach ($this->patterns as $pattern) {
+            $this->regex->validate($pattern);
+        }
+    }
+
+    /**
      * @param array{key: string} $params
      */
     #[BeforeMethods('coldCase')]
@@ -114,6 +130,14 @@ final class ValidateBench
         $this->setUpRealistic();
         $this->benchValidateRealistic();
         $this->regex = ColdStart::regex();
+        PeakMemory::reset();
+    }
+
+    public function warmRealistic(): void
+    {
+        $this->patterns = \array_slice(array_values(BenchCases::realistic()), 0, 1000);
+        $this->regex = Regex::create();
+        $this->benchValidateRealisticWarm();
         PeakMemory::reset();
     }
 
