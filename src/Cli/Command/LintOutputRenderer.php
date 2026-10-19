@@ -17,6 +17,7 @@ use PHPRegex\Cli\Output;
 use PHPRegex\Cli\PcreRuntimeInfo;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Formatter\LintSummary;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
@@ -95,7 +96,7 @@ final class LintOutputRenderer
         $lines['Recursion'] = $output->warning((string) ($runtime->recursionLimit ?? 'unknown'));
 
         if ([] !== $configFiles) {
-            $paths = array_map($this->relativePath(...), $configFiles);
+            $paths = array_map((new RelativePathHelper())->getRelativePath(...), $configFiles);
             $lines['Configuration'] = implode(', ', $paths);
         }
 
@@ -118,26 +119,5 @@ final class LintOutputRenderer
         $output->write("\n");
         $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
         $output->write('  '.$output->dim($message.'https://github.com/php-regex/php-regex')."\n\n");
-    }
-
-    private function relativePath(string $path): string
-    {
-        $normalizedPath = str_replace('\\', '/', $path);
-        $cwd = getcwd();
-        if (false === $cwd) {
-            return $normalizedPath;
-        }
-
-        $normalizedCwd = rtrim(str_replace('\\', '/', $cwd), '/');
-        if ('' === $normalizedCwd) {
-            return $normalizedPath;
-        }
-
-        $prefix = $normalizedCwd.'/';
-        if (str_starts_with($normalizedPath, $prefix)) {
-            return substr($normalizedPath, \strlen($prefix));
-        }
-
-        return $normalizedPath;
     }
 }

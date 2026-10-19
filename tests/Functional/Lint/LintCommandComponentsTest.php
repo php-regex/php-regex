@@ -306,9 +306,10 @@ final class LintCommandComponentsTest extends TestCase
         $this->assertStringContainsString('No issues found', $passBuffer);
 
         $configPath = getcwd();
-        $banner = $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json']);
+        $banner = $renderer->renderBanner($output, ProjectTarget::fromSources([], [], null, []), 2, [$configPath.'/regex.json', '/elsewhere/regex.dist.json']);
         $this->assertStringContainsString('PHPRegex', $banner);
-        $this->assertStringContainsString('Configuration : ', $banner);
+        // A file under the working directory is named from it, any other in full.
+        $this->assertStringContainsString('Configuration : regex.json, /elsewhere/regex.dist.json', $banner);
     }
 
     public function test_output_renderer_colors_the_target_versions_but_not_the_source(): void
