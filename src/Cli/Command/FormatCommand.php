@@ -23,6 +23,7 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\PatternFormatter;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Lays a pattern out over lines under x, or compacts it to one line. The
@@ -139,7 +140,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
      */
     private static function width(string|bool $value): ?int
     {
-        if (true === $value || '' === $value || \strlen($value) !== strspn($value, '0123456789')) {
+        if (true === $value || !Ascii::isDigit($value)) {
             return null;
         }
 

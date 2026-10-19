@@ -403,6 +403,8 @@ final class FormatCommandTest extends TestCase
         yield 'negative' => ['option' => '--width=-1'];
         yield 'not a number' => ['option' => '--width=abc'];
         yield 'not an integer' => ['option' => '--width=1.5'];
+        yield 'digits then a letter' => ['option' => '--width=12a'];
+        yield 'a space before the digits' => ['option' => '--width= 12'];
         yield 'empty' => ['option' => '--width='];
     }
 
