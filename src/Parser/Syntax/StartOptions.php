@@ -24,10 +24,10 @@ use PHPRegex\Parser\Text\Ascii;
 final class StartOptions
 {
     /**
-     * Every option PCRE2 reads in the opening run; the same list as the
-     * validator's start-of-pattern settings, kept in step with it.
+     * Every option PCRE2 reads in the opening run, and only there: anywhere
+     * else they are not verbs at all.
      */
-    private const NAMES = [
+    public const NAMES = [
         'UTF' => true, 'UTF8' => true, 'UCP' => true,
         'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
         'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,

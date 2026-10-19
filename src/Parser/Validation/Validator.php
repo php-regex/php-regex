@@ -18,6 +18,7 @@ use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Analysis\LookbehindLength;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
@@ -86,9 +87,10 @@ use PHPRegex\Parser\Token\TokenType;
  */
 final class Validator extends AbstractNodeVisitor
 {
-    // Maximum cache size to prevent memory leaks in long-running processes
-    private const MAX_CACHE_SIZE = 1000;
-
+    /**
+     * How deep PCRE2 lets parentheses nest by default, which PHP keeps.
+     */
+    public const MAX_GROUP_NESTING = 250;
     /**
      * Script and property names newer than PCRE2 10.40, loosely spelled, with
      * the release that brought them ("pcre2test -LS" and "-LP" of each).
@@ -120,11 +122,6 @@ final class Validator extends AbstractNodeVisitor
      * The largest (*LIMIT_...=n) value PCRE still multiplies by ten.
      */
     private const MAX_LIMIT_VALUE_BEFORE_DIGIT = 429496728;
-
-    /**
-     * How deep PCRE2 lets parentheses nest by default, which PHP keeps.
-     */
-    private const MAX_GROUP_NESTING = 250;
 
     /**
      * The largest compiled pattern PCRE2 takes with the two-byte links PHP
@@ -170,6 +167,10 @@ final class Validator extends AbstractNodeVisitor
         'G' => true, 'b' => true, 'B' => true,
     ];
 
+    /**
+     * The verbs PCRE2 reads anywhere in the pattern; the settings of the
+     * opening run are StartOptions::NAMES.
+     */
     private const VALID_PCRE_VERBS = [
         // Backtracking control verbs
         'FAIL' => true, 'F' => true, 'ACCEPT' => true, 'COMMIT' => true,
@@ -178,39 +179,9 @@ final class Validator extends AbstractNodeVisitor
         'DEFINE' => true,
         // Mark verb (with optional :NAME argument)
         'MARK' => true,
-        // Mode setting verbs
-        'UTF8' => true, 'UTF' => true, 'UCP' => true,
-        // Newline conventions
-        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
-        // BSR (backslash-R) conventions
-        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
-        // Optimization control
-        'NO_AUTO_POSSESS' => true, 'NO_START_OPT' => true, 'NO_DOTSTAR_ANCHOR' => true,
-        // Limit verbs
-        'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true,
-        'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
         // Script run verbs (also as lowercase aliases)
         'script_run' => true, 'sr' => true,
         'atomic_script_run' => true, 'asr' => true,
-        // Empty match control
-        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
-        // JIT control (PCRE2)
-        'NO_JIT' => true,
-    ];
-
-    /**
-     * Settings PCRE2 only reads in the run of "(*...)" items that opens the
-     * pattern; anywhere else they are not verbs at all. StartOptions holds
-     * the same list, kept in step with this one.
-     */
-    private const START_OF_PATTERN_VERBS = [
-        'UTF8' => true, 'UTF' => true, 'UCP' => true,
-        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
-        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
-        'NO_AUTO_POSSESS' => true, 'NO_START_OPT' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true,
-        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
-        'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
-        'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
     ];
 
     /**
@@ -1254,12 +1225,9 @@ final class Validator extends AbstractNodeVisitor
                 ? 'p{'.$prop.'}'
                 : 'p'.$prop);
 
-        // Intelligent caching with lazy validation and size limit
         if (!isset(self::$unicodePropCache[$key])) {
-            // Prevent unbounded cache growth in long-running processes
-            if (\count(self::$unicodePropCache) >= self::MAX_CACHE_SIZE) {
-                self::$unicodePropCache = \array_slice(self::$unicodePropCache, -((int) (self::MAX_CACHE_SIZE / 2)), null, true);
-            }
+            StaticCaches::register(self::class, self::clearCaches(...));
+            self::$unicodePropCache = StaticCaches::makeRoom(self::$unicodePropCache);
             self::$unicodePropCache[$key] = $this->validateUnicodeProperty($key);
         }
 
@@ -1459,8 +1427,9 @@ final class Validator extends AbstractNodeVisitor
     {
         $verbName = LibraryPcre::split('/[:=]/', $node->verb, 2)[0] ?? $node->verb;
 
+        $setting = isset(StartOptions::NAMES[$verbName]);
         if (!isset(self::VALID_PCRE_VERBS[$verbName])
-            && !(isset(self::PCRE_1045_SETTINGS[$verbName]) && $this->supports(PcreFeature::CasingSettingVerbs))) {
+            && !($setting && (!isset(self::PCRE_1045_SETTINGS[$verbName]) || $this->supports(PcreFeature::CasingSettingVerbs)))) {
             // "(*)" is a "*" with nothing to repeat, refused past it from
             // PCRE2 10.47.
             if ('' === $node->verb) {
@@ -1488,7 +1457,7 @@ final class Validator extends AbstractNodeVisitor
         // PCRE reports these at the closing parenthesis.
         $closing = $node->getEndPosition() - 1;
 
-        if (isset(self::START_OF_PATTERN_VERBS[$verbName])) {
+        if ($setting) {
             $this->validateStartOfPatternPlacement($verbName, $node->startPosition);
         }
 
@@ -2324,10 +2293,8 @@ final class Validator extends AbstractNodeVisitor
             return self::$quantifierBoundsCache[$normalized];
         }
 
-        // Prevent unbounded cache growth in long-running processes
-        if (\count(self::$quantifierBoundsCache) >= self::MAX_CACHE_SIZE) {
-            self::$quantifierBoundsCache = \array_slice(self::$quantifierBoundsCache, -((int) (self::MAX_CACHE_SIZE / 2)), null, true);
-        }
+        StaticCaches::register(self::class, self::clearCaches(...));
+        self::$quantifierBoundsCache = StaticCaches::makeRoom(self::$quantifierBoundsCache);
 
         // Compute and cache the result
         $bounds = $this->parseQuantifierBounds($normalized);
@@ -3620,7 +3587,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function readStartOfPatternEnd(string $source): int
     {
-        $names = implode('|', array_keys(self::START_OF_PATTERN_VERBS));
+        $names = implode('|', array_keys(StartOptions::NAMES));
 
         // The run may be empty, so the pattern always matches: the 0 branch
         // is unreachable and only there for the type.

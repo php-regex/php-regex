@@ -59,6 +59,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Token\Token;
@@ -78,7 +79,6 @@ use PHPRegex\Parser\Validation\Validator;
 final class TokenParser
 {
     private const INLINE_FLAG_LETTERS = InlineFlags::LETTERS;
-    private const MAX_RECURSION_DEPTH = 1024;
 
     // Token length constants for calculating positions
     private const PCRE_VERB_WRAPPER_LENGTH = 3; // (*...)
@@ -268,7 +268,7 @@ final class TokenParser
      */
     public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
     {
-        $this->maxRecursionDepth = $maxRecursionDepth ?? self::MAX_RECURSION_DEPTH;
+        $this->maxRecursionDepth = $maxRecursionDepth ?? RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
         $this->target = $target ?? PcreTarget::runtime();
         $this->pcre2Ten32 = !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused);
     }

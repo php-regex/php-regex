@@ -17,6 +17,7 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Parser\Analysis\ComplexityScorer;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Printer\PatternPrinter;
@@ -86,6 +87,41 @@ final class StaticCachesTest extends TestCase
     {
         $this->assertFalse((new \ReflectionClass(RegexParser::class))->hasMethod('clearValidatorCaches'));
         $this->assertFalse((new \ReflectionClass(Regex::class))->hasMethod('clearValidatorCaches'));
+    }
+
+    /**
+     * The validator's caches are emptied with every other one, by the one
+     * call that reaches them all, not by a call of their own.
+     */
+    #[Test]
+    public function test_the_shared_clear_empties_the_validator_caches(): void
+    {
+        $this->assertTrue(RegexParser::create(['cache' => new NullCache()])->validate('/\p{Latin}a{2,3}/u')->isValid);
+        $this->assertNotSame([], $this->read(Validator::class, 'unicodePropCache'));
+        $this->assertNotSame([], $this->read(Validator::class, 'quantifierBoundsCache'));
+
+        StaticCaches::clear();
+
+        $this->assertSame([], $this->read(Validator::class, 'unicodePropCache'));
+        $this->assertSame([], $this->read(Validator::class, 'quantifierBoundsCache'));
+    }
+
+    /**
+     * "a{1,0}", "a{1,1}" ... fifteen hundred counts, each its own key.
+     */
+    #[Test]
+    public function test_the_validator_count_cache_is_bounded(): void
+    {
+        $this->write(Validator::class, 'quantifierBoundsCache', []);
+        $parser = RegexParser::create(['cache' => new NullCache()]);
+
+        for ($max = 1; $max <= 1500; $max++) {
+            $this->assertTrue($parser->validate('/a{1,'.$max.'}/')->isValid);
+        }
+
+        $count = \count($this->read(Validator::class, 'quantifierBoundsCache'));
+        $this->assertGreaterThan(0, $count);
+        $this->assertLessThanOrEqual(self::BOUND, $count);
     }
 
     /**

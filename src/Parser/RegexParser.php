@@ -74,7 +74,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-0fc23fd15578f182a5aeb2ede7820b49';
+    public const CACHE_VERSION = 'ast-fe15c2ccb269e02d9001c2a5ed59f5ca';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -300,14 +300,13 @@ final class RegexParser
 
     /**
      * Empty every process-wide cache the library keeps (useful for
-     * long-running processes): the validator's, and every other one a class
-     * filled so far (the lexer's, the compiler's, the scorer's, the sample
+     * long-running processes): every one a class filled so far (the
+     * lexer's, the validator's, the compiler's, the scorer's, the sample
      * generator's, the automata's), and the validate() results this parser
      * kept.
      */
     public function clearCaches(): void
     {
-        Validator::clearCaches();
         StaticCaches::clear();
         $this->front?->clear();
         $this->results = [];
@@ -560,11 +559,11 @@ final class RegexParser
             return null;
         }
 
-        // PCRE refuses the 251st level of parentheses as it opens it, at the
-        // start of its body, though the groups are never closed.
+        // PCRE refuses the level of parentheses past its limit as it opens
+        // it, at the start of its body, though the groups are never closed.
         $tooDeep = self::openerPastTheNestingLimit($tokens);
         if (null !== $tooDeep) {
-            return new SemanticErrorException('Parentheses are nested too deeply: PCRE allows at most 250 levels.', ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, null, 'Flatten the pattern: drop groups that only wrap one item.');
+            return new SemanticErrorException(\sprintf('Parentheses are nested too deeply: PCRE allows at most %d levels.', Validator::MAX_GROUP_NESTING), ErrorCode::GroupNestedTooDeep, $tooDeep->end(), $pattern, null, 'Flatten the pattern: drop groups that only wrap one item.');
         }
 
         $length = \strlen($pattern);
@@ -612,7 +611,7 @@ final class RegexParser
      */
     private static function mayHoldAnErrorOfTheTree(array $tokens): bool
     {
-        // Past 250 levels, plain groups are refused too.
+        // Past the nesting limit, plain groups are refused too.
         if (null !== self::openerPastTheNestingLimit($tokens)) {
             return true;
         }
@@ -637,7 +636,7 @@ final class RegexParser
     }
 
     /**
-     * The token that opens the 251st level of parentheses, past PCRE's
+     * The token that opens the first level of parentheses past PCRE's
      * limit, or null when none does.
      *
      * @param list<Token> $tokens
@@ -648,7 +647,7 @@ final class RegexParser
         foreach ($tokens as $token) {
             if (self::opensGroup($token)) {
                 $open[] = $token;
-                if (\count($open) > 250) {
+                if (\count($open) > Validator::MAX_GROUP_NESTING) {
                     return $token;
                 }
             } elseif (TokenType::GroupClose === $token->type) {

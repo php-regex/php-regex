@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Syntax;
 
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -64,6 +66,27 @@ final class StartOptionsTest extends TestCase
         $this->assertSame(1, preg_match('/'.$options.'a/', 'a'));
 
         $this->assertSame($options, StartOptions::of($options.'a'));
+    }
+
+    /**
+     * The validator knows the same options as the reading of the run: each
+     * one is valid where the pattern opens, and out of place after "a",
+     * where PCRE2 reads no option.
+     */
+    #[Test]
+    #[DataProvider('provideStartOptions')]
+    public function test_the_validator_takes_every_start_option_at_the_start_only(string $options): void
+    {
+        if (str_contains($options, 'CASELESS_RESTRICT') || str_contains($options, 'TURKISH_CASING')) {
+            $this->requiresPcre2('10.45', $options);
+        }
+
+        $parser = RegexParser::create();
+
+        $this->assertTrue($parser->validate('/'.$options.'a/u')->isValid, $options);
+
+        $this->assertFalse(@preg_match('/a'.$options.'/u', 'a'));
+        $this->assertSame(ErrorCode::VerbMisplaced, $parser->validate('/a'.$options.'/u')->errorCode, $options);
     }
 
     /**
