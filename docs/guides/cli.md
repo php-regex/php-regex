@@ -838,7 +838,7 @@ or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
 ### 8. Graph (Automaton)
 
-Print the automaton a pattern compiles to — Dot by default, Mermaid with `--format=mermaid`:
+Print the automaton a pattern compiles to — Dot by default (`--format=dot`, or `graphviz`), Mermaid with `--format=mermaid`, the format read in any case:
 
 ```bash
 vendor/bin/regex graph '/ab?c/'

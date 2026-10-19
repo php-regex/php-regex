@@ -22,6 +22,7 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * @internal
@@ -45,18 +46,18 @@ final class GraphCommand extends AbstractCommand
 
     public function run(Input $input, Output $output): int
     {
-        $usage = "Usage: regex graph <pattern> [--format=dot|mermaid] [--output=<file>]\n";
+        $usage = "Usage: regex graph <pattern> [--format=dot|graphviz|mermaid] [--output=<file>]\n";
         $arguments = $this->readArguments($input->args, [], ['--format', '--output']);
         if (null !== $arguments['error']) {
             return $this->usageError($output, $arguments['error'], $usage);
         }
 
         $pattern = $arguments['pattern'];
-        $format = (string) ($arguments['options']['--format'] ?? 'dot');
+        $format = Ascii::lower((string) ($arguments['options']['--format'] ?? 'dot'));
         $outputFile = $arguments['options']['--output'] ?? null;
         $outputFile = \is_string($outputFile) ? $outputFile : null;
         if (!\in_array($format, ['dot', 'graphviz', 'mermaid'], true)) {
-            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=dot or --format=mermaid.", $format), $usage);
+            return $this->usageError($output, \sprintf("Unsupported format '%s'. Use --format=dot, --format=graphviz or --format=mermaid.", $format), $usage);
         }
 
         $regex = $this->createRegex($output, $input->regexOptions);

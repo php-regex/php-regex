@@ -968,6 +968,46 @@ final class HelpCommandTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{command: string}>
+     */
+    public static function provideDocumentedCommands(): iterable
+    {
+        foreach (['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'graph', 'highlight', 'validate', 'transpile', 'format', 'lint', 'lsp', 'version', 'self-update'] as $command) {
+            yield $command => ['command' => $command];
+        }
+    }
+
+    /**
+     * In the examples of a command's page, the name of the command takes
+     * the colour of a command, whichever command it is.
+     */
+    #[Test]
+    #[DataProvider('provideDocumentedCommands')]
+    public function test_the_examples_colour_the_name_of_every_documented_command(string $command): void
+    {
+        $originalArgv = $_SERVER['argv'] ?? null;
+        $_SERVER['argv'] = ['bin/regex'];
+
+        try {
+            $input = new Input('help', [$command], new GlobalOptions(false, null, false, false, null, null), []);
+            ob_start();
+            (new HelpCommand())->run($input, OutputFactory::create(ansi: true));
+            $text = (string) ob_get_clean();
+        } finally {
+            if (null === $originalArgv) {
+                unset($_SERVER['argv']);
+            } else {
+                $_SERVER['argv'] = $originalArgv;
+            }
+        }
+
+        $this->assertStringContainsString(
+            Output::BLUE.Output::BOLD.'bin/regex'.Output::RESET.' '.Output::YELLOW.Output::BOLD.$command.Output::RESET,
+            $text,
+        );
+    }
+
+    /**
      * The text of `help` (no command: the overview) or `help <command>`.
      */
     private static function commandHelp(?string $command): string

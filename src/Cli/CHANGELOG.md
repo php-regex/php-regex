@@ -55,3 +55,5 @@ CHANGELOG
    `regex debug` prints the warnings of `regex.json` on stderr.
  * A `--pattern-function` or `extraction.functions` spec the lint cannot
    read, `x#a` say, is ignored with a warning instead of silently.
+ * `graph` reads `--format` in any case, as the other commands do, and
+   names `graphviz`, an alias of `dot`, in its usage, its error and its help.

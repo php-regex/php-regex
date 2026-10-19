@@ -455,7 +455,7 @@ final class HelpCommand extends AbstractCommand
             'graph' => self::commandHelp(
                 description: 'Generate a graph diagram (DOT/Mermaid) of the NFA',
                 options: [
-                    ['--format <format>', 'Output format (dot, mermaid)'],
+                    ['--format <format>', 'Output format (dot, graphviz, mermaid)'],
                     ['--output <file>', 'Write the diagram to a file'],
                 ],
                 notes: [],
@@ -688,7 +688,7 @@ final class HelpCommand extends AbstractCommand
             return $output->color($token, Output::GREEN);
         }
 
-        if (\in_array($token, ['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'highlight', 'validate', 'transpile', 'format', 'lint', 'lsp', 'self-update', 'help'], true)) {
+        if (\in_array($token, self::DOCUMENTED_COMMANDS, true)) {
             return $output->color($token, Output::YELLOW.Output::BOLD);
         }
 
