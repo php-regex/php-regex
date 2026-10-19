@@ -66,6 +66,31 @@ final class ClassItemBeforeRangeErrorTest extends TestCase
         yield 'surrogate before a range from a type' => ['pattern' => '/[\x{d800}\w-a]/u', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::UnicodeSurrogate, 'offset' => 8];
         yield 'named code point past Unicode before a range from a type' => ['pattern' => '/[\N{U+110000}\w-a]/u', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 12];
 
+        // A reversed range, refused where it ends (pcre2test 10.32 to 10.49:
+        // "range out of order in character class at offset 3" for
+        // "[z-a\d-b]" up to 10.46, at offset 4 from 10.47).
+        foreach ([['7.3', '10.32', 3], ['8.2', '10.40', 3], ['8.4', '10.44', 3], ['8.4', '10.45', 3], ['8.4', '10.47', 4], ['8.5', '10.49', 4]] as [$php, $release, $offset]) {
+            yield \sprintf('reversed range before a range from a type, PCRE2 %s', $release) => ['pattern' => '/[z-a\d-b]/'.('7.3' === $php ? 'X' : ''), 'php' => $php, 'release' => $release, 'code' => ErrorCode::RangeReversed, 'offset' => $offset];
+        }
+
+        yield 'reversed range before a range to a type' => ['pattern' => '/[z-aa-\d]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeReversed, 'offset' => 3];
+        yield 'reversed range before a range from a property' => ['pattern' => '/[b-a\pL-a]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'reversed range before a range from a POSIX class' => ['pattern' => '/[z-a[:alpha:]-a]/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::RangeReversed, 'offset' => 3];
+        yield 'reversed range of escapes before a range from a type' => ['pattern' => '/[\x{7a}-a\w-[:alpha:]]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeReversed, 'offset' => 8];
+        yield 'reversed range, an empty quote, then a range from a type' => ['pattern' => '/[z-a\Q\E\d-b]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeReversed, 'offset' => 3];
+        yield 'reversed range ending on a hyphen before a quoted run' => ['pattern' => '/[a--\Qb\E-\d]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'reversed range after an empty quote' => ['pattern' => '/[\Q\Ez-a\pL-a]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
+        yield 'reversed range before a range from a type, class left open' => ['pattern' => '/[z-a\d-b/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeReversed, 'offset' => 3];
+
+        // A quote before the item is no item: the reading goes on past it
+        // (pcre2test: "unknown POSIX class name at offset 7" for
+        // "[\Q\E[:foo:]\d-z]" up to 10.44, at offset 12 from 10.45).
+        yield 'unknown POSIX class after an empty quote' => ['pattern' => '/[\Q\E[:foo:]\d-z]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 7];
+        yield 'unknown POSIX class after an empty quote, PCRE2 10.45' => ['pattern' => '/[\Q\E[:foo:]\d-z]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::PosixInvalid, 'offset' => 12];
+        yield 'unknown POSIX class after an empty quote, PCRE2 10.32' => ['pattern' => '/[\Q\E[:foo:]\d-z]/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::PosixInvalid, 'offset' => 7];
+        yield 'code point past a byte after a quoted run' => ['pattern' => '/[\Qa\E\x{100}\w-[:alpha:]]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 12];
+        yield 'braced octal past a byte after an empty quote, class left open' => ['pattern' => '/[\Q\E\o{400}a-\d/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 11];
+
         // The class left open.
         yield 'unknown POSIX class starting a range from a type, class left open' => ['pattern' => '/[[:foo:]-\w/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::PosixInvalid, 'offset' => 3];
         yield 'octal past a byte before a reversed range, class left open' => ['pattern' => '/[\777a-\x41/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 5];

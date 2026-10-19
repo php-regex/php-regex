@@ -457,34 +457,52 @@ final class FirstErrorLocator
     /**
      * The first item of a class, its tokens from its "[", that PCRE refuses
      * as it reads it before $limit, where the parser could not read the
-     * class whole: a code point or a POSIX class, each judged alone. A
-     * quote stops the reading: what it holds is no item.
+     * class whole. The class read up to $limit, closed there, is judged
+     * whole, quotes and all: a code point, a POSIX class, or a reversed
+     * range where it ends, as PCRE refuses it once it has read it. Should
+     * the parser refuse a range there too, the class is read up to that
+     * range's hyphen.
      *
      * @param list<Token> $class
      */
     private function firstItemErrorBefore(array $class, string $pattern, string $flags, string $delimiter, int $limit): ?SemanticErrorException
     {
-        $items = [TokenType::Unicode, TokenType::UnicodeNamed, TokenType::Octal, TokenType::OctalLegacy, TokenType::PosixClass];
+        $read = [$class[0]];
+        $reads = [];
         foreach (\array_slice($class, 1) as $token) {
-            if ($token->position >= $limit || TokenType::QuoteModeStart === $token->type) {
+            if ($token->position >= $limit || \in_array($token->type, [TokenType::CharClassClose, TokenType::Eof], true)) {
                 break;
             }
 
-            if (!\in_array($token->type, $items, true)) {
-                continue;
+            if (TokenType::Range === $token->type) {
+                $reads[1] = $read;
             }
+
+            $read[] = $token;
+        }
+
+        $reads[0] = $read;
+        ksort($reads);
+
+        foreach ($reads as $prefix) {
+            $end = $prefix[array_key_last($prefix)]->end();
 
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))
-                    ->parse(new TokenStream([$class[0], $token, new Token(TokenType::CharClassClose, ']', $token->end(), 0), new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern))
+                    ->parse(new TokenStream([...$prefix, new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)], $pattern), $flags, $delimiter, \strlen($pattern))
                     ->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
+
+                return null;
             } catch (SemanticErrorException $error) {
-                if (($error->position ?? $limit) < $limit) {
-                    return $error;
-                }
+                return ($error->position ?? $limit) < $limit ? $error : null;
+            } catch (LexerException|LimitException|ParserException) {
+                // The range refused there: read up to its hyphen.
             }
         }
 
+        // Unreachable in practice: read up to its last hyphen, the class
+        // holds no range the parser could refuse. Kept as this runs while an
+        // error is being reported, where nothing may escape.
         return null;
     }
 
