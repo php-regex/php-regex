@@ -180,6 +180,7 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   at 13 (the range `-` to `-`, then `\pL`), the library says 11.
 - `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10; `[-[=a=]`
   up to 10.44: offset 2, the library says 3.
+- `[-[=a=]` up to 10.44: offset 2, the library says 3.
 
 ## The articles section: what is left
 

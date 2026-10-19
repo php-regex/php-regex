@@ -1193,9 +1193,11 @@ final class Validator extends AbstractNodeVisitor
     public function visitCharLiteral(CharLiteralNode $node): void
     {
         // "\N{name}": PCRE2 refuses a character name, whatever it names, on
-        // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point.
+        // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point,
+        // and from 10.43 "\N{ U+...}": before, a space makes "\N{" a name.
+        $padding = $this->supports(PcreFeature::PaddedBracedEscapes) ? '[ \t]*+' : '';
         if (CharLiteralType::UnicodeNamed === $node->type
-            && 1 !== LibraryPcre::match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
+            && 1 !== LibraryPcre::match('/^\\\\N\{'.$padding.'U\+/', $node->originalRepresentation)) {
             // Before PCRE2 10.37 its digits are read as a count first.
             if (!$this->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($node->originalRepresentation, 2)) {
                 $this->raiseSemanticError('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $node->startPosition + 2, ErrorCode::QuantifierTooBig);
@@ -2638,19 +2640,16 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        // A space before "U+" makes "\N{" a name, which PCRE2 refuses past
-        // the "\N", as "\N{foo}".
-        $name = CharLiteralType::UnicodeNamed === $node->type && 1 === LibraryPcre::match('/^\\\\N\{[ \t]/', $representation);
+        // A space before "U+", which makes "\N{" a name, is refused before.
         [$code, $escape] = match (true) {
             CharLiteralType::Octal === $node->type => [ErrorCode::OctalInvalidDigit, '\o{}'],
-            $name => [ErrorCode::EscapeUnsupported, '\N{U+}'],
             CharLiteralType::UnicodeNamed === $node->type => [ErrorCode::UnicodeInvalidDigit, '\N{U+}'],
             default => [ErrorCode::UnicodeInvalidDigit, '\x{}'],
         };
 
         $this->raiseSemanticError(
             \sprintf('Spaces inside %s need PCRE2 10.43, which PHP bundles from 8.4.', $escape),
-            $node->startPosition + ($name ? 2 : $space),
+            $node->startPosition + $space,
             $code,
             'Write the escape without spaces, or target PHP 8.4+.',
         );
@@ -3296,9 +3295,11 @@ final class Validator extends AbstractNodeVisitor
             $digits = $position + 1 + strspn($source, self::BRACE_PADDING, $position + 1) + 2;
 
             if (!$this->unicodeMode) {
-                // From PCRE2 10.47, PCRE reads to the closing brace before it
-                // looks at the mode; before, it stops past the "\N".
-                $end = $digits + strspn($source, self::HEX_DIGITS.self::BRACE_PADDING, $digits);
+                // From PCRE2 10.47, PCRE reads the hex digits right after
+                // "U+", the padding after them and a "}" before it looks at
+                // the mode; before, it stops past the "\N".
+                $end = $digits + strspn($source, self::HEX_DIGITS, $digits);
+                $end += strspn($source, self::BRACE_PADDING, $end);
                 $this->raiseSemanticError(
                     '\N{U+...} is only supported in Unicode mode; add the "u" flag.',
                     $this->supports(PcreFeature::NamedCodePointReadBeforeModeCheck) ? ('}' === ($source[$end] ?? '') ? $end + 1 : $end) : $position,
@@ -3325,13 +3326,14 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Whether "{U+" follows, which PCRE2 10.48 also reads with spaces or tabs
-     * after the brace: "\N{ U+41}".
+     * Whether "{U+" follows, which PCRE2 10.43 also reads with spaces or tabs
+     * after the brace: "\N{ U+41}". Before, "\N{ " names a character.
      */
     private function startsNamedCodePoint(string $source, int $position): bool
     {
-        return '{' === ($source[$position] ?? '')
-            && 'U+' === substr($source, $position + 1 + strspn($source, self::BRACE_PADDING, $position + 1), 2);
+        $padding = $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($source, self::BRACE_PADDING, $position + 1) : 0;
+
+        return '{' === ($source[$position] ?? '') && 'U+' === substr($source, $position + 1 + $padding, 2);
     }
 
     /**
@@ -3352,9 +3354,11 @@ final class Validator extends AbstractNodeVisitor
         string $escape,
     ): void {
         $length = \strlen($source);
+        // Before PCRE2 10.43 a space or a tab is no digit, refused on it.
+        $padded = $this->supports(PcreFeature::PaddedBracedEscapes);
 
         if ($leadingPadding) {
-            $position += strspn($source, self::BRACE_PADDING, $position);
+            $position += $padded ? strspn($source, self::BRACE_PADDING, $position) : 0;
         } elseif ($position < $length && 1 === strspn($source, self::BRACE_PADDING, $position, 1)) {
             // Padding right after "U+": before PCRE2 10.43 it is refused on
             // its first character; from 10.43 it may only run up to the
@@ -3390,7 +3394,7 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $position += strspn($source, $digits, $position);
-        $position += strspn($source, self::BRACE_PADDING, $position);
+        $position += $padded ? strspn($source, self::BRACE_PADDING, $position) : 0;
 
         // Unreachable from a parsed pattern: the lexer reads every braced
         // escape of this shape as a token of its own, so only a malformed one
@@ -3399,10 +3403,12 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
+        $unreadPadding = !$padded && 1 === strspn($source, self::BRACE_PADDING, $position, 1);
         $this->raiseSemanticError(
-            \sprintf('Invalid character in %s, or closing brace missing.', $escape),
+            $unreadPadding ? \sprintf('Spaces inside %s need PCRE2 10.43, which PHP bundles from 8.4.', $escape) : \sprintf('Invalid character in %s, or closing brace missing.', $escape),
             $this->braceFaultOffset($source, $position),
             $invalidDigitCode,
+            $unreadPadding ? 'Write the escape without spaces, or target PHP 8.4+.' : null,
         );
     }
 
