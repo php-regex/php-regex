@@ -502,21 +502,22 @@ final class FirstErrorLocator
     private function firstItemErrorBefore(array $class, string $pattern, string $flags, string $delimiter, int $limit): ?SemanticErrorException
     {
         $read = [$class[0]];
-        $reads = [];
+        $lastHyphen = null;
         foreach (\array_slice($class, 1) as $token) {
             if ($token->position >= $limit || \in_array($token->type, [TokenType::CharClassClose, TokenType::Eof], true)) {
                 break;
             }
 
             if (TokenType::Range === $token->type) {
-                $reads[1] = $read;
+                $lastHyphen = \count($read);
             }
 
             $read[] = $token;
         }
 
-        $reads[0] = $read;
-        ksort($reads);
+        // Cut once: a copy for each hyphen read would cost the class read
+        // again for each of its ranges.
+        $reads = null === $lastHyphen ? [$read] : [$read, \array_slice($read, 0, $lastHyphen)];
 
         foreach ($reads as $prefix) {
             $end = $prefix[array_key_last($prefix)]->end();
