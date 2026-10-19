@@ -86,6 +86,17 @@ final class ByteModeRangeEndTest extends TestCase
         // character class at offset 7").
         yield 'two-byte character ending a range before a range to a type, PHP 7.3' => ['pattern' => '/[a-é-\d]/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeReversed, 'offset' => 7];
 
+        // An escape PCRE refuses ending the range from the last byte is
+        // refused as the range before PCRE2 10.45, past its letter
+        // (pcre2test: "invalid range in character class at offset 8" for
+        // "[a-é-\k]" up to 10.44, "[a-é-\B]" on 10.32).
+        yield 'two-byte character ending a range before a range to \k' => ['pattern' => '/[a-é-\k]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'two-byte character ending a range before a range to \N' => ['pattern' => '/[a-é-\N]/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'two-byte character ending a range before a range to \B, PCRE2 10.32' => ['pattern' => '/[a-é-\B]/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'two-byte character ending a range before a range to \B past an empty quote, PCRE2 10.32' => ['pattern' => '/[a-é-\Q\E\B]/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 12];
+        yield 'quoted two-byte character ending a range before a range to \k' => ['pattern' => '/[a-\Qé\E-\k]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 12];
+        yield 'two-byte character ending a range, a quote end, then a range to \k' => ['pattern' => '/[a-é-\E\k]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 10];
+
         yield 'two-byte character ending a range before a range to a POSIX class' => ['pattern' => '/[a-é-[:alpha:]]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 7];
         yield 'two-byte character ending a range before a range to a POSIX class, PCRE2 10.45' => ['pattern' => '/[a-é-[:alpha:]]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 15];
         yield 'two-byte character ending a range before a range to a property' => ['pattern' => '/[a-é-\pL]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];

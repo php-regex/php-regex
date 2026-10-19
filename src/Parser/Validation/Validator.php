@@ -510,7 +510,10 @@ final class Validator extends AbstractNodeVisitor
                 $endsRange = $afterRange;
                 $quote = \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true);
                 $afterRange = (TokenType::Range === $token->type && !$endsRange && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
-                $rangeEnded = $quote ? $rangeEnded || $endsRange : $endsRange;
+                // Without UTF a multibyte character ending a range leaves
+                // its last byte, which a "-" makes a range from.
+                $rangeEnded = $quote ? $rangeEnded || $endsRange
+                    : $endsRange && ($this->unicodeMode || !\in_array($token->type, [TokenType::Literal, TokenType::LiteralEscaped], true) || 1 === \strlen($token->value));
                 $classEscapeThenQuote = $quoteKeepsHyphen && $quote && ($classEscape || $classEscapeThenQuote);
                 $classEscape = \in_array($token->type, [TokenType::CharType, TokenType::PosixClass, TokenType::UnicodeProp], true);
 
