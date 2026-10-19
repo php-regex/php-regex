@@ -41,6 +41,7 @@ final class AstFingerprint
         'src/Parser/Token/TokenType.php',
         'src/Parser/Node/*.php',
         'src/Parser/Validation/Validator.php',
+        'src/Parser/Validation/FirstErrorLocator.php',
         // Hands the flags, the delimiter and the options to the parser; the
         // version it holds is left out of its own fingerprint.
         'src/Parser/RegexParser.php',

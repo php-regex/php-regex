@@ -98,6 +98,13 @@ final class EarlierErrorOrderTest extends TestCase
         yield 'unknown verb before a group left open' => ['pattern' => '/(*FOO)(/', 'code' => ErrorCode::VerbInvalid, 'offset' => 5];
         yield 'unknown verb in a group left open' => ['pattern' => '/(a(*FOO)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 7];
         yield 'unknown verb in a short lookahead left open' => ['pattern' => '/(?*a(*FOO)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 9];
+        // PCRE: "(*VERB) not recognized or malformed": a value after a name
+        // that takes none, refused at its "=".
+        yield 'setting given a value before a name repeated' => ['pattern' => '/(*CR=1)(?<o>)(?<o>)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 4];
+        yield 'verb given a value before a group left open' => ['pattern' => '/a(*ACCEPT=1)(a/', 'code' => ErrorCode::VerbInvalid, 'offset' => 9];
+        // PCRE: "missing closing parenthesis": "(?(VERSION)" names the group
+        // called VERSION, no version is judged before the group left open.
+        yield 'condition on a group named VERSION before a group left open' => ['pattern' => '/(?<VERSION>a)(?(VERSION)b)(/', 'code' => ErrorCode::GroupUnclosed, 'offset' => 27];
         // PCRE: "(*alpha_assertion) not recognized".
         yield 'unknown assertion before a group left open' => ['pattern' => '/(*foo:a)(/', 'code' => ErrorCode::VerbInvalid, 'offset' => 5];
         yield 'unknown assertion before a stray parenthesis' => ['pattern' => '/(*foo:a)x)/', 'code' => ErrorCode::VerbInvalid, 'offset' => 5];
