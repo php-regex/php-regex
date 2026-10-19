@@ -111,6 +111,7 @@ final class FirstErrorLocator
 
         $laterErrors = [
             $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
+            ErrorCode::CharclassUnclosed === $error->errorCode ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
@@ -401,6 +402,44 @@ final class FirstErrorLocator
             if (null !== $error) {
                 return $error;
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first error in the class the tokens leave open at the end of the
+     * pattern: PCRE reads it item by item before it meets that end, so an
+     * item it refuses comes before the missing "]". The class is parsed
+     * alone, as if a "]" closed it there, and judged.
+     *
+     * @param list<Token> $tokens
+     */
+    private function firstErrorInClassLeftOpen(array $tokens, string $pattern, string $flags, string $delimiter): ?SemanticErrorException
+    {
+        // The tokens from the "[" no "]" closes; none should the lexer ever
+        // report a class left open it has not read.
+        $depth = 0;
+        $opening = \count($tokens);
+        foreach ($tokens as $index => $token) {
+            if (TokenType::CharClassOpen === $token->type && 0 === $depth++) {
+                $opening = $index;
+            } elseif (TokenType::CharClassClose === $token->type && $depth > 0 && 0 === --$depth) {
+                $opening = \count($tokens);
+            }
+        }
+
+        $end = \strlen($pattern);
+        $class = [...\array_slice($tokens, $opening), new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)];
+
+        try {
+            $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(new TokenStream($class, $pattern), $flags, $delimiter, $end);
+            $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
+        } catch (SemanticErrorException $error) {
+            return $error;
+        } catch (LexerException|LimitException|ParserException) {
+            // A class the parser cannot read alone, "[" with nothing after
+            // it: the missing "]" stands.
         }
 
         return null;
