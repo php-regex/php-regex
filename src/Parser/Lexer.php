@@ -21,6 +21,7 @@ use PHPRegex\Parser\Syntax\CodePointReader;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreVerb;
+use PHPRegex\Parser\Syntax\PosixItem;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\Token;
@@ -275,6 +276,12 @@ final class Lexer
     private bool $inQuoteMode = false;
 
     private bool $inCommentMode = false;
+
+    /**
+     * Where the POSIX item read whole, character by character, ends: its
+     * "]" when it opens a class, past it in a class.
+     */
+    private ?int $classTextEnd = null;
 
     private bool $byteMode = false;
 
@@ -581,6 +588,12 @@ final class Lexer
             // once, not once per token.
             LibraryPcre::run(function () use (&$tokens): void {
                 while ($this->position < $this->length) {
+                    if (null !== $this->classTextEnd) {
+                        $tokens[] = $this->consumeClassText($this->classTextEnd);
+
+                        continue;
+                    }
+
                     if ($this->handleTunnelModes($tokens)) {
                         continue;
                     }
@@ -760,6 +773,7 @@ final class Lexer
         $this->inCharClass = false;
         $this->inQuoteMode = false;
         $this->inCommentMode = false;
+        $this->classTextEnd = null;
         $this->charClassStartPositions = [];
         $this->quotedRun = null;
         $this->unclosedBody = null;
@@ -1196,6 +1210,14 @@ final class Lexer
             $char = $this->pattern[$at];
             if (']' === $char) {
                 break;
+            }
+
+            // So is a POSIX item whose name holds a backslash, "[:\d-z:]".
+            $terminator = '[' === $char ? PosixItem::terminatorPastABackslash($this->pattern, $at) : null;
+            if (null !== $terminator) {
+                $at = $terminator + 2;
+
+                continue;
             }
 
             if ('[' === $char && ':' === ($this->pattern[$at + 1] ?? '')) {
@@ -1770,12 +1792,43 @@ final class Lexer
     private function handleCharClassOpen(int $startPos): Token
     {
         // PHP compiles without PCRE2's extended class syntax, so a "[" inside
-        // a class is a member: nothing nests.
+        // a class is a member: nothing nests. A POSIX item whose name holds
+        // a backslash, "[:\d-z:]", is read whole, as PCRE reads it, not as
+        // the escapes it holds: one token in a class; the "[" of a collating
+        // element, "[.\d.]", then each of its characters; the characters of
+        // the class it opens otherwise.
+        $terminator = PosixItem::terminatorPastABackslash($this->pattern, $startPos);
         if ($this->inCharClass) {
+            if (null !== $terminator && ':' === $this->pattern[$startPos + 1]) {
+                $this->position = $terminator + 2;
+
+                return new Token(TokenType::PosixClass, substr($this->pattern, $startPos + 2, $terminator - $startPos - 2), $startPos, $this->position - $startPos);
+            }
+
+            $this->classTextEnd = null === $terminator ? null : $terminator + 2;
+
             return new Token(TokenType::Literal, '[', $startPos);
         }
 
+        $this->classTextEnd = null === $terminator ? null : $terminator + 1;
+
         return $this->openCharClass($startPos);
+    }
+
+    /**
+     * A character of a POSIX item read whole, as a member: no escape, no
+     * range, no quote in it is read.
+     */
+    private function consumeClassText(int $end): Token
+    {
+        $start = $this->position;
+        $ord = \ord($this->pattern[$start]);
+        $this->position += $this->byteMode || $ord < 0xC0 ? 1 : ($ord >= 0xF0 ? 4 : ($ord >= 0xE0 ? 3 : 2));
+        if ($this->position >= $end) {
+            $this->classTextEnd = null;
+        }
+
+        return new Token(TokenType::Literal, substr($this->pattern, $start, $this->position - $start), $start);
     }
 
     private function openCharClass(int $startPos): Token
@@ -2313,10 +2366,17 @@ final class Lexer
     {
         $members = [];
         $open = false;
+        $quoted = false;
         foreach ($tokens as $token) {
             if (!$open) {
                 $open = TokenType::CharClassOpen === $token->type && $token->position === $classStart;
-            } elseif (TokenType::QuoteModeStart !== $token->type && TokenType::QuoteModeEnd !== $token->type) {
+            } elseif (TokenType::QuoteModeStart === $token->type || TokenType::QuoteModeEnd === $token->type) {
+                $quoted = TokenType::QuoteModeStart === $token->type;
+            } elseif (!$quoted && TokenType::Literal === $token->type && '[' === $token->value && null !== PosixItem::terminator($this->pattern, $token->position)) {
+                // The "[" of a POSIX item, "[.a.]", names no character:
+                // PCRE refuses the item, or a range it ends.
+                $members[] = new Token(TokenType::PosixClass, '', $token->position, 1);
+            } else {
                 $members[] = $token;
             }
         }

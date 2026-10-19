@@ -316,6 +316,11 @@ final class ErrorOffsetReleaseTest extends TestCase
         // A "\p{" no "}" closes is judged after the items before it.
         yield 'reversed range before a range to an unclosed property' => ['pattern' => '/[z-aa-\\p{L]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
         yield 'reversed range before an unclosed property with no name' => ['pattern' => '/([z-a\\P{]/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
+        // A POSIX item is read whole, whatever its name holds.
+        yield 'POSIX item holding a range from a type' => ['pattern' => '/[[:\\d-z:]]/', 'bundled' => 3, 'newer' => 9, 'movedIn' => '10.45'];
+        yield 'POSIX item holding a range from a type, ending a range' => ['pattern' => '/[a-[:\\d-z:]]/', 'bundled' => 4, 'newer' => 11, 'movedIn' => '10.45'];
+        yield 'collating element holding a control escape PCRE refuses' => ['pattern' => '/[[.\\cé.]]/', 'bundled' => 1, 'newer' => 9, 'movedIn' => '10.45'];
+        yield 'class that is a POSIX item holding a range from a type' => ['pattern' => '/[:\\d-z:]/', 'bundled' => 0, 'newer' => 8, 'movedIn' => '10.47'];
         // What PCRE checks once the pattern is read comes after the counts.
         yield 'counts out of order after an unbounded lookbehind' => ['pattern' => '/(?<=a+){2,1}/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
         yield 'counts out of order after a reference to a missing group' => ['pattern' => '/\\9{2,1}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];

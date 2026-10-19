@@ -151,10 +151,14 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
   reported one byte early.
 - `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10.
-- The lexer reads no POSIX item whose name holds a backslash, `[:\d-z:]`:
-  from 10.45 `[[:\d-z:]]` is "unknown POSIX class name" at offset 9 and
-  `[a-[:\d-z:]]` "invalid range in character class" at offset 11, where the
-  library refuses the `\d-z` inside at 6 and 8.
+- In the body of an alphabetic assertion, a range from a class escape is
+  refused after a `\c` PCRE refuses later in the class: `(*pla:[\d-a\cé])`
+  is "invalid range in character class" at offset 9 from 10.33 (10 from
+  10.45), the library says 13 (`\c` before a character past ASCII); the
+  same class in `(?=...)` is reported right.
+- Under `u`, `\pé` is "malformed \P or \p sequence" at offset 3 up to
+  10.46, inside the `é` (4 from 10.47); the library says 4 on every
+  release, and 5 for 4 in `[\pé]`.
 - Up to 10.44 a quoted hyphen starts a range: `([\Q-\E--\pL]` misses its `)`
   at 13 (the range `-` to `-`, then `\pL`), the library says 11.
 - A name nothing closes in a call by name, `(?<n>a)(?&n )` or

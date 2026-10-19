@@ -69,6 +69,7 @@ final class AstFingerprint
         'src/Parser/Syntax/NamedCharacterBrace.php',
         'src/Parser/Syntax/PatternParser.php',
         'src/Parser/Syntax/PcreVerb.php',
+        'src/Parser/Syntax/PosixItem.php',
         'src/Parser/Syntax/PropertyNames.php',
         'src/Parser/Syntax/RepeatCount.php',
         'src/Parser/Syntax/StartOptions.php',

@@ -65,6 +65,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\BadEscape;
 use PHPRegex\Parser\Syntax\NamedCharacterBrace;
 use PHPRegex\Parser\Syntax\PcreVerb;
+use PHPRegex\Parser\Syntax\PosixItem;
 use PHPRegex\Parser\Syntax\PropertyNames;
 use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -3648,32 +3649,7 @@ final class Validator extends AbstractNodeVisitor
      */
     private function findPosixTerminator(string $source, int $offset): ?int
     {
-        $terminator = $source[$offset] ?? '';
-        if (':' !== $terminator && '.' !== $terminator && '=' !== $terminator) {
-            return null;
-        }
-
-        $length = \strlen($source);
-        for ($position = $offset + 1; $length - $position >= 2; $position++) {
-            $char = $source[$position];
-            $next = $source[$position + 1];
-
-            if ('\\' === $char && (']' === $next || '\\' === $next)) {
-                $position++;
-
-                continue;
-            }
-
-            if (('[' === $char && $terminator === $next) || ']' === $char) {
-                return null;
-            }
-
-            if ($terminator === $char && ']' === $next) {
-                return $position;
-            }
-        }
-
-        return null;
+        return PosixItem::terminator($source, $offset - 1);
     }
 
     private function isPosixClassName(string $name): bool
