@@ -16,10 +16,13 @@ namespace PHPRegex\Parser\Analysis;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
@@ -273,6 +276,11 @@ final class GroupIndex
      */
     private function index(NodeInterface $node, int &$nextGroupNumber, bool $inBranchReset = false): void
     {
+        // Most nodes are characters and classes, which hold no group.
+        if ($node instanceof LiteralNode || $node instanceof CharClassNode || $node instanceof CharTypeNode) {
+            return;
+        }
+
         if ($node instanceof SubroutineNode || $node instanceof BackrefNode) {
             $this->nextNumberAt[spl_object_id($node)] = $nextGroupNumber;
             if ($node instanceof SubroutineNode && !isset($this->recursionTests[spl_object_id($node)])) {

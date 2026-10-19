@@ -153,6 +153,16 @@ final class Validator extends AbstractNodeVisitor
      */
     private const COMPILED_SIZE_CAP = 1 << 24;
 
+    /**
+     * The most units compiledSizeFloor() counts for one byte of a pattern
+     * that holds no "{", so repeats nothing by a count: a class of two
+     * members 33 for its four bytes, a group 8 for its two brackets, a
+     * branch 3 for its "|", a literal 2 per character, a callout 11 and its
+     * string for six bytes and that string, a verb 3 and its name for more,
+     * "?" on a group 1, every other item 3 at most for one byte or more.
+     */
+    private const MAX_UNITS_PER_BYTE_UNCOUNTED = 33;
+
     // Precomputed validation sets for maximum performance
     private const VALID_ASSERTIONS = [
         'A' => true, 'z' => true, 'Z' => true,
@@ -562,7 +572,12 @@ final class Validator extends AbstractNodeVisitor
         $this->raiseFirstLateError();
 
         // PCRE measures the compiled pattern last, once it has read it all.
-        if ($this->compiledSizeFloor($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE) {
+        // A pattern that holds no "{" and is short enough cannot reach the
+        // limit, whatever it holds: it is not measured.
+        $source = $node->source;
+        $belowTheLimit = null !== $source && !str_contains($source, '{')
+            && \strlen($source) * self::MAX_UNITS_PER_BYTE_UNCOUNTED + self::COMPILED_FRAME_SIZE <= self::MAX_COMPILED_SIZE;
+        if (!$belowTheLimit && $this->compiledSizeFloor($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE) {
             $this->raiseSemanticError(
                 'Regular expression is too large: PCRE would compile it to more than 64 KiB.',
                 \strlen($node->source ?? ''),
@@ -776,7 +791,7 @@ final class Validator extends AbstractNodeVisitor
 
         $letter = $node->value;
         $start = $node->startPosition;
-        if (1 !== \strlen($letter) || !Ascii::isAlpha($letter)
+        if (1 !== \strlen($letter) || '\\' !== ($this->source[$start] ?? '') || !Ascii::isAlpha($letter)
             || '\\'.$letter !== substr($this->source, $start, $node->endPosition - $start)) {
             return;
         }
@@ -3694,9 +3709,8 @@ final class Validator extends AbstractNodeVisitor
     private function compiledSizeFloor(NodeInterface $node): int
     {
         $size = match (true) {
-            $node instanceof SequenceNode => array_sum(array_map($this->compiledSizeFloor(...), $node->children)),
-            $node instanceof AlternationNode => array_sum(array_map($this->compiledSizeFloor(...), $node->alternatives))
-                + 3 * (\count($node->alternatives) - 1),
+            $node instanceof SequenceNode => $this->compiledSizeFloorOfAll($node->children),
+            $node instanceof AlternationNode => $this->compiledSizeFloorOfAll($node->alternatives) + 3 * (\count($node->alternatives) - 1),
             $node instanceof GroupNode => $this->groupSizeFloor($node),
             $node instanceof ConditionalNode => $this->conditionalSizeFloor($node),
             $node instanceof QuantifierNode => $this->repeatedSizeFloor($node),
@@ -3716,6 +3730,19 @@ final class Validator extends AbstractNodeVisitor
         };
 
         return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * @param array<NodeInterface> $nodes
+     */
+    private function compiledSizeFloorOfAll(array $nodes): int
+    {
+        $size = 0;
+        foreach ($nodes as $node) {
+            $size += $this->compiledSizeFloor($node);
+        }
+
+        return $size;
     }
 
     /**
