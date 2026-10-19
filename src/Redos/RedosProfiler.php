@@ -107,7 +107,7 @@ final class RedosProfiler extends AbstractNodeVisitor
         $suggestedRewrite = null;
 
         foreach ($this->vulnerabilities as $vuln) {
-            if ($this->severityGreaterThan($vuln->severity, $maxSeverity)) {
+            if ($vuln->severity->rank() > $maxSeverity->rank()) {
                 $maxSeverity = $vuln->severity;
                 $pattern = $vuln->pattern;
                 $trigger = $vuln->trigger;
@@ -741,7 +741,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private function reduceSeverity(RedosSeverity $severity, RedosSeverity $cap): RedosSeverity
     {
-        return $this->severityGreaterThan($severity, $cap) ? $cap : $severity;
+        return $severity->rank() > $cap->rank() ? $cap : $severity;
     }
 
     /**
@@ -777,7 +777,7 @@ final class RedosProfiler extends AbstractNodeVisitor
             $trigger,
         );
 
-        if ($this->severityGreaterThan($severity, $this->culpritSeverity)) {
+        if ($severity->rank() > $this->culpritSeverity->rank()) {
             $this->culpritSeverity = $severity;
             $this->culpritNode = $triggerNode;
         }
@@ -800,28 +800,11 @@ final class RedosProfiler extends AbstractNodeVisitor
     }
 
     /**
-     * Compares two RedosSeverity values.
-     */
-    private function severityGreaterThan(RedosSeverity $a, RedosSeverity $b): bool
-    {
-        $levels = [
-            RedosSeverity::Safe->value => 0,
-            RedosSeverity::Low->value => 1,
-            RedosSeverity::Unknown->value => 2,
-            RedosSeverity::Medium->value => 3,
-            RedosSeverity::High->value => 4,
-            RedosSeverity::Critical->value => 5,
-        ];
-
-        return $levels[$a->value] > $levels[$b->value];
-    }
-
-    /**
      * Returns the higher of two RedosSeverity values.
      */
     private function maxSeverity(RedosSeverity $a, RedosSeverity $b): RedosSeverity
     {
-        return $this->severityGreaterThan($a, $b) ? $a : $b;
+        return $a->rank() > $b->rank() ? $a : $b;
     }
 
     /**
