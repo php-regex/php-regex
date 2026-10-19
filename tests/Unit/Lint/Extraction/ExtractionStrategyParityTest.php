@@ -20,6 +20,7 @@ use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -469,9 +470,9 @@ final class ExtractionStrategyParityTest extends TestCase
             .str_repeat('Strings::match(subject: ', $depth).'$s'.str_repeat(", pattern: '/n/')", $depth).";\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $patterns = $this->patterns($strategy, $file);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertCount($depth, $patterns);
         // A quadratic reading takes 70 s and more at this depth, a linear
@@ -491,9 +492,9 @@ final class ExtractionStrategyParityTest extends TestCase
             .str_repeat("Strings::replace(\$s, ['/a/' => 'x'], function (\$m) { return ", $depth).'$m'.str_repeat('; });', $depth)."\n");
         $strategy = new TokenBasedExtractionStrategy([], PatternFunctionRegistry::create(['nette-utils']));
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $patterns = $this->patterns($strategy, $file);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertCount($depth, $patterns);
         // A quadratic reading takes 70 s and more at this depth, a linear

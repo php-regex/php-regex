@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser\Text;
 
 use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -79,9 +80,9 @@ final class DisplayEscaperLinearTimeTest extends TestCase
     {
         $best = \INF;
         for ($run = 0; $run < 3; $run++) {
-            $start = hrtime(true);
+            $start = CpuClock::nanoseconds();
             DisplayEscaper::escape($pattern);
-            $best = min($best, (hrtime(true) - $start) / 1e9);
+            $best = min($best, (CpuClock::nanoseconds() - $start) / 1e9);
         }
 
         return $best;

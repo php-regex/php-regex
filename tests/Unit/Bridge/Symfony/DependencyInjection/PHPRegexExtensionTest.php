@@ -13,20 +13,17 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Parser\Cache\PsrCacheAdapter;
+use PHPRegex\Symfony\Command\ExplainCommand;
+use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
+use PHPRegex\Tests\Support\DependencyInjectionFunctionOverrides;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
-
-final class DependencyInjectionFunctionOverrides
-{
-    public static ?bool $classExistsResult = null;
-
-    public static function reset(): void
-    {
-        self::$classExistsResult = null;
-    }
-}
 
 final class PHPRegexExtensionTest extends TestCase
 {
@@ -40,7 +37,7 @@ final class PHPRegexExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
 
-        $extension = new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension();
+        $extension = new PHPRegexExtension();
         $extension->load([[
             'max_pattern_length' => 42,
             'cache' => [
@@ -89,7 +86,7 @@ final class PHPRegexExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
 
-        (new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension())->load([[]], $container);
+        (new PHPRegexExtension())->load([[]], $container);
 
         $regexOptions = $container->getDefinition('php_regex.command.lint')->getArgument('$regexOptions');
         $this->assertIsArray($regexOptions);
@@ -105,10 +102,10 @@ final class PHPRegexExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
 
-        (new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension())->load([[]], $container);
+        (new PHPRegexExtension())->load([[]], $container);
 
         $definition = $container->getDefinition('php_regex.command.explain');
-        $this->assertSame(\PHPRegex\Symfony\Command\ExplainCommand::class, $definition->getClass());
+        $this->assertSame(ExplainCommand::class, $definition->getClass());
         $this->assertTrue($definition->hasTag('console.command'));
         $regex = $definition->getArgument('$regex');
         $this->assertInstanceOf(Reference::class, $regex);
@@ -124,9 +121,9 @@ final class PHPRegexExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
 
-        (new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension())->load([[]], $container);
+        (new PHPRegexExtension())->load([[]], $container);
 
-        $definition = $container->getDefinition(\PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator::class);
+        $definition = $container->getDefinition(ValidRegexValidator::class);
         $this->assertTrue($definition->hasTag('validator.constraint_validator'));
         $regex = $definition->getArgument('$regex');
         $this->assertInstanceOf(Reference::class, $regex);
@@ -138,18 +135,18 @@ final class PHPRegexExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', false);
 
-        $extension = new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension();
+        $extension = new PHPRegexExtension();
         $extension->load([[
             'extractor_service' => 'my_custom_extractor',
         ]], $container);
 
-        $this->assertTrue($container->hasAlias(\PHPRegex\Linter\Extraction\ExtractorInterface::class));
-        $this->assertSame('my_custom_extractor', (string) $container->getAlias(\PHPRegex\Linter\Extraction\ExtractorInterface::class));
+        $this->assertTrue($container->hasAlias(ExtractorInterface::class));
+        $this->assertSame('my_custom_extractor', (string) $container->getAlias(ExtractorInterface::class));
     }
 
     public function test_build_cache_definition_uses_pool(): void
     {
-        $extension = new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension();
+        $extension = new PHPRegexExtension();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('buildCacheDefinition');
 
@@ -162,7 +159,7 @@ final class PHPRegexExtensionTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(\PHPRegex\Parser\Cache\PsrCacheAdapter::class, $definition->getClass());
+        $this->assertSame(PsrCacheAdapter::class, $definition->getClass());
         $argument = $definition->getArgument(0);
         $this->assertInstanceOf(Reference::class, $argument);
         $this->assertSame('cache.pool', $argument->__toString());
@@ -172,14 +169,14 @@ final class PHPRegexExtensionTest extends TestCase
     {
         DependencyInjectionFunctionOverrides::$classExistsResult = false;
 
-        $extension = new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension();
+        $extension = new PHPRegexExtension();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('createExtractorDefinition');
 
         /** @var Definition $definition */
         $definition = $method->invoke($extension, ['interop' => [], 'functions' => []]);
 
-        $this->assertSame(\PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy::class, $definition->getClass());
+        $this->assertSame(TokenBasedExtractionStrategy::class, $definition->getClass());
     }
 
     public function test_resolve_editor_format_uses_framework_ide(): void
@@ -187,7 +184,7 @@ final class PHPRegexExtensionTest extends TestCase
         $container = new ContainerBuilder();
         $container->setParameter('framework.ide', 'phpstorm');
 
-        $extension = new \PHPRegex\Symfony\DependencyInjection\PHPRegexExtension();
+        $extension = new PHPRegexExtension();
         $reflection = new \ReflectionClass($extension);
         $method = $reflection->getMethod('resolveEditorFormat');
 
@@ -195,17 +192,4 @@ final class PHPRegexExtensionTest extends TestCase
 
         $this->assertSame('phpstorm', $resolved);
     }
-}
-
-namespace PHPRegex\Symfony\DependencyInjection;
-
-use PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection\DependencyInjectionFunctionOverrides;
-
-function class_exists(string $class, bool $autoload = true): bool
-{
-    if (null !== DependencyInjectionFunctionOverrides::$classExistsResult) {
-        return DependencyInjectionFunctionOverrides::$classExistsResult;
-    }
-
-    return \class_exists($class, $autoload);
 }

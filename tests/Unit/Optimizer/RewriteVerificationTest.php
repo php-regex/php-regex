@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -60,9 +61,9 @@ final class RewriteVerificationTest extends TestCase
         $this->assertNotSame($original, $rewrite, 'The pattern has something to rewrite.');
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $verdict = $verify->invoke($optimizer, $original, $rewrite);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertTrue($verdict);
         $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));
@@ -84,9 +85,9 @@ final class RewriteVerificationTest extends TestCase
         $this->assertNotSame($original, $rewrite, 'The pattern has something to rewrite.');
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $verdict = $verify->invoke($optimizer, $original, $rewrite);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertTrue($verdict);
         $this->assertLessThan(2.0, $seconds, \sprintf('The check took %.2f s.', $seconds));

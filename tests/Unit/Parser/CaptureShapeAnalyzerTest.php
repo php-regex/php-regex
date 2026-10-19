@@ -20,6 +20,7 @@ use PHPRegex\Parser\Analysis\Participation;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -389,9 +390,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
     {
         $shape = $this->analyze($pattern);
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $shape->matchShape($flags);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertLessThan(2.0, $seconds, \sprintf('matchShape(%d) took %.2f s.', $flags, $seconds));
     }
@@ -912,9 +913,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $shape = $this->analyze($pattern);
 
         foreach ([\PREG_PATTERN_ORDER, \PREG_SET_ORDER] as $order) {
-            $start = hrtime(true);
+            $start = CpuClock::nanoseconds();
             $shape->matchAllShape($order | $flags);
-            $seconds = (hrtime(true) - $start) / 1e9;
+            $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
             $this->assertLessThan(2.0, $seconds, \sprintf('matchAllShape(%d) took %.2f s.', $order | $flags, $seconds));
         }
@@ -1841,9 +1842,9 @@ final class CaptureShapeAnalyzerTest extends TestCase
     {
         $fastest = \INF;
         for ($run = 0; $run < 3; $run++) {
-            $start = hrtime(true);
+            $start = CpuClock::nanoseconds();
             $analyzer->analyze($regex);
-            $fastest = min($fastest, (hrtime(true) - $start) / 1e9);
+            $fastest = min($fastest, (CpuClock::nanoseconds() - $start) / 1e9);
         }
 
         return $fastest;

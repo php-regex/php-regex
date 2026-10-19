@@ -17,6 +17,7 @@ use PHPRegex\Generator\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -172,7 +173,7 @@ final class RegexGenerateTest extends TestCase
     #[Test]
     public function test_a_sample_the_engine_gave_up_on_is_not_padded(): void
     {
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
 
         try {
             Regex::create(['cache' => null])->generate('/(?:\\w|\\w){25}\\z!/');
@@ -181,7 +182,7 @@ final class RegexGenerateTest extends TestCase
             $this->assertStringEndsWith('the engine gave up checking 8 of the samples (Backtrack limit exhausted).', $e->getMessage());
         }
 
-        $this->assertLessThan(4.0, (hrtime(true) - $start) / 1e9);
+        $this->assertLessThan(4.0, (CpuClock::nanoseconds() - $start) / 1e9);
     }
 
     #[Test]

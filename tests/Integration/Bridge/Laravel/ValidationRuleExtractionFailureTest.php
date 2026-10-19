@@ -19,6 +19,7 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -325,9 +326,9 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
     {
         $best = \PHP_FLOAT_MAX;
         for ($run = 0; $run < 3; $run++) {
-            $start = hrtime(true);
+            $start = CpuClock::nanoseconds();
             $found = self::extracted($directory);
-            $best = min($best, (hrtime(true) - $start) / 1e9);
+            $best = min($best, (CpuClock::nanoseconds() - $start) / 1e9);
             self::assertSame(['/a/', '/b+/'], $found, 'Both rules are found at every size.');
         }
 

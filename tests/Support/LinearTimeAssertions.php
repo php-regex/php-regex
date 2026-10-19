@@ -82,29 +82,9 @@ trait LinearTimeAssertions
      */
     private static function cpuTime(\Closure $read, int $size): float
     {
-        $start = self::cpuSeconds();
+        $start = CpuClock::seconds();
         $read($size);
 
-        return self::cpuSeconds() - $start;
-    }
-
-    /**
-     * The user and system time of the process: their sum is exact to the
-     * microsecond on Linux and macOS, where each alone may be sampled.
-     */
-    private static function cpuSeconds(): float
-    {
-        $usage = getrusage();
-        if (false === $usage) {
-            throw new \RuntimeException('getrusage() failed: the CPU time of the process cannot be read.');
-        }
-
-        $seconds = 0.0;
-        foreach (['ru_utime.tv_sec' => 1.0, 'ru_utime.tv_usec' => 1e-6, 'ru_stime.tv_sec' => 1.0, 'ru_stime.tv_usec' => 1e-6] as $field => $unit) {
-            $value = $usage[$field] ?? 0;
-            $seconds += (\is_int($value) ? $value : 0) * $unit;
-        }
-
-        return $seconds;
+        return CpuClock::seconds() - $start;
     }
 }

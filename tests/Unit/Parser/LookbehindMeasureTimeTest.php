@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\TestUtils\PcreMessageCodes;
@@ -415,9 +416,9 @@ final class LookbehindMeasureTimeTest extends TestCase
     {
         $best = \INF;
         for ($run = 0; $run < 3; $run++) {
-            $start = hrtime(true);
+            $start = CpuClock::nanoseconds();
             Regex::create(['cache' => null])->validate($regex);
-            $best = min($best, (hrtime(true) - $start) / 1e9);
+            $best = min($best, (CpuClock::nanoseconds() - $start) / 1e9);
             if ($best >= 10 * self::BUDGET) {
                 break;
             }

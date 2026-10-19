@@ -70,6 +70,7 @@ final class OptionsShapeTest extends TestCase
             );
             self::assertIsResource($process);
             $stdout = (string) stream_get_contents($pipes[1]);
+            $stderr = (string) stream_get_contents($pipes[2]);
             fclose($pipes[1]);
             fclose($pipes[2]);
             proc_close($process);
@@ -82,7 +83,7 @@ final class OptionsShapeTest extends TestCase
                     break;
                 }
             }
-            self::assertIsArray($json, $stdout);
+            self::assertIsArray($json, $stdout.$stderr);
             $files = $json['files'] ?? [];
             self::assertIsArray($files);
             $file = $files[$fixture] ?? [];

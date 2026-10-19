@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -132,10 +133,10 @@ final class ImpossibleBoundaryRuleTest extends TestCase
     {
         $tree = Regex::create(['cache' => null])->parse($pattern);
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $linter = new PatternLinter();
         $tree->accept($linter);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertLessThan(0.5, $seconds);
         $this->assertCount($reported, array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id));

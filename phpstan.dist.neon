@@ -131,6 +131,10 @@ parameters:
         - tests/Integration/Bridge/PHPStan/Fixtures/
         # Psalm reads these, invalid patterns and all
         - tests/Integration/Bridge/Psalm/Fixtures/
+        # Rector's test case writes each fixture's code as a .php file beside
+        # it while the test runs, and removes it: an analysis run beside the
+        # suite would list the file, then fail to read it
+        - tests/Integration/Bridge/Rector/*/Fixture*
         - tests/Tools/validate_library.php
         # The Rector set is read by Rector, whose classes live in its own vendor
         - src/Toolkit/Resources/rector/*

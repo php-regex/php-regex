@@ -33,6 +33,7 @@ use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Redos\RedosProfiler;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -57,10 +58,10 @@ final class VisitorDepthScalingTest extends TestCase
         $pattern = '/'.str_repeat('(?:', $depth).'a'.str_repeat(')*', $depth).'/';
         $tree = Regex::create(['cache' => null])->parse($pattern);
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $tree->accept($visitor);
 
-        $this->assertLessThan(1.0, (hrtime(true) - $start) / 1e9);
+        $this->assertLessThan(1.0, (CpuClock::nanoseconds() - $start) / 1e9);
     }
 
     /**

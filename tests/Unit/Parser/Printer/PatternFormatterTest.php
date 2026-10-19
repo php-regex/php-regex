@@ -33,6 +33,7 @@ use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\Printer\PatternFormatter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
@@ -781,13 +782,13 @@ final class PatternFormatterTest extends TestCase
         $formatter = new PatternFormatter();
         $formatter->{$operation}($this->parse('/\.\./'));
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $formatter->{$operation}($short);
-        $shortTime = hrtime(true) - $start;
+        $shortTime = CpuClock::nanoseconds() - $start;
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $formatter->{$operation}($long);
-        $longTime = hrtime(true) - $start;
+        $longTime = CpuClock::nanoseconds() - $start;
 
         $this->assertLessThan(6, $longTime / max(1, $shortTime), \sprintf('%s: %.0f ms for 5,000 escapes, %.0f ms for 20,000.', $operation, $shortTime / 1e6, $longTime / 1e6));
     }
@@ -1399,9 +1400,9 @@ final class PatternFormatterTest extends TestCase
         $pattern = '{'.str_repeat('\Q{\E.\Q}\E.', 8000).'}';
         $regex = $this->parse($pattern);
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $result = (new PatternFormatter())->compact($regex);
-        $seconds = (hrtime(true) - $start) / 1e9;
+        $seconds = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertLessThan(3.0, $seconds, \sprintf('compact took %.1f s.', $seconds));
         $this->assertSame(1, preg_match($result->pattern, str_repeat('{a}b', 8000)), 'The output matches as the input does.');

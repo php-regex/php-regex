@@ -20,6 +20,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
+use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -81,9 +82,9 @@ final class ResolutionLimitsTest extends TestCase
         }
         $file = $this->makeProject(['same.php' => $code."}\n"]).'/same.php';
 
-        $start = hrtime(true);
+        $start = CpuClock::nanoseconds();
         $patterns = self::patterns($strategy, $file);
-        $elapsed = (hrtime(true) - $start) / 1e9;
+        $elapsed = (CpuClock::nanoseconds() - $start) / 1e9;
 
         $this->assertCount($calls, $patterns);
 
