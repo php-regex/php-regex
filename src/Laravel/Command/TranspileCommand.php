@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
+use PHPRegex\Laravel\Output\ConsoleWriter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
@@ -22,8 +23,6 @@ use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
-use Symfony\Component\Console\Formatter\OutputFormatter;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Transpile a PCRE regex to another dialect.
@@ -79,7 +78,7 @@ final class TranspileCommand extends Command
             $registry->get($target);
         } catch (TranspileException $e) {
             if ('json' === $format) {
-                $this->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
+                ConsoleWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
             } else {
                 $this->error(\sprintf(
                     "Invalid target '%s'. Supported targets: %s",
@@ -96,7 +95,7 @@ final class TranspileCommand extends Command
         $validation = $this->regex->validate($pattern);
         if (!$validation->isValid) {
             if ('json' === $format) {
-                $this->writeDocument(JsonDocument::error(
+                ConsoleWriter::document($this->output, JsonDocument::error(
                     $validation->error ?? 'Invalid pattern.',
                     JsonDocument::STAGE_PATTERN,
                     ['validation' => $validation],
@@ -118,7 +117,7 @@ final class TranspileCommand extends Command
             $result = $this->regex->transpile($pattern, $target, $options);
 
             if ('json' === $format) {
-                $this->writeDocument(JsonDocument::encode($result->jsonSerialize()));
+                ConsoleWriter::document($this->output, JsonDocument::encode($result->jsonSerialize()));
 
                 return self::SUCCESS;
             }
@@ -128,7 +127,7 @@ final class TranspileCommand extends Command
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Source (PCRE):</>');
-            $this->line('  '.$this->displayPattern($pattern));
+            $this->line('  '.ConsoleWriter::pattern($this->regex, $this->output, $pattern));
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Target ('.ucfirst($result->target).'):</>');
@@ -158,34 +157,12 @@ final class TranspileCommand extends Command
         } catch (LexerException|ParserException|TranspileException $e) {
             // A valid pattern the target cannot express.
             if ('json' === $format) {
-                $this->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
+                ConsoleWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
             } else {
                 $this->error('Transpilation failed: '.$e->getMessage());
             }
 
             return self::FAILURE;
         }
-    }
-
-    /**
-     * The document as it is, never read for console tags, and written even
-     * under --quiet: it is the output asked for, not a status line.
-     */
-    private function writeDocument(string $document): void
-    {
-        $this->output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
-    }
-
-    /**
-     * The pattern highlighted on a decorated output; elsewhere, as plain
-     * text, so that no escape sequence reaches a pipe or --no-ansi.
-     */
-    private function displayPattern(string $pattern): string
-    {
-        if ($this->output->isDecorated()) {
-            return $this->regex->highlight($pattern, 'console');
-        }
-
-        return '<fg=yellow>'.OutputFormatter::escape($pattern).'</>';
     }
 }

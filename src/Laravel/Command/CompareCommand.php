@@ -19,13 +19,13 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Laravel\Output\ConsoleWriter;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Compare two regex patterns: whether they share a string, whether the
@@ -115,7 +115,7 @@ final class CompareCommand extends Command
             if ($json) {
                 // Every key whatever the method, in the same order, null
                 // where the method fills none.
-                $this->writeDocument(JsonDocument::encode(array_replace([
+                ConsoleWriter::document($this->output, JsonDocument::encode(array_replace([
                     'pattern1' => $pattern1,
                     'pattern2' => $pattern2,
                     'method' => $method,
@@ -141,11 +141,11 @@ final class CompareCommand extends Command
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Pattern 1:</>');
-            $this->line('  '.$this->displayPattern($pattern1));
+            $this->line('  '.ConsoleWriter::pattern($this->regex, $this->output, $pattern1));
             $this->newLine();
 
             $this->line('<fg=white;options=bold>Pattern 2:</>');
-            $this->line('  '.$this->displayPattern($pattern2));
+            $this->line('  '.ConsoleWriter::pattern($this->regex, $this->output, $pattern2));
             $this->newLine();
 
             $this->line($outcome['verdict']);
@@ -187,7 +187,7 @@ final class CompareCommand extends Command
     private function refuse(bool $json, string $message, string $stage, int $exitCode): int
     {
         if ($json) {
-            $this->writeDocument(JsonDocument::error($message, $stage));
+            ConsoleWriter::document($this->output, JsonDocument::error($message, $stage));
         } else {
             $this->error($message);
         }
@@ -202,7 +202,7 @@ final class CompareCommand extends Command
     private function invalidPattern(bool $json, string $which, ValidationResult $validation): int
     {
         if ($json) {
-            $this->writeDocument(JsonDocument::error(
+            ConsoleWriter::document($this->output, JsonDocument::error(
                 $validation->error ?? 'Invalid pattern.',
                 JsonDocument::STAGE_PATTERN,
                 ['validation' => $validation],
@@ -213,15 +213,6 @@ final class CompareCommand extends Command
         }
 
         return self::FAILURE;
-    }
-
-    /**
-     * The document as it is, never read for console tags, and written even
-     * under --quiet: it is the output asked for, not a status line.
-     */
-    private function writeDocument(string $document): void
-    {
-        $this->output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 
     /**
@@ -295,18 +286,5 @@ final class CompareCommand extends Command
         $configured = config('php-regex.automata.'.$setting);
 
         return \is_string($configured) && '' !== $configured ? $configured : $default;
-    }
-
-    /**
-     * The pattern highlighted on a decorated output; elsewhere, as plain
-     * text, so that no escape sequence reaches a pipe or --no-ansi.
-     */
-    private function displayPattern(string $pattern): string
-    {
-        if ($this->output->isDecorated()) {
-            return $this->regex->highlight($pattern, 'console');
-        }
-
-        return '<fg=yellow>'.OutputFormatter::escape($pattern).'</>';
     }
 }

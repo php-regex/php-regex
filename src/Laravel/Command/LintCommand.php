@@ -15,6 +15,7 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
+use PHPRegex\Laravel\Output\ConsoleWriter;
 use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
 use PHPRegex\Laravel\Output\LintProgressBar;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
@@ -407,7 +408,7 @@ final class LintCommand extends Command
             return;
         }
 
-        $this->output->write($report, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
+        ConsoleWriter::document($this->output, $report);
     }
 
     private function renderEmptyResults(string $format): int
