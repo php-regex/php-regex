@@ -73,4 +73,26 @@ final class SecurityCommandTest extends TestCase
         $this->assertMatchesRegularExpression('/Firewalls\s*:\s*3\b/', $display);
         $this->assertStringContainsString('api', $display);
     }
+
+    #[Test]
+    public function test_command_passes_a_configuration_with_no_security_entries(): void
+    {
+        $command = new SecurityCommand(
+            new SecurityConfigExtractor(),
+            new SecurityAccessControlAnalyzer(Regex::create()),
+            new SecurityFirewallAnalyzer(Regex::create()),
+            new SecurityConfigLocator(),
+            new SecurityAccessSuggestionBuilder(),
+            null,
+            'high',
+        );
+
+        $tester = new CommandTester($command);
+        $status = $tester->execute(['--config' => [dirname(__DIR__, 4).'/Fixtures/Symfony/routes_only.yaml']]);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString('No security configuration entries found.', $display);
+        $this->assertStringContainsString('If PHPRegex helps, a GitHub star is appreciated', $display);
+    }
 }

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Command;
 
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Symfony\Routing\RouteConflictReport;
 use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
@@ -83,7 +83,7 @@ final class RoutesCommand extends Command
         if (0 === \count($collection->all())) {
             $this->showBanner($io);
             $io->writeln('  '.self::BADGE_PASS.' <fg=white>No routes found.</>');
-            $this->showFooter($io);
+            ConsoleWriter::footer($io);
 
             return Command::SUCCESS;
         }
@@ -103,7 +103,7 @@ final class RoutesCommand extends Command
                 $io->newLine();
             }
 
-            $this->showFooter($io);
+            ConsoleWriter::footer($io);
 
             return Command::SUCCESS;
         }
@@ -119,7 +119,7 @@ final class RoutesCommand extends Command
             $io->newLine();
         }
 
-        $this->showFooter($io);
+        ConsoleWriter::footer($io);
 
         return Command::FAILURE;
     }
@@ -174,10 +174,10 @@ final class RoutesCommand extends Command
 
         $labels = ['Routes', 'Mode', 'Shadowed', 'Overlaps'];
         $maxLabelLength = max(array_map(strlen(...), $labels));
-        $io->writeln($this->formatMetaLine('Routes', (string) $report->stats['routes'], $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Mode', $mode, $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Shadowed', (string) $report->stats['shadowed'], $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Overlaps', (string) $report->stats['overlaps'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Routes', (string) $report->stats['routes'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Mode', $mode, $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Shadowed', (string) $report->stats['shadowed'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Overlaps', (string) $report->stats['overlaps'], $maxLabelLength));
         $io->newLine();
     }
 
@@ -222,7 +222,7 @@ final class RoutesCommand extends Command
             $other = $conflict['conflict'];
             $typeLabel = $this->formatType($conflict);
             $scope = $this->formatScope($conflict['methods'], $conflict['schemes']);
-            $example = $this->formatExample($conflict['example']);
+            $example = ConsoleWriter::example($conflict['example']);
 
             $header = \sprintf(
                 '  %s <fg=white>%s</> <fg=gray>(#%d)</> <fg=gray>%s</> <fg=white>%s</> <fg=gray>(#%d)</>',
@@ -284,30 +284,5 @@ final class RoutesCommand extends Command
         }
 
         return implode(' • ', $parts);
-    }
-
-    private function formatExample(?string $example): string
-    {
-        if (null === $example) {
-            return '-';
-        }
-
-        return DisplayEscaper::quote($example, '<fg=cyan>', '</>');
-    }
-
-    private function showFooter(SymfonyStyle $io): void
-    {
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
-        $io->newLine();
-    }
-
-    private function formatMetaLine(string $label, string $value, int $maxLabelLength): string
-    {
-        return \sprintf(
-            '<fg=white;options=bold>%s</> : <fg=yellow>%s</>',
-            str_pad($label, $maxLabelLength),
-            $value,
-        );
     }
 }

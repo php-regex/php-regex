@@ -15,9 +15,9 @@ namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
+use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityAccessSuggestionBuilder;
@@ -168,7 +168,7 @@ final class SecurityCommand extends Command
         if ([] === $rules && [] === $firewalls) {
             $this->showBanner($io);
             $io->writeln('  '.self::BADGE_PASS.' <fg=white>No security configuration entries found.</>');
-            $this->showFooter($io);
+            ConsoleWriter::footer($io);
 
             return Command::SUCCESS;
         }
@@ -208,7 +208,7 @@ final class SecurityCommand extends Command
             }
         }
 
-        $this->showFooter($io);
+        ConsoleWriter::footer($io);
 
         $accessFailure = $accessReport->stats['shadowed'] > 0
             || ($includeOverlaps && $accessReport->stats['overlaps'] > 0);
@@ -335,11 +335,11 @@ final class SecurityCommand extends Command
 
         $labels = ['Rules', 'Mode', 'Shadowed', 'Overlaps', 'Critical'];
         $maxLabelLength = max(array_map(strlen(...), $labels));
-        $io->writeln($this->formatMetaLine('Rules', (string) $report->stats['rules'], $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Mode', $mode, $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Shadowed', (string) $report->stats['shadowed'], $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Overlaps', (string) $report->stats['overlaps'], $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Critical', (string) $report->stats['critical'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Rules', (string) $report->stats['rules'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Mode', $mode, $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Shadowed', (string) $report->stats['shadowed'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Overlaps', (string) $report->stats['overlaps'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Critical', (string) $report->stats['critical'], $maxLabelLength));
         $io->newLine();
     }
 
@@ -395,7 +395,7 @@ final class SecurityCommand extends Command
             $rule = $conflict['rule'];
             $other = $conflict['conflict'];
             $typeLabel = $this->formatAccessType($conflict);
-            $example = $this->formatExample($conflict['example']);
+            $example = ConsoleWriter::example($conflict['example']);
 
             $header = \sprintf(
                 '  %s <fg=white>#%d</> <fg=gray>(%s)</> <fg=gray>%s</> <fg=white>#%d</> <fg=gray>(%s)</>',
@@ -451,9 +451,9 @@ final class SecurityCommand extends Command
     ): void {
         $labels = ['Firewalls', 'ReDoS >=', 'Flagged'];
         $maxLabelLength = max(array_map(strlen(...), $labels));
-        $io->writeln($this->formatMetaLine('Firewalls', (string) $report->stats['firewalls'], $maxLabelLength));
-        $io->writeln($this->formatMetaLine('ReDoS >=', $threshold->value, $maxLabelLength));
-        $io->writeln($this->formatMetaLine('Flagged', (string) $report->stats['flagged'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Firewalls', (string) $report->stats['firewalls'], $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('ReDoS >=', $threshold->value, $maxLabelLength));
+        $io->writeln(ConsoleWriter::metaLine('Flagged', (string) $report->stats['flagged'], $maxLabelLength));
         $io->newLine();
     }
 
@@ -491,17 +491,17 @@ final class SecurityCommand extends Command
             );
             $io->writeln($header);
             $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Verdict:</> '.$finding['verdict']);
-            $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Pattern:</> '.$this->formatPattern($finding['pattern']));
+            $io->writeln('      <fg=gray>'.self::ARROW_LABEL.' Pattern:</> '.ConsoleWriter::pattern($finding['pattern']));
 
             if (null !== $finding['vulnerable'] && '' !== $finding['vulnerable']) {
                 $io->writeln(
-                    '      <fg=gray>'.self::ARROW_LABEL.' Vulnerable:</> '.$this->formatPattern($finding['vulnerable']),
+                    '      <fg=gray>'.self::ARROW_LABEL.' Vulnerable:</> '.ConsoleWriter::pattern($finding['vulnerable']),
                 );
             }
 
             if (null !== $finding['trigger'] && '' !== $finding['trigger']) {
                 $io->writeln(
-                    '      <fg=gray>'.self::ARROW_LABEL.' Trigger:</> '.$this->formatExample($finding['trigger']),
+                    '      <fg=gray>'.self::ARROW_LABEL.' Trigger:</> '.ConsoleWriter::example($finding['trigger']),
                 );
             }
 
@@ -608,24 +608,6 @@ final class SecurityCommand extends Command
         return $this->pathHelper->getRelativePath($file).':'.$line;
     }
 
-    private function formatExample(?string $example): string
-    {
-        if (null === $example) {
-            return '-';
-        }
-
-        return DisplayEscaper::quote($example, '<fg=cyan>', '</>');
-    }
-
-    private function formatPattern(string $pattern): string
-    {
-        if ('' === $pattern) {
-            return '<fg=cyan>""</>';
-        }
-
-        return '<fg=cyan>'.OutputFormatter::escape($pattern).'</>';
-    }
-
     private function formatSeverityBadge(string $severity): string
     {
         return match ($severity) {
@@ -633,22 +615,6 @@ final class SecurityCommand extends Command
             'high' => self::BADGE_FAIL,
             default => self::BADGE_WARN,
         };
-    }
-
-    private function showFooter(SymfonyStyle $io): void
-    {
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
-        $io->newLine();
-    }
-
-    private function formatMetaLine(string $label, string $value, int $maxLabelLength): string
-    {
-        return \sprintf(
-            '<fg=white;options=bold>%s</> : <fg=yellow>%s</>',
-            str_pad($label, $maxLabelLength),
-            $value,
-        );
     }
 
     /**

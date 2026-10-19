@@ -83,4 +83,19 @@ final class RoutesCommandTest extends TestCase
         $this->assertSame(0, $status);
         $this->assertStringContainsString('No route conflicts detected', (string) $tester->getDisplay());
     }
+
+    #[Test]
+    public function test_command_passes_a_router_with_no_routes(): void
+    {
+        $router = $this->createStub(RouterInterface::class);
+        $router->method('getRouteCollection')->willReturn(new RouteCollection());
+
+        $tester = new CommandTester(new RoutesCommand(new RouteConflictAnalyzer(Regex::create()), new RouteConflictSuggestionBuilder(), $router));
+        $status = $tester->execute([]);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(0, $status);
+        $this->assertStringContainsString('No routes found.', $display);
+        $this->assertStringContainsString('If PHPRegex helps, a GitHub star is appreciated', $display);
+    }
 }

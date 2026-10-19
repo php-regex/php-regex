@@ -23,6 +23,7 @@ use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
+use PHPRegex\Symfony\Output\ConsoleWriter;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -217,7 +218,7 @@ final class AnalyzeCommand extends Command
         }
 
         if ($json) {
-            $this->writeDocument($output, $this->jsonFormatter->format($report, $debug));
+            ConsoleWriter::document($output, $this->jsonFormatter->format($report, $debug));
         } else {
             $this->consoleFormatter->render($report, $io, !$renderBanner, $debug);
             if ($renderBanner) {
@@ -253,21 +254,12 @@ final class AnalyzeCommand extends Command
     private function refuse(OutputInterface $output, SymfonyStyle $io, bool $json, string $message): int
     {
         if ($json) {
-            $this->writeDocument($output, JsonDocument::error($message, JsonDocument::STAGE_USAGE));
+            ConsoleWriter::document($output, JsonDocument::error($message, JsonDocument::STAGE_USAGE));
         } else {
             $io->error($message);
         }
 
         return Command::INVALID;
-    }
-
-    /**
-     * The document as it is, never read for console tags, and written even
-     * under --quiet: it is the output asked for, not a status line.
-     */
-    private function writeDocument(OutputInterface $output, string $document): void
-    {
-        $output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 
     /**

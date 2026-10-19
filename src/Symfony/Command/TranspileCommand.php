@@ -16,6 +16,7 @@ namespace PHPRegex\Symfony\Command;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;
@@ -85,7 +86,7 @@ final class TranspileCommand extends Command
         if (!$validation->isValid) {
             $message = $validation->error ?? 'Invalid pattern.';
             if ($json) {
-                $this->writeDocument($output, JsonDocument::error($message, JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
+                ConsoleWriter::document($output, JsonDocument::error($message, JsonDocument::STAGE_PATTERN, ['validation' => $validation]));
 
                 return Command::FAILURE;
             }
@@ -104,7 +105,7 @@ final class TranspileCommand extends Command
         }
 
         if ($json) {
-            $this->writeDocument($output, JsonDocument::encode($result->jsonSerialize()));
+            ConsoleWriter::document($output, JsonDocument::encode($result->jsonSerialize()));
 
             return Command::SUCCESS;
         }
@@ -138,20 +139,11 @@ final class TranspileCommand extends Command
     private function fail(OutputInterface $output, SymfonyStyle $io, bool $json, string $message, string $stage, int $exitCode): int
     {
         if ($json) {
-            $this->writeDocument($output, JsonDocument::error($message, $stage));
+            ConsoleWriter::document($output, JsonDocument::error($message, $stage));
         } else {
             $io->error($message);
         }
 
         return $exitCode;
-    }
-
-    /**
-     * The document as it is, never read for console tags, and written even
-     * under --quiet: it is the output asked for, not a status line.
-     */
-    private function writeDocument(OutputInterface $output, string $document): void
-    {
-        $output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 }

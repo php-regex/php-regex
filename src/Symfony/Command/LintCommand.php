@@ -31,6 +31,7 @@ use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Symfony\Output\LintProgressBar;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
@@ -409,7 +410,7 @@ final class LintCommand extends Command
             return;
         }
 
-        $output->write($report, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
+        ConsoleWriter::document($output, $report);
     }
 
     private function renderEmptyResults(string $format, OutputInterface $output, SymfonyStyle $io): int
@@ -431,15 +432,8 @@ final class LintCommand extends Command
     {
         $io->newLine();
         $io->writeln('  <bg=green;fg=white;options=bold> PASS </> <fg=gray>No regex patterns found.</>');
-        $this->showFooter($io);
-    }
-
-    private function showFooter(SymfonyStyle $io): void
-    {
         $io->newLine();
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
-        $io->newLine();
+        ConsoleWriter::footer($io);
     }
 
     private function validateAndNormalizeFormat(InputInterface $input, SymfonyStyle $io): string

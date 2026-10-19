@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Analyzer\Formatter;
 
-use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Symfony\Analyzer\AnalysisNotice;
 use PHPRegex\Symfony\Analyzer\CheckOutcome;
 use PHPRegex\Symfony\Analyzer\IssueDetail;
 use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
+use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -131,7 +131,7 @@ final class ConsoleReportFormatter
         $maxLabelLength = max(array_map(strlen(...), $labels));
 
         foreach ($meta as $label => $value) {
-            $io->writeln($this->formatMetaLine($label, (string) $value, $maxLabelLength));
+            $io->writeln(ConsoleWriter::metaLine($label, (string) $value, $maxLabelLength));
         }
 
         $io->newLine();
@@ -150,25 +150,11 @@ final class ConsoleReportFormatter
     private function formatDetailValue(IssueDetail $detail): string
     {
         return match ($detail->kind) {
-            'example' => $this->formatExample($detail->value),
-            'pattern' => $this->formatPattern($detail->value),
+            'example' => ConsoleWriter::example($detail->value),
+            'pattern' => ConsoleWriter::pattern($detail->value),
             // Text rows carry user input (paths, attacks): never console markup.
             default => OutputFormatter::escape($detail->value),
         };
-    }
-
-    private function formatExample(string $example): string
-    {
-        return DisplayEscaper::quote($example, '<fg=cyan>', '</>');
-    }
-
-    private function formatPattern(string $pattern): string
-    {
-        if ('' === $pattern) {
-            return '<fg=cyan>""</>';
-        }
-
-        return '<fg=cyan>'.OutputFormatter::escape($pattern).'</>';
     }
 
     private function renderSectionHeader(SymfonyStyle $io, string $title): void
@@ -179,14 +165,5 @@ final class ConsoleReportFormatter
     private function renderSubsectionHeader(SymfonyStyle $io, string $title): void
     {
         $io->writeln(\sprintf(self::SUBSECTION_BADGE, $title));
-    }
-
-    private function formatMetaLine(string $label, string $value, int $maxLabelLength): string
-    {
-        return \sprintf(
-            '<fg=white;options=bold>%s</> : <fg=yellow>%s</>',
-            str_pad($label, $maxLabelLength),
-            $value,
-        );
     }
 }

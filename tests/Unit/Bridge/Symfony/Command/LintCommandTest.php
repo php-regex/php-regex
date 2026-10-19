@@ -196,17 +196,20 @@ final class LintCommandTest extends TestCase
     }
 
     #[Test]
-    public function test_show_footer_outputs_correct_format(): void
+    public function test_the_empty_summary_ends_with_the_footer_after_a_blank_line(): void
     {
         $command = $this->createCommand();
 
         $reflection = new \ReflectionClass($command);
-        $method = $reflection->getMethod('showFooter');
+        $method = $reflection->getMethod('renderEmptySummary');
 
         $io = $this->createMock(SymfonyStyle::class);
-        $io->expects($this->exactly(2))->method('newLine');
-        $io->expects($this->once())->method('writeln')
-            ->with('  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex</>');
+        $io->expects($this->exactly(3))->method('newLine');
+        $io->expects($this->exactly(2))->method('writeln')
+            ->with($this->logicalOr(
+                '  <bg=green;fg=white;options=bold> PASS </> <fg=gray>No regex patterns found.</>',
+                '  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex</>',
+            ));
 
         $method->invoke($command, $io);
     }
