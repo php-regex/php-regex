@@ -23,6 +23,34 @@ final class TokenBasedExtractionStrategyTest extends TestCase
         $this->assertContains('#bar#', $patterns);
     }
 
+    /**
+     * Half-typed code, as an editor sends it: the brackets of the call never
+     * balance, so its last argument runs to the end of the file.
+     */
+    public function test_reads_a_call_whose_brackets_never_balance_without_a_warning(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'regex-extract-');
+        $this->assertNotFalse($file);
+        file_put_contents($file, "<?php preg_match(''{)}(''.");
+
+        $warnings = [];
+        set_error_handler(static function (int $level, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        });
+
+        try {
+            $occurrences = (new TokenBasedExtractionStrategy())->extract([$file]);
+        } finally {
+            restore_error_handler();
+            unlink($file);
+        }
+
+        $this->assertSame([], $warnings);
+        $this->assertSame([], $occurrences);
+    }
+
     public function test_extracts_custom_function_and_static_method(): void
     {
         $file = __DIR__.'/../../Fixtures/Extractor/custom_function_and_static_method.php';

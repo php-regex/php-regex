@@ -1281,7 +1281,11 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function sliceTokens(array $tokens, int $start, int $end): array
     {
-        // A name with no value after it, "pattern:)", leaves nothing.
+        // A name with no value after it, "pattern:)", leaves nothing. A call
+        // whose brackets never balance, as in half-typed code, runs to the
+        // end of the file and no further.
+        $end = min($end, \count($tokens));
+
         return [array_values(\array_slice($tokens, $start, $end - $start)), $end > $start ? range($start, $end - 1) : []];
     }
 
