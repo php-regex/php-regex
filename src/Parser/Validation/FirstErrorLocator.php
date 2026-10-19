@@ -22,6 +22,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\PcreVerb;
@@ -106,6 +107,8 @@ final class FirstErrorLocator
         $earlier = (new Validator($this->maxLookbehindLength, $pattern, $this->target))
             ->firstEscapeErrorBefore($read, $pattern, $flags, $limit);
 
+        $earlier ??= $this->escapeErrorEndingRange($error, $read, $pattern, $flags);
+
         $laterErrors = [
             $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
@@ -143,12 +146,59 @@ final class FirstErrorLocator
                         || (ErrorCode::CharclassUnclosed === $error->errorCode && null !== $last
                             && !\in_array($last->type, [TokenType::Range, TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)));
                 if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))) {
-                    return $syntaxError;
+                    return $this->escapeErrorEndingRange($syntaxError, $syntaxTokens, $pattern, $flags) ?? $syntaxError;
                 }
             }
         }
 
         return $earlier;
+    }
+
+    /**
+     * From PCRE2 10.45 a range from a type, a POSIX class or a property is
+     * read to its end before it is refused past its hyphen: an escape PCRE
+     * refuses as it reads that end is refused first, past the hyphen. Null
+     * for any other error, or an end PCRE reads.
+     *
+     * @param list<Token> $tokens
+     */
+    private function escapeErrorEndingRange(RegexException $error, array $tokens, string $pattern, string $flags): ?SemanticErrorException
+    {
+        if (ErrorCode::RangeInvalidBounds !== $error->errorCode || !$this->target->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
+            return null;
+        }
+
+        $end = self::rangeEndAfterHyphen($tokens, $error->position ?? 0);
+        if (null === $end) {
+            return null;
+        }
+
+        // The escapes read up to that end, which starts before the limit.
+        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))
+            ->firstEscapeErrorBefore($tokens, $pattern, $flags, $end->position + ($this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? 2 : 1));
+    }
+
+    /**
+     * The token that ends the range whose hyphen ends at $position, past the
+     * empty quotes PCRE skips there; null when no hyphen ends there.
+     *
+     * @param list<Token> $tokens
+     */
+    private static function rangeEndAfterHyphen(array $tokens, int $position): ?Token
+    {
+        $afterHyphen = false;
+        $end = null;
+        foreach ($tokens as $token) {
+            if ($afterHyphen && TokenType::QuoteModeStart !== $token->type && TokenType::QuoteModeEnd !== $token->type) {
+                $end = $token;
+
+                break;
+            }
+
+            $afterHyphen = $afterHyphen || (TokenType::Range === $token->type && $token->end() === $position);
+        }
+
+        return $end;
     }
 
     /**

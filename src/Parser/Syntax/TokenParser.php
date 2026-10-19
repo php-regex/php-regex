@@ -3475,6 +3475,25 @@ final class TokenParser
     }
 
     /**
+     * Whether the class item at the current token is a code point PCRE
+     * refuses where it reads it. The stream is left where it was.
+     */
+    private function endRefusesCodePoint(): bool
+    {
+        $at = $this->stream->getPosition();
+
+        try {
+            [$endNode] = $this->parseCharClassAtom($this->stream->current()->position);
+        } catch (ParserException) {
+            return false;
+        } finally {
+            $this->stream->setPosition($at);
+        }
+
+        return $this->refusesCodePoint($endNode);
+    }
+
+    /**
      * Whether the node is a code point PCRE refuses where it reads it: past
      * \xFF without UTF, past U+10FFFF or a surrogate under it.
      */
@@ -3638,22 +3657,41 @@ final class TokenParser
 
         // PCRE refuses a class escape before the "-" once it has read the "-".
         $afterHyphen = $this->stream->previous()->end();
+        $length = \strlen($this->pattern);
+
+        // Before PCRE2 10.45 a range from a type is refused on its hyphen,
+        // before its end is read, unless the pattern ends after the hyphen
+        // or a "]" follows it, read as characters: "[\w-\Q\E]" is refused.
+        $rangeFromType = $this->isNonRangeEndpointType($startNode);
+        if ($rangeFromType && !$this->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
+            if ($afterHyphen >= $length || ']' === $this->pattern[$afterHyphen]) {
+                $this->stream->setPosition($rangePosition);
+
+                return $startNode;
+            }
+
+            $this->guardRangeEndpoint($startNode, $afterHyphen, false);
+        }
 
         // PCRE skips "\E" and an empty "\Q\E" after the "-": "[a-\Ec]" is
-        // the range a-c, and in "[a-\Q\E]" the "-" is a plain member.
+        // the range a-c, and in "[a-\Q\E]" the "-" is a plain member. From
+        // 10.45 a "-" after a class escape that the pattern ends after, past
+        // them, is one too: the "]" is missing.
         $this->skipEmptyQuotes();
 
-        if ($this->stream->check(TokenType::CharClassClose)) {
+        if ($this->stream->check(TokenType::CharClassClose)
+            || ($rangeFromType && $this->stream->isAtEnd() && $this->stream->current()->position >= $length)) {
             $this->stream->setPosition($rangePosition);
 
             return $startNode;
         }
 
-        // Before PCRE2 10.45 a range from a type is refused on its hyphen,
-        // before its end is read; from 10.45 an escape PCRE refuses in a
-        // class at its end is reported first.
-        if (!$this->supports(PcreFeature::RangeFromTypeReadToItsEnd)) {
-            $this->guardRangeEndpoint($startNode, $afterHyphen, false);
+        // From 10.45 the end of a range from a type is read first: a code
+        // point PCRE refuses there is reported as itself, by the validator.
+        if ($rangeFromType && $this->endRefusesCodePoint()) {
+            $this->stream->setPosition($rangePosition);
+
+            return $startNode;
         }
 
         // Before PCRE2 10.45, an escape that names no character ends a range
