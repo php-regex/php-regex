@@ -93,6 +93,8 @@ final class PackageManifestTest extends TestCase
             'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\StartOptions',
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
+        // The CLI, the PHPStan rule and the Psalm plugin name the directory
+        // where the class sets PCRE2 answered are kept between runs.
         'Cli' => [
             'Automata\Model\Nfa', 'Automata\Model\NfaState', 'Automata\Transform\HirToNfaTransformer',
             'LanguageServer\Server', 'Linter\AnalysisService', 'Linter\Config\LintArgumentParser',
@@ -105,8 +107,8 @@ final class PackageManifestTest extends TestCase
             'Linter\LintStatsCounter', 'Linter\Formatter\LintSummary', 'Linter\RedosVerdict',
             'Linter\Parallel\WorkerCount', 'Linter\LintProgress', 'Linter\LintReport', 'Linter\LintRequest',
             'Linter\LintService', 'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection',
-            'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\HirTranslator',
-            'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\IniFlag',
+            'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
+            'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\IniFlag',
             'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss',
             'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
@@ -160,15 +162,16 @@ final class PackageManifestTest extends TestCase
             'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunction',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
-            'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Text\Ascii',
-            'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
+            'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Hir\ClassSetProvider',
+            'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
         ],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
         'Psalm' => [
             'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\GuardRegions', 'Linter\Extraction\PhpParserGuards', 'Linter\Extraction\TargetMarker',
-            'Linter\Extraction\TargetMarkers', 'Parser\Text\Ascii', 'Parser\Analysis\CaptureKey',
+            'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider', 'Parser\Text\Ascii',
+            'Parser\Analysis\CaptureKey',
             'Parser\Analysis\CaptureLayout', 'Parser\Engine\LibraryPcre',
         ],
         'Redos' => [
