@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Syntax;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -96,19 +98,20 @@ final class BadEscape
      * groups opened before it, "\g{-1}" or "\400", is false while $captures
      * is null.
      *
-     * @param bool     $inClass      whether the escape is in a class
-     * @param bool     $utf          whether the pattern is read as UTF-8
-     * @param bool     $pcre2Ten32   whether PCRE2 10.32 reads it
-     * @param int|null $captures     the groups PCRE2 numbered before it, null when unknown
-     * @param bool     $rangeStarted whether a character and a "-" before it start a range in the class
+     * @param bool       $inClass      whether the escape is in a class
+     * @param bool       $utf          whether the pattern is read as UTF-8
+     * @param PcreTarget $target       the PHP and PCRE2 judged
+     * @param int|null   $captures     the groups PCRE2 numbered before it, null when unknown
+     * @param bool       $rangeStarted whether a character and a "-" before it start a range in the class
      */
-    public static function at(string $pattern, int $at, bool $inClass, bool $utf, bool $pcre2Ten32, ?int $captures = null, bool $rangeStarted = false): bool
+    public static function at(string $pattern, int $at, bool $inClass, bool $utf, PcreTarget $target, ?int $captures = null, bool $rangeStarted = false): bool
     {
         $letter = $pattern[$at + 1] ?? '';
         if (!Ascii::isAlnum($letter)) {
             return false;
         }
 
+        $pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $after = $at + 2;
         if (str_contains(self::UNKNOWN_LETTERS, $letter)) {
             return true;
@@ -120,7 +123,7 @@ final class BadEscape
 
         return match ($letter) {
             'N' => self::namedCharacterFails($pattern, $after, $utf),
-            'p', 'P' => !self::readsProperty($pattern, $after),
+            'p', 'P' => !self::readsProperty($pattern, $after, $target),
             'k' => self::namedReferenceFails($pattern, $after, $utf, $pcre2Ten32),
             'g' => !$inClass && self::gReferenceFails($pattern, $after, $utf, $pcre2Ten32, $captures),
             'o' => self::octalBracesFail($pattern, $after, $utf),
@@ -236,13 +239,14 @@ final class BadEscape
 
     /**
      * Whether "\p" or "\P" reads a property: a letter, or a braced name of
-     * at most 30 characters, a "^" before it, that PCRE2 knows.
+     * at most 30 characters, a "^" before it, that the PCRE2 judged knows:
+     * "\p{Vithkuqi}" is the text "p{Vithkuqi}" before 10.39.
      */
-    private static function readsProperty(string $pattern, int $after): bool
+    private static function readsProperty(string $pattern, int $after, PcreTarget $target): bool
     {
         $first = $pattern[$after] ?? '';
         if ('{' !== $first) {
-            return Ascii::isAlpha($first) && PropertyNames::knownBefore1040($first);
+            return Ascii::isAlpha($first) && PropertyNames::knownBefore1040($first, $target);
         }
 
         $at = $after + 1;
@@ -255,7 +259,7 @@ final class BadEscape
             return false;
         }
 
-        return PropertyNames::knownBefore1040(substr($pattern, $at, $close - $at));
+        return PropertyNames::knownBefore1040(substr($pattern, $at, $close - $at), $target);
     }
 
     /**

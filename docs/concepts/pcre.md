@@ -77,7 +77,8 @@ version.
 
 PHP 8.1.0 bundled PCRE2 10.37, which lacks five Unicode 14 scripts 10.39 knows
 (`Cypro_Minoan`, `Old_Uyghur`, `Tangsa`, `Toto`, `Vithkuqi`): it is judged as
-10.39, and so is any older release. PCRE2 10.40 also fixed matching bugs that
+10.39, and so is any older release, but for the script names it knows, so
+`'pcre_version' => '10.37'` refuses `\p{Toto}`. PCRE2 10.40 also fixed matching bugs that
 no verdict models: on 10.39, `/[Aa]{2}/` does not match `aa`.
 
 #### PHP 7.3 to 8.0, and PCRE1
@@ -97,10 +98,13 @@ Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library 
 
 A PHP series is judged with the release its x.y.0 bundled, but for 8.1,
 judged with the 10.39 of 8.1.1 onwards: PHP 7.4.6 moved to 10.34 and 7.4.12
-to 10.35, and a 7.4 target is still judged as 10.33. The Unicode tables a
-release reads are not modelled release by release: which characters a
-`\p{...}` holds, and which script names an old release knows, are a blind
-spot below 10.39. Neither are the matching bugs of an old release, such as a
+to 10.35, and a 7.4 target is still judged as 10.33. The script names each
+release knows are modelled: 10.32 has no `Unknown`, 10.34 added the Unicode
+12.1 scripts, 10.35 the Unicode 13 ones, 10.39 the Unicode 14 ones, so
+`\p{Vithkuqi}` is refused for PHP 8.0 and is the text `p{Vithkuqi}` for PHP
+7.3 and 7.4 without `X`. Which characters a `\p{...}` holds is not: the
+Unicode data of an old release is a blind spot below 10.39. Neither are the
+matching bugs of an old release, such as a
 `(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse
 and others read with the wrong length.
 

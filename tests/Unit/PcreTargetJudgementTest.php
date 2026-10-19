@@ -109,13 +109,14 @@ final class PcreTargetJudgementTest extends TestCase
     }
 
     /**
-     * PHP 8.1.0 bundled PCRE2 10.37, judged as 10.39: the five scripts of
-     * Unicode 14 it does not know are taken for known.
+     * PHP 8.1.0 bundled PCRE2 10.37, judged as 10.39 but for the five
+     * scripts of Unicode 14 it does not know (php:8.1.0-cli: "unknown
+     * property name after \P or \p at offset 8" for "\p{Toto}").
      */
     #[Test]
     public function test_pcre2_10_37_is_judged_as_10_39(): void
     {
-        $this->assertTrue(Regex::create(['cache' => null, 'pcre_version' => '10.37'])->validate('/\\p{Toto}/u')->isValid);
+        $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.37'])->validate('/\\p{Toto}/u')->isValid);
         $this->assertFalse(Regex::create(['cache' => null, 'pcre_version' => '10.37'])->validate('/\\p{greek}/u')->isValid);
     }
 }

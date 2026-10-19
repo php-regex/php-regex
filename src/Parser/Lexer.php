@@ -431,6 +431,11 @@ final class Lexer
     private readonly bool $pcre2Ten32;
 
     /**
+     * The PHP and PCRE2 judged, which say what a bad escape is.
+     */
+    private readonly PcreTarget $target;
+
+    /**
      * Whether the pattern read is compiled with
      * PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL: PHP 7.3 and 7.4 without "X". An
      * escape PCRE2 refuses as it reads it is then the character after the
@@ -450,6 +455,7 @@ final class Lexer
         $this->readsNonAtomicShortSyntax = $target->supports(PcreFeature::NonAtomicAssertionShortSyntax);
         $this->overflowingNumberIsOctal = $target->supports(PcreFeature::OverflowingBackslashNumberIsOctal);
         $this->phpVersionId = $target->phpVersionId;
+        $this->target = $target;
         $this->pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $this->largeOpenCountIsText = $target->supports(PcreFeature::LargeOpenCountIsText);
         $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
@@ -796,7 +802,7 @@ final class Lexer
         // PHP 7.3 and 7.4 read an escape PCRE2 refuses as it reads it as the
         // character after the backslash, then what follows as pattern text.
         if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$this->position]
-            && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->utf, $this->pcre2Ten32, null, $this->startsRangeEnd($tokens))) {
+            && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->utf, $this->target, null, $this->startsRangeEnd($tokens))) {
             $tokens[] = new Token(TokenType::LiteralEscaped, $this->pattern[$this->position + 1], $this->position, 2);
             $this->position += 2;
 
@@ -1039,7 +1045,7 @@ final class Lexer
 
             // An escape PHP 7.3 and 7.4 read as its character takes no more:
             // "\p{L)}" is "p{L" then the ")" that closes the body.
-            if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$at] && BadEscape::at($this->pattern, $at, false, $this->utf, $this->pcre2Ten32)) {
+            if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$at] && BadEscape::at($this->pattern, $at, false, $this->utf, $this->target)) {
                 $at += 2;
 
                 continue;

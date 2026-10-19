@@ -1518,7 +1518,7 @@ final class TokenParser
     private function readsBadEscapeAt(int $position): bool
     {
         return $this->badEscapeIsLiteral && !$this->inQuoteMode
-            && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->pcre2Ten32, $this->captureCount);
+            && BadEscape::at($this->pattern, $position, false, $this->unicodeMode, $this->target, $this->captureCount);
     }
 
     /**
@@ -3434,7 +3434,7 @@ final class TokenParser
         }
 
         // PHP 7.3 and 7.4 read one PCRE2 refuses as it reads it as its letter.
-        if ($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $position, true, $this->unicodeMode, $this->pcre2Ten32, null, $endsRange)) {
+        if ($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $position, true, $this->unicodeMode, $this->target, null, $endsRange)) {
             return false;
         }
 
@@ -3628,7 +3628,7 @@ final class TokenParser
         // guardRangeEndpoint().
         $endAt = $this->stream->current()->position;
         $endsAsInvalidRange = !$this->supports(PcreFeature::ClassEscapeEndingRangeRefusedAsEscape)
-            && !($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $endAt, true, $this->unicodeMode, $this->pcre2Ten32, null, true));
+            && !($this->badEscapeIsLiteral && BadEscape::at($this->pattern, $endAt, true, $this->unicodeMode, $this->target, null, true));
         if ($endsAsInvalidRange && TokenType::UnicodeProp !== $this->stream->current()->type && BadEscape::endsRangeAsInvalidRange($this->pattern, $endAt, $this->pcre2Ten32)) {
             $this->throwEscapeEndingRange($endAt);
         }

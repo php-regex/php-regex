@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Syntax;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -21,8 +22,8 @@ use PHPRegex\Parser\Text\Ascii;
  * loosely, reads "sc:" and "scx:", the four-letter script codes, the Bidi
  * classes and the binary properties, and makes a bare script name mean its
  * script extensions. The table is pcre2_tables.c of PCRE2 10.39 (Unicode
- * 14); 10.37, which PHP 8.1.0 bundled, lacks five of its scripts and is
- * judged with it.
+ * 14); an older release lacks the scripts a later Unicode added, which
+ * SCRIPTS_SINCE names with the release that added each.
  *
  * @internal
  */
@@ -33,6 +34,19 @@ final class PropertyNames
      * them, without a "}", the "\p" is malformed.
      */
     public const MAX_NAME_LENGTH_BEFORE_10_40 = 31;
+
+    /**
+     * The scripts of the table an older release does not know, by the
+     * release that added them (pcre2_tables.c of 10.32 to 10.39): 10.33
+     * added "Unknown", 10.34 Unicode 12.1, 10.35 Unicode 13, 10.39 Unicode
+     * 14; 10.36 to 10.38 added none.
+     */
+    private const SCRIPTS_SINCE = [
+        'Unknown' => '10.33',
+        'Elymaic' => '10.34', 'Nandinagari' => '10.34', 'Nyiakeng_Puachue_Hmong' => '10.34', 'Wancho' => '10.34',
+        'Chorasmian' => '10.35', 'Dives_Akuru' => '10.35', 'Khitan_Small_Script' => '10.35', 'Yezidi' => '10.35',
+        'Cypro_Minoan' => '10.39', 'Old_Uyghur' => '10.39', 'Tangsa' => '10.39', 'Toto' => '10.39', 'Vithkuqi' => '10.39',
+    ];
 
     /**
      * The general categories and PCRE's own properties.
@@ -71,11 +85,27 @@ final class PropertyNames
     ];
 
     /**
-     * Whether PCRE2 10.39 knows the name, spelled as written.
+     * Whether the PCRE2 judged, 10.39 or older, knows the name, spelled as
+     * written.
      */
-    public static function knownBefore1040(string $name): bool
+    public static function knownBefore1040(string $name, PcreTarget $target): bool
     {
-        return \in_array($name, self::CATEGORIES, true) || \in_array($name, self::SCRIPTS, true);
+        if (\in_array($name, self::CATEGORIES, true)) {
+            return true;
+        }
+
+        $since = self::SCRIPTS_SINCE[$name] ?? null;
+
+        return \in_array($name, self::SCRIPTS, true) && (null === $since || $target->pcreAtLeast($since));
+    }
+
+    /**
+     * The release that added the script, spelled as PCRE2 10.39 reads it,
+     * for one an older release does not know; null for any other name.
+     */
+    public static function releaseAddingBefore1040(string $name): ?string
+    {
+        return self::SCRIPTS_SINCE[$name] ?? null;
     }
 
     /**
@@ -87,14 +117,15 @@ final class PropertyNames
     }
 
     /**
-     * The spelling PCRE2 10.39 knows for a name written as 10.40 reads it,
-     * case, spaces, hyphens and underscores aside; null when none matches.
+     * The spelling the PCRE2 judged, 10.39 or older, knows for a name
+     * written as 10.40 reads it, case, spaces, hyphens and underscores
+     * aside; null when none matches.
      */
-    public static function spellingBefore1040(string $name): ?string
+    public static function spellingBefore1040(string $name, PcreTarget $target): ?string
     {
         $loose = static fn (string $text): string => Ascii::lower(str_replace([' ', "\t", '-', '_'], '', $text));
         foreach ([...self::CATEGORIES, ...self::SCRIPTS] as $known) {
-            if ($loose($known) === $loose($name)) {
+            if ($loose($known) === $loose($name) && self::knownBefore1040($known, $target)) {
                 return $known;
             }
         }

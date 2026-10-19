@@ -202,6 +202,8 @@ final class BadEscapeIsLiteralTest extends TestCase
         yield 'p and an unknown letter' => ['pattern' => '/\py/', 'subject' => 'py', 'match' => 'py'];
         yield 'p and an unknown name' => ['pattern' => '/\p{Bogus}/', 'subject' => 'p{Bogus}', 'match' => 'p{Bogus}'];
         yield 'p and an unknown name under u' => ['pattern' => '/\p{Bogus}/u', 'subject' => 'p{Bogus}', 'match' => 'p{Bogus}'];
+        yield 'p and a script PCRE2 10.39 added' => ['pattern' => '/\p{Vithkuqi}/', 'subject' => 'p{Vithkuqi}', 'match' => 'p{Vithkuqi}'];
+        yield 'P and a script PCRE2 10.39 added, negated: the "^" an anchor' => ['pattern' => '/\P{^Toto}/u', 'subject' => 'P{^Toto}', 'match' => null];
         yield 'P and an unknown name' => ['pattern' => '/\P{Bogus}/', 'subject' => 'P{Bogus}', 'match' => 'P{Bogus}'];
         yield 'p and empty braces' => ['pattern' => '/\p{}/', 'subject' => 'p{}', 'match' => 'p{}'];
         yield 'p unclosed' => ['pattern' => '/\p{L/', 'subject' => 'p{L', 'match' => 'p{L'];

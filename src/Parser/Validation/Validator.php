@@ -479,7 +479,7 @@ final class Validator extends AbstractNodeVisitor
 
                 if ($nEndsRange && $afterRange && \in_array($token->type, [TokenType::LiteralEscaped, TokenType::CharType, TokenType::UnicodeProp], true)
                     && BadEscape::endsRangeAsInvalidRange($source, $token->position, $pcre2Ten32)
-                    && !($this->badEscapeIsLiteral && BadEscape::at($source, $token->position, true, $this->unicodeMode, $pcre2Ten32, null, true))) {
+                    && !($this->badEscapeIsLiteral && BadEscape::at($source, $token->position, true, $this->unicodeMode, $this->target, null, true))) {
                     $this->raiseSemanticError(
                         \sprintf('Invalid range in character class: "\%s" cannot end a range, at position %d.', $source[$token->position + 1], $token->position + 2),
                         $token->position + 2,
@@ -1846,12 +1846,23 @@ final class Validator extends AbstractNodeVisitor
             $end = $close + 1;
         }
 
-        if (PropertyNames::knownBefore1040($name)) {
+        if (PropertyNames::knownBefore1040($name, $this->target)) {
             return;
         }
 
+        // A script a later Unicode added, which this release does not know.
+        $needs = PropertyNames::releaseAddingBefore1040($name);
+        if (null !== $needs) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid or unsupported Unicode property: \\%s. It needs PCRE2 %s, and the target is PCRE2 %s.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $needs, $this->target->pcreVersion),
+                $end,
+                ErrorCode::UnicodePropertyInvalid,
+                \sprintf('Target a PHP whose PCRE2 is %s or later, or use another property.', $needs),
+            );
+        }
+
         $unprefixed = LibraryPcre::replace('/^\s*+(?:sc|script|scx|script[\s_-]*+extensions)\s*+[:=]/i', '', $name) ?? $name;
-        $spelling = PropertyNames::spellingBefore1040($unprefixed);
+        $spelling = PropertyNames::spellingBefore1040($unprefixed, $this->target);
         $this->raiseSemanticError(
             \sprintf('Invalid or unsupported Unicode property: \\%s. PCRE2 %s knows a property by one exact name only.', substr($source, $node->startPosition + 1, $end - $node->startPosition - 1), $this->target->pcreVersion),
             $end,
@@ -3016,7 +3027,7 @@ final class Validator extends AbstractNodeVisitor
     {
         // PHP 7.3 and 7.4 read an escape PCRE2 refuses as it reads it as its
         // letter.
-        if ($this->badEscapeIsLiteral && BadEscape::at($source, $start, $this->charClassDepth > 0, $this->unicodeMode, !$this->target->supports(PcreFeature::BadEscapeInClassStaysRefused), null, $this->endsRange)) {
+        if ($this->badEscapeIsLiteral && BadEscape::at($source, $start, $this->charClassDepth > 0, $this->unicodeMode, $this->target, null, $this->endsRange)) {
             return;
         }
 
