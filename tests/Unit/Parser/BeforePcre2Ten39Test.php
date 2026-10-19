@@ -176,6 +176,20 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'verb name of 129 characters' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).'g)/', 'releases' => ['10.44', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
         yield 'verb name of 128 characters' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).')/', 'releases' => ['10.44', '10.49'], 'offset' => 130, 'code' => ErrorCode::VerbInvalid];
         yield 'verb name of 34 characters' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh_)/', 'releases' => ['10.33', '10.43'], 'offset' => 37, 'code' => ErrorCode::GroupNameTooLong];
+        // A verb no ")" closes has its name read first, and refused as the
+        // same name would be in a closed one.
+        yield 'verb name of 33 letters never closed' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefg/', 'releases' => ['10.32', '10.33', '10.43'], 'offset' => 35, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb name of 36 letters never closed' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij/', 'releases' => ['10.33', '10.43'], 'offset' => 38, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb name of 36 letters never closed on 10.32' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij/', 'releases' => ['10.32'], 'offset' => 35, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb name of 34 characters and a name never closed' => ['pattern' => '/a(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh_:x/', 'releases' => ['10.33', '10.43'], 'offset' => 38, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'alphabetic name of 34 letters never closed' => ['pattern' => '/(*abcdefghijklmnopqrstuvwxyzabcdefgh/', 'releases' => ['10.33', '10.43'], 'offset' => 36, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'alphabetic name of 34 letters and a body never closed' => ['pattern' => '/(*abcdefghijklmnopqrstuvwxyzabcdefgh:x/', 'releases' => ['10.33', '10.43'], 'offset' => 36, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb name of 129 characters never closed' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).'g/', 'releases' => ['10.44', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'alphabetic name of 129 letters never closed' => ['pattern' => '/(*'.str_repeat('abcdefghijklmnopqrstuvwxyzabcdef', 4).'g/', 'releases' => ['10.44', '10.47', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
+        // 10.32 reads the name of a verb no ")" closes as letters too.
+        yield 'verb name holding a digit never closed' => ['pattern' => '/(*UTF8/', 'releases' => ['10.32'], 'offset' => 5, 'code' => ErrorCode::VerbUnclosed];
+        yield 'verb name with an underscore and a name never closed' => ['pattern' => '/a(*NO_JIT:x/', 'releases' => ['10.32'], 'offset' => 5, 'code' => ErrorCode::VerbUnclosed];
+        yield 'verb name opening with a digit never closed' => ['pattern' => '/(*1a/', 'releases' => ['10.32'], 'offset' => 2, 'code' => ErrorCode::GroupNameInvalid];
         // Where a name is due, PCRE wants it on the "(" of a verb, before
         // it reads the verb.
         yield 'verb where a group name is due' => ['pattern' => '/(?<(*1))/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];

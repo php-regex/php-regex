@@ -957,6 +957,10 @@ final class TokenParser
                 throw $this->doubleStarError($position + 1);
             }
 
+            if ($unclosedVerb) {
+                $this->refuseUnclosedVerbName($position - 1);
+            }
+
             $namePosition = $position + 1;
             $position = $unclosedVerb
                 ? $this->unclosedVerbOffset($position - 1)
@@ -4345,7 +4349,8 @@ final class TokenParser
             return $limit;
         }
 
-        LibraryPcre::match('/\G[A-Za-z0-9_]*+/', $this->pattern, $matches, 0, $start + 2);
+        // Before PCRE2 10.33 the name is a run of letters.
+        LibraryPcre::match($this->supports(PcreFeature::NamesReadWhole) ? '/\G[A-Za-z0-9_]*+/' : '/\G[A-Za-z]*+/', $this->pattern, $matches, 0, $start + 2);
         $name = $matches[0] ?? '';
         $nameEnd = $start + 2 + \strlen($name);
 
@@ -4367,6 +4372,49 @@ final class TokenParser
         }
 
         return $nameEnd + ($this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1);
+    }
+
+    /**
+     * PCRE reads the name of a "(*" no ")" closes as it reads any verb name,
+     * before it looks for the ")": a name longer than a group name may be is
+     * refused as one too long where it ends. Before PCRE2 10.33, which reads
+     * it as a run of letters, a name that starts with a digit is refused on
+     * it, and one past 32 letters at the 33rd.
+     *
+     * @param int $start the offset of the "("
+     *
+     * @throws ParserException
+     */
+    private function refuseUnclosedVerbName(int $start): void
+    {
+        $nameStart = $start + 2;
+        if (!$this->supports(PcreFeature::NamesReadWhole)) {
+            if (Ascii::isDigit($this->pattern[$nameStart] ?? '')) {
+                throw $this->parserException(
+                    \sprintf('Invalid verb name at position %d: PCRE2 before 10.33 reads it as a group name, which must not start with a digit.', $nameStart),
+                    ErrorCode::GroupNameInvalid,
+                    $nameStart,
+                );
+            }
+
+            if (strspn($this->pattern, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $nameStart) > GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044) {
+                $offset = $nameStart + GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044 + 1;
+
+                throw $this->parserException(\sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset), ErrorCode::GroupNameTooLong, $offset);
+            }
+
+            return;
+        }
+
+        $length = strspn($this->pattern, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_', $nameStart);
+        $longest = $this->supports(PcreFeature::LongGroupNames) ? GroupNameReader::MAX_NAME_LENGTH : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
+        if ($length > $longest) {
+            throw $this->parserException(
+                \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameStart + $length, $longest),
+                ErrorCode::GroupNameTooLong,
+                $nameStart + $length,
+            );
+        }
     }
 
     /**

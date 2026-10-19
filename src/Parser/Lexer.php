@@ -1671,6 +1671,11 @@ final class Lexer
                 );
             }
 
+            // A name too long is refused as one before it is looked up.
+            if ($this->namesReadWhole) {
+                $this->refuseVerbNameTooLong(\strlen($opener[1]), $startPos);
+            }
+
             // A name PCRE knows opens a body read in place.
             throw LexerException::withContext(
                 \sprintf('Unknown alphabetic assertion "(*%s:".', $opener[1]),
@@ -2189,15 +2194,7 @@ final class Lexer
         // length of a group name, and refused where it ends.
         if ($this->namesReadWhole) {
             $length = strspn($name, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_');
-            $longest = $this->target->supports(PcreFeature::LongGroupNames) ? self::NAME_LENGTH : self::NAME_LENGTH_BEFORE_PCRE_10_44;
-            if ($length > $longest) {
-                throw LexerException::withContext(
-                    \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $start + 2 + $length, $longest),
-                    ErrorCode::GroupNameTooLong,
-                    $start + 2 + $length,
-                    $this->pattern,
-                );
-            }
+            $this->refuseVerbNameTooLong($length, $start);
 
             // As the condition, the parser refuses it on its "(".
             if (!$condition) {
@@ -2259,6 +2256,26 @@ final class Lexer
             $start + 2 + $length,
             $this->pattern,
         );
+    }
+
+    /**
+     * From PCRE2 10.33 a verb name is held to the length of a group name,
+     * and refused as one too long where it ends.
+     *
+     * @param int $length the length of the name
+     * @param int $start  the offset of the "(" of the verb
+     */
+    private function refuseVerbNameTooLong(int $length, int $start): void
+    {
+        $longest = $this->target->supports(PcreFeature::LongGroupNames) ? self::NAME_LENGTH : self::NAME_LENGTH_BEFORE_PCRE_10_44;
+        if ($length > $longest) {
+            throw LexerException::withContext(
+                \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $start + 2 + $length, $longest),
+                ErrorCode::GroupNameTooLong,
+                $start + 2 + $length,
+                $this->pattern,
+            );
+        }
     }
 
     /**
