@@ -47,6 +47,12 @@ final class CodePointReaderTest extends TestCase
             'type' => CharLiteralType::UnicodeNamed,
             'codePoint' => 65,
         ];
+        // PCRE2 10.43 and later read no digit, then the padding, as U+0000.
+        yield 'a named code point of padding alone' => [
+            'escape' => '\N{U+ }',
+            'type' => CharLiteralType::UnicodeNamed,
+            'codePoint' => 0,
+        ];
 
         // Nothing readable: the escape keeps its spelling in the tree and the
         // validator decides whether it is an error.

@@ -81,8 +81,9 @@ final class CodePointReader
         $name = $matches[1];
 
         $hex = [];
-        if (1 === LibraryPcre::match('/^[ \t]*+U\+([0-9a-fA-F]++)[ \t]*+$/', $name, $hex)) {
-            return (int) hexdec($hex[1]);
+        // No digit but padding is U+0000 from PCRE2 10.43: "\N{U+ }".
+        if (1 === LibraryPcre::match('/^[ \t]*+U\+(?:([0-9a-fA-F]++)[ \t]*+|[ \t]++)$/', $name, $hex)) {
+            return (int) hexdec($hex[1] ?? '0');
         }
 
         if (class_exists(\IntlChar::class)) {

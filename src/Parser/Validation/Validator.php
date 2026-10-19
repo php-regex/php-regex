@@ -2206,8 +2206,9 @@ final class Validator extends AbstractNodeVisitor
 
         $name = $matches[1];
 
-        // PCRE only supports \N{U+hhhh} in Unicode (/u) mode.
-        if (!$this->unicodeMode && 1 === LibraryPcre::match('/^[ \t]*+U\+[0-9A-Fa-f]+[ \t]*+$/', $name)) {
+        // PCRE only supports \N{U+hhhh} in Unicode (/u) mode, "\N{U+ }"
+        // included.
+        if (!$this->unicodeMode && 1 === LibraryPcre::match('/^[ \t]*+U\+(?:[0-9A-Fa-f]++[ \t]*+|[ \t]++)$/', $name)) {
             $this->raiseSemanticError(
                 \sprintf('\N{%s} is only supported in Unicode mode; add the "u" flag.', $name),
                 // From PCRE2 10.47, PCRE reads the escape to its closing
@@ -3232,8 +3233,8 @@ final class Validator extends AbstractNodeVisitor
 
             $this->validateBracedDigits($source, $digits, self::HEX_DIGITS, false, ErrorCode::UnicodeInvalidDigit, '\N{U+}');
 
-            // Reached only when the digits are left unjudged, "\N{U+ }": a
-            // well-formed "\N{U+...}" is a token of its own.
+            // Unreachable: a well-formed "\N{U+...}", "\N{U+ }" included, is
+            // a token of its own, so the digits above are always refused.
             return;
         }
 

@@ -344,6 +344,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `\N{U+ }`, a `U+` followed by nothing but spaces or tabs up to the brace, is the code point U+0000, as PCRE2 10.43 and later read it (`preg_match('/[\N{U+ }]/u', "\0")` is 1): the tree held `\N`, then `{`, `U+`, a space and `}` as text, so the explanation, the samples and the analyses described another pattern. Outside UTF mode it is refused for the missing `u`, as any `\N{U+...}`, where it was accepted, or refused on its padding for PHP 8.2 and 8.3.
 - A count PCRE2 refuses right after `\N`, `\N{65536}` or `a\N{2,1}`, is refused where the `\N` ends, as PCRE2 10.35 to 10.49 report it (`a\N{0,65536}`: offset 3), where the offset pointed past the number.
 - A `\o` that ends the pattern, with no `{` after it, is refused on the `o` for PCRE2 10.46 and earlier, as PCRE2 reports it (pcre2test 10.32 to 10.45: offset 1 for `/\o/`), where the offset pointed past it.
 - A braced property name left open, as `\p{aaa…`, is malformed where PCRE2 10.39 and older stop reading it, 31 bytes past the brace and its `^`, spaces counted, for PHP 8.1 and older: it was reported where 10.40 stops, up to 49 characters on, skipping spaces.

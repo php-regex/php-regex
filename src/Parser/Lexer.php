@@ -61,10 +61,11 @@ final class Lexer
     ];
 
     /*
-     * PCRE2 10.48 lets spaces and tabs pad the digits of "\x{...}", "\o{...}"
-     * and "\N{U+...}", and the space before "U+": "\x{ 41 }" is "A". The
-     * token patterns are compiled with /x, so the padding is spelled as a
-     * class.
+     * PCRE2 10.43 lets spaces and tabs pad the digits of "\x{...}", "\o{...}"
+     * and "\N{U+...}", and the space before "U+": "\x{ 41 }" is "A". It
+     * asks for a digit before it skips the padding after "{", and enters
+     * "\N{U+" past that question: "\N{U+ }" is U+0000. The token patterns
+     * are compiled with /x, so the padding is spelled as a class.
      */
     private const OCTAL_BRACED = '\\\\ o\\{ [\\x20\\t]*+ [0-7]++ [\\x20\\t]*+ \\}';
 
@@ -77,7 +78,7 @@ final class Lexer
      */
     private const REPEAT_COUNT = '\\{ [\\x20\\t]*+ (?: \\d++ [\\x20\\t]*+ (?: , [\\x20\\t]*+ \\d*+ [\\x20\\t]*+ )? | , [\\x20\\t]*+ \\d++ [\\x20\\t]*+ ) \\}';
 
-    private const UNICODE_NAMED = '\\\\ N (?!'.self::REPEAT_COUNT.') \\{ (?: [\\x20\\t]*+ U\\+[0-9a-fA-F]++ [\\x20\\t]*+ | [a-zA-Z0-9_ -]++ ) \\}';
+    private const UNICODE_NAMED = '\\\\ N (?!'.self::REPEAT_COUNT.') \\{ (?: [\\x20\\t]*+ U\\+ (?: [0-9a-fA-F]++ [\\x20\\t]*+ | [\\x20\\t]++ ) | [a-zA-Z0-9_ -]++ ) \\}';
 
     /*
      * A callout string, between any of the delimiters PCRE2 takes; doubling
