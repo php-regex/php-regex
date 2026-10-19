@@ -30,7 +30,6 @@ use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DoesNotPerformAssertions;
 use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\TestCase;
 
@@ -49,7 +48,6 @@ final class AnalysisServiceTest extends TestCase
             'low',
             [],
             [],
-            false,
             'theoretical',
             null,
             true, // redosEnabled
@@ -146,20 +144,6 @@ final class AnalysisServiceTest extends TestCase
         $result = $this->analysis->suggestOptimizations($patterns, 100);
 
         $this->assertSame([], $result);
-    }
-
-    #[DoesNotPerformAssertions]
-    public function test_construct_with_ignore_parse_errors(): void
-    {
-        new AnalysisService(
-            RegexParser::create(),
-            null,
-            50,
-            'high',
-            [],
-            [],
-            true,
-        );
     }
 
     public function test_suggest_optimizations_continues_on_parse_error(): void
@@ -284,20 +268,6 @@ final class AnalysisServiceTest extends TestCase
         $progress = new RecordingLintProgress();
         $this->analysis->lint($patterns, $progress);
 
-        $this->assertSame(1, $progress->advancedTotal());
-    }
-
-    public function test_lint_progress_with_ignore_parse_errors(): void
-    {
-        $analysis = new AnalysisService(RegexParser::create(), null, 50, 'high', [], [], true);
-        $patterns = [
-            new PatternOccurrence('/foo', 'test.php', 1, 'preg_match'),
-        ];
-
-        $progress = new RecordingLintProgress();
-        $issues = $analysis->lint($patterns, $progress);
-
-        $this->assertSame([], $issues);
         $this->assertSame(1, $progress->advancedTotal());
     }
 
@@ -814,11 +784,6 @@ final class AnalysisServiceTest extends TestCase
         $this->assertStringContainsString('Keep it linear', (string) $hint);
         $this->assertStringContainsString('Suggested (verify behavior)', (string) $hint);
         $this->assertStringContainsString('possessive', (string) $hint);
-    }
-
-    public function test_is_likely_partial_regex_error_returns_false(): void
-    {
-        $this->assertFalse($this->invokePrivate('isLikelyPartialRegexError', 'Completely unrelated'));
     }
 
     /**

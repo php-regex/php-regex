@@ -148,27 +148,6 @@ final class AnalysisServiceTest extends TestCase
         $this->assertNotEmpty($highlighted);
     }
 
-    public function test_lint_with_invalid_pattern_and_ignore_parse_errors(): void
-    {
-        $service = new AnalysisService(
-            RegexParser::create(),
-            null,
-            10,
-            'high',
-            [],
-            [],
-            true, // ignoreParseErrors = true
-        );
-
-        // Use a pattern that would trigger "No closing delimiter" which should be ignored
-        $pattern = new PatternOccurrence('/^test', 'file.php', 1, 'route:test', '^test');
-
-        $issues = $service->lint([$pattern]);
-
-        // Should be empty because parse errors are ignored
-        $this->assertSame([], $issues);
-    }
-
     public function test_lint_with_linter_warnings(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'high');
@@ -384,7 +363,6 @@ final class AnalysisServiceTest extends TestCase
             $redosThreshold,
             $ignoredPatterns,
             [],
-            false,
             'theoretical',
             null,
             true, // redosEnabled

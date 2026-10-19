@@ -39,7 +39,6 @@ final class AnalysisServiceClassTest extends TestCase
             RedosSeverity::High->value,
             [],     // ignoredPatterns
             [],     // redosIgnoredPatterns
-            false,    // ignoreParseErrors
         );
 
         $occurrence = new PatternOccurrence('/a+/', 'test.php', 1, 'preg_match');

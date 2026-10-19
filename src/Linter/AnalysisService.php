@@ -108,7 +108,6 @@ final class AnalysisService
         string $redosThreshold = 'high',
         array $ignoredPatterns = [],
         array $redosIgnoredPatterns = [],
-        private readonly bool $ignoreParseErrors = false,
         RedosMode|string $redosMode = RedosMode::Theoretical,
         private readonly ?ConfirmationOptions $redosConfirmOptions = null,
         bool $redosEnabled = false,
@@ -157,7 +156,6 @@ final class AnalysisService
             $this->redosSeverityThreshold->value,
             $this->ignoredPatterns,
             [],
-            $this->ignoreParseErrors,
             $this->redosMode,
             $this->redosConfirmOptions,
             RedosMode::Off !== $this->redosMode,
@@ -433,14 +431,6 @@ final class AnalysisService
 
             if (!$validation->isValid) {
                 $message = $validation->error ?? 'Invalid regex.';
-                if ($this->ignoreParseErrors && $this->isLikelyPartialRegexError($message)) {
-                    if (null !== $done) {
-                        $done(1);
-                    }
-
-                    continue;
-                }
-
                 $issues[] = [
                     'type' => 'error',
                     'file' => $occurrence->file,
@@ -676,7 +666,6 @@ final class AnalysisService
             $this->redosSeverityThreshold->value,
             $this->ignoredPatterns,
             [],
-            $this->ignoreParseErrors,
             $this->redosMode,
             $this->redosConfirmOptions,
             RedosMode::Off !== $this->redosMode,
@@ -1500,23 +1489,5 @@ final class AnalysisService
         }
 
         return RedosVerdict::searchSeverity($cost)->rank() >= $this->redosSeverityThreshold->rank();
-    }
-
-    private function isLikelyPartialRegexError(string $errorMessage): bool
-    {
-        $indicators = [
-            'No closing delimiter',
-            'Regex too short',
-            'Unknown modifier',
-            'Unexpected end',
-        ];
-
-        foreach ($indicators as $indicator) {
-            if (str_contains(Ascii::lower($errorMessage), Ascii::lower((string) $indicator))) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
