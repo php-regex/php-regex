@@ -101,8 +101,19 @@ final class RegexPatternRuleDocLinksTest extends TestCase
 
         $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance', $links['possessive quantifiers']);
         $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/08-performance-redos.md#1-atomic-groups-', $links['atomic groups']);
-        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/06-lookarounds.md#types-of-lookarounds', $links['lookahead']);
-        $this->assertSame(self::REPO_URL_PREFIX.'docs/tutorial/06-lookarounds.md#types-of-lookarounds', $links['lookbehind']);
+    }
+
+    /**
+     * The concept links are the ones a ReDoS tip cites, and no other: a
+     * link no message reads is a link nobody keeps alive.
+     */
+    #[Test]
+    public function test_the_concept_links_are_the_ones_a_tip_cites(): void
+    {
+        $concepts = array_keys(self::constantMap('DOC_LINKS'));
+        sort($concepts);
+
+        $this->assertSame(['atomic groups', 'catastrophic backtracking', 'possessive quantifiers'], $concepts);
     }
 
     /**

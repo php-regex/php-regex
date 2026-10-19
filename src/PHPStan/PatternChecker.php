@@ -71,23 +71,9 @@ final class PatternChecker
     private const MAX_PATTERN_DISPLAY_LENGTH = 50;
 
     private const DOC_LINKS = [
-        // Flags - Use PHP.net where possible, or precise concept pages
-        'Flag \'s\' is useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-s-dotall',
-        'Flag \'m\' is useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-m-multiline',
-        'Flag \'i\' is useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-i-caseless',
-        'Flag \'D\' is useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-d-dollar-end-only',
-        'Flag \'x\' is useless' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#useless-flag-x-extended',
-
-        // Security & Concepts - The authority on explaining regex mechanics
         'catastrophic backtracking' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/reference/rules.md#catastrophic-backtracking',
-
-        // Advanced Syntax - the chapters that teach it
         'possessive quantifiers' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/04-quantifiers.md#possessive-quantifiers-performance',
         'atomic groups' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/08-performance-redos.md#1-atomic-groups-',
-
-        // Assertions
-        'lookahead' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/06-lookarounds.md#types-of-lookarounds',
-        'lookbehind' => 'https://github.com/php-regex/php-regex/blob/2.x/docs/tutorial/06-lookarounds.md#types-of-lookarounds',
     ];
 
     private const LINT_DOC_LINKS = [
