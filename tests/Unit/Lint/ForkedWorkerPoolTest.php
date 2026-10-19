@@ -637,6 +637,43 @@ final class ForkedWorkerPoolTest extends TestCase
     }
 
     /**
+     * A worker sent SIGTERM the moment it is forked (the next fork failed,
+     * the run ends) leaves its parent alive. PHP's own handler re-raises
+     * the signal with kill(getpid()), and on macOS a process just forked
+     * can still read its parent's pid there: the parent died with it, one
+     * run in a few dozen. Run in a PHP process of its own, many times.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_a_worker_ended_as_it_starts_leaves_its_parent_alive(): void
+    {
+        $script = \sprintf(<<<'PHP_WRAP'
+            require %s;
+            for ($run = 0; $run < 150; $run++) {
+                PHPRegex\Tests\Support\LintFunctionOverrides::reset();
+                PHPRegex\Tests\Support\LintFunctionOverrides::$pcntlForkFailAfter = 1;
+                $results = (new PHPRegex\Linter\Parallel\ForkedWorkerPool())->run(
+                    [1, 2],
+                    2,
+                    static fn (array $chunk, Closure $done): array => $chunk,
+                    null,
+                    'Parallel analysis failed',
+                    [],
+                    static fn (int $item): string => 'file'.$item.'.php',
+                );
+                if (null !== $results) {
+                    echo 'the run did not give up';
+
+                    exit(1);
+                }
+            }
+            echo 'alive';
+            PHP_WRAP, var_export(\dirname(__DIR__, 2).'/bootstrap.php', true));
+
+        $this->assertSame('alive', $this->runPhp($script));
+    }
+
+    /**
      * The first "worker" is a process id no process has: it never answers
      * on its channel. When the next fork fails the run gives up at once,
      * without waiting for it.

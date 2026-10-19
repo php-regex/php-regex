@@ -23,6 +23,9 @@ CHANGELOG
    time while the workers run: workers loading the classes of a phar their
    parent held open read each other's bytes through the one file offset
    they share, and died on a parse error.
+ * On macOS, ending a worker the moment it is forked no longer ends the
+   process that forked it: a worker is forked with SIGTERM blocked, and
+   lets it through once set up.
  * The workers take the files and the patterns a few at a time, as each one
    finishes, and report their progress as they go; the inline ignore markers
    are read by the workers, and a file's source is read once for all its

@@ -311,7 +311,17 @@ final class ForkedWorkerPool
 
                 [$parentEnd, $workerEnd] = $pair;
                 $workerLock = null === $lock ? false : @fopen($lock, 'r');
+                // PHP handles SIGTERM itself and raises it again with
+                // kill(getpid()): on macOS a process just forked can still
+                // read its parent's pid there, and a worker ended as it
+                // starts killed its parent. The worker is forked with
+                // SIGTERM blocked, and lets it through once set up.
+                pcntl_sigprocmask(\SIG_BLOCK, [\SIGTERM], $mask);
                 $pid = pcntl_fork();
+                if (0 !== $pid && !\in_array(\SIGTERM, \is_array($mask) ? $mask : [], true)) {
+                    pcntl_sigprocmask(\SIG_UNBLOCK, [\SIGTERM]);
+                }
+
                 if (-1 === $pid) {
                     fclose($parentEnd);
                     fclose($workerEnd);
@@ -651,9 +661,10 @@ final class ForkedWorkerPool
         }
 
         // The parent ends this worker with SIGTERM, whatever handler of its
-        // own it inherited, blocked or not; the channel waits as long as the
-        // parent does.
+        // own it inherited, blocked or not, and it was forked with SIGTERM
+        // blocked; the channel waits as long as the parent does.
         pcntl_signal(\SIGTERM, \SIG_DFL);
+        pcntl_sigprocmask(\SIG_UNBLOCK, [\SIGTERM]);
         stream_set_timeout($channel, self::NO_TIMEOUT);
 
         try {
