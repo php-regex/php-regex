@@ -293,7 +293,7 @@ final class AlphaAssertionBodyTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            8000,
+            4000,
             '(*pla: then \\p{',
         );
     }
@@ -308,7 +308,7 @@ final class AlphaAssertionBodyTest extends TestCase
             static function (int $size): void {
                 (new Lexer())->tokenize(str_repeat('\\p{', $size));
             },
-            16000,
+            8000,
             '\\p{',
         );
     }
@@ -397,7 +397,7 @@ final class AlphaAssertionBodyTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            250,
+            125,
             $unit,
         );
     }
@@ -585,7 +585,7 @@ final class AlphaAssertionBodyTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            1_000,
+            500,
             (string) json_encode($prefix.$unit, \JSON_INVALID_UTF8_SUBSTITUTE),
         );
     }
@@ -636,7 +636,7 @@ final class AlphaAssertionBodyTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            500,
+            250,
             $opener,
         );
     }
@@ -669,7 +669,7 @@ final class AlphaAssertionBodyTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            500,
+            250,
             $open.$close,
         );
     }
@@ -1091,7 +1091,7 @@ final class AlphaAssertionBodyTest extends TestCase
             static function (int $size) use ($unit): void {
                 Regex::create(['cache' => null])->validate('/'.str_repeat($unit, $size).')/');
             },
-            2_000,
+            1_000,
             $unit,
         );
     }

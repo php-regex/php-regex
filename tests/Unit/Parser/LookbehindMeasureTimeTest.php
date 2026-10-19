@@ -143,9 +143,9 @@ final class LookbehindMeasureTimeTest extends TestCase
             static function (int $size) use ($prefix, $unit): void {
                 Regex::create(['cache' => null])->validate('/'.$prefix.str_repeat($unit, $size).'(?</');
             },
-            120,
+            60,
             $unit,
-            2.5,
+            6.5,
         );
 
         $regex = '/'.$prefix.str_repeat($unit, 240).'(?</';

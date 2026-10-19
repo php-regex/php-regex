@@ -56,11 +56,11 @@ final class UnclosedVerbRunTest extends TestCase
      */
     public static function provideRunsOfUnclosedVerbs(): iterable
     {
-        yield 'bare openers' => ['prefix' => '', 'unit' => '(*', 'size' => 30_000];
-        yield 'openers with a colon' => ['prefix' => '', 'unit' => '(*:', 'size' => 20_000];
-        yield 'openers after a letter' => ['prefix' => '', 'unit' => 'a(*', 'size' => 20_000];
-        yield 'openers in an alphabetic lookahead' => ['prefix' => '(*pla:', 'unit' => '(*', 'size' => 30_000];
-        yield 'openers in a short lookahead' => ['prefix' => '(?*', 'unit' => '(*', 'size' => 20_000];
-        yield 'alphabetic lookaheads each holding an opener' => ['prefix' => '', 'unit' => '(*pla:(*', 'size' => 10_000];
+        yield 'bare openers' => ['prefix' => '', 'unit' => '(*', 'size' => 15_000];
+        yield 'openers with a colon' => ['prefix' => '', 'unit' => '(*:', 'size' => 10_000];
+        yield 'openers after a letter' => ['prefix' => '', 'unit' => 'a(*', 'size' => 10_000];
+        yield 'openers in an alphabetic lookahead' => ['prefix' => '(*pla:', 'unit' => '(*', 'size' => 15_000];
+        yield 'openers in a short lookahead' => ['prefix' => '(?*', 'unit' => '(*', 'size' => 10_000];
+        yield 'alphabetic lookaheads each holding an opener' => ['prefix' => '', 'unit' => '(*pla:(*', 'size' => 5_000];
     }
 }

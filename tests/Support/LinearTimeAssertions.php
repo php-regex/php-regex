@@ -14,82 +14,97 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Support;
 
 /**
- * Twice the text must cost about twice the time: a reading that goes back
- * over the rest of the pattern for each unit takes four times as long.
+ * Four times the text must cost about four times the time: a reading that
+ * goes back over the rest of the pattern for each unit takes sixteen times
+ * as long.
  */
 trait LinearTimeAssertions
 {
     /**
-     * Reads $size units then twice as many, and asserts each read takes
+     * Reads $size units then four times as many, and asserts each read takes
      * less than the budget and the larger one less than $maxRatio times the
-     * smaller. Each size is timed at its best of four runs, so a pause of
-     * the machine does not count, and the ratio gets up to three
-     * measurements.
+     * smaller.
+     *
+     * The clock is the CPU time of the process, not the wall clock: a
+     * process the machine sets aside while it reads (a loaded laptop, a
+     * shared runner, the other test processes) is not charged for the wait.
+     * The smaller read is read twice, then the two sizes in turns, each
+     * keeping its best reading, and the first turn under the line ends the
+     * measure. A slowed reading only errs one way: the larger one slowed
+     * fails a linear read for one turn, and the next turn reads it again;
+     * the smaller one slowed would pass a quadratic read, and it never
+     * stands alone: it has its twin from the first turn. A linear read so
+     * costs two smaller reads and one larger.
+     *
+     * Four times the units, not two: a linear read takes four times as long
+     * and a quadratic one sixteen, where twice the units gave two and four.
+     * At half the size a quadratic part of the read stands half as high
+     * against the linear one, and the wider gap still puts it past the line:
+     * a read the old measure (twice $size, 3.2) caught at the boundary,
+     * a quadratic part one and a half times the linear one, reads 9.1 here.
+     *
+     * Below a millisecond the clock says more than the read: the ratio of a
+     * smaller read that short is not judged, only the budget.
      *
      * @param \Closure(int): void $read
+     * @param float|null          $maxRatio the line for four times the units: 8 by default, 9.5 on a shared runner
      */
     private function assertLinearTime(\Closure $read, int $size, string $what, ?float $maxRatio = null): void
     {
-        // The sizes above are chosen to stay well under a second on a dev
-        // machine; a loaded laptop or a two-core CI runner reads them two to
-        // three times slower, and its clock jitters a linear read up to three
-        // and a half times the time at twice the size, so the budget bounds
-        // the runaway and the ratio draws the line beyond the jitter: a
-        // reading that goes back over the rest of the pattern for each unit
-        // lands far above both.
-        // A shared runner (CI set) gets those loose lines; a dev machine
-        // keeps the strict ones, under which a quadratic read whose small
-        // reading stays below the CI noise floor is still caught.
         $shared = false !== getenv('CI') && '' !== getenv('CI');
         $budget = $shared ? 4.0 : 3.0;
-        $maxRatio ??= $shared ? 3.5 : 3.2;
-        $noise = $shared ? 0.05 : 0.02;
+        $maxRatio ??= $shared ? 9.5 : 8.0;
 
-        // A linear read doubles (2.1 to 2.4 on a dev machine); one burst of
-        // the runner during either size can still push a ratio past the
-        // line (3.56 on a macOS runner). A quadratic read is past it on every
-        // measurement, so the ratio is measured up to three times and one
-        // measurement under the line is enough.
+        $small = self::cpuTime($read, $size);
+        $large = \INF;
         $readings = [];
-        for ($attempt = 0; $attempt < 3; $attempt++) {
-            $small = self::bestTime($read, $size);
-            $this->assertLessThan($budget, $small, \sprintf('%s x %d: %.3f s.', $what, $size, $small));
-
-            $large = self::bestTime($read, 2 * $size);
-            $this->assertLessThan($budget, $large, \sprintf('%s x %d: %.3f s, %.3f s for half as many.', $what, 2 * $size, $large, $small));
-
-            // Below a few tens of milliseconds the clock says more than the
-            // reading on a shared runner, so the ratio is read only when BOTH
-            // readings are above the noise.
-            if ($small < $noise || $large < $noise) {
+        for ($turn = 0; $turn < 5; $turn++) {
+            $small = min($small, self::cpuTime($read, $size));
+            $large = min($large, self::cpuTime($read, 4 * $size));
+            $readings[] = \sprintf('%.4f s for %d units, %.4f s for %d (%.2f)', $small, $size, $large, 4 * $size, $large / max($small, 1e-6));
+            $this->assertLessThan($budget, $large, \sprintf('%s x %d: %.3f s.', $what, 4 * $size, $large));
+            if ($small < 0.001) {
                 return;
             }
 
-            if ($large / $small < $maxRatio || 2 === $attempt) {
-                $this->assertLessThan($maxRatio, $large / $small, \sprintf('%s: twice the units took more than %.1f times as long on every measurement: %s.', $what, $maxRatio, implode('; ', [...$readings, \sprintf('%.3f s for %d units, %.3f s for %d (%.2f)', $small, $size, $large, 2 * $size, $large / $small)])));
-
-                return;
+            if ($large / $small < $maxRatio) {
+                break;
             }
-
-            $readings[] = \sprintf('%.3f s for %d units, %.3f s for %d (%.2f)', $small, $size, $large, 2 * $size, $large / $small);
         }
+
+        $this->assertLessThan($maxRatio, $large / $small, \sprintf('%s: four times the units took more than %.1f times as long on every turn: %s.', $what, $maxRatio, implode('; ', $readings)));
     }
 
     /**
-     * The best of four readings: a busy machine or a coverage driver slows
-     * one reading down, rarely all four.
+     * The CPU time of one read, in seconds.
      *
      * @param \Closure(int): void $read
      */
-    private static function bestTime(\Closure $read, int $size): float
+    private static function cpuTime(\Closure $read, int $size): float
     {
-        $best = \INF;
-        for ($run = 0; $run < 4; $run++) {
-            $start = hrtime(true);
-            $read($size);
-            $best = min($best, (hrtime(true) - $start) / 1e9);
+        $start = self::cpuSeconds();
+        $read($size);
+
+        return self::cpuSeconds() - $start;
+    }
+
+    /**
+     * The user and system time of the process: their sum is exact to the
+     * microsecond on Linux and macOS, where each alone may be sampled.
+     */
+    private static function cpuSeconds(): float
+    {
+        $usage = getrusage();
+        if (false === $usage) {
+            throw new \RuntimeException('getrusage() failed: the CPU time of the process cannot be read.');
         }
 
-        return $best;
+        $seconds = 0.0;
+        foreach (['ru_utime.tv_sec' => 1.0, 'ru_utime.tv_usec' => 1e-6, 'ru_stime.tv_sec' => 1.0, 'ru_stime.tv_usec' => 1e-6] as $field => $unit) {
+            $value = $usage[$field] ?? 0;
+            $seconds += (\is_int($value) ? $value : 0) * $unit;
+        }
+
+        return $seconds;
     }
 }

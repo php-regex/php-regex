@@ -50,7 +50,7 @@ final class CalloutTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            20_000,
+            10_000,
             $prefix.$unit,
         );
     }

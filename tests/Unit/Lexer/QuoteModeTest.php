@@ -60,10 +60,10 @@ final class QuoteModeTest extends TestCase
      */
     public static function provideQuotedRunsInAClass(): iterable
     {
-        yield 'letters closed by \\E' => ['prefix' => '[\\Q', 'unit' => 'a', 'suffix' => '\\E]', 'size' => 16_000];
-        yield 'two-byte characters closed by \\E' => ['prefix' => '[\\Q', 'unit' => "\u{e9}", 'suffix' => '\\E]', 'size' => 8_000];
-        yield 'letters running to the end' => ['prefix' => '[\\Q', 'unit' => 'a', 'suffix' => ']', 'size' => 16_000];
-        yield 'letters after a member' => ['prefix' => '[a\\Q', 'unit' => 'b', 'suffix' => '\\E]', 'size' => 16_000];
+        yield 'letters closed by \\E' => ['prefix' => '[\\Q', 'unit' => 'a', 'suffix' => '\\E]', 'size' => 8_000];
+        yield 'two-byte characters closed by \\E' => ['prefix' => '[\\Q', 'unit' => "\u{e9}", 'suffix' => '\\E]', 'size' => 4_000];
+        yield 'letters running to the end' => ['prefix' => '[\\Q', 'unit' => 'a', 'suffix' => ']', 'size' => 8_000];
+        yield 'letters after a member' => ['prefix' => '[a\\Q', 'unit' => 'b', 'suffix' => '\\E]', 'size' => 8_000];
     }
 
     /**
@@ -84,7 +84,7 @@ final class QuoteModeTest extends TestCase
                     // A refusal ends the reading: only its time counts.
                 }
             },
-            16_000,
+            8_000,
             '(*pla:[\\Qa\\E])',
         );
     }
