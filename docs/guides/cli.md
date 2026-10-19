@@ -1731,8 +1731,8 @@ and the PCRE2 that gave it, so an upgrade of any of them reads the classes
 again. A directory other users may write into is not read; one that cannot
 be written keeps nothing, and the run goes on. Removing the directory
 empties it. On about 1,800 Unicode patterns gathered from open-source
-projects, `--redos` on, a second run takes about 2.4 s where the first takes
-2.8 s.
+projects, `--redos` on, a second run takes about 2.3 s where the first takes
+2.7 s.
 
 ### Baseline
 
