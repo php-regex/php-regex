@@ -2289,7 +2289,10 @@ final class Lexer
                     'range' => 'none',
                     default => 'character',
                 },
-                TokenType::Literal, TokenType::LiteralEscaped, TokenType::Unicode, TokenType::Octal, TokenType::OctalLegacy,
+                // Without UTF mode a multibyte end leaves its last byte, a
+                // character a "-" may start a range from.
+                TokenType::Literal, TokenType::LiteralEscaped => 'range' === $state && 1 === $this->multibyteLength($token) ? 'none' : 'character',
+                TokenType::Unicode, TokenType::Octal, TokenType::OctalLegacy,
                 TokenType::UnicodeNamed, TokenType::ControlChar => 'range' === $state ? 'none' : 'character',
                 default => 'none',
             };
@@ -2326,11 +2329,15 @@ final class Lexer
 
             $start = $this->rangeBound($members[$i], true);
             $end = $this->rangeBound($members[$i + 2], false);
+            $endLength = $this->multibyteLength($members[$i + 2]);
             if (null !== $start && null !== $end && $start > $end) {
-                return $members[$i + 2]->end();
+                // On the first byte of a multibyte end.
+                return $members[$i + 2]->end() - $endLength + 1;
             }
 
-            $i += 2;
+            // Without UTF mode, a multibyte end may start the next range
+            // from its last byte.
+            $i += $endLength > 1 ? 1 : 2;
         }
 
         return null;
@@ -2339,8 +2346,9 @@ final class Lexer
     /**
      * The character a class member names as a bound of a range, null when it
      * names none or one this reading leaves alone. Without UTF mode PCRE
-     * reads bytes: a multibyte literal starts a range at its last byte. A
-     * "-" right after the one that makes the range is its end.
+     * reads bytes: a multibyte literal starts a range at its last byte, and
+     * ends one at its first. A "-" right after the one that makes the range
+     * is its end.
      */
     private function rangeBound(Token $token, bool $start): ?int
     {
@@ -2357,7 +2365,7 @@ final class Lexer
             TokenType::Literal, TokenType::LiteralEscaped, TokenType::Range => match (true) {
                 1 === \strlen($value) => \ord($value),
                 $this->utf && 1 === mb_strlen($value, 'UTF-8') => mb_ord($value, 'UTF-8'),
-                !$this->utf && $start && \strlen($value) > 1 => \ord(substr($value, -1)),
+                !$this->utf && \strlen($value) > 1 => \ord($start ? substr($value, -1) : $value),
                 default => null,
             },
             TokenType::Unicode => CodePointReader::fromHexEscape($value),
@@ -2369,6 +2377,15 @@ final class Lexer
         };
 
         return null === $codePoint || $codePoint < 0 || (!$this->utf && $codePoint > 0xFF) ? null : $codePoint;
+    }
+
+    /**
+     * The bytes of a literal PCRE reads one at a time, without UTF mode: a
+     * multibyte character ends a range on its first byte. One otherwise.
+     */
+    private function multibyteLength(Token $token): int
+    {
+        return !$this->utf && \in_array($token->type, [TokenType::Literal, TokenType::LiteralEscaped], true) ? max(1, \strlen($token->value)) : 1;
     }
 
     /**

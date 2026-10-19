@@ -1082,9 +1082,12 @@ final class Validator extends AbstractNodeVisitor
         $startCodePoint = $this->rangeEndpointCodePoint($node->start, true);
         $endCodePoint = $this->rangeEndpointCodePoint($node->end, false);
         if (null !== $startCodePoint && null !== $endCodePoint && $startCodePoint > $endCodePoint) {
+            // Without Unicode mode, a multibyte end ends the range on its
+            // first byte.
+            $endsAt = !$this->unicodeMode && $node->end instanceof LiteralNode ? $node->getEndPosition() - \strlen($node->end->value) + 1 : $node->getEndPosition();
             $this->raiseSemanticError(
                 \sprintf('Invalid range "%s": start character comes after end character.', $this->describeRange($node)),
-                $this->pastTheFault($node->getEndPosition()),
+                $this->pastTheFault($endsAt),
                 ErrorCode::RangeReversed,
             );
         }

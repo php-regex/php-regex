@@ -309,6 +309,10 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'unknown escape before counts out of order' => ['pattern' => '/\\y{2,1}/', 'bundled' => 1, 'newer' => 2, 'movedIn' => '10.47'];
         yield 'unknown property before a count too big' => ['pattern' => '/\\pX{65536}/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
         yield 'reversed range in a group before counts out of order' => ['pattern' => '/([z-a]){2,1}/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
+        // Without UTF mode a multibyte character ends a range on its first
+        // byte, and a "-" after it starts one from its last.
+        yield 'range from the last byte of a multibyte range end' => ['pattern' => '/[a-é-a]/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'reversed range to the first byte of a multibyte character' => ['pattern' => '/[\\xff-ɐ]/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
         // What PCRE checks once the pattern is read comes after the counts.
         yield 'counts out of order after an unbounded lookbehind' => ['pattern' => '/(?<=a+){2,1}/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
         yield 'counts out of order after a reference to a missing group' => ['pattern' => '/\\9{2,1}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];

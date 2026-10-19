@@ -3447,7 +3447,7 @@ final class TokenParser
 
                 continue;
             }
-            $parts[] = $this->parseCharClassPart();
+            array_push($parts, ...$this->parseCharClassParts());
         }
 
         if (empty($parts)) {
@@ -3675,19 +3675,69 @@ final class TokenParser
     }
 
     /**
-     * parses a part of a character class, which can be a literal, range, char type, unicode property, etc
+     * The next part of a class, or the parts PCRE reads there. Without UTF
+     * mode PCRE reads a class byte by byte: a multibyte character ending a
+     * range ends it on its first byte, and a "-" after it starts a range
+     * from its last byte, the bytes between members: "[a-é-a]" is the range
+     * a to 0xC3, then 0xA9 to "a". The range is cut only when that "-" makes
+     * a range.
+     *
+     * @return non-empty-list<NodeInterface>
      */
-    private function parseCharClassPart(): NodeInterface
+    private function parseCharClassParts(): array
     {
-        $startToken = $this->stream->current();
-        $startPosition = $startToken->position;
+        $parts = [];
+        $part = $this->parseCharClassPart();
 
-        [$startNode] = $this->parseCharClassAtom($startPosition);
+        while (!$this->unicodeMode && $part instanceof RangeNode && $part->end instanceof LiteralNode && \strlen($part->end->value) > 1) {
+            $end = $part->end;
+            $endsAt = $end->getEndPosition();
+            $tokenAt = $this->stream->getPosition();
+            $wasInQuoteMode = $this->inQuoteMode;
+            $next = $this->parseCharClassPart(new LiteralNode(substr($end->value, -1), $endsAt - 1, $endsAt, $end->isRaw));
+            if (!$next instanceof RangeNode) {
+                $this->stream->setPosition($tokenAt);
+                $this->inQuoteMode = $wasInQuoteMode;
 
-        // PCRE refuses such an escape as soon as it reads it, before any "-"
-        // after it could make a range.
-        if ($this->isClassInvalidEscapeAt($startToken)) {
-            return $startNode;
+                break;
+            }
+
+            // The first byte ends the range; the bytes between are members.
+            $firstEndsAt = $endsAt - \strlen($end->value) + 1;
+            $parts[] = new RangeNode($part->start, new LiteralNode($end->value[0], $end->getStartPosition(), $firstEndsAt, $end->isRaw), $part->getStartPosition(), $firstEndsAt);
+            if ($endsAt - 1 > $firstEndsAt) {
+                $parts[] = new LiteralNode(substr($end->value, 1, -1), $firstEndsAt, $endsAt - 1, $end->isRaw);
+            }
+
+            $part = $next;
+        }
+
+        $parts[] = $part;
+
+        return $parts;
+    }
+
+    /**
+     * parses a part of a character class, which can be a literal, range, char type, unicode property, etc
+     *
+     * @param LiteralNode|null $lastByte the last byte of a multibyte range end, which starts this part
+     */
+    private function parseCharClassPart(?LiteralNode $lastByte = null): NodeInterface
+    {
+        if (null !== $lastByte) {
+            $startNode = $lastByte;
+            $startPosition = $lastByte->getStartPosition();
+        } else {
+            $startToken = $this->stream->current();
+            $startPosition = $startToken->position;
+
+            [$startNode] = $this->parseCharClassAtom($startPosition);
+
+            // PCRE refuses such an escape as soon as it reads it, before any
+            // "-" after it could make a range.
+            if ($this->isClassInvalidEscapeAt($startToken)) {
+                return $startNode;
+            }
         }
 
         // PCRE also skips "\E" and an empty "\Q\E" before the "-": "[z\E-a]"

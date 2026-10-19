@@ -143,9 +143,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   from 10.45 `[[:\d-z:]]` is "unknown POSIX class name" at offset 9 and
   `[a-[:\d-z:]]` "invalid range in character class" at offset 11, where the
   library refuses the `\d-z` inside at 6 and 8.
-- Without `u`, a range ending on a multibyte character ends on its first
-  byte: `[a-é-a]` is "range out of order" on every release (offset 6, 7
-  from 10.47), the library accepts it.
 - Up to 10.44 a quoted hyphen starts a range: `([\Q-\E--\pL]` misses its `)`
   at 13 (the range `-` to `-`, then `\pL`), the library says 11.
 - A name nothing closes in a call by name, `(?<n>a)(?&n )` or
