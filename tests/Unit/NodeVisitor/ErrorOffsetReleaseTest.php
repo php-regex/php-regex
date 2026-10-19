@@ -313,6 +313,9 @@ final class ErrorOffsetReleaseTest extends TestCase
         // byte, and a "-" after it starts one from its last.
         yield 'range from the last byte of a multibyte range end' => ['pattern' => '/[a-é-a]/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'reversed range to the first byte of a multibyte character' => ['pattern' => '/[\\xff-ɐ]/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
+        // A "\p{" no "}" closes is judged after the items before it.
+        yield 'reversed range before a range to an unclosed property' => ['pattern' => '/[z-aa-\\p{L]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'reversed range before an unclosed property with no name' => ['pattern' => '/([z-a\\P{]/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];
         // What PCRE checks once the pattern is read comes after the counts.
         yield 'counts out of order after an unbounded lookbehind' => ['pattern' => '/(?<=a+){2,1}/', 'bundled' => 11, 'newer' => 11, 'movedIn' => '10.40'];
         yield 'counts out of order after a reference to a missing group' => ['pattern' => '/\\9{2,1}/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];

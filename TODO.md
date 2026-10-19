@@ -139,6 +139,18 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   to 10.44: `[z-aa-\p{L]` is "range out of order" at offset 3, the library
   says 8 (invalid range); on every release `([z-a\P{]` is offset 4 (5 from
   10.47), the library says 9 (malformed property).
+- PCRE2 10.32 to 10.36 read the digits of a brace before they check that a
+  count closes it: `a{65536 }` is "number too big in {} quantifier" at
+  offset 7 (php:8.0-cli), and `\g{65536 }` too for PHP 7.3 and 7.4 without
+  `X` (offset 8). The library accepts both.
+- `(a)\g{1-}` compiles for the library on every PHP 8 target; PCRE2 refuses
+  it at offset 5 (7 from 10.47). `\g{--1}` and `\g{-+1}` have the right
+  offset but say `regex.backref.relative` where PCRE2 says "subpattern name
+  expected".
+- `\k{1 }` and `\k{1n }` up to 10.42: PCRE2 says "subpattern name must start
+  with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
+  reported one byte early.
+- `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10.
 - The lexer reads no POSIX item whose name holds a backslash, `[:\d-z:]`:
   from 10.45 `[[:\d-z:]]` is "unknown POSIX class name" at offset 9 and
   `[a-[:\d-z:]]` "invalid range in character class" at offset 11, where the

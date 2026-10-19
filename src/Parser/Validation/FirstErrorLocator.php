@@ -112,6 +112,7 @@ final class FirstErrorLocator
         $laterErrors = [
             $this->firstClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $error instanceof LexerException ? $this->firstErrorInClassLeftOpen($read, $pattern, $flags, $delimiter, $error) : null,
+            null !== $swallowing ? $this->firstErrorBeforeAnUnclosedName($swallowing, $pattern, $flags, $delimiter) : null,
             $this->firstExtendedClassErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstVersionConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
             $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, $limit),
@@ -451,19 +452,10 @@ final class FirstErrorLocator
      */
     private function firstErrorInClassLeftOpen(array $tokens, string $pattern, string $flags, string $delimiter, LexerException $lexerError): ?SemanticErrorException
     {
-        // The tokens from the "[" no "]" closes; none should the lexer ever
-        // report a class left open it has not read.
-        $depth = 0;
-        $opening = \count($tokens);
-        foreach ($tokens as $index => $token) {
-            if (TokenType::CharClassOpen === $token->type && 0 === $depth++) {
-                $opening = $index;
-            } elseif (TokenType::CharClassClose === $token->type && $depth > 0 && 0 === --$depth) {
-                $opening = \count($tokens);
-            }
-        }
-
-        if ($opening === \count($tokens)) {
+        // None should the lexer ever report a class left open it has not
+        // read.
+        $opening = self::classLeftOpen($tokens);
+        if (null === $opening) {
             return null;
         }
 
@@ -489,6 +481,47 @@ final class FirstErrorLocator
     }
 
     /**
+     * The first error in the class a "\p{" that no "}" closes stands in,
+     * before it: PCRE reads the class item by item up to it, then looks for
+     * the "}" to the end of the pattern. Null when it stands in no class.
+     *
+     * @param list<Token> $tokens the tokens read up to that "\p{", which ends them
+     */
+    private function firstErrorBeforeAnUnclosedName(array $tokens, string $pattern, string $flags, string $delimiter): ?SemanticErrorException
+    {
+        $opening = self::classLeftOpen($tokens);
+        $name = $tokens[\count($tokens) - 1] ?? null;
+        if (null === $opening || null === $name) {
+            return null;
+        }
+
+        // From PCRE2 10.47 an item is refused past its end, where the name
+        // may start.
+        return $this->firstItemErrorBefore(\array_slice($tokens, $opening), $pattern, $flags, $delimiter, $name->position, true);
+    }
+
+    /**
+     * The index of the token that opens the class no "]" closes in the
+     * tokens, null when every class they open is closed.
+     *
+     * @param list<Token> $tokens
+     */
+    private static function classLeftOpen(array $tokens): ?int
+    {
+        $depth = 0;
+        $opening = null;
+        foreach ($tokens as $index => $token) {
+            if (TokenType::CharClassOpen === $token->type && 0 === $depth++) {
+                $opening = $index;
+            } elseif (TokenType::CharClassClose === $token->type && $depth > 0 && 0 === --$depth) {
+                $opening = null;
+            }
+        }
+
+        return $opening;
+    }
+
+    /**
      * The first item of a class, its tokens from its "[", that PCRE refuses
      * as it reads it before $limit, where the parser could not read the
      * class whole. The class read up to $limit, closed there, is judged
@@ -498,8 +531,9 @@ final class FirstErrorLocator
      * range's hyphen.
      *
      * @param list<Token> $class
+     * @param bool        $atTheLimit whether an error reported at $limit counts
      */
-    private function firstItemErrorBefore(array $class, string $pattern, string $flags, string $delimiter, int $limit): ?SemanticErrorException
+    private function firstItemErrorBefore(array $class, string $pattern, string $flags, string $delimiter, int $limit, bool $atTheLimit = false): ?SemanticErrorException
     {
         $read = [$class[0]];
         $lastHyphen = null;
@@ -529,7 +563,9 @@ final class FirstErrorLocator
 
                 return null;
             } catch (SemanticErrorException $error) {
-                return ($error->position ?? $limit) < $limit ? $error : null;
+                $at = $error->position ?? $limit;
+
+                return $at < $limit || ($atTheLimit && $at === $limit) ? $error : null;
             } catch (LexerException|LimitException|ParserException) {
                 // The range refused there: read up to its hyphen.
             }
