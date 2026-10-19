@@ -1485,8 +1485,8 @@ final class TokenParser
             return $position;
         }
 
-        // Only "\g{...}" takes spaces around what it holds.
-        $blanks = '}' === $closing ? " \t" : '';
+        // Only "\g{...}" takes spaces around what it holds, from PCRE2 10.43.
+        $blanks = '}' === $closing && $this->supports(PcreFeature::PaddedBracedEscapes) ? " \t" : '';
         $position++;
         $position += strspn($this->pattern, $blanks, $position);
 

@@ -2670,18 +2670,41 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        $offset = match (true) {
-            '' !== $matches[2] => 3,
-            'g' === $matches[1] => 2,
-            default => 3 + \strlen($matches[3]),
+        // A space first leaves no name; one after a number ends "\g", whose
+        // number PCRE reads first; one after a name ends the name.
+        $digits = [];
+        $number = 'g' === $matches[1] && 1 === LibraryPcre::match('/^([+-]?)(\d++)$/', $matches[3], $digits);
+        [$offset, $code] = match (true) {
+            '' !== $matches[2] => [3, ErrorCode::GroupNameExpected],
+            $number => [2, $this->braceNumberError($node, $digits[1] ?? '', $digits[2] ?? '') ?? ErrorCode::BackrefInvalidSyntax],
+            default => [3 + \strlen($matches[3]), ErrorCode::GroupNameUnterminated],
         };
 
         $this->raiseSemanticError(
             \sprintf('Spaces inside \%s{} need PCRE2 10.43, which PHP bundles from 8.4.', $matches[1]),
             $node->startPosition + $offset,
-            ErrorCode::BackrefInvalidSyntax,
+            $code,
             'Remove the spaces inside the braces, or target PHP 8.4+.',
         );
+    }
+
+    /**
+     * The error PCRE gives the number of "\g{...}" as it reads it, before
+     * what follows: past 65535, a forward one counted from the groups opened
+     * before it included; a relative zero; a backward one past the groups
+     * opened. Null for a number it reads.
+     */
+    private function braceNumberError(BackrefNode $node, string $sign, string $digits): ?ErrorCode
+    {
+        $value = (int) $digits;
+        $before = ($this->groups->nextNumberAt($node) ?? 1) - 1;
+
+        return match (true) {
+            \strlen(ltrim($digits, '0')) > 5 || $value > 65535 || ('+' === $sign && $value + $before > 65535) => ErrorCode::GroupNumberTooBig,
+            '' !== $sign && 0 === $value => ErrorCode::BackrefZero,
+            '-' === $sign && $value > $before => ErrorCode::BackrefRelative,
+            default => null,
+        };
     }
 
     /**

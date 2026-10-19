@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -118,6 +120,49 @@ final class PaddedReferenceBracesTest extends TestCase
         yield 'space after the name only' => ['pattern' => '/(?<n>a)\\k{n }/', 'offset' => 11];
         yield 'space before the number only' => ['pattern' => '/(a)\\g{ 1}/', 'offset' => 6];
         yield 'space before the name only' => ['pattern' => '/(?<n>a)\\k{ n}/', 'offset' => 10];
+    }
+
+    /**
+     * Before PCRE2 10.43 a space or a tab after the "{" leaves no name or
+     * number there; one after a number ends "\\g", which PCRE2 reads first
+     * and refuses as it reads it; one after a name ends the name too early
+     * (pcre2test 10.32 to 10.42, php:7.3-cli under "X", php:8.2-cli and
+     * php:8.3-cli: "subpattern name expected at offset 6" for "(a)\\g{ 1 }",
+     * "a relative value of zero is not allowed at offset 5" for
+     * "(a)\\g{+0 }", "syntax error in subpattern name (missing terminator?)
+     * at offset 11" for "(?<n>a)\\g{n }").
+     */
+    #[Test]
+    #[DataProvider('provideCodesBefore1043')]
+    public function test_padding_is_refused_as_pcre2_refuses_it_before_10_43(string $pattern, ErrorCode $code, int $offset): void
+    {
+        foreach ([['7.3', '10.32'], ['8.2', '10.40'], ['8.3', '10.42']] as [$php, $release]) {
+            $result = RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern.('7.3' === $php ? 'X' : ''));
+
+            $this->assertSame($code, $result->errorCode, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, (string) $result->error));
+            $this->assertSame($offset, $result->offset, \sprintf('%s on PCRE2 %s', $pattern, $release));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideCodesBefore1043(): iterable
+    {
+        yield 'space before a number' => ['pattern' => '/(a)\\g{ 1 }/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'tab before a number' => ['pattern' => "/(a)\\g{\t1}/", 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'space before a backward number' => ['pattern' => '/(a)\\g{ -1 }/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'space before a name after g' => ['pattern' => '/(?<n>a)\\g{ n }/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 10];
+        yield 'space before a name after k' => ['pattern' => '/(?<n>a)\\k{ n }/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 10];
+        yield 'space after a number' => ['pattern' => '/(a)\\g{1 }/', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'space after a relative zero' => ['pattern' => '/(a)\\g{+0 }/', 'code' => ErrorCode::BackrefZero, 'offset' => 5];
+        yield 'space after a number back past the groups' => ['pattern' => '/(a)\\g{-3 }/', 'code' => ErrorCode::BackrefRelative, 'offset' => 5];
+        yield 'space after a number too big' => ['pattern' => '/(a)\\g{65536 }/', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 5];
+        yield 'space after a name after g' => ['pattern' => '/(?<n>a)\\g{n }/', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 11];
+        yield 'space after a name after k' => ['pattern' => '/(?<n>a)\\k{n }/', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 11];
+        yield 'tab after a name after k' => ['pattern' => "/(?<n>a)\\k{n\t}/", 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 11];
+        yield 'space before a sign and a name, left open' => ['pattern' => '/(a)\\g{ +n/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'space before a name, left open' => ['pattern' => '/(a)\\g{ n/', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
     }
 
     #[Test]
