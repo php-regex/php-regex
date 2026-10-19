@@ -41,6 +41,11 @@ enum PcreFeature
     case BadEscapeInClassStaysRefused;
 
     /**
+     * A name is read whole before it is judged: a verb name holds letters, digits and underscores, not letters only, and a name too long is refused where it ends, not at the character past the limit.
+     */
+    case NamesReadWhole;
+
+    /**
      * "(*ACCEPT)" may be repeated, as "(*ACCEPT)??".
      */
     case QuantifiedAccept;
@@ -260,7 +265,8 @@ enum PcreFeature
             self::AlphabeticAssertionNames,
             self::ScriptRuns,
             self::NonAsciiGroupNames,
-            self::BadEscapeInClassStaysRefused => '10.33',
+            self::BadEscapeInClassStaysRefused,
+            self::NamesReadWhole => '10.33',
             self::QuantifiedAccept,
             self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames => '10.34',

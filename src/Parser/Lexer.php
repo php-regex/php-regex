@@ -44,6 +44,19 @@ final class Lexer
      */
     private const LARGEST_NUMBER_BEFORE_PCRE_10_37 = 214_748_363;
 
+    /**
+     * The longest name PCRE2 10.32 reads, a verb's or a group's.
+     */
+    private const NAME_LENGTH_BEFORE_PCRE_10_33 = 32;
+
+    /**
+     * The longest name PCRE2 reads, a verb's or a group's: 32 code units up
+     * to 10.43, 128 from 10.44.
+     */
+    private const NAME_LENGTH_BEFORE_PCRE_10_44 = 32;
+
+    private const NAME_LENGTH = 128;
+
     private const TOKENS_OUTSIDE = [
         'T_COMMENT_OPEN', 'T_CALLOUT', 'T_PCRE_VERB', 'T_GROUP_MODIFIER_OPEN',
         'T_GROUP_OPEN', 'T_GROUP_CLOSE', 'T_CHAR_CLASS_OPEN', 'T_QUANTIFIER',
@@ -394,6 +407,13 @@ final class Lexer
     private readonly bool $readsAlphabeticAssertions;
 
     /**
+     * Whether a name is read whole before it is judged; before, a verb name
+     * is a run of letters, and a name is refused at the character that
+     * takes it past 32.
+     */
+    private readonly bool $namesReadWhole;
+
+    /**
      * Whether "(*sr:" and the other names of a script run are read.
      */
     private readonly bool $readsScriptRuns;
@@ -444,6 +464,7 @@ final class Lexer
     {
         $target ??= PcreTarget::runtime();
         $this->readsAlphabeticAssertions = $target->supports(PcreFeature::AlphabeticAssertionNames);
+        $this->namesReadWhole = $target->supports(PcreFeature::NamesReadWhole);
         $this->readsScriptRuns = $target->supports(PcreFeature::ScriptRuns);
         $this->readsNonAtomicAssertions = $target->supports(PcreFeature::NonAtomicAssertionNames);
         $this->readsNonAtomicShortSyntax = $target->supports(PcreFeature::NonAtomicAssertionShortSyntax);
@@ -888,7 +909,8 @@ final class Lexer
                 : \sprintf('Unknown alphabetic assertion "(*%s:": PCRE2 10.34 added the non-atomic lookarounds.', $name),
             PcreVerb::namesScriptRun($name) => $this->readsScriptRuns ? null
                 : \sprintf('Unknown verb "(*%s:": PCRE2 10.33 added script runs.', $name),
-            default => null,
+            // Before PCRE2 10.33 no verb has a lowercase name.
+            default => $this->readsAlphabeticAssertions ? null : \sprintf('Invalid or unsupported PCRE verb: "%s".', $name),
         };
         if (null !== $why) {
             // Before PCRE2 10.33 no name is alphabetic: as a condition PCRE
@@ -897,12 +919,11 @@ final class Lexer
             // name it does not know yet is refused where it ends.
             $start = $this->position;
             if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $start)) {
-                throw LexerException::withContext(
-                    \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $start + 1),
-                    ErrorCode::ConditionalInvalid,
-                    $start + 1,
-                    $this->pattern,
-                );
+                throw self::conditionWantsAName($start + 1, $this->pattern);
+            }
+
+            if (!$this->namesReadWhole) {
+                $this->refuseLongVerbName(strspn($name, 'abcdefghijklmnopqrstuvwxyz'), $start);
             }
 
             throw LexerException::withContext(
@@ -1557,6 +1578,10 @@ final class Lexer
             $this->trackExtendedModeScope($type);
         }
 
+        if (TokenType::PcreVerb === $type && !$this->inCharClass) {
+            $this->refuseVerbName($matchedValue, $startPos, $currentTokens);
+        }
+
         // Before PCRE2 10.37 a backslash and its digits are one number, refused
         // at the digit that takes it past 214748363.
         if (!$this->overflowingNumberIsOctal && !$this->inCharClass && TokenType::Backref === $type
@@ -2059,6 +2084,118 @@ final class Lexer
         }
 
         return $position + 1;
+    }
+
+    /**
+     * PCRE reads the name of a verb as it reads a group name, and refuses
+     * one too long as one. PCRE2 10.32 reads it as a run of letters and wants
+     * a ":" or a ")" right after it; it refuses a name that starts with a
+     * digit, or that runs past 32 letters, as a group name. As the condition
+     * of "(?(" it reads no verb: it wants a group name on the "*". A setting
+     * the pattern opens with is no verb, and is read before.
+     *
+     * @param string      $verb   the verb as written, "(*NAME:arg)"
+     * @param list<Token> $tokens the tokens read before it
+     */
+    private function refuseVerbName(string $verb, int $start, array $tokens): void
+    {
+        $name = substr($verb, 2, -1);
+        if ('' === $name) {
+            return;
+        }
+
+        if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $start)) {
+            throw self::conditionWantsAName($start + 1, $this->pattern);
+        }
+
+        // From 10.33 the name is the run of word characters, held to the
+        // length of a group name, and refused where it ends.
+        if ($this->namesReadWhole) {
+            $length = strspn($name, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_');
+            $longest = $this->target->supports(PcreFeature::LongGroupNames) ? self::NAME_LENGTH : self::NAME_LENGTH_BEFORE_PCRE_10_44;
+            if ($length > $longest) {
+                throw LexerException::withContext(
+                    \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $start + 2 + $length, $longest),
+                    ErrorCode::GroupNameTooLong,
+                    $start + 2 + $length,
+                    $this->pattern,
+                );
+            }
+
+            return;
+        }
+
+        if ($start < $this->leadingSettingsEnd()) {
+            return;
+        }
+
+        if (Ascii::isDigit($name[0])) {
+            throw LexerException::withContext(
+                \sprintf('Invalid verb name at position %d: PCRE2 before 10.33 reads it as a group name, which must not start with a digit.', $start + 2),
+                ErrorCode::GroupNameInvalid,
+                $start + 2,
+                $this->pattern,
+            );
+        }
+
+        $letters = strspn($name, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
+        $this->refuseLongVerbName($letters, $start);
+
+        $next = $name[$letters] ?? '';
+        if (':' !== $next && '' !== $next) {
+            throw LexerException::withContext(
+                \sprintf('Invalid or unsupported PCRE verb at position %d: PCRE2 before 10.33 reads a verb name as letters only.', $start + 2 + $letters),
+                ErrorCode::VerbInvalid,
+                $start + 2 + $letters,
+                $this->pattern,
+            );
+        }
+    }
+
+    /**
+     * PCRE2 10.32 refuses a verb name of more than 32 letters at the 33rd,
+     * as a group name too long.
+     */
+    private function refuseLongVerbName(int $letters, int $start): void
+    {
+        if ($letters > self::NAME_LENGTH_BEFORE_PCRE_10_33) {
+            $offset = $start + 2 + self::NAME_LENGTH_BEFORE_PCRE_10_33 + 1;
+
+            throw LexerException::withContext(
+                \sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset),
+                ErrorCode::GroupNameTooLong,
+                $offset,
+                $this->pattern,
+            );
+        }
+    }
+
+    /**
+     * Where the settings the pattern opens with, "(*UTF)(*NO_JIT)", end:
+     * PCRE reads them before the pattern, and a setting it does not know
+     * yet ends them.
+     */
+    private function leadingSettingsEnd(): int
+    {
+        $settings = StartOptions::of($this->pattern);
+        if (!$this->target->supports(PcreFeature::CasingSettingVerbs)) {
+            foreach (['(*CASELESS_RESTRICT)', '(*TURKISH_CASING)'] as $unknown) {
+                $at = strpos($settings, $unknown);
+                $settings = false === $at ? $settings : substr($settings, 0, $at);
+            }
+        }
+
+        return \strlen($settings);
+    }
+
+    private static function conditionWantsAName(int $offset, string $pattern): LexerException
+    {
+        return LexerException::withContext(
+            \sprintf('Invalid conditional construct at position %d. Condition must be a group reference, lookaround, or (DEFINE).', $offset),
+            ErrorCode::ConditionalInvalid,
+            $offset,
+            $pattern,
+        );
     }
 
     /**

@@ -70,7 +70,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-b80419e48da1b053857070ce1b59f379';
+    public const CACHE_VERSION = 'ast-82981cf1aa96957ee7e644689ee676db';
 
     /**
      * Default maximum allowed regex pattern length.

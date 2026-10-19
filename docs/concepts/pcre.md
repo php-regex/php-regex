@@ -255,6 +255,7 @@ and a target has it from the release it arrived in on
 | `ScriptRuns` | 10.33 | Script runs: "(*script_run:", "(*sr:", "(*atomic_script_run:" and "(*asr:". |
 | `NonAsciiGroupNames` | 10.33 | Under UTF a group name may hold letters and decimal digits of any script, as "(?<nämed>a)". |
 | `BadEscapeInClassStaysRefused` | 10.33 | Under PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, as PHP 7.3 and 7.4 compile, an escape a class refuses once it has read it, as "[\B]", "[\N]" or the "\d" of "[a-\d]", stays refused, where it was read as its letter. |
+| `NamesReadWhole` | 10.33 | A name is read whole before it is judged: a verb name holds letters, digits and underscores, not letters only, and a name too long is refused where it ends, not at the character past the limit. |
 | `QuantifiedAccept` | 10.34 | "(*ACCEPT)" may be repeated, as "(*ACCEPT)??". |
 | `PossessiveRepeatOnceIsAtomic` | 10.34 | A possessive "{1}+" on a group or a subroutine call makes it atomic, where it was ignored as "{1}" is. |
 | `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |

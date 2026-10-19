@@ -154,6 +154,49 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'padded count as a called name' => ['pattern' => '/(?P>{65536 })/', 'releases' => ['10.32'], 'offset' => 4, 'code' => ErrorCode::GroupNameExpected];
         yield 'padded count after (?' => ['pattern' => '/(?{65536 })/', 'releases' => ['10.35'], 'offset' => 2, 'code' => ErrorCode::GroupSyntax];
         yield 'open count as a called name' => ['pattern' => '/(?&{65536)/', 'releases' => ['10.33'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
+        // 10.32 reads the name of any verb as a run of letters, and wants a
+        // ":" or a ")" right after it; a setting past the start of the
+        // pattern is such a name.
+        yield 'verb name with an underscore' => ['pattern' => '/(*scan_substring:(1)a)/', 'releases' => ['10.32'], 'offset' => 6, 'code' => ErrorCode::VerbInvalid];
+        yield 'verb name with an underscore on 10.33' => ['pattern' => '/(*scan_substring:(1)a)/', 'releases' => ['10.33'], 'offset' => 16, 'code' => ErrorCode::VerbInvalid];
+        yield 'casing setting past the start' => ['pattern' => '/a(*TURKISH_CASING)/', 'releases' => ['10.32'], 'offset' => 10, 'code' => ErrorCode::VerbInvalid];
+        yield 'casing setting past the start on 10.33' => ['pattern' => '/a(*TURKISH_CASING)/', 'releases' => ['10.33'], 'offset' => 17, 'code' => ErrorCode::VerbInvalid];
+        yield 'setting with an underscore past the start' => ['pattern' => '/a(*NO_JIT)/', 'releases' => ['10.32'], 'offset' => 5, 'code' => ErrorCode::VerbInvalid];
+        yield 'limit past the start' => ['pattern' => '/a(*LIMIT_MATCH=10)/', 'releases' => ['10.32'], 'offset' => 8, 'code' => ErrorCode::VerbInvalid];
+        yield 'setting of letters past the start' => ['pattern' => '/a(*UTF)/', 'releases' => ['10.32', '10.33'], 'offset' => 6, 'code' => ErrorCode::VerbMisplaced];
+        yield 'verb name holding a digit' => ['pattern' => '/(*a1)/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::VerbInvalid];
+        yield 'verb name opening with an underscore' => ['pattern' => '/(*_ab)/', 'releases' => ['10.32'], 'offset' => 2, 'code' => ErrorCode::VerbInvalid];
+        yield 'verb name opening with an underscore on 10.33' => ['pattern' => '/(*_ab)/', 'releases' => ['10.33'], 'offset' => 5, 'code' => ErrorCode::VerbInvalid];
+        yield 'verb name opening with a digit' => ['pattern' => '/(*1a)/', 'releases' => ['10.32'], 'offset' => 2, 'code' => ErrorCode::GroupNameInvalid];
+        yield 'verb name opening with a digit on 10.33' => ['pattern' => '/(*1a)/', 'releases' => ['10.33'], 'offset' => 4, 'code' => ErrorCode::VerbInvalid];
+        // A verb name is held to the length of a group name, and refused
+        // as one too long.
+        yield 'verb name of 33 letters' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefg)/', 'releases' => ['10.32', '10.33', '10.43'], 'offset' => 35, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb name of 32 letters' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef)/', 'releases' => ['10.32', '10.33', '10.49'], 'offset' => 34, 'code' => ErrorCode::VerbInvalid];
+        yield 'verb name of 129 characters' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).'g)/', 'releases' => ['10.44', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb name of 128 characters' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).')/', 'releases' => ['10.44', '10.49'], 'offset' => 130, 'code' => ErrorCode::VerbInvalid];
+        yield 'verb name of 34 characters' => ['pattern' => '/(*ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh_)/', 'releases' => ['10.33', '10.43'], 'offset' => 37, 'code' => ErrorCode::GroupNameTooLong];
+        // As a condition, 10.32 wants a group name on the "*" of any verb.
+        yield 'verb as a condition' => ['pattern' => '/(?(*ACCEPT)xxx)/', 'releases' => ['10.32'], 'offset' => 3, 'code' => ErrorCode::ConditionalInvalid];
+        yield 'substring scan as a condition' => ['pattern' => '/(\w++)=(?(*scs:(1)(abc))pqr|xyz)(\w++)/', 'releases' => ['10.32'], 'offset' => 10, 'code' => ErrorCode::ConditionalInvalid];
+        // 10.32 refuses a name at the character that takes it past 32,
+        // later releases where the name ends.
+        yield 'group name past 32 characters' => ['pattern' => '/a(?<namedverylongbutperfectlylegalsoyoushouldnthaveaproblem_1>b)c/', 'releases' => ['10.32'], 'offset' => 37, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'group name past 32 characters on 10.33' => ['pattern' => '/a(?<namedverylongbutperfectlylegalsoyoushouldnthaveaproblem_1>b)c/', 'releases' => ['10.33', '10.43'], 'offset' => 61, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'unclosed group name past 32 characters' => ['pattern' => '/(?<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ-x/', 'releases' => ['10.32'], 'offset' => 36, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'unclosed group name past 32 characters on 10.33' => ['pattern' => '/(?<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ-x/', 'releases' => ['10.33'], 'offset' => 39, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'quoted group name past 32 characters' => ['pattern' => "/(?'abcdefghijklmnopqrstuvwxyzABCDEabcdefghijklmnopqrstuvwxyzABCDEFGH'toolong)/", 'releases' => ['10.32'], 'offset' => 36, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'reference name past 32 characters' => ['pattern' => '/(a)\k<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ>/', 'releases' => ['10.32'], 'offset' => 39, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'reference name past 32 characters on 10.33' => ['pattern' => '/(a)\k<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ>/', 'releases' => ['10.33'], 'offset' => 42, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'call name past 32 characters' => ['pattern' => '/(a)(?&abcdefghijklmnopqrstuvwxyzABCDEFGHIJ)/', 'releases' => ['10.32'], 'offset' => 39, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'bare condition name past 32 characters' => ['pattern' => '/(a)(?(abcdefghijklmnopqrstuvwxyzABCDEFGHIJ)b)/', 'releases' => ['10.32'], 'offset' => 39, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'bare condition name past 32 characters on 10.33' => ['pattern' => '/(a)(?(abcdefghijklmnopqrstuvwxyzABCDEFGHIJ)b)/', 'releases' => ['10.33'], 'offset' => 42, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'recursion condition name past 32 characters' => ['pattern' => '/(a)(?(R&abcdefghijklmnopqrstuvwxyzABCDEFGHIJ)b)/', 'releases' => ['10.32'], 'offset' => 41, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'quoted condition name past 32 characters' => ['pattern' => "/(a)(?('abcdefghijklmnopqrstuvwxyzABCDEFGHIJ')b)/", 'releases' => ['10.32'], 'offset' => 40, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'condition name past 32 characters before a hyphen' => ['pattern' => '/(a)(?(abcdefghijklmnopqrstuvwxyzABCDEFGHIJ-)b)/', 'releases' => ['10.32'], 'offset' => 39, 'code' => ErrorCode::GroupNameTooLong];
+        yield 'verb with no name' => ['pattern' => '/a(*)/', 'releases' => ['10.32', '10.33'], 'offset' => 2, 'code' => ErrorCode::QuantifierNothingToRepeat];
+        yield 'casing setting after the opening settings' => ['pattern' => '/(*NOTEMPTY_ATSTART)(*TURKISH_CASING)a/', 'releases' => ['10.32'], 'offset' => 28, 'code' => ErrorCode::VerbInvalid];
+        yield 'condition name past 32 characters' => ['pattern' => '/(a)(?(<abcdefghijklmnopqrstuvwxyzABCDEFGHIJ>)b)/', 'releases' => ['10.32'], 'offset' => 40, 'code' => ErrorCode::GroupNameTooLong];
     }
 
     /**
@@ -250,6 +293,7 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'backslash and nine digits quoted' => ['pattern' => '/\Q\214748364\E/'];
         yield 'backslash and digits a space parts under x' => ['pattern' => '/(?x)\21474 8364/'];
         yield 'octal escape and digits' => ['pattern' => '/\0214748364/'];
+        yield 'opening settings holding an underscore' => ['pattern' => '/(*LIMIT_MATCH=10)(*NO_JIT)a/'];
         yield 'ASCII group name under UTF' => ['pattern' => '/(?<name>a)\k<name>/u'];
     }
 

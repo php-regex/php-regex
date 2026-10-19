@@ -315,6 +315,7 @@ final class TokenParser
         $this->groupNames = new GroupNameReader($stream);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
         $this->groupNames->reportPastTheFault($this->supports(PcreFeature::ErrorOffsetPastTheFault));
+        $this->groupNames->readWhole($this->supports(PcreFeature::NamesReadWhole));
         // PCRE2 10.44 took names from 32 code units to 128; PHP bundles it
         // from 8.4.
         $this->groupNames->limitNameLength(
@@ -1481,7 +1482,7 @@ final class TokenParser
             throw $this->parserException(
                 \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->groupNames->maxNameLength()),
                 ErrorCode::GroupNameTooLong,
-                $nameStart + \strlen($name),
+                $this->groupNames->tooLongAt($nameStart, $nameStart + \strlen($name)),
             );
         }
     }
@@ -3326,7 +3327,7 @@ final class TokenParser
             return $this->parserException(
                 \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $nameEnd - $nameStart, $this->groupNames->maxNameLength()),
                 ErrorCode::GroupNameTooLong,
-                $nameEnd,
+                $this->groupNames->tooLongAt($nameStart, $nameEnd),
             );
         }
 

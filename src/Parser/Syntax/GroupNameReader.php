@@ -48,6 +48,13 @@ final class GroupNameReader
     private bool $pastTheFault = true;
 
     /**
+     * Whether a name is read whole before its length is judged, as from
+     * PCRE2 10.33, and one too long refused where it ends; before, at the
+     * character that takes it past the limit.
+     */
+    private bool $readsWhole = true;
+
+    /**
      * The group numbers each name was given so far.
      *
      * @var array<string, list<int>>
@@ -83,6 +90,21 @@ final class GroupNameReader
     public function maxNameLength(): int
     {
         return $this->maxNameLength;
+    }
+
+    public function readWhole(bool $readsWhole): void
+    {
+        $this->readsWhole = $readsWhole;
+    }
+
+    /**
+     * Where PCRE refuses a name too long that starts at $nameStart and ends
+     * at $nameEnd: where it ends, or before PCRE2 10.33 at the character
+     * that takes it past the limit.
+     */
+    public function tooLongAt(int $nameStart, int $nameEnd): int
+    {
+        return $this->readsWhole ? $nameEnd : $nameStart + $this->maxNameLength + 1;
     }
 
     /**
@@ -169,7 +191,7 @@ final class GroupNameReader
             throw $this->error(
                 \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', \strlen($name), $this->maxNameLength),
                 ErrorCode::GroupNameTooLong,
-                $nameEnd,
+                $this->tooLongAt($nameStart, $nameEnd),
             );
         }
 
@@ -281,7 +303,7 @@ final class GroupNameReader
             return $this->error(
                 \sprintf('Group name is too long: %d code units, PCRE allows at most %d.', $offset - $nameStart, $this->maxNameLength),
                 ErrorCode::GroupNameTooLong,
-                $offset,
+                $this->tooLongAt($nameStart, $offset),
             );
         }
 
