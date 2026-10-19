@@ -132,6 +132,18 @@ final class ClassEscapeStartingRangeTest extends TestCase
         yield 'type, then quotes' => ['pattern' => '/[\d-\E\Q\E]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 3];
         yield 'type, then a quote end, class left open, PCRE2 10.44' => ['pattern' => '/[\w-\E/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 3];
 
+        // A quote between the class escape and the hyphen keeps the hyphen
+        // a member up to 10.44: what follows it ends no range ("missing
+        // terminating ] for character class at offset 9" for "[\h\E-\pL",
+        // "unknown property after \P or \p at offset 13" for
+        // "[\w\E-\p{Foo}", pcre2test 10.32 to 10.44, php:7.4.0-cli).
+        yield 'type, a quote end, then a hyphen and a property, class left open' => ['pattern' => '/[\h\E-\pL/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 9];
+        yield 'type, a quote end, then a hyphen and a property, class left open, PCRE2 10.33' => ['pattern' => '/[\h\E-\pL/', 'php' => '7.4', 'release' => '10.33', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 9];
+        yield 'POSIX class, a quote end, then a hyphen and a property, class left open' => ['pattern' => '/[[:alpha:]\E-\pL/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 16];
+        yield 'type, a quote end, then a hyphen and an unknown property, class left open' => ['pattern' => '/[\w\E-\p{Foo}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::UnicodePropertyInvalid, 'offset' => 13];
+        yield 'type, a quote end, then a hyphen and an unknown property, class left open, PCRE2 10.35' => ['pattern' => '/[\w\E-\p{Foo}/', 'php' => '7.4', 'release' => '10.35', 'code' => ErrorCode::UnicodePropertyInvalid, 'offset' => 13];
+        yield 'type, a quote end, then a hyphen and a property, class left open, PCRE2 10.45' => ['pattern' => '/[\h\E-\pL/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 6];
+
         // From 10.45.
         yield 'type, then an empty quoted run, PCRE2 10.45' => ['pattern' => '/[\w-\Q\E]/', 'php' => '8.4', 'release' => '10.45', 'code' => null, 'offset' => null];
         yield 'type, then the end of the pattern, PCRE2 10.45' => ['pattern' => '/[\w-/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 4];

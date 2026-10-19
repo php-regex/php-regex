@@ -466,6 +466,11 @@ final class Validator extends AbstractNodeVisitor
         $pcre2Ten32 = !$this->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $afterRange = false;
         $rangeEnded = false;
+        // Up to PCRE2 10.44 a quote after a class escape keeps a "-" after
+        // it a member: "[\h\E-\pL]".
+        $quoteKeepsHyphen = !$this->supports(PcreFeature::EmptyQuoteSkippedAfterClassEscape);
+        $classEscapeThenQuote = false;
+        $classEscape = false;
 
         try {
             foreach ($tokens as $token) {
@@ -478,8 +483,10 @@ final class Validator extends AbstractNodeVisitor
                 // A "-" right after a range that ended is a member: "[a-c-\pL]".
                 $endsRange = $afterRange;
                 $quote = \in_array($token->type, [TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true);
-                $afterRange = (TokenType::Range === $token->type && !$rangeEnded) || ($endsRange && $quote);
+                $afterRange = (TokenType::Range === $token->type && !$rangeEnded && !$classEscapeThenQuote) || ($endsRange && $quote);
                 $rangeEnded = $endsRange && !$quote;
+                $classEscapeThenQuote = $quoteKeepsHyphen && $quote && ($classEscape || $classEscapeThenQuote);
+                $classEscape = \in_array($token->type, [TokenType::CharType, TokenType::PosixClass, TokenType::UnicodeProp], true);
 
                 // "\N" ending a range is refused as the range, but for a "\N{"
                 // check_escape() refuses first.
