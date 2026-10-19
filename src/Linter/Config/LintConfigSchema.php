@@ -311,6 +311,20 @@ final class LintConfigSchema
     }
 
     /**
+     * Whether a rules map, as checks.lint.rules writes it, leaves on an
+     * analysis issue it turns off like a lint rule: unless it says false
+     * for it, under its full identifier or without "regex.lint.".
+     *
+     * @param array<string, bool> $rules
+     */
+    public static function leavesOn(array $rules, string $issueId): bool
+    {
+        $short = str_starts_with($issueId, 'regex.lint.') ? substr($issueId, \strlen('regex.lint.')) : $issueId;
+
+        return false !== ($rules[$issueId] ?? null) && false !== ($rules[$short] ?? null);
+    }
+
+    /**
      * The interop presets extraction.interop may name.
      *
      * @return list<string>

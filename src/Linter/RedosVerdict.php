@@ -168,7 +168,7 @@ final class RedosVerdict
      * medium. The search cost is quadratic: it is looked for only when one
      * attempt is linear.
      */
-    public static function searchSeverity(RedosSearchCost $cost): RedosSeverity
+    public static function searchSeverity(): RedosSeverity
     {
         return RedosSeverity::Medium;
     }
@@ -181,7 +181,7 @@ final class RedosVerdict
     {
         return \sprintf(
             "Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)); the JIT may avoid it for some patterns. Severity: %s.",
-            Ascii::upper(self::searchSeverity($cost)->value),
+            Ascii::upper(self::searchSeverity()->value),
         );
     }
 

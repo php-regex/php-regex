@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\LintRuleInterface;
@@ -61,20 +62,6 @@ use PHPRegex\Parser\Printer\PatternPrinter;
  */
 final class PatternLinter extends AbstractNodeVisitor
 {
-    /**
-     * Rules that are disabled by default (can be enabled via config).
-     */
-    private const DEFAULT_DISABLED_RULES = [
-        'anchor.dollarNewline' => false,
-        'unicode.shorthandWithoutU' => false,
-        'charclass.single' => false,
-        'literal.multipleSpaces' => false,
-        'quantifier.lazyToClass' => false,
-        'quantifier.uselessLazy' => false,
-        'lookaround.edgeQuantifier' => false,
-        'lookaround.redundant' => false,
-    ];
-
     /**
      * @var list<RuleViolation>
      */
@@ -451,13 +438,8 @@ final class PatternLinter extends AbstractNodeVisitor
             return $enabledRules[$shortId];
         }
 
-        // Check default disabled rules
-        if (\array_key_exists($shortId, self::DEFAULT_DISABLED_RULES)) {
-            return self::DEFAULT_DISABLED_RULES[$shortId];
-        }
-
-        // All other rules enabled by default
-        return true;
+        // Else as the schema runs it by default; an id it does not know runs
+        return LintConfigSchema::LINT_RULES[$shortId][1] ?? true;
     }
 
     private function createContext(): LintContext

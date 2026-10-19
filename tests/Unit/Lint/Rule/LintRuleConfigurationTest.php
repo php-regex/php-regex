@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\Config\LintConfigSchema;
+use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -110,6 +111,47 @@ final class LintRuleConfigurationTest extends TestCase
         yield 'anchor.dollarNewline' => ['key' => 'anchor.dollarNewline', 'default' => false];
         yield 'literal.invisible' => ['key' => 'literal.invisible', 'default' => true];
         yield 'lookaround.redundant' => ['key' => 'lookaround.redundant', 'default' => false];
+    }
+
+    /**
+     * A rules map that does not mention a rule runs it as the schema says
+     * it runs by default: one list of the rules off by default.
+     */
+    #[Test]
+    public function test_the_linter_runs_by_default_exactly_the_rules_the_schema_turns_on(): void
+    {
+        foreach (LintConfigSchema::LINT_RULES as $key => [, $default]) {
+            $this->assertSame($default, PatternLinter::enables([], $key), $key);
+            $this->assertSame($default, PatternLinter::enables([], 'regex.lint.'.$key), $key);
+            $this->assertSame(!$default, PatternLinter::enables([$key => !$default], $key), $key);
+        }
+    }
+
+    /**
+     * An analysis issue the rules map turns off like a lint rule is on
+     * unless the map says false for it, under its full identifier or
+     * without "regex.lint.", as regex.json writes it.
+     *
+     * @param array<string, bool> $rules
+     */
+    #[Test]
+    #[DataProvider('provideAnalysisIssueRules')]
+    public function test_an_analysis_issue_is_on_unless_the_rules_map_turns_it_off(array $rules, bool $expected): void
+    {
+        $this->assertSame($expected, LintConfigSchema::leavesOn($rules, 'regex.lint.redos.search'));
+    }
+
+    /**
+     * @return iterable<string, array{rules: array<string, bool>, expected: bool}>
+     */
+    public static function provideAnalysisIssueRules(): iterable
+    {
+        yield 'not mentioned' => ['rules' => [], 'expected' => true];
+        yield 'another rule off' => ['rules' => ['compat.meaningChanges' => false], 'expected' => true];
+        yield 'on by its short id' => ['rules' => ['redos.search' => true], 'expected' => true];
+        yield 'off by its short id' => ['rules' => ['redos.search' => false], 'expected' => false];
+        yield 'off by its full id' => ['rules' => ['regex.lint.redos.search' => false], 'expected' => false];
+        yield 'on by one id, off by the other' => ['rules' => ['regex.lint.redos.search' => true, 'redos.search' => false], 'expected' => false];
     }
 
     /**

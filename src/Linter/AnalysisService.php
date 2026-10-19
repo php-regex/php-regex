@@ -35,6 +35,7 @@ use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
@@ -50,7 +51,6 @@ use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -332,8 +332,7 @@ final class AnalysisService
      */
     private function shouldReportSearchCostRule(): bool
     {
-        return false !== ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
-            && false !== ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null);
+        return LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID);
     }
 
     /**
@@ -609,7 +608,7 @@ final class AnalysisService
 
                 // One attempt proven linear, the search retrying it is not.
                 $searchCost = $redos->searchCost;
-                if (null !== $searchCost && $this->shouldReportSearchCost($searchCost)) {
+                if (null !== $searchCost && $this->shouldReportSearchCost()) {
                     $riskIssues[] = [
                         'type' => 'warning',
                         'file' => $occurrence->file,
@@ -767,8 +766,7 @@ final class AnalysisService
      */
     private function comparesTrees(): bool
     {
-        return false !== ($this->lintRules[self::ISSUE_ID_MEANING_CHANGES] ?? null)
-            && false !== ($this->lintRules[substr(self::ISSUE_ID_MEANING_CHANGES, \strlen('regex.lint.'))] ?? null);
+        return LintConfigSchema::leavesOn($this->lintRules, self::ISSUE_ID_MEANING_CHANGES);
     }
 
     /**
@@ -1177,24 +1175,15 @@ final class AnalysisService
      */
     private function usesExtendedMode(string $pattern): bool
     {
-        // Fast path: if there is no trailing flag block, there's no /x.
-        $pattern = Ascii::trimLeadingSpaces($pattern);
-        if ('' === $pattern) {
-            return false;
-        }
-
         try {
-            /** @var array{0: string, 1: string, 2: string} $parts */
-            $parts = PatternParser::extractPatternAndFlags($pattern, $this->regex->target());
-        } catch (\Throwable) {
-            // If we cannot reliably extract flags, fall back to not treating it
-            // as extended mode to avoid false positives.
+            [, $flags] = PatternParser::extractPatternAndFlags($pattern, $this->regex->target());
+        } catch (ParserException) {
+            // Flags that cannot be read are not taken for /x, to avoid
+            // false positives.
             return false;
         }
 
-        $flags = $parts[1] ?? '';
-
-        return \is_string($flags) && str_contains($flags, 'x');
+        return str_contains($flags, 'x');
     }
 
     private function getTipForValidationError(string $message, string $pattern, ValidationResult $validation): ?string
@@ -1482,12 +1471,12 @@ final class AnalysisService
      * as the rules map of regex.json writes it. It is a warning in every
      * mode: the per-attempt verdict behind it is linear.
      */
-    private function shouldReportSearchCost(RedosSearchCost $cost): bool
+    private function shouldReportSearchCost(): bool
     {
         if (!$this->shouldReportSearchCostRule()) {
             return false;
         }
 
-        return RedosVerdict::searchSeverity($cost)->rank() >= $this->redosSeverityThreshold->rank();
+        return RedosVerdict::searchSeverity()->rank() >= $this->redosSeverityThreshold->rank();
     }
 }

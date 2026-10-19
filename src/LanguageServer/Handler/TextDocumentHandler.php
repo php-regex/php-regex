@@ -490,8 +490,7 @@ final class TextDocumentHandler
         return match ($identifier) {
             RedosVerdict::ISSUE_ID => RedosMode::Off === $this->redosMode,
             RedosVerdict::SEARCH_ISSUE_ID => RedosMode::Off === $this->redosMode
-                || false === ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
-                || false === ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null),
+                || !LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID),
             'regex.optimization', 'regex.lint.complexity', 'regex.lint.compat.meaningChanges' => true,
             default => str_starts_with($identifier, 'regex.lint.')
                 && \in_array(substr($identifier, \strlen('regex.lint.')), LintConfigSchema::lintRuleIds(), true)
@@ -549,9 +548,8 @@ final class TextDocumentHandler
         // One attempt proven linear, the search retrying it is not.
         $searchCost = $redos->searchCost;
         if (null !== $searchCost
-            && false !== ($this->lintRules[RedosVerdict::SEARCH_ISSUE_ID] ?? null)
-            && false !== ($this->lintRules[substr(RedosVerdict::SEARCH_ISSUE_ID, \strlen('regex.lint.'))] ?? null)
-            && RedosVerdict::searchSeverity($searchCost)->rank() >= $this->redosThreshold->rank()) {
+            && LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID)
+            && RedosVerdict::searchSeverity()->rank() >= $this->redosThreshold->rank()) {
             $diagnostics[] = $this->diagnosticConverter->fromRedos(
                 RedosVerdict::SEARCH_ISSUE_ID,
                 RedosVerdict::searchMessage($searchCost),
