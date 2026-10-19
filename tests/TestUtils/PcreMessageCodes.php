@@ -30,18 +30,36 @@ final class PcreMessageCodes
 {
     public const CODES = [
         // The wording of the older releases the suite runs on: PCRE2 10.40 to 10.44.
-        'lookbehind assertion is not fixed length' => ['regex.lookbehind.unbounded', 'regex.lookbehind.variable_length_not_supported'],
+        // Up to 10.33 a lookbehind too long is "not fixed length" too.
+        'lookbehind assertion is not fixed length' => ['regex.lookbehind.unbounded', 'regex.lookbehind.variable_length_not_supported', 'regex.lookbehind.too_long'],
         'assertion expected after (?( or (?(?C)' => ['regex.conditional.assertion_expected'],
         'digits missing in \\x{} or \\o{} or \\N{U+}' => ['regex.escape.digits_missing'],
         '\\ at end of pattern' => ['regex.escape.trailing_backslash'],
         'digit expected after (?+ or (?-' => ['regex.subroutine.invalid_syntax'],
         'subpattern name is too long (maximum 32 code units)' => ['regex.group.name_too_long'],
 
+        // The wording of PCRE2 10.32, and of 10.33 for some.
+        'invalid escape sequence in character class' => ['regex.charclass.invalid_escape'],
+        'syntax error in subpattern name (missing terminator)' => ['regex.group.name_unterminated'],
+        'group name must start with a non-digit' => ['regex.group.name_invalid'],
+        'unknown property name after \\P or \\p' => ['regex.unicode.property_invalid'],
+        'subpattern name is too long (maximum 32 characters)' => ['regex.group.name_too_long'],
+        'group number is too big' => ['regex.group.number_too_big'],
+
+        // PCRE2 10.45 to 10.47 fail on an operator of an extended class
+        // their walk over the lookbehinds meets.
+        'internal error: unknown meta code in check_lookbehinds()' => ['regex.extended_class.beside_lookbehind'],
+
+        // The library refuses "\C" under "u" anywhere, on purpose.
+        '\\C is not allowed in a lookbehind assertion in UTF-8 mode' => ['regex.escape.single_byte_in_utf'],
+
         // Verbs and alpha assertions.
         '(*MARK) must have an argument' => ['regex.verb.mark_name_missing'],
         // A start-of-pattern verb placed later, and a verb left open, are
         // both refused under this message.
-        '(*VERB) not recognized or malformed' => ['regex.verb.invalid', 'regex.verb.misplaced', 'regex.verb.unclosed'],
+        // A limit past 4294967289 is malformed too.
+        '(*VERB) not recognized or malformed' => ['regex.verb.invalid', 'regex.verb.misplaced', 'regex.verb.unclosed', 'regex.verb.limit_too_large'],
+        'name is too long in (*MARK), (*PRUNE), (*SKIP), or (*THEN)' => ['regex.verb.name_too_long'],
         '(*alpha_assertion) not recognized' => ['regex.verb.invalid'],
 
         // Group openers and inline options.
@@ -89,7 +107,9 @@ final class PcreMessageCodes
 
         // Conditions.
         'atomic assertion expected after (?( or (?(?C)' => ['regex.conditional.assertion_expected'],
-        'missing closing parenthesis for condition' => ['regex.conditional.unclosed'],
+        // PCRE reports a list of groups left open, "(?1(1x))" or
+        // "(*scs:(1x)a)", with the message of a condition.
+        'missing closing parenthesis for condition' => ['regex.conditional.unclosed', 'regex.group.unclosed'],
         'conditional subpattern contains more than two branches' => ['regex.conditional.too_many_branches'],
         'DEFINE subpattern contains more than one branch' => ['regex.define.too_many_branches'],
         'syntax error or number too big in (?(VERSION condition' => ['regex.conditional.version_syntax', 'regex.conditional.version_operator'],
@@ -136,6 +156,7 @@ final class PcreMessageCodes
         'non-hex character in \\x{} (closing brace missing?)' => ['regex.unicode.invalid_digit'],
         'non-octal character in \\o{} (closing brace missing?)' => ['regex.octal.invalid_digit'],
         'missing opening brace after \\o' => ['regex.octal.missing_brace'],
+        'octal value is greater than \\377 in 8-bit non-UTF-8 mode' => ['regex.octal.out_of_range'],
         'character code point value in \\x{} or \\o{} is too large' => ['regex.unicode.out_of_range', 'regex.octal.out_of_range'],
         'disallowed Unicode code point (>= 0xd800 && <= 0xdfff)' => ['regex.unicode.surrogate'],
         '\\N{U+dddd} is supported only in Unicode (UTF) mode' => ['regex.unicode_named.requires_utf'],

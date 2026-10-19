@@ -226,6 +226,8 @@ final class Pcre2ConformanceTable
 
         $lines[] = self::countsRow('**total**', $totals, true);
 
+        $lines = array_merge($lines, self::releaseSection());
+
         $lines[] = '';
         $lines[] = '## PHP compile context';
         $lines[] = '';
@@ -332,6 +334,7 @@ final class Pcre2ConformanceTable
         $lines[] = \sprintf('php tests/Tools/extract_pcre2_testdata.php --floor-pcre2test=/tmp/pcre2-%s/pcre2test', Pcre2TestdataExtractor::PCRE2_FLOOR);
         $lines[] = 'php tests/Tools/generate_pcre2_conformance_table.php --baseline';
         $lines[] = \sprintf('php tests/Tools/verify_pcre2_fixture.php --floor-pcre2test=/tmp/pcre2-%s/pcre2test --pin-pcre2test=/tmp/pcre2-%s/pcre2test', Pcre2TestdataExtractor::PCRE2_FLOOR, $pin);
+        $lines[] = 'php tests/Tools/extract_pcre2_release_outcomes.php --releases-dir=/tmp';
         $lines[] = '```';
         $lines[] = '';
         $lines[] = \sprintf(
@@ -340,10 +343,81 @@ final class Pcre2ConformanceTable
             Pcre2TestdataExtractor::PCRE2_FLOOR,
         );
         $lines[] = '';
-        $lines[] = 'Per-case detail lives in `tests/Fixtures/Pcre2/conformance-baseline.json`, an internal, free-to-change format: only the counts on this page are published.';
+        $lines[] = \sprintf('The fourth compiles the cases of every release\'s suite with every release, PCRE2 %s to %s, each built from its tarball under `/tmp/pcre2-<release>`, and rewrites the fixture of the cases on which they do not all agree; with `--check` it writes nothing and fails when the committed fixture differs.', Pcre2ReleaseOutcomes::RELEASES[0], Pcre2ReleaseOutcomes::RELEASES[array_key_last(Pcre2ReleaseOutcomes::RELEASES)]);
+        $lines[] = '';
+        $lines[] = 'Per-case detail lives in `tests/Fixtures/Pcre2/conformance-baseline.json` and `tests/Fixtures/Pcre2/release-outcomes.json`, internal, free-to-change formats: only the counts on this page are published.';
         $lines[] = '';
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * The section on the suites of every release, from the release outcomes
+     * fixture: how many cases each release compiles, and how the cases on
+     * which the releases do not all agree fall on each.
+     *
+     * @return list<string>
+     */
+    public static function releaseSection(string $path = Pcre2ReleaseOutcomes::FIXTURE): array
+    {
+        $json = is_file($path) ? file_get_contents($path) : false;
+        $fixture = false === $json ? null : json_decode($json, true);
+        if (!\is_array($fixture) || !\is_array($fixture['meta'] ?? null) || !\is_array($fixture['cases'] ?? null)) {
+            throw new \RuntimeException(\sprintf('Unable to read the release outcomes fixture %s.', $path));
+        }
+
+        /** @var array{releases: list<string>, php7: array<string, int>, cases: int, measured: array<string, int>, measuredAsPhp7: array<string, int>} $meta */
+        $meta = $fixture['meta'];
+        /** @var list<array{php: array<string, array{0: int, 1: int}|null>, php7?: array<string, array{0: int, 1: int}|null>|false}> $cases */
+        $cases = $fixture['cases'];
+
+        $counts = [];
+        foreach ($cases as $case) {
+            foreach (Pcre2ReleaseOutcomes::expand($case['php'], $meta['releases']) as $release => $outcome) {
+                $counts[$release][null === $outcome ? 'compiled' : 'refused'] = ($counts[$release][null === $outcome ? 'compiled' : 'refused'] ?? 0) + 1;
+            }
+
+            $php7 = $case['php7'] ?? null;
+            if (false !== $php7) {
+                $legacy = null === $php7 ? Pcre2ReleaseOutcomes::expand($case['php'], array_keys($meta['php7'])) : Pcre2ReleaseOutcomes::expand($php7, array_keys($meta['php7']));
+                foreach ($legacy as $release => $outcome) {
+                    $counts['php7 '.$release][null === $outcome ? 'compiled' : 'refused'] = ($counts['php7 '.$release][null === $outcome ? 'compiled' : 'refused'] ?? 0) + 1;
+                }
+            }
+        }
+
+        $first = $meta['releases'][0] ?? '';
+        $last = $meta['releases'][\count($meta['releases']) - 1] ?? '';
+        $lines = [
+            '',
+            '## Every release\'s own suite',
+            '',
+            \sprintf(
+                'The suites of PCRE2 %s to %s hold **%d** compilation cases PHP can express (`testinput1` to `10`, `14` to `22`, `26` and `27`, where a release has them; a case several suites hold counts once). Each was compiled by a `pcre2test` of every release, under PHP\'s compile options, and on %s to %s once more as PHP 7.3 and 7.4 compile. **%d** of them are compiled another way by some release, or by PHP 7: for each release, the library judged for it agrees with every one of them on the verdict, the offset and the code (`tests/Integration/Pcre2ReleaseOutcomesTest.php`).',
+                $first,
+                $last,
+                $meta['cases'],
+                array_key_first($meta['php7']),
+                array_key_last($meta['php7']),
+                \count($cases),
+            ),
+            '',
+            '| release | cases measured | cases that move: compiled | refused |',
+            '|---|---:|---:|---:|',
+        ];
+
+        foreach ($meta['releases'] as $release) {
+            $lines[] = \sprintf('| %s | %d | %d | %d |', $release, $meta['measured'][$release] ?? 0, $counts[$release]['compiled'] ?? 0, $counts[$release]['refused'] ?? 0);
+        }
+
+        foreach ($meta['php7'] as $release => $phpVersion) {
+            $lines[] = \sprintf('| %s, PHP %d.%d | %d | %d | %d |', $release, intdiv($phpVersion, 10000), intdiv($phpVersion, 100) % 100, $meta['measuredAsPhp7'][$release] ?? 0, $counts['php7 '.$release]['compiled'] ?? 0, $counts['php7 '.$release]['refused'] ?? 0);
+        }
+
+        $lines[] = '';
+        $lines[] = 'A case is not compiled as PHP 7 when PHP 7 cannot express it (a NUL byte in the pattern, the `n` modifier), nor with the `r` modifier before PCRE2 10.43, which added it.';
+
+        return $lines;
     }
 
     /**

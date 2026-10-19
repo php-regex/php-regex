@@ -59,20 +59,27 @@ without notice; do not build on it.
 
 ## Beyond the four pinned files
 
-The library was also run on every file of the PCRE2 10.49 test suite that applies to PHP (`testinput1` to `10`, `14`
-to `22`, `26` and `27`, some 8,000 cases), against `pcre2test` builds of the release each PHP minor bundles (10.40,
-10.42, 10.44) and against 10.49 itself:
+Verdicts and offsets move between PCRE2 releases, and the library judges a pattern for the release a target names. So
+the suite of every release from 10.32 to 10.49 is measured as well: every file that applies to PHP (`testinput1` to
+`10`, `14` to `22`, `26` and `27`, where the release has them), some 5,300 cases once the suites are merged, each
+compiled by a `pcre2test` of every release, under PHP's compile options, and for 10.32 to 10.35 also as PHP 7.3 and
+7.4 compile them (`PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL`, unless the pattern has `X`). About 1,200 cases are compiled
+another way by at least one release; the test suite holds what each release does with them, and judges the library
+for each release against it: [the release table below](#every-releases-own-suite).
 
-- **Compile verdict:** it agrees with every release on every case PHP can express, apart from `\C` under `u`, which
-  the library refuses on purpose (see [PCRE](../concepts/pcre.md)).
-- **Error offset:** it agrees on every pattern both reject, for each release.
-- **Analysis:** on the 7,500 or so patterns PHP compiles, with the suite's own subject lines replayed through PHP,
-  the recompiled tree and `optimize()` match exactly what the pattern matches, and the length range and `literals()`
-  hold for every match they apply to. `generate()` finds a sample PHP matches for about 98% of them; for the rest,
-  no subject matches the pattern, or its constraints are too tangled to guess.
+- **Compile verdict, error offset and code:** the library judged for each release agrees with that release on every
+  one of those cases, apart from `\C` under `u`, which the library refuses on purpose (see
+  [PCRE](../concepts/pcre.md)) and which no release treats differently.
+- **Upcoming releases:** the development branch of PCRE2, measured at 10.50-DEV, was compiled the same way: it judges
+  every case as 10.49 does, and the few cases its suite adds all compile. The extraction tool takes such a build
+  with `--compare` and prints every case it compiles another way.
+- **Analysis:** on the 7,500 or so patterns PHP compiles in the 10.49 suite, with the suite's own subject lines
+  replayed through PHP, the recompiled tree and `optimize()` match exactly what the pattern matches, and the length
+  range and `literals()` hold for every match they apply to. `generate()` finds a sample PHP matches for about 98% of
+  them; for the rest, no subject matches the pattern, or its constraints are too tangled to guess.
 
-This wider run uses PCRE2 builds made outside the repository and is not part of the test suite; the continuous
-integration runs the test suite on the PCRE2 each supported PHP bundles and on the latest release.
+The releases are built from their tarballs outside the repository, as `tests/Fixtures/Pcre2/README.md` describes; the
+continuous integration runs the test suite on the PCRE2 each supported PHP bundles and on the latest release.
 
 <!-- pcre2-conformance: generated below - do not edit -->
 
@@ -96,6 +103,37 @@ Against PCRE2 10.48's official test suite, under PHP's compile options: compile 
 | `testinput4` | 650 | 33 | 617 | 617 | 0 | 0 | 0 | 0 |
 | `testinput5` | 817 | 189 | 628 | 628 | 38 | 38 | 15 | 0 |
 | **total** | **5171** | **745** | **4426** | **4426** | **427** | **427** | **218** | **0** |
+
+## Every release's own suite
+
+The suites of PCRE2 10.32 to 10.49 hold **5259** compilation cases PHP can express (`testinput1` to `10`, `14` to `22`, `26` and `27`, where a release has them; a case several suites hold counts once). Each was compiled by a `pcre2test` of every release, under PHP's compile options, and on 10.32 to 10.35 once more as PHP 7.3 and 7.4 compile. **1223** of them are compiled another way by some release, or by PHP 7: for each release, the library judged for it agrees with every one of them on the verdict, the offset and the code (`tests/Integration/Pcre2ReleaseOutcomesTest.php`).
+
+| release | cases measured | cases that move: compiled | refused |
+|---|---:|---:|---:|
+| 10.32 | 5192 | 9 | 1214 |
+| 10.33 | 5192 | 54 | 1169 |
+| 10.34 | 5192 | 76 | 1147 |
+| 10.35 | 5192 | 84 | 1139 |
+| 10.36 | 5192 | 84 | 1139 |
+| 10.37 | 5192 | 89 | 1134 |
+| 10.38 | 5192 | 89 | 1134 |
+| 10.39 | 5192 | 94 | 1129 |
+| 10.40 | 5192 | 641 | 582 |
+| 10.41 | 5192 | 641 | 582 |
+| 10.42 | 5192 | 641 | 582 |
+| 10.43 | 5259 | 709 | 514 |
+| 10.44 | 5259 | 717 | 506 |
+| 10.45 | 5259 | 885 | 338 |
+| 10.46 | 5259 | 885 | 338 |
+| 10.47 | 5259 | 906 | 317 |
+| 10.48 | 5259 | 919 | 304 |
+| 10.49 | 5259 | 919 | 304 |
+| 10.32, PHP 7.3 | 5187 | 716 | 507 |
+| 10.33, PHP 7.4 | 5187 | 743 | 480 |
+| 10.34, PHP 7.4 | 5187 | 760 | 463 |
+| 10.35, PHP 7.4 | 5187 | 763 | 460 |
+
+A case is not compiled as PHP 7 when PHP 7 cannot express it (a NUL byte in the pattern, the `n` modifier), nor with the `r` modifier before PCRE2 10.43, which added it.
 
 ## PHP compile context
 
@@ -141,8 +179,11 @@ _None._
 php tests/Tools/extract_pcre2_testdata.php --floor-pcre2test=/tmp/pcre2-10.40/pcre2test
 php tests/Tools/generate_pcre2_conformance_table.php --baseline
 php tests/Tools/verify_pcre2_fixture.php --floor-pcre2test=/tmp/pcre2-10.40/pcre2test --pin-pcre2test=/tmp/pcre2-10.48/pcre2test
+php tests/Tools/extract_pcre2_release_outcomes.php --releases-dir=/tmp
 ```
 
 The extraction runs every case through `preg_match` and refuses to write unless the PHP running it is linked to PCRE2 10.48 and every expected verdict and offset matches what that engine does. It also compiles every extractable case with the given `pcre2test`, which must be exactly PCRE2 10.40 (build it from the release tarball, see `tests/Fixtures/Pcre2/README.md`). The second command re-measures the baseline of known gaps, then rewrites the sections below the generation marker of this page; it prints its wall-clock time and peak memory. The third re-observes every recorded engine result on both releases, built from their tarballs, and fails on any difference.
 
-Per-case detail lives in `tests/Fixtures/Pcre2/conformance-baseline.json`, an internal, free-to-change format: only the counts on this page are published.
+The fourth compiles the cases of every release's suite with every release, PCRE2 10.32 to 10.49, each built from its tarball under `/tmp/pcre2-<release>`, and rewrites the fixture of the cases on which they do not all agree; with `--check` it writes nothing and fails when the committed fixture differs.
+
+Per-case detail lives in `tests/Fixtures/Pcre2/conformance-baseline.json` and `tests/Fixtures/Pcre2/release-outcomes.json`, internal, free-to-change formats: only the counts on this page are published.

@@ -13,6 +13,7 @@ the ground truth for the library's compile-verdict conformance test
 | `testdata/testoutput1`, `testoutput2`, `testoutput4`, `testoutput5` | the matching expected-output files, recorded from a real PCRE2 10.48 run |
 | `testdata/LICENCE.md` | the PCRE2 project's licence file, copied from the source repository |
 | `suite-cases.json` | the extracted compilation cases (pattern body, delimiter, PHP flags, expected verdict/offset/error and PCRE2 error number, what PCRE2 10.40 did with it, or skip category), one entry per pattern line, under a `meta` record naming the pin, the PHP/PCRE2 build and the floor release that extracted them, and `crossChecked`, a checksum of the engine-derived fields that catches accidental edits (it is no proof of provenance: `verify_pcre2_fixture.php` is) |
+| `release-outcomes.json` | what every PCRE2 release from 10.32 to 10.49 does with the compilation cases of every release's own suite, for the cases on which they do not all agree: one case per line (pattern body, delimiter, PHP flags, and the outcome on each release as runs, the release from which an outcome holds), under a `meta` record naming the releases, the PHP versions judged, a SHA-256 digest of each release's testdata files read, the wording of each PCRE2 error the cases hold, release by release, and `crossChecked`, a checksum of the cases |
 | `conformance-baseline.json` | the measured conformance baseline: every case whose `Regex::validate()` verdict or error offset disagrees with the expected outcome, with its defect class (`crash`, `false-reject`, `false-accept`, `offset-defect`) and what the library returned |
 
 The raw files are never modified (`.gitattributes` marks them `-text`, so no
@@ -53,8 +54,8 @@ exception's terms. Keep that file with the data on any re-vendor.
 
 ## Size note
 
-The eight raw files total about 1.3 MB and the two JSON artifacts about
-2.8 MB more. The whole `/tests` tree is export-ignored from distribution
+The eight raw files total about 1.3 MB and the three JSON artifacts about
+3 MB more. The whole `/tests` tree is export-ignored from distribution
 archives via `.gitattributes`, so consumers installing the package never
 download them — but anyone cloning the repository does. That cost is accepted
 deliberately: the suite is the ground truth the conformance claims rest on.
@@ -131,6 +132,60 @@ When a newer PCRE2 release should be measured instead:
 Keeping the pin bump in its own commit lets downstream tools tell a
 conformance-number shift caused by new suite content apart from one caused by
 a library change.
+
+## Every release's own suite
+
+The pinned suite above is one release's view. The library judges a pattern for
+the PCRE2 release a target names, and verdicts and offsets move between
+releases, so `release-outcomes.json` holds, for the suites of every release from
+10.32 to 10.49, the cases the releases do not all compile the same way, and
+`tests/Integration/Pcre2ReleaseOutcomesTest.php` judges the library for each
+release against them: the verdict, the offset, and the code, which must be one
+the error the release reports allows (`tests/TestUtils/PcreMessageCodes.php`).
+The raw suites are not vendored: about 1.3 MB per release, against some 200 KB
+for the cases that move.
+
+How the fixture is built (`tests/Tools/extract_pcre2_release_outcomes.php`):
+
+- every suite file that applies to PHP — `testinput1` to `10`, `14` to `22`,
+  `26` and `27`, where a release has them; not `11` to `13`, for the 16 and
+  32-bit libraries, `23`, for a build without `\C`, `24` and `25`, which
+  convert patterns — is read by the same extractor as the pinned suite, and a
+  case several suites hold is kept once, named after the newest release that
+  holds it (`10.49:testinput2:6139`);
+- each case is compiled by the `pcre2test` of every release, under PHP's
+  compile options: every flag as its pcre2test modifier, `allow_lookaround_bsk`
+  from 10.38 (PHP 8.4 is the PHP judged), and on 10.32 to 10.35 a second time
+  as PHP 7.3 and 7.4 compile, with `bad_escape_is_literal` unless the flags hold
+  `X`. A case PHP 7 cannot express (a NUL byte, the `n` modifier) is not
+  compiled as PHP 7, nor one with the `r` modifier before 10.43;
+- a case is kept when its outcome — the verdict, the offset, the PCRE2 error
+  number — moves between two releases, or between PHP 7 and 8 on one release.
+  A `php7` of `false` means the case was not compiled as PHP 7; no `php7` means
+  PHP 7 does what PHP 8 does;
+- a release that abandons its run on a case (10.47 does on its error 170) has
+  that case compiled alone, and the run goes on after it. A `**` diagnostic in
+  place of a verdict stops the tool: no verdict is guessed.
+
+To regenerate it, build every release from its tarball, outside the
+repository, and run the tool from the repository root:
+
+```console
+(cd /tmp && for minor in $(seq 32 49); do curl -fsSL -O https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.$minor/pcre2-10.$minor.tar.gz && tar xzf pcre2-10.$minor.tar.gz; done)
+(cd /tmp && for minor in $(seq 32 49); do (cd pcre2-10.$minor && ./configure --disable-shared --enable-unicode && make pcre2test); done)
+php tests/Tools/extract_pcre2_release_outcomes.php --releases-dir=/tmp
+php tests/Tools/generate_pcre2_conformance_table.php
+```
+
+Each `pcre2test` must report its release and the build options PHP's bundled
+PCRE2 uses, in the layout of its release. `--check` writes nothing and exits 1
+when the fixture it builds differs from the committed one; a CI job runs it,
+with every release built from its tarball. `--compare=<dir>` takes a newer
+build, a PCRE2 checkout with `pcre2test` built in it and its `testdata`, and
+prints every case, its own suite's included, that it compiles another way than
+the newest release: an early warning for the next release, written nowhere.
+When a new release comes out, add it to `Pcre2ReleaseOutcomes::RELEASES`, to
+the CI job's list and cache key, and regenerate.
 
 ## Baseline format
 
