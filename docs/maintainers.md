@@ -572,7 +572,7 @@ subsystem:
 | group | measures |
 |---|---|
 | `lexer`, `parser`, `validate` | tokenizing, parsing and validating |
-| `lint` | the lint run over a fixed set of files, one process |
+| `lint` | the lint run over a fixed set of files, one process; the default rules alone over the lint corpus and over the cases of `data/lint/` |
 | `redos` | the theoretical ReDoS analysis |
 | `redos-corpus` | the same analysis once per pattern of the lint corpus, ASTs cached (the longest group) |
 | `automata` | NFA construction, determinization, minimization and the language solver |

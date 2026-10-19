@@ -60,6 +60,10 @@ final class AlwaysEmptyCaptureTest extends TestCase
         yield 'an optional digit after digits' => ['pattern' => '/\d+(\d?)x/', 'group' => '(\d?)'];
         yield 'one alternative' => ['pattern' => '/a+(a*)|b/', 'group' => '(a*)'];
         yield 'a named group' => ['pattern' => '/x+(?<n>x*)y/', 'group' => '(?<n>x*)'];
+        yield 'anchored at both ends' => ['pattern' => '/^\d+(\d*)$/', 'group' => '(\d*)'];
+        yield 'a greedy run under U' => ['pattern' => '/a+?(a*)b/U', 'group' => '(a*)'];
+        yield 'a class before a narrower class' => ['pattern' => '/[a-z]+([a-c]*)\d/', 'group' => '([a-c]*)'];
+        yield 'before groups that capture' => ['pattern' => '/x+(x*)(y)?/', 'group' => '(x*)'];
     }
 
     #[Test]
@@ -127,6 +131,30 @@ final class AlwaysEmptyCaptureTest extends TestCase
         $this->assertSame([], $this->messages('/^L_(.*?)/'));
         $this->assertSame([], $this->messages('/x([ ]*)?/U'));
         $this->assertSame([], $this->messages('/a(b){0}c/'));
+    }
+
+    /**
+     * What a pattern gets is kept for the next lint of the same pattern,
+     * for its flags and its target: the same body under other flags is
+     * judged again.
+     */
+    #[Test]
+    public function test_a_pattern_linted_again_gets_the_same_answer_for_its_own_flags(): void
+    {
+        $starved = '/a+(a*)b/';
+        $filled = '/a+(a*)b/U';
+        $this->assertSame(1, preg_match($filled, 'aab', $matches));
+        $this->assertSame('a', $matches[1]);
+
+        for ($i = 0; $i < 2; $i++) {
+            $this->assertCount(1, $this->messages($starved));
+            $this->assertSame([], $this->messages($filled));
+        }
+
+        // Emptied with the library's caches, the answers are found again.
+        Regex::create()->clearCaches();
+        $this->assertCount(1, $this->messages($starved));
+        $this->assertSame([], $this->messages($filled));
     }
 
     /**

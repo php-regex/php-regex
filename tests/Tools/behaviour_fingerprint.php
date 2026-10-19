@@ -30,16 +30,26 @@ declare(strict_types=1);
  * fixture when "fixture" is named. --autoload loads another copy of the
  * library, to fingerprint the code of another revision with this script.
  *
+ * --lint writes what the lint says instead, per pattern and target: the
+ * issues of the rules on by default ("default"), of every rule ("all"), or
+ * the issues and the optimizations "regex lint" reports by default, each
+ * rewrite checked with the automata ("suggest"). --slice=I/N keeps every
+ * Nth pattern from the Ith, to run one list in N processes.
+ *
  * Usage:
- *   php tests/Tools/behaviour_fingerprint.php [--autoload=FILE] [--targets=runtime,php80100,...] [--plain] --out=FILE fixture|LIST.json...
+ *   php tests/Tools/behaviour_fingerprint.php [--autoload=FILE] [--targets=runtime,php80100,...] [--lint=default|all|suggest] [--slice=I/N] [--plain] --out=FILE fixture|LIST.json...
  */
 
 namespace PHPRegex\Tests\Tools;
 
-$options = getopt('', ['autoload:', 'targets:', 'plain', 'out:'], $restIndex);
+$options = getopt('', ['autoload:', 'targets:', 'lint:', 'slice:', 'plain', 'out:'], $restIndex);
 $autoload = $options['autoload'] ?? __DIR__.'/../../vendor/autoload.php';
 require_once \is_string($autoload) ? $autoload : __DIR__.'/../../vendor/autoload.php';
 
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\Rule\LintRuleRegistry;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\RegexParser;
@@ -147,6 +157,46 @@ function fingerprint(RegexParser $parser, string $pattern): array
     return [$tokens, $tree, $tolerantTree, $validation];
 }
 
+/**
+ * What the lint reports for one pattern: the issues, and in "suggest" mode
+ * the optimizations, serialized whole.
+ *
+ * @return array{string}
+ */
+function lintFingerprint(AnalysisService $service, string $mode, string $pattern): array
+{
+    $occurrence = new PatternOccurrence($pattern, 'pattern.php', 1, 'preg_match()');
+
+    try {
+        if ('suggest' !== $mode) {
+            return [serialize($service->lint([$occurrence]))];
+        }
+
+        [$issues, $analyzed] = $service->lintForSuggestions([$occurrence]);
+
+        return [serialize([$issues, $service->suggestOptimizations([$occurrence], 1, new OptimizerOptions(verifyWithAutomata: true), 1, null, $analyzed)])];
+    } catch (\Throwable $e) {
+        return [describe($e)];
+    }
+}
+
+/**
+ * Every rule of the registry turned on, by id.
+ *
+ * @return array<string, bool>
+ */
+function everyRule(): array
+{
+    $rules = [];
+    foreach ((new LintRuleRegistry())->all() as $rule) {
+        foreach ($rule->getRuleIds() as $id) {
+            $rules[$id] = true;
+        }
+    }
+
+    return $rules;
+}
+
 $out = $options['out'] ?? null;
 $sources = \array_slice($argv, $restIndex);
 if (!\is_string($out) || [] === $sources) {
@@ -161,6 +211,8 @@ if (isset($options['targets']) && \is_string($options['targets'])) {
 }
 
 $plain = isset($options['plain']);
+$lint = isset($options['lint']) && \is_string($options['lint']) ? $options['lint'] : null;
+[$sliceIndex, $sliceCount] = isset($options['slice']) && \is_string($options['slice']) ? array_map(intval(...), explode('/', $options['slice'], 2)) + [1 => 1] : [0, 1];
 $handle = fopen($out, 'w');
 if (false === $handle) {
     fwrite(\STDERR, \sprintf("Cannot write %s\n", $out));
@@ -172,9 +224,14 @@ foreach ($sources as $source) {
     $patterns = readPatterns($source);
     foreach ($targets as $name => $targetOptions) {
         $parser = RegexParser::create(['cache' => null] + $targetOptions);
+        $service = null === $lint ? null : new AnalysisService($parser, lintRules: 'all' === $lint ? everyRule() : []);
         foreach ($patterns as $index => $pattern) {
-            $parts = fingerprint($parser, $pattern);
-            fwrite($handle, basename($source)."\t".$name."\t".$index."\t".implode("\t", $plain ? array_map(addcslashes(...), $parts, array_fill(0, 4, "\0..\37\\")) : array_map(md5(...), $parts))."\n");
+            if ($index % max(1, $sliceCount) !== $sliceIndex) {
+                continue;
+            }
+
+            $parts = null === $service || null === $lint ? fingerprint($parser, $pattern) : lintFingerprint($service, $lint, $pattern);
+            fwrite($handle, basename($source)."\t".$name."\t".$index."\t".implode("\t", $plain ? array_map(addcslashes(...), $parts, array_fill(0, \count($parts), "\0..\37\\")) : array_map(md5(...), $parts))."\n");
         }
     }
 }

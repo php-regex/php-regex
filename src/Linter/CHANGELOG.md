@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `group.alwaysEmptyCapture` asks the automata about a capturing group only
+   when no subject built from the pattern shows the engine filling it, and
+   keeps each answer per pattern and target: the same findings, about eight
+   times less time.
  * A guard on `PHP_VERSION_ID` or `version_compare(PHP_VERSION, …)` around a
    pattern narrows the versions it is judged for, in both extraction
    strategies.

@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\CaptureWitness;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -38,6 +40,11 @@ use PHPRegex\Parser\Node\SequenceNode;
  * preg_match_all() tries again for a non-empty one, where another path may
  * fill the group.
  *
+ * The automata are asked only when no subject shows otherwise: a subject
+ * built from the pattern on which the engine fills the group is a subject
+ * where the two patterns write different $matches (CaptureWitness). What
+ * they answered is kept per pattern, flags and target.
+ *
  * @internal
  */
 final class AlwaysEmptyCaptureRule extends AbstractLintRule
@@ -45,6 +52,13 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
     private const ID = 'regex.lint.group.alwaysEmptyCapture';
 
     private readonly QuestionBudget $questions;
+
+    /**
+     * Whether the group always stays empty, by target, pattern and group.
+     *
+     * @var array<string, bool>
+     */
+    private static array $answers = [];
 
     public function __construct()
     {
@@ -86,7 +100,7 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
             return [];
         }
 
-        if (true !== LanguageQuestions::matchTheSameFromAnyOffset($context, $node->child->getStartPosition(), $node->child->getEndPosition(), '')) {
+        if (!self::alwaysEmpty($node, $context)) {
             return [];
         }
 
@@ -97,6 +111,30 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
             'Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.',
             end: $node->getEndPosition(),
         )];
+    }
+
+    /**
+     * Whether the pattern with the group's body removed writes the same
+     * $matches as the pattern, from any offset: never where the engine
+     * fills the group on a subject built from the pattern.
+     */
+    private static function alwaysEmpty(GroupNode $group, LintContext $context): bool
+    {
+        $pattern = $context->pattern;
+        $key = $context->target->cacheKey()."\0".$pattern->delimiter.$pattern->flags."\0".$group->getStartPosition().':'.$group->getEndPosition()."\0".$pattern->source;
+        if (isset(self::$answers[$key])) {
+            return self::$answers[$key];
+        }
+
+        $answer = !CaptureWitness::fills($context, $group)
+            && true === LanguageQuestions::matchTheSameFromAnyOffset($context, $group->child->getStartPosition(), $group->child->getEndPosition(), '');
+
+        StaticCaches::register(self::class, static function (): void {
+            self::$answers = [];
+        });
+        self::$answers = StaticCaches::makeRoom(self::$answers);
+
+        return self::$answers[$key] = $answer;
     }
 
     /**
