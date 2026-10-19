@@ -15,6 +15,7 @@ namespace PHPRegex\Laravel\Extractor;
 
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
+use PHPRegex\Laravel\Routing\RouteAction;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
@@ -51,7 +52,7 @@ final class RoutePatternSource implements PatternSourceInterface
         foreach ($routes->getRoutes() as $route) {
             $routeName = $route->getName() ?? $route->uri();
             $wheres = $route->wheres;
-            $controller = $this->resolveControllerInfo($route);
+            $controller = RouteAction::name($route);
 
             foreach ($wheres as $parameter => $pattern) {
                 if (!\is_string($pattern) || '' === $pattern) {
@@ -73,24 +74,6 @@ final class RoutePatternSource implements PatternSourceInterface
         }
 
         return $patterns;
-    }
-
-    /**
-     * Resolve controller information from route action.
-     */
-    private function resolveControllerInfo(Route $route): ?string
-    {
-        $controller = $route->getAction('controller');
-        if (\is_string($controller)) {
-            return $controller;
-        }
-
-        $uses = $route->getAction('uses');
-        if (\is_string($uses)) {
-            return $uses;
-        }
-
-        return $uses instanceof \Closure ? 'Closure' : null;
     }
 
     /**

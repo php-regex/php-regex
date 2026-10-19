@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
-use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
 use PHPRegex\Laravel\Output\ConsoleWriter;
+use PHPRegex\Laravel\Routing\RouteAction;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
@@ -90,7 +90,7 @@ final class RoutesCommand extends Command
                 'name' => $routeName,
                 'uri' => $route->uri(),
                 'methods' => $methods,
-                'action' => $this->resolveAction($route),
+                'action' => RouteAction::name($route) ?? 'Unknown',
                 'constraints' => [],
             ];
 
@@ -196,20 +196,5 @@ final class RoutesCommand extends Command
         }
 
         return self::SUCCESS;
-    }
-
-    private function resolveAction(Route $route): string
-    {
-        $controller = $route->getAction('controller');
-        if (\is_string($controller)) {
-            return $controller;
-        }
-
-        $uses = $route->getAction('uses');
-        if (\is_string($uses)) {
-            return $uses;
-        }
-
-        return $uses instanceof \Closure ? 'Closure' : 'Unknown';
     }
 }
