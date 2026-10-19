@@ -2282,13 +2282,13 @@ final class Lexer
             }
 
             // PCRE reads the ranges of the class first: a reversed one is
-            // refused past its end.
+            // refused past its end, one byte before it up to 10.46.
             $reversed = $this->reversedRangeEnd($tokens, $classStart);
             if (null !== $reversed) {
                 throw LexerException::withContext(
                     'Range out of order in character class.',
                     ErrorCode::RangeReversed,
-                    $reversed,
+                    $this->reportsPastTheFault ? $reversed : $reversed - 1,
                     $this->pattern,
                 );
             }

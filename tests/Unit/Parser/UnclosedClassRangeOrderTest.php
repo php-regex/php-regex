@@ -103,7 +103,68 @@ final class UnclosedClassRangeOrderTest extends TestCase
     public static function provideBareHexEscapesAsBounds(): iterable
     {
         yield 'bare hex escape as the start' => ['pattern' => '/[\\x-abc/', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 7];
-        yield 'bare hex escape as the end' => ['pattern' => '/[a-\\x/', 'code' => ErrorCode::RangeReversed, 'offset' => 5];
+        // php:7.3-cli to php:8.4-cli, pcre2test 10.32 to 10.44: "range out
+        // of order in character class at offset 4".
+        yield 'bare hex escape as the end' => ['pattern' => '/[a-\\x/', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+    }
+
+    /**
+     * A class the pattern leaves open is still read range by range before PCRE
+     * meets the end of the pattern: a reversed range in it is refused where it
+     * is in a closed class, one byte before the end of the range up to PCRE2
+     * 10.46, past it from 10.47.
+     *
+     * Every row was run on php:7.3-cli (PCRE2 10.32), php:7.4-cli and
+     * php:8.0-cli (10.35), php:8.1-cli (10.39), php:8.2-cli (10.40), php:8.4-cli
+     * (10.44), through pcre2test 10.44 to 10.49, and on PHP with PCRE2 10.49:
+     * "range out of order in character class at offset 3" for "[z-a" up to
+     * 10.46, at offset 4 from 10.47; "at offset 5" for "[z-\cA" up to 10.46, 6
+     * from 10.47; "at offset 4" for "[!-\a{" up to 10.46, 5 from 10.47.
+     */
+    #[Test]
+    #[DataProvider('provideReversedRanges')]
+    public function test_a_reversed_range_in_a_class_left_open_is_refused_where_the_release_reports_it(string $pattern, string $php, string $release, int $offset): void
+    {
+        $result = self::parser($php, $release)->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+        $this->assertSame(ErrorCode::RangeReversed, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, php: string, release: string, offset: int}>
+     */
+    public static function provideReversedRanges(): iterable
+    {
+        foreach ([['7.3', '10.32'], ['7.4', '10.35'], ['8.0', '10.35'], ['8.1', '10.39'], ['8.2', '10.40'], ['8.4', '10.44'], ['8.4', '10.45'], ['8.4', '10.46']] as [$php, $release]) {
+            yield \sprintf('z-a, PCRE2 %s on PHP %s', $release, $php) => ['pattern' => '/[z-a/', 'php' => $php, 'release' => $release, 'offset' => 3];
+        }
+
+        yield 'z-a, PCRE2 10.47' => ['pattern' => '/[z-a/', 'php' => '8.4', 'release' => '10.47', 'offset' => 4];
+        yield 'z-a, PCRE2 10.49' => ['pattern' => '/[z-a/', 'php' => '8.5', 'release' => '10.49', 'offset' => 4];
+        yield 'z-a under X, PCRE2 10.32' => ['pattern' => '/[z-a/X', 'php' => '7.3', 'release' => '10.32', 'offset' => 3];
+        yield 'z-a under u' => ['pattern' => '/[z-a/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 3];
+        yield 'z-a under x' => ['pattern' => '/[z-a/x', 'php' => '8.2', 'release' => '10.40', 'offset' => 3];
+        yield 'z-a and more' => ['pattern' => '/[z-ab/', 'php' => '8.4', 'release' => '10.44', 'offset' => 3];
+        yield 'z-a negated' => ['pattern' => '/[^z-a/', 'php' => '8.4', 'release' => '10.44', 'offset' => 4];
+        yield 'z-a negated, PCRE2 10.47' => ['pattern' => '/[^z-a/', 'php' => '8.4', 'release' => '10.47', 'offset' => 5];
+        yield 'control escape' => ['pattern' => '/[z-\cA/', 'php' => '8.4', 'release' => '10.44', 'offset' => 5];
+        yield 'control escape, PCRE2 10.32' => ['pattern' => '/[z-\cA/', 'php' => '7.3', 'release' => '10.32', 'offset' => 5];
+        yield 'control escape, PCRE2 10.48' => ['pattern' => '/[z-\cA/', 'php' => '8.4', 'release' => '10.48', 'offset' => 6];
+        yield 'bell escape before a brace' => ['pattern' => '/[!-\a{/', 'php' => '8.0', 'release' => '10.35', 'offset' => 4];
+        yield 'bell escape before a brace, PCRE2 10.49' => ['pattern' => '/[!-\a{/', 'php' => '8.5', 'release' => '10.49', 'offset' => 5];
+        yield 'hex escape' => ['pattern' => '/[z-\x41/', 'php' => '8.4', 'release' => '10.44', 'offset' => 6];
+        yield 'braced hex escape' => ['pattern' => '/[z-\x{41}/', 'php' => '8.4', 'release' => '10.46', 'offset' => 8];
+        yield 'braced hex escape, PCRE2 10.47' => ['pattern' => '/[z-\x{41}/', 'php' => '8.4', 'release' => '10.47', 'offset' => 9];
+        yield 'octal escape' => ['pattern' => '/[z-\101/', 'php' => '8.4', 'release' => '10.44', 'offset' => 6];
+        yield 'quoted end' => ['pattern' => '/[z-\Qa/', 'php' => '8.4', 'release' => '10.44', 'offset' => 5];
+        yield 'quoted end and its close' => ['pattern' => '/[z-\Qa\E/', 'php' => '8.4', 'release' => '10.44', 'offset' => 5];
+        yield 'quoted end, PCRE2 10.47' => ['pattern' => '/[z-\Qab/', 'php' => '8.4', 'release' => '10.47', 'offset' => 6];
+        yield 'multibyte start under u' => ['pattern' => '/[é-a/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 4];
+        yield 'multibyte end under u' => ['pattern' => '/[ü-é/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 5];
+        yield 'multibyte end under u, PCRE2 10.47' => ['pattern' => '/[ü-é/u', 'php' => '8.4', 'release' => '10.47', 'offset' => 6];
+        yield 'named code point under u' => ['pattern' => '/[z-\N{U+41}/u', 'php' => '8.4', 'release' => '10.44', 'offset' => 10];
     }
 
     /**
@@ -153,5 +214,10 @@ final class UnclosedClassRangeOrderTest extends TestCase
         yield 'multibyte end without u' => ['pattern' => '/[a-ébc/', 'offset' => 7];
         // Without u the range starts at the last byte of U+0100, 0x80.
         yield 'last byte of a multibyte start below an escaped end without u' => ['pattern' => "/[\u{100}-\\x{81}bc/", 'offset' => 12];
+    }
+
+    private static function parser(string $php, string $release): RegexParser
+    {
+        return RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
     }
 }
