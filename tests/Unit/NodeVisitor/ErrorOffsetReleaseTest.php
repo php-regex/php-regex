@@ -268,6 +268,15 @@ final class ErrorOffsetReleaseTest extends TestCase
         // PCRE2 10.45 reports an unknown POSIX class past its end.
         yield 'unknown POSIX class' => ['pattern' => '/[[:foo:]]/', 'bundled' => 3, 'newer' => 8, 'movedIn' => '10.45'];
         yield 'collating element' => ['pattern' => '/x[[=a=]]/', 'bundled' => 2, 'newer' => 7, 'movedIn' => '10.45'];
+        // On its "[" after a hyphen that is a member, just inside it as the
+        // end of a range (pcre2test 10.32 to 10.49).
+        yield 'collating element after a hyphen starting the class' => ['pattern' => '/[-[=a=]]/', 'bundled' => 2, 'newer' => 7, 'movedIn' => '10.45'];
+        yield 'collating element after a hyphen starting a class left open' => ['pattern' => '/[-[=a=]/', 'bundled' => 2, 'newer' => 7, 'movedIn' => '10.45'];
+        yield 'collating element after a hyphen past a range' => ['pattern' => '/[a-z-[.a.]]/', 'bundled' => 5, 'newer' => 10, 'movedIn' => '10.45'];
+        yield 'collating element after a negated class\'s hyphen' => ['pattern' => '/[^-[=a=]]/', 'bundled' => 3, 'newer' => 8, 'movedIn' => '10.45'];
+        yield 'collating element ending a range past a quote end' => ['pattern' => '/[a-\\E[=a=]]/', 'bundled' => 6, 'newer' => 10, 'movedIn' => '10.45'];
+        yield 'collating element after a quote end and a hyphen past a range' => ['pattern' => '/[a-z\\E-[.a.]]/', 'bundled' => 7, 'newer' => 12, 'movedIn' => '10.45'];
+        yield 'collating element after a type, a quote end and a hyphen' => ['pattern' => '/[\\d\\E-[=a=]]/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.45'];
         yield 'POSIX class ending a range' => ['pattern' => '/[a-[:digit:]]/', 'bundled' => 4, 'newer' => 12, 'movedIn' => '10.45'];
         yield 'POSIX class starting a range' => ['pattern' => '/[[:digit:]-z]/', 'bundled' => 10, 'newer' => 11, 'movedIn' => '10.45'];
         yield 'character type starting a range' => ['pattern' => '/[\\d-a]/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.45'];

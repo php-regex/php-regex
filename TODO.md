@@ -158,8 +158,7 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
 - `\k{1 }` and `\k{1n }` up to 10.42: PCRE2 says "subpattern name must start
   with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
   reported one byte early.
-- `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10; `[-[=a=]`
-  up to 10.44: offset 2, the library says 3.
+- `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10.
 
 ## The articles section: what is left
 

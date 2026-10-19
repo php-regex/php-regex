@@ -3452,8 +3452,9 @@ final class Validator extends AbstractNodeVisitor
         $past = $this->supports(PcreFeature::PosixItemErrorPastItsEnd);
         if (':' !== $source[$start + 1]) {
             // As a range end, "[a-[.x.]]", just inside its "[", and refused
-            // as a range PCRE cannot make.
-            $position = $past ? $terminator + 2 : $start + ('-' === ($source[$start - 1] ?? '') ? 1 : 0);
+            // as a range PCRE cannot make; after a hyphen that is a member,
+            // "[-[.x.]]", on its "[".
+            $position = $past ? $terminator + 2 : $start + ($isRangeEnd ? 1 : 0);
             if ($isRangeEnd) {
                 $this->raiseSemanticError('Invalid range in character class: a POSIX collating element cannot end a range.', $position, ErrorCode::RangeInvalidBounds);
             }
