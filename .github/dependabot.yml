@@ -40,14 +40,14 @@ updates:
         update-types: [ minor, patch ]
     open-pull-requests-limit: 5
 
-  # The workflows and the local action: one pull request per action, across
-  # every file that names it. The workflow each package carries for its
-  # read-only repository is left out: the split token may not write
-  # workflows, so a change to it would stop the split.
+  # The workflows, the local action, and the workflow each package carries
+  # for its read-only repository: one pull request per action, across every
+  # file that names it, so the seventeen package copies stay identical.
   - package-ecosystem: github-actions
     directories:
       - /
       - /.github/actions/*
+      - /src/*
     schedule:
       interval: weekly
       day: monday

@@ -1,14 +1,25 @@
 name: Close Pull Request
 
+# This repository is a read-only split of php-regex/php-regex: a pull request
+# opened here is closed with a pointer to the monorepo.
+
 on:
-    pull_request_target:
+    # The target's context is what lets the token close a pull request from a
+    # fork. Nothing of the pull request is checked out or run: the only step
+    # comments on it and closes it.
+    pull_request_target: # zizmor: ignore[dangerous-triggers]
         types: [opened]
+
+permissions: {}
 
 jobs:
     run:
         runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            pull-requests: write
         steps:
-            - uses: superbrothers/close-pull-request@v3
+            - uses: superbrothers/close-pull-request@9c18513d320d7b2c7185fb93396d0c664d5d8448 # v3.1.2
               with:
                   comment: |
                       Thanks for your pull request! We love contributions.
