@@ -215,6 +215,25 @@ final class PcreVerb
     }
 
     /**
+     * The fault of a list of groups as PCRE2 10.45 and 10.46 report it,
+     * which have no error of their own for a list that opens no "(" or an
+     * item that is no number or name: a missing ")" at the end of the
+     * pattern, a reference to no group elsewhere.
+     *
+     * @param array{0: int, 1: ErrorCode, 2: string} $fault
+     *
+     * @return array{0: int, 1: ErrorCode, 2: string}
+     */
+    public static function groupListFaultBefore1047(array $fault, int $patternLength): array
+    {
+        if (ErrorCode::ScanSubstringMissingList !== $fault[1] && ErrorCode::GroupListItemExpected !== $fault[1]) {
+            return $fault;
+        }
+
+        return [$fault[0], $fault[0] >= $patternLength ? ErrorCode::GroupUnclosed : ErrorCode::GroupListMissingGroup, $fault[2]];
+    }
+
+    /**
      * Whether PCRE knows "(*name:": an assertion, a script run, or a verb
      * that takes a name, the mark's "(*:" included.
      */

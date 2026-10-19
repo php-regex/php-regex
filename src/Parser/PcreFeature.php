@@ -227,6 +227,11 @@ enum PcreFeature
     case CallsReturnCaptureGroups;
 
     /**
+     * A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere.
+     */
+    case GroupListErrors;
+
+    /**
      * An unclosed "\g<3" or "\g{3" is refused after the number, not at "\g".
      */
     case GReferenceNumberReadBeforeClosing;
@@ -318,6 +323,7 @@ enum PcreFeature
             self::NamedCharacterBraceRefusedInClass => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
+            self::GroupListErrors,
             self::GReferenceNumberReadBeforeClosing,
             self::NamedCodePointReadBeforeModeCheck,
             self::CalloutConditionErrorAtItemStart,

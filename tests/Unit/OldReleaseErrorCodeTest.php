@@ -67,5 +67,58 @@ final class OldReleaseErrorCodeTest extends TestCase
         yield 'version with a letter, 10.40' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.40', 'code' => ErrorCode::ConditionalUnclosed, 'offset' => 13];
         yield 'version with a letter, 10.46' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.46', 'code' => ErrorCode::ConditionalUnclosed, 'offset' => 13];
         yield 'version with a letter, 10.47' => ['pattern' => '/(?(VERSION=10z)yes|no)/', 'release' => '10.47', 'code' => ErrorCode::ConditionalVersionSyntax, 'offset' => 14];
+
+        // "syntax error in subpattern name (missing terminator?)" after the
+        // name of a call before 10.47, which reads a list of groups there.
+        yield 'call name before a list, 10.46' => ['pattern' => "/(?<fn>a)(?&fn('ret'))/", 'release' => '10.46', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 13];
+        yield 'call name before a hyphen, 10.40' => ['pattern' => '/(?<fn>a)(?&fn-)/', 'release' => '10.40', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 13];
+        yield 'call name before a hyphen, 10.47' => ['pattern' => '/(?<fn>a)(?&fn-)/', 'release' => '10.47', 'code' => ErrorCode::GroupUnclosed, 'offset' => 13];
+        yield 'call name at the end, 10.46' => ['pattern' => '/(?<fn>a)(?&fn/', 'release' => '10.46', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 13];
+        yield 'Python call name before a hyphen, 10.46' => ['pattern' => '/(?<fn>a)(?P>fn-)/', 'release' => '10.46', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 14];
+        yield 'Python call name at the end, 10.46' => ['pattern' => '/(?<fn>a)(?P>fn/', 'release' => '10.46', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 14];
+        yield 'Python call name at the end, 10.47' => ['pattern' => '/(?<fn>a)(?P>fn/', 'release' => '10.47', 'code' => ErrorCode::GroupUnclosed, 'offset' => 14];
+        yield 'call name before an empty list, 10.46' => ['pattern' => '/(?<fn>a)(?&fn()/', 'release' => '10.46', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 13];
+
+        // A list of groups left open or holding no group is "missing closing
+        // parenthesis" at the end of the pattern and "reference to
+        // non-existent subpattern" elsewhere before 10.47.
+        yield 'substring scan with no list at the end, 10.45' => ['pattern' => '/(a)(*scs:/', 'release' => '10.45', 'code' => ErrorCode::GroupUnclosed, 'offset' => 9];
+        yield 'substring scan with no list at the end, 10.47' => ['pattern' => '/(a)(*scs:/', 'release' => '10.47', 'code' => ErrorCode::ScanSubstringMissingList, 'offset' => 9];
+        yield 'substring scan with no list, 10.46' => ['pattern' => '/(a)(*scs:)/', 'release' => '10.46', 'code' => ErrorCode::GroupListMissingGroup, 'offset' => 9];
+        yield 'substring scan with a letter for a list, 10.45' => ['pattern' => '/(a)(*scs:x/', 'release' => '10.45', 'code' => ErrorCode::GroupListMissingGroup, 'offset' => 9];
+        yield 'substring scan list left open, 10.45' => ['pattern' => '/(a)(*scs:(/', 'release' => '10.45', 'code' => ErrorCode::GroupUnclosed, 'offset' => 10];
+        yield 'empty substring scan list, 10.45' => ['pattern' => '/(a)(*scs:()a)/', 'release' => '10.45', 'code' => ErrorCode::GroupListMissingGroup, 'offset' => 10];
+        yield 'empty substring scan list, 10.47' => ['pattern' => '/(a)(*scs:()a)/', 'release' => '10.47', 'code' => ErrorCode::GroupListItemExpected, 'offset' => 10];
+        yield 'substring scan list left open after a comma, 10.46' => ['pattern' => '/(a)(*scs:(1,/', 'release' => '10.46', 'code' => ErrorCode::GroupUnclosed, 'offset' => 12];
+        yield 'substring scan list naming group zero, 10.45' => ['pattern' => '/(a)(*scs:(0)a)/', 'release' => '10.45', 'code' => ErrorCode::GroupListMissingGroup, 'offset' => 11];
+        yield 'substring scan list holding a name left open, 10.45' => ['pattern' => '/(a)(*scs:(<a)a)/', 'release' => '10.45', 'code' => ErrorCode::GroupNameUnterminated, 'offset' => 12];
+        yield 'substring scan list ending in a comma, 10.45' => ['pattern' => '/(a)(*scs:(1,)a)/', 'release' => '10.45', 'code' => ErrorCode::GroupListMissingGroup, 'offset' => 12];
+    }
+
+    /**
+     * PHP 7.3 and 7.4 compile with PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, which
+     * the "X" modifier clears: before 10.45 "[\E" and "[\Q\E" at the end of
+     * the pattern then leave the class open, where the backslash would end
+     * the pattern (pcre2test 10.32 to 10.44 with "bad_escape_is_literal").
+     */
+    #[Test]
+    #[DataProvider('provideCodesByPhpVersion')]
+    public function test_the_code_follows_the_judged_php_version(string $pattern, int $phpVersion, string $release, ErrorCode $code, int $offset): void
+    {
+        $result = RegexParser::create(['cache' => null, 'php_version' => $phpVersion, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame($code, $result->errorCode, \sprintf('%s for PHP %d on %s: %s', $pattern, $phpVersion, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s for PHP %d on %s', $pattern, $phpVersion, $release));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, phpVersion: int, release: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideCodesByPhpVersion(): iterable
+    {
+        yield '[\\E left open, PHP 7.3' => ['pattern' => '/[\\E/', 'phpVersion' => 70300, 'release' => '10.32', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 3];
+        yield '[\\Q\\E left open, PHP 7.4' => ['pattern' => '/[\\Q\\E/', 'phpVersion' => 70400, 'release' => '10.35', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 5];
+        yield '[\\E left open under X, PHP 7.4' => ['pattern' => '/[\\E/X', 'phpVersion' => 70400, 'release' => '10.33', 'code' => ErrorCode::EscapeTrailingBackslash, 'offset' => 3];
+        yield '[\\E left open, PHP 8.0' => ['pattern' => '/[\\E/', 'phpVersion' => 80000, 'release' => '10.35', 'code' => ErrorCode::EscapeTrailingBackslash, 'offset' => 3];
     }
 }

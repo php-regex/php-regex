@@ -62,6 +62,7 @@ final class PcreFeatureTest extends TestCase
         yield 'non-atomic assertion short syntax' => [PcreFeature::NonAtomicAssertionShortSyntax, '10.34', '10.35'];
         yield 'overflowing backslash number as octal' => [PcreFeature::OverflowingBackslashNumberIsOctal, '10.36', '10.37'];
         yield 'scan substring' => [PcreFeature::ScanSubstring, '10.44', '10.45'];
+        yield 'group list errors' => [PcreFeature::GroupListErrors, '10.46', '10.47'];
         yield 'offsets past the fault' => [PcreFeature::ErrorOffsetPastTheFault, '10.46', '10.47'];
         yield 'branch count off the condition name' => [PcreFeature::BranchCountErrorOffTheConditionName, '10.46', '10.47'];
         yield 'variable-length lookbehind' => [PcreFeature::VariableLengthLookbehind, '10.42', '10.43'];

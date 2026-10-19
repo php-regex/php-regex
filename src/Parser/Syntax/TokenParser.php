@@ -2388,7 +2388,7 @@ final class TokenParser
     {
         $listOpen = $startPosition + 2 + \strlen($name) + 1;
         if ('(' !== ($this->pattern[$listOpen] ?? '')) {
-            throw $this->parserException(\sprintf('Missing "(" to open the groups of (*%s: at position %d.', $name, $listOpen), ErrorCode::ScanSubstringMissingList, $listOpen);
+            throw $this->groupListError([$listOpen, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the groups of (*%s: at position %d.', $name, $listOpen)]);
         }
 
         [$groups, $bodyStart] = $this->readGroupList($listOpen + 1);
@@ -2461,7 +2461,7 @@ final class TokenParser
         if ($this->stream->matchLiteral('>')) { // (?P>name) subroutine
             $name = $this->parseSubroutineName();
             $returned = $this->readReturnedGroups() ?? [];
-            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', ErrorCode::GroupUnclosed);
+            $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', $this->callLeftOpenCode());
 
             return new SubroutineNode($name, 'P>', $startPos, $endToken->position + 1, $returned);
         }
@@ -2664,7 +2664,20 @@ final class TokenParser
      */
     private function groupListError(array $fault): ParserException
     {
+        if (!$this->supports(PcreFeature::GroupListErrors)) {
+            $fault = PcreVerb::groupListFaultBefore1047($fault, \strlen($this->pattern));
+        }
+
         return $this->parserException($fault[2], $fault[1], $fault[0]);
+    }
+
+    /**
+     * The code of a call by name the pattern ends in: before PCRE2 10.47 the
+     * name wants a ")" right after it, from 10.47 the call does.
+     */
+    private function callLeftOpenCode(): ErrorCode
+    {
+        return $this->supports(PcreFeature::CallsReturnCaptureGroups) ? ErrorCode::GroupUnclosed : ErrorCode::GroupNameUnterminated;
     }
 
     /**
@@ -2678,7 +2691,7 @@ final class TokenParser
 
         $name = $this->parseSubroutineName();
         $returned = $this->readReturnedGroups() ?? [];
-        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', ErrorCode::GroupUnclosed);
+        $endToken = $this->stream->consume(TokenType::GroupClose, 'Expected ) to close subroutine call', $this->callLeftOpenCode());
 
         return new SubroutineNode($name, '&', $startPosition, $endToken->position + 1, $returned);
     }
@@ -3935,6 +3948,12 @@ final class TokenParser
             $position = $this->groupNames->invalidNameOffset($nameStart);
 
             return $this->parserException(\sprintf('Invalid subroutine name "%s" at position %d: a group name must not start with a digit.', $name, $position), ErrorCode::GroupNameInvalid, $position);
+        }
+
+        // Before PCRE2 10.47 PCRE wants ")" right after the name of a call,
+        // as after any name it reads.
+        if (!$this->supports(PcreFeature::CallsReturnCaptureGroups)) {
+            return $this->parserException(\sprintf('Unexpected token "%s" after the subroutine name at position %d: ")" is expected to end the name.', $found, $position), ErrorCode::GroupNameUnterminated, $position);
         }
 
         // A "(" after the name: PCRE stops past it, a name or number expected.

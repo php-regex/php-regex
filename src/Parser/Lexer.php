@@ -1628,6 +1628,9 @@ final class Lexer
                     $this->reportsPastTheFault,
                     $this->utf,
                 ) ?? [$this->length, ErrorCode::GroupUnclosed, \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1])];
+                if (!$this->target->supports(PcreFeature::GroupListErrors)) {
+                    [$offset, $code, $message] = PcreVerb::groupListFaultBefore1047([$offset, $code, $message], $this->length);
+                }
 
                 throw LexerException::withContext($message, $code, $offset, $this->pattern);
             }
@@ -2373,9 +2376,11 @@ final class Lexer
             // Before PCRE2 10.45, "[\E", "[^\Q\E" and the like run into the
             // end of the pattern as a backslash: PCRE skips the empty quotes
             // that open a class, and under "(?xx)" its spaces and tabs, and
-            // meets nothing after the last quote.
+            // meets nothing after the last quote. Under
+            // PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, as PHP 7.3 and 7.4 compile,
+            // that backslash is a character, and the class is left open.
             $skipped = $this->extendedMoreMode ? '(?:\\\\(?:Q\\\\)?E|[ \t])' : '(?:\\\\(?:Q\\\\)?E)';
-            if (!$this->emptyQuoteOpeningClassIsUnclosed
+            if (!$this->emptyQuoteOpeningClassIsUnclosed && !$this->badEscapeIsLiteral
                 && 1 === LibraryPcre::match('/\G'.$skipped.'*+(?:\^'.$skipped.'*+)?(?<=\\\\E)\z/', $this->pattern, $quotes, 0, $classStart + 1)) {
                 throw LexerException::withContext(
                     \sprintf('A backslash ends the pattern at position %d.', $this->length),

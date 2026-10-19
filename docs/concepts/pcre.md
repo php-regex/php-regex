@@ -292,6 +292,7 @@ and a target has it from the release it arrived in on
 | `NamedCharacterBraceRefusedInClass` | 10.45 | "\N{" in a class is refused as a character name whatever follows the brace, where a count after "\N" was read as one. |
 | `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
 | `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
+| `GroupListErrors` | 10.47 | A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere. |
 | `GReferenceNumberReadBeforeClosing` | 10.47 | An unclosed "\g<3" or "\g{3" is refused after the number, not at "\g". |
 | `NamedCodePointReadBeforeModeCheck` | 10.47 | "\N{U+...}" without UTF is read to its brace before it is refused. |
 | `CalloutConditionErrorAtItemStart` | 10.47 | An error in a callout condition is reported at the start of the item. |
