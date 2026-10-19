@@ -45,6 +45,8 @@ final class PcreMessageCodes
         'unknown property name after \\P or \\p' => ['regex.unicode.property_invalid'],
         'subpattern name is too long (maximum 32 characters)' => ['regex.group.name_too_long'],
         'group number is too big' => ['regex.group.number_too_big'],
+        'conditional group contains more than two branches' => ['regex.conditional.too_many_branches'],
+        'DEFINE group contains more than one branch' => ['regex.define.too_many_branches'],
 
         // PCRE2 10.45 to 10.47 fail on an operator of an extended class
         // their walk over the lookbehinds meets.
