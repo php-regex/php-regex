@@ -124,8 +124,8 @@ final class BadEscape
         return match ($letter) {
             'N' => self::namedCharacterFails($pattern, $after, $utf),
             'p', 'P' => !self::readsProperty($pattern, $after, $target),
-            'k' => self::namedReferenceFails($pattern, $after, $utf, $pcre2Ten32),
-            'g' => !$inClass && self::gReferenceFails($pattern, $after, $utf, $pcre2Ten32, $captures),
+            'k' => self::namedReferenceFails($pattern, $after, $utf && !$pcre2Ten32 ? $target : null),
+            'g' => !$inClass && self::gReferenceFails($pattern, $after, $utf && !$pcre2Ten32 ? $target : null, $captures),
             'o' => self::octalBracesFail($pattern, $after, $utf),
             'x' => '{' === ($pattern[$after] ?? '') && self::hexBracesFail($pattern, $after + 1, $utf),
             'c' => self::controlFails($pattern, $after),
@@ -265,27 +265,37 @@ final class BadEscape
     /**
      * "\k" and a name between "<>", "''" or "{}".
      */
-    private static function namedReferenceFails(string $pattern, int $after, bool $utf, bool $pcre2Ten32): bool
+    private static function namedReferenceFails(string $pattern, int $after, ?PcreTarget $unicodeTables): bool
     {
         $closer = ['<' => '>', "'" => "'", '{' => '}'][$pattern[$after] ?? ''] ?? null;
 
-        return null === $closer || !self::readsName($pattern, $after + 1, $closer, $utf, $pcre2Ten32);
+        return null === $closer || !self::readsName($pattern, $after + 1, $closer, $unicodeTables);
     }
 
     /**
      * Whether a group name and its closer stand at $at. From 10.33 a name
-     * under UTF takes letters and digits of any script.
+     * under UTF takes letters and digits of any script, those of the Unicode
+     * tables of $unicodeTables; ASCII ones when it is null.
      */
-    private static function readsName(string $pattern, int $at, string $closer, bool $utf, bool $pcre2Ten32): bool
+    private static function readsName(string $pattern, int $at, string $closer, ?PcreTarget $unicodeTables): bool
     {
-        $unicode = $utf && !$pcre2Ten32;
-        if (1 === LibraryPcre::match($unicode ? '/\G\p{Nd}/u' : '/\G[0-9]/', $pattern, $digit, 0, $at)) {
-            return false;
+        if (null !== $unicodeTables) {
+            if (NameCharacters::digitAt($pattern, $at, $unicodeTables) > 0) {
+                return false;
+            }
+
+            $end = NameCharacters::end($pattern, $at, $unicodeTables);
+        } else {
+            if (Ascii::isDigit($pattern[$at] ?? '')) {
+                return false;
+            }
+
+            LibraryPcre::match('/\G[A-Za-z0-9_]*+/', $pattern, $name, 0, $at);
+            $end = $at + \strlen($name[0] ?? '');
         }
 
-        LibraryPcre::match($unicode ? '/\G[\p{L}\p{Nd}_]*+/u' : '/\G[A-Za-z0-9_]*+/', $pattern, $name, 0, $at);
         // The length is counted in bytes, as PCRE2 counts code units.
-        $length = \strlen($name[0] ?? '');
+        $length = $end - $at;
 
         return $length > 0 && $length <= self::MAX_NAME_LENGTH && $closer === ($pattern[$at + $length] ?? '');
     }
@@ -295,7 +305,7 @@ final class BadEscape
      * name or a number between "<>" or "''". A number counted back from the
      * groups opened so far needs them.
      */
-    private static function gReferenceFails(string $pattern, int $after, bool $utf, bool $pcre2Ten32, ?int $captures): bool
+    private static function gReferenceFails(string $pattern, int $after, ?PcreTarget $unicodeTables, ?int $captures): bool
     {
         $opener = $pattern[$after] ?? '';
         if ('' === $opener) {
@@ -307,7 +317,7 @@ final class BadEscape
             // "\g<0>" calls the whole pattern.
             $number = self::signedNumber($pattern, $after + 1, $captures, false);
             if (null === $number) {
-                return !self::readsName($pattern, $after + 1, $closer, $utf, $pcre2Ten32);
+                return !self::readsName($pattern, $after + 1, $closer, $unicodeTables);
             }
 
             [$fails, $end] = $number;
@@ -318,7 +328,7 @@ final class BadEscape
         if ('{' === $opener) {
             $number = self::signedNumber($pattern, $after + 1, $captures, true);
             if (null === $number) {
-                return !self::readsName($pattern, $after + 1, '}', $utf, $pcre2Ten32);
+                return !self::readsName($pattern, $after + 1, '}', $unicodeTables);
             }
 
             [$fails, $end] = $number;

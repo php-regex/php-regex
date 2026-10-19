@@ -1668,7 +1668,7 @@ final class Lexer
                     $this->pattern,
                     $listOpen,
                     $this->reportsPastTheFault,
-                    $this->utf,
+                    $this->utf ? $this->target : null,
                 ) ?? [$this->length, ErrorCode::GroupUnclosed, \sprintf('Missing closing parenthesis for "(*%s:".', $opener[1])];
                 if (!$this->target->supports(PcreFeature::GroupListErrors)) {
                     [$offset, $code, $message] = PcreVerb::groupListFaultBefore1047([$offset, $code, $message], $this->length);

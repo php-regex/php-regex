@@ -16,6 +16,8 @@ namespace PHPRegex\Parser\Syntax;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * What "(*...)" holds.
@@ -160,14 +162,17 @@ final class PcreVerb
      * a digit or is not closed, or no "," or ")" after an item. Null when the
      * list closes. What the numbers name is left to the caller.
      *
-     * @param bool $pastTheDigit whether a name starting with a digit is
-     *                           refused past the digit, as from PCRE2 10.47
-     * @param bool $unicode      whether names are read in UTF mode
+     * @param bool            $pastTheDigit  whether a name starting with a digit
+     *                                       is refused past the digit, as from
+     *                                       PCRE2 10.47
+     * @param PcreTarget|null $unicodeTables in UTF mode, the release whose
+     *                                       Unicode tables say what a name
+     *                                       holds
      *
      * @return array{0: int, 1: ErrorCode, 2: string}|null the offset, the
      *                                                     code and the message
      */
-    public static function groupListFault(string $pattern, int $open, bool $pastTheDigit = true, bool $unicode = false): ?array
+    public static function groupListFault(string $pattern, int $open, bool $pastTheDigit = true, ?PcreTarget $unicodeTables = null): ?array
     {
         if ('(' !== ($pattern[$open] ?? '')) {
             return [$open, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the list of groups at position %d.', $open)];
@@ -178,14 +183,19 @@ final class PcreVerb
             $quote = $pattern[$at] ?? '';
             if ('<' === $quote || "'" === $quote) {
                 $nameStart = $at + 1;
-                if (1 === LibraryPcre::match($unicode ? '/\G\p{Nd}/u' : '/\G[0-9]/', $pattern, $digit, 0, $nameStart)) {
-                    $offset = $nameStart + ($pastTheDigit ? \strlen($digit[0]) : 0);
+                $digit = null !== $unicodeTables ? NameCharacters::digitAt($pattern, $nameStart, $unicodeTables) : (Ascii::isDigit($pattern[$nameStart] ?? '') ? 1 : 0);
+                if ($digit > 0) {
+                    $offset = $nameStart + ($pastTheDigit ? $digit : 0);
 
                     return [$offset, ErrorCode::GroupNameInvalid, \sprintf('A group name must not start with a digit, at position %d.', $offset)];
                 }
 
-                LibraryPcre::match($unicode ? '/\G[_\p{L}\p{Nd}]*+/u' : '/\G\w*+/', $pattern, $name, 0, $nameStart);
-                $nameEnd = $nameStart + \strlen($name[0] ?? '');
+                if (null !== $unicodeTables) {
+                    $nameEnd = NameCharacters::end($pattern, $nameStart, $unicodeTables);
+                } else {
+                    LibraryPcre::match('/\G\w*+/', $pattern, $name, 0, $nameStart);
+                    $nameEnd = $nameStart + \strlen($name[0] ?? '');
+                }
                 if ($nameEnd === $nameStart) {
                     return [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Group name expected at position %d.', $nameStart)];
                 }

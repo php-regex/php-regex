@@ -193,6 +193,9 @@ final class BadEscapeIsLiteralTest extends TestCase
         // "\k" with no well-formed name.
         yield 'k alone' => ['pattern' => '/\k/', 'subject' => 'k', 'match' => 'k'];
         yield 'k and a name starting with a digit' => ['pattern' => '/\k<1a>/', 'subject' => 'k<1a>', 'match' => 'k<1a>'];
+        yield 'k and a name starting with an Arabic digit under u' => ['pattern' => "/\\k<\u{661}a>/u", 'subject' => "k<\u{661}a>", 'match' => "k<\u{661}a>"];
+        // U+0870 is a letter from Unicode 14, which PCRE2 10.39 brought.
+        yield 'k and a letter newer than the tables under u' => ['pattern' => "/\\k<a\u{870}>/u", 'subject' => "k<a\u{870}>", 'match' => "k<a\u{870}>"];
         yield 'k and an empty name' => ['pattern' => '/\k<>/', 'subject' => 'k<>', 'match' => 'k<>'];
         yield 'k unclosed' => ['pattern' => '/\k{x/', 'subject' => 'k{x', 'match' => 'k{x'];
         yield 'k and a name of 33 characters' => ['pattern' => '/\k<'.str_repeat('a', 33).'>/', 'subject' => 'k<'.str_repeat('a', 33).'>', 'match' => 'k<'.str_repeat('a', 33).'>'];

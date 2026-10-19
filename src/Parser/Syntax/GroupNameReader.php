@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Syntax;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -70,7 +71,11 @@ final class GroupNameReader
 
     private bool $duplicatesAllowed = false;
 
-    private bool $unicodeNames = false;
+    /**
+     * The release whose Unicode tables say which letters and digits a name
+     * holds, or null when a name holds ASCII word characters only.
+     */
+    private ?PcreTarget $unicodeTables = null;
 
     public function __construct(private readonly TokenStream $stream) {}
 
@@ -107,13 +112,14 @@ final class GroupNameReader
     }
 
     /**
-     * Whether the pattern is in Unicode mode, where PCRE2 10.33+ takes a name
-     * made of letters of any script, decimal digits and "_", not starting
-     * with a digit: "(?<nämed>b)".
+     * In Unicode mode PCRE2 10.33+ takes a name made of letters of any
+     * script, decimal digits and "_", not starting with a digit:
+     * "(?<nämed>b)"; the letters and digits of the Unicode tables of $target,
+     * or ASCII word characters only when null.
      */
-    public function readUnicodeNames(bool $unicode): void
+    public function readUnicodeNames(?PcreTarget $target): void
     {
-        $this->unicodeNames = $unicode;
+        $this->unicodeTables = $target;
     }
 
     public function duplicatesAllowed(): bool
@@ -172,8 +178,8 @@ final class GroupNameReader
         // PCRE group names are word characters only and must not start with
         // a digit: PCRE reads the characters a name may hold, and wants what
         // closes the name right after them.
-        $namePattern = $this->unicodeNames ? '/^[_\p{L}][_\p{L}\p{Nd}]*+\z/u' : '/^[A-Za-z_]\w*+\z/';
-        if (1 !== LibraryPcre::match($namePattern, $name)) {
+        $valid = null !== $this->unicodeTables ? NameCharacters::isName($name, $this->unicodeTables) : 1 === LibraryPcre::match('/^[A-Za-z_]\w*+\z/', $name);
+        if (!$valid) {
             throw $this->invalidName($name, $nameStart);
         }
 
@@ -247,7 +253,9 @@ final class GroupNameReader
      */
     public function startsWithDigit(int $position): bool
     {
-        return 1 === LibraryPcre::match($this->unicodeNames ? '/\G\p{Nd}/u' : '/\G[0-9]/', $this->stream->getPattern(), $matches, 0, $position);
+        $pattern = $this->stream->getPattern();
+
+        return null !== $this->unicodeTables ? NameCharacters::digitAt($pattern, $position, $this->unicodeTables) > 0 : Ascii::isDigit($pattern[$position] ?? '');
     }
 
     /**
@@ -259,19 +267,20 @@ final class GroupNameReader
     {
         $pattern = $this->stream->getPattern();
 
-        if ($this->unicodeNames) {
-            if (1 === LibraryPcre::match('/\G\p{Nd}/u', $pattern, $matches, 0, $position)) {
-                return $position + ($this->pastTheFault ? \strlen($matches[0]) : 0);
+        if (null !== $this->unicodeTables) {
+            $digit = NameCharacters::digitAt($pattern, $position, $this->unicodeTables);
+            if ($digit > 0) {
+                return $position + ($this->pastTheFault ? $digit : 0);
             }
 
-            LibraryPcre::match('/\G[_\p{L}\p{Nd}]*+/u', $pattern, $matches, 0, $position);
-        } else {
-            if (Ascii::isDigit($pattern[$position] ?? '')) {
-                return $position + ($this->pastTheFault ? 1 : 0);
-            }
-
-            LibraryPcre::match('/\G\w*+/', $pattern, $matches, 0, $position);
+            return NameCharacters::end($pattern, $position, $this->unicodeTables);
         }
+
+        if (Ascii::isDigit($pattern[$position] ?? '')) {
+            return $position + ($this->pastTheFault ? 1 : 0);
+        }
+
+        LibraryPcre::match('/\G\w*+/', $pattern, $matches, 0, $position);
 
         return $position + \strlen($matches[0] ?? '');
     }

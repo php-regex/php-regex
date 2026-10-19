@@ -102,7 +102,10 @@ to 10.35, and a 7.4 target is still judged as 10.33. The script names each
 release knows are modelled: 10.32 has no `Unknown`, 10.34 added the Unicode
 12.1 scripts, 10.35 the Unicode 13 ones, 10.39 the Unicode 14 ones, so
 `\p{Vithkuqi}` is refused for PHP 8.0 and is the text `p{Vithkuqi}` for PHP
-7.3 and 7.4 without `X`. Which characters a `\p{...}` holds is not: the
+7.3 and 7.4 without `X`. So are the letters and decimal digits a group name
+holds under UTF, those of each release's Unicode tables, from Unicode 11 for
+10.33 to Unicode 17 for 10.48: `(?<aࡰ>x)/u`, whose `ࡰ` Unicode 14 added, is
+refused up to 10.38. Which characters a `\p{...}` holds is not: the
 Unicode data of an old release is a blind spot below 10.39. Neither are the
 matching bugs of an old release, such as a
 `(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse

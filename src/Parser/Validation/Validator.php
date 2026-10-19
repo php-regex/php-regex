@@ -63,6 +63,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\BadEscape;
+use PHPRegex\Parser\Syntax\NameCharacters;
 use PHPRegex\Parser\Syntax\NamedCharacterBrace;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PosixItem;
@@ -2794,10 +2795,15 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        $unicodeNames = $this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames);
-        LibraryPcre::match($unicodeNames ? '/\G(?:(\p{Nd})|[_\p{L}\p{Nd}]*+)/u' : '/\G(?:([0-9])|[_A-Za-z0-9]*+)/', $source, $name, 0, $nameStart);
-        $read = $name[0] ?? '';
-        $digit = $name[1] ?? '';
+        if ($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames)) {
+            $digit = substr($source, $nameStart, NameCharacters::digitAt($source, $nameStart, $this->target));
+            $read = '' === $digit ? substr($source, $nameStart, NameCharacters::end($source, $nameStart, $this->target) - $nameStart) : $digit;
+        } else {
+            LibraryPcre::match('/\G(?:([0-9])|[_A-Za-z0-9]*+)/', $source, $name, 0, $nameStart);
+            $read = $name[0] ?? '';
+            $digit = $name[1] ?? '';
+        }
+
         $closeAt = $nameStart + \strlen($read);
         $closeAt += $padded ? strspn($source, " \t", $closeAt) : 0;
 

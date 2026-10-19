@@ -327,7 +327,7 @@ final class TokenParser
         // the start, from PCRE2 10.33.
         $this->unicodeMode = str_contains($flags, 'u')
             || StartOptions::turnUtfOn($this->pattern);
-        $this->groupNames->readUnicodeNames($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames));
+        $this->groupNames->readUnicodeNames($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames) ? $this->target : null);
         if (null !== $this->namesAround) {
             $this->groupNames->shareNamesWith($this->namesAround);
             $this->groupNames->allowDuplicates($this->namesAround->duplicatesAllowed());
@@ -2671,7 +2671,7 @@ final class TokenParser
     {
         // What stops PCRE reading the list, if anything; the numbers it has
         // read before are judged first.
-        $fault = PcreVerb::groupListFault($this->pattern, $at - 1, $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode);
+        $fault = PcreVerb::groupListFault($this->pattern, $at - 1, $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode ? $this->target : null);
 
         $groups = [];
         while (true) {
