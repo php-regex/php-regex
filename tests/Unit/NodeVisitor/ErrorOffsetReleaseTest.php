@@ -206,6 +206,15 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'alphabetic name holding a digit' => ['pattern' => '/(*a9b)/', 'bundled' => 5, 'newer' => 6, 'movedIn' => '10.47'];
         yield 'alphabetic name ending in a digit' => ['pattern' => '/(*pla9)/', 'bundled' => 6, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'alphabetic name ending in a digit at the end' => ['pattern' => '/(*pla9/', 'bundled' => 6, 'newer' => 6, 'movedIn' => '10.40'];
+        // From 10.47 past the whole character after the name: in UTF mode
+        // the character, not its first byte.
+        yield 'alphabetic name followed by a two-byte letter' => ['pattern' => '/(*aé)/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'alphabetic name followed by a two-byte letter under (*UTF)' => ['pattern' => '/(*UTF)(*aé)/', 'bundled' => 9, 'newer' => 11, 'movedIn' => '10.47'];
+        yield 'alphabetic name followed by a two-byte letter without UTF' => ['pattern' => '/(*aé)/', 'bundled' => 3, 'newer' => 4, 'movedIn' => '10.47'];
+        yield 'alphabetic name followed by a three-byte letter' => ['pattern' => '/x(*a名)y/u', 'bundled' => 4, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'alphabetic name followed by a four-byte character' => ['pattern' => '/(*a😀)/u', 'bundled' => 3, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'known alphabetic name followed by a two-byte letter' => ['pattern' => '/(*plaé:x)/u', 'bundled' => 5, 'newer' => 7, 'movedIn' => '10.47'];
+        yield 'alphabetic name followed by a two-byte letter never closed' => ['pattern' => '/(*aé/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
         yield 'unknown verb name' => ['pattern' => '/(*FOO)/', 'bundled' => 5, 'newer' => 5, 'movedIn' => '10.40'];
         yield 'verb name of a digit at the end' => ['pattern' => '/(*9/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];
         yield 'verb name of a digit before a colon' => ['pattern' => '/(*9:/', 'bundled' => 3, 'newer' => 3, 'movedIn' => '10.40'];

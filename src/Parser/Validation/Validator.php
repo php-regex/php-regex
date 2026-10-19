@@ -1542,13 +1542,14 @@ final class Validator extends AbstractNodeVisitor
             }
 
             // PCRE reports an unknown verb where its name ends, and past the
-            // character after it an alphabetic assertion, whose name starts
-            // with a lowercase letter, followed by no colon.
+            // character after it, whole in UTF mode, an alphabetic assertion,
+            // whose name starts with a lowercase letter, followed by no colon.
             $nameEnd = $node->startPosition + 2 + (1 === LibraryPcre::match('/^\w*+/', $verbName, $name) ? \strlen($name[0]) : 0);
+            $width = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', (string) $this->source, $character, 0, $nameEnd) ? \strlen($character[0]) : 1;
             $this->raiseSemanticError(
                 \sprintf('Invalid or unsupported PCRE verb: "%s".', $verbName),
                 match (true) {
-                    1 === LibraryPcre::match('/^[a-z]/', $verbName) && ':' !== ($this->source[$nameEnd] ?? '') => $this->pastTheFault($nameEnd + 1),
+                    1 === LibraryPcre::match('/^[a-z]/', $verbName) && ':' !== ($this->source[$nameEnd] ?? '') => $this->pastTheFault($nameEnd + $width, $width),
                     default => $nameEnd,
                 },
                 ErrorCode::VerbInvalid,

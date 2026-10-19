@@ -4355,15 +4355,18 @@ final class TokenParser
 
         // "(*" at the end is a "*" with nothing to repeat, and from PCRE2
         // 10.47 an alphabetic name, one that starts with a lowercase letter,
-        // followed by no colon is refused past the character after it.
+        // followed by no colon is refused past the character after it,
+        // whole in UTF mode.
         $pastTheFault = $this->supports(PcreFeature::ErrorOffsetPastTheFault);
         if ('' === $name && $nameEnd >= \strlen($this->pattern)) {
             return $this->pastTheFault($nameEnd);
         }
 
-        return $pastTheFault && 1 === LibraryPcre::match('/^[a-z]/', $name) && $nameEnd < \strlen($this->pattern) && ':' !== $this->pattern[$nameEnd]
-            ? $nameEnd + 1
-            : $nameEnd;
+        if (!$pastTheFault || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $nameEnd >= \strlen($this->pattern) || ':' === $this->pattern[$nameEnd]) {
+            return $nameEnd;
+        }
+
+        return $nameEnd + ($this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1);
     }
 
     /**
