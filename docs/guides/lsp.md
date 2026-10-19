@@ -92,6 +92,13 @@ What each diagnostic underlines:
 Columns count UTF-16 code units, as the protocol does, and follow the literal
 as written: in `"/\t(a/"` an offset past the tab lands past the `\t` escape.
 
+A change analyses only the patterns whose text it changed; the findings of
+the others move with them. A keystroke inside a pattern that a call takes
+whole, as in `preg_match('/a+b/', $s)`, is read in place, the rest of the
+document standing as it stood; any other change reads the document again.
+In a file holding about 330 patterns, a keystroke inside one of them takes
+about 4 ms.
+
 ### Hover Information
 
 Hover over any regex pattern to see:

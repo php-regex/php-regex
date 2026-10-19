@@ -7,7 +7,9 @@ CHANGELOG
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * A change analyses only the patterns whose text it changed: the findings
-   of each pattern are kept for the session, and moved with the pattern.
+   of each pattern are kept for the session, and moved with the pattern. A
+   keystroke inside a pattern a call takes whole is read in place, without
+   reading the document again.
  * A guard on `PHP_VERSION_ID` around a pattern narrows the versions it is
    judged for, as in `regex lint`.
  * `@regex-target` narrows the versions a pattern is judged for, as in

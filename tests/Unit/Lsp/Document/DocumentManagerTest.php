@@ -129,4 +129,53 @@ final class DocumentManagerTest extends TestCase
 
         $this->assertSame([], $occurrences);
     }
+
+    /**
+     * A keystroke inside a pattern reads the pattern in place, without
+     * reading the document again; a keystroke elsewhere reads it whole, and
+     * so does one in a document a change of declarations reads again.
+     * Either way the occurrences are those of a document opened with the
+     * text.
+     */
+    #[Test]
+    public function test_an_edit_inside_a_pattern_is_read_in_place(): void
+    {
+        $finder = new RegexFinder();
+        $manager = new DocumentManager($finder);
+        $uri = 'file:///test.php';
+        $manager->open($uri, "<?php
+preg_match('/a/', \$s);\npreg_match('/b/', \$s);\n");
+        $reads = self::reads($finder);
+
+        foreach (["<?php\npreg_match('/ab/', \$s);\npreg_match('/b/', \$s);\n", "<?php\npreg_match('/abc/', \$s);\npreg_match('/b/', \$s);\n"] as $text) {
+            $manager->update($uri, $text);
+            $this->assertEquals(self::opened($text), $manager->getOccurrences($uri));
+        }
+
+        $this->assertSame($reads, self::reads($finder));
+
+        $text = "<?php\npreg_match('/abc/', \$t);\npreg_match('/b/', \$s);\n";
+        $manager->update($uri, $text);
+        $this->assertEquals(self::opened($text), $manager->getOccurrences($uri));
+        $this->assertSame($reads + 1, self::reads($finder));
+    }
+
+    /**
+     * @return list<RegexOccurrence>
+     */
+    private static function opened(string $text): array
+    {
+        $manager = new DocumentManager(new RegexFinder());
+        $manager->open('file:///test.php', $text);
+
+        return $manager->getOccurrences('file:///test.php');
+    }
+
+    private static function reads(RegexFinder $finder): int
+    {
+        $reads = (new \ReflectionProperty(RegexFinder::class, 'reads'))->getValue($finder);
+        self::assertIsInt($reads);
+
+        return $reads;
+    }
 }

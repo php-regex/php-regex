@@ -71,6 +71,7 @@ final class DocumentManager
      */
     public function update(string $uri, string $content, ?int $version = null): array
     {
+        $before = $this->documents[$uri] ?? null;
         $this->documents[$uri] = $content;
         if (null === $version) {
             unset($this->versions[$uri]);
@@ -82,7 +83,11 @@ final class DocumentManager
             return array_values(array_diff($this->refresh(), [$uri]));
         }
 
-        $this->occurrences[$uri] = $this->finder->find($content, $this->declarations);
+        // The declarations are those the text before was read with: an edit
+        // inside a pattern is read in place.
+        $this->occurrences[$uri] = null === $before || !isset($this->occurrences[$uri])
+            ? $this->finder->find($content, $this->declarations)
+            : $this->finder->findAfterEdit($before, $this->occurrences[$uri], $content, $this->declarations);
 
         return [];
     }

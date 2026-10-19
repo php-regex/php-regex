@@ -53,7 +53,26 @@ final class PositionConverter
 
         return [
             'line' => $line,
-            'character' => $this->utf16Length(substr($this->content, $lineStart, max(0, $offset - $lineStart))),
+            'character' => self::utf16Length(substr($this->content, $lineStart, max(0, $offset - $lineStart))),
+        ];
+    }
+
+    /**
+     * The position of a byte offset in the content, as offsetToPosition()
+     * gives it, without the table of every line: for a few offsets of a
+     * long text.
+     *
+     * @return Position
+     */
+    public static function positionIn(string $content, int $offset): array
+    {
+        $before = substr($content, 0, max(0, $offset));
+        $lastBreak = strrpos($before, "\n");
+        $lineStart = false === $lastBreak ? 0 : $lastBreak + 1;
+
+        return [
+            'line' => substr_count($before, "\n"),
+            'character' => self::utf16Length(substr($before, $lineStart)),
         ];
     }
 
@@ -106,9 +125,9 @@ final class PositionConverter
      * The number of UTF-16 code units a piece of text takes: one per code
      * point, two for anything outside the basic multilingual plane.
      */
-    private function utf16Length(string $text): int
+    private static function utf16Length(string $text): int
     {
-        if (!$this->isUtf8($text)) {
+        if (!self::isUtf8($text)) {
             return \strlen($text);
         }
 
@@ -124,7 +143,7 @@ final class PositionConverter
             return 0;
         }
 
-        if (!$this->isUtf8($line)) {
+        if (!self::isUtf8($line)) {
             return min($units, \strlen($line));
         }
 
@@ -136,14 +155,14 @@ final class PositionConverter
                 break;
             }
 
-            $consumed += $this->utf16Length($character);
+            $consumed += self::utf16Length($character);
             $bytes += \strlen($character);
         }
 
         return $bytes;
     }
 
-    private function isUtf8(string $text): bool
+    private static function isUtf8(string $text): bool
     {
         return 1 === LibraryPcre::match('//u', $text);
     }

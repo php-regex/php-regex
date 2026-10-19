@@ -97,6 +97,38 @@ final class IncrementalDiagnosticsTest extends TestCase
     }
 
     /**
+     * Typing a pattern one keystroke at a time, the literal unclosed for a
+     * while, then on the line of another and of a silenced one: each step
+     * publishes what a fresh server publishes, and the keystrokes inside
+     * the literal do not read the document again.
+     */
+    #[Test]
+    public function test_typing_inside_a_pattern_publishes_what_a_fresh_server_publishes(): void
+    {
+        $head = "<?php\n// @regex-ignore-next-line\npreg_match('/(a+)+b/', \$s);\npreg_match(";
+        $tail = ", \$s); preg_match('/é+x/u', \$s);\nif (PHP_VERSION_ID >= 80400) { preg_match('/a{,3}/', \$s); }\n";
+        $steps = ["'/'", "'/a'", "'/a+'", "'/a+(a'", "'/a+(a*'", "'/a+(a*)b/'", "'/a+(a*)b/'.", "'/a+(a*)b/'", "'/a+(a*)é\\d/u'", "'/a+/u'"];
+        $finder = new RegexFinder();
+        $handler = new TextDocumentHandler(new DocumentManager($finder), Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low);
+        $this->publish($handler, $head.$steps[0].$tail, true);
+        $reads = (new \ReflectionProperty(RegexFinder::class, 'reads'))->getValue($finder);
+        $published = 0;
+        foreach ($steps as $step => $literal) {
+            $text = $head.$literal.$tail;
+            $incremental = $this->publish($handler, $text, false);
+            $fresh = $this->publish(new TextDocumentHandler(new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low), $text, true);
+
+            $this->assertSame($fresh, $incremental, 'Step '.$step);
+            $published += \count($fresh);
+        }
+
+        $this->assertGreaterThan(10, $published);
+        // The dot typed after the literal and erased: two reads of the
+        // document; the keystrokes inside the literal read none.
+        $this->assertSame(\is_int($reads) ? $reads + 2 : null, (new \ReflectionProperty(RegexFinder::class, 'reads'))->getValue($finder));
+    }
+
+    /**
      * The diagnostics the handler publishes for the text, opened or changed.
      *
      * @return list<mixed>

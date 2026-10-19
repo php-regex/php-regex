@@ -82,7 +82,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     public function extractSource(string $content, string $file = ''): array
     {
-        if ('' === $content || $this->shouldSkipContent($content)) {
+        if (!$this->readsContent($content)) {
             return [];
         }
 
@@ -142,6 +142,16 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         return TokenGuards::regions($tokens, $tokenOffsets, $closers, $content)->apply(
             $this->settle(array_values($found->getArrayCopy()), $patternArguments, $tokens, $tokenOffsets, $closers, $file, $content),
         );
+    }
+
+    /**
+     * Whether extractSource() reads the source at all: one that names none
+     * of the calls the registry knows holds no pattern of theirs, and is
+     * not tokenized.
+     */
+    public function readsContent(string $content): bool
+    {
+        return '' !== $content && !$this->shouldSkipContent($content);
     }
 
     /**
