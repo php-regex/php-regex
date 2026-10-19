@@ -151,6 +151,16 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   it at offset 5 (7 from 10.47). `\g{--1}` and `\g{-+1}` have the right
   offset but say `regex.backref.relative` where PCRE2 says "subpattern name
   expected".
+- A reversed range before a range the parser refuses, in a closed class:
+  `[z-a\d-b]` is refused at 3 (4 from 10.47) by PCRE2, later by the library.
+- An empty `\Q\E` before an item PCRE2 refuses hides it when a range the
+  parser refuses follows: `[\Q\E[:foo:]\d-z]` is offset 7 (12 from 10.45).
+- From 10.45 a range from a type ending in a `\Q` the pattern ends in,
+  `[\d-\Q`, misses its `]` at the end of the pattern; the library says 4.
+- Up to 10.44 `([a-z\E-\pL]` misses its `)` at 12: the library reads a range
+  ending on `\pL` there (a quote after a range resets the range read).
+- A `\c` ending a class left open hides an earlier error in it: `[[:foo:]\c`,
+  `[z-a\c`.
 - `\k{1 }` and `\k{1n }` up to 10.42: PCRE2 says "subpattern name must start
   with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
   reported one byte early.

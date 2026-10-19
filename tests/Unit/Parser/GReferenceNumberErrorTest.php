@@ -119,6 +119,31 @@ final class GReferenceNumberErrorTest extends TestCase
         yield 'braced number left open' => ['pattern' => '/()\g{3/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 4];
         yield 'braced number left open, PCRE2 10.47' => ['pattern' => '/()\g{3/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 6];
         yield 'padded number left open, PCRE2 10.43' => ['pattern' => '/()\g{ 3/', 'php' => '8.4', 'release' => '10.43', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 4];
+
+        // A sign is no digit: what follows the number is no "}", "\g is not
+        // followed by a braced..." past the "g" up to 10.46, "syntax error in
+        // subpattern number" where the number ends from 10.47 (pcre2test
+        // 10.32 to 10.49).
+        yield 'braced number before a hyphen' => ['pattern' => '/(a)\g{1-}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'braced number before a hyphen, PCRE2 10.47' => ['pattern' => '/(a)\g{1-}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 7];
+        yield 'braced number before a hyphen under X, PCRE2 10.32' => ['pattern' => '/(a)\g{1-}/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'braced number before a plus' => ['pattern' => '/(a)\g{1+}/', 'php' => '8.0', 'release' => '10.35', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'braced number before a hyphen and a number' => ['pattern' => '/(a)\g{1-1}/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 7];
+        yield 'braced backward number before a hyphen' => ['pattern' => '/(a)\g{-1-}/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'braced backward number before a hyphen, PCRE2 10.47' => ['pattern' => '/(a)\g{-1-}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 8];
+        yield 'braced number of no group before a hyphen, PCRE2 10.47' => ['pattern' => '/(a)\g{2-}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 7];
+        yield 'padded number before a hyphen, PCRE2 10.44' => ['pattern' => '/(a)\g{ 1-}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 5];
+        yield 'padded number before a hyphen, PCRE2 10.47' => ['pattern' => '/(a)\g{ 1-}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefInvalidSyntax, 'offset' => 8];
+        yield 'braced relative zero before a hyphen, PCRE2 10.47' => ['pattern' => '/(a)\g{-0-}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::BackrefZero, 'offset' => 5];
+        yield 'braced number too big before a hyphen' => ['pattern' => '/(a)\g{65536-}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::GroupNumberTooBig, 'offset' => 5];
+
+        // A sign PCRE2 reads no number after is no number: "\g{" then holds
+        // a name, and a sign is no name ("subpattern name expected").
+        yield 'braced two hyphens' => ['pattern' => '/(a)\g{--1}/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'braced hyphen and plus' => ['pattern' => '/(a)\g{-+1}/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'braced plus and hyphen under X' => ['pattern' => '/(a)\g{+-1}/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'braced sign alone' => ['pattern' => '/(a)\g{+}/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::GroupNameExpected, 'offset' => 6];
+        yield 'padded two hyphens, PCRE2 10.47' => ['pattern' => '/(a)\g{ --1}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::GroupNameExpected, 'offset' => 7];
     }
 
     /**

@@ -1314,8 +1314,9 @@ final class TokenParser
         $this->guardReferenceNameLength($token->value, $token->position);
 
         // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
-        // like \g<N>, calls the group instead.
-        if (LibraryPcre::match('/^\\\\g(?:\{([0-9+-]++)\}|([0-9+-]++))$/', $value, $m)) {
+        // like \g<N>, calls the group instead. Braces hold one sign at most,
+        // then digits only: "\g{1-}" and "\g{--1}" are refused below.
+        if (LibraryPcre::match('/^\\\\g(?:\{[+-]?\d++\}|[0-9+-]++)$/', $value)) {
             return new BackrefNode($value, $startPosition, $endPosition);
         }
 
