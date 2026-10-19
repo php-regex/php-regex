@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
-use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -50,6 +49,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -167,12 +167,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     private const CHAR_CLASS_META = [
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
-
-    // Intelligent delimiter mapping cache
-    /**
-     * @var array<string, string>
-     */
-    private static array $delimiterCache = [];
 
     // Minimal state tracking
     private bool $inCharClass = false;
@@ -435,7 +429,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->delimiter = $node->delimiter;
         $this->flags = $node->flags;
         $this->utfVerb = self::startsWithUtfVerb($node->pattern);
-        $this->closingDelimiter = $this->getClosingDelimiter($node->delimiter);
+        $this->closingDelimiter = PatternParser::closingDelimiter($node->delimiter);
         $this->source = $this->collapseExtendedComments || !$this->preserveSpelling
             ? null
             : $node->source;
@@ -1883,31 +1877,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * Intelligent delimiter mapping with caching.
-     */
-    private function getClosingDelimiter(string $delimiter): string
-    {
-        // One entry per delimiter byte at most.
-        if (!isset(self::$delimiterCache[$delimiter])) {
-            StaticCaches::register(self::class, self::clearCaches(...));
-            self::$delimiterCache[$delimiter] = match ($delimiter) {
-                '(' => ')',
-                '[' => ']',
-                '{' => '}',
-                '<' => '>',
-                default => $delimiter,
-            };
-        }
-
-        return self::$delimiterCache[$delimiter];
-    }
-
-    private static function clearCaches(): void
-    {
-        self::$delimiterCache = [];
-    }
-
-    /**
      * String escaping with minimal allocations.
      */
     private function escapeString(string $value): string
@@ -2051,7 +2020,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->droppedGroups = [];
         $this->spacedBraces = null;
         $this->delimiter = $node->delimiter;
-        $this->closingDelimiter = $this->getClosingDelimiter($node->delimiter);
+        $this->closingDelimiter = PatternParser::closingDelimiter($node->delimiter);
         $this->bracketMark = self::MODE_PRETTY === $this->mode && $this->delimiter !== $this->closingDelimiter
             ? self::markAbsentFrom($node->source ?? $node->accept(new self()))
             : null;

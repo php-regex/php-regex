@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -36,8 +37,6 @@ final class NoJit
     private const HELD_BY_THE_VERB = ['*', '_', ')'];
 
     private const REPLACEMENTS = ["\x01", '#', '~', '%', '!', '@', ';', ','];
-
-    private const CLOSING_BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 
     /**
      * The pattern with the verb after its opening delimiter; the pattern as
@@ -87,7 +86,7 @@ final class NoJit
             return null;
         }
 
-        $close = self::CLOSING_BRACKETS[$open] ?? $open;
+        $close = PatternParser::CLOSING_BRACKETS[$open] ?? $open;
         $length = \strlen($trimmed);
         $depth = 1;
         for ($index = 1; $index < $length; $index++) {

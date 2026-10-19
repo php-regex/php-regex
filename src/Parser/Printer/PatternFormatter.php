@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 
 /**
  * Lays a pattern out over lines under x, or compacts it to one line.
@@ -39,8 +40,6 @@ use PHPRegex\Parser\RegexParser;
  */
 final class PatternFormatter
 {
-    private const CLOSING_DELIMITERS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
-
     private readonly int $width;
 
     private readonly PcreTarget $target;
@@ -145,7 +144,7 @@ final class PatternFormatter
             return $regex->accept(new PatternPrinter());
         }
 
-        return $regex->delimiter.$regex->source.(self::CLOSING_DELIMITERS[$regex->delimiter] ?? $regex->delimiter).$regex->flags;
+        return $regex->delimiter.$regex->source.(PatternParser::CLOSING_BRACKETS[$regex->delimiter] ?? $regex->delimiter).$regex->flags;
     }
 
     /**

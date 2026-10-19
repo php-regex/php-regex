@@ -29,6 +29,12 @@ use PHPRegex\Parser\Text\DisplayEscaper;
 final class PatternParser
 {
     /**
+     * The delimiters PHP closes with another character, each with the one
+     * that closes it; any other delimiter closes itself.
+     */
+    public const CLOSING_BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
+
+    /**
      * @return array{0: string, 1: string, 2: string}
      */
     public static function extractPatternAndFlags(string $regex, ?PcreTarget $target = null): array
@@ -206,13 +212,7 @@ final class PatternParser
 
     public static function closingDelimiter(string $delimiter): string
     {
-        return match ($delimiter) {
-            '(' => ')',
-            '[' => ']',
-            '{' => '}',
-            '<' => '>',
-            default => $delimiter,
-        };
+        return self::CLOSING_BRACKETS[$delimiter] ?? $delimiter;
     }
 
     private static function nulByte(int $offset, string $regex): ParserException

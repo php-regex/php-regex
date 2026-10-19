@@ -20,7 +20,6 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
-use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Redos\RedosAnalyzer;
@@ -46,7 +45,6 @@ final class StaticCachesTest extends TestCase
         $parser->parse('/a+/')->accept(new ComplexityScorer());
         $parser->parse('/\p{Latin}/')->accept(new SampleGenerator());
         $parser->parse('/\p{Linear_B}/u')->accept(new SampleGenerator());
-        $parser->parse('#a#')->accept(new PatternPrinter());
         // \w, not a class of ranges: the model builds those itself and
         // never asks the class-set cache.
         (new RedosAnalyzer())->analyze('/(\w+)+$/');
@@ -197,7 +195,6 @@ final class StaticCachesTest extends TestCase
             [ComplexityScorer::class, 'unboundedQuantifierCache'],
             [SampleGenerator::class, 'propertySamples'],
             [SampleGenerator::class, 'codePointChunks'],
-            [PatternPrinter::class, 'delimiterCache'],
             [ClassSetProvider::class, 'sets'],
         ];
     }

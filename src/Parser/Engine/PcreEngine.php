@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
+use PHPRegex\Parser\Syntax\PatternParser;
+
 /**
  * The one door a pattern the library was given goes through to the running
  * PCRE2 engine.
@@ -27,8 +29,6 @@ namespace PHPRegex\Parser\Engine;
  */
 final class PcreEngine
 {
-    private const CLOSING_BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
-
     /**
      * White space PHP skips before the delimiter: led by it, a pattern is
      * a key of its own in PHP's cache of compiled patterns, so it is
@@ -150,7 +150,7 @@ final class PcreEngine
         }
 
         [, $body, , $flags] = $parts;
-        foreach (self::CLOSING_BRACKETS as $open => $close) {
+        foreach (PatternParser::CLOSING_BRACKETS as $open => $close) {
             if (self::closesLast($body, $open, $close)) {
                 return $open.NoJit::VERB.$body.$close.$flags;
             }

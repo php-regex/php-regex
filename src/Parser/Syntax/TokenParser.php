@@ -78,6 +78,18 @@ use PHPRegex\Parser\Validation\Validator;
  */
 final class TokenParser
 {
+    /**
+     * Atoms a character class cannot hold: inside "[...]" a "^" is a literal
+     * or a negation, and "\1" is an octal escape, so a class that receives
+     * one of these has been built by hand rather than by the lexer.
+     */
+    /**
+     * The delimiters PCRE2 takes around the string of a callout, each with
+     * the one that closes it.
+     */
+    public const CALLOUT_STRING_DELIMITERS = [
+        '`' => '`', "'" => "'", '"' => '"', '^' => '^', '%' => '%', '#' => '#', '$' => '$', '{' => '}',
+    ];
     private const INLINE_FLAG_LETTERS = InlineFlags::LETTERS;
 
     // Token length constants for calculating positions
@@ -113,19 +125,6 @@ final class TokenParser
         TokenType::UnicodeNamed,
         TokenType::Octal,
         TokenType::OctalLegacy,
-    ];
-
-    /**
-     * Atoms a character class cannot hold: inside "[...]" a "^" is a literal
-     * or a negation, and "\1" is an octal escape, so a class that receives
-     * one of these has been built by hand rather than by the lexer.
-     */
-    /**
-     * The delimiters PCRE2 takes around the string of a callout, each with
-     * the one that closes it.
-     */
-    private const CALLOUT_STRING_DELIMITERS = [
-        '`' => '`', "'" => "'", '"' => '"', '^' => '^', '%' => '%', '#' => '#', '$' => '$', '{' => '}',
     ];
 
     /**

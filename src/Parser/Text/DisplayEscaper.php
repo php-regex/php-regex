@@ -15,7 +15,9 @@ namespace PHPRegex\Parser\Text;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Syntax\TokenParser;
 
 /**
  * Escapes bytes that would break the layout of a terminal or a rendered
@@ -30,17 +32,6 @@ final class DisplayEscaper
      * is spelled in hex, as "\b" and "\v" mean something else to it.
      */
     private const LETTER_ESCAPES = ["\t" => '\\t', "\n" => '\\n', "\r" => '\\r'];
-
-    /**
-     * The characters that open a callout string "(?C\"...\")", each with the
-     * one that closes it.
-     */
-    private const CALLOUT_DELIMITERS = ['`' => '`', "'" => "'", '"' => '"', '^' => '^', '%' => '%', '#' => '#', '$' => '$', '{' => '}'];
-
-    /**
-     * The delimiters PHP closes with another character.
-     */
-    private const BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
 
     /**
      * The characters that move or hide text when printed raw, as the engine
@@ -644,7 +635,7 @@ final class DisplayEscaper
             return [0, $length, null];
         }
 
-        $close = self::BRACKETS[$open] ?? $open;
+        $close = PatternParser::CLOSING_BRACKETS[$open] ?? $open;
         $depth = 0;
         for ($i = $start + 1; $i < $length; $i++) {
             if ('\\' === $text[$i]) {
@@ -760,8 +751,8 @@ final class DisplayEscaper
      */
     private static function unescapedRunEnd(string $text, int $offset): ?int
     {
-        if ('(?C' === substr($text, $offset, 3) && isset(self::CALLOUT_DELIMITERS[$text[$offset + 3] ?? ''])) {
-            return self::calloutStringEnd($text, $offset + 4, self::CALLOUT_DELIMITERS[$text[$offset + 3]]);
+        if ('(?C' === substr($text, $offset, 3) && isset(TokenParser::CALLOUT_STRING_DELIMITERS[$text[$offset + 3] ?? ''])) {
+            return self::calloutStringEnd($text, $offset + 4, TokenParser::CALLOUT_STRING_DELIMITERS[$text[$offset + 3]]);
         }
 
         if ('(?#' === substr($text, $offset, 3)) {
