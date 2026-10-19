@@ -222,11 +222,11 @@ final class LintCommand extends Command
         $analysis = $this->analysis->withParser($parser, $range, $judged);
         $lint = $this->lint->withAnalysis($analysis);
 
-        $this->formatterRegistry->override(
+        $this->formatterRegistry->register(
             self::FORMAT_CONSOLE,
             new SymfonyConsoleFormatter($analysis, $this->linkFormatter, $output->isDecorated()),
         );
-        $this->formatterRegistry->override('json', new JsonFormatter(target: $target->toArray()));
+        $this->formatterRegistry->register('json', new JsonFormatter(target: $target->toArray()));
 
         $jobsExplicitlySet = $input->hasParameterOption(['--jobs', '-j']);
         $jobsValue = $input->getOption('jobs');

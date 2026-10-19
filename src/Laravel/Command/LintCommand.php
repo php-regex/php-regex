@@ -162,11 +162,11 @@ final class LintCommand extends Command
         $analysis = $appAnalysis->withParser($parser, $range, $judged);
         $lint = $appLint->withAnalysis($analysis);
 
-        $this->formatterRegistry->override(
+        $this->formatterRegistry->register(
             self::FORMAT_CONSOLE,
             new LaravelConsoleFormatter($analysis, $linkFormatter, $this->output->isDecorated()),
         );
-        $this->formatterRegistry->override('json', new JsonFormatter(target: $target->toArray()));
+        $this->formatterRegistry->register('json', new JsonFormatter(target: $target->toArray()));
 
         // What config/php-regex.php holds that the run ignores: one warning
         // each, and the run goes on.

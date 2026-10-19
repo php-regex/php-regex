@@ -95,28 +95,6 @@ final class FormatterRegistryTest extends TestCase
         $this->assertSame($mockFormatter, $this->registry->get('console'));
     }
 
-    public function test_override_adds_new_formatter(): void
-    {
-        $mockFormatter = $this->createStub(OutputFormatterInterface::class);
-
-        $this->registry->override('new_formatter', $mockFormatter);
-
-        $this->assertTrue($this->registry->has('new_formatter'));
-        $this->assertSame($mockFormatter, $this->registry->get('new_formatter'));
-        $this->assertContains('new_formatter', $this->registry->getNames());
-    }
-
-    public function test_override_overwrites_existing_formatter(): void
-    {
-        $originalFormatter = $this->registry->get('json');
-        $mockFormatter = $this->createStub(OutputFormatterInterface::class);
-
-        $this->registry->override('json', $mockFormatter);
-
-        $this->assertNotSame($originalFormatter, $this->registry->get('json'));
-        $this->assertSame($mockFormatter, $this->registry->get('json'));
-    }
-
     public function test_get_names_returns_all_registered_names(): void
     {
         $names = $this->registry->getNames();

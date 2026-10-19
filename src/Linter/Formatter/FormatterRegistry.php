@@ -37,7 +37,8 @@ final class FormatterRegistry
     }
 
     /**
-     * Register a formatter with a specific name.
+     * Register a formatter under a name, in place of the one registered
+     * under it if any.
      */
     public function register(string $name, OutputFormatterInterface $formatter): void
     {
@@ -73,13 +74,5 @@ final class FormatterRegistry
     public function getNames(): array
     {
         return array_keys($this->formatters);
-    }
-
-    /**
-     * Override a formatter with a specific name.
-     */
-    public function override(string $name, OutputFormatterInterface $formatter): void
-    {
-        $this->formatters[$name] = $formatter;
     }
 }
