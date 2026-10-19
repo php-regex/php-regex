@@ -13,12 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\DefineNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -109,6 +111,7 @@ final class LookbehindLength
      * @param (\Closure(SubroutineNode|BackrefNode, list<GroupNode>): void)|null $onReference    told of each call or reference, with the groups it names
      * @param bool                                                               $inLookaheads   whether the PCRE2 judged (10.34+) measures the lookbehinds inside a lookahead it meets
      * @param bool                                                               $skipsDefine    whether the PCRE2 judged (10.35+) skips a "(?(DEFINE)" group
+     * @param bool                                                               $readsNesting   whether the PCRE2 judged reads an extended class that nests a class or a parenthesis whole (all but 10.45 to 10.47)
      */
     public function __construct(
         private readonly GroupIndex $groups,
@@ -119,6 +122,7 @@ final class LookbehindLength
         private readonly ?\Closure $onReference = null,
         private readonly bool $inLookaheads = true,
         private readonly bool $skipsDefine = true,
+        private readonly bool $readsNesting = true,
     ) {}
 
     /**
@@ -264,6 +268,13 @@ final class LookbehindLength
 
         if ($node instanceof DefineNode) {
             return $this->skipsDefine ? [0, 0] : $this->defineWithItsFirstItemSkipped($node, $expanding);
+        }
+
+        // PCRE2 10.45 to 10.47 skip an extended class to its first "]" or
+        // ")": one that nests a class or a parenthesis leaves the rest of it
+        // to be measured, and the lookbehind has no bound.
+        if ($node instanceof ExtendedCharClassNode && !$this->readsNesting && self::nestsAClass($node->text)) {
+            return [0, null];
         }
 
         // "\X" is a grapheme cluster of any length, here or in a group a call
@@ -441,6 +452,18 @@ final class LookbehindLength
         }
 
         return false;
+    }
+
+    /**
+     * Whether an extended class, "(?[" to "])" as written, opens a class or
+     * a parenthesis inside it: not a POSIX class, nor an escaped or quoted
+     * bracket.
+     */
+    private static function nestsAClass(string $text): bool
+    {
+        $body = (string) LibraryPcre::replace(['/\\\\Q.*?(?:\\\\E|$)/s', '/\\\\./s', '/\[:\^?[a-z]++:\]/'], '', substr($text, 3, -2));
+
+        return false !== strpbrk($body, '[(');
     }
 
     private function groupBody(NodeInterface $body): void

@@ -66,6 +66,7 @@ final class PcreFeatureTest extends TestCase
         yield 'branch count off the condition name' => [PcreFeature::BranchCountErrorOffTheConditionName, '10.46', '10.47'];
         yield 'variable-length lookbehind' => [PcreFeature::VariableLengthLookbehind, '10.42', '10.43'];
         yield 'long group names' => [PcreFeature::LongGroupNames, '10.43', '10.44'];
+        yield 'extended class beside a lookbehind' => [PcreFeature::ExtendedClassBesideLookbehindCompiles, '10.47', '10.48'];
         yield 'unclosed brace at the end' => [PcreFeature::UnclosedBraceAtPatternEnd, '10.47', '10.48'];
     }
 

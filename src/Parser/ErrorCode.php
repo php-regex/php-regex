@@ -181,6 +181,11 @@ enum ErrorCode: string
     case EscapeUnsupported = 'regex.escape.unsupported';
 
     /**
+     * PCRE2 10.45 to 10.47 fail on an operator of an extended class in a pattern that holds a lookbehind, where the operator stands outside it.
+     */
+    case ExtendedClassBesideLookbehind = 'regex.extended_class.beside_lookbehind';
+
+    /**
      * The "]" closing an extended class is not followed by ")".
      */
     case ExtendedClassBracketWithoutParen = 'regex.extended_class.bracket_without_paren';

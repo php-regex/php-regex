@@ -369,6 +369,21 @@ final class Validator extends AbstractNodeVisitor
     private int $lookaheadsInLookbehinds = 0;
 
     /**
+     * Whether PCRE fails on an operator of an extended class its walk over
+     * the lookbehinds meets: PCRE2 10.45 to 10.47, in a pattern that holds
+     * a lookbehind.
+     */
+    private bool $classOperatorsFail = false;
+
+    /**
+     * The lookarounds and substring scans the walk is in, innermost last:
+     * true for a lookbehind.
+     *
+     * @var list<bool>
+     */
+    private array $lookaroundKinds = [];
+
+    /**
      * @var list<GroupNode> the lookbehinds around the node visited, innermost last
      */
     private array $lookbehinds = [];
@@ -670,6 +685,11 @@ final class Validator extends AbstractNodeVisitor
             $this->lookaheadsInLookbehinds++;
         }
 
+        $walkedApart = $isLookaround || GroupType::ScanSubstring === $node->type;
+        if ($walkedApart) {
+            $this->lookaroundKinds[] = $isLookbehind;
+        }
+
         // "(?i)" sets options for what follows and opens nothing.
         $nests = !$this->setsOptionsOnly($node);
         if ($nests) {
@@ -690,6 +710,9 @@ final class Validator extends AbstractNodeVisitor
             }
             if ($lookaheadInLookbehind) {
                 $this->lookaheadsInLookbehinds--;
+            }
+            if ($walkedApart) {
+                array_pop($this->lookaroundKinds);
             }
             $holdsKeep = false;
             if ($isLookaround) {
@@ -937,6 +960,21 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): void
     {
+        // PCRE2 10.45 to 10.47 walk the pattern to measure its lookbehinds
+        // and know no operator of an extended class: one the walk meets, out
+        // of every lookbehind or in a lookahead there, fails at offset 0.
+        // An operator, anywhere in the class, is the root of its expression.
+        if ($this->walkingPattern && $this->classOperatorsFail && true !== end($this->lookaroundKinds) && $node->expression instanceof ClassSetOperationNode) {
+            $this->lateErrors[0] ??= new SemanticErrorException(
+                'An operator of an extended class in a pattern that holds a lookbehind makes PCRE2 10.45 to 10.47 fail ("unknown meta code in check_lookbehinds()").',
+                ErrorCode::ExtendedClassBesideLookbehind,
+                0,
+                $this->pattern,
+                null,
+                'Target PCRE2 10.48 or later, or write the class without an operator, as "[...]".',
+            );
+        }
+
         $this->charClassDepth++;
 
         try {
@@ -1733,6 +1771,10 @@ final class Validator extends AbstractNodeVisitor
         $this->nextNode = null;
         $this->lookbehindDepth = 0;
         $this->lookaheadsInLookbehinds = 0;
+        $this->lookaroundKinds = [];
+        $this->classOperatorsFail = $this->supports(PcreFeature::ExtendedCharClass)
+            && !$this->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles)
+            && self::holdsLookbehind($node->pattern);
         $this->lookbehinds = [];
         $this->nestingDepth = 0;
         $this->keepsInLookarounds = [];
@@ -2605,6 +2647,7 @@ final class Validator extends AbstractNodeVisitor
             $this->checkMeasuredReference(...),
             $this->supports(PcreFeature::LookbehindInLookaheadMeasured),
             $this->supports(PcreFeature::DefineSkippedInLookbehind),
+            !$this->supports(PcreFeature::ExtendedCharClass) || $this->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles),
         );
     }
 
@@ -4070,6 +4113,21 @@ final class Validator extends AbstractNodeVisitor
         }
 
         $this->lateErrors[2] ??= $error;
+    }
+
+    private static function holdsLookbehind(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsLookbehind($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

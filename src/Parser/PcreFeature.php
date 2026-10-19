@@ -267,6 +267,11 @@ enum PcreFeature
     case UnclosedBraceAtPatternEnd;
 
     /**
+     * A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed.
+     */
+    case ExtendedClassBesideLookbehindCompiles;
+
+    /**
      * The PCRE2 release the behaviour arrived in, as "10.45".
      */
     public function release(): string
@@ -320,7 +325,8 @@ enum PcreFeature
             self::AlphaNameAtPatternEndIsUnclosed,
             self::VersionConditionLeftOpenIsVersionError,
             self::BranchCountErrorOffTheConditionName => '10.47',
-            self::UnclosedBraceAtPatternEnd => '10.48',
+            self::UnclosedBraceAtPatternEnd,
+            self::ExtendedClassBesideLookbehindCompiles => '10.48',
         };
     }
 }

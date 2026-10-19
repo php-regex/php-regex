@@ -560,6 +560,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.escape.trailing_backslash` | `EscapeTrailingBackslash` | A backslash ends the pattern with nothing to escape. |
 | `regex.escape.unrecognized` | `EscapeUnrecognized` | A backslash is followed by a letter PCRE knows no escape for. |
 | `regex.escape.unsupported` | `EscapeUnsupported` | The escape is not supported by PCRE, or not by the targeted PCRE release. |
+| `regex.extended_class.beside_lookbehind` | `ExtendedClassBesideLookbehind` | PCRE2 10.45 to 10.47 fail on an operator of an extended class in a pattern that holds a lookbehind, where the operator stands outside it. |
 | `regex.extended_class.bracket_without_paren` | `ExtendedClassBracketWithoutParen` | The "]" closing an extended class is not followed by ")". |
 | `regex.extended_class.empty_expression` | `ExtendedClassEmptyExpression` | An extended class, or a parenthesis in it, holds no expression. |
 | `regex.extended_class.missing_operand` | `ExtendedClassMissingOperand` | An operator in an extended class has no operand before or after it. |
