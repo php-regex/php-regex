@@ -64,4 +64,23 @@ final class RedosConfirmationRunnerTest extends TestCase
         $this->assertGreaterThan(1.0, $confirmation->samples[0]->durationMs);
         $this->assertNull($confirmation->samples[0]->pregErrorCode);
     }
+
+    /**
+     * A pattern without delimiters confirms nothing: its flags read as none,
+     * and each run reports the compile error PHP gives (preg_match('abc', '')
+     * is false, preg_last_error() 1).
+     */
+    #[Test]
+    public function test_a_pattern_without_delimiters_runs_with_no_flags_and_confirms_nothing(): void
+    {
+        $confirmation = (new ConfirmationRunner())->confirm(
+            'abc',
+            new RedosAnalysis(RedosSeverity::High, 8),
+            new ConfirmationOptions(minInputLength: 2, maxInputLength: 3, steps: 2, iterations: 1, timeoutMs: 50.0),
+        );
+
+        $this->assertFalse($confirmation->confirmed);
+        $this->assertCount(2, $confirmation->samples);
+        $this->assertSame(\PREG_INTERNAL_ERROR, $confirmation->samples[0]->pregErrorCode);
+    }
 }

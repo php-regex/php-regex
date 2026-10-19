@@ -16,6 +16,7 @@ namespace PHPRegex\Redos;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
 
 /**
@@ -149,7 +150,7 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
         try {
             $patternInfo = DelimitedPattern::fromDelimited($regex);
             $flags = $patternInfo->flags;
-        } catch (\Throwable) {
+        } catch (ParserException) {
             $flags = '';
         }
 
