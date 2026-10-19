@@ -87,6 +87,12 @@ final class LintFunctionOverrides
     public static bool $countFileGetContents = false;
 
     /**
+     * When true, fopen() in the worker pool fails to create the file its
+     * workers lock around class loading.
+     */
+    public static bool $lockFileFails = false;
+
+    /**
      * How many times each path was read while counting is on.
      *
      * @var array<string, int>
@@ -112,6 +118,7 @@ final class LintFunctionOverrides
         self::$tempnamDelayMicroseconds = 0;
         self::$countFileGetContents = false;
         self::$fileGetContentsCalls = [];
+        self::$lockFileFails = false;
     }
 
     /**
@@ -225,6 +232,18 @@ final class LintFunctionOverrides
         return pcntl_waitpid($pid, $status, $options, $rusage);
     }
 
+    /**
+     * @return resource|false
+     */
+    public static function fopen(string $filename, string $mode): mixed
+    {
+        if (self::$lockFileFails && 'x' === $mode) {
+            return false;
+        }
+
+        return \fopen($filename, $mode);
+    }
+
     public static function tempnam(string $dir, string $prefix): string|false
     {
         if ([] !== self::$tempnamSequence) {
@@ -323,6 +342,14 @@ function tempnam(string $dir, string $prefix): string|false
 function function_exists(string $function): bool
 {
     return LintFunctionOverrides::functionExists($function);
+}
+
+/**
+ * @return resource|false
+ */
+function fopen(string $filename, string $mode): mixed
+{
+    return LintFunctionOverrides::fopen($filename, $mode);
 }
 
 /**

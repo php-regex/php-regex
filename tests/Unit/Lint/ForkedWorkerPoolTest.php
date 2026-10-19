@@ -19,6 +19,7 @@ use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresFunction;
+use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -760,6 +761,170 @@ final class ForkedWorkerPoolTest extends TestCase
     }
 
     /**
+     * A phar the parent holds open (a Phar object, a stream on one of its
+     * files) is read through one descriptor that every worker inherits,
+     * with one file offset for all: workers loading its classes at once
+     * moved each other's offset and compiled each other's bytes, and died
+     * on a parse error (the suite saw it on macOS with PHPStan's phar
+     * loaded before a parallel lint). Each worker loads every class of the
+     * phar here, in an order of its own.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    #[RequiresPhpExtension('phar')]
+    public function test_workers_load_classes_from_a_phar_their_parent_holds_open(): void
+    {
+        $directory = sys_get_temp_dir().'/regexparser_pool_phar_'.bin2hex(random_bytes(6));
+        mkdir($directory);
+        $script = \sprintf(<<<'PHP_WRAP'
+            require %s;
+            $path = %s.'/classes.phar';
+            $phar = new Phar($path);
+            $phar->startBuffering();
+            for ($i = 0; $i < 24; $i++) {
+                $phar->addFromString('C'.$i.'.php', "<?php\nnamespace PharClasses;\n/*".str_repeat('x', 32 * 1024)."*/\nfinal class C".$i." { public const ID = ".$i."; }\n");
+            }
+            $phar->setStub('<?php __HALT_COMPILER();');
+            $phar->stopBuffering();
+            spl_autoload_register(static function (string $class) use ($path): void {
+                if (str_starts_with($class, 'PharClasses\\')) {
+                    require 'phar://'.$path.'/'.substr($class, 12).'.php';
+                }
+            });
+            $held = fopen('phar://'.$path.'/C0.php', 'r');
+            try {
+                echo serialize((new PHPRegex\Linter\Parallel\ForkedWorkerPool())->run(
+                    [0, 1, 2, 3],
+                    4,
+                    static function (array $chunk, Closure $done): array {
+                        $ids = [];
+                        for ($i = 0; $i < 24; $i++) {
+                            $ids[] = ('PharClasses\\C'.(($i + 7 * $chunk[0]) %% 24))::ID;
+                        }
+                        sort($ids);
+
+                        return [$ids === range(0, 23)];
+                    },
+                    null,
+                    'Parallel analysis failed',
+                    [],
+                    static fn (int $item): string => 'file'.$item.'.php',
+                ));
+            } catch (PHPRegex\Linter\LintException $e) {
+                echo substr($e->getMessage(), 0, 200);
+            }
+            PHP_WRAP, var_export($this->autoload(), true), var_export($directory, true));
+
+        try {
+            $stdout = $this->runPhp($script, ['phar.readonly=0', 'sys_temp_dir='.$directory]);
+            $left = glob($directory.'/*') ?: [];
+        } finally {
+            @unlink($directory.'/classes.phar');
+            @rmdir($directory);
+        }
+
+        $this->assertSame(serialize([true, true, true, true]), $stdout);
+        $this->assertSame([$directory.'/classes.phar'], $left, 'The run left a file behind in the temp directory.');
+    }
+
+    /**
+     * The parent loads its classes under the same lock while its workers
+     * run: a class and its parent class, loaded one inside the other, and a
+     * class no loader knows. Once the run is over, its class loaders are
+     * the ones it had.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_the_parent_loads_classes_while_its_workers_run(): void
+    {
+        $namespace = 'PHPRegex\Tests\Unit\Lint\Loaded'.bin2hex(random_bytes(6));
+        $definitions = [
+            $namespace.'\Child' => 'class Child extends Base {}',
+            $namespace.'\Base' => 'class Base {}',
+        ];
+        $define = static function (string $class) use ($namespace, $definitions): void {
+            if (isset($definitions[$class])) {
+                eval('namespace '.$namespace.'; '.$definitions[$class]);
+            }
+        };
+        spl_autoload_register($define);
+        $before = spl_autoload_functions();
+        $found = [];
+
+        try {
+            $progress = new class(static function () use ($namespace, &$found): void {
+                $found = [class_exists($namespace.'\Child'), class_exists($namespace.'\Missing')];
+            }) implements LintProgress {
+
+                /**
+                 * @param \Closure(): void $onWorkers
+                 */
+                public function __construct(private readonly \Closure $onWorkers) {}
+
+                public function step(string $step, ?int $total): void {}
+
+                public function advance(int $count = 1): void {}
+
+                public function tick(): void {}
+
+                public function workers(int $count): void
+                {
+                    ($this->onWorkers)();
+                }
+
+                public function stalled(string $file, int $seconds): void {}
+
+                public function finish(): void {}
+            };
+
+            $results = $this->withDeadline(self::DEADLINE, static fn (): ?array => (new ForkedWorkerPool())->run(
+                [1, 2],
+                2,
+                static fn (array $chunk, \Closure $done): array => $chunk,
+                $progress,
+                'Parallel analysis failed',
+                [],
+                static fn (int $item): string => 'file'.$item.'.php',
+            ));
+            $after = spl_autoload_functions();
+        } finally {
+            spl_autoload_unregister($define);
+        }
+
+        $this->assertSame([1, 2], $results);
+        $this->assertSame([true, false], $found, 'The class and its parent load, the unknown class does not.');
+        $this->assertSame(get_parent_class($namespace.'\Child'), $namespace.'\Base');
+        $this->assertSame($before, $after, 'The run left a class loader of its own behind.');
+        $this->assertNothingLeftBehind();
+    }
+
+    /**
+     * Without a lock file (the temp directory is full or read-only) the run
+     * goes on, its classes loaded as they come.
+     */
+    #[Test]
+    #[RequiresFunction('pcntl_fork')]
+    public function test_run_goes_on_without_the_lock_file(): void
+    {
+        LintFunctionOverrides::$lockFileFails = true;
+        $before = spl_autoload_functions();
+
+        $results = $this->withDeadline(self::DEADLINE, static fn (): ?array => (new ForkedWorkerPool())->run(
+            [1, 2, 3],
+            2,
+            static fn (array $chunk, \Closure $done): array => $chunk,
+            null,
+            'Parallel analysis failed',
+            [],
+            static fn (int $item): string => 'file'.$item.'.php',
+        ));
+
+        $this->assertSame([1, 2, 3], $results);
+        $this->assertSame($before, spl_autoload_functions());
+        $this->assertNothingLeftBehind();
+    }
+
+    /**
      * A failure ends the run without waiting for a busy worker to finish its
      * chunk, whatever the parent does with SIGTERM: a handler of its own is
      * not the worker's, and a SIGTERM the parent blocks is let through in
@@ -1220,9 +1385,18 @@ final class ForkedWorkerPoolTest extends TestCase
         return \dirname(__DIR__, 3).'/vendor/autoload.php';
     }
 
-    private function runPhp(string $script): string
+    /**
+     * @param list<string> $ini settings for the process, as "name=value"
+     */
+    private function runPhp(string $script, array $ini = []): string
     {
-        $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-r', $script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        $settings = [];
+        foreach ($ini as $setting) {
+            $settings[] = '-d';
+            $settings[] = $setting;
+        }
+
+        $process = proc_open([\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', ...$settings, '-r', $script], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         $this->assertIsResource($process);
         $stdout = (string) stream_get_contents($pipes[1]);
         fclose($pipes[1]);

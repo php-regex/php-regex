@@ -19,6 +19,10 @@ CHANGELOG
    of a narrowed pattern carries `target.guard` in the JSON report.
  * An inline marker may name the issues it silences, and the markers that
    silence nothing are reported (`reportUnmatchedIgnores`, on by default).
+ * The workers, and the process that forked them, load their classes one at a
+   time while the workers run: workers loading the classes of a phar their
+   parent held open read each other's bytes through the one file offset
+   they share, and died on a parse error.
  * The workers take the files and the patterns a few at a time, as each one
    finishes, and report their progress as they go; the inline ignore markers
    are read by the workers, and a file's source is read once for all its

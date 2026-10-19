@@ -105,6 +105,20 @@ final class ForkedWorkerPool
     private int $nextChunk = 0;
 
     /**
+     * The class loader the parent takes the lock with while its workers
+     * run, and the lock file it holds open.
+     *
+     * @var array{\Closure(string): void, resource}|null
+     */
+    private ?array $parentLoader = null;
+
+    /**
+     * How many classes this process is loading, one inside the other, under
+     * the lock: it takes the lock for the outermost one only.
+     */
+    private static int $loading = 0;
+
+    /**
      * When a worker last reported progress.
      */
     private float $reportedAt = 0.0;
@@ -219,6 +233,7 @@ final class ForkedWorkerPool
             }
         } finally {
             $this->shutdown();
+            $this->releaseParentLoader();
         }
 
         ksort($resultsByChunk);
@@ -279,37 +294,140 @@ final class ForkedWorkerPool
      */
     private function start(int $count, array $chunks, \Closure $work): bool
     {
-        for ($worker = 0; $worker < $count; $worker++) {
-            $pair = stream_socket_pair(\STREAM_PF_UNIX, \STREAM_SOCK_STREAM, \STREAM_IPPROTO_IP);
-            if (false === $pair) {
-                return false;
-            }
+        // A file the parent holds open, a phar it loaded classes from among
+        // them, is one descriptor every worker inherits, with one offset for
+        // all: two processes reading it at once read each other's bytes. The
+        // workers and their parent load their classes one at a time, each
+        // through a lock file of its own opening; the file is gone once they
+        // all hold it, so a run killed midway leaves none behind.
+        $lock = self::createLock();
 
-            [$parentEnd, $workerEnd] = $pair;
-            $pid = pcntl_fork();
-            if (-1 === $pid) {
-                fclose($parentEnd);
+        try {
+            for ($worker = 0; $worker < $count; $worker++) {
+                $pair = stream_socket_pair(\STREAM_PF_UNIX, \STREAM_SOCK_STREAM, \STREAM_IPPROTO_IP);
+                if (false === $pair) {
+                    return false;
+                }
+
+                [$parentEnd, $workerEnd] = $pair;
+                $workerLock = null === $lock ? false : @fopen($lock, 'r');
+                $pid = pcntl_fork();
+                if (-1 === $pid) {
+                    fclose($parentEnd);
+                    fclose($workerEnd);
+                    if (false !== $workerLock) {
+                        fclose($workerLock);
+                    }
+
+                    return false;
+                }
+
+                if (0 === $pid) {
+                    // Unreachable from a test: only the forked worker runs
+                    // this line, and its coverage ends with it.
+                    $this->work($parentEnd, $workerEnd, $chunks, $work, $workerLock);
+                }
+
+                // The parent keeps its own end only: once the worker is gone,
+                // nothing holds the other end open, and the channel reads
+                // EOF. The worker's lock is its own: a worker that dies
+                // holding it lets it go.
                 fclose($workerEnd);
+                if (false !== $workerLock) {
+                    fclose($workerLock);
+                }
 
-                return false;
+                stream_set_timeout($parentEnd, self::NO_TIMEOUT);
+                $this->pids[$worker] = $pid;
+                $this->channels[$worker] = $parentEnd;
+                $this->buffers[$worker] = '';
             }
 
-            if (0 === $pid) {
-                // Unreachable from a test: only the forked worker runs this
-                // line, and its coverage ends with it.
-                $this->work($parentEnd, $workerEnd, $chunks, $work);
+            $parentLock = null === $lock ? false : @fopen($lock, 'r');
+            if (false !== $parentLock) {
+                $this->parentLoader = [self::loadClassesOneAtATime($parentLock), $parentLock];
             }
-
-            // The parent keeps its own end only: once the worker is gone,
-            // nothing holds the other end open, and the channel reads EOF.
-            fclose($workerEnd);
-            stream_set_timeout($parentEnd, self::NO_TIMEOUT);
-            $this->pids[$worker] = $pid;
-            $this->channels[$worker] = $parentEnd;
-            $this->buffers[$worker] = '';
+        } finally {
+            if (null !== $lock) {
+                @unlink($lock);
+            }
         }
 
         return true;
+    }
+
+    /**
+     * An empty file for the workers and their parent to lock, in the temp
+     * directory; null when it cannot be created: the run goes on without
+     * the lock.
+     */
+    private static function createLock(): ?string
+    {
+        $path = sys_get_temp_dir().\DIRECTORY_SEPARATOR.'regexparser_lock_'.bin2hex(random_bytes(8));
+        $handle = @fopen($path, 'x');
+        if (false === $handle) {
+            return null;
+        }
+
+        fclose($handle);
+
+        return $path;
+    }
+
+    /**
+     * Registers, before every other, a class loader that runs the others
+     * under the lock held through $lock: one class loaded at a time across
+     * the processes that lock the same file.
+     *
+     * @param resource $lock
+     *
+     * @return \Closure(string): void
+     */
+    private static function loadClassesOneAtATime($lock): \Closure
+    {
+        $loader = null;
+        $loader = static function (string $class) use ($lock, &$loader): void {
+            // The parent class or an interface of the class being loaded is
+            // loaded under the lock already held.
+            if (0 === self::$loading++) {
+                flock($lock, \LOCK_EX);
+            }
+
+            try {
+                foreach (spl_autoload_functions() as $next) {
+                    if ($next === $loader) {
+                        continue;
+                    }
+
+                    $next($class);
+                    if (class_exists($class, false) || interface_exists($class, false) || trait_exists($class, false)) {
+                        return;
+                    }
+                }
+            } finally {
+                if (0 === --self::$loading) {
+                    flock($lock, \LOCK_UN);
+                }
+            }
+        };
+        spl_autoload_register($loader, true, true);
+
+        return $loader;
+    }
+
+    /**
+     * The parent loads its classes as it did before the run.
+     */
+    private function releaseParentLoader(): void
+    {
+        if (null === $this->parentLoader) {
+            return;
+        }
+
+        [$loader, $lock] = $this->parentLoader;
+        spl_autoload_unregister($loader);
+        fclose($lock);
+        $this->parentLoader = null;
     }
 
     /**
@@ -509,9 +627,15 @@ final class ForkedWorkerPool
      * @param resource                                        $channel
      * @param list<list<T>>                                   $chunks
      * @param \Closure(list<T>, \Closure(int): void): list<R> $work
+     * @param resource|false                                  $lock      the lock file this worker opened, false without one
      */
-    private function work($parentEnd, $channel, array $chunks, \Closure $work): never
+    private function work($parentEnd, $channel, array $chunks, \Closure $work, $lock): never
     {
+        // Only a worker runs these lines: its coverage ends with it.
+        if (false !== $lock) {
+            self::loadClassesOneAtATime($lock);
+        }
+
         // The parent's ends, of this channel and of the channels forked
         // before it: held open here, they would keep this worker from
         // reading EOF when the parent is gone.
