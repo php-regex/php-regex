@@ -16,9 +16,7 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\DisplayEscaper;
-use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
  * Console output formatter shared by the framework bridges.
@@ -87,7 +85,7 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
         $issues = $result['issues'] ?? [];
         /** @var array<OptimizationEntry> $optimizations */
         $optimizations = $result['optimizations'] ?? [];
-        $pattern = $this->extractPatternForResult($result);
+        $pattern = ConsoleResultText::pattern($result);
 
         $output = '';
         $output .= $this->displayPatternContext($result);
@@ -103,7 +101,7 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
      */
     private function displayPatternContext(array $result): string
     {
-        $pattern = $this->extractPatternForResult($result);
+        $pattern = ConsoleResultText::pattern($result);
         $line = (int) $result['line'];
         $column = (int) ($result['column'] ?? 0);
         $file = (string) $result['file'];
@@ -183,7 +181,7 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
             $badge = $this->getIssueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue, $pattern));
+            $parts[] = $this->displaySingleIssue($badge, ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
@@ -236,24 +234,6 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
         return implode('', $parts);
     }
 
-    /**
-     * The message of an issue in display form, and under it the caret
-     * snippet its validation carries apart: the line of the pattern with the
-     * character at fault, spelled in the pattern's mode.
-     *
-     * @param LintIssue $issue
-     */
-    private function messageWithSnippet(array $issue, ?string $pattern): string
-    {
-        $message = ReportSpelling::displayText($issue['message']);
-        $validation = $issue['validation'] ?? null;
-        if (!$validation instanceof ValidationResult || null === $validation->caretSnippet || '' === $validation->caretSnippet) {
-            return $message;
-        }
-
-        return $message."\n".ReportSpelling::displaySnippet($validation->caretSnippet, $pattern);
-    }
-
     private function displaySingleIssue(string $badge, string $message): string
     {
         $lines = explode("\n", $message);
@@ -270,7 +250,7 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
                 $parts[] = \sprintf(
                     '         <fg=gray>%s %s</>'.\PHP_EOL,
                     0 === $index ? self::ARROW_LABEL : ' ',
-                    self::escape($this->stripMessageLine($line)),
+                    self::escape(ConsoleResultText::withoutLineLabels($line)),
                 );
             }
         }
@@ -320,35 +300,6 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
     }
 
     /**
-     * @phpstan-param LintResult $result
-     */
-    private function extractPatternForResult(array $result): ?string
-    {
-        $pattern = $result['pattern'];
-        if (\is_string($pattern) && '' !== $pattern) {
-            return $pattern;
-        }
-
-        if (!empty($result['issues'])) {
-            $firstIssue = $result['issues'][0];
-            $issuePattern = $firstIssue['pattern'] ?? $firstIssue['regex'] ?? null;
-            if (\is_string($issuePattern) && '' !== $issuePattern) {
-                return $issuePattern;
-            }
-        }
-
-        if (!empty($result['optimizations'])) {
-            $firstOpt = $result['optimizations'][0];
-            $optimization = $firstOpt['optimization'];
-            if ($optimization instanceof OptimizationResult) {
-                return $optimization->original;
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Escapes text for a console that reads style tags: "<" and ">" take a
      * backslash, and trailing backslashes become NUL bytes so they do not
      * escape the closing tag that follows (the console prints them back as
@@ -366,14 +317,5 @@ abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
         $text = str_replace("\0", '', rtrim($text, '\\'));
 
         return $text.str_repeat("\0", $length - \strlen($text));
-    }
-
-    private function stripMessageLine(string $message): string
-    {
-        return LibraryPcre::replaceCallback(
-            '/^Line \d+:/m',
-            static fn (array $matches): string => str_repeat(' ', \strlen($matches[0])),
-            $message,
-        ) ?? $message;
     }
 }

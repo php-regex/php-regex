@@ -17,10 +17,10 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\DisplayEscaper;
-use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
  * Console output formatter with ANSI colors and verbosity levels.
@@ -71,7 +71,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
         foreach ($groupedResults as $results) {
             foreach ($results as $result) {
-                $pattern = $this->extractPatternForResult($result);
+                $pattern = ConsoleResultText::pattern($result);
                 $parts[] = $this->formatPatternContext($result);
                 /** @var array<LintIssue> $issues */
                 $issues = $result['issues'] ?? [];
@@ -125,7 +125,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
      */
     private function formatPatternContext(array $result): string
     {
-        $pattern = $this->extractPatternForResult($result);
+        $pattern = ConsoleResultText::pattern($result);
         $file = (string) ($result['file'] ?? '');
         $line = (int) ($result['line'] ?? 0);
         $column = (int) ($result['column'] ?? 0);
@@ -186,7 +186,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
         foreach ($issues as $issue) {
             $issueType = (string) ($issue['type'] ?? 'info');
             $badge = $this->issueBadge($issueType);
-            $parts[] = $this->displaySingleIssue($badge, $this->messageWithSnippet($issue, $pattern));
+            $parts[] = $this->displaySingleIssue($badge, ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
@@ -425,14 +425,9 @@ class ConsoleFormatter extends AbstractOutputFormatter
 
     private function isExtendedModePattern(string $pattern): bool
     {
-        $pattern = Ascii::trimLeadingSpaces($pattern);
-        if ('' === $pattern) {
-            return false;
-        }
-
         try {
             [, $flags] = PatternParser::extractPatternAndFlags($pattern);
-        } catch (\Throwable) {
+        } catch (ParserException) {
             return false;
         }
 
@@ -526,24 +521,6 @@ class ConsoleFormatter extends AbstractOutputFormatter
         return $output;
     }
 
-    /**
-     * The message of an issue in display form, and under it the caret
-     * snippet its validation carries apart: the line of the pattern with the
-     * character at fault, spelled in the pattern's mode.
-     *
-     * @param LintIssue $issue
-     */
-    private function messageWithSnippet(array $issue, ?string $pattern): string
-    {
-        $message = ReportSpelling::displayText($issue['message']);
-        $validation = $issue['validation'] ?? null;
-        if (!$validation instanceof ValidationResult || null === $validation->caretSnippet || '' === $validation->caretSnippet) {
-            return $message;
-        }
-
-        return $message."\n".ReportSpelling::displaySnippet($validation->caretSnippet, $pattern);
-    }
-
     private function displaySingleIssue(string $badge, string $message): string
     {
         $lines = explode("\n", $message);
@@ -561,7 +538,7 @@ class ConsoleFormatter extends AbstractOutputFormatter
                 $output .= \sprintf(
                     '         %s %s'.\PHP_EOL,
                     $this->dim($prefix),
-                    $this->dim($this->stripMessageLine($line)),
+                    $this->dim(ConsoleResultText::withoutLineLabels($line)),
                 );
             }
         }
@@ -882,43 +859,5 @@ class ConsoleFormatter extends AbstractOutputFormatter
     private function dim(string $text): string
     {
         return $this->color($text, self::GRAY);
-    }
-
-    /**
-     * @phpstan-param LintResult $result
-     */
-    private function extractPatternForResult(array $result): ?string
-    {
-        $pattern = $result['pattern'];
-        if (\is_string($pattern) && '' !== $pattern) {
-            return $pattern;
-        }
-
-        if (!empty($result['issues'])) {
-            $firstIssue = $result['issues'][0];
-            $issuePattern = $firstIssue['pattern'] ?? $firstIssue['regex'] ?? null;
-            if (\is_string($issuePattern) && '' !== $issuePattern) {
-                return $issuePattern;
-            }
-        }
-
-        if (!empty($result['optimizations'])) {
-            $firstOpt = $result['optimizations'][0];
-            $optimization = $firstOpt['optimization'];
-            if ($optimization instanceof OptimizationResult) {
-                return $optimization->original;
-            }
-        }
-
-        return null;
-    }
-
-    private function stripMessageLine(string $message): string
-    {
-        return LibraryPcre::replaceCallback(
-            '/^Line \d+:/m',
-            static fn (array $matches): string => str_repeat(' ', \strlen($matches[0])),
-            $message,
-        ) ?? $message;
     }
 }

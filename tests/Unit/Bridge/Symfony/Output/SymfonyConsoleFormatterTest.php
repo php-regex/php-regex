@@ -20,7 +20,6 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
-use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
@@ -531,56 +530,6 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $this->assertIsString($output);
         $this->assertStringContainsString('details', (string) $output);
         $this->assertStringContainsString('More', (string) $output);
-    }
-
-    public function test_extract_pattern_for_result_prefers_issue_pattern(): void
-    {
-        $analysis = new AnalysisService(RegexParser::create());
-        $relativePathHelper = new RelativePathHelper('/app');
-        $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
-
-        $result = [
-            'file' => 'test.php',
-            'line' => 1,
-            'pattern' => null,
-            'issues' => [
-                ['pattern' => '/from-issue/'],
-            ],
-            'optimizations' => [],
-            'problems' => [],
-        ];
-
-        $pattern = $this->invokePrivate($formatter, 'extractPatternForResult', [$result]);
-
-        $this->assertIsString($pattern);
-        $this->assertSame('/from-issue/', $pattern);
-    }
-
-    public function test_extract_pattern_for_result_uses_optimization(): void
-    {
-        $analysis = new AnalysisService(RegexParser::create());
-        $relativePathHelper = new RelativePathHelper('/app');
-        $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
-
-        $optimization = Regex::create()->optimize('/foo/');
-
-        $result = [
-            'file' => 'test.php',
-            'line' => 1,
-            'pattern' => null,
-            'issues' => [],
-            'optimizations' => [
-                ['optimization' => $optimization],
-            ],
-            'problems' => [],
-        ];
-
-        $pattern = $this->invokePrivate($formatter, 'extractPatternForResult', [$result]);
-
-        $this->assertIsString($pattern);
-        $this->assertSame($optimization->original, $pattern);
     }
 
     /**
