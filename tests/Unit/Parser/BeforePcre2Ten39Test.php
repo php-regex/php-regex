@@ -71,6 +71,12 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'open count past every integer' => ['pattern' => '/a{6553600000000000000/', 'release' => '10.35', 'offset' => 7, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
         yield 'count followed by a letter' => ['pattern' => '/a{65536x/', 'release' => '10.33', 'offset' => 7, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
         yield 'count followed by a space' => ['pattern' => '/a{65536 /', 'release' => '10.32', 'offset' => 7, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
+        // A count padded before its "}", read as text from 10.37 to 10.42,
+        // is still read as digits first: pcre2test 10.32 to 10.36.
+        yield 'padded count' => ['pattern' => '/a{65536 }/', 'release' => '10.36', 'offset' => 7, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
+        yield 'padded count before a comma' => ['pattern' => '/a{65536, }/', 'release' => '10.35', 'offset' => 7, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
+        yield 'padded count after a comma' => ['pattern' => '/a{1,65536 }/', 'release' => '10.32', 'offset' => 9, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
+        yield 'padded count at the start' => ['pattern' => '/{65536 }/', 'release' => '10.33', 'offset' => 6, 'code' => ErrorCode::QuantifierTooBig, 'from' => '10.37'];
         // Script runs arrived in 10.33: 10.32 refuses the name where its
         // run of letters ends.
         yield 'script run' => ['pattern' => '/(*sr:a)b/', 'release' => '10.32', 'offset' => 4, 'code' => ErrorCode::VerbInvalid, 'from' => '10.33'];
@@ -308,6 +314,68 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'backslash and nine digits, PHP 7.3' => ['pattern' => '/\214748364/', 'phpVersion' => '7.3', 'accepted' => true];
         yield 'backslash and nine digits, PHP 7.4' => ['pattern' => '/b\214748364|a/', 'phpVersion' => '7.4', 'accepted' => true];
         yield 'backslash and nine digits, PHP 8.0' => ['pattern' => '/\214748364/', 'phpVersion' => '8.0', 'accepted' => false];
+    }
+
+    /**
+     * Before 10.37 "\N{" reads the digits after it as a count too, whatever
+     * follows them, and refuses one past 65535 past the "\N", in a class or
+     * not: "number too big in {} quantifier at offset 2" for "\N{65536 }"
+     * (pcre2test 10.32 to 10.36). From 10.37, "\N{name} is not supported".
+     */
+    #[Test]
+    #[DataProvider('provideCountsTooBigAfterN')]
+    public function test_a_count_too_big_after_n_is_refused_as_too_big_before_10_37(string $pattern, string $release, int $offset): void
+    {
+        $validation = self::parser($release)->validate($pattern);
+
+        $this->assertFalse($validation->isValid, $pattern.' on PCRE2 '.$release);
+        $this->assertSame(ErrorCode::QuantifierTooBig, $validation->errorCode, $pattern.' on PCRE2 '.$release.': '.($validation->error ?? ''));
+        $this->assertSame($offset, $validation->offset, $pattern.' on PCRE2 '.$release);
+        $this->assertSame(ErrorCode::EscapeUnsupported, self::parser('10.37')->validate($pattern)->errorCode, $pattern.' on PCRE2 10.37');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, release: string, offset: int}>
+     */
+    public static function provideCountsTooBigAfterN(): iterable
+    {
+        yield 'padded count' => ['pattern' => '/\N{65536 }/', 'release' => '10.36', 'offset' => 2];
+        yield 'padded count after a comma' => ['pattern' => '/a\N{1,65536 }/', 'release' => '10.32', 'offset' => 3];
+        yield 'count before a comma and a space' => ['pattern' => '/\N{65536, }/', 'release' => '10.35', 'offset' => 2];
+        yield 'count before a letter' => ['pattern' => '/\N{65536x}/', 'release' => '10.33', 'offset' => 2];
+        yield 'count left open' => ['pattern' => '/\N{65536/', 'release' => '10.34', 'offset' => 2];
+        yield 'padded count in a class' => ['pattern' => '/[\N{65536 }]/', 'release' => '10.35', 'offset' => 3];
+        yield 'count left open in a class' => ['pattern' => '/[a\N{65536]/', 'release' => '10.32', 'offset' => 4];
+    }
+
+    /**
+     * PHP 7.3 and 7.4 without "X" read "\g{65536 }", "\k{65536 }" and
+     * "\N{65536 }", which their PCRE2 refuses, as the letter then the
+     * braces, whose digits PCRE2 before 10.37 reads as a count:
+     * "number too big in {} quantifier at offset 8" for "\g{65536 }"
+     * (php:7.3-cli, php:7.4-cli).
+     */
+    #[Test]
+    #[DataProvider('provideCountsTooBigAfterALetter')]
+    public function test_php_7_refuses_a_count_too_big_after_an_escape_it_reads_as_text(string $pattern, string $phpVersion, string $release, int $offset): void
+    {
+        $validation = RegexParser::create(['cache' => null, 'php_version' => $phpVersion, 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertFalse($validation->isValid, $pattern.' on PHP '.$phpVersion);
+        $this->assertSame(ErrorCode::QuantifierTooBig, $validation->errorCode, $pattern.' on PHP '.$phpVersion.': '.($validation->error ?? ''));
+        $this->assertSame($offset, $validation->offset, $pattern.' on PHP '.$phpVersion);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, phpVersion: string, release: string, offset: int}>
+     */
+    public static function provideCountsTooBigAfterALetter(): iterable
+    {
+        yield 'g, PHP 7.3' => ['pattern' => '/\g{65536 }/', 'phpVersion' => '7.3', 'release' => '10.32', 'offset' => 8];
+        yield 'g after a group, PHP 7.4' => ['pattern' => '/(a)\g{65536 }/', 'phpVersion' => '7.4', 'release' => '10.35', 'offset' => 11];
+        yield 'g with a count after a comma, PHP 7.4' => ['pattern' => '/(a)\g{1,65536 }/', 'phpVersion' => '7.4', 'release' => '10.33', 'offset' => 13];
+        yield 'k, PHP 7.3' => ['pattern' => '/(a)\k{65536 }/', 'phpVersion' => '7.3', 'release' => '10.32', 'offset' => 11];
+        yield 'N, PHP 7.4' => ['pattern' => '/\N{65536 }/', 'phpVersion' => '7.4', 'release' => '10.35', 'offset' => 8];
     }
 
     #[Test]

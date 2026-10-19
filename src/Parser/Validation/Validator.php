@@ -66,6 +66,7 @@ use PHPRegex\Parser\Syntax\BadEscape;
 use PHPRegex\Parser\Syntax\NamedCharacterBrace;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PropertyNames;
+use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
@@ -724,6 +725,12 @@ final class Validator extends AbstractNodeVisitor
             && str_starts_with($node->quantifier, '{')
             && 1 !== LibraryPcre::match('/^\{\d++(?:,\d*+)?\}/', $node->quantifier)
             && !$this->supports(PcreFeature::OpenAndPaddedRepeatCounts)) {
+            // Before 10.37 its digits are read first: one past 65535 is
+            // refused as too big a count, at the same place.
+            if (!$this->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($node->quantifier, 0)) {
+                $this->raiseSemanticError('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $node->node->getEndPosition(), ErrorCode::QuantifierTooBig);
+            }
+
             $this->raiseSemanticError(
                 \sprintf('The count "%s" after \N needs PCRE2 10.43, which PHP bundles from 8.4.', $node->quantifier),
                 $node->node->getEndPosition(),
@@ -1200,6 +1207,11 @@ final class Validator extends AbstractNodeVisitor
         // the "{", past it from PCRE2 10.47; only "\N{U+...}" is a code point.
         if (CharLiteralType::UnicodeNamed === $node->type
             && 1 !== LibraryPcre::match('/^\\\\N\{[ \t]*+U\+/', $node->originalRepresentation)) {
+            // Before PCRE2 10.37 its digits are read as a count first.
+            if (!$this->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($node->originalRepresentation, 2)) {
+                $this->raiseSemanticError('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $node->startPosition + 2, ErrorCode::QuantifierTooBig);
+            }
+
             $this->raiseUnsupportedEscape('N{', $this->pastTheFault($node->startPosition + 3));
         }
 
@@ -3282,6 +3294,12 @@ final class Validator extends AbstractNodeVisitor
             // Unreachable: a well-formed "\N{U+...}", "\N{U+ }" included, is
             // a token of its own, so the digits above are always refused.
             return;
+        }
+
+        // Before PCRE2 10.37 the digits are read as a count first, and one
+        // past 65535 refused past the "\N", whatever follows it.
+        if (!$this->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($source, $position)) {
+            $this->raiseSemanticError('Number too big in the count after \N: PCRE allows at most 65535 repetitions.', $position, ErrorCode::QuantifierTooBig);
         }
 
         if (1 !== LibraryPcre::match(self::REPEAT_COUNT, $source, $matches, 0, $position)) {

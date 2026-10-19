@@ -21,6 +21,7 @@ use PHPRegex\Parser\Syntax\CodePointReader;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreVerb;
+use PHPRegex\Parser\Syntax\RepeatCount;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\Token;
@@ -1565,9 +1566,11 @@ final class Lexer
         }
 
         // Before PCRE2 10.37, the digits after a "{" that opens no quantifier
-        // are still read as a count, and one past 65535 refused there.
-        if (!$this->largeOpenCountIsText && !$this->inCharClass && '{' === $matchedValue && TokenType::Literal === $type) {
-            $overflow = self::countOverflow($this->pattern, $startPos + 1);
+        // are still read as a count, and one past 65535 refused there: a
+        // count padded before its "}" included, which is text up to 10.42.
+        if (!$this->largeOpenCountIsText && !$this->inCharClass && '{' === $matchedValue[0]
+            && (TokenType::Literal === $type || (TokenType::Quantifier === $type && !self::isPlainCount($matchedValue) && !$this->followsNamedCharacterEscape($currentTokens, $startPos)))) {
+            $overflow = RepeatCount::overflowBeforeTen37($this->pattern, $startPos);
             if (null !== $overflow) {
                 throw LexerException::withContext(
                     \sprintf('Number too big in "{" at position %d: PCRE2 before 10.37 reads the digits after it as a count, at most 65535.', $overflow),
@@ -1653,7 +1656,7 @@ final class Lexer
         // read here, and what follows it is read again as text. A "\N" right
         // before keeps its count, which the validator refuses there.
         if (TokenType::Quantifier === $type && !$this->wideRepeatCounts && '{' === $matchedValue[0]
-            && 1 !== LibraryPcre::match('/^\{\d++(?:,\d*+)?\}/', $matchedValue)
+            && !self::isPlainCount($matchedValue)
             && !$this->followsNamedCharacterEscape($currentTokens, $startPos)) {
             $this->position = $startPos + 1;
 
@@ -1670,30 +1673,12 @@ final class Lexer
     }
 
     /**
-     * Where PCRE2 before 10.37 refuses the count after a "{": past the digit
-     * that takes the first number, or the one after its comma, over 65535.
-     * Null when neither does.
+     * Whether a quantifier token is a count every release reads: "{n}",
+     * "{n,}" or "{n,m}", unpadded.
      */
-    private static function countOverflow(string $pattern, int $at): ?int
+    private static function isPlainCount(string $quantifier): bool
     {
-        for ($number = 0; $number < 2; $number++) {
-            $start = $at;
-            $value = 0;
-            while (Ascii::isDigit($pattern[$at] ?? '')) {
-                $value = $value * 10 + (int) $pattern[$at];
-                $at++;
-                if ($value > 65535) {
-                    return $at;
-                }
-            }
-
-            if ($at === $start || ',' !== ($pattern[$at] ?? '')) {
-                return null;
-            }
-            $at++;
-        }
-
-        return null;
+        return 1 === LibraryPcre::match('/^\{\d++(?:,\d*+)?\}/', $quantifier);
     }
 
     /**

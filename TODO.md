@@ -147,10 +147,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
 
-- PCRE2 10.32 to 10.36 read the digits of a brace before they check that a
-  count closes it: `a{65536 }` is "number too big in {} quantifier" at
-  offset 7 (php:8.0-cli), and `\g{65536 }` too for PHP 7.3 and 7.4 without
-  `X` (offset 8). The library accepts both.
 - `(a)\g{1-}` compiles for the library on every PHP 8 target; PCRE2 refuses
   it at offset 5 (7 from 10.47). `\g{--1}` and `\g{-+1}` have the right
   offset but say `regex.backref.relative` where PCRE2 says "subpattern name

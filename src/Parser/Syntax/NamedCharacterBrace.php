@@ -46,6 +46,11 @@ final class NamedCharacterBrace
             return ErrorCode::EscapeUnsupported;
         }
 
+        // Before 10.37 the digits are read first, whatever follows them.
+        if (!$target->supports(PcreFeature::LargeOpenCountIsText) && null !== RepeatCount::overflowBeforeTen37($pattern, $brace)) {
+            return ErrorCode::QuantifierTooBig;
+        }
+
         $blank = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts) ? '[ \t]*+' : '';
 
         if (1 !== LibraryPcre::match('/\G\{'.$blank.'(\d*+)'.$blank.'(?:(,)'.$blank.'(\d*+)'.$blank.')?\}/', $pattern, $count, \PREG_UNMATCHED_AS_NULL, $brace)) {
