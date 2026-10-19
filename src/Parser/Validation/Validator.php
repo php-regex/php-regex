@@ -1042,7 +1042,7 @@ final class Validator extends AbstractNodeVisitor
     public function visitBackref(BackrefNode $node): void
     {
         $this->ensureGroupNumberingInitialized();
-        $this->validateReferenceBracePadding($node);
+        $this->validateReferenceName($node);
 
         $ref = $node->ref;
 
@@ -1177,17 +1177,6 @@ final class Validator extends AbstractNodeVisitor
             }
 
             return;
-        }
-
-        // "\k<1>": PCRE reads a name there, and a name never starts with a
-        // digit. The tree spells "\g{1a}" the same way, but PCRE reads a
-        // number after "\g{" and calls it a syntax error: the source tells.
-        if (1 === LibraryPcre::match('/^\\\\k[<{\']\d/', $ref) && null !== $this->source && '\\k' === substr($this->source, $node->startPosition, 2)) {
-            $this->raiseSemanticError(
-                \sprintf('Group name after \k must not start with a digit: "%s".', $ref),
-                $this->missingReferenceOffset($node),
-                ErrorCode::GroupNameInvalid,
-            );
         }
 
         // "\g{name}" is kept as "\k{name}": the message quotes the source.
@@ -1789,6 +1778,7 @@ final class Validator extends AbstractNodeVisitor
     private function validateSubroutineReference(SubroutineNode $node): void
     {
         $this->ensureGroupNumberingInitialized();
+        $this->validateReferenceName($node);
 
         $ref = $node->reference;
 
@@ -2667,38 +2657,70 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * "\g{ 1 }" and "\k{ name }" need PCRE2 10.43. Before, PCRE stops on the
-     * space after the "{", or, with no space there, where "\g" wants a
-     * reference and "\k{" the end of the name.
+     * The name of "\k{...}", "\k<...>" and "\k'...'", and of "\g{...}",
+     * "\g<...>" and "\g'...'" where no number stands, as PCRE2's read_name()
+     * reads it: past the spaces and tabs after "{" from 10.43, a digit first
+     * is refused on it, past it from 10.47; a character no name holds first
+     * leaves no name; else the name ends at the first character no name
+     * holds, and what closes it must follow, past the spaces and tabs before
+     * "}" from 10.43. A name holds ASCII letters, digits and underscores,
+     * and under UTF from 10.33 any letter or decimal digit. Before 10.43 a
+     * space after the number of "\g{" ends "\g", whose number PCRE reads
+     * first.
      */
-    private function validateReferenceBracePadding(BackrefNode $node): void
+    private function validateReferenceName(BackrefNode|SubroutineNode $node): void
     {
-        if (null === $this->source || $this->supports(PcreFeature::PaddedBracedEscapes)) {
+        $source = $this->source ?? '';
+        $start = $node->startPosition;
+        $closer = ['{' => '}', '<' => '>', "'" => "'"][$source[$start + 2] ?? ''] ?? null;
+        if (null === $closer || 1 !== LibraryPcre::match('/\G\\\\[gk]/', $source, $escape, 0, $start)) {
             return;
         }
 
-        $written = substr($this->source, $node->startPosition, $node->getEndPosition() - $node->startPosition);
-        if (1 !== LibraryPcre::match('/^\\\\([gk])\{([ \t]*+)([^ \t}]*+)([ \t]?)/', $written, $matches)
-            || '' === $matches[2].$matches[4]) {
-            return;
-        }
-
-        // A space first leaves no name; one after a number ends "\g", whose
-        // number PCRE reads first; one after a name ends the name.
+        $letter = $source[$start + 1];
+        $padded = '}' === $closer && $this->supports(PcreFeature::PaddedBracedEscapes);
+        $nameStart = $start + 3 + ($padded ? strspn($source, " \t", $start + 3) : 0);
         $digits = [];
-        // "\g" reads a number first, whatever follows its digits.
-        $number = 'g' === $matches[1] && 1 === LibraryPcre::match('/^([+-]?)(\d++)/', $matches[3], $digits);
-        [$offset, $code] = match (true) {
-            '' !== $matches[2] => [3, ErrorCode::GroupNameExpected],
-            $number => [2, $this->braceNumberError($node, $digits[1] ?? '', $digits[2] ?? '') ?? ErrorCode::BackrefInvalidSyntax],
-            default => [3 + \strlen($matches[3]), ErrorCode::GroupNameUnterminated],
+        if ('g' === $letter && 1 === LibraryPcre::match('/\G([+-]?)(\d++)/', $source, $digits, 0, $nameStart)) {
+            // Only "\g{...}" is a back reference, whose number is read here.
+            if ($node instanceof BackrefNode && '}' === $closer && !$padded && 1 === strspn($source, " \t", $nameStart + \strlen($digits[0]), 1)) {
+                $this->raiseSemanticError(
+                    'Spaces inside \g{} need PCRE2 10.43, which PHP bundles from 8.4.',
+                    $start + 2,
+                    $this->braceNumberError($node, $digits[1], $digits[2]) ?? ErrorCode::BackrefInvalidSyntax,
+                    'Remove the spaces inside the braces, or target PHP 8.4+.',
+                );
+            }
+
+            return;
+        }
+
+        $unicodeNames = $this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames);
+        LibraryPcre::match($unicodeNames ? '/\G(?:(\p{Nd})|[_\p{L}\p{Nd}]*+)/u' : '/\G(?:([0-9])|[_A-Za-z0-9]*+)/', $source, $name, 0, $nameStart);
+        $read = $name[0] ?? '';
+        $digit = $name[1] ?? '';
+        $closeAt = $nameStart + \strlen($read);
+        $closeAt += $padded ? strspn($source, " \t", $closeAt) : 0;
+
+        if ('' === $digit && '' !== $read && $closer === ($source[$closeAt] ?? '')) {
+            return;
+        }
+
+        $written = substr($source, $start, $node->getEndPosition() - $start);
+        [$offset, $code, $message] = match (true) {
+            '' !== $digit => [$this->pastTheFault($nameStart + \strlen($digit), \strlen($digit)), ErrorCode::GroupNameInvalid, \sprintf('Invalid reference "%s": a group name must not start with a digit.', $written)],
+            '' === $read => [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Invalid reference "%s": a group name is expected at position %d.', $written, $nameStart)],
+            default => [$closeAt, ErrorCode::GroupNameUnterminated, \sprintf('Invalid reference "%s": the group name ends at position %d, and no "%s" closes it there.', $written, $closeAt, $closer)],
         };
 
+        // A space PCRE2 stops on inside the braces is padding it does not
+        // read before 10.43.
+        $unreadPadding = '}' === $closer && !$padded && 1 === strspn($source, " \t", $offset, 1);
         $this->raiseSemanticError(
-            \sprintf('Spaces inside \%s{} need PCRE2 10.43, which PHP bundles from 8.4.', $matches[1]),
-            $node->startPosition + $offset,
+            $unreadPadding ? \sprintf('Spaces inside \%s{} need PCRE2 10.43, which PHP bundles from 8.4.', $letter) : $message,
+            $offset,
             $code,
-            'Remove the spaces inside the braces, or target PHP 8.4+.',
+            $unreadPadding ? 'Remove the spaces inside the braces, or target PHP 8.4+.' : null,
         );
     }
 
@@ -2834,11 +2856,6 @@ final class Validator extends AbstractNodeVisitor
             // A name, past the spaces and tabs a brace takes from 10.43.
             if ('' === $matches[4]) {
                 return $start + 3 + ('{' === $matches[2] && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($text, " \t", 3) : 0);
-            }
-
-            // "\k<5ghj>" names no group: a name cannot start with a digit.
-            if ('k' === $matches[1]) {
-                return $this->pastTheFault($start + 4);
             }
 
             // A number past 65535 is refused on the brace that opens it.

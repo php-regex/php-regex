@@ -1049,9 +1049,8 @@ final class TokenParser
             $nameStart += strspn($this->pattern, " \t", $nameStart);
         }
         $nameEnd = $this->groupNames->invalidNameOffset($nameStart);
-        $digit = $this->unicodeMode ? '/\G\p{Nd}/u' : '/\G[0-9]/';
 
-        if (1 === LibraryPcre::match($digit, $this->pattern, $matches, 0, $nameStart)) {
+        if (ErrorCode::GroupNameInvalid === $this->groupNames->nameFault($nameStart, $nameEnd)) {
             throw $this->parserException(
                 \sprintf('Group name after \k%s must not start with a digit at position %d.', $opener, $nameEnd),
                 ErrorCode::GroupNameInvalid,
@@ -1427,11 +1426,9 @@ final class TokenParser
         // PCRE2 10.43.
         $nameStart = $start + 3 + ('{' === $opener && $this->supports(PcreFeature::PaddedBracedEscapes) ? strspn($this->pattern, " \t", $start + 3) : 0);
 
-        return match (true) {
-            1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart) => ErrorCode::BackrefInvalidSyntax,
-            $position === $nameStart => ErrorCode::GroupNameExpected,
-            default => ErrorCode::GroupNameUnterminated,
-        };
+        return 1 === LibraryPcre::match('/\G[+-]?\d/', $this->pattern, $matches, 0, $nameStart)
+            ? ErrorCode::BackrefInvalidSyntax
+            : $this->groupNames->nameFault($nameStart, $position);
     }
 
     /**

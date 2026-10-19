@@ -256,7 +256,7 @@ final class GroupNameReader
      * stops reading at $stop: a name starting with a digit, no name at all
      * when it stops where the name starts, or else a name nothing closes.
      */
-    private function nameFault(int $nameStart, int $stop): ErrorCode
+    public function nameFault(int $nameStart, int $stop): ErrorCode
     {
         $digit = $this->unicodeNames ? '/\G\p{Nd}/u' : '/\G[0-9]/';
 
