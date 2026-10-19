@@ -109,6 +109,41 @@ final class DebugCommandEdgeCasesTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{args: list<string>, error: string}>
+     */
+    public static function provideOptionErrors(): iterable
+    {
+        yield 'unknown mode after a space' => ['args' => ['/a/', '--redos-mode', 'sometimes'], 'error' => 'Invalid value for --redos-mode.'];
+        yield 'mode missing' => ['args' => ['/a/', '--redos-mode'], 'error' => 'Missing value for --redos-mode.'];
+        yield 'threshold missing' => ['args' => ['/a/', '--redos-threshold', '--input'], 'error' => 'Missing value for --redos-threshold.'];
+        yield 'unknown threshold after a space' => ['args' => ['/a/', '--redos-threshold', 'severe'], 'error' => 'Invalid value for --redos-threshold: '];
+    }
+
+    /**
+     * An option without its value, or with one it does not take, stops
+     * the command before the pattern is read, with the message and the
+     * usage.
+     *
+     * @param list<string> $args
+     */
+    #[DataProvider('provideOptionErrors')]
+    public function test_debug_refuses_an_option_without_a_value_it_takes(array $args, string $error): void
+    {
+        $output = OutputFactory::create();
+        $input = new Input('debug', $args, new GlobalOptions(false, false, false, true, null, null), []);
+
+        $exitCode = 0;
+        $buffer = $this->captureOutput(static function () use ($input, $output, &$exitCode): void {
+            $exitCode = (new DebugCommand())->run($input, $output);
+        });
+
+        $written = $buffer.OutputFactory::errors($output);
+        $this->assertNotSame(0, $exitCode);
+        $this->assertStringContainsString($error, $written);
+        $this->assertStringContainsString('Usage: regex debug <pattern>', $written);
+    }
+
+    /**
      * @param callable(): void $callback
      */
     private function captureOutput(callable $callback): string

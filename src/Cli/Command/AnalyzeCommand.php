@@ -28,7 +28,6 @@ use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Confirmation;
-use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
@@ -36,7 +35,7 @@ use PHPRegex\Redos\RedosSeverity;
 /**
  * @internal
  *
- * @phpstan-type AnalyzeArguments array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
+ * @phpstan-type AnalyzeArguments array{pattern: string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
  */
 final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterface
 {
@@ -82,7 +81,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             $format = $parsed['format'];
             $redosMode = $parsed['redosMode'];
             $redosThreshold = $parsed['redosThreshold'];
-            $confirmOptions = $parsed['confirmOptions'];
 
             $validation = $regex->validate($pattern);
             // The report holds an invalid pattern, its parse failed and the
@@ -101,18 +99,20 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             }
 
             $ast = $regex->parse($pattern);
-            $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
+            $analysis = $regex->redos($pattern, $redosThreshold, $redosMode);
             $explain = $regex->explain($pattern);
 
             $highlightedPattern = $output->isAnsi()
                 ? $ast->accept(new ConsoleHighlighter())
                 : $pattern;
 
-            $rendered = 'json' === $format
-                ? $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain)
-                : $this->renderConsoleOutput($output, $style, $highlightedPattern, $validation, $analysis, $explain);
+            if ('json' === $format) {
+                $this->renderJsonOutput($output, $pattern, $runtime, $validation, $analysis, $explain);
+            } else {
+                $this->renderConsoleOutput($output, $style, $highlightedPattern, $validation, $analysis, $explain);
+            }
 
-            if (self::SUCCESS !== $rendered || !$validation->isValid || $this->isConfirmedRedos($analysis, $redosThreshold)) {
+            if (!$validation->isValid || $this->isConfirmedRedos($analysis, $redosThreshold)) {
                 return self::FAILURE;
             }
 
@@ -133,7 +133,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         $format = 'console';
         $redosMode = RedosMode::Theoretical;
         $redosThreshold = null;
-        $confirmOptions = null;
         $stopParsing = false;
 
         for ($i = 0; $i < \count($args); $i++) {
@@ -246,7 +245,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             'format' => $format,
             'redosMode' => $redosMode,
             'redosThreshold' => $redosThreshold,
-            'confirmOptions' => $confirmOptions,
             'error' => null,
         ];
     }
@@ -261,7 +259,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             'format' => $format,
             'redosMode' => $redosMode,
             'redosThreshold' => $redosThreshold,
-            'confirmOptions' => null,
             'error' => $error,
         ];
     }
@@ -283,7 +280,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         return $meta;
     }
 
-    private function renderJsonOutput(Output $output, string $pattern, PcreRuntimeInfo $runtime, ValidationResult $validation, RedosAnalysis $analysis, string $explain): int
+    private function renderJsonOutput(Output $output, string $pattern, PcreRuntimeInfo $runtime, ValidationResult $validation, RedosAnalysis $analysis, string $explain): void
     {
         $payload = [
             'pattern' => $pattern,
@@ -295,11 +292,9 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         ];
 
         $output->writeDocument(JsonDocument::encode($payload));
-
-        return self::SUCCESS;
     }
 
-    private function renderConsoleOutput(Output $output, ConsoleStyle $style, string $highlightedPattern, ValidationResult $validation, RedosAnalysis $analysis, string $explain): int
+    private function renderConsoleOutput(Output $output, ConsoleStyle $style, string $highlightedPattern, ValidationResult $validation, RedosAnalysis $analysis, string $explain): void
     {
         $confirmation = RedosMode::Confirmed === $analysis->mode ? $analysis->confirmation : null;
         // One number per section printed: Confirmation only when there is one.
@@ -369,8 +364,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
 
         $style->renderSection('Explanation', $steps, $steps);
         $output->write($explain."\n");
-
-        return self::SUCCESS;
     }
 
     private function renderConfirmationSection(Output $output, ConsoleStyle $style, Confirmation $confirmation, int $steps): void

@@ -30,7 +30,6 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\DisplayEscaper;
-use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\Heatmap;
 use PHPRegex\Redos\InputGenerator;
 use PHPRegex\Redos\RedosAnalysis;
@@ -100,7 +99,6 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
         $format = $parsed['format'];
         $redosMode = $parsed['redosMode'];
         $redosThreshold = $parsed['redosThreshold'];
-        $confirmOptions = $parsed['confirmOptions'];
 
         $regex = $this->createRegex($output, $input->regexOptions, $json);
         if (null === $regex) {
@@ -141,7 +139,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
         try {
             $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
-            $analysis = $regex->redos($pattern, $redosThreshold, $redosMode, $confirmOptions);
+            $analysis = $regex->redos($pattern, $redosThreshold, $redosMode);
             // The analysis reports a pattern it cannot parse as its error;
             // the exit code reports an invalid pattern, syntax or semantic
             // error alike, as a problem of the pattern.
@@ -321,7 +319,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
      * @param array<int, string> $args
      * @param LintDefaults       $defaults
      *
-     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, confirmOptions: ?ConfirmationOptions, error: ?string}
+     * @return array{pattern: string, inputValue: ?string, format: string, redosMode: RedosMode, redosThreshold: ?RedosSeverity, error: ?string}
      */
     private function parseArguments(array $args, array $defaults = []): array
     {
@@ -343,7 +341,6 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $redosThreshold = RedosSeverity::fromConfig($defaults['redosThreshold']);
         }
 
-        $confirmOptions = null;
         $stopParsing = false;
 
         for ($i = 0; $i < \count($args); $i++) {
@@ -364,7 +361,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             if (!$stopParsing && '--input' === $arg) {
                 $value = $args[$i + 1] ?? '';
                 if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --input.'];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --input.'];
                 }
                 $inputValue = $value;
                 $i++;
@@ -387,7 +384,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             if (!$stopParsing && '--format' === $arg) {
                 $value = $args[$i + 1] ?? '';
                 if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --format.'];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --format.'];
                 }
                 $format = Ascii::lower($value);
                 $i++;
@@ -399,7 +396,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 $value = Ascii::lower(substr($arg, \strlen('--redos-mode=')));
                 $mode = RedosMode::tryFrom($value);
                 if (null === $mode) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-mode.'];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-mode.'];
                 }
                 $redosMode = $mode;
 
@@ -409,11 +406,11 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             if (!$stopParsing && '--redos-mode' === $arg) {
                 $value = $args[$i + 1] ?? '';
                 if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --redos-mode.'];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --redos-mode.'];
                 }
                 $mode = RedosMode::tryFrom(Ascii::lower($value));
                 if (null === $mode) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-mode.'];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-mode.'];
                 }
                 $redosMode = $mode;
                 $i++;
@@ -425,7 +422,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 try {
                     $redosThreshold = RedosSeverity::fromConfig(substr($arg, \strlen('--redos-threshold=')));
                 } catch (InvalidRegexOptionException $e) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
                 }
 
                 continue;
@@ -434,13 +431,13 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             if (!$stopParsing && '--redos-threshold' === $arg) {
                 $value = $args[$i + 1] ?? '';
                 if ('' === $value || str_starts_with($value, '-')) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing value for --redos-threshold.'];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing value for --redos-threshold.'];
                 }
 
                 try {
                     $redosThreshold = RedosSeverity::fromConfig($value);
                 } catch (InvalidRegexOptionException $e) {
-                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
+                    return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --redos-threshold: '.$e->getMessage()];
                 }
                 $i++;
 
@@ -448,7 +445,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             }
 
             if (!$stopParsing && str_starts_with($arg, '-')) {
-                return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Unknown option: '.$arg];
+                return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Unknown option: '.$arg];
             }
 
             if ('' === $pattern) {
@@ -457,15 +454,15 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 continue;
             }
 
-            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Unexpected argument: '.$arg];
+            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Unexpected argument: '.$arg];
         }
 
         if ('' === $pattern) {
-            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Missing pattern.'];
+            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Missing pattern.'];
         }
 
         if (!\in_array($format, ['console', 'json'], true)) {
-            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'confirmOptions' => null, 'error' => 'Invalid value for --format.'];
+            return ['pattern' => '', 'inputValue' => null, 'format' => $format, 'redosMode' => $redosMode, 'redosThreshold' => $redosThreshold, 'error' => 'Invalid value for --format.'];
         }
 
         return [
@@ -474,7 +471,6 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             'format' => $format,
             'redosMode' => $redosMode,
             'redosThreshold' => $redosThreshold,
-            'confirmOptions' => $confirmOptions,
             'error' => null,
         ];
     }
