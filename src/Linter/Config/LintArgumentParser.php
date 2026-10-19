@@ -131,63 +131,13 @@ final class LintArgumentParser
             }
 
             if ('--redos' === $arg) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    true,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(checkRedos: true);
 
                 continue;
             }
 
             if ('--no-redos' === $arg) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    false,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(checkRedos: false);
 
                 continue;
             }
@@ -197,31 +147,9 @@ final class LintArgumentParser
                 if (\is_string($mode)) {
                     return new LintParseResult(null, $mode);
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    true,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $mode->value,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
+                $arguments = $arguments->with(
+                    checkRedos: true,
+                    redosMode: $mode->value,
                 );
 
                 continue;
@@ -236,31 +164,9 @@ final class LintArgumentParser
                 if (\is_string($mode)) {
                     return new LintParseResult(null, $mode);
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    true,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $mode->value,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
+                $arguments = $arguments->with(
+                    checkRedos: true,
+                    redosMode: $mode->value,
                 );
                 $i++;
 
@@ -273,32 +179,7 @@ final class LintArgumentParser
                 } catch (InvalidRegexOptionException $e) {
                     return new LintParseResult(null, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $value,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(redosThreshold: $value);
 
                 continue;
             }
@@ -314,95 +195,20 @@ final class LintArgumentParser
                 } catch (InvalidRegexOptionException $e) {
                     return new LintParseResult(null, 'Invalid value for --redos-threshold: '.$e->getMessage());
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $value,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(redosThreshold: $value);
                 $i++;
 
                 continue;
             }
 
             if ('--no-validate' === $arg) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    false,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(checkValidation: false);
 
                 continue;
             }
 
             if ('--no-optimize' === $arg) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    false,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(checkOptimizations: false);
 
                 continue;
             }
@@ -412,32 +218,7 @@ final class LintArgumentParser
                 if (null === $generateBaseline) {
                     return new LintParseResult(null, 'Missing value for --generate-baseline.');
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(generateBaseline: $generateBaseline);
 
                 continue;
             }
@@ -447,32 +228,7 @@ final class LintArgumentParser
                 if (null === $baseline) {
                     return new LintParseResult(null, 'Missing value for --baseline.');
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(baseline: $baseline);
 
                 continue;
             }
@@ -504,32 +260,7 @@ final class LintArgumentParser
             if (str_starts_with($arg, '--exclude=')) {
                 $exclude = $arguments->exclude;
                 $exclude[] = substr($arg, \strlen('--exclude='));
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(exclude: $exclude);
 
                 continue;
             }
@@ -541,64 +272,14 @@ final class LintArgumentParser
                 }
                 $exclude = $arguments->exclude;
                 $exclude[] = $value;
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(exclude: $exclude);
                 $i++;
 
                 continue;
             }
 
             if (str_starts_with($arg, '--min-savings=')) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    (int) substr($arg, \strlen('--min-savings=')),
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(minSavings: (int) substr($arg, \strlen('--min-savings=')));
 
                 continue;
             }
@@ -608,32 +289,7 @@ final class LintArgumentParser
                 if ($jobs < 1) {
                     return new LintParseResult(null, 'The --jobs value must be a positive integer.');
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(jobs: $jobs);
 
                 continue;
             }
@@ -644,32 +300,7 @@ final class LintArgumentParser
                     return new LintParseResult(null, 'Missing value for --min-savings.');
                 }
                 $minSavings = (int) $value;
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(minSavings: $minSavings);
                 $i++;
 
                 continue;
@@ -684,64 +315,14 @@ final class LintArgumentParser
                 if ($jobs < 1) {
                     return new LintParseResult(null, 'The --jobs value must be a positive integer.');
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $jobs,
-                    $arguments->output,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(jobs: $jobs);
                 $i++;
 
                 continue;
             }
 
             if (str_starts_with($arg, '--output=')) {
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    substr($arg, \strlen('--output=')),
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(output: substr($arg, \strlen('--output=')));
 
                 continue;
             }
@@ -751,32 +332,7 @@ final class LintArgumentParser
                 if ('' === $value || str_starts_with($value, '-')) {
                     return new LintParseResult(null, 'Missing value for --output.');
                 }
-                $arguments = new LintArguments(
-                    $arguments->paths,
-                    $arguments->exclude,
-                    $arguments->minSavings,
-                    $arguments->verbosity,
-                    $arguments->format,
-                    $arguments->quiet,
-                    $arguments->checkRedos,
-                    $arguments->checkValidation,
-                    $arguments->checkOptimizations,
-                    $arguments->checkLint,
-                    $arguments->jobs,
-                    $value,
-                    $arguments->baseline,
-                    $arguments->generateBaseline,
-                    $arguments->ide,
-                    $arguments->optimizations,
-                    $arguments->redosMode,
-                    $arguments->redosThreshold,
-                    $arguments->lintRules,
-                    $arguments->interop,
-                    $arguments->patternFunctions,
-                    $arguments->checkComplexity,
-                    $arguments->complexityThreshold,
-                    $arguments->reportUnmatchedIgnores,
-                );
+                $arguments = $arguments->with(output: $value);
                 $i++;
 
                 continue;
@@ -792,32 +348,7 @@ final class LintArgumentParser
                 $pathsProvided = true;
             }
             $paths[] = $arg;
-            $arguments = new LintArguments(
-                $paths,
-                $arguments->exclude,
-                $arguments->minSavings,
-                $arguments->verbosity,
-                $arguments->format,
-                $arguments->quiet,
-                $arguments->checkRedos,
-                $arguments->checkValidation,
-                $arguments->checkOptimizations,
-                $arguments->checkLint,
-                $arguments->jobs,
-                $arguments->output,
-                $arguments->baseline,
-                $arguments->generateBaseline,
-                $arguments->ide,
-                $arguments->optimizations,
-                $arguments->redosMode,
-                $arguments->redosThreshold,
-                $arguments->lintRules,
-                $arguments->interop,
-                $arguments->patternFunctions,
-                $arguments->checkComplexity,
-                $arguments->complexityThreshold,
-                $arguments->reportUnmatchedIgnores,
-            );
+            $arguments = $arguments->with(paths: $paths);
         }
 
         return new LintParseResult($arguments, pathsGiven: $pathsProvided, warnings: $warnings);
@@ -863,32 +394,7 @@ final class LintArgumentParser
 
     private function withFormat(LintArguments $arguments, string $format): LintArguments
     {
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $arguments->verbosity,
-            $format,
-            $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $arguments->checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $arguments->lintRules,
-            $arguments->interop,
-            $arguments->patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $arguments->reportUnmatchedIgnores,
-        );
+        return $arguments->with(format: $format);
     }
 
     /**
@@ -896,31 +402,9 @@ final class LintArgumentParser
      */
     private function withVerbosity(LintArguments $arguments, string $verbosity, bool $quiet = false): LintArguments
     {
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $verbosity,
-            $arguments->format,
-            $quiet ?: $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $arguments->checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $arguments->lintRules,
-            $arguments->interop,
-            $arguments->patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $arguments->reportUnmatchedIgnores,
+        return $arguments->with(
+            verbosity: $verbosity,
+            quiet: $quiet ?: $arguments->quiet,
         );
     }
 
@@ -955,32 +439,7 @@ final class LintArgumentParser
      */
     private function withInterop(LintArguments $arguments, array $interop): LintArguments
     {
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $arguments->verbosity,
-            $arguments->format,
-            $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $arguments->checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $arguments->lintRules,
-            $interop,
-            $arguments->patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $arguments->reportUnmatchedIgnores,
-        );
+        return $arguments->with(interop: $interop);
     }
 
     /**
@@ -998,92 +457,17 @@ final class LintArgumentParser
             $warnings[] = $warning;
         }
 
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $arguments->verbosity,
-            $arguments->format,
-            $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $arguments->checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $arguments->lintRules,
-            $arguments->interop,
-            $patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $arguments->reportUnmatchedIgnores,
-        );
+        return $arguments->with(patternFunctions: $patternFunctions);
     }
 
     private function withCheckLint(LintArguments $arguments, bool $checkLint): LintArguments
     {
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $arguments->verbosity,
-            $arguments->format,
-            $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $arguments->lintRules,
-            $arguments->interop,
-            $arguments->patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $arguments->reportUnmatchedIgnores,
-        );
+        return $arguments->with(checkLint: $checkLint);
     }
 
     private function withReportUnmatchedIgnores(LintArguments $arguments, bool $report): LintArguments
     {
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $arguments->verbosity,
-            $arguments->format,
-            $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $arguments->checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $arguments->lintRules,
-            $arguments->interop,
-            $arguments->patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $report,
-        );
+        return $arguments->with(reportUnmatchedIgnores: $report);
     }
 
     private function withLintRule(LintArguments $arguments, string $ruleId, bool $enabled): LintArguments
@@ -1091,31 +475,6 @@ final class LintArgumentParser
         $lintRules = $arguments->lintRules;
         $lintRules[$ruleId] = $enabled;
 
-        return new LintArguments(
-            $arguments->paths,
-            $arguments->exclude,
-            $arguments->minSavings,
-            $arguments->verbosity,
-            $arguments->format,
-            $arguments->quiet,
-            $arguments->checkRedos,
-            $arguments->checkValidation,
-            $arguments->checkOptimizations,
-            $arguments->checkLint,
-            $arguments->jobs,
-            $arguments->output,
-            $arguments->baseline,
-            $arguments->generateBaseline,
-            $arguments->ide,
-            $arguments->optimizations,
-            $arguments->redosMode,
-            $arguments->redosThreshold,
-            $lintRules,
-            $arguments->interop,
-            $arguments->patternFunctions,
-            $arguments->checkComplexity,
-            $arguments->complexityThreshold,
-            $arguments->reportUnmatchedIgnores,
-        );
+        return $arguments->with(lintRules: $lintRules);
     }
 }

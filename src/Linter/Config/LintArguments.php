@@ -63,6 +63,73 @@ final class LintArguments
     ) {}
 
     /**
+     * A copy with the values given in place of these, each named after the
+     * property it sets: one left out keeps its value (so a nullable one is
+     * never set back to null this way).
+     *
+     * @param array<int, string>|null                 $paths
+     * @param array<int, string>|null                 $exclude
+     * @param "debug"|"normal"|"quiet"|"verbose"|null $verbosity
+     * @param array<string, bool|int>|null            $optimizations
+     * @param array<string, bool>|null                $lintRules
+     * @param array<int, string>|null                 $interop
+     * @param array<int, string>|null                 $patternFunctions
+     */
+    public function with(
+        ?array $paths = null,
+        ?array $exclude = null,
+        ?int $minSavings = null,
+        ?string $verbosity = null,
+        ?string $format = null,
+        ?bool $quiet = null,
+        ?bool $checkRedos = null,
+        ?bool $checkValidation = null,
+        ?bool $checkOptimizations = null,
+        ?bool $checkLint = null,
+        ?int $jobs = null,
+        ?string $output = null,
+        ?string $baseline = null,
+        ?string $generateBaseline = null,
+        ?string $ide = null,
+        ?array $optimizations = null,
+        ?string $redosMode = null,
+        ?string $redosThreshold = null,
+        ?array $lintRules = null,
+        ?array $interop = null,
+        ?array $patternFunctions = null,
+        ?bool $checkComplexity = null,
+        ?int $complexityThreshold = null,
+        ?bool $reportUnmatchedIgnores = null,
+    ): self {
+        return new self(
+            paths: $paths ?? $this->paths,
+            exclude: $exclude ?? $this->exclude,
+            minSavings: $minSavings ?? $this->minSavings,
+            verbosity: $verbosity ?? $this->verbosity,
+            format: $format ?? $this->format,
+            quiet: $quiet ?? $this->quiet,
+            checkRedos: $checkRedos ?? $this->checkRedos,
+            checkValidation: $checkValidation ?? $this->checkValidation,
+            checkOptimizations: $checkOptimizations ?? $this->checkOptimizations,
+            checkLint: $checkLint ?? $this->checkLint,
+            jobs: $jobs ?? $this->jobs,
+            output: $output ?? $this->output,
+            baseline: $baseline ?? $this->baseline,
+            generateBaseline: $generateBaseline ?? $this->generateBaseline,
+            ide: $ide ?? $this->ide,
+            optimizations: $optimizations ?? $this->optimizations,
+            redosMode: $redosMode ?? $this->redosMode,
+            redosThreshold: $redosThreshold ?? $this->redosThreshold,
+            lintRules: $lintRules ?? $this->lintRules,
+            interop: $interop ?? $this->interop,
+            patternFunctions: $patternFunctions ?? $this->patternFunctions,
+            checkComplexity: $checkComplexity ?? $this->checkComplexity,
+            complexityThreshold: $complexityThreshold ?? $this->complexityThreshold,
+            reportUnmatchedIgnores: $reportUnmatchedIgnores ?? $this->reportUnmatchedIgnores,
+        );
+    }
+
+    /**
      * @param array<string, mixed> $defaults
      */
     public static function fromDefaults(array $defaults): self
@@ -228,30 +295,30 @@ final class LintArguments
         }
 
         return new self(
-            $paths,
-            $exclude,
-            $minSavings,
-            $verbosity,
-            $format,
-            $quiet,
-            $checkRedos,
-            $checkValidation,
-            $checkOptimizations,
-            $checkLint,
-            $jobs,
-            $output,
-            $baseline,
-            $generateBaseline,
-            $ide,
-            $optimizations,
-            $redosMode,
-            $redosThreshold,
-            $lintRules,
-            $interop,
-            $patternFunctions,
-            $checkComplexity,
-            $complexityThreshold,
-            $reportUnmatchedIgnores,
+            paths: $paths,
+            exclude: $exclude,
+            minSavings: $minSavings,
+            verbosity: $verbosity,
+            format: $format,
+            quiet: $quiet,
+            checkRedos: $checkRedos,
+            checkValidation: $checkValidation,
+            checkOptimizations: $checkOptimizations,
+            checkLint: $checkLint,
+            jobs: $jobs,
+            output: $output,
+            baseline: $baseline,
+            generateBaseline: $generateBaseline,
+            ide: $ide,
+            optimizations: $optimizations,
+            redosMode: $redosMode,
+            redosThreshold: $redosThreshold,
+            lintRules: $lintRules,
+            interop: $interop,
+            patternFunctions: $patternFunctions,
+            checkComplexity: $checkComplexity,
+            complexityThreshold: $complexityThreshold,
+            reportUnmatchedIgnores: $reportUnmatchedIgnores,
         );
     }
 
