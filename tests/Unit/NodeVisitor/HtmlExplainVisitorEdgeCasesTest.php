@@ -150,4 +150,19 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $this->assertStringContainsString("Callout: <strong>(?C&quot;a\u{FFFD}b&quot;)</strong>", $callout);
         $this->assertStringContainsString("<strong>&#039;a\u{FFFD}b&#039;</strong>", $quoted);
     }
+
+    /**
+     * A class and a condition describe their parts as text, escaped once:
+     * a quote shows as a quote, not as the entity that escapes it.
+     */
+    public function test_a_class_and_a_condition_escape_their_parts_once(): void
+    {
+        $class = (string) $this->regex->parse('/[a-f<]/')->accept($this->visitor);
+        $condition = (string) $this->regex->parse('/(?(?=a)b|c)/')->accept($this->visitor);
+
+        $this->assertStringContainsString('Character Class: [ Range: from &#039;a&#039; to &#039;f&#039;, Literal: &#039;&lt;&#039; ]', $class);
+        $this->assertStringContainsString('title="any character in [ Range: from &#039;a&#039; to &#039;f&#039;, Literal: &#039;&lt;&#039; ]"', $class);
+        $this->assertStringContainsString("(Start Positive Lookahead:\nLiteral: &#039;a&#039;)", $condition);
+        $this->assertStringNotContainsString('&amp;', $class.$condition);
+    }
 }

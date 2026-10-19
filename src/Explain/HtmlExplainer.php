@@ -291,7 +291,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
         $explainedParts = array_map(fn (NodeInterface $part): string => $part->accept($this), $expressionParts);
 
         // Char class parts are just strings, not <li>
-        $parts = array_map(strip_tags(...), $explainedParts);
+        $parts = array_map($this->text(...), $explainedParts);
 
         $explanation = $node->isNegated
             ? \sprintf('any character except [ %s ]', implode(', ', $parts))
@@ -299,7 +299,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
 
         return \sprintf(
             '<li><span title="%s">Character Class: [ %s%s ]</span></li>',
-            $this->e(strip_tags($explanation)),
+            $this->e($explanation),
             $negLabel,
             $this->e(implode(', ', $parts)),
         );
@@ -435,7 +435,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
         $no = $hasElseBranch ? $this->explainInGroup($node->no) : '';
 
         // Condition node will be a <li>, just need its text
-        $condText = trim(strip_tags((string) $cond), " \t\n\r\0\x0B");
+        $condText = trim($this->text((string) $cond), " \t\n\r\0\x0B");
 
         if ('' === $no || '<li></li>' === $no) {
             return \sprintf(
@@ -650,6 +650,15 @@ final class HtmlExplainer extends AbstractNodeVisitor
         $raw = str_starts_with($value, '\\') ? substr($value, 1) : $value;
 
         return str_starts_with($raw, '0') ? $raw : '0'.$raw;
+    }
+
+    /**
+     * The text of an explained part, its tags dropped and its entities
+     * read back, to be escaped once more where it is written.
+     */
+    private function text(string $html): string
+    {
+        return html_entity_decode(strip_tags($html), \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
     }
 
     private function e(?string $s): string
