@@ -9,6 +9,8 @@
 #
 # Splits the monorepo into the read-only repositories of its packages, with
 # splitsh-lite: each src/<Package> becomes the root of php-regex/<repository>.
+# .github/organization becomes php-regex/.github, the organization's profile and default
+# community files, pushed to its main branch, never tagged.
 #
 # Usage:
 #   bin/split [--dry-run] [--root <dir>] [--branch <name>] [--tag <name>] [--only <repository>]...
@@ -43,6 +45,9 @@ SPLITS=(
     "src/Rector:regex-rector"
     "src/Symfony:regex-symfony"
     "src/Laravel:regex-laravel"
+    # GitHub reads an organization's profile from the default branch of its
+    # .github repository: a third field names the branch pushed to.
+    ".github/organization:.github:main"
 )
 
 dry_run=0
@@ -84,14 +89,22 @@ fi
 failed=0
 for split in "${SPLITS[@]}"; do
     prefix=${split%%:*}
-    repository=${split##*:}
+    rest=${split#*:}
+    repository=${rest%%:*}
+    # A repository with a branch of its own is pushed there, and never tagged.
+    target=$branch
+    target_tag=$tag
+    if [ "$rest" != "$repository" ]; then
+        target=${rest#*:}
+        target_tag=""
+    fi
     remote="$base/$repository.git"
     if [ "${#only[@]}" -gt 0 ] && ! printf '%s\n' "${only[@]}" | grep -qxF "$repository"; then
         continue
     fi
 
     if [ "$dry_run" -eq 1 ]; then
-        echo "$prefix -> $remote ($branch${tag:+, tag $tag})"
+        echo "$prefix -> $remote ($target${target_tag:+, tag $target_tag})"
         continue
     fi
 
@@ -104,28 +117,28 @@ for split in "${SPLITS[@]}"; do
     # package's repository exists, GitHub may redirect its old name to the
     # monorepo, and a forced push would replace the monorepo's branch.
     # A repository that cannot be read is not pushed: the check above needs it.
-    if ! listing=$(git ls-remote "$remote" "refs/heads/$branch" 2>&1); then
+    if ! listing=$(git ls-remote "$remote" "refs/heads/$target" 2>&1); then
         echo "✗ $repository: cannot read $remote ($(printf '%s' "$listing" | tail -1)); nothing pushed" >&2
         failed=$((failed + 1))
         continue
     fi
     current=$(printf '%s' "$listing" | cut -f1)
     if [ -n "$current" ]; then
-        git cat-file -e "$current^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "refs/heads/$branch" 2>/dev/null || true
+        git cat-file -e "$current^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "refs/heads/$target" 2>/dev/null || true
         if git cat-file -e "$current:bin/split" 2>/dev/null; then
             # Only a repository not created yet does that: skipped, not failed.
-            echo "⚠ $repository: $remote serves the monorepo (its $branch holds bin/split), so the repository does not exist yet; skipped" >&2
+            echo "⚠ $repository: $remote serves the monorepo (its $target holds bin/split), so the repository does not exist yet; skipped" >&2
             continue
         fi
     fi
-    if ! git push -q --no-follow-tags "$remote" "$sha:refs/heads/$branch" -f; then
+    if ! git push -q --no-follow-tags "$remote" "$sha:refs/heads/$target" -f; then
         echo "✗ $repository: the push failed" >&2
         failed=$((failed + 1))
         continue
     fi
-    if [ -n "$tag" ]; then
-        tag_sha=$("$splitsh" --prefix="$prefix" --origin="refs/tags/$tag" 2>/dev/null) || { echo "✗ $repository: the tag split failed" >&2; failed=$((failed + 1)); continue; }
-        git push -q "$remote" "$tag_sha:refs/tags/$tag" || { echo "✗ $repository: the tag push failed" >&2; failed=$((failed + 1)); continue; }
+    if [ -n "$target_tag" ]; then
+        tag_sha=$("$splitsh" --prefix="$prefix" --origin="refs/tags/$target_tag" 2>/dev/null) || { echo "✗ $repository: the tag split failed" >&2; failed=$((failed + 1)); continue; }
+        git push -q "$remote" "$tag_sha:refs/tags/$target_tag" || { echo "✗ $repository: the tag push failed" >&2; failed=$((failed + 1)); continue; }
     fi
     echo "✓ $repository ${sha:0:8}"
 done

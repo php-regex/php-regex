@@ -1,0 +1,101 @@
+name: Bug report
+description: A verdict, an explanation, a rewrite or a command that is wrong.
+labels: [ bug ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Most verdicts depend on the PHP version and the PCRE2 release the pattern is judged for: the versions below let anyone reproduce what you saw. A security issue goes to the private advisory form instead (see SECURITY.md).
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - php-regex/regex-parser
+        - php-regex/regex-explain
+        - php-regex/regex-optimizer
+        - php-regex/regex-generator
+        - php-regex/regex-automata
+        - php-regex/regex-redos
+        - php-regex/regex-transpiler
+        - php-regex/regex-linter
+        - php-regex/regex-toolkit
+        - php-regex/regex-cli
+        - php-regex/regex-language-server
+        - php-regex/regex-phpstan
+        - php-regex/regex-phpunit
+        - php-regex/regex-psalm
+        - php-regex/regex-rector
+        - php-regex/regex-symfony
+        - php-regex/regex-laravel
+        - The phar (regex.phar)
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: As `composer show php-regex/regex-parser` or `regex --version` prints it.
+      placeholder: 2.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: php
+    attributes:
+      label: Output of `php -v`
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: pcre
+    attributes:
+      label: Output of `php -r 'echo PCRE_VERSION;'`
+      placeholder: 10.44 2024-06-07
+    validations:
+      required: true
+
+  - type: textarea
+    id: pattern
+    attributes:
+      label: Pattern
+      description: As written in PHP, delimiters, quotes and flags included.
+      placeholder: "'/(?<year>\\d{4})-(?<month>\\d{2})/'"
+      render: php
+    validations:
+      required: true
+
+  - type: textarea
+    id: subject
+    attributes:
+      label: Subject
+      description: The string the pattern runs on, when the issue is about matching.
+      render: php
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: The output, the message or the exception, pasted in full.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Reproducer
+      description: The smallest script or command that shows it.
+      render: php
+    validations:
+      required: true

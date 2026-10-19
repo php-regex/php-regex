@@ -1,9 +1,10 @@
 name: Split
 
 # Pushes each src/<Package> to its read-only repository on every push to 2.x
-# and on every tag. Off until the repository variable SPLIT_ENABLED is "true"
-# and the secret SPLIT_TOKEN holds a token with write access to the
-# php-regex/regex-* repositories.
+# and on every tag, and .github/organization to php-regex/.github. Off until the repository
+# variable SPLIT_ENABLED is "true" and the secret SPLIT_TOKEN holds a token
+# with write access to the php-regex/regex-* repositories and
+# php-regex/.github.
 
 on:
   push:

@@ -393,6 +393,39 @@ exit 1
     }
 
     #[Test]
+    public function test_split_pushes_the_organization_repository_to_its_own_branch_without_the_tag(): void
+    {
+        mkdir($this->root.'/.github/organization/profile', 0o777, true);
+        file_put_contents($this->root.'/.github/organization/profile/README.md', '# PHPRegex');
+        $this->commit();
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'tag', '-a', 'v2.0.0', '-m', 'v2.0.0');
+        $remotes = $this->root.'/remotes';
+        mkdir($remotes);
+        exec('git init -q --bare '.escapeshellarg($remotes.'/.github.git'));
+        $head = trim($this->git('rev-parse', 'HEAD'));
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\necho {$head}\n");
+        chmod($this->root.'/fake/splitsh-lite', 0o755);
+
+        $process = proc_open(
+            [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, '--branch', '2.x', '--tag', 'v2.0.0', '--only', '.github'],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+            null,
+            ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $remotes, 'HOME' => (string) getenv('HOME')],
+        );
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        $this->assertSame(0, proc_close($process), $output);
+        $refs = (string) shell_exec('git -C '.escapeshellarg($remotes.'/.github.git').' for-each-ref --format="%(refname)"');
+        $this->assertSame("refs/heads/main\n", $refs);
+        $this->assertSame($head, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/.github.git').' rev-parse main')));
+    }
+
+    #[Test]
     public function test_status_offline_lists_every_package(): void
     {
         [$code, $output] = $this->script('status', '--offline');

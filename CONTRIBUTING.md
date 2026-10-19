@@ -188,6 +188,15 @@ repository; Packagist picks the versions up from there. A pre-release
 (`2.1.0-BETA1`, `2.1.0-RC1`) leaves the CHANGELOG alone and is published as a
 GitHub pre-release.
 
+Every push to 2.x also splits `.github/organization` to the `main` branch of
+`php-regex/.github`: the organization's profile (`.github/organization/profile/README.md`) and
+the community files GitHub shows in every repository that has none of its
+own, the read-only ones among them. Edit them here, never in that repository:
+the next split replaces what it holds. The community files are copies of the
+monorepo's own (`.github/FUNDING.yml`, the issue and pull request templates,
+`SECURITY.md`, `CODE_OF_CONDUCT.md`), and a test fails when one of them
+drifts, or when the profile leaves out a package.
+
 The 1.x tags (`v0.1.0` to `v1.3.0`) and the `1.x` branch stay in this
 repository for good, whatever a later cleanup of tags or branches removes:
 those tags are the 1.x versions of `php-regex/php-regex` on Packagist, and
