@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Exception;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -64,5 +66,38 @@ final class ExceptionSurfaceTest extends TestCase
             $this->assertSame(2, $exception->position);
             $this->assertSame($exception->getVisualSnippet(), $exception->snippet);
         }
+    }
+
+    /**
+     * The exceptions that show the pattern are built one way: the caret
+     * stands at the snippet position when one is given, at the position
+     * otherwise, and the position stays what it was.
+     *
+     * @param class-string<LexerException|LimitException|ParserException> $class
+     */
+    #[Test]
+    #[DataProvider('provideExceptionsShowingThePattern')]
+    public function test_the_caret_stands_at_the_snippet_position(string $class): void
+    {
+        $shifted = $class::withContext('Bad.', ErrorCode::GroupUnclosed, 5, '/abcdefgh/', null, 2);
+        $atTwo = $class::withContext('Bad.', ErrorCode::GroupUnclosed, 2, '/abcdefgh/');
+        $atFive = $class::withContext('Bad.', ErrorCode::GroupUnclosed, 5, '/abcdefgh/');
+
+        $this->assertInstanceOf($class, $shifted);
+        $this->assertSame(5, $shifted->position);
+        $this->assertSame('/abcdefgh/', $shifted->getPattern());
+        $this->assertSame($atTwo->getVisualSnippet(), $shifted->getVisualSnippet());
+        $this->assertNotSame($atFive->getVisualSnippet(), $shifted->getVisualSnippet());
+        $this->assertSame($atFive->getVisualSnippet(), $atFive->snippet);
+    }
+
+    /**
+     * @return iterable<string, array{class: class-string<LexerException|LimitException|ParserException>}>
+     */
+    public static function provideExceptionsShowingThePattern(): iterable
+    {
+        yield 'lexer' => ['class' => LexerException::class];
+        yield 'parser' => ['class' => ParserException::class];
+        yield 'limit' => ['class' => LimitException::class];
     }
 }

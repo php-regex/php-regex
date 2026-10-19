@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Exception;
 
-use PHPRegex\Parser\ErrorCode;
-
 /**
  * Represents an error that occurred during the parsing phase.
  *
@@ -24,41 +22,5 @@ use PHPRegex\Parser\ErrorCode;
  */
 class ParserException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
-    use VisualContextTrait;
-
-    /**
-     * @internal the library throws its exceptions; catch them, read them
-     *
-     * @param int|null $snippetPosition where the caret stands in $pattern when that is not
-     *                                  $position: a fault outside the body is counted from the
-     *                                  body but shown in the whole pattern
-     */
-    public function __construct(
-        string $message,
-        ErrorCode $errorCode,
-        ?int $position = null,
-        ?string $pattern = null,
-        ?\Throwable $previous = null,
-        ?int $snippetPosition = null,
-    ) {
-        $this->initializeContext($snippetPosition ?? $position, $pattern);
-
-        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
-    }
-
-    /**
-     * @internal the library throws its exceptions; catch them, read them
-     *
-     * @param int|null $snippetPosition where the caret stands in $pattern when that is not $position
-     */
-    public static function withContext(
-        string $message,
-        ErrorCode $errorCode,
-        int $position,
-        string $pattern,
-        ?\Throwable $previous = null,
-        ?int $snippetPosition = null,
-    ): static {
-        return new static($message, $errorCode, $position, $pattern, $previous, $snippetPosition);
-    }
+    use PatternContextTrait;
 }

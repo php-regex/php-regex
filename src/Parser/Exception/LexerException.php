@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Exception;
 
-use PHPRegex\Parser\ErrorCode;
-
 /**
  * Represents an error that occurred during the lexical analysis phase.
  *
@@ -22,33 +20,5 @@ use PHPRegex\Parser\ErrorCode;
  */
 final class LexerException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
-    use VisualContextTrait;
-
-    /**
-     * @internal the library throws its exceptions; catch them, read them
-     */
-    public function __construct(
-        string $message,
-        ErrorCode $errorCode,
-        ?int $position = null,
-        ?string $pattern = null,
-        ?\Throwable $previous = null,
-    ) {
-        $this->initializeContext($position, $pattern);
-
-        parent::__construct($message, $errorCode, $position, $this->getVisualSnippet(), $previous);
-    }
-
-    /**
-     * @internal the library throws its exceptions; catch them, read them
-     */
-    public static function withContext(
-        string $message,
-        ErrorCode $errorCode,
-        int $position,
-        string $pattern,
-        ?\Throwable $previous = null,
-    ): self {
-        return new self($message, $errorCode, $position, $pattern, $previous);
-    }
+    use PatternContextTrait;
 }
