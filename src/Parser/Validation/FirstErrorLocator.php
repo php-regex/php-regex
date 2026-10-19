@@ -134,9 +134,14 @@ final class FirstErrorLocator
             } catch (LexerException|LimitException|ParserException $syntaxError) {
                 $at = $syntaxError->position ?? $position;
                 // A body that never closes is read to the end: an error met
-                // there, other than that ")" missing, comes first.
-                $atTheEnd = $at === $position && ErrorCode::GroupUnclosed === $error->errorCode
-                    && ErrorCode::GroupUnclosed !== $syntaxError->errorCode;
+                // there, other than that ")" missing, comes first. So does
+                // one in the item that ends a class never closed, but for a
+                // "-" or a quote, which PCRE reads as no item: it then meets
+                // the end of the pattern.
+                $atTheEnd = $at === $position && $error->errorCode !== $syntaxError->errorCode
+                    && (ErrorCode::GroupUnclosed === $error->errorCode
+                        || (ErrorCode::CharclassUnclosed === $error->errorCode && null !== $last
+                            && !\in_array($last->type, [TokenType::Range, TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)));
                 if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))) {
                     return $syntaxError;
                 }

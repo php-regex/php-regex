@@ -168,6 +168,66 @@ final class UnclosedClassRangeOrderTest extends TestCase
     }
 
     /**
+     * A type, a POSIX class or a property ending a range, the last item of a
+     * class left open, is refused as the range as PCRE reads it, before the
+     * end of the pattern: past the escape's letter up to PCRE2 10.44, past
+     * the item from 10.45 (past "\N" there, refused as itself). PHP 7.3
+     * without "X" reads "\w" there as the letter w, and misses the "]".
+     *
+     * php:7.3-cli under "X", php:7.4.0-cli and php:7.4-cli (10.33, 10.35),
+     * php:8.0-cli, php:8.4-cli, pcre2test 10.32 to 10.49: "invalid range in
+     * character class at offset 5" for "[!-\w"; 6 for "[!-\pL" and 12 for
+     * "[!-[:alpha:]" from 10.45; php:7.3-cli: "missing terminating ] for
+     * character class at offset 5" for "[!-\w".
+     */
+    #[Test]
+    #[DataProvider('provideClassEscapesEndingARange')]
+    public function test_a_class_escape_ending_a_range_is_refused_before_the_missing_bracket(string $pattern, string $php, string $release, ErrorCode $code, int $offset): void
+    {
+        $result = self::parser($php, $release)->validate($pattern);
+
+        $this->assertFalse($result->isValid, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+        $this->assertSame($code, $result->errorCode, \sprintf('%s on PHP %s with PCRE2 %s: %s', $pattern, $php, $release, (string) $result->error));
+        $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, php: string, release: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideClassEscapesEndingARange(): iterable
+    {
+        foreach ([['7.4', '10.33'], ['7.4', '10.35'], ['8.0', '10.35'], ['8.1', '10.39'], ['8.2', '10.40'], ['8.4', '10.44'], ['8.4', '10.45'], ['8.4', '10.47'], ['8.5', '10.49']] as [$php, $release]) {
+            yield \sprintf('w, PCRE2 %s on PHP %s', $release, $php) => ['pattern' => '/[!-\w/', 'php' => $php, 'release' => $release, 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        }
+
+        yield 'w under X, PCRE2 10.32' => ['pattern' => '/[!-\w/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'w read as its letter, PCRE2 10.32' => ['pattern' => '/[!-\w/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 5];
+        yield 'd' => ['pattern' => '/[!-\d/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'D' => ['pattern' => '/[!-\D/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 's' => ['pattern' => '/[!-\s/', 'php' => '8.4', 'release' => '10.46', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'h' => ['pattern' => '/[!-\h/', 'php' => '8.0', 'release' => '10.35', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'v' => ['pattern' => '/[!-\v/', 'php' => '8.4', 'release' => '10.48', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'w under u' => ['pattern' => '/[!-\w/u', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'w under x' => ['pattern' => '/[!-\w/x', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'w, negated' => ['pattern' => '/[^!-\w/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 6];
+        yield 'w after a member' => ['pattern' => '/[a!-\w/', 'php' => '8.0', 'release' => '10.35', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 6];
+        yield 'w after an empty quote' => ['pattern' => '/[!-\E\w/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 7];
+        yield 'N, PCRE2 10.33' => ['pattern' => '/[!-\N/', 'php' => '7.4', 'release' => '10.33', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'N, PCRE2 10.44' => ['pattern' => '/[!-\N/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'N under X, PCRE2 10.32' => ['pattern' => '/[!-\N/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'N from a letter' => ['pattern' => '/[a-\N/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'N, PCRE2 10.45' => ['pattern' => '/[!-\N/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::CharclassInvalidEscape, 'offset' => 5];
+        yield 'N read as its letter, PCRE2 10.32' => ['pattern' => '/[a-\N/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
+        yield 'property, PCRE2 10.44' => ['pattern' => '/[!-\pL/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 5];
+        yield 'property, PCRE2 10.45' => ['pattern' => '/[!-\pL/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 6];
+        yield 'braced property, PCRE2 10.47' => ['pattern' => '/[!-\p{L}/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 8];
+        yield 'property read as its letter, PCRE2 10.32' => ['pattern' => '/[!-\pL/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::CharclassUnclosed, 'offset' => 6];
+        yield 'POSIX class, PCRE2 10.44' => ['pattern' => '/[!-[:alpha:]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
+        yield 'POSIX class, PCRE2 10.45' => ['pattern' => '/[!-[:alpha:]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 12];
+        yield 'unknown POSIX class, PCRE2 10.49' => ['pattern' => '/[!-[:foo:]/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 10];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, offset: int}>
      */
     public static function provideUnclosedClasses(): iterable
