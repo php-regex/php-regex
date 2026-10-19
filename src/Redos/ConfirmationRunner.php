@@ -163,8 +163,8 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
             $baseInput = 'a!';
         }
 
-        $baseChar = $baseInput[0] ?? 'a';
-        $suffixChar = $baseInput[\strlen($baseInput) - 1] ?? '!';
+        $baseChar = $baseInput[0];
+        $suffixChar = $baseInput[-1];
 
         $length = max(\strlen($baseInput), $options->minInputLength);
 

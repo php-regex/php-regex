@@ -75,8 +75,6 @@ final class CaseWithoutIntlTest extends TestCase
         $this->assertSame(0xE9, CodePoints::fromLiteral('é', true));
         $this->assertSame(0x24B6, CodePoints::fromLiteral('Ⓐ', true));
         $this->assertNull(CodePoints::fromLiteral('ab', true));
-        $this->assertSame(0xE9, CodePointHelper::toCodePoint('é'));
-        $this->assertNull(CodePointHelper::toCodePoint(''));
         $this->assertSame('é', CodePointHelper::toString(0xE9));
         $this->assertNull(CodePointHelper::toString(0xD800));
     }

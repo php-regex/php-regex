@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\Engine\PcreMatch;
@@ -53,8 +54,6 @@ class SearchCostReplayer
     private const WORDS = 256;
 
     private const MAX_STEPS = 10_000_000;
-
-    private const NO_JIT = '(*NO_JIT)';
 
     private const NO_AUTO_POSSESS = '(*NO_AUTO_POSSESS)';
 
@@ -110,11 +109,11 @@ class SearchCostReplayer
     private static function counted(string $pattern): ?string
     {
         $prepared = (new PcreEngine())->prepare($pattern);
-        if (self::NO_JIT !== substr($prepared, 1, \strlen(self::NO_JIT))) {
+        if (NoJit::VERB !== substr($prepared, 1, \strlen(NoJit::VERB))) {
             return null;
         }
 
-        return substr_replace($prepared, self::NO_JIT.self::NO_AUTO_POSSESS, 1, \strlen(self::NO_JIT));
+        return substr_replace($prepared, NoJit::VERB.self::NO_AUTO_POSSESS, 1, \strlen(NoJit::VERB));
     }
 
     /**

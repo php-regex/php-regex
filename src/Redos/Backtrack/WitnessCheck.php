@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Engine\PcreEngine;
 
 /**
@@ -26,8 +27,6 @@ use PHPRegex\Parser\Engine\PcreEngine;
  */
 final class WitnessCheck
 {
-    private const NO_JIT = '(*NO_JIT)';
-
     private const NO_START_OPT = '(*NO_START_OPT)';
 
     /**
@@ -39,8 +38,8 @@ final class WitnessCheck
     public function __construct(string $pattern, private readonly PcreEngine $engine = new PcreEngine())
     {
         $prepared = $this->engine->prepare($pattern);
-        $this->pinned = self::NO_JIT === substr($prepared, 1, \strlen(self::NO_JIT))
-            ? substr_replace($prepared, self::NO_JIT.self::NO_START_OPT, 1, \strlen(self::NO_JIT)).'A'
+        $this->pinned = NoJit::VERB === substr($prepared, 1, \strlen(NoJit::VERB))
+            ? substr_replace($prepared, NoJit::VERB.self::NO_START_OPT, 1, \strlen(NoJit::VERB)).'A'
             : null;
     }
 

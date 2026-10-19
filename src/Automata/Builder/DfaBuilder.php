@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Builder;
 
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithmFactory;
-use PHPRegex\Automata\Determinization\DeterminizationAlgorithmInterface;
 use PHPRegex\Automata\Determinization\WorkBudgetAwareDeterminizationAlgorithmInterface;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Minimization\DfaMinimizer;
@@ -33,13 +32,6 @@ use PHPRegex\Automata\Support\WorkBudget;
  */
 final class DfaBuilder
 {
-    public function __construct(
-        private readonly ?DfaMinimizer $minimizer = null,
-        private readonly ?MinimizationAlgorithmFactory $minimizationFactory = null,
-        private readonly ?DeterminizationAlgorithmInterface $determinizer = null,
-        private readonly ?DeterminizationAlgorithmFactory $determinizationFactory = null,
-    ) {}
-
     /**
      * @throws ComplexityException
      */
@@ -58,11 +50,7 @@ final class DfaBuilder
             );
         }
 
-        $determinizer = $this->determinizer;
-        if (null === $determinizer) {
-            $factory = $this->determinizationFactory ?? new DeterminizationAlgorithmFactory();
-            $determinizer = $factory->create($options->determinizationAlgorithm);
-        }
+        $determinizer = (new DeterminizationAlgorithmFactory())->create($options->determinizationAlgorithm);
 
         if ($determinizer instanceof WorkBudgetAwareDeterminizationAlgorithmInterface) {
             $determinizer->setWorkBudget($workBudget);
@@ -74,12 +62,7 @@ final class DfaBuilder
             return $dfa;
         }
 
-        $minimizer = $this->minimizer;
-        if (null === $minimizer) {
-            $factory = $this->minimizationFactory ?? new MinimizationAlgorithmFactory();
-            $algorithm = $factory->create($options->minimizationAlgorithm);
-            $minimizer = new DfaMinimizer($algorithm);
-        }
+        $minimizer = new DfaMinimizer((new MinimizationAlgorithmFactory())->create($options->minimizationAlgorithm));
 
         return $minimizer->minimize($dfa, $options);
     }

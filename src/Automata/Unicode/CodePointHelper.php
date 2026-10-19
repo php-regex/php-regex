@@ -31,15 +31,4 @@ final class CodePointHelper
 
         return false === $char || '' === $char ? null : $char;
     }
-
-    public static function toCodePoint(string $char): ?int
-    {
-        if ('' === $char) {
-            return null;
-        }
-
-        $value = mb_ord($char, 'UTF-8');
-
-        return false === $value ? null : $value;
-    }
 }

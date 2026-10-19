@@ -132,14 +132,6 @@ final class GroupNameReader
         return array_keys($this->used);
     }
 
-    public function forget(): void
-    {
-        $this->used = [];
-        // Unreachable today: nothing calls forget(). Kept in step with $used
-        // so a future caller does not keep stale group numbers.
-        $this->namesByNumber = [];
-    }
-
     /**
      * A name PCRE refuses is reported where PCRE stops reading it.
      *

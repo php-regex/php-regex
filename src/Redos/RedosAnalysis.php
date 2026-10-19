@@ -144,10 +144,6 @@ final class RedosAnalysis implements \JsonSerializable
         $bestRank = -1;
 
         foreach ($this->hotspots as $hotspot) {
-            if (!$hotspot instanceof Hotspot) {
-                continue;
-            }
-
             $rank = $hotspot->severity->rank();
             if ($rank > $bestRank) {
                 $bestRank = $rank;
