@@ -63,11 +63,12 @@ final class ClassSetProviderCacheTest extends TestCase
     }
 
     /**
-     * Under a backtrack limit of 2, the raise refused, the probe "[a-z]"
+     * Under a backtrack limit of 2, the raise refused, the probe "\x{61}"
      * gives up on the first block (the probe runs without the JIT, so the
      * limit bites whatever ran before). Nothing is kept: the second query
      * asks the engine again, and once the limit is back the third one gets
-     * the set.
+     * the set. A class of characters and ranges needs no probe at all: it
+     * is read from its members.
      */
     #[Test]
     public function test_query_scans_again_after_the_engine_gave_up(): void
@@ -80,21 +81,50 @@ final class ClassSetProviderCacheTest extends TestCase
                 return false;
             });
 
-            $first = ClassSetProvider::query('[a-z]', true, '');
+            $first = ClassSetProvider::query('\x{61}', true, '');
             $askedFirst = $raises;
-            $second = ClassSetProvider::query('[a-z]', true, '');
+            $second = ClassSetProvider::query('\x{61}', true, '');
 
             return [$first, $askedFirst, $second, $raises - $askedFirst];
         };
         [$first, $askedFirst, $second, $askedSecond] = self::underBacktrackLimit('2', $work);
-        $third = ClassSetProvider::query('[a-z]', true, '');
+        $third = ClassSetProvider::query('\x{61}', true, '');
 
         $this->assertNull($first);
         $this->assertGreaterThan(0, $askedFirst);
         $this->assertNull($second);
         $this->assertGreaterThan(0, $askedSecond, 'The failed scan was kept: the engine was not asked again.');
         $this->assertInstanceOf(CharSet::class, $third);
-        $this->assertSame([[0x61, 0x7A]], $third->ranges);
+        $this->assertSame([[0x61, 0x61]], $third->ranges);
+        $this->assertSame([[0x61, 0x7A]], ClassSetProvider::query('[a-z]', true, '')?->ranges);
+    }
+
+    /**
+     * A caseless class is read from its members, each folded by the engine:
+     * a member it gave up on under its limits leaves the class unread, and
+     * nothing is kept.
+     */
+    #[Test]
+    #[DataProvider('provideCaselessClasses')]
+    public function test_a_caseless_class_is_not_kept_when_a_member_scan_gave_up(string $atom): void
+    {
+        $work = static function () use ($atom): ?CharSet {
+            LibraryPcre::useIniSetter(static fn (): bool => false);
+
+            return ClassSetProvider::query($atom, true, 'i');
+        };
+
+        $this->assertNull(self::underBacktrackLimit('2', $work));
+        $this->assertInstanceOf(CharSet::class, ClassSetProvider::query($atom, true, 'i'));
+    }
+
+    /**
+     * @return iterable<string, array{atom: string}>
+     */
+    public static function provideCaselessClasses(): iterable
+    {
+        yield 'a character past ASCII' => ['atom' => "[\u{E9}a]"];
+        yield 'an ASCII range holding k' => ['atom' => '[j-l_]'];
     }
 
     /**

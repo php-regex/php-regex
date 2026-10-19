@@ -16,9 +16,24 @@ namespace PHPRegex\Parser\Hir;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\NoJit;
+use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PropertyNames;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * The exact set of characters one atom matches, asked of the running PCRE:
@@ -27,6 +42,15 @@ use PHPRegex\Parser\Syntax\PropertyNames;
  * is kept for the process, keyed by the atom and its options, and emptied
  * with the library's other caches. The probe is the library's own regex: it
  * runs under the library's floor of PCRE limits, whatever the caller set.
+ *
+ * Two kinds of atom are answered without a scan of their own. A class that
+ * is not caseless is the union of its members: each type, property or POSIX
+ * class asked as an atom of its own, so scanned once whatever class holds
+ * it, each character and range read as written, a negated class the rest of
+ * the alphabet, but under the ASCII options. Under /u a caseless ASCII
+ * character is itself and its other case, but "k" and "s", which Unicode
+ * folds with a third character: those are scanned. A class the parser does
+ * not read as members it knows is scanned whole.
  *
  * @internal
  */
@@ -52,6 +76,16 @@ final class ClassSetProvider
      */
     private const BLOCK_SIZE = 16384;
 
+    /**
+     * The general categories caseless matching leaves as they are: all but
+     * Lu, Ll and Lt, which it reads otherwise from PCRE2 10.45.
+     */
+    private const CASE_FREE_CATEGORIES = [
+        'L', 'Lm', 'Lo', 'M', 'Mn', 'Mc', 'Me', 'N', 'Nd', 'Nl', 'No',
+        'P', 'Pc', 'Pd', 'Ps', 'Pe', 'Pi', 'Pf', 'Po', 'S', 'Sm', 'Sc', 'Sk', 'So',
+        'Z', 'Zs', 'Zl', 'Zp', 'C', 'Cc', 'Cf', 'Cs', 'Co', 'Cn',
+    ];
+
     private static ?string $unicodeSubject = null;
 
     private static ?string $byteSubject = null;
@@ -60,6 +94,8 @@ final class ClassSetProvider
      * @var array<string, CharSet|false>
      */
     private static array $sets = [];
+
+    private static ?RegexParser $parser = null;
 
     /**
      * Whether a bare script name, "\p{Han}", means the script alone for the
@@ -118,10 +154,16 @@ final class ClassSetProvider
     {
         StaticCaches::register(self::class, self::clear(...));
 
+        $atom = self::spelledOnce($atom);
+        $modifiers = self::bearingOn($atom, $modifiers);
         $global = $unicodeFlag && $unicode ? 'u' : '';
         $key = $startVerbs.$global.'|'.$modifiers.':'.$atom;
         if (!isset(self::$sets[$key])) {
-            $set = self::scan($atom, $unicode, $modifiers, $global, $startVerbs);
+            // A scan of the 256 bytes costs less than reading the atom: only
+            // the Unicode scans, over every code point, are worth saving.
+            $set = ($unicode && $unicodeFlag ? self::caselessAscii($atom, $modifiers) : null)
+                ?? ($unicode ? self::composed($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
+                ?? self::scan($atom, $unicode, $modifiers, $global, $startVerbs);
             if (null === $set) {
                 return null;
             }
@@ -135,11 +177,291 @@ final class ClassSetProvider
         return false === $set ? null : $set;
     }
 
+    /**
+     * One spelling of a general category: "\pL" and "\p{L}" are one atom,
+     * "\p{^L}" and "\P{L}" another.
+     */
+    private static function spelledOnce(string $atom): string
+    {
+        // Read without a regex: the key is worked out before the cache is.
+        if (!str_starts_with($atom, '\\p') && !str_starts_with($atom, '\\P')) {
+            return $atom;
+        }
+
+        $name = substr($atom, 2);
+        $caret = false;
+        if (str_starts_with($name, '{') && str_ends_with($name, '}')) {
+            $name = substr($name, 1, -1);
+            $caret = str_starts_with($name, '^');
+            $name = $caret ? substr($name, 1) : $name;
+        } elseif (1 !== \strlen($name)) {
+            return $atom;
+        }
+
+        $category = '' !== $name && Ascii::isAlpha($name) && Ascii::upper($name[0]) === $name[0] && (1 === \strlen($name) || (2 === \strlen($name) && Ascii::lower($name[1]) === $name[1]));
+        if (!$category) {
+            return $atom;
+        }
+
+        return (('P' === $atom[1]) !== $caret ? '\\P{' : '\\p{').$name.'}';
+    }
+
+    /**
+     * The options that can change what the atom matches: "s" only for a
+     * dot, "x" only where the atom holds a space or a "#", "xx" only where
+     * it holds a space or a tab, "i" not for a type, which holds every case
+     * of what it holds, nor for a general category but Lu, Ll and Lt (each
+     * holds the same set with "i" and without on PCRE2 10.39 to 10.49).
+     * The others stay as given: "r" alone is refused before PCRE2 10.43,
+     * and the scan says so.
+     */
+    private static function bearingOn(string $atom, string $modifiers): string
+    {
+        if ('.' !== $atom) {
+            $modifiers = str_replace('s', '', $modifiers);
+        }
+
+        if (\in_array($atom, ['\\d', '\\D', '\\s', '\\S', '\\w', '\\W', '\\h', '\\H', '\\v', '\\V'], true)
+            || (str_starts_with($atom, '\\p{') || str_starts_with($atom, '\\P{')) && \in_array(substr($atom, 3, -1), self::CASE_FREE_CATEGORIES, true)) {
+            $modifiers = str_replace('i', '', $modifiers);
+        }
+
+        $extendedMore = str_contains($modifiers, 'xx');
+        if (($extendedMore && false === strpbrk($atom, " \t")) || (!$extendedMore && false === strpbrk($atom, " \t\n\r\f\v#"))) {
+            $modifiers = str_replace('x', '', $modifiers);
+        }
+
+        return $modifiers;
+    }
+
     private static function clear(): void
     {
         self::$sets = [];
+        self::$parser = null;
         self::$unicodeSubject = null;
         self::$byteSubject = null;
+    }
+
+    /**
+     * The set of "\x{HH}", an ASCII character, under "i" or "ir", with
+     * Unicode case folding (UTF and UCP, as /u gives them): itself and its
+     * other case, whatever the release, as no other character folds to one;
+     * null for "k" and "s", which Unicode folds with the Kelvin sign and the
+     * long s (but under "r"), and for any other atom. Without UCP the
+     * locale's tables fold the characters, and the atom is scanned.
+     */
+    private static function caselessAscii(string $atom, string $modifiers): ?CharSet
+    {
+        // "r" is refused before PCRE2 10.43: the scan says so.
+        $restrictOk = 'ir' !== $modifiers || PcreTarget::runtime()->supports(PcreFeature::CaselessRestrictModifier);
+        if (('i' !== $modifiers && 'ir' !== $modifiers) || !$restrictOk || 1 !== LibraryPcre::match('/^\\\\x\{([0-7]?[0-9A-F])\}$/', $atom, $digits)) {
+            return null;
+        }
+
+        $character = \chr((int) hexdec($digits[1]));
+        $lower = Ascii::lower($character);
+        if ('k' === $lower || 's' === $lower) {
+            return null;
+        }
+
+        return CharSet::single(\ord($lower))->union(CharSet::single(\ord(Ascii::upper($character))));
+    }
+
+    /**
+     * The set of a class that is not caseless, from its members; null when
+     * the class is caseless, under "xx" with a space or a tab, read by the
+     * parser as anything else than a class of known members, or holding a
+     * member the engine does not answer for: the class is then scanned.
+     */
+    private static function composed(string $atom, string $modifiers, string $startVerbs, bool $unicodeFlag): ?CharSet
+    {
+        // Under the ASCII options PCRE2 10.44 reads a negated type next to
+        // other members otherwise ("[\S\D]" under "(?a)" leaves the Arabic
+        // digits out): such a class is scanned whole.
+        if ('[' !== ($atom[0] ?? '') || str_contains($modifiers, 'a')
+            || (str_contains($modifiers, 'xx') && false !== strpbrk($atom, " \t"))) {
+            return null;
+        }
+
+        $delimiter = self::delimiterFor($atom.$startVerbs);
+        if (null === $delimiter) {
+            return null;
+        }
+
+        // Read for the running engine, which scans the members: an atom it
+        // refuses is scanned, and refused there.
+        $prefix = $delimiter.$startVerbs.('' === $modifiers ? '' : '(?'.$modifiers.')');
+        $regex = $prefix.$atom.$delimiter.($unicodeFlag ? 'u' : '');
+        $parser = self::$parser ??= RegexParser::create();
+
+        if (!$parser->validate($regex)->isValid) {
+            return null;
+        }
+
+        // Valid, the tree is the one the validation read, from the cache.
+        $tree = $parser->parse($regex)->pattern;
+
+        $class = $tree instanceof SequenceNode ? $tree->children[array_key_last($tree->children)] ?? null : $tree;
+        if (!$class instanceof CharClassNode || ($tree instanceof SequenceNode && !self::onlyOptionsBefore($tree, $class))) {
+            return null;
+        }
+
+        $members = $class->expression instanceof AlternationNode ? $class->expression->alternatives : [$class->expression];
+        // A class of one POSIX class is the atom asked; so is one caseless
+        // range, written by code point, which only the engine folds.
+        $caseless = str_contains($modifiers, 'i');
+        $only = 1 === \count($members) ? $members[0] : null;
+        if ($only instanceof PosixClassNode || ($caseless && $only instanceof RangeNode && $atom === self::rangeAtom($only))) {
+            return null;
+        }
+
+        $set = CharSet::empty();
+        foreach ($members as $member) {
+            $part = self::memberSet($member, $regex, $modifiers, $startVerbs, $unicodeFlag);
+            if (null === $part) {
+                return null;
+            }
+
+            $set = $set->union($part);
+        }
+
+        return $class->isNegated ? CharSet::universe(true)->subtract($set) : $set->intersect(CharSet::universe(true));
+    }
+
+    private static function onlyOptionsBefore(SequenceNode $sequence, CharClassNode $class): bool
+    {
+        foreach ($sequence->children as $child) {
+            if ($child !== $class && !($child instanceof GroupNode && GroupType::InlineFlags === $child->type)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function memberSet(NodeInterface $member, string $regex, string $modifiers, string $startVerbs, bool $unicodeFlag): ?CharSet
+    {
+        // Caseless, each character and range is folded by the engine: asked
+        // as an atom of its own, so once whatever class holds it.
+        if (str_contains($modifiers, 'i')) {
+            return self::caselessMemberSet($member, $regex, $modifiers, $startVerbs, $unicodeFlag);
+        }
+
+        if ($member instanceof RangeNode) {
+            $from = self::codePoints($member->start);
+            $to = self::codePoints($member->end);
+
+            return null === $from || null === $to || 1 !== \count($from) || 1 !== \count($to) ? null : CharSet::range($from[0], $to[0]);
+        }
+
+        $codePoints = self::codePoints($member);
+        if (null !== $codePoints) {
+            $set = CharSet::empty();
+            foreach ($codePoints as $codePoint) {
+                $set = $set->union(CharSet::single($codePoint));
+            }
+
+            return $set;
+        }
+
+        // The types a class holds: "\N", "\R" and "\X" have no meaning in
+        // one, and a member read so is not one the engine reads. A negated
+        // POSIX class next to other members is read otherwise by PCRE2
+        // before 10.49 under UCP ("[[:^ascii:][:ascii:]]" holds U+0000 to
+        // U+00FF only on 10.44): the class is scanned whole.
+        $type = $member instanceof CharTypeNode && \in_array($member->value, ['d', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V'], true);
+        $posix = $member instanceof PosixClassNode && !str_starts_with($member->class, '^');
+        if (!$type && !$posix && !$member instanceof UnicodePropNode) {
+            return null;
+        }
+
+        $text = substr($regex, $member->getStartPosition() + 1, $member->getEndPosition() - $member->getStartPosition());
+
+        return self::query($member instanceof PosixClassNode ? '['.$text.']' : $text, true, $modifiers, $startVerbs, $unicodeFlag);
+    }
+
+    private static function caselessMemberSet(NodeInterface $member, string $regex, string $modifiers, string $startVerbs, bool $unicodeFlag): ?CharSet
+    {
+        $codePoints = self::codePoints($member);
+        if (null !== $codePoints) {
+            $set = CharSet::empty();
+            foreach ($codePoints as $codePoint) {
+                $folded = self::query(\sprintf('\\x{%X}', $codePoint), true, $modifiers, $startVerbs, $unicodeFlag);
+                if (null === $folded) {
+                    return null;
+                }
+
+                $set = $set->union($folded);
+            }
+
+            return $set;
+        }
+
+        if ($member instanceof RangeNode) {
+            $atom = self::rangeAtom($member);
+            $from = self::codePoints($member->start)[0] ?? null;
+            $to = self::codePoints($member->end)[0] ?? null;
+            // An ASCII range under Unicode folding is its characters, each
+            // folded as an atom of its own.
+            if (null !== $atom && null !== $from && null !== $to && $unicodeFlag && $to <= 0x7F && $from <= $to) {
+                $set = CharSet::empty();
+                for ($codePoint = $from; $codePoint <= $to; $codePoint++) {
+                    $folded = self::query(\sprintf('\\x{%X}', $codePoint), true, $modifiers, $startVerbs, $unicodeFlag);
+                    if (null === $folded) {
+                        return null;
+                    }
+
+                    $set = $set->union($folded);
+                }
+
+                return $set;
+            }
+
+            return null === $atom ? null : self::query($atom, true, $modifiers, $startVerbs, $unicodeFlag);
+        }
+
+        $known = ($member instanceof CharTypeNode && \in_array($member->value, ['d', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V'], true))
+            || ($member instanceof PosixClassNode && !str_starts_with($member->class, '^'))
+            || $member instanceof UnicodePropNode;
+        if (!$known) {
+            return null;
+        }
+
+        $text = substr($regex, $member->getStartPosition() + 1, $member->getEndPosition() - $member->getStartPosition());
+
+        return self::query($member instanceof PosixClassNode ? '['.$text.']' : $text, true, $modifiers, $startVerbs, $unicodeFlag);
+    }
+
+    /**
+     * A class of the range alone, written by code point: "^-~" in brackets
+     * would be a negation.
+     */
+    private static function rangeAtom(RangeNode $range): ?string
+    {
+        $from = self::codePoints($range->start);
+        $to = self::codePoints($range->end);
+
+        return null === $from || null === $to || 1 !== \count($from) || 1 !== \count($to) ? null : \sprintf('[\\x{%X}-\\x{%X}]', $from[0], $to[0]);
+    }
+
+    /**
+     * The characters a literal member stands for, each one a member.
+     *
+     * @return list<int>|null
+     */
+    private static function codePoints(NodeInterface $member): ?array
+    {
+        if ($member instanceof CharLiteralNode || $member instanceof ControlCharNode) {
+            return $member->codePoint <= 0x10FFFF ? [$member->codePoint] : null;
+        }
+
+        if (!$member instanceof LiteralNode) {
+            return null;
+        }
+
+        $codePoints = Utf8::decode($member->value, true);
+
+        return null === $codePoints || [] === $codePoints ? null : $codePoints;
     }
 
     /**
@@ -148,15 +470,7 @@ final class ClassSetProvider
      */
     private static function scan(string $atom, bool $unicode, string $modifiers, string $global, string $startVerbs): CharSet|false|null
     {
-        $delimiter = null;
-        foreach (self::DELIMITERS as $candidate) {
-            if (!str_contains($atom.$startVerbs, $candidate)) {
-                $delimiter = $candidate;
-
-                break;
-            }
-        }
-
+        $delimiter = self::delimiterFor($atom.$startVerbs);
         if (null === $delimiter) {
             return false;
         }
@@ -196,6 +510,21 @@ final class ClassSetProvider
         }
 
         return CharSet::fromRanges($ranges)->intersect(CharSet::universe($unicode));
+    }
+
+    /**
+     * The first delimiter the text does not hold; null when it holds them
+     * all.
+     */
+    private static function delimiterFor(string $text): ?string
+    {
+        foreach (self::DELIMITERS as $candidate) {
+            if (!str_contains($text, $candidate)) {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
