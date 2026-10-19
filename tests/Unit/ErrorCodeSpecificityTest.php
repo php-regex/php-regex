@@ -407,6 +407,27 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'broken three-byte sequence after text' => ['pattern' => "/ab\xe2\x82z/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
         yield 'surrogate after text' => ['pattern' => "/ab\xed\xa0\x80/u", 'code' => 'regex.encoding.invalid_utf8', 'message' => 'not valid UTF-8'];
         yield '(*UTF) not at the start' => ['pattern' => "/a(*UTF)\xff/", 'code' => 'regex.verb.misplaced', 'message' => '(*UTF)'];
+        // The opening run ends at the first item that is no setting PCRE
+        // knows, written as it takes it: a "(*UTF)" past that item turns no
+        // UTF mode on, and the fault is the item.
+        yield '(*UTF) after an unknown verb' => ['pattern' => "/(*FOO)(*UTF)\xff/", 'code' => 'regex.verb.invalid', 'message' => 'FOO'];
+        yield '(*UTF) after a limit with no number' => ['pattern' => "/(*LIMIT_MATCH)(*UTF)\xff/", 'code' => 'regex.verb.invalid', 'message' => 'needs a number'];
+        yield '(*UTF) after a limit with an empty number' => ['pattern' => "/(*LIMIT_MATCH=)(*UTF)\xff/", 'code' => 'regex.verb.invalid', 'message' => 'needs a number'];
+        yield '(*UTF) after a setting given a number' => ['pattern' => "/(*CR=1)(*UTF)\xff/", 'code' => 'regex.verb.invalid', 'message' => 'CR'];
+        yield '(*UTF) after a backtracking verb' => ['pattern' => "/(*ACCEPT)(*UTF)\xff/", 'code' => 'regex.verb.misplaced', 'message' => '(*UTF)'];
+        // Only the limits take an "=" value: after any other name PCRE
+        // refuses the "=", where it stands.
+        yield 'setting given a number' => ['pattern' => '/(*CR=1)a/', 'code' => 'regex.verb.invalid', 'message' => '(*CR) takes no value'];
+        yield 'UTF given a number' => ['pattern' => '/(*UTF=1)a/', 'code' => 'regex.verb.invalid', 'message' => '(*UTF) takes no value'];
+        yield 'setting given an empty value' => ['pattern' => '/(*NO_JIT=)a/', 'code' => 'regex.verb.invalid', 'message' => '(*NO_JIT) takes no value'];
+        yield 'setting given a word' => ['pattern' => '/(*CR=a)a/', 'code' => 'regex.verb.invalid', 'message' => '(*CR) takes no value'];
+        yield 'backtracking verb given a number' => ['pattern' => '/a(*ACCEPT=1)/', 'code' => 'regex.verb.invalid', 'message' => '(*ACCEPT) takes no value'];
+        yield 'short verb given an empty value' => ['pattern' => '/a(*F=)/', 'code' => 'regex.verb.invalid', 'message' => '(*F) takes no value'];
+        yield 'verb with a name given one after "="' => ['pattern' => '/a(*PRUNE=x)/', 'code' => 'regex.verb.invalid', 'message' => '(*PRUNE) takes no value'];
+        yield 'mark given its name after "="' => ['pattern' => '/a(*MARK=x)/', 'code' => 'regex.verb.invalid', 'message' => '(*MARK) takes no value'];
+        yield 'limit given a second value' => ['pattern' => '/(*LIMIT_MATCH=1=2)a/', 'code' => 'regex.verb.invalid', 'message' => 'needs a number'];
+        yield 'limit given a doubled "="' => ['pattern' => '/(*LIMIT_MATCH==1)a/', 'code' => 'regex.verb.invalid', 'message' => 'needs a number'];
+        yield 'script run given a value' => ['pattern' => '/a(*sr=a)/', 'code' => 'regex.verb.invalid', 'message' => '(*sr) takes no value'];
         // PCRE: "subpattern name expected", where the name should start.
         yield '\\g brace with nothing in it' => ['pattern' => '/\\g{/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];
         yield '\\g brace holding only padding' => ['pattern' => '/(a)\\g{  }/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];

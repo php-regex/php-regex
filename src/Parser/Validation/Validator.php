@@ -64,6 +64,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\BadEscape;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PropertyNames;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -292,12 +293,6 @@ final class Validator extends AbstractNodeVisitor
      */
     private const REPEAT_COUNT = '/\G\{[ \t]*+(?:\d++[ \t]*+(?:,[ \t]*+\d*+[ \t]*+)?|,[ \t]*+\d++[ \t]*+)\}/';
 
-    /**
-     * The start-of-pattern settings, "(*UTF)" among them, that PCRE2 reads
-     * before the pattern itself.
-     */
-    private const LEADING_UTF_VERB = '/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/';
-
     // Optimized state management with minimal memory footprint
 
     private bool $unicodeMode = false;
@@ -490,7 +485,7 @@ final class Validator extends AbstractNodeVisitor
         $this->positionOffset = 0;
         $this->charClassDepth = 0;
         $this->unicodeFlag = str_contains($flags, 'u');
-        $this->unicodeMode = $this->unicodeFlag || 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $source);
+        $this->unicodeMode = $this->unicodeFlag || StartOptions::turnUtfOn($source);
         $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $flags);
 
         // Before PCRE2 10.45, "\N" ending a range is refused as the range.
@@ -1497,7 +1492,19 @@ final class Validator extends AbstractNodeVisitor
             $this->validateStartOfPatternPlacement($verbName, $node->startPosition);
         }
 
-        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== LibraryPcre::match('/=\d++\z/', $node->verb)) {
+        // Only the limits take a value after "=": after any other name PCRE
+        // refuses the "=" where it stands. "(*=name)", a mark written short,
+        // is refused further down.
+        $equals = $node->startPosition + 2 + \strlen($verbName);
+        if (!isset(self::LIMIT_VERBS[$verbName]) && '=' === ($this->source[$equals] ?? '') && '=' !== ($this->source[$node->startPosition + 2] ?? '')) {
+            $this->raiseSemanticError(
+                \sprintf('(*%s) takes no value: only the limits take one, as (*LIMIT_MATCH=10).', $verbName),
+                1 === LibraryPcre::match('/^[a-z]/', $verbName) ? $this->pastTheFault($equals + 1) : $equals,
+                ErrorCode::VerbInvalid,
+            );
+        }
+
+        if (isset(self::LIMIT_VERBS[$verbName]) && 1 !== LibraryPcre::match('/\A[A-Z_]++=\d++\z/', $node->verb)) {
             $this->raiseSemanticError(
                 \sprintf('(*%s) needs a number: (*%s=10).', $verbName, $verbName),
                 PcreVerb::limitValueErrorOffset((string) $this->source, $node->startPosition, $this->supports(PcreFeature::LimitValueErrorOnFaultingCharacter)) ?? $closing,
@@ -1691,7 +1698,7 @@ final class Validator extends AbstractNodeVisitor
         $this->validateCasingSettings($node);
         $this->unicodeFlag = str_contains($node->flags, 'u');
         $this->unicodeMode = $this->unicodeFlag
-            || (null !== $node->source && 1 === LibraryPcre::match(self::LEADING_UTF_VERB, $node->source));
+            || (null !== $node->source && StartOptions::turnUtfOn($node->source));
         $this->badEscapeIsLiteral = PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $node->flags);
         $this->groups = GroupIndex::of($node->pattern);
         $this->groupNumbering = $this->groups->numbering();

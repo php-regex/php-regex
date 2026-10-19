@@ -326,7 +326,7 @@ final class TokenParser
         // Group names take any letter in Unicode mode, "u" or "(*UTF)" at
         // the start, from PCRE2 10.33.
         $this->unicodeMode = str_contains($flags, 'u')
-            || 1 === LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $this->pattern);
+            || StartOptions::turnUtfOn($this->pattern);
         $this->groupNames->readUnicodeNames($this->unicodeMode && $this->supports(PcreFeature::NonAsciiGroupNames));
         if (null !== $this->namesAround) {
             $this->groupNames->shareNamesWith($this->namesAround);

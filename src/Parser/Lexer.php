@@ -538,7 +538,7 @@ final class Lexer
         // refuses them, at the first byte that starts no UTF-8 character.
         $this->byteMode = !LibraryPcre::match('//u', $pattern);
         $this->utf = str_contains($flags, 'u')
-            || 1 === LibraryPcre::match('/\A(?:\(\*[A-Z_]++(?:=\d++)?\))*?\(\*UTF8?\)/', $pattern);
+            || StartOptions::turnUtfOn($pattern);
         if ($this->byteMode && $this->utf) {
             throw LexerException::withContext('Input string is not valid UTF-8.', ErrorCode::EncodingInvalidUtf8, self::firstInvalidUtf8Offset($pattern), $pattern);
         }
