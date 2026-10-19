@@ -132,6 +132,7 @@ Documentation
 Resources
 ---------
 
+* [Upgrading from 1.x](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md) — moving from `yoeunes/regex-parser` 1.3 to 2.0, every change that needs one on your side
 * [Documentation](https://php-regex.com/docs/)
 * The parsing core it builds on: [regex-parser](https://github.com/php-regex/php-regex/tree/2.x/src/Parser)
 * [Changelog](CHANGELOG.md)

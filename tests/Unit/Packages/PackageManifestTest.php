@@ -287,6 +287,21 @@ final class PackageManifestTest extends TestCase
     }
 
     /**
+     * The upgrade guide ships with the monorepo package only: a split
+     * install carries no copy, so its README links the guide on the 2.x
+     * branch, the file this repository holds.
+     */
+    #[Test]
+    #[DataProvider('provideDirectories')]
+    public function test_a_package_readme_links_the_upgrade_guide(string $directory): void
+    {
+        $readme = (string) file_get_contents(self::root().'/src/'.$directory.'/README.md');
+
+        $this->assertFileExists(self::root().'/UPGRADE-2.0.md');
+        $this->assertStringContainsString('(https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)', $readme, \sprintf('src/%s/README.md does not link the upgrade guide.', $directory));
+    }
+
+    /**
      * The README banners are read from the repository, never from an
      * install: a package leaves them out of its archive, as it does its
      * tests.
