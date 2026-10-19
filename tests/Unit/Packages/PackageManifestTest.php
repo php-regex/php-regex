@@ -134,7 +134,7 @@ final class PackageManifestTest extends TestCase
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
             'Linter\Diagnostic', 'Linter\DiagnosticType', 'Linter\Extraction\ExtractorInterface',
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunctionRegistry',
-            'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\TokenBasedExtractionStrategy',
+            'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\RouteRequirementCompiler', 'Linter\Extraction\TokenBasedExtractionStrategy',
             'Linter\Formatter\AbstractConsoleTagFormatter', 'Linter\Formatter\FormatterRegistry',
             'Linter\Formatter\JsonFormatter', 'Linter\Formatter\LinkFormatter', 'Linter\Formatter\RelativePathHelper',
             'Linter\LintStatsCounter', 'Linter\Parallel\WorkerCount', 'Linter\LintProgress',
@@ -186,7 +186,7 @@ final class PackageManifestTest extends TestCase
         'Symfony' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\ExtractorInterface', 'Linter\Extraction\InteropPresets',
-            'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpParserExtractionStrategy',
+            'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\RouteRequirementCompiler',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\Formatter\AbstractConsoleTagFormatter',
             'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter', 'Linter\Formatter\LinkFormatter',
             'Linter\Formatter\RelativePathHelper', 'Linter\Parallel\WorkerCount', 'Linter\LintProgress',

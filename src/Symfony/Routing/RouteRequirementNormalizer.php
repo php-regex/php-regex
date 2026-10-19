@@ -13,21 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Routing;
 
-use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Linter\Extraction\RouteRequirementCompiler;
 
 /**
- * The pattern Symfony's route compiler matches a requirement with. The
- * compiler strips the requirement's leading ^ or \A and its trailing $ or
- * \z as Route::sanitizeRequirement() does, inserts ?: after every ( no
- * backslash escapes, puts it in a group named after the parameter and
- * matches the path with "{^...$}sD", the host with "{^...$}sDi", plus u
- * under the route's utf8 option.
- *
- * The normalized pattern is the compiled one without the text of the path
- * around the parameter, so the engine and the lint read the requirement as
- * the compiled route reads it: a brace the compiled route's delimiters do
- * not balance, or a backslash left before the group's ), fails here as it
- * fails there.
+ * The pattern Symfony's route compiler matches a requirement with: the
+ * path with "{^...$}sD", the host with "{^...$}sDi", plus u under the
+ * route's utf8 option, as RouteRequirementCompiler writes it.
  *
  * @internal
  */
@@ -38,7 +29,7 @@ final class RouteRequirementNormalizer
      */
     public function normalize(string $requirement, string $parameter, bool $utf8 = false, bool $host = false): string
     {
-        return $this->normalizeHeld($this->sanitize($requirement), $parameter, $utf8, $host);
+        return RouteRequirementCompiler::compile(RouteRequirementCompiler::sanitize($requirement), $parameter, $utf8, $host);
     }
 
     /**
@@ -47,74 +38,6 @@ final class RouteRequirementNormalizer
      */
     public function normalizeHeld(string $requirement, string $parameter, bool $utf8 = false, bool $host = false): string
     {
-        return '{^'.$this->group($parameter, $this->nonCapturing($requirement)).'$}sD'.($host ? 'i' : '').($utf8 ? 'u' : '');
-    }
-
-    /**
-     * The requirement as Route::sanitizeRequirement() leaves it: a trailing
-     * $ goes even escaped, and a \z only where it first stands.
-     */
-    private function sanitize(string $requirement): string
-    {
-        if (str_starts_with($requirement, '^')) {
-            $requirement = substr($requirement, 1);
-        } elseif (str_starts_with($requirement, '\\A')) {
-            $requirement = substr($requirement, 2);
-        }
-
-        if (str_ends_with($requirement, '$')) {
-            return substr($requirement, 0, -1);
-        }
-
-        if (\strlen($requirement) - 2 === strpos($requirement, '\\z')) {
-            return substr($requirement, 0, -2);
-        }
-
-        return $requirement;
-    }
-
-    /**
-     * The requirement as RouteCompiler::transformCapturingGroupsToNonCapturings()
-     * leaves it: ?: goes after every ( no backslash escapes and no * or ?
-     * follows, whether it opens a group or stands in a class or a comment.
-     */
-    private function nonCapturing(string $requirement): string
-    {
-        for ($i = 0; $i < \strlen($requirement); $i++) {
-            if ('\\' === $requirement[$i]) {
-                $i++;
-
-                continue;
-            }
-
-            if ('(' !== $requirement[$i] || !isset($requirement[$i + 2])) {
-                continue;
-            }
-
-            if ('*' === $requirement[++$i] || '?' === $requirement[$i]) {
-                $i++;
-
-                continue;
-            }
-
-            $requirement = substr_replace($requirement, '?:', $i, 0);
-            $i++;
-        }
-
-        return $requirement;
-    }
-
-    /**
-     * The group the compiler names after the parameter. A requirement on a
-     * parameter the path never names is never compiled: its group goes
-     * unnamed where the name is none PCRE takes.
-     */
-    private function group(string $parameter, string $body): string
-    {
-        if (1 === LibraryPcre::match('/^[a-zA-Z_]\w{0,31}$/D', $parameter)) {
-            return '(?P<'.$parameter.'>'.$body.')';
-        }
-
-        return '('.$body.')';
+        return RouteRequirementCompiler::compile($requirement, $parameter, $utf8, $host);
     }
 }
