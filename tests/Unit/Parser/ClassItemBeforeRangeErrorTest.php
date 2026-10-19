@@ -96,6 +96,17 @@ final class ClassItemBeforeRangeErrorTest extends TestCase
         yield 'octal past a byte before a reversed range, class left open' => ['pattern' => '/[\777a-\x41/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 5];
         yield 'octal past a byte before a reversed range, class left open, PCRE2 10.47' => ['pattern' => '/[\777a-\x41/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 5];
 
+        // A POSIX item ending a range is refused as the range before its
+        // name is read, a name holding a backslash too (pcre2test 10.32 to
+        // 10.49, php:7.3-cli and php:7.4-cli: "invalid range in character
+        // class at offset 4" for "[a-[:\d:]]" up to 10.44, at offset 9 from
+        // 10.45).
+        yield 'POSIX item named with a backslash ending a range' => ['pattern' => '/[a-[:\d:]]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
+        yield 'POSIX item named with a backslash ending a range, PCRE2 10.45' => ['pattern' => '/[a-[:\d:]]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 9];
+        yield 'POSIX item named with a backslash ending a range, PCRE2 10.32' => ['pattern' => '/[a-[:\d:]]/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
+        yield 'POSIX item named with a backslash ending a range past a quote end' => ['pattern' => '/[a-\E[:\d:]]/', 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 11];
+        yield 'POSIX item holding a range from a type, ending a range' => ['pattern' => '/[a-[:\d-z:]]/', 'php' => '8.2', 'release' => '10.40', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
+
         // What PCRE reads after the range is not read.
         yield 'code point past a byte after a range from a type' => ['pattern' => '/[\d-a\x{100}]/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];
         yield 'unknown POSIX class ending a range from a type' => ['pattern' => '/[\w-[:foo:]]/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::RangeInvalidBounds, 'offset' => 4];

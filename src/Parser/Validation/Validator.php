@@ -3450,16 +3450,17 @@ final class Validator extends AbstractNodeVisitor
         // Past the element from PCRE2 10.45; before, on the "[" that opens
         // a collating element, or on the name of a class.
         $past = $this->supports(PcreFeature::PosixItemErrorPastItsEnd);
-        if (':' !== $source[$start + 1]) {
-            // As a range end, "[a-[.x.]]", just inside its "[", and refused
-            // as a range PCRE cannot make; after a hyphen that is a member,
-            // "[-[.x.]]", on its "[".
-            $position = $past ? $terminator + 2 : $start + ($isRangeEnd ? 1 : 0);
-            if ($isRangeEnd) {
-                $this->raiseSemanticError('Invalid range in character class: a POSIX collating element cannot end a range.', $position, ErrorCode::RangeInvalidBounds);
-            }
 
-            $this->raiseSemanticError('POSIX collating elements are not supported.', $position, ErrorCode::PosixCollatingElement);
+        // As a range end, "[a-[.x.]]", just inside its "[", and refused as a
+        // range PCRE cannot make before its name is read: "[a-[:\d:]]", a
+        // name the lexer reads as no class, too.
+        if ($isRangeEnd) {
+            $this->raiseSemanticError('Invalid range in character class: a POSIX item cannot end a range.', $past ? $terminator + 2 : $start + 1, ErrorCode::RangeInvalidBounds);
+        }
+
+        // After a hyphen that is a member, "[-[.x.]]", on its "[".
+        if (':' !== $source[$start + 1]) {
+            $this->raiseSemanticError('POSIX collating elements are not supported.', $past ? $terminator + 2 : $start, ErrorCode::PosixCollatingElement);
         }
 
         $name = substr($source, $start + 2, $terminator - $start - 2);

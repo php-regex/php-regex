@@ -159,6 +159,19 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
   reported one byte early.
 - `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10.
+- A `\p{` or `\P{` no `}` closes in a class hides an earlier error in it up
+  to 10.44: `[z-aa-\p{L]` is "range out of order" at offset 3, the library
+  says 8 (invalid range); on every release `([z-a\P{]` is offset 4 (5 from
+  10.47), the library says 9 (malformed property).
+- The lexer reads no POSIX item whose name holds a backslash, `[:\d-z:]`:
+  from 10.45 `[[:\d-z:]]` is "unknown POSIX class name" at offset 9 and
+  `[a-[:\d-z:]]` "invalid range in character class" at offset 11, where the
+  library refuses the `\d-z` inside at 6 and 8.
+- Without `u`, a range ending on a multibyte character ends on its first
+  byte: `[a-é-a]` is "range out of order" on every release (offset 6, 7
+  from 10.47), the library accepts it.
+- Up to 10.44 a quoted hyphen starts a range: `([\Q-\E--\pL]` misses its `)`
+  at 13 (the range `-` to `-`, then `\pL`), the library says 11.
 
 ## The articles section: what is left
 
