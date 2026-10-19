@@ -33,9 +33,12 @@ use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
+use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
@@ -55,6 +58,11 @@ final class TextDocumentHandler
      */
     private const FILE_DELETED = 3;
 
+    /**
+     * How many patterns' findings the server keeps, the latest read first.
+     */
+    private const MAX_KEPT_ANALYSES = 4096;
+
     private readonly DiagnosticConverter $diagnosticConverter;
 
     /**
@@ -63,6 +71,16 @@ final class TextDocumentHandler
      * @var array<string, Regex>
      */
     private array $narrowed = [];
+
+    /**
+     * What each pattern was found to hold, by the Regex that judged it and
+     * the pattern: the same for every place the pattern stands, so an edit
+     * analyses only the patterns whose text it changed. The lint rules and
+     * the ReDoS settings are the server's, fixed.
+     *
+     * @var array<string, array{0: 'invalid', 1: ValidationResult}|array{0: 'read', 1: string, 2: list<RuleViolation>, 3: ?RedosAnalysis}|array{0: 'limit', 1: string, 2: ErrorCode}|array{0: 'unread', 1: string, 2: ErrorCode, 3: ?int, 4: ?string}>
+     */
+    private array $analyses = [];
 
     /**
      * @param array<string, bool> $lintRules              the lint rules regex.json turns on or off, by id
@@ -367,63 +385,98 @@ final class TextDocumentHandler
         // Offsets count in bytes of the pattern body; the span places
         // them through the literal's escapes, in UTF-16 columns.
         $span = PatternSpan::of($occurrence, $positions);
+        $analysis = $this->analysis($occurrence->pattern, $regex);
 
-        try {
-            $ast = $regex->parse($occurrence->pattern);
-
+        if ('invalid' === $analysis[0]) {
             // A pattern PCRE refuses gets that error, and no lint issue.
-            $validation = $regex->validate($occurrence->pattern);
-            if (!$validation->isValid && null !== $validation->errorCode) {
-                return [$this->diagnosticConverter->fromValidationError(
-                    $validation->error ?? 'Invalid regex.',
-                    $validation->errorCode,
-                    $span,
-                    $validation->offset,
-                    $validation->hint,
-                )];
-            }
+            $validation = $analysis[1];
 
-            // Run linter
-            $linter = new PatternLinter($this->lintRules);
-            $ast->accept($linter);
-
-            $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($occurrence->pattern, $this->redosThreshold, $this->redosMode);
-
-            foreach ($linter->getIssues() as $issue) {
-                // The heuristic rules guess what the analysis just proved:
-                // once it shows the pattern linear, their warnings go.
-                if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
-                    continue;
-                }
-
-                // A raw character the literal spells with an escape, as
-                // a double-quoted "\t", is no raw character in the source.
-                if (InvisibleCharacterRule::ID === $issue->id
-                    && !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))
-                ) {
-                    continue;
-                }
-
-                $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);
-            }
-
-            if (null !== $redos) {
-                array_push($diagnostics, ...$this->redosDiagnostics($redos, $span));
-            }
-        } catch (LimitException $e) {
-            $diagnostics[] = $this->diagnosticConverter->fromLimit($e->getMessage(), $e->errorCode, $span);
-        } catch (LexerException|ParserException $e) {
-            $diagnostics[] = $this->diagnosticConverter->fromParseError(
-                $e->getMessage(),
-                $e->errorCode,
+            return [$this->diagnosticConverter->fromValidationError(
+                $validation->error ?? 'Invalid regex.',
+                $validation->errorCode ?? ErrorCode::PcreRuntime,
                 $span,
-                $e->position,
-                // The fix comes with the validation's verdict on the same error.
-                $regex->validate($occurrence->pattern)->hint,
-            );
+                $validation->offset,
+                $validation->hint,
+            )];
+        }
+
+        if ('limit' === $analysis[0]) {
+            return [$this->diagnosticConverter->fromLimit($analysis[1], $analysis[2], $span)];
+        }
+
+        if ('unread' === $analysis[0]) {
+            // The fix comes with the validation's verdict on the same error.
+            return [$this->diagnosticConverter->fromParseError($analysis[1], $analysis[2], $span, $analysis[3], $analysis[4])];
+        }
+
+        [, $source, $issues, $redos] = $analysis;
+        foreach ($issues as $issue) {
+            // The heuristic rules guess what the analysis just proved:
+            // once it shows the pattern linear, their warnings go.
+            if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
+                continue;
+            }
+
+            // A raw character the literal spells with an escape, as
+            // a double-quoted "\t", is no raw character in the source.
+            if (InvisibleCharacterRule::ID === $issue->id
+                && !LiteralSpelling::holdsRaw($content, $occurrence->byteOffset, InvisibleCharacterRule::reportedCharacter($source, (int) $issue->offset))
+            ) {
+                continue;
+            }
+
+            $diagnostics[] = $this->diagnosticConverter->convert($issue, $span);
+        }
+
+        if (null !== $redos) {
+            array_push($diagnostics, ...$this->redosDiagnostics($redos, $span));
         }
 
         return $diagnostics;
+    }
+
+    /**
+     * What the pattern holds for the Regex, wherever it stands: worked out
+     * once, then kept.
+     *
+     * @return array{0: 'invalid', 1: ValidationResult}|array{0: 'read', 1: string, 2: list<RuleViolation>, 3: ?RedosAnalysis}|array{0: 'limit', 1: string, 2: ErrorCode}|array{0: 'unread', 1: string, 2: ErrorCode, 3: ?int, 4: ?string}
+     */
+    private function analysis(string $pattern, Regex $regex): array
+    {
+        $key = spl_object_id($regex)."\0".$pattern;
+        if (isset($this->analyses[$key])) {
+            $analysis = $this->analyses[$key];
+            // Read again, it is the latest.
+            unset($this->analyses[$key]);
+
+            return $this->analyses[$key] = $analysis;
+        }
+
+        try {
+            $ast = $regex->parse($pattern);
+
+            $validation = $regex->validate($pattern);
+            if (!$validation->isValid && null !== $validation->errorCode) {
+                $analysis = ['invalid', $validation];
+            } else {
+                $linter = new PatternLinter($this->lintRules);
+                $ast->accept($linter);
+
+                $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);
+                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos];
+            }
+        } catch (LimitException $e) {
+            $analysis = ['limit', $e->getMessage(), $e->errorCode];
+        } catch (LexerException|ParserException $e) {
+            $analysis = ['unread', $e->getMessage(), $e->errorCode, $e->position, $regex->validate($pattern)->hint];
+        }
+
+        $this->analyses[$key] = $analysis;
+        if (\count($this->analyses) > self::MAX_KEPT_ANALYSES) {
+            unset($this->analyses[array_key_first($this->analyses)]);
+        }
+
+        return $analysis;
     }
 
     /**

@@ -782,6 +782,13 @@ Both single-quoted and double-quoted strings are supported.
 
 ### Performance Tuning
 
+The server keeps what it found in each pattern it analysed, for the life
+of the session: a change analyses only the patterns whose text it changed,
+and moves the findings of the others to where they now stand. In a
+document of about 330 patterns, an edit to one pattern takes about 20 ms
+where it took about 380 ms, most of it spent finding the patterns in the
+text again (measured with PHP 8.4 on an Apple M1 Max).
+
 For large codebases:
 
 1. Use workspace folders to limit the scope
