@@ -125,11 +125,14 @@ final class ConsoleStyle
 // ---------------------------------------------------------------------------
 
 /**
+ * Named after the script: the tests load it beside packages whose scoped
+ * builds declare a global parseArgs().
+ *
  * @param list<string> $argv
  *
  * @return array{command: ?string, root: ?string, jobs: ?string, timeout: ?string, force: bool, debug: bool, help: bool, clone: bool, clone-only: bool, prune: bool, write-manifest: bool, add: list<string>, as: ?string, branch: ?string, depth: ?string}
  */
-function parseArgs(array $argv): array
+function parseCorpusArgs(array $argv): array
 {
     $options = [
         'command' => null,
@@ -2411,7 +2414,7 @@ function main(array $argv): int
     $io = new ConsoleStyle();
 
     try {
-        $options = parseArgs($argv);
+        $options = parseCorpusArgs($argv);
     } catch (InvalidArgumentException $e) {
         $io->error($e->getMessage());
         printUsage();
