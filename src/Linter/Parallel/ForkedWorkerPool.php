@@ -50,6 +50,11 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 final class ForkedWorkerPool
 {
     /**
+     * The prefix of the files the workers hand their results over in.
+     */
+    public const PAYLOAD_PREFIX = 'regex-lint-';
+
+    /**
      * The read and write timeout of the channels, in seconds: about 23
      * days, as long as poll() can wait (its milliseconds fit a C int).
      */
@@ -600,7 +605,7 @@ final class ForkedWorkerPool
         // without posix.
         $data = serialize($payload);
         pcntl_sigprocmask(\SIG_BLOCK, [\SIGTERM]);
-        $path = tempnam(sys_get_temp_dir(), 'regexparser_');
+        $path = tempnam(sys_get_temp_dir(), self::PAYLOAD_PREFIX);
         if (false !== $path) {
             file_put_contents($path, $data);
             fwrite($channel, 'f '.$path."\n");

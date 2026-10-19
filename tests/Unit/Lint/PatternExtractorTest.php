@@ -18,6 +18,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -48,13 +49,6 @@ final class PatternExtractorTest extends TestCase
     protected function tearDown(): void
     {
         LintFunctionOverrides::reset();
-    }
-
-    public function test_supports_parallel(): void
-    {
-        $actual = PatternExtractor::supportsParallel();
-
-        $this->assertIsBool($actual);
     }
 
     public function test_extract_with_empty_paths(): void
@@ -459,13 +453,13 @@ final class PatternExtractorTest extends TestCase
 
     /**
      * The payload files a run of workers could leave in the temporary
-     * directory (the .php files are this test's own inputs).
+     * directory.
      *
      * @return list<string>
      */
     private static function payloadFiles(): array
     {
-        return array_values(array_filter(glob(sys_get_temp_dir().'/regexparser_*') ?: [], static fn (string $path): bool => !str_ends_with($path, '.php') && is_file($path)));
+        return array_values(array_filter(glob(sys_get_temp_dir().'/'.ForkedWorkerPool::PAYLOAD_PREFIX.'*') ?: [], is_file(...)));
     }
 
     private function createTempPhpFile(string $fixture = 'default.php'): string

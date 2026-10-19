@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -675,7 +676,7 @@ final class AnalysisServiceTest extends TestCase
      */
     private static function payloadFiles(): array
     {
-        return array_values(array_filter(glob(sys_get_temp_dir().'/regexparser_*') ?: [], is_file(...)));
+        return array_values(array_filter(glob(sys_get_temp_dir().'/'.ForkedWorkerPool::PAYLOAD_PREFIX.'*') ?: [], is_file(...)));
     }
 
     private function invokePrivate(string $method, mixed ...$args): mixed

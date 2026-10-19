@@ -58,11 +58,6 @@ final class PatternExtractor
 
     public function __construct(private readonly ExtractorInterface $extractor) {}
 
-    public static function supportsParallel(): bool
-    {
-        return ForkedWorkerPool::canFork();
-    }
-
     /**
      * Extract regex patterns from the given paths.
      *

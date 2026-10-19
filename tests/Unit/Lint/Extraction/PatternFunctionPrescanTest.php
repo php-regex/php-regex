@@ -20,6 +20,7 @@ use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -995,6 +996,6 @@ final class PatternFunctionPrescanTest extends TestCase
      */
     private static function payloadFiles(): array
     {
-        return array_values(array_filter(glob(sys_get_temp_dir().'/regexparser_*') ?: [], is_file(...)));
+        return array_values(array_filter(glob(sys_get_temp_dir().'/'.ForkedWorkerPool::PAYLOAD_PREFIX.'*') ?: [], is_file(...)));
     }
 }

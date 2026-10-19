@@ -52,14 +52,6 @@ final class Message
     }
 
     /**
-     * Read a message from stdin following LSP protocol.
-     */
-    public static function readFromStdin(): self|InvalidMessage|null
-    {
-        return self::readFrom(\STDIN);
-    }
-
-    /**
      * Read a message from a stream following LSP protocol.
      *
      * @param resource           $stream
