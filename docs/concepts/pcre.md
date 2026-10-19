@@ -301,8 +301,10 @@ and a target has it from the release it arrived in on
 | `VersionConditionLeftOpenIsVersionError` | 10.47 | A character after the major of "(?(VERSION=10z)" is a version error, not a condition left open. |
 | `BranchCountErrorOffTheConditionName` | 10.47 | A conditional on a name that holds more than two branches is not reported on that name. |
 | `SurrogateRefusedBeforeBrace` | 10.47 | Under UTF a surrogate written in braces, "\x{d800" or "\o{154000", is refused before the closing brace is looked for. |
+| `TooLargeAtPatternStart` | 10.47 | A pattern too large to compile is reported at offset 0, not at its end. |
 | `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
 | `ExtendedClassBesideLookbehindCompiles` | 10.48 | A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed. |
+| `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. |
 
 ## A known JIT crash
 

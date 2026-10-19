@@ -69,6 +69,8 @@ final class PcreFeatureTest extends TestCase
         yield 'long group names' => [PcreFeature::LongGroupNames, '10.43', '10.44'];
         yield 'extended class beside a lookbehind' => [PcreFeature::ExtendedClassBesideLookbehindCompiles, '10.47', '10.48'];
         yield 'unclosed brace at the end' => [PcreFeature::UnclosedBraceAtPatternEnd, '10.47', '10.48'];
+        yield 'too large at the start' => [PcreFeature::TooLargeAtPatternStart, '10.46', '10.47'];
+        yield 'too large at a group end' => [PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd, '10.47', '10.48'];
     }
 
     /**

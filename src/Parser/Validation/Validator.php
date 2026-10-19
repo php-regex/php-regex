@@ -603,7 +603,7 @@ final class Validator extends AbstractNodeVisitor
         if (!$belowTheLimit && $this->compiledSizeFloor($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE) {
             $this->raiseSemanticError(
                 'Regular expression is too large: PCRE would compile it to more than 64 KiB.',
-                \strlen($node->source ?? ''),
+                $this->tooLargeOffset($node),
                 ErrorCode::PatternTooLarge,
                 'A group repeated with a count is compiled once per repetition: lower the count, or repeat a single item.',
             );
@@ -3921,6 +3921,110 @@ final class Validator extends AbstractNodeVisitor
         };
 
         return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * Where PCRE reports a pattern too large to compile: at its end up to
+     * PCRE2 10.46, at offset 0 on 10.47. From 10.48 the check made where a
+     * group or the pattern ends sets no offset, so a pattern that only that
+     * check finds too large is reported at its end again.
+     */
+    private function tooLargeOffset(RegexNode $node): int
+    {
+        $end = \strlen($node->source ?? '');
+        if (!$this->supports(PcreFeature::TooLargeAtPatternStart)) {
+            return $end;
+        }
+
+        if (!$this->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd)) {
+            return 0;
+        }
+
+        // The end marker comes first, then the brackets around the pattern.
+        [$atGroupEnd] = $this->measureBranches($this->branchesOf($node->pattern), 1, self::COMPILED_GROUP_SIZE);
+
+        return true === $atGroupEnd ? $end : 0;
+    }
+
+    /**
+     * Measure a group, or the pattern, as PCRE2 10.48 does on its first
+     * pass: each item is added to its branch, which may not pass the limit;
+     * each branch but the last is then added to what comes before the
+     * group, and the last one where the group ends, with no offset set. All
+     * on the floors, so a pattern whose size the floor misses is measured as
+     * if it were that floor.
+     *
+     * @param list<NodeInterface> $branches
+     * @param int                 $before   the units counted before the group
+     * @param int                 $frame    the brackets of the group
+     *
+     * @return array{0: bool|null, 1: int} whether the limit is passed where
+     *                                     the group ends (true), inside a
+     *                                     branch (false), or not at all
+     *                                     (null); and the units counted once
+     *                                     the group is added
+     */
+    private function measureBranches(array $branches, int $before, int $frame): array
+    {
+        $length = $frame;
+        $last = \count($branches) - 1;
+        foreach ($branches as $index => $branch) {
+            [$found, $length] = $this->measureItems($branch, $length);
+            if (null !== $found) {
+                return [$found, $length];
+            }
+
+            if ($index < $last) {
+                // A "|" adds an alternation marker and its link.
+                $length += 3;
+                if ($before + $length > self::MAX_COMPILED_SIZE) {
+                    return [false, $before + $length];
+                }
+
+                $before += $length;
+                $length = 0;
+            } elseif ($before + $length > self::MAX_COMPILED_SIZE) {
+                return [true, $before + $length];
+            }
+        }
+
+        return [null, $before + $length];
+    }
+
+    /**
+     * Add the items of $branch to the $length of the branch so far, a group
+     * measured on its own first.
+     *
+     * @return array{0: bool|null, 1: int} as measureBranches() does, and the
+     *                                     length of the branch
+     */
+    private function measureItems(NodeInterface $branch, int $length): array
+    {
+        foreach ($branch instanceof SequenceNode ? $branch->children : [$branch] as $item) {
+            $group = $item instanceof QuantifierNode ? $item->node : $item;
+            if ($group instanceof GroupNode) {
+                $capturing = GroupType::Capturing === $group->type || GroupType::Named === $group->type;
+                [$found] = $this->measureBranches($this->branchesOf($group->child), 0, self::COMPILED_GROUP_SIZE + ($capturing ? 2 : 0));
+                if (null !== $found) {
+                    return [$found, $length];
+                }
+            }
+
+            $length += $this->compiledSizeFloor($item);
+            if ($length > self::MAX_COMPILED_SIZE) {
+                return [false, $length];
+            }
+        }
+
+        return [null, $length];
+    }
+
+    /**
+     * @return list<NodeInterface>
+     */
+    private function branchesOf(NodeInterface $node): array
+    {
+        return $node instanceof AlternationNode ? array_values($node->alternatives) : [$node];
     }
 
     /**

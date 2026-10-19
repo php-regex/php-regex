@@ -272,6 +272,11 @@ enum PcreFeature
     case SurrogateRefusedBeforeBrace;
 
     /**
+     * A pattern too large to compile is reported at offset 0, not at its end.
+     */
+    case TooLargeAtPatternStart;
+
+    /**
      * A braced escape left open at the end of the pattern is reported at the end, not past it.
      */
     case UnclosedBraceAtPatternEnd;
@@ -280,6 +285,11 @@ enum PcreFeature
      * A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed.
      */
     case ExtendedClassBesideLookbehindCompiles;
+
+    /**
+     * A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again.
+     */
+    case TooLargeAtGroupEndReportedAtPatternEnd;
 
     /**
      * The PCRE2 release the behaviour arrived in, as "10.45".
@@ -336,9 +346,11 @@ enum PcreFeature
             self::AlphaNameAtPatternEndIsUnclosed,
             self::VersionConditionLeftOpenIsVersionError,
             self::BranchCountErrorOffTheConditionName,
-            self::SurrogateRefusedBeforeBrace => '10.47',
+            self::SurrogateRefusedBeforeBrace,
+            self::TooLargeAtPatternStart => '10.47',
             self::UnclosedBraceAtPatternEnd,
-            self::ExtendedClassBesideLookbehindCompiles => '10.48',
+            self::ExtendedClassBesideLookbehindCompiles,
+            self::TooLargeAtGroupEndReportedAtPatternEnd => '10.48',
         };
     }
 }
