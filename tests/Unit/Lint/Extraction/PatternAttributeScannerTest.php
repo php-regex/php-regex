@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Linter\Extraction\PatternAttributeScanner;
+use PHPRegex\Parser\Attribute\RegexPattern;
 use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -71,5 +73,36 @@ final class PatternAttributeScannerTest extends TestCase
         $content = "<?php\nnamespace App;\nuse PHPRegex\\Parser\\Attribute\\RegexPattern;\nfunction grep(#[RegexPattern]) {}\nfunction other(\$subject) {}\n";
 
         $this->assertSame(['App\grep#0'], PatternAttributeScanner::scan($content));
+    }
+
+    /**
+     * What marks a parameter as a pattern, read the same way by the token
+     * scanner and by the static analysis rule: #[RegexPattern], or
+     * PhpStorm's #[Language] given "RegExp", the names compared without
+     * case and with or without their leading backslash.
+     *
+     * @param list<string> $arguments
+     */
+    #[Test]
+    #[DataProvider('provideAttributes')]
+    public function test_marks_tells_a_pattern_attribute(string $name, array $arguments, bool $expected): void
+    {
+        $this->assertSame($expected, PatternAttributeScanner::marks($name, $arguments));
+    }
+
+    /**
+     * @return iterable<string, array{name: string, arguments: list<string>, expected: bool}>
+     */
+    public static function provideAttributes(): iterable
+    {
+        yield 'the library attribute' => ['name' => RegexPattern::class, 'arguments' => [], 'expected' => true];
+        yield 'the library attribute, fully qualified' => ['name' => '\\'.RegexPattern::class, 'arguments' => [], 'expected' => true];
+        yield 'the library attribute, lower case' => ['name' => 'phpregex\parser\attribute\regexpattern', 'arguments' => [], 'expected' => true];
+        yield 'PhpStorm RegExp' => ['name' => 'JetBrains\PhpStorm\Language', 'arguments' => ['RegExp'], 'expected' => true];
+        yield 'PhpStorm regexp, any case' => ['name' => '\jetbrains\phpstorm\LANGUAGE', 'arguments' => ['REGEXP'], 'expected' => true];
+        yield 'PhpStorm another language' => ['name' => 'JetBrains\PhpStorm\Language', 'arguments' => ['SQL'], 'expected' => false];
+        yield 'PhpStorm with no language' => ['name' => 'JetBrains\PhpStorm\Language', 'arguments' => [], 'expected' => false];
+        yield 'RegExp given another attribute' => ['name' => 'App\Language', 'arguments' => ['RegExp'], 'expected' => false];
+        yield 'a short name is no import' => ['name' => 'RegexPattern', 'arguments' => [], 'expected' => false];
     }
 }

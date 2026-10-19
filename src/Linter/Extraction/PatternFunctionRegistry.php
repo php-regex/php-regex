@@ -29,19 +29,6 @@ use PHPRegex\Parser\Text\Ascii;
 final class PatternFunctionRegistry
 {
     /**
-     * Native functions taking the pattern as their first argument.
-     */
-    private const NATIVE_FUNCTIONS = [
-        'preg_match',
-        'preg_match_all',
-        'preg_replace',
-        'preg_replace_callback',
-        'preg_split',
-        'preg_grep',
-        'preg_filter',
-    ];
-
-    /**
      * One pattern finding any needle, the first test of matchesContent();
      * null when there is none.
      */
@@ -98,12 +85,11 @@ final class PatternFunctionRegistry
     {
         $functions = [];
 
-        foreach (self::NATIVE_FUNCTIONS as $function) {
-            $functions[$function] = new PatternFunction($function);
+        // The pattern is the first argument, but for one function whose
+        // patterns are the keys of the array passed as first argument.
+        foreach (array_keys(PregFunctions::PARAMETERS) as $function) {
+            $functions[$function] = new PatternFunction($function, 0, keysArePatterns: 'preg_replace_callback_array' === $function);
         }
-
-        // The patterns are the keys of the array passed as first argument.
-        $functions['preg_replace_callback_array'] = new PatternFunction('preg_replace_callback_array', 0, keysArePatterns: true);
 
         // filter_var($value, $filter, $options), filter_input($type,
         // $var_name, $filter, $options): with FILTER_VALIDATE_REGEXP, the

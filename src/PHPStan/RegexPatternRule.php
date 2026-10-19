@@ -30,6 +30,7 @@ use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunction;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
 use PHPRegex\Parser\Exception\ExceptionInterface;
@@ -113,26 +114,6 @@ final class RegexPatternRule implements Rule
      */
     public const IDENTIFIER_REPLACEMENT_UNDEFINED_GROUP = 'regex.replacement.undefinedGroup';
 
-    /**
-     * The preg functions the rule reads, with the position and name of their
-     * subject parameter; the pattern comes first in each.
-     */
-    private const PREG_FUNCTION_MAP = [
-        'preg_match' => [1, 'subject'],
-        'preg_match_all' => [1, 'subject'],
-        'preg_replace' => [2, 'subject'],
-        'preg_replace_callback' => [2, 'subject'],
-        'preg_split' => [1, 'subject'],
-        'preg_grep' => [1, 'array'],
-        'preg_filter' => [2, 'subject'],
-        'preg_replace_callback_array' => [1, 'subject'],
-    ];
-
-    /**
-     * The functions whose pattern may also be an array of patterns.
-     */
-    private const PATTERN_LISTS = ['preg_replace', 'preg_replace_callback', 'preg_filter'];
-
     private readonly PatternChecker $checker;
 
     /**
@@ -200,7 +181,8 @@ final class RegexPatternRule implements Rule
         // Safe\preg_match() and the other drop-ins read as the function
         // they stand for.
         $functionName = $this->registry->lookupFunction($node->name->toString())->label ?? '';
-        if (!isset(self::PREG_FUNCTION_MAP[$functionName])) {
+        $subject = PregFunctions::subject($functionName);
+        if (null === $subject) {
             return [];
         }
 
@@ -212,7 +194,7 @@ final class RegexPatternRule implements Rule
 
         // A constant subject cannot carry an attack: the call backtracks the
         // same way on every run, or never.
-        [$subjectPosition, $subjectName] = self::PREG_FUNCTION_MAP[$functionName];
+        [$subjectPosition, $subjectName] = $subject;
         $subjectArg = self::argument($args, $subjectPosition, $subjectName);
         $constantSubject = null !== $subjectArg && $scope->getType($subjectArg)->isConstantValue()->yes();
 
@@ -231,7 +213,7 @@ final class RegexPatternRule implements Rule
         $patterns = array_fill_keys(self::constantStrings($patternType), $literalOffset);
         // An array of patterns is a pattern each: preg_match() and the
         // others take a string only, PHP refuses an array there.
-        if (\in_array($functionName, self::PATTERN_LISTS, true)) {
+        if (\in_array($functionName, PregFunctions::PATTERN_LISTS, true)) {
             foreach ($patternType->getConstantArrays() as $patternArray) {
                 foreach ($patternArray->getValueTypes() as $patternValue) {
                     $patterns += array_fill_keys(self::constantStrings($patternValue), null);

@@ -48,6 +48,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\GuardRegions;
 use PHPRegex\Linter\Extraction\PhpParserGuards;
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Parser\Analysis\CaptureShape;
@@ -135,22 +136,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      * them by position, then by name. The pattern comes first in each but
      * preg_quote(), which builds one.
      */
-    private const PARAMETERS = [
-        'preg_match' => ['pattern', 'subject', 'matches', 'flags', 'offset'],
-        'preg_match_all' => ['pattern', 'subject', 'matches', 'flags', 'offset'],
-        'preg_replace' => ['pattern', 'replacement', 'subject', 'limit', 'count'],
-        'preg_replace_callback' => ['pattern', 'callback', 'subject', 'limit', 'count', 'flags'],
-        'preg_replace_callback_array' => ['pattern', 'subject', 'limit', 'count', 'flags'],
-        'preg_split' => ['pattern', 'subject', 'limit', 'flags'],
-        'preg_grep' => ['pattern', 'array', 'flags'],
-        'preg_filter' => ['pattern', 'replacement', 'subject', 'limit', 'count'],
-        'preg_quote' => ['str', 'delimiter'],
-    ];
-
-    /**
-     * The functions that take an array of patterns, each element one.
-     */
-    private const PATTERN_LISTS = ['preg_replace', 'preg_replace_callback', 'preg_filter'];
+    private const PARAMETERS = PregFunctions::PARAMETERS + ['preg_quote' => ['str', 'delimiter']];
 
     /**
      * The comparisons Psalm reads a call's assertions through.
@@ -809,7 +795,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         }
 
         $keys = 'preg_replace_callback_array' === $function;
-        if (!$argument instanceof Array_ || (!$keys && !\in_array($function, self::PATTERN_LISTS, true))) {
+        if (!$argument instanceof Array_ || (!$keys && !\in_array($function, PregFunctions::PATTERN_LISTS, true))) {
             return [];
         }
 

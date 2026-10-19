@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Attribute\RegexPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\Ascii;
 
@@ -32,13 +33,39 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class PatternAttributeScanner
 {
-    private const ATTRIBUTE = 'phpregex\parser\attribute\regexpattern';
-
     private const PHPSTORM_LANGUAGE = 'jetbrains\phpstorm\language';
 
     private const IGNORED = [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT];
 
     private const IDENTIFIER = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
+
+    /**
+     * Whether an attribute marks its parameter as a pattern: #[RegexPattern],
+     * or PhpStorm's #[Language] given the string "RegExp". The strings are
+     * read for the latter only, the names compared without case.
+     *
+     * @param string           $name      the attribute's fully qualified name, with or without its leading backslash
+     * @param iterable<string> $arguments the strings passed to the attribute
+     */
+    public static function marks(string $name, iterable $arguments): bool
+    {
+        $name = Ascii::lower(ltrim($name, '\\'));
+        if (Ascii::lower(RegexPattern::class) === $name) {
+            return true;
+        }
+
+        if (self::PHPSTORM_LANGUAGE !== $name) {
+            return false;
+        }
+
+        foreach ($arguments as $argument) {
+            if ('regexp' === Ascii::lower($argument)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     /**
      * The pattern function specs the files declare, each naming the
@@ -318,7 +345,7 @@ final class PatternAttributeScanner
             } elseif ($inAttribute === $nesting && $inAttribute > 0
                 && $token->is([\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE])) {
                 $name = Ascii::lower(self::resolve($token, $namespace, $uses));
-                if (self::ATTRIBUTE === $name || (self::PHPSTORM_LANGUAGE === $name && self::namesRegExp($tokens, $i + 1))) {
+                if (self::marks($name, self::stringArguments($tokens, $i + 1))) {
                     $marked[$index] ??= [$index, self::parameterName($tokens, $i + 1)];
                 }
             }
@@ -356,24 +383,24 @@ final class PatternAttributeScanner
     }
 
     /**
-     * Whether the argument list that opens at $i, if any, holds the string
-     * "RegExp", PhpStorm's name for a regex: #[Language('RegExp')].
+     * The strings written in the argument list that opens at $i, if any,
+     * read one at a time: #[Language('RegExp')] gives "RegExp".
      *
      * @param list<\PhpToken> $tokens
+     *
+     * @return \Generator<int, string>
      */
-    private static function namesRegExp(array $tokens, int $i): bool
+    private static function stringArguments(array $tokens, int $i): \Generator
     {
         if (!isset($tokens[$i]) || '(' !== $tokens[$i]->text) {
-            return false;
+            return;
         }
 
         for ($i++; isset($tokens[$i]) && ')' !== $tokens[$i]->text; $i++) {
-            if ($tokens[$i]->is(\T_CONSTANT_ENCAPSED_STRING) && 'regexp' === Ascii::lower(substr($tokens[$i]->text, 1, -1))) {
-                return true;
+            if ($tokens[$i]->is(\T_CONSTANT_ENCAPSED_STRING)) {
+                yield substr($tokens[$i]->text, 1, -1);
             }
         }
-
-        return false;
     }
 
     /**

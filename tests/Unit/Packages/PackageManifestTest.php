@@ -164,6 +164,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Hir\ClassSetProvider',
             'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
+            'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions',
         ],
         // The plugin reads the key layout CaptureShape renders for
         // PHPStan, so both type systems say the same keys.
@@ -171,7 +172,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\GuardRegions', 'Linter\Extraction\PhpParserGuards', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider', 'Parser\Text\Ascii',
-            'Parser\Analysis\CaptureKey',
+            'Parser\Analysis\CaptureKey', 'Linter\Extraction\PregFunctions',
             'Parser\Analysis\CaptureLayout', 'Parser\Engine\LibraryPcre',
         ],
         'Redos' => [

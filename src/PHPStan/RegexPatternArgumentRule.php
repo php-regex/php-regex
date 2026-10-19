@@ -24,10 +24,9 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
-use PHPRegex\Parser\Attribute\RegexPattern;
+use PHPRegex\Linter\Extraction\PatternAttributeScanner;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Text\Ascii;
 use PHPStan\Analyser\Scope;
 use PHPStan\Php\PhpVersion;
 use PHPStan\Reflection\AttributeReflection;
@@ -59,8 +58,6 @@ final class RegexPatternArgumentRule implements Rule
      * core gives the same error in a preg_*() call.
      */
     public const IDENTIFIER_INVALID = 'regexp.pattern';
-
-    private const PHPSTORM_LANGUAGE = 'jetbrains\phpstorm\language';
 
     private readonly PatternChecker $checker;
 
@@ -245,24 +242,21 @@ final class RegexPatternArgumentRule implements Rule
      */
     private static function marksRegex(AttributeReflection $attribute): bool
     {
-        $name = Ascii::lower(ltrim($attribute->getName(), '\\'));
-        if (Ascii::lower(RegexPattern::class) === $name) {
-            return true;
-        }
+        return PatternAttributeScanner::marks($attribute->getName(), self::constantStrings($attribute));
+    }
 
-        if (self::PHPSTORM_LANGUAGE !== $name) {
-            return false;
-        }
-
+    /**
+     * The constant strings passed to an attribute, read one at a time.
+     *
+     * @return \Generator<int, string>
+     */
+    private static function constantStrings(AttributeReflection $attribute): \Generator
+    {
         foreach ($attribute->getArgumentTypes() as $type) {
             foreach ($type->getConstantStrings() as $constantString) {
-                if ('regexp' === Ascii::lower($constantString->getValue())) {
-                    return true;
-                }
+                yield $constantString->getValue();
             }
         }
-
-        return false;
     }
 
     /**
