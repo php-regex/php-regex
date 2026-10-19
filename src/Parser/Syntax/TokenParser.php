@@ -741,10 +741,11 @@ final class TokenParser
         // "\1000*": the octal escape, then the text "0" the quantifier repeats.
         if (null !== $this->splitEscape && $node === $this->splitEscape) {
             $this->splitEscape = null;
-            [$escape, $text] = $node->children;
+            $children = $node->children;
+            $text = array_pop($children) ?? $node;
             $last = $this->parseQuantifiedText($text);
 
-            return $last === $text ? $node : new SequenceNode([$escape, $last], $node->startPosition, $last->getEndPosition());
+            return $last === $text ? $node : new SequenceNode([...$children, $last], $node->startPosition, $last->getEndPosition());
         }
 
         // A quantifier after a comment repeats the item before the comment.
@@ -1523,17 +1524,28 @@ final class TokenParser
     /**
      * An escape read as the character after its backslash: "\g{-1}" with
      * no group open is "g" then the text "{-1}", "\400" without UTF is "4"
-     * then "00". What follows the character is plain text in either.
+     * then "00". What follows the character is plain text in either, but
+     * for the "+" of "\g{+n}", "\g<+n>", "\g'+n'" or "\g+n", which repeats
+     * the character before it: "g{+65535}" is "g", "{" once or more, then
+     * the text "65535}".
      */
     private function badEscapeLiteral(Token $token, int $startPosition): SequenceNode
     {
         $characterEnd = $startPosition + 2;
+        $end = $token->end();
         $character = new LiteralNode($this->pattern[$startPosition + 1], $startPosition, $characterEnd);
-        $this->splitEscape = new SequenceNode(
-            [$character, new LiteralNode(substr($this->pattern, $characterEnd, $token->end() - $characterEnd), $characterEnd, $token->end())],
-            $startPosition,
-            $token->end(),
-        );
+        $parts = [$character];
+        $textStart = $characterEnd;
+        $plusAt = '+' === ($this->pattern[$characterEnd] ?? '') ? $characterEnd : $characterEnd + 1;
+        if ('g' === $character->value && '+' === ($this->pattern[$plusAt] ?? '') && $plusAt < $end) {
+            $parts = $plusAt === $characterEnd
+                ? [new QuantifierNode($character, '+', QuantifierType::Greedy, $startPosition, $plusAt + 1)]
+                : [$character, new QuantifierNode(new LiteralNode($this->pattern[$characterEnd], $characterEnd, $plusAt), '+', QuantifierType::Greedy, $characterEnd, $plusAt + 1)];
+            $textStart = $plusAt + 1;
+        }
+
+        $parts[] = new LiteralNode(substr($this->pattern, $textStart, $end - $textStart), $textStart, $end);
+        $this->splitEscape = new SequenceNode($parts, $startPosition, $end);
 
         return $this->splitEscape;
     }

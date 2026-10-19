@@ -171,6 +171,25 @@ final class BadEscapeIsLiteralTest extends TestCase
         yield 'g relative past a branch reset' => ['pattern' => '/(?|(a)|(b))\g{-2}/', 'subject' => 'bg{-2}', 'match' => 'bg{-2}'];
         yield 'g relative past a group (?n) leaves unnumbered' => ['pattern' => '/(?n)(a)\g{-1}/', 'subject' => 'ag{-1}', 'match' => 'ag{-1}'];
 
+        // "\g" and "+n" past 65535 less the groups opened so far, which
+        // read_number() refuses: the "+" then repeats the character before
+        // it, the "{", "<" or "'", or the "g" itself (php:7.3-cli,
+        // php:7.4.0-cli, php:7.4.6-cli and php:7.4-cli agree on each row).
+        yield 'g forward past 65535 less the groups' => ['pattern' => '/(a)\g{+65535}/', 'subject' => 'ag{{{65535}', 'match' => 'ag{{{65535}'];
+        yield 'g forward past 65535 less two groups' => ['pattern' => '/(a)(b)\g{+65534}/', 'subject' => 'abg{65534}', 'match' => 'abg{65534}'];
+        yield 'g forward past 65535 less the group still open' => ['pattern' => '/(a\g{+65535})/', 'subject' => 'ag{65535}', 'match' => 'ag{65535}'];
+        yield 'g forward past 65535 less a branch reset' => ['pattern' => '/(?|(a)|(b))\g{+65535}/', 'subject' => 'ag{65535}', 'match' => 'ag{65535}'];
+        yield 'g forward past 65535 less a named group' => ['pattern' => '/(?<n>a)\g{+65535}/', 'subject' => 'ag{65535}', 'match' => 'ag{65535}'];
+        yield 'g forward past 65535 with leading zeros' => ['pattern' => '/(a)\g{+0065535}/', 'subject' => 'ag{0065535}', 'match' => 'ag{0065535}'];
+        yield 'g forward past 65535, quantified' => ['pattern' => '/(a)\g{+65535}*/', 'subject' => 'ag{65535}}}', 'match' => 'ag{65535}}}'];
+        yield 'g forward past 65535, optional' => ['pattern' => '/(a)\g{+65535}?/', 'subject' => 'ag{65535', 'match' => 'ag{65535'];
+        yield 'g forward past 65535, caseless' => ['pattern' => '/(a)\g{+65535}/i', 'subject' => 'AG{65535}', 'match' => 'AG{65535}'];
+        yield 'g forward past 65535 under u' => ['pattern' => '/(a)\g{+65535}/u', 'subject' => 'ag{65535}', 'match' => 'ag{65535}'];
+        yield 'g forward past 65535 unbraced' => ['pattern' => '/(a)\g+65535/', 'subject' => 'agg65535', 'match' => 'agg65535'];
+        yield 'g forward past 65535 unbraced, optional' => ['pattern' => '/(a)\g+65535?/', 'subject' => 'agg6553', 'match' => 'agg6553'];
+        yield 'g forward call past 65535' => ['pattern' => '/(a)\g<+65535>/', 'subject' => 'ag<<65535>', 'match' => 'ag<<65535>'];
+        yield 'g forward quoted call past 65535' => ['pattern' => "/(a)\\g'+65535'/", 'subject' => "ag''65535'", 'match' => "ag''65535'"];
+
         // "\k" with no well-formed name.
         yield 'k alone' => ['pattern' => '/\k/', 'subject' => 'k', 'match' => 'k'];
         yield 'k and a name starting with a digit' => ['pattern' => '/\k<1a>/', 'subject' => 'k<1a>', 'match' => 'k<1a>'];
@@ -344,6 +363,9 @@ final class BadEscapeIsLiteralTest extends TestCase
         yield 'reference past the groups' => ['pattern' => '/(a)\2/', 'offset' => 4];
         yield 'braced reference to no group' => ['pattern' => '/\g{9}/', 'offset' => 4];
         yield 'relative reference forward to no group' => ['pattern' => '/\g{+1}/', 'offset' => 5];
+        yield 'relative reference forward to 65535 less the groups' => ['pattern' => '/(a)\g{+65534}/', 'offset' => 12];
+        yield 'relative reference forward past a group (?n) leaves unnumbered' => ['pattern' => '/(?n)(a)\g{+65535}/', 'offset' => 16];
+        yield 'g forward past 65535 in a lookbehind, a repeat' => ['pattern' => '/(a)(?<=\g{+65535})/', 'offset' => 3];
         yield 'call to no group' => ['pattern' => '/\g<9>/', 'offset' => 4];
         yield 'call to no name' => ['pattern' => '/\g<x>/', 'offset' => 3];
         yield 'named reference to no group' => ['pattern' => '/\k<x>/', 'offset' => 3];

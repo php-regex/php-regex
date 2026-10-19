@@ -332,15 +332,13 @@ final class BadEscape
      * follows, else whether PCRE2 refuses it (null when that hangs on the
      * groups opened so far, unknown) and where it ends. A number past 65535
      * is refused, so is a signed zero, a zero when it names a reference,
-     * and a number counted back past the groups opened.
+     * a number counted back past the groups opened, and one counted forward
+     * past 65535 less them.
      *
      * @return array{0: bool|null, 1: int}|null
      */
     private static function signedNumber(string $pattern, int $at, ?int $captures, bool $reference): ?array
     {
-        // PCRE2 also refuses "+n" past 65535 less the groups open; read as
-        // its letter, "\g{+n}" would leave "{+" to repeat, which no node
-        // made here says: it is left a reference.
         $sign = $pattern[$at] ?? '';
         $digits = '+' === $sign || '-' === $sign ? $at + 1 : $at;
         $number = self::readNumber($pattern, $digits, self::MAX_NUMBER);
@@ -355,6 +353,12 @@ final class BadEscape
 
         if (0 === $value) {
             return [$reference || $digits > $at, $end];
+        }
+
+        // read_number() adds the groups opened so far to "+n", and refuses
+        // the sum past 65535.
+        if ('+' === $sign) {
+            return [null === $captures ? null : $value > self::MAX_NUMBER - $captures, $end];
         }
 
         if ('-' !== $sign) {
