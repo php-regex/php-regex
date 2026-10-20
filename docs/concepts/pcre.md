@@ -266,6 +266,33 @@ Where the library still departs from what the target's PCRE2 reports:
   PCRE2 found too large where it ends, so the library reports the end of the
   pattern, as up to 10.46: `/(?:[\x{100}-\x{200}]|a){5000}/u` is at offset
   29 where PCRE2 10.48 and 10.49 say 0.
+- **A DEFINE group in a lookbehind, or one that opens with a group, on
+  PCRE2 10.32 to 10.34** (PHP 7.3 and 7.4). These releases step over one item too many of their
+  internal form of the pattern after `(?(DEFINE)`, both when they measure a
+  lookbehind and when they look for the lookbehinds to measure. The library
+  follows the item skipped, but not what comes of it where that item opens
+  a group or a lookaround: the `)` of that group then closes the DEFINE
+  group, and the `)` of the DEFINE group closes what holds it, so that what
+  follows in a lookbehind goes unmeasured. `(?<=(?(DEFINE)(a))b+)`,
+  `(?<=x(?(DEFINE)(a))b+)c` and `(?<=(?:(?(DEFINE)(a)))b+)` compile there and
+  are refused here, as 10.35 refuses them, and `(?<=(?<=(?(DEFINE)(a))d+)b)`
+  is refused at offset 0 there and at 4 here. On 10.34 the search for the
+  lookbehinds to measure also stops at the end of such a DEFINE group,
+  inside a lookbehind or not: `(?(DEFINE)(a))(?<=b+)` and
+  `(?<=(?(DEFINE)(a))b)(?<=c+)` compile on 10.34, refused at 14 and 20 on
+  10.32, 10.33 and here. A lookbehind that opens a DEFINE group is never
+  measured: `(?(DEFINE)(?<=b+))` compiles on 10.32 to 10.34, and on 10.34 so
+  does `(?<=(?=(?(DEFINE)(?<=b+))))`, both refused here at the inner
+  lookbehind, as from 10.35. Where the item skipped carries words of data,
+  as a call, a reference by name, a property, a verb with a name or a
+  callout, those releases read the words left as characters:
+  `(?<=(?(DEFINE)\p{L}a{65535}))` and `(?<=(?(DEFINE)(?1)a{65534}))(x)` are
+  too long there and compile here. For `maxLookbehind` too, a DEFINE group
+  inside a lookbehind on those releases is measured as the library reads
+  it, not as they do, and `pcre2test` 10.32 to 10.34 give
+  `(?<=(?(DEFINE)(?<=abcd)))` a "Max lookbehind" of 6, the library 4.
+  Reproducing this would mean replaying that internal form of the pattern;
+  PCRE2 10.35 fixed it.
 
 ## What changed in which release
 
@@ -331,38 +358,6 @@ and a target has it from the release it arrived in on
 | `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
 | `ExtendedClassBesideLookbehindCompiles` | 10.48 | A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed. |
 | `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. |
-
-## Known differences
-
-Where a verdict of the library departs from the target's PCRE2:
-
-- **A DEFINE group in a lookbehind, or one that opens with a group, on
-  PCRE2 10.32 to 10.34** (PHP 7.3 and 7.4). These releases step over one item too many of their
-  internal form of the pattern after `(?(DEFINE)`, both when they measure a
-  lookbehind and when they look for the lookbehinds to measure. The library
-  follows the item skipped, but not what comes of it where that item opens
-  a group or a lookaround: the `)` of that group then closes the DEFINE
-  group, and the `)` of the DEFINE group closes what holds it, so that what
-  follows in a lookbehind goes unmeasured. `(?<=(?(DEFINE)(a))b+)`,
-  `(?<=x(?(DEFINE)(a))b+)c` and `(?<=(?:(?(DEFINE)(a)))b+)` compile there and
-  are refused here, as 10.35 refuses them, and `(?<=(?<=(?(DEFINE)(a))d+)b)`
-  is refused at offset 0 there and at 4 here. On 10.34 the search for the
-  lookbehinds to measure also stops at the end of such a DEFINE group,
-  inside a lookbehind or not: `(?(DEFINE)(a))(?<=b+)` and
-  `(?<=(?(DEFINE)(a))b)(?<=c+)` compile on 10.34, refused at 14 and 20 on
-  10.32, 10.33 and here. A lookbehind that opens a DEFINE group is never
-  measured: `(?(DEFINE)(?<=b+))` compiles on 10.32 to 10.34, and on 10.34 so
-  does `(?<=(?=(?(DEFINE)(?<=b+))))`, both refused here at the inner
-  lookbehind, as from 10.35. Where the item skipped carries words of data,
-  as a call, a reference by name, a property, a verb with a name or a
-  callout, those releases read the words left as characters:
-  `(?<=(?(DEFINE)\p{L}a{65535}))` and `(?<=(?(DEFINE)(?1)a{65534}))(x)` are
-  too long there and compile here. For `maxLookbehind` too, a DEFINE group
-  inside a lookbehind on those releases is measured as the library reads
-  it, not as they do, and `pcre2test` 10.32 to 10.34 give
-  `(?<=(?(DEFINE)(?<=abcd)))` a "Max lookbehind" of 6, the library 4.
-  Reproducing this would mean replaying that internal form of the pattern;
-  PCRE2 10.35 fixed it.
 
 ## A known JIT crash
 

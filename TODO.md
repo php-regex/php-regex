@@ -135,36 +135,6 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Lookbehind measures and sizes still reported wrong
-
-Each checked with pcre2test 10.32 to 10.49.
-
-- Up to 10.34, where a `(?(DEFINE)` group in a lookbehind opens with a
-  group, PCRE2 reads every later `)` one level up: `(?<=(?(DEFINE)(a))b+)`,
-  `(?<=x(?(DEFINE)(a))b+)c` and `(?<=(?:(?(DEFINE)(a)))b+)` compile there,
-  and `(?<=(?<=(?(DEFINE)(a))d+)b)` is "lookbehind assertion is not fixed
-  length" at offset 0, on the outer lookbehind; the library refuses the
-  first three at 0 and the last at 4, as 10.35 does. On 10.34 the
-  lookbehinds after it in the pattern are then never measured:
-  `(?<=(?(DEFINE)(a))b)(?<=c+)` compiles there, and is refused at 20 on
-  10.32, 10.33 and 10.35. A repeat of such a DEFINE group is left alone:
-  `(?<=(?(DEFINE)(a))??)` compiles on 10.32 to 10.34.
-- On 10.34 a lookbehind in a DEFINE group inside a lookahead inside a
-  lookbehind is never measured: `(?<=(?=(?(DEFINE)(?<=b+))))` compiles
-  there, and is refused at 17 from 10.35; the library refuses it at 17 on
-  10.34 too.
-- Up to 10.42 an item is added to the length of its branch before the
-  repeat after it is read: `(?<=a{65535}b?)` is "lookbehind assertion is
-  too long" at 0 there, where the library says
-  `regex.lookbehind.variable_length_not_supported` (same offset).
-- From 10.48 a pattern too large is reported at 0 when an item or a branch
-  passes the limit, at its end when only the check where a group ends finds
-  it. The library measures on its size floors, and keeps the end once a
-  group of several branches came first: `(?:a|b){5041}` and
-  `(?:x|(?:b){8190})` are at 0 on 10.48 and 10.49, the library says 13 and
-  17; `(?:a{2}){7000}|(?:bb){1000}` is at 0, the library says 27, as the
-  floor counts `a{2}` two units where PCRE2 compiles four.
-
 ## Compiled size verdicts
 
 Each checked with pcre2test 10.32 to 10.49.
