@@ -142,7 +142,9 @@ function seededSample(array $patterns, int $size, int $seed): array
 }
 
 $options = getopt('', ['literals', 'sample:', 'seed:', 'out:'], $restIndex);
-$directories = \array_slice($argv, $restIndex);
+// $argv is a global the analysis cannot see defined here.
+$arguments = $_SERVER['argv'] ?? [];
+$directories = \array_slice(\is_array($arguments) ? array_values(array_filter($arguments, \is_string(...))) : [], $restIndex);
 $out = $options['out'] ?? null;
 if (!\is_string($out) || [] === $directories) {
     fwrite(\STDERR, "Usage: php tests/Tools/harvest_patterns.php [--literals] [--sample=N] [--seed=S] --out=FILE DIR...\n");

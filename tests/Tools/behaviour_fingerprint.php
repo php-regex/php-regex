@@ -198,7 +198,9 @@ function everyRule(): array
 }
 
 $out = $options['out'] ?? null;
-$sources = \array_slice($argv, $restIndex);
+// $argv is a global the analysis cannot see defined here.
+$arguments = $_SERVER['argv'] ?? [];
+$sources = \array_slice(\is_array($arguments) ? array_values(array_filter($arguments, \is_string(...))) : [], $restIndex);
 if (!\is_string($out) || [] === $sources) {
     fwrite(\STDERR, "Usage: php tests/Tools/behaviour_fingerprint.php [--autoload=FILE] [--targets=runtime,php80100,...] [--plain] --out=FILE fixture|LIST.json...\n");
 
