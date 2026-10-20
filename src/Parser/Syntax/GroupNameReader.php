@@ -167,7 +167,7 @@ final class GroupNameReader
 
         // PCRE wants a name before anything that closes it.
         if ('' === $name) {
-            throw $this->error(\sprintf('Expected group name at position %d', $nameStart), ErrorCode::GroupNameExpected, $nameStart);
+            throw $this->error(\sprintf('Expected group name at position %d.', $nameStart), ErrorCode::GroupNameExpected, $nameStart);
         }
 
         // PCRE group names are word characters only and must not start with
@@ -383,7 +383,7 @@ final class GroupNameReader
 
                 $written = substr($this->stream->getPattern(), $token->position, max(1, $token->end() - $token->position));
 
-                throw $this->error(\sprintf('Unexpected token "%s" in group name', $written), $this->nameFault($nameStart, $token->position), $token->position);
+                throw $this->error(\sprintf('Unexpected token "%s" in group name.', $written), $this->nameFault($nameStart, $token->position), $token->position);
             }
 
             $name .= $this->stream->current()->value;
@@ -401,7 +401,7 @@ final class GroupNameReader
         if (!$this->stream->checkLiteral($quote)) {
             throw $this->error(
                 \sprintf(
-                    'Expected closing quote "%s" for group name at position %d',
+                    'Expected closing quote "%s" for group name at position %d.',
                     $quote,
                     $this->stream->current()->position,
                 ),

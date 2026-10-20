@@ -56,7 +56,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf("'", 'name', "'", '>'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected group name at position 0');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position 0, found');
 
         $reader->read();
     }
@@ -67,7 +67,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf('>', 'a', ')'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected group name at position');
+        $this->expectExceptionMessageMatches('/^Expected group name at position \d+\.$/');
 
         $reader->read();
     }
@@ -89,7 +89,7 @@ final class GroupNameReaderTest extends TestCase
         $reader = new GroupNameReader($this->streamOf("'", 'name', '>'));
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected closing quote');
+        $this->expectExceptionMessageMatches('/^Expected closing quote "\'" for group name at position \d+\.$/');
 
         $reader->read(quoted: true);
     }

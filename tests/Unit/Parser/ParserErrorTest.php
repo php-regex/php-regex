@@ -125,7 +125,7 @@ final class ParserErrorTest extends TestCase
     public function test_throws_on_invalid_token_in_group_name(): void
     {
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Unexpected token "|" in group name');
+        $this->expectExceptionMessageIsOrContains('Unexpected token "|" in group name.');
 
         $regex = $this->createRegex();
         $regex->parse('/(?<a|b>)/');

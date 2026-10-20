@@ -2685,7 +2685,7 @@ final class Lexer
             // the "[" after "(?", whatever follows it.
             if (!$this->readsExtendedClass && $this->opensExtendedClass($tokens, $classStart)) {
                 throw LexerException::withContext(
-                    \sprintf('Invalid group modifier syntax at position %d', $classStart),
+                    \sprintf('Invalid group modifier syntax at position %d.', $classStart),
                     ErrorCode::GroupSyntax,
                     $classStart,
                     $this->pattern,

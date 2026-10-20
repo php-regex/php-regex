@@ -315,7 +315,7 @@ final class ParserSweepTest extends TestCase
     {
         // PCRE: "subpattern name expected" on the quote.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected group name at position 4');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position 4, found');
 
         $this->regexService->parse("/(?P<'name>x)/");
     }
@@ -324,7 +324,7 @@ final class ParserSweepTest extends TestCase
     {
         // PCRE: "subpattern name expected" on the quote.
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Expected group name at position 4');
+        $this->expectExceptionMessageIsOrContains('Expected group name at position 4, found');
 
         $this->regexService->parse('/(?P<"name>x)/');
     }

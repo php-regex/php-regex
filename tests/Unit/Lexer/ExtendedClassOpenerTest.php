@@ -70,6 +70,14 @@ final class ExtendedClassOpenerTest extends TestCase
         $this->assertSame((int) $match[1], $result->offset, \sprintf('%s: PCRE says "%s", the library "%s".', $pattern, $warning, (string) $result->error));
     }
 
+    #[Test]
+    public function test_the_message_names_the_group_opener(): void
+    {
+        $result = Regex::create(['cache' => null, 'php_version' => 80200])->validate('/(?[a/');
+
+        $this->assertSame('Invalid group modifier syntax at position 2.', strtok((string) $result->error, "\n"));
+    }
+
     /**
      * @return iterable<string, array{pattern: string, offsets: array<int, int>}>
      */
