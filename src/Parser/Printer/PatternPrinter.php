@@ -55,11 +55,28 @@ use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 
 /**
- * Compiler that recompiles regex AST back into optimized strings.
+ * Writes a regex tree back as a pattern, delimiters and flags included.
  *
- * This visitor provides compilation with caching and
- * streamlined string building for efficiency while maintaining
- * full PCRE compatibility.
+ * Each constructor gives the printer for one way of writing it back:
+ *
+ * - asWritten() gives the pattern back as its author wrote it: the
+ *   escapes, the comments, the white space x skips and the spelling of
+ *   each construct come back from the source, and a node the source does
+ *   not hold, one an optimizer wrote, is spelled by the library. The rest
+ *   of the library prints this way.
+ * - normalized() writes the library's spelling whatever the source, so
+ *   that two patterns written differently print the same.
+ * - pretty() writes the normalized spelling and, under an x the pattern
+ *   already has, lays it out over lines as the formatter does.
+ * - forFormatting() and forCompacting(), through which PatternFormatter
+ *   works, lay a pattern out under x in its author's spelling, adding the
+ *   x it lacks, or write it on one line without its global x, its layout
+ *   or its comments; where that would change what the pattern matches,
+ *   they give it back as written, and refusal() says why.
+ *
+ * The printer spells each node. Where a laid-out pattern breaks into lines
+ * is PatternLayout's to decide, and how a body must be written for PHP to
+ * end the pattern where PCRE does is DelimiterBrackets'.
  *
  * @extends AbstractNodeVisitor<string>
  */
@@ -122,7 +139,9 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private const SPACED_BRACES = '/\G\{[ \t]*+(?:[0-9]++[ \t]*+(?:,[ \t]*+[0-9]*+[ \t]*+)?|,[ \t]*+[0-9]++[ \t]*+)\}/';
 
-    // Optimized meta-character sets for fast lookups
+    /**
+     * The characters a literal escapes outside a class.
+     */
     private const META_CHARACTERS = [
         '\\' => true, '.' => true, '^' => true, '$' => true,
         '[' => true, ']' => true, '(' => true, ')' => true,
@@ -135,11 +154,16 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private const UTF_PATTERN_WHITE_SPACE = ["\u{85}" => '\\x{85}', "\u{200E}" => '\\x{200E}', "\u{200F}" => '\\x{200F}', "\u{2028}" => '\\x{2028}', "\u{2029}" => '\\x{2029}'];
 
+    /**
+     * The characters a literal escapes in a class.
+     */
     private const CHAR_CLASS_META = [
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
 
-    // Minimal state tracking
+    /**
+     * Inside a character class, where other characters are special.
+     */
     private bool $inCharClass = false;
 
     /**
@@ -494,7 +518,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitAlternation(AlternationNode $node): string
     {
-        // Optimized: direct compilation without array_map overhead
         $alternatives = $node->alternatives;
         if ([] === $alternatives) {
             return '';
@@ -525,7 +548,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitSequence(SequenceNode $node): string
     {
-        // Optimized: direct compilation without array_map overhead
         $children = $node->children;
         if ([] === $children) {
             return '';
@@ -630,7 +652,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     {
         $value = $node->value;
 
-        // Fast path for empty strings
         if ('' === $value) {
             return '';
         }
@@ -658,7 +679,6 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $this->writtenSpelling($node, $value, $value);
         }
 
-        // Intelligent escaping with optimized character processing
         return $this->writtenSpelling($node, $this->escapeString($value), $value);
     }
 
@@ -1249,7 +1269,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
         $needsEscape = [] !== $skipped && \strlen($value) !== \strlen(strtr($value, $skipped));
 
-        // Fast pre-scan to check if escaping is needed
+        // Most literals need no escape: a first pass finds out.
         $len = \strlen($value);
         for ($i = 0; $i < $len; $i++) {
             $char = $value[$i];
@@ -1270,12 +1290,10 @@ final class PatternPrinter extends AbstractNodeVisitor
             }
         }
 
-        // Fast path: no escaping needed
         if (!$needsEscape) {
             return $value;
         }
 
-        // Optimized escaping with single pass
         $result = '';
         for ($i = 0; $i < $len; $i++) {
             $char = $value[$i];
@@ -1348,13 +1366,6 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
-     * The text that opened a group, as the pattern spelled it.
-     *
-     * PCRE names a group four ways — "(?<n>", "(?'n'", "(?P<n>", "(?P\"n\"" —
-     * and they mean the same thing, so the tree keeps only the name. The
-     * source still knows which one was written.
-     */
-    /**
      * "(*scs:(1,<name>)" or "(*scan_substring:(1,<name>)", as the pattern
      * spelled it.
      */
@@ -1387,6 +1398,13 @@ final class PatternPrinter extends AbstractNodeVisitor
         };
     }
 
+    /**
+     * The text that opened a group, as the pattern spelled it.
+     *
+     * PCRE names a group four ways — "(?<n>", "(?'n'", "(?P<n>", "(?P\"n\"" —
+     * and they mean the same thing, so the tree keeps only the name. The
+     * source still knows which one was written.
+     */
     private function openingAsWritten(GroupNode $node, string $opening): string
     {
         // Under "n", "(...)" does not capture: it is read as "(?:...)" and
