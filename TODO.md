@@ -176,6 +176,29 @@ written once, the rule state reset in `begin()`, the token helpers shared by
 the two extraction strategies, the console formatter split, and the config
 side of rule ids.
 
+## Architecture and contributor path: the last pass before 2.0.0
+
+- Contributor docs: `docs/extending.md` shows a node that is a fatal error
+  (`final readonly class ... extends AbstractNode`) and names a parser method
+  that does not exist; no page explains adding a lint rule; CONTRIBUTING
+  calls Task optional and asks for readonly classes; `tests/README.md` gives
+  a camelCase test naming the suite does not follow.
+- Packaging: `bin/corpus-lint` and a dangling `bin/paratest` symlink ship in
+  the monorepo archive; the monorepo package does not conflict with the
+  Laravel and Symfony versions its bridges refuse; the 1.x to 2.0 Rector set
+  belongs in `regex-rector` as `RegexSetList::UPGRADE_2_0`; deptrac grants
+  siblings the manifests do not require.
+- The transpiler output is never run in its target engine: add a
+  differential test against node and python.
+- Then, once the branches above are merged: `new Optimizer()` and
+  `new Transpiler()` without a parser, `Optimizer::optimize()` without
+  arrays, `SampleGenerator` without its seed setters, `Regex::lint()`;
+  `regex-phpunit` without the facade; the Psalm and PHPStan bridges without
+  the whole linter (the target resolution and the PHP-source helpers move
+  out of `regex-linter`); one placement and naming rule for exceptions; the
+  test conventions (`#[Test]` everywhere, the four inline ignores moved to
+  the config); release notes for 2.0.0 instead of the 805-line section.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
