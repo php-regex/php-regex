@@ -133,7 +133,7 @@ final class TextDocumentHandlerTest extends TestCase
         $this->assertIsArray($result);
         $contents = $result['contents'] ?? null;
         $this->assertIsArray($contents);
-        $this->assertSame("**Not analyzed**\n\nRecursion limit of 3 exceeded", $contents['value'] ?? null);
+        $this->assertSame("**Not analyzed**\n\nRecursion limit of 3 exceeded.", $contents['value'] ?? null);
     }
 
     /**

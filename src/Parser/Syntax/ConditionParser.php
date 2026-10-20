@@ -506,7 +506,7 @@ final class ConditionParser
         $position = $faultPosition ?? $this->target->faultOffset($startPosition + 1);
 
         throw $this->state->error(
-            'Invalid conditional condition at position '.$position,
+            \sprintf('Invalid conditional condition at position %d.', $position),
             ErrorCode::ConditionalAssertionExpected,
             $position,
         );

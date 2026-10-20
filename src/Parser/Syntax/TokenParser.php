@@ -60,11 +60,27 @@ use PHPRegex\Parser\Token\TokenType;
 use PHPRegex\Parser\Validation\Validator;
 
 /**
- * Recursive descent parser for regex patterns.
+ * Reads the tokens of a pattern into its tree, as PCRE2 reads the pattern.
  *
- * This parser uses intelligent caching, reduced method calls, and
- * streamlined parsing logic for efficiency while maintaining full
- * compatibility with PCRE syntax.
+ * A recursive descent over the tokens the lexer gives: an alternation of
+ * sequences of quantified atoms, and a group read for each "(" with the
+ * alternation inside it. It follows the PCRE2 release of its target, down
+ * to the offset each error is reported at, and reads in this order: the
+ * entry and the sequences, with the trivia of "x"; quantifiers; atoms,
+ * escapes and references; groups, inline options and verbs; extended
+ * classes; names and the faults of a "(?" group it cannot read.
+ *
+ * The parts with a grammar of their own are read apart: a character class
+ * by ClassParser and the condition of a conditional by ConditionParser,
+ * both sharing this parser's ParseState, the stream and the modes. Where
+ * PCRE refuses a count, an unclosed verb or a callout is asked of
+ * RepeatCount, PcreVerb and Callout, which read no parser state. A body
+ * PCRE reads from the text, the payload of an alphabetic assertion or an
+ * operand of an extended class, is lexed and read by a parser of its own,
+ * its offsets moved into the whole pattern.
+ *
+ * A pattern with a recursion test written before the group its name gives,
+ * "(?(R2)b|c)(?<R2>a)", is read a second time, knowing every name.
  *
  * @internal
  */
@@ -685,7 +701,7 @@ final class TokenParser
             $position = RepeatCount::nothingToRepeatOffset($token, $this->target);
 
             throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $position),
+                \sprintf('Quantifier without target at position %d.', $position),
                 ErrorCode::QuantifierNothingToRepeat,
                 $position,
             );
@@ -696,7 +712,7 @@ final class TokenParser
             $position = $this->target->faultOffset($token->position + \strlen($token->value));
 
             throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $position),
+                \sprintf('Quantifier without target at position %d.', $position),
                 ErrorCode::QuantifierNothingToRepeat,
                 $position,
             );
@@ -841,7 +857,7 @@ final class TokenParser
             $this->guardQuantifierCount($token);
 
             throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $position),
+                \sprintf('Quantifier without target at position %d.', $position),
                 ErrorCode::QuantifierNothingToRepeat,
                 $position,
             );
@@ -860,7 +876,7 @@ final class TokenParser
             $nodeName = $this->getAssertionNodeName($node);
 
             throw $this->parserException(
-                \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d%s',
+                \sprintf('Quantifier "%s" cannot be applied to assertion or verb "%s" at position %d%s.',
                     $token->value, $nodeName, $position, $isAccept ? ': PCRE2 10.34 lets "(*ACCEPT)" be repeated; write "(?:(*ACCEPT))'.$token->value.'", which every release reads' : ''),
                 ErrorCode::QuantifierNothingToRepeat,
                 $position,
@@ -964,7 +980,7 @@ final class TokenParser
 
             throw $unclosedVerb
                 ? $this->parserException(\sprintf('Missing ")" to close the verb at position %d.', $position), ErrorCode::VerbUnclosed, $position)
-                : $this->parserException(\sprintf('Quantifier without target at position %d', $position), ErrorCode::QuantifierNothingToRepeat, $position);
+                : $this->parserException(\sprintf('Quantifier without target at position %d.', $position), ErrorCode::QuantifierNothingToRepeat, $position);
         }
 
         $val = $this->stream->current()->value;
@@ -1146,10 +1162,6 @@ final class TokenParser
     }
 
     /**
-     * Transforms a stream of Tokens into an Abstract Syntax Tree (AST).
-     * Implements a Recursive Descent Parser based on PCRE grammar.
-     */
-    /**
      * The group a plain "(" opens, the "(" read.
      */
     private function parsePlainGroup(Token $startToken): NodeInterface
@@ -1282,7 +1294,7 @@ final class TokenParser
             \sprintf('Invalid \\g reference syntax: %s at position %d%s', $value, $position, match ($code) {
                 ErrorCode::GroupNameExpected => ': a group name or number is expected.',
                 ErrorCode::GroupNameUnterminated => ': nothing closes the group name there.',
-                default => '',
+                default => '.',
             }),
             $code,
             $position,
@@ -1485,11 +1497,6 @@ final class TokenParser
     }
 
     /**
-     * "\NN" of 10 or more that starts with 1 to 7, past the groups opened so
-     * far, is no reference: PCRE reads an octal escape of up to three octal
-     * digits, and the digits left as text, "\1000" being "@" then "0".
-     */
-    /**
      * Before PCRE2 10.45 a number past 214748363 is read as no reference:
      * "\8" or "\9" and eight digits or more is then the digit, and the
      * digits after it text.
@@ -1510,6 +1517,11 @@ final class TokenParser
         return $this->splitEscape;
     }
 
+    /**
+     * "\NN" of 10 or more that starts with 1 to 7, past the groups opened so
+     * far, is no reference: PCRE reads an octal escape of up to three octal
+     * digits, and the digits left as text, "\1000" being "@" then "0".
+     */
     private function octalEscapeFromReference(Token $token, int $startPosition): ?NodeInterface
     {
         if (1 !== LibraryPcre::match('/^\\\\([1-7]\d++)$/', $token->value, $matches)
@@ -2057,7 +2069,7 @@ final class TokenParser
             $position = $this->target->faultOffset($token->position + \strlen($token->value));
 
             throw $this->parserException(
-                \sprintf('Quantifier without target at position %d', $position),
+                \sprintf('Quantifier without target at position %d.', $position),
                 ErrorCode::QuantifierNothingToRepeat,
                 $position,
             );
@@ -2609,7 +2621,7 @@ final class TokenParser
         $length = \strlen($pattern);
         $position = $start + 2;
         $char = $pattern[$position] ?? '';
-        $syntax = [ErrorCode::GroupSyntax, 'Invalid group modifier syntax at position %d'];
+        $syntax = [ErrorCode::GroupSyntax, 'Invalid group modifier syntax at position %d.'];
         $unclosed = [ErrorCode::GroupUnclosed, 'Missing ")" to close the group at position %d.'];
 
         // Tokens with no pattern text behind them: nothing to read.
@@ -2732,7 +2744,7 @@ final class TokenParser
     }
 
     /**
-     * creates a ParserException with context about the pattern being parsed
+     * A syntax error at $position, with the pattern around it.
      */
     private function parserException(string $message, ErrorCode $code, int $position): ParserException
     {
@@ -2746,7 +2758,7 @@ final class TokenParser
     {
         if ($this->recursionDepth + $deeper >= $this->maxRecursionDepth) {
             throw RecursionLimitException::withContext(
-                \sprintf('Recursion limit of %d exceeded', $this->maxRecursionDepth),
+                \sprintf('Recursion limit of %d exceeded.', $this->maxRecursionDepth),
                 ErrorCode::NestingTooDeep,
                 $position,
                 $this->pattern,
@@ -2777,10 +2789,6 @@ final class TokenParser
         return new GroupNode($expr, $type, $name, $flags, $startPosition, $endToken->position + 1, $usePythonSyntax);
     }
 
-    /**
-     * Parses a simple group: alternation content followed by closing paren.
-     * Used for non-capturing groups, lookaheads, atomic groups, etc.
-     */
     /**
      * Read a lookaround, given the characters that introduce the ones this
      * position accepts.
@@ -2828,6 +2836,10 @@ final class TokenParser
         );
     }
 
+    /**
+     * Parses a simple group: alternation content followed by closing paren.
+     * Used for non-capturing groups, lookaheads, atomic groups, etc.
+     */
     private function parseSimpleGroup(int $startPosition, GroupType $type): GroupNode
     {
         $expr = $this->parseScopedAlternation();
