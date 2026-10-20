@@ -52,8 +52,8 @@ final class SecurityCommandTest extends TestCase
         $status = $tester->execute(['--config' => [$path]]);
 
         $this->assertSame(1, $status);
-        $this->assertStringContainsString('Access Control Conflicts', (string) $tester->getDisplay());
-        $this->assertStringContainsString('Firewall Regex ReDoS', (string) $tester->getDisplay());
+        $this->assertStringContainsString('1 shadowed rules detected.', (string) $tester->getDisplay());
+        $this->assertStringContainsString('1 firewall regex patterns exceed the ReDoS threshold.', (string) $tester->getDisplay());
     }
 
     #[Test]

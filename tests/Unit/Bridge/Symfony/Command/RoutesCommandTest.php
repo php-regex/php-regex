@@ -56,7 +56,7 @@ final class RoutesCommandTest extends TestCase
         $status = $tester->execute([]);
 
         $this->assertSame(1, $status);
-        $this->assertStringContainsString('Route Conflicts Detected', (string) $tester->getDisplay());
+        $this->assertStringContainsString('1 shadowed routes detected.', (string) $tester->getDisplay());
         $this->assertStringContainsString('api_user_show', (string) $tester->getDisplay());
         $this->assertStringContainsString('api_user_list', (string) $tester->getDisplay());
     }

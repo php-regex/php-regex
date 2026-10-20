@@ -83,3 +83,6 @@ CHANGELOG
    on the rest. `--config=<file>` reads that YAML file with `symfony/yaml`,
    now suggested. A configuration they cannot read is exit code 2, stage
    `config` in the JSON report of `regex:analyze`.
+ * `regex:routes` and `regex:security` print the sections of `regex:analyze`,
+   the same analyzers in the same layout; `-v` adds the counts of the
+   analysis and why each entry left out was left out.

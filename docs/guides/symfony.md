@@ -357,25 +357,27 @@ bin/console regex:security
 ```
 
 ```
-Firewalls : 2
+ Security Firewall Regex
+
+Firewalls : 1
 ReDoS >=  : high
 Flagged   : 1
 
    FAIL  1 firewall regex patterns exceed the ReDoS threshold.
 
-Firewall Regex ReDoS
---------------------
-
-   CRIT  api (config/packages/security.yaml:4) CRITICAL score 10
+   CRIT  api (config/packages/security.yaml:4)
+      ↳ Severity: CRITICAL
       ↳ Verdict: Exponential backtracking (proven)
+      ↳ Score: 10
       ↳ Pattern: ^/api/(\w+/?)+$
       ↳ Attack: "/api/" . "0" x n . "!"
 ```
 
 `"/api/" . "0" x n . "!"` reads as PHP: `"/api/" . str_repeat("0", $n) .
 "!"`, a request path that makes `preg_match()` give up from 19 repetitions
-under PHP's default limits. `regex:analyze` prints the same finding as
-`Verdict` and `Attack` rows, and its JSON report carries them as details:
+under PHP's default limits. `regex:routes` and `regex:security` print the
+sections of `regex:analyze`, the same analysis printed the same way, and
+the JSON report of `regex:analyze` carries the rows as details:
 
 ```json
 {

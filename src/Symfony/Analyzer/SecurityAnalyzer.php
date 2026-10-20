@@ -30,6 +30,8 @@ use PHPRegex\Symfony\Security\SecurityFirewallReport;
  * @phpstan-import-type AccessConflict from SecurityAccessControlReport
  * @phpstan-import-type AccessRule from SecurityAccessControlReport
  * @phpstan-import-type FirewallFinding from SecurityFirewallReport
+ * @phpstan-import-type AccessControlRule from SecurityConfigExtractor
+ * @phpstan-import-type FirewallRule from SecurityConfigExtractor
  *
  * @phpstan-type SkippedFile array{file: string, reason: string}
  */
@@ -67,13 +69,7 @@ final class SecurityAnalyzer implements AnalyzerInterface
      */
     public function analyze(AnalysisContext $context): array
     {
-        $config = $this->extractor->read(
-            $context->securityConfigPaths,
-            $context->kernel,
-            $this->locator,
-            $context->projectDir,
-            $context->environment,
-        );
+        $config = $this->read($context);
 
         if (null === $config) {
             return [
@@ -87,23 +83,100 @@ final class SecurityAnalyzer implements AnalyzerInterface
             ];
         }
 
-        $rules = $config['accessControl'];
-        $firewalls = $config['firewalls'];
+        return $this->sections($config, $context);
+    }
+
+    /**
+     * The security configuration the context names, null when there is none.
+     *
+     * @throws SecurityConfigException when the security configuration cannot be read
+     *
+     * @return array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>, skippedFiles: list<SkippedFile>}|null
+     */
+    public function read(AnalysisContext $context): ?array
+    {
+        return $this->extractor->read(
+            $context->securityConfigPaths,
+            $context->kernel,
+            $this->locator,
+            $context->projectDir,
+            $context->environment,
+        );
+    }
+
+    /**
+     * The sections of a security configuration read: its access_control
+     * rules, then its firewalls unless the context skips them.
+     *
+     * @param array{accessControl: list<AccessControlRule>, firewalls: list<FirewallRule>, skippedFiles: list<SkippedFile>} $config
+     *
+     * @return list<ReportSection>
+     */
+    public function sections(array $config, AnalysisContext $context): array
+    {
+        $pathHelper = new RelativePathHelper($context->projectDir);
         $skippedFiles = $config['skippedFiles'];
 
-        $pathHelper = new RelativePathHelper($context->projectDir);
-        $accessReport = $this->accessAnalyzer->analyze($rules, $context->includeOverlaps);
+        if ([] === $config['accessControl'] && [] === $config['firewalls']) {
+            return [
+                new ReportSection(
+                    self::ID.'_access',
+                    'Security Access Control',
+                    summary: [
+                        new AnalysisNotice(CheckOutcome::Pass, 'No security configuration entries found.'),
+                    ],
+                    warnings: $this->buildFileWarnings($skippedFiles),
+                    debug: $context->debug ? $this->skippedFileRows($skippedFiles, $pathHelper) : [],
+                ),
+            ];
+        }
+
+        $accessReport = $this->accessAnalyzer->analyze($config['accessControl'], $context->includeOverlaps);
 
         $sections = [
             $this->buildAccessSection($accessReport, $context, $pathHelper, $skippedFiles),
         ];
 
         if (!$context->skipFirewalls) {
-            $firewallReport = $this->firewallAnalyzer->analyze($firewalls, $context->redosThreshold);
+            $firewallReport = $this->firewallAnalyzer->analyze($config['firewalls'], $context->redosThreshold);
             $sections[] = $this->buildFirewallSection($firewallReport, $context, $pathHelper);
         }
 
         return $sections;
+    }
+
+    /**
+     * @param array<int, SkippedFile> $skippedFiles
+     *
+     * @return list<AnalysisNotice>
+     */
+    private function buildFileWarnings(array $skippedFiles): array
+    {
+        if ([] === $skippedFiles) {
+            return [];
+        }
+
+        return [new AnalysisNotice(
+            CheckOutcome::Warn,
+            \sprintf('%d security config files were skipped.', \count($skippedFiles)),
+        )];
+    }
+
+    /**
+     * Why each file was left out, as debug rows.
+     *
+     * @param array<int, SkippedFile> $skippedFiles
+     *
+     * @return array<string, string>
+     */
+    private function skippedFileRows(array $skippedFiles, RelativePathHelper $pathHelper): array
+    {
+        $rows = [];
+        foreach ($skippedFiles as $skip) {
+            $rows['Skipped file '.$pathHelper->getRelativePath($skip['file'])] = $skip['reason'];
+        }
+
+        return $rows;
     }
 
     /**
@@ -149,6 +222,11 @@ final class SecurityAnalyzer implements AnalyzerInterface
                 'Path intersections' => $report->stats['path_intersections'] ?? 0,
                 'Path subset checks' => $report->stats['path_subsets'] ?? 0,
             ];
+            foreach ($report->skippedRules as $skip) {
+                $location = $this->formatLocation($pathHelper, $skip['file'], $skip['line']);
+                $debug[\sprintf('Skipped rule #%d (%s)', $skip['index'], $location)] = $skip['reason'];
+            }
+            $debug += $this->skippedFileRows($skippedFiles, $pathHelper);
         }
 
         return new ReportSection(
@@ -170,14 +248,7 @@ final class SecurityAnalyzer implements AnalyzerInterface
      */
     private function buildAccessWarnings(SecurityAccessControlReport $report, array $skippedFiles): array
     {
-        $warnings = [];
-
-        if ([] !== $skippedFiles) {
-            $warnings[] = new AnalysisNotice(
-                CheckOutcome::Warn,
-                \sprintf('%d security config files were skipped.', \count($skippedFiles)),
-            );
-        }
+        $warnings = $this->buildFileWarnings($skippedFiles);
 
         if ([] !== $report->skippedRules) {
             $warnings[] = new AnalysisNotice(
@@ -349,6 +420,14 @@ final class SecurityAnalyzer implements AnalyzerInterface
             $issues[] = $this->buildFirewallIssue($finding, $pathHelper);
         }
 
+        $debug = [];
+        if ($context->debug) {
+            foreach ($report->skippedFirewalls as $skip) {
+                $location = $this->formatLocation($pathHelper, $skip['file'], $skip['line']);
+                $debug[\sprintf('Skipped firewall %s (%s)', $skip['name'], $location)] = $skip['reason'];
+            }
+        }
+
         return new ReportSection(
             self::ID.'_firewall',
             'Security Firewall Regex',
@@ -356,6 +435,7 @@ final class SecurityAnalyzer implements AnalyzerInterface
             $summary,
             $warnings,
             $issues,
+            debug: $debug,
         );
     }
 

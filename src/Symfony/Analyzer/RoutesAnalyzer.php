@@ -118,6 +118,9 @@ final class RoutesAnalyzer implements AnalyzerInterface
                 'Path subset checks' => $report->stats['path_subsets'] ?? 0,
                 'Pairs skipped (complexity)' => $report->stats['skipped_pairs'] ?? 0,
             ];
+            foreach ($report->skippedRoutes as $skip) {
+                $debug['Skipped route '.$skip['route']] = $skip['reason'];
+            }
         }
 
         return [

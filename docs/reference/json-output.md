@@ -696,7 +696,7 @@ configuration the SecurityBundle refuses) prints the envelope with stage
 | `warnings` | list | What the section could not check, as the notices below, such as a firewall without a pattern |
 | `issues` | list | The conflicts and findings, the objects below |
 | `suggestions` | list of strings | What to change, for people |
-| `debug` | list, optional | Present under `--debug` or `-v`: timings and solver counts, as rows like `meta`'s |
+| `debug` | list, optional | Present under `--debug` or `-v`: timings, solver counts and why each route, rule, firewall or file left out was left out, as rows like `meta`'s |
 
 ### Fact: `symfony_analyze.sections[].meta[]`
 

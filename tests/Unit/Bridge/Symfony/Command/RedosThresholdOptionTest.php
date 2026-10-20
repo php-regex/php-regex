@@ -79,7 +79,7 @@ final class RedosThresholdOptionTest extends TestCase
         $tester->execute(['--config' => [$path], '--redos-threshold' => 'CRITICAL']);
 
         $this->assertStringNotContainsString('--redos-threshold', $tester->getDisplay());
-        $this->assertStringContainsString('Access Control Conflicts', $tester->getDisplay());
+        $this->assertStringContainsString('1 shadowed rules detected.', $tester->getDisplay());
     }
 
     private function analyzeCommand(): AnalyzeCommand
