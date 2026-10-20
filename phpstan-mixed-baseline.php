@@ -2,8 +2,6 @@
 
 declare(strict_types=1);
 
-use PHPRegex\Parser\Printer\JsonDumper;
-
 /*
  * This file is part of the PHPRegex package.
  *
@@ -146,7 +144,7 @@ return [
         'PHPRegex\Parser\Printer\StructuralFingerprint::isLiteral()' => ['reflection-sink', 1],
     ],
     'src/Parser/Printer/JsonDumper.php' => [
-        JsonDumper::class => ['reflection-sink', 1],
+        'PHPRegex\Parser\Printer\JsonDumper' => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::all()' => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::visitAlternation()' => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::visitAnchor()' => ['reflection-sink', 1],
