@@ -198,6 +198,8 @@ side of rule ids.
   out of `regex-linter`); one placement and naming rule for exceptions; the
   test conventions (`#[Test]` everywhere, the four inline ignores moved to
   the config); release notes for 2.0.0 instead of the 805-line section.
+- Internal, so it may follow the tag: split `Validator` (4,757 lines) by
+  concern and `TokenParser` (4,583) by family of constructs.
 
 ## The articles section: what is left
 
