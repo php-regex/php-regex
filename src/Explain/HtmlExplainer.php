@@ -179,7 +179,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitCharType(CharTypeNode $node): string
     {
-        $explanation = Vocabulary::CHAR_TYPES[$node->value] ?? 'unknown (\\'.$node->value.')';
+        $explanation = Vocabulary::charType($node->value, $this->settings) ?? 'unknown (\\'.$node->value.')';
 
         return \sprintf(
             '<li><span title="Character Type: %s">Character Type: <strong>\%s</strong> (%s)</span></li>',

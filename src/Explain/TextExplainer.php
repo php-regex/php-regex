@@ -200,7 +200,7 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitCharType(CharTypeNode $node): string
     {
-        return $this->line('Character Type: '.(Vocabulary::CHAR_TYPES[$node->value] ?? 'unknown (\\'.$node->value.')'));
+        return $this->line('Character Type: '.(Vocabulary::charType($node->value, $this->settings) ?? 'unknown (\\'.$node->value.')'));
     }
 
     #[\Override]

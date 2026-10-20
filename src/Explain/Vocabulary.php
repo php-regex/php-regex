@@ -39,7 +39,7 @@ final class Vocabulary
         'S' => 'A non-whitespace character: [^\\s]',
         'v' => 'A vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]',
         'V' => 'A non-vertical whitespace character: [^\\v]',
-        'w' => 'A word character: [a-zA-Z_0-9]',
+        'w' => 'A word character: [a-zA-Z_0-9], or a letter or digit of the LC_CTYPE locale when it is not C',
         'W' => 'A non-word character: [^\\w]',
         'R' => 'Any Unicode linebreak sequence (\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])',
     ];
@@ -68,6 +68,33 @@ final class Vocabulary
         'isalphabetic' => 'An alphabetic character (binary property)',
         'sc' => 'A currency symbol',
     ];
+
+    /**
+     * What "\d", "\s" and "\w" and their negations match under Unicode
+     * properties, as PCRE2 reads them under UCP.
+     */
+    public const UNICODE_CHAR_TYPES = [
+        'd' => 'A decimal digit: any Unicode decimal digit (\\p{Nd})',
+        'D' => 'A non-digit: any character but a Unicode decimal digit (\\P{Nd})',
+        's' => 'A whitespace character: a Unicode separator (\\p{Z}), or a horizontal or vertical whitespace character (\\h, \\v)',
+        'S' => 'A non-whitespace character: [^\\s]',
+        'w' => 'A word character: a Unicode letter (\\p{L}) or number (\\p{N}), an underscore, and from PCRE2 10.43 a non-spacing mark (\\p{Mn}) or connector punctuation (\\p{Pc})',
+        'W' => 'A non-word character: [^\\w]',
+    ];
+
+    /**
+     * What a character type matches, by the settings in force: "\d", "\s"
+     * and "\w" by the Unicode tables under Unicode properties, by ASCII
+     * otherwise; null for a type the table does not hold.
+     */
+    public static function charType(string $type, MatchSettings $settings): ?string
+    {
+        if (isset(self::UNICODE_CHAR_TYPES[$type]) && $settings->unicodeType($type)) {
+            return self::UNICODE_CHAR_TYPES[$type];
+        }
+
+        return self::CHAR_TYPES[$type] ?? null;
+    }
 
     /**
      * Where "^" or "$" matches, by the flags in force: with m at the start
