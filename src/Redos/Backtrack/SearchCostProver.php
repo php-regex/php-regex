@@ -637,7 +637,7 @@ final class SearchCostProver
             }
         }
 
-        $components = self::components($graph, $budget);
+        $components = StronglyConnectedComponents::of($graph, $budget)->componentOf;
         $sizes = array_count_values($components);
         // Mixing classes matters only where an attempt's start depends on
         // the character before it: the classes any item on a cycle reads.
@@ -711,81 +711,6 @@ final class SearchCostProver
         ksort($ranked);
 
         return \array_slice(array_merge(...array_values($ranked)), 0, self::MAX_MIXED_WORDS);
-    }
-
-    /**
-     * The strongly connected component of each item of the graph, by
-     * Tarjan's algorithm, without recursion.
-     *
-     * @param array<int, list<int>> $graph
-     *
-     * @throws ModelLimit
-     *
-     * @return array<int, int>
-     */
-    private static function components(array $graph, Budget $budget): array
-    {
-        /** @var array<int, int> $index */
-        $index = [];
-        /** @var array<int, int> $low */
-        $low = [];
-        /** @var array<int, int> $position where each item still on the stack lies in it */
-        $position = [];
-        /** @var list<int> $stack */
-        $stack = [];
-        /** @var array<int, int> $components */
-        $components = [];
-        $counter = 0;
-        foreach (array_keys($graph) as $root) {
-            if (isset($index[$root])) {
-                continue;
-            }
-
-            // The path of the depth-first walk, and the next successor each
-            // of its items visits.
-            $path = [$root];
-            $nextOf = [0];
-            $index[$root] = $low[$root] = $counter++;
-            $position[$root] = \count($stack);
-            $stack[] = $root;
-            while ([] !== $path) {
-                $budget->step();
-                $depth = \count($path) - 1;
-                $item = $path[$depth];
-                $next = $nextOf[$depth];
-                if ($next < \count($graph[$item])) {
-                    $nextOf[$depth] = $next + 1;
-                    $successor = $graph[$item][$next];
-                    if (!isset($index[$successor])) {
-                        $index[$successor] = $low[$successor] = $counter++;
-                        $position[$successor] = \count($stack);
-                        $stack[] = $successor;
-                        $path[] = $successor;
-                        $nextOf[] = 0;
-                    } elseif (isset($position[$successor])) {
-                        $low[$item] = min($low[$item], $index[$successor]);
-                    }
-
-                    continue;
-                }
-
-                array_pop($path);
-                array_pop($nextOf);
-                if ([] !== $path) {
-                    $parent = $path[\count($path) - 1];
-                    $low[$parent] = min($low[$parent], $low[$item]);
-                }
-
-                if ($low[$item] === $index[$item]) {
-                    foreach (array_splice($stack, $position[$item]) as $member) {
-                        unset($position[$member]);
-                        $components[$member] = $index[$item];
-                    }
-                }
-            }
-        }
-
-        return $components;
     }
 
     /**

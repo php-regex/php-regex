@@ -162,13 +162,9 @@ final class AmbiguityFinder
         // The most cyclic components a path crosses, over the components in
         // topological order, the last first.
         $edges = $this->edges([]);
-        $components = $this->stronglyConnected($edges);
-        $of = [];
-        foreach ($components as $index => $members) {
-            foreach ($members as $member) {
-                $of[$member] = $index;
-            }
-        }
+        $strong = StronglyConnectedComponents::of($edges, $this->budget);
+        $components = $strong->components;
+        $of = $strong->componentOf;
 
         $longest = [];
         for ($index = \count($components) - 1; $index >= 0; $index--) {
@@ -675,7 +671,7 @@ final class AmbiguityFinder
             return;
         }
 
-        foreach ($this->stronglyConnected($edges) as $component) {
+        foreach (StronglyConnectedComponents::of($edges, $this->budget)->components as $component) {
             $diagonal = [];
             $split = false;
             foreach ($component as $node) {
@@ -1653,7 +1649,7 @@ final class AmbiguityFinder
         $edges = $this->edges([]);
         if ($blocking) {
             $within = [];
-            foreach ($this->fullComponents ?? $this->stronglyConnected($edges) as $index => $members) {
+            foreach ($this->fullComponents ?? StronglyConnectedComponents::of($edges, $this->budget)->components as $index => $members) {
                 foreach ($members as $member) {
                     $within[$member] = $index;
                 }
@@ -1681,7 +1677,7 @@ final class AmbiguityFinder
             $edges = $this->edges($blocked);
         }
 
-        $components = $this->stronglyConnected($edges);
+        $components = StronglyConnectedComponents::of($edges, $this->budget)->components;
         if (!$blocking) {
             $this->fullComponents = $components;
         }
@@ -1743,80 +1739,6 @@ final class AmbiguityFinder
         }
 
         return $edges;
-    }
-
-    /**
-     * Tarjan's strongly connected components, without recursion, in
-     * topological order: a component comes before the ones it reaches.
-     *
-     * @param array<int, list<int>> $edges every node a key, its successors among the keys
-     *
-     * @return list<list<int>>
-     */
-    private function stronglyConnected(array $edges): array
-    {
-        $index = [];
-        $low = [];
-        $onStack = [];
-        $stack = [];
-        $counter = 0;
-        $components = [];
-
-        foreach ($edges as $root => $_) {
-            if (isset($index[$root])) {
-                continue;
-            }
-
-            $work = [[$root, 0]];
-            $index[$root] = $low[$root] = $counter++;
-            $stack[] = $root;
-            $onStack[$root] = true;
-
-            while ([] !== $work) {
-                $this->budget->step();
-                $top = \count($work) - 1;
-                [$node, $position] = $work[$top];
-                $successors = $edges[$node];
-                if ($position < \count($successors)) {
-                    $work[$top][1]++;
-                    $next = $successors[$position];
-                    if (!isset($index[$next])) {
-                        $index[$next] = $low[$next] = $counter++;
-                        $stack[] = $next;
-                        $onStack[$next] = true;
-                        $work[] = [$next, 0];
-                    } elseif (isset($onStack[$next])) {
-                        $low[$node] = min($low[$node], $index[$next]);
-                    }
-
-                    continue;
-                }
-
-                array_pop($work);
-                if ([] !== $work) {
-                    $parent = $work[\count($work) - 1][0];
-                    $low[$parent] = min($low[$parent], $low[$node]);
-                }
-
-                if ($low[$node] === $index[$node]) {
-                    $members = [];
-                    while ([] !== $stack) {
-                        $member = $stack[\count($stack) - 1];
-                        array_pop($stack);
-                        unset($onStack[$member]);
-                        $members[] = $member;
-                        if ($member === $node) {
-                            break;
-                        }
-                    }
-
-                    $components[] = $members;
-                }
-            }
-        }
-
-        // Tarjan closes a component after every component it reaches.
-        return array_reverse($components);
     }
 
     /**
