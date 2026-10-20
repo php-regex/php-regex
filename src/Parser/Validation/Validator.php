@@ -2643,8 +2643,9 @@ final class Validator extends AbstractNodeVisitor
     private function lookbehindErrorPosition(GroupNode $node): int
     {
         $start = $node->startPosition;
-        if (null !== $this->pattern && 1 === LibraryPcre::match('/\G\(\*(\w++):/', $this->pattern, $name, 0, $start)) {
-            return $start + \strlen($name[1]) - 1;
+        $name = null === $this->pattern ? null : PcreVerb::nameBeforeColonAt($this->pattern, $start, PcreVerb::WORD_NAME);
+        if (null !== $name) {
+            return $start + \strlen($name) - 1;
         }
 
         return $start;

@@ -1706,12 +1706,12 @@ final class Lexer
         // read in place. A name PCRE does not know is refused where it ends.
         // Where a name is due, as after "(?<", PCRE wants it on the "(" and
         // reads no name: the parser refuses it there.
-        if (TokenType::GroupOpen === $type && 1 === LibraryPcre::match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos) && !$this->followsNameOpener($startPos)) {
+        if (TokenType::GroupOpen === $type && null !== ($name = PcreVerb::nameBeforeColonAt($this->pattern, $startPos, PcreVerb::LOWERCASE_NAME)) && !$this->followsNameOpener($startPos)) {
             // "(?(*atomic:" is no condition: PCRE takes a lookaround there,
             // and refuses any other name it knows at the colon.
-            $known = PcreVerb::takesArgument($opener[1]) || ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true));
-            if ($known && !PcreVerb::isLookaround($opener[1]) && $this->opensCondition($currentTokens, $startPos)) {
-                $colon = $startPos + 2 + \strlen($opener[1]);
+            $known = PcreVerb::takesArgument($name) || ($this->readsScanSubstring && \in_array($name, ['scs', 'scan_substring'], true));
+            if ($known && !PcreVerb::isLookaround($name) && $this->opensCondition($currentTokens, $startPos)) {
+                $colon = $startPos + 2 + \strlen($name);
 
                 throw LexerException::withContext(
                     \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after "(?(".', $colon),
@@ -1735,14 +1735,14 @@ final class Lexer
 
             // A name too long is refused as one before it is looked up.
             if ($this->namesReadWhole) {
-                $this->refuseVerbNameTooLong(\strlen($opener[1]), $startPos);
+                $this->refuseVerbNameTooLong(\strlen($name), $startPos);
             }
 
             // A name PCRE knows opens a body read in place.
             throw LexerException::withContext(
-                \sprintf('Unknown alphabetic assertion "(*%s:".', $opener[1]),
+                \sprintf('Unknown alphabetic assertion "(*%s:".', $name),
                 ErrorCode::VerbInvalid,
-                $startPos + 2 + \strlen($opener[1]),
+                $startPos + 2 + \strlen($name),
                 $this->pattern,
             );
         }

@@ -32,6 +32,16 @@ use PHPRegex\Parser\Text\Ascii;
 final class PcreVerb
 {
     /**
+     * The letters of an alphabetic name, "(*pla:" or "(*atomic:".
+     */
+    public const LOWERCASE_NAME = 'abcdefghijklmnopqrstuvwxyz_';
+
+    /**
+     * The characters "\w" stands for outside UTF mode.
+     */
+    public const WORD_NAME = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
+
+    /**
      * PCRE2 10.33+ alphabetic assertion verbs and their group equivalents.
      */
     private const ASSERTIONS = [
@@ -248,6 +258,26 @@ final class PcreVerb
         }
 
         return [$fault[0], $fault[0] >= $patternLength ? ErrorCode::GroupUnclosed : ErrorCode::GroupListMissingGroup, $fault[2]];
+    }
+
+    /**
+     * The name of the "(*name:" at $at, one or more of $letters then ":";
+     * null when no such opener stands there.
+     *
+     * It is read without a regex: a match that must end in ":" has PCRE2
+     * search the subject for one before it tries the match, and up to
+     * PCRE2 10.44 the JIT searches to the end of the subject, at every "("
+     * of a pattern with fewer ":" than groups.
+     */
+    public static function nameBeforeColonAt(string $pattern, int $at, string $letters): ?string
+    {
+        if ('(' !== ($pattern[$at] ?? '') || '*' !== ($pattern[$at + 1] ?? '')) {
+            return null;
+        }
+
+        $length = strspn($pattern, $letters, $at + 2);
+
+        return $length > 0 && ':' === ($pattern[$at + 2 + $length] ?? '') ? substr($pattern, $at + 2, $length) : null;
     }
 
     /**

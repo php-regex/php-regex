@@ -292,6 +292,35 @@ final class PcreVerbTest extends TestCase
         yield 'in a lookahead spelled (?=' => ['pattern' => '/(?=(**))/', 'position' => 5];
     }
 
+    /**
+     * The name of "(*name:" standing at an offset, made of the letters
+     * given, a ":" right after them; null for anything else.
+     */
+    #[Test]
+    #[DataProvider('provideNamesBeforeAColon')]
+    public function test_the_name_of_an_opener_is_read_up_to_its_colon(string $pattern, int $at, string $letters, ?string $name): void
+    {
+        $this->assertSame($name, PcreVerb::nameBeforeColonAt($pattern, $at, $letters));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, at: int, letters: string, name: string|null}>
+     */
+    public static function provideNamesBeforeAColon(): iterable
+    {
+        yield 'alphabetic lookahead' => ['pattern' => '(*pla:a)', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => 'pla'];
+        yield 'name with an underscore, further on' => ['pattern' => 'ab(*positive_lookbehind:', 'at' => 2, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => 'positive_lookbehind'];
+        yield 'capitals are no alphabetic name' => ['pattern' => '(*MARK:a)', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'capitals and digits are word characters' => ['pattern' => '(*MARK1:a)', 'at' => 0, 'letters' => PcreVerb::WORD_NAME, 'name' => 'MARK1'];
+        yield 'no colon after the name' => ['pattern' => '(*pla)', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'the pattern ends with the name' => ['pattern' => '(*pla', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'no name before the colon' => ['pattern' => '(*:a)', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'the pattern ends with the opener' => ['pattern' => 'a(*', 'at' => 1, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'a group opener' => ['pattern' => '(?=a)', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'not on a parenthesis' => ['pattern' => 'a(*pla:', 'at' => 0, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+        yield 'past the end' => ['pattern' => '(*pla:', 'at' => 6, 'letters' => PcreVerb::LOWERCASE_NAME, 'name' => null];
+    }
+
     #[Test]
     public function test_a_script_run_with_nothing_in_it_is_a_plain_verb(): void
     {
