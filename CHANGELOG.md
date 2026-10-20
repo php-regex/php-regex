@@ -347,6 +347,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A class after `\c(?` (`/\c(?[a/`, where `\c` escapes the `(` and `?` repeats it) is a plain class, refused where PCRE2 refuses it (at 6, the class left open), where it was taken for the `(?[` of an extended class and refused on its `[`.
 - A group, subroutine or condition name that a `\c` ending the pattern, a `\x{}` or, before PCRE2 10.35, a `(?*` cuts short is refused where PCRE2 refuses it, on the backslash or the `(` (`/(?&\c/` at 3, `/(?<a\c/` at 4, `/(?&a\x{}/` at 4), as is a `(?\c` (at 2, past it from PCRE2 10.47), where the escape or the group was reported.
 - Java's property names (`\p{javaLowerCase}`, `\p{javaUpperCase}`, `\p{javaWhitespace}`, `\p{javaMirrored}`) and Unicode blocks (`\p{Block=Basic_Latin}`, `\p{blk=ASCII}`, even `\p{Blk=Foo}`) are refused, as `preg_match()` refuses them on every PCRE2 release PHP 8 bundles, where a target of PCRE2 10.40 or later reported them valid. PCRE2 has no Unicode blocks; the error points past the `}`, as PCRE2's does.
 - On PHP 8.5 and later, validating a class left open whose range ends on a character past ASCII without `u` (`/[a-é/`) raises no deprecation of `ord()`, and a value in `\x{...}`, `\o{...}` or `\N{U+...}` past what a PHP integer holds raises no warning of a float cast: it reads as the largest integer, where the cast wrapped it to 0 or below.

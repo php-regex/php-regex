@@ -2657,18 +2657,20 @@ final class Lexer
     /**
      * Whether the class at $position is the "[" of "(?[", a Perl extended
      * class PCRE2 only reads from 10.45; before, PCRE2 refuses that "[",
-     * whatever follows it.
+     * whatever follows it. Only a group opener ending there does: in
+     * "\(?[a" and "\c(?[a" the "(" is a character, and the class is plain.
+     *
+     * @param list<Token> $tokens
      */
-    private function opensExtendedClass(int $position): bool
+    private function opensExtendedClass(array $tokens, int $position): bool
     {
-        if ($position < 2 || '(?' !== substr($this->pattern, $position - 2, 2)) {
-            return false;
+        foreach ($tokens as $token) {
+            if ($token->end() === $position) {
+                return TokenType::GroupModifierOpen === $token->type;
+            }
         }
 
-        // An escaped "(" opens nothing: "\(?[a" is an unclosed class.
-        $before = substr($this->pattern, 0, $position - 2);
-
-        return 0 === (\strlen($before) - \strlen(rtrim($before, '\\'))) % 2;
+        return false;
     }
 
     /**
@@ -2681,7 +2683,7 @@ final class Lexer
 
             // Before PCRE2 10.45, "(?[" is no extended class: PCRE refuses
             // the "[" after "(?", whatever follows it.
-            if (!$this->readsExtendedClass && $this->opensExtendedClass($classStart)) {
+            if (!$this->readsExtendedClass && $this->opensExtendedClass($tokens, $classStart)) {
                 throw LexerException::withContext(
                     \sprintf('Invalid group modifier syntax at position %d', $classStart),
                     ErrorCode::GroupSyntax,
@@ -2722,7 +2724,7 @@ final class Lexer
             throw LexerException::withContext(
                 'Unclosed character class "]" at end of input.',
                 ErrorCode::CharclassUnclosed,
-                $this->opensExtendedClass($classStart) ? $classStart : $this->position,
+                $this->opensExtendedClass($tokens, $classStart) ? $classStart : $this->position,
                 $this->pattern,
             );
         }
