@@ -158,6 +158,13 @@ final class PhpTokensTest extends TestCase
         $this->assertNull(PhpTokens::previousSignificant($tokens, 4, 2));
         $this->assertSame(0, PhpTokens::previousSignificant($tokens, 0));
         $this->assertNull(PhpTokens::previousSignificant($tokens, -1));
+
+        // A character token is significant, whatever its text.
+        $characters = [[\T_WHITESPACE, ' ', 1], '(', [\T_COMMENT, '#', 1], ' '];
+        $this->assertSame(1, PhpTokens::nextSignificant($characters, 0, 4));
+        $this->assertSame(3, PhpTokens::nextSignificant($characters, 2, 4));
+        $this->assertSame(3, PhpTokens::previousSignificant($characters, 3));
+        $this->assertSame(1, PhpTokens::previousSignificant($characters, 2));
     }
 
     #[Test]

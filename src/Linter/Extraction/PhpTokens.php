@@ -160,8 +160,11 @@ final class PhpTokens
      */
     public static function nextSignificant(array $tokens, int $start, int $end): ?int
     {
+        // The test of isIgnorable() written in place: both walks run it on
+        // most tokens of every file read.
         for ($i = $start, $end = min($end, \count($tokens)); $i < $end; $i++) {
-            if (!self::isIgnorable($tokens[$i])) {
+            $token = $tokens[$i];
+            if (!\is_array($token) || !isset(self::IGNORABLE[$token[0]])) {
                 return $i;
             }
         }
@@ -178,7 +181,8 @@ final class PhpTokens
     public static function previousSignificant(array $tokens, int $start, int $floor = 0): ?int
     {
         for ($i = min($start, \count($tokens) - 1); $i >= $floor; $i--) {
-            if (!self::isIgnorable($tokens[$i])) {
+            $token = $tokens[$i];
+            if (!\is_array($token) || !isset(self::IGNORABLE[$token[0]])) {
                 return $i;
             }
         }
