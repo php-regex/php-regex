@@ -33,7 +33,6 @@ use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
-use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
@@ -493,7 +492,9 @@ final class TextDocumentHandler
             RedosVerdict::SEARCH_ISSUE_ID => RedosMode::Off === $this->redosMode
                 || !LintConfigSchema::leavesOn($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID),
             'regex.optimization', 'regex.lint.complexity', 'regex.lint.compat.meaningChanges' => true,
-            default => RuleId::isLintRule($identifier) && !PatternLinter::enables($this->lintRules, $identifier),
+            default => str_starts_with($identifier, 'regex.lint.')
+                && \in_array(substr($identifier, \strlen('regex.lint.')), LintConfigSchema::lintRuleIds(), true)
+                && !PatternLinter::enables($this->lintRules, $identifier),
         };
     }
 
