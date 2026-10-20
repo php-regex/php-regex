@@ -55,6 +55,12 @@ final class ArrayLiteralPatternsTest extends TestCase
         yield 'a trailing comma' => ['array' => "['/a/',]", 'reads' => 'values', 'items' => ["'/a/'", '']];
         yield 'a comment' => ['array' => "[/* first */ '/a/']", 'reads' => 'values', 'items' => ["/* first */ '/a/'"]];
         yield 'an array left open' => ['array' => "['/a/', '/b/'", 'reads' => 'values', 'items' => ["'/a/'"]];
+        yield 'an arrow function' => ['array' => "[fn () => '/a/', '/b/']", 'reads' => 'values', 'items' => ["fn () => '/a/'", "'/b/'"]];
+        yield 'an attributed static arrow function' => ['array' => "[#[A] static fn () => '/a/']", 'reads' => 'values', 'items' => ["#[A] static fn () => '/a/'"]];
+        yield 'an arrow function in a nested call' => ['array' => "[f(fn () => 1), 'x' => '/a/']", 'reads' => 'values', 'items' => ['f(fn () => 1)', "'/a/'"]];
+        yield 'the keys, an arrow function value' => ['array' => "['/a/' => fn () => 1, '/b/' => \$f]", 'reads' => 'keys', 'items' => ["'/a/'", "'/b/'"]];
+        yield 'the keys, nested arrow functions' => ['array' => "['/a/' => fn () => fn () => 1, '/b/' => 2]", 'reads' => 'keys', 'items' => ["'/a/'", "'/b/'"]];
+        yield 'an arrow function first, either' => ['array' => "[fn () => '/a/']", 'reads' => 'either', 'items' => ["fn () => '/a/'"]];
         yield 'no array' => ['array' => '$patterns', 'reads' => 'values', 'items' => []];
     }
 

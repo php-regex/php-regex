@@ -83,6 +83,9 @@ final class ArrayLiteralPatterns
         $totalTokens = \count($tokens);
         $stack = [self::closingTokenFor($tokens[$startIndex])];
         $collecting = true;
+        // The arrow functions the current item opened at the top level whose
+        // "=>" is still to come.
+        $arrowFunctions = 0;
         $segmentTokens = [];
         $segmentTokenIndexes = [];
 
@@ -138,13 +141,14 @@ final class ArrayLiteralPatterns
 
                 $useKeys ??= false;
                 $collecting = true;
+                $arrowFunctions = 0;
                 $segmentTokens = [];
                 $segmentTokenIndexes = [];
 
                 continue;
             }
 
-            if ($atTopLevel && PhpTokens::isDoubleArrow($token)) {
+            if ($atTopLevel && PhpTokens::isDoubleArrow($token) && 0 === $arrowFunctions) {
                 $useKeys ??= self::isStringKey($segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content);
                 if ($useKeys) {
                     $segments[] = [$segmentTokens, $segmentTokenIndexes];
@@ -156,6 +160,14 @@ final class ArrayLiteralPatterns
                 $segmentTokenIndexes = [];
 
                 continue;
+            }
+
+            // An arrow function the item opens owns the next "=>": it
+            // separates no key from its value.
+            if ($atTopLevel && \is_array($token) && \T_FN === $token[0]) {
+                $arrowFunctions++;
+            } elseif ($atTopLevel && PhpTokens::isDoubleArrow($token)) {
+                $arrowFunctions--;
             }
 
             if ($collecting) {

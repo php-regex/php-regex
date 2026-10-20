@@ -273,4 +273,29 @@ final class TokenBasedExtractionStrategyShapesTest extends TestCase
             preg_replace_callback_array([array('/nested-key/') => fn ($m) => ''], $s);
             PHP);
     }
+
+    /**
+     * The "=>" of an arrow function in an array of patterns is the arrow
+     * function's: what it returns is no pattern, as PHP refuses the closure
+     * itself ("Object of class Closure could not be converted to string"),
+     * and an item after it is read as any other.
+     */
+    #[Test]
+    public function test_an_arrow_function_item_holds_no_pattern(): void
+    {
+        $this->assertExtractedByBoth([
+            ['pattern' => '/kept-a/', 'at' => "'/kept-a/'"],
+            ['pattern' => '/kept-b/', 'at' => "'/kept-b/'"],
+            ['pattern' => '/kept-c/', 'at' => "'/kept-c/'"],
+            ['pattern' => '/kept-d/', 'at' => "'/kept-d/'"],
+        ], <<<'PHP'
+            <?php
+
+            preg_replace([fn () => '/arrow-value/'], '', $s);
+            preg_replace(['/kept-a/', static fn ($x) => '/arrow-after/'], '', $s);
+            preg_replace_callback_array(['/kept-b/' => fn ($m) => fn () => '/arrow-nested/', '/kept-c/' => $g], $s);
+            preg_replace([fn () => [1, 2], '/kept-d/'], '', $s);
+            preg_replace([#[Pure] fn () => '/arrow-attributed/'], '', $s);
+            PHP);
+    }
 }
