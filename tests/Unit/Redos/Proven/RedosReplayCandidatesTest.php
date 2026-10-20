@@ -301,6 +301,21 @@ final class RedosReplayCandidatesTest extends TestCase
     }
 
     /**
+     * A replay whose limit would take more work than the replay allows runs
+     * nothing it can count: the verdict stands as proven, not reproduced,
+     * at the confidence of a proof the engine did not confirm.
+     */
+    #[Test]
+    public function test_a_replay_over_its_work_budget_is_not_reproduced(): void
+    {
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 2_000_000_000));
+
+        $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
+        $this->assertFalse($analysis->replayed);
+        $this->assertSame(RedosConfidence::Medium, $analysis->confidence);
+    }
+
+    /**
      * Whether a build of the witness exhausts the replay's backtrack limit
      * within the runner's bound on pumps, in the call form given.
      */

@@ -36,6 +36,8 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeVisitorInterface;
+use PHPRegex\Redos\Finding;
+use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosSeverity;
@@ -197,6 +199,29 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 6)]));
         $this->assertFalse($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 7, new LiteralNode('a', 0, 1))]));
         $this->assertTrue($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 8, new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 2))]));
+    }
+
+    /**
+     * A DEFINE block is analysed on its own, outside the loops around it,
+     * with the nesting of its own loops counted from none.
+     */
+    public function test_the_loops_of_a_define_block_nest_from_none(): void
+    {
+        $analyzer = new RedosAnalyzer();
+        $messages = static fn (string $pattern): array => array_map(
+            static fn (Finding $finding): string => $finding->severity->value.' '.$finding->pattern.': '.$finding->message,
+            $analyzer->analyze($pattern)->findings,
+        );
+
+        $unbounded = $messages('/(?(DEFINE)(?<x>(a+)+))b/');
+        $this->assertContains('critical a+: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).', $unbounded);
+
+        $bounded = $messages('/(?(DEFINE)(?<x>(?:a{1,3}){1,3}))b/');
+        $this->assertContains('low a{1,3}: Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...).', $bounded);
+
+        // A loop of the block counts as no loop of the pattern around it.
+        $outside = $messages('/^(?:c(?(DEFINE)(?<x>a+)))+$/');
+        $this->assertNotContains('critical a+: Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).', $outside);
     }
 
     public function test_capture_length_and_quantifier_bounds_helpers(): void
