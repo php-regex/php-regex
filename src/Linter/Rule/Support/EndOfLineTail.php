@@ -764,11 +764,11 @@ final class EndOfLineTail
 
     private static function dotAllAfter(GroupNode $flags, bool $dotAll): bool
     {
-        return str_contains(NodePredicates::applyInlineFlags($dotAll ? 's' : '', (string) $flags->flags), 's');
+        return str_contains(FlagScope::flagsAfter($flags, $dotAll ? 's' : ''), 's');
     }
 
     private static function dotAllInside(GroupNode $group, bool $dotAll): bool
     {
-        return GroupType::InlineFlags === $group->type && null !== $group->flags ? self::dotAllAfter($group, $dotAll) : $dotAll;
+        return str_contains(FlagScope::flagsInside($group, $dotAll ? 's' : ''), 's');
     }
 }

@@ -21,7 +21,7 @@ use PHPRegex\Linter\Rule\LintRuleInterface;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\PatternInfo;
 use PHPRegex\Linter\Rule\RuleViolation;
-use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
@@ -303,14 +303,7 @@ final class PatternLinter extends AbstractNodeVisitor
     public function visitScriptRun(ScriptRunNode $node): NodeInterface
     {
         $this->dispatch($node);
-
-        if (null !== $node->content) {
-            $previousFlags = $this->context->activeFlags();
-            $this->context->pushParent($node);
-            $node->content->accept($this);
-            $this->context->popParent();
-            $this->context->setActiveFlags($previousFlags);
-        }
+        $this->visitScope($node, $this->context->activeFlags());
 
         return $node;
     }
@@ -319,20 +312,7 @@ final class PatternLinter extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): NodeInterface
     {
         $this->dispatch($node);
-        $previousFlags = $this->context->activeFlags();
-        $standalone = NodePredicates::isStandaloneInlineFlags($node);
-
-        if (GroupType::InlineFlags === $node->type && null !== $node->flags && !$standalone) {
-            $this->context->setActiveFlags(NodePredicates::applyInlineFlags($previousFlags, $node->flags));
-        }
-
-        $this->context->pushParent($node);
-        $node->child->accept($this);
-        $this->context->popParent();
-
-        // A standalone (?s) holds for what follows it, up to the end of the
-        // enclosing group; a group with content restores the flags.
-        $this->context->setActiveFlags($standalone ? NodePredicates::applyInlineFlags($previousFlags, (string) $node->flags) : $previousFlags);
+        $this->visitScope($node, FlagScope::flagsInside($node, $this->context->activeFlags()));
 
         return $node;
     }
@@ -393,14 +373,7 @@ final class PatternLinter extends AbstractNodeVisitor
     public function visitConditional(ConditionalNode $node): NodeInterface
     {
         $this->dispatch($node);
-
-        $previousFlags = $this->context->activeFlags();
-        $this->context->pushParent($node);
-        $node->condition->accept($this);
-        $node->yes->accept($this);
-        $node->no->accept($this);
-        $this->context->popParent();
-        $this->context->setActiveFlags($previousFlags);
+        $this->visitScope($node, $this->context->activeFlags());
 
         return $node;
     }
@@ -409,12 +382,7 @@ final class PatternLinter extends AbstractNodeVisitor
     public function visitDefine(DefineNode $node): NodeInterface
     {
         $this->dispatch($node);
-
-        $previousFlags = $this->context->activeFlags();
-        $this->context->pushParent($node);
-        $node->content->accept($this);
-        $this->context->popParent();
-        $this->context->setActiveFlags($previousFlags);
+        $this->visitScope($node, $this->context->activeFlags());
 
         return $node;
     }
@@ -439,6 +407,24 @@ final class PatternLinter extends AbstractNodeVisitor
 
         // Else as the schema runs it by default; an id it does not know runs
         return LintConfigSchema::LINT_RULES[$shortId][1] ?? true;
+    }
+
+    /**
+     * Visit the children of a group, a conditional, a DEFINE or a script
+     * run, the first reading $inside: a standalone "(?s)" among them holds
+     * for the ones after it, up to the end of the node, where the flags
+     * before it come back. A standalone "(?s)" itself sets them after it.
+     */
+    private function visitScope(GroupNode|ConditionalNode|DefineNode|ScriptRunNode $node, string $inside): void
+    {
+        $before = $this->context->activeFlags();
+        $this->context->setActiveFlags($inside);
+        $this->context->pushParent($node);
+        foreach ($node->getChildren() as $child) {
+            $child->accept($this);
+        }
+        $this->context->popParent();
+        $this->context->setActiveFlags(FlagScope::flagsAfter($node, $before));
     }
 
     private function createContext(): LintContext

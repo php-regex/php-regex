@@ -14,25 +14,20 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Linter\Rule\Support\Continuation;
+use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Node\AlternationNode;
-use PHPRegex\Parser\Node\CharClassNode;
-use PHPRegex\Parser\Node\CharLiteralNode;
-use PHPRegex\Parser\Node\CharTypeNode;
-use PHPRegex\Parser\Node\CommentNode;
-use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
-use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
 
 /**
@@ -46,11 +41,6 @@ use PHPRegex\Parser\PcreTarget;
  */
 final class LintContext
 {
-    /**
-     * Groups after which nothing more is matched once their child is.
-     */
-    private const GROUPS_ENDING_WITH_THEIR_CHILD = [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags];
-
     /**
      * The DFAs the automata build for the rules' questions, kept for the
      * run: the process's cache unless the run brings its own.
@@ -76,13 +66,9 @@ final class LintContext
     private string $activeFlags;
 
     /**
-     * For each sequence asked about and each kind of question, whether
-     * nothing but what the question allows follows each of its items,
-     * keyed by the item's object id.
-     *
-     * @var array<string, array<int, bool>>
+     * What can be matched after the nodes of the pattern.
      */
-    private array $followers = [];
+    private readonly Continuation $continuation;
 
     /**
      * @param (\Closure(string): bool)|null $ruleEnabled whether the configuration turns a rule on, by its
@@ -97,6 +83,7 @@ final class LintContext
         ?PcreTarget $target = null,
     ) {
         $this->activeFlags = $pattern->flags;
+        $this->continuation = new Continuation($groups);
         $this->dfas = $dfas ?? LanguageQuestions::dfas();
         $this->target = $target ?? PcreTarget::runtime();
     }
@@ -148,7 +135,7 @@ final class LintContext
     {
         $flags ??= $this->activeFlags;
 
-        return $this->findFlags($within, $node, $flags) ?? $flags;
+        return FlagScope::flagsAt($node, $within, $flags) ?? $flags;
     }
 
     /**
@@ -161,14 +148,7 @@ final class LintContext
      */
     public function flagsAtEachChild(SequenceNode|AlternationNode $node, ?string $flags = null): array
     {
-        $flags ??= $this->activeFlags;
-        $atEachChild = [];
-        foreach ($node instanceof SequenceNode ? $node->children : $node->alternatives as $index => $child) {
-            $atEachChild[$index] = $flags;
-            $flags = self::flagsAfter($child, $flags);
-        }
-
-        return $atEachChild;
+        return FlagScope::flagsAtEachChild($node, $flags ?? $this->activeFlags);
     }
 
     /**
@@ -222,47 +202,38 @@ final class LintContext
      */
     public function endsThePatternForEveryCall(NodeInterface $node, bool $endAnchorsMayFollow = false): bool
     {
-        return $this->nothingFollows($node, $endAnchorsMayFollow) && !$this->isReenteredBySubroutine($node);
+        return $this->continuation->endsThePatternForEveryCall($node, $this->parentStack, $endAnchorsMayFollow);
     }
 
     /**
      * Whether only items that may match nothing, and hold nothing that can
      * fail, can follow the node wherever it runs: "b*" or "(?:b|)", never
-     * an anchor, a lookaround, a verb or a reference. Whatever the node
-     * matches, the rest of the pattern then matches the empty string after
-     * it, at the first try.
+     * an anchor, a lookaround, a verb or a reference.
      */
     public function onlyEmptyMatchesFollowForEveryCall(NodeInterface $node): bool
     {
-        return $this->nothingFollows($node, false, true) && !$this->isReenteredBySubroutine($node);
+        return $this->continuation->onlyEmptyMatchesFollowForEveryCall($node, $this->parentStack);
     }
 
     /**
      * Whether a subroutine call can run the node again at another point of
      * the match: the node is, or sits inside, a group some call targets, or
-     * the pattern recurses into itself whole. What follows the node where it
-     * is written then says nothing about what follows it when called.
-     *
-     * The node is the one being checked; its ancestors are read from the
-     * traversal cursor.
+     * the pattern recurses into itself whole.
      */
     public function isReenteredBySubroutine(NodeInterface $node): bool
     {
-        if ($this->groups->recurses) {
-            return true;
-        }
+        return $this->continuation->isReenteredBySubroutine($node, $this->parentStack);
+    }
 
-        if ([] === $this->groups->subroutineTargets) {
-            return false;
-        }
-
-        foreach ([$node, ...$this->parentStack] as $candidate) {
-            if ($candidate instanceof GroupNode && $this->groups->isSubroutineTarget($candidate)) {
-                return true;
-            }
-        }
-
-        return false;
+    /**
+     * Whether the items written after the node in each sequence around it
+     * pass the test, the innermost sequence first.
+     *
+     * @param \Closure(list<NodeInterface>): bool $test
+     */
+    public function followersPass(NodeInterface $node, \Closure $test): bool
+    {
+        return $this->continuation->followersPass($node, $this->parentStack, $test);
     }
 
     /**
@@ -319,100 +290,6 @@ final class LintContext
     }
 
     /**
-     * Whether nothing can be matched after the node: each enclosing node
-     * ends with it, up to the pattern itself. Only comments may follow it;
-     * an anchor, a lookaround or any other assertion after it can fail and
-     * send the engine back into it. With $endAnchorsMayFollow, "$", "\z"
-     * and "\Z" may follow it as well.
-     *
-     * The node is the one being checked; its ancestors are read from the
-     * traversal cursor.
-     */
-    private function nothingFollows(NodeInterface $node, bool $endAnchorsMayFollow, bool $emptyMatchesMayFollow = false): bool
-    {
-        $child = $node;
-        foreach (array_reverse($this->parentStack) as $parent) {
-            $last = match (true) {
-                $parent instanceof SequenceNode => $this->onlyCommentsFollow($parent, $child, $endAnchorsMayFollow, $emptyMatchesMayFollow) ? $child : null,
-                $parent instanceof AlternationNode => $child,
-                $parent instanceof GroupNode && \in_array($parent->type, self::GROUPS_ENDING_WITH_THEIR_CHILD, true) => $parent->child,
-                default => null,
-            };
-
-            if ($last !== $child) {
-                return false;
-            }
-
-            $child = $parent;
-        }
-
-        return true;
-    }
-
-    /**
-     * Whether only comments follow the item in its sequence, or end anchors
-     * and items that match nothing first as well when the flags say so.
-     * Each sequence is read once per question, from its end: the answer for
-     * every item of it is kept.
-     */
-    private function onlyCommentsFollow(SequenceNode $sequence, NodeInterface $item, bool $endAnchorsMayFollow, bool $emptyMatchesMayFollow): bool
-    {
-        $key = spl_object_id($sequence).':'.($endAnchorsMayFollow ? 1 : 0).($emptyMatchesMayFollow ? 1 : 0);
-        if (!isset($this->followers[$key])) {
-            $followed = [];
-            $nothingAfter = true;
-            for ($index = \count($sequence->children) - 1; $index >= 0; $index--) {
-                $next = $sequence->children[$index];
-                $followed[spl_object_id($next)] = $nothingAfter;
-                $nothingAfter = $nothingAfter && ($next instanceof CommentNode
-                    || ($endAnchorsMayFollow && NodePredicates::isEndAnchorNode($next))
-                    || ($emptyMatchesMayFollow && self::alwaysMatchesEmptyFirst($next)));
-            }
-            $this->followers[$key] = $followed;
-        }
-
-        return $this->followers[$key][spl_object_id($item)] ?? false;
-    }
-
-    /**
-     * Whether the node may match nothing and holds nothing that can fail
-     * where it stands: no anchor, lookaround, verb, reference or call.
-     */
-    private static function alwaysMatchesEmptyFirst(NodeInterface $node): bool
-    {
-        return NodePredicates::canBeEmpty($node) && !self::holdsATest($node);
-    }
-
-    /**
-     * Whether the node holds anything but structure, characters and
-     * comments: an anchor, an assertion, a lookaround, a verb, a callout, a
-     * conditional, a reference or a call can each fail where it stands.
-     */
-    private static function holdsATest(NodeInterface $node): bool
-    {
-        if ($node instanceof LiteralNode || $node instanceof CharClassNode || $node instanceof CharTypeNode
-            || $node instanceof DotNode || $node instanceof CharLiteralNode || $node instanceof UnicodePropNode
-            || $node instanceof CommentNode
-        ) {
-            return false;
-        }
-
-        if (!$node instanceof SequenceNode && !$node instanceof AlternationNode && !$node instanceof QuantifierNode
-            && !($node instanceof GroupNode && NodePredicates::isTransparentGroup($node->type))
-        ) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::holdsATest($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * The analyzer's sets, with the flags followed through the groups, the
      * sequences and the alternations that can change them. Any other node,
      * and one with no inline flags inside, is read whole by the analyzer
@@ -420,9 +297,9 @@ final class LintContext
      */
     private function charsInForce(NodeInterface $node, string $flags, bool $fromStart): ByteCharSet
     {
-        if (self::containsInlineFlags($node)) {
+        if (FlagScope::containsInlineFlags($node)) {
             if ($node instanceof GroupNode) {
-                return $this->charsInForce($node->child, self::flagsInside($node, $flags), $fromStart);
+                return $this->charsInForce($node->child, FlagScope::flagsInside($node, $flags), $fromStart);
             }
 
             if ($node instanceof QuantifierNode) {
@@ -465,93 +342,6 @@ final class LintContext
     private function analyzerFor(string $flags): CharSetAnalyzer
     {
         return $this->charSetAnalyzer->withFlags(str_contains($this->pattern->flags, 'u') ? $flags.'u' : $flags);
-    }
-
-    /**
-     * The flags in effect at $target, searched for inside $node whose start
-     * reads $flags; null when $target is not inside $node.
-     */
-    private function findFlags(NodeInterface $node, NodeInterface $target, string $flags): ?string
-    {
-        if ($node === $target) {
-            return $flags;
-        }
-
-        foreach ($this->childrenWithTheirFlags($node, $flags) as [$child, $flagsAtChild]) {
-            $found = $this->findFlags($child, $target, $flagsAtChild);
-            if (null !== $found) {
-                return $found;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Each child of the node with the flags in effect at its start, the
-     * node's own start reading $flags. A standalone (?s) holds for the
-     * children after it: the rest of its sequence, the alternatives after
-     * its own, and the no branch of a conditional after its yes branch.
-     *
-     * @return iterable<array{NodeInterface, string}>
-     */
-    private function childrenWithTheirFlags(NodeInterface $node, string $flags): iterable
-    {
-        if ($node instanceof GroupNode) {
-            yield [$node->child, self::flagsInside($node, $flags)];
-
-            return;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            yield [$child, $flags];
-            $flags = self::flagsAfter($child, $flags);
-        }
-    }
-
-    /**
-     * The flags in effect after a node: a standalone (?s) changes them, as
-     * does one at the top level of an alternative; a group restores them
-     * at its end.
-     */
-    private static function flagsAfter(NodeInterface $node, string $flags): string
-    {
-        if (NodePredicates::isStandaloneInlineFlagsGroup($node)) {
-            return NodePredicates::applyInlineFlags($flags, (string) $node->flags);
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $flags = self::flagsAfter($child, $flags);
-            }
-        }
-
-        return $flags;
-    }
-
-    /**
-     * The flags in effect inside a group: a scoped (?s:...) changes them.
-     */
-    private static function flagsInside(GroupNode $group, string $flags): string
-    {
-        return GroupType::InlineFlags === $group->type && null !== $group->flags
-            ? NodePredicates::applyInlineFlags($flags, $group->flags)
-            : $flags;
-    }
-
-    private static function containsInlineFlags(NodeInterface $node): bool
-    {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && null !== $node->flags) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::containsInlineFlags($child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

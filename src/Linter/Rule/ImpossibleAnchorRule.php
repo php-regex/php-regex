@@ -324,8 +324,10 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return $tail->canStartWithNewline($nodes, $dotAll);
         }
 
+        // The newline the tail matches is the subject's last character: what
+        // follows the sequence, up to the end of the pattern, matches nothing.
         return $tail->canMatchTheLastNewline($nodes, $dotAll)
-            && $this->sequenceEndsPattern($sequence, $context, $tail);
+            && $context->followersPass($sequence, $tail->canMatchNothingAtTheEnd(...));
     }
 
     /**
@@ -365,33 +367,5 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         };
 
         return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before);
-    }
-
-    /**
-     * Whether only always-empty content follows this sequence inside its
-     * enclosing scopes — the newline a `$`/`\Z` continuation consumes is
-     * the subject's last byte, so anything consuming after the enclosing
-     * group would make the match impossible after all.
-     */
-    private function sequenceEndsPattern(SequenceNode $node, LintContext $context, EndOfLineTail $tail): bool
-    {
-        $child = $node;
-
-        foreach (array_reverse($context->parents()) as $parent) {
-            if ($parent instanceof SequenceNode) {
-                $index = array_search($child, $parent->children, true);
-
-                if (false !== $index) {
-                    $followers = array_slice($parent->children, (int) $index + 1);
-                    if (!$tail->canMatchNothingAtTheEnd($followers)) {
-                        return false;
-                    }
-                }
-            }
-
-            $child = $parent;
-        }
-
-        return true;
     }
 }
