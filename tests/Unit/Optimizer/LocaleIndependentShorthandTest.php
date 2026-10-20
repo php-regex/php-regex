@@ -88,7 +88,7 @@ final class LocaleIndependentShorthandTest extends TestCase
         $rewriter = new Rewriter(optimizeWord: $optimizeWord, locale: $locale);
         $rewritten = Regex::create(['cache' => null])->parse($pattern)->accept($rewriter);
 
-        $this->assertSame($expected, $rewritten->accept(new PatternPrinter()));
+        $this->assertSame($expected, $rewritten->accept(PatternPrinter::asWritten()));
         $this->assertSame(str_contains($expected, '\\w') || str_contains($expected, '\\W'), \in_array(Rewriter::WORD, $rewriter->changes(), true));
     }
 

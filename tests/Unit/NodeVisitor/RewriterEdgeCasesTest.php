@@ -718,7 +718,7 @@ final class RewriterEdgeCasesTest extends TestCase
     public function test_the_full_word_class_is_never_written_as_a_shorthand(): void
     {
         $regex = Regex::create();
-        $printer = new PatternPrinter();
+        $printer = PatternPrinter::asWritten();
 
         $result = $regex->parse('/[a-zA-Z0-9_]/')->accept(new Rewriter());
         $this->assertSame('/[0-9A-Z_a-z]/', $result->accept($printer));

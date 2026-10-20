@@ -300,7 +300,7 @@ final class RewriterTest extends TestCase
         $newAst = $ast->accept($optimizer);
 
         $this->assertInstanceOf(CharClassNode::class, $newAst->pattern);
-        $this->assertSame('/[0-9A-Z_a-z]/', $newAst->accept(new PatternPrinter()));
+        $this->assertSame('/[0-9A-Z_a-z]/', $newAst->accept(PatternPrinter::asWritten()));
     }
 
     public function test_does_not_optimize_word_if_flag_u_present(): void
