@@ -107,8 +107,9 @@ holds under UTF, those of each release's Unicode tables, from Unicode 11 for
 10.33 to Unicode 17 for 10.48: `(?<aࡰ>x)/u`, whose `ࡰ` Unicode 14 added, is
 refused up to 10.38. So are the other cases a caseless class, or a class of
 a character and its other case, compiles to when the library decides
-whether a pattern is too large, from Unicode 11 for 10.32: `[\x{1C89}\x{1C8A}]`
-under `u` is one caseless character from 10.45, two before. Which characters a `\p{...}` holds is not: the
+whether a pattern is too large, from Unicode 11 for 10.32:
+`[\x{1C89}\x{1C8A}]` under `u` is one caseless character from 10.45, two
+before. Which characters a `\p{...}` holds is not: the
 Unicode data of an old release is a blind spot below 10.39. Neither are the
 matching bugs of an old release, such as a
 `(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse
@@ -267,8 +268,9 @@ Where the library still departs from what the target's PCRE2 reports:
   for sure: a class whose cases follow the locale PHP builds its tables
   from: `[iI]`, which Turkish tables keep apart, without UTF a class of
   bytes past ASCII such as `[\xe9\xc9]` (under UCP from 10.35 they follow
-  the Unicode tables), and from PCRE2 10.45 a class of types or caseless letters that holds all
-  of ASCII without UTF, which may then hold every byte; from 10.45, a class
+  the Unicode tables), and from PCRE2 10.45 a class of types or caseless
+  letters that holds all of ASCII without UTF, which may then hold every
+  byte; from 10.45, a class
   that holds every character past 255 and a property, whose characters below
   256 may complete its map, as `[[:^ascii:][:^blank:][:space:]]` under `u`;
   `(*scan_substring:...)` and an extended class `(?[...])`; a class of
@@ -277,9 +279,10 @@ Where the library still departs from what the target's PCRE2 reports:
   the second DEFINE group of a pattern that opens on a group, which these
   releases may leave without the length to move back. Such an item is
   counted at the least it may compile to, so a pattern PCRE2 refuses for it
-  may be reported valid, never the reverse. From 10.48, PCRE2 reports the error at offset 0
-  when an item or a branch passes the limit, and at the end of the pattern
-  when only the check made where a group ends finds it; when a group of
+  may be reported valid, never the reverse. From 10.48, PCRE2 reports the
+  error at offset 0 when an item or a branch passes the limit, and at the
+  end of the pattern when only the check made where a group ends finds it;
+  when a group of
   several branches holding one of these items is measured before the limit
   is passed, the library reports the end of the pattern, as up to 10.46.
   PCRE2 stops reading a pattern where it passes the limit, and an error
