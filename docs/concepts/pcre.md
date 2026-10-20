@@ -256,7 +256,10 @@ Where the library still departs from what the target's PCRE2 reports:
   where a group ends finds it. The library measures each item at the length
   PCRE2 compiles it to. A few lengths it does not know for sure: a class in
   UTF mode that holds a character past 255, or past ASCII under `i`, or a
-  type or a POSIX class under UCP; a caseless letter under
+  type or a POSIX class under UCP; a class whose cases follow the locale
+  PHP builds its tables from: `[iI]`, which Turkish tables keep apart, and
+  without UTF a class of bytes past ASCII such as `[\xe9\xc9]`; a caseless
+  letter under
   `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or `r`; a string callout;
   `(*scan_substring:...)`. When a group of several branches holding
   one of these is measured before the limit is passed, it may be the group

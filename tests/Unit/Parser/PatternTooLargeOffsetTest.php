@@ -43,6 +43,20 @@ final class PatternTooLargeOffsetTest extends TestCase
         $this->assertSame($offset, $result->offset, \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release));
     }
 
+    #[Test]
+    public function test_a_class_of_thousands_of_types_is_measured_in_little_memory(): void
+    {
+        $pattern = '/['.str_repeat('\\D', 3000).'](?:a){8200}/';
+        $parser = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.48', 'runtime_pcre_validation' => false]);
+        if (\function_exists('memory_reset_peak_usage')) {
+            memory_reset_peak_usage();
+        }
+        $before = memory_get_peak_usage();
+
+        $this->assertSame(ErrorCode::PatternTooLarge, $parser->validate($pattern)->errorCode);
+        $this->assertLessThan(32 * 1024 * 1024, memory_get_peak_usage() - $before);
+    }
+
     /**
      * @return iterable<string, array{pattern: string, php: string, release: string, offset: int}>
      */
@@ -113,6 +127,12 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'repeated group in the last of three branches, 10.48' => ['pattern' => '/a|b|(?:c|d){5040}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 17];
         yield 'two branches of repeated groups of branches, 10.49' => ['pattern' => '/(?:a|b){3000}|(?:c|d){3000}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 27];
         yield 'three branches of repeated groups of branches, 10.48' => ['pattern' => '/(?:a|b){2000}|(?:c|d){2000}|(?:e|f){2000}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 41];
+
+        // Groups of branches measured whole, too large only where the last
+        // group ends: at the end.
+        yield 'groups of classes of a letter and a character past 255, 10.48' => ['pattern' => '/(?:(?:[a\\x{161}]){1000}|(?:[a\\x{161}]){1000})(?:a){9000}/u', 'php' => '8.4', 'release' => '10.48', 'offset' => 56];
+        yield 'groups of caseless POSIX classes under UTF, 10.49' => ['pattern' => '/(*UTF)(?:(?:[[:alpha:]]){1400}|(?:[[:alpha:]]){1400})(?:a){9000}/i', 'php' => '8.5', 'release' => '10.49', 'offset' => 64];
+        yield 'group of branches after a group of options holding a space, 10.48' => ['pattern' => '/(?:(?i: )(?:k){7300}|(?:b){1000})/xu', 'php' => '8.4', 'release' => '10.48', 'offset' => 33];
 
         // A group of branches holding an item whose length is not known for
         // sure may have passed the limit where it ends: the end is kept, as

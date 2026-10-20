@@ -93,7 +93,6 @@ final class CompiledLengthTest extends TestCase
         yield 'class of one letter' => ['pattern' => '/[a]/', 'length' => 9];
         yield 'negated class of one letter' => ['pattern' => '/[^a]/', 'length' => 9];
         yield 'class of a letter and its other case' => ['pattern' => '/[aA]/', 'length' => 9];
-        yield 'class of i and its other case' => ['pattern' => '/[iI]/', 'length' => 9];
         yield 'class of k and its other case, which has a third' => ['pattern' => '/[kK]/', 'length' => 40];
         yield 'class of two letters' => ['pattern' => '/[ab]/', 'length' => 40];
         yield 'range' => ['pattern' => '/[a-z]/', 'length' => 40];
@@ -117,7 +116,6 @@ final class CompiledLengthTest extends TestCase
         yield 'class holding the POSIX punctuation' => ['pattern' => '/[[:punct:]]/', 'length' => 40];
         yield 'class holding the POSIX visible characters' => ['pattern' => '/[[:graph:]]/', 'length' => 40];
         yield 'class holding the POSIX printable characters' => ['pattern' => '/[[:print:]]/', 'length' => 40];
-        yield 'class holding the POSIX ASCII' => ['pattern' => '/[[:ascii:]]/', 'length' => 40];
         yield 'class holding the horizontal spaces and non-spaces' => ['pattern' => '/[\\h\\S]/', 'length' => 40];
         yield 'class of one two-byte letter in UTF mode' => ['pattern' => '/[é]/u', 'length' => 10];
         yield 'negated caseless class of k in UTF mode' => ['pattern' => '/[^k]/iu', 'length' => 10];
@@ -129,6 +127,12 @@ final class CompiledLengthTest extends TestCase
         yield 'caseless class of k and s in UTF mode' => ['pattern' => '/[ks]/iu', 'length' => 51];
         yield 'caseless range in UTF mode' => ['pattern' => '/[a-z]/iu', 'length' => 51];
         yield 'negated caseless class of k and another letter in UTF mode' => ['pattern' => '/[^kx]/iu', 'length' => 48];
+        // The Kelvin sign and the long s join the class for a literal k or s,
+        // not for a POSIX name or a type that matches them.
+        yield 'caseless class of a POSIX name under UTF without UCP' => ['pattern' => '/(*UTF)[[:alpha:]]/i', 'length' => 40];
+        yield 'caseless class of the word type under UTF without UCP' => ['pattern' => '/(*UTF)[\\w]/i', 'length' => 40];
+        yield 'caseless class of a POSIX name and k under UTF without UCP' => ['pattern' => '/(*UTF)[[:alpha:]k]/i', 'length' => 48];
+        yield 'caseless class of the word type and s under UTF without UCP' => ['pattern' => '/(*UTF)[\\ws]/i', 'length' => 47];
         yield 'counted caseless class of k and s in UTF mode' => ['pattern' => '/[ks]{2}/iu', 'length' => 56];
         yield 'counted letter' => ['pattern' => '/a{2}/', 'length' => 11];
         yield 'letter counted two to three times' => ['pattern' => '/a{2,3}/', 'length' => 13];
@@ -195,6 +199,11 @@ final class CompiledLengthTest extends TestCase
         yield 'group counted once' => ['pattern' => '/(?:a){1}/', 'length' => 15];
         yield 'group counted once, possessive' => ['pattern' => '/(?:a){1}+/', 'length' => 21];
         yield 'call counted once' => ['pattern' => '/(a)(?1){1}/', 'length' => 20];
+        // A group of options whose body is only a space under "x" is a group,
+        // not options for the rest of the pattern.
+        yield 'group of options holding a space under x' => ['pattern' => '/(?i: )k/xu', 'length' => 15];
+        yield 'group of options turning x on, holding a space' => ['pattern' => '/(?ix: )k/u', 'length' => 15];
+        yield 'group of options resetting them, holding a space' => ['pattern' => '/(?^x: )k/iu', 'length' => 16];
         // "(?^)" turns the caseless option off for the rest of the group.
         yield 'caseless k before the options are reset' => ['pattern' => '/k(?^)k/iu', 'length' => 12];
     }
@@ -233,6 +242,18 @@ final class CompiledLengthTest extends TestCase
         yield 'accept with a name' => ['pattern' => '/(*ACCEPT:x)/'];
         // A script run and a conditional on a version are not counted.
         yield 'counted script run' => ['pattern' => '/(*sr:a){2}/'];
+        // Without UTF, the cases of a byte past ASCII follow the locale PHP
+        // builds its tables from.
+        // Turkish tables make the other case of "i" a byte past ASCII.
+        yield 'class of i and its other case' => ['pattern' => '/[iI]/'];
+        yield 'class of every ASCII character in a POSIX name' => ['pattern' => '/[[:ascii:]]/'];
+        // A character past 255 whose low byte is a letter's other case is no
+        // case pair: the class holds it past the map (47 units).
+        yield 'class of a letter and a character past 255 sharing its low byte' => ['pattern' => '/[a\\x{161}]/u'];
+        yield 'class of two bytes past ASCII' => ['pattern' => '/[\\xe9\\xc9]/'];
+        yield 'caseless class of every ASCII character and a byte past it' => ['pattern' => '/[\\x00-\\x7f\\xe9]/i'];
+        // A class of thousands of types is not measured member by member.
+        yield 'class of three thousand types' => ['pattern' => '/['.str_repeat('\\D', 3000).']/'];
         yield 'counted conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a){2}/'];
     }
 

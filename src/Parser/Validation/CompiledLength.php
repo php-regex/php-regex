@@ -667,7 +667,7 @@ final class CompiledLength
     {
         if ($node instanceof CharClassNode) {
             $members = $this->classMembers($node);
-            if (null === $members || [] !== $members[1]) {
+            if (null === $members || [] !== $members[1] || [] !== $members[2]) {
                 return null;
             }
 
@@ -771,17 +771,19 @@ final class CompiledLength
     private function classLength(CharClassNode $node, bool $caseless): ?int
     {
         $members = $this->classMembers($node);
-        if (null === $members || (!$node->isNegated && [] === $members[1] && 2 === \count($members[0]) && null === $this->isCasePair(...$members[0]))) {
+        if (null === $members || (!$node->isNegated && [] === $members[1] && [] === $members[2] && 2 === \count($members[0]) && null === $this->isCasePair(...$members[0]))) {
             return null;
         }
 
-        $ranges = $members[1];
-        foreach ($members[0] as $codePoint) {
+        [$characters, $ranges, $types] = $members;
+        foreach ($characters as $codePoint) {
             $ranges[] = [$codePoint, $codePoint];
         }
 
+        // What the characters and ranges hold, then what the types and the
+        // POSIX names add.
         $covered = [];
-        foreach ($ranges as [$low, $high]) {
+        foreach ([...$ranges, ...$types] as $index => [$low, $high]) {
             if ($high > 0xFF || ($caseless && ($this->utf || $this->ucp) && ($this->caseRulesVary() || $high > 0x7F))) {
                 return null;
             }
@@ -793,31 +795,49 @@ final class CompiledLength
                     $covered[\ord(Ascii::upper(\chr($codePoint)))] = true;
                 }
             }
+
+            if ($index === \count($ranges) - 1) {
+                $literals = $covered;
+            }
         }
 
-        if (\count($covered) >= 256) {
+        // Without UTF, what a type or a caseless letter matches past ASCII
+        // follows the locale PHP builds its tables from: a class that holds
+        // all of ASCII may hold every character there.
+        $asciiCovered = \count(array_filter(array_keys($covered), static fn (int $codePoint): bool => $codePoint < 0x80)) >= 0x80;
+        if (\count($covered) >= 256 || (!$this->utf && ($caseless || [] !== $types) && $asciiCovered)) {
             return null;
         }
 
         // The opcode, its link, its flags, the map, each character past it
-        // (its tag and its UTF-8 bytes) and the end of the list.
-        $past = $caseless && $this->utf ? (isset($covered[0x6B]) ? 4 : 0) + (isset($covered[0x73]) ? 3 : 0) : 0;
+        // (its tag and its UTF-8 bytes) and the end of the list. Only a "k"
+        // or an "s" written as such, not one a type or a POSIX name holds,
+        // brings in the Kelvin sign or the long s.
+        $literals ??= [];
+        $past = $caseless && $this->utf ? (isset($literals[0x6B]) ? 4 : 0) + (isset($literals[0x73]) ? 3 : 0) : 0;
 
         return 0 === $past ? 33 : 33 + 3 + $past + 1;
     }
 
     /**
      * The single characters and the ranges of a class, each as PCRE reads
-     * them, the types and POSIX names the map holds as ranges too, or null
-     * when it holds anything else.
+     * them, and the ranges of the types and POSIX names the map holds, or
+     * null when it holds anything else, or more members than a measure
+     * goes through.
      *
-     * @return array{0: list<int>, 1: list<array{0: int, 1: int}>}|null
+     * @return array{0: list<int>, 1: list<array{0: int, 1: int}>, 2: list<array{0: int, 1: int}>}|null
      */
     private function classMembers(CharClassNode $node): ?array
     {
+        $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
+        if (\count($members) > 256) {
+            return null;
+        }
+
         $characters = [];
         $ranges = [];
-        foreach ($node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression] as $member) {
+        $types = [];
+        foreach ($members as $member) {
             if ($member instanceof RangeNode) {
                 $low = $this->codePointOf($member->start);
                 $high = $this->codePointOf($member->end);
@@ -851,9 +871,7 @@ final class CompiledLength
                     return null;
                 }
 
-                foreach ($set as $codePoint) {
-                    $ranges[] = [$codePoint, $codePoint];
-                }
+                array_push($types, ...$set);
 
                 continue;
             }
@@ -866,16 +884,16 @@ final class CompiledLength
             $characters[] = $codePoint;
         }
 
-        return [$characters, $ranges];
+        return [$characters, $ranges, $types];
     }
 
     /**
      * The characters below 256 a type or a POSIX name of a class matches,
      * when the map of the class holds all it matches: not under UCP, where
      * they follow Unicode, nor "\h" and "\v" in UTF mode, which match
-     * characters past 255.
+     * characters past 255. Its ranges, a negated one's included.
      *
-     * @return list<int>|null
+     * @return list<array{0: int, 1: int}>|null
      */
     private function mapSet(string $name): ?array
     {
@@ -885,19 +903,21 @@ final class CompiledLength
             return null;
         }
 
-        $set = [];
-        for ($codePoint = 0; $codePoint < 256; $codePoint++) {
-            $in = false;
-            foreach ($ranges as [$low, $high]) {
-                $in = $in || ($low <= $codePoint && $codePoint <= $high);
-            }
-
-            if ($in !== $negated) {
-                $set[] = $codePoint;
-            }
+        if (!$negated) {
+            return $ranges;
         }
 
-        return $set;
+        $set = [];
+        $next = 0;
+        foreach ($ranges as [$low, $high]) {
+            if ($low > $next) {
+                $set[] = [$next, $low - 1];
+            }
+
+            $next = $high + 1;
+        }
+
+        return [...$set, [$next, 0xFF]];
     }
 
     private function codePointOf(NodeInterface $node): ?int
@@ -926,7 +946,11 @@ final class CompiledLength
      */
     private function setsOptionsOnly(GroupNode $node): bool
     {
-        return self::isEmpty($node->child) && ':' !== ($this->source[$node->getEndPosition() - 2] ?? '');
+        // The flags end at ")" or ":"; under "x" a body of spaces reads as
+        // empty too.
+        $end = $node->startPosition + 2 + strspn($this->source, '^-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $node->startPosition + 2);
+
+        return self::isEmpty($node->child) && ')' === ($this->source[$end] ?? '');
     }
 
     /**
@@ -952,25 +976,32 @@ final class CompiledLength
     /**
      * Whether a class of two characters is a letter and its other case, one
      * PCRE compiles as a caseless letter: an ASCII letter but "k" and "s",
-     * which have a third case; null when that is not known, past ASCII
-     * under Unicode rules, or where rules that change the cases of "i",
-     * "k" and "s" may be set.
+     * which have a third case. Null when that is not known: past ASCII,
+     * where the other case follows Unicode, or without UTF the locale PHP
+     * builds its tables from; for "i", whose other case Turkish tables make
+     * a byte past ASCII; where rules that change the cases of "k" and "s"
+     * may be set.
      */
     private function isCasePair(int $first, int $second): ?bool
     {
         if ($first > 0x7F) {
-            return $this->utf || $this->ucp ? null : false;
-        }
-
-        if (!Ascii::isAlpha(\chr($first)) || $first === $second || Ascii::lower(\chr($first)) !== Ascii::lower(\chr($second))) {
-            return false;
-        }
-
-        if (\in_array(Ascii::lower(\chr($first)), ['i', 'k', 's'], true) && $this->caseRulesVary()) {
             return null;
         }
 
-        return !\in_array(Ascii::lower(\chr($first)), ['k', 's'], true);
+        $letter = Ascii::lower(\chr($first));
+        if (!Ascii::isAlpha($letter) || $first === $second) {
+            return false;
+        }
+
+        if ($second > 0x7F || $letter !== Ascii::lower(\chr($second))) {
+            return 'i' === $letter && $second > 0x7F ? null : false;
+        }
+
+        if ('i' === $letter || (\in_array($letter, ['k', 's'], true) && $this->caseRulesVary())) {
+            return null;
+        }
+
+        return !\in_array($letter, ['k', 's'], true);
     }
 
     private static function isAnyProperty(UnicodePropNode $node): bool
