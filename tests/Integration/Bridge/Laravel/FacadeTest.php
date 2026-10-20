@@ -123,7 +123,7 @@ final class FacadeTest extends LaravelTestCase
         $this->assertInstanceOf(OptimizationResult::class, $result);
         $this->assertSame('/[0-9]+/', $result->original);
         $this->assertSame('/\\d+/', $result->optimized);
-        $this->assertSame(['Optimized pattern.'], $result->changes);
+        $this->assertSame(['Wrote [0-9] as \\d.'], $result->changes);
     }
 
     public function test_transpile_returns_transpile_result(): void

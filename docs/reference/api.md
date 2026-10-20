@@ -521,7 +521,7 @@ $result = Regex::create()->optimize('/[0-9]+/', new OptimizerOptions(possessive:
 
 echo $result->original;    // '/[0-9]+/'
 echo $result->optimized;   // '/\d+/'
-echo $result->changes[0];  // 'Optimized pattern.'
+echo $result->changes[0];  // 'Wrote [0-9] as \d.'
 ```
 
 When `verifyWithAutomata` is enabled, PHPRegex validates that the optimization writes the same `$matches` as the
