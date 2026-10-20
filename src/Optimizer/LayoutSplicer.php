@@ -251,7 +251,7 @@ final class LayoutSplicer
      */
     private function print(NodeInterface $node, RegexNode $context): string
     {
-        $printed = (new RegexNode($node, $context->flags, $context->delimiter, 0, 0))->accept(new PatternPrinter());
+        $printed = (new RegexNode($node, $context->flags, $context->delimiter, 0, 0))->accept(PatternPrinter::asWritten());
         $closing = PatternParser::closingDelimiter($context->delimiter).$context->flags;
 
         return substr($printed, \strlen($context->delimiter), -\strlen($closing));
@@ -262,6 +262,6 @@ final class LayoutSplicer
      */
     private static function canonical(RegexNode $node): string
     {
-        return $node->accept(new PatternPrinter(preserveSpelling: false));
+        return $node->accept(PatternPrinter::normalized());
     }
 }

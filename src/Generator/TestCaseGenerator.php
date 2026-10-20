@@ -79,7 +79,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     {
         // No case is kept for a pattern the engine refuses: none is built,
         // however long its counts would make each one.
-        $pattern = $node->accept(new PatternPrinter());
+        $pattern = $node->accept(PatternPrinter::asWritten());
         if (null !== $this->engine->compile($pattern)) {
             return ['matching' => [], 'non_matching' => []];
         }
@@ -472,7 +472,7 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     public function visitExtendedCharClass(ExtendedCharClassNode $node): array
     {
         // PCRE knows which characters are in the set: ask it, when it reads "(?[".
-        $class = "\x01\\A".$node->accept(new PatternPrinter())."\\z\x01";
+        $class = "\x01\\A".$node->accept(PatternPrinter::asWritten())."\\z\x01";
         $cases = ['matching' => [], 'non_matching' => []];
         for ($code = 0x20; $code < 0x7F; $code++) {
             $verdict = $this->engine->match($class, \chr($code))->matched;

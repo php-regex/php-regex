@@ -172,13 +172,22 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 
 $ast = Regex::create()->parse('/foo/i');
 
-// Compile back to string
-$pattern = $ast->accept(new PatternPrinter());
+// Compile back to string, as written
+$pattern = $ast->accept(PatternPrinter::asWritten());
 echo $pattern;  // '/foo/i'
 ```
 
-`new PatternPrinter(pretty: true)` normalizes the escapes and, under `x`
-only, lays the pattern out over lines with the rules of
+Three printers write a pattern back:
+
+- `PatternPrinter::asWritten()` gives it back as its author wrote it: the
+  escapes, the comments and the white space `x` skips come from the source,
+  and a node the source does not hold, one an optimizer wrote, is spelled by
+  the library. `new PatternPrinter()` is the same printer.
+- `PatternPrinter::normalized()` writes it in the library's spelling whatever
+  its source, so that two patterns written differently print the same:
+  `/a\-b/` prints `/a-b/`.
+- `PatternPrinter::pretty()` writes the normalized spelling too and, under `x`
+  only, lays the pattern out over lines with the rules of
 [the formatter](../guides/formatting.md): a construct that fits the line stays
 on it, a broken group indents its body, and a broken alternation hangs its
 `| ` in the indent. Without `x` the newlines and indents would change what the
@@ -248,7 +257,7 @@ use PHPRegex\Optimizer\Modernizer;
 $ast = Regex::create()->parse('/[0-9](?:foo)/');
 $modernized = $ast->accept(new Modernizer());
 
-$pattern = $modernized->accept(new PatternPrinter());
+$pattern = $modernized->accept(PatternPrinter::asWritten());
 echo $pattern;  // '/\dfoo/'
 ```
 
@@ -806,7 +815,7 @@ class UppercaserVisitor extends AbstractNodeVisitor
 $ast = Regex::create()->parse('/hello/');
 $newAst = $ast->accept(new UppercaserVisitor());
 
-echo $newAst->accept(new PatternPrinter());  // '/HELLO/'
+echo $newAst->accept(PatternPrinter::asWritten());  // '/HELLO/'
 ```
 
 For a transformation that spans the whole tree, every container node

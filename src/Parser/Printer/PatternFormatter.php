@@ -141,7 +141,7 @@ final class PatternFormatter
     private static function written(RegexNode $regex): string
     {
         if (null === $regex->source) {
-            return $regex->accept(new PatternPrinter());
+            return $regex->accept(PatternPrinter::asWritten());
         }
 
         return $regex->delimiter.$regex->source.(PatternParser::CLOSING_BRACKETS[$regex->delimiter] ?? $regex->delimiter).$regex->flags;

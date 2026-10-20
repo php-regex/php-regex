@@ -144,7 +144,7 @@ foreach ($alternation->alternatives as $alt) {
 }
 
 // RIGHT: Compile an alternative when you need its text
-$printer = new \PHPRegex\Parser\Printer\PatternPrinter();
+$printer = \PHPRegex\Parser\Printer\PatternPrinter::asWritten();
 foreach ($alternation->alternatives as $alt) {
     echo $alt->accept($printer), "\n";  // 'a', 'b' for /a|b/
 }

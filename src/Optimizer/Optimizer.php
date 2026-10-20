@@ -95,8 +95,8 @@ final class Optimizer
         // Both sides are normalized so that a pattern only counts as optimized
         // when its structure changed, not when it merely spells an escape
         // differently.
-        $originalCompiled = $ast->accept(new PatternPrinter($pretty, preserveSpelling: false));
-        $optimizedCompiled = $optimizedAst->accept(new PatternPrinter($pretty, preserveSpelling: false));
+        $originalCompiled = $ast->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::normalized());
+        $optimizedCompiled = $optimizedAst->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::normalized());
 
         [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->parser->target());
         [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->parser->target());

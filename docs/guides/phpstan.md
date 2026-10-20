@@ -491,7 +491,7 @@ longer reported for a pattern the analysis proves linear.
 ## Types and IDE support
 
 The library's own PHPDoc is written for your analyser, not just for reading:
-visitors carry their return type as a generic (`$ast->accept(new PatternPrinter())`
+visitors carry their return type as a generic (`$ast->accept(PatternPrinter::asWritten())`
 is a `string` to PHPStan and Psalm, with no `@var`), and the array shapes the
 results hand you are named type aliases you can import instead of restating:
 

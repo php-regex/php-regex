@@ -266,6 +266,11 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private ?array $spacedBraces = null;
 
+    /**
+     * asWritten(), normalized() and pretty() name the printer each flag set
+     * here gives. $collapseExtendedComments gives one more: a normalized
+     * printer that writes every comment under x as "(?#...)".
+     */
     public function __construct(
         /**
          * When true, escapes are normalized and, under x only, the pattern
@@ -288,6 +293,41 @@ final class PatternPrinter extends AbstractNodeVisitor
         private readonly bool $preserveSpelling = true
     ) {
         $this->mode = $this->pretty ? self::MODE_PRETTY : self::MODE_OFF;
+    }
+
+    /**
+     * A printer that writes a pattern back as its author wrote it. The
+     * escapes, the comments, the white space x skips and the spelling of
+     * each construct, "(?P<n>" or "\k{n}", come back from the source the
+     * tree was parsed from; a node the source does not hold, one an
+     * optimizer wrote, is spelled by the library. What the library prints
+     * everywhere else.
+     */
+    public static function asWritten(): self
+    {
+        return new self();
+    }
+
+    /**
+     * A printer that writes a pattern in the library's spelling, whatever
+     * its source: escapes, references and comments normalized, the white
+     * space x skips dropped. Two patterns that differ only in how they are
+     * written print the same, which comparing them needs.
+     */
+    public static function normalized(): self
+    {
+        return new self(false, false, false);
+    }
+
+    /**
+     * A printer that writes a pattern in the normalized spelling and, under
+     * an x the pattern already has, lays it out over lines as the formatter
+     * does, at a width of 80. Without x it writes one line, as a line break
+     * would be a literal there; it never adds x, and never refuses.
+     */
+    public static function pretty(): self
+    {
+        return new self(true);
     }
 
     /**
@@ -610,16 +650,16 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         if ($this->inExtendedClass) {
-            return $this->asWritten($node, $this->extendedClassOperand($value), $value);
+            return $this->writtenSpelling($node, $this->extendedClassOperand($value), $value);
         }
 
         // Special case for closing bracket outside char class
         if (!$this->inCharClass && ']' === $value && ']' !== $this->closingDelimiter) {
-            return $this->asWritten($node, $value, $value);
+            return $this->writtenSpelling($node, $value, $value);
         }
 
         // Intelligent escaping with optimized character processing
-        return $this->asWritten($node, $this->escapeString($value), $value);
+        return $this->writtenSpelling($node, $this->escapeString($value), $value);
     }
 
     #[\Override]
@@ -1393,7 +1433,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      * thing as the compiled form, escaping aside, which keeps a stale position
      * from ever changing what the pattern matches.
      */
-    private function asWritten(NodeInterface $node, string $compiled, ?string $value = null): string
+    private function writtenSpelling(NodeInterface $node, string $compiled, ?string $value = null): string
     {
         $written = $this->writtenText($node);
         if (null === $written) {
@@ -1949,7 +1989,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->delimiter = $node->delimiter;
         $this->closingDelimiter = PatternParser::closingDelimiter($node->delimiter);
         $this->bracketMark = self::MODE_PRETTY === $this->mode && $this->delimiter !== $this->closingDelimiter
-            ? self::markAbsentFrom($node->source ?? $node->accept(new self()), "\x03\x04", "\x04", self::BRACKET_MARKS)
+            ? self::markAbsentFrom($node->source ?? $node->accept(self::asWritten()), "\x03\x04", "\x04", self::BRACKET_MARKS)
             : null;
         // Pretty printing normalizes the spelling: it writes from the tree.
         $this->source = self::MODE_PRETTY === $this->mode ? null : $node->source;
@@ -1973,7 +2013,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         if (null !== $refusal) {
             $this->refusal = $refusal;
 
-            return $written ?? $node->accept(new self());
+            return $written ?? $node->accept(self::asWritten());
         }
 
         if (self::MODE_COMPACT === $this->mode) {
@@ -1987,7 +2027,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                     $this->keptQuotedBrackets = [];
                     $this->refusal = FormatRefusal::ParenthesisInComment;
 
-                    return $written ?? $node->accept(new self());
+                    return $written ?? $node->accept(self::asWritten());
                 }
             }
 

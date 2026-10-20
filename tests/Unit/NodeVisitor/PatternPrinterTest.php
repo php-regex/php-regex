@@ -557,6 +557,54 @@ final class PatternPrinterTest extends TestCase
     }
 
     /**
+     * Each named constructor gives a printer for one way of writing a
+     * pattern back, and prints what the boolean constructor prints for it:
+     * as written, normalized, or pretty printed under x.
+     *
+     * @param array<string, int> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideNamedConstructorOutputs')]
+    public function test_named_constructors_print_their_mode(string $pattern, string $asWritten, string $normalized, string $pretty, array $subjects): void
+    {
+        $tree = Regex::create()->parse($pattern);
+
+        $printed = [
+            'as written' => [$asWritten, $tree->accept(PatternPrinter::asWritten()), $tree->accept(new PatternPrinter())],
+            'normalized' => [$normalized, $tree->accept(PatternPrinter::normalized()), $tree->accept(new PatternPrinter(false, false, false))],
+            'pretty' => [$pretty, $tree->accept(PatternPrinter::pretty()), $tree->accept(new PatternPrinter(true))],
+        ];
+
+        foreach ($printed as $mode => [$expected, $named, $constructed]) {
+            $this->assertSame($expected, $named, $mode);
+            $this->assertSame($constructed, $named, $mode.', as the constructor prints it');
+            foreach ($subjects as $subject => $matches) {
+                $this->assertSame($matches, preg_match($pattern, (string) $subject), 'The oracle on the input, '.json_encode((string) $subject));
+                $this->assertSame($matches, preg_match($named, (string) $subject), $mode.': '.$named.' on '.json_encode((string) $subject));
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, asWritten: string, normalized: string, pretty: string, subjects: array<string, int>}>
+     */
+    public static function provideNamedConstructorOutputs(): iterable
+    {
+        yield 'an optional escape' => ['pattern' => '/a\-b/', 'asWritten' => '/a\-b/', 'normalized' => '/a-b/', 'pretty' => '/a-b/', 'subjects' => ['a-b' => 1, 'ab' => 0]];
+        yield 'a Python-style reference' => ['pattern' => '/(?P<n>a)(?P=n)/', 'asWritten' => '/(?P<n>a)(?P=n)/', 'normalized' => '/(?P<n>a)\k<n>/', 'pretty' => '/(?P<n>a)\k<n>/', 'subjects' => ['aa' => 1, 'a' => 0]];
+        yield 'groups nested three deep under x' => ['pattern' => '/(((a)))/x', 'asWritten' => '/(((a)))/x', 'normalized' => '/(((a)))/x', 'pretty' => "/\n    (\n        ((a))\n    )\n/x", 'subjects' => ['a' => 1, 'b' => 0]];
+        yield 'a comment under x' => ['pattern' => "/a b # c\n/x", 'asWritten' => "/a b # c\n/x", 'normalized' => "/ab# c\n/x", 'pretty' => "/\n    ab  # c\n/x", 'subjects' => ['ab' => 1, 'a b' => 0]];
+    }
+
+    #[Test]
+    public function test_named_constructors_give_a_new_printer_each_time(): void
+    {
+        $this->assertNotSame(PatternPrinter::asWritten(), PatternPrinter::asWritten());
+        $this->assertNotSame(PatternPrinter::normalized(), PatternPrinter::normalized());
+        $this->assertNotSame(PatternPrinter::pretty(), PatternPrinter::pretty());
+    }
+
+    /**
      * The optimizer reuses one printer and resets it between nodes: once
      * reset, it prints what a new printer prints, on the lines and in the
      * spelling it was given.

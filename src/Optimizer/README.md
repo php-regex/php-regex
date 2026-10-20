@@ -138,7 +138,7 @@ use PHPRegex\Parser\RegexParser;
 $parser = RegexParser::create();
 $modernized = $parser->parse('/a\-(?:[0-9])/')->accept(new Modernizer());
 
-echo $modernized->accept(new PatternPrinter());  // '/a-\d/'
+echo $modernized->accept(PatternPrinter::asWritten());  // '/a-\d/'
 ```
 
 Documentation

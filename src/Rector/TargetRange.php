@@ -100,6 +100,6 @@ final class TargetRange
         $after = $reader->parse($rewritten);
 
         return $after->accept(new NodeDumper()) === $before->accept(new NodeDumper())
-            || $after->accept(new PatternPrinter(true, false, false)) === $before->accept(new PatternPrinter(true, false, false));
+            || $after->accept(PatternPrinter::pretty()) === $before->accept(PatternPrinter::pretty());
     }
 }

@@ -914,8 +914,8 @@ final class AnalysisService
                 $optimizedPattern = $optimizedAst instanceof RegexNode ? $splicer->splice($ast, $optimizedAst) : null;
                 if (null === $baseline || null === $optimizedPattern) {
                     $pretty = str_contains($ast->flags, 'x');
-                    $baseline = $ast->accept(new PatternPrinter($pretty));
-                    $optimizedPattern = $optimizedAst->accept(new PatternPrinter($pretty));
+                    $baseline = $ast->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::asWritten());
+                    $optimizedPattern = $optimizedAst->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::asWritten());
                 }
 
                 if ($baseline === $optimizedPattern) {

@@ -130,4 +130,4 @@ In a few cases, laying the pattern out under `x`, or dropping `x`, would change 
 
 ## The pretty printer
 
-`new PatternPrinter(pretty: true)` uses the same layout engine with normalized escapes. It lays a pattern out only when it already has `x`, never adds `x`, and never refuses: where `format` would refuse, it prints one line.
+`PatternPrinter::pretty()` uses the same layout engine with normalized escapes. It lays a pattern out only when it already has `x`, never adds `x`, and never refuses: where `format` would refuse, it prints one line.

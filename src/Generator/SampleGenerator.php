@@ -585,7 +585,7 @@ final class SampleGenerator extends AbstractNodeVisitor
     {
         // PCRE knows which characters are in the set, under "i" too: ask it,
         // when it reads "(?[".
-        $class = $node->accept(new PatternPrinter());
+        $class = $node->accept(PatternPrinter::asWritten());
         $samples = $this->charactersWithProperty($this->caseless ? '(?i)'.$class : $class);
         if ([] !== $samples) {
             return $this->getRandomChar($samples);
@@ -925,7 +925,7 @@ final class SampleGenerator extends AbstractNodeVisitor
         ];
 
         try {
-            $compiled = $node->accept(new PatternPrinter());
+            $compiled = $node->accept(PatternPrinter::asWritten());
         } catch (\Throwable) {
             return '!';
         }
@@ -1186,7 +1186,7 @@ final class SampleGenerator extends AbstractNodeVisitor
      */
     private function holds(NodeInterface $body, string $text, string $before, string $after): bool
     {
-        $compiled = $body->accept(new PatternPrinter());
+        $compiled = $body->accept(PatternPrinter::asWritten());
 
         // Checked by the engine, as generate() checks its samples.
         return true === $this->engine->match("\x01".$before.'(?:'.$compiled.')'.$after."\x01".($this->unicode ? 'u' : ''), $text)->matched;

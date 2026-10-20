@@ -77,7 +77,7 @@ PHPRegex includes several useful visitors:
 ```php
 use PHPRegex\Parser\Printer\PatternPrinter;
 
-$compiler = new PatternPrinter();
+$compiler = PatternPrinter::asWritten();
 $pattern = $ast->accept($compiler); // Regenerate the pattern: '/hello\d+/'
 ```
 

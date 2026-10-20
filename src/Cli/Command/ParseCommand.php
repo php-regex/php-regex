@@ -87,7 +87,7 @@ final class ParseCommand extends AbstractCommand
     private function executeParsing(Output $output, Regex $regex, ConsoleStyle $style, string $pattern, bool $validate): int
     {
         $ast = $regex->parse($pattern);
-        $compiled = $ast->accept(new PatternPrinter());
+        $compiled = $ast->accept(PatternPrinter::asWritten());
         $highlightedPattern = $output->isAnsi()
             ? $ast->accept(new ConsoleHighlighter())
             : $pattern;

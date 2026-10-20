@@ -186,7 +186,7 @@ final class PatternLinter extends AbstractNodeVisitor
         $this->skipUselessBackref = false;
 
         // Use a simple visitor to compile the pattern string for diagnostics
-        $compiler = new PatternPrinter();
+        $compiler = PatternPrinter::asWritten();
         $this->patternValue = $node->pattern->accept($compiler);
 
         $this->groups = PcreGroups::of($node->pattern);

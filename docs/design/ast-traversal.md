@@ -125,7 +125,7 @@ Visitors typically follow one of two patterns:
 
 ```php
 // PatternPrinter - returns a string
-$pattern = $ast->accept(new PatternPrinter());
+$pattern = $ast->accept(PatternPrinter::asWritten());
 ```
 
 ### Pattern 2: Stateful (Accumulates and Returns Result)

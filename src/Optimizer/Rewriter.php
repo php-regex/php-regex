@@ -1564,7 +1564,7 @@ final class Rewriter extends AbstractNodeVisitor
 
     private function nodeToString(NodeInterface $node): string
     {
-        $this->compiler ??= new PatternPrinter();
+        $this->compiler ??= PatternPrinter::asWritten();
         $this->compiler->resetState();
 
         return $node->accept($this->compiler);

@@ -49,7 +49,7 @@ final class UnicodePropertyWithoutURule extends AbstractLintRule
         // each stay themselves, the printer undoing the "^" the parser folds.
         return [new RuleViolation(
             'regex.lint.unicode.propertyWithoutU',
-            \sprintf('Without the /u flag, Unicode property "%s" only covers the first 256 code points.', $node->accept(new PatternPrinter())),
+            \sprintf('Without the /u flag, Unicode property "%s" only covers the first 256 code points.', $node->accept(PatternPrinter::asWritten())),
             $node->startPosition,
             'Add the /u flag to match beyond the first 256 code points.',
             LintSeverity::Error,

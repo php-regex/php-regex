@@ -785,7 +785,7 @@ final class RedosProfiler extends AbstractNodeVisitor
 
     private function compileNode(NodeInterface $node): string
     {
-        return $node->accept(new PatternPrinter());
+        return $node->accept(PatternPrinter::asWritten());
     }
 
     private function describeTrigger(NodeInterface $node): string

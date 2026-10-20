@@ -62,7 +62,7 @@ final class DuplicateDisjunctionRule extends AbstractLintRule
                 continue;
             }
 
-            $compiler = new PatternPrinter();
+            $compiler = PatternPrinter::asWritten();
             $signature = $alt->accept($compiler);
             if (isset($seen[$signature])) {
                 // The branch as written, a piece of the body spelled in the
