@@ -307,6 +307,11 @@ enum PcreFeature
     case TooLargeAtPatternStart;
 
     /**
+     * A substring scan compiles each group it lists once, and a name several groups bear only while one of them is not listed before it, where each item listed compiled.
+     */
+    case ScanSubstringListsEachGroupOnce;
+
+    /**
      * A braced escape left open at the end of the pattern is reported at the end, not past it.
      */
     case UnclosedBraceAtPatternEnd;
@@ -388,7 +393,8 @@ enum PcreFeature
             self::VersionConditionLeftOpenIsVersionError,
             self::BranchCountErrorOffTheConditionName,
             self::SurrogateRefusedBeforeBrace,
-            self::TooLargeAtPatternStart => '10.47',
+            self::TooLargeAtPatternStart,
+            self::ScanSubstringListsEachGroupOnce => '10.47',
             self::UnclosedBraceAtPatternEnd,
             self::ExtendedClassBesideLookbehindCompiles,
             self::TooLargeAtGroupEndReportedAtPatternEnd,

@@ -564,12 +564,9 @@ final class CompiledLengthTest extends TestCase
         yield 'class of every ASCII character in a POSIX name' => ['pattern' => '/[[:ascii:]]/'];
         yield 'class of two bytes past ASCII' => ['pattern' => '/[\\xe9\\xc9]/'];
         yield 'caseless class of every ASCII character and a byte past it' => ['pattern' => '/[\\x00-\\x7f\\xe9]/i'];
-        // A class of thousands of types is not measured member by member.
-        yield 'class of three thousand types' => ['pattern' => '/['.str_repeat('\\D', 3000).']/'];
         // An inline "a" may hold the types to ASCII under UCP.
         yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u'];
         yield 'counted type under UCP and an inline a' => ['pattern' => '/(?a)\\d{2}/u'];
-        yield 'scan substring' => ['pattern' => '/(a)(*scs:(1)b)/'];
         yield 'condition on a name no group holds' => ['pattern' => '/(?(<x>)a|b)/'];
     }
 

@@ -311,8 +311,10 @@ Where the library still departs from what the target's PCRE2 reports:
   compiles. A few lengths it does not know for sure: from 10.45, a class
   that holds every character past 255 and a property, whose characters below
   256 may complete its map, as `[[:^ascii:][:^blank:][:space:]]` under `u`;
-  `(*scan_substring:...)` and an extended class `(?[...])`; a class of
-  more than 256 members; up to PCRE2 10.34, a lookbehind after a DEFINE
+  a counted extended class that would match every character but for what
+  a property it holds matches below 256, as `(?[ [^a] | !\D ]){2}` under
+  `u`, which a count then repeats as a type or as a class; up to PCRE2
+  10.34, a lookbehind after a DEFINE
   group that opens on a group inside a lookbehind, and on 10.34 one after
   the second DEFINE group of a pattern that opens on a group, which these
   releases may leave without the length to move back. Such an item is
@@ -421,6 +423,7 @@ and a target has it from the release it arrived in on
 | `BranchCountErrorOffTheConditionName` | 10.47 | A conditional on a name that holds more than two branches is not reported on that name. |
 | `SurrogateRefusedBeforeBrace` | 10.47 | Under UTF a surrogate written in braces, "\x{d800" or "\o{154000", is refused before the closing brace is looked for. |
 | `TooLargeAtPatternStart` | 10.47 | A pattern too large to compile is reported at offset 0, not at its end. |
+| `ScanSubstringListsEachGroupOnce` | 10.47 | A substring scan compiles each group it lists once, and a name several groups bear only while one of them is not listed before it, where each item listed compiled. |
 | `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
 | `ExtendedClassBesideLookbehindCompiles` | 10.48 | A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed. |
 | `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. |

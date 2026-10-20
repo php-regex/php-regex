@@ -30,6 +30,7 @@ use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
@@ -275,12 +276,29 @@ final class CompiledLength
     private ?ClassLength $classes = null;
 
     /**
-     * The length of each class measured, and the bytes of its lists, by its
-     * text and whether it is caseless.
+     * The length of each class measured, the bytes of its lists and, up to
+     * 10.47, the most it counts once its lists are checked, by its text and
+     * whether it is caseless.
      *
-     * @var array<string, array{0: ?int, 1: int}>
+     * @var array<string, array{0: ?int, 1: int, 2: int}>
      */
     private array $classLengths = [];
+
+    /**
+     * The class each extended class of a single item stands for, by the
+     * identity of the extended class, kept with it so that no other node
+     * takes that identity, nor the one of the class, which may key its
+     * length.
+     *
+     * @var array<int, array{0: ExtendedCharClassNode, 1: CharClassNode}>
+     */
+    private array $singleItemClasses = [];
+
+    /**
+     * Up to 10.47, the most the class last measured counts once its lists
+     * are checked, those lists included.
+     */
+    private int $listsPeak = 0;
 
     /**
      * The members of each class read, by its text.
@@ -507,11 +525,13 @@ final class CompiledLength
                 return [$found, $length, null, $caseless];
             }
 
-            // Up to 10.47 a class whose lists, with its header and what the
-            // group holds before it, pass the limit is refused as it is
-            // compiled, by a check that sets no offset.
+            // Up to 10.47 a class whose lists, with its header, its properties
+            // and what the group holds before it, pass the limit is refused as
+            // it is compiled, by a check that sets no offset. A class inside
+            // a group is checked with what that group holds.
             $lists = $this->charLists - $lists;
-            if ($lists > 0 && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) && $before + $length + 4 + $lists > self::LIMIT) {
+            $class = $item instanceof QuantifierNode ? $item->node : $item;
+            if ($lists > 0 && ($class instanceof CharClassNode || $class instanceof ExtendedCharClassNode) && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) && $before + $length + $this->listsPeak > self::LIMIT) {
                 $this->passedAtClassLists = true;
                 $this->stoppedAt = $item->getEndPosition();
 
@@ -640,7 +660,8 @@ final class CompiledLength
                 // Each branch of a lookbehind of some length starts with
                 // the length to move back, in one number or two.
                 GroupType::LookbehindPositive, GroupType::LookbehindNegative => [$branches = self::branchesOf($node->child), $this->lookbehindFrame($node, $branches), $caseless, null],
-                default => [self::branchesOf($node->child), [self::BRACKETS, null], $caseless, null],
+                // A substring scan lists the captures it reads after its bracket.
+                GroupType::ScanSubstring => [self::branchesOf($node->child), $this->scanSubstringFrame($node), $caseless, null],
             };
         }
 
@@ -695,7 +716,8 @@ final class CompiledLength
         $possessive = QuantifierType::Possessive === $node->type;
         $atomicOnce = $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic);
         if ($repeated instanceof GroupNode) {
-            $assertion = \in_array($repeated->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true);
+            // A substring scan is an assertion too.
+            $assertion = \in_array($repeated->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true);
 
             // Up to 10.34 an assertion counted at least once is compiled
             // once, and one counted from zero as optional.
@@ -766,6 +788,7 @@ final class CompiledLength
             return $this->repeatedLength($node, $caseless);
         }
 
+        $node = $this->classOfSingleItem($node);
         $character = $this->characterOf($node);
         if (null !== $character) {
             return $this->characterLength($character, $caseless);
@@ -778,6 +801,7 @@ final class CompiledLength
             $node instanceof CharTypeNode => $this->typeLength($node),
             $node instanceof UnicodePropNode => $this->propertyLength($node),
             $node instanceof CharClassNode => $this->classLength($node, $caseless),
+            $node instanceof ExtendedCharClassNode => $this->extendedClassLength($node, $caseless)[0],
             $node instanceof BackrefNode => $this->referenceLength($node, $caseless),
             // A call that returns groups lists them, a number each.
             $node instanceof SubroutineNode => 3 + 3 * \count($node->returnedGroups),
@@ -811,7 +835,7 @@ final class CompiledLength
     private function repeatedLength(QuantifierNode $node, bool $caseless): ?int
     {
         [$min, $max] = $this->boundsOf($node);
-        $item = $node->node;
+        $item = $this->classOfSingleItem($node->node);
         if ($item instanceof SubroutineNode) {
             return self::repeatCall(3 + 3 * \count($item->returnedGroups), $min, $max, QuantifierType::Possessive === $node->type, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic));
         }
@@ -849,6 +873,17 @@ final class CompiledLength
             }
 
             return null === $length ? null : self::repeatSingle(0, $length, $min, $max);
+        }
+
+        // An extended class written as a match of any character repeats as
+        // a type does, after what it counted.
+        if ($item instanceof ExtendedCharClassNode) {
+            [$length, $any] = $this->extendedClassLength($item, $caseless);
+            if (null === $length || null === $any) {
+                return null;
+            }
+
+            return $any ? $length - 1 + self::repeatSingle(0, 1, $min, $max) : $length + $count;
         }
 
         // A class or a reference takes its count after it: "*", "+" and "?"
@@ -1038,19 +1073,92 @@ final class CompiledLength
 
         // A class written again measures the same.
         $key = ($caseless ? ($this->restricted ? 'r' : 'i') : '-').$this->classKey($node);
-        $this->classLengths[$key] ??= [$this->classes()->of($node, $caseless, $this->restricted), $this->classes()->charListBytes];
+        if (!isset($this->classLengths[$key])) {
+            $classes = $this->classes();
+            $this->classLengths[$key] = [$classes->of($node, $caseless, $this->restricted), $classes->charListBytes, $classes->unitsBeforeLists + $classes->charListBytes];
+        }
 
-        [$length, $lists] = $this->classLengths[$key];
+        [$length, $lists, $this->listsPeak] = $this->classLengths[$key];
         $this->charLists += $lists;
 
         return $length;
     }
 
     /**
+     * An extended class that holds an operator, or a class in brackets or
+     * parentheses: see ExtendedClassLength. Its length, and whether it is
+     * written as a match of any character.
+     *
+     * @return array{0: ?int, 1: ?bool}
+     */
+    private function extendedClassLength(ExtendedCharClassNode $node, bool $caseless): array
+    {
+        $classes = new ExtendedClassLength($this->classes());
+        $length = $classes->of($node, $caseless, $this->restricted);
+        $this->charLists += $classes->charListBytes;
+        $this->listsPeak = $classes->listsPeak;
+
+        return [$length, $classes->matchesAnyCharacter];
+    }
+
+    /**
+     * An extended class of a single item, neither in brackets nor in
+     * parentheses, is the class of that item; any other node is itself.
+     */
+    private function classOfSingleItem(NodeInterface $node): NodeInterface
+    {
+        $item = $node instanceof ExtendedCharClassNode ? ExtendedClassLength::singleItem($node) : null;
+        if (null === $item) {
+            return $node;
+        }
+
+        $this->singleItemClasses[spl_object_id($node)] ??= [$node, new CharClassNode($item, false, $node->getStartPosition(), $node->getEndPosition())];
+
+        return $this->singleItemClasses[spl_object_id($node)][1];
+    }
+
+    /**
+     * The brackets of a substring scan and what it lists: a number for each
+     * item, three units, or an index and a count for a name several groups
+     * bear, five. From 10.47 a group listed before adds nothing, nor a name
+     * whose groups all are; a name one group bears is its number.
+     *
+     * @return array{0: int, 1: ?int}
+     */
+    private function scanSubstringFrame(GroupNode $node): array
+    {
+        $once = $this->target->supports(PcreFeature::ScanSubstringListsEachGroupOnce);
+        $next = (int) $this->groupIndex()->nextNumberAt($node);
+        $listed = [];
+        $units = 0;
+        foreach ($node->scannedGroups as $group) {
+            // "+1" is the group opened next, "-1" the one opened last.
+            $number = (int) $group;
+            $numbers = match ($group[0]) {
+                '<', "'" => $this->groupIndex()->numbersNamed(substr($group, 1, -1)),
+                '+' => [$next - 1 + $number],
+                '-' => [$next + $number],
+                default => [$number],
+            };
+
+            if ([] === $numbers) {
+                return [self::BRACKETS, null]; // a name no group bears is refused before any measure
+            }
+
+            $new = array_diff_key(array_flip($numbers), $listed);
+            $listed += $new;
+            if (!$once || [] !== $new) {
+                $units += \count($numbers) > 1 ? 5 : 3;
+            }
+        }
+
+        return [self::BRACKETS + $units, self::BRACKETS + $units];
+    }
+
+    /**
      * The single characters and the ranges of a class, each as PCRE reads
      * them, and the ranges of the types and POSIX names the map holds, or
-     * null when it holds anything else, or more members than a measure
-     * goes through.
+     * null when it holds anything else.
      *
      * @return array{0: list<int>, 1: list<array{0: int, 1: int}>, 2: list<array{0: int, 1: int}>}|null
      */
@@ -1071,10 +1179,6 @@ final class CompiledLength
     private function readClassMembers(CharClassNode $node): ?array
     {
         $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
-        if (\count($members) > 256) {
-            return null;
-        }
-
         $characters = [];
         $ranges = [];
         $types = [];

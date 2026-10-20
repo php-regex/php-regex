@@ -50,8 +50,7 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * A length that depends on what is not known here is null: what the
  * locale PHP builds its tables from adds to a map that may then hold every
- * character where those tables are not given, a class of more members than
- * a measure goes through.
+ * character where those tables are not given.
  *
  * @internal
  */
@@ -171,6 +170,13 @@ final class ClassLength
     public int $charListBytes = 0;
 
     /**
+     * Up to 10.47, what the class counts before its lists are checked
+     * against the limit, as it is compiled: its header and its properties;
+     * of no use where it keeps no lists.
+     */
+    public int $unitsBeforeLists = 0;
+
+    /**
      * The set of each character of CASELESS_SETS, once read.
      *
      * @var array<int, list<int>>|null
@@ -189,6 +195,17 @@ final class ClassLength
      * @var array{0: int, 1: int}
      */
     private array $member = [0, 0];
+
+    /**
+     * From 10.45, what the class last measured compiles to: whether it is
+     * an extended class, whether it holds characters below 256, whether
+     * the characters past 255 it holds are turned over, its ranges merged,
+     * its properties, whether properties may add to its map, and whether
+     * the locale may add to it past ASCII.
+     *
+     * @var array{0: bool, 1: bool, 2: bool, 3: list<array{0: int, 1: int}>, 4: int, 5: bool, 6: bool}|null
+     */
+    private ?array $shape = null;
 
     /**
      * @param bool                 $utf          whether PCRE reads the pattern as UTF-8
@@ -215,11 +232,13 @@ final class ClassLength
 
     /**
      * The length of the class in the code, without the lists it keeps
-     * beside it (charListBytes), under rules kept to ASCII or not.
+     * beside it (charListBytes), under rules kept to ASCII or not, negated
+     * as written or as $negated says.
      */
-    public function of(CharClassNode $node, bool $caseless, bool $restricted): ?int
+    public function of(CharClassNode $node, bool $caseless, bool $restricted, ?bool $negated = null): ?int
     {
         $this->charListBytes = 0;
+        $this->shape = null;
         $members = $this->membersOf($node);
         if (null === $members) {
             return null;
@@ -229,9 +248,65 @@ final class ClassLength
             return null;
         }
 
-        return $this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges)
-            ? $this->merged($members, $node->isNegated, $caseless, $restricted)
-            : $this->memberByMember($members, $node->isNegated, $caseless, $restricted);
+        $negated ??= $node->isNegated;
+        if (!$this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges)) {
+            return $this->memberByMember($members, $negated, $caseless, $restricted);
+        }
+
+        // Merged, a character or a range written again adds nothing: each
+        // is read once. Each property is written, again or not.
+        $distinct = [];
+        foreach ($members as $index => $member) {
+            $distinct['range' === $member[0] ? $member[1].'-'.$member[2] : $index] = $member;
+        }
+
+        return $this->merged(array_values($distinct), $negated, $caseless, $restricted);
+    }
+
+    /**
+     * From 10.45, what an operand of an extended class compiles to: the
+     * class, negated as $negated says, as a match of any character, a map
+     * of characters below 256 with none past it or all of them, or an
+     * extended class without its map, whose characters below 256 join the
+     * map of the whole; with the length that adds, whether it holds
+     * characters below 256, its map, as the bytes it sets and those it may
+     * set, and its properties. Null where the class has no known length.
+     *
+     * @return array{0: string, 1: int, 2: bool, 3: string, 4: string, 5: int}|null
+     */
+    public function operand(CharClassNode $node, bool $negated, bool $caseless, bool $restricted): ?array
+    {
+        $length = $this->of($node, $caseless, $restricted, $negated);
+        if (null === $length || null === $this->shape) {
+            return null;
+        }
+
+        [$extended, $map, $flip, $ranges, $properties, $mapFromProperties, $localeMaps] = $this->shape;
+        $ones = ExtendedClassLength::NO_BYTE;
+        foreach ($ranges as [$low, $high]) {
+            for ($byte = $low; $byte <= min($high, 0xFF); $byte++) {
+                $ones[$byte >> 3] = \chr(\ord($ones[$byte >> 3]) | 1 << ($byte & 7));
+            }
+        }
+
+        // What a property sets below 256 is not known here, nor without
+        // UTF what the locale sets past ASCII where its tables are not given.
+        $unknown = $properties > 0 || $mapFromProperties ? ~$ones : ExtendedClassLength::NO_BYTE;
+        if (!$this->utf && null === $this->tables && ($localeMaps || $caseless)) {
+            $unknown |= ~$ones & ExtendedClassLength::PAST_ASCII;
+        }
+
+        if ($negated) {
+            $ones = ~($ones | $unknown);
+        }
+
+        // The map of an extended class is lifted out of it.
+        return [match (true) {
+            $extended => 'xclass',
+            1 === $length => 'any',
+            $negated === $flip => 'class',
+            default => 'nclass',
+        }, $extended && $map ? $length - 32 : $length, $map, $ones, $unknown, $properties];
     }
 
     /**
@@ -263,6 +338,8 @@ final class ClassLength
         $flip = false;
         $everyWideCharacter = false;
         $property = false;
+        // What a member written again adds, read once.
+        $otherCases = [];
         foreach ($members as [$kind, $first, $second]) {
             if ('range' === $kind) {
                 \assert(\is_int($first) && \is_int($second));
@@ -270,7 +347,7 @@ final class ClassLength
                 // characters, each member its own.
                 if ($caseless && $this->utf) {
                     $this->member = [$first, $second];
-                    [$units, $inMap] = $this->withOtherCasesWritten($first, $second, $restricted, true);
+                    [$units, $inMap] = $otherCases[$first.'-'.$second] ??= $this->withOtherCasesWritten($first, $second, $restricted, true);
                     $items += $units;
                     $map = $map || $inMap;
 
@@ -432,10 +509,12 @@ final class ClassLength
             $wide = array_values(array_filter($ranges, static fn (array $range): bool => $range[1] > 0xFF));
         }
 
+        $this->shape = [$properties > 0 || [] !== $wide, $map, $flip, $ranges, $properties, $mapFromProperties, $localeMaps];
         if ($properties > 0 || [] !== $wide) {
             $length = 4 + ($map ? 32 : 0) + 3 * $properties;
             if (\count($wide) >= 6) {
                 $this->charListBytes = self::charListBytes($ranges);
+                $this->unitsBeforeLists = 4 + 3 * $properties;
 
                 return $length + 4;
             }
@@ -493,17 +572,13 @@ final class ClassLength
 
     /**
      * The members of a class as ranges of characters, types, POSIX names
-     * and properties, or null when it holds anything else, or more members
-     * than a measure goes through.
+     * and properties, or null when it holds anything else.
      *
      * @return list<array{0: string, 1: int|string, 2: int|bool}>|null
      */
     private function membersOf(CharClassNode $node): ?array
     {
         $nodes = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
-        if (\count($nodes) > 256) {
-            return null;
-        }
 
         $members = [];
         foreach ($nodes as $member) {

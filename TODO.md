@@ -142,8 +142,9 @@ compiled length the size verdict counts at its least, so a pattern near the
 64 KiB limit PCRE2 refuses may be reported valid (never the reverse). Count
 each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
 
-- `(*scan_substring:...)`, extended classes `(?[...])` and classes of more
-  than 256 members.
+- a counted extended class that would match every character but for what a
+  property it holds matches below 256 (`(?[ [^a] | !\D ]){2}` under `u`):
+  the characters below 256 of each property, per release.
 
 The DEFINE quirk of PCRE2 10.32 to 10.34 stays documented, not planned: it
 would mean replaying their internal form of the pattern (10.35 fixed it).
