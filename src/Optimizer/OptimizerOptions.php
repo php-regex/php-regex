@@ -63,7 +63,10 @@ final class OptimizerOptions
      *                                      to read
      * @param int  $minQuantifierCount      how many repetitions of an item become a quantifier, at least 2
      * @param bool $verifyWithAutomata      a rewrite is only offered when the automata prove it writes
-     *                                      the same $matches
+     *                                      the same $matches, as the lint's suggestions are; on by
+     *                                      default. Off, only a rewrite that adds a possessive quantifier
+     *                                      or an atomic group is checked, and the others ship as the
+     *                                      rewriter writes them
      */
     public function __construct(
         public readonly bool $digits = true,
@@ -73,7 +76,7 @@ final class OptimizerOptions
         public readonly bool $possessive = false,
         public readonly bool $factorize = false,
         public readonly int $minQuantifierCount = 4,
-        public readonly bool $verifyWithAutomata = false,
+        public readonly bool $verifyWithAutomata = true,
     ) {
         if ($minQuantifierCount < 2) {
             throw new InvalidRegexOptionException(\sprintf('Optimizer option "min_quantifier_count" must be an integer of at least 2, %d given.', $minQuantifierCount));

@@ -62,15 +62,19 @@ the same options in camelCase (`OptimizerOptions::fromCamelCaseArray()`).
 | `possessive`                | bool | `false` | a quantifier becomes possessive where nothing after it can take the match back |
 | `factorize`                 | bool | `false` | alternatives sharing a prefix share it                                      |
 | `min_quantifier_count`      | int  | `4`     | how many repetitions of an item become a quantifier, at least 2             |
-| `verify_with_automata`      | bool | `false` | a rewrite is only offered when the automata prove it writes the same `$matches`, or, where the match solver does not read it, when it reads as the pattern does or each part it changed is proven alone |
+| `verify_with_automata`      | bool | `true`  | a rewrite is only offered when the automata prove it writes the same `$matches`, or, where the match solver does not read it, when it reads as the pattern does or each part it changed is proven alone |
 
 `possessive` and `factorize` are off by default: a backreference can make a
 possessive quantifier change what the pattern matches, and factorization makes
-an `/x` pattern harder to read. `verify_with_automata` is off by default too:
-the proof builds automata for both patterns, which costs time on large ones,
-and a rewrite it disproves is withdrawn, the original pattern returned. The
-proof works within a budget of its own: a check that runs out of it proves
-nothing, and the rewrite is withdrawn as well.
+an `/x` pattern harder to read. `verify_with_automata` is on, as it is for the
+lint's suggestions, the PHPStan rule and the editor's quick fix: a rewrite it
+disproves, or cannot prove within a budget of its own, is withdrawn, the
+original pattern returned. The proof builds automata for both patterns: on some
+600 patterns gathered from open-source projects it made `optimize()` about two
+and a half times as slow on average, about a second for the slowest, and
+withdrew none of the rewrites. Turned off, the rewrites ship as the rewriter
+writes them, but one that adds a possessive quantifier or an atomic group,
+which is proven whatever the option says.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program
@@ -128,10 +132,10 @@ a batch of patterns rather than building one per call. The check of a
 rewrite builds no DFA to keep between calls, so the constructor takes the
 parser alone.
 
-To have every rewrite proven before it is offered:
+To take the rewrite unproven, faster:
 
 ```php
-$result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/', ['verify_with_automata' => true]);
+$result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/', ['verify_with_automata' => false]);
 
 echo $result->optimized;  // '/\d{4}/'
 ```

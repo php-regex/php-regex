@@ -134,7 +134,7 @@ final class CodeActionHandlerTest extends TestCase
     #[DataProvider('provideOptimizationsToProve')]
     public function test_the_optimization_action_offers_only_a_proven_rewrite(string $pattern, ?string $offered): void
     {
-        $this->assertNotSame($pattern, Regex::create()->optimize($pattern)->optimized, 'Unchecked, the pattern is rewritten.');
+        $this->assertNotSame($pattern, Regex::create()->optimize($pattern, ['verify_with_automata' => false])->optimized, 'Unchecked, the pattern is rewritten.');
 
         $action = self::action($this->codeActionsOnLiteral(self::source($pattern, 0)), 'Apply regex optimization');
 

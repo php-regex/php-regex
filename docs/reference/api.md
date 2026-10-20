@@ -513,7 +513,7 @@ $result = Regex::create()->optimize('/[0-9]+/', [
     'possessive' => false,               // Add possessive quantifiers
     'factorize' => false,                // Factor common prefixes of alternatives
     'min_quantifier_count' => 4,         // Use {n} only when repetition >= 4
-    'verify_with_automata' => false,     // Verify equivalence with the automata solver when possible
+    'verify_with_automata' => true,      // Offer only a rewrite the automata prove
 ]);
 
 // The same, as a value:
@@ -524,7 +524,7 @@ echo $result->optimized;   // '/\d+/'
 echo $result->changes[0];  // 'Wrote [0-9] as \d.'
 ```
 
-When `verifyWithAutomata` is enabled, PHPRegex validates that the optimization writes the same `$matches` as the
+When `verifyWithAutomata` is enabled, as it is by default, PHPRegex validates that the optimization writes the same `$matches` as the
 pattern on every subject (`LanguageSolver::matchEquivalent()`). Where the match solver does not read the pattern, only
 a rewrite that reads as the pattern does (`[0-9]` for `\d`), or whose changed parts are each proven alone (`(?:_|%)` for
 `[_%]` beside a lookbehind), is kept: matching the same strings is not enough, as `/a(?!b)/` and `/a/` show on `"ab"`. The check works within a budget of its own: one it runs out of proves nothing,

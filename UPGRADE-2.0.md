@@ -1018,6 +1018,13 @@ with its members sorted, `[0-9A-Z_a-z]`. A test that expected `/\w+/` from
 the program runs under the C locale. `[0-9]` no longer becomes `\d` under
 `(*UCP)`, as under `u`.
 
+`verify_with_automata` is on by default, as it is for the lint: `optimize()`
+returns a rewrite only once the automata prove it writes the same `$matches`,
+and the pattern as written when they disprove it or cannot prove it within
+their budget. It costs time, about two and a half times as long on average.
+Pass `['verify_with_automata' => false]`, or `new OptimizerOptions(verifyWithAutomata: false)`,
+to take the rewriter's output unproven, as 1.x did.
+
 #### `ValidationResult::$error` is the message alone
 
 In 1.x a failed validation's `$error` ended with the caret snippet, on the

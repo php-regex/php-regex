@@ -45,7 +45,7 @@ final class OptimizerOptionsTest extends TestCase
         $this->assertFalse($options->possessive);
         $this->assertFalse($options->factorize);
         $this->assertSame(4, $options->minQuantifierCount);
-        $this->assertFalse($options->verifyWithAutomata);
+        $this->assertTrue($options->verifyWithAutomata);
         $this->assertEquals($options, OptimizerOptions::fromArray([]));
     }
 

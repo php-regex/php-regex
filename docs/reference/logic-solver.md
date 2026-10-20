@@ -129,7 +129,7 @@ way, `equivalent()` calls `/a$/` and `/a\z/` equivalent, as both match the whole
 `a` only, while `preg_match()` finds `a` in `"a\n"` with the first and nothing with the
 second.
 
-The optimizer, with `verify_with_automata`, and the lint's suggestions put a rewrite to
+The optimizer, with `verify_with_automata` on as it is by default, and the lint's suggestions put a rewrite to
 `matchEquivalent()`: a rewrite it proves is offered, one it disproves is not. The check
 works within a budget of its own (1,000 configurations, 200,000 units of work), and one that
 runs out proves nothing. Where the match solver does not read a pattern, or gives up,

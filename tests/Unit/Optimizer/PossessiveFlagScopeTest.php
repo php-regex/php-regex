@@ -36,7 +36,9 @@ final class PossessiveFlagScopeTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_the_rewrite_matches_what_the_pattern_matched(string $pattern, string $expected, array $subjects): void
     {
-        $optimized = Regex::create(['cache' => null])->optimize($pattern, ['possessive' => true])->optimized;
+        // The rewriter and the gate the possessive rewrites always pass, the
+        // proof of the other rewrites left to the caller.
+        $optimized = Regex::create(['cache' => null])->optimize($pattern, ['possessive' => true, 'verify_with_automata' => false])->optimized;
 
         foreach ($subjects as $subject) {
             $this->assertSame(
