@@ -170,6 +170,13 @@ pattern and the share of each ReDoS proof. It exits with 1 when the 99th
 percentile is above 6 ms (`--max-p99=<ms>` sets another limit); a release
 waits until it passes. Run it on an idle machine: the times are wall-clock.
 
+`bin/release` releases only a HEAD that origin's branch holds, read from
+origin when it runs, and on which every workflow that runs on each push to
+2.x passed: the tests, the engines, static analysis, the packages, coverage,
+the benchmarks, the workflow checks, and the demo applications, which install
+the checkout into a Symfony and a Laravel application. `bin/status` shows how
+far HEAD stands from origin's branch, and reads only.
+
 `bin/release` creates the GitHub release as a draft before it pushes the
 tag, so a release GitHub refuses leaves nothing tagged; a tag cannot be moved
 or deleted once pushed. Its notes are the CHANGELOG section, or the section's

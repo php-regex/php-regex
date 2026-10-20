@@ -59,6 +59,15 @@ current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 [ -z "$(git status --porcelain 2>/dev/null)" ] || problems+=("The working tree is not clean: commit or remove the changes first.")
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null && problems+=("The tag $tag already exists.")
 
+# The commit to release is on origin: the tag would otherwise push commits
+# CI never ran on along with it. origin is read as it stands now.
+if git fetch -q --no-tags origin "+refs/heads/$branch:refs/remotes/origin/$branch" 2>/dev/null; then
+    ahead=$(git rev-list --count "refs/remotes/origin/$branch..HEAD")
+    [ "$ahead" -eq 0 ] || problems+=("HEAD is $ahead commit$([ "$ahead" -eq 1 ] || echo s) ahead of origin/$branch: push $branch first.")
+else
+    problems+=("Git cannot read $branch from origin, so whether origin holds HEAD is unknown.")
+fi
+
 # The version the code reports, and the CHANGELOG section of a final release.
 current=$(sed -nE "s/.*public const VERSION = '([^']+)';.*/\1/p" src/Toolkit/Regex.php)
 [ "$current" = "$version" ] || problems+=("Regex::VERSION is \"$current\", not \"$version\": run bin/bump $version and commit.")
@@ -72,9 +81,10 @@ if [ "$skip_ci" -eq 0 ]; then
     if ! command -v gh >/dev/null 2>&1; then
         problems+=("gh is not installed: it checks CI and publishes the release (or pass --skip-ci).")
     else
-        # The workflows that gate a release; the experimental and scheduled
-        # ones do not.
-        for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml; do
+        # The workflows that gate a release, each run on every push to the
+        # branch; the experimental and scheduled ones do not. demo.yml
+        # installs HEAD itself into a Symfony and a Laravel application.
+        for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml demo.yml; do
             conclusion=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion --jq '.[0].conclusion' 2>/dev/null || echo "")
             [ "$conclusion" = "success" ] || problems+=("$workflow on $(git rev-parse --short HEAD) is \"${conclusion:-not found}\", not \"success\".")
         done

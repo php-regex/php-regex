@@ -57,7 +57,7 @@ final class ReleaseScriptsTest extends TestCase
 
     protected function tearDown(): void
     {
-        exec('rm -rf '.escapeshellarg($this->root));
+        exec('rm -rf '.escapeshellarg($this->root).' '.escapeshellarg($this->root.'.origin.git'));
     }
 
     #[Test]
@@ -197,6 +197,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
+        $this->publish();
 
         [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
@@ -210,6 +211,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
+        $this->publish();
 
         [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
@@ -224,6 +226,7 @@ final class ReleaseScriptsTest extends TestCase
         file_put_contents($this->root.'/CHANGELOG.md', str_replace("### Added\n\n- Something.\n", "Opening words of the release.\n\n### Added\n\n".$entries, self::CHANGELOG));
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
+        $this->publish();
 
         [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
@@ -238,6 +241,7 @@ final class ReleaseScriptsTest extends TestCase
     {
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
+        $this->publish();
 
         [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
 
@@ -275,11 +279,10 @@ echo 'built locally' >&2
 exit 1
 ");
         chmod($this->root.'/phar/build', 0o755);
-        file_put_contents($this->root.'/.gitignore', "/origin.git/\n/fake/\n/gh.log\n");
+        file_put_contents($this->root.'/.gitignore', "/fake/\n/gh.log\n");
         $this->script('bump', '--date', '2026-10-01', '2.0.0');
         $this->commit();
-        exec('git init -q --bare '.escapeshellarg($this->root.'/origin.git'));
-        $this->git('remote', 'add', 'origin', $this->root.'/origin.git');
+        $this->publish();
         mkdir($this->root.'/fake');
         file_put_contents($this->root.'/fake/gh', "#!/usr/bin/env bash\npushed=no\ngit ls-remote --tags origin | grep -q 'refs/tags/v2.0.0' && pushed=yes\necho \"\$* [tag on origin: \$pushed]\" >> \"\$GH_LOG\"\n");
         chmod($this->root.'/fake/gh', 0o755);
@@ -297,6 +300,103 @@ exit 1
         $this->assertStringEndsWith('[tag on origin: no]', $calls[0]);
         $this->assertStringContainsString('refs/tags/v2.0.0', $this->git('ls-remote', '--tags', 'origin'));
         $this->assertStringContainsString('phar.yml', $output);
+    }
+
+    #[Test]
+    public function test_release_refuses_a_head_origin_does_not_hold(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+        $this->publish();
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'not pushed');
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('HEAD is 1 commit ahead of origin/2.x', $output);
+    }
+
+    /**
+     * What origin holds is read when the release runs, not when it was last
+     * fetched: a commit pushed from elsewhere, then reset away here, leaves
+     * HEAD on origin's history.
+     */
+    #[Test]
+    public function test_release_reads_origin_as_it_stands_now(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+        $this->publish();
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'pushed from elsewhere');
+        $this->git('push', '-q', 'origin', 'HEAD:refs/heads/2.x');
+        $this->git('update-ref', 'refs/remotes/origin/2.x', 'HEAD~1');
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
+
+        $this->assertSame(0, $code, $output);
+    }
+
+    #[Test]
+    public function test_release_refuses_a_branch_origin_does_not_serve(): void
+    {
+        $this->script('bump', '--date', '2026-10-01', '2.0.0');
+        $this->commit();
+
+        [$code, $output] = $this->script('release', '--dry-run', '--skip-ci', '2.0.0');
+
+        $this->assertSame(1, $code, $output);
+        $this->assertStringContainsString('cannot read 2.x from origin', $output);
+    }
+
+    #[Test]
+    public function test_release_and_status_check_the_same_workflows(): void
+    {
+        $release = self::gatedWorkflows('release');
+
+        $this->assertSame($release, self::gatedWorkflows('status'));
+        $this->assertContains('workflows.yml', $release);
+        $this->assertContains('demo.yml', $release);
+    }
+
+    /**
+     * A release asks for a run of each workflow on the commit it tags, so
+     * each one runs on every push to the branch, whatever the push changed.
+     */
+    #[Test]
+    public function test_every_workflow_a_release_checks_runs_on_every_push(): void
+    {
+        foreach (self::gatedWorkflows('release') as $workflow) {
+            $source = (string) file_get_contents(\dirname(__DIR__, 3).'/.github/workflows/'.$workflow);
+            $this->assertSame(1, preg_match('~^on:\n  push:\n((?:    .*\n)+)~m', $source, $push), $workflow);
+            $this->assertMatchesRegularExpression('~^    branches: \[ ?2\.x ?\]$~m', $push[1], $workflow);
+            $this->assertStringNotContainsString('paths', $push[1], $workflow);
+        }
+    }
+
+    #[Test]
+    public function test_status_offline_shows_how_far_head_is_ahead_of_origin(): void
+    {
+        $this->commit();
+        $this->publish();
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'one');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'two');
+
+        [$code, $output] = $this->script('status', '--offline');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('HEAD is 2 commits ahead of origin/2.x', $output);
+    }
+
+    #[Test]
+    public function test_status_offline_says_when_head_is_on_origin(): void
+    {
+        $this->commit();
+        $this->publish();
+
+        [$code, $output] = $this->script('status', '--offline');
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('HEAD is on origin/2.x', $output);
     }
 
     #[Test]
@@ -509,6 +609,29 @@ exit 1
         exec('git -C '.escapeshellarg($this->root).' '.implode(' ', array_map(escapeshellarg(...), $arguments)).' 2>&1', $output);
 
         return implode("\n", $output);
+    }
+
+    /**
+     * The workflows a script reads the CI of HEAD from.
+     *
+     * @return list<string>
+     */
+    private static function gatedWorkflows(string $script): array
+    {
+        preg_match('~for workflow in ([a-z.\- ]+); do~', (string) file_get_contents(\dirname(__DIR__, 3).'/bin/'.$script), $match);
+
+        return explode(' ', $match[1] ?? '');
+    }
+
+    /**
+     * Gives the scratch repository an origin holding its 2.x, as the release
+     * branch is once pushed.
+     */
+    private function publish(): void
+    {
+        exec('git init -q --bare '.escapeshellarg($this->root.'.origin.git'));
+        $this->git('remote', 'add', 'origin', $this->root.'.origin.git');
+        $this->git('push', '-q', 'origin', 'HEAD:refs/heads/2.x');
     }
 
     private function commit(): void

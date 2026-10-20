@@ -53,6 +53,33 @@ echo "Repository"
 branch=$(git -C "$root" rev-parse --abbrev-ref HEAD 2>/dev/null) && na "branch $branch" || na "not a git checkout"
 last_tag=$(git -C "$root" describe --tags --abbrev=0 2>/dev/null) && na "last tag $last_tag" || na "no tag yet"
 if [ -z "$(git -C "$root" status --porcelain 2>/dev/null)" ]; then ok "working tree clean"; else ko "working tree has changes"; fi
+# How HEAD stands against origin's branch, which bin/release wants HEAD on:
+# as origin serves it now, or offline as it was last fetched. Nothing is
+# fetched.
+plural() { [ "$1" -eq 1 ] && echo "$1 commit" || echo "$1 commits"; }
+if [ -n "${branch:-}" ] && [ "$branch" != HEAD ]; then
+    if [ "$offline" -eq 1 ]; then
+        remote_head=$(git -C "$root" rev-parse -q --verify "refs/remotes/origin/$branch" 2>/dev/null)
+        when=" (as last fetched)"
+    else
+        remote_head=$(git -C "$root" ls-remote origin "refs/heads/$branch" 2>/dev/null | cut -f1)
+        when=""
+    fi
+    if [ -z "$remote_head" ]; then
+        na "origin/$branch not found$when"
+    elif ! git -C "$root" cat-file -e "$remote_head^{commit}" 2>/dev/null; then
+        na "origin/$branch is at ${remote_head:0:10}, a commit not fetched here"
+    else
+        ahead=$(git -C "$root" rev-list --count "$remote_head..HEAD")
+        behind=$(git -C "$root" rev-list --count "HEAD..$remote_head")
+        if [ "$ahead" -gt 0 ]; then
+            ko "HEAD is $(plural "$ahead") ahead of origin/$branch$when: bin/release wants it pushed"
+        elif [ "$behind" -eq 0 ]; then
+            ok "HEAD is on origin/$branch$when"
+        fi
+        [ "$behind" -eq 0 ] || na "origin/$branch is $(plural "$behind") ahead of HEAD$when"
+    fi
+fi
 
 if [ "$offline" -eq 1 ]; then
     echo
@@ -69,8 +96,8 @@ fi
 
 head=$(git -C "$root" rev-parse HEAD)
 short=$(git -C "$root" rev-parse --short HEAD)
-for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml; do
-    ci=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion,status --jq '.[0] | "\(.status) \(.conclusion)"' 2>/dev/null)
+for workflow in tests.yml engines.yml static-analysis.yml packages.yml coverage.yml benchmarks.yml workflows.yml demo.yml; do
+    ci=$(gh run list --commit "$head" --workflow "$workflow" --json conclusion,status --jq '.[0] // empty | "\(.status) \(.conclusion)"' 2>/dev/null)
     case "$ci" in
         "completed success") ok "$workflow passed on $short" ;;
         "") ko "no $workflow run on $short" ;;
