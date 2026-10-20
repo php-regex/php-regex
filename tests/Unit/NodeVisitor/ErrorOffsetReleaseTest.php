@@ -215,6 +215,7 @@ final class ErrorOffsetReleaseTest extends TestCase
         yield 'alphabetic name followed by a four-byte character' => ['pattern' => '/(*a😀)/u', 'bundled' => 3, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'known alphabetic name followed by a two-byte letter' => ['pattern' => '/(*plaé:x)/u', 'bundled' => 5, 'newer' => 7, 'movedIn' => '10.47'];
         yield 'alphabetic name followed by a two-byte letter never closed' => ['pattern' => '/(*aé/u', 'bundled' => 3, 'newer' => 5, 'movedIn' => '10.47'];
+        yield 'alphabetic name followed by a two-byte letter after a callout condition' => ['pattern' => '/(?(?C1)(*plaé)a)/u', 'bundled' => 12, 'newer' => 14, 'movedIn' => '10.47'];
         // A script run takes a body: its name closed with no colon is an
         // alphabetic name PCRE refuses.
         yield 'script run name closed with no colon' => ['pattern' => '/(*sr)/', 'bundled' => 4, 'newer' => 5, 'movedIn' => '10.47'];

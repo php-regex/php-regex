@@ -144,6 +144,38 @@ final class StartOptionsTest extends TestCase
     }
 
     /**
+     * After a callout, what PCRE2 reads as nothing, a comment, a "\E" or an
+     * empty quote, leaves the start option given an argument where the
+     * assertion is due: refused on its "(" there (pcre2test 10.32 to 10.49,
+     * PHP 8.4 with 10.49 for the line comment under "x").
+     *
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function provideStartOptionsWithAnArgumentAfterACalloutAndNothing(): iterable
+    {
+        yield 'comment' => ['pattern' => '/(?(?C1)(?#c)(*UTF:x)a)/', 'offset' => 12];
+        yield 'two comments' => ['pattern' => '/(?(?C1)(?#c)(?#d)(*UCP:x)|b)/', 'offset' => 17];
+        yield 'quote end' => ['pattern' => '/(?(?C1)\E(*UTF:x)a)/', 'offset' => 9];
+        yield 'empty quote' => ['pattern' => '/(?(?C1)\Q\E(*NO_JIT:)a|b)/', 'offset' => 11];
+        yield 'string callout and a comment' => ['pattern' => '/(?(?C"x")(?#c)(*UTF:x)a)/', 'offset' => 14];
+        yield 'line comment under x' => ['pattern' => "/(?(?C1) #c\n (*UTF:x)a)/x", 'offset' => 12];
+    }
+
+    #[Test]
+    #[DataProvider('provideStartOptionsWithAnArgumentAfterACalloutAndNothing')]
+    public function test_a_start_option_given_an_argument_after_a_callout_and_nothing_is_no_assertion(string $pattern, int $offset): void
+    {
+        $this->assertFalse(@preg_match($pattern, 'a'));
+
+        foreach (['10.32', '10.33', '10.44', '10.45', '10.47', '10.49'] as $release) {
+            $result = RegexParser::create(['php_version' => '8.0', 'pcre_version' => $release, 'runtime_pcre_validation' => false])->validate($pattern);
+
+            $this->assertSame($offset, $result->offset, $pattern.' on '.$release);
+            $this->assertSame(ErrorCode::ConditionalAssertionExpected, $result->errorCode, $pattern.' on '.$release);
+        }
+    }
+
+    /**
      * As the condition of "(?(", a start option given an argument is no
      * assertion: PCRE2 refuses it on its "(", from 10.47 past it (pcre2test
      * 10.33 to 10.49).

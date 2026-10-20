@@ -934,8 +934,24 @@ final class Lexer
             // its run of letters, and is not one PCRE knows. From 10.33 a
             // name it does not know yet is refused where it ends.
             $start = $this->position;
-            if (!$this->readsAlphabeticAssertions && $this->opensCondition($tokens, $start)) {
-                throw self::conditionWantsAName($start + 1, $this->pattern);
+            $at = $this->nothingReadBefore($start);
+            $before = array_values(array_filter($tokens, static fn (Token $token): bool => $token->position < $at));
+            if (!$this->readsAlphabeticAssertions && $this->opensCondition($before, $at)) {
+                // After a callout it wants an assertion, on the "(", what it
+                // reads as nothing between them aside.
+                $last = $before[\count($before) - 1] ?? null;
+                if (null !== $last && TokenType::Callout === $last->type) {
+                    throw LexerException::withContext(
+                        \sprintf('Invalid conditional condition at position %d: a lookaround assertion is expected after the callout.', $start),
+                        ErrorCode::ConditionalAssertionExpected,
+                        $start,
+                        $this->pattern,
+                    );
+                }
+
+                if ($at === $start) {
+                    throw self::conditionWantsAName($start + 1, $this->pattern);
+                }
             }
 
             if (!$this->namesReadWhole) {
@@ -1628,7 +1644,9 @@ final class Lexer
 
         // "(*name:" read as a plain "(": its body never closes and is not
         // read in place. A name PCRE does not know is refused where it ends.
-        if (TokenType::GroupOpen === $type && 1 === LibraryPcre::match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos)) {
+        // Where a name is due, as after "(?<", PCRE wants it on the "(" and
+        // reads no name: the parser refuses it there.
+        if (TokenType::GroupOpen === $type && 1 === LibraryPcre::match('/\G\(\*([a-z_]++):/', $this->pattern, $opener, 0, $startPos) && !$this->followsNameOpener($startPos)) {
             // "(?(*atomic:" is no condition: PCRE takes a lookaround there,
             // and refuses any other name it knows at the colon.
             $known = PcreVerb::takesArgument($opener[1]) || ($this->readsScanSubstring && \in_array($opener[1], ['scs', 'scan_substring'], true));
@@ -2170,14 +2188,11 @@ final class Lexer
         // As the condition, 10.32 wants a name on the "*" right after "(?(";
         // after a callout the condition must be an assertion, which the
         // parser refuses on the "(" of the verb, before its name is read.
-        // Under "x" a space or a line break between them reads nothing.
-        $at = $start;
-        $last = $tokens[\count($tokens) - 1] ?? null;
-        while ($this->extendedMode && null !== $last && TokenType::Literal === $last->type
-            && '' === trim($last->value, " \t\n\r\f\v") && $last->end() === $at) {
+        // What PCRE reads as nothing between them, a comment, "\E", "\Q\E"
+        // or under "x" a space or a line comment, does not count.
+        $at = $this->nothingReadBefore($start);
+        while ([] !== $tokens && $tokens[\count($tokens) - 1]->position >= $at) {
             array_pop($tokens);
-            $at = $last->position;
-            $last = $tokens[\count($tokens) - 1] ?? null;
         }
 
         $condition = $this->opensCondition($tokens, $at);
@@ -2194,7 +2209,11 @@ final class Lexer
         // length of a group name, and refused where it ends.
         if ($this->namesReadWhole) {
             $length = strspn($name, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_');
-            $this->refuseVerbNameTooLong($length, $start);
+            // As the condition, only an alphabetic name is read before the
+            // parser refuses what is no assertion.
+            if (!$condition || 1 === LibraryPcre::match('/^[a-z]/', $name)) {
+                $this->refuseVerbNameTooLong($length, $start);
+            }
 
             // As the condition, the parser refuses it on its "(".
             if (!$condition) {
@@ -2235,6 +2254,47 @@ final class Lexer
         }
 
         $this->refuseSettingWithArgument($name, $letters, $start);
+    }
+
+    /**
+     * Where the run of what PCRE reads as nothing that ends at $position
+     * starts: "(?#...)" comments, "\E" and "\Q\E", and under "x" white
+     * space and line comments.
+     */
+    private function nothingReadBefore(int $position): int
+    {
+        do {
+            $before = $position;
+            $previous = $this->pattern[$position - 1] ?? '';
+            if ($this->extendedMode && '' !== $previous && '' === trim($previous, " \t\n\r\f\v")) {
+                // A space, or the line break that ends a "#" comment.
+                $position--;
+                if ("\n" === $previous) {
+                    $lineStart = $this->lastBefore("\n", $position) + 1;
+                    $hash = strpos(substr($this->pattern, $lineStart, $position - $lineStart), '#');
+                    $position = false === $hash ? $position : $lineStart + $hash;
+                }
+            } elseif (')' === $previous) {
+                // A "(?#...)" comment holds no ")": it opens past the one before.
+                $from = $this->lastBefore(')', $position - 1) + 1;
+                $open = strpos(substr($this->pattern, $from, $position - 1 - $from), '(?#');
+                $position = false === $open ? $position : $from + $open;
+            } elseif ('E' === $previous && 1 === strspn(strrev(substr($this->pattern, max(0, $position - 65), min($position - 1, 64))), '\\') % 2) {
+                $position -= '\\Q' === substr($this->pattern, max(0, $position - 4), 2) && $position >= 4 ? 4 : 2;
+            }
+        } while ($position !== $before);
+
+        return $position;
+    }
+
+    /**
+     * Where $needle last stands before $position, -1 for nowhere.
+     */
+    private function lastBefore(string $needle, int $position): int
+    {
+        $at = $position > 0 ? strrpos($this->pattern, $needle, $position - 1 - $this->length) : false;
+
+        return false === $at ? -1 : $at;
     }
 
     /**

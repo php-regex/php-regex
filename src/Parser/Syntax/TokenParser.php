@@ -2108,11 +2108,18 @@ final class TokenParser
      */
     private function alphaNameConditionError(int $nameStart): ?ParserException
     {
-        if (1 !== LibraryPcre::match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
+        // Before PCRE2 10.33 no name is alphabetic.
+        if (!$this->supports(PcreFeature::AlphabeticAssertionNames) || 1 !== LibraryPcre::match('/\G[a-z][A-Za-z0-9_]*+/', $this->pattern, $name, 0, $nameStart)) {
             return null;
         }
 
         $nameEnd = $nameStart + \strlen($name[0]);
+        // A name too long is refused as one before anything else.
+        $longest = $this->supports(PcreFeature::LongGroupNames) ? GroupNameReader::MAX_NAME_LENGTH : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
+        if (\strlen($name[0]) > $longest) {
+            return $this->parserException(\sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameEnd, $longest), ErrorCode::GroupNameTooLong, $nameEnd);
+        }
+
         if (':' === ($this->pattern[$nameEnd] ?? '')) {
             // Before PCRE2 10.45, a substring scan is a name PCRE does not know.
             $scan = \in_array($name[0], ['scs', 'scan_substring'], true) && $this->supports(PcreFeature::ScanSubstring);
@@ -2126,7 +2133,9 @@ final class TokenParser
             return $this->parserException(\sprintf('Missing ")" to close "(*%s" at position %d.', $name[0], $nameEnd), ErrorCode::GroupUnclosed, $nameEnd);
         }
 
-        $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->pastTheFault($nameEnd + 1);
+        // Past the whole character in UTF mode.
+        $width = $this->unicodeMode && 1 === LibraryPcre::match('/\G./su', $this->pattern, $character, 0, $nameEnd) ? \strlen($character[0]) : 1;
+        $position = $nameEnd >= \strlen($this->pattern) ? $nameEnd : $this->pastTheFault($nameEnd + $width, $width);
 
         return $this->parserException(\sprintf('Unknown alphabetic assertion "(*%s" at position %d: a ":" is expected after the name.', $name[0], $position), ErrorCode::VerbInvalid, $position);
     }

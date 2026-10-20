@@ -186,6 +186,20 @@ final class BeforePcre2Ten39Test extends TestCase
         yield 'alphabetic name of 34 letters and a body never closed' => ['pattern' => '/(*abcdefghijklmnopqrstuvwxyzabcdefgh:x/', 'releases' => ['10.33', '10.43'], 'offset' => 36, 'code' => ErrorCode::GroupNameTooLong];
         yield 'verb name of 129 characters never closed' => ['pattern' => '/(*'.str_repeat('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef', 4).'g/', 'releases' => ['10.44', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
         yield 'alphabetic name of 129 letters never closed' => ['pattern' => '/(*'.str_repeat('abcdefghijklmnopqrstuvwxyzabcdef', 4).'g/', 'releases' => ['10.44', '10.47', '10.49'], 'offset' => 131, 'code' => ErrorCode::GroupNameTooLong];
+        // After a callout, a condition wants an assertion: a verb there is
+        // refused on its "(", before its name is read, whatever the name,
+        // and on 10.32 an alphabetic name too, which it does not know.
+        yield 'verb name of 34 letters after a callout condition' => ['pattern' => '/(?(?C1)(*ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGH)a)/', 'releases' => ['10.33', '10.43'], 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'verb name of 34 letters after a callout condition and a comment' => ['pattern' => '/(?(?C1)(?#c)(*ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGH)a)/', 'releases' => ['10.33', '10.43'], 'offset' => 12, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'alphabetic name after a callout condition' => ['pattern' => '/(?(?C1)(*pla)a)/', 'releases' => ['10.32'], 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'script run name after a callout condition' => ['pattern' => '/(?(?C1)(*sr)a)/', 'releases' => ['10.32'], 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'alphabetic assertion after a callout condition' => ['pattern' => '/(?(?C1)(*pla:a)b)\\2/', 'releases' => ['10.32'], 'offset' => 7, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'alphabetic assertion after a callout condition and a comment' => ['pattern' => '/(?(?C1)(?#c)(*pla:a)b)\\2/', 'releases' => ['10.32'], 'offset' => 12, 'code' => ErrorCode::ConditionalAssertionExpected];
+        yield 'alphabetic name of 33 letters never closed after a callout condition' => ['pattern' => '/(?(?C1)(*'.str_repeat('a', 33).'/', 'releases' => ['10.33', '10.43'], 'offset' => 42, 'code' => ErrorCode::GroupNameTooLong];
+        // Where a name is due, PCRE wants it on the "(" of an alphabetic
+        // name it does not know, before it reads the name.
+        yield 'unknown alphabetic name with a colon where a name is due' => ['pattern' => '/(?<(*abc:x/', 'releases' => ['10.32', '10.33', '10.44', '10.49'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
+        yield 'alphabetic name of 33 letters with a colon where a name is due' => ['pattern' => '/(?<(*'.str_repeat('a', 33).':x/', 'releases' => ['10.32', '10.33', '10.43', '10.49'], 'offset' => 3, 'code' => ErrorCode::GroupNameExpected];
         // A script run name closed with no colon is no verb either.
         yield 'script run name closed with no colon' => ['pattern' => '/(*sr)/', 'releases' => ['10.32', '10.33'], 'offset' => 4, 'code' => ErrorCode::VerbInvalid];
         yield 'atomic script run name closed with no colon' => ['pattern' => '/(*asr)/', 'releases' => ['10.32', '10.33'], 'offset' => 5, 'code' => ErrorCode::VerbInvalid];
