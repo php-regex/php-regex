@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\Support\EndOfLineTail;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -578,22 +580,19 @@ final class LinterFalsePositiveRegressionTest extends TestCase
         $sequence = $ast->pattern;
         $this->assertInstanceOf(SequenceNode::class, $sequence);
 
-        $this->assertTrue(NodePredicates::tailCanStartWithNewline(
+        $this->assertTrue((new EndOfLineTail(new CharSetAnalyzer(), "\n", PcreGroups::empty()))->canStartWithNewline(
             array_values($sequence->children),
-            new CharSetAnalyzer(),
             false,
         ));
     }
 
     #[Test]
-    public function test_backreference_never_counts_as_a_newline_match(): void
+    public function test_a_backreference_to_no_known_group_may_match_the_newline(): void
     {
-        // Documented conservative limit: a backref could match "\n" at
-        // runtime, but its charset is unknown, so an exotic tail stays
-        // reported rather than silenced.
-        $this->assertFalse(NodePredicates::canMatchNewline(
-            new BackrefNode('1', 0, 0),
-            new CharSetAnalyzer(),
+        // A reference whose group the index does not hold may capture the
+        // newline: the tail is not called impossible.
+        $this->assertTrue((new EndOfLineTail(new CharSetAnalyzer(), "\n", PcreGroups::empty()))->canMatchTheLastNewline(
+            [new BackrefNode('1', 0, 0)],
             false,
         ));
     }

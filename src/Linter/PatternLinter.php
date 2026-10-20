@@ -462,6 +462,7 @@ final class PatternLinter extends AbstractNodeVisitor
                 $this->skipUselessBackref,
                 $this->groups->subroutineTargets(),
                 $this->groups->recursesWhole(),
+                $this->groups,
             ),
             $this->charSetAnalyzer,
             $this->isRuleEnabled(...),

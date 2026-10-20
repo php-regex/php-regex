@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Node\GroupNode;
 
 /**
@@ -30,6 +31,8 @@ final class GroupIndex
      * @param array<string, array<int, CapturingGroupInfo>> $capturingGroupsByName
      * @param array<int, GroupNode>                         $subroutineTargets     the groups a subroutine call runs again, keyed by object id
      * @param bool                                          $recurses              whether the pattern calls itself whole: (?R), (?0), \g<0>
+     * @param PcreGroups|null                               $pcre                  the groups as PCRE numbers them, with the group each
+     *                                                                             reference names and each call runs
      */
     public function __construct(
         public readonly int $maxCapturingGroup,
@@ -39,6 +42,7 @@ final class GroupIndex
         public readonly bool $containsBranchReset,
         public readonly array $subroutineTargets = [],
         public readonly bool $recurses = false,
+        public readonly ?PcreGroups $pcre = null,
     ) {}
 
     /**

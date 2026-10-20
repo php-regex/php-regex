@@ -13,9 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\EndOfLineTail;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
+use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -52,6 +55,14 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * @var array<string, bool|null>
      */
     private array $wordKinds = [];
+
+    /**
+     * What the automata said of whether an atom reads a newline character,
+     * keyed by the question.
+     *
+     * @var array<string, false|null>
+     */
+    private array $newlineReads = [];
 
     private readonly QuestionBudget $questions;
 
@@ -121,7 +132,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 $tail = array_slice($children, $i + 1);
                 if ([] !== $tail
                     && !NodePredicates::sequenceCanBeEmpty($tail)
-                    && !$this->tailCanContinueEndOfLine($child, $tail, $flags, $node, $context)
+                    && !$this->tailCanContinueEndOfLine($child, array_slice($children, 0, $i), $tail, $flags, $node, $context)
                 ) {
                     $issues[] = new RuleViolation(
                         'regex.lint.anchor.impossible.end',
@@ -259,36 +270,6 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     }
 
     /**
-     * Under "(*CRLF)" a newline starts with "\r", under "(*ANYCRLF)" with
-     * "\r" or "\n": a tail that can continue a line end starts with one of
-     * them, which is all this checks. Under "(*ANY)" some newlines lie above
-     * ASCII, which the sets do not hold: the rule says nothing.
-     *
-     * @param array<int, NodeInterface> $nodes
-     */
-    private function tailCanStartALineEnd(NodeInterface $anchor, array $nodes, string $flags, string $convention, LintContext $context): bool
-    {
-        $starts = match ($convention) {
-            'CRLF' => "\r",
-            'ANYCRLF' => "\r\n",
-            default => null,
-        };
-        if (null === $starts) {
-            return true;
-        }
-
-        if ($anchor instanceof AssertionNode && 'z' === $anchor->value) {
-            return false;
-        }
-
-        if (!$anchor instanceof AssertionNode && $context->pattern->hasFlag('D') && !str_contains($flags, 'm')) {
-            return false;
-        }
-
-        return NodePredicates::tailCanStartWithNewline($nodes, $context->charSetAnalyzer, str_contains($flags, 's'), $starts);
-    }
-
-    /**
      * `$` and `\Z` also match just before the subject's final newline (and
      * a multiline `$` before any newline), so a tail that can continue one
      * of those newline matches is not impossible. `\z` only matches at the
@@ -298,43 +279,88 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * `$` before the final newline leaves nothing for content that follows
      * the enclosing group.
      *
+     * Under "(*CRLF)" a newline starts with "\r", under "(*ANYCRLF)" with
+     * "\r" or "\n": a tail that can continue a line end starts with one of
+     * them, which is all this checks. Under "(*ANY)" some newlines lie above
+     * ASCII, which the sets do not hold: the rule says nothing.
+     *
+     * @param array<int, NodeInterface> $before the items written before the anchor in its sequence
      * @param array<int, NodeInterface> $nodes
      */
-    private function tailCanContinueEndOfLine(NodeInterface $anchor, array $nodes, string $flags, SequenceNode $sequence, LintContext $context): bool
+    private function tailCanContinueEndOfLine(NodeInterface $anchor, array $before, array $nodes, string $flags, SequenceNode $sequence, LintContext $context): bool
     {
-        $multiline = str_contains($flags, 'm');
-        $dotAll = str_contains($flags, 's');
-
         $convention = StartOptions::newline($context->pattern->source);
         $newline = match ($convention) {
             'LF' => "\n",
-            'CR' => "\r",
+            'CR', 'CRLF' => "\r",
             'NUL' => "\0",
+            'ANYCRLF' => "\r\n",
             default => null,
         };
         if (null === $newline) {
-            return $this->tailCanStartALineEnd($anchor, $nodes, $flags, $convention, $context);
+            return true;
         }
 
-        if ($anchor instanceof AssertionNode) {
-            if ('z' === $anchor->value) {
-                return false;
-            }
+        $multiline = str_contains($flags, 'm');
+        $atTheEnd = $anchor instanceof AssertionNode
+            ? 'z' === $anchor->value
+            : $context->pattern->hasFlag('D') && !$multiline;
 
-            return NodePredicates::tailCanMatchNewline($nodes, $context->charSetAnalyzer, $dotAll, $newline)
-                && $this->sequenceEndsPattern($sequence, $context);
+        $tail = $this->tail($newline, $flags, $sequence, $context, EndOfLineTail::lastCharacters($before, $context->charSetAnalyzer));
+        if ($tail->canMatchNothingHere($nodes, $atTheEnd)) {
+            return true;
         }
 
-        if ($context->pattern->hasFlag('D') && !$multiline) {
+        if ($atTheEnd) {
             return false;
         }
 
-        if ($multiline) {
-            return NodePredicates::tailCanStartWithNewline($nodes, $context->charSetAnalyzer, $dotAll, $newline);
+        $dotAll = str_contains($flags, 's');
+        if (1 < \strlen($newline) || 'CRLF' === $convention || ($multiline && !$anchor instanceof AssertionNode)) {
+            return $tail->canStartWithNewline($nodes, $dotAll);
         }
 
-        return NodePredicates::tailCanMatchNewline($nodes, $context->charSetAnalyzer, $dotAll, $newline)
-            && $this->sequenceEndsPattern($sequence, $context);
+        return $tail->canMatchTheLastNewline($nodes, $dotAll)
+            && $this->sequenceEndsPattern($sequence, $context, $tail);
+    }
+
+    /**
+     * The reader of the items after an anchor of the sequence. A set the
+     * analyzer cannot read is put to the automata, within the budget: an
+     * atom disjoint from the newline never reads it.
+     */
+    private function tail(string $newline, string $flags, SequenceNode $sequence, LintContext $context, ?ByteCharSet $before): EndOfLineTail
+    {
+        $spelled = false;
+        $reads = function (NodeInterface $atom, string $character) use ($flags, $sequence, $context, &$spelled): ?bool {
+            if (!LanguageQuestions::isOneCharacter($atom, $context->pattern->unicodeMode)) {
+                return null;
+            }
+
+            if (false === $spelled) {
+                $spelled = LanguageQuestions::spelledFlags($context, $sequence);
+            }
+
+            if (null === $spelled) {
+                return null;
+            }
+
+            $atomPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($atom, $context), $flags, $spelled);
+            $key = $atomPattern."\0".$character;
+            if (\array_key_exists($key, $this->newlineReads)) {
+                return $this->newlineReads[$key];
+            }
+
+            if (!$this->questions->allows($context)) {
+                return null;
+            }
+
+            $characterPattern = LanguageQuestions::pattern($context, \sprintf('\\x%02x', \ord($character)), $flags, $spelled);
+
+            return $this->newlineReads[$key] = true === LanguageQuestions::areDisjoint($atomPattern, $characterPattern, $context->dfas, $context->target) ? false : null;
+        };
+
+        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, null === $before || $before->isEmpty() ? null : $before);
     }
 
     /**
@@ -343,7 +369,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * the subject's last byte, so anything consuming after the enclosing
      * group would make the match impossible after all.
      */
-    private function sequenceEndsPattern(SequenceNode $node, LintContext $context): bool
+    private function sequenceEndsPattern(SequenceNode $node, LintContext $context, EndOfLineTail $tail): bool
     {
         $child = $node;
 
@@ -353,7 +379,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
                 if (false !== $index) {
                     $followers = array_slice($parent->children, (int) $index + 1);
-                    if (!NodePredicates::alwaysMatchesEmpty($followers, true)) {
+                    if (!$tail->canMatchNothingAtTheEnd($followers)) {
                         return false;
                     }
                 }
