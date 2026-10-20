@@ -44,7 +44,6 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
-use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -505,6 +504,9 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
+     * Each capturing group with where it stands: the branch it takes of
+     * each alternation around it, and whether it always captures nothing.
+     *
      * @param array<string, int> $alternation
      */
     private function collectCapturingGroupInfo(NodeInterface $node, array $alternation = []): void
@@ -539,10 +541,6 @@ final class PatternLinter extends AbstractNodeVisitor
                     $this->capturingGroupsByName[$node->name][] = $info;
                 }
             }
-
-            $this->collectCapturingGroupInfo($node->child, $alternation);
-
-            return;
         }
 
         if ($node instanceof AlternationNode) {
@@ -556,43 +554,8 @@ final class PatternLinter extends AbstractNodeVisitor
             return;
         }
 
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $this->collectCapturingGroupInfo($child, $alternation);
-            }
-
-            return;
-        }
-
-        if ($node instanceof QuantifierNode) {
-            $this->collectCapturingGroupInfo($node->node, $alternation);
-
-            return;
-        }
-
-        if ($node instanceof ConditionalNode) {
-            $this->collectCapturingGroupInfo($node->condition, $alternation);
-            $this->collectCapturingGroupInfo($node->yes, $alternation);
-            $this->collectCapturingGroupInfo($node->no, $alternation);
-
-            return;
-        }
-
-        if ($node instanceof DefineNode) {
-            $this->collectCapturingGroupInfo($node->content, $alternation);
-
-            return;
-        }
-
-        if ($node instanceof CharClassNode) {
-            $this->collectCapturingGroupInfo($node->expression, $alternation);
-
-            return;
-        }
-
-        if ($node instanceof RangeNode) {
-            $this->collectCapturingGroupInfo($node->start, $alternation);
-            $this->collectCapturingGroupInfo($node->end, $alternation);
+        foreach ($node->getChildren() as $child) {
+            $this->collectCapturingGroupInfo($child, $alternation);
         }
     }
 
