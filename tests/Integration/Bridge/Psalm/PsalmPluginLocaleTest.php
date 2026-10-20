@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Psalm\PregCallAnalyzer;
+use PHPRegex\Psalm\CallTarget;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -66,11 +66,9 @@ final class PsalmPluginLocaleTest extends TestCase
     public function test_two_locales_never_share_a_verdict(): void
     {
         $this->requiresLocale('fr_FR.ISO8859-1', 'The verdicts of two locales');
-        $key = new \ReflectionMethod(PregCallAnalyzer::class, 'targetKey');
-
         $this->assertNotSame(
-            $key->invoke(null, RegexParser::create(['php_version' => '8.4', 'locale' => 'C'])),
-            $key->invoke(null, RegexParser::create(['php_version' => '8.4', 'locale' => 'fr_FR.ISO8859-1'])),
+            CallTarget::key(RegexParser::create(['php_version' => '8.4', 'locale' => 'C'])),
+            CallTarget::key(RegexParser::create(['php_version' => '8.4', 'locale' => 'fr_FR.ISO8859-1'])),
         );
     }
 

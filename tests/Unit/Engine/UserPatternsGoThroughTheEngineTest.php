@@ -95,7 +95,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Transpiler/Target/Python/PythonPrinter.php',
         'src/Transpiler/Target/Python/PythonTarget.php',
         // preg_quote() of a literal, typed as the literal it returns.
-        'src/Psalm/PregCallAnalyzer.php',
+        'src/Psalm/CallTypes.php',
         'src/Psalm/QuotedPattern.php',
     ];
 

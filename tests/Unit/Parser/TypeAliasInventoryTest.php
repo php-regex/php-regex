@@ -42,7 +42,8 @@ use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\ReplacementReferences;
-use PHPRegex\Psalm\PregCallAnalyzer;
+use PHPRegex\Psalm\CallTypes;
+use PHPRegex\Psalm\PatternVerdicts;
 use PHPRegex\Redos\Backtrack\AmbiguityFinder;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosWitness;
@@ -115,7 +116,8 @@ final class TypeAliasInventoryTest extends TestCase
         CaptureFacts::class => ['Facts'],
         ReplacementReferences::class => ['GroupReference'],
         RegexPatternRule::class => ['ConfigArray'],
-        PregCallAnalyzer::class => ['CachedType', 'PatternVerdict'],
+        CallTypes::class => ['CachedType'],
+        PatternVerdicts::class => ['PatternVerdict'],
         AmbiguityFinder::class => ['Verdict', 'Witness'],
         SecurityAnalyzer::class => ['SkippedFile'],
         SymfonyLintCommand::class => ['RegexOptions'],

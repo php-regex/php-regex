@@ -167,7 +167,7 @@ final class AsciiTest extends TestCase
         $helpers = [realpath(__DIR__.'/../../../../src/Parser/Text/Ascii.php'), realpath(__DIR__.'/../../../../src/Parser/Text/Bytes.php')];
         // Psalm keys its functions by strtolower(): the plugin asks for a
         // name lowered the same way.
-        $sameAsTheHost = ['Psalm/PregCallAnalyzer.php:'];
+        $sameAsTheHost = ['Psalm/CallArguments.php:'];
         $calls = [];
         foreach (glob(__DIR__.'/../../../../src/*', \GLOB_ONLYDIR) ?: [] as $package) {
             if (\in_array(basename($package), ['Laravel', 'Symfony'], true)) {

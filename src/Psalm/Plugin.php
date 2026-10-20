@@ -53,7 +53,7 @@ final class Plugin implements PluginEntryPointInterface
      */
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {
-        PregCallAnalyzer::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'), self::option($config, 'locale'));
+        CallTarget::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'), self::option($config, 'locale'));
         // What the engine answers about Unicode classes, kept in Psalm's
         // cache directory, which --clear-cache empties; none under --no-cache.
         $cacheDirectory = Config::getInstance()->getCacheDirectory();
