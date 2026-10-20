@@ -235,7 +235,6 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'unicode_extended_category' => ['/\p{Ll}/', 'extended Unicode category property'];
         yield 'unicode_extended_property' => ['/\p{Alpha}/', 'extended Unicode binary property'];
         yield 'unicode_script_equals' => ['/\p{Script=Greek}/', 'extended Unicode script= property'];
-        yield 'unicode_block_equals' => ['/\p{Block=Basic_Latin}/', 'extended Unicode block= property'];
 
         // 10. Callouts
         yield 'callout_bare' => ['/(?C)abc/', 'bare callout'];
@@ -307,10 +306,7 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'possessive_in_class_question' => ['/[a?+b]/', '?+ in class'];
 
         // Extended Unicode properties
-        yield 'unicode_block' => ['/\p{Block=Basic_Latin}/', 'Block= property'];
         yield 'unicode_script' => ['/\p{Script=Latin}/', 'Script= property'];
-        yield 'unicode_category' => ['/\p{General_Category=Letter}/', 'General_Category='];
-        yield 'unicode_negated' => ['/\P{Block=Basic_Latin}/', 'negated Block='];
 
         // Callouts
         yield 'callout_empty' => ['/(?C)abc/', 'empty callout'];
@@ -331,6 +327,14 @@ final class AdvancedFeaturesComplianceTest extends TestCase
         yield 'invalid_callout_range' => ['/(?C256)abc/', 'callout identifier out of range'];
         yield 'invalid_pcre_verb' => ['/(*INVALID)a/', 'unsupported PCRE verb'];
         yield 'invalid_group_verb' => ['/(?(*INVALID)a)/', 'unsupported verb in modifier group'];
+
+        // Rows that once sat in the accepting providers above. PCRE2 has no Unicode
+        // blocks, and no "General_Category=" prefix: a category is named bare, "\p{L}".
+        // preg_match() on PCRE2 10.35 to 10.49 gives "unknown property after \P or \p"
+        // at offset 21 for the blocks and 27 for the category.
+        yield 'unicode_block_equals' => ['/\p{Block=Basic_Latin}/', 'extended Unicode block= property'];
+        yield 'unicode_negated_block' => ['/\P{Block=Basic_Latin}/', 'negated Block='];
+        yield 'unicode_category_long_value' => ['/\p{General_Category=Letter}/', 'General_Category= prefix'];
 
         // Rows that once sat in the accepting providers above, on patterns PHP refuses.
         // "(?(" takes a condition, and a verb is not one: preg_match() on PCRE2 10.48 gives

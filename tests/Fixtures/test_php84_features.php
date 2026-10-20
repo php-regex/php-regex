@@ -59,7 +59,7 @@ $features = [
     
     // 9. Extended \p{...} properties
     'Extended \\p{...} properties' => [
-        'patterns' => ['/\p{L}/', '/\p{Script=Greek}/', '/\p{Block=Basic_Latin}/'],
+        'patterns' => ['/\p{L}/', '/\p{Script=Greek}/'],
         'description' => 'Extended unicode properties should be validated'
     ],
     

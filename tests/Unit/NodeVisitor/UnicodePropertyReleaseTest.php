@@ -146,6 +146,19 @@ final class UnicodePropertyReleaseTest extends TestCase
         yield 'White_Space' => ['pattern' => '/\\p{White_Space}/u', 'refusedBy' => [80100]];
         yield 'ASCII' => ['pattern' => '/\\p{ASCII}/u', 'refusedBy' => [80100]];
         yield 'a script in lower case inside a class' => ['pattern' => '/[\\p{greek}]/u', 'refusedBy' => [80100]];
+
+        // Names other regex flavours know and no PCRE2 release does: Java's
+        // "java" properties, and Unicode blocks, which PCRE2 never added
+        // ("unknown property after \P or \p" on 10.35 to 10.49).
+        yield 'a Java lower-case property' => ['pattern' => '/\\p{javaLowerCase}/u', 'refusedBy' => $all];
+        yield 'a Java upper-case property, negated' => ['pattern' => '/\\p{^javaUpperCase}/u', 'refusedBy' => $all];
+        yield 'a Java white-space property' => ['pattern' => '/\\p{javaWhitespace}/u', 'refusedBy' => $all];
+        yield 'a Java mirrored property, without "u"' => ['pattern' => '/\\p{javaMirrored}/', 'refusedBy' => $all];
+        yield 'a block' => ['pattern' => '/\\p{Block=Basic_Latin}/u', 'refusedBy' => $all];
+        yield 'a block, negated' => ['pattern' => '/\\P{Block=Greek}/u', 'refusedBy' => $all];
+        yield 'a block by its short name' => ['pattern' => '/\\p{blk=ASCII}/u', 'refusedBy' => $all];
+        yield 'a block no Unicode has' => ['pattern' => '/\\p{Blk=Foo}/u', 'refusedBy' => $all];
+        yield 'a block in the "In" form' => ['pattern' => '/\\p{InBasic_Latin}/u', 'refusedBy' => $all];
     }
 
     /**

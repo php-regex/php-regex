@@ -2480,58 +2480,10 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Optimized Unicode property validation with error suppression.
+     * Whether the engine that runs compiles the property: a name it does not
+     * know is refused, whatever another regex flavour calls it.
      */
     private function validateUnicodeProperty(string $key): bool
-    {
-        if ($this->compileUnicodeProperty($key)) {
-            return true;
-        }
-
-        if (null !== $mappedKey = $this->mapJavaUnicodeProperty($key)) {
-            if ($this->compileUnicodeProperty($mappedKey)) {
-                return true;
-            }
-        }
-
-        // Fallback: map Block=/Blk= to In<block> alias which PCRE recognizes.
-        if (LibraryPcre::match('/^p\\{(\\^)?bl(?:ock|k)=([^}]+)\\}$/i', $key, $matches)) {
-            $negation = (string) $matches[1];
-            $block = $matches[2];
-            $aliasKey = 'p{'.$negation.'In'.$block.'}';
-            // Try to compile the alias; if the runtime lacks block-name support,
-            // still treat the property as syntactically valid.
-            $this->compileUnicodeProperty($aliasKey);
-
-            return true;
-        }
-
-        return false;
-    }
-
-    private function mapJavaUnicodeProperty(string $key): ?string
-    {
-        if (!LibraryPcre::match('/^p\\{(\\^)?([A-Za-z_][A-Za-z0-9_]*)\\}$/', $key, $matches)) {
-            return null;
-        }
-
-        $negation = $matches[1];
-        $property = Ascii::lower($matches[2]);
-        $aliases = [
-            'javalowercase' => 'Ll',
-            'javauppercase' => 'Lu',
-            'javawhitespace' => 'White_Space',
-            'javamirrored' => 'Bidi_Mirrored',
-        ];
-
-        if (!isset($aliases[$property])) {
-            return null;
-        }
-
-        return 'p{'.$negation.$aliases[$property].'}';
-    }
-
-    private function compileUnicodeProperty(string $key): bool
     {
         return null === $this->engine->compile("/^\\{$key}$/u");
     }
@@ -2541,8 +2493,6 @@ final class Validator extends AbstractNodeVisitor
         return $node instanceof LiteralNode
             || $node instanceof CharLiteralNode
             || $node instanceof ControlCharNode;
-        // CharTypeNode (e.g., \d) is technically invalid in a standard PCRE range start/end,
-        // but we exclude it here to remain spec-compliant unless lenient mode is desired.
     }
 
     /**

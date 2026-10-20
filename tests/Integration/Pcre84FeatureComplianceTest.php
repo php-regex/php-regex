@@ -142,7 +142,6 @@ final class Pcre84FeatureComplianceTest extends TestCase
     {
         yield 'general category' => ['/\\p{L}+/'];
         yield 'script property' => ['/\\p{Script=Greek}+$/'];
-        yield 'block property' => ['/\\p{Block=Basic_Latin}/'];
     }
 
     #[DataProvider('provideCallouts')]

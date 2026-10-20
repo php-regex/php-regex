@@ -43,21 +43,28 @@ final class ValidatorAcceptsTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideFormerlyAcceptedPatternsPhpRefuses')]
-    public function test_a_pattern_php_refuses_is_reported_as_invalid(string $pattern): void
+    public function test_a_pattern_php_refuses_is_reported_as_invalid(string $pattern, int $offset): void
     {
         $result = Regex::create()->validate($pattern);
 
         $this->assertFalse($result->isValid, \sprintf('%s compiles in no PCRE2 release but was reported valid.', $pattern));
         $this->assertNotNull($result->error);
+        $this->assertSame($offset, $result->offset, $pattern);
     }
 
     /**
-     * @return iterable<string, array{pattern: string}>
+     * @return iterable<string, array{pattern: string, offset: int}>
      */
     public static function provideFormerlyAcceptedPatternsPhpRefuses(): iterable
     {
         // preg_match() on PCRE2 10.48 and 10.40: "PCRE2 does not support \F, \L, \l, \N{name}, \U, or \u at offset 2".
-        yield 'unicode four digit escape: /\\u0041/' => ['pattern' => '/\\u0041/'];
+        yield 'unicode four digit escape: /\\u0041/' => ['pattern' => '/\\u0041/', 'offset' => 2];
+        // preg_match() on PCRE2 10.35 to 10.49: "unknown property after \P or \p", past the "}".
+        // Java names its own properties "java..."; no PCRE2 release knows them.
+        yield 'java unicode property: /\\p{javaLowerCase}/u' => ['pattern' => '/\\p{javaLowerCase}/u', 'offset' => 17];
+        yield 'java unicode property: /\\p{javaUpperCase}/u' => ['pattern' => '/\\p{javaUpperCase}/u', 'offset' => 17];
+        yield 'java unicode property: /\\p{javaWhitespace}/u' => ['pattern' => '/\\p{javaWhitespace}/u', 'offset' => 18];
+        yield 'java unicode property: /\\p{javaMirrored}/u' => ['pattern' => '/\\p{javaMirrored}/u', 'offset' => 16];
     }
 
     /**
@@ -68,10 +75,6 @@ final class ValidatorAcceptsTest extends TestCase
         yield 'validate valid: /foo{1,3}/ims' => ['pattern' => '/foo{1,3}/ims'];
         yield 'allows nested quantifiers: /(a+)*b/' => ['pattern' => '/(a+)*b/'];
         yield 'valid unicode property: /\\p{L}/' => ['pattern' => '/\\p{L}/'];
-        yield 'valid java unicode properties: /\\p{javaLowerCase}/u' => ['pattern' => '/\\p{javaLowerCase}/u'];
-        yield 'valid java unicode properties: /\\p{javaUpperCase}/u' => ['pattern' => '/\\p{javaUpperCase}/u'];
-        yield 'valid java unicode properties: /\\p{javaWhitespace}/u' => ['pattern' => '/\\p{javaWhitespace}/u'];
-        yield 'valid java unicode properties: /\\p{javaMirrored}/u' => ['pattern' => '/\\p{javaMirrored}/u'];
         yield 'valid unicode named character: /\\N{U+0041}/u' => ['pattern' => '/\\N{U+0041}/u'];
         yield 'allows non nested quantifiers: /(a*)(b*)/' => ['pattern' => '/(a*)(b*)/'];
         yield 'allows nested possessive quantifiers: /(a++)*+b/' => ['pattern' => '/(a++)*+b/'];

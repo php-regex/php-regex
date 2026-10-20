@@ -1516,22 +1516,24 @@ final class ParserConstructsTest extends TestCase
             'recompiled' => '/(a+)*b/',
         ];
 
-        yield 'valid java unicode properties: /\\p{javaLowerCase}/u' => [
+        // No PCRE2 release knows a "java" property, and validation refuses
+        // it; reading it is syntax only, and the name is written back as read.
+        yield 'a property name PCRE2 does not know, written back as read: /\\p{javaLowerCase}/u' => [
             'pattern' => '/\\p{javaLowerCase}/u',
             'recompiled' => '/\\p{javaLowerCase}/u',
         ];
 
-        yield 'valid java unicode properties: /\\p{javaUpperCase}/u' => [
+        yield 'a property name PCRE2 does not know, written back as read: /\\p{javaUpperCase}/u' => [
             'pattern' => '/\\p{javaUpperCase}/u',
             'recompiled' => '/\\p{javaUpperCase}/u',
         ];
 
-        yield 'valid java unicode properties: /\\p{javaWhitespace}/u' => [
+        yield 'a property name PCRE2 does not know, written back as read: /\\p{javaWhitespace}/u' => [
             'pattern' => '/\\p{javaWhitespace}/u',
             'recompiled' => '/\\p{javaWhitespace}/u',
         ];
 
-        yield 'valid java unicode properties: /\\p{javaMirrored}/u' => [
+        yield 'a property name PCRE2 does not know, written back as read: /\\p{javaMirrored}/u' => [
             'pattern' => '/\\p{javaMirrored}/u',
             'recompiled' => '/\\p{javaMirrored}/u',
         ];
