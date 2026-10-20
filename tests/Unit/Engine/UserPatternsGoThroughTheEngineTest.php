@@ -76,6 +76,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/LanguageServer/Protocol/Message.php',
         'src/Parser/Node/QuantifierBounds.php',
         'src/Parser/Printer/PatternPrinter.php',
+        'src/Parser/Printer/DelimiterBrackets.php',
         'src/Explain/TextExplainer.php',
         'src/Explain/Highlighter/AbstractHighlighter.php',
         'src/Explain/HtmlExplainer.php',
