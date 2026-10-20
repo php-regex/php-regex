@@ -277,21 +277,6 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         }
     }
 
-    protected static function holdsCapture(NodeInterface $node): bool
-    {
-        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::holdsCapture($child)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * A class with members that are the complement of a set, as "\S" under
      * u in "[\S\d]", where the target has no class operation to write one:
@@ -356,6 +341,21 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $quantifier = LibraryPcre::replace('/\s+/', '', $quantifier) ?? $quantifier;
 
         return str_starts_with($quantifier, '{,') ? '{0,'.substr($quantifier, 2) : $quantifier;
+    }
+
+    private static function holdsCapture(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsCapture($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

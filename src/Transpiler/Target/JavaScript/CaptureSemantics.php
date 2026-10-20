@@ -84,7 +84,7 @@ final class CaptureSemantics
         $check = new self();
         $check->ungreedy = str_contains($ast->flags, 'U') || 1 === LibraryPcre::match('/\\(\\?[\\^a-zA-Z]*U/', (string) $ast->source);
         $check->number($ast->pattern);
-        $check->walk($ast->pattern, [], []);
+        $check->walk($ast->pattern, []);
 
         return null === $check->divergent ? null : [$check->reason, $check->divergent];
     }
@@ -94,7 +94,8 @@ final class CaptureSemantics
         if ($node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type)) {
             $this->numbers[spl_object_id($node)] = $number = \count($this->numbers) + 1;
             if (null !== $node->name) {
-                $this->names[$node->name] ??= $number;
+                // Two groups share a name only under (?J), which is refused.
+                $this->names[$node->name] = $number;
             }
         }
 
@@ -105,14 +106,14 @@ final class CaptureSemantics
 
     /**
      * The groups certain to have matched once the node has, given those
-     * certain before it.
+     * certain before it. A reference inside its own group finds it not yet
+     * matched, as JavaScript does.
      *
-     * @param array<int, true> $set  the groups certain to have matched before the node
-     * @param array<int, true> $open the groups the node stands in
+     * @param array<int, bool> $set the groups certain to have matched before the node
      *
-     * @return array<int, true>
+     * @return array<int, bool>
      */
-    private function walk(NodeInterface $node, array $set, array $open): array
+    private function walk(NodeInterface $node, array $set): array
     {
         if (null !== $this->divergent) {
             return $set;
@@ -120,7 +121,7 @@ final class CaptureSemantics
 
         if ($node instanceof SequenceNode) {
             foreach ($node->children as $child) {
-                $set = $this->walk($child, $set, $open);
+                $set = $this->walk($child, $set);
             }
 
             return $set;
@@ -129,7 +130,7 @@ final class CaptureSemantics
         if ($node instanceof AlternationNode) {
             $common = null;
             foreach ($node->alternatives as $alternative) {
-                $after = $this->walk($alternative, $set, $open);
+                $after = $this->walk($alternative, $set);
                 $common = null === $common ? $after : array_intersect_key($common, $after);
             }
 
@@ -137,16 +138,16 @@ final class CaptureSemantics
         }
 
         if ($node instanceof GroupNode) {
-            return $this->walkGroup($node, $set, $open);
+            return $this->walkGroup($node, $set);
         }
 
         if ($node instanceof QuantifierNode) {
-            return $this->walkQuantifier($node, $set, $open);
+            return $this->walkQuantifier($node, $set);
         }
 
         if ($node instanceof BackrefNode) {
             $number = $this->referenced($node->ref);
-            if (null !== $number && (!isset($set[$number]) || isset($open[$number]))) {
+            if (null !== $number && true !== ($set[$number] ?? false)) {
                 $this->diverge('A backreference to a group that may not have matched cannot be carried into JavaScript: there it matches the empty string, where PCRE fails.', $node);
             }
         }
@@ -155,34 +156,31 @@ final class CaptureSemantics
     }
 
     /**
-     * @param array<int, true> $set
-     * @param array<int, true> $open
+     * @param array<int, bool> $set
      *
-     * @return array<int, true>
+     * @return array<int, bool>
      */
-    private function walkGroup(GroupNode $node, array $set, array $open): array
+    private function walkGroup(GroupNode $node, array $set): array
     {
+        $after = $this->walk($node->child, $set);
         $number = $this->numbers[spl_object_id($node)] ?? null;
         if (null !== $number) {
-            return $this->walk($node->child, $set, $open + [$number => true]) + [$number => true];
+            return [$number => true] + $after;
         }
-
-        $after = $this->walk($node->child, $set, $open);
 
         // A negative assertion holds when its groups have not matched.
         return GroupType::LookaheadNegative === $node->type || GroupType::LookbehindNegative === $node->type ? $set : $after;
     }
 
     /**
-     * @param array<int, true> $set
-     * @param array<int, true> $open
+     * @param array<int, bool> $set
      *
-     * @return array<int, true>
+     * @return array<int, bool>
      */
-    private function walkQuantifier(QuantifierNode $node, array $set, array $open): array
+    private function walkQuantifier(QuantifierNode $node, array $set): array
     {
+        $after = $this->walk($node->node, $set);
         $bounds = QuantifierBounds::parse($node->quantifier);
-        $after = $this->walk($node->node, $set, $open);
         if (null === $bounds) {
             return $set;
         }
@@ -215,7 +213,7 @@ final class CaptureSemantics
         if ($node instanceof QuantifierNode) {
             $lazy = QuantifierType::Lazy === $node->type || ($this->ungreedy && QuantifierType::Greedy === $node->type);
 
-            return ($lazy && 0 === (QuantifierBounds::parse($node->quantifier)->min ?? 0)) || $this->prefersEmpty($node->node);
+            return ($lazy && self::mayBeLeftOut($node)) || $this->prefersEmpty($node->node);
         }
 
         if ($node instanceof AlternationNode) {
@@ -233,6 +231,14 @@ final class CaptureSemantics
         }
 
         return false;
+    }
+
+    /**
+     * Whether the repetition may be taken no time at all: "?", "*", "{0,n}".
+     */
+    private static function mayBeLeftOut(QuantifierNode $node): bool
+    {
+        return 0 === QuantifierBounds::parse($node->quantifier)?->min;
     }
 
     /**
@@ -263,7 +269,7 @@ final class CaptureSemantics
             $node instanceof LiteralNode => '' === $node->value,
             $node instanceof SequenceNode => [] === array_filter($node->children, static fn (NodeInterface $child): bool => !self::matchesEmpty($child)),
             $node instanceof AlternationNode => [] !== array_filter($node->alternatives, self::matchesEmpty(...)),
-            $node instanceof QuantifierNode => 0 === (QuantifierBounds::parse($node->quantifier)->min ?? 0) || self::matchesEmpty($node->node),
+            $node instanceof QuantifierNode => self::mayBeLeftOut($node) || self::matchesEmpty($node->node),
             $node instanceof GroupNode => \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true) || self::matchesEmpty($node->child),
             $node instanceof CharClassNode, $node instanceof CharTypeNode, $node instanceof DotNode, $node instanceof CharLiteralNode,
             $node instanceof UnicodePropNode, $node instanceof ControlCharNode => false,

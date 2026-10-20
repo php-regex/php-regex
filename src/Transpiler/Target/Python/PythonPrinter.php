@@ -160,7 +160,8 @@ final class PythonPrinter extends AbstractTargetPrinter
         if (GroupType::Capturing === $node->type || GroupType::Named === $node->type) {
             $number = ++$this->groupCount;
             if (null !== $node->name) {
-                $this->names[$node->name] ??= $number;
+                // Two groups share a name only under (?J), which is refused.
+                $this->names[$node->name] = $number;
             }
         }
 
@@ -547,7 +548,8 @@ final class PythonPrinter extends AbstractTargetPrinter
             return $this->unsupported('PCRE cannot tell which characters '.$atom.' matches under /i.', $node);
         }
 
-        $dottedI = CharSet::fromRanges([[0x49, 0x49], [0x69, 0x69], [0x130, 0x131]]);
+        // "I" and "i" fold together in PCRE: "i" in either set stands for both.
+        $dottedI = CharSet::fromRanges([[0x69, 0x69], [0x130, 0x131]]);
         if ($sensitive->intersect($dottedI)->isEmpty() && $caseless->intersect($dottedI)->isEmpty()) {
             return $this->caseScoped($printed);
         }

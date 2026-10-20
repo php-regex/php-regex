@@ -97,6 +97,23 @@ final class PythonEngineParityTest extends TestCase
         yield 'a caseless letter with no dotted i under u' => ['pattern' => '/k/iu', 'python' => 'k', 'flags' => 'i', 'subject' => "\u{212A}", 'spans' => [[0, 3]]];
         yield 'a backreference before a digit' => ['pattern' => '/(a)\1(?#)2/', 'python' => '(a)(?:\1)2', 'flags' => 'a', 'subject' => 'aa2', 'spans' => [[0, 3], [0, 1]]];
         yield 'a caseless class that takes every character' => ['pattern' => '/(?i)[\x00-\x{398}\x{39a}-\x{10ffff}]/u', 'python' => '[\s\S]', 'flags' => '', 'subject' => "\u{399}", 'spans' => [[0, 2]]];
+        yield 'letters around the dotted i under u' => ['pattern' => '/HJhj\x{12F}\x{132}/iu', 'python' => 'HJhj\u012F\u0132', 'flags' => 'i', 'subject' => "hjHJ\u{12E}\u{133}", 'spans' => [[0, 8]]];
+        yield 'the dotted capital I under u' => ['pattern' => '/\x{130}/iu', 'python' => '(?-i:[\u0130])', 'flags' => 'i', 'subject' => 'i', 'spans' => null];
+        yield 'the dotless small i under u' => ['pattern' => '/\x{131}/iu', 'python' => '(?-i:[\u0131])', 'flags' => 'i', 'subject' => 'I', 'spans' => null];
+        yield 'an i among other letters under u' => ['pattern' => '/éIx/iu', 'python' => 'é(?-i:[Ii])x', 'flags' => 'i', 'subject' => 'ÉiX', 'spans' => [[0, 4]]];
+        yield 'two adjacent letters with their cases' => ['pattern' => '/[ij]/iu', 'python' => '(?-i:[IJij])', 'flags' => 'i', 'subject' => 'J', 'spans' => [[0, 1]]];
+        yield 'a range with a third case' => ['pattern' => '/[i-k]/iu', 'python' => '(?-i:[I-Ki-k\u212A])', 'flags' => 'i', 'subject' => "\u{212A}", 'spans' => [[0, 3]]];
+        yield 'an escape in a class under an inline caseless switch' => ['pattern' => '/a(?i)[\x41]/', 'python' => 'a(?i:[\x41])', 'flags' => 'a', 'subject' => 'aa', 'spans' => [[0, 2]]];
+        yield 'a quoted run with an i under u' => ['pattern' => '/\QéIx\E/iu', 'python' => 'é(?-i:[Ii])x', 'flags' => 'i', 'subject' => 'ÉiX', 'spans' => [[0, 4]]];
+        yield 'a quoted run starting with an I under u' => ['pattern' => '/\QIé\E/iu', 'python' => '(?-i:[Ii])é', 'flags' => 'i', 'subject' => 'iÉ', 'spans' => [[0, 3]]];
+        yield 'a class around the dotted i under u' => ['pattern' => '/[hj\x{12F}\x{132}]/iu', 'python' => '[hj\u012F\u0132]', 'flags' => 'i', 'subject' => 'H', 'spans' => [[0, 1]]];
+        yield 'a class of a capital I under u' => ['pattern' => '/[I]/iu', 'python' => '(?-i:[Ii])', 'flags' => 'i', 'subject' => 'i', 'spans' => [[0, 1]]];
+        yield 'a lookbehind over alternatives of different lengths' => ['pattern' => '/(?<=a|bc)d/', 'python' => '(?:(?<=a)|(?<=bc))d', 'flags' => 'a', 'subject' => 'bcd', 'spans' => [[2, 3]]];
+        yield 'a negative lookbehind over alternatives of different lengths' => ['pattern' => '/(?<!a|bc)d/', 'python' => '(?<!a)(?<!bc)d', 'flags' => 'a', 'subject' => 'bcd', 'spans' => null];
+        yield 'a space in a class under u' => ['pattern' => '/[\sx]/u', 'python' => '[\t-\r \x85\xA0\u1680\u180E\u2000-\u200A\u2028\u2029\u202F\u205F\u3000x]', 'flags' => '', 'subject' => "\u{85}", 'spans' => [[0, 2]]];
+        yield 'a backreference under i without u' => ['pattern' => '/(a)\1/i', 'python' => '(a)\1', 'flags' => 'ai', 'subject' => 'aA', 'spans' => [[0, 2], [0, 1]]];
+        yield 'an inline comment' => ['pattern' => '/a(?#c)b/', 'python' => 'ab', 'flags' => 'a', 'subject' => 'ab', 'spans' => [[0, 2]]];
+        yield 'horizontal space' => ['pattern' => '/\h/', 'python' => '[\x09\x20\xA0\u1680\u180E\u2000-\u200A\u202F\u205F\u3000]', 'flags' => 'a', 'subject' => "\t", 'spans' => [[0, 1]]];
         yield 'a group that may be unset' => ['pattern' => '/(a)|b\1/', 'python' => '(a)|b\1', 'flags' => 'a', 'subject' => 'b', 'spans' => null];
     }
 
@@ -165,6 +182,13 @@ final class PythonEngineParityTest extends TestCase
         ];
     }
 
+    #[Test]
+    public function test_notes_the_whitespace_classes(): void
+    {
+        $this->assertContains('Converted \h to character class.', Regex::create(['cache' => null])->transpile('/\h/', 'python')->notes);
+        $this->assertContains('Dropped comments during transpilation.', Regex::create(['cache' => null])->transpile('/a(?#c)b/', 'python')->notes);
+    }
+
     /**
      * @return list<?array{int, int}>|null
      */
@@ -174,6 +198,6 @@ final class PythonEngineParityTest extends TestCase
             return null;
         }
 
-        return array_values(array_map(static fn (array $match): ?array => null === $match[0] ? null : [$match[1], $match[1] + \strlen($match[0])], $matches));
+        return array_values(array_map(static fn (array $match): ?array => null === $match[0] ? null : [$match[1], $match[1] + \strlen($match[0])], array_filter($matches, is_int(...), \ARRAY_FILTER_USE_KEY)));
     }
 }
