@@ -107,8 +107,7 @@ final class FirstErrorLocator
         $read = $swallowing ?? $inPlace;
         $limit = null === $swallowing ? $position : \strlen($pattern) + 1;
 
-        $earlier = (new Validator($this->maxLookbehindLength, $pattern, $this->target))
-            ->firstEscapeErrorBefore($read, $pattern, $flags, $limit);
+        $earlier = EscapeChecks::forPattern($pattern, $flags, $this->target)->firstErrorBefore($read, $limit);
 
         $earlier ??= $this->escapeErrorEndingRange($error, $read, $pattern, $flags);
 
@@ -202,8 +201,8 @@ final class FirstErrorLocator
         }
 
         // The escapes read up to that end, which starts before the limit.
-        return (new Validator($this->maxLookbehindLength, $pattern, $this->target))
-            ->firstEscapeErrorBefore($tokens, $pattern, $flags, $end->position + ($this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? 2 : 1));
+        return EscapeChecks::forPattern($pattern, $flags, $this->target)
+            ->firstErrorBefore($tokens, $end->position + ($this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? 2 : 1));
     }
 
     /**

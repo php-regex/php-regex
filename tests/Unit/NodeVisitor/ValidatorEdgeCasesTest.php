@@ -32,6 +32,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Validation\EscapeChecks;
 use PHPRegex\Parser\Validation\QuantifierCounts;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -44,9 +45,7 @@ final class ValidatorEdgeCasesTest extends TestCase
 
     public function test_clear_caches_resets_static_state(): void
     {
-        $ref = new \ReflectionClass(Validator::class);
-
-        $unicodePropCache = $ref->getProperty('unicodePropCache');
+        $unicodePropCache = (new \ReflectionClass(EscapeChecks::class))->getProperty('unicodePropCache');
         $unicodePropCache->setValue(null, ['p{X}' => true]);
 
         $quantifierBoundsCache = (new \ReflectionClass(QuantifierCounts::class))->getProperty('quantifierBoundsCache');

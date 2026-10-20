@@ -21,8 +21,8 @@ use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\EscapeChecks;
 use PHPRegex\Parser\Validation\QuantifierCounts;
-use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -96,12 +96,12 @@ final class StaticCachesTest extends TestCase
     public function test_the_shared_clear_empties_the_validator_caches(): void
     {
         $this->assertTrue(RegexParser::create(['cache' => new NullCache()])->validate('/\p{Latin}a{2,3}/u')->isValid);
-        $this->assertNotSame([], $this->read(Validator::class, 'unicodePropCache'));
+        $this->assertNotSame([], $this->read(EscapeChecks::class, 'unicodePropCache'));
         $this->assertNotSame([], $this->read(QuantifierCounts::class, 'quantifierBoundsCache'));
 
         StaticCaches::clear();
 
-        $this->assertSame([], $this->read(Validator::class, 'unicodePropCache'));
+        $this->assertSame([], $this->read(EscapeChecks::class, 'unicodePropCache'));
         $this->assertSame([], $this->read(QuantifierCounts::class, 'quantifierBoundsCache'));
     }
 
@@ -191,7 +191,7 @@ final class StaticCachesTest extends TestCase
     private static function caches(): array
     {
         return [
-            [Validator::class, 'unicodePropCache'],
+            [EscapeChecks::class, 'unicodePropCache'],
             [QuantifierCounts::class, 'quantifierBoundsCache'],
             [ComplexityScorer::class, 'unboundedQuantifierCache'],
             [SampleGenerator::class, 'propertySamples'],
