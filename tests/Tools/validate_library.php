@@ -15,12 +15,10 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Toolkit\Regex;
 
 /*
- * This file is part of the PHPRegex package.
- *
- * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
+ * A short end-to-end check of the library from its public entry point, each
+ * result held against PHP's own PCRE engine where one applies: generated
+ * samples must match, printed patterns must match the same subjects, and the
+ * features listed must compile. Exits 1 when any check fails.
  */
 
 require __DIR__.'/../../vendor/autoload.php';
@@ -86,6 +84,7 @@ foreach ($redosPatterns as $pattern => $shouldDetect) {
     } catch (Exception $e) {
         echo "✗ Pattern: $pattern → Error: {$e->getMessage()}\n";
         $failedTests++;
+        $issues[] = "ReDoS analysis failed for: $pattern";
     }
 }
 echo "\n";
@@ -119,8 +118,9 @@ foreach ($pcreFeatures as $feature => $pattern) {
             echo "✓ $feature: Parsed successfully\n";
             $passedTests++;
         } else {
-            echo "⚠ $feature: Parsed but may not be valid PCRE\n";
+            echo "✗ $feature: Parsed, but PHP's PCRE engine refuses it\n";
             $failedTests++;
+            $issues[] = "Parsed a pattern PHP's PCRE engine refuses: $feature";
         }
     } catch (Exception $e) {
         echo "✗ $feature: Failed - {$e->getMessage()}\n";
@@ -164,13 +164,14 @@ foreach ($roundTripPatterns as $pattern) {
             echo "✓ Pattern: $pattern → Compiles to: $compiled (behavior matches)\n";
             $passedTests++;
         } else {
-            echo "⚠ Pattern: $pattern → Compiles to: $compiled (behavior differs)\n";
+            echo "✗ Pattern: $pattern → Compiles to: $compiled (behavior differs)\n";
             $failedTests++;
             $issues[] = "Round-trip behavior mismatch for: $pattern";
         }
     } catch (Exception $e) {
         echo "✗ Pattern: $pattern → Error: {$e->getMessage()}\n";
         $failedTests++;
+        $issues[] = "Round-trip failed for: $pattern";
     }
 }
 echo "\n";
@@ -222,16 +223,4 @@ if (!empty($issues)) {
     echo "\n";
 }
 
-echo "=== Analysis ===\n";
-echo "The library demonstrates:\n";
-echo "• Basic parsing and AST generation works\n";
-echo "• Sample generation works for simple patterns\n";
-echo "• ReDoS detection has some capability\n";
-echo "• Error detection for obvious invalid patterns works\n\n";
-
-echo "However, there are concerns:\n";
-echo "• No systematic cross-validation against PHP's PCRE engine\n";
-echo "• Tests check AST structure, not actual regex behavior\n";
-echo "• Coverage of advanced PCRE features is unclear\n";
-echo "• No proof that optimizations preserve semantics\n";
-echo "• Integration tools (PHPStan) rely on unverified parser\n";
+exit($failedTests > 0 ? 1 : 0);
