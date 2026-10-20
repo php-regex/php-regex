@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
@@ -57,7 +57,6 @@ final class ServerTargetFallbackTest extends TestCase
         }
 
         $this->output = $output;
-        Response::writeTo($this->output);
 
         $this->root = sys_get_temp_dir().'/regex-parser-lsp-fallback-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
@@ -65,7 +64,6 @@ final class ServerTargetFallbackTest extends TestCase
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
 
         foreach (glob($this->root.'/*') ?: [] as $file) {
@@ -187,7 +185,7 @@ final class ServerTargetFallbackTest extends TestCase
         fwrite($input, $payload);
         rewind($input);
 
-        (new Server($regex, $input))->run();
+        (new Server($regex, $input, transport: new Transport($this->output)))->run();
     }
 
     private function rootUri(): string

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,6 +35,8 @@ final class ServerTraceTest extends TestCase
      */
     private $errors;
 
+    private Transport $transport;
+
     protected function setUp(): void
     {
         $output = fopen('php://memory', 'r+');
@@ -45,13 +47,12 @@ final class ServerTraceTest extends TestCase
 
         $this->output = $output;
         $this->errors = $errors;
-        Response::writeTo($this->output);
+        $this->transport = new Transport($output);
         Server::writeErrorsTo($this->errors);
     }
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         Server::writeErrorsTo(null);
         fclose($this->output);
         fclose($this->errors);
@@ -163,7 +164,7 @@ final class ServerTraceTest extends TestCase
         ]);
         $traced = \count($this->traceLines());
 
-        Response::notification('window/logMessage', ['type' => 3, 'message' => 'after the session']);
+        $this->transport->notification('window/logMessage', ['type' => 3, 'message' => 'after the session']);
 
         $this->assertCount($traced, $this->traceLines());
     }
@@ -208,7 +209,7 @@ final class ServerTraceTest extends TestCase
         fwrite($input, $payload);
         rewind($input);
 
-        (new Server(null, $input))->run();
+        (new Server(null, $input, transport: $this->transport))->run();
     }
 
     /**

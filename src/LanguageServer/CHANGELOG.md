@@ -8,6 +8,10 @@ CHANGELOG
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * A lint finding, a ReDoS verdict and an inline marker diagnostic carry a
    `codeDescription` linking to the section of the docs that explains them.
+ * A request whose answer cannot be written as JSON, a hover on a pattern
+   holding a byte that is no UTF-8, is answered with an internal error
+   (`-32603`) instead of nothing; a notification that cannot be written is
+   left out with one line on stderr.
  * `initializationOptions.locale`, then `locale` in `regex.json`, name the
    `LC_CTYPE` locale the patterns are judged under; the versions a
    `@regex-target` marker keeps are judged under it too.

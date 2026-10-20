@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +48,6 @@ final class ServerLiteralReadingsTest extends TestCase
 
         $this->output = $output;
         $this->input = $input;
-        Response::writeTo($this->output);
 
         $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-readings-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src', 0o700, true);
@@ -56,7 +55,6 @@ final class ServerLiteralReadingsTest extends TestCase
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
         fclose($this->input);
 
@@ -84,7 +82,7 @@ final class ServerLiteralReadingsTest extends TestCase
 
         ftruncate($this->output, 0);
         rewind($this->output);
-        $server = new Server(null, $this->input);
+        $server = new Server(null, $this->input, transport: new Transport($this->output));
         $messages = [
             ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root]],
             ['method' => 'initialized', 'params' => []],

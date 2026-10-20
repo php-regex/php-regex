@@ -18,7 +18,7 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\CompletionHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -214,6 +214,39 @@ final class CompletionHandlerTest extends TestCase
     }
 
     /**
+     * A request without a document or a position, and one outside every
+     * pattern, is answered with no completion; a notification is answered
+     * under the id 0, as it always was.
+     */
+    #[Test]
+    public function test_completion_answers_nothing_where_it_cannot_complete(): void
+    {
+        $this->documents->open('file:///a.php', "<?php\npreg_match('/a/', \$s);\n");
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $handler = new CompletionHandler(new Transport($stream), $this->documents);
+
+        foreach ([
+            [1, ['textDocument' => ['uri' => 'file:///a.php']]],
+            [2, ['position' => ['line' => 1, 'character' => 13]]],
+            [3, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 2]]],
+            [null, ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 13]]],
+        ] as [$id, $params]) {
+            $handler->handle(new Message(jsonrpc: '2.0', method: 'textDocument/completion', id: $id, params: $params));
+        }
+
+        rewind($stream);
+        $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($stream), -1, \PREG_SPLIT_NO_EMPTY);
+        $this->assertIsArray($frames);
+        $this->assertSame([
+            ['jsonrpc' => '2.0', 'id' => 1, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 3, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 0, 'result' => null],
+        ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
+    }
+
+    /**
      * @return list<string>
      */
     private function complete(string $pattern, int $typed): array
@@ -222,24 +255,20 @@ final class CompletionHandlerTest extends TestCase
         $this->documents->open('file:///a.php', "<?php\n".$prefix.$pattern."', \$s);\n");
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new CompletionHandler($this->documents))->handle(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/completion',
-                id: 1,
-                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => \strlen($prefix) + $typed]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new CompletionHandler(new Transport($stream), $this->documents))->handle(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/completion',
+            id: 1,
+            params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => \strlen($prefix) + $typed]],
+        ));
 
         rewind($stream);
         $output = (string) stream_get_contents($stream);
         $body = json_decode(substr($output, (int) strpos($output, "\r\n\r\n") + 4), true);
         $this->assertIsArray($body);
         $this->assertIsArray($body['result'] ?? null);
+        $this->assertFalse($body['result']['isIncomplete'] ?? null, 'The list is the whole of what the context offers.');
         $this->assertIsArray($body['result']['items'] ?? null);
 
         $labels = [];
@@ -269,24 +298,20 @@ final class CompletionHandlerTest extends TestCase
         $this->documents->open('file:///a.php', $content);
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new CompletionHandler($this->documents))->handle(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/completion',
-                id: 1,
-                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => $position],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new CompletionHandler(new Transport($stream), $this->documents))->handle(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/completion',
+            id: 1,
+            params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => $position],
+        ));
 
         rewind($stream);
         $output = (string) stream_get_contents($stream);
         $body = json_decode(substr($output, (int) strpos($output, "\r\n\r\n") + 4), true);
         $this->assertIsArray($body);
         $this->assertIsArray($body['result'] ?? null);
+        $this->assertFalse($body['result']['isIncomplete'] ?? null, 'The list is the whole of what the context offers.');
         $this->assertIsArray($body['result']['items'] ?? null);
 
         $labels = [];

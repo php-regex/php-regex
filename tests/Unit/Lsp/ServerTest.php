@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\MessageLimits;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,12 +36,10 @@ final class ServerTest extends TestCase
         }
 
         $this->output = $output;
-        Response::writeTo($this->output);
     }
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
     }
 
@@ -59,6 +57,35 @@ final class ServerTest extends TestCase
             ['name' => 'php-regex-lsp', 'version' => Regex::VERSION],
             $answer['result']['serverInfo'],
         );
+    }
+
+    /**
+     * A pattern spelled with "\xFF" in a double-quoted string holds a byte
+     * JSON cannot carry: its hover, which quotes the pattern, cannot be
+     * encoded. The request is answered all the same, with an internal
+     * error, where the client would have waited for an answer forever.
+     */
+    #[Test]
+    public function test_a_response_that_cannot_be_encoded_is_answered_with_an_internal_error(): void
+    {
+        $this->serve([
+            ['id' => 1, 'method' => 'initialize', 'params' => []],
+            ['method' => 'initialized'],
+            ['method' => 'textDocument/didOpen', 'params' => [
+                'textDocument' => ['uri' => 'file:///a.php', 'languageId' => 'php', 'version' => 1, 'text' => "<?php\npreg_match(\"/\\xFF\\xFEa+/\", \$s);\n"],
+            ]],
+            ['id' => 2, 'method' => 'textDocument/hover', 'params' => [
+                'textDocument' => ['uri' => 'file:///a.php'],
+                'position' => ['line' => 1, 'character' => 16],
+            ]],
+            ['id' => 3, 'method' => 'shutdown'],
+        ]);
+
+        $this->assertSame(-32603, $this->errorCodeOf(2));
+        $error = $this->answerTo(2)['error'];
+        $this->assertIsArray($error);
+        $this->assertSame('The response could not be encoded as JSON: Malformed UTF-8 characters, possibly incorrectly encoded.', $error['message']);
+        $this->assertArrayHasKey('result', $this->answerTo(3), 'The session did not go on after the unencodable response.');
     }
 
     #[Test]
@@ -138,7 +165,7 @@ final class ServerTest extends TestCase
     {
         $input = $this->stream("Content-Length: 120\r\n\r\n{\"jsonrpc\":\"2.0\"");
 
-        (new Server(null, $input))->run();
+        (new Server(null, $input, transport: new Transport($this->output)))->run();
 
         $this->assertSame('', $this->written());
     }
@@ -285,7 +312,7 @@ final class ServerTest extends TestCase
             .self::frame(['method' => 'exit']);
         $input = $this->stream($untilExit.self::frame(['id' => 9, 'method' => 'initialize', 'params' => []]));
 
-        $code = (new Server(null, $input))->run();
+        $code = (new Server(null, $input, transport: new Transport($this->output)))->run();
 
         $this->assertSame(\strlen($untilExit), ftell($input), 'The server did not read up to the "exit" notification.');
         $this->assertSame(0, $code);
@@ -380,8 +407,8 @@ final class ServerTest extends TestCase
     #[Test]
     public function test_an_initialize_notification_after_initialization_does_nothing(): void
     {
-        // The seam the drop lines are written through, mirroring
-        // Response::writeTo(); null restores stderr.
+        // The seam the drop lines are written through; null restores
+        // stderr.
         $errors = fopen('php://memory', 'r+');
         $this->assertIsResource($errors);
         Server::writeErrorsTo($errors);
@@ -454,7 +481,7 @@ final class ServerTest extends TestCase
             .self::frame(['id' => 2, 'method' => 'shutdown']);
         $input = $this->stream($payload);
 
-        (new Server(null, $input, null, new MessageLimits(maxContentLength: 64)))->run();
+        (new Server(null, $input, null, new MessageLimits(maxContentLength: 64), transport: new Transport($this->output)))->run();
 
         $this->assertSame([['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => $code, 'message' => $message]]], $this->errorsWritten());
         $this->assertArrayHasKey('result', $this->answerTo(2), 'The frame after the rejected one was not served.');
@@ -489,7 +516,7 @@ final class ServerTest extends TestCase
             .self::frame(['id' => 2, 'method' => 'shutdown']);
         $input = $this->stream($payload);
 
-        $code = (new Server(null, $input, null, new MessageLimits(maxContentLength: 64, maxHeaderBlock: 64)))->run();
+        $code = (new Server(null, $input, null, new MessageLimits(maxContentLength: 64, maxHeaderBlock: 64), transport: new Transport($this->output)))->run();
 
         $this->assertSame(0, $code);
         $this->assertSame([['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32600, 'message' => 'Invalid Request']]], $this->errorsWritten());
@@ -554,7 +581,7 @@ final class ServerTest extends TestCase
         $input = $this->stream('');
 
         try {
-            $server = new Server(null, $input);
+            $server = new Server(null, $input, transport: new Transport($this->output));
             $this->sendTo($server, $input,
                 ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
                 ['method' => 'initialized'],
@@ -589,7 +616,7 @@ final class ServerTest extends TestCase
         $input = $this->stream('');
 
         try {
-            $server = new Server(null, $input);
+            $server = new Server(null, $input, transport: new Transport($this->output));
             $this->sendTo($server, $input,
                 ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
                 ['method' => 'initialized'],
@@ -623,7 +650,7 @@ final class ServerTest extends TestCase
         $input = $this->stream('');
 
         try {
-            $server = new Server(null, $input);
+            $server = new Server(null, $input, transport: new Transport($this->output));
             $this->sendTo($server, $input,
                 ['id' => 1, 'method' => 'initialize', 'params' => []],
                 ['method' => 'initialized'],
@@ -699,7 +726,7 @@ final class ServerTest extends TestCase
         $input = $this->stream('');
 
         try {
-            $server = new Server(null, $input);
+            $server = new Server(null, $input, transport: new Transport($this->output));
             $this->sendTo($server, $input,
                 ['id' => 1, 'method' => 'initialize', 'params' => []],
                 ['method' => 'initialized'],
@@ -729,7 +756,7 @@ final class ServerTest extends TestCase
         $input = $this->stream('');
 
         try {
-            $server = new Server(null, $input);
+            $server = new Server(null, $input, transport: new Transport($this->output));
             $this->sendTo($server, $input,
                 ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
                 ['method' => 'initialized'],
@@ -781,7 +808,7 @@ final class ServerTest extends TestCase
 
     private function serveRaw(string $payload): void
     {
-        (new Server(null, $this->stream($payload)))->run();
+        (new Server(null, $this->stream($payload), transport: new Transport($this->output)))->run();
     }
 
     /**
@@ -894,7 +921,7 @@ final class ServerTest extends TestCase
             $payload .= 'Content-Length: '.\strlen($json)."\r\n\r\n".$json;
         }
 
-        (new Server(null, $this->stream($payload)))->run();
+        (new Server(null, $this->stream($payload), transport: new Transport($this->output)))->run();
     }
 
     /**

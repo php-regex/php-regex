@@ -18,7 +18,7 @@ use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
@@ -158,7 +158,7 @@ final class CompletionHandler
         ['label' => '[:xdigit:]', 'detail' => 'Hex digit', 'doc' => 'Matches hexadecimal digits [0-9A-Fa-f].'],
     ];
 
-    public function __construct(private readonly DocumentManager $documents) {}
+    public function __construct(private readonly Transport $transport, private readonly DocumentManager $documents) {}
 
     /**
      * Handle textDocument/completion request.
@@ -173,7 +173,7 @@ final class CompletionHandler
         $position = isset($params['position']) && \is_array($params['position']) ? $params['position'] : null;
 
         if (null === $message->id || null === $uri || null === $position) {
-            Response::success($message->id ?? 0, null);
+            $this->transport->success($message->id ?? 0, null);
 
             return;
         }
@@ -184,7 +184,7 @@ final class CompletionHandler
         // Check if we're inside a regex pattern
         $occurrence = $this->documents->getOccurrenceAtPosition($uri, $line, $character);
         if (null === $occurrence) {
-            Response::success($message->id, null);
+            $this->transport->success($message->id, null);
 
             return;
         }
@@ -192,7 +192,7 @@ final class CompletionHandler
         // Get the context (what was typed before the cursor)
         $content = $this->documents->getContent($uri);
         if (null === $content) {
-            Response::success($message->id, null);
+            $this->transport->success($message->id, null); // Never: an occurrence was found in the document's content.
 
             return;
         }
@@ -200,7 +200,7 @@ final class CompletionHandler
         $context = $this->getCompletionContext($occurrence, new PositionConverter($content), $line, $character);
         $items = $this->getCompletionItems($context);
 
-        Response::success($message->id, [
+        $this->transport->success($message->id, [
             'isIncomplete' => false,
             'items' => $items,
         ]);

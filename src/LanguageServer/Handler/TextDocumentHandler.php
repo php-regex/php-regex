@@ -21,7 +21,7 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
@@ -92,6 +92,7 @@ final class TextDocumentHandler
      *                                                    "@regex-target" marker to narrow
      */
     public function __construct(
+        private readonly Transport $transport,
         private readonly DocumentManager $documents,
         private readonly Regex $regex,
         private readonly array $lintRules = [],
@@ -165,7 +166,7 @@ final class TextDocumentHandler
         $affected = $this->documents->close($uri);
 
         // Clear diagnostics
-        Response::notification('textDocument/publishDiagnostics', [
+        $this->transport->notification('textDocument/publishDiagnostics', [
             'uri' => $uri,
             'diagnostics' => [],
         ]);
@@ -249,7 +250,7 @@ final class TextDocumentHandler
 
         $occurrence = $this->documents->getOccurrenceAtPosition($uri, $line, $character);
         if (null === $occurrence) {
-            Response::success($message->id, null);
+            $this->transport->success($message->id, null);
 
             return;
         }
@@ -261,7 +262,7 @@ final class TextDocumentHandler
 
             $markdown = "**Regex Pattern**\n\n```\n{$occurrence->pattern}\n```\n\n**Explanation**\n\n{$explanation}";
 
-            Response::success($message->id, [
+            $this->transport->success($message->id, [
                 'contents' => [
                     'kind' => 'markdown',
                     'value' => $markdown,
@@ -272,14 +273,14 @@ final class TextDocumentHandler
                 ],
             ]);
         } catch (LimitException $e) {
-            Response::success($message->id, [
+            $this->transport->success($message->id, [
                 'contents' => [
                     'kind' => 'markdown',
                     'value' => "**Not analyzed**\n\n{$e->getMessage()}",
                 ],
             ]);
         } catch (LexerException|ParserException $e) {
-            Response::success($message->id, [
+            $this->transport->success($message->id, [
                 'contents' => [
                     'kind' => 'markdown',
                     'value' => "**Regex Error**\n\n{$e->getMessage()}",
@@ -371,7 +372,7 @@ final class TextDocumentHandler
             $payload['version'] = $version;
         }
 
-        Response::notification('textDocument/publishDiagnostics', $payload);
+        $this->transport->notification('textDocument/publishDiagnostics', $payload);
     }
 
     /**

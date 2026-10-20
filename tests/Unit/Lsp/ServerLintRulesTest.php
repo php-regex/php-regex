@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +49,6 @@ final class ServerLintRulesTest extends TestCase
 
         $this->output = $output;
         $this->input = $input;
-        Response::writeTo($this->output);
 
         $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-rules-'.bin2hex(random_bytes(6));
         mkdir($this->root, 0o700, true);
@@ -57,7 +56,6 @@ final class ServerLintRulesTest extends TestCase
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
         fclose($this->input);
 
@@ -104,7 +102,7 @@ final class ServerLintRulesTest extends TestCase
         }
         rewind($this->input);
 
-        (new Server(null, $this->input))->run();
+        (new Server(null, $this->input, transport: new Transport($this->output)))->run();
 
         rewind($this->output);
         $codes = [];

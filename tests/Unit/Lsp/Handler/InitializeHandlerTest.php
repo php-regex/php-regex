@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp\Handler;
 
 use PHPRegex\LanguageServer\Handler\InitializeHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -24,7 +25,7 @@ final class InitializeHandlerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->handler = new InitializeHandler();
+        $this->handler = new InitializeHandler(new Transport());
     }
 
     #[Test]

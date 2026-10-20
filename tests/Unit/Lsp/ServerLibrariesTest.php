@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Document\PatternDeclarations;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -78,7 +78,6 @@ final class ServerLibrariesTest extends TestCase
 
         $this->output = $output;
         $this->input = $input;
-        Response::writeTo($this->output);
 
         $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-libraries-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src', 0o700, true);
@@ -86,7 +85,6 @@ final class ServerLibrariesTest extends TestCase
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
         fclose($this->input);
 
@@ -255,7 +253,7 @@ final class ServerLibrariesTest extends TestCase
     #[Test]
     public function test_the_installed_json_watcher_is_registered_when_the_client_offers_it(): void
     {
-        $this->server = new Server(null, $this->input);
+        $this->server = new Server(null, $this->input, transport: new Transport($this->output));
         $this->send(
             ['id' => 1, 'method' => 'initialize', 'params' => ['capabilities' => ['workspace' => ['didChangeWatchedFiles' => ['dynamicRegistration' => true]]]]],
             ['method' => 'initialized', 'params' => []],
@@ -370,7 +368,7 @@ final class ServerLibrariesTest extends TestCase
 
     private function initialize(?PatternDeclarations $declarations = null): void
     {
-        $this->server = new Server(null, $this->input, $declarations);
+        $this->server = new Server(null, $this->input, $declarations, transport: new Transport($this->output));
         $this->send(
             ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root]],
             ['method' => 'initialized', 'params' => []],

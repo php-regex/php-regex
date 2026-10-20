@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\LanguageServer\Handler;
 
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Toolkit\Regex;
 
 /**
@@ -25,6 +25,8 @@ use PHPRegex\Toolkit\Regex;
 final class InitializeHandler
 {
     private bool $watchedFilesRegistration = false;
+
+    public function __construct(private readonly Transport $transport) {}
 
     /**
      * Handle the initialize request.
@@ -67,7 +69,7 @@ final class InitializeHandler
             'version' => Regex::VERSION,
         ];
 
-        Response::success($message->id, [
+        $this->transport->success($message->id, [
             'capabilities' => $capabilities,
             'serverInfo' => $serverInfo,
         ]);

@@ -16,7 +16,7 @@ namespace PHPRegex\LanguageServer\Handler;
 use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\LexerException;
@@ -76,6 +76,7 @@ final class CodeActionHandler
      * @param array<string, bool> $lintRules the lint rules regex.json turns on or off, by id
      */
     public function __construct(
+        private readonly Transport $transport,
         private readonly DocumentManager $documents,
         private readonly Regex $regex,
         private readonly array $lintRules = []
@@ -98,7 +99,7 @@ final class CodeActionHandler
         $context = isset($params['context']) && \is_array($params['context']) ? $params['context'] : [];
 
         if (null === $message->id || null === $uri || null === $range) {
-            Response::success($message->id ?? 0, []);
+            $this->transport->success($message->id ?? 0, []);
 
             return;
         }
@@ -128,7 +129,7 @@ final class CodeActionHandler
             );
         }
 
-        Response::success($message->id, $codeActions);
+        $this->transport->success($message->id, $codeActions);
     }
 
     /**

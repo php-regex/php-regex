@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,7 +55,6 @@ final class ServerInlineIgnoreTest extends TestCase
 
         $this->output = $output;
         $this->input = $input;
-        Response::writeTo($this->output);
 
         $this->root = str_replace('\\', '/', sys_get_temp_dir()).'/regex-parser-lsp-ignore-'.bin2hex(random_bytes(6));
         mkdir($this->root.'/src', 0o700, true);
@@ -63,7 +62,6 @@ final class ServerInlineIgnoreTest extends TestCase
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
         fclose($this->input);
 
@@ -356,7 +354,7 @@ preg_match('/(a/', \$subject);
      */
     private function initialize(array $options = []): void
     {
-        $this->server = new Server(null, $this->input);
+        $this->server = new Server(null, $this->input, transport: new Transport($this->output));
         $this->send(
             ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root] + ([] === $options ? [] : ['initializationOptions' => $options])],
             ['method' => 'initialized', 'params' => []],

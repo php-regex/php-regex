@@ -24,8 +24,8 @@ use PHPRegex\LanguageServer\Protocol\FrameTrace;
 use PHPRegex\LanguageServer\Protocol\InvalidMessage;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\MessageLimits;
-use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\LanguageServer\Protocol\TraceLevel;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\JudgedRange;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
@@ -73,11 +73,6 @@ use PHPRegex\Toolkit\Regex;
  */
 final class Server
 {
-    /**
-     * JSON-RPC "internal error".
-     */
-    private const ERROR_INTERNAL = -32603;
-
     /**
      * window/logMessage and window/showMessage types.
      */
@@ -136,6 +131,11 @@ final class Server
      */
     private bool $strayResponseTraced = false;
 
+    /**
+     * Where the messages to the client are written.
+     */
+    private readonly Transport $transport;
+
     private readonly InitializeHandler $initHandler;
 
     private readonly DocumentManager $documents;
@@ -156,17 +156,22 @@ final class Server
      * @param MessageLimits|null       $limits       the caps the frames are
      *                                               read under, the production
      *                                               ones when null
+     * @param Transport|null           $transport    where the messages to the
+     *                                               client are written, stdout
+     *                                               when null
      */
     public function __construct(
         private readonly ?Regex $givenRegex = null,
         private $input = null,
         ?PatternDeclarations $declarations = null,
         private readonly ?MessageLimits $limits = null,
+        ?Transport $transport = null,
     ) {
+        $this->transport = $transport ?? new Transport();
         $this->documents = new DocumentManager(new RegexFinder(), $declarations ?? new PatternDeclarations());
 
-        $this->initHandler = new InitializeHandler();
-        $this->completionHandler = new CompletionHandler($this->documents);
+        $this->initHandler = new InitializeHandler($this->transport);
+        $this->completionHandler = new CompletionHandler($this->transport, $this->documents);
         $this->judgeWith($this->givenRegex ?? Regex::create());
     }
 
@@ -198,12 +203,12 @@ final class Server
             stream_set_read_buffer($input, 0);
         }
 
-        Response::observeWith($this->traceOutbound(...));
+        $this->transport->observeWith($this->traceOutbound(...), self::writeErrorLine(...));
 
         try {
             return $this->serve($input);
         } finally {
-            Response::observeWith(null);
+            $this->transport->observeWith(null);
         }
     }
 
@@ -235,7 +240,7 @@ final class Server
             // A message that cannot be used costs one error answer, not the
             // session.
             if ($message instanceof InvalidMessage) {
-                Response::error($message->id, $message->code, $message->message);
+                $this->transport->error($message->id, $message->code, $message->message);
 
                 continue;
             }
@@ -310,7 +315,7 @@ final class Server
      * protocol's "trace", else off. A value that is not a level is ignored,
      * with a warning, and the next source is read.
      */
-    private static function traceLevel(Message $initialize): TraceLevel
+    private function traceLevel(Message $initialize): TraceLevel
     {
         $params = $initialize->params ?? [];
         $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
@@ -325,7 +330,7 @@ final class Server
                 return $level;
             }
 
-            self::log(self::LOG_WARNING, \sprintf('%s %s is not off, messages or verbose: ignored.', $source, \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
+            $this->log(self::LOG_WARNING, \sprintf('%s %s is not off, messages or verbose: ignored.', $source, \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
         }
 
         return TraceLevel::Off;
@@ -340,7 +345,7 @@ final class Server
         self::writeErrorLine(\sprintf('%s: %s', $failure::class, $failure->getMessage()));
 
         if ($message->isRequest() && null !== $message->id) {
-            Response::error($message->id, self::ERROR_INTERNAL, $failure->getMessage());
+            $this->transport->error($message->id, Transport::INTERNAL_ERROR, $failure->getMessage());
         }
     }
 
@@ -367,7 +372,7 @@ final class Server
         // shutdown included, is answered Invalid Request.
         if ($this->shutdown) {
             if (null !== $message->id) {
-                Response::error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is shut down');
+                $this->transport->error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is shut down');
             }
 
             return;
@@ -376,7 +381,7 @@ final class Server
         if ('shutdown' === $method) {
             $this->shutdown = true;
             if (null !== $message->id) {
-                Response::success($message->id, null);
+                $this->transport->success($message->id, null);
             }
 
             return;
@@ -388,7 +393,7 @@ final class Server
         if ('initialize' === $method) {
             if ($this->initialized) {
                 if (null !== $message->id) {
-                    Response::error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is already initialized.');
+                    $this->transport->error($message->id, InvalidMessage::INVALID_REQUEST, 'The server is already initialized.');
                 } else {
                     self::writeErrorLine('the "initialize" notification was dropped: the server is already initialized.');
                 }
@@ -423,7 +428,7 @@ final class Server
         // unknown notifications they are to this server.
         if (!$this->initialized) {
             if (null !== $message->id) {
-                Response::error($message->id, -32002, 'Server not initialized');
+                $this->transport->error($message->id, -32002, 'Server not initialized');
 
                 return;
             }
@@ -439,7 +444,7 @@ final class Server
         // that asks for one is answered with none.
         if ($this->refused && \in_array($method, ['textDocument/didOpen', 'textDocument/didChange', 'textDocument/didClose', 'textDocument/didSave', 'workspace/didChangeWatchedFiles', 'textDocument/hover', 'textDocument/codeAction'], true)) {
             if ($message->isRequest() && null !== $message->id) {
-                Response::success($message->id, 'textDocument/codeAction' === $method ? [] : null);
+                $this->transport->success($message->id, 'textDocument/codeAction' === $method ? [] : null);
             }
 
             return;
@@ -464,7 +469,7 @@ final class Server
     private function handleInitialize(Message $message): void
     {
         // The frame log starts with the request that turns it on.
-        $this->trace = self::traceLevel($message);
+        $this->trace = $this->traceLevel($message);
         $this->traceInbound($message);
 
         $this->initHandler->handle($message);
@@ -472,7 +477,7 @@ final class Server
 
         $params = $message->params ?? [];
         $root = self::rootDirectory($params);
-        $config = null === $root ? [] : self::loadConfig($root);
+        $config = null === $root ? [] : $this->loadConfig($root);
         // The lint rules regex.json turns on or off, as `regex lint` reads them.
         $arguments = LintArguments::fromDefaults((new LintDefaultsBuilder())->build($config));
         $lintRules = $arguments->lintRules;
@@ -482,23 +487,23 @@ final class Server
 
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
-            self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s%s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion, 'C' === $target->locale ? '' : ', locale '.$target->locale));
+            $this->log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s%s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion, 'C' === $target->locale ? '' : ', locale '.$target->locale));
             $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores);
         } else {
             try {
                 $target = $this->resolveTarget($params, $root, $config);
             } catch (UnsupportedTargetException|InvalidRegexOptionException $e) {
                 $message = $e->getMessage().' No pattern is judged.';
-                self::log(self::LOG_ERROR, $message);
-                Response::notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
+                $this->log(self::LOG_ERROR, $message);
+                $this->transport->notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
                 $this->refused = true;
 
                 return;
             }
             foreach ($target->notices() as $notice) {
-                self::log(self::LOG_INFO, $notice);
+                $this->log(self::LOG_INFO, $notice);
             }
-            self::log(self::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->source()));
+            $this->log(self::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->source()));
 
             $regex = Regex::create($target->regexOptions());
             $this->judgeWith($regex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores, $target->judgedRange($regex->parser()));
@@ -521,7 +526,7 @@ final class Server
         }
 
         $this->registrationRequestId = $this->nextRequestId++;
-        Response::request($this->registrationRequestId, 'client/registerCapability', [
+        $this->transport->request($this->registrationRequestId, 'client/registerCapability', [
             'registrations' => [
                 [
                     'id' => self::WATCHED_FILES_REGISTRATION,
@@ -597,20 +602,20 @@ final class Server
      *
      * @return LintConfig
      */
-    private static function loadConfig(string $root): array
+    private function loadConfig(string $root): array
     {
         $loaded = (new LintConfigLoader())->load($root);
         if (null !== $loaded->error) {
             $message = 'regex.json ignored: '.$loaded->error;
-            self::log(self::LOG_ERROR, $message);
-            Response::notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
+            $this->log(self::LOG_ERROR, $message);
+            $this->transport->notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
 
             return [];
         }
 
         // What the file holds that is ignored, the rest of it kept.
         foreach ($loaded->warnings as $warning) {
-            self::log(self::LOG_WARNING, 'regex.json: '.$warning);
+            $this->log(self::LOG_WARNING, 'regex.json: '.$warning);
         }
 
         return $loaded->config;
@@ -631,16 +636,16 @@ final class Server
 
         $declarations = $this->documents->declarations();
         if (!$declarations->scanWorkspace($root, [] === $paths ? ['.'] : $paths, $exclude)) {
-            self::warn('Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.');
+            $this->warn('Functions declaring #[RegexPattern] were read from the first PHP files of the workspace only: narrow "paths" or "exclude" in regex.json to read them all.');
         }
 
         // Read even when absent: the directory is watched, and read once
         // Composer installs into it.
         $libraries = $declarations->scanLibraries($root.'/vendor');
         if (!is_dir($root.'/vendor') && self::requiresPackages($root.'/composer.json')) {
-            self::warn('vendor/ is not in the workspace, though composer.json is: the functions its libraries declare with #[RegexPattern] are not read, and the patterns passed to them are not checked. Install the dependencies where the editor sees them, the host and not only a container.');
+            $this->warn('vendor/ is not in the workspace, though composer.json is: the functions its libraries declare with #[RegexPattern] are not read, and the patterns passed to them are not checked. Install the dependencies where the editor sees them, the host and not only a container.');
         } elseif (!$libraries) {
-            self::warn('Functions declaring #[RegexPattern] were read from the first PHP files of vendor/ only.');
+            $this->warn('Functions declaring #[RegexPattern] were read from the first PHP files of vendor/ only.');
         }
     }
 
@@ -674,10 +679,10 @@ final class Server
      * A coverage the session reads less of than the user expects: logged,
      * and shown once, since "initialize" reads the workspace once.
      */
-    private static function warn(string $message): void
+    private function warn(string $message): void
     {
-        self::log(self::LOG_WARNING, $message);
-        Response::notification('window/showMessage', ['type' => self::LOG_WARNING, 'message' => $message]);
+        $this->log(self::LOG_WARNING, $message);
+        $this->transport->notification('window/showMessage', ['type' => self::LOG_WARNING, 'message' => $message]);
     }
 
     /**
@@ -703,13 +708,13 @@ final class Server
         $configPhp = $config['phpVersion'] ?? null;
         $configPcre = $config['pcreVersion'] ?? null;
         $configLocale = $config['locale'] ?? null;
-        $pcre = self::readVersion($options, 'pcreVersion', 'pcre_version');
-        $locale = self::readVersion($options, 'locale', 'locale', 'a locale this machine can set');
+        $pcre = $this->readVersion($options, 'pcreVersion', 'pcre_version');
+        $locale = $this->readVersion($options, 'locale', 'locale', 'a locale this machine can set');
 
         // regex.json was checked against its schema when it was loaded.
         return ProjectTarget::fromSources(
             [
-                'initializationOptions' => self::readVersion($options, 'phpVersion', 'php_version'),
+                'initializationOptions' => $this->readVersion($options, 'phpVersion', 'php_version'),
                 'regex.json' => \is_string($configPhp) || \is_int($configPhp) ? $configPhp : null,
             ],
             [
@@ -733,7 +738,7 @@ final class Server
      * @param array<array-key, mixed> $options
      * @param string                  $what    what the value must be, for the warning
      */
-    private static function readVersion(array $options, string $key, string $regexOption, string $what = 'a version'): string|int|null
+    private function readVersion(array $options, string $key, string $regexOption, string $what = 'a version'): string|int|null
     {
         $value = $options[$key] ?? null;
         if (null === $value) {
@@ -750,7 +755,7 @@ final class Server
             }
         }
 
-        self::log(self::LOG_WARNING, \sprintf(
+        $this->log(self::LOG_WARNING, \sprintf(
             'initializationOptions.%s %s is not %s: ignored.',
             $key,
             \is_string($value) || \is_int($value) ? '"'.$value.'"' : get_debug_type($value),
@@ -790,20 +795,20 @@ final class Server
      */
     private function judgeWith(Regex $regex, array $lintRules = [], RedosMode $redosMode = RedosMode::Off, RedosSeverity $redosThreshold = RedosSeverity::High, bool $reportUnmatchedIgnores = true, ?JudgedRange $judged = null): void
     {
-        $this->textDocHandler = new TextDocumentHandler($this->documents, $regex, $lintRules, $redosMode, $redosThreshold, $reportUnmatchedIgnores, $judged);
-        $this->codeActionHandler = new CodeActionHandler($this->documents, $regex, $lintRules);
+        $this->textDocHandler = new TextDocumentHandler($this->transport, $this->documents, $regex, $lintRules, $redosMode, $redosThreshold, $reportUnmatchedIgnores, $judged);
+        $this->codeActionHandler = new CodeActionHandler($this->transport, $this->documents, $regex, $lintRules);
     }
 
-    private static function log(int $type, string $message): void
+    private function log(int $type, string $message): void
     {
-        Response::notification('window/logMessage', ['type' => $type, 'message' => $message]);
+        $this->transport->notification('window/logMessage', ['type' => $type, 'message' => $message]);
     }
 
     private function handleUnknownMethod(Message $message): void
     {
         // Only respond to requests, not notifications
         if ($message->isRequest() && null !== $message->id) {
-            Response::error(
+            $this->transport->error(
                 $message->id,
                 -32601, // Method not found
                 "Method not found: {$message->method}",

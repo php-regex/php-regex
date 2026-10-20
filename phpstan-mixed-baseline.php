@@ -27,11 +27,11 @@ return [
         'PHPRegex\LanguageServer\Protocol\Message::__construct()' => ['protocol-slot', 1],
         'PHPRegex\LanguageServer\Protocol\Message::fromObject()' => ['json-decode', 1],
     ],
-    'src/LanguageServer/Protocol/Response.php' => [
-        'PHPRegex\LanguageServer\Protocol\Response::notification()' => ['protocol-slot', 1],
-        'PHPRegex\LanguageServer\Protocol\Response::request()' => ['protocol-slot', 1],
-        'PHPRegex\LanguageServer\Protocol\Response::send()' => ['reflection-sink', 1],
-        'PHPRegex\LanguageServer\Protocol\Response::success()' => ['protocol-slot', 1],
+    'src/LanguageServer/Protocol/Transport.php' => [
+        'PHPRegex\LanguageServer\Protocol\Transport::notification()' => ['protocol-slot', 1],
+        'PHPRegex\LanguageServer\Protocol\Transport::request()' => ['protocol-slot', 1],
+        'PHPRegex\LanguageServer\Protocol\Transport::send()' => ['reflection-sink', 1],
+        'PHPRegex\LanguageServer\Protocol\Transport::success()' => ['protocol-slot', 1],
     ],
     'src/LanguageServer/Server.php' => [
         'PHPRegex\LanguageServer\Server::readVersion()' => ['protocol-slot', 1],

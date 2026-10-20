@@ -17,7 +17,7 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
@@ -50,10 +50,33 @@ final class IncrementalDiagnosticsTest extends TestCase
         "<?php\npreg_match(\"/x\\t+\\\\d/\", \$s);\npreg_match('/[a-z]+[a-z]/', \$s);\n",
     ];
 
+    /**
+     * @var resource
+     */
+    private $output;
+
+    private Transport $transport;
+
+    protected function setUp(): void
+    {
+        $output = fopen('php://memory', 'w+');
+        if (false === $output) {
+            self::fail('Unable to open an in-memory stream.');
+        }
+
+        $this->output = $output;
+        $this->transport = new Transport($output);
+    }
+
+    protected function tearDown(): void
+    {
+        fclose($this->output);
+    }
+
     #[Test]
     public function test_an_edit_analyses_only_the_patterns_it_changed(): void
     {
-        $handler = new TextDocumentHandler(new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]));
+        $handler = new TextDocumentHandler($this->transport, new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]));
         $this->publish($handler, self::EDITS[0], true);
         $this->assertSame(3, self::kept($handler));
 
@@ -67,7 +90,7 @@ final class IncrementalDiagnosticsTest extends TestCase
     #[Test]
     public function test_the_server_keeps_the_latest_4096_patterns(): void
     {
-        $handler = new TextDocumentHandler(new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]));
+        $handler = new TextDocumentHandler($this->transport, new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]));
         $lines = '';
         for ($i = 0; $i <= 4096; $i++) {
             $lines .= "preg_match('/a".$i."/', \$s);\n";
@@ -83,10 +106,10 @@ final class IncrementalDiagnosticsTest extends TestCase
     {
         $published = 0;
         foreach ([[RedosMode::Off, []], [RedosMode::Theoretical, ['quantifier.uselessLazy' => true]]] as [$redos, $rules]) {
-            $handler = new TextDocumentHandler(new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), $rules, $redos, RedosSeverity::Low);
+            $handler = new TextDocumentHandler($this->transport, new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), $rules, $redos, RedosSeverity::Low);
             foreach (self::EDITS as $step => $text) {
                 $incremental = $this->publish($handler, $text, 0 === $step);
-                $fresh = $this->publish(new TextDocumentHandler(new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), $rules, $redos, RedosSeverity::Low), $text, true);
+                $fresh = $this->publish(new TextDocumentHandler($this->transport, new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), $rules, $redos, RedosSeverity::Low), $text, true);
 
                 $this->assertSame($fresh, $incremental, 'Step '.$step);
                 $published += \count($fresh);
@@ -109,14 +132,14 @@ final class IncrementalDiagnosticsTest extends TestCase
         $tail = ", \$s); preg_match('/é+x/u', \$s);\nif (PHP_VERSION_ID >= 80400) { preg_match('/a{,3}/', \$s); }\n";
         $steps = ["'/'", "'/a'", "'/a+'", "'/a+(a'", "'/a+(a*'", "'/a+(a*)b/'", "'/a+(a*)b/'.", "'/a+(a*)b/'", "'/a+(a*)é\\d/u'", "'/a+/u'"];
         $finder = new RegexFinder();
-        $handler = new TextDocumentHandler(new DocumentManager($finder), Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low);
+        $handler = new TextDocumentHandler($this->transport, new DocumentManager($finder), Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low);
         $this->publish($handler, $head.$steps[0].$tail, true);
         $reads = (new \ReflectionProperty(RegexFinder::class, 'reads'))->getValue($finder);
         $published = 0;
         foreach ($steps as $step => $literal) {
             $text = $head.$literal.$tail;
             $incremental = $this->publish($handler, $text, false);
-            $fresh = $this->publish(new TextDocumentHandler(new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low), $text, true);
+            $fresh = $this->publish(new TextDocumentHandler($this->transport, new DocumentManager(new RegexFinder()), Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low), $text, true);
 
             $this->assertSame($fresh, $incremental, 'Step '.$step);
             $published += \count($fresh);
@@ -136,12 +159,9 @@ final class IncrementalDiagnosticsTest extends TestCase
     private function publish(TextDocumentHandler $handler, string $text, bool $open): array
     {
         $published = [];
-        Response::observeWith(static function (string $json) use (&$published): void {
+        $this->transport->observeWith(static function (string $json) use (&$published): void {
             $published[] = json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
         });
-        $stream = fopen('php://memory', 'w+');
-        $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
         try {
             $document = ['uri' => self::URI, 'version' => 1];
@@ -151,8 +171,7 @@ final class IncrementalDiagnosticsTest extends TestCase
                 $handler->didChange(new Message(jsonrpc: '2.0', method: 'textDocument/didChange', id: null, params: ['textDocument' => $document, 'contentChanges' => [['text' => $text]]]));
             }
         } finally {
-            Response::writeTo(null);
-            Response::observeWith(null);
+            $this->transport->observeWith(null);
         }
 
         $diagnostics = [];

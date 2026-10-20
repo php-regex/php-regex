@@ -17,7 +17,7 @@ use PHPRegex\LanguageServer\Converter\PatternSpan;
 use PHPRegex\LanguageServer\Converter\PositionConverter;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Document\RegexOccurrence;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
@@ -82,12 +82,10 @@ final class LintParityTest extends TestCase
 
         $this->output = $output;
         $this->input = $input;
-        Response::writeTo($this->output);
     }
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
         fclose($this->input);
     }
@@ -240,7 +238,7 @@ final class LintParityTest extends TestCase
      */
     private function published(string $content, array $options = [], bool $redos = false): array
     {
-        $this->server = new Server(Regex::create(['cache' => null] + $options), $this->input);
+        $this->server = new Server(Regex::create(['cache' => null] + $options), $this->input, transport: new Transport($this->output));
         $this->send(
             ['id' => 1, 'method' => 'initialize', 'params' => $redos ? ['initializationOptions' => ['redos' => true]] : []],
             ['method' => 'initialized', 'params' => []],

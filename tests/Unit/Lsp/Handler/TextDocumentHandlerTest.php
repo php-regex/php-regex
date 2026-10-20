@@ -17,7 +17,7 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Redos\RedosMode;
@@ -46,7 +46,7 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $regex = Regex::create(['cache' => null, 'max_recursion_depth' => 64, 'locale' => 'C']);
         $target = ProjectTarget::fromSources(['composer.json' => '8.2'], [], null, [], ['regex.json' => 'C']);
-        $handler = new TextDocumentHandler($this->documents, $regex->withTarget($target->target()), judged: $target->judgedRange($regex->parser()));
+        $handler = new TextDocumentHandler(new Transport(), $this->documents, $regex->withTarget($target->target()), judged: $target->judgedRange($regex->parser()));
         $regexFor = new \ReflectionMethod($handler, 'regexFor');
 
         $narrowed = $regexFor->invoke($handler, TargetConstraint::phpFrom(80205, null));
@@ -72,19 +72,14 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            // A substring scan is read from PCRE2 10.45: judged for 10.49.
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///a.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        // A substring scan is read from PCRE2 10.45: judged for 10.49.
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///a.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -107,23 +102,17 @@ final class TextDocumentHandlerTest extends TestCase
     #[Test]
     public function test_hovering_a_pattern_past_a_limit_says_it_was_not_analyzed(): void
     {
-        $handler = new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'max_recursion_depth' => 3]));
-        $this->documents->open('file:///a.php', "<?php\npreg_match('/((((a))))/', \$s);\n");
-
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
+        $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'max_recursion_depth' => 3]));
+        $this->documents->open('file:///a.php', "<?php\npreg_match('/((((a))))/', \$s);\n");
 
-        try {
-            $handler->hover(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/hover',
-                id: 1,
-                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 15]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        $handler->hover(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/hover',
+            id: 1,
+            params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => 1, 'character' => 15]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -137,6 +126,37 @@ final class TextDocumentHandlerTest extends TestCase
     }
 
     /**
+     * Hovering a pattern that does not parse, or that the lexer refuses,
+     * says its error; hovering outside every pattern answers nothing.
+     */
+    #[Test]
+    public function test_hovering_answers_the_error_of_a_pattern_and_nothing_outside_one(): void
+    {
+        $stream = fopen('php://memory', 'w+');
+        $this->assertIsResource($stream);
+        $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]));
+        $this->documents->open('file:///a.php', "<?php\npreg_match('/a(/', \$s);\npreg_match('/\\c/', \$s);\n");
+
+        foreach ([1 => [1, 14], 2 => [1, 2], 3 => [2, 13]] as $id => [$line, $character]) {
+            $handler->hover(new Message(
+                jsonrpc: '2.0',
+                method: 'textDocument/hover',
+                id: $id,
+                params: ['textDocument' => ['uri' => 'file:///a.php'], 'position' => ['line' => $line, 'character' => $character]],
+            ));
+        }
+
+        rewind($stream);
+        $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($stream), -1, \PREG_SPLIT_NO_EMPTY);
+        $this->assertIsArray($frames);
+        $this->assertSame([
+            ['jsonrpc' => '2.0', 'id' => 1, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\nExpected ) at end of input (found eof)"]]],
+            ['jsonrpc' => '2.0', 'id' => 2, 'result' => null],
+            ['jsonrpc' => '2.0', 'id' => 3, 'result' => ['contents' => ['kind' => 'markdown', 'value' => "**Regex Error**\n\n\\c must be followed by a printable ASCII character."]]],
+        ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
+    }
+
+    /**
      * A limit of the library is no error in the pattern: the editor shows
      * it as a warning — the severity `regex lint` reports for the same
      * "Not analyzed" outcome — never as an error.
@@ -146,18 +166,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'max_recursion_depth' => 3])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///a.php', 'text' => "<?php\npreg_match('/((((a))))/', \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'max_recursion_depth' => 3])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///a.php', 'text' => "<?php\npreg_match('/((((a))))/', \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -195,18 +210,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -243,18 +253,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///fix.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///fix.php', 'text' => "<?php\npreg_match('".$pattern."', \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -278,18 +283,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///b.php', 'text' => "<?php\npreg_match('/ab)/', \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49'])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///b.php', 'text' => "<?php\npreg_match('/ab)/', \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -388,18 +388,13 @@ final class TextDocumentHandlerTest extends TestCase
         $line = "preg_match('/x(a+)+\$/', \$s);";
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///r.php', 'text' => "<?php\n".$line."\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]), [], RedosMode::Theoretical, RedosSeverity::Low))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///r.php', 'text' => "<?php\n".$line."\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -442,18 +437,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null]), $lintRules, RedosMode::Theoretical))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///i.php', 'text' => "<?php\npreg_match('/x/', \$s); // @regex-ignore ".$identifier."\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]), $lintRules, RedosMode::Theoretical))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///i.php', 'text' => "<?php\npreg_match('/x/', \$s); // @regex-ignore ".$identifier."\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -476,18 +466,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\npreg_match('/x[aa]/', \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///c.php', 'text' => "<?php\npreg_match('/x[aa]/', \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -527,18 +512,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///d.php', 'text' => "<?php\npreg_match(".$literal.", \$s);\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///d.php', 'text' => "<?php\npreg_match(".$literal.", \$s);\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);
@@ -631,16 +611,11 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            $handler = new TextDocumentHandler($this->documents, Regex::create(['cache' => null]));
-            foreach ($messages as $message) {
-                $method = substr((string) $message->method, (int) strrpos((string) $message->method, '/') + 1);
-                $handler->{$method}($message);
-            }
-        } finally {
-            Response::writeTo(null);
+        $handler = new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null]));
+        foreach ($messages as $message) {
+            $method = substr((string) $message->method, (int) strrpos((string) $message->method, '/') + 1);
+            $handler->{$method}($message);
         }
 
         rewind($stream);
@@ -672,18 +647,13 @@ final class TextDocumentHandlerTest extends TestCase
     {
         $stream = fopen('php://memory', 'w+');
         $this->assertIsResource($stream);
-        Response::writeTo($stream);
 
-        try {
-            (new TextDocumentHandler($this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49', ...$options])))->didOpen(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/didOpen',
-                id: null,
-                params: ['textDocument' => ['uri' => 'file:///u.php', 'text' => "<?php\n".$line."\n"]],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        (new TextDocumentHandler(new Transport($stream), $this->documents, Regex::create(['cache' => null, 'pcre_version' => '10.49', ...$options])))->didOpen(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/didOpen',
+            id: null,
+            params: ['textDocument' => ['uri' => 'file:///u.php', 'text' => "<?php\n".$line."\n"]],
+        ));
 
         rewind($stream);
         $written = (string) stream_get_contents($stream);

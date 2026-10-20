@@ -17,7 +17,7 @@ use PHPRegex\LanguageServer\Document\DocumentManager;
 use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\CodeActionHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -104,10 +104,26 @@ final class CodeActionHandlerTest extends TestCase
 
     private DocumentManager $documents;
 
+    /**
+     * @var resource
+     */
+    private $output;
+
     protected function setUp(): void
     {
+        $output = fopen('php://memory', 'w+');
+        if (false === $output) {
+            self::fail('Unable to open an in-memory stream.');
+        }
+
+        $this->output = $output;
         $this->documents = new DocumentManager(new RegexFinder());
-        $this->handler = new CodeActionHandler($this->documents, Regex::create());
+        $this->handler = new CodeActionHandler(new Transport($this->output), $this->documents, Regex::create());
+    }
+
+    protected function tearDown(): void
+    {
+        fclose($this->output);
     }
 
     /**
@@ -117,7 +133,7 @@ final class CodeActionHandlerTest extends TestCase
     #[Test]
     public function test_no_action_is_offered_on_a_pattern_past_a_limit(): void
     {
-        $this->handler = new CodeActionHandler($this->documents, Regex::create(['max_recursion_depth' => 3]));
+        $this->handler = new CodeActionHandler(new Transport($this->output), $this->documents, Regex::create(['max_recursion_depth' => 3]));
 
         $this->assertSame([], $this->codeActions("<?php\npreg_match('/((((a))))/', \$s);\n", ['line' => 1, 'character' => 12], ['line' => 1, 'character' => 24]));
     }
@@ -159,11 +175,32 @@ final class CodeActionHandlerTest extends TestCase
         yield 'a run spelled as a repeat beside a subroutine call' => ['pattern' => '/(a)(?1)[0-9]aaaa/', 'offered' => null];
     }
 
+    /**
+     * A request without a document or a range is answered with no action;
+     * a notification under the id 0, as it always was.
+     */
+    #[Test]
+    public function test_a_request_without_a_document_or_a_range_is_offered_no_action(): void
+    {
+        foreach ([[4, ['textDocument' => ['uri' => self::URI]]], [5, ['range' => ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 1]]]], [null, []]] as [$id, $params]) {
+            $this->handler->handle(new Message(jsonrpc: '2.0', method: 'textDocument/codeAction', id: $id, params: $params));
+        }
+
+        rewind($this->output);
+        $frames = preg_split('/Content-Length: \d+\r\n\r\n/', (string) stream_get_contents($this->output), -1, \PREG_SPLIT_NO_EMPTY);
+        $this->assertIsArray($frames);
+        $this->assertSame([
+            ['jsonrpc' => '2.0', 'id' => 4, 'result' => []],
+            ['jsonrpc' => '2.0', 'id' => 5, 'result' => []],
+            ['jsonrpc' => '2.0', 'id' => 0, 'result' => []],
+        ], array_map(static fn (string $frame): mixed => json_decode($frame, true, 512, \JSON_THROW_ON_ERROR), $frames));
+    }
+
     #[Test]
     public function test_handler_can_be_instantiated(): void
     {
         $this->expectNotToPerformAssertions();
-        new CodeActionHandler($this->documents, Regex::create());
+        new CodeActionHandler(new Transport($this->output), $this->documents, Regex::create());
     }
 
     #[Test]
@@ -480,7 +517,7 @@ final class CodeActionHandlerTest extends TestCase
                 return $this->ast;
             }
         };
-        $this->handler = new CodeActionHandler($this->documents, Regex::create(['cache' => $cache]));
+        $this->handler = new CodeActionHandler(new Transport($this->output), $this->documents, Regex::create(['cache' => $cache]));
 
         $actions = $this->codeActionsOnLiteral(self::source(self::URL, 8));
 
@@ -616,7 +653,7 @@ final class CodeActionHandlerTest extends TestCase
         // The oracle: "/^b{,2}$/" matches "b{,2}" only before 10.43.
         $this->assertSame(PcreTarget::runtime()->pcreAtLeast('10.43') ? 0 : 1, preg_match('/^b{,2}$/', 'b{,2}'));
         $regex = Regex::create(['cache' => new NullCache(), 'pcre_version' => '10.40']);
-        $this->handler = new CodeActionHandler($this->documents, $regex);
+        $this->handler = new CodeActionHandler(new Transport($this->output), $this->documents, $regex);
         $pattern = '/'.str_repeat('(?:ab)', 14).'b{,2}/';
 
         $actions = $this->codeActionsOnLiteral(self::source($pattern, 8));
@@ -667,7 +704,7 @@ final class CodeActionHandlerTest extends TestCase
     public function test_format_action_is_not_offered_for_a_spaced_quantifier_whatever_the_target(?string $pcreVersion): void
     {
         $this->assertSame(0, preg_match(self::SPACED_QUANTIFIER, ''), 'The pattern compiles.');
-        $this->handler = new CodeActionHandler($this->documents, Regex::create(null === $pcreVersion ? ['cache' => new NullCache()] : ['cache' => new NullCache(), 'pcre_version' => $pcreVersion]));
+        $this->handler = new CodeActionHandler(new Transport($this->output), $this->documents, Regex::create(null === $pcreVersion ? ['cache' => new NullCache()] : ['cache' => new NullCache(), 'pcre_version' => $pcreVersion]));
 
         $actions = $this->codeActionsOnLiteral(self::source(self::SPACED_QUANTIFIER, 8));
 
@@ -721,24 +758,21 @@ final class CodeActionHandlerTest extends TestCase
     {
         $this->documents->open(self::URI, $source);
 
-        $stream = fopen('php://memory', 'w+');
-        $this->assertIsResource($stream);
-        Response::writeTo($stream);
+        // The answer to this request alone.
+        $stream = $this->output;
+        ftruncate($stream, 0);
+        rewind($stream);
 
-        try {
-            $this->handler->handle(new Message(
-                jsonrpc: '2.0',
-                method: 'textDocument/codeAction',
-                id: 1,
-                params: [
-                    'textDocument' => ['uri' => self::URI],
-                    'range' => ['start' => $start, 'end' => $end],
-                    'context' => ['diagnostics' => []],
-                ],
-            ));
-        } finally {
-            Response::writeTo(null);
-        }
+        $this->handler->handle(new Message(
+            jsonrpc: '2.0',
+            method: 'textDocument/codeAction',
+            id: 1,
+            params: [
+                'textDocument' => ['uri' => self::URI],
+                'range' => ['start' => $start, 'end' => $end],
+                'context' => ['diagnostics' => []],
+            ],
+        ));
 
         rewind($stream);
         $output = (string) stream_get_contents($stream);

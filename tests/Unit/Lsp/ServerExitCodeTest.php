@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -39,12 +39,10 @@ final class ServerExitCodeTest extends TestCase
         }
 
         $this->output = $output;
-        Response::writeTo($this->output);
     }
 
     protected function tearDown(): void
     {
-        Response::writeTo(null);
         fclose($this->output);
     }
 
@@ -150,7 +148,7 @@ final class ServerExitCodeTest extends TestCase
         fwrite($stream, self::frames($messages));
         rewind($stream);
 
-        return (new Server(null, $stream))->run();
+        return (new Server(null, $stream, transport: new Transport($this->output)))->run();
     }
 
     /**

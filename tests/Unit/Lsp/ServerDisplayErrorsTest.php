@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lsp;
 
-use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -46,15 +46,10 @@ final class ServerDisplayErrorsTest extends TestCase
         $output = fopen('php://memory', 'r+');
         $this->assertIsResource($input);
         $this->assertIsResource($output);
-        Response::writeTo($output);
         ini_set('display_errors', $setting);
 
-        try {
-            (new Server(null, $input))->run();
-            $actual = ini_get('display_errors');
-        } finally {
-            Response::writeTo(null);
-        }
+        (new Server(null, $input, transport: new Transport($output)))->run();
+        $actual = ini_get('display_errors');
 
         $this->assertSame($expected, $actual);
     }
