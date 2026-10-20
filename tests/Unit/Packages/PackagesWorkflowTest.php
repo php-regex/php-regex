@@ -13,16 +13,21 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
+use PHPRegex\Tests\TestUtils\PackageSmokeChecks;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The packages workflow checks every package as Packagist will serve it:
- * its manifest, its install alone in a bare project, and the advisories
- * against what that install pulled.
+ * its manifest, its install alone in a bare project, the advisories
+ * against what that install pulled, and one class of its own loaded and
+ * run from the installed copy.
  */
 final class PackagesWorkflowTest extends TestCase
 {
+    private const SMOKE_SCRIPT = __DIR__.'/../../Tools/package_smoke_check.php';
+
     #[Test]
     public function test_the_standalone_job_installs_every_package(): void
     {
@@ -62,6 +67,90 @@ final class PackagesWorkflowTest extends TestCase
         $this->assertLessThan(strpos($job, 'composer audit'), strpos($job, 'composer install -d "$project"'));
         $this->assertStringNotContainsString('continue-on-error', $job);
         $this->assertStringNotContainsString('|| true', $job);
+    }
+
+    /**
+     * Each package answers with a class of its own namespace: a sibling's
+     * class would load through the sibling's autoload and pass whatever
+     * the package under test ships.
+     */
+    #[Test]
+    public function test_every_package_has_a_smoke_check_of_its_own(): void
+    {
+        $checks = PackageSmokeChecks::all();
+        $listed = array_keys($checks);
+        sort($listed);
+
+        $this->assertSame(self::packages(), $listed);
+        foreach ($checks as $package => [$class]) {
+            $this->assertStringStartsWith('PHPRegex\\'.$package.'\\', $class, $package);
+        }
+    }
+
+    #[Test]
+    #[DataProvider('providePackages')]
+    public function test_a_smoke_check_answers_in_the_monorepo(string $package): void
+    {
+        [$class, $check] = PackageSmokeChecks::all()[$package];
+
+        $this->assertTrue(class_exists($class), $class);
+        $this->assertTrue($check(), $package);
+    }
+
+    #[Test]
+    public function test_the_standalone_job_runs_the_package_smoke_check(): void
+    {
+        $job = self::job('standalone');
+
+        $this->assertStringContainsString('run: php tests/Tools/package_smoke_check.php "$PACKAGE" "$project"', $job);
+        $this->assertStringNotContainsString('RegexParser::create()', $job);
+    }
+
+    #[Test]
+    public function test_the_smoke_script_refuses_a_package_it_has_no_check_for(): void
+    {
+        [$code, $output] = self::runSmokeScript('Unknown', \dirname(__DIR__, 3));
+
+        $this->assertSame(2, $code);
+        $this->assertStringContainsString('usage: php tests/Tools/package_smoke_check.php <package> <project-dir>', $output);
+    }
+
+    #[Test]
+    public function test_the_smoke_script_refuses_a_directory_without_an_install(): void
+    {
+        [$code, $output] = self::runSmokeScript('Parser', sys_get_temp_dir().'/php-regex-no-such-project');
+
+        $this->assertSame(2, $code);
+        $this->assertStringContainsString('usage: php tests/Tools/package_smoke_check.php <package> <project-dir>', $output);
+    }
+
+    /**
+     * @return iterable<string, array{package: string}>
+     */
+    public static function providePackages(): iterable
+    {
+        foreach (self::packages() as $package) {
+            yield $package => ['package' => $package];
+        }
+    }
+
+    /**
+     * @return array{int, string}
+     */
+    private static function runSmokeScript(string $package, string $project): array
+    {
+        $process = proc_open(
+            [\PHP_BINARY, '-d', 'auto_prepend_file=', self::SMOKE_SCRIPT, $package, $project],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+        );
+        self::assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]);
+        $errors = (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        return [proc_close($process), $output.$errors];
     }
 
     private static function job(string $name): string

@@ -100,10 +100,13 @@ jobs:
       - name: Audit what it installed
         run: composer audit -d "$project" --no-interaction
 
-      - name: Validate a pattern with what it installed
-        run: |
-          # shellcheck disable=SC2016 # the single quotes hold PHP, not shell
-          php -r 'require $argv[1]."/vendor/autoload.php"; exit(PHPRegex\Parser\RegexParser::create()->validate("/a+/")->isValid ? 0 : 1);' "$project"
+      # A class of the package's own, loaded from its installed copy and run
+      # once, then its binaries: a sibling's class would pass whatever this
+      # package ships.
+      - name: Run a class of the package from what it installed
+        env:
+          PACKAGE: ${{ matrix.package }}
+        run: php tests/Tools/package_smoke_check.php "$PACKAGE" "$project"
 
   phpunit-matrix:
     # The assertion package runs on five PHPUnit majors the monorepo suite
