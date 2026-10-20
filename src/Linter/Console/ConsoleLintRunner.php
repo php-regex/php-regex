@@ -26,6 +26,7 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSetup;
 use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Text\Ascii;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -47,12 +48,17 @@ final class ConsoleLintRunner
 {
     private const FORMAT_CONSOLE = 'console';
 
+    /**
+     * The steps of a run: the scan, the analysis and the optimizations.
+     */
+    private const STEPS = 3;
+
     public function __construct(private readonly FormatterRegistry $formatters = new FormatterRegistry()) {}
 
     public function run(ConsoleLintRequest $request, OutputInterface $output): int
     {
         $errors = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
-        $format = strtolower($request->format);
+        $format = Ascii::lower($request->format);
         if (!$this->formatters->has($format)) {
             $errors->writeln(\sprintf("<error>Error: Invalid format '%s'. Supported formats: %s</error>", OutputFormatter::escape($format), implode(', ', $this->formatters->getNames())));
 
@@ -109,9 +115,9 @@ final class ConsoleLintRunner
         $startTime = (float) microtime(true);
         $progress = null;
         if ($console && !$output->isQuiet()) {
-            // The optimizations are a step of their own when they run.
-            $progress = new LintProgressBar($output, $lintRequest->checkOptimizations ? 3 : 2);
-            $progress->writeln('  <fg=gray>[1/'.($lintRequest->checkOptimizations ? 3 : 2).'] Scanning files</>');
+            // The bridges always suggest optimizations, a step of their own.
+            $progress = new LintProgressBar($output, self::STEPS);
+            $progress->writeln('  <fg=gray>[1/'.self::STEPS.'] Scanning files</>');
         }
 
         $runner = new LintRunner($setup->lint);

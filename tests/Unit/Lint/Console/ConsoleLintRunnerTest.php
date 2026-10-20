@@ -292,6 +292,27 @@ final class ConsoleLintRunnerTest extends TestCase
         $this->assertSame(['error' => 'The --jobs value must be a positive integer.', 'stage' => 'usage'], JsonContract::decodeDocument($this->standard()));
     }
 
+    /**
+     * The format is named in any case, folded as ASCII whatever the
+     * locale: under a Turkish one, PHP 8.1's strtolower() reads "I" as
+     * a dotless i.
+     */
+    #[Test]
+    public function test_the_format_is_read_in_any_case(): void
+    {
+        $locale = setlocale(\LC_CTYPE, '0');
+        setlocale(\LC_CTYPE, 'tr_TR.UTF-8', 'tr_TR.ISO8859-9', 'tr_TR');
+
+        try {
+            $status = $this->lint(self::request([], format: 'CHECKSTYLE'));
+        } finally {
+            setlocale(\LC_CTYPE, false === $locale ? 'C' : $locale);
+        }
+
+        $this->assertSame(0, $status);
+        $this->assertStringStartsWith('<?xml', $this->standard());
+    }
+
     #[Test]
     public function test_github_failure_prints_the_format_error(): void
     {
