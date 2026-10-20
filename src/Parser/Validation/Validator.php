@@ -341,6 +341,12 @@ final class Validator extends AbstractNodeVisitor
     private bool $readingPrefix = false;
 
     /**
+     * Whether the measure of a pattern too large went through a group of
+     * several branches, which the floors may make smaller than it compiles.
+     */
+    private bool $measuredGroupOfBranches = false;
+
+    /**
      * Where the text the visited nodes count their positions from starts in
      * the whole pattern: 0, or the start of the payload of the "(*pla:...)"
      * or "(*sr:...)" being visited, which is parsed apart.
@@ -3947,9 +3953,14 @@ final class Validator extends AbstractNodeVisitor
         }
 
         // The end marker comes first, then the brackets around the pattern.
+        $this->measuredGroupOfBranches = false;
         [$atGroupEnd] = $this->measureBranches($this->branchesOf($node->pattern), 1, self::COMPILED_GROUP_SIZE);
 
-        return true === $atGroupEnd ? $end : 0;
+        // An item or a branch past the limit on the floors is past it in the
+        // compiled pattern too, which is no smaller; unless a group of
+        // branches measured before, larger than its floor, was found too
+        // large where it ends first. Then the end, as it was up to 10.46.
+        return false === $atGroupEnd && !$this->measuredGroupOfBranches ? 0 : $end;
     }
 
     /**
@@ -3969,6 +3980,8 @@ final class Validator extends AbstractNodeVisitor
      *                                     branch (false), or not at all
      *                                     (null); and the units counted once
      *                                     the group is added
+     *
+     * @phpstan-impure it records a group of several branches it measures
      */
     private function measureBranches(array $branches, int $before, int $frame): array
     {
@@ -4008,12 +4021,25 @@ final class Validator extends AbstractNodeVisitor
     {
         foreach ($branch instanceof SequenceNode ? $branch->children : [$branch] as $item) {
             $group = $item instanceof QuantifierNode ? $item->node : $item;
+            $branches = null;
+            $frame = 0;
             if ($group instanceof GroupNode) {
                 $capturing = GroupType::Capturing === $group->type || GroupType::Named === $group->type;
-                [$found] = $this->measureBranches($this->branchesOf($group->child), 0, self::COMPILED_GROUP_SIZE + ($capturing ? 2 : 0));
+                $branches = $this->branchesOf($group->child);
+                $frame = self::COMPILED_GROUP_SIZE + ($capturing ? 2 : 0);
+            } elseif ($group instanceof ConditionalNode) {
+                // A conditional is a group of one or two branches.
+                $branches = $this->compiledSizeFloor($group->no) > 0 ? [$group->yes, $group->no] : [$group->yes];
+                $frame = self::COMPILED_GROUP_SIZE + $this->compiledSizeFloor($group->condition);
+            }
+
+            if (null !== $branches) {
+                [$found] = $this->measureBranches($branches, 0, $frame);
                 if (null !== $found) {
                     return [$found, $length];
                 }
+
+                $this->measuredGroupOfBranches = $this->measuredGroupOfBranches || \count($branches) > 1;
             }
 
             $length += $this->compiledSizeFloor($item);

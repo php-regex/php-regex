@@ -216,6 +216,13 @@ Each checked with pcre2test 10.32 to 10.49.
   not fixed length" at offset 0; the library accepts them. A lookahead
   repeated directly, `(?<=(?=a)?)`, stays fixed. The measure needs an
   outcome for a length that is neither fixed nor unbounded.
+- From 10.48 a pattern too large is reported at 0 when an item or a branch
+  passes the limit, at its end when only the check where a group ends finds
+  it. The library measures on its size floors, and keeps the end once a
+  group of several branches came first: `(?:a|b){5041}` and
+  `(?:x|(?:b){8190})` are at 0 on 10.48 and 10.49, the library says 13 and
+  17; `(?:a{2}){7000}|(?:bb){1000}` is at 0, the library says 27, as the
+  floor counts `a{2}` two units where PCRE2 compiles four.
 
 ## The articles section: what is left
 

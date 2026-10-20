@@ -73,5 +73,15 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'last branch makes it too large, 10.48' => ['pattern' => '/a|(?:b){8191}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 13];
         yield 'two branches past the limit, 10.49' => ['pattern' => '/(?:a){4096}|(?:b){4095}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 23];
         yield 'group whose last branch makes it too large, 10.48' => ['pattern' => '/(?:x|(?:b){8191})/', 'php' => '8.4', 'release' => '10.48', 'offset' => 17];
+        yield 'conditional whose second branch makes it too large, 10.48' => ['pattern' => '/(a)(?(1)(?:bc){5000}|(?:de){5000})/', 'php' => '8.4', 'release' => '10.48', 'offset' => 34];
+        yield 'assertion conditional whose second branch makes it too large, 10.49' => ['pattern' => '/(?(?=x)(?:bc){5000}|(?:de){5000})/', 'php' => '8.5', 'release' => '10.49', 'offset' => 33];
+        yield 'conditional branch alone past the limit, 10.48' => ['pattern' => '/(a)(?(1)a|(?:de){9000})/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'conditional branches past the limit, 10.47' => ['pattern' => '/(a)(?(1)(?:bc){5000}|(?:de){5000})/', 'php' => '8.4', 'release' => '10.47', 'offset' => 0];
+
+        // A group of branches measured before the limit is passed may be
+        // larger than its floor, and too large where it ends: at the end
+        // of the pattern, as up to 10.46. "a{2}" compiles to four units.
+        yield 'group of branches before the limit, 10.48' => ['pattern' => '/(?:(?:a{2}){3400}|(?:b{2}){3400})(?:cc){1500}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 45];
+        yield 'capturing group of branches before the limit, 10.49' => ['pattern' => '/((?:a{2}){3400}|(?:b{2}){3400})x(?:cc){1500}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 44];
     }
 }
