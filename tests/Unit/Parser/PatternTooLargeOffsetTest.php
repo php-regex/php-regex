@@ -78,9 +78,51 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'conditional branch alone past the limit, 10.48' => ['pattern' => '/(a)(?(1)a|(?:de){9000})/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
         yield 'conditional branches past the limit, 10.47' => ['pattern' => '/(a)(?(1)(?:bc){5000}|(?:de){5000})/', 'php' => '8.4', 'release' => '10.47', 'offset' => 0];
 
-        // A group of branches measured before the limit is passed may be
-        // larger than its floor, and too large where it ends: at the end
-        // of the pattern, as up to 10.46. "a{2}" compiles to four units.
+        // From 10.48, a group of branches measured whole, and repeated, is
+        // past the limit where the repeat is added: at offset 0.
+        yield 'repeated group of two branches, 10.48' => ['pattern' => '/(?:a|b){5041}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated group of two branches in UTF mode, 10.49' => ['pattern' => '/(?:a|b){5041}/u', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'repeated caseless group of two branches in UTF mode, 10.48' => ['pattern' => '/(?:a|b){5041}/iu', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated caseless letter of three cases, 10.49' => ['pattern' => '/(?:k|b){5041}/iu', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'repeated group nested in the last branch, 10.49' => ['pattern' => '/(?:x|(?:b){8190})/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'counted letter in a repeated group before a branch, 10.48' => ['pattern' => '/(?:a{2}){7000}|(?:bb){1000}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'caseless counted letter in a repeated group before a branch, 10.49' => ['pattern' => '/(?:a{2}){7000}|(?:bb){1000}/i', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'counted Unicode type in a repeated group of branches, 10.48' => ['pattern' => '/(?:\\d{2}|\\w){5000}/u', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'counted class in a repeated group of branches, 10.49' => ['pattern' => '/(?:[ab]{2}|c){1500}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'counted class of one letter in a repeated group of branches, 10.48' => ['pattern' => '/(?:[a]{3}|c){6000}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated group of branches nesting another, 10.48' => ['pattern' => '/(?:(?:a|b)|c){3000}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated capture nesting a group of branches, 10.49' => ['pattern' => '/((?:a|b)c){3000}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'group of branches before a repeated one, 10.48' => ['pattern' => '/(?:a|b)(?:c|d){5040}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated group of two-letter branches, 10.48' => ['pattern' => '/(?:ab|cd){4000}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'possessive repeat of a group of branches, 10.49' => ['pattern' => '/(?:a|b){5041}+/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'possessive range repeat of a group of branches, 10.48' => ['pattern' => '/(?:a|b){2,5000}+/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated lookahead of two branches, 10.48' => ['pattern' => '/(?=a|b){5041}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated atomic group of two branches, 10.49' => ['pattern' => '/(?>a|b){5041}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'repeated capture of two branches, 10.48' => ['pattern' => '/(a|b){4400}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'letters past the limit, 10.49' => ['pattern' => '/'.str_repeat('abcdefghij', 4000).'/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'caseless letters past the limit in UTF mode, 10.48' => ['pattern' => '/'.str_repeat('abcdefghij', 4000).'/iu', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
+        yield 'repeated named capture of two branches, 10.49' => ['pattern' => '/(?<n>a|b){4400}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+
+        // The same patterns on the releases before.
+        yield 'repeated group of two branches, 10.46' => ['pattern' => '/(?:a|b){5041}/', 'php' => '8.4', 'release' => '10.46', 'offset' => 13];
+        yield 'repeated group of two branches, 10.47' => ['pattern' => '/(?:a|b){5041}/', 'php' => '8.4', 'release' => '10.47', 'offset' => 0];
+        yield 'counted letter in a repeated group before a branch, 10.46' => ['pattern' => '/(?:a{2}){7000}|(?:bb){1000}/', 'php' => '8.4', 'release' => '10.46', 'offset' => 27];
+        yield 'repeated group nested in the last branch, 10.46' => ['pattern' => '/(?:x|(?:b){8190})/', 'php' => '8.4', 'release' => '10.46', 'offset' => 17];
+
+        // From 10.48, branches that pass the limit only together, at the end.
+        yield 'repeated group in the last of three branches, 10.48' => ['pattern' => '/a|b|(?:c|d){5040}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 17];
+        yield 'two branches of repeated groups of branches, 10.49' => ['pattern' => '/(?:a|b){3000}|(?:c|d){3000}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 27];
+        yield 'three branches of repeated groups of branches, 10.48' => ['pattern' => '/(?:a|b){2000}|(?:c|d){2000}|(?:e|f){2000}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 41];
+
+        // A group of branches holding an item whose length is not known for
+        // sure may have passed the limit where it ends: the end is kept, as
+        // up to 10.46, though PCRE2 10.48 reports this one at 0 (a known
+        // difference: a class past 255 compiles to a list of ranges).
+        yield 'group of branches holding a class past 255, 10.48' => ['pattern' => '/(?:[\\x{100}-\\x{200}]|a){5000}/u', 'php' => '8.4', 'release' => '10.48', 'offset' => 29];
+
+        // A group of branches measured before the limit is passed, and too
+        // large where it ends: at the end of the pattern, as up to 10.46.
+        // "a{2}" compiles to four units.
         yield 'group of branches before the limit, 10.48' => ['pattern' => '/(?:(?:a{2}){3400}|(?:b{2}){3400})(?:cc){1500}/', 'php' => '8.4', 'release' => '10.48', 'offset' => 45];
         yield 'capturing group of branches before the limit, 10.49' => ['pattern' => '/((?:a{2}){3400}|(?:b{2}){3400})x(?:cc){1500}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 44];
     }

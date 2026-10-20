@@ -246,6 +246,24 @@ The library reads patterns with PCRE itself, under limits of its own: a low
 `pcre.backtrack_limit` in your configuration changes neither how a pattern is
 read nor its verdict (see [PCRE settings](#pcre-settings)).
 
+### Known differences
+
+Where the library still departs from what the target's PCRE2 reports:
+
+- **Where a pattern too large is reported, from PCRE2 10.48.** PCRE2 reports
+  "regular expression is too large" at offset 0 when an item or a branch
+  passes the limit, and at the end of the pattern when only the check made
+  where a group ends finds it. The library measures each item at the length
+  PCRE2 compiles it to. A few lengths it does not know for sure: a class in
+  UTF mode that holds a character past 255, or past ASCII under `i`, or a
+  type or a POSIX class under UCP; a caseless letter under
+  `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or `r`; a string callout;
+  `(*scan_substring:...)`. When a group of several branches holding
+  one of these is measured before the limit is passed, it may be the group
+  PCRE2 found too large where it ends, so the library reports the end of the
+  pattern, as up to 10.46: `/(?:[\x{100}-\x{200}]|a){5000}/u` is at offset
+  29 where PCRE2 10.48 and 10.49 say 0.
+
 ## What changed in which release
 
 The rules that differ between releases each name the behaviour that changed,

@@ -341,12 +341,6 @@ final class Validator extends AbstractNodeVisitor
     private bool $readingPrefix = false;
 
     /**
-     * Whether the measure of a pattern too large went through a group of
-     * several branches, which the floors may make smaller than it compiles.
-     */
-    private bool $measuredGroupOfBranches = false;
-
-    /**
      * Where the text the visited nodes count their positions from starts in
      * the whole pattern: 0, or the start of the payload of the "(*pla:...)"
      * or "(*sr:...)" being visited, which is parsed apart.
@@ -4054,111 +4048,12 @@ final class Validator extends AbstractNodeVisitor
             return 0;
         }
 
-        // The end marker comes first, then the brackets around the pattern.
-        $this->measuredGroupOfBranches = false;
-        [$atGroupEnd] = $this->measureBranches($this->branchesOf($node->pattern), 1, self::COMPILED_GROUP_SIZE);
+        // Past the limit inside a branch, at offset 0; where a group ends,
+        // or when that cannot be told for sure, at the end, as up to 10.46.
+        $source = $node->source ?? '';
+        $length = new CompiledLength($this->compiledSizeFloor(...), $source, $this->unicodeMode, $this->unicodeFlag || \in_array('UCP', StartOptions::items($source), true), $node->flags);
 
-        // An item or a branch past the limit on the floors is past it in the
-        // compiled pattern too, which is no smaller; unless a group of
-        // branches measured before, larger than its floor, was found too
-        // large where it ends first. Then the end, as it was up to 10.46.
-        return false === $atGroupEnd && !$this->measuredGroupOfBranches ? 0 : $end;
-    }
-
-    /**
-     * Measure a group, or the pattern, as PCRE2 10.48 does on its first
-     * pass: each item is added to its branch, which may not pass the limit;
-     * each branch but the last is then added to what comes before the
-     * group, and the last one where the group ends, with no offset set. All
-     * on the floors, so a pattern whose size the floor misses is measured as
-     * if it were that floor.
-     *
-     * @param list<NodeInterface> $branches
-     * @param int                 $before   the units counted before the group
-     * @param int                 $frame    the brackets of the group
-     *
-     * @return array{0: bool|null, 1: int} whether the limit is passed where
-     *                                     the group ends (true), inside a
-     *                                     branch (false), or not at all
-     *                                     (null); and the units counted once
-     *                                     the group is added
-     *
-     * @phpstan-impure it records a group of several branches it measures
-     */
-    private function measureBranches(array $branches, int $before, int $frame): array
-    {
-        $length = $frame;
-        $last = \count($branches) - 1;
-        foreach ($branches as $index => $branch) {
-            [$found, $length] = $this->measureItems($branch, $length);
-            if (null !== $found) {
-                return [$found, $length];
-            }
-
-            if ($index < $last) {
-                // A "|" adds an alternation marker and its link.
-                $length += 3;
-                if ($before + $length > self::MAX_COMPILED_SIZE) {
-                    return [false, $before + $length];
-                }
-
-                $before += $length;
-                $length = 0;
-            } elseif ($before + $length > self::MAX_COMPILED_SIZE) {
-                return [true, $before + $length];
-            }
-        }
-
-        return [null, $before + $length];
-    }
-
-    /**
-     * Add the items of $branch to the $length of the branch so far, a group
-     * measured on its own first.
-     *
-     * @return array{0: bool|null, 1: int} as measureBranches() does, and the
-     *                                     length of the branch
-     */
-    private function measureItems(NodeInterface $branch, int $length): array
-    {
-        foreach ($branch instanceof SequenceNode ? $branch->children : [$branch] as $item) {
-            $group = $item instanceof QuantifierNode ? $item->node : $item;
-            $branches = null;
-            $frame = 0;
-            if ($group instanceof GroupNode) {
-                $capturing = GroupType::Capturing === $group->type || GroupType::Named === $group->type;
-                $branches = $this->branchesOf($group->child);
-                $frame = self::COMPILED_GROUP_SIZE + ($capturing ? 2 : 0);
-            } elseif ($group instanceof ConditionalNode) {
-                // A conditional is a group of one or two branches.
-                $branches = $this->compiledSizeFloor($group->no) > 0 ? [$group->yes, $group->no] : [$group->yes];
-                $frame = self::COMPILED_GROUP_SIZE + $this->compiledSizeFloor($group->condition);
-            }
-
-            if (null !== $branches) {
-                [$found] = $this->measureBranches($branches, 0, $frame);
-                if (null !== $found) {
-                    return [$found, $length];
-                }
-
-                $this->measuredGroupOfBranches = $this->measuredGroupOfBranches || \count($branches) > 1;
-            }
-
-            $length += $this->compiledSizeFloor($item);
-            if ($length > self::MAX_COMPILED_SIZE) {
-                return [false, $length];
-            }
-        }
-
-        return [null, $length];
-    }
-
-    /**
-     * @return list<NodeInterface>
-     */
-    private function branchesOf(NodeInterface $node): array
-    {
-        return $node instanceof AlternationNode ? array_values($node->alternatives) : [$node];
+        return $length->passedInsideABranch($node->pattern) ? 0 : $end;
     }
 
     /**

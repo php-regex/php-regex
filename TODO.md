@@ -157,16 +157,26 @@ Each checked with pcre2test 10.32 to 10.49.
   repeat after it is read: `(?<=a{65535}b?)` is "lookbehind assertion is
   too long" at 0 there, where the library says
   `regex.lookbehind.variable_length_not_supported` (same offset).
-- From 10.48 a pattern too large is reported at 0 when an item or a branch
-  passes the limit, at its end when only the check where a group ends finds
-  it. The library measures on its size floors, and keeps the end once a
-  group of several branches came first: `(?:a|b){5041}` and
-  `(?:x|(?:b){8190})` are at 0 on 10.48 and 10.49, the library says 13 and
-  17; `(?:a{2}){7000}|(?:bb){1000}` is at 0, the library says 27, as the
-  floor counts `a{2}` two units where PCRE2 compiles four.
 - `Regex::info()` reports the longest lookbehind of one PCRE never measures:
   `(?<=(*ACCEPT)(?<=abcd))` and `(?<=(?(DEFINE)(?<=abcd)))` have no
   "Max lookbehind" in pcre2test 10.49 `/I`; the library says 4.
+
+## Compiled size verdicts
+
+Each checked with pcre2test 10.32 to 10.49.
+
+- The verdict "regular expression is too large" still rests on the size
+  floors, on every release: a pattern whose floor stays under 64 KiB is
+  valid for the library, though PCRE2 compiles it larger and refuses it.
+  `(?:a{2,}){7000}`, `(?:\d{2}|\w){5000}` and `(?:é|b){5000}/u` are too large
+  on 10.32 to 10.49, the library says valid; in a generated sweep of near
+  limit patterns, most of those PCRE2 refuses. The lengths PCRE2 10.48
+  compiles to are known item by item now; older releases would need theirs
+  checked one by one before the verdict can use them, and the cost on long
+  patterns measured.
+- `\p{Any}` compiles to one unit from 10.33 (three on 10.32), and `[\p{Any}]`
+  from 10.45, where the floor counts three: `(?:\p{Any}){9000}` compiles on
+  10.33 to 10.49, the library says too large.
 
 ## The articles section: what is left
 
