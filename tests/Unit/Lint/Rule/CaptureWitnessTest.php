@@ -23,6 +23,7 @@ use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,6 +38,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class CaptureWitnessTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param list<bool> $expected one answer per capturing group, in order
      */
@@ -133,6 +136,20 @@ final class CaptureWitnessTest extends TestCase
     public function test_a_group_that_captures_nothing_is_never_shown_filled(): void
     {
         $this->assertSame([false, true], array_map(static fn (array $seen): bool => $seen['fills'], self::groupsOf('/(?:a)(b)/', true)));
+        // "(?n)" on every PHP: PCRE2 reads it from 10.30 (php:8.1-cli, 10.39).
+        // The setting is a group of its own, and fills nothing either.
+        $this->assertSame([false, false], array_map(static fn (array $seen): bool => $seen['fills'], self::groupsOf('/(?n)(a)/', true)));
+    }
+
+    /**
+     * The witness runs the pattern on the running PHP, which reads the n
+     * modifier from 8.2.
+     */
+    #[Test]
+    public function test_a_group_the_n_modifier_keeps_from_capturing_is_never_shown_filled(): void
+    {
+        $this->requiresPhpReading('/(a)/n');
+
         $this->assertSame([false], array_map(static fn (array $seen): bool => $seen['fills'], self::groupsOf('/(a)/n', true)));
     }
 
