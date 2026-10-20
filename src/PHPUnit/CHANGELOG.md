@@ -18,3 +18,6 @@ CHANGELOG
    around `MatchesPattern` would pass as "not a match".
  * Offsets are bytes, and one match attempt is one `preg_match()` call —
    both said in every failure the assertions render.
+ * Requires `php-regex/regex-parser` and `php-regex/regex-redos` only: the
+   assertions read patterns through the parser and the ReDoS analyzer, not
+   through the `Regex` facade.

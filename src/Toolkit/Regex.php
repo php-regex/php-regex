@@ -33,20 +33,17 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
-use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
-use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\Printer\PatternFormatter;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\CompatibilityChecker;
@@ -403,19 +400,7 @@ final class Regex
      */
     public function info(string $regex): PatternInfo
     {
-        $ast = $this->parse($regex);
-
-        // A pattern that parses can still be one PCRE refuses at this target,
-        // as a \K in a lookbehind on PHP 8.5: its facts would describe
-        // nothing the engine runs.
-        $validation = $this->parser->validate($regex);
-        if (!$validation->isValid) {
-            [$pattern] = PatternParser::extractPatternAndFlags($regex, $this->target());
-
-            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, null, $validation->hint);
-        }
-
-        return (new PatternInfoAnalyzer($this->target()))->analyze($ast);
+        return PatternInfoAnalyzer::analyzePattern($this->parser, $regex);
     }
 
     /**

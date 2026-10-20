@@ -137,4 +137,41 @@ final class RegexInfoTest extends TestCase
         $this->assertSame(0, $info->captureCount);
         $this->assertSame(2, $info->maxLookbehind);
     }
+
+    /**
+     * The facade holds no rule of its own: info() is the parser package's
+     * analyzePattern() at the facade's parser, refusals included.
+     *
+     * @param array<string, mixed> $options
+     */
+    #[Test]
+    #[DataProvider('provideRefusedPatterns')]
+    public function test_info_throws_what_analyze_pattern_throws(string $pattern, array $options): void
+    {
+        $regex = Regex::fromOptions(ParserOptions::fromArray($options));
+
+        try {
+            PatternInfoAnalyzer::analyzePattern($regex->parser(), $pattern);
+            self::fail('The row must be a pattern analyzePattern() refuses.');
+        } catch (ExceptionInterface $expected) {
+        }
+
+        try {
+            $regex->info($pattern);
+            self::fail('Expected info() to throw.');
+        } catch (ExceptionInterface $thrown) {
+            $this->assertSame($expected::class, $thrown::class);
+            $this->assertSame($expected->getMessage(), $thrown->getMessage());
+        }
+    }
+
+    #[Test]
+    #[DataProvider('providePatterns')]
+    public function test_info_answers_what_analyze_pattern_answers(string $pattern): void
+    {
+        $this->assertEquals(
+            PatternInfoAnalyzer::analyzePattern(RegexParser::create(self::TARGET), $pattern),
+            Regex::create(self::TARGET)->info($pattern),
+        );
+    }
 }

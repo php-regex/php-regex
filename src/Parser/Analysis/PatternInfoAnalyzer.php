@@ -14,6 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\BsrConvention;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -38,6 +41,8 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
@@ -52,6 +57,11 @@ use PHPRegex\Parser\Syntax\StartOptions;
  * The tree is read as written: a pattern the validator refuses gets an
  * answer, not an error. The longest lookbehind is the one PCRE2 measures at
  * the target, the running PHP's PCRE2 unless one is named.
+ *
+ * analyzePattern() reads a pattern rather than a tree, and answers only for
+ * one the parser accepts at its target:
+ *
+ *     $info = PatternInfoAnalyzer::analyzePattern(RegexParser::create(), '/(?<y>\d{4})-\d\d/');
  */
 final class PatternInfoAnalyzer
 {
@@ -63,6 +73,32 @@ final class PatternInfoAnalyzer
     public const ANALYSIS_VERSION = '2';
 
     public function __construct(private readonly ?PcreTarget $target = null) {}
+
+    /**
+     * The facts of a pattern the parser accepts at its target, read at that
+     * target: a pattern that parses can still be one PCRE refuses there, as
+     * a \K in a lookbehind on PHP 8.5, and its facts would describe nothing
+     * the engine runs.
+     *
+     * @param RegexParser $parser reads the pattern and judges it, its target the one the facts are read at
+     * @param string      $regex  the pattern with its delimiters and flags
+     *
+     * @throws ExceptionInterface when the parser refuses the pattern at its target: the exception parse() throws, or a
+     *                            SemanticErrorException carrying the validation error, its code and its hint
+     */
+    public static function analyzePattern(RegexParser $parser, string $regex): PatternInfo
+    {
+        $ast = $parser->parse($regex);
+
+        $validation = $parser->validate($regex);
+        if (!$validation->isValid) {
+            [$pattern] = PatternParser::extractPatternAndFlags($regex, $parser->target());
+
+            throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, null, $validation->hint);
+        }
+
+        return (new self($parser->target()))->analyze($ast);
+    }
 
     public function analyze(RegexNode $ast): PatternInfo
     {

@@ -14,30 +14,31 @@ declare(strict_types=1);
 namespace PHPRegex\PHPUnit;
 
 use PHPRegex\Parser\Analysis\PatternInfo;
+use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\VisualContextInterface;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosProof;
-use PHPRegex\Toolkit\Regex;
 
 /**
- * The machinery every regex assertion leans on: one lazily created facade
+ * The machinery every regex assertion leans on: one lazily created parser
  * held for the process, the no-JIT guarded spelling each match attempt runs
  * under, the capture-expectation vocabulary, and the memoized ReDoS
  * verdicts.
  *
- * The facade is held once because nothing about it is memoized itself: its
- * parser's cache is per instance, so a fresh facade per assertion would
- * parse every pattern again. ReDoS verdicts are memoized per pattern; the
- * analyzer is deterministic per release, so the memoization cannot be
- * observed, only the budget spent twice is saved.
+ * The parser is held once because its cache is per instance, so a fresh
+ * parser per assertion would parse every pattern again. ReDoS verdicts are
+ * memoized per pattern; the analyzer is deterministic per release, so the
+ * memoization cannot be observed, only the budget spent twice is saved.
  *
  * @internal the assertions and their constraints are the public doors
  */
 final class PatternLab
 {
-    private static ?Regex $regex = null;
+    private static ?RegexParser $parser = null;
 
     private static ?PcreEngine $engine = null;
 
@@ -51,12 +52,12 @@ final class PatternLab
     private static array $linearFailures = [];
 
     /**
-     * The facade every assertion reads patterns through, created on the
+     * The parser every assertion reads patterns through, created on the
      * first call and held for the process.
      */
-    public static function regex(): Regex
+    public static function parser(): RegexParser
     {
-        return self::$regex ??= Regex::create();
+        return self::$parser ??= RegexParser::create();
     }
 
     /**
@@ -71,7 +72,7 @@ final class PatternLab
     public static function run(string $pattern, string $subject, array $expected): MatchAttempt
     {
         try {
-            $node = self::regex()->parse($pattern);
+            $node = self::parser()->parse($pattern);
         } catch (RegexException $e) {
             return new MatchAttempt(null, [], [], self::libraryFailure($e));
         }
@@ -79,7 +80,7 @@ final class PatternLab
         $expectation = null;
         if ([] !== $expected) {
             try {
-                $info = self::regex()->info($pattern);
+                $info = PatternInfoAnalyzer::analyzePattern(self::parser(), $pattern);
             } catch (RegexException $e) {
                 return new MatchAttempt(null, [], [], self::libraryFailure($e));
             }
@@ -146,7 +147,7 @@ final class PatternLab
     public static function linearFailure(string $pattern): ?string
     {
         if (!\array_key_exists($pattern, self::$linearFailures)) {
-            self::$linearFailures[$pattern] = self::verdictFailure(self::regex()->redos($pattern));
+            self::$linearFailures[$pattern] = self::verdictFailure((new RedosAnalyzer(self::parser()))->analyze($pattern));
         }
 
         return self::$linearFailures[$pattern];

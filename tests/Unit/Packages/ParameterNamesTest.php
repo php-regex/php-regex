@@ -80,6 +80,7 @@ final class ParameterNamesTest extends TestCase
         yield 'PcreEngine::matchAll' => ['class' => PcreEngine::class, 'method' => 'matchAll', 'names' => ['regex', 'subject']];
         yield 'CaptureShapeAnalyzer::analyze' => ['class' => CaptureShapeAnalyzer::class, 'method' => 'analyze', 'names' => ['ast']];
         yield 'PatternInfoAnalyzer::analyze' => ['class' => PatternInfoAnalyzer::class, 'method' => 'analyze', 'names' => ['ast']];
+        yield 'PatternInfoAnalyzer::analyzePattern' => ['class' => PatternInfoAnalyzer::class, 'method' => 'analyzePattern', 'names' => ['parser', 'regex']];
         yield 'RequiredLiteralAnalyzer::analyze' => ['class' => RequiredLiteralAnalyzer::class, 'method' => 'analyze', 'names' => ['ast']];
         yield 'GroupNumberingCollector::collect' => ['class' => GroupNumberingCollector::class, 'method' => 'collect', 'names' => ['ast']];
     }

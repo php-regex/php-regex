@@ -16,6 +16,9 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\BsrConvention;
+use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
@@ -803,6 +806,101 @@ final class PatternInfoAnalyzerTest extends TestCase
         $this->assertNull($second->newline);
         $this->assertFalse($second->usesBackslashC);
         $this->assertFalse($second->anchoredStart);
+    }
+
+    #[Test]
+    #[DataProvider('provideAcceptedPatterns')]
+    public function test_analyze_pattern_is_the_analyzer_answer_at_the_parsers_target(string $pattern): void
+    {
+        $parser = RegexParser::create(self::TARGET);
+
+        $this->assertEquals(
+            (new PatternInfoAnalyzer($parser->target()))->analyze($parser->parse($pattern)),
+            PatternInfoAnalyzer::analyzePattern($parser, $pattern),
+        );
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideAcceptedPatterns(): iterable
+    {
+        yield 'plain' => ['pattern' => '/abc/'];
+        yield 'every fact set' => ['pattern' => '/(*LIMIT_MATCH=5)(*LIMIT_DEPTH=6)(*LIMIT_HEAP=7)(*CRLF)(*BSR_ANYCRLF)\A(?<n>a)\1\Cb\z/'];
+        yield 'unicode' => ['pattern' => '/(?<=é)\X+/u'];
+        // preg_match() on PHP 8.4.26 compiles it and returns 1 on "abc".
+        yield '\K in a lookbehind up to PHP 8.4' => ['pattern' => '/(?<=a\Kb)c/'];
+    }
+
+    /**
+     * The longest lookbehind is the one PCRE2 measures at the parser's own
+     * target: pcre2test 10.33 prints no "Max lookbehind" for it, 10.34
+     * prints 4.
+     */
+    #[Test]
+    public function test_analyze_pattern_reads_the_longest_lookbehind_at_the_parsers_target(): void
+    {
+        $older = RegexParser::create(['php_version' => '8.0', 'pcre_version' => '10.33']);
+        $newer = RegexParser::create(['php_version' => '8.0', 'pcre_version' => '10.34']);
+
+        $this->assertSame(0, PatternInfoAnalyzer::analyzePattern($older, '/(?<=(?=(?<=abcd)))/')->maxLookbehind);
+        $this->assertSame(4, PatternInfoAnalyzer::analyzePattern($newer, '/(?<=(?=(?<=abcd)))/')->maxLookbehind);
+    }
+
+    #[Test]
+    #[DataProvider('provideUnparsablePatterns')]
+    public function test_analyze_pattern_throws_what_parse_throws(string $pattern): void
+    {
+        $parser = RegexParser::create(self::TARGET);
+
+        try {
+            $parser->parse($pattern);
+            self::fail('The row must be a pattern parse() refuses.');
+        } catch (ExceptionInterface $expected) {
+        }
+
+        try {
+            PatternInfoAnalyzer::analyzePattern($parser, $pattern);
+            self::fail('Expected analyzePattern() to throw.');
+        } catch (ExceptionInterface $thrown) {
+            $this->assertSame($expected::class, $thrown::class);
+            $this->assertSame($expected->getMessage(), $thrown->getMessage());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideUnparsablePatterns(): iterable
+    {
+        yield 'unclosed group' => ['pattern' => '/(a/'];
+        yield 'no closing delimiter' => ['pattern' => '/abc'];
+        yield 'alphanumeric delimiter' => ['pattern' => 'abc'];
+    }
+
+    /**
+     * A pattern that parses can still be one PCRE refuses at the target:
+     * PHP 8.5 compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK (pcre2test
+     * 10.49 without that option: error 199), so its facts would describe
+     * nothing the engine runs.
+     */
+    #[Test]
+    public function test_analyze_pattern_throws_the_validation_error_for_a_pattern_the_target_refuses(): void
+    {
+        $parser = RegexParser::create(['php_version' => '8.5', 'pcre_version' => '10.44']);
+        $validation = $parser->validate('/(?<=a\Kb)c/');
+        $this->assertFalse($validation->isValid, 'The row must be a pattern the target refuses.');
+
+        try {
+            PatternInfoAnalyzer::analyzePattern($parser, '/(?<=a\Kb)c/');
+            self::fail('Expected analyzePattern() to throw.');
+        } catch (SemanticErrorException $refusal) {
+            $this->assertSame($validation->error, $refusal->getMessage());
+            $this->assertSame(ErrorCode::KeepInLookaround, $refusal->errorCode);
+            $this->assertSame($validation->offset, $refusal->position);
+            $this->assertSame($validation->hint, $refusal->hint);
+            $this->assertStringStartsWith('Line 1: (?<=a\Kb)c', $refusal->getVisualSnippet());
+        }
     }
 
     private function info(string $pattern): PatternInfo

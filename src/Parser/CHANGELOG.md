@@ -16,3 +16,6 @@ CHANGELOG
  * `PatternInfoAnalyzer` takes an optional `PcreTarget`, the running PHP's
    PCRE2 by default: its release decides which lookbehinds `maxLookbehind`
    counts, as PCRE2 measures them.
+ * `PatternInfoAnalyzer::analyzePattern()` reads the facts of a delimited
+   pattern with a `RegexParser`, at the parser's target, and throws what the
+   parser refuses there, as `Regex::info()` does.

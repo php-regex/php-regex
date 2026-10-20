@@ -43,7 +43,7 @@ Installation
 composer require --dev php-regex/regex-phpunit
 ```
 
-The package brings `php-regex/regex-toolkit` with it: the parser, the capture information and the ReDoS analysis the assertions read.
+The package brings `php-regex/regex-parser` and `php-regex/regex-redos` with it: the parser, the pattern facts and the ReDoS analysis the assertions read.
 
 Usage
 -----
@@ -173,7 +173,7 @@ Resources
 
 * [Upgrading from 1.x](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md) — moving from `yoeunes/regex-parser` 1.3 to 2.0, every change that needs one on your side
 * [Documentation](https://php-regex.com/docs/)
-* The analysis layer behind the assertions: [regex-toolkit](https://github.com/php-regex/php-regex/tree/2.x/src/Toolkit)
+* The analysis layer behind the assertions: [regex-parser](https://github.com/php-regex/php-regex/tree/2.x/src/Parser) and [regex-redos](https://github.com/php-regex/php-regex/tree/2.x/src/Redos)
 * [Changelog](CHANGELOG.md)
 * [Report issues](https://github.com/php-regex/php-regex/issues) and [send pull requests](https://github.com/php-regex/php-regex/pulls) in the [main PHPRegex repository](https://github.com/php-regex/php-regex)
 

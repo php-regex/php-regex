@@ -57,6 +57,19 @@ validation error and its code. On PHP 8.5, which refuses `\K` in a
 lookaround, `Regex::create(['php_version' => '8.5'])->info('/(?<=a\Kb)c/')`
 throws a `SemanticErrorException` whose code is `regex.keep.in_lookaround`.
 
+The same rule needs only the parser: `PatternInfoAnalyzer::analyzePattern()`
+takes a `RegexParser` and a pattern, reads the facts at the parser's target,
+and throws what `Regex::info()` throws.
+
+```php
+use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
+use PHPRegex\Parser\RegexParser;
+
+$info = PatternInfoAnalyzer::analyzePattern(RegexParser::create(), '/^(?<year>\d{4})-(?<month>\d\d)$/D');
+
+$info->names; // ['month' => [2], 'year' => [1]]
+```
+
 Which lookbehinds PCRE2 measures depends on its release, and so does
 `maxLookbehind`: `PatternInfoAnalyzer` reads it for the target it is given,
 the running PHP's PCRE2 when none is, and `Regex::info()` gives it the

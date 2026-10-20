@@ -197,7 +197,6 @@ final class PackageManifestTest extends TestCase
             'Parser\Text\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Transpiler\Target\TargetRegistry',
         ],
-        'Toolkit' => ['Parser\Syntax\PatternParser'],
         // The HTML pattern attribute takes no flag: /i is spelled out
         // with the characters the running PCRE takes for each atom.
         'Transpiler' => [
