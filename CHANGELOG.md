@@ -782,7 +782,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Tests
 
-- CI installs each of the sixteen packages alone in a bare project, from its directory, its siblings reached through path repositories, and validates a pattern with what it installed: a package that only installs inside the monorepo fails before a tag publishes it.
+- CI installs each of the seventeen packages alone in a bare project, from its directory, its siblings reached through path repositories, audits the dependencies it pulled with `composer audit`, loads a class of the package's own from its installed copy and runs it once, and runs each binary it ships with `--version`: a package that only installs or loads inside the monorepo fails before a tag publishes it. The root manifest and the seventeen package manifests pass `composer validate --strict`.
 - Added comprehensive LSP server test suite (97 tests) covering Protocol, Handlers, Document management, and Converters.
 - Added Unicode lint rules tests covering all shorthand patterns and Unicode properties.
 - Added coverage for `checks` normalization and PHPStan `checks` overrides.
