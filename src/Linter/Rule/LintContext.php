@@ -226,6 +226,14 @@ final class LintContext
     }
 
     /**
+     * Whether only comments are written after the item in the sequence.
+     */
+    public function onlyCommentsFollowIn(SequenceNode $sequence, NodeInterface $item): bool
+    {
+        return $this->continuation->onlyCommentsFollowIn($sequence, $item);
+    }
+
+    /**
      * Whether the items written after the node in each sequence around it
      * pass the test, the innermost sequence first.
      *

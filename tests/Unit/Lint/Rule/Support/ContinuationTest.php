@@ -19,6 +19,7 @@ use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -92,6 +93,12 @@ final class ContinuationTest extends TestCase
         $this->assertSame([3, 2], $seen);
 
         $this->assertFalse($continuation->followersPass($node, $parents, static fn (array $followers): bool => 2 !== \count($followers)));
+
+        $inner = $parents[\count($parents) - 1];
+        $this->assertInstanceOf(SequenceNode::class, $inner);
+        $this->assertFalse($continuation->onlyCommentsFollowIn($inner, $node));
+        $this->assertFalse($continuation->onlyCommentsFollowIn($inner, $inner->children[\count($inner->children) - 2]));
+        $this->assertTrue($continuation->onlyCommentsFollowIn($inner, $inner->children[\count($inner->children) - 1]));
     }
 
     /**

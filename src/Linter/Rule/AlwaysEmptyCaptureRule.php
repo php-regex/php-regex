@@ -19,7 +19,6 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Node\AlternationNode;
-use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -54,6 +53,12 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
     private readonly QuestionBudget $questions;
 
     /**
+     * Whether the pattern being linted may match nothing, read once for all
+     * its groups.
+     */
+    private ?bool $patternCanBeEmpty = null;
+
+    /**
      * Whether the group always stays empty, by target, pattern and group.
      *
      * @var array<string, bool>
@@ -68,6 +73,7 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
     public function begin(LintContext $context): void
     {
         $this->questions->reset();
+        $this->patternCanBeEmpty = null;
     }
 
     public function getRuleIds(): array
@@ -95,13 +101,14 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
 
         // In a branch reset another alternative fills the same slot, which
         // is all the proof reads.
-        $root = $context->parents()[0] ?? $node;
         $inBranchReset = array_filter($context->parents(), static fn (NodeInterface $parent): bool => $parent instanceof GroupNode && GroupType::BranchReset === $parent->type);
         if ([] !== $inBranchReset) {
             return [];
         }
 
-        if (NodePredicates::canBeEmpty($root) || self::anotherRuleExplains($node, $context) || !$this->questions->allows()) {
+        $root = $context->parents()[0] ?? null;
+        $canBeEmpty = null === $root ? NodePredicates::canBeEmpty($node) : $this->patternCanBeEmpty ??= NodePredicates::canBeEmpty($root);
+        if ($canBeEmpty || self::anotherRuleExplains($node, $context) || !$this->questions->allows()) {
             return [];
         }
 
@@ -157,7 +164,7 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
             }
         }
 
-        if (!self::nothingFollows($group, $context->parents())) {
+        if (!self::nothingFollows($group, $context)) {
             return false;
         }
 
@@ -175,18 +182,15 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
      * through the sequences, alternatives, groups and quantifiers that hold
      * it.
      *
-     * @param list<NodeInterface> $parents the node's ancestors, outermost first
+     * The node's ancestors are read from the traversal cursor.
      */
-    private static function nothingFollows(NodeInterface $node, array $parents): bool
+    private static function nothingFollows(NodeInterface $node, LintContext $context): bool
     {
         $child = $node;
-        foreach (array_reverse($parents) as $parent) {
+        foreach (array_reverse($context->parents()) as $parent) {
             if ($parent instanceof SequenceNode) {
-                $after = \array_slice($parent->children, (int) array_search($child, $parent->children, true) + 1);
-                foreach ($after as $next) {
-                    if (!$next instanceof CommentNode) {
-                        return false;
-                    }
+                if (!$context->onlyCommentsFollowIn($parent, $child)) {
+                    return false;
                 }
             } elseif ($parent instanceof GroupNode && !NodePredicates::isTransparentGroup($parent->type)) {
                 return false;

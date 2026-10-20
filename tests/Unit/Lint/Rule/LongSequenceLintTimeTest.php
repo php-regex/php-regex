@@ -30,9 +30,9 @@ final class LongSequenceLintTimeTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideLongSequences')]
-    public function test_a_long_sequence_is_linted_in_linear_time(string $item, int $issues): void
+    public function test_a_long_sequence_is_linted_in_linear_time(string $item, int $issues, int $count = 2000): void
     {
-        $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, 2000).'/');
+        $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, $count).'/');
         $linter = new PatternLinter(array_fill_keys(LintConfigSchema::lintRuleIds(), true));
 
         $start = CpuClock::nanoseconds();
@@ -46,7 +46,7 @@ final class LongSequenceLintTimeTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{item: string, issues: int}>
+     * @return iterable<string, array{item: string, issues: int, count?: int}>
      */
     public static function provideLongSequences(): iterable
     {
@@ -56,5 +56,8 @@ final class LongSequenceLintTimeTest extends TestCase
         yield 'classes and letters' => ['item' => '[ab]x', 'issues' => 0];
         yield 'start anchors and letters' => ['item' => '\Ga', 'issues' => 1999];
         yield 'end anchors and newlines' => ['item' => 'a$\n', 'issues' => 1999];
+        // Each group asks whether its pattern may match nothing, and what
+        // follows it: 4,000 took about 17 s when each read the pattern again.
+        yield 'optional capturing groups' => ['item' => '(a)?', 'issues' => 0, 'count' => 4000];
     }
 }
