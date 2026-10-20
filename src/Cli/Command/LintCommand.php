@@ -292,7 +292,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $writeLine = 'console' === $format ? $output->write(...) : $output->writeError(...);
             $workingDirectory = getcwd();
             foreach ($parserFallbacks as $fallback) {
-                $file = LintService::displayPath($fallback->file, false === $workingDirectory ? null : $workingDirectory);
+                $file = RelativePathHelper::relativize($fallback->file, false === $workingDirectory ? null : $workingDirectory);
                 $writeLine(\sprintf("  Parsed with the tokenizer: %s (%s)\n", $file, $fallback->parserFallback));
             }
         }

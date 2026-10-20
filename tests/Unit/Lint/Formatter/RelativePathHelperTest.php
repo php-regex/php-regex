@@ -14,15 +14,19 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * How the reports and the lint banner name a file: from the base path
- * when the file is under it, in full otherwise, with forward slashes.
+ * How the reports, the links and the lint banner name a file: from the
+ * base path when the file is under it, whichever way the path is written
+ * or reached, in full otherwise, with forward slashes.
  */
 final class RelativePathHelperTest extends TestCase
 {
+    use TemporaryProject;
+
     /**
      * @return iterable<string, array{base: string, path: string, expected: string}>
      */
@@ -32,14 +36,44 @@ final class RelativePathHelperTest extends TestCase
         yield 'under a base written with a trailing slash' => ['base' => '/base/', 'path' => '/base/regex.json', 'expected' => 'regex.json'];
         yield 'outside the base' => ['base' => '/base', 'path' => '/other/file.php', 'expected' => '/other/file.php'];
         yield 'beside the base, sharing its prefix' => ['base' => '/base', 'path' => '/baseline/file.php', 'expected' => '/baseline/file.php'];
-        yield 'backslashes' => ['base' => '/base', 'path' => 'C:\\root\\file.php', 'expected' => 'C:/root/file.php'];
-        yield 'a Windows path under a Windows base' => ['base' => 'C:\\root', 'path' => 'C:\\root\\src\\file.php', 'expected' => 'src/file.php'];
+        yield 'relative to the base' => ['base' => '/base', 'path' => './src//x/../file.php', 'expected' => 'src/file.php'];
+        yield 'up out of the base' => ['base' => '/base/app', 'path' => '../lib/file.php', 'expected' => '/base/lib/file.php'];
+        yield 'under a base written with dots' => ['base' => '/base/./app/..', 'path' => '/base/src/file.php', 'expected' => 'src/file.php'];
+        // A separator on Windows only: elsewhere a backslash is part of the name.
+        yield 'a Windows path under a Windows base' => ['base' => 'C:\\root', 'path' => 'C:\\root\\src\\file.php', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? 'src/file.php' : 'C:\\root\\src\\file.php'];
+        yield 'a drive path under a drive base' => ['base' => 'C:/root', 'path' => 'C:/root/src/file.php', 'expected' => 'src/file.php'];
         yield 'an empty base' => ['base' => '', 'path' => '/root/file.php', 'expected' => '/root/file.php'];
+        yield 'a stream URL' => ['base' => '/base', 'path' => 'phar:///base/a.phar/file.php', 'expected' => 'phar:///base/a.phar/file.php'];
     }
 
     #[DataProvider('providePaths')]
     public function test_a_file_is_named_from_the_base_when_it_is_under_it(string $base, string $path, string $expected): void
     {
         $this->assertSame($expected, (new RelativePathHelper($base))->getRelativePath($path));
+    }
+
+    /**
+     * A base named through a symbolic link, as $PWD may name the working
+     * directory, holds the files of the directory it points to.
+     */
+    public function test_a_file_reached_through_a_link_is_named_from_the_base(): void
+    {
+        $directory = $this->makeProject(['src/a.php' => "<?php\n"]);
+        $link = $this->makeProject().'/link';
+        $this->assertTrue(symlink($directory, $link));
+
+        $this->assertSame('src/a.php', (new RelativePathHelper($link))->getRelativePath($directory.'/src/a.php'));
+        $this->assertSame('src/a.php', (new RelativePathHelper($directory))->getRelativePath($link.'/src/a.php'));
+    }
+
+    /**
+     * Without a base, the working directory is the base.
+     */
+    public function test_the_working_directory_is_the_base_by_default(): void
+    {
+        $cwd = (string) getcwd();
+
+        $this->assertSame('src/file.php', (new RelativePathHelper())->getRelativePath($cwd.'/src/file.php'));
+        $this->assertSame(str_replace('\\', '/', $cwd), (new RelativePathHelper())->getBasePath());
     }
 }

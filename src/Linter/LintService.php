@@ -16,12 +16,12 @@ namespace PHPRegex\Linter;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\TargetMarker;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Aggregates pattern sources and produces lint results.
@@ -168,41 +168,6 @@ final class LintService
         }
 
         return true;
-    }
-
-    /**
-     * Relative to the working directory, with "/" separators, when the file
-     * lies under it; absolute otherwise. "./src", "src/", "../project/src"
-     * and the absolute path all give the same value. A name that is not a
-     * path (a stream URL, a route collection) is left as it is.
-     */
-    public static function displayPath(string $file, ?string $workingDirectory): string
-    {
-        if ('' === $file || null === $workingDirectory || str_contains($file, '://')) {
-            return $file;
-        }
-
-        $path = self::slashes($file);
-        $base = self::collapse(self::slashes($workingDirectory));
-        $absolute = self::collapse('' !== self::root($path) ? $path : $base.'/'.$path);
-
-        $relative = self::under($absolute, $base);
-        if (null !== $relative) {
-            return $relative;
-        }
-
-        // Through a symbolic link ($PWD may name the working directory by a
-        // link, getcwd() never does): compare the resolved paths.
-        $resolvedFile = realpath($file);
-        $resolvedBase = realpath($workingDirectory);
-        if (false !== $resolvedFile && false !== $resolvedBase) {
-            $relative = self::under(self::slashes($resolvedFile), self::slashes($resolvedBase));
-            if (null !== $relative) {
-                return $relative;
-            }
-        }
-
-        return $absolute;
     }
 
     /**
@@ -513,12 +478,12 @@ final class LintService
         /** @var array<string, LintResult> $results */
         $results = [];
 
-        $issues = array_map(static fn (LintIssue $issue): LintIssue => $issue->withFile(self::displayPath($issue->file, $workingDirectory)), $issues);
+        $issues = array_map(static fn (LintIssue $issue): LintIssue => $issue->withFile(RelativePathHelper::relativize($issue->file, $workingDirectory)), $issues);
         // Grouping keeps the order it is given: issues sorted here come out
         // sorted inside each result, whatever order the workers returned.
         usort($issues, self::compareIssues(...));
         $optimizations = array_map(static function (array $optimization) use ($workingDirectory): array {
-            $optimization['file'] = self::displayPath($optimization['file'], $workingDirectory);
+            $optimization['file'] = RelativePathHelper::relativize($optimization['file'], $workingDirectory);
 
             return $optimization;
         }, $optimizations);
@@ -567,57 +532,6 @@ final class LintService
         return null === $value ? [0, 0] : [1, $value];
     }
 
-    private static function slashes(string $path): string
-    {
-        return '\\' === \DIRECTORY_SEPARATOR ? str_replace('\\', '/', $path) : $path;
-    }
-
-    /**
-     * The root an absolute path starts with, "/" or a drive ("C:/"); empty
-     * for a relative path.
-     */
-    private static function root(string $path): string
-    {
-        if (str_starts_with($path, '/')) {
-            return '/';
-        }
-
-        return \strlen($path) >= 3 && Ascii::isAlpha($path[0]) && ':/' === substr($path, 1, 2) ? substr($path, 0, 3) : '';
-    }
-
-    /**
-     * "." and empty segments dropped, ".." resolved, without touching the
-     * filesystem.
-     */
-    private static function collapse(string $path): string
-    {
-        $root = self::root($path);
-
-        $segments = [];
-        foreach (explode('/', substr($path, \strlen($root))) as $segment) {
-            if ('' === $segment || '.' === $segment) {
-                continue;
-            }
-
-            if ('..' === $segment) {
-                array_pop($segments);
-
-                continue;
-            }
-
-            $segments[] = $segment;
-        }
-
-        return $root.implode('/', $segments);
-    }
-
-    private static function under(string $path, string $base): ?string
-    {
-        $prefix = rtrim($base, '/').'/';
-
-        return str_starts_with($path, $prefix) && \strlen($path) > \strlen($prefix) ? substr($path, \strlen($prefix)) : null;
-    }
-
     /**
      * @param array<PatternOccurrence> $originalPatterns
      *
@@ -627,7 +541,7 @@ final class LintService
     {
         $map = [];
         foreach ($originalPatterns as $pattern) {
-            $key = $this->createPatternKey(self::displayPath($pattern->file, $workingDirectory), $pattern->line, $pattern->source, $pattern->fileOffset);
+            $key = $this->createPatternKey(RelativePathHelper::relativize($pattern->file, $workingDirectory), $pattern->line, $pattern->source, $pattern->fileOffset);
             $map[$key] = [
                 'pattern' => $pattern->displayPattern ?? $pattern->pattern,
                 'location' => $pattern->location,
