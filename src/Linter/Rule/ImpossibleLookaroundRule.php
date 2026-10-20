@@ -73,6 +73,11 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         $this->questions = new QuestionBudget();
     }
 
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+    }
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -96,7 +101,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         }
 
         $pattern = $this->continuationPattern($node, $context);
-        if (null === $pattern || !$this->questions->allows($context) || true !== LanguageQuestions::matchesNothing($pattern, $context->dfas, $context->target)) {
+        if (null === $pattern || !$this->questions->allows() || true !== LanguageQuestions::matchesNothing($pattern, $context->dfas, $context->target)) {
             return [];
         }
 

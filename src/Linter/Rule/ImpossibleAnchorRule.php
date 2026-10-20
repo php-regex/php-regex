@@ -48,17 +48,20 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     private const ASCII_WORD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
 
     /**
-     * What the automata said of the atoms beside a boundary, keyed by the
-     * pattern they were asked about: a pattern repeats its atoms, and under
-     * /u each question reads "\w" over the whole of Unicode.
+     * What the automata said of the atoms beside a boundary in the pattern
+     * being linted, keyed by the pattern they were asked about: a pattern
+     * repeats its atoms, and under /u each question reads "\w" over the
+     * whole of Unicode. Kept for one pattern only, as the budget is: an
+     * answer kept from an earlier pattern would spare a question this one
+     * pays for.
      *
      * @var array<string, bool|null>
      */
     private array $wordKinds = [];
 
     /**
-     * What the automata said of whether an atom reads a newline character,
-     * keyed by the question.
+     * What the automata said of whether an atom of the pattern being linted
+     * reads a newline character, keyed by the question.
      *
      * @var array<string, false|null>
      */
@@ -69,6 +72,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     public function __construct()
     {
         $this->questions = new QuestionBudget();
+    }
+
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+        $this->wordKinds = [];
+        $this->newlineReads = [];
     }
 
     public function getRuleIds(): array
@@ -239,7 +249,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         // Past the budget there is no answer, and none is kept: the next
         // pattern asks again.
         $wordPattern = LanguageQuestions::pattern($context, '\\w', $flags, $spelled);
-        if (!$this->questions->allows($context)) {
+        if (!$this->questions->allows()) {
             return null;
         }
 
@@ -247,7 +257,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return $this->wordKinds[$atomPattern] = true;
         }
 
-        if (!$this->questions->allows($context)) {
+        if (!$this->questions->allows()) {
             return null;
         }
 
@@ -357,7 +367,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 return $this->newlineReads[$key];
             }
 
-            if (!$this->questions->allows($context)) {
+            if (!$this->questions->allows()) {
                 return null;
             }
 

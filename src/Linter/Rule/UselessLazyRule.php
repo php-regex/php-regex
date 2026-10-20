@@ -45,6 +45,11 @@ final class UselessLazyRule extends AbstractLintRule
         $this->questions = new QuestionBudget();
     }
 
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+    }
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -85,7 +90,7 @@ final class UselessLazyRule extends AbstractLintRule
             return [];
         }
 
-        if (!$this->questions->allows($context) || true !== LanguageQuestions::matchTheSameFromAnyOffset($context, $end - 1, $end, '')) {
+        if (!$this->questions->allows() || true !== LanguageQuestions::matchTheSameFromAnyOffset($context, $end - 1, $end, '')) {
             return [];
         }
 

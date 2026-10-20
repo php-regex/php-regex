@@ -52,6 +52,11 @@ final class PossessiveImpossibleRule extends AbstractLintRule
         $this->questions = new QuestionBudget();
     }
 
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+    }
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -94,7 +99,7 @@ final class PossessiveImpossibleRule extends AbstractLintRule
 
             $takenPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($taken, $context), $context->flagsAt($taken, $child, $flagsAtChild[$index]), $spelled);
             $nextPattern = LanguageQuestions::pattern($context, LanguageQuestions::text($next, $context), $context->flagsAt($next, $children[$nextIndex], $flagsAtChild[$nextIndex]), $spelled);
-            if (!$this->questions->allows($context) || true !== LanguageQuestions::isSubset($nextPattern, $takenPattern, $context->dfas, $context->target)) {
+            if (!$this->questions->allows() || true !== LanguageQuestions::isSubset($nextPattern, $takenPattern, $context->dfas, $context->target)) {
                 continue;
             }
 

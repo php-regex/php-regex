@@ -65,6 +65,11 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
         $this->questions = new QuestionBudget();
     }
 
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+    }
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -96,7 +101,7 @@ final class AlwaysEmptyCaptureRule extends AbstractLintRule
             return [];
         }
 
-        if (NodePredicates::canBeEmpty($root) || self::anotherRuleExplains($node, $context) || !$this->questions->allows($context)) {
+        if (NodePredicates::canBeEmpty($root) || self::anotherRuleExplains($node, $context) || !$this->questions->allows()) {
             return [];
         }
 

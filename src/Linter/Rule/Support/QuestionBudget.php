@@ -13,17 +13,14 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
-use PHPRegex\Linter\Rule\LintContext;
-
 /**
  * How many questions a rule may put to the automata about one pattern:
  * each costs milliseconds, and a long pattern of distinct atoms would ask
  * hundreds. Past the number the rule has no answer, and stays silent for
  * the rest of the pattern.
  *
- * A linter reuses its rules from one pattern to the next, and builds a new
- * context for each: the count starts again with the first question about
- * another context.
+ * A linter reuses its rules from one pattern to the next: a rule resets
+ * its budget as it begins each pattern.
  *
  * @internal
  */
@@ -36,25 +33,18 @@ final class QuestionBudget
      */
     public const QUESTIONS_PER_PATTERN = 8;
 
-    private ?LintContext $pattern = null;
-
     private int $asked = 0;
 
     public function __construct(private readonly int $limit = self::QUESTIONS_PER_PATTERN) {}
 
     /**
-     * Whether one more question may be asked about the pattern of the
-     * context; when it may, the question is counted.
+     * Whether one more question may be asked about the pattern; when it
+     * may, the question is counted.
      *
      * @phpstan-impure
      */
-    public function allows(LintContext $context): bool
+    public function allows(): bool
     {
-        if ($context !== $this->pattern) {
-            $this->pattern = $context;
-            $this->asked = 0;
-        }
-
         if ($this->asked >= $this->limit) {
             return false;
         }
@@ -62,6 +52,14 @@ final class QuestionBudget
         $this->asked++;
 
         return true;
+    }
+
+    /**
+     * Count again from none, for the next pattern.
+     */
+    public function reset(): void
+    {
+        $this->asked = 0;
     }
 
     /**

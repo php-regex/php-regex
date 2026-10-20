@@ -58,6 +58,11 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
         $this->questions = new QuestionBudget();
     }
 
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+    }
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -134,7 +139,7 @@ final class LookaroundEdgeQuantifierRule extends AbstractLintRule
         // two bodies assert the same when those closures are equal.
         $shortened = substr($body, 0, $start - $bodyStart).$minimum.substr($body, $end - $bodyStart);
         $spelled = LanguageQuestions::spelledFlags($context, $lookaround);
-        if (null === $spelled || !$this->questions->allows($context)) {
+        if (null === $spelled || !$this->questions->allows()) {
             return null;
         }
 

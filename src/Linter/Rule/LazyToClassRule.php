@@ -53,6 +53,11 @@ final class LazyToClassRule extends AbstractLintRule
         $this->questions = new QuestionBudget();
     }
 
+    public function begin(LintContext $context): void
+    {
+        $this->questions->reset();
+    }
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -105,7 +110,7 @@ final class LazyToClassRule extends AbstractLintRule
         $end = $node->getEndPosition();
         $original = $pattern->delimiter.$pattern->source.$delimiters[1].$pattern->flags;
         $rewritten = $pattern->delimiter.substr($pattern->source, 0, $start).$class.substr($pattern->source, $end).$delimiters[1].$pattern->flags;
-        if (!$this->questions->allows($context) || true !== LanguageQuestions::matchTheSame($original, $rewritten, $context->dfas, $context->target)) {
+        if (!$this->questions->allows() || true !== LanguageQuestions::matchTheSame($original, $rewritten, $context->dfas, $context->target)) {
             return [];
         }
 

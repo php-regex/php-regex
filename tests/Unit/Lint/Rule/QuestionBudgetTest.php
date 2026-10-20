@@ -14,12 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
-use PHPRegex\Linter\Rule\GroupIndex;
-use PHPRegex\Linter\Rule\LintContext;
-use PHPRegex\Linter\Rule\PatternInfo;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
-use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,28 +33,26 @@ final class QuestionBudgetTest extends TestCase
     public function test_the_budget_allows_its_number_of_questions_per_pattern(): void
     {
         $budget = new QuestionBudget(3);
-        $context = self::context();
 
-        $this->assertTrue($budget->allows($context));
-        $this->assertTrue($budget->allows($context));
-        $this->assertTrue($budget->allows($context));
-        $this->assertFalse($budget->allows($context));
-        $this->assertFalse($budget->allows($context));
+        $this->assertTrue($budget->allows());
+        $this->assertTrue($budget->allows());
+        $this->assertTrue($budget->allows());
+        $this->assertFalse($budget->allows());
+        $this->assertFalse($budget->allows());
         $this->assertSame(3, $budget->asked());
     }
 
     #[Test]
-    public function test_the_count_starts_again_with_the_next_pattern(): void
+    public function test_the_count_starts_again_once_reset_for_the_next_pattern(): void
     {
         $budget = new QuestionBudget(1);
-        $first = self::context();
-        $this->assertTrue($budget->allows($first));
-        $this->assertFalse($budget->allows($first));
+        $this->assertTrue($budget->allows());
+        $this->assertFalse($budget->allows());
 
-        $next = self::context();
-        $this->assertTrue($budget->allows($next));
+        $budget->reset();
+        $this->assertTrue($budget->allows());
         $this->assertSame(1, $budget->asked());
-        $this->assertFalse($budget->allows($next));
+        $this->assertFalse($budget->allows());
     }
 
     /**
@@ -158,10 +152,5 @@ final class QuestionBudgetTest extends TestCase
         Regex::create()->parse($pattern)->accept($linter);
 
         return array_values(array_filter($linter->getIssues(), static fn (RuleViolation $issue): bool => $id === $issue->id));
-    }
-
-    private static function context(): LintContext
-    {
-        return new LintContext(new PatternInfo('', '/', '', false), new GroupIndex(0, [], [], [], false), new CharSetAnalyzer(''));
     }
 }
