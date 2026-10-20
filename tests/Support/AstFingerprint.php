@@ -46,6 +46,7 @@ final class AstFingerprint
         'src/Parser/Validation/CompiledSize.php',
         'src/Parser/Validation/EscapeChecks.php',
         'src/Parser/Validation/QuantifierCounts.php',
+        'src/Parser/Validation/ReferenceChecks.php',
         'src/Parser/Validation/ClassLength.php',
         'src/Parser/Validation/ExtendedClassLength.php',
         'src/Parser/Validation/OtherCases.php',

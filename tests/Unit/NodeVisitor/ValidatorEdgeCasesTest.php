@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\NodeVisitor;
 
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -32,8 +33,10 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\EscapeChecks;
 use PHPRegex\Parser\Validation\QuantifierCounts;
+use PHPRegex\Parser\Validation\ReferenceChecks;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
@@ -137,13 +140,13 @@ final class ValidatorEdgeCasesTest extends TestCase
 
     public function test_backref_relative_zero_is_rejected(): void
     {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('assertRelativeReferenceExists');
+        $references = self::references(new GroupNumbering(0, [], []));
+        $method = (new \ReflectionClass($references))->getMethod('assertRelativeReferenceExists');
 
         $this->expectException(SemanticErrorException::class);
         $this->expectExceptionMessageIsOrContains('relative reference cannot be zero');
 
-        $method->invoke($validator, 0, 0, ErrorCode::BackrefRelative, 'Backreference');
+        $method->invoke($references, 0, 0, ErrorCode::BackrefRelative, 'Backreference');
     }
 
     public function test_valid_backref_returns_cleanly(): void
@@ -256,10 +259,7 @@ final class ValidatorEdgeCasesTest extends TestCase
 
     public function test_subroutine_absolute_recursion_reference_returns(): void
     {
-        $validator = new Validator();
-        $this->setPrivateProperty($validator, 'groupNumbering', new GroupNumbering(1, [1], []));
-
-        (new SubroutineNode('R1', 'R1', 0, 0))->accept($validator);
+        self::references(new GroupNumbering(1, [1], []))->subroutine(new SubroutineNode('R1', 'R1', 0, 0));
         $this->expectNotToPerformAssertions();
     }
 
@@ -378,10 +378,14 @@ final class ValidatorEdgeCasesTest extends TestCase
         $this->assertStringContainsString('Lookbehind exceeds the maximum length', (string) $result->error);
     }
 
-    private function setPrivateProperty(object $object, string $property, mixed $value): void
+    /**
+     * The reference checks of a pattern whose groups are numbered so, every
+     * missing group refused at once.
+     */
+    private static function references(GroupNumbering $numbering): ReferenceChecks
     {
-        $ref = new \ReflectionClass($object);
-        $prop = $ref->getProperty($property);
-        $prop->setValue($object, $value);
+        return new ReferenceChecks(GroupIndex::empty(), $numbering, PcreTarget::runtime(), static function (SemanticErrorException $error): never {
+            throw $error;
+        });
     }
 }
