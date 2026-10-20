@@ -45,7 +45,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 
 /**
  * Renders an ASCII tree diagram of the regex AST.

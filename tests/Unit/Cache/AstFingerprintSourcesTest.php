@@ -18,7 +18,7 @@ use PHPRegex\Parser\Analysis\ComplexityScorer;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\NodeVisitorInterface;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\AstFingerprint;

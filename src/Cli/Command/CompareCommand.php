@@ -26,8 +26,8 @@ use PHPRegex\Cli\Option\Arguments;
 use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * @internal

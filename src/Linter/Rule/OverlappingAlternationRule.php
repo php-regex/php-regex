@@ -22,8 +22,8 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Detects (.|\n) anti-patterns, overlapping literal alternatives, and

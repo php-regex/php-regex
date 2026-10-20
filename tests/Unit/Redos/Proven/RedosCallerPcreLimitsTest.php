@@ -269,26 +269,25 @@ final class RedosCallerPcreLimitsTest extends TestCase
     public static function provideInternalRegexes(): iterable
     {
         yield 'the lexer tokenizer' => ['regexes' => static function (): array {
-            StaticCaches::clear();
             // One pattern per mode: UTF-8 or bytes, with and without x. The
             // alphabetic assertion has its body read by a regex of its own.
-            foreach (['/a[b]c(*pla:d)/', '/a[b]c(*pla:d)/x', "/\xFF[\xFE](*pla:\xFD)/", "/\xFF[\xFE](*pla:\xFD)/x"] as $pattern) {
-                RegexParser::create()->parse($pattern);
-            }
-            $lexer = new \ReflectionClass(Lexer::class);
-            $regexes = [];
-            foreach (['regexOutside', 'regexInside', 'regexBodyItem'] as $property) {
-                $compiled = $lexer->getStaticPropertyValue($property);
-                $modes = 0;
-                foreach (\is_array($compiled) ? $compiled : [] as $regex) {
-                    if (\is_string($regex)) {
-                        $regexes[] = $regex;
-                        $modes++;
+            // Each lexer builds the regexes of the modes it reads.
+            $built = [];
+            foreach ([['a[b]c(*pla:d)', ''], ['a[b]c(*pla:d)', 'x'], ["\xFF[\xFE](*pla:\xFD)", ''], ["\xFF[\xFE](*pla:\xFD)", 'x']] as [$pattern, $flags]) {
+                $lexer = new Lexer();
+                $lexer->tokenize($pattern, $flags);
+                $read = (new \ReflectionProperty(Lexer::class, 'regexes'))->getValue($lexer);
+                foreach (\is_array($read) ? $read : [] as $key => $regex) {
+                    if (\is_string($key) && \is_string($regex)) {
+                        $built[$key] = $regex;
                     }
                 }
+            }
+            $regexes = array_values($built);
+            foreach (['outside' => 2, 'inside' => 2, 'body' => 4] as $context => $modes) {
                 // The body regex varies with the byte mode and x: four.
-                if (0 === $modes || ('regexBodyItem' === $property && 4 !== $modes)) {
-                    throw new \LogicException(\sprintf('Lexer::$%s holds %d regexes after one parse per mode.', $property, $modes));
+                if ($modes !== \count(array_filter(array_keys($built), static fn (string $key): bool => str_starts_with($key, $context)))) {
+                    throw new \LogicException(\sprintf('The lexers built no %d %s regexes after one parse per mode.', $modes, $context));
                 }
             }
 

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 
 /**
  * The one door a pattern the library was given goes through to the running
@@ -150,7 +150,7 @@ final class PcreEngine
         }
 
         [, $body, , $flags] = $parts;
-        foreach (PatternParser::CLOSING_BRACKETS as $open => $close) {
+        foreach (Delimiters::BRACKETS as $open => $close) {
             if (self::closesLast($body, $open, $close)) {
                 return $open.NoJit::VERB.$body.$close.$flags;
             }

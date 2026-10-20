@@ -48,7 +48,7 @@ final class UserPatternsGoThroughTheEngineTest extends TestCase
         'src/Cli/Command/RedosBenchmark.php',
         'src/Cli/SelfUpdate/SelfUpdater.php',
         'src/Parser/Syntax/CodePointReader.php',
-        'src/Parser/Text/DisplayEscaper.php',
+        'src/Parser/Printer/DisplayEscaper.php',
         'src/Parser/Syntax/ExtendedClassReader.php',
         'src/Parser/Syntax/GroupNameReader.php',
         'src/Parser/Syntax/InlineFlags.php',

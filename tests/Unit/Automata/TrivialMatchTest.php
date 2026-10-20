@@ -16,7 +16,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchKind;
 use PHPRegex\Linter\Formatter\ReportSpelling;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

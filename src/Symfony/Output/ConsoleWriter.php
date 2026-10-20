@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Output;
 
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
 /**

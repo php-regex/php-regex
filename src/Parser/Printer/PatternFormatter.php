@@ -21,7 +21,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 
 /**
  * Lays a pattern out over lines under x, or compacts it to one line.
@@ -144,7 +144,7 @@ final class PatternFormatter
             return $regex->accept(PatternPrinter::asWritten());
         }
 
-        return $regex->delimiter.$regex->source.(PatternParser::CLOSING_BRACKETS[$regex->delimiter] ?? $regex->delimiter).$regex->flags;
+        return $regex->delimiter.$regex->source.(Delimiters::BRACKETS[$regex->delimiter] ?? $regex->delimiter).$regex->flags;
     }
 
     /**
@@ -155,13 +155,13 @@ final class PatternFormatter
      */
     private function parser(string $output): RegexParser
     {
-        $length = max(\strlen($output), RegexParser::DEFAULT_MAX_PATTERN_LENGTH);
+        $length = max(\strlen($output), ParserOptions::DEFAULT_MAX_PATTERN_LENGTH);
 
         return RegexParser::fromOptions(new ParserOptions(
             $length,
             \PHP_INT_MAX,
             new NullCache(),
-            maxRecursionDepth: max($length, RegexParser::DEFAULT_MAX_RECURSION_DEPTH),
+            maxRecursionDepth: max($length, ParserOptions::DEFAULT_MAX_RECURSION_DEPTH),
             target: $this->target,
         ));
     }

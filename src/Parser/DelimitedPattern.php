@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser;
 
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\PatternParser;
 
 /**
@@ -31,7 +32,7 @@ final class DelimitedPattern implements \Stringable
      */
     public function __toString(): string
     {
-        $closingDelimiter = PatternParser::closingDelimiter($this->delimiter);
+        $closingDelimiter = Delimiters::closing($this->delimiter);
 
         return $this->delimiter.$this->pattern.$closingDelimiter.$this->flags;
     }

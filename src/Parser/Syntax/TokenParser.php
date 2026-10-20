@@ -42,10 +42,10 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
@@ -254,7 +254,7 @@ final class TokenParser
      */
     public function __construct(?int $maxRecursionDepth = null, ?PcreTarget $target = null)
     {
-        $this->maxRecursionDepth = $maxRecursionDepth ?? RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
+        $this->maxRecursionDepth = $maxRecursionDepth ?? ParserOptions::DEFAULT_MAX_RECURSION_DEPTH;
         $this->target = $target ?? PcreTarget::runtime();
     }
 

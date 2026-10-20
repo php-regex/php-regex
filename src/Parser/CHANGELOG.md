@@ -13,6 +13,9 @@ CHANGELOG
    read from the engine once per process. `PcreTarget::withLocale()` and
    `key()`, and `RegexParser::withTarget()`, a parser for another target
    with every other option.
+ * `ParserOptions::DEFAULT_MAX_PATTERN_LENGTH`, `DEFAULT_MAX_LOOKBEHIND_LENGTH`
+   and `DEFAULT_MAX_RECURSION_DEPTH` hold the default limits, which
+   `RegexParser::DEFAULT_*` name as well.
  * `php_version` is read whole, each part after the major at most 99, and a
    PHP_VERSION_ID is at least `ParserOptions::OLDEST_PHP_VERSION_ID`, 70000;
    the constructor of `ParserOptions` checks the ranges of the limits.

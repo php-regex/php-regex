@@ -111,12 +111,12 @@ final class PackageManifestTest extends TestCase
             'Linter\LintRunFailure', 'Linter\LintRunner',
             'Linter\LintService', 'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection',
             'Linter\Source\PhpFilePatternSource', 'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
-            'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Text\DisplayEscaper', 'Parser\Engine\IniFlag',
+            'Parser\Hir\HirTranslator', 'Parser\Text\Ascii', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\IniFlag',
             'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss',
-            'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
+            'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
             'Transpiler\Target\TargetRegistry',
         ],
-        'Explain' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre'],
+        'Explain' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre'],
         'Generator' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Cache\StaticCaches'],
         // The library's own regexes run under the PCRE floor in every
         // package that runs one: the floor helper is the one shared
@@ -142,7 +142,7 @@ final class PackageManifestTest extends TestCase
             'Linter\LintService', 'Linter\LintSetup', 'Linter\PatternExtractor',
             'Linter\PatternOccurrence', 'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
-            'Parser\Text\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
+            'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Transpiler\Target\TargetRegistry',
         ],
         // The lint writes its rewrite of a pattern under x into the
@@ -151,20 +151,20 @@ final class PackageManifestTest extends TestCase
         'Linter' => [
             'Optimizer\LayoutSplicer', 'Optimizer\RewriteCheck', 'Optimizer\Rewriter',
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
-            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\DisplayEscaper',
+            'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument', 'Parser\Json\JsonEncodingFailure',
-            'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\PatternParser',
+            'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
-        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
+        'Optimizer' => ['Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Parser\NodeWalker', 'Parser\TraversalAction'],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
             'Linter\Config\TargetConstraint', 'Linter\Config\UnsupportedTargetException',
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunction',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\TargetMarker',
             'Linter\Extraction\TargetMarkers', 'Linter\PatternOccurrence', 'Parser\Hir\ClassSetProvider',
-            'Parser\Text\DisplayEscaper', 'Parser\Engine\LibraryPcre',
+            'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre',
             'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
         ],
         // The plugin reads the key layout CaptureShape renders for
@@ -194,7 +194,7 @@ final class PackageManifestTest extends TestCase
             'Linter\PatternOccurrence',
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
-            'Parser\Text\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
+            'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
             'Transpiler\Target\TargetRegistry',
         ],
         // The HTML pattern attribute takes no flag: /i is spelled out

@@ -49,8 +49,8 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\InlineFlags;
-use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -529,7 +529,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->delimiter = $node->delimiter;
         $this->flags = $node->flags;
         $this->utfVerb = self::startsWithUtfVerb($node->pattern);
-        $this->closingDelimiter = PatternParser::closingDelimiter($node->delimiter);
+        $this->closingDelimiter = Delimiters::closing($node->delimiter);
         $this->source = $this->collapseExtendedComments || !$this->preserveSpelling
             ? null
             : $node->source;
@@ -2109,7 +2109,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->droppedGroups = [];
         $this->spacedBraces = null;
         $this->delimiter = $node->delimiter;
-        $this->closingDelimiter = PatternParser::closingDelimiter($node->delimiter);
+        $this->closingDelimiter = Delimiters::closing($node->delimiter);
         $this->bracketMark = self::MODE_PRETTY === $this->mode && $this->delimiter !== $this->closingDelimiter
             ? self::markAbsentFrom($node->source ?? $node->accept(self::asWritten()), "\x03\x04", "\x04", self::BRACKET_MARKS)
             : null;

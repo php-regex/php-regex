@@ -54,6 +54,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreVerb;
@@ -63,7 +64,6 @@ use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Syntax\VersionCondition;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * The semantic checks of a parsed pattern: what PCRE2 refuses in a tree the

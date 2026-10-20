@@ -20,7 +20,7 @@ use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

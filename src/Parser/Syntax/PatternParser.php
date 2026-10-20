@@ -19,21 +19,15 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * @internal
  */
 final class PatternParser
 {
-    /**
-     * The delimiters PHP closes with another character, each with the one
-     * that closes it; any other delimiter closes itself.
-     */
-    public const CLOSING_BRACKETS = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'];
-
     /**
      * @return array{0: string, 1: string, 2: string}
      */
@@ -76,7 +70,7 @@ final class PatternParser
         }
 
         // Handle bracket delimiters style: (pattern), [pattern], {pattern}, <pattern>
-        $closingDelimiter = self::closingDelimiter($delimiter);
+        $closingDelimiter = Delimiters::closing($delimiter);
 
         // For bracket-style delimiters, PHP requires balanced nesting: the
         // pattern ends at the closer matching the opening bracket, so
@@ -198,11 +192,6 @@ final class PatternParser
             $closingDelimiter,
             $suggested,
         ), ErrorCode::DelimiterUnclosed);
-    }
-
-    public static function closingDelimiter(string $delimiter): string
-    {
-        return self::CLOSING_BRACKETS[$delimiter] ?? $delimiter;
     }
 
     private static function nulByte(int $offset, string $regex): ParserException

@@ -21,7 +21,7 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -169,7 +169,7 @@ final class DelimiterBrackets
     public static function asWritten(RegexNode $node, ?string $source, array $quotedSpans, bool $dropsComments): array
     {
         $opening = $node->delimiter;
-        $closing = PatternParser::closingDelimiter($opening);
+        $closing = Delimiters::closing($opening);
         if ($opening === $closing || null === $source || (!$dropsComments && [] === $quotedSpans)) {
             return [[], []];
         }

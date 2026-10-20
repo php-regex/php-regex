@@ -11,13 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Parser\Text;
+namespace PHPRegex\Parser\Printer;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Syntax\Callout;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\InlineFlags;
-use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Escapes bytes that would break the layout of a terminal or a rendered
@@ -635,7 +637,7 @@ final class DisplayEscaper
             return [0, $length, null];
         }
 
-        $close = PatternParser::CLOSING_BRACKETS[$open] ?? $open;
+        $close = Delimiters::BRACKETS[$open] ?? $open;
         $depth = 0;
         for ($i = $start + 1; $i < $length; $i++) {
             if ('\\' === $text[$i]) {

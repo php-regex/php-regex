@@ -17,8 +17,8 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Bytes;
-use PHPRegex\Parser\Text\DisplayEscaper;
 use PHPRegex\Parser\Token\TokenType;
 
 /**

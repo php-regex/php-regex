@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -86,7 +86,7 @@ final class NoJit
             return null;
         }
 
-        $close = PatternParser::CLOSING_BRACKETS[$open] ?? $open;
+        $close = Delimiters::BRACKETS[$open] ?? $open;
         $length = \strlen($trimmed);
         $depth = 1;
         for ($index = 1; $index < $length; $index++) {

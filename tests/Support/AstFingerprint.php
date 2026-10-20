@@ -56,6 +56,8 @@ final class AstFingerprint
         // Hands the flags, the delimiter and the options to the parser; the
         // version it holds is left out of its own fingerprint.
         'src/Parser/RegexParser.php',
+        // Holds the default recursion depth the token parser reads.
+        'src/Parser/ParserOptions.php',
         'src/Parser/Analysis/LengthRangeCalculator.php',
         'src/Parser/Analysis/AcceptVerb.php',
         'src/Parser/Engine/PcreEngine.php',
@@ -79,6 +81,7 @@ final class AstFingerprint
         'src/Parser/Syntax/ClassParser.php',
         'src/Parser/Syntax/CodePointReader.php',
         'src/Parser/Syntax/ConditionParser.php',
+        'src/Parser/Syntax/Delimiters.php',
         'src/Parser/Syntax/ExtendedClassParser.php',
         'src/Parser/Syntax/ExtendedClassReader.php',
         'src/Parser/Syntax/GroupNameReader.php',

@@ -23,7 +23,7 @@ use PHPRegex\Laravel\Output\ConsoleWriter;
 use PHPRegex\Linter\Console\ConsoleWriter as DocumentWriter;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\Text\DisplayEscaper;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Formatter\OutputFormatter;

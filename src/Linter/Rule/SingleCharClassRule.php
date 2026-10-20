@@ -21,7 +21,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -106,7 +106,7 @@ final class SingleCharClassRule extends AbstractLintRule
             return false;
         }
 
-        $delimiters = [$context->pattern->delimiter, PatternParser::closingDelimiter($context->pattern->delimiter)];
+        $delimiters = [$context->pattern->delimiter, Delimiters::closing($context->pattern->delimiter)];
         if (\in_array($member->value, $delimiters, true)) {
             return false;
         }

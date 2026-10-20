@@ -47,9 +47,9 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Generates a basic railroad-style SVG diagram of the regex AST.

@@ -26,7 +26,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
@@ -124,7 +124,7 @@ final class RedosRepairer
             }
         }
 
-        $closing = PatternParser::closingDelimiter($ast->delimiter);
+        $closing = Delimiters::closing($ast->delimiter);
         $wrap = static fn (string $body): string => $ast->delimiter.$body.$closing.$ast->flags;
 
         $candidates = [];

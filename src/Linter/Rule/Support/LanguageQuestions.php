@@ -33,7 +33,7 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
 
@@ -135,7 +135,7 @@ final class LanguageQuestions
         return $pattern->delimiter
             .StartOptions::of($pattern->source)
             .self::scoped($body, $flags, $spelled)
-            .PatternParser::closingDelimiter($pattern->delimiter)
+            .Delimiters::closing($pattern->delimiter)
             .str_replace(self::CASELESS_RESTRICT, '', $pattern->flags);
     }
 
@@ -241,7 +241,7 @@ final class LanguageQuestions
     public static function matchTheSameFromAnyOffset(LintContext $context, int $start, int $end, string $replacement): ?bool
     {
         $pattern = $context->pattern;
-        $wrap = static fn (string $body): string => $pattern->delimiter.$body.PatternParser::closingDelimiter($pattern->delimiter).$pattern->flags;
+        $wrap = static fn (string $body): string => $pattern->delimiter.$body.Delimiters::closing($pattern->delimiter).$pattern->flags;
         $edit = [$start, $end, $replacement];
 
         $same = self::matchTheSame($wrap($pattern->source), $wrap(self::spliced($pattern->source, [$edit])), $context->dfas, $context->target);

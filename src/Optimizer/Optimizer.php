@@ -29,6 +29,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\TraversalAction;
 
@@ -104,7 +105,7 @@ final class Optimizer
 
         if ($originalPattern === $optimizedPatternPart) {
             [$pattern, , $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->parser->target());
-            $closingDelimiter = PatternParser::closingDelimiter($delimiter);
+            $closingDelimiter = Delimiters::closing($delimiter);
             $optimizedPattern = $delimiter.$pattern.$closingDelimiter.$optimizedAst->flags;
         } else {
             $optimizedPattern = $optimizedCompiled;

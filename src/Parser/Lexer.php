@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser;
 
-use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
@@ -238,21 +237,12 @@ final class Lexer
     private static ?array $plainBytes = null;
 
     /**
-     * Token patterns compiled once per byte mode.
+     * The token regexes this lexer built, by context and reading mode: a
+     * string built once per lexer, which PCRE keeps compiled across them.
      *
-     * @var array<int, string>
+     * @var array<string, string>
      */
-    private static array $regexOutside = [];
-
-    /**
-     * @var array<int, string>
-     */
-    private static array $regexInside = [];
-
-    /**
-     * @var array<int, string>
-     */
-    private static array $regexBodyItem = [];
+    private array $regexes = [];
 
     private string $pattern;
 
@@ -694,17 +684,9 @@ final class Lexer
 
     private function getRegexOutside(): string
     {
-        // The token patterns are constants and the compiled regex only varies
-        // with the byte mode, so that is the whole key: keying it on the PHP
-        // version as well compiled the same regexes once per version.
-        $key = $this->byteMode ? 1 : 0;
-
-        if (!isset(self::$regexOutside[$key])) {
-            StaticCaches::register(self::class, self::clearCaches(...));
-            self::$regexOutside[$key] = $this->compilePattern(self::PATTERNS_OUTSIDE);
-        }
-
-        return self::$regexOutside[$key];
+        // The token patterns are constants and the regex only varies with
+        // the byte mode.
+        return $this->regexes['outside'.($this->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_OUTSIDE);
     }
 
     /**
@@ -713,18 +695,15 @@ final class Lexer
      */
     private function getRegexBodyItem(bool $extended): string
     {
-        $key = $this->bodyMode($extended);
-
-        if (!isset(self::$regexBodyItem[$key])) {
+        $key = 'body'.$this->bodyMode($extended);
+        if (!isset($this->regexes[$key])) {
             $item = $extended
                 ? str_replace(self::GROUP_BODY_TEXT, self::GROUP_BODY_TEXT_EXTENDED, self::GROUP_BODY_ITEM)
                 : self::GROUP_BODY_ITEM;
-
-            StaticCaches::register(self::class, self::clearCaches(...));
-            self::$regexBodyItem[$key] = '/(?:'.$item.')/xsA'.($this->byteMode ? '' : 'u');
+            $this->regexes[$key] = '/(?:'.$item.')/xsA'.($this->byteMode ? '' : 'u');
         }
 
-        return self::$regexBodyItem[$key];
+        return $this->regexes[$key];
     }
 
     /**
@@ -738,25 +717,7 @@ final class Lexer
 
     private function getRegexInside(): string
     {
-        $key = $this->byteMode ? 1 : 0;
-
-        if (!isset(self::$regexInside[$key])) {
-            StaticCaches::register(self::class, self::clearCaches(...));
-            self::$regexInside[$key] = $this->compilePattern(self::PATTERNS_INSIDE);
-        }
-
-        return self::$regexInside[$key];
-    }
-
-    /**
-     * Two regexes outside a class, two inside and four for the body of an
-     * alphabetic assertion at most, one per mode.
-     */
-    private static function clearCaches(): void
-    {
-        self::$regexOutside = [];
-        self::$regexInside = [];
-        self::$regexBodyItem = [];
+        return $this->regexes['inside'.($this->byteMode ? 1 : 0)] ??= $this->compilePattern(self::PATTERNS_INSIDE);
     }
 
     /**

@@ -24,7 +24,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 
 /**
  * A rewritten tree written into the text of the tree it was rewritten from:
@@ -60,7 +60,7 @@ final class LayoutSplicer
             $body = substr_replace($body, $text, $start, $end - $start);
         }
 
-        $spliced = $original->delimiter.$body.PatternParser::closingDelimiter($original->delimiter).$rewritten->flags;
+        $spliced = $original->delimiter.$body.Delimiters::closing($original->delimiter).$rewritten->flags;
 
         try {
             $readBack = $this->parser->parse($spliced);
@@ -252,7 +252,7 @@ final class LayoutSplicer
     private function print(NodeInterface $node, RegexNode $context): string
     {
         $printed = (new RegexNode($node, $context->flags, $context->delimiter, 0, 0))->accept(PatternPrinter::asWritten());
-        $closing = PatternParser::closingDelimiter($context->delimiter).$context->flags;
+        $closing = Delimiters::closing($context->delimiter).$context->flags;
 
         return substr($printed, \strlen($context->delimiter), -\strlen($closing));
     }

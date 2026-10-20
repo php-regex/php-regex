@@ -19,9 +19,9 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * The console report of `regex lint`, in ANSI colors when the terminal

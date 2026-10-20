@@ -36,6 +36,7 @@ use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Text\Ascii;
@@ -74,21 +75,19 @@ final class RegexParser
     public const CACHE_VERSION = 'ast-b948dd8725a43573db087b649356c4f2';
 
     /**
-     * Default maximum allowed regex pattern length.
+     * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
      */
-    public const DEFAULT_MAX_PATTERN_LENGTH = 100_000;
+    public const DEFAULT_MAX_PATTERN_LENGTH = ParserOptions::DEFAULT_MAX_PATTERN_LENGTH;
 
     /**
-     * Default maximum length of a variable-length lookbehind, PCRE2's own
-     * default for max_varlookbehind. A fixed-length lookbehind is only
-     * limited by PCRE's ceiling of 65535 characters.
+     * ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, by the name the parser gave it first.
      */
-    public const DEFAULT_MAX_LOOKBEHIND_LENGTH = 255;
+    public const DEFAULT_MAX_LOOKBEHIND_LENGTH = ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH;
 
     /**
-     * How deep the parser may nest groups before it stops.
+     * ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, by the name the parser gave it first.
      */
-    public const DEFAULT_MAX_RECURSION_DEPTH = 1024;
+    public const DEFAULT_MAX_RECURSION_DEPTH = ParserOptions::DEFAULT_MAX_RECURSION_DEPTH;
 
     // Visual snippet constants
     private const MAX_CONTEXT_WIDTH = 80;
@@ -254,7 +253,7 @@ final class RegexParser
      */
     public function parsePattern(string $pattern, string $flags = '', string $delimiter = '/'): RegexNode
     {
-        $closingDelimiter = PatternParser::closingDelimiter($delimiter);
+        $closingDelimiter = Delimiters::closing($delimiter);
         $regex = $delimiter.$pattern.$closingDelimiter.$flags;
 
         return $this->parse($regex);

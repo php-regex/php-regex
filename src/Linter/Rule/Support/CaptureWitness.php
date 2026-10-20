@@ -38,7 +38,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -111,7 +111,7 @@ final class CaptureWitness
         }
 
         $pattern = $context->pattern;
-        $regex = $pattern->delimiter.$pattern->source.PatternParser::closingDelimiter($pattern->delimiter).$pattern->flags;
+        $regex = $pattern->delimiter.$pattern->source.Delimiters::closing($pattern->delimiter).$pattern->flags;
         $tried = [];
         // The fewest characters first, then a separator read between two
         // runs, then a body read with other characters than its neighbours.

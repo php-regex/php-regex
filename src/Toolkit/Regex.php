@@ -80,17 +80,17 @@ final class Regex
     /**
      * Default maximum allowed regex pattern length.
      */
-    public const DEFAULT_MAX_PATTERN_LENGTH = RegexParser::DEFAULT_MAX_PATTERN_LENGTH;
+    public const DEFAULT_MAX_PATTERN_LENGTH = ParserOptions::DEFAULT_MAX_PATTERN_LENGTH;
 
     /**
      * Default maximum length of a variable-length lookbehind.
      */
-    public const DEFAULT_MAX_LOOKBEHIND_LENGTH = RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH;
+    public const DEFAULT_MAX_LOOKBEHIND_LENGTH = ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH;
 
     /**
      * How deep the parser may nest groups before it stops.
      */
-    public const DEFAULT_MAX_RECURSION_DEPTH = RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
+    public const DEFAULT_MAX_RECURSION_DEPTH = ParserOptions::DEFAULT_MAX_RECURSION_DEPTH;
 
     /**
      * @param RegexParser   $parser               Reads and judges every pattern

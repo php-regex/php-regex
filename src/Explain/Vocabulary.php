@@ -21,9 +21,9 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * The words the text and the HTML explanations describe a construct with,

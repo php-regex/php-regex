@@ -48,8 +48,8 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Words what each construct of a pattern means, as the flags in force where

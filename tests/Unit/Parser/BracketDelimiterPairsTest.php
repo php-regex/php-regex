@@ -17,7 +17,7 @@ use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -51,7 +51,7 @@ final class BracketDelimiterPairsTest extends TestCase
         // Oracle: PHP closes the pattern there.
         $this->assertSame(1, preg_match($regex, 'A'));
 
-        $this->assertSame($close, PatternParser::closingDelimiter($open));
+        $this->assertSame($close, Delimiters::closing($open));
         $this->assertSame([$open, 'a+', $close, 'i'], NoJit::split($regex));
         $this->assertSame($open.'(*NO_JIT)a+'.$close.'i', (new PcreEngine())->prepare($regex));
         $this->assertSame($regex, RegexParser::create()->parse($regex)->accept(new PatternPrinter()));

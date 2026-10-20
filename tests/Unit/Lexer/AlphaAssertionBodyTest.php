@@ -748,22 +748,19 @@ final class AlphaAssertionBodyTest extends TestCase
     }
 
     /**
-     * A pattern that is one alphabetic assertion compiles the body item
-     * regex and no other: clearing the library's caches empties it too.
-     * In a process of its own, so that nothing else registered the lexer's
-     * caches first.
+     * A pattern that is one alphabetic assertion builds the body item regex
+     * once for the lexer reading it; another lexer builds its own, so the
+     * process keeps none of them.
      */
     #[Test]
-    #[RunInSeparateProcess]
-    public function test_clearing_the_caches_empties_the_body_item_regexes(): void
+    public function test_the_body_item_regex_belongs_to_the_lexer_that_built_it(): void
     {
-        (new Lexer())->tokenize('(*pla:a)');
-        $regexes = new \ReflectionProperty(Lexer::class, 'regexBodyItem');
-        $this->assertNotSame([], $regexes->getValue());
+        $lexer = new Lexer();
+        $lexer->tokenize('(*pla:a)');
+        $regexes = new \ReflectionProperty(Lexer::class, 'regexes');
+        $this->assertNotSame([], array_filter((array) $regexes->getValue($lexer), static fn (string $key): bool => str_starts_with($key, 'body'), \ARRAY_FILTER_USE_KEY));
 
-        StaticCaches::clear();
-
-        $this->assertSame([], $regexes->getValue());
+        $this->assertSame([], $regexes->getValue(new Lexer()));
     }
 
     /**

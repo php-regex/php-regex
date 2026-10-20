@@ -25,8 +25,8 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\PatternPrinter;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * Detects duplicate alternation branches.

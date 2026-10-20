@@ -16,9 +16,10 @@ namespace PHPRegex\Linter\Formatter;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
+use PHPRegex\Parser\Printer\DisplayEscaper;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
-use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
  * How a report spells the text it quotes.
@@ -151,7 +152,7 @@ final class ReportSpelling
             return $pattern;
         }
 
-        $bodyStart = \strlen($pattern) - \strlen($modifiers) - \strlen(PatternParser::closingDelimiter($delimiter)) - \strlen($body);
+        $bodyStart = \strlen($pattern) - \strlen($modifiers) - \strlen(Delimiters::closing($delimiter)) - \strlen($body);
         $layout = self::layoutTabOffsets($body, $bodyStart);
 
         $expanded = '';

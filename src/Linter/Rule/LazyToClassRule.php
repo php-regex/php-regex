@@ -23,7 +23,7 @@ use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
-use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\Delimiters;
 use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
@@ -102,7 +102,7 @@ final class LazyToClassRule extends AbstractLintRule
         }
 
         $pattern = $context->pattern;
-        $delimiters = [$pattern->delimiter, PatternParser::closingDelimiter($pattern->delimiter)];
+        $delimiters = [$pattern->delimiter, Delimiters::closing($pattern->delimiter)];
         $member = \in_array($closing->value, [...self::CLASS_SPECIALS, ...$delimiters], true) ? '\\'.$closing->value : $closing->value;
         $class = '[^'.$member.(str_contains($flags, 's') ? '' : '\n').']'.(0 === $bounds->min ? '*' : '+');
 

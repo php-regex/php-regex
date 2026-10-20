@@ -46,6 +46,23 @@ use PHPRegex\Parser\Text\Ascii;
 final class ParserOptions
 {
     /**
+     * Default maximum allowed regex pattern length.
+     */
+    public const DEFAULT_MAX_PATTERN_LENGTH = 100_000;
+
+    /**
+     * Default maximum length of a variable-length lookbehind, PCRE2's own
+     * default for max_varlookbehind. A fixed-length lookbehind is only
+     * limited by PCRE's ceiling of 65535 characters.
+     */
+    public const DEFAULT_MAX_LOOKBEHIND_LENGTH = 255;
+
+    /**
+     * How deep the parser may nest groups before it stops.
+     */
+    public const DEFAULT_MAX_RECURSION_DEPTH = 1024;
+
+    /**
      * What "php_version" takes, said when it holds something else.
      */
     public const PHP_VERSION_EXPECTED = '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".';
@@ -97,7 +114,7 @@ final class ParserOptions
         public readonly CacheInterface $cache,
         public readonly array $redosIgnoredPatterns = [],
         public readonly bool $runtimePcreValidation = false,
-        public readonly int $maxRecursionDepth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
+        public readonly int $maxRecursionDepth = self::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
     ) {
         if ($maxPatternLength <= 0) {
@@ -167,8 +184,8 @@ final class ParserOptions
     private static function createDefault(): self
     {
         return new self(
-            RegexParser::DEFAULT_MAX_PATTERN_LENGTH,
-            RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+            self::DEFAULT_MAX_PATTERN_LENGTH,
+            self::DEFAULT_MAX_LOOKBEHIND_LENGTH,
             new ArrayCache(),
             [],
             false,
@@ -205,7 +222,7 @@ final class ParserOptions
      */
     private static function getPatternLength(array $options): int
     {
-        $length = $options['max_pattern_length'] ?? RegexParser::DEFAULT_MAX_PATTERN_LENGTH;
+        $length = $options['max_pattern_length'] ?? self::DEFAULT_MAX_PATTERN_LENGTH;
 
         // The range is the constructor's to check.
         if (!\is_int($length)) {
@@ -226,7 +243,7 @@ final class ParserOptions
      */
     private static function getLookbehindLength(array $options): int
     {
-        $length = $options['max_lookbehind_length'] ?? RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH;
+        $length = $options['max_lookbehind_length'] ?? self::DEFAULT_MAX_LOOKBEHIND_LENGTH;
 
         if (!\is_int($length)) {
             throw new InvalidRegexOptionException(
@@ -264,7 +281,7 @@ final class ParserOptions
      */
     private static function getRecursionDepth(array $options): int
     {
-        $depth = $options['max_recursion_depth'] ?? RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
+        $depth = $options['max_recursion_depth'] ?? self::DEFAULT_MAX_RECURSION_DEPTH;
 
         if (!\is_int($depth)) {
             throw new InvalidRegexOptionException(
