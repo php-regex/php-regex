@@ -73,6 +73,19 @@ final class InvisibleCharacterSourceTest extends TestCase
     }
 
     /**
+     * Two patterns of one file are each read at their own place in it: the
+     * raw tab is reported, the escaped ones around it are not.
+     */
+    #[Test]
+    public function test_each_pattern_of_a_file_is_read_at_its_own_place(): void
+    {
+        $occurrences = $this->extract(TokenBasedExtractionStrategy::class, "<?php\n\npreg_match(\"/a\\tb/\", \$s);\npreg_match('/c\td/', \$s);\npreg_match(\"/e\\tf/\", \$s);\n");
+        $this->assertCount(3, $occurrences);
+
+        $this->assertSame([4], array_map(static fn (LintIssue $issue): int => $issue->line, $this->invisibleIssues($occurrences)));
+    }
+
+    /**
      * Without the PHP source, as for a route requirement, the spelling is
      * unknown: nothing is reported.
      */

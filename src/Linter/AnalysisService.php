@@ -143,21 +143,7 @@ final class AnalysisService
      */
     public function withParser(RegexParser $parser, array $range = [], ?JudgedRange $judged = null): self
     {
-        return new self(
-            $parser,
-            $this->extractor,
-            $this->warningThreshold,
-            $this->redosSeverityThreshold->value,
-            $this->redosIgnoredPatterns,
-            $this->redosMode,
-            $this->redosConfirmOptions,
-            RedosMode::Off !== $this->redosMode,
-            $this->lintEnabled,
-            $this->lintRules,
-            $range,
-            $this->dfaCache,
-            $judged,
-        );
+        return $this->rebuild($parser, $range, $judged);
     }
 
     /**
@@ -342,195 +328,11 @@ final class AnalysisService
     private function lintChunk(array $patterns, ?\Closure $done = null, ?array &$analyzed = null): array
     {
         $issues = [];
+        // The files read for the spelling of a raw character, once each.
+        $files = [];
 
         foreach ($patterns as $occurrence) {
-            // A file read with the tokenizer instead of the PHP parser is
-            // counted in the stats, never reported.
-            if ($occurrence->isIgnored || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
-                if (null !== $done) {
-                    $done(1);
-                }
-
-                continue;
-            }
-
-            // Code that runs on some versions of the range only is judged
-            // for those, by the analysis of those versions; for none, it is
-            // dead code there, and not judged.
-            [$narrowed, $key] = $this->narrowedFor($occurrence);
-            if (null !== $narrowed) {
-                if ($narrowed instanceof self) {
-                    $found = null === $analyzed ? null : [];
-                    array_push($issues, ...self::underGuard($narrowed->lintChunk([$occurrence], null, $found), $narrowed, $occurrence->guard));
-                    foreach ($found ?? [] as $pattern => $read) {
-                        $analyzed[$key."\0".$pattern] = $read;
-                    }
-                }
-
-                if (null !== $done) {
-                    $done(1);
-                }
-
-                continue;
-            }
-
-            // A file the extractor could not read holds patterns no one linted.
-            if (null !== $occurrence->unread) {
-                $issues[] = new LintIssue(LintSeverity::Error, $occurrence->unread, $occurrence->file, 1, 1, issueId: 'regex.lint.source.unreadable', source: $occurrence->source);
-
-                if (null !== $done) {
-                    $done(1);
-                }
-
-                continue;
-            }
-
-            $validation = $this->regex->validate($occurrence->pattern);
-            if (null !== $analyzed && !$validation->isValid) {
-                $analyzed[$occurrence->pattern] = [$validation, null];
-            }
-            if (!$validation->isValid && ValidationErrorCategory::Limit === $validation->category) {
-                // The library gave up: a warning that the pattern was not
-                // analyzed, no verdict on a pattern PCRE may compile.
-                $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'), position: $validation->offset, tip: $validation->hint, validation: $validation);
-
-                if (null !== $done) {
-                    $done(1);
-                }
-
-                continue;
-            }
-
-            if (!$validation->isValid) {
-                $message = $validation->error ?? 'Invalid regex.';
-                $issues[] = LintIssue::at($occurrence, LintSeverity::Error, $message, position: $validation->offset, tip: ValidationTips::forError($message, $occurrence->pattern, $validation), validation: $validation);
-
-                if (null !== $done) {
-                    $done(1);
-                }
-
-                continue;
-            }
-
-            // Valid on the floor: a later PHP of the range may refuse it.
-            // The lint rules and the risk analysis still judge the floor.
-            $diff = [] === $this->range ? null : (new RangeDiff($this->regex, $this->range))->diff($occurrence->pattern, $this->comparesTrees());
-            $rangeError = null === $diff ? null : self::rangeError($diff);
-            if (null !== $rangeError) {
-                [$target, $refusedOn, $rangeValidation] = $rangeError;
-                $message = \sprintf('On %s: %s', $refusedOn, $rangeValidation->error ?? 'Invalid regex.');
-                $issues[] = LintIssue::at(
-                    $occurrence,
-                    LintSeverity::Error,
-                    $message,
-                    position: $rangeValidation->offset,
-                    tip: $this->badEscapeTip($occurrence->pattern) ?? ValidationTips::forError($message, $occurrence->pattern, $rangeValidation),
-                    validation: $rangeValidation,
-                    target: ProjectTarget::describe($target),
-                );
-            }
-
-            $ast = $this->regex->parse($occurrence->pattern);
-            if (null !== $analyzed) {
-                $analyzed[$occurrence->pattern] = [$validation, AstSerializer::serialize($ast)];
-            }
-
-            // Accepted everywhere, the pattern may still read otherwise on a
-            // later PHP: the same text, another tree, or the same tree that
-            // a later release matches otherwise.
-            $readsOtherwise = $diff?->readsOtherwise;
-            $silentChange = null === $diff || null !== $readsOtherwise || null !== $rangeError || !$this->comparesTrees()
-                ? null
-                : SilentMeaningChange::first($ast, $this->regex->target(), array_map(static fn (RegexParser $parser): PcreTarget => $parser->target(), $this->range));
-            if (null !== $silentChange) {
-                $issues[] = LintIssue::at(
-                    $occurrence,
-                    LintSeverity::Warning,
-                    \sprintf('From PHP %s (PCRE2 %s) %s', ProjectTarget::phpLabel($silentChange->target->phpVersionId), $silentChange->target->pcreVersion, $silentChange->message),
-                    self::ISSUE_ID_MEANING_CHANGES,
-                    hint: $silentChange->hint,
-                    target: ProjectTarget::describe($silentChange->target),
-                );
-            }
-
-            if (null !== $readsOtherwise) {
-                $issues[] = LintIssue::at(
-                    $occurrence,
-                    LintSeverity::Warning,
-                    \sprintf('From PHP %s (PCRE2 %s) the pattern parses differently: the same text means something else there.', ProjectTarget::phpLabel($readsOtherwise->phpVersionId), $readsOtherwise->pcreVersion),
-                    self::ISSUE_ID_MEANING_CHANGES,
-                    hint: 'Write the part that differs in a form every PHP of the range reads alike: "a{0,3}" for a quantifier, "a\{,3}" for the text.',
-                    target: ProjectTarget::describe($readsOtherwise),
-                );
-            }
-
-            $skipRiskAnalysis = $this->shouldSkipRiskAnalysis($occurrence);
-            $lintIssues = [];
-
-            // Run linter if enabled
-            if ($this->lintEnabled) {
-                $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
-                $ast->accept($linter);
-                $code = null;
-
-                foreach ($linter->getIssues() as $issue) {
-                    if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
-                        continue;
-                    }
-
-                    // A raw character the PHP literal spells with an escape,
-                    // as a double-quoted "\t", is no raw character in the
-                    // source; without the source, the spelling is unknown.
-                    if (InvisibleCharacterRule::ID === $issue->id) {
-                        $code ??= null === $occurrence->fileOffset ? '' : (string) @file_get_contents($occurrence->file);
-                        if ('' === $code || !LiteralSpelling::holdsRaw($code, (int) $occurrence->fileOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))) {
-                            continue;
-                        }
-                    }
-
-                    // No automatic rewrite for the risk rules: wrapping the
-                    // operand in an atomic group while leaving the outer
-                    // quantifier in place removes the cross-iteration
-                    // backtracking the engine may need, so any rewrite the
-                    // user applies has to be verified by hand.
-                    $lintIssues[] = LintIssue::at($occurrence, $issue->severity, $issue->message, $issue->id, $issue->offset, $issue->hint);
-                }
-            }
-
-            $riskIssues = [];
-            if (!$skipRiskAnalysis) {
-                if ($validation->complexityScore >= $this->warningThreshold) {
-                    $riskIssues[] = LintIssue::at($occurrence, LintSeverity::Warning, \sprintf('Pattern is complex (score: %d).', $validation->complexityScore), self::ISSUE_ID_COMPLEXITY);
-                }
-
-                $redos = (new RedosAnalyzer($this->regex))->analyze(
-                    $occurrence->pattern,
-                    $this->redosSeverityThreshold,
-                    $this->redosMode,
-                    $this->redosConfirmOptions,
-                );
-
-                // The heuristic rules guess what the analysis just proved:
-                // once it shows the pattern linear, their warnings go.
-                if ($redos->isProvenSafe()) {
-                    $lintIssues = array_values(array_filter(
-                        $lintIssues,
-                        static fn (LintIssue $issue): bool => !isset(RedosVerdict::HEURISTIC_ISSUE_IDS[(string) $issue->issueId]),
-                    ));
-                }
-
-                if (RedosVerdict::reported($redos, $this->redosSeverityThreshold, $this->redosMode)) {
-                    $riskIssues[] = LintIssue::at($occurrence, self::redosSeverity($redos), RedosVerdict::message($redos), RedosVerdict::ISSUE_ID, hint: RedosHints::forAnalysis($redos, $occurrence->pattern), analysis: $redos);
-                }
-
-                // One attempt proven linear, the search retrying it is not.
-                $searchCost = $redos->searchCost;
-                if (null !== $searchCost && $this->shouldReportSearchCost()) {
-                    $riskIssues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::searchMessage($searchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion)), analysis: $redos);
-                }
-            }
-
-            array_push($issues, ...$lintIssues, ...$riskIssues);
+            array_push($issues, ...$this->judge($occurrence, $analyzed, $files));
 
             if (null !== $done) {
                 $done(1);
@@ -538,6 +340,262 @@ final class AnalysisService
         }
 
         return $issues;
+    }
+
+    /**
+     * The issues of one occurrence: none for an occurrence that holds no
+     * pattern to judge, the issues of the versions a guard keeps for a
+     * guarded one, and otherwise its validation at the floor, then at the
+     * other versions of the range, then the lint rules and the risk
+     * analysis of a pattern the floor accepts.
+     *
+     * @param array<string, array{0: ValidationResult, 1: string|null}>|null $analyzed
+     * @param array<string, string>                                          $files    the files read, by name
+     *
+     * @param-out ($analyzed is null ? null : array<string, array{0: ValidationResult, 1: string|null}>) $analyzed
+     *
+     * @return list<LintIssue>
+     */
+    private function judge(PatternOccurrence $occurrence, ?array &$analyzed, array &$files): array
+    {
+        // A file read with the tokenizer instead of the PHP parser is
+        // counted in the stats, never reported.
+        if ($occurrence->isIgnored || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
+            return [];
+        }
+
+        // Code that runs on some versions of the range only is judged for
+        // those, by the analysis of those versions; for none, it is dead
+        // code there, and not judged.
+        [$narrowed, $key] = $this->narrowedFor($occurrence);
+        if (false === $narrowed) {
+            return [];
+        }
+
+        if (null !== $narrowed) {
+            $found = null === $analyzed ? null : [];
+            $issues = self::underGuard($narrowed->lintChunk([$occurrence], null, $found), $narrowed, $occurrence->guard);
+            foreach ($found ?? [] as $pattern => $read) {
+                $analyzed[$key."\0".$pattern] = $read;
+            }
+
+            return $issues;
+        }
+
+        // A file the extractor could not read holds patterns no one linted.
+        if (null !== $occurrence->unread) {
+            return [new LintIssue(LintSeverity::Error, $occurrence->unread, $occurrence->file, 1, 1, issueId: 'regex.lint.source.unreadable', source: $occurrence->source)];
+        }
+
+        $validation = $this->regex->validate($occurrence->pattern);
+        if (!$validation->isValid) {
+            if (null !== $analyzed) {
+                $analyzed[$occurrence->pattern] = [$validation, null];
+            }
+
+            return $this->validationIssues($occurrence, $validation);
+        }
+
+        // Valid on the floor: a later PHP of the range may refuse it. The
+        // lint rules and the risk analysis still judge the floor.
+        $ast = $this->regex->parse($occurrence->pattern);
+        if (null !== $analyzed) {
+            $analyzed[$occurrence->pattern] = [$validation, AstSerializer::serialize($ast)];
+        }
+
+        $issues = $this->rangeIssues($occurrence, $ast);
+        $skipRiskAnalysis = $this->shouldSkipRiskAnalysis($occurrence);
+        $lintIssues = $this->lintEnabled ? $this->lintIssues($occurrence, $ast, $skipRiskAnalysis, $files) : [];
+        if ($skipRiskAnalysis) {
+            return [...$issues, ...$lintIssues];
+        }
+
+        $redos = (new RedosAnalyzer($this->regex))->analyze(
+            $occurrence->pattern,
+            $this->redosSeverityThreshold,
+            $this->redosMode,
+            $this->redosConfirmOptions,
+        );
+
+        // The heuristic rules guess what the analysis just proved: once it
+        // shows the pattern linear, their warnings go.
+        if ($redos->isProvenSafe()) {
+            $lintIssues = array_values(array_filter(
+                $lintIssues,
+                static fn (LintIssue $issue): bool => !isset(RedosVerdict::HEURISTIC_ISSUE_IDS[(string) $issue->issueId]),
+            ));
+        }
+
+        return [...$issues, ...$lintIssues, ...$this->riskIssues($occurrence, $validation, $redos)];
+    }
+
+    /**
+     * The issue of a pattern the floor refuses: a warning that it was not
+     * analysed when the library gave up at one of its own limits, as PCRE
+     * may compile it; an error otherwise.
+     *
+     * @return list<LintIssue>
+     */
+    private function validationIssues(PatternOccurrence $occurrence, ValidationResult $validation): array
+    {
+        if (ValidationErrorCategory::Limit === $validation->category) {
+            return [LintIssue::at($occurrence, LintSeverity::Warning, 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'), position: $validation->offset, tip: $validation->hint, validation: $validation)];
+        }
+
+        $message = $validation->error ?? 'Invalid regex.';
+
+        return [LintIssue::at($occurrence, LintSeverity::Error, $message, position: $validation->offset, tip: ValidationTips::forError($message, $occurrence->pattern, $validation), validation: $validation)];
+    }
+
+    /**
+     * The issues of a pattern the floor accepts at the other versions of
+     * the range: an error when a later PHP refuses it, else a warning when
+     * a later PHP reads the same text as another tree, or matches the same
+     * tree otherwise.
+     *
+     * @return list<LintIssue>
+     */
+    private function rangeIssues(PatternOccurrence $occurrence, RegexNode $ast): array
+    {
+        if ([] === $this->range) {
+            return [];
+        }
+
+        $issues = [];
+        $diff = (new RangeDiff($this->regex, $this->range))->diff($occurrence->pattern, $this->comparesTrees());
+        $rangeError = self::rangeError($diff);
+        if (null !== $rangeError) {
+            [$target, $refusedOn, $rangeValidation] = $rangeError;
+            $message = \sprintf('On %s: %s', $refusedOn, $rangeValidation->error ?? 'Invalid regex.');
+            $issues[] = LintIssue::at(
+                $occurrence,
+                LintSeverity::Error,
+                $message,
+                position: $rangeValidation->offset,
+                tip: $this->badEscapeTip($occurrence->pattern) ?? ValidationTips::forError($message, $occurrence->pattern, $rangeValidation),
+                validation: $rangeValidation,
+                target: ProjectTarget::describe($target),
+            );
+        }
+
+        $readsOtherwise = $diff->readsOtherwise;
+        if (null !== $readsOtherwise) {
+            $issues[] = LintIssue::at(
+                $occurrence,
+                LintSeverity::Warning,
+                \sprintf('From PHP %s (PCRE2 %s) the pattern parses differently: the same text means something else there.', ProjectTarget::phpLabel($readsOtherwise->phpVersionId), $readsOtherwise->pcreVersion),
+                self::ISSUE_ID_MEANING_CHANGES,
+                hint: 'Write the part that differs in a form every PHP of the range reads alike: "a{0,3}" for a quantifier, "a\{,3}" for the text.',
+                target: ProjectTarget::describe($readsOtherwise),
+            );
+        }
+
+        if ([] !== $issues) {
+            return $issues;
+        }
+
+        $silentChange = $this->comparesTrees()
+            ? SilentMeaningChange::first($ast, $this->regex->target(), array_map(static fn (RegexParser $parser): PcreTarget => $parser->target(), $this->range))
+            : null;
+        if (null === $silentChange) {
+            return [];
+        }
+
+        return [LintIssue::at(
+            $occurrence,
+            LintSeverity::Warning,
+            \sprintf('From PHP %s (PCRE2 %s) %s', ProjectTarget::phpLabel($silentChange->target->phpVersionId), $silentChange->target->pcreVersion, $silentChange->message),
+            self::ISSUE_ID_MEANING_CHANGES,
+            hint: $silentChange->hint,
+            target: ProjectTarget::describe($silentChange->target),
+        )];
+    }
+
+    /**
+     * The findings of the lint rules, but the heuristic risk rules on a
+     * pattern the risk analysis skips. None carries a rewrite: wrapping the
+     * operand of a risk rule in an atomic group while the outer quantifier
+     * stays removes the backtracking across iterations the engine may need.
+     *
+     * @param array<string, string> $files the files read, by name
+     *
+     * @return list<LintIssue>
+     */
+    private function lintIssues(PatternOccurrence $occurrence, RegexNode $ast, bool $skipRiskAnalysis, array &$files): array
+    {
+        $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
+        $ast->accept($linter);
+
+        $issues = [];
+        foreach ($linter->getIssues() as $issue) {
+            if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
+                continue;
+            }
+
+            // A raw character the PHP literal spells with an escape, as a
+            // double-quoted "\t", is no raw character in the source; without
+            // the source, the spelling is unknown.
+            if (InvisibleCharacterRule::ID === $issue->id) {
+                $code = null === $occurrence->fileOffset ? '' : ($files[$occurrence->file] ??= (string) @file_get_contents($occurrence->file));
+                if ('' === $code || !LiteralSpelling::holdsRaw($code, $occurrence->fileOffset, InvisibleCharacterRule::reportedCharacter($ast->source ?? '', (int) $issue->offset))) {
+                    continue;
+                }
+            }
+
+            $issues[] = LintIssue::at($occurrence, $issue->severity, $issue->message, $issue->id, $issue->offset, $issue->hint);
+        }
+
+        return $issues;
+    }
+
+    /**
+     * The risks of a pattern: its complexity past the threshold, its ReDoS
+     * verdict at or above the threshold, and the cost of an unanchored
+     * search when one attempt is linear and the search is not.
+     *
+     * @return list<LintIssue>
+     */
+    private function riskIssues(PatternOccurrence $occurrence, ValidationResult $validation, RedosAnalysis $redos): array
+    {
+        $issues = [];
+        if ($validation->complexityScore >= $this->warningThreshold) {
+            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, \sprintf('Pattern is complex (score: %d).', $validation->complexityScore), self::ISSUE_ID_COMPLEXITY);
+        }
+
+        if (RedosVerdict::reported($redos, $this->redosSeverityThreshold, $this->redosMode)) {
+            $issues[] = LintIssue::at($occurrence, self::redosSeverity($redos), RedosVerdict::message($redos), RedosVerdict::ISSUE_ID, hint: RedosHints::forAnalysis($redos, $occurrence->pattern), analysis: $redos);
+        }
+
+        $searchCost = $redos->searchCost;
+        if (null !== $searchCost && $this->shouldReportSearchCost()) {
+            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::searchMessage($searchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion)), analysis: $redos);
+        }
+
+        return $issues;
+    }
+
+    /**
+     * The same settings, judging with another parser and range.
+     *
+     * @param list<RegexParser> $range
+     */
+    private function rebuild(RegexParser $parser, array $range, ?JudgedRange $judged): self
+    {
+        return new self(
+            $parser,
+            $this->extractor,
+            $this->warningThreshold,
+            $this->redosSeverityThreshold->value,
+            $this->redosIgnoredPatterns,
+            $this->redosMode,
+            $this->redosConfirmOptions,
+            RedosMode::Off !== $this->redosMode,
+            $this->lintEnabled,
+            $this->lintRules,
+            $range,
+            $this->dfaCache,
+            $judged,
+        );
     }
 
     /**
@@ -564,20 +622,7 @@ final class AnalysisService
             return [null, ''];
         }
 
-        $this->narrowed[$key] ??= new self(
-            $this->judged->parserFor($targets[0]),
-            $this->extractor,
-            $this->warningThreshold,
-            $this->redosSeverityThreshold->value,
-            $this->redosIgnoredPatterns,
-            $this->redosMode,
-            $this->redosConfirmOptions,
-            RedosMode::Off !== $this->redosMode,
-            $this->lintEnabled,
-            $this->lintRules,
-            array_map($this->judged->parserFor(...), \array_slice($targets, 1)),
-            $this->dfaCache,
-        );
+        $this->narrowed[$key] ??= $this->rebuild($this->judged->parserFor($targets[0]), array_map($this->judged->parserFor(...), \array_slice($targets, 1)), null);
 
         return [$this->narrowed[$key], $key];
     }
@@ -671,15 +716,6 @@ final class AnalysisService
     }
 
     /**
-     * The 1-based column of the pattern in its file, null when the source
-     * does not know it: none is invented.
-     */
-    private function resolveColumn(PatternOccurrence $occurrence): ?int
-    {
-        return $occurrence->column;
-    }
-
-    /**
      * @param array<PatternOccurrence> $patterns
      *
      * @return list<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
@@ -721,7 +757,7 @@ final class AnalysisService
             $issues[] = [
                 'file' => $occurrence->file,
                 'line' => $occurrence->line,
-                'column' => $this->resolveColumn($occurrence),
+                'column' => $occurrence->column,
                 'fileOffset' => $occurrence->fileOffset,
                 'analysis' => $analysis,
             ];
@@ -860,7 +896,7 @@ final class AnalysisService
         return [
             'file' => $occurrence->file,
             'line' => $occurrence->line,
-            'column' => $this->resolveColumn($occurrence),
+            'column' => $occurrence->column,
             'fileOffset' => $occurrence->fileOffset,
             'optimization' => $optimization,
             'savings' => $savings,
