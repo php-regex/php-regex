@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Support;
 
-use PHPRegex\Toolkit\Upgrade\UpgradeMap;
+use PHPRegex\Rector\Upgrade\UpgradeMap;
 
 /**
  * The tables of UPGRADE-2.0.md that UpgradeMap holds, between two markers.

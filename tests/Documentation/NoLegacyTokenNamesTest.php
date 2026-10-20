@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
  * A `T_*` name the code still spells (the lexer's token-map keys such as
  * T_CALLOUT, PHP's tokenizer constants) is not a 1.x name: a name is flagged
  * only when it occurs nowhere under src/. The 1.x-to-2.0 upgrade map
- * (src/Toolkit/Upgrade/) names the 1.x cases on purpose and is not read.
+ * (src/Rector/Upgrade/) names the 1.x cases on purpose and is not read.
  *
  * The pages read are those of DocumentationPages. CHANGELOG.md and
  * UPGRADE-2.0.md name the 1.x cases on purpose and are not among them.
@@ -150,7 +150,7 @@ final class NoLegacyTokenNamesTest extends TestCase
         );
         foreach ($iterator as $file) {
             if (!$file instanceof \SplFileInfo || 'php' !== $file->getExtension()
-                || str_contains(str_replace('\\', '/', $file->getPathname()), '/src/Toolkit/Upgrade/')) {
+                || str_contains(str_replace('\\', '/', $file->getPathname()), '/src/Rector/Upgrade/')) {
                 continue;
             }
             preg_match_all(self::LEGACY_NAME, (string) file_get_contents($file->getPathname()), $matches);

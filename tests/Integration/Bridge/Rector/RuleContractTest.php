@@ -76,6 +76,19 @@ final class RuleContractTest extends TestCase
         $this->assertSame($expected, realpath(RegexSetList::PCRE_UPGRADE));
     }
 
+    /**
+     * The 1.x to 2.0 set ships with the Rector rules, at a path the constant
+     * names whatever the install layout: split or monorepo.
+     */
+    #[Test]
+    public function test_set_list_points_at_the_upgrade_2_0_set(): void
+    {
+        $expected = realpath(\dirname(__DIR__, 4).'/src/Rector/config/sets/upgrade-2.0.php');
+
+        $this->assertIsString($expected);
+        $this->assertSame($expected, realpath(RegexSetList::UPGRADE_2_0));
+    }
+
     #[Test]
     public function test_literal_brace_refactor_returns_the_same_call_it_received(): void
     {

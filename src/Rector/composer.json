@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-rector",
     "type": "rector-extension",
-    "description": "Rector rules that rewrite a preg_* call into the string function that does the same, only when the automata prove it.",
+    "description": "Rector rules that rewrite a preg_* call into the string function that does the same, only when the automata prove it, and the set that moves code written for 1.x to the 2.0 names.",
     "keywords": [
         "regex",
         "pcre",

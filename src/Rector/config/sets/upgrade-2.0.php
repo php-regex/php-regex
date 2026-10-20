@@ -15,13 +15,17 @@ declare(strict_types=1);
  * The Rector set that moves code written for 1.3 to the 2.0 names: classes,
  * enum cases and renamed methods. Add it to your rector.php:
  *
- *     $rectorConfig->sets([__DIR__.'/vendor/php-regex/regex-toolkit/Resources/rector/upgrade-2.0.php']);
+ *     ->withSets([RegexSetList::UPGRADE_2_0])
  *
  * What it cannot change (configuration keys, error codes, offsets, removed
  * classes) is listed in UPGRADE-2.0.md.
+ *
+ * The file sits in the namespace of the map it reads, which is internal to
+ * this package.
  */
 
-use PHPRegex\Toolkit\Upgrade\UpgradeMap;
+namespace PHPRegex\Rector\Upgrade;
+
 use Rector\Config\RectorConfig;
 use Rector\Renaming\Rector\ClassConstFetch\RenameClassConstFetchRector;
 use Rector\Renaming\Rector\MethodCall\RenameMethodRector;

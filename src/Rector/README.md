@@ -42,9 +42,11 @@ Features
   spelled the way every PHP reads it: `/(*pla:a)b/` (PHP 7.4 and later) as
   `/(?=a)b/`, a NUL byte (PHP 8.2 and later) as `\x00`, `/a{65536/` (PHP 8.1
   and later) as `/a\{65536/`.
-* Six rules and two sets, `RegexSetList::STRING_FUNCTIONS` and
-  `RegexSetList::PCRE_UPGRADE`. The rule names and the sets stay the same for
-  all of 2.x; the rules take no configuration.
+* Code written for `yoeunes/regex-parser` 1.3 moves to the 2.0 names: every
+  class, enum case and renamed method, with `RegexSetList::UPGRADE_2_0`.
+* Seven rules and three sets, `RegexSetList::STRING_FUNCTIONS`,
+  `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0`. The rule names
+  and the sets stay the same for all of 2.x; the rules take no configuration.
 
 Installation
 ------------
@@ -106,6 +108,27 @@ Then run `vendor/bin/rector process --dry-run` to see the changes, and
 After upgrading this package, run Rector once with `--clear-cache`: Rector
 caches the files it found nothing to change in, and a new release may prove
 patterns the previous one could not.
+
+### Upgrading from 1.x
+
+`RegexSetList::UPGRADE_2_0` moves code written for `yoeunes/regex-parser` 1.3
+to the 2.0 names: `RegexParser\Regex` to `PHPRegex\Toolkit\Regex`,
+`ReDoSSeverity::HIGH` to `RedosSeverity::High`, `clearValidatorCaches()` to
+`clearCaches()`. Run Rector twice: the second run renames the methods called
+on an object whose class the first one renamed.
+
+```php
+use PHPRegex\Rector\Set\RegexSetList;
+use Rector\Config\RectorConfig;
+
+return RectorConfig::configure()
+    ->withPaths([__DIR__.'/src'])
+    ->withSets([RegexSetList::UPGRADE_2_0])
+    ->withImportNames(removeUnusedImports: true);
+```
+
+The [upgrade guide](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
+lists what the set cannot change.
 
 The rules
 ---------

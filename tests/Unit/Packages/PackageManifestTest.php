@@ -444,6 +444,7 @@ final class PackageManifestTest extends TestCase
         // only conflict with it.
         $this->assertNull(self::dig($manifest, 'require', 'nikic/php-parser'));
         $this->assertFileExists(self::root().'/src/Rector/config/sets/string-functions.php');
+        $this->assertFileExists(self::root().'/src/Rector/config/sets/upgrade-2.0.php');
     }
 
     #[Test]

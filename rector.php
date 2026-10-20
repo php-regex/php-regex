@@ -63,7 +63,7 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__.'/tests/Tools/verify_engine_claims.php',
         __DIR__.'/src/Laravel',
         // The upgrade map names classes in full: imported, two CharSet would collide
-        __DIR__.'/src/Toolkit/Upgrade/UpgradeMap.php',
+        __DIR__.'/src/Rector/Upgrade/UpgradeMap.php',
         // The IDE completion files are the editor's own DSL: their functions
         // exist only inside the editor
         __DIR__.'/src/Parser/.phpstorm.meta.php',

@@ -106,6 +106,11 @@ final class EngineReplayTest extends TestCase
             if (str_contains($fixture, '/EscapeLiteralBraceRector/') || str_contains($fixture, '/PossessiveRepeatOnceRector/') || str_contains($fixture, '/FixturePcreUpgrade/')) {
                 continue;
             }
+            // The 1.x to 2.0 set renames classes, cases and methods, never a
+            // preg_* call: there is no pattern to replay.
+            if (str_contains($fixture, '/FixtureUpgrade20/')) {
+                continue;
+            }
 
             if (str_contains((string) file_get_contents($fixture), self::SPLIT)) {
                 yield substr($fixture, \strlen(__DIR__) + 1) => ['fixture' => $fixture];

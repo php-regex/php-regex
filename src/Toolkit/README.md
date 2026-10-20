@@ -41,7 +41,7 @@ Installation
 composer require php-regex/regex-toolkit
 ```
 
-The seven libraries behind the facade come with it; nothing else to install. To drive the same analyses from the terminal, add `php-regex/regex-cli`. Upgrading from `yoeunes/regex-parser` 1.3? Run the Rector set shipped as `Resources/rector/upgrade-2.0.php`.
+The seven libraries behind the facade come with it; nothing else to install. To drive the same analyses from the terminal, add `php-regex/regex-cli`. Upgrading from `yoeunes/regex-parser` 1.3? The `RegexSetList::UPGRADE_2_0` Rector set of `php-regex/regex-rector` moves your code to the 2.0 names; the [upgrade guide](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md) shows how to run it.
 
 Configuration
 -------------

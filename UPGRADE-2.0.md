@@ -58,15 +58,27 @@ and `Linter\DiagnosticType`, built only by the lint commands. Read lint
 results through `PatternLinter::getIssues()` (`Rule\RuleViolation`) or the
 CLI's JSON output.
 
-A Rector set makes these changes in your code. Add it to your `rector.php`
-and run Rector twice:
+A Rector set makes these changes in your code. It ships with the Rector
+rules, in `php-regex/regex-rector` (`php-regex/php-regex` carries it too):
 
-```php
-$rectorConfig->sets([__DIR__.'/vendor/php-regex/regex-toolkit/Resources/rector/upgrade-2.0.php']);
+```bash
+composer require --dev php-regex/regex-rector
 ```
 
-Under the `php-regex/php-regex` install the set lives one level deeper, at
-`vendor/php-regex/php-regex/src/Toolkit/Resources/rector/upgrade-2.0.php`.
+Add the set to your `rector.php` and run Rector twice:
+
+```php
+use PHPRegex\Rector\Set\RegexSetList;
+use Rector\Config\RectorConfig;
+
+return RectorConfig::configure()
+    ->withPaths([__DIR__.'/src'])
+    ->withSets([RegexSetList::UPGRADE_2_0])
+    ->withImportNames(removeUnusedImports: true);
+```
+
+Without `withImportNames()`, Rector writes each new name in full,
+`\PHPRegex\Toolkit\Regex::create()`, and leaves the `use` lines of the 1.x names.
 
 It renames classes, enum cases and the renamed methods; the second run catches
 the methods called on an object whose class the first run renamed. It does not change

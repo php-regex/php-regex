@@ -32,4 +32,13 @@ final class RegexSetList
      * "/(?=a)/" (PHP 7.3), a NUL byte to "\x00" (PHP 8.1 and earlier).
      */
     public const PCRE_UPGRADE = __DIR__.'/../config/sets/pcre-upgrade.php';
+
+    /**
+     * Code written for yoeunes/regex-parser 1.3 moved to the 2.0 names: every
+     * class, enum case and renamed method, "RegexParser\Regex" to
+     * "PHPRegex\Toolkit\Regex", "ReDoSSeverity::HIGH" to
+     * "RedosSeverity::High". Run Rector twice: the second run renames the
+     * methods called on an object whose class the first one renamed.
+     */
+    public const UPGRADE_2_0 = __DIR__.'/../config/sets/upgrade-2.0.php';
 }

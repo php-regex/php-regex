@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Toolkit\Upgrade;
+namespace PHPRegex\Rector\Upgrade;
 
 /**
  * What 1.3 named, and what 2.0 names it: every class 1.3 shipped, its legacy

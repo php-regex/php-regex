@@ -134,8 +134,9 @@ The bridges and tools carry more than their classes:
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
 - `regex-rector`: the rules keep their names for all of 2.x and take no
-  configuration, and `RegexSetList::STRING_FUNCTIONS` and
-  `RegexSetList::PCRE_UPGRADE` name the sets that register them. Each rewrites only what the automata prove; a minor release
+  configuration, and `RegexSetList::STRING_FUNCTIONS`,
+  `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0` name the sets
+  that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.
 - `regex-symfony`: the `php_regex` configuration, the commands' names and
   options, the `regex:analyze` JSON report ([every key](json-output.md#symfony-analyze)),

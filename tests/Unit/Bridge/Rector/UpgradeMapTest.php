@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Toolkit;
+namespace PHPRegex\Tests\Unit\Bridge\Rector;
 
+use PHPRegex\Rector\Upgrade\UpgradeMap;
 use PHPRegex\Tests\Support\UpgradeGuide;
-use PHPRegex\Toolkit\Upgrade\UpgradeMap;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -88,7 +88,7 @@ final class UpgradeMapTest extends TestCase
     #[Test]
     public function test_the_upgrade_guide_carries_the_map(): void
     {
-        $guide = (string) file_get_contents(\dirname(__DIR__, 3).'/UPGRADE-2.0.md');
+        $guide = (string) file_get_contents(\dirname(__DIR__, 4).'/UPGRADE-2.0.md');
 
         $this->assertStringContainsString(UpgradeGuide::render(), $guide, 'Run "php tests/Tools/write_upgrade_map.php".');
     }
@@ -96,8 +96,9 @@ final class UpgradeMapTest extends TestCase
     #[Test]
     public function test_the_map_names_classes_without_depending_on_them(): void
     {
-        // The toolkit depends on no bridge: a ::class constant would make it.
-        $source = (string) file_get_contents(\dirname(__DIR__, 3).'/src/Toolkit/Upgrade/UpgradeMap.php');
+        // The Rector package depends on none of the packages whose classes it
+        // renames: a ::class constant would make it.
+        $source = (string) file_get_contents(\dirname(__DIR__, 4).'/src/Rector/Upgrade/UpgradeMap.php');
 
         $this->assertStringNotContainsString('::class', $source);
     }
@@ -105,7 +106,7 @@ final class UpgradeMapTest extends TestCase
     #[Test]
     public function test_the_rector_set_reads_the_map(): void
     {
-        $set = (string) file_get_contents(\dirname(__DIR__, 3).'/src/Toolkit/Resources/rector/upgrade-2.0.php');
+        $set = (string) file_get_contents(\dirname(__DIR__, 4).'/src/Rector/config/sets/upgrade-2.0.php');
 
         $this->assertStringContainsString('UpgradeMap::RENAMED', $set);
         $this->assertStringContainsString('UpgradeMap::ENUM_CASES', $set);
@@ -117,7 +118,7 @@ final class UpgradeMapTest extends TestCase
      */
     public static function provideClassesOf13(): \Generator
     {
-        $lines = file(\dirname(__DIR__, 2).'/Fixtures/Upgrade/v1.3.0-classes.txt', \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES) ?: [];
+        $lines = file(\dirname(__DIR__, 3).'/Fixtures/Upgrade/v1.3.0-classes.txt', \FILE_IGNORE_NEW_LINES | \FILE_SKIP_EMPTY_LINES) ?: [];
         foreach ($lines as $class) {
             yield $class => [$class];
         }

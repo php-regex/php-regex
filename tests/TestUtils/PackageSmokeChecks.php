@@ -81,7 +81,7 @@ final class PackageSmokeChecks
             'PHPStan' => [RegexPatternRule::class, static fn (): bool => self::extends(RegexPatternRule::class, Rule::class)],
             'PHPUnit' => [CompilesPattern::class, static fn (): bool => true === (new CompilesPattern())->evaluate('/a+/', '', true) && false === (new CompilesPattern())->evaluate('/(/', '', true)],
             'Psalm' => [Plugin::class, static fn (): bool => self::extends(Plugin::class, PluginEntryPointInterface::class)],
-            'Rector' => [EscapeNulByteRector::class, static fn (): bool => self::extends(EscapeNulByteRector::class, RectorInterface::class) && is_file(RegexSetList::PCRE_UPGRADE)],
+            'Rector' => [EscapeNulByteRector::class, static fn (): bool => self::extends(EscapeNulByteRector::class, RectorInterface::class) && is_file(RegexSetList::PCRE_UPGRADE) && is_file(RegexSetList::UPGRADE_2_0)],
             'Redos' => [RedosAnalyzer::class, static fn (): bool => RedosSeverity::Critical === (new RedosAnalyzer())->analyze('/(a+)+$/')->severity],
             'Symfony' => [PHPRegexBundle::class, static fn (): bool => (new PHPRegexBundle())->getContainerExtension() instanceof PHPRegexExtension],
             'Toolkit' => [Regex::class, static fn (): bool => Regex::create()->validate('/a+/')->isValid],

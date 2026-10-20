@@ -39,9 +39,6 @@
         "php-regex/regex-redos": "self.version",
         "php-regex/regex-transpiler": "self.version"
     },
-    "suggest": {
-        "rector/rector": "To run the 1.x to 2.0 upgrade set in Resources/rector."
-    },
     "autoload": {
         "psr-4": {
             "PHPRegex\\Toolkit\\": ""

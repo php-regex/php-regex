@@ -109,6 +109,27 @@ The rules take no configuration. After upgrading the package, run Rector once
 with `--clear-cache`: Rector skips the files it found nothing to change in, and
 a new release may prove patterns the previous one could not.
 
+### Upgrading from 1.x
+
+The 2.0 upgrade set moves code written for `yoeunes/regex-parser` 1.3 to the
+2.0 names: every class, enum case and renamed method, `RegexParser\Regex` to
+`PHPRegex\Toolkit\Regex`, `ReDoSSeverity::HIGH` to `RedosSeverity::High`,
+`clearValidatorCaches()` to `clearCaches()`. Run Rector twice: the second run
+renames the methods called on an object whose class the first one renamed.
+
+```php
+return RectorConfig::configure()
+    ->withPaths([__DIR__.'/src'])
+    ->withSets([RegexSetList::UPGRADE_2_0])
+    ->withImportNames(removeUnusedImports: true);
+```
+
+Without `withImportNames()`, Rector writes each new name in full and leaves
+the `use` lines of the 1.x names. The
+[upgrade guide](https://github.com/php-regex/php-regex/blob/2.x/UPGRADE-2.0.md)
+lists what the set cannot change: configuration keys, error codes, offsets and
+removed classes.
+
 ## What the rules rewrite
 
 Rector produced every "after" below from the "before" above it.
