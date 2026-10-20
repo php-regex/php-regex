@@ -40,6 +40,14 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * calls, has no bound. "(*ACCEPT)" and "(*FAIL)" end the branch they stand
  * in. Lengths count bytes, or characters in UTF mode.
  *
+ * Each item is added to the length of its branch before the repeat after
+ * it is read, and a branch past 65535 is refused there, on every release:
+ * "a{65535}b?" and "a{65535}b{0}" are too long. A group's branches are
+ * summed from the start of the group. Before PCRE2 10.34 the sum is a 32-bit
+ * integer that wraps around instead of passing the limit: a branch that
+ * ends below zero has no fixed length, and the measure goes on past one
+ * that wrapped.
+ *
  * Before PCRE2 10.43 the measure ends at the first item of no fixed length:
  * a repeat of variable count, whatever it repeats, or a group whose
  * branches differ in length. The lookbehind is then refused whatever
@@ -60,6 +68,11 @@ use PHPRegex\Parser\Node\SubroutineNode;
  */
 final class LookbehindLength
 {
+    /**
+     * The longest branch PCRE2 measures (LOOKBEHIND_MAX).
+     */
+    private const MAX_BRANCH_LENGTH = 65535;
+
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
@@ -76,7 +89,7 @@ final class LookbehindLength
      * The length of each group measured, by node, with the groups its
      * measure called.
      *
-     * @var array<int, array{length: LengthRange, calls: array<int, true>, unfixed: bool}>
+     * @var array<int, array{length: LengthRange, calls: array<int, true>, unfixed: bool, tooLong: int|null}>
      */
     private array $measuredGroups = [];
 
@@ -111,6 +124,12 @@ final class LookbehindLength
     private bool $unfixed = false;
 
     /**
+     * The length the branch reached when it passed MAX_BRANCH_LENGTH, which
+     * ends the measure there; null while it has not.
+     */
+    private ?int $tooLong = null;
+
+    /**
      * @param bool                                                               $unicode        whether lengths count characters
      * @param bool                                                               $variableLength whether the PCRE2 judged (10.43+) measures a group repeated zero times as empty
      * @param (\Closure(GroupNode, array<int, true>): void)|null                 $onLookaround   told of a lookaround met inside a branch
@@ -119,6 +138,7 @@ final class LookbehindLength
      * @param bool                                                               $inLookaheads   whether the PCRE2 judged (10.34+) measures the lookbehinds inside a lookahead it meets
      * @param bool                                                               $skipsDefine    whether the PCRE2 judged (10.35+) skips a "(?(DEFINE)" group
      * @param bool                                                               $readsNesting   whether the PCRE2 judged reads an extended class that nests a class or a parenthesis whole (all but 10.45 to 10.47)
+     * @param bool                                                               $wrapsLengths   whether the PCRE2 judged (before 10.34) adds lengths up in a 32-bit integer that wraps around
      */
     public function __construct(
         private readonly GroupIndex $groups,
@@ -130,6 +150,7 @@ final class LookbehindLength
         private readonly bool $inLookaheads = true,
         private readonly bool $skipsDefine = true,
         private readonly bool $readsNesting = true,
+        private readonly bool $wrapsLengths = false,
     ) {}
 
     /**
@@ -177,40 +198,42 @@ final class LookbehindLength
     }
 
     /**
-     * The length range of one branch of a lookbehind, and whether the
-     * measure ended on an item of no fixed length, which the PCRE2 judged
-     * (up to 10.42) refuses whatever the range.
+     * The length range of one branch of a lookbehind, whether the measure
+     * ended on an item of no fixed length, which the PCRE2 judged (up to
+     * 10.42) refuses whatever the range, and the length the branch reached
+     * past 65535 where the measure ended on it, null where it did not.
      *
      * @param array<int, true> $expanding the groups being measured, by node
      *
-     * @return array{0: LengthRange, 1: bool}
+     * @return array{0: LengthRange, 1: bool, 2: int|null}
      *
      * @phpstan-impure
      */
     public function branch(NodeInterface $branch, array $expanding = []): array
     {
-        $around = $this->unfixed;
-        $this->unfixed = false;
+        [$unfixed, $tooLong] = [$this->unfixed, $this->tooLong];
+        [$this->unfixed, $this->tooLong] = [false, null];
 
         try {
-            $length = $this->of($branch, $expanding);
+            $length = $this->branchOf($branch, $expanding);
 
-            return [$length, $this->unfixed];
+            return [$length, $this->unfixed, $this->tooLong];
         } finally {
-            $this->unfixed = $around;
+            [$this->unfixed, $this->tooLong] = [$unfixed, $tooLong];
         }
     }
 
     /**
      * @param array<int, true> $expanding the groups being measured, by node
+     * @param int              $before    the length of the branch before the node, where a sequence measures it as an item
      *
      * @return LengthRange
      *
      * @phpstan-impure
      */
-    public function of(NodeInterface $node, array $expanding = []): array
+    public function of(NodeInterface $node, array $expanding = [], int $before = 0): array
     {
-        $length = $this->measure($node, $expanding);
+        $length = $this->measure($node, $expanding, $before);
 
         // Up to PCRE2 10.42 an item of more than one length ends the measure.
         if (!$this->variableLength && $length[0] !== $length[1]) {
@@ -221,12 +244,70 @@ final class LookbehindLength
     }
 
     /**
+     * The length of a branch, of a group or a lookbehind: one past the limit
+     * is refused, and before PCRE2 10.34 one that wrapped below zero has no
+     * fixed length.
+     *
      * @param array<int, true> $expanding the groups being measured, by node
      *
      * @return LengthRange
      */
-    private function measure(NodeInterface $node, array $expanding): array
+    private function branchOf(NodeInterface $branch, array $expanding): array
     {
+        $length = $this->of($branch, $expanding);
+        if ($this->unfixed || null === $length[1] || ($length[1] >= 0 && $length[1] <= self::MAX_BRANCH_LENGTH)) {
+            return $length;
+        }
+
+        if ($length[1] < 0) {
+            $this->unfixed = true;
+        } else {
+            $this->passes($length[1]);
+        }
+
+        return $length;
+    }
+
+    /**
+     * $length repeated $count times, as PCRE counts it.
+     */
+    private function times(int $length, int $count): int
+    {
+        return $this->wrapsLengths ? self::wrap($length * $count) : $length * $count;
+    }
+
+    /**
+     * A length as a 32-bit integer holds it, wrapped around.
+     */
+    private static function wrap(int $value): int
+    {
+        $value &= 0xFFFFFFFF;
+
+        return $value > 0x7FFFFFFF ? $value - 0x100000000 : $value;
+    }
+
+    /**
+     * Whether the branch, at that length, passed the limit: the measure ends
+     * there, as PCRE refuses the lookbehind.
+     */
+    private function passes(?int $length): bool
+    {
+        if (null !== $length && $length > self::MAX_BRANCH_LENGTH) {
+            $this->tooLong ??= $length;
+        }
+
+        return null !== $this->tooLong;
+    }
+
+    /**
+     * @param array<int, true> $expanding the groups being measured, by node
+     * @param int              $before    the length of the branch before the node: only an item a sequence measures follows what came before it, what the item holds starts branches of its own
+     *
+     * @return LengthRange
+     */
+    private function measure(NodeInterface $node, array $expanding, int $before): array
+    {
+
         if ($node instanceof SequenceNode) {
             [$min, $max] = [0, 0];
             foreach ($node->children as $child) {
@@ -236,12 +317,18 @@ final class LookbehindLength
                     break;
                 }
 
-                [$childMin, $childMax] = $this->of($child, $expanding);
-                $min += $childMin;
-                $max = null === $childMax ? null : $max + $childMax;
+                [$childMin, $childMax] = $this->of($child, $expanding, $max);
+                if ($this->wrapsLengths) {
+                    $min = self::wrap($min + $childMin);
+                    $max = null === $childMax ? null : self::wrap($max + $childMax);
+                } else {
+                    $min += $childMin;
+                    $max = null === $childMax ? null : $max + $childMax;
+                }
 
-                // PCRE stops measuring at the first item it cannot bound.
-                if (null === $max || $this->unfixed) {
+                // PCRE stops measuring at the first item it cannot bound, and
+                // at the first that takes the branch past the limit.
+                if (null === $max || $this->unfixed || null !== $this->tooLong || ($max > self::MAX_BRANCH_LENGTH && $this->passes($max))) {
                     break;
                 }
             }
@@ -270,13 +357,13 @@ final class LookbehindLength
                     $this->groupBody($alternative);
                 }
 
-                [$altMin, $altMax] = $this->of($alternative, $expanding);
+                [$altMin, $altMax] = $this->branchOf($alternative, $expanding);
                 $min = min($min, $altMin);
                 $max = null === $altMax ? null : max($max, $altMax);
 
                 // Up to PCRE2 10.42 a branch of another length than those
                 // before it ends the measure.
-                if (null === $max || $this->unfixed || (!$this->variableLength && $min !== $max)) {
+                if (null === $max || $this->unfixed || null !== $this->tooLong || (!$this->variableLength && $min !== $max)) {
                     break;
                 }
             }
@@ -296,18 +383,29 @@ final class LookbehindLength
 
             $this->groupBody($node->child);
 
-            return $this->of($node->child, $expanding);
+            return $this->branchOf($node->child, $expanding);
         }
 
         if ($node instanceof ScriptRunNode && null !== $node->content) {
             $this->groupBody($node->content);
 
-            return $this->of($node->content, $expanding);
+            return $this->branchOf($node->content, $expanding);
         }
 
         if ($node instanceof QuantifierNode) {
             [$childMin, $childMax] = $this->of($node->node, $expanding);
             [$qMin, $qMax] = self::bounds($node->quantifier);
+
+            // The item is added to its branch before the repeat is read: a
+            // repeat of variable count, or of none, comes too late.
+            if (!$this->unfixed && null !== $childMax) {
+                $reached = $this->wrapsLengths ? self::wrap($before + $childMax) : $before + $childMax;
+                if ($reached > self::MAX_BRANCH_LENGTH) {
+                    $this->tooLong ??= $reached;
+
+                    return [$childMin, $childMax];
+                }
+            }
 
             // A repeated lookahead, "(?=.)*" or "(*pla:.)+", adds nothing.
             // Only a lookahead read directly under the quantifier does: a
@@ -329,7 +427,7 @@ final class LookbehindLength
                 $this->unfixed = true;
             }
 
-            return [$childMin * $qMin, null === $childMax || -1 === $qMax ? null : $childMax * $qMax];
+            return [$this->times($childMin, $qMin), null === $childMax || -1 === $qMax ? null : $this->times($childMax, $qMax)];
         }
 
         if ($node instanceof DefineNode) {
@@ -399,6 +497,7 @@ final class LookbehindLength
         if (null !== $measured && !self::callsAnyOf($measured['calls'], $expanding)) {
             $this->called += $measured['calls'];
             $this->unfixed = $this->unfixed || $measured['unfixed'];
+            $this->tooLong ??= $measured['tooLong'];
 
             return $measured['length'];
         }
@@ -408,10 +507,10 @@ final class LookbehindLength
         $calledAround = $this->called;
         $this->called = [];
         $recursions = $this->recursions;
-        $length = $this->of($group->child, $expanding + [$id => true]);
+        $length = $this->branchOf($group->child, $expanding + [$id => true]);
 
         if (!$this->groups->hasBranchReset() && $recursions === $this->recursions) {
-            $this->measuredGroups[$id] = ['length' => $length, 'calls' => $this->called, 'unfixed' => $this->unfixed];
+            $this->measuredGroups[$id] = ['length' => $length, 'calls' => $this->called, 'unfixed' => $this->unfixed, 'tooLong' => $this->tooLong];
         }
         $this->called += $calledAround;
 

@@ -2575,13 +2575,18 @@ final class Validator extends AbstractNodeVisitor
         try {
             foreach ($branches as $branch) {
                 $this->countLookbehindMeasures(1);
-                [$length, $unfixed] = $this->lookbehindLength->branch($branch, $measuring);
+                [$length, $unfixed, $tooLong] = $this->lookbehindLength->branch($branch, $measuring);
                 $lengths[] = $length;
 
-                // A branch of one length past PCRE's cap is refused as it is
-                // measured, before the branches after it.
-                if (!$unfixed && $length[0] === $length[1] && $length[1] > self::MAX_FIXED_LOOKBEHIND_LENGTH) {
-                    $this->validateLookbehindBranchLength($node, $length, false);
+                // PCRE adds each item to the branch before the repeat after
+                // it, and refuses the branch as soon as it passes the limit.
+                if (null !== $tooLong) {
+                    $this->raiseSemanticError(
+                        \sprintf('Lookbehind is too long: PCRE adds each item to the length of its branch before the repeat after it, and refuses a branch past %d characters (%d reached).', self::MAX_FIXED_LOOKBEHIND_LENGTH, $tooLong),
+                        $this->lookbehindErrorPosition($node),
+                        ErrorCode::LookbehindTooLong,
+                        'Shorten the lookbehind.',
+                    );
                 }
 
                 // PCRE stops at the first branch it cannot bound, met in
@@ -2668,18 +2673,9 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
-        // A fixed length is only capped by PCRE itself; a variable one by
-        // max_lookbehind_length, which stands for PCRE2's max_varlookbehind.
-        if (!$variable && $max > self::MAX_FIXED_LOOKBEHIND_LENGTH) {
-            $this->raiseSemanticError(
-                // Past PHP_INT_MAX the count is a float, which %d would wrap.
-                \sprintf('Lookbehind is too long: PCRE takes a fixed-length lookbehind of at most %d characters (%s).', self::MAX_FIXED_LOOKBEHIND_LENGTH, \is_int($max) ? 'length='.$max : 'length over '.\PHP_INT_MAX),
-                $this->lookbehindErrorPosition($node),
-                ErrorCode::LookbehindTooLong,
-                'Shorten the lookbehind.',
-            );
-        }
-
+        // A fixed length is only capped by PCRE itself, as the branch is
+        // measured; a variable one by max_lookbehind_length, which stands for
+        // PCRE2's max_varlookbehind.
         if ($variable && $max > $this->maxLookbehindLength) {
             $this->raiseSemanticError(
                 \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->maxLookbehindLength, $max),
@@ -2749,6 +2745,7 @@ final class Validator extends AbstractNodeVisitor
             $this->supports(PcreFeature::LookbehindInLookaheadMeasured),
             $this->supports(PcreFeature::DefineSkippedInLookbehind),
             !$this->supports(PcreFeature::ExtendedCharClass) || $this->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles),
+            !$this->supports(PcreFeature::LookbehindLengthOverflowRefused),
         );
     }
 

@@ -284,6 +284,7 @@ and a target has it from the release it arrived in on
 | `PossessiveRepeatOnceIsAtomic` | 10.34 | A possessive "{1}+" on a group or a subroutine call makes it atomic, where it was ignored as "{1}" is. |
 | `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |
 | `LookbehindInLookaheadMeasured` | 10.34 | A lookbehind inside a lookahead met while a lookbehind is measured is measured too, where the lookahead was skipped whole. |
+| `LookbehindLengthOverflowRefused` | 10.34 | A lookbehind branch whose length passes what a 32-bit integer holds is too long, where its length wrapped around. |
 | `NonAtomicAssertionShortSyntax` | 10.35 | "(?*" and "(?<*" spell the non-atomic lookarounds. |
 | `GroupHoldingItsOwnReferenceBacktracks` | 10.35 | A group that holds a reference to itself may be backtracked into, where it was atomic. |
 | `RepeatedAssertionKeepsItsCount` | 10.35 | A repeated assertion runs as many times as its count asks, where it ran once. |

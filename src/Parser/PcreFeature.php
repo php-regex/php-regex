@@ -66,6 +66,11 @@ enum PcreFeature
     case LookbehindInLookaheadMeasured;
 
     /**
+     * A lookbehind branch whose length passes what a 32-bit integer holds is too long, where its length wrapped around.
+     */
+    case LookbehindLengthOverflowRefused;
+
+    /**
      * "(?*" and "(?<*" spell the non-atomic lookarounds.
      */
     case NonAtomicAssertionShortSyntax;
@@ -305,7 +310,8 @@ enum PcreFeature
             self::QuantifiedAccept,
             self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames,
-            self::LookbehindInLookaheadMeasured => '10.34',
+            self::LookbehindInLookaheadMeasured,
+            self::LookbehindLengthOverflowRefused => '10.34',
             self::NonAtomicAssertionShortSyntax,
             self::GroupHoldingItsOwnReferenceBacktracks,
             self::RepeatedAssertionKeepsItsCount,
