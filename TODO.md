@@ -156,6 +156,26 @@ each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
 The DEFINE quirk of PCRE2 10.32 to 10.34 stays documented, not planned: it
 would mean replaying their internal form of the pattern (10.35 fixed it).
 
+## Linter: the last pass before 2.0.0
+
+Bugs to fix, each reproduced against PCRE2 10.49:
+
+- `anchor.impossible.end` reports `/a$\b\n/`, `/a$(?=\n)\n/`, `/a$(?!x)\n/`
+  and `/a$\X/u`, which all match `"a\n"`.
+- Two issues of one pattern with the same message are reported once:
+  `/a{1}b{1}/` shows one `quantifier.useless`.
+- `redos.ignored_patterns` skips a fragment only in a pattern without
+  flags whose delimiters are the same: not in `/(a+)+$/i` or `{(a+)+$}`.
+- `backref.useless` does not see the groups inside `(*sr:...)`.
+- Long runs of lazy quantifiers are linted in quadratic time.
+
+Then the cleanup: an issue value object instead of the array held twice,
+one severity mapping, one rule-id helper and catalogue (with the docs URL
+in every output), `lintChunk` split, the flag scope and "what follows"
+written once, the rule state reset in `begin()`, the token helpers shared by
+the two extraction strategies, the console formatter split, and the config
+side of rule ids.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
