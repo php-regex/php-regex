@@ -152,7 +152,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## Symfony Bridge Analyzers
 
 **Routes (`regex:routes`)**
-- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons.
+- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only.
 - **Guarantee:** Sound for supported regex subset and route conditions considered in analysis.
 - **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown.
 

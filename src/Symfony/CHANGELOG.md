@@ -71,3 +71,8 @@ CHANGELOG
  * `php_regex.extraction.interop` and `functions` take one name written
    without a list, and a `functions` spec the lint cannot read is ignored
    with a warning, `Malformed pattern function "x#a", ignored.`
+ * `regex:routes` and `regex:analyze` read the routes in declaration order,
+   as the router does, first match wins: two routes sharing some paths are
+   an overlap whichever is declared first, the earlier one winning them, and
+   a route is shadowed when an earlier one takes all its paths. A narrower
+   route declared before a wider one is not reported.

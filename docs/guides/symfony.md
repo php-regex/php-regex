@@ -295,6 +295,15 @@ explanation. What stays the bundle's own: `regex:routes`, `regex:security`
 and `regex:analyze` read Symfony's router and `security.yaml`, where
 Laravel's `regex:routes` lists and validates route constraints.
 
+`regex:routes` reads the routes in the order they are declared, as the router
+matches them: the first route that matches a path wins it. A route is
+**shadowed** when an earlier route takes every path it matches, so it can
+never be reached. Two routes that share some paths but not all are an
+**overlap**, listed with `--show-overlaps`: `/blog/{slug}` (`[a-z]+`) declared
+before `/blog/{id}` (`\d+|new`) takes `/blog/new`. A narrower route declared
+before a wider one, `/users/list` before `/users/{id}`, is the order the
+router expects and is not reported.
+
 `regex:lint` reads the functions marked `#[RegexPattern]` (or PhpStorm's
 `#[Language('RegExp')]`) in the configured `paths`, with `exclude` where they are linted, and
 in `%kernel.project_dir%/vendor`, whatever `exclude` says; a project

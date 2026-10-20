@@ -21,7 +21,7 @@ use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Routing\CompiledRoute;
 use Symfony\Component\Routing\Route;
@@ -84,8 +84,6 @@ final class RouteConflictAnalyzer
             }
         }
 
-        $routes = $this->sortBySpecificity($routes);
-
         /** @var array<int, RouteConflict> $conflicts */
         $conflicts = [];
         $shadowed = 0;
@@ -103,33 +101,39 @@ final class RouteConflictAnalyzer
         $pathSubsets = 0;
         $count = \count($routes);
 
+        // The router tries the routes in the order they were declared and
+        // stops at the first match: of two routes sharing a path, the
+        // earlier one always wins it. Each pair is therefore read earlier
+        // route first.
         for ($i = 0; $i < $count; $i++) {
             for ($j = $i + 1; $j < $count; $j++) {
-                $left = $routes[$i];
-                $right = $routes[$j];
+                $earlier = $routes[$i];
+                $later = $routes[$j];
                 $pairsTotal++;
 
-                if (!$this->methodsOverlap($left['methods'], $right['methods'])) {
+                if (!$this->methodsOverlap($earlier['methods'], $later['methods'])) {
                     $pairsFilteredMethods++;
 
                     continue;
                 }
 
-                if (!$this->schemesOverlap($left['schemes'], $right['schemes'])) {
+                if (!$this->schemesOverlap($earlier['schemes'], $later['schemes'])) {
                     $pairsFilteredSchemes++;
 
                     continue;
                 }
 
-                if (!$this->prefixOverlaps($left['staticPrefix'], $right['staticPrefix'])) {
+                // A fast reject: two literal prefixes neither of which
+                // starts the other cannot begin the same path.
+                if (!$this->prefixOverlaps($earlier['staticPrefix'], $later['staticPrefix'])) {
                     $pairsFilteredPrefix++;
 
                     continue;
                 }
 
                 if (!$this->hostsOverlap(
-                    $left,
-                    $right,
+                    $earlier,
+                    $later,
                     $options,
                     $skippedPairs,
                     $hostChecks,
@@ -141,69 +145,53 @@ final class RouteConflictAnalyzer
 
                 try {
                     $pathIntersections++;
-                    $intersection = $this->solver->intersection($left['pathPattern'], $right['pathPattern'], $options);
+                    $intersection = $this->solver->intersection($earlier['pathPattern'], $later['pathPattern'], $options);
+                    if ($intersection->isEmpty) {
+                        continue;
+                    }
+
+                    $pathSubsets++;
+                    $equivalence = $this->solver->equivalent($earlier['pathPattern'], $later['pathPattern'], $options);
                 } catch (ComplexityException) {
                     $skippedPairs++;
 
                     continue;
                 }
 
-                if ($intersection->isEmpty) {
-                    continue;
-                }
+                $notes = $this->buildNotes($earlier, $later);
 
-                $example = $intersection->example;
-                $pathSubsets++;
-                $equivalence = $this->solver->equivalent($left['pathPattern'], $right['pathPattern'], $options);
-                $isEquivalent = $equivalence->isEquivalent;
-                $leftSubsetRight = null === $equivalence->leftOnlyExample;
-                $rightSubsetLeft = null === $equivalence->rightOnlyExample;
-                if ($isEquivalent) {
-                    $equivalent++;
-                }
-
-                $notes = $this->buildNotes($left, $right);
-                if ($isEquivalent) {
-                    $notes[] = 'Equivalent route patterns.';
-                }
-
-                if ($leftSubsetRight && $left['index'] > $right['index']) {
+                if (null === $equivalence->rightOnlyExample) {
+                    // Every path of the later route goes to the earlier one.
                     $shadowed++;
-                    $route = $right;
-                    $other = $left;
                     $conflictType = 'shadowed';
-                    $notes[] = 'Less specific route declared BEFORE more specific route.';
-                } elseif ($rightSubsetLeft && $right['index'] > $left['index']) {
-                    $shadowed++;
-                    $route = $left;
-                    $other = $right;
-                    $conflictType = 'shadowed';
-                    $notes[] = 'Less specific route declared BEFORE more specific route.';
-                } else {
-                    if ($right['index'] > $left['index']) {
-                        continue;
+                    if ($equivalence->isEquivalent) {
+                        $equivalent++;
+                        $notes[] = 'Equivalent route patterns.';
                     }
-
+                    $notes[] = 'Less specific route declared BEFORE more specific route.';
+                } elseif (null === $equivalence->leftOnlyExample) {
+                    // The earlier route is a part of the later one, declared
+                    // first on purpose: both stay reachable.
+                    continue;
+                } else {
                     $overlaps++;
 
                     if (!$includeOverlaps) {
                         continue;
                     }
 
-                    $route = $right;
-                    $other = $left;
                     $conflictType = 'overlap';
-                    $notes[] = 'Less specific route declared BEFORE more specific route.';
+                    $notes[] = 'The earlier route wins every path both routes match.';
                 }
 
                 $conflicts[] = [
-                    'route' => $route,
-                    'conflict' => $other,
+                    'route' => $earlier,
+                    'conflict' => $later,
                     'type' => $conflictType,
-                    'example' => $example,
-                    'equivalent' => $isEquivalent,
-                    'methods' => $this->intersectMethods($route['methods'], $other['methods']),
-                    'schemes' => $this->intersectSchemes($route['schemes'], $other['schemes']),
+                    'example' => $intersection->example,
+                    'equivalent' => $equivalence->isEquivalent,
+                    'methods' => $this->intersectMethods($earlier['methods'], $later['methods']),
+                    'schemes' => $this->intersectSchemes($earlier['schemes'], $later['schemes']),
                     'notes' => $notes,
                 ];
             }
@@ -255,6 +243,8 @@ final class RouteConflictAnalyzer
         try {
             $compiled = $route->compile();
         } catch (\Throwable $exception) {
+            // A boundary: the route and its compiler belong to the
+            // application, and whatever they throw only skips that route.
             $skippedRoutes[] = [
                 'route' => $name,
                 'reason' => 'Route compile failed: '.$exception->getMessage(),
@@ -267,7 +257,7 @@ final class RouteConflictAnalyzer
 
         try {
             $pathNormalization = $this->normalizePattern($pathRegex);
-        } catch (\Throwable $exception) {
+        } catch (ExceptionInterface $exception) {
             $skippedRoutes[] = [
                 'route' => $name,
                 'reason' => 'Route regex normalization failed: '.$exception->getMessage(),
@@ -297,7 +287,7 @@ final class RouteConflictAnalyzer
         } elseif ($hasHostRequirement) {
             try {
                 $hostNormalization = $this->normalizePattern($hostRegex);
-            } catch (\Throwable) {
+            } catch (ExceptionInterface) {
                 $hostNormalization = null;
                 $hostUnsupported = true;
                 $routesWithUnsupportedHosts[] = $name;
@@ -596,56 +586,6 @@ final class RouteConflictAnalyzer
         }
 
         return $staticSegments;
-    }
-
-    /**
-     * Sorts routes by specificity to match Symfony's best-match routing algorithm.
-     *
-     * Routes with more static characters come first, then more static segments.
-     * Routes with variable segments are more specific than routes without.
-     * Original index is used as tiebreaker to preserve declaration order.
-     *
-     * @phpstan-param array<int, RouteDescriptor> $routes
-     *
-     * @phpstan-return array<int, RouteDescriptor>
-     */
-    private function sortBySpecificity(array $routes): array
-    {
-        usort($routes, function (array $a, array $b): int {
-            $staticPrefixA = $a['staticPrefix'];
-            $staticPrefixB = $b['staticPrefix'];
-            $prefixLenA = \strlen($staticPrefixA);
-            $prefixLenB = \strlen($staticPrefixB);
-
-            if ($prefixLenA !== $prefixLenB) {
-                return $prefixLenB <=> $prefixLenA;
-            }
-
-            $segmentsA = \count($a['staticSegments']);
-            $segmentsB = \count($b['staticSegments']);
-
-            if ($segmentsA !== $segmentsB) {
-                return $segmentsB <=> $segmentsA;
-            }
-
-            $variableSegmentsA = $this->countVariableSegments($a['path']);
-            $variableSegmentsB = $this->countVariableSegments($b['path']);
-
-            if ($variableSegmentsA !== $variableSegmentsB) {
-                return $variableSegmentsB <=> $variableSegmentsA;
-            }
-
-            return $a['index'] <=> $b['index'];
-        });
-
-        return $routes;
-    }
-
-    private function countVariableSegments(string $path): int
-    {
-        LibraryPcre::matchAll('/\{[^}]+\}/', $path, $matches);
-
-        return \count($matches[0]);
     }
 
     private function resolveMinimizationAlgorithm(): MinimizationAlgorithm
