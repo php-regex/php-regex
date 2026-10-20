@@ -157,6 +157,7 @@ final class FormatCommand extends AbstractCommand implements JsonCommandInterfac
             FormatRefusal::ExtendedModeSwitchedOff => 'left as written: (?-x) or (?^) turns x off at the top level, where a line break would be a literal.',
             FormatRefusal::LineBreakInName => 'left as written: a line break inside a name, such as (*MARK:…), has no escape, so it could not be told from layout.',
             FormatRefusal::ParenthesisInComment => 'left as written: a # comment holds the ")" that balances the delimiter, and no (?#…) comment can hold it.',
+            FormatRefusal::DelimiterMisread => 'left as written: a \\c\\ hides a character of the delimiter from PHP, which laid out it would read, ending the pattern elsewhere.',
         };
     }
 }

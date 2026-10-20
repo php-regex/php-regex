@@ -294,6 +294,12 @@ final class PatternPrinter extends AbstractNodeVisitor
     private ?string $rebalancingMark = null;
 
     /**
+     * Whether the last body rendered could not be spelled so that PHP ends
+     * the pattern where PCRE does (see endingWhereWritten).
+     */
+    private bool $delimiterMisread = false;
+
+    /**
      * The groups holding only comments that a compacted pattern drops, by
      * object id.
      *
@@ -942,6 +948,15 @@ final class PatternPrinter extends AbstractNodeVisitor
     public function visitComment(CommentNode $node): string
     {
         if (null !== $this->layout && $this->layout->skips($node)) {
+            return '';
+        }
+
+        // Under a "#" delimiter PHP reads a comment only right after "\c\",
+        // which it reads as "\c" and the escape "\#", PCRE as a control
+        // character before the "#" that opens the comment. Laid out or
+        // collapsed, the comment would end the pattern at its "#": pretty
+        // printing and collapsing drop it, and the formatter refuses.
+        if ('#' === $this->delimiter && (self::MODE_PRETTY === $this->mode || $this->collapseExtendedComments)) {
             return '';
         }
 
@@ -2147,7 +2162,7 @@ final class PatternPrinter extends AbstractNodeVisitor
                 }
             }
 
-            return $this->renderRoot($node, str_replace('x', '', $node->flags), false);
+            return $this->unlessMisread($this->renderRoot($node, str_replace('x', '', $node->flags), false), $written);
         }
 
         [, $this->keptQuotedBrackets] = DelimiterBrackets::asWritten($node, $this->source, $this->quotedSpans(), false);
@@ -2163,7 +2178,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $inline = $this->renderRoot($node, $node->flags, false);
         $hasLineComment = null !== $this->layout && $this->layout->sawLineComment();
         if (!$hasLineComment && $shallow && false === strpbrk($inline, "\n\r") && $this->columns($inline) <= $this->width) {
-            return $inline;
+            return $this->unlessMisread($inline, $written);
         }
 
         // Nothing past the start options: no line would hold anything.
@@ -2197,11 +2212,11 @@ final class PatternPrinter extends AbstractNodeVisitor
         if ($this->addsExtended && $shallow) {
             $inline = $this->renderRoot($node, $flags, false, $trail);
             if (false === strpbrk($inline, "\n\r") && $this->columns($inline) <= $this->width) {
-                return $inline;
+                return $this->unlessMisread($inline, $written);
             }
         }
 
-        return PatternLayout::finishLines($this->renderRoot($node, $flags, true, $trail), $trail, $this->countsCodePoints);
+        return $this->unlessMisread(PatternLayout::finishLines($this->renderRoot($node, $flags, true, $trail), $trail, $this->countsCodePoints), $written);
     }
 
     /**
@@ -2228,6 +2243,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             $this->extendedModeMovesSpacedBraces($node->pattern, $node->flags, $flags) => FormatRefusal::SpacedQuantifier,
             $hasLineComment && \in_array($newline, ['CR', 'CRLF', 'NUL'], true) => FormatRefusal::NewlineConvention,
             self::switchesExtendedOffAtTop($node->pattern, $flags) => FormatRefusal::ExtendedModeSwitchedOff,
+            '#' === $node->delimiter && self::holdsComment($node->pattern) => FormatRefusal::DelimiterMisread,
             default => null,
         };
     }
@@ -2374,6 +2390,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function renderRoot(RegexNode $node, string $flags, bool $layout, string $trail = PatternLayout::TRAIL): string
     {
+        $this->delimiterMisread = false;
         $write = function () use ($node, $flags, $layout, $trail): string {
             $this->capturesOpened = 0;
             $this->flags = $flags;
@@ -2391,6 +2408,42 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return $node->delimiter.$this->endingWhereWritten($body, $write).$tail.$this->closingDelimiter.$flags;
+    }
+
+    /**
+     * The pattern formatted or compacted, or, where PHP would not end it
+     * where PCRE does, the pattern as written, refused: no spelling of the
+     * brackets it holds pairs those PHP counts (see endingWhereWritten).
+     * Pretty printing never refuses.
+     */
+    private function unlessMisread(string $rendered, ?string $written): string
+    {
+        if (!$this->delimiterMisread || self::MODE_PRETTY === $this->mode || null === $written) {
+            return $rendered;
+        }
+
+        $this->refusal = FormatRefusal::DelimiterMisread;
+
+        return $written;
+    }
+
+    /**
+     * Whether a pattern holds a comment: under a "#" delimiter, PHP reads one
+     * only where "\c\" before it hides its "#" (see visitComment).
+     */
+    private static function holdsComment(NodeInterface $node): bool
+    {
+        if ($node instanceof CommentNode) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsComment($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -2443,7 +2496,13 @@ final class PatternPrinter extends AbstractNodeVisitor
             $this->rebalancingMark = null;
         }
 
-        return null === $balanced ? $spelled : DelimiterBrackets::spelledToEnd($balanced, $this->delimiter, $this->closingDelimiter);
+        if (null === $balanced) {
+            $this->delimiterMisread = true;
+
+            return $spelled;
+        }
+
+        return DelimiterBrackets::spelledToEnd($balanced, $this->delimiter, $this->closingDelimiter);
     }
 
     /**

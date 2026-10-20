@@ -175,6 +175,29 @@ final class PatternPrinterRoundTripTest extends TestCase
         yield 'an escaped bracket in a comment, which PHP does not count' => ['pattern' => "{(*MARK:{)a # \\} }\n}x", 'subjects' => ['a', 'b']];
     }
 
+    /**
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideControlBackslashBeforeDelimiter')]
+    public function test_a_delimiter_a_control_backslash_hides_from_php_prints_back_the_same_pattern(string $pattern, array $subjects): void
+    {
+        $this->assertEveryPrinterKeepsThePattern($pattern, $subjects);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideControlBackslashBeforeDelimiter(): iterable
+    {
+        // PHP reads "\c\#" as "\c" then "\#", PCRE as a control character
+        // then the "#" that opens a comment: no other spelling of the comment
+        // lets PHP read past its "#".
+        yield 'a comment after a control backslash' => ['pattern' => '#\c\#c#x', 'subjects' => ["\x1C", 'c', "\x1Cc"]];
+        yield 'a comment after a control backslash, in a long pattern' => ['pattern' => '#aaaaaaaaaaaaaaaaaaaaaaaaaaa\c\#c#x', 'subjects' => ["aaaaaaaaaaaaaaaaaaaaaaaaaaa\x1C", 'a']];
+        yield 'a parenthesis after a control backslash' => ['pattern' => '(\N\10(?#()(?#c){[a]\101[]]\]\x{100}\c\(?<!b))u', 'subjects' => ["x\x08{aA]]Ā\x1C", 'a']];
+    }
+
     #[Test]
     #[DataProvider('provideGroupsByName')]
     public function test_a_group_written_by_name_keeps_it_under_angle_brackets(string $pattern, string $name, string $formatted): void

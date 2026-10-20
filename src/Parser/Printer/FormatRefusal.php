@@ -50,4 +50,13 @@ enum FormatRefusal: string
      * and no "(?#...)" can hold a ")".
      */
     case ParenthesisInComment = 'parenthesis_in_comment';
+
+    /**
+     * The pattern hides a character of its delimiter from PHP behind "\c\",
+     * which PHP reads as "\c" and an escape, PCRE as one control character:
+     * the "#" opening a comment in "#a\c\#c#x", or a "(" PHP does not count
+     * in "(\c\(?#()...)". Laid out, PHP would read that character where
+     * PCRE does, and end the pattern elsewhere.
+     */
+    case DelimiterMisread = 'delimiter_misread';
 }

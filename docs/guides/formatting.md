@@ -127,6 +127,7 @@ In a few cases, laying the pattern out under `x`, or dropping `x`, would change 
 | `extended_mode_switched_off` | a top-level `(?-x)` or `(?^)` | after it, a line break is a literal |
 | `line_break_in_name` | a raw line break inside a verb name such as `(*MARK:…)` or a callout string | no escape can spell it there, so it could not be told from layout |
 | `parenthesis_in_comment` | `compact`, under a `(` delimiter: a `#` comment holds the `)` that balances a `(` written where no backslash can go, in a verb name such as `(*MARK:()` | dropped, the comment would leave PHP a `(` it pairs elsewhere, and no `(?#…)` can hold a `)` |
+| `delimiter_misread` | a `\c\` hides a character of the delimiter from PHP, which reads it as `\c` and an escape where PCRE reads one control character: the `#` of a comment in `#a\c\#c#x`, or a `(` PHP does not count in `(\c\(?#()…)` | laid out, PHP would read that character where PCRE does and end the pattern elsewhere |
 
 `compact` refuses a pattern under `x` that spells a quantifier with spaces where `x` is on, for the same reason as `spaced_quantifier`, and a pattern holding a line break in a name.
 

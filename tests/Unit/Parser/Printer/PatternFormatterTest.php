@@ -510,7 +510,7 @@ final class PatternFormatterTest extends TestCase
     public function test_format_refusal_values_are_stable(): void
     {
         $this->assertSame(
-            ['newline_convention', 'spaced_quantifier', 'extended_mode_switched_off', 'line_break_in_name', 'parenthesis_in_comment'],
+            ['newline_convention', 'spaced_quantifier', 'extended_mode_switched_off', 'line_break_in_name', 'parenthesis_in_comment', 'delimiter_misread'],
             array_map(static fn (FormatRefusal $refusal): string => $refusal->value, FormatRefusal::cases()),
         );
     }
@@ -2026,6 +2026,12 @@ final class PatternFormatterTest extends TestCase
         // (*LIMIT_MATCH=n) before (*CR) does not hide it.
         yield 'comments under (*CR) opening the first top-level branch' => ['pattern' => "/(*CR)ab|cd # c\n/x", 'width' => 1, 'refusal' => 'newline_convention'];
         yield 'comments under (*CR) after (*LIMIT_MATCH)' => ['pattern' => "/(*LIMIT_MATCH=5)(*CR)a # c\nb/x", 'width' => 1, 'refusal' => 'newline_convention'];
+        // PHP reads "\c\#" as "\c" and "\#", PCRE as a control character
+        // and the "#" that opens a comment: laid out, the "#" would end the
+        // pattern. "\c\(" hides a "(" from PHP the same way, which leaves
+        // the "(" of a comment alone once "\c\" is spelled otherwise.
+        yield 'a comment after a control backslash, under "#"' => ['pattern' => '#aaaaaaaaaaaaaaaaaaaaaaaaaaa\c\#c#x', 'width' => 20, 'refusal' => 'delimiter_misread'];
+        yield 'a parenthesis after a control backslash, under "("' => ['pattern' => '(\N\10(?#()(?#c){[a]\101[]]\]\x{100}\c\(?<!b))u', 'width' => 20, 'refusal' => 'delimiter_misread'];
     }
 
     /**
