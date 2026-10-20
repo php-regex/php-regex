@@ -160,21 +160,22 @@ final class CompiledLength
 
     /**
      * The captures open around the item measured, since the assertion it
-     * stands in: "(*ACCEPT)" closes each of them.
+     * stands in: "(*ACCEPT)" closes each of them. Each group measured puts
+     * back the count it found, none once the pattern is measured.
      */
     private int $openCaptures = 0;
 
     /**
      * Whether the source may set rules that change the cases of "i", "k"
-     * or "s", once read.
+     * or "s": the Turkish ones, or those that keep ASCII apart.
      */
-    private ?bool $caseRulesVary = null;
+    private readonly bool $caseRulesVary;
 
     /**
      * Whether the source may hold an inline "a", which keeps "\d", "\s" and
-     * "\w" to ASCII under UCP, once read.
+     * "\w" to ASCII under UCP.
      */
-    private ?bool $asciiOptions = null;
+    private readonly bool $asciiOptions;
 
     /**
      * @param \Closure(NodeInterface): int $floor  the fewest units a node may
@@ -195,7 +196,11 @@ final class CompiledLength
         private readonly bool $utf,
         private readonly bool $ucp,
         private readonly string $flags,
-    ) {}
+    ) {
+        $this->caseRulesVary = str_contains($flags, 'r') || str_contains($source, 'TURKISH_CASING') || str_contains($source, 'CASELESS_RESTRICT')
+            || 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*r/', $source);
+        $this->asciiOptions = 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*a/', $source);
+    }
 
     /**
      * Whether PCRE2 10.48 and later find the pattern too large inside a
@@ -205,7 +210,6 @@ final class CompiledLength
     public function passedInsideABranch(NodeInterface $pattern): bool
     {
         $this->branchesMayEndPastTheLimit = false;
-        $this->openCaptures = 0;
         // The end marker comes first, then the brackets around the pattern.
         [$found] = $this->measureBranches(self::branchesOf($pattern), 1, [self::BRACKETS, self::BRACKETS], str_contains($this->flags, 'i'));
 
@@ -219,8 +223,6 @@ final class CompiledLength
      */
     public function of(NodeInterface $pattern): ?int
     {
-        $this->branchesMayEndPastTheLimit = false;
-        $this->openCaptures = 0;
         [$found, $length, $ceiling] = $this->measureBranches(self::branchesOf($pattern), 1, [self::BRACKETS, self::BRACKETS], str_contains($this->flags, 'i'));
 
         return null === $found && $length === $ceiling ? $length + 1 : null;
@@ -240,8 +242,9 @@ final class CompiledLength
      *                                              where the group ends
      *                                              (true), inside a branch
      *                                              (false), or not at all
-     *                                              (null); and the length and
-     *                                              the ceiling of the group
+     *                                              (null); and, where it is
+     *                                              not, the length and the
+     *                                              ceiling of the group
      *
      * @phpstan-impure it records a group of branches that may end past the limit
      */
@@ -254,20 +257,20 @@ final class CompiledLength
             [$found, $length, $branchCeiling, $caseless] = $this->measureItems($branch, $length, $caseless);
             $ceiling = self::sum($ceiling, $branchCeiling);
             if (null !== $found) {
-                return [$found, $done + $length, null];
+                return [$found, $length, null];
             }
 
             if ($index < $last) {
                 $length += self::ALTERNATION;
                 $ceiling = self::sum($ceiling, self::ALTERNATION);
                 if ($before + $done + $length > self::LIMIT) {
-                    return [false, $done + $length, null];
+                    return [false, $length, null];
                 }
 
                 $done += $length;
                 $length = 0;
             } elseif ($before + $done + $length > self::LIMIT) {
-                return [true, $done + $length, null];
+                return [true, $length, null];
             }
         }
 
@@ -297,7 +300,7 @@ final class CompiledLength
             // Most items are one ASCII letter, or one byte without UTF:
             // measured at once.
             $units = $item instanceof LiteralNode && 1 === \strlen($item->value)
-                ? (!$caseless || !($this->utf || $this->ucp) || (!isset(self::CASELESS_SETS[\ord($item->value)]) && !$this->caseRulesVary()) ? 2 : $this->characterLength(\ord($item->value), true))
+                ? (!$caseless || !($this->utf || $this->ucp) || (!isset(self::CASELESS_SETS[\ord($item->value)]) && !$this->caseRulesVary) ? 2 : $this->characterLength(\ord($item->value), true))
                 : null;
             if (null !== $units) {
                 $length += $units;
@@ -317,7 +320,7 @@ final class CompiledLength
 
             [$found, $itemLength, $itemCeiling] = $this->measureItem($item, $caseless);
             if (null !== $found) {
-                return [$found, $length + $itemLength, null, $caseless];
+                return [$found, $length, null, $caseless];
             }
 
             $length += $itemLength;
@@ -354,10 +357,13 @@ final class CompiledLength
                 return [$found, $conditionLength, null];
             }
 
-            $frame = [$frame[0] + $conditionLength, self::sum($frame[1], $conditionCeiling)];
-            if ($frame[0] > self::LIMIT) {
-                return [false, $frame[0], null];
+            [$frameLength, $frameCeiling] = $frame;
+            $frameLength += $conditionLength;
+            if ($frameLength > self::LIMIT) {
+                return [false, $frameLength, null];
             }
+
+            $frame = [$frameLength, self::sum($frameCeiling, $conditionCeiling)];
         }
 
         $open = $this->openCaptures;
@@ -480,10 +486,6 @@ final class CompiledLength
     private static function repeatGroup(int $copy, int $min, ?int $max, bool $possessive, bool $conditional): int
     {
         $wrap = $possessive ? self::BRACKETS : 0;
-        if (1 === $min && 1 === $max) {
-            return $copy + $wrap;
-        }
-
         if (0 === $min) {
             return self::cap(match (true) {
                 // Kept, behind a marker that skips it.
@@ -527,7 +529,7 @@ final class CompiledLength
             $node instanceof CharClassNode => $this->classLength($node, $caseless),
             $node instanceof BackrefNode => self::isGroupNumber($node) ? ($caseless ? 4 : 3) : null,
             $node instanceof SubroutineNode => 3,
-            $node instanceof CalloutNode => \is_string($node->identifier) && $node->isStringIdentifier ? null : 6,
+            $node instanceof CalloutNode => $node->isStringIdentifier ? null : 6,
             $node instanceof PcreVerbNode => $this->verbLength($node->verb),
             $node instanceof LimitMatchNode => 0,
             default => null,
@@ -539,21 +541,25 @@ final class CompiledLength
      */
     private function leafCeiling(NodeInterface $node): ?int
     {
-        [$min, $max] = $node instanceof QuantifierNode ? self::boundsOf($node) : [1, 1];
-        $item = $node instanceof QuantifierNode ? $node->node : $node;
-
         // A character whose cases are not known is a caseless character, or
         // a property of three units: the longer of the two. A count of zero
-        // or of one leaves the item as it is.
-        $codePoint = $this->codePointOf($item);
-        if (null !== $codePoint && $codePoint <= 0x10FFFF && ($this->utf || $codePoint <= 0xFF)) {
-            $units = $this->utf ? \strlen((string) mb_chr($codePoint, 'UTF-8')) : 1;
+        // or of one leaves the item as it is. Only a character of three
+        // bytes or more is longer than the property, so a byte without UTF is
+        // measured as its UTF-8 form, of two bytes at most.
+        $codePoint = $this->codePointOf($node instanceof QuantifierNode ? $node->node : $node);
+        if (null !== $codePoint && ($this->utf || $codePoint < 0x100)) {
+            $units = \strlen((string) mb_chr($codePoint, 'UTF-8'));
+            $single = max(1 + $units, 3);
+            if (!$node instanceof QuantifierNode) {
+                return $single;
+            }
 
-            return 0 === $max || (1 === $min && 1 === $max) ? max(1 + $units, 3) : max(self::repeatSingle($units, 1 + $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
+            [$min, $max] = self::boundsOf($node);
+
+            return 0 === $max || (1 === $min && 1 === $max) ? $single : max(self::repeatSingle($units, 1 + $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
         }
 
         return match (true) {
-            $node instanceof QuantifierNode => null,
             // A reference to a name that stands for several groups, caseless.
             $node instanceof BackrefNode => 6,
             $node instanceof GroupNode && $this->isBlank($node->child) => self::BRACKETS,
@@ -599,8 +605,10 @@ final class CompiledLength
         }
 
         // A class or a reference takes its count after it: "*", "+" and "?"
-        // in one unit, any other count in five. Nothing else repeats.
-        $length = $item instanceof CharClassNode || $item instanceof BackrefNode ? $this->leafLength($item, $caseless) : null;
+        // in one unit, any other count in five. Nothing else the parser
+        // lets a count follow is left here, but a lookahead that holds
+        // nothing, whose length is not known.
+        $length = $this->leafLength($item, $caseless);
 
         return null === $length ? null : $length + ((null === $max && $min < 2) || (0 === $min && 1 === $max) ? 1 : 5);
     }
@@ -621,13 +629,13 @@ final class CompiledLength
     /**
      * A character or a type repeated: one opcode for "*", "+" and "?", one
      * and a count for an upper bound, an exact count and a second opcode for
-     * a count of at least two; the item after each opcode. $mc is the units
-     * of a character, 0 for a type of $type units.
+     * a count of at least two; the item after each opcode. $item is the
+     * units of the item alone, its opcode included; $mc those of a
+     * character after its opcode, 0 for a type, whose opcode is the item.
      */
-    private static function repeatSingle(int $mc, int $type, int $min, ?int $max): int
+    private static function repeatSingle(int $mc, int $item, int $min, ?int $max): int
     {
-        $unit = 0 === $mc ? $type : $mc;
-        $item = 0 === $mc ? $type : 1 + $mc;
+        $unit = 0 === $mc ? $item : $mc;
         $open = null === $max;
 
         return match (true) {
@@ -644,10 +652,6 @@ final class CompiledLength
      */
     private static function repeatCall(int $min, ?int $max, bool $possessive): int
     {
-        if (1 === $min && 1 === $max && !$possessive) {
-            return 3;
-        }
-
         if ($min > 0 && (1 !== $min || null !== $max)) {
             if ($min === $max) {
                 return self::cap(3 * $min + ($possessive ? self::BRACKETS : 0));
@@ -704,7 +708,7 @@ final class CompiledLength
 
         if ($caseless && ($this->utf || $this->ucp)) {
             $set = isset(self::CASELESS_SETS[$codePoint]);
-            if ($this->caseRulesVary() && ($set || \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true))) {
+            if ($this->caseRulesVary && ($set || \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true))) {
                 return null;
             }
 
@@ -754,8 +758,6 @@ final class CompiledLength
         }
 
         // An inline "a" may hold these types to ASCII.
-        $this->asciiOptions ??= 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*a/', $this->source);
-
         return $this->asciiOptions ? null : 3;
     }
 
@@ -784,7 +786,7 @@ final class CompiledLength
         // POSIX names add.
         $covered = [];
         foreach ([...$ranges, ...$types] as $index => [$low, $high]) {
-            if ($high > 0xFF || ($caseless && ($this->utf || $this->ucp) && ($this->caseRulesVary() || $high > 0x7F))) {
+            if ($high > 0xFF || ($caseless && ($this->utf || $this->ucp) && ($this->caseRulesVary || $high > 0x7F))) {
                 return null;
             }
 
@@ -931,16 +933,6 @@ final class CompiledLength
     }
 
     /**
-     * Whether the source may set rules that change the cases of "i", "k" or
-     * "s": the Turkish ones, or those that keep ASCII apart.
-     */
-    private function caseRulesVary(): bool
-    {
-        return $this->caseRulesVary ??= str_contains($this->flags, 'r') || str_contains($this->source, 'TURKISH_CASING') || str_contains($this->source, 'CASELESS_RESTRICT')
-            || 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*r/', $this->source);
-    }
-
-    /**
      * Whether a group of flags sets options for the rest of its group, as
      * "(?i)" does, rather than holding a body, as "(?i:)" does.
      */
@@ -963,14 +955,10 @@ final class CompiledLength
 
     private static function caselessAfter(string $flags, bool $caseless): bool
     {
-        if (str_starts_with($flags, '^')) {
-            $caseless = false;
-            $flags = substr($flags, 1);
-        }
+        // "^" turns every option off first, "-" those after it.
+        [$on, $off] = explode('-', $flags) + [1 => ''];
 
-        [$on, $off] = explode('-', $flags, 2) + [1 => ''];
-
-        return str_contains($off, 'i') ? false : ($caseless || str_contains($on, 'i'));
+        return !str_contains($off, 'i') && (str_contains($on, 'i') || ($caseless && !str_starts_with($flags, '^')));
     }
 
     /**
@@ -997,7 +985,7 @@ final class CompiledLength
             return 'i' === $letter && $second > 0x7F ? null : false;
         }
 
-        if ('i' === $letter || (\in_array($letter, ['k', 's'], true) && $this->caseRulesVary())) {
+        if ('i' === $letter || (\in_array($letter, ['k', 's'], true) && $this->caseRulesVary)) {
             return null;
         }
 

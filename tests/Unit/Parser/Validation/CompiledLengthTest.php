@@ -48,6 +48,12 @@ final class CompiledLengthTest extends TestCase
     {
         $this->assertNull(self::lengthOf('/(?:a){8192}/'));
         $this->assertSame(65535, self::lengthOf('/(?:a){8191}/'));
+        // The end marker counts against the limit: 65536 units compile, one
+        // more does not (pcre2test 10.49).
+        $this->assertSame(65536, self::lengthOf('/.'.str_repeat('a', 32764).'/'));
+        $this->assertNull(self::lengthOf('/'.str_repeat('a', 32765).'/'));
+        // Past the limit only once its last branch is added.
+        $this->assertNull(self::lengthOf('/a|(?:b){8191}/'));
     }
 
     /**
@@ -206,6 +212,82 @@ final class CompiledLengthTest extends TestCase
         yield 'group of options resetting them, holding a space' => ['pattern' => '/(?^x: )k/iu', 'length' => 16];
         // "(?^)" turns the caseless option off for the rest of the group.
         yield 'caseless k before the options are reset' => ['pattern' => '/k(?^)k/iu', 'length' => 12];
+        yield 'k after the caseless option is turned off' => ['pattern' => '/(?-i)k/iu', 'length' => 9];
+        yield 'k after the caseless option is turned on' => ['pattern' => '/(?i)k/u', 'length' => 10];
+        yield 'k after the caseless option is turned on and the ASCII rules off' => ['pattern' => '/(?i-r)k/u', 'length' => 10];
+        yield 'k after the caseless option is turned on and x off' => ['pattern' => '/(?i-x)k/u', 'length' => 10];
+        yield 'k after the options are reset and the caseless one turned on' => ['pattern' => '/(?^i)k/u', 'length' => 10];
+        yield 'caseless k after another option is set' => ['pattern' => '/(?x)k/iu', 'length' => 10];
+        // A group counted zero times is kept, behind a marker that skips it.
+        yield 'group counted zero times' => ['pattern' => '/(?:a){0}/', 'length' => 16];
+        yield 'other types under UCP' => ['pattern' => '/\\h\\v\\R\\X\\N/u', 'length' => 12];
+        // A class takes "?", "*" and "+" in one unit, any other count in five.
+        yield 'class counted at most once' => ['pattern' => '/[ab]{0,1}/', 'length' => 41];
+        yield 'optional class' => ['pattern' => '/[ab]?/', 'length' => 41];
+        yield 'class counted once or more' => ['pattern' => '/[ab]+/', 'length' => 41];
+        yield 'class counted once or more, written with braces' => ['pattern' => '/[ab]{1,}/', 'length' => 41];
+        yield 'class counted up to three times' => ['pattern' => '/[ab]{0,3}/', 'length' => 45];
+        yield 'class counted two times or more' => ['pattern' => '/[ab]{2,}/', 'length' => 45];
+        yield 'class counted one to two times' => ['pattern' => '/[ab]{1,2}/', 'length' => 45];
+        yield 'optional reference' => ['pattern' => '/(a)\\1?/', 'length' => 21];
+        yield 'reference counted up to three times' => ['pattern' => '/(a)\\1{0,3}/', 'length' => 25];
+        yield 'type under UCP counted one to three times' => ['pattern' => '/\\d{1,3}/u', 'length' => 16];
+        yield 'type counted one to three times' => ['pattern' => '/\\d{1,3}/', 'length' => 12];
+        yield 'optional call' => ['pattern' => '/(a)(?1)?/', 'length' => 27];
+        yield 'call counted once or more' => ['pattern' => '/(a)(?1)+/', 'length' => 26];
+        yield 'call counted zero times' => ['pattern' => '/(a)(?1){0}/', 'length' => 27];
+        yield 'call counted up to two times' => ['pattern' => '/(a)(?1){0,2}/', 'length' => 43];
+        yield 'call counted three times or more' => ['pattern' => '/(a)(?1){3,}/', 'length' => 36];
+        yield 'call counted two times or more' => ['pattern' => '/(a)(?1){2,}/', 'length' => 33];
+        yield 'possessive count of a call' => ['pattern' => '/(a)(?1){2}+/', 'length' => 29];
+        yield 'possessive star on a call' => ['pattern' => '/(a)(?1)*+/', 'length' => 27];
+        yield 'call counted once, possessive' => ['pattern' => '/(a)(?1){1}+/', 'length' => 26];
+        yield 'possessive plus on a call' => ['pattern' => '/(a)(?1)++/', 'length' => 26];
+        yield 'call counted two times or more, possessive' => ['pattern' => '/(a)(?1){2,}+/', 'length' => 33];
+        yield 'possessive range count of a call' => ['pattern' => '/(a)(?1){2,3}+/', 'length' => 39];
+        yield 'call counted at most once' => ['pattern' => '/(a)(?1){0,1}/', 'length' => 27];
+        yield 'call counted one to three times' => ['pattern' => '/(a)(?1){1,3}/', 'length' => 46];
+        yield 'call counted once or more, written with braces' => ['pattern' => '/(a)(?1){1,}/', 'length' => 26];
+        yield 'counted class of a letter and its other case' => ['pattern' => '/[aA]{2}/', 'length' => 11];
+        yield 'counted class of a letter and its other case in UTF mode' => ['pattern' => '/[aA]{2}/u', 'length' => 11];
+        yield 'class of a letter and its other case counted two to three times' => ['pattern' => '/[aA]{2,3}/', 'length' => 13];
+        yield 'Kelvin sign in UTF mode' => ['pattern' => '/\\x{212A}/u', 'length' => 11];
+        yield 'counted k in UTF mode' => ['pattern' => '/k{2}/u', 'length' => 11];
+        yield 'counted Kelvin sign in UTF mode' => ['pattern' => '/\\x{212A}{2}/u', 'length' => 13];
+        // Rules kept to ASCII leave the cases of a letter but "i", "k" and
+        // "s" as they are.
+        yield 'caseless H under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)H/iu', 'length' => 9];
+        yield 'caseless J under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)J/iu', 'length' => 9];
+        yield 'caseless h under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)h/iu', 'length' => 9];
+        yield 'caseless j under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)j/iu', 'length' => 9];
+        yield 'caseless i with ogonek under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{12F}/iu', 'length' => 10];
+        yield 'caseless ligature IJ under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{132}/iu', 'length' => 10];
+        yield 'caseless a under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)a/iu', 'length' => 9];
+        yield 'counted caseless a under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)a{2}/iu', 'length' => 11];
+        yield 'counted caseless h under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)h{2}/iu', 'length' => 11];
+        yield 'class of a letter and its other case under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)[aA]/u', 'length' => 9];
+        yield 'last byte' => ['pattern' => '/\\xff/', 'length' => 9];
+        yield 'counted last byte' => ['pattern' => '/\\xff{2}/', 'length' => 11];
+        yield 'quoted letter and two-byte letter in UTF mode' => ['pattern' => '/\\Qaé\\E/u', 'length' => 12];
+        yield 'quoted three-byte character in UTF mode' => ['pattern' => '/\\Q€\\E/u', 'length' => 11];
+        yield 'quoted letter and three-byte character in UTF mode' => ['pattern' => '/\\Qa€\\E/u', 'length' => 13];
+        yield 'quoted two-byte letter in UTF mode' => ['pattern' => '/\\Qé\\E/u', 'length' => 10];
+        // A negated type or POSIX name holds every byte its name does not.
+        yield 'class holding the POSIX non-letters' => ['pattern' => '/[[:^alpha:]]/', 'length' => 40];
+        yield 'class holding the POSIX non-controls' => ['pattern' => '/[[:^cntrl:]]/', 'length' => 40];
+        yield 'class of every byte but 0' => ['pattern' => '/[\\D1-9]/', 'length' => 40];
+        yield 'class of every byte but 9' => ['pattern' => '/[\\D0-8]/', 'length' => 40];
+        yield 'class of the non-word characters and the digits' => ['pattern' => '/[\\W0-9]/', 'length' => 40];
+        yield 'possessive star on a group' => ['pattern' => '/(?:a)*+/', 'length' => 16];
+        yield 'group counted up to two times, possessive' => ['pattern' => '/(?:a){0,2}+/', 'length' => 37];
+        yield 'conditional on a recursion' => ['pattern' => '/(?(R)b|c)/', 'length' => 23];
+        yield 'conditional on a recursion into a group' => ['pattern' => '/(?(R2)b|c)()()/', 'length' => 39];
+        yield 'counted conditional on a recursion' => ['pattern' => '/(?(R)b|c){2}/', 'length' => 39];
+        yield 'counted conditional on an assertion' => ['pattern' => '/(?(?=x)b|c){2}/', 'length' => 49];
+        yield 'conditional counted up to two times' => ['pattern' => '/(a)(?(1)b|c){0,2}/', 'length' => 57];
+        yield 'starred conditional' => ['pattern' => '/(a)(?(1)b|c)*/', 'length' => 34];
+        yield 'possessive star on a conditional' => ['pattern' => '/(a)(?(1)b|c)*+/', 'length' => 40];
+        yield 'conditional counted two times or more, possessive' => ['pattern' => '/(a)(?(1)b|c){2,}+/', 'length' => 61];
     }
 
     /**
@@ -255,6 +337,107 @@ final class CompiledLengthTest extends TestCase
         // A class of thousands of types is not measured member by member.
         yield 'class of three thousand types' => ['pattern' => '/['.str_repeat('\\D', 3000).']/'];
         yield 'counted conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a){2}/'];
+        // An inline "a" may hold the types to ASCII under UCP.
+        yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u'];
+        yield 'counted type under UCP and an inline a' => ['pattern' => '/(?a)\\d{2}/u'];
+        yield 'counted negated property of any character' => ['pattern' => '/\\P{Any}{2}/'];
+        yield 'accept counted once' => ['pattern' => '/(*ACCEPT){1}/'];
+        yield 'accept counted zero times' => ['pattern' => '/(*ACCEPT){0}/'];
+        yield 'caseless I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)I/iu'];
+        yield 'caseless i under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)i/iu'];
+        yield 'caseless dotted capital I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{130}/iu'];
+        yield 'caseless dotless i under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{131}/iu'];
+        yield 'counted caseless I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)I{2}/iu'];
+        yield 'caseless k under the r modifier' => ['pattern' => '/k/iur'];
+        yield 'caseless k under an inline r' => ['pattern' => '/(?r)k/iu'];
+        // A conditional with no second branch may be written with its "|".
+        yield 'conditional on an assertion with one branch' => ['pattern' => '/(?(?=x)b)/'];
+        yield 'conditional on a group number with one branch' => ['pattern' => '/(a)(?(1)b)/'];
+        yield 'conditional on a group name' => ['pattern' => '/(?<n>a)(?(<n>)b|c)/'];
+        yield 'atomic script run' => ['pattern' => '/(*asr:a)/'];
+        yield 'scan substring' => ['pattern' => '/(a)(*scs:(1)b)/'];
+        yield 'class of a letter and a character past 255 in UTF mode' => ['pattern' => '/[a\\x{100}]/u'];
+        yield 'class of a range and a character past 255 in UTF mode' => ['pattern' => '/[a-c\\x{100}]/u'];
+        yield 'class of every character under UTF without UCP' => ['pattern' => '/(*UTF)[\\d\\D]/'];
+    }
+
+    /**
+     * An item whose length is not known for sure counts at its floor, and
+     * the pattern has a length only where that floor reaches the most the
+     * item may compile to: its ceiling, none for an item of no ceiling.
+     * Each ceiling is no less than the item compiles to in pcre2test 10.49,
+     * and the most it may compile to where the rules that change the cases
+     * vary: a caseless character, or a property of three units.
+     */
+    #[Test]
+    #[DataProvider('provideCeilings')]
+    public function test_an_item_of_unknown_length_counts_up_to_its_ceiling(string $pattern, ?int $ceiling): void
+    {
+        $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->parse($pattern);
+        $source = (string) $regex->source;
+        $utf = str_contains($regex->flags, 'u') || StartOptions::turnUtfOn($source);
+        $ucp = str_contains($regex->flags, 'u') || \in_array('UCP', StartOptions::items($source), true);
+
+        $known = [];
+        foreach (range(0, 40) as $floor) {
+            if (null !== (new CompiledLength(static fn (): int => $floor, $source, $utf, $ucp, $regex->flags))->of($regex->pattern)) {
+                $known[] = $floor;
+            }
+        }
+
+        $this->assertSame(null === $ceiling ? [] : [$ceiling], $known, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ceiling: int|null}>
+     */
+    public static function provideCeilings(): iterable
+    {
+        yield 'caseless k under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k/iu', 'ceiling' => 3];
+        yield 'caseless Kelvin sign under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}/iu', 'ceiling' => 4];
+        yield 'counted caseless Kelvin sign under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{2}/iu', 'ceiling' => 6];
+        yield 'caseless Kelvin sign counted two to three times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{2,3}/iu', 'ceiling' => 10];
+        yield 'caseless Kelvin sign counted zero times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{0}/iu', 'ceiling' => 4];
+        yield 'caseless Kelvin sign counted once under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{1}/iu', 'ceiling' => 4];
+        yield 'caseless Kelvin sign counted one to two times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{1,2}/iu', 'ceiling' => 10];
+        yield 'optional caseless Kelvin sign under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}?/iu', 'ceiling' => 4];
+        yield 'counted caseless k under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{2}/iu', 'ceiling' => 6];
+        yield 'caseless k counted once under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{1}/iu', 'ceiling' => 3];
+        yield 'caseless k counted zero times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{0}/iu', 'ceiling' => 3];
+        yield 'caseless k counted one to two times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{1,2}/iu', 'ceiling' => 9];
+        yield 'caseless k counted once or more under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k+/iu', 'ceiling' => 4];
+        yield 'caseless k under UCP without UTF, rules kept to ASCII' => ['pattern' => '/(*UCP)(*CASELESS_RESTRICT)k/i', 'ceiling' => 3];
+        yield 'counted caseless k under UCP without UTF, rules kept to ASCII' => ['pattern' => '/(*UCP)(*CASELESS_RESTRICT)k{2}/i', 'ceiling' => 6];
+        yield 'caseless i under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)i/iu', 'ceiling' => 3];
+        // A name may stand for several groups, and the reference be caseless.
+        yield 'reference by name' => ['pattern' => '/(?<n>a)\\k<n>/', 'ceiling' => 6];
+        yield 'caseless reference by name' => ['pattern' => '/(?<n>a)\\k<n>/i', 'ceiling' => 6];
+        yield 'counted reference by name' => ['pattern' => '/(?<n>a)\\k<n>{2}/', 'ceiling' => null];
+        // A condition on a name is a number, or a name that stands for
+        // several groups and their count (pcre2test 10.49: 3 units, 5 for a
+        // name two groups hold under J).
+        yield 'condition on a group name' => ['pattern' => '/(?<n>a)(?(<n>)b|c)/', 'ceiling' => 5];
+        // A conditional with no "|" may be written with one, three units
+        // more: a reference by name in it is the item of unknown length.
+        yield 'reference by name in a conditional of one branch' => ['pattern' => '/(?<n>a)(?(1)\\k<n>)/', 'ceiling' => 9];
+        // "(?=)" compiles to a group, "(?!)" to a failure.
+        yield 'empty lookahead' => ['pattern' => '/(?=)/', 'ceiling' => 6];
+        yield 'empty negative lookahead' => ['pattern' => '/(?!)/', 'ceiling' => 6];
+        yield 'character past 255 without UTF' => ['pattern' => '/\\x{100}/', 'ceiling' => null];
+        yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u', 'ceiling' => null];
+    }
+
+    /**
+     * PCRE2 counts an item before the count after it is read: one counted
+     * zero times keeps its length against the limit, though it is dropped
+     * from the compiled pattern (pcre2test 10.49: the first of these
+     * compiles to 65534 units, the second is too large).
+     */
+    #[Test]
+    public function test_an_item_counted_zero_times_keeps_its_length_against_the_limit(): void
+    {
+        $this->assertSame(65536, self::lengthOf('/.'.str_repeat('a', 32763).'b{0}/'));
+        $this->assertNull(self::lengthOf('/'.str_repeat('a', 32764).'b{0}/'));
     }
 
     #[Test]
@@ -280,6 +463,27 @@ final class CompiledLengthTest extends TestCase
         yield 'condition past the limit on its own' => ['pattern' => '/(?(?=(?:a){8192})b|c)/', 'insideABranch' => true];
         yield 'condition past the limit with the conditional' => ['pattern' => '/(?(?=(?:a){8191})b)/', 'insideABranch' => true];
         yield 'last branch past the limit with the branch before' => ['pattern' => '/a|(?:b){8191}/', 'insideABranch' => false];
+        // A condition whose last branch passes the limit where it ends.
+        yield 'condition past the limit where it ends' => ['pattern' => '/(?(?=a|(?:b){8191})c)/', 'insideABranch' => false];
+        // A condition that takes the conditional past the limit before its
+        // branch, which holds only options.
+        yield 'conditional past the limit with its condition' => ['pattern' => '/(?(?=(?:a){8190}aaa)(?i))/', 'insideABranch' => true];
+        yield 'only branch of a conditional past the limit' => ['pattern' => '/(a)(?(1)(?:b){8200})/', 'insideABranch' => true];
+        yield 'lookbehind past the limit' => ['pattern' => '/(?<=(?:a){8200})/', 'insideABranch' => true];
+        yield 'second branch of a condition past the limit with the first' => ['pattern' => '/(?(?=(?:a){4000}|(?:b){4200}|c)x)/', 'insideABranch' => true];
+        // The end marker counts against the limit, before a group or a
+        // branch is measured: 65536 units are not past it, 65537 are.
+        yield 'pattern of one branch one unit past the limit' => ['pattern' => '/'.str_repeat('a', 32765).'/', 'insideABranch' => false];
+        yield 'group of 65536 units, past the limit in the branch around it' => ['pattern' => '/(?:(?:a){8190}|abc.)/', 'insideABranch' => true];
+        yield 'group of 65537 units, past the limit where it ends' => ['pattern' => '/(?:(?:a){8190}|abcd)/', 'insideABranch' => false];
+        yield 'first branch at the limit with the end marker' => ['pattern' => '/(?:a){8190}abc|d/', 'insideABranch' => false];
+        yield 'first branch one unit past the limit with the end marker' => ['pattern' => '/(?:a){8190}abc.|d/', 'insideABranch' => true];
+        yield 'second of three branches past the limit with the first' => ['pattern' => '/(?:a){4000}|(?:b){4200}|c/', 'insideABranch' => true];
+        // A group of branches whose length is known to the unit is not past
+        // the limit where it ends.
+        yield 'lookbehind of two branches before a repeat past the limit' => ['pattern' => '/(?<=a|b)(?:c){8200}/', 'insideABranch' => true];
+        yield 'negative lookbehind of two branches before a repeat past the limit' => ['pattern' => '/(?<!a|b)(?:c){8200}/', 'insideABranch' => true];
+        yield 'atomic script run of two branches before a repeat past the limit' => ['pattern' => '/(*asr:(?:a){8189}aa|b)(?:c){8200}/', 'insideABranch' => true];
     }
 
     private static function lengthOf(string $pattern): ?int
