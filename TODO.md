@@ -197,11 +197,10 @@ Integrations:
   `ide` fallback never fires; `AbstractBundle`, no container parameters,
   no autowirable internal services.
 - PHPStan: a repo-only rule ships in the public extension;
-  `PatternChecker` split. Psalm: the calls into `Psalm\Internal` isolated
-  in one adapter; `PregCallAnalyzer` marked internal and split.
-- CLI: one option declaration per command for parsing and help; the LSP
-  server's workspace settings apart; `OutputFormat` split per method in the
-  facade.
+  `PatternChecker` split.
+- CLI: one option declaration per command for parsing and help;
+  `OutputFormat` split per method in the facade; the language server's
+  error stream still written through a static.
 - The target settings (PHP, PCRE2, locale) enter through one class, and
   every parser derived for another target keeps the locale.
 
