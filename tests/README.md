@@ -7,20 +7,22 @@ This test suite follows the **Testing Pyramid** structure, ensuring fast, reliab
 - **`tests/Unit/`**: Pure unit tests for individual components (classes, methods) without external dependencies. These tests run instantly (milliseconds) and mock any I/O or external systems.
 - **`tests/Integration/`**: Tests combining multiple components or verifying interactions with external libraries (e.g., Symfony bridges, PCRE compliance).
 - **`tests/Functional/`**: End-to-end tests touching the filesystem, real file I/O, or broader application behavior (e.g., linting fixtures, pattern extraction).
-- **`tests/Benchmark/`**: Performance measurement tests (do not modify).
-- **`tests/Tools/`**: Utility scripts for test data extraction, validation, or setup.
+- **`tests/Documentation/`**: Tests that hold the documentation to the code: the examples call methods that exist, import only public classes, and the tables list what the code holds.
+- **`tests/Benchmark/`**: PHPBench benchmarks, run with `composer bench`; they are not PHPUnit tests.
+- **`tests/Tools/`**: Scripts that write or check generated files, such as `update_cache_version.php` and `write_config_schema.php`.
 - **`tests/Fixtures/`**: Shared test data files (e.g., sample regex patterns, fixture files for functional tests).
-- **`tests/TestUtils/`**: Helper classes and utilities for tests (e.g., accessors for internal state).
+- **`tests/Support/`**: Traits and helpers the tests share, such as `PcreGates`, which skips a row the running PCRE2 or PHP does not read, with a message that says why.
+- **`tests/TestUtils/`**: Smaller helpers (an in-memory cache pool, the coverage threshold, the engine claims).
 
 ## Best Practices
 
 ### General
 - All test files use `declare(strict_types=1);`.
 - Test classes are `final` and extend `PHPUnit\Framework\TestCase`.
-- Test methods use `#[Test]` attributes (PHPUnit 10+).
+- Test methods carry the `#[Test]` attribute and are named `test_{feature}_{scenario}` in snake case: `test_callout_number_past_255_is_refused_where_pcre_refuses_it()`.
 - Use strict assertions: `assertSame()` instead of `assertEquals()`.
-- Test methods follow camelCase: `testMethodName()`.
-- Data providers use `#[DataProvider('methodName')]` and are static methods.
+- Data providers are static methods named `provide...()` that return `iterable` and yield keyed rows: the row's name as its key, each argument by name (`yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];`). A test reads one with `#[DataProvider('provideRanges')]`.
+- What a pattern means is checked against PCRE first, in the test itself: run the pattern through `preg_match()` before you assert what the library says about it.
 
 ### PHPUnit Versions
 - The suite runs on PHPUnit 10.5 (PHP 8.1, `tools/phpunit-81`) through the newest major `tools/phpunit` installs. A test that needs a method only the newest PHPUnit has, such as `expectExceptionMessageIsOrContains()`, uses the `PhpUnitForwardCompat` trait from `tests/Support/PhpUnitCompat/`: the native method runs where PHPUnit has it, a polyfill on the older API elsewhere. Its docblock says how to polyfill one more method.

@@ -13,33 +13,70 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ## Quick Start
 
+You need PHP 8.4 or later for the development tools, Composer, Git, and
+[Task](https://taskfile.dev), which runs the commands below. The packages
+themselves run on PHP 8.1 and later.
+
 ```bash
 # 1. Fork & clone
 git clone https://github.com/YOUR-USERNAME/php-regex.git
 cd php-regex
 
-# 2. Set up environment
-composer install
-
-# 3. Install Development Tools (if you have Task installed)
+# 2. Install the library and the development tools
 task install
 
-# 4. Make your changes and submit a PR!
+# 3. Make your changes and submit a PR!
+```
+
+The root `composer.json` installs the library alone. Each development tool
+(PHPUnit, PHPStan, Rector, PHP CS Fixer and the others) has its own
+`composer.json` under `tools/`, so the tools never share or constrain the
+library's dependencies. `task install` installs the root and each tool, then
+links each tool into `vendor/bin`.
+
+### Without Task
+
+The tools `task install` installs are listed in `taskfile.dist.yaml`. To
+install them by hand:
+
+```bash
+composer install
+for tool in php-cs-fixer phpbench phplint phpstan rector infection phpunit paratest deptrac; do
+    composer install -d tools/$tool
+done
+```
+
+`task install` passes `--ignore-platform-req=php+` to each tool, so that a
+PHP newer than a tool's locked dependencies admit still installs it. Add it
+to the loop when Composer refuses your PHP.
+
+The Composer scripts call each tool from `tools/<tool>/vendor/bin`, so they
+work without the links: `composer phpunit`, `composer phpstan`,
+`composer lint`, and the others in the `scripts` section of `composer.json`.
+
+The tools are locked for PHP 8.4. To run the suite on an older PHP, resolve
+PHPUnit for it first with `composer update -d tools/phpunit`. PHP 8.1 runs it
+with PHPUnit 10.5:
+
+```bash
+composer update -d tools/phpunit-81
+tools/phpunit-81/vendor/bin/phpunit -c tools/phpunit-81/phpunit.xml.dist
 ```
 
 ## Development Workflow
 
 ### Making Changes
-1. Follow coding standards (strict types, type declarations, immutability)
-2. Write tests first (TDD approach recommended)
+1. Follow the coding standards below
+2. Write the test first, and watch it fail before you write the code
 3. Keep commits focused on single changes
 4. Update documentation as needed
 
 ### Quality Assurance
 
 ```bash
-# Run all checks
-task lint
+# Run all checks: Rector, PHP CS Fixer, the cache version, PHPLint,
+# PHPUnit, PHPStan and Deptrac
+task lint       # or: composer lint
 ```
 
 ### Running the Tests
@@ -50,7 +87,7 @@ composer test:parallel    # the same suite in parallel, one process per CPU core
 ```
 
 `composer test:parallel` runs the suite through ParaTest, installed in its own
-vendor under `tools/paratest` by `task install`. It takes the arguments
+vendor under `tools/paratest`. It takes the arguments
 PHPUnit does (`--filter`, a test path, `--group`) and a few of its own:
 `--processes=4` sets the number of processes. Each process runs whole test
 classes, so a test must leave nothing behind that another test class reads: a
@@ -61,36 +98,78 @@ is reset in `tearDown()`.
 
 - **Strict types** required for all PHP files
 - **Type declarations** for all parameters, return types, and properties
-- **Immutability** - use `readonly` classes and properties where possible
-- **Naming conventions** - PascalCase for classes, camelCase for methods
+- **Immutability** - use `readonly` properties where possible; AST nodes hold
+  `public readonly` properties. The packages run on PHP 8.1, which has no
+  readonly classes
+- **Naming conventions** - PascalCase for classes, camelCase for methods,
+  except test methods (see below)
+- **Style** - PHP CS Fixer and Rector apply it: run `task lint` rather than
+  formatting by hand
+- **Static analysis** - PHPStan at its highest level. Fix what it reports
+  rather than silencing it inline; a real false positive goes in
+  `phpstan.dist.neon`
 
 ## Testing Requirements
 
-All contributions MUST include tests:
+All contributions MUST include tests, and a bug fix starts with a test that
+fails without the fix. The test suite's conventions:
+
+- a test class is `final` and extends `PHPUnit\Framework\TestCase`;
+- each test method is marked `#[Test]` and named `test_{feature}_{scenario}`,
+  in snake case: `test_callout_number_past_255_is_refused_where_pcre_refuses_it`;
+- a data provider is a static method that returns `iterable` and yields keyed
+  rows, the row's name as its key and each argument by name:
+  `yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];`;
+- strict assertions: `assertSame()`, not `assertEquals()`;
+- what a pattern means is checked against PCRE first, in the test itself:
+  the library reports what the engine does, so the engine is the reference.
 
 ```php
 <?php
+
 declare(strict_types=1);
 
-namespace PHPRegex\Tests\Unit;
+namespace PHPRegex\Tests\Unit\Parser;
 
+use PHPRegex\Parser\RegexParser;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class YourClassTest extends TestCase
+final class QuantifierRangeTest extends TestCase
 {
-    public function test_descriptive_name(): void
+    #[Test]
+    #[DataProvider('provideRanges')]
+    public function test_quantifier_range_is_judged_as_pcre_judges_it(string $pattern, bool $valid): void
     {
-        // Given
-        $input = 'test input';
+        // The engine first: PCRE compiles the pattern, or refuses it.
+        $this->assertSame($valid, false !== @preg_match($pattern, ''));
 
-        // When
-        $result = YourClass::process($input);
+        $this->assertSame($valid, RegexParser::create(['cache' => null])->validate($pattern)->isValid);
+    }
 
-        // Then
-        $this->assertSame('expected output', $result);
+    /**
+     * @return iterable<string, array{pattern: string, valid: bool}>
+     */
+    public static function provideRanges(): iterable
+    {
+        yield 'an ordered range' => ['pattern' => '/a{1,2}/', 'valid' => true];
+        yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];
     }
 }
 ```
+
+To see what PCRE does with a pattern before you write the test:
+
+```bash
+php -r 'var_dump(@preg_match("/a{2,1}/", ""), error_get_last()["message"] ?? null);'
+```
+
+[tests/README.md](tests/README.md) describes the layout of the suite.
+[Extending](https://php-regex.com/extending/#adding-a-pcre-construct) walks
+through a new PCRE construct, and
+[Adding a Lint Rule](https://php-regex.com/adding-a-lint-rule/) through a new
+lint rule, each with every place it touches and the tests that check them.
 
 ## Changing what the parser builds
 
