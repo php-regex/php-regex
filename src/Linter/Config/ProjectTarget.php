@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -152,7 +151,7 @@ final class ProjectTarget
         }
 
         if (null === $phpVersionId || null === $phpSource) {
-            $fromComposer = null === $projectDir ? null : self::fromComposer($projectDir, $env, $notices);
+            $fromComposer = null === $projectDir ? null : ComposerPlatform::read($projectDir, $env, $notices);
             if (null === $fromComposer) {
                 [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, 'running PHP', true];
             } else {
@@ -187,7 +186,7 @@ final class ProjectTarget
         $source = null === $localeSource || str_contains('; '.$source.';', '; '.$localeSource.';') ? $source : $source.'; '.$localeSource;
         $target = new PcreTarget($phpVersionId, $pcreVersion, $localeName);
         $range = self::rangeFor($target, $constraint, $pinnedPcre);
-        $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, self::intervals($constraint) ?? []);
+        $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, ComposerConstraint::intervals($constraint) ?? []);
 
         // A release older than the library knows in full is judged with
         // the rules of the oldest it does: said once for the whole range,
@@ -307,23 +306,9 @@ final class ProjectTarget
      */
     public function judgedRange(RegexParser $floor): JudgedRange
     {
-        $admitted = $this->admitted ?? [[$this->target->phpVersionId, self::nextAt($this->target->phpVersionId, 2)]];
+        $admitted = $this->admitted ?? [[$this->target->phpVersionId, ComposerConstraint::nextAt($this->target->phpVersionId, 2)]];
 
         return new JudgedRange($this->range, $admitted, $this->pinnedPcre, $floor);
-    }
-
-    /**
-     * The versions a Composer constraint allows, as intervals, a branch
-     * without a lower bound starting at the first version: what a guard or
-     * a "@regex-target" marker narrows a project range to, never the range
-     * itself. Null when the constraint is not one of the forms
-     * composer.json's require.php is read in.
-     *
-     * @return non-empty-list<array{int, int|null}>|null
-     */
-    public static function constraintIntervals(string $constraint): ?array
-    {
-        return self::intervals($constraint, true);
     }
 
     /**
@@ -411,6 +396,40 @@ final class ProjectTarget
     }
 
     /**
+     * The PHP version, once it is one on PCRE2.
+     *
+     * @param string $from what named it, and how: "--php-version names", "composer.json require.php allows"
+     *
+     * @throws UnsupportedTargetException when it ships PCRE1
+     */
+    public static function onPcre2(int $phpVersionId, string $from): int
+    {
+        // PCRE1 is another engine, not an older PCRE2: judging it as the
+        // oldest PCRE2 would be a verdict about an engine it does not run.
+        // The oldest PHP the library judges is the first on PCRE2, 7.3.
+        if ($phpVersionId < PcreTarget::phpVersionBoundaries()[0]) {
+            throw self::onPcre1($phpVersionId, $from);
+        }
+
+        return $phpVersionId;
+    }
+
+    /**
+     * The refusal of a PHP version that ships PCRE1.
+     *
+     * @param string $from what named it, and how: "--php-version names", "composer.json require.php allows"
+     */
+    public static function onPcre1(int $phpVersionId, string $from): UnsupportedTargetException
+    {
+        return new UnsupportedTargetException(\sprintf(
+            '%s PHP %d.%d: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
+            $from,
+            intdiv($phpVersionId, 10000),
+            intdiv($phpVersionId, 100) % 100,
+        ));
+    }
+
+    /**
      * The intervals require.php allows, from the floor up: the versions on
      * PCRE1 and those below a pinned platform are not installed on.
      *
@@ -445,7 +464,7 @@ final class ProjectTarget
     private static function rangeFor(PcreTarget $floor, ?string $constraint, ?string $pinnedPcre): array
     {
         $range = [$floor];
-        $intervals = null === $constraint ? [] : (self::intervals($constraint) ?? []);
+        $intervals = null === $constraint ? [] : (ComposerConstraint::intervals($constraint) ?? []);
         $points = array_unique([...PcreTarget::phpVersionBoundaries(), ...array_column($intervals, 0)]);
         sort($points);
         foreach ($points as $point) {
@@ -471,311 +490,5 @@ final class ProjectTarget
     private static function phpVersionId(string|int $version): int
     {
         return ParserOptions::fromArray(['php_version' => $version])->target->phpVersionId;
-    }
-
-    /**
-     * @param array<string, string> $env
-     * @param list<string>          $notices
-     *
-     * @throws UnsupportedTargetException when the floor ships PCRE1 and require.php allows no PHP on PCRE2
-     *
-     * @return array{int, string, string|null}|null the floor, its source, and require.php when it was read
-     */
-    private static function fromComposer(string $projectDir, array $env, array &$notices): ?array
-    {
-        $name = ($env['COMPOSER'] ?? '') ?: 'composer.json';
-        $path = str_starts_with($name, '/') || 1 === LibraryPcre::match('/^[A-Za-z]:[\\\\\/]/', $name) ? $name : $projectDir.'/'.$name;
-
-        $contents = is_file($path) ? @file_get_contents($path) : false;
-        if (false === $contents) {
-            $notices[] = \sprintf('No %s in %s: judging for the running PHP.', $name, $projectDir);
-
-            return null;
-        }
-
-        $composer = json_decode($contents, true);
-        if (!\is_array($composer)) {
-            $notices[] = \sprintf('%s is not a JSON object: judging for the running PHP.', $name);
-
-            return null;
-        }
-
-        // A platform on PCRE1 pins the PHP Composer resolves the
-        // dependencies for, the lowest the project installs on: it gives way
-        // to a require.php that also allows a PHP on PCRE2, and is refused
-        // when there is none.
-        $pinned = null;
-        $platform = self::at($composer, 'config', 'platform', 'php');
-        if (\is_string($platform)) {
-            $floor = self::floor($platform);
-            if (null !== $floor && !str_contains($platform, ' ') && !str_contains($platform, '|')) {
-                if ($floor >= PcreTarget::phpVersionBoundaries()[0]) {
-                    return [$floor, $name.' config.platform.php', null];
-                }
-                $pinned = $floor;
-            } else {
-                $notices[] = \sprintf('%s config.platform.php "%s" is not a version: reading require.php instead.', $name, $platform);
-            }
-        }
-
-        $constraint = self::at($composer, 'require', 'php');
-        $constraint = \is_string($constraint) ? $constraint : null;
-        $intervals = null === $constraint ? null : self::intervals($constraint);
-        $firstOnPcre2 = null === $intervals ? null : self::lowestFrom($intervals, PcreTarget::phpVersionBoundaries()[0]);
-        if (null !== $pinned) {
-            if (null === $firstOnPcre2) {
-                throw self::onPcre1($pinned, $name.' config.platform.php allows');
-            }
-            $notices[] = \sprintf(
-                '%s config.platform.php pins PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version require.php allows on PCRE2.',
-                $name,
-                intdiv($pinned, 10000),
-                intdiv($pinned, 100) % 100,
-                self::phpLabel($firstOnPcre2),
-            );
-
-            return [$firstOnPcre2, $name.' require.php', $constraint];
-        }
-
-        if (null === $constraint) {
-            $notices[] = \sprintf('%s has no require.php constraint: judging for the running PHP.', $name);
-
-            return null;
-        }
-
-        if (null === $intervals) {
-            $notices[] = \sprintf('%s require.php "%s" names no lowest PHP version: judging for the running PHP.', $name, $constraint);
-
-            return null;
-        }
-
-        // A range that also allows a PHP on PCRE2 installs there too: it is
-        // judged from the lowest such PHP, and only the versions on PCRE1
-        // are left out. A range that allows none is refused.
-        $floor = min(array_column($intervals, 0));
-        if ($floor < PcreTarget::phpVersionBoundaries()[0] && null !== $firstOnPcre2) {
-            $notices[] = \sprintf(
-                '%s require.php allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
-                $name,
-                intdiv($floor, 10000),
-                intdiv($floor, 100) % 100,
-                self::phpLabel($firstOnPcre2),
-            );
-            $floor = $firstOnPcre2;
-        }
-
-        return [self::onPcre2($floor, $name.' require.php allows'), $name.' require.php', $constraint];
-    }
-
-    /**
-     * The lowest version of $from or later the intervals allow, or null
-     * when they allow none.
-     *
-     * @param non-empty-list<array{int, int|null}> $intervals
-     */
-    private static function lowestFrom(array $intervals, int $from): ?int
-    {
-        $lowest = null;
-        foreach ($intervals as [$first, $below]) {
-            $candidate = max($first, $from);
-            if ((null === $below || $candidate < $below) && (null === $lowest || $candidate < $lowest)) {
-                $lowest = $candidate;
-            }
-        }
-
-        return $lowest;
-    }
-
-    /**
-     * The value at a path of decoded JSON, or null.
-     *
-     * @param array<array-key, mixed> $data
-     */
-    private static function at(array $data, string ...$path): mixed
-    {
-        $value = $data;
-        foreach ($path as $segment) {
-            if (!\is_array($value) || !\array_key_exists($segment, $value)) {
-                return null;
-            }
-            $value = $value[$segment];
-        }
-
-        return $value;
-    }
-
-    /**
-     * The PHP version, once it is one on PCRE2.
-     *
-     * @param string $from what named it, and how: "--php-version names", "composer.json require.php allows"
-     *
-     * @throws UnsupportedTargetException when it ships PCRE1
-     */
-    private static function onPcre2(int $phpVersionId, string $from): int
-    {
-        // PCRE1 is another engine, not an older PCRE2: judging it as the
-        // oldest PCRE2 would be a verdict about an engine it does not run.
-        // The oldest PHP the library judges is the first on PCRE2, 7.3.
-        if ($phpVersionId < PcreTarget::phpVersionBoundaries()[0]) {
-            throw self::onPcre1($phpVersionId, $from);
-        }
-
-        return $phpVersionId;
-    }
-
-    /**
-     * The refusal of a PHP version that ships PCRE1.
-     *
-     * @param string $from what named it, and how: "--php-version names", "composer.json require.php allows"
-     */
-    private static function onPcre1(int $phpVersionId, string $from): UnsupportedTargetException
-    {
-        return new UnsupportedTargetException(\sprintf(
-            '%s PHP %d.%d: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.',
-            $from,
-            intdiv($phpVersionId, 10000),
-            intdiv($phpVersionId, 100) % 100,
-        ));
-    }
-
-    /**
-     * The lowest version a Composer constraint allows, as a PHP_VERSION_ID,
-     * or null when the constraint is not one of the forms read.
-     */
-    private static function floor(string $constraint): ?int
-    {
-        $intervals = self::intervals($constraint);
-
-        return null === $intervals ? null : min(array_column($intervals, 0));
-    }
-
-    /**
-     * The versions a Composer constraint allows, as PHP_VERSION_ID
-     * intervals: the lowest allowed, and the first above it no longer
-     * allowed (null when none is). Null when the constraint is not one of
-     * the forms read: >=, >, <, <=, ^, ~, a bare version, X.Y.*, AND (comma
-     * or space), OR (| or ||), a hyphen range. A branch without a lower
-     * bound makes the whole constraint unreadable.
-     *
-     * @return non-empty-list<array{int, int|null}>|null
-     */
-    private static function intervals(string $constraint, bool $openBelow = false): ?array
-    {
-        $intervals = [];
-        foreach (LibraryPcre::split('/\s*\|\|?\s*/', trim($constraint, " \t\n\r\0\x0B")) ?: [] as $branch) {
-            $interval = self::branchInterval($branch, $openBelow);
-            if (null === $interval) {
-                return null;
-            }
-            $intervals[] = $interval;
-        }
-
-        return [] === $intervals ? null : $intervals;
-    }
-
-    /**
-     * @param bool $openBelow whether a branch without a lower bound starts at the first version, where
-     *                        it makes the constraint unreadable
-     *
-     * @return array{int, int|null}|null
-     */
-    private static function branchInterval(string $branch, bool $openBelow = false): ?array
-    {
-        // A partial upper version of a hyphen range allows its whole
-        // branch: "8.2 - 8.4" is below 8.5; a full one is itself the last
-        // allowed, "8.2 - 8.4.25" is below 8.4.26.
-        if (1 === LibraryPcre::match('/^(\S+)\s+-\s+(\S+)$/', $branch, $range)) {
-            $lowest = self::version($range[1]);
-            $upper = self::version($range[2]);
-            if (null === $lowest || null === $upper) {
-                return null;
-            }
-
-            return [$lowest[0], self::nextAt($upper[0], $upper[1])];
-        }
-
-        // An operator may be followed by spaces: ">= 8.3".
-        $branch = (string) LibraryPcre::replace('/(>=|<=|!=|==|[<>=^~])\s+/', '$1', $branch);
-
-        $lowest = null;
-        $below = null;
-        foreach (LibraryPcre::split('/[\s,]+/', trim($branch, " \t\n\r\0\x0B")) ?: [] as $term) {
-            if (1 !== LibraryPcre::match('/^(>=|<=|!=|==|[<>=^~])?(.+)$/', $term, $parts)) {
-                return null;
-            }
-            $version = self::version($parts[2]);
-            if (null === $version) {
-                return null;
-            }
-            [$id, $precision, $wildcard] = $version;
-
-            [$from, $until] = match ($parts[1]) {
-                '!=' => [null, null],
-                '<' => [null, $id],
-                '<=' => [null, $id + 1],
-                '>=', '>' => [$id, null],
-                '^' => [$id, self::nextAt($id, 1)],
-                '~' => [$id, self::nextAt($id, max(1, $precision - 1))],
-                default => [$id, $wildcard ? self::nextAt($id, $precision) : $id + 1],
-            };
-            if (null !== $from) {
-                $lowest = null === $lowest ? $from : max($lowest, $from);
-            }
-            if (null !== $until) {
-                $below = null === $below ? $until : min($below, $until);
-            }
-        }
-
-        if (null === $lowest && $openBelow && null !== $below) {
-            $lowest = 0;
-        }
-
-        return null === $lowest ? null : [$lowest, $below];
-    }
-
-    /**
-     * The first version past every version sharing the first $precision
-     * parts of $id: 8.2.x past 8.2 is 8.3, past 8 is 9.0.
-     */
-    private static function nextAt(int $id, int $precision): int
-    {
-        return match ($precision) {
-            1 => (intdiv($id, 10000) + 1) * 10000,
-            2 => (intdiv($id, 100) + 1) * 100,
-            default => $id + 1,
-        };
-    }
-
-    /**
-     * "8.3", "8.3.4", "8.3.*", "v8.3" as a PHP_VERSION_ID, the number of
-     * parts given before any wildcard, and whether a wildcard ends it; "*"
-     * and branch names as null.
-     *
-     * @return array{int, int, bool}|null
-     */
-    private static function version(string $version): ?array
-    {
-        if (1 !== LibraryPcre::match('/^v?(\d+)(?:\.(\d+|\*))?(?:\.(\d+|\*))?(?:\.\d+)?$/', $version, $parts)) {
-            return null;
-        }
-
-        $minor = isset($parts[2]) && '*' !== $parts[2] ? (int) $parts[2] : 0;
-        $patch = isset($parts[3]) && '*' !== $parts[3] ? (int) $parts[3] : 0;
-
-        $precision = 1;
-        $wildcard = false;
-        foreach ([2, 3] as $index) {
-            if (!isset($parts[$index]) || '' === $parts[$index]) {
-                break;
-            }
-            if ('*' === $parts[$index]) {
-                $wildcard = true;
-
-                break;
-            }
-            $precision++;
-        }
-
-        return [(int) $parts[1] * 10000 + $minor * 100 + $patch, $precision, $wildcard];
     }
 }

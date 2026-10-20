@@ -56,8 +56,8 @@ final class TargetConstraint
             return null;
         }
 
-        $php = '' === ($parts['php'] ?? '') ? null : ProjectTarget::constraintIntervals($parts['php']);
-        $pcre = '' === ($parts['pcre'] ?? '') ? null : ProjectTarget::constraintIntervals($parts['pcre']);
+        $php = '' === ($parts['php'] ?? '') ? null : ComposerConstraint::intervals($parts['php'], true);
+        $pcre = '' === ($parts['pcre'] ?? '') ? null : ComposerConstraint::intervals($parts['pcre'], true);
         if ((null === $php && '' !== ($parts['php'] ?? '')) || (null === $pcre && '' !== ($parts['pcre'] ?? '')) || (null === $php && null === $pcre)) {
             return null;
         }

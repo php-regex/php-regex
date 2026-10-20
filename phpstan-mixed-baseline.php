@@ -50,6 +50,9 @@ return [
     'src/Laravel/Rules/ValidRegex.php' => [
         'PHPRegex\Laravel\Rules\ValidRegex::validate()' => ['host-contract', 1],
     ],
+    'src/Linter/Config/ComposerPlatform.php' => [
+        'PHPRegex\Linter\Config\ComposerPlatform::at()' => ['json-decode', 2],
+    ],
     'src/Linter/Config/LintArgumentParser.php' => [
         'PHPRegex\Linter\Config\LintArgumentParser::parse()' => ['validator-input', 1],
     ],
@@ -81,9 +84,6 @@ return [
         'PHPRegex\Linter\Config\LintConfigValidator::hasType()' => ['json-decode', 2],
         'PHPRegex\Linter\Config\LintConfigValidator::map()' => ['json-decode', 2],
         'PHPRegex\Linter\Config\LintConfigValidator::resolve()' => ['json-decode', 2],
-    ],
-    'src/Linter/Config/ProjectTarget.php' => [
-        'PHPRegex\Linter\Config\ProjectTarget::at()' => ['json-decode', 2],
     ],
     'src/Linter/Extraction/InteropPresets.php' => [
         'PHPRegex\Linter\Extraction\InteropPresets::notAStringWarning()' => ['reflection-sink', 1],
