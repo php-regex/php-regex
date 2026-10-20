@@ -151,6 +151,25 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   letter: `[^a[-\P{]a)` is "range out of order" at offset 6 (php:7.3-cli),
   the library says 11 (class left open), reading `\P{` as a property no `}`
   closes.
+- A name nothing closes in a call by name, `(?<n>a)(?&n )` or
+  `(?<n>a)(?P>n )`, is "syntax error in subpattern name (missing
+  terminator?)" from 10.33 to 10.46, at the offset the library gives, where
+  the library says `regex.group.unclosed`. Without UTF, `(?<n>a)(?&é)` is
+  "subpattern name expected" at 10 on every release (the library says
+  `regex.group.unclosed`), and so are `(?<n>a)(?&١)` and `(?<n>a)(?P>١)`
+  (the library says `regex.group.name_invalid`).
+- From 10.47 a pattern too large, `(?:a){65535}`, is refused at offset 0;
+  the library says 12.
+- Up to 10.43 a reference name past 32 characters that nothing closes,
+  `(?<n>a)\k<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ` (33 characters), is
+  "subpattern name is too long" at the end of the name (43); the library
+  says `regex.group.name_unterminated` there, and one byte late for a padded
+  `\k{` or `\g{` on 10.43. From 10.44 the missing terminator comes first.
+- Under UTF the letters and digits of a name are those of the release's
+  Unicode tables: `(?<a>x)\k<𖫀>/u` (U+16AC0, a digit from Unicode 14) is
+  "subpattern name expected" on 10.33 to 10.37, where the library says
+  `regex.group.name_invalid`; `(?<aࡰ>x)/u` is refused at 4 on 10.33 to
+  10.38 and accepted by the library.
 
 ## Literal extraction on a count PCRE refuses
 

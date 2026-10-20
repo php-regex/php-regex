@@ -76,11 +76,13 @@ final class FirstErrorLocator
         }
 
         $lexer = new Lexer($this->target);
+        $tokenized = true;
 
         try {
             $lexer->tokenize($pattern, $flags);
         } catch (LexerException) {
             // The tokens read before the error are what is judged.
+            $tokenized = false;
         }
 
         $tokens = $lexer->tokensRead();
@@ -100,7 +102,7 @@ final class FirstErrorLocator
         // before the error: PCRE reads nothing past it, and refuses it at
         // the end of the pattern or where its name goes wrong. What stands
         // before it is judged, and it last.
-        $swallowing = self::readUpToAnUnclosedName($inPlace, $pattern, $position);
+        $swallowing = self::readUpToAnUnclosedName($inPlace, $pattern, $position, $lexer->literalEscapesRead());
         $read = $swallowing ?? $inPlace;
         $limit = null === $swallowing ? $position : \strlen($pattern) + 1;
 
@@ -128,8 +130,10 @@ final class FirstErrorLocator
             // error that ending causes lies there, and is not taken. A "(?"
             // read last is read with what follows it, which is not read:
             // what is refused past it is refused for want of that. Read up
-            // to an unclosed name, the pattern is read whole.
-            $syntaxTokens = $swallowing ?? $tokens;
+            // to an unclosed name, the pattern is read whole. An error the
+            // lexer found reading the body of an alphabetic assertion is
+            // read with the body in place.
+            $syntaxTokens = $swallowing ?? ($tokenized && $error instanceof LexerException ? $inPlace : $tokens);
             $stream = new TokenStream([...$syntaxTokens, new Token(TokenType::Eof, '', min($limit, \strlen($pattern)))], $pattern);
             $last = [] === $syntaxTokens ? null : $syntaxTokens[array_key_last($syntaxTokens)];
             $readUpTo = null !== $last && TokenType::GroupModifierOpen === $last->type ? $last->end() : $limit;
@@ -235,11 +239,12 @@ final class FirstErrorLocator
      * included; null when none stands there. PCRE reads nothing after it:
      * it looks for the "}" or ")" to the end of the pattern.
      *
-     * @param list<Token> $tokens
+     * @param list<Token>      $tokens
+     * @param array<int, true> $literalEscapes where the escapes read as their character stand
      *
      * @return list<Token>|null
      */
-    private static function readUpToAnUnclosedName(array $tokens, string $pattern, int $position): ?array
+    private static function readUpToAnUnclosedName(array $tokens, string $pattern, int $position, array $literalEscapes): ?array
     {
         $lastBrace = strrpos($pattern, '}');
 
@@ -248,8 +253,9 @@ final class FirstErrorLocator
                 break;
             }
 
-            // The lexer reads "\p{" with no "}" after it as "\p" then "{".
-            if (TokenType::LiteralEscaped === $token->type && \in_array($token->value, ['p', 'P'], true)
+            // The lexer reads "\p{" with no "}" after it as "\p" then "{";
+            // PHP 7.3 and 7.4 read it as "p{", and go on.
+            if (TokenType::LiteralEscaped === $token->type && \in_array($token->value, ['p', 'P'], true) && !isset($literalEscapes[$token->position])
                 && '{' === ($pattern[$token->end()] ?? '') && (false === $lastBrace || $lastBrace < $token->end())) {
                 return \array_slice($tokens, 0, $index + 1);
             }

@@ -1353,7 +1353,29 @@ final class Validator extends AbstractNodeVisitor
                 );
             }
 
-            return;
+            // From PCRE2 10.45 a "^" after spaces, hyphens or underscores
+            // negates: the name after it is looked up as after a "^" right
+            // behind the brace, unless a later release added it.
+            $negated = $this->nameAfterSkippedCaret($node);
+            if (null === $negated || isset(self::UNICODE_NAMES_SINCE[self::looseName($negated)])) {
+                return;
+            }
+
+            $key = 'p{^'.$negated.'}';
+            if (!isset(self::$unicodePropCache[$key])) {
+                self::$unicodePropCache = StaticCaches::makeRoom(self::$unicodePropCache);
+                self::$unicodePropCache[$key] = $this->validateUnicodeProperty($key);
+            }
+
+            if (self::$unicodePropCache[$key]) {
+                return;
+            }
+
+            $this->raiseSemanticError(
+                \sprintf('Invalid or unsupported Unicode property: \\%s.', $key),
+                $node->getEndPosition(),
+                ErrorCode::UnicodePropertyInvalid,
+            );
         }
 
         if (false === self::$unicodePropCache[$key]) {
@@ -1987,17 +2009,42 @@ final class Validator extends AbstractNodeVisitor
      */
     private function releaseAddingProperty(UnicodePropNode $node): ?string
     {
+        $negated = $this->nameAfterSkippedCaret($node);
+        if (null !== $negated) {
+            $since = self::UNICODE_NAMES_SINCE[self::looseName($negated)] ?? '10.45';
+
+            return version_compare($since, '10.45', '>') ? $since : '10.45';
+        }
+
         $written = substr($this->source ?? '', $node->startPosition, $node->getEndPosition() - $node->startPosition);
-        if (1 !== LibraryPcre::match('/^\\\\[pP]\{([ \t]*+)(\^?)(.*)\}$/s', $written, $matches)) {
+        if (1 !== LibraryPcre::match('/^\\\\[pP]\{[ \t]*+\^?(.*)\}$/s', $written, $matches)) {
             return null;
         }
 
-        // Loose matching: case, spaces, hyphens and underscores are ignored,
-        // and "sc=", "scx:" and their long forms only name the table.
-        $name = Ascii::lower(str_replace([' ', "\t", '-', '_'], '', $matches[3]));
-        $name = LibraryPcre::replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
+        return self::UNICODE_NAMES_SINCE[self::looseName($matches[1])] ?? null;
+    }
 
-        return '' !== $matches[1] && '' !== $matches[2] ? '10.45' : (self::UNICODE_NAMES_SINCE[$name] ?? null);
+    /**
+     * The name after a "^" that spaces, hyphens or underscores put off the
+     * brace, which PCRE2 skips: up to 10.44 that "^" is a letter of the
+     * name, from 10.45 it negates. Null for any other spelling.
+     */
+    private function nameAfterSkippedCaret(UnicodePropNode $node): ?string
+    {
+        $written = substr($this->source ?? '', $node->startPosition, $node->getEndPosition() - $node->startPosition);
+
+        return 1 === LibraryPcre::match('/^\\\\[pP]\{[ _\-\t-\r]++\^(.*)\}$/s', $written, $matches) ? $matches[1] : null;
+    }
+
+    /**
+     * Loose matching: case, spaces, hyphens and underscores are ignored, and
+     * "sc=", "scx:" and their long forms only name the table.
+     */
+    private static function looseName(string $name): string
+    {
+        $name = Ascii::lower(str_replace([' ', "\t", '-', '_'], '', $name));
+
+        return LibraryPcre::replace('/^(?:sc|script|scx|scriptextensions)[:=]/', '', $name) ?? $name;
     }
 
     /**
@@ -3286,10 +3333,21 @@ final class Validator extends AbstractNodeVisitor
         $offset = match (true) {
             $position >= \strlen($source) => $position,
             '{' === $source[$position] => $this->malformedPropertyNameEnd($source, $position) ?? \strlen($source),
-            default => $position + $this->characterLengthAt($source, $position),
+            default => $this->pastTheCharacter($source, $position),
         };
 
         $this->raiseMalformedPropertyAt($letter, $offset);
+    }
+
+    /**
+     * Past the character at $position: under UTF, up to PCRE2 10.46 one
+     * byte past its start, from 10.47 past all of it.
+     */
+    private function pastTheCharacter(string $source, int $position): int
+    {
+        $width = $this->characterLengthAt($source, $position);
+
+        return $this->pastTheFault($position + $width, $width - 1);
     }
 
     private function raiseMalformedPropertyAt(string $letter, int $offset): never
@@ -3334,15 +3392,17 @@ final class Validator extends AbstractNodeVisitor
                 return $length;
             }
 
+            // Up to PCRE2 10.46 the name is read byte by byte, from 10.47
+            // character by character.
             $char = $source[$position];
-            $step = $this->characterLengthAt($source, $position);
-            $position += $step;
+            $position += $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $this->characterLengthAt($source, $position) : 1;
 
             if (str_contains(" _-\t\n\v\f\r", $char)) {
                 continue;
             }
 
-            if (0 === $read && !$negated && '^' === $char) {
+            // Up to PCRE2 10.44 only a "^" right after the brace negates.
+            if (0 === $read && !$negated && '^' === $char && ($position === $brace + 2 || $this->supports(PcreFeature::MalformedPropertyName))) {
                 $negated = true;
 
                 continue;
@@ -3352,10 +3412,10 @@ final class Validator extends AbstractNodeVisitor
                 return null;
             }
 
-            // Names hold "&" to "z" only; 10.45 and 10.46 stopped past the
+            // Names hold "&" to "z" only; 10.45 and 10.46 stop past the
             // first byte of a longer UTF-8 character, 10.47 past all of it.
             if (($char < '&' || $char > 'z') && $this->supports(PcreFeature::MalformedPropertyName)) {
-                return $this->supports(PcreFeature::ErrorOffsetPastTheFault) ? $position : $position - $step + 1;
+                return $position;
             }
 
             $read++;

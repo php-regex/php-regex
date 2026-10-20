@@ -465,6 +465,13 @@ final class Lexer
     private bool $badEscapeIsLiteral = false;
 
     /**
+     * Where each escape read as its character stands.
+     *
+     * @var array<int, true>
+     */
+    private array $literalEscapes = [];
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      */
     public function __construct(?PcreTarget $target = null)
@@ -497,6 +504,19 @@ final class Lexer
     public function tokensRead(): array
     {
         return $this->tokensRead;
+    }
+
+    /**
+     * Where the escapes PHP 7.3 and 7.4 read as the character after the
+     * backslash stand, in the text the last tokenizing read.
+     *
+     * @internal
+     *
+     * @return array<int, true>
+     */
+    public function literalEscapesRead(): array
+    {
+        return $this->literalEscapes;
     }
 
     /**
@@ -777,6 +797,7 @@ final class Lexer
         $this->charClassStartPositions = [];
         $this->quotedRun = null;
         $this->unclosedBody = null;
+        $this->literalEscapes = [];
     }
 
     /**
@@ -832,6 +853,7 @@ final class Lexer
         if ($this->badEscapeIsLiteral && '\\' === $this->pattern[$this->position]
             && BadEscape::at($this->pattern, $this->position, $this->inCharClass, $this->utf, $this->target, null, $this->startsRangeEnd($tokens))) {
             $tokens[] = new Token(TokenType::LiteralEscaped, $this->pattern[$this->position + 1], $this->position, 2);
+            $this->literalEscapes[$this->position] = true;
             $this->position += 2;
 
             return true;

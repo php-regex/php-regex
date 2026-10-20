@@ -64,6 +64,10 @@ final class ClassItemBeforeRangeErrorTest extends TestCase
         yield 'braced octal past a byte before a property with no name' => ['pattern' => '/[\o{400}\p-\w]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 7];
         yield 'braced octal past a byte before an unknown property' => ['pattern' => '/[\o{400}\p{Foo}-\N]/', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::OctalOutOfRange, 'offset' => 7];
         yield 'surrogate before a range from a type' => ['pattern' => '/[\x{d800}\w-a]/u', 'php' => '8.4', 'release' => '10.44', 'code' => ErrorCode::UnicodeSurrogate, 'offset' => 8];
+        // PHP 7.3 on 10.32 reads "\P{" that no "}" closes, ending a range,
+        // as "P": the range is reversed, whatever follows the class.
+        yield 'range ending in a property brace nothing closes before a parenthesis, PHP 7.3' => ['pattern' => '/[^a[-\P{]a)/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeReversed, 'offset' => 6];
+        yield 'range ending in a property brace nothing closes before a parenthesis, from a letter, PHP 7.3' => ['pattern' => '/[a-\P{])/', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::RangeReversed, 'offset' => 4];
         yield 'named code point past Unicode before a range from a type' => ['pattern' => '/[\N{U+110000}\w-a]/u', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::UnicodeOutOfRange, 'offset' => 12];
 
         // A reversed range, refused where it ends (pcre2test 10.32 to 10.49:
