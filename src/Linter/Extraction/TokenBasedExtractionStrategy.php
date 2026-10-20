@@ -837,20 +837,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 continue;
             }
 
-            if (\is_array($token) && \T_ARRAY === $token[0]) {
-                $nextIndex = PhpTokens::nextSignificant($tokens, $i + 1, $totalTokens);
-                if (null !== $nextIndex && '(' === $tokens[$nextIndex]) {
-                    $stack[] = ')';
-                    if ($collecting) {
-                        $segmentTokens[] = '(';
-                        $segmentTokenIndexes[] = $tokenIndex;
-                    }
-                    $i = $nextIndex;
-
-                    continue;
-                }
-            }
-
+            // An array() item keeps its keyword: it is an array, as a []
+            // item is, and its parenthesis opens a nesting as any other.
             if (PhpTokens::opensNesting($token)) {
                 $stack[] = $this->closingTokenFor($token);
                 if ($collecting) {

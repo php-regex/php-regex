@@ -255,4 +255,22 @@ final class TokenBasedExtractionStrategyShapesTest extends TestCase
 
         $this->assertSame(['/after-malformed/'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $read));
     }
+
+    /**
+     * An item of an array of patterns that is itself an array() holds no
+     * pattern, as a [] item holds none: PHP reads it as the string "Array"
+     * ("Delimiter must not be alphanumeric"), and an array is no key.
+     */
+    #[Test]
+    public function test_an_array_item_spelled_array_holds_no_pattern(): void
+    {
+        $this->assertExtractedByBoth([['pattern' => '/kept/', 'at' => "'/kept/'"]], <<<'PHP'
+            <?php
+
+            preg_replace([array('/nested-long/')], '', $s);
+            preg_replace(array(array ('/nested-in-long/'), '/kept/'), '', $s);
+            preg_replace([['/nested-short/']], '', $s);
+            preg_replace_callback_array([array('/nested-key/') => fn ($m) => ''], $s);
+            PHP);
+    }
 }
