@@ -15,8 +15,6 @@ namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Analysis\GroupIndex;
-use PHPRegex\Parser\Analysis\LengthRangeCalculator;
-use PHPRegex\Parser\Analysis\LookbehindLength;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
@@ -76,8 +74,6 @@ use PHPRegex\Parser\Text\DisplayEscaper;
  * @extends AbstractNodeVisitor<void>
  *
  * @internal
- *
- * @phpstan-import-type LengthRange from LengthRangeCalculator
  */
 final class Validator extends AbstractNodeVisitor
 {
@@ -132,20 +128,6 @@ final class Validator extends AbstractNodeVisitor
         'LIMIT_MATCH' => true, 'LIMIT_RECURSION' => true, 'LIMIT_DEPTH' => true, 'LIMIT_HEAP' => true,
     ];
 
-    /**
-     * PCRE's own ceiling on a fixed-length lookbehind, the same on every
-     * PCRE2 release; max_lookbehind_length only bounds variable ones.
-     */
-    private const MAX_FIXED_LOOKBEHIND_LENGTH = 65535;
-
-    /**
-     * How many branches PCRE measures across all the lookbehinds of a
-     * pattern before it gives up: each branch of a lookbehind, and each
-     * branch of a group it reaches. Without a branch reset it measures a
-     * capturing group once; with one, each time it meets it.
-     */
-    private const MAX_LOOKBEHIND_BRANCH_MEASURES = 2001;
-
     private const VALID_POSIX_CLASSES = [
         'alnum' => true, 'alpha' => true, 'ascii' => true,
         'blank' => true, 'cntrl' => true, 'digit' => true,
@@ -183,25 +165,6 @@ final class Validator extends AbstractNodeVisitor
      * when there is no source to read it from.
      */
     private ?int $startOfPatternEnd = null;
-
-    /**
-     * The capturing groups by number and by name, and where each call or
-     * reference sits in their count.
-     */
-    private GroupIndex $groups;
-
-    /**
-     * Measures a lookbehind branch, telling the validator of what it meets.
-     */
-    private LookbehindLength $lookbehindLength;
-
-    private int $lookbehindBranchMeasures = 0;
-
-    /**
-     * The lookbehind being measured, where PCRE reports the measure it gave
-     * up.
-     */
-    private ?GroupNode $measuredLookbehind = null;
 
     /**
      * Whether the walk judges the part of a pattern read before a syntax
@@ -325,6 +288,11 @@ final class Validator extends AbstractNodeVisitor
     private ReferenceChecks $references;
 
     /**
+     * The measure of the lookbehinds of the pattern.
+     */
+    private LookbehindChecks $lookbehindChecks;
+
+    /**
      * @param PcreTarget|null $target the PHP and PCRE2 judged; the running ones when null
      * @param PcreEngine      $engine asks the running engine which property names it knows
      */
@@ -335,10 +303,10 @@ final class Validator extends AbstractNodeVisitor
         private readonly PcreEngine $engine = new PcreEngine(),
     ) {
         $this->target = $target ?? PcreTarget::runtime();
-        $this->groups = GroupIndex::empty();
+        $groups = GroupIndex::empty();
         $this->escapes = new EscapeChecks($this->target, $pattern, engine: $engine);
-        $this->references = new ReferenceChecks($this->groups, $this->groups->numbering(), $this->target, $this->keepMissingReference(...), $pattern);
-        $this->lookbehindLength = $this->measuring($this->groups);
+        $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $pattern);
+        $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $pattern, $maxLookbehindLength, false);
     }
 
     /**
@@ -662,7 +630,7 @@ final class Validator extends AbstractNodeVisitor
     {
         // A "\C" in a lookbehind is refused where PCRE measures it.
         $lookbehind = 'C' === $node->value ? end($this->lookbehinds) : false;
-        $this->escapes->charType($node, $this->charClassDepth > 0, false === $lookbehind ? null : $this->lookbehindErrorPosition($lookbehind));
+        $this->escapes->charType($node, $this->charClassDepth > 0, false === $lookbehind ? null : $this->lookbehindChecks->errorPosition($lookbehind));
     }
 
     #[\Override]
@@ -1233,11 +1201,10 @@ final class Validator extends AbstractNodeVisitor
             PhpVersionGates::badEscapeIsLiteral($this->target->phpVersionId, $node->flags),
             $this->engine,
         );
-        $this->groups = GroupIndex::of($node->pattern);
-        $this->references = new ReferenceChecks($this->groups, $this->groups->numbering(), $this->target, $this->keepMissingReference(...), $this->pattern, $node->source, 0, $this->unicodeMode);
-        $this->lookbehindBranchMeasures = 0;
+        $groups = GroupIndex::of($node->pattern);
+        $this->references = new ReferenceChecks($groups, $groups->numbering(), $this->target, $this->keepMissingReference(...), $this->pattern, $node->source, 0, $this->unicodeMode);
         // A measure of its own: what an earlier pattern measured is gone.
-        $this->lookbehindLength = $this->measuring($this->groups);
+        $this->lookbehindChecks = new LookbehindChecks($groups, $this->target, $this->checkMeasuredReference(...), $this->pattern, $this->maxLookbehindLength, $this->unicodeMode);
 
         $this->previousNode = null;
         $this->nextNode = null;
@@ -1388,258 +1355,6 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * @param array<int, true>|null $expanding the groups being measured, by
-     *                                         node, when the lookbehind sits
-     *                                         in one being measured
-     */
-    private function validateLookbehindLength(GroupNode $node, ?array $expanding = null): void
-    {
-        // Only the groups the measure reached through calls are being
-        // measured: those around the lookbehind are not.
-        $measuring = $expanding ?? [];
-
-        // A lookbehind measured inside another is not measured again, unless
-        // it calls a group being measured here and was not there.
-        $this->lookbehindLength->once(
-            $node,
-            $measuring,
-            null === $expanding,
-            fn () => $this->measureLookbehindBranches($node, $measuring),
-        );
-    }
-
-    /**
-     * Measure each branch of a lookbehind, raising the errors PCRE raises.
-     *
-     * @param array<int, true> $measuring the groups being measured, by node
-     */
-    private function measureLookbehindBranches(GroupNode $node, array $measuring): void
-    {
-        // PCRE measures each top-level branch on its own: "(?<=a{300}|b)" is
-        // two fixed lengths, "(?<=(?:a{300}|b))" one variable length.
-        $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
-        $around = $this->measuredLookbehind;
-        $this->measuredLookbehind = $node;
-        $lengths = [];
-
-        try {
-            foreach ($branches as $branch) {
-                $this->countLookbehindMeasures(1);
-                [$length, $unfixed, $tooLong] = $this->lookbehindLength->branch($branch, $measuring);
-                $lengths[] = $length;
-
-                // PCRE adds each item to the branch before the repeat after
-                // it, and refuses the branch as soon as it passes the limit.
-                if (null !== $tooLong) {
-                    $this->raiseSemanticError(
-                        \sprintf('Lookbehind is too long: PCRE adds each item to the length of its branch before the repeat after it, and refuses a branch past %d characters (%d reached).', self::MAX_FIXED_LOOKBEHIND_LENGTH, $tooLong),
-                        $this->lookbehindErrorPosition($node),
-                        ErrorCode::LookbehindTooLong,
-                        'Shorten the lookbehind.',
-                    );
-                }
-
-                // PCRE stops at the first branch it cannot bound, met in
-                // order: a nested lookbehind before it was judged first.
-                if (null === $length[1]) {
-                    // "\X" matches a whole grapheme cluster, of no bounded length.
-                    if ($this->containsGraphemeCluster($branch)) {
-                        $this->raiseSemanticError(
-                            'Lookbehind is unbounded: \X matches a grapheme cluster of any length.',
-                            $this->lookbehindErrorPosition($node),
-                            ErrorCode::LookbehindUnbounded,
-                            'Match the characters the cluster may hold instead of \X.',
-                        );
-                    }
-
-                    $this->validateLookbehindBranchLength($node, $length, true);
-                }
-
-                // Up to PCRE2 10.42 the measure ends at the first item of no
-                // fixed length, and the lookbehind is refused there.
-                if ($unfixed) {
-                    $this->refuseVariableLengthLookbehind($node);
-                }
-            }
-        } finally {
-            $this->measuredLookbehind = $around;
-        }
-
-        // One branch of variable length makes the whole lookbehind variable,
-        // and then every branch answers to the variable-length limit.
-        $variable = false;
-        foreach ($lengths as [$min, $max]) {
-            $variable = $variable || $min !== $max;
-        }
-
-        foreach ($lengths as $length) {
-            $this->validateLookbehindBranchLength($node, $length, $variable);
-        }
-    }
-
-    /**
-     * Where PCRE reports a lookbehind it cannot take: its "(", or the last
-     * letter of the name of "(*plb:...)" and its kin.
-     */
-    private function lookbehindErrorPosition(GroupNode $node): int
-    {
-        $start = $node->startPosition;
-        $name = null === $this->pattern ? null : PcreVerb::nameBeforeColonAt($this->pattern, $start, PcreVerb::WORD_NAME);
-        if (null !== $name) {
-            return $start + \strlen($name) - 1;
-        }
-
-        return $start;
-    }
-
-    /**
-     * @param LengthRange $lengthRange
-     */
-    private function validateLookbehindBranchLength(GroupNode $node, array $lengthRange, bool $variable): void
-    {
-        $max = $lengthRange[1];
-
-        if (null === $max) {
-            $culprit = $this->findUnboundedLookbehindNode($node->child);
-            $detail = $culprit instanceof QuantifierNode ? $culprit->quantifier : null;
-            $hint = null !== $detail
-                ? \sprintf('Use a bounded quantifier instead of "%s".', $detail)
-                : 'Ensure the lookbehind has a bounded maximum length.';
-
-            // PCRE reports the lookbehind itself, not what makes it unbounded.
-            $this->raiseSemanticError(
-                'Lookbehind is unbounded. PCRE requires a bounded maximum length.',
-                $this->lookbehindErrorPosition($node),
-                ErrorCode::LookbehindUnbounded,
-                $hint,
-            );
-        }
-
-        // A fixed length is only capped by PCRE itself, as the branch is
-        // measured; a variable one by max_lookbehind_length, which stands for
-        // PCRE2's max_varlookbehind.
-        if ($variable && $max > $this->maxLookbehindLength) {
-            $this->raiseSemanticError(
-                \sprintf('Lookbehind exceeds the maximum length of %d (max=%d).', $this->maxLookbehindLength, $max),
-                $this->lookbehindErrorPosition($node),
-                ErrorCode::LookbehindTooLong,
-                'Reduce the lookbehind length, or raise max_lookbehind_length.',
-            );
-        }
-    }
-
-    private function refuseVariableLengthLookbehind(GroupNode $node): never
-    {
-        $this->raiseSemanticError(
-            'Variable-length lookbehind needs PCRE2 10.43, which PHP bundles from 8.4.',
-            $this->lookbehindErrorPosition($node),
-            ErrorCode::LookbehindVariableLengthNotSupported,
-            'Give each branch of the lookbehind a fixed length, or target PHP 8.4+.',
-        );
-    }
-
-    /**
-     * PCRE measures a lookbehind it meets inside the one it is measuring, and
-     * those a lookahead there holds, before it goes on: the innermost one
-     * that has no bound is the one reported.
-     *
-     * @param array<int, true> $expanding
-     */
-    private function validateNestedLookbehinds(NodeInterface $node, array $expanding): void
-    {
-        if ($node instanceof GroupNode && \in_array($node->type, [
-            GroupType::LookbehindPositive,
-            GroupType::LookbehindNegative,
-        ], true)) {
-            $this->validateLookbehindLength($node, $expanding);
-
-            return;
-        }
-
-        $children = match (true) {
-            $node instanceof GroupNode => [$node->child],
-            $node instanceof SequenceNode => $node->children,
-            $node instanceof AlternationNode => $node->alternatives,
-            $node instanceof QuantifierNode => [$node->node],
-            $node instanceof ConditionalNode => [$node->condition, $node->yes, $node->no],
-            $node instanceof DefineNode => [$node->content],
-            $node instanceof ScriptRunNode => null === $node->content ? [] : [$node->content],
-            default => [],
-        };
-
-        foreach ($children as $child) {
-            $this->validateNestedLookbehinds($child, $expanding);
-        }
-    }
-
-    /**
-     * The lookbehind measure, wired to the errors PCRE raises as it measures.
-     */
-    private function measuring(GroupIndex $groups): LookbehindLength
-    {
-        return new LookbehindLength(
-            $groups,
-            $this->unicodeMode,
-            $this->supportsVariableLengthLookbehind(),
-            $this->validateNestedLookbehinds(...),
-            $this->countLookbehindBranches(...),
-            $this->checkMeasuredReference(...),
-            $this->supports(PcreFeature::LookbehindInLookaheadMeasured),
-            $this->supports(PcreFeature::DefineSkippedInLookbehind),
-            !$this->supports(PcreFeature::ExtendedCharClass) || $this->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles),
-            !$this->supports(PcreFeature::LookbehindLengthOverflowRefused),
-        );
-    }
-
-    /**
-     * PCRE checks that the group a call or a reference names exists as it
-     * measures the lookbehind, counting relative references from where they
-     * stand. A numbered back reference in a pattern with a branch reset it
-     * does not measure at all, unless it failed already while being read:
-     * one back past the first group, or to group zero.
-     *
-     * @param list<GroupNode> $groups the groups it names
-     */
-    private function checkMeasuredReference(SubroutineNode|BackrefNode $node, array $groups): void
-    {
-        $unmeasured = $node instanceof BackrefNode
-            && $this->groups->hasBranchReset()
-            && !str_starts_with($node->ref, '\\k')
-            && 1 !== LibraryPcre::match('/^\\\\g[{<\']?\s*+(?:-|[+-]?0++(?!\d))/', $node->ref);
-        if ([] !== $groups || $unmeasured) {
-            return;
-        }
-
-        $node->accept($this);
-    }
-
-    /**
-     * Count the branches of a group PCRE measures for a lookbehind.
-     */
-    private function countLookbehindBranches(NodeInterface $groupBody): void
-    {
-        $this->countLookbehindMeasures($groupBody instanceof AlternationNode ? \count($groupBody->alternatives) : 1);
-    }
-
-    /**
-     * PCRE counts each branch it measures and gives up past its budget at
-     * once, at the lookbehind it is measuring: the measure stops there,
-     * however much is left of it.
-     */
-    private function countLookbehindMeasures(int $branches): void
-    {
-        $this->lookbehindBranchMeasures += $branches;
-        if ($this->lookbehindBranchMeasures > self::MAX_LOOKBEHIND_BRANCH_MEASURES && null !== $this->measuredLookbehind) {
-            $this->raiseSemanticError(
-                'Lookbehind is too complicated: PCRE gives up past 2,001 branches measured for the lookbehinds of a pattern.',
-                $this->lookbehindErrorPosition($this->measuredLookbehind),
-                ErrorCode::LookbehindTooComplex,
-                'Call fewer groups from the lookbehinds, use fewer lookbehinds, or drop the branch reset, which makes PCRE measure a group again each time.',
-            );
-        }
-    }
-
-    /**
      * "(?C1)(?=a)" as the condition of a conditional.
      */
     private function isCalloutThenAssertion(NodeInterface $condition): bool
@@ -1661,16 +1376,6 @@ final class Validator extends AbstractNodeVisitor
     }
 
     /**
-     * Variable-length lookbehinds arrived in PCRE2 10.43. php-src bundles
-     * 10.40 in PHP 8.2 and 10.42 in 8.3, so an explicit target below 8.4
-     * lacks them; for the running PHP, the PCRE2 it links decides.
-     */
-    private function supportsVariableLengthLookbehind(): bool
-    {
-        return $this->supports(PcreFeature::VariableLengthLookbehind);
-    }
-
-    /**
      * Where PCRE reports an error it reports past the character at fault
      * from PCRE2 10.47, given that later offset: $shift characters earlier
      * before 10.47, which every PHP bundles.
@@ -1683,64 +1388,6 @@ final class Validator extends AbstractNodeVisitor
     private function supports(PcreFeature $feature): bool
     {
         return $this->target->supports($feature);
-    }
-
-    private function findUnboundedLookbehindNode(NodeInterface $node): ?NodeInterface
-    {
-        if ($node instanceof BackrefNode || $node instanceof SubroutineNode) {
-            return $node;
-        }
-
-        if ($node instanceof QuantifierNode) {
-            [, $max] = QuantifierCounts::of($node->quantifier);
-            if (-1 === $max) {
-                return $node;
-            }
-
-            return $this->findUnboundedLookbehindNode($node->node);
-        }
-
-        if ($node instanceof GroupNode) {
-            return $this->findUnboundedLookbehindNode($node->child);
-        }
-
-        if ($node instanceof AlternationNode) {
-            foreach ($node->alternatives as $alt) {
-                $culprit = $this->findUnboundedLookbehindNode($alt);
-                if (null !== $culprit) {
-                    return $culprit;
-                }
-            }
-        }
-
-        if ($node instanceof SequenceNode) {
-            foreach ($node->children as $child) {
-                $culprit = $this->findUnboundedLookbehindNode($child);
-                if (null !== $culprit) {
-                    return $culprit;
-                }
-            }
-        }
-
-        if ($node instanceof ConditionalNode) {
-            return $this->findUnboundedLookbehindNode($node->condition)
-                ?? $this->findUnboundedLookbehindNode($node->yes)
-                ?? $this->findUnboundedLookbehindNode($node->no);
-        }
-
-        if ($node instanceof DefineNode) {
-            return $this->findUnboundedLookbehindNode($node->content);
-        }
-
-        if ($node instanceof CharClassNode) {
-            return $this->findUnboundedLookbehindNode($node->expression);
-        }
-
-        if ($node instanceof RangeNode) {
-            return $this->findUnboundedLookbehindNode($node->start) ?? $this->findUnboundedLookbehindNode($node->end);
-        }
-
-        return null;
     }
 
     /**
@@ -1917,21 +1564,6 @@ final class Validator extends AbstractNodeVisitor
         };
     }
 
-    private function containsGraphemeCluster(NodeInterface $node): bool
-    {
-        return match (true) {
-            $node instanceof CharTypeNode => 'X' === $node->value,
-            $node instanceof SequenceNode => $this->anyContainsGraphemeCluster($node->children),
-            $node instanceof AlternationNode => $this->anyContainsGraphemeCluster($node->alternatives),
-            // A lookaround adds no length to the lookbehind around it, and a
-            // nested lookbehind is checked on its own.
-            $node instanceof GroupNode => !$this->isLookaround($node) && $this->containsGraphemeCluster($node->child),
-            $node instanceof QuantifierNode => $this->containsGraphemeCluster($node->node),
-            $node instanceof ConditionalNode => $this->anyContainsGraphemeCluster([$node->condition, $node->yes, $node->no]),
-            default => false,
-        };
-    }
-
     private function isLookaround(GroupNode $node): bool
     {
         return \in_array($node->type, [
@@ -1940,20 +1572,6 @@ final class Validator extends AbstractNodeVisitor
             GroupType::LookbehindPositive,
             GroupType::LookbehindNegative,
         ], true);
-    }
-
-    /**
-     * @param array<NodeInterface> $nodes
-     */
-    private function anyContainsGraphemeCluster(array $nodes): bool
-    {
-        foreach ($nodes as $node) {
-            if ($this->containsGraphemeCluster($node)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -2132,9 +1750,9 @@ final class Validator extends AbstractNodeVisitor
             // Off a walk, the nodes measured on an earlier visit may be gone
             // and their ids taken by others.
             if (0 === $this->lookbehindDepth) {
-                $this->lookbehindLength->forget();
+                $this->lookbehindChecks->forget();
             }
-            $this->validateLookbehindLength($node);
+            $this->lookbehindChecks->measure($node, $this->positionOffset);
 
             return;
         }
@@ -2149,12 +1767,21 @@ final class Validator extends AbstractNodeVisitor
         $this->measuringLookbehind = true;
 
         try {
-            $this->validateLookbehindLength($node);
+            $this->lookbehindChecks->measure($node, $this->positionOffset);
         } catch (SemanticErrorException $error) {
             $this->lateErrors[0] ??= $error;
         } finally {
             $this->measuringLookbehind = false;
         }
+    }
+
+    /**
+     * A reference or a call met while a lookbehind is measured, which PCRE
+     * judges there: a missing group is refused at once.
+     */
+    private function checkMeasuredReference(BackrefNode|SubroutineNode $node): void
+    {
+        $node->accept($this);
     }
 
     /**

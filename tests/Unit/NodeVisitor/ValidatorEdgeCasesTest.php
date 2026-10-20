@@ -35,6 +35,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\EscapeChecks;
+use PHPRegex\Parser\Validation\LookbehindChecks;
 use PHPRegex\Parser\Validation\QuantifierCounts;
 use PHPRegex\Parser\Validation\ReferenceChecks;
 use PHPRegex\Parser\Validation\Validator;
@@ -323,17 +324,17 @@ final class ValidatorEdgeCasesTest extends TestCase
 
     public function test_find_unbounded_lookbehind_node_traverses_branches(): void
     {
-        $validator = new Validator();
-        $method = (new \ReflectionClass($validator))->getMethod('findUnboundedLookbehindNode');
+        $lookbehinds = new LookbehindChecks(GroupIndex::empty(), PcreTarget::runtime(), static function (): void {}, null, 255, false);
+        $method = (new \ReflectionClass($lookbehinds))->getMethod('findUnboundedNode');
 
         $group = new GroupNode(new BackrefNode('1', 0, 0), GroupType::Capturing, null, null, 0, 0);
-        $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $group));
+        $this->assertInstanceOf(BackrefNode::class, $method->invoke($lookbehinds, $group));
 
         $alternation = new AlternationNode([
             new LiteralNode('a', 0, 0),
             new QuantifierNode(new LiteralNode('b', 0, 0), '*', QuantifierType::Greedy, 0, 0),
         ], 0, 0);
-        $this->assertInstanceOf(QuantifierNode::class, $method->invoke($validator, $alternation));
+        $this->assertInstanceOf(QuantifierNode::class, $method->invoke($lookbehinds, $alternation));
 
         $conditional = new ConditionalNode(
             new LiteralNode('a', 0, 0),
@@ -342,13 +343,13 @@ final class ValidatorEdgeCasesTest extends TestCase
             0,
             0,
         );
-        $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $conditional));
+        $this->assertInstanceOf(BackrefNode::class, $method->invoke($lookbehinds, $conditional));
 
         $define = new DefineNode(new BackrefNode('1', 0, 0), 0, 0);
-        $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $define));
+        $this->assertInstanceOf(BackrefNode::class, $method->invoke($lookbehinds, $define));
 
         $range = new RangeNode(new BackrefNode('1', 0, 0), new LiteralNode('b', 0, 0), 0, 0);
-        $this->assertInstanceOf(BackrefNode::class, $method->invoke($validator, $range));
+        $this->assertInstanceOf(BackrefNode::class, $method->invoke($lookbehinds, $range));
     }
 
     public function test_unbounded_lookbehind_with_backref_has_generic_hint(): void
