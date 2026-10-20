@@ -46,7 +46,11 @@ final class InteropPresetCatalogueTest extends TestCase
     public function test_preset_names_are_the_package_slugs(): void
     {
         $this->assertSame(self::NAMES, InteropPresets::names());
-        $this->assertSame(self::NAMES, LintConfigSchema::interopPresets());
+        // The schema reads the names from the presets, and keeps no list
+        // of its own.
+        $schema = new \ReflectionClass(LintConfigSchema::class);
+        $this->assertFalse($schema->hasMethod('interopPresets'));
+        $this->assertFalse($schema->hasConstant('INTEROP_PRESETS'));
     }
 
     #[Test]

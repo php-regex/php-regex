@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
+use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Rule\RuleCatalog;
 
@@ -31,18 +32,18 @@ use PHPRegex\Linter\Rule\RuleCatalog;
 final class LintConfigSchema
 {
     /**
-     * The libraries extraction.interop can name, by package slug, in the
-     * order of InteropPresets::names().
+     * What each preset of extraction.interop reads, by its name: the names
+     * and their order are InteropPresets::names()'.
      */
-    private const INTEROP_PRESETS = [
-        'composer-pcre' => 'composer/pcre: Composer\Pcre\Preg and Composer\Pcre\Regex.',
-        'nette-utils' => 'nette/utils: Nette\Utils\Strings, whose pattern is the second argument.',
-        'spatie-regex' => 'spatie/regex: Spatie\Regex\Regex.',
-        'illuminate-support' => 'illuminate/support: Illuminate\Support\Str::match, matchAll, isMatch and replaceMatches.',
-        'phpunit' => 'phpunit/phpunit: the regex assertions and expectations, matched by method name on $this->, self::, static::, parent::, Assert:: and TestCase::, and as functions of PHPUnit\Framework.',
-        'webmozart-assert' => 'webmozart/assert: Webmozart\Assert\Assert::regex, notRegex and their nullOr and all variants.',
-        'beberlei-assert' => 'beberlei/assert: Assert\Assertion::regex, notRegex and their nullOr and all variants.',
-        'symfony-validator' => 'symfony/validator: the Symfony\Component\Validator\Constraints\Regex constraint, as new and as attribute.',
+    private const INTEROP_DESCRIPTIONS = [
+        InteropPresets::COMPOSER_PCRE => 'composer/pcre: Composer\\Pcre\\Preg and Composer\\Pcre\\Regex.',
+        InteropPresets::NETTE_UTILS => 'nette/utils: Nette\\Utils\\Strings, whose pattern is the second argument.',
+        InteropPresets::SPATIE_REGEX => 'spatie/regex: Spatie\\Regex\\Regex.',
+        InteropPresets::ILLUMINATE_SUPPORT => 'illuminate/support: Illuminate\\Support\\Str::match, matchAll, isMatch and replaceMatches.',
+        InteropPresets::PHPUNIT => 'phpunit/phpunit: the regex assertions and expectations, matched by method name on $this->, self::, static::, parent::, Assert:: and TestCase::, and as functions of PHPUnit\\Framework.',
+        InteropPresets::WEBMOZART_ASSERT => 'webmozart/assert: Webmozart\\Assert\\Assert::regex, notRegex and their nullOr and all variants.',
+        InteropPresets::BEBERLEI_ASSERT => 'beberlei/assert: Assert\\Assertion::regex, notRegex and their nullOr and all variants.',
+        InteropPresets::SYMFONY_VALIDATOR => 'symfony/validator: the Symfony\\Component\\Validator\\Constraints\\Regex constraint, as new and as attribute.',
     ];
 
     /**
@@ -232,16 +233,6 @@ final class LintConfigSchema
     }
 
     /**
-     * The interop presets extraction.interop may name.
-     *
-     * @return list<string>
-     */
-    public static function interopPresets(): array
-    {
-        return array_keys(self::INTEROP_PRESETS);
-    }
-
-    /**
      * @return array<string, mixed>
      */
     private static function optimizationOptions(): array
@@ -397,8 +388,8 @@ final class LintConfigSchema
     private static function extraction(): array
     {
         $presets = [];
-        foreach (self::INTEROP_PRESETS as $name => $description) {
-            $presets[] = ['const' => $name, 'description' => $description];
+        foreach (InteropPresets::names() as $name) {
+            $presets[] = ['const' => $name, 'description' => self::INTEROP_DESCRIPTIONS[$name] ?? throw new \LogicException(\sprintf('The interop preset "%s" has no description in the configuration schema.', $name))];
         }
 
         return [
@@ -409,9 +400,9 @@ final class LintConfigSchema
                 'interop' => [
                     'type' => 'array',
                     'description' => 'Libraries whose calls carry a regex pattern, beyond the native preg_* functions, RegexIterator and filter_var(). Every preset is on by default; a list reads exactly the presets it names, those a later release adds left off. Set to [] to read the native calls only. A name that is no preset is an error, which names the preset it most likely means.',
-                    'x-expected' => 'a list of distinct presets among '.implode(', ', array_keys(self::INTEROP_PRESETS)),
+                    'x-expected' => 'a list of distinct presets among '.implode(', ', InteropPresets::names()),
                     'x-item' => 'preset',
-                    'default' => array_keys(self::INTEROP_PRESETS),
+                    'default' => InteropPresets::names(),
                     'uniqueItems' => true,
                     'items' => ['oneOf' => $presets],
                     'examples' => [['composer-pcre'], ['composer-pcre', 'nette-utils'], []],

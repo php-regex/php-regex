@@ -176,7 +176,24 @@ final class LintConfigMessagesTest extends TestCase
     #[Test]
     public function test_schema_names_every_interop_preset(): void
     {
-        $this->assertSame(InteropPresets::names(), LintConfigSchema::interopPresets());
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['properties'] ?? null);
+        $this->assertIsArray($definition['properties']['extraction'] ?? null);
+        $this->assertIsArray($definition['properties']['extraction']['properties'] ?? null);
+        $interop = $definition['properties']['extraction']['properties']['interop'] ?? null;
+        $this->assertIsArray($interop);
+        $this->assertIsArray($interop['items'] ?? null);
+        $this->assertIsArray($interop['items']['oneOf'] ?? null);
+
+        $named = [];
+        foreach ($interop['items']['oneOf'] as $preset) {
+            $this->assertIsArray($preset);
+            $this->assertIsString($preset['description'] ?? null);
+            $this->assertNotSame('', $preset['description']);
+            $named[] = $preset['const'] ?? null;
+        }
+        $this->assertSame(InteropPresets::names(), $named);
+        $this->assertSame(InteropPresets::names(), $interop['default'] ?? null);
     }
 
     #[Test]
