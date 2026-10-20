@@ -66,7 +66,7 @@ final class LintCommand extends Command
      * @var string
      */
     protected $signature = 'regex:lint
-        {paths?* : The paths to analyze}
+        {paths?* : The paths to analyze, read from the working directory (default: the configured paths, read from the base path)}
         {--exclude=* : Paths to exclude}
         {--min-savings=1 : Minimum optimization savings in characters}
         {--j|jobs= : Parallel workers for analysis (auto-detected if not specified)}
@@ -104,8 +104,12 @@ final class LintCommand extends Command
         /** @var array<string>|null $pathsArg */
         $pathsArg = $this->argument('paths');
         // A null or empty php-regex.paths reads app/, the published default.
+        // The configured paths are the application's, read from its base
+        // path whatever directory the command runs from; the paths given on
+        // the command line are read from the working directory.
         $defaultPaths = array_values(array_filter((array) config('php-regex.paths', ['app']), \is_string(...)));
-        $paths = !empty($pathsArg) ? $pathsArg : ([] === $defaultPaths ? ['app'] : $defaultPaths);
+        $configured = null === $pathsArg || [] === $pathsArg;
+        $paths = $configured ? self::fromBasePath([] === $defaultPaths ? ['app'] : $defaultPaths) : $pathsArg;
 
         /** @var array<string>|null $excludeOption */
         $excludeOption = $this->option('exclude');
@@ -204,6 +208,10 @@ final class LintCommand extends Command
                 // linted. A setting that is no list (one path) is read as one.
                 declarationPaths: $this->declarationPaths($paths),
                 vendorPaths: [base_path('vendor')],
+                // An exclude names a directory of the application: one of the
+                // same name above it, where the application lives (Testbench's
+                // skeleton lives under vendor/), excludes nothing.
+                excludeBase: $configured ? base_path() : null,
             );
 
             if ($showProgress) {
@@ -458,7 +466,21 @@ final class LintCommand extends Command
     {
         $configured = array_values(array_filter((array) config('php-regex.paths', ['app']), \is_string(...)));
 
-        return [] === $configured ? array_values($linted) : $configured;
+        return [] === $configured ? array_values($linted) : self::fromBasePath($configured);
+    }
+
+    /**
+     * The configured paths read from the application's base path.
+     *
+     * @param list<string> $paths
+     *
+     * @return list<string>
+     */
+    private static function fromBasePath(array $paths): array
+    {
+        $base = base_path();
+
+        return array_map(static fn (string $path): string => RelativePathHelper::absolutize($path, $base), $paths);
     }
 
     /**

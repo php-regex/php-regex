@@ -70,12 +70,18 @@ return [
         'interop' => null,   // null: every preset; a list: exactly those; []: native calls only
         'functions' => [],   // your helpers: "App\Support\Str::matches#1"
     ],
-    'paths' => ['app'],
-    'exclude' => ['vendor', 'node_modules', 'storage'],
+    'paths' => ['app'],                                // read from base_path()
+    'exclude' => ['vendor', 'node_modules', 'storage'], // directories of the application
     'report_unmatched_ignores' => true, // report the @regex-ignore markers that silence nothing
     'ide' => env('PHP_REGEX_IDE', env('APP_EDITOR', null)),
 ];
 ```
+
+`paths` and `exclude` are read from `base_path()`: `regex:lint` lints the
+same files whatever directory it runs from. An `exclude` names a directory
+of the application, wherever it lies under the paths, never one above it:
+Testbench's skeleton, which lives under `vendor/`, is linted. The paths given
+to `regex:lint` on the command line are read from the working directory.
 
 A key missing from your file takes the package default, inside each section
 too: a file published by an older release keeps working after an upgrade.

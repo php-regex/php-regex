@@ -80,11 +80,16 @@ php_regex:
         possessive: false
         factorize: false
         min_quantifier_count: 4
-    paths: [src]
-    exclude: [vendor]
+    paths: [src]       # read from %kernel.project_dir%
+    exclude: [vendor]  # a directory of the project, wherever it lies under the paths
     report_unmatched_ignores: true  # report the @regex-ignore markers that silence nothing
     ide: '%env(default::SYMFONY_IDE)%'
 ```
+
+`paths` and `exclude` are read from `%kernel.project_dir%`: `regex:lint`
+lints the same files whatever directory it runs from. The paths given to
+`regex:lint` on the command line are read from the working directory, as
+`lint:yaml` reads them.
 
 A value the bundle cannot read stops the container compile with the key
 named: an unknown ReDoS threshold, a `php_version` that is no version, a

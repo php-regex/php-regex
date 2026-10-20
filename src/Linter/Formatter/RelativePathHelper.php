@@ -86,6 +86,19 @@ final class RelativePathHelper
     }
 
     /**
+     * $path read from $base: a relative path is put under the base, as
+     * written; an absolute path, a stream URL and an empty name are kept.
+     */
+    public static function absolutize(string $path, string $base): string
+    {
+        if ('' === $path || str_contains($path, '://') || '' !== self::root(self::slashes($path))) {
+            return $path;
+        }
+
+        return rtrim($base, '/\\').'/'.$path;
+    }
+
+    /**
      * The path with "/" separators on Windows; elsewhere a backslash is
      * part of a name.
      */

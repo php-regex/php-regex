@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` reads `paths` and `exclude` of `config/php-regex.php` from
+   `base_path()`, whatever directory it runs from; the paths given on the
+   command line are read from the working directory.
  * `locale` in `config/php-regex.php` names the `LC_CTYPE` locale
    `regex:lint` judges patterns under; the `Regex` service judges under the
    running PHP's.

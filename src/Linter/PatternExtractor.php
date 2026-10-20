@@ -74,12 +74,15 @@ final class PatternExtractor
      *                                             functions; what they hold is not linted
      * @param array<string>      $vendorPaths      Library paths (vendor/) read the same way; a project
      *                                             declaration wins over a copy found there
+     * @param string|null        $excludeBase      The directory the excludes are read from: a file under it
+     *                                             is matched by its path below it, as a run from there walks
+     *                                             it; null matches each file by the path it is walked as
      *
      * @return array<PatternOccurrence>
      */
-    public function extract(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
+    public function extract(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = [], ?string $excludeBase = null): array
     {
-        return $this->collect(false, $paths, $excludePaths, $progress, $workers, $declarationPaths, $vendorPaths);
+        return $this->collect(false, $paths, $excludePaths, $progress, $workers, $declarationPaths, $vendorPaths, $excludeBase);
     }
 
     /**
@@ -96,9 +99,9 @@ final class PatternExtractor
      *
      * @return array<PatternOccurrence>
      */
-    public function scan(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = []): array
+    public function scan(array $paths, ?array $excludePaths = null, ?LintProgress $progress = null, int $workers = 1, array $declarationPaths = [], array $vendorPaths = [], ?string $excludeBase = null): array
     {
-        return $this->collect(true, $paths, $excludePaths, $progress, $workers, $declarationPaths, $vendorPaths);
+        return $this->collect(true, $paths, $excludePaths, $progress, $workers, $declarationPaths, $vendorPaths, $excludeBase);
     }
 
     /**
@@ -111,11 +114,11 @@ final class PatternExtractor
      *
      * @return array<PatternOccurrence>
      */
-    private function collect(bool $scanned, array $paths, ?array $excludePaths, ?LintProgress $progress, int $workers, array $declarationPaths, array $vendorPaths): array
+    private function collect(bool $scanned, array $paths, ?array $excludePaths, ?LintProgress $progress, int $workers, array $declarationPaths, array $vendorPaths, ?string $excludeBase): array
     {
         $excludePaths ??= ['vendor'];
         $progress?->step(LintProgress::STEP_FILES, null);
-        $phpFiles = $this->collectPhpFiles($paths, $excludePaths, $progress);
+        $phpFiles = $this->collectPhpFiles($paths, $excludePaths, $progress, $excludeBase);
 
         if ([] === $phpFiles) {
             $progress?->finish();
@@ -374,8 +377,9 @@ final class PatternExtractor
      *
      * @return list<string>
      */
-    private function collectPhpFiles(array $paths, array $excludePaths, ?LintProgress $progress = null): array
+    private function collectPhpFiles(array $paths, array $excludePaths, ?LintProgress $progress = null, ?string $excludeBase = null): array
     {
+        $basePrefix = null === $excludeBase ? null : rtrim($excludeBase, '/\\').\DIRECTORY_SEPARATOR;
         $normalizedExcludePaths = [];
         foreach ($excludePaths as $excludePath) {
             $excludePath = trim($excludePath, '/\\');
@@ -412,6 +416,7 @@ final class PatternExtractor
                 }
 
                 $filePath = $file->getPathname();
+                $matchedPath = null !== $basePrefix && str_starts_with($filePath, $basePrefix) ? substr($filePath, \strlen($basePrefix)) : $filePath;
 
                 // Skip template files by default
                 if ($this->isTemplateFile($filePath)) {
@@ -421,7 +426,7 @@ final class PatternExtractor
                 // Skip excluded directories
                 $excluded = false;
                 foreach ($normalizedExcludePaths as $excludePath) {
-                    if (str_contains($filePath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR) || str_starts_with($filePath, $excludePath.\DIRECTORY_SEPARATOR)) {
+                    if (str_contains($matchedPath, \DIRECTORY_SEPARATOR.$excludePath.\DIRECTORY_SEPARATOR) || str_starts_with($matchedPath, $excludePath.\DIRECTORY_SEPARATOR)) {
                         $excluded = true;
 
                         break;

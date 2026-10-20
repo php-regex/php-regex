@@ -424,6 +424,47 @@ final class PatternExtractorTest extends TestCase
     }
 
     /**
+     * Read from a base, an exclude matches a file under it by the path
+     * below it, as a run from the base walks it: a directory of the same
+     * name above the base excludes nothing. A file outside the base is
+     * matched by the path it is walked as.
+     *
+     * @param list<string> $expected relative to the temporary root
+     */
+    #[DataProvider('provideExcludeBases')]
+    public function test_excludes_are_read_from_the_base_they_are_given(?string $base, array $expected): void
+    {
+        $root = $this->makeProject([
+            'vendor/app/src/Keep.php' => "<?php\n",
+            'vendor/app/src/Legacy/Old.php' => "<?php\n",
+            'vendor/app/src/Generated/Proxy.php' => "<?php\n",
+            'vendor/app/vendor/acme/Lib.php' => "<?php\n",
+            'vendor/lib/Shared.php' => "<?php\n",
+        ]);
+        $this->extractor->method('extract')->willReturnCallback(self::onePerFile(...));
+
+        $occurrences = $this->patternExtractor->extract(
+            [$root.'/vendor/app/src', $root.'/vendor/app/vendor', $root.'/vendor/lib'],
+            ['vendor', 'src/Legacy', '/Generated/'],
+            excludeBase: null === $base ? null : $root.'/'.$base,
+        );
+
+        $files = array_map(static fn (PatternOccurrence $occurrence): string => substr($occurrence->file, \strlen($root) + 1), $occurrences);
+        sort($files);
+        $this->assertSame($expected, $files);
+    }
+
+    /**
+     * @return iterable<string, array{base: string|null, expected: list<string>}>
+     */
+    public static function provideExcludeBases(): iterable
+    {
+        yield 'no base: every file under a vendor directory' => ['base' => null, 'expected' => []];
+        yield 'the project' => ['base' => 'vendor/app', 'expected' => ['vendor/app/src/Keep.php']];
+        yield 'the project, written with a trailing slash' => ['base' => 'vendor/app/', 'expected' => ['vendor/app/src/Keep.php']];
+    }
+
+    /**
      * One occurrence per file, named after it.
      *
      * @param array<string> $files

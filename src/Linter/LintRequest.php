@@ -36,6 +36,8 @@ final class LintRequest
      *                                                 of the analysis
      * @param bool             $reportUnmatchedIgnores whether an inline marker, or an identifier it names,
      *                                                 that silences nothing is reported as regex.ignore.unmatched
+     * @param string|null      $excludeBase            the directory the excludes are read from, the project's when
+     *                                                 the paths are; null reads them as the files are walked
      */
     public function __construct(
         public readonly array $paths,
@@ -51,6 +53,7 @@ final class LintRequest
         public readonly array $vendorPaths = [],
         public readonly bool $checkComplexity = false,
         public readonly bool $reportUnmatchedIgnores = true,
+        public readonly ?string $excludeBase = null,
     ) {}
 
     /**

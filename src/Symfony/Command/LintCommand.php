@@ -142,7 +142,7 @@ final class LintCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('paths', InputArgument::IS_ARRAY | InputArgument::OPTIONAL, 'The paths to analyze', array_values($this->defaultPaths))
+            ->addArgument('paths', InputArgument::IS_ARRAY | InputArgument::OPTIONAL, \sprintf('The paths to analyze, read from the working directory (default: %s, read from the project directory)', implode(', ', $this->defaultPaths)))
             ->addOption('exclude', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Paths to exclude', $this->defaultExcludePaths)
             ->addOption('min-savings', null, InputOption::VALUE_OPTIONAL, 'Minimum optimization savings in characters', 1)
              ->addOption('jobs', 'j', InputOption::VALUE_OPTIONAL, 'Parallel workers for analysis (auto-detected if not specified)', -1)
@@ -192,7 +192,13 @@ final class LintCommand extends Command
         $this->pathHelper = new RelativePathHelper($workingDir);
         $this->linkFormatter = new LinkFormatter($this->editorUrl, $this->pathHelper);
 
-        $paths = $this->normalizeStringList($input->getArgument('paths'));
+        // The configured paths are the project's, read from its directory
+        // whatever directory the command runs from; the paths given on the
+        // command line are read from the working directory, as lint:yaml
+        // reads them.
+        $givenPaths = $this->normalizeStringList($input->getArgument('paths'));
+        $configured = [] === $givenPaths;
+        $paths = $configured ? $this->fromProject($this->defaultPaths) : $givenPaths;
         $exclude = $this->normalizeStringList($input->getOption('exclude'));
         $minSavingsValue = $input->getOption('min-savings');
         $minSavings = is_numeric($minSavingsValue) ? (int) $minSavingsValue : 1;
@@ -274,8 +280,11 @@ final class LintCommand extends Command
                 reportUnmatchedIgnores: $this->reportUnmatchedIgnores,
                 // The functions marked #[RegexPattern] are read in the
                 // configured paths and in vendor/, whatever paths are linted.
-                declarationPaths: $this->defaultPaths,
+                declarationPaths: $this->fromProject($this->defaultPaths),
                 vendorPaths: [($this->projectDir ?? $workingDir ?? '.').'/vendor'],
+                // An exclude names a directory of the project: one of the same
+                // name above it, where the project lives, excludes nothing.
+                excludeBase: $configured ? $this->projectDir : null,
             );
             $patterns = $lint->collectPatterns($request, $progress);
         } catch (\Throwable $e) {
@@ -457,6 +466,24 @@ final class LintCommand extends Command
         }
 
         return $format;
+    }
+
+    /**
+     * The configured paths read from the project directory; as they are
+     * written when the bundle knows of none.
+     *
+     * @param array<string> $paths
+     *
+     * @return array<string>
+     */
+    private function fromProject(array $paths): array
+    {
+        $projectDir = $this->projectDir;
+        if (null === $projectDir) {
+            return $paths;
+        }
+
+        return array_map(static fn (string $path): string => RelativePathHelper::absolutize($path, $projectDir), $paths);
     }
 
     /**

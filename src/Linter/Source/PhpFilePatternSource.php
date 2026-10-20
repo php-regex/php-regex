@@ -44,6 +44,7 @@ final class PhpFilePatternSource implements PatternSourceInterface
             $context->workers,
             $context->declarationPaths,
             $context->vendorPaths,
+            $context->excludeBase,
         );
     }
 }

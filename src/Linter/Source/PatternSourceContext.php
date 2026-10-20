@@ -30,6 +30,8 @@ final class PatternSourceContext
      *                                        besides the paths linted: the project's paths
      * @param array<string> $vendorPaths      the libraries read the same way, vendor/: a project
      *                                        declaration wins over a copy found there
+     * @param string|null   $excludeBase      the directory the excludes are read from; null reads
+     *                                        them as the files are walked
      */
     public function __construct(
         public readonly array $paths,
@@ -39,6 +41,7 @@ final class PatternSourceContext
         public readonly int $workers = 1,
         public readonly array $declarationPaths = [],
         public readonly array $vendorPaths = [],
+        public readonly ?string $excludeBase = null,
     ) {}
 
     public function isSourceEnabled(string $name): bool

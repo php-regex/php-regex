@@ -62,7 +62,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind the automata comparisons |
 | `optimizations.*` | `digits`, `word`, `ranges`, `canonicalize_char_classes` `true`; `possessive`, `factorize` `false`; `min_quantifier_count` `4` | Default optimization switches for `regex:lint` |
-| `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips |
+| `paths`, `exclude` | `['src']`, `['vendor']` | Directories `regex:lint` scans, and skips, read from `%kernel.project_dir%` whatever directory it runs from; paths given on the command line are read from the working directory |
 | `report_unmatched_ignores` | `true` | `regex:lint` reports each `@regex-ignore` marker, or issue identifier it names, that silences nothing, as `regex.ignore.unmatched` |
 | `ide` | `'%env(default::SYMFONY_IDE)%'` | IDE behind the clickable links; falls back to `framework.ide` |
 

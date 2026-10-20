@@ -103,6 +103,7 @@ final class LintService
             $request->analysisWorkers,
             $request->declarationPaths,
             $request->vendorPaths,
+            $request->excludeBase,
         );
 
         return $this->sources->collect($context);

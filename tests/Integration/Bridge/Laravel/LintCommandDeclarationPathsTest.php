@@ -196,7 +196,7 @@ final class LintCommandDeclarationPathsTest extends LaravelTestCase
         ]);
 
         $this->assertSame(0, $exitCode, Artisan::output());
-        $this->assertSame(['app'], $source->context?->paths);
+        $this->assertSame([$project.'/app'], $source->context?->paths);
     }
 
     /**

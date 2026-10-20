@@ -53,6 +53,29 @@ final class RelativePathHelperTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{base: string, path: string, expected: string}>
+     */
+    public static function provideAbsolutePaths(): iterable
+    {
+        yield 'a relative path' => ['base' => '/base', 'path' => 'src', 'expected' => '/base/src'];
+        yield 'a base written with a trailing slash' => ['base' => '/base/', 'path' => 'src/lib', 'expected' => '/base/src/lib'];
+        yield 'a path written with dots, kept as written' => ['base' => '/base', 'path' => './src/../lib', 'expected' => '/base/./src/../lib'];
+        yield 'an absolute path' => ['base' => '/base', 'path' => '/other/src', 'expected' => '/other/src'];
+        yield 'a drive path' => ['base' => '/base', 'path' => 'C:/root/src', 'expected' => 'C:/root/src'];
+        yield 'a Windows drive path' => ['base' => '/base', 'path' => 'C:\\root\\src', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? 'C:\\root\\src' : '/base/C:\\root\\src'];
+        yield 'a Windows rooted path' => ['base' => '/base', 'path' => '\\root\\src', 'expected' => '\\' === \DIRECTORY_SEPARATOR ? '\\root\\src' : '/base/\\root\\src'];
+        yield 'a stream URL' => ['base' => '/base', 'path' => 'phar:///a.phar/src', 'expected' => 'phar:///a.phar/src'];
+        yield 'an empty path' => ['base' => '/base', 'path' => '', 'expected' => ''];
+        yield 'a drive letter alone' => ['base' => '/base', 'path' => 'C:', 'expected' => '/base/C:'];
+    }
+
+    #[DataProvider('provideAbsolutePaths')]
+    public function test_a_relative_path_is_read_from_the_base(string $base, string $path, string $expected): void
+    {
+        $this->assertSame($expected, RelativePathHelper::absolutize($path, $base));
+    }
+
+    /**
      * A base named through a symbolic link, as $PWD may name the working
      * directory, holds the files of the directory it points to.
      */

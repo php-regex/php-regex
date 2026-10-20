@@ -277,7 +277,8 @@ final class LintCommandTest extends TestCase
             (new CommandTester($command))->execute(['paths' => ['src/Controller/One.php'], '--format' => 'json']);
         }
 
-        $this->assertSame([['src', 'lib'], ['src', 'lib']], $source->declarationPaths);
+        // Read from the project directory, as written when there is none.
+        $this->assertSame([['/app/src', '/app/lib'], ['src', 'lib']], $source->declarationPaths);
         $this->assertSame([['/app/vendor'], [getcwd().'/vendor']], $source->vendorPaths);
     }
 
