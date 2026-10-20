@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Syntax;
 
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -231,6 +232,15 @@ final class ParseState
     public function error(string $message, ErrorCode $code, int $position): ParserException
     {
         return SyntaxErrorException::withContext($message, $code, $position, $this->pattern);
+    }
+
+    /**
+     * An error in text read apart, which counts positions from its own start,
+     * reported where it stands in the whole pattern.
+     */
+    public function movedError(LexerException|ParserException $error, int $offset): LexerException|ParserException
+    {
+        return $error::withContext($error->getMessage(), $error->errorCode, (int) $error->position + $offset, $this->pattern, $error);
     }
 
     /**

@@ -210,5 +210,6 @@ final class ParserAccessor
         $this->reflection->getProperty('state')->setValue($this->parser, new ParseState($stream, \is_string($pattern) ? $pattern : '', $target, false, false));
         $this->reflection->getProperty('classes')->setValue($this->parser, null);
         $this->reflection->getProperty('conditions')->setValue($this->parser, null);
+        $this->reflection->getProperty('extendedClasses')->setValue($this->parser, null);
     }
 }
