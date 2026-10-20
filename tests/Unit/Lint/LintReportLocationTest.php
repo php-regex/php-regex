@@ -152,10 +152,11 @@ final class LintReportLocationTest extends TestCase
      */
     public static function provideIssueOrders(): iterable
     {
-        // The duplicate branch is found at 6 before the group at 0.
+        // The duplicate branch is found at 6 before the group at 0; the
+        // second redundant group, at 6 too, comes after it by identifier.
         yield 'by position' => [
             'pattern' => '/(?:a)|(?:a)/',
-            'expected' => [[0, 'regex.lint.group.redundant'], [6, 'regex.lint.alternation.duplicateDisjunction']],
+            'expected' => [[0, 'regex.lint.group.redundant'], [6, 'regex.lint.alternation.duplicateDisjunction'], [6, 'regex.lint.group.redundant']],
         ];
         yield 'by identifier on one position' => [
             'pattern' => '/(b+)+$/',

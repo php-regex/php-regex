@@ -484,6 +484,11 @@ final class LintService
     }
 
     /**
+     * The issues with each one reported twice dropped: a file a run is
+     * given twice is read twice. Two findings of one pattern that share
+     * their message, as two useless quantifiers, stand apart by their
+     * position in the pattern.
+     *
      * @phpstan-param array<LintIssue> $issues
      *
      * @phpstan-return array<LintIssue>
@@ -494,11 +499,13 @@ final class LintService
         $unique = [];
 
         foreach ($issues as $issue) {
-            $key = ($issue['file'] ?? '')
-                .':'.($issue['line'] ?? 0)
-                .':'.($issue['column'] ?? 0)
+            $key = $issue['file']
+                .':'.$issue['line']
+                .':'.($issue['column'] ?? '')
                 .':'.($issue['fileOffset'] ?? '')
-                .':'.($issue['message'] ?? '');
+                .':'.($issue['position'] ?? '')
+                .':'.($issue['issueId'] ?? '')
+                .':'.$issue['message'];
             if (isset($seen[$key])) {
                 continue;
             }

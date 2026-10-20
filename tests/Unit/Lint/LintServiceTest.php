@@ -235,6 +235,38 @@ final class LintServiceTest extends TestCase
         $this->assertCount(1, $result->results); // Should be deduplicated to one result
     }
 
+    /**
+     * @return iterable<string, array{pattern: string, issueId: string, positions: list<int>}>
+     */
+    public static function provideIssuesSharingAMessage(): iterable
+    {
+        yield 'two useless quantifiers' => ['pattern' => '/a{1}b{1}/', 'issueId' => 'regex.lint.quantifier.useless', 'positions' => [0, 4]];
+        yield 'two redundant classes' => ['pattern' => '/[aa]x[bb]/', 'issueId' => 'regex.lint.charclass.redundant', 'positions' => [0, 5]];
+        yield 'two redundant groups' => ['pattern' => '/(?:a)b(?:c)/', 'issueId' => 'regex.lint.group.redundant', 'positions' => [0, 6]];
+    }
+
+    /**
+     * Two findings of one rule in one pattern share their message and
+     * differ by their position: both are reported.
+     *
+     * @param list<int> $positions
+     */
+    #[DataProvider('provideIssuesSharingAMessage')]
+    public function test_analyze_keeps_each_issue_of_a_pattern_that_shares_its_message(string $pattern, string $issueId, array $positions): void
+    {
+        $request = new LintRequest(['.'], [], 0);
+        $occurrence = new PatternOccurrence($pattern, 'test.php', 1, 'preg_match()', column: 12, fileOffset: 40);
+
+        $service = new LintService($this->analysis, $this->sources);
+        // The same occurrence twice, as a file given by its path and inside
+        // its directory is read twice: its findings are reported once.
+        $result = $service->analyze([$occurrence, $occurrence], $request, null);
+
+        $this->assertCount(1, $result->results);
+        $found = array_values(array_filter($result->results[0]['issues'], static fn (array $issue): bool => $issueId === ($issue['issueId'] ?? null)));
+        $this->assertSame($positions, array_map(static fn (array $issue): ?int => $issue['position'] ?? null, $found));
+    }
+
     #[Test]
     public function test_analyze_does_not_deduplicate_patterns_with_different_offsets(): void
     {
