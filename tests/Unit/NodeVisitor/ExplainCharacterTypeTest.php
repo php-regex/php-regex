@@ -45,6 +45,10 @@ final class ExplainCharacterTypeTest extends TestCase
 
     private const UNICODE_SPACE = 'A whitespace character: a Unicode separator (\p{Z}), or a horizontal or vertical whitespace character (\h, \v)';
 
+    private const GRAPHEME = 'An extended grapheme cluster: a character with the marks that combine with it, or a \r\n pair';
+
+    private const BYTE = 'One code unit: a single byte, a newline included';
+
     #[Test]
     #[DataProvider('provideTypes')]
     public function test_a_character_type_is_explained_by_the_flags_in_force(string $pattern, string $description, string $subject, int $matches): void
@@ -95,6 +99,15 @@ final class ExplainCharacterTypeTest extends TestCase
         yield 'a digit in a group setting an ASCII option' => ['pattern' => '/(?aD:\d)/u', 'description' => self::DIGIT, 'subject' => '٣', 'matches' => 0];
         // The other options leave the three types alone.
         yield 'a digit after an ASCII POSIX option' => ['pattern' => '/(?aP)\d/u', 'description' => self::UNICODE_DIGIT, 'subject' => '٣', 'matches' => 1];
+        yield 'a grapheme cluster under u' => ['pattern' => '/^\X$/u', 'description' => self::GRAPHEME, 'subject' => "e\u{301}", 'matches' => 1];
+        yield 'a carriage return and line feed as one cluster' => ['pattern' => '/^\X$/u', 'description' => self::GRAPHEME, 'subject' => "\r\n", 'matches' => 1];
+        yield 'a grapheme cluster of bytes without u' => ['pattern' => '/^\X$/', 'description' => self::GRAPHEME, 'subject' => "e\u{301}", 'matches' => 0];
+        yield 'anything but a newline' => ['pattern' => '/a\Nb/', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => "a\nb", 'matches' => 0];
+        yield 'anything but a newline under s' => ['pattern' => '/a\Nb/s', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => "a\nb", 'matches' => 0];
+        yield 'anything but a newline under CR' => ['pattern' => '/(*CR)a\Nb/', 'description' => 'Any character but a newline (\r), whatever s says', 'subject' => "a\nb", 'matches' => 1];
+        yield 'anything but a newline is one character under u' => ['pattern' => '/^\N$/u', 'description' => 'Any character but a newline (\n), whatever s says', 'subject' => 'é', 'matches' => 1];
+        yield 'one byte, a newline included' => ['pattern' => '/^\C$/', 'description' => self::BYTE, 'subject' => "\n", 'matches' => 1];
+        yield 'one byte of a character' => ['pattern' => '/^\C\C$/', 'description' => self::BYTE, 'subject' => 'é', 'matches' => 1];
     }
 
     /**

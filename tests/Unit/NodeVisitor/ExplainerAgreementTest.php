@@ -47,7 +47,9 @@ final class ExplainerAgreementTest extends TestCase
         yield 'a digit' => ['pattern' => '/\d/', 'description' => 'A digit: [0-9]'];
         yield 'a horizontal space' => ['pattern' => '/\h/', 'description' => 'A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]'];
         yield 'a linebreak' => ['pattern' => '/\R/', 'description' => 'Any Unicode linebreak sequence'];
-        yield 'an unknown type' => ['pattern' => '/\X/', 'description' => 'unknown (\X)'];
+        yield 'a grapheme cluster' => ['pattern' => '/\X/', 'description' => 'An extended grapheme cluster: a character with the marks that combine with it, or a \r\n pair'];
+        yield 'anything but a newline' => ['pattern' => '/\N/', 'description' => 'Any character but a newline (\n), whatever s says'];
+        yield 'one byte' => ['pattern' => '/\C/', 'description' => 'One code unit: a single byte, a newline included'];
         yield 'the start of the subject' => ['pattern' => '/^a/', 'description' => 'the start of the subject'];
         yield 'the start of a line' => ['pattern' => '/^a/m', 'description' => 'the start of a line: the start of the subject, or just after a newline (\n) that does not end it'];
         yield 'the end of the subject' => ['pattern' => '/a$/', 'description' => 'the end of the subject, or just before a newline (\n) that ends it'];

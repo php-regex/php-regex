@@ -42,6 +42,8 @@ final class Vocabulary
         'w' => 'A word character: [a-zA-Z_0-9], or a letter or digit of the LC_CTYPE locale when it is not C',
         'W' => 'A non-word character: [^\\w]',
         'R' => 'Any Unicode linebreak sequence (\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])',
+        'X' => 'An extended grapheme cluster: a character with the marks that combine with it, or a \\r\\n pair',
+        'C' => 'One code unit: a single byte, a newline included',
     ];
 
     public const UNICODE_PROPERTIES = [
@@ -85,12 +87,17 @@ final class Vocabulary
     /**
      * What a character type matches, by the settings in force: "\d", "\s"
      * and "\w" by the Unicode tables under Unicode properties, by ASCII
-     * otherwise; null for a type the table does not hold.
+     * otherwise, "\N" by what a newline is; null for a type the table does
+     * not hold.
      */
     public static function charType(string $type, MatchSettings $settings): ?string
     {
         if (isset(self::UNICODE_CHAR_TYPES[$type]) && $settings->unicodeType($type)) {
             return self::UNICODE_CHAR_TYPES[$type];
+        }
+
+        if ('N' === $type) {
+            return \sprintf('Any character but %s, whatever s says', self::newline($settings->newline));
         }
 
         return self::CHAR_TYPES[$type] ?? null;
