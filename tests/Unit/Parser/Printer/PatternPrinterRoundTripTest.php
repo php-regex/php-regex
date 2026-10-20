@@ -146,6 +146,7 @@ final class PatternPrinterRoundTripTest extends TestCase
         yield 'a lookbehind by name in a lookahead' => ['pattern' => '<(*pla:(*plb:a))>', 'subjects' => ['a', 'b']];
         yield 'a lookbehind by name as a condition after a callout' => ['pattern' => '<x(?(?C1)(*plb:x)ab|cd)$>', 'subjects' => ['xab', 'xcd', 'ab']];
         yield 'a non-atomic lookbehind by name' => ['pattern' => '<(*naplb:(.)..|(.)...)(\1|\2)>', 'subjects' => ['abcb', 'abca', 'abcd']];
+        yield 'a lookbehind by name holding the bracket a verb name needs' => ['pattern' => '<\[(*MARK:<)\Q[\E(*plb:\Q>\E)(*MARK:[)>', 'subjects' => ['[[>', '[[', '[>']];
         yield 'the word boundaries of a POSIX spelling' => ['pattern' => '<[[:<:]]été[[:>:]]>u', 'subjects' => ['été', 'aété', 'étéa']];
     }
 

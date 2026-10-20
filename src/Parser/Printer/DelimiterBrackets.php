@@ -302,9 +302,9 @@ final class DelimiterBrackets
     {
         $body = self::controlBackslashesSpelledAll($body);
         $tokens = self::markedTokens($body, $mark, $opening, $closing);
-        $included = array_column($tokens, 5);
         $order = array_keys($tokens);
-        if (!self::paired($tokens, $included, $order, true) || !self::paired($tokens, $included, array_reverse($order), false)) {
+        $included = self::pairing($tokens, $order, false) ?? self::pairing($tokens, $order, true);
+        if (null === $included) {
             return null;
         }
 
@@ -877,19 +877,40 @@ final class DelimiterBrackets
     }
 
     /**
+     * Whether each token is counted once the marked items are turned so
+     * that every bracket PHP counts pairs, read left to right then right to
+     * left (see paired); null when nothing can turn. A group with nothing to
+     * pair takes its name first where $groupsFirst, rather than use up a
+     * literal bracket a bracket nothing marks may need later.
+     *
+     * @param list<array{int, int, string, bool, int, bool}> $tokens
+     * @param list<int>                                      $order
+     *
+     * @return array<int, bool>|null
+     */
+    private static function pairing(array $tokens, array $order, bool $groupsFirst): ?array
+    {
+        $included = array_column($tokens, 5);
+
+        return self::paired($tokens, $included, $order, true, $groupsFirst) && self::paired($tokens, $included, array_reverse($order), false, $groupsFirst)
+            ? $included
+            : null;
+    }
+
+    /**
      * Turn marked items so that, read in $order, no closing bracket stands
      * with nothing open: read right to left, an opening bracket is the one
      * that closes. A closing bracket with nothing open goes uncounted when
      * it is a literal; otherwise the nearest literal before it turns, an
      * opening one counted or a closing one uncounted, else the group it
-     * opens or closes takes its name, else the nearest group before it.
-     * False when nothing can turn.
+     * opens or closes takes its name, first where $groupsFirst, else the
+     * nearest group before it. False when nothing can turn.
      *
      * @param list<array{int, int, string, bool, int, bool}> $tokens
      * @param array<int, bool>                               $included whether each token is counted
      * @param list<int>                                      $order
      */
-    private static function paired(array $tokens, array &$included, array $order, bool $forward): bool
+    private static function paired(array $tokens, array &$included, array $order, bool $forward, bool $groupsFirst): bool
     {
         $depth = 0;
         $literals = [];
@@ -922,7 +943,7 @@ final class DelimiterBrackets
                 continue;
             }
 
-            $turned = self::KIND_FIXED !== $kind && self::KIND_GROUP !== $kind
+            $turned = self::KIND_FIXED !== $kind && (self::KIND_GROUP !== $kind || $groupsFirst)
                 ? $index
                 : array_pop($literals) ?? (self::KIND_GROUP === $kind ? $index : array_pop($groups));
             if (null === $turned) {

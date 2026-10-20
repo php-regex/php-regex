@@ -97,6 +97,9 @@ final class DelimiterBracketsTest extends TestCase
         yield 'a lookbehind nothing closes' => ['body' => "a\x03G(?<=a)", 'opening' => '<', 'closing' => '>', 'expected' => 'a(*plb:a)', 'subject' => 'a'];
         yield 'an atomic group nothing opens' => ['body' => "\x03G(?>a|ab)c", 'opening' => '<', 'closing' => '>', 'expected' => '(*atomic:a|ab)c', 'subject' => 'ac'];
         yield 'a lookbehind a literal closes' => ['body' => "\x03G(?<=a)b\x03>", 'opening' => '<', 'closing' => '>', 'expected' => '(?<=a)b>', 'subject' => 'ab>'];
+        // A group takes its name rather than use up the literal bracket a
+        // verb name needs as a partner.
+        yield 'a lookbehind holding the literal a verb name needs' => ['body' => "(*MARK:<)\x03G(?<=\x03>)", 'opening' => '<', 'closing' => '>', 'expected' => '(*MARK:<)(*plb:>)', 'subject' => '>'];
         // A literal bracket turns before a group does.
         yield 'a negative lookbehind before a pair of literals' => ['body' => "\x03G(?<!a)\x03B<b\x03B>", 'opening' => '<', 'closing' => '>', 'expected' => '(?<!a)\\<b>', 'subject' => '<b>'];
     }
