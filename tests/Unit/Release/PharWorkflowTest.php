@@ -209,6 +209,34 @@ final class PharWorkflowTest extends TestCase
     }
 
     /**
+     * The check reads the answer with jq, which GitHub's runners ship and
+     * the official PHP images do not: each job that runs the suite inside
+     * one of them installs it, or the test above fails there.
+     */
+    #[Test]
+    public function test_each_job_running_the_suite_in_a_php_image_installs_jq(): void
+    {
+        $this->assertStringContainsString('jq ', self::step('Check the phar carries the language server'));
+
+        $workflows = glob(\dirname(__DIR__, 3).'/.github/workflows/*.yml');
+        $this->assertNotFalse($workflows);
+        $jobs = 0;
+        foreach ($workflows as $workflow) {
+            preg_match_all('~^  ([a-z][a-z0-9-]*):\n((?:(?:    .*)?\n)*)~m', (string) file_get_contents($workflow), $matches, \PREG_SET_ORDER);
+            foreach ($matches as [, $id, $body]) {
+                if (1 !== preg_match('~^    container: php:~m', $body) || !str_contains($body, 'vendor/bin/phpunit')) {
+                    continue;
+                }
+
+                $jobs++;
+                $this->assertMatchesRegularExpression('~apt-get install [^\n]*\bjq\b~', $body, basename($workflow).': '.$id);
+            }
+        }
+
+        $this->assertGreaterThan(0, $jobs);
+    }
+
+    /**
      * Box needs PHP 8.2 to build; the phar itself runs on the lowest PHP the
      * packages name, and is checked there.
      */

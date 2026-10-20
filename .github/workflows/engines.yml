@@ -52,7 +52,9 @@ jobs:
       - name: Install Git
         # Before the checkout: without git, it downloads an archive, which
         # leaves out what .gitattributes marks export-ignore, tests included.
-        run: apt-get update && apt-get install -y --no-install-recommends git unzip
+        # jq too: the phar workflow's checks, which the suite runs, read the
+        # language server's answer with it, as GitHub's runners ship it.
+        run: apt-get update && apt-get install -y --no-install-recommends git unzip jq
 
       - name: Install multibyte support
         # The 8.6-rc image ships without mbstring, and compiling it needs
