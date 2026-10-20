@@ -45,9 +45,10 @@ This Code of Conduct applies to:
 ## 🚨 Enforcement
 
 ### Reporting Violations
-Instances of abusive, harassing, or unacceptable behavior may be reported to:
-- **Email:** younes.ennaji.pro@gmail.com
-- **GitHub Issues:** [Open a private issue](https://github.com/php-regex/php-regex/issues) with "CoC Violation" in the title
+Instances of abusive, harassing, or unacceptable behavior may be reported privately to:
+- **Email:** younes.ennaji.pro@gmail.com, with "CoC Violation" in the subject
+
+GitHub issues and discussions are public: please do not report a violation there.
 
 ### Investigation Process
 All complaints will be:

@@ -93,6 +93,21 @@ final class OrganizationProfileTest extends TestCase
     }
 
     /**
+     * GitHub issues are public: a report of a violation is taken by email
+     * alone, and the code of conduct says so.
+     */
+    #[Test]
+    public function test_the_code_of_conduct_takes_reports_in_private(): void
+    {
+        $conduct = (string) file_get_contents(self::root().'/CODE_OF_CONDUCT.md');
+        $this->assertSame(1, preg_match('~^### Reporting Violations\n(.*?)(?=^###? )~ms', $conduct, $section), 'The code of conduct has a section for reporting violations.');
+
+        $this->assertStringContainsString('- **Email:** younes.ennaji.pro@gmail.com', $section[1]);
+        $this->assertStringNotContainsString('/issues', $section[1]);
+        $this->assertStringNotContainsString('private issue', $section[1]);
+    }
+
+    /**
      * @return list<string>
      */
     private static function packageRepositories(): array
