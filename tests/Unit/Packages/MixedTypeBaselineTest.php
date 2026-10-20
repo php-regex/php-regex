@@ -40,7 +40,7 @@ final class MixedTypeBaselineTest extends TestCase
         'PHPStan' => 2,
         'PHPUnit' => 21,
         'Parser' => 64,
-        'Symfony' => 22,
+        'Symfony' => 21,
     ];
 
     public function test_each_package_declares_the_mixed_types_it_is_counted_for(): void
