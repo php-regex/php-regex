@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\CompiledLength;
+use PHPRegex\Parser\Validation\CompiledSize;
 use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -52,7 +53,6 @@ final class CompiledSizeBoundTest extends TestCase
     {
         mt_srand(20261019);
         $parser = RegexParser::create(['cache' => null]);
-        $floor = new \ReflectionMethod(Validator::class, 'compiledSizeFloor');
         $measured = 0;
 
         for ($i = 0; $i < 3000; $i++) {
@@ -63,14 +63,12 @@ final class CompiledSizeBoundTest extends TestCase
 
             try {
                 $ast = $parser->parse('/'.$body.'/'.$modifiers);
-                $validator = new Validator(255, $body, PcreTarget::runtime());
-                $ast->accept($validator);
+                $ast->accept(new Validator(255, $body, PcreTarget::runtime()));
             } catch (ExceptionInterface) {
                 continue;
             }
 
-            $units = $floor->invoke($validator, $ast->pattern);
-            $this->assertIsInt($units);
+            $units = (new CompiledSize($ast, str_contains($modifiers, 'u'), PcreTarget::runtime()))->floor($ast->pattern);
             $this->assertLessThanOrEqual(self::UNITS_PER_BYTE * \strlen($body), $units, $body);
             $measured++;
         }
@@ -127,8 +125,6 @@ final class CompiledSizeBoundTest extends TestCase
         mt_srand(20261021);
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
         $target = new PcreTarget(80400, $release);
-        $ceiling = new \ReflectionMethod(Validator::class, 'compiledSizeCeiling');
-        $prepare = new \ReflectionMethod(Validator::class, 'mayBeTooLarge');
         $counts = ['', '', '*', '+?', '{2}', '{0,3}', '{2,}+', '{1}+'];
         $measured = 0;
 
@@ -148,10 +144,7 @@ final class CompiledSizeBoundTest extends TestCase
                 continue;
             }
 
-            $validator = new Validator(255, $body, $target);
-            $prepare->invoke($validator, $ast);
-            $most = $ceiling->invoke($validator, $ast->pattern);
-            $this->assertIsInt($most);
+            $most = (new CompiledSize($ast, str_contains($modifiers, 'u'), $target))->ceiling($ast->pattern);
             $this->assertGreaterThanOrEqual($length, $most + 7, $body.' on PCRE2 '.$release);
             $measured++;
         }
@@ -171,7 +164,6 @@ final class CompiledSizeBoundTest extends TestCase
         mt_srand(20261022);
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
         $target = new PcreTarget(80400, $release);
-        $floor = new \ReflectionMethod(Validator::class, 'compiledSizeFloor');
         $pieces = [...self::PIECES, '[\h\H\v\V]', '[b\P{Any}\x{8000}]', '[[:^blank:][:space:][:^ascii:]]', '[\d\D]', '[\x00-\xff]', '[\p{Any}]', '(?(DEFINE)(?<d>a))', '(*sr:a)', '(?x: )'];
         $counts = ['', '', '*', '{2}', '{0,3}', '{2,}+', '{0}'];
         $measured = 0;
@@ -192,10 +184,7 @@ final class CompiledSizeBoundTest extends TestCase
                 continue;
             }
 
-            $validator = new Validator(255, $body, $target);
-            $ast->accept($validator);
-            $least = $floor->invoke($validator, $ast->pattern);
-            $this->assertIsInt($least);
+            $least = (new CompiledSize($ast, str_contains($modifiers, 'u'), $target))->floor($ast->pattern);
             $this->assertLessThanOrEqual($length, $least + 7, $body.' on PCRE2 '.$release);
             $measured++;
         }

@@ -32,6 +32,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Validation\QuantifierCounts;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
@@ -48,7 +49,7 @@ final class ValidatorEdgeCasesTest extends TestCase
         $unicodePropCache = $ref->getProperty('unicodePropCache');
         $unicodePropCache->setValue(null, ['p{X}' => true]);
 
-        $quantifierBoundsCache = $ref->getProperty('quantifierBoundsCache');
+        $quantifierBoundsCache = (new \ReflectionClass(QuantifierCounts::class))->getProperty('quantifierBoundsCache');
         $quantifierBoundsCache->setValue(null, ['{1,2}' => [1, 2]]);
 
         Validator::clearCaches();
@@ -311,19 +312,14 @@ final class ValidatorEdgeCasesTest extends TestCase
 
     public function test_quantifier_bounds_cache_eviction_runs(): void
     {
-        $validator = new Validator();
-        $ref = new \ReflectionClass(Validator::class);
-        $quantifierCache = $ref->getProperty('quantifierBoundsCache');
+        $quantifierCache = (new \ReflectionClass(QuantifierCounts::class))->getProperty('quantifierBoundsCache');
         $cache = [];
         for ($i = 0; $i < 1000; $i++) {
             $cache['{'.$i.',}'] = [$i, -1];
         }
         $quantifierCache->setValue(null, $cache);
 
-        $method = $ref->getMethod('getQuantifierBounds');
-
-        $bounds = $method->invoke($validator, '{2,3}');
-        $this->assertSame([2, 3], $bounds);
+        $this->assertSame([2, 3], QuantifierCounts::of('{2,3}'));
     }
 
     public function test_find_unbounded_lookbehind_node_traverses_branches(): void

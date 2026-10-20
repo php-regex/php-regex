@@ -18,8 +18,8 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\CompiledLength;
+use PHPRegex\Parser\Validation\CompiledSize;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Parser\Validation\Validator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -571,9 +571,6 @@ final class CaselessLengthTest extends TestCase
         mt_srand(20261020);
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release, 'runtime_pcre_validation' => false]);
         $target = new PcreTarget(80400, $release);
-        $ceiling = new \ReflectionMethod(Validator::class, 'compiledSizeCeiling');
-        $floor = new \ReflectionMethod(Validator::class, 'compiledSizeFloor');
-        $prepare = new \ReflectionMethod(Validator::class, 'mayBeTooLarge');
         $pieces = ['i', 'I', 'k', 's', 'K', 'ſ', 'İ', 'ı', 'é', 'ā', 'Ā', '\x{1C89}', '[ā-ž]', '[āĀ]', '[iI]', '[kK]', '[à-ž]', '[\x{100}-\x{400}]', '[Ǆ-ǌ]', '[ĀĂ]', '[^ā]', '[ix]', '[\x{130}-\x{131}]', '(?r)', '(?-r)', '(?r:k)', '(?i)', '(?^)', '(?:ks)', '\Qki\E'];
         $counts = ['', '', '*', '{2}', '{0,3}', '+?'];
         $measured = 0;
@@ -595,15 +592,9 @@ final class CaselessLengthTest extends TestCase
                 continue;
             }
 
-            $validator = new Validator(255, $body, $target);
-            $prepare->invoke($validator, $ast);
-            $most = $ceiling->invoke($validator, $ast->pattern);
-            $this->assertIsInt($most);
-            $this->assertGreaterThanOrEqual($length, $most + 7, $body.' on PCRE2 '.$release);
-            $validator = new Validator(255, $body, $target);
-            $ast->accept($validator);
-            $least = $floor->invoke($validator, $ast->pattern);
-            $this->assertIsInt($least);
+            $size = new CompiledSize($ast, true, $target);
+            $this->assertGreaterThanOrEqual($length, $size->ceiling($ast->pattern) + 7, $body.' on PCRE2 '.$release);
+            $least = $size->floor($ast->pattern);
             $this->assertLessThanOrEqual($length, $least + 7, $body.' on PCRE2 '.$release);
             $measured++;
         }

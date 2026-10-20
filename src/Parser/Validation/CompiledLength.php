@@ -50,6 +50,7 @@ use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
@@ -67,8 +68,10 @@ use PHPRegex\Parser\Text\Bytes;
  * passes the limit, on every release.
  *
  * An item is counted at the length PCRE2 compiles it to where this class
- * knows that length, and at the floor the validator measures otherwise,
- * with the most it may compile to where that is known: the ceiling.
+ * knows that length, and at the floor it is given otherwise, the one
+ * CompiledSize measures, with the most it may compile to where that is
+ * known: the ceiling. CompiledSize reads its limit and the sizes of its
+ * brackets from the constants here.
  *
  * @internal
  */
@@ -77,23 +80,23 @@ final class CompiledLength
     /**
      * The largest compiled pattern, in code units, with two-byte links.
      */
-    private const LIMIT = 65536;
+    public const LIMIT = 65536;
 
     /**
      * The opening and closing brackets of a group, with their links.
      */
-    private const BRACKETS = 6;
+    public const BRACKETS = 6;
 
     /**
      * A "|": the alternation marker and its link.
      */
-    private const ALTERNATION = 3;
+    public const ALTERNATION = 3;
 
     /**
      * What the "may skip" marker and the brackets nesting the next copy add
      * to an optional copy of a counted group.
      */
-    private const OPTIONAL_COPY = 7;
+    public const OPTIONAL_COPY = 7;
 
     /**
      * A length no pattern reaches, where the counts stop growing.
@@ -1262,9 +1265,7 @@ final class CompiledLength
     {
         // The flags end at ")" or ":"; under "x" a body of spaces reads as
         // empty too.
-        $end = $node->startPosition + 2 + strspn($this->source, '^-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $node->startPosition + 2);
-
-        return self::isEmpty($node->child) && ')' === ($this->source[$end] ?? '');
+        return self::isEmpty($node->child) && InlineFlags::setOptionsOnly($this->source, $node->startPosition);
     }
 
     /**

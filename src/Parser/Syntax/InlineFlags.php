@@ -103,6 +103,19 @@ final class InlineFlags
         return LibraryPcre::replace('/a[DSWPT]?/', '', $text) ?? $text;
     }
 
+    /**
+     * Whether the group of flags that opens at $start in $source closes
+     * right after its letters, as "(?i)" does, setting options for the rest
+     * of the group around it, rather than holding a body of its own, as
+     * "(?i:...)" does.
+     */
+    public static function setOptionsOnly(string $source, int $start): bool
+    {
+        $end = $start + 2 + strspn($source, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ^-', $start + 2);
+
+        return ')' === ($source[$end] ?? '');
+    }
+
     public function turnsOn(string $flag): bool
     {
         return str_contains($this->set, $flag);

@@ -21,6 +21,7 @@ use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\QuantifierCounts;
 use PHPRegex\Parser\Validation\Validator;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Toolkit\Regex;
@@ -96,12 +97,12 @@ final class StaticCachesTest extends TestCase
     {
         $this->assertTrue(RegexParser::create(['cache' => new NullCache()])->validate('/\p{Latin}a{2,3}/u')->isValid);
         $this->assertNotSame([], $this->read(Validator::class, 'unicodePropCache'));
-        $this->assertNotSame([], $this->read(Validator::class, 'quantifierBoundsCache'));
+        $this->assertNotSame([], $this->read(QuantifierCounts::class, 'quantifierBoundsCache'));
 
         StaticCaches::clear();
 
         $this->assertSame([], $this->read(Validator::class, 'unicodePropCache'));
-        $this->assertSame([], $this->read(Validator::class, 'quantifierBoundsCache'));
+        $this->assertSame([], $this->read(QuantifierCounts::class, 'quantifierBoundsCache'));
     }
 
     /**
@@ -110,14 +111,14 @@ final class StaticCachesTest extends TestCase
     #[Test]
     public function test_the_validator_count_cache_is_bounded(): void
     {
-        $this->write(Validator::class, 'quantifierBoundsCache', []);
+        $this->write(QuantifierCounts::class, 'quantifierBoundsCache', []);
         $parser = RegexParser::create(['cache' => new NullCache()]);
 
         for ($max = 1; $max <= 1500; $max++) {
             $this->assertTrue($parser->validate('/a{1,'.$max.'}/')->isValid);
         }
 
-        $count = \count($this->read(Validator::class, 'quantifierBoundsCache'));
+        $count = \count($this->read(QuantifierCounts::class, 'quantifierBoundsCache'));
         $this->assertGreaterThan(0, $count);
         $this->assertLessThanOrEqual(self::BOUND, $count);
     }
@@ -191,7 +192,7 @@ final class StaticCachesTest extends TestCase
     {
         return [
             [Validator::class, 'unicodePropCache'],
-            [Validator::class, 'quantifierBoundsCache'],
+            [QuantifierCounts::class, 'quantifierBoundsCache'],
             [ComplexityScorer::class, 'unboundedQuantifierCache'],
             [SampleGenerator::class, 'propertySamples'],
             [SampleGenerator::class, 'codePointChunks'],

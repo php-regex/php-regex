@@ -43,6 +43,8 @@ final class AstFingerprint
         'src/Parser/Validation/Validator.php',
         'src/Parser/Validation/FirstErrorLocator.php',
         'src/Parser/Validation/CompiledLength.php',
+        'src/Parser/Validation/CompiledSize.php',
+        'src/Parser/Validation/QuantifierCounts.php',
         'src/Parser/Validation/ClassLength.php',
         'src/Parser/Validation/ExtendedClassLength.php',
         'src/Parser/Validation/OtherCases.php',
