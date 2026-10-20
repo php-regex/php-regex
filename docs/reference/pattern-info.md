@@ -57,6 +57,20 @@ validation error and its code. On PHP 8.5, which refuses `\K` in a
 lookaround, `Regex::create(['php_version' => '8.5'])->info('/(?<=a\Kb)c/')`
 throws a `SemanticErrorException` whose code is `regex.keep.in_lookaround`.
 
+Which lookbehinds PCRE2 measures depends on its release, and so does
+`maxLookbehind`: `PatternInfoAnalyzer` reads it for the target it is given,
+the running PHP's PCRE2 when none is, and `Regex::info()` gives it the
+facade's target:
+
+```php
+use PHPRegex\Parser\PcreTarget;
+
+$regex = RegexParser::create(['php_version' => '8.0', 'pcre_version' => '10.33'])->parse('/(?<=(?=(?<=abcd)))/');
+
+(new PatternInfoAnalyzer(new PcreTarget(80000, '10.33')))->analyze($regex)->maxLookbehind; // 0
+(new PatternInfoAnalyzer(new PcreTarget(80000, '10.34')))->analyze($regex)->maxLookbehind; // 4
+```
+
 ## The facts
 
 `PatternInfo` is a read-only value; its constructor is internal. Its facts fall
@@ -99,7 +113,7 @@ did not have.
 |---|---|---|
 | `minMatchLength` | `int` | The fewest characters `$matches[0]` holds: code points in UTF mode (`u` or `(*UTF)`), bytes otherwise |
 | `maxMatchLength` | `?int` | The most characters `$matches[0]` holds, in the same unit; `null` when unbounded, or not proven bounded |
-| `maxLookbehind` | `int` | The longest lookbehind body, in the same unit, `0` for none |
+| `maxLookbehind` | `int` | The longest branch of the lookbehinds PCRE2 measures at the target, in the same unit, `0` for none |
 | `anchoredStart` | `bool` | `true` when proven: every match attempt is tied to where the search starts |
 | `anchoredEnd` | `bool` | `true` when proven: every successful match ends at the end of the subject |
 
@@ -167,7 +181,7 @@ under `/I`, and says where the two differ.
 | `bsr` | `BSR` | `\R matches ...` | `null` when the pattern does not say, where PCRE2 answers the default of the build |
 | `minMatchLength` | `MINLENGTH` | `Subject length lower bound` | `MINLENGTH` bounds the subject: `(?=a)b?` gives 1 there, as the lookahead needs an `a`, and `0` here, as `$matches[0]` may be empty. `MATCHEMPTY` (`May match empty string`) is close to `minMatchLength === 0` |
 | `maxMatchLength` | none | none | PCRE2 does not compute it |
-| `maxLookbehind` | `MAXLOOKBEHIND` | `Max lookbehind` | PCRE2 also counts the character `\b`, `\B` and `\A` look back at: `\bx` gives 1 there and `0` here. A group repeated zero times inside a lookbehind is read as PCRE2 10.43 and later read it, whatever the target: `(?<=(?:a\|bc){0})x` gives `0` |
+| `maxLookbehind` | `MAXLOOKBEHIND` | `Max lookbehind` | PCRE2 also counts the character `\b`, `\B` and `\A` look back at: `\bx` gives 1 there and `0` here. A group repeated zero times inside a lookbehind is read as PCRE2 10.43 and later read it, whatever the target: `(?<=(?:a\|bc){0})x` gives `0`. As PCRE2, it leaves out a lookbehind that PCRE2 never measures, inside a lookbehind: after a `(*ACCEPT)` or a `(*FAIL)` that ends its branch, `(?<=(*ACCEPT)(?<=abcd))` giving `0`; in a DEFINE group from 10.35, `(?<=(?(DEFINE)(?<=abcd)))` giving `0`; in a lookahead before 10.34, `(?<=(?=(?<=abcd)))` giving `0` on 10.33 and `4` from 10.34. For a DEFINE group that opens with a group, on 10.32 to 10.34, see [the known differences](../concepts/pcre.md#known-differences) |
 | `anchoredStart` | `ALLOPTIONS` holding `PCRE2_ANCHORED` | `Overall options: anchored` | PCRE2 also anchors a pattern starting with `.*` under `s`, and drops an item repeated zero times before the anchor; neither is modelled: `/.*a/s` and `/(?:a){0}\Ab/` are anchored there and not here. PCRE2 reports `A` with a `(*SKIP)` as anchored, which the JIT does not honour (above); `false` here. A `true` here is always anchored in PCRE2 |
 | `anchoredEnd` | none | none | PCRE2 does not infer it; `PCRE2_ENDANCHORED` is a compile option, not a fact |
 

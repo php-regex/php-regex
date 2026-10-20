@@ -13,3 +13,6 @@ CHANGELOG
    again costs a lookup.
  * `ArrayCache` drops the tree read or written longest ago, where it dropped
    the one written first.
+ * `PatternInfoAnalyzer` takes an optional `PcreTarget`, the running PHP's
+   PCRE2 by default: its release decides which lookbehinds `maxLookbehind`
+   counts, as PCRE2 measures them.

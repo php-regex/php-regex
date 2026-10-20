@@ -36,6 +36,8 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
@@ -48,15 +50,19 @@ use PHPRegex\Parser\Syntax\StartOptions;
  *     $info->minMatchLength; // 7
  *
  * The tree is read as written: a pattern the validator refuses gets an
- * answer, not an error.
+ * answer, not an error. The longest lookbehind is the one PCRE2 measures at
+ * the target, the running PHP's PCRE2 unless one is named.
  */
 final class PatternInfoAnalyzer
 {
     /**
-     * Rises when a sound bound narrows: the same pattern may then get a
-     * tighter length range or a proven anchor it did not have.
+     * Rises when a sound bound narrows, or when a fact changes for the same
+     * pattern: the same pattern may then get a tighter length range, a
+     * proven anchor it did not have, or another longest lookbehind.
      */
-    public const ANALYSIS_VERSION = '1';
+    public const ANALYSIS_VERSION = '2';
+
+    public function __construct(private readonly ?PcreTarget $target = null) {}
 
     public function analyze(RegexNode $ast): PatternInfo
     {
@@ -85,13 +91,7 @@ final class PatternInfoAnalyzer
             }
         }
 
-        $maxLookbehind = 0;
-        $measure = new LookbehindLength($groups, $unicode, true);
-        foreach ($facts['lookbehinds'] as $lookbehind) {
-            foreach ($lookbehind->child instanceof AlternationNode ? $lookbehind->child->alternatives : [$lookbehind->child] as $branch) {
-                $maxLookbehind = max($maxLookbehind, $measure->of($branch)[1] ?? 0);
-            }
-        }
+        $maxLookbehind = $this->maxLookbehind($facts['lookbehinds'], $groups, $unicode);
 
         [$matchLimit, $depthLimit, $heapLimit, $newline, $bsr] = self::startOptions($ast->source ?? '');
 
@@ -121,9 +121,84 @@ final class PatternInfoAnalyzer
     }
 
     /**
+     * The longest branch of the lookbehinds PCRE2 measures (MAXLOOKBEHIND,
+     * less the one character "\b", "\B" and "\A" look back at): those
+     * outside any other lookbehind, and those it meets while measuring one.
+     * It does not meet one past a "(*ACCEPT)" or a "(*FAIL)" that ends the
+     * branch, in a DEFINE group from PCRE2 10.35, or in a lookahead before
+     * 10.34; inside a lookahead it meets, it measures every lookbehind.
+     *
+     * @param list<GroupNode> $outermost the lookbehinds outside any other
+     */
+    private function maxLookbehind(array $outermost, GroupIndex $groups, bool $unicode): int
+    {
+        $target = $this->target ?? PcreTarget::runtime();
+
+        // The lookbehinds met while one is measured wait their turn: a
+        // valid pattern gives each the same length wherever it is measured.
+        $waiting = $outermost;
+        $measure = new LookbehindLength(
+            $groups,
+            $unicode,
+            // Lengths are read as PCRE2 10.43 and later read them, whatever
+            // the target: a pattern the target refuses gets an answer too.
+            true,
+            static function (GroupNode $lookaround) use (&$waiting): void {
+                self::collectLookbehinds($lookaround, $waiting);
+            },
+            inLookaheads: $target->supports(PcreFeature::LookbehindInLookaheadMeasured),
+            skipsDefine: $target->supports(PcreFeature::DefineSkippedInLookbehind),
+        );
+
+        $max = 0;
+        $measured = [];
+        for ($next = 0; $next < \count($waiting); $next++) {
+            $lookbehind = $waiting[$next];
+            $id = spl_object_id($lookbehind);
+            if (isset($measured[$id])) {
+                continue;
+            }
+            $measured[$id] = true;
+
+            foreach ($lookbehind->child instanceof AlternationNode ? $lookbehind->child->alternatives : [$lookbehind->child] as $branch) {
+                $max = max($max, $measure->branch($branch)[0][1] ?? 0);
+            }
+        }
+
+        return $max;
+    }
+
+    /**
+     * Adds the lookbehind itself, or those a lookahead holds outside any
+     * other lookbehind, wherever they stand in it.
+     *
+     * @param list<GroupNode> $into
+     */
+    private static function collectLookbehinds(NodeInterface $node, array &$into): void
+    {
+        if (self::isLookbehind($node)) {
+            $into[] = $node;
+
+            return;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            self::collectLookbehinds($child, $into);
+        }
+    }
+
+    /**
+     * @phpstan-assert-if-true GroupNode $node
+     */
+    private static function isLookbehind(NodeInterface $node): bool
+    {
+        return $node instanceof GroupNode && (GroupType::LookbehindPositive === $node->type || GroupType::LookbehindNegative === $node->type);
+    }
+
+    /**
      * @param array{backreference: int, backslashC: bool, keep: bool, skip: bool, lookbehinds: list<GroupNode>} $facts
      */
-    private function collect(NodeInterface $node, GroupIndex $groups, array &$facts): void
+    private function collect(NodeInterface $node, GroupIndex $groups, array &$facts, bool $inLookbehind = false): void
     {
         if ($node instanceof BackrefNode) {
             $facts['backreference'] = max($facts['backreference'], ...[0, ...$this->referencedNumbers($node, $groups)]);
@@ -137,12 +212,13 @@ final class PatternInfoAnalyzer
             $facts['keep'] = true;
         } elseif ($node instanceof PcreVerbNode && ('SKIP' === $node->verb || str_starts_with($node->verb, 'SKIP:'))) {
             $facts['skip'] = true;
-        } elseif ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+        } elseif (self::isLookbehind($node) && !$inLookbehind) {
+            // A lookbehind inside another is measured, or not, with it.
             $facts['lookbehinds'][] = $node;
         }
 
         foreach ($node->getChildren() as $child) {
-            $this->collect($child, $groups, $facts);
+            $this->collect($child, $groups, $facts, $inLookbehind || self::isLookbehind($node));
         }
     }
 

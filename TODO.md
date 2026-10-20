@@ -164,9 +164,6 @@ Each checked with pcre2test 10.32 to 10.49.
   `(?:x|(?:b){8190})` are at 0 on 10.48 and 10.49, the library says 13 and
   17; `(?:a{2}){7000}|(?:bb){1000}` is at 0, the library says 27, as the
   floor counts `a{2}` two units where PCRE2 compiles four.
-- `Regex::info()` reports the longest lookbehind of one PCRE never measures:
-  `(?<=(*ACCEPT)(?<=abcd))` and `(?<=(?(DEFINE)(?<=abcd)))` have no
-  "Max lookbehind" in pcre2test 10.49 `/I`; the library says 4.
 
 ## Compiled size verdicts
 

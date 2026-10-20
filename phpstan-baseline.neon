@@ -727,7 +727,7 @@ parameters:
 			path: tests/Unit/Parser/ParserTest.php
 
 		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''1'' and ''1'' will always evaluate to true.'
+			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''2'' and ''2'' will always evaluate to true.'
 			identifier: method.alreadyNarrowedType
 			count: 1
 			path: tests/Unit/Parser/PatternInfoAnalyzerTest.php

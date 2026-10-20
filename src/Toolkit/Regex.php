@@ -415,7 +415,7 @@ final class Regex
             throw new SemanticErrorException((string) $validation->error, $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, $pattern, null, $validation->hint);
         }
 
-        return (new PatternInfoAnalyzer())->analyze($ast);
+        return (new PatternInfoAnalyzer($this->target()))->analyze($ast);
     }
 
     /**

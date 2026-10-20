@@ -39,7 +39,9 @@ final class RegexInfoTest extends TestCase
     {
         $info = Regex::create(['cache' => new NullCache()] + self::TARGET)->info($pattern);
 
-        $this->assertEquals((new PatternInfoAnalyzer())->analyze(RegexParser::create(self::TARGET)->parse($pattern)), $info);
+        $parser = RegexParser::create(self::TARGET);
+
+        $this->assertEquals((new PatternInfoAnalyzer($parser->target()))->analyze($parser->parse($pattern)), $info);
     }
 
     /**
@@ -110,6 +112,19 @@ final class RegexInfoTest extends TestCase
         yield 'limit one past the largest PCRE2 reads' => ['pattern' => '/(*LIMIT_MATCH=4294967290)a/', 'options' => self::TARGET];
         // Refused only by the validator, once the tree is read.
         yield '\K in a lookbehind on PHP 8.5' => ['pattern' => '/(?<=a\Kb)c/', 'options' => ['php_version' => '8.5', 'pcre_version' => '10.44']];
+    }
+
+    /**
+     * The lookbehinds PCRE2 measures depend on the release: one in a
+     * lookahead inside a lookbehind from 10.34 on (pcre2test 10.33 prints no
+     * "Max lookbehind", 10.34 prints 4), never one after a "(*ACCEPT)".
+     */
+    #[Test]
+    public function test_info_reads_the_longest_lookbehind_for_the_target(): void
+    {
+        $this->assertSame(0, Regex::create(['php_version' => '8.0', 'pcre_version' => '10.33'])->info('/(?<=(?=(?<=abcd)))/')->maxLookbehind);
+        $this->assertSame(4, Regex::create(['php_version' => '8.0', 'pcre_version' => '10.34'])->info('/(?<=(?=(?<=abcd)))/')->maxLookbehind);
+        $this->assertSame(0, Regex::create(self::TARGET)->info('/(?<=(*ACCEPT)(?<=abcd))/')->maxLookbehind);
     }
 
     #[Test]

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\BsrConvention;
 use PHPRegex\Parser\NewlineConvention;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -44,9 +45,9 @@ final class PatternInfoAnalyzerTest extends TestCase
     private const TARGET = ['php_version' => '8.4', 'pcre_version' => '10.44'];
 
     #[Test]
-    public function test_analysis_version_is_1(): void
+    public function test_analysis_version_is_2(): void
     {
-        $this->assertSame('1', PatternInfoAnalyzer::ANALYSIS_VERSION);
+        $this->assertSame('2', PatternInfoAnalyzer::ANALYSIS_VERSION);
     }
 
     #[Test]
@@ -329,6 +330,55 @@ final class PatternInfoAnalyzerTest extends TestCase
         // A group repeated zero times is empty, as PCRE2 10.43 and later
         // measure it (pcre2test 10.49: 1).
         yield 'group repeated zero times' => ['pattern' => '/(?<=(?:a|bc){0}d)x/', 'expected' => 1];
+    }
+
+    /**
+     * @param array<string, int> $expected by PCRE2 release
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindsMeasuredOrNot')]
+    public function test_max_lookbehind_counts_only_the_lookbehinds_pcre2_measures(string $pattern, array $expected): void
+    {
+        foreach ($expected as $release => $max) {
+            $ast = RegexParser::create(['php_version' => '8.0', 'pcre_version' => $release])->parse($pattern);
+
+            $this->assertSame($max, (new PatternInfoAnalyzer(new PcreTarget(80000, $release)))->analyze($ast)->maxLookbehind, \sprintf('%s on PCRE2 %s', $pattern, $release));
+        }
+    }
+
+    /**
+     * pcre2test "/I" of each release named, 0 where it prints no "Max
+     * lookbehind". PCRE2 measures the lookbehinds the pattern holds outside
+     * any other, and those it meets while measuring one: not after a
+     * "(*ACCEPT)" or a "(*FAIL)" that ends the branch, nor in a DEFINE group
+     * from 10.35, nor in a lookahead before 10.34.
+     *
+     * @return iterable<string, array{pattern: string, expected: array<string, int>}>
+     */
+    public static function provideLookbehindsMeasuredOrNot(): iterable
+    {
+        yield 'after an accept' => ['pattern' => '/(?<=(*ACCEPT)(?<=abcd))/', 'expected' => ['10.32' => 0, '10.34' => 0, '10.35' => 0, '10.43' => 0, '10.49' => 0]];
+        yield 'after a fail' => ['pattern' => '/(?<=(*FAIL)(?<=abcd))/', 'expected' => ['10.32' => 0, '10.49' => 0]];
+        yield 'after an accept in a group' => ['pattern' => '/(?<=(?:(*ACCEPT)(?<=abcd)))/', 'expected' => ['10.32' => 0, '10.49' => 0]];
+        yield 'after an accept behind two characters' => ['pattern' => '/(?<=ab(*ACCEPT)(?<=abcd))/', 'expected' => ['10.32' => 2, '10.42' => 2, '10.49' => 2]];
+        yield 'after an accept in the second branch' => ['pattern' => '/(?<=a|(*ACCEPT)(?<=abcd))/', 'expected' => ['10.32' => 1, '10.49' => 1]];
+        yield 'after an accept in a condition' => ['pattern' => '/(?<=(?(1)(*ACCEPT)(?<=abcd)))()/', 'expected' => ['10.32' => 0, '10.49' => 0]];
+        yield 'after an accept beside another lookbehind' => ['pattern' => '/(?<=(*ACCEPT)(?<=abcd))(?<=xy)/', 'expected' => ['10.32' => 2, '10.49' => 2]];
+        yield 'after an accept in a nested lookbehind' => ['pattern' => '/(?<=a(?<=(*ACCEPT)(?<=abcde)))/', 'expected' => ['10.32' => 1, '10.49' => 1]];
+        yield 'in a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)(?<=abcd)))/', 'expected' => ['10.35' => 0, '10.43' => 0, '10.49' => 0]];
+        yield 'in a DEFINE group before a character' => ['pattern' => '/(?<=(?(DEFINE)(?<=abcd))b)/', 'expected' => ['10.35' => 1, '10.49' => 1]];
+        yield 'in a group in a DEFINE group' => ['pattern' => '/(?<=(?(DEFINE)((?<=abcd))))/', 'expected' => ['10.32' => 4, '10.34' => 4, '10.35' => 0, '10.49' => 0]];
+        yield 'in a DEFINE group after a character' => ['pattern' => '/(?<=(?(DEFINE)x(?<=abcde))y)/', 'expected' => ['10.32' => 5, '10.34' => 5, '10.35' => 1, '10.49' => 1]];
+        yield 'in a lookahead' => ['pattern' => '/(?<=(?=(?<=abcd)))/', 'expected' => ['10.32' => 0, '10.33' => 0, '10.34' => 4, '10.49' => 4]];
+        yield 'in a negative lookahead' => ['pattern' => '/(?<=(?!(?<=abcd)))/', 'expected' => ['10.33' => 0, '10.34' => 4]];
+        yield 'in a lookahead after a character' => ['pattern' => '/(?<=(?=a(?<=abcd))b)/', 'expected' => ['10.33' => 1, '10.34' => 4]];
+        yield 'after an accept in a lookahead' => ['pattern' => '/(?<=(?=(*ACCEPT)(?<=abcd)))/', 'expected' => ['10.33' => 0, '10.34' => 4, '10.49' => 4]];
+        yield 'in a lookahead condition' => ['pattern' => '/(?<=(?(?=(?<=abcd))x))/', 'expected' => ['10.33' => 1, '10.34' => 4, '10.49' => 4]];
+        yield 'in a DEFINE group in a lookahead' => ['pattern' => '/(?<=(?=x(?(DEFINE)(?<=abcde))))/', 'expected' => ['10.33' => 0, '10.35' => 5, '10.49' => 5]];
+        yield 'after an accept, reached through a call' => ['pattern' => '/(?<=(*ACCEPT)((?<=abcd)))(?<=(?1))/', 'expected' => ['10.32' => 4, '10.49' => 4]];
+        yield 'in a DEFINE group outside any lookbehind' => ['pattern' => '/(?(DEFINE)(?<=abcd))/', 'expected' => ['10.35' => 4, '10.49' => 4]];
+        yield 'after a commit' => ['pattern' => '/(?<=(*COMMIT)(?<=abcd))/', 'expected' => ['10.32' => 4, '10.49' => 4]];
+        yield 'met outside any lookbehind and through a call' => ['pattern' => '/(?<=(?1))((?<=ab)c)/', 'expected' => ['10.32' => 2, '10.35' => 2, '10.49' => 2]];
     }
 
     #[Test]
