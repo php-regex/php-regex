@@ -45,6 +45,17 @@ final class LintConfigSchema
         'symfony-validator' => 'symfony/validator: the Symfony\Component\Validator\Constraints\Regex constraint, as new and as attribute.',
     ];
 
+    /**
+     * The placeholders a URL template of the ide key holds, by what the
+     * link fills in for them, as LinkFormatter fills them in.
+     */
+    private const IDE_PLACEHOLDERS = [
+        'the file' => ['%f', '%file%'],
+        'the file relative to the working directory' => ['%relFile%'],
+        'the line' => ['%l', '%line%'],
+        'the column' => ['%c', '%column%'],
+    ];
+
     private const FORMATS = [
         'console' => 'Human-friendly console output.',
         'json' => 'Machine-readable JSON report.',
@@ -427,16 +438,24 @@ final class LintConfigSchema
         foreach (LinkFormatter::IDE_LINK_FORMATS as $name => $template) {
             $choices[] = ['const' => $name, 'description' => 'Use '.$template];
         }
+        $alternatives = [];
+        $meanings = [];
+        foreach (self::IDE_PLACEHOLDERS as $meaning => $placeholders) {
+            foreach ($placeholders as $placeholder) {
+                $alternatives[] = substr($placeholder, 1);
+            }
+            $meanings[] = implode(' or ', $placeholders).' ('.$meaning.')';
+        }
         $choices[] = [
             'type' => 'string',
             'minLength' => 1,
-            'pattern' => '.*%(?:f|file%|relFile%|l|line%|c|column%).*',
+            'pattern' => '.*%(?:'.implode('|', $alternatives).').*',
             'description' => 'Custom URL template with placeholders.',
         ];
 
         return [
-            'description' => 'IDE name or custom URL template for clickable file links. Use placeholders like %f, %l, %c, or %relFile%.',
-            'x-expected' => 'one of '.implode(', ', array_keys(LinkFormatter::IDE_LINK_FORMATS)).', an empty string, or a URL template holding %f or %l',
+            'description' => 'IDE name or custom URL template for clickable file links. A template holds at least one placeholder: '.implode(', ', $meanings).'.',
+            'x-expected' => 'one of '.implode(', ', array_keys(LinkFormatter::IDE_LINK_FORMATS)).', an empty string, or a URL template holding a placeholder: '.implode(', ', array_map(static fn (array $placeholders): string => implode(' or ', $placeholders), self::IDE_PLACEHOLDERS)),
             'default' => '',
             'oneOf' => $choices,
             'examples' => ['phpstorm', 'vscode', 'vscode://file/%f:%l'],

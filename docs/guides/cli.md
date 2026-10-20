@@ -1424,6 +1424,24 @@ Enable clickable file links in lint output:
 - `"macvim"` - mvim://open?url=file://%f&line=%l
 - `""` - Disable clickable links
 
+Any other value is a URL template of your own, which holds at least one of
+these placeholders, filled in for each link:
+
+| Placeholder          | Filled in with                                   |
+|----------------------|--------------------------------------------------|
+| `%f` or `%file%`     | The absolute path of the file, URL-encoded       |
+| `%relFile%`          | The path relative to the working directory, URL-encoded |
+| `%l` or `%line%`     | The line                                         |
+| `%c` or `%column%`   | The column                                       |
+
+```json
+{
+  "ide": "myeditor://open?file=%f&line=%l&column=%c"
+}
+```
+
+A value that is no IDE name and holds no placeholder is refused.
+
 ---
 
 ## Ignoring Patterns

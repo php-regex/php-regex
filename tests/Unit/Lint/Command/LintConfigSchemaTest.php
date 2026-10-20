@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Command;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintConfigSchema;
 use PHPRegex\Linter\Formatter\LinkFormatter;
+use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\JsonSchemaSubsetValidator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -73,6 +74,36 @@ final class LintConfigSchemaTest extends TestCase
         }
 
         $this->assertSame(LinkFormatter::IDE_LINK_FORMATS, $documented);
+    }
+
+    /**
+     * The placeholders a template of the ide key must hold one of, as the
+     * schema accepts them and as its error message names them, are those
+     * the links fill in: a template holding one gets a link that holds
+     * none.
+     */
+    #[Test]
+    public function test_the_ide_placeholders_are_those_the_links_fill_in(): void
+    {
+        $definition = LintConfigSchema::definition();
+        $this->assertIsArray($definition['properties'] ?? null);
+        $this->assertIsArray($definition['properties']['ide'] ?? null);
+        $this->assertIsString($definition['properties']['ide']['x-expected'] ?? null);
+        $this->assertIsArray($definition['properties']['ide']['oneOf'] ?? null);
+        $template = end($definition['properties']['ide']['oneOf']);
+        $this->assertIsArray($template);
+        $this->assertIsString($template['pattern'] ?? null);
+
+        $build = new \ReflectionMethod(LinkFormatter::class, 'buildEditorUrl');
+        foreach (['%f', '%file%', '%relFile%', '%l', '%line%', '%c', '%column%'] as $placeholder) {
+            $this->assertStringContainsString($placeholder, (string) $definition['properties']['ide']['x-expected']);
+            $this->assertMatchesRegularExpression('/'.$template['pattern'].'/', 'x://'.$placeholder);
+
+            $url = $build->invoke(new LinkFormatter('x://'.$placeholder, new RelativePathHelper(__DIR__)), __FILE__, 3, 7);
+            $this->assertIsString($url);
+            $this->assertStringNotContainsString('%', (string) $url, $placeholder);
+        }
+        $this->assertDoesNotMatchRegularExpression('/'.$template['pattern'].'/', 'x://%x');
     }
 
     #[Test]

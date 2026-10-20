@@ -13,6 +13,9 @@ CHANGELOG
    report links each finding to the docs on php-regex.com: `docs_url` in the
    JSON report, a `Read more:` line in the GitHub and Checkstyle messages.
  * The Checkstyle `source` is the issue's identifier, without a prefix.
+ * The error for an `ide` value `regex.json` refuses names every placeholder
+   a template may hold, `%f`, `%file%`, `%relFile%`, `%l`, `%line%`, `%c` and
+   `%column%`, where it named `%f` and `%l` only though `%c` alone was taken.
  * `PatternLinter` throws `UnknownLintRuleException` for a rules map naming
    a rule it does not run, the nearest rule named, where a typo turned
    nothing off; the map takes each id short or in full.

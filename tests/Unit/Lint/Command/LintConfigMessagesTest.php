@@ -65,7 +65,8 @@ final class LintConfigMessagesTest extends TestCase
         yield 'object' => ['{"extraction": []}', 'expected an object'];
         yield 'duplicate preset' => ['{"extraction": {"interop": ["nette-utils", "nette-utils"]}}', 'a list of distinct presets'];
         yield 'duplicate function' => ['{"extraction": {"functions": ["a", "a"]}}', 'a list of distinct non-empty strings'];
-        yield 'unknown IDE' => ['{"ide": "notepad"}', 'a URL template holding %f or %l'];
+        yield 'unknown IDE' => ['{"ide": "notepad"}', 'a URL template holding a placeholder: %f or %file%, %relFile%, %l or %line%, %c or %column%'];
+        yield 'template without a placeholder' => ['{"ide": "foo://x"}', 'Invalid "ide" in '];
         yield 'mode off' => ['{"checks": {"redos": {"mode": "off"}}}', 'checks.redos.enabled set to false turns the analysis off'];
         yield '1.x key, once removed with its replacement named' => ['{"minSavings": 2}', 'Unknown key "minSavings"'];
         yield '1.x key without a replacement' => ['{"redosNoJit": true}', 'Unknown key "redosNoJit"'];
@@ -106,6 +107,9 @@ final class LintConfigMessagesTest extends TestCase
         yield 'none' => [''];
         yield 'named' => ['vscode'];
         yield 'template' => ['myeditor://open?file=%f&line=%l'];
+        yield 'template with the long names' => ['myeditor://open?file=%file%&line=%line%&column=%column%'];
+        yield 'template with the relative file' => ['myeditor://%relFile%'];
+        yield 'template with a column alone' => ['foo://%c'];
     }
 
     /**

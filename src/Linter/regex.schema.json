@@ -694,8 +694,8 @@
       "default": "console"
     },
     "ide": {
-      "description": "IDE name or custom URL template for clickable file links. Use placeholders like %f, %l, %c, or %relFile%.",
-      "x-expected": "one of phpstorm, vscode, textmate, sublime, emacs, atom, macvim, an empty string, or a URL template holding %f or %l",
+      "description": "IDE name or custom URL template for clickable file links. A template holds at least one placeholder: %f or %file% (the file), %relFile% (the file relative to the working directory), %l or %line% (the line), %c or %column% (the column).",
+      "x-expected": "one of phpstorm, vscode, textmate, sublime, emacs, atom, macvim, an empty string, or a URL template holding a placeholder: %f or %file%, %relFile%, %l or %line%, %c or %column%",
       "default": "",
       "oneOf": [
         {
