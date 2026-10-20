@@ -31,6 +31,9 @@
              deprecation under src/ fails, vendor ones stay
              informational. PHPUnit 10.5 carries the same event types. -->
         <bootstrap class="PHPRegex\Tests\Support\SourceDeprecationListener"/>
+        <!-- The directory the class scans are kept in is set for the
+             whole process: each test leaves it unset for the next. -->
+        <bootstrap class="PHPRegex\Tests\Support\ClassSetStoreReset"/>
     </extensions>
     <testsuites>
         <testsuite name="PHPRegex on PHP 8.1">
