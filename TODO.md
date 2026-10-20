@@ -178,13 +178,6 @@ Parser bugs, each reproduced against the engine: the library's own regexes givin
 under a low `pcre.backtrack_limit` are reported as pattern errors;
 `php_version` and `ParserOptions` accept nonsense values.
 
-Printer bugs, each reproduced by printing then matching: the printed
-pattern matches differently or does not compile in about 240 cases as
-written, 380 normalized, 105 pretty and 87 compact, as `<b(*plb:a)>`
-printed `<b(?<=a)>` (the `<` delimiter counted), `{^a\Q{\E2}$}` printed
-`{^a\{2}$}`, `[[a-d[m-p]]]` normalized to `[[a-d[m-p]\]]` and
-`{a(?#{)b}c}` to `{a(?#{)b\}c}`.
-
 Parser structure: the extended-class parsing still in `TokenParser`
 (`parseExtendedClass`, `parseOperandAt`) apart; the error-offset rule read
 through `PcreTarget::faultOffset()` in `Validator`, `Lexer` and
@@ -228,6 +221,11 @@ Integrations:
 - The Modernizer rewrites `[\t\n\x0B\f\r ]` to `\s`, which a locale widens
   (167 of 288 macOS locales add the byte 0xA0): keep the class unless the
   locale is `C`, as the optimizer now does.
+- The optimizer rewrites `(?(DEFINE)a){7000}` to `(?:(?(DEFINE)a)){7000}`,
+  which PCRE2 refuses: a DEFINE group is not to be wrapped.
+- The printer writes a quantifier before the comments that sit between an
+  atom and it; under `#`, where a `\c\` hides the delimiter in such a
+  comment, PHP then reads the printed pattern differently.
 - The ReDoS results, the railroad layout, the backtrack
   prover's result passing, the two Tarjan implementations, the
   24-parameter `RedosAnalysis`, the solver's internal methods on its public
