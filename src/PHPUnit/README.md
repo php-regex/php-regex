@@ -33,7 +33,7 @@ Features
 * `assertPatternDoesNotMatch()` asserts no match — a pattern that does not parse or an engine refusal fails the assertion instead of passing it as "not a match"
 * `assertPatternCompiles()` asks the running engine, carrying the PCRE message and the offset it names on a refusal
 * `assertPatternIsLinear()` asserts a proven-linear ReDoS verdict, and fails with a stable first line — `proven unsafe:` for a held witness or a quadratic unanchored search, `could not analyze:` for a budget, a model or a parse refusal
-* The three constraints behind the assertions — `MatchesPattern`, `CompilesPattern`, `IsLinearPattern` — compose with `assertThat()`, `LogicalNot` and boolean composition
+* The four constraints behind the assertions — `MatchesPattern`, `DoesNotMatchPattern`, `CompilesPattern`, `IsLinearPattern` — compose with `assertThat()` and boolean composition; assert no match with `DoesNotMatchPattern`, since `LogicalNot` around `MatchesPattern` reads a pattern that does not parse, or an engine refusal, as "not a match"
 * A parse failure carries the library's message, byte position and caret snippet; an engine refusal carries `preg_last_error_msg()`
 
 Installation

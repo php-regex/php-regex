@@ -76,9 +76,8 @@ final class RegexAssertionsTraitTest extends TestCase
     }
 
     /**
-     * The negated assertion pre-runs the attempt so an unusable pattern
-     * fails loudly instead of passing under the negation: a pattern that
-     * does not parse never reaches "does not match".
+     * An unusable pattern fails loudly instead of passing as "not a match":
+     * a pattern that does not parse never reaches "does not match".
      */
     #[Test]
     public function test_assert_pattern_does_not_match_fails_with_the_library_error_on_a_parse_invalid_pattern(): void
@@ -87,7 +86,52 @@ final class RegexAssertionsTraitTest extends TestCase
             self::assertPatternDoesNotMatch('/(a/', 'a');
         });
 
+        $this->assertStringStartsWith("Failed asserting that 'a' does not match the pattern '/(a/'.\n", $failure);
         $this->assertStringContainsString('Expected ) at end of input', $failure);
+    }
+
+    /**
+     * The failure on a broken pattern runs through assertThat() like every
+     * other, so PHPUnit counts the assertion and never also reports the
+     * test as one that performed none.
+     */
+    #[Test]
+    public function test_assert_pattern_does_not_match_counts_the_assertion_on_a_parse_invalid_pattern(): void
+    {
+        $before = self::getCount();
+
+        $this->failingMessage(static function (): void {
+            self::assertPatternDoesNotMatch('/a(/', 'x');
+        });
+
+        $this->assertSame($before + 1, self::getCount());
+    }
+
+    #[Test]
+    public function test_assert_pattern_does_not_match_counts_the_assertion_on_a_bare_assert_subclass(): void
+    {
+        $before = self::getCount();
+
+        $this->failingMessage(static function (): void {
+            PlainRegexAssert::assertPatternDoesNotMatch('/a(/', 'x', 'the custom note');
+        });
+
+        $this->assertSame($before + 1, self::getCount());
+    }
+
+    /**
+     * preg_match('/a/u', "\xFFa") answers false: the engine read nothing,
+     * so the subject is not one the pattern misses.
+     */
+    #[Test]
+    public function test_assert_pattern_does_not_match_fails_with_the_engine_error_on_an_invalid_utf8_subject(): void
+    {
+        $failure = $this->failingMessage(static function (): void {
+            self::assertPatternDoesNotMatch('/a/u', "\xFFa", 'the custom note');
+        });
+
+        $this->assertStringStartsWith("the custom note\n", $failure);
+        $this->assertStringContainsString('Malformed UTF-8 characters', $failure);
     }
 
     #[Test]

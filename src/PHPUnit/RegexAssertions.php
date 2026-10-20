@@ -14,9 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\PHPUnit;
 
 use PHPRegex\PHPUnit\Constraint\CompilesPattern;
+use PHPRegex\PHPUnit\Constraint\DoesNotMatchPattern;
 use PHPRegex\PHPUnit\Constraint\IsLinearPattern;
 use PHPRegex\PHPUnit\Constraint\MatchesPattern;
-use PHPUnit\Framework\Constraint\LogicalNot;
 use PHPUnit\Framework\ExpectationFailedException;
 
 /**
@@ -61,12 +61,7 @@ trait RegexAssertions
      */
     public static function assertPatternDoesNotMatch(string $pattern, string $subject, string $message = ''): void
     {
-        $attempt = PatternLab::run($pattern, $subject, []);
-        if (null !== $attempt->failure) {
-            throw new ExpectationFailedException(self::noted($attempt->failure, $message));
-        }
-
-        self::assertThat($subject, new LogicalNot(new MatchesPattern($pattern)), $message);
+        self::assertThat($subject, new DoesNotMatchPattern($pattern), $message);
     }
 
     /**

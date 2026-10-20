@@ -181,6 +181,11 @@ return [
         'PHPRegex\PHPUnit\Constraint\CompilesPattern::failureDescription()' => ['host-contract', 1],
         'PHPRegex\PHPUnit\Constraint\CompilesPattern::additionalFailureDescription()' => ['host-contract', 1],
     ],
+    'src/PHPUnit/Constraint/DoesNotMatchPattern.php' => [
+        'PHPRegex\PHPUnit\Constraint\DoesNotMatchPattern::matches()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\DoesNotMatchPattern::failureDescription()' => ['host-contract', 1],
+        'PHPRegex\PHPUnit\Constraint\DoesNotMatchPattern::additionalFailureDescription()' => ['host-contract', 1],
+    ],
     'src/PHPUnit/Constraint/IsLinearPattern.php' => [
         'PHPRegex\PHPUnit\Constraint\IsLinearPattern::matches()' => ['host-contract', 1],
         'PHPRegex\PHPUnit\Constraint\IsLinearPattern::failureDescription()' => ['host-contract', 1],

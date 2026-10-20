@@ -11,8 +11,10 @@ CHANGELOG
    `assertPatternDoesNotMatch()` asserts no match, `assertPatternCompiles()`
    asks the running engine, and `assertPatternIsLinear()` asks the ReDoS
    analysis for a proof.
- * `MatchesPattern`, `CompilesPattern` and `IsLinearPattern` constraints,
-   so every assertion composes with `assertThat()`, `LogicalNot` and
-   boolean composition.
+ * `MatchesPattern`, `DoesNotMatchPattern`, `CompilesPattern` and
+   `IsLinearPattern` constraints, so every assertion composes with
+   `assertThat()` and boolean composition. `DoesNotMatchPattern` fails on a
+   pattern that does not parse or an engine refusal, which `LogicalNot`
+   around `MatchesPattern` would pass as "not a match".
  * Offsets are bytes, and one match attempt is one `preg_match()` call —
    both said in every failure the assertions render.

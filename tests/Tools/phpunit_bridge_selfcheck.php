@@ -70,6 +70,20 @@ $checks = [
     'assertPatternDoesNotMatch fails on a match' => [true, static function () use ($bridge): void {
         $bridge::assertPatternDoesNotMatch('/b/', 'abc');
     }],
+    'assertPatternDoesNotMatch fails on a pattern that does not parse' => [true, static function () use ($bridge): void {
+        $bridge::assertPatternDoesNotMatch('/a(/', 'x');
+    }],
+    'assertPatternDoesNotMatch counts its failure as an assertion' => [false, static function () use ($bridge): void {
+        $before = Assert::getCount();
+
+        try {
+            $bridge::assertPatternDoesNotMatch('/a(/', 'x');
+        } catch (ExpectationFailedException) {
+        }
+        if ($before + 1 !== Assert::getCount()) {
+            throw new ExpectationFailedException('the failure on a pattern that does not parse was not counted as an assertion.');
+        }
+    }],
     'assertPatternCompiles passes a pattern the engine takes' => [false, static function () use ($bridge): void {
         $bridge::assertPatternCompiles('/^\d{4}-\d{2}-\d{2}$/');
     }],

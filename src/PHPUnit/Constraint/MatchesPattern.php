@@ -30,6 +30,10 @@ use SebastianBergmann\Comparator\ComparisonFailure;
  * carrying the library's or the engine's own words. When only the captures
  * differ, the failure carries a comparison of the expectation against the
  * engine's answer, so PHPUnit renders a focused diff.
+ *
+ * Assert no match with DoesNotMatchPattern rather than negating this one:
+ * LogicalNot reads every failure as "not a match", the failure of a pattern
+ * that does not parse included.
  */
 final class MatchesPattern extends Constraint
 {

@@ -65,7 +65,7 @@ final class PublicSurface
             'Node/*',
         ],
         'PHPStan' => ['RegexPatternRule', 'RegexPatternArgumentRule'],
-        'PHPUnit' => ['RegexAssertions', 'Constraint/MatchesPattern', 'Constraint/CompilesPattern', 'Constraint/IsLinearPattern'],
+        'PHPUnit' => ['RegexAssertions', 'Constraint/MatchesPattern', 'Constraint/DoesNotMatchPattern', 'Constraint/CompilesPattern', 'Constraint/IsLinearPattern'],
         'Psalm' => ['Plugin'],
         'Rector' => ['PregMatchToStringComparisonRector', 'PregReplaceToStrReplaceRector', 'PregSplitToExplodeRector', 'EscapeLiteralBraceRector', 'AlphabeticAssertionToClassicRector', 'EscapeNulByteRector', 'PossessiveRepeatOnceRector', 'Set/RegexSetList'],
         'Redos' => [

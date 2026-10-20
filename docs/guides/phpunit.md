@@ -33,9 +33,13 @@ final class SlugTest extends TestCase
 ```
 
 The methods are static, so the trait also works in a bare `Assert` subclass
-— arrange-only helpers included. The three constraints behind the
-assertions (`MatchesPattern`, `CompilesPattern`, `IsLinearPattern`) compose
-with `assertThat()`, `LogicalNot` and boolean composition.
+— arrange-only helpers included. The four constraints behind the
+assertions (`MatchesPattern`, `DoesNotMatchPattern`, `CompilesPattern`,
+`IsLinearPattern`) compose with `assertThat()` and boolean composition.
+Assert no match with `DoesNotMatchPattern` rather than `LogicalNot` around
+`MatchesPattern`: the negation reads a pattern that does not parse, or an
+engine refusal, as "not a match", where `DoesNotMatchPattern` fails with the
+library's or the engine's words.
 
 ## The capture expectation
 
