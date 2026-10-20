@@ -197,6 +197,13 @@ one error order on the PHP 7.3 target; the library's own regexes giving up
 under a low `pcre.backtrack_limit` are reported as pattern errors;
 `php_version` and `ParserOptions` accept nonsense values.
 
+Printer bugs, each reproduced by printing then matching: the printed
+pattern matches differently or does not compile in about 240 cases as
+written, 380 normalized, 105 pretty and 87 compact, as `<b(*plb:a)>`
+printed `<b(?<=a)>` (the `<` delimiter counted), `{^a\Q{\E2}$}` printed
+`{^a\{2}$}`, `[[a-d[m-p]]]` normalized to `[[a-d[m-p]\]]` and
+`{a(?#{)b}c}` to `{a(?#{)b\}c}`.
+
 Parser structure: `TokenParser` (class and conditional parsing apart) and
 `PatternPrinter` (layout and bracket delimiters apart) split; then
 `Validator` split by concern; `QuantifierNode` carrying its bounds instead
