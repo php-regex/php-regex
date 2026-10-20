@@ -90,6 +90,39 @@ final class StartOptionsTest extends TestCase
     }
 
     /**
+     * After "\E" or a comment, which PCRE reads as nothing, an option is out
+     * of place all the same. Walking back over them from an option the
+     * pattern ends with read the last character of the pattern for the one
+     * before its first, and went round for ever between "\E" and a comment.
+     */
+    #[Test]
+    #[DataProvider('provideOptionsAfterWhatPcreReadsAsNothing')]
+    public function test_an_option_after_what_pcre_reads_as_nothing_at_the_start_is_out_of_place(string $pattern): void
+    {
+        // Oracle: PHP's PCRE refuses it, "(*VERB) not recognized or malformed".
+        $this->assertFalse(@preg_match($pattern, ''));
+        $this->assertSame(1, preg_match('/at offset (\d++)$/', (string) (error_get_last()['message'] ?? ''), $offset), $pattern);
+
+        $result = RegexParser::create(['cache' => null])->validate($pattern);
+
+        $this->assertSame(ErrorCode::VerbMisplaced, $result->errorCode, $pattern);
+        $this->assertSame((int) $offset[1], $result->offset, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideOptionsAfterWhatPcreReadsAsNothing(): iterable
+    {
+        yield '"\E" then a comment' => ['pattern' => '/\E(?#c)(*UTF)/'];
+        yield 'an empty quote then a comment' => ['pattern' => '/\Q\E(?#c)(*UTF)/'];
+        yield 'a comment then "\E"' => ['pattern' => '/(?#c)\E(*UTF)/'];
+        yield 'two "\E" then a comment' => ['pattern' => '/\E\E(?#c)(*UTF)/'];
+        yield '"\E" then two comments' => ['pattern' => '/\E(?#c)(?#d)(*LIMIT_MATCH=1)/'];
+        yield '"\E" then a comment under x' => ['pattern' => '/\E(?#c)(*NO_JIT)/x'];
+    }
+
+    /**
      * The name of every start option, and where PCRE2 10.32 ends it: it
      * reads a verb name as a run of letters only.
      *

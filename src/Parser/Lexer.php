@@ -2312,7 +2312,9 @@ final class Lexer
     {
         do {
             $before = $position;
-            $previous = $this->pattern[$position - 1] ?? '';
+            // Nothing stands before the start: a negative offset would read
+            // the end of the pattern.
+            $previous = $position > 0 ? $this->pattern[$position - 1] : '';
             if ($this->extendedMode && '' !== $previous && '' === trim($previous, " \t\n\r\f\v")) {
                 // A space, or the line break that ends a "#" comment.
                 $position--;
