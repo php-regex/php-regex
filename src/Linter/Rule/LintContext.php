@@ -76,6 +76,15 @@ final class LintContext
     private string $activeFlags;
 
     /**
+     * For each sequence asked about and each kind of question, whether
+     * nothing but what the question allows follows each of its items,
+     * keyed by the item's object id.
+     *
+     * @var array<string, array<int, bool>>
+     */
+    private array $followers = [];
+
+    /**
      * @param (\Closure(string): bool)|null $ruleEnabled whether the configuration turns a rule on, by its
      *                                                   id; every rule when none is given
      */
@@ -324,7 +333,7 @@ final class LintContext
         $child = $node;
         foreach (array_reverse($this->parentStack) as $parent) {
             $last = match (true) {
-                $parent instanceof SequenceNode => self::onlyCommentsFollow($parent, $child, $endAnchorsMayFollow, $emptyMatchesMayFollow) ? $child : null,
+                $parent instanceof SequenceNode => $this->onlyCommentsFollow($parent, $child, $endAnchorsMayFollow, $emptyMatchesMayFollow) ? $child : null,
                 $parent instanceof AlternationNode => $child,
                 $parent instanceof GroupNode && \in_array($parent->type, self::GROUPS_ENDING_WITH_THEIR_CHILD, true) => $parent->child,
                 default => null,
@@ -340,16 +349,29 @@ final class LintContext
         return true;
     }
 
-    private static function onlyCommentsFollow(SequenceNode $sequence, NodeInterface $item, bool $endAnchorsMayFollow, bool $emptyMatchesMayFollow = false): bool
+    /**
+     * Whether only comments follow the item in its sequence, or end anchors
+     * and items that match nothing first as well when the flags say so.
+     * Each sequence is read once per question, from its end: the answer for
+     * every item of it is kept.
+     */
+    private function onlyCommentsFollow(SequenceNode $sequence, NodeInterface $item, bool $endAnchorsMayFollow, bool $emptyMatchesMayFollow): bool
     {
-        $after = \array_slice($sequence->children, (int) array_search($item, $sequence->children, true) + 1);
+        $key = spl_object_id($sequence).':'.($endAnchorsMayFollow ? 1 : 0).($emptyMatchesMayFollow ? 1 : 0);
+        if (!isset($this->followers[$key])) {
+            $followed = [];
+            $nothingAfter = true;
+            for ($index = \count($sequence->children) - 1; $index >= 0; $index--) {
+                $next = $sequence->children[$index];
+                $followed[spl_object_id($next)] = $nothingAfter;
+                $nothingAfter = $nothingAfter && ($next instanceof CommentNode
+                    || ($endAnchorsMayFollow && NodePredicates::isEndAnchorNode($next))
+                    || ($emptyMatchesMayFollow && self::alwaysMatchesEmptyFirst($next)));
+            }
+            $this->followers[$key] = $followed;
+        }
 
-        return [] === array_filter(
-            $after,
-            static fn (NodeInterface $next): bool => !$next instanceof CommentNode
-                && !($endAnchorsMayFollow && NodePredicates::isEndAnchorNode($next))
-                && !($emptyMatchesMayFollow && self::alwaysMatchesEmptyFirst($next)),
-        );
+        return $this->followers[$key][spl_object_id($item)] ?? false;
     }
 
     /**

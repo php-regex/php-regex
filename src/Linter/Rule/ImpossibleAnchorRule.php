@@ -98,47 +98,48 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         $issues = [];
         $children = $node->children;
         $count = \count($children);
-        $flagsAtChild = null;
+        $flagsAtChild = array_values($context->flagsAtEachChild($node));
         $spelled = false;
+
+        // What the items before the current one read, kept as the loop goes:
+        // whether they may all read nothing, and the characters the last of
+        // them reads (an empty set when none reads one, null when unknown).
+        $prefixCanBeEmpty = true;
+        $before = ByteCharSet::empty();
+        $tailCanBeEmpty = null;
 
         for ($i = 0; $i < $count; $i++) {
             $child = $children[$i];
-            $flags = $this->effectiveFlagsAt($children, $i, $context);
+            $flags = $flagsAtChild[$i];
 
             if (NodePredicates::isStartAnchorNode($child)) {
                 $skipForMultiline = $child instanceof AnchorNode
                     && '^' === $child->value
                     && str_contains($flags, 'm');
 
-                if (!$skipForMultiline) {
-                    $anchorLabel = NodePredicates::anchorDisplay($child);
-                    $prefix = array_slice($children, 0, $i);
-                    if ([] !== $prefix && !NodePredicates::sequenceCanBeEmpty($prefix)) {
-                        $issues[] = new RuleViolation(
-                            'regex.lint.anchor.impossible.start',
-                            \sprintf(
-                                "Start anchor '%s' appears after consuming characters, making it impossible to match.",
-                                $anchorLabel,
-                            ),
-                            $child->getStartPosition(),
-                            end: $child->getEndPosition(),
-                        );
-                    }
+                if (!$skipForMultiline && $i > 0 && !$prefixCanBeEmpty) {
+                    $issues[] = new RuleViolation(
+                        'regex.lint.anchor.impossible.start',
+                        \sprintf(
+                            "Start anchor '%s' appears after consuming characters, making it impossible to match.",
+                            NodePredicates::anchorDisplay($child),
+                        ),
+                        $child->getStartPosition(),
+                        end: $child->getEndPosition(),
+                    );
                 }
             }
 
-            if (NodePredicates::isEndAnchorNode($child)) {
-                $anchorLabel = NodePredicates::anchorDisplay($child);
-                $tail = array_slice($children, $i + 1);
-                if ([] !== $tail
-                    && !NodePredicates::sequenceCanBeEmpty($tail)
-                    && !$this->tailCanContinueEndOfLine($child, array_slice($children, 0, $i), $tail, $flags, $node, $context)
+            if (NodePredicates::isEndAnchorNode($child) && $i + 1 < $count) {
+                $tailCanBeEmpty ??= self::emptyFromEachItem($children);
+                if (!$tailCanBeEmpty[$i + 1]
+                    && !$this->tailCanContinueEndOfLine($child, null === $before || $before->isEmpty() ? null : $before, \array_slice($children, $i + 1), $flags, $node, $context)
                 ) {
                     $issues[] = new RuleViolation(
                         'regex.lint.anchor.impossible.end',
                         \sprintf(
                             "End anchor '%s' appears before consuming characters, making it impossible to match.",
-                            $anchorLabel,
+                            NodePredicates::anchorDisplay($child),
                         ),
                         $child->getStartPosition(),
                         end: $child->getEndPosition(),
@@ -147,7 +148,6 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             }
 
             if ($child instanceof AssertionNode && ('b' === $child->value || 'B' === $child->value) && $i > 0 && $i + 1 < $count) {
-                $flagsAtChild ??= array_values($context->flagsAtEachChild($node));
                 if (false === $spelled) {
                     $spelled = LanguageQuestions::spelledFlags($context, $node);
                 }
@@ -155,6 +155,12 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 if (null !== $boundary) {
                     $issues[] = $boundary;
                 }
+            }
+
+            $prefixCanBeEmpty = $prefixCanBeEmpty && NodePredicates::canBeEmpty($child);
+            $last = EndOfLineTail::lastCharacters([$child], $context->charSetAnalyzer);
+            if (null === $last || !$last->isEmpty()) {
+                $before = $last;
             }
         }
 
@@ -249,24 +255,21 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     }
 
     /**
-     * The enclosing-scope flags folded with every bare (?flags) group that
-     * precedes the child inside its own sequence.
+     * Whether the items from each index to the end may all read nothing,
+     * keyed by the index; the end itself, past the last item, may.
      *
-     * @param array<int, NodeInterface> $children
+     * @param list<NodeInterface> $children
+     *
+     * @return array<int, bool>
      */
-    private function effectiveFlagsAt(array $children, int $index, LintContext $context): string
+    private static function emptyFromEachItem(array $children): array
     {
-        $flags = $context->activeFlags();
-
-        for ($j = 0; $j < $index; $j++) {
-            $sibling = $children[$j];
-            if (NodePredicates::isStandaloneInlineFlagsGroup($sibling)
-                && null !== $sibling->flags) {
-                $flags = NodePredicates::applyInlineFlags($flags, $sibling->flags);
-            }
+        $empty = [\count($children) => true];
+        for ($index = \count($children) - 1; $index >= 0; $index--) {
+            $empty[$index] = $empty[$index + 1] && NodePredicates::canBeEmpty($children[$index]);
         }
 
-        return $flags;
+        return $empty;
     }
 
     /**
@@ -284,10 +287,11 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * them, which is all this checks. Under "(*ANY)" some newlines lie above
      * ASCII, which the sets do not hold: the rule says nothing.
      *
-     * @param array<int, NodeInterface> $before the items written before the anchor in its sequence
+     * @param ByteCharSet|null          $before the characters the item read just before the anchor can be, null
+     *                                          when unknown or when the anchor may come first
      * @param array<int, NodeInterface> $nodes
      */
-    private function tailCanContinueEndOfLine(NodeInterface $anchor, array $before, array $nodes, string $flags, SequenceNode $sequence, LintContext $context): bool
+    private function tailCanContinueEndOfLine(NodeInterface $anchor, ?ByteCharSet $before, array $nodes, string $flags, SequenceNode $sequence, LintContext $context): bool
     {
         $convention = StartOptions::newline($context->pattern->source);
         $newline = match ($convention) {
@@ -306,7 +310,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             ? 'z' === $anchor->value
             : $context->pattern->hasFlag('D') && !$multiline;
 
-        $tail = $this->tail($newline, $flags, $sequence, $context, EndOfLineTail::lastCharacters($before, $context->charSetAnalyzer));
+        $tail = $this->tail($newline, $flags, $sequence, $context, $before);
         if ($tail->canMatchNothingHere($nodes, $atTheEnd)) {
             return true;
         }
@@ -360,7 +364,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             return $this->newlineReads[$key] = true === LanguageQuestions::areDisjoint($atomPattern, $characterPattern, $context->dfas, $context->target) ? false : null;
         };
 
-        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, null === $before || $before->isEmpty() ? null : $before);
+        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before);
     }
 
     /**

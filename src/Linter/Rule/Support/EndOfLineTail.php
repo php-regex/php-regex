@@ -237,19 +237,20 @@ final class EndOfLineTail
      */
     public function canMatchTheLastNewline(array $nodes, bool $dotAll): bool
     {
-        // The two sides are read once each, so that a tail of thousands of
-        // items stays linear.
-        $nothingAfter = [];
-        $ok = true;
-        for ($i = \count($nodes) - 1; $i >= 0; $i--) {
-            $nothingAfter[$i] = $ok;
-            $ok = $ok && $this->mayBeEmpty($nodes[$i], self::AFTER_THE_LAST_NEWLINE, $dotAll);
-        }
+        $nodes = array_values($nodes);
+        $count = \count($nodes);
 
-        $nothingBefore = true;
+        // Where the items after a candidate stop matching nothing: the first
+        // one after it that may not, or one that may end the match there.
+        // Found once for the run of candidates before it, so that a tail of
+        // thousands of items stays linear.
+        $stop = -1;
+        $stopEndsIt = false;
+
+        // Every item before the current one matches nothing.
         foreach ($nodes as $index => $node) {
             if (self::holdsAccept($node)) {
-                return $nothingBefore;
+                return true;
             }
 
             if (NodePredicates::isStandaloneInlineFlagsGroup($node)) {
@@ -258,11 +259,23 @@ final class EndOfLineTail
                 continue;
             }
 
-            if ($nothingBefore && $nothingAfter[$index] && $this->mayBeTheNewline($node, $dotAll)) {
-                return true;
+            if ($this->mayBeTheNewline($node, $dotAll)) {
+                if ($index >= $stop) {
+                    $stop = $index + 1;
+                    while ($stop < $count && !self::holdsAccept($nodes[$stop]) && $this->mayBeEmpty($nodes[$stop], self::AFTER_THE_LAST_NEWLINE, $dotAll)) {
+                        $stop++;
+                    }
+                    $stopEndsIt = $stop === $count || self::holdsAccept($nodes[$stop]);
+                }
+
+                if ($stopEndsIt) {
+                    return true;
+                }
             }
 
-            $nothingBefore = $nothingBefore && $this->mayBeEmpty($node, self::BEFORE_THE_LAST_NEWLINE, $dotAll);
+            if (!$this->mayBeEmpty($node, self::BEFORE_THE_LAST_NEWLINE, $dotAll)) {
+                return false;
+            }
         }
 
         return false;

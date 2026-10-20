@@ -70,6 +70,7 @@ final class EndAnchorZeroWidthTailTest extends TestCase
         yield 'call of an empty group' => ['pattern' => '/a$(?1)()/', 'subject' => 'a'];
         yield 'call of an optional newline' => ['pattern' => '/(\n)?a$(?1)/', 'subject' => "a\n"];
         yield 'accept before a letter' => ['pattern' => '/a$(*ACCEPT)b/', 'subject' => 'a'];
+        yield 'accept after the newline before a letter' => ['pattern' => '/a$\n(*ACCEPT)b/', 'subject' => "a\n"];
         yield 'accept in a group before a letter' => ['pattern' => '/a$(?:(*ACCEPT))b/', 'subject' => 'a'];
         yield 'circumflex before the newline at the start' => ['pattern' => '/$^\n/', 'subject' => "\n"];
         yield 'subject start before the newline at the start' => ['pattern' => '/\Z\A\n/', 'subject' => "\n"];
