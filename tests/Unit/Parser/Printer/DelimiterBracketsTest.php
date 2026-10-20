@@ -89,6 +89,9 @@ final class DelimiterBracketsTest extends TestCase
         // In a class, "[" before ":" would open a POSIX class.
         yield 'a square bracket before a colon, quoted' => ['body' => "[\x03[:-;:](?#])", 'opening' => '[', 'closing' => ']', 'expected' => '[\Q[\E:-;:](?#])', 'subject' => '['];
         yield 'a square bracket before a letter' => ['body' => "[\x03[a](?#])", 'opening' => '[', 'closing' => ']', 'expected' => '[[a](?#])', 'subject' => '['];
+        // A collapsed comment writes a bracket it held only where one needs it.
+        yield 'a comment bracket a verb name needs' => ['body' => "(*MARK:{)a(?#...\x03C})", 'opening' => '{', 'closing' => '}', 'expected' => '(*MARK:{)a(?#...})', 'subject' => 'a'];
+        yield 'a comment bracket nothing needs' => ['body' => "a(?#...\x03C{)", 'opening' => '{', 'closing' => '}', 'expected' => 'a(?#...)', 'subject' => 'a'];
         // Where no literal bracket pairs, a lookbehind or an atomic group
         // takes its name, which holds no bracket.
         yield 'a lookbehind nothing closes' => ['body' => "a\x03G(?<=a)", 'opening' => '<', 'closing' => '>', 'expected' => 'a(*plb:a)', 'subject' => 'a'];

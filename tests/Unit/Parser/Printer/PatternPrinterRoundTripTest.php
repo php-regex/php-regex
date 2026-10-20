@@ -149,6 +149,32 @@ final class PatternPrinterRoundTripTest extends TestCase
         yield 'the word boundaries of a POSIX spelling' => ['pattern' => '<[[:<:]]été[[:>:]]>u', 'subjects' => ['été', 'aété', 'étéa']];
     }
 
+    /**
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideCommentBrackets')]
+    public function test_a_comment_holding_a_bracket_php_counts_prints_back_the_same_pattern(string $pattern, array $subjects): void
+    {
+        $this->assertEveryPrinterKeepsThePattern($pattern, $subjects);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideCommentBrackets(): iterable
+    {
+        // A comment collapsed to "(?#...)" would drop the bracket that pairs
+        // with one of a verb name, which no literal can stand for.
+        yield 'a "#" comment closing a brace of a verb name' => ['pattern' => "{(*MARK:{)a # }\n}x", 'subjects' => ['a', 'b']];
+        yield 'a "#" comment closing a parenthesis of a verb name' => ['pattern' => "((*MARK:()a # )\n)x", 'subjects' => ['a', 'b']];
+        yield 'a "#" comment closing an angle bracket of a verb name' => ['pattern' => "<(*MARK:<)a # >\n>x", 'subjects' => ['a', 'b']];
+        yield 'two "#" comment brackets closing two verb names' => ['pattern' => "{(*MARK:{)(*MARK:{) a # }}\n}x", 'subjects' => ['a', 'b']];
+        yield 'a "(?#...)" comment opening a brace a verb name closes' => ['pattern' => '{(?#{)\0101\pL.\0(*MARK:})\x{7B}}xu', 'subjects' => ["\x081a.\0{", 'a']];
+        yield 'a "(?#...)" comment and a "#" one, under pretty printing' => ['pattern' => "{(?#{)\\10#}\n(?<!b)(?x)(?#c)\\o{7}[ ]}x", 'subjects' => ["\x08\x07 ", 'a']];
+        yield 'an escaped bracket in a comment, which PHP does not count' => ['pattern' => "{(*MARK:{)a # \\} }\n}x", 'subjects' => ['a', 'b']];
+    }
+
     #[Test]
     #[DataProvider('provideGroupsByName')]
     public function test_a_group_written_by_name_keeps_it_under_angle_brackets(string $pattern, string $name, string $formatted): void

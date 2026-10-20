@@ -59,6 +59,12 @@ final class DelimiterBrackets
     public const MARK_GROUP = 'G';
 
     /**
+     * After a mark, a bracket a collapsed comment may hold, which it writes
+     * only where one PHP counts needs it (see rebalanced).
+     */
+    public const MARK_COMMENT = 'C';
+
+    /**
      * The symbols of the lookbehinds and the atomic group, each holding a
      * "<" or a ">", with the name that holds none: PCRE2 reads both from
      * 10.34 on.
@@ -72,6 +78,8 @@ final class DelimiterBrackets
     private const KIND_QUOTED = 2;
 
     private const KIND_GROUP = 3;
+
+    private const KIND_COMMENT = 4;
 
     /**
      * The "\Q...\E" regions of a pattern's source, as offsets: start, end.
@@ -273,10 +281,12 @@ final class DelimiterBrackets
      * are counted as written. After the mark, a literal bracket is written
      * unescaped ("B" then the bracket), escaped (the bracket alone) or
      * escaped where it may only come back counted quoted ("Q" then the
-     * bracket); "G" then the symbol marks a group. Each stays as written
+     * bracket); "C" then a bracket marks one a collapsed comment may hold,
+     * which it leaves out unless needed; "G" then the symbol marks a
+     * group. Each stays as written
      * unless PHP would then end the pattern too soon, at a closing bracket
      * with nothing open, or never, past an opening one nothing closes.
-     * There a literal bracket nearby changes, counted or not, before a
+     * There a literal or comment bracket nearby changes, counted or not, before a
      * group takes its name, "(*plb:" for "(?<=", which holds no bracket:
      * read left to right, a closing bracket with nothing open turns the
      * nearest marked item before it; read right to left, an opening one
@@ -307,6 +317,7 @@ final class DelimiterBrackets
 
             $result .= substr($body, $from, $start - $from).match (true) {
                 self::KIND_GROUP === $kind => self::groupSpelling(substr($body, $start + \strlen($mark) + 1, $end - $start - \strlen($mark) - 1), $included[$index]),
+                self::KIND_COMMENT === $kind => $included[$index] ? $bracket : '',
                 !$included[$index] => '\\'.$bracket,
                 self::KIND_LITERAL === $kind && self::standsBare($body, $start, $end, $bracket, $mark) => $bracket,
                 default => '\\Q'.$bracket.'\\E',
@@ -821,10 +832,15 @@ final class DelimiterBrackets
                     continue;
                 }
 
-                $flagged = self::MARK_BARE === $flag || self::MARK_QUOTED === $flag;
+                $kind = match ($flag) {
+                    self::MARK_QUOTED => self::KIND_QUOTED,
+                    self::MARK_COMMENT => self::KIND_COMMENT,
+                    default => self::KIND_LITERAL,
+                };
+                $flagged = self::MARK_BARE === $flag || self::KIND_LITERAL !== $kind;
                 $bracket = $body[$flagged ? $at + 1 : $at];
                 $end = $flagged ? $at + 2 : $at + 1;
-                $tokens[] = [$i, $end, $bracket, $opening === $bracket, self::MARK_QUOTED === $flag ? self::KIND_QUOTED : self::KIND_LITERAL, self::MARK_BARE === $flag];
+                $tokens[] = [$i, $end, $bracket, $opening === $bracket, $kind, self::MARK_BARE === $flag];
                 $i = $end;
 
                 continue;
@@ -906,7 +922,7 @@ final class DelimiterBrackets
                 continue;
             }
 
-            $turned = self::KIND_LITERAL === $kind || self::KIND_QUOTED === $kind
+            $turned = self::KIND_FIXED !== $kind && self::KIND_GROUP !== $kind
                 ? $index
                 : array_pop($literals) ?? (self::KIND_GROUP === $kind ? $index : array_pop($groups));
             if (null === $turned) {

@@ -969,7 +969,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // lightweight inline placeholder so that we preserve structure
         // without leaking (or reflowing) the original comment text.
         if ($this->collapseExtendedComments && $isExtended) {
-            return '(?#...)';
+            return $this->collapsedComment($node);
         }
 
         // Extended (/x) mode line comments (starting with '#') should be
@@ -2444,6 +2444,38 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return null === $balanced ? $spelled : DelimiterBrackets::spelledToEnd($balanced, $this->delimiter, $this->closingDelimiter);
+    }
+
+    /**
+     * The placeholder a collapsed comment is written as, "(?#...)". Where
+     * the pattern is written again to balance a bracket delimiter (see
+     * endingWhereWritten), it may keep, marked, the brackets of the
+     * delimiter PHP counted in the comment, after the dots: one may pair
+     * with a bracket of a verb name, which no literal can stand for. A ")"
+     * ends a "(?#...)": only a "#" comment holds one, and its placeholder
+     * is then a "#" comment too, ending as it did.
+     */
+    private function collapsedComment(CommentNode $node): string
+    {
+        $brackets = '';
+        $closesParenthesis = false;
+        if (null !== $this->rebalancingMark) {
+            $text = $node->comment;
+            for ($i = 0, $length = \strlen($text); $i < $length; $i++) {
+                if ('\\' === $text[$i]) {
+                    $i++;
+                } elseif ($text[$i] === $this->delimiter || $text[$i] === $this->closingDelimiter) {
+                    $brackets .= $this->rebalancingMark.DelimiterBrackets::MARK_COMMENT.$text[$i];
+                    $closesParenthesis = $closesParenthesis || ')' === $text[$i];
+                }
+            }
+        }
+
+        if ($closesParenthesis) {
+            return '#...'.$brackets.substr($node->comment, \strlen(rtrim($node->comment, "\r\n")));
+        }
+
+        return '(?#...'.$brackets.')';
     }
 
     /**
