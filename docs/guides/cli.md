@@ -1385,7 +1385,8 @@ target PHP of 7.2 or earlier, which ships PCRE1: one named outright, or a
 scanned. `regex` run without a command prints the help and exits
 with 2, as `regex help` with an unknown command does.
 
-For `lint`, code 2 also covers the paths it is given:
+For `lint`, code 2 also covers the paths it is given, as it does for
+Symfony's and Laravel's `regex:lint`:
 
 | Case                                                         | Exit code | JSON `stage` |
 |--------------------------------------------------------------|-----------|--------------|

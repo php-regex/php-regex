@@ -89,7 +89,10 @@ php_regex:
 `paths` and `exclude` are read from `%kernel.project_dir%`: `regex:lint`
 lints the same files whatever directory it runs from. The paths given to
 `regex:lint` on the command line are read from the working directory, as
-`lint:yaml` reads them.
+`lint:yaml` reads them. A path that does not exist stops `regex:lint` with
+exit code 2, as it stops `regex lint`: `Path not found: src/Legacy`, stage
+`usage` in the JSON envelope for a path given on the command line, `config`
+for one of `php_regex.paths`, which the message names.
 
 A value the bundle cannot read stops the container compile with the key
 named: an unknown ReDoS threshold, a `php_version` that is no version, a

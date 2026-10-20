@@ -23,6 +23,8 @@ use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintRunFailure;
+use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\Parallel\WorkerCount;
 use PHPRegex\Linter\PatternOccurrence;
@@ -209,6 +211,12 @@ final class LintCommand extends Command
             $format = $this->validateAndNormalizeFormat($input, $io);
         } catch (InvalidRegexOptionException) {
             return Command::INVALID;
+        }
+
+        try {
+            LintRunner::checkPaths($paths, $configured ? 'php_regex.paths' : null);
+        } catch (LintRunFailure $e) {
+            return $this->renderFailure($format, $output, $io, $e->getMessage(), $e->stage, $e->exitCode);
         }
 
         // The runtime service judges for the running PHP; the lint judges

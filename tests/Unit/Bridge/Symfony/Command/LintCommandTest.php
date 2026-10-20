@@ -68,7 +68,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommand();
 
         $tester = new CommandTester($command);
-        $status = $tester->execute(['paths' => ['nonexistent']]);
+        $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
@@ -107,7 +107,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommand();
 
         $tester = new CommandTester($command);
-        $status = $tester->execute(['paths' => ['nonexistent'], '--format' => 'json']);
+        $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(0, $status);
 
@@ -130,7 +130,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommand();
 
         $tester = new CommandTester($command);
-        $status = $tester->execute(['paths' => ['nonexistent'], '--format' => 'invalid']);
+        $status = $tester->execute(['paths' => ['.'], '--format' => 'invalid']);
 
         $this->assertSame(2, $status);
         $display = preg_replace('/\s+/', ' ', $tester->getDisplay()) ?? '';
@@ -274,7 +274,7 @@ final class LintCommandTest extends TestCase
 
         foreach (['/app', null] as $projectDir) {
             $command = new LintCommand(lint: $lint, analysis: $analysis, defaultPaths: ['src', 'lib'], projectDir: $projectDir);
-            (new CommandTester($command))->execute(['paths' => ['src/Controller/One.php'], '--format' => 'json']);
+            (new CommandTester($command))->execute(['paths' => [__FILE__], '--format' => 'json']);
         }
 
         // Read from the project directory, as written when there is none.
@@ -288,7 +288,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommand();
 
         $tester = new CommandTester($command);
-        $status = $tester->execute(['paths' => ['nonexistent'], '--jobs' => '0']);
+        $status = $tester->execute(['paths' => ['.'], '--jobs' => '0']);
 
         $this->assertSame(2, $status);
         $this->assertStringContainsString('positive integer', (string) $tester->getDisplay());
@@ -334,7 +334,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommandWithSources([$progressSource]);
         $tester = new CommandTester($command);
 
-        $status = $tester->execute(['paths' => ['nonexistent']]);
+        $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString('No regex patterns found', (string) $tester->getDisplay());
@@ -364,7 +364,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommandWithSources([$failingSource]);
         $tester = new CommandTester($command);
 
-        $status = $tester->execute(['paths' => ['nonexistent']]);
+        $status = $tester->execute(['paths' => ['.']]);
 
         $this->assertSame(1, $status);
         $this->assertStringContainsString('boom', (string) $tester->getDisplay());
@@ -393,7 +393,7 @@ final class LintCommandTest extends TestCase
         $command = $this->createCommandWithSources([$failingSource]);
         $tester = new CommandTester($command);
 
-        $status = $tester->execute(['paths' => ['nonexistent'], '--format' => 'json']);
+        $status = $tester->execute(['paths' => ['.'], '--format' => 'json']);
 
         $this->assertSame(1, $status);
         $this->assertStringContainsString('Failed to collect patterns', (string) $tester->getDisplay());
@@ -551,7 +551,7 @@ final class LintCommandTest extends TestCase
         $router->method('getRouteCollection')->willReturn($collection);
 
         $tester = new CommandTester($this->createCommandWithSources([new RoutePatternSource(new RouteRequirementNormalizer(), $router)]));
-        $status = $tester->execute(['paths' => ['nonexistent']]);
+        $status = $tester->execute(['paths' => ['.']]);
         $display = (string) $tester->getDisplay();
 
         $this->assertSame(0, $status, $display);

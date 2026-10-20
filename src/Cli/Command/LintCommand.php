@@ -35,6 +35,8 @@ use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintRunFailure;
+use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Linter\Parallel\WorkerCount;
@@ -380,12 +382,10 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
      */
     private function unusableFile(LintArguments $arguments, bool $pathsGiven, ?LintBaseline &$baseline): ?array
     {
-        foreach ($arguments->paths as $path) {
-            if ('' !== $path && !file_exists($path)) {
-                return $pathsGiven
-                    ? ['Path not found: '.$path, JsonDocument::STAGE_USAGE]
-                    : ['Path not found: '.$path.' (from the "paths" of the configuration)', JsonDocument::STAGE_CONFIG];
-            }
+        try {
+            LintRunner::checkPaths($arguments->paths, $pathsGiven ? null : 'the "paths" of the configuration');
+        } catch (LintRunFailure $e) {
+            return [$e->getMessage(), $e->stage];
         }
 
         $baseline = null;

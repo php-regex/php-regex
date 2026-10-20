@@ -9,6 +9,8 @@ CHANGELOG
  * `regex:lint` reads `paths` and `exclude` from `%kernel.project_dir%`,
    whatever directory it runs from; the paths given on the command line are
    read from the working directory.
+ * `regex:lint` stops with exit code 2 on a path that does not exist, as
+   `regex lint` does, where it passed.
  * `locale` names the `LC_CTYPE` locale `regex:lint` judges patterns
    under; the `php_regex.regex` service judges under the running PHP's.
  * `report_unmatched_ignores`, on by default, makes `regex:lint` report each

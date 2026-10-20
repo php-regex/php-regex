@@ -29,6 +29,8 @@ use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
+use PHPRegex\Linter\LintRunFailure;
+use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
@@ -140,6 +142,12 @@ final class LintCommand extends Command
             if (false === $jobs) {
                 return $this->renderFailure($format, 'The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, self::INVALID);
             }
+        }
+
+        try {
+            LintRunner::checkPaths($paths, $configured ? 'php-regex.paths' : null);
+        } catch (LintRunFailure $e) {
+            return $this->renderFailure($format, $e->getMessage(), $e->stage, $e->exitCode);
         }
 
         // The Regex service judges for the running PHP; the lint judges for
