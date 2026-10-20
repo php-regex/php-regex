@@ -437,6 +437,8 @@
         {"source":"ErrorOffsetReleaseTest: class that is a POSIX item holding a range from a type","pattern":"/[:\\d-z:]/","compile":{"10.39":0,"10.40":0,"10.42":0,"10.44":0}},
         {"source":"ErrorOffsetReleaseTest: range from a quoted hyphen to a hyphen, then a range from a property","pattern":"/[\\Q-\\E--\\pL-z]/","compile":{"10.39":11,"10.40":11,"10.42":11,"10.44":11}},
         {"source":"ErrorOffsetReleaseTest: range to a hyphen, then a range from a property","pattern":"/[!--\\pL-z]/","compile":{"10.39":7,"10.40":7,"10.42":7,"10.44":7}},
+        {"source":"ErrorOffsetReleaseTest: octal past a byte in a class, no brace","pattern":"/[\\o{400/","compile":{"10.39":7,"10.40":7,"10.42":7,"10.44":7}},
+        {"source":"ErrorOffsetReleaseTest: surrogate, no brace","pattern":"/\\x{d800/u","compile":{"10.39":{"php":{"70300":true,"80000":6}},"10.40":{"php":{"70300":true,"80000":6}},"10.42":{"php":{"70300":true,"80000":6}},"10.44":{"php":{"70300":true,"80000":6}}}},
         {"source":"ErrorOffsetReleaseTest: counts out of order after an unbounded lookbehind","pattern":"/(?<=a+){2,1}/","compile":{"10.39":11,"10.40":11,"10.42":11,"10.44":11}},
         {"source":"ErrorOffsetReleaseTest: counts out of order after a reference to a missing group","pattern":"/\\9{2,1}/","compile":{"10.39":6,"10.40":6,"10.42":6,"10.44":6}},
         {"source":"ErrorOffsetReleaseTest: counts out of order after a call to a missing group","pattern":"/(?1){2,1}/","compile":{"10.39":8,"10.40":8,"10.42":8,"10.44":8}},

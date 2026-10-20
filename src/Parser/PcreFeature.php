@@ -267,6 +267,11 @@ enum PcreFeature
     case BranchCountErrorOffTheConditionName;
 
     /**
+     * Under UTF a surrogate written in braces, "\x{d800" or "\o{154000", is refused before the closing brace is looked for.
+     */
+    case SurrogateRefusedBeforeBrace;
+
+    /**
      * A braced escape left open at the end of the pattern is reported at the end, not past it.
      */
     case UnclosedBraceAtPatternEnd;
@@ -330,7 +335,8 @@ enum PcreFeature
             self::ErrorOffsetPastTheFault,
             self::AlphaNameAtPatternEndIsUnclosed,
             self::VersionConditionLeftOpenIsVersionError,
-            self::BranchCountErrorOffTheConditionName => '10.47',
+            self::BranchCountErrorOffTheConditionName,
+            self::SurrogateRefusedBeforeBrace => '10.47',
             self::UnclosedBraceAtPatternEnd,
             self::ExtendedClassBesideLookbehindCompiles => '10.48',
         };

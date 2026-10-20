@@ -135,22 +135,6 @@ symfony/recipes-contrib once 2.0.0 is on Packagist.
 
 Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
 
-- A `\p{` or `\P{` no `}` closes in a class hides an earlier error in it up
-  to 10.44: `[z-aa-\p{L]` is "range out of order" at offset 3, the library
-  says 8 (invalid range); on every release `([z-a\P{]` is offset 4 (5 from
-  10.47), the library says 9 (malformed property).
-- PCRE2 10.32 to 10.36 read the digits of a brace before they check that a
-  count closes it: `a{65536 }` is "number too big in {} quantifier" at
-  offset 7 (php:8.0-cli), and `\g{65536 }` too for PHP 7.3 and 7.4 without
-  `X` (offset 8). The library accepts both.
-- `(a)\g{1-}` compiles for the library on every PHP 8 target; PCRE2 refuses
-  it at offset 5 (7 from 10.47). `\g{--1}` and `\g{-+1}` have the right
-  offset but say `regex.backref.relative` where PCRE2 says "subpattern name
-  expected".
-- `\k{1 }` and `\k{1n }` up to 10.42: PCRE2 says "subpattern name must start
-  with a non-digit" at offset 3 (from the backslash); `\k{ 1}` from 10.43 is
-  reported one byte early.
-- `\N{U+ 41}` without UTF from 10.47: offset 7, the library says 10.
 - In the body of an alphabetic assertion, a range from a class escape is
   refused after a `\c` PCRE refuses later in the class: `(*pla:[\d-a\cé])`
   is "invalid range in character class" at offset 9 from 10.33 (10 from
@@ -159,8 +143,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
 - Under `u`, `\pé` is "malformed \P or \p sequence" at offset 3 up to
   10.46, inside the `é` (4 from 10.47); the library says 4 on every
   release, and 5 for 4 in `[\pé]`.
-- Up to 10.44 a quoted hyphen starts a range: `([\Q-\E--\pL]` misses its `)`
-  at 13 (the range `-` to `-`, then `\pL`), the library says 11.
 - A name nothing closes in a call by name, `(?<n>a)(?&n )` or
   `(?<n>a)(?P>n )`, is "syntax error in subpattern name (missing
   terminator?)" from 10.33 to 10.46, at the offset the library gives, where
@@ -168,10 +150,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   "subpattern name expected" at 10 on every release (the library says
   `regex.group.unclosed`), and so are `(?<n>a)(?&١)` and `(?<n>a)(?P>١)`
   (the library says `regex.group.name_invalid`).
-- From 10.47 a surrogate in braces the pattern ends in, `\x{D800 ` or
-  `\N{U+D800 ` under UTF, is "disallowed Unicode code point" at the end of
-  its digits (8 for `\x{D800 `); the library says
-  `regex.unicode.invalid_digit`, one byte later on 10.47.
 - From 10.47 a pattern too large, `(?:a){65535}`, is refused at offset 0;
   the library says 12.
 - Up to 10.43 a reference name past 32 characters that nothing closes,
@@ -184,6 +162,17 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   "subpattern name expected" on 10.33 to 10.37, where the library says
   `regex.group.name_invalid`; `(?<aࡰ>x)/u` is refused at 4 on 10.33 to
   10.38 and accepted by the library.
+- PHP 7.3 without `X` (10.32) reads `\P` ending a range from a `[` as its
+  letter: `[^a[-\P{]a)` is "range out of order" at offset 6 (php:7.3-cli),
+  the library says 11 (class left open), reading `\P{` as a property no `}`
+  closes.
+
+## Literal extraction on a count PCRE refuses
+
+`Regex::literals('/a{99999999}/')` does not validate first and joins the
+literal 99,999,999 times: it runs for many seconds where PCRE2 refuses the
+count. A count past 65535, or a product of counts past a bound, should end
+the extraction before it is expanded.
 
 ## The articles section: what is left
 

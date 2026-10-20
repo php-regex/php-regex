@@ -346,6 +346,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A value in `\x{...}` past what a PHP integer holds, `/\x{8000000000000000}/`, is refused as a code point past U+10FFFF, `regex.unicode.out_of_range`, where its value overflowed and the library said `regex.octal.out_of_range`, even under `u`.
+- From PCRE2 10.47 a surrogate written in braces under UTF, `\x{`, `\o{` or `\N{U+`, is refused where its digits and the spaces after them end, before the `}` is looked for (`/\x{d800/u` at offset 7, `/\N{U+D800/u` at 9, `regex.unicode.surrogate`), where the library said `regex.unicode.invalid_digit`.
 - Without nikic/php-parser, the lint reads a call whose brackets never balance, as half-typed code in an editor, `preg_match(''{)}(''.`, up to the end of the file: it raised "Undefined array key" past the last token.
 - A verb or a setting given a value after `=`, `(*CR=1)`, `(*UTF=1)`, `(*ACCEPT=1)`, `(*PRUNE=x)`, `(*MARK=x)`, is refused where the `=` stands, as PCRE2 refuses it (`/(*CR=1)a/`: offset 4), where `validate()` called it valid: only the limits take a value, and a limit given more than its number, `(*LIMIT_MATCH=1=2)` or `(*LIMIT_MATCH==1)`, is refused too.
 - `(*UTF)` turns UTF mode on only inside the opening run of settings PCRE2 reads, which ends at the first item that is no setting written as PCRE2 takes it: `/(*FOO)(*UTF)\xff/` is refused on `(*FOO)` (offset 5), as PCRE2 refuses it, where the library read UTF mode on and reported invalid UTF-8.

@@ -2218,7 +2218,9 @@ final class Validator extends AbstractNodeVisitor
         } elseif (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $rep, $m)) {
             $codePoint = (int) hexdec($m[1]);
         } elseif (LibraryPcre::match('/^\\\\(x|u)\\{[ \t]*+([0-9a-fA-F]+)[ \t]*+\\}$/', $rep, $m)) {
-            $codePoint = (int) hexdec($m[2]);
+            // Past six digits the value is past U+10FFFF, and may be past
+            // what an integer holds.
+            $codePoint = \strlen(ltrim($m[2], '0')) > 6 ? 0x110000 : (int) hexdec($m[2]);
         } else {
             return; // Invalid format, skip
         }
@@ -3496,8 +3498,22 @@ final class Validator extends AbstractNodeVisitor
             );
         }
 
+        $digitsStart = $position;
         $position += strspn($source, $digits, $position);
+        $value = substr($source, $digitsStart, $position - $digitsStart);
         $position += $padded ? strspn($source, self::BRACE_PADDING, $position) : 0;
+
+        // From PCRE2 10.47 a surrogate under UTF is refused there too, past
+        // the spaces and tabs after its digits; no larger than U+10FFFF, or
+        // refused above.
+        $codePoint = (int) ('\o{}' === $escape ? octdec($value) : hexdec($value));
+        if ($this->unicodeMode && $codePoint >= 0xD800 && $codePoint <= 0xDFFF && $this->supports(PcreFeature::SurrogateRefusedBeforeBrace)) {
+            $this->raiseSemanticError(
+                \sprintf('Invalid code point in %s: a surrogate, which UTF-8 cannot hold.', $escape),
+                $position,
+                ErrorCode::UnicodeSurrogate,
+            );
+        }
 
         // Unreachable from a parsed pattern: the lexer reads every braced
         // escape of this shape as a token of its own, so only a malformed one
