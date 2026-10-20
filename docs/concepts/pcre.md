@@ -278,6 +278,11 @@ Where the library still departs from what the target's PCRE2 reports:
   when only the check made where a group ends finds it; when a group of
   several branches holding one of these items is measured before the limit
   is passed, the library reports the end of the pattern, as up to 10.46.
+  PCRE2 stops reading a pattern where it passes the limit, and an error
+  written after that point, as a reference to a group the pattern does not
+  have, is never reached; where one of these items comes first, the library
+  may find the limit passed later than PCRE2 does, and report such an error
+  in its place.
 - **A DEFINE group in a lookbehind, or one that opens with a group, on
   PCRE2 10.32 to 10.34** (PHP 7.3 and 7.4). These releases step over one item too many of their
   internal form of the pattern after `(?(DEFINE)`, both when they measure a

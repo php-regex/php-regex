@@ -172,6 +172,15 @@ final class CompiledLength
     public bool $passedAtClassLists = false;
 
     /**
+     * Where the first pass stops once it finds the pattern too large: past
+     * the item, the branch or the condition whose length takes it past the
+     * limit, so that nothing written from there on is read; out of the
+     * pattern where only the check made once it is read finds it, or where
+     * the limit is not passed.
+     */
+    public int $stoppedAt = \PHP_INT_MAX;
+
+    /**
      * Whether a group of several branches was measured whole before the
      * limit was passed, and may have passed it where it ends: its length is
      * not known and its ceiling is past the limit, or not known either.
@@ -336,6 +345,7 @@ final class CompiledLength
         $this->openGroups = [];
         $this->charLists = 0;
         $this->passedAtClassLists = false;
+        $this->stoppedAt = \PHP_INT_MAX;
         if ($this->pattern !== $pattern) {
             $this->pattern = $pattern;
             $this->lookbehinds = null;
@@ -393,13 +403,19 @@ final class CompiledLength
             if ($index < $last) {
                 $length += self::ALTERNATION;
                 $ceiling = self::sum($ceiling, self::ALTERNATION);
-                if ($before + $done + $length > self::LIMIT) {
+                // Up to 10.47 the next branch is checked with the branches
+                // before it, the end marker left out.
+                if (($this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) ? $before : 0) + $done + $length > self::LIMIT) {
+                    $this->stoppedAt = $branch->getEndPosition();
+
                     return [false, $length, null];
                 }
 
                 $done += $length;
                 $length = 0;
             } elseif ($before + $done + $length > self::LIMIT) {
+                $this->stoppedAt = $branch->getEndPosition();
+
                 return [true, $length, null];
             }
         }
@@ -425,6 +441,9 @@ final class CompiledLength
      */
     private function measureItems(NodeInterface $branch, int $length, bool $caseless, int $before = 0): array
     {
+        // Up to 10.47 each item is checked with the branches before it in
+        // its group; from 10.48 with its own branch.
+        $checked = $this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) ? 0 : $before;
         $ceiling = 0;
         foreach (self::itemsOf($branch) as $item) {
             // Most items are one ASCII letter, or one byte without UTF:
@@ -435,7 +454,9 @@ final class CompiledLength
             if (null !== $units) {
                 $length += $units;
                 $ceiling = null === $ceiling ? null : $ceiling + $units;
-                if ($length > self::LIMIT) {
+                if ($checked + $length > self::LIMIT) {
+                    $this->stoppedAt = $item->getEndPosition();
+
                     return [false, $length, null, $caseless];
                 }
 
@@ -460,13 +481,16 @@ final class CompiledLength
             $lists = $this->charLists - $lists;
             if ($lists > 0 && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) && $before + $length + 4 + $lists > self::LIMIT) {
                 $this->passedAtClassLists = true;
+                $this->stoppedAt = $item->getEndPosition();
 
                 return [true, $length, null, $caseless];
             }
 
             $length += $itemLength;
             $ceiling = self::sum($ceiling, $itemCeiling);
-            if ($length > self::LIMIT) {
+            if ($checked + $length > self::LIMIT) {
+                $this->stoppedAt = $item->getEndPosition();
+
                 return [false, $length, null, $caseless];
             }
         }
@@ -506,6 +530,8 @@ final class CompiledLength
 
             $frame = [$frame[0] + $conditionLength, self::sum($frame[1], $conditionCeiling)];
             if ($frame[0] > self::LIMIT) {
+                $this->stoppedAt = $condition->getEndPosition();
+
                 return [false, $conditionLength, null];
             }
         }
@@ -582,7 +608,9 @@ final class CompiledLength
         if ($node instanceof ConditionalNode) {
             // An empty second branch may be written, "(?(1)a|)", or not.
             $written = self::isEmpty($node->no) ? $this->secondBranchWritten($node) : true;
-            $branches = true === $written ? [$node->yes, $node->no] : [$node->yes];
+            // The first pass reads each branch past the second as a branch:
+            // only the second pass refuses them.
+            $branches = true === $written ? [$node->yes, ...self::branchesOf($node->no)] : [$node->yes];
             $ceiling = null === $written ? self::BRACKETS + self::ALTERNATION : self::BRACKETS;
             $condition = $node->condition;
             if ($condition instanceof GroupNode || self::isCalloutsThenAssertion($condition)) {

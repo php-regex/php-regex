@@ -364,9 +364,9 @@ final class Validator extends AbstractNodeVisitor
 
     /**
      * For each lookaround the node being visited sits in, innermost last,
-     * whether a `\K` stands in it.
+     * where the first `\K` in it stands, if one does.
      *
-     * @var list<bool>
+     * @var list<int|null>
      */
     private array $keepsInLookarounds = [];
 
@@ -438,6 +438,20 @@ final class Validator extends AbstractNodeVisitor
      * @var array<int, SemanticErrorException>
      */
     private array $lateErrors = [];
+
+    /**
+     * Where the first pass of the compiler meets the error kept for it in
+     * $lateErrors[1]: the earliest of them is the one it reports, unless the
+     * pattern passes the size limit before it.
+     */
+    private int $firstPassErrorAt = \PHP_INT_MAX;
+
+    /**
+     * Where the reference, the call, the conditional or the scan being
+     * checked starts: where the first pass meets a group it names, whatever
+     * offset reports it.
+     */
+    private int $referenceAt = 0;
 
     private GroupNumbering $groupNumbering;
 
@@ -608,16 +622,25 @@ final class Validator extends AbstractNodeVisitor
     public function visitRegex(RegexNode $node): void
     {
         $this->walkPattern($node);
-        $this->raiseFirstLateError();
 
-        // PCRE measures the compiled pattern last, once it has read it all.
-        // A pattern that holds no "{" and is short enough cannot reach the
-        // limit, whatever it holds: it is not measured. "(*ACCEPT)" closes
-        // each capture open around it, three units each.
+        // PCRE measures the compiled pattern in its first pass. A pattern
+        // that holds no "{" and is short enough cannot reach the limit,
+        // whatever it holds: it is not measured. "(*ACCEPT)" closes each
+        // capture open around it, three units each.
         $source = $node->source;
         $belowTheLimit = null !== $source && !str_contains($source, '{') && !str_contains($source, 'ACCEPT')
             && \strlen($source) * self::MAX_UNITS_PER_BYTE_UNCOUNTED + self::COMPILED_FRAME_SIZE <= self::MAX_COMPILED_SIZE;
-        if (!$belowTheLimit && $this->mayBeTooLarge($node) && $this->isTooLarge($node)) {
+        $tooLarge = !$belowTheLimit && $this->mayBeTooLarge($node) && $this->isTooLarge($node);
+
+        // The lookbehinds are measured before the first pass, which stops
+        // where the pattern passes the limit: an error it would meet past
+        // that point is never reached, nor the second pass, which counts
+        // the branches of conditionals.
+        if (isset($this->lateErrors[0]) || ([] !== $this->lateErrors && (!$tooLarge || $this->firstPassErrorAt < $this->firstPassStop($node)))) {
+            $this->raiseFirstLateError();
+        }
+
+        if ($tooLarge) {
             $this->raiseSemanticError(
                 'Regular expression is too large: PCRE would compile it to more than 64 KiB.',
                 $this->tooLargeOffset($node),
@@ -669,6 +692,7 @@ final class Validator extends AbstractNodeVisitor
         $this->ensureGroupNumberingInitialized();
 
         if (GroupType::ScanSubstring === $node->type) {
+            $this->referenceAt = $node->startPosition + $this->positionOffset;
             $this->validateListedGroups($node, $node->scannedGroups, $node->startPosition + 2);
         }
 
@@ -700,7 +724,7 @@ final class Validator extends AbstractNodeVisitor
 
         $isLookaround = $this->isLookaround($node);
         if ($isLookaround) {
-            $this->keepsInLookarounds[] = false;
+            $this->keepsInLookarounds[] = null;
         }
 
         $lookaheadInLookbehind = $isLookaround && !$isLookbehind && $this->lookbehindDepth > 0;
@@ -737,20 +761,18 @@ final class Validator extends AbstractNodeVisitor
             if ($walkedApart) {
                 array_pop($this->lookaroundKinds);
             }
-            $holdsKeep = false;
-            if ($isLookaround) {
-                $holdsKeep = true === array_pop($this->keepsInLookarounds);
-            }
+            $keepAt = $isLookaround ? array_pop($this->keepsInLookarounds) : null;
         }
 
         // PCRE refuses the "\K" as it compiles the lookaround, once the whole
         // pattern is read, and reports it at the end of the pattern.
-        if ($holdsKeep && $this->target->phpVersionId >= PhpVersionGates::NO_KEEP_IN_LOOKAROUND) {
+        if (null !== $keepAt && $this->target->phpVersionId >= PhpVersionGates::NO_KEEP_IN_LOOKAROUND) {
             $this->raiseLateCompileError(
                 '\K is not allowed in a lookaround from PHP 8.5, which compiles without PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK.',
                 $this->patternLength - $this->positionOffset,
                 ErrorCode::KeepInLookaround,
                 $this->keepHint($node),
+                $keepAt,
             );
         }
 
@@ -972,8 +994,7 @@ final class Validator extends AbstractNodeVisitor
     public function visitKeep(KeepNode $node): void
     {
         if ([] !== $this->keepsInLookarounds) {
-            array_pop($this->keepsInLookarounds);
-            $this->keepsInLookarounds[] = true;
+            $this->keepsInLookarounds[] = array_pop($this->keepsInLookarounds) ?? $node->startPosition + $this->positionOffset;
         }
     }
 
@@ -1119,6 +1140,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitBackref(BackrefNode $node): void
     {
+        $this->referenceAt = $node->startPosition + $this->positionOffset;
         $this->ensureGroupNumberingInitialized();
         $this->validateReferenceName($node);
 
@@ -1453,6 +1475,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node): void
     {
+        $this->referenceAt = $node->startPosition + $this->positionOffset;
         $this->ensureGroupNumberingInitialized();
 
         // PCRE counts the conditional as it opens it: past a reference, or
@@ -1560,6 +1583,7 @@ final class Validator extends AbstractNodeVisitor
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): void
     {
+        $this->referenceAt = $node->startPosition + $this->positionOffset;
         $this->validateSubroutineReference($node);
         $this->validateReturnedGroups($node);
     }
@@ -1836,6 +1860,7 @@ final class Validator extends AbstractNodeVisitor
         $this->patternLength = \strlen($node->source ?? '');
         $this->positionOffset = 0;
         $this->lateErrors = [];
+        $this->firstPassErrorAt = \PHP_INT_MAX;
         $this->walkingPattern = true;
 
         try {
@@ -4633,10 +4658,10 @@ final class Validator extends AbstractNodeVisitor
      */
     /**
      * An error PCRE finds as it compiles the pattern, in the same pass as the
-     * references to missing groups: on a walk from the pattern root, it waits
-     * for the walk to end.
+     * references to missing groups, where it meets $at: on a walk from the
+     * pattern root, it waits for the walk to end.
      */
-    private function raiseLateCompileError(string $message, int $position, ErrorCode $code, string $hint): void
+    private function raiseLateCompileError(string $message, int $position, ErrorCode $code, string $hint, int $at): void
     {
         $error = new SemanticErrorException($message, $code, $position + $this->positionOffset, $this->pattern, null, $hint);
 
@@ -4644,7 +4669,31 @@ final class Validator extends AbstractNodeVisitor
             throw $error;
         }
 
-        $this->lateErrors[1] ??= $error;
+        $this->keepFirstPassError($error, $at);
+    }
+
+    /**
+     * Keep the error the first pass meets first: a `\K` in a lookaround is
+     * found where the lookaround ends, after the references in it.
+     */
+    private function keepFirstPassError(SemanticErrorException $error, int $at): void
+    {
+        if ($at < $this->firstPassErrorAt) {
+            $this->lateErrors[1] = $error;
+            $this->firstPassErrorAt = $at;
+        }
+    }
+
+    /**
+     * Where the first pass stops on a pattern too large: past the end of the
+     * pattern where that is not known for sure.
+     */
+    private function firstPassStop(RegexNode $node): int
+    {
+        $length = $this->compiledLength($node);
+        $length->passesTheLimit($node->pattern);
+
+        return $length->stoppedAt;
     }
 
     private function raiseMissingReference(string $message, int $position, ErrorCode $code, ?string $hint = null): void
@@ -4655,7 +4704,16 @@ final class Validator extends AbstractNodeVisitor
             throw $error;
         }
 
-        $this->lateErrors[$this->lookbehindDepth > 0 ? 0 : 1] ??= $error;
+        if ($this->lookbehindDepth > 0) {
+            $this->lateErrors[0] ??= $error;
+
+            return;
+        }
+
+        // The walk meets the references in the order the first pass does.
+        if (!isset($this->lateErrors[1])) {
+            $this->keepFirstPassError($error, $this->referenceAt);
+        }
     }
 
     /**
