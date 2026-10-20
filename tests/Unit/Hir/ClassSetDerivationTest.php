@@ -47,6 +47,10 @@ final class ClassSetDerivationTest extends TestCase
     protected function setUp(): void
     {
         StaticCaches::clear();
+        // A command, a plugin or a rule built earlier in this process may
+        // have left the answers kept on disk, where an earlier query wrote
+        // them: these tests ask the engine.
+        ClassSetProvider::persistIn(null);
         self::useJit(true);
     }
 
