@@ -55,23 +55,23 @@ final class ReferenceChecks
     private const GROUP_NAME = '[_\p{L}][_\p{L}\p{Nd}]*+';
 
     /**
-     * @param GroupIndex                                $groups    the groups of the pattern
-     * @param GroupNumbering                            $numbering their numbers and names
-     * @param PcreTarget                                $target    the PHP and PCRE2 judged
-     * @param \Closure(SemanticErrorException): void    $missing   told of a reference to a group
-     *                                                             the pattern does not have,
-     *                                                             which PCRE refuses once the
-     *                                                             whole pattern is read
-     * @param string|null                               $pattern   the whole pattern, which the
-     *                                                             errors quote
-     * @param string|null                               $source    the text the positions of the
-     *                                                             references point into; null
-     *                                                             when nothing says what was
-     *                                                             written
-     * @param int                                       $offset    where that text starts in the
-     *                                                             pattern
-     * @param bool                                      $utf       whether PCRE reads the pattern
-     *                                                             as UTF-8
+     * @param GroupIndex                             $groups    the groups of the pattern
+     * @param GroupNumbering                         $numbering their numbers and names
+     * @param PcreTarget                             $target    the PHP and PCRE2 judged
+     * @param \Closure(SemanticErrorException): void $missing   told of a reference to a group
+     *                                                          the pattern does not have,
+     *                                                          which PCRE refuses once the
+     *                                                          whole pattern is read
+     * @param string|null                            $pattern   the whole pattern, which the
+     *                                                          errors quote
+     * @param string|null                            $source    the text the positions of the
+     *                                                          references point into; null
+     *                                                          when nothing says what was
+     *                                                          written
+     * @param int                                    $offset    where that text starts in the
+     *                                                          pattern
+     * @param bool                                   $utf       whether PCRE reads the pattern
+     *                                                          as UTF-8
      */
     public function __construct(
         private readonly GroupIndex $groups,

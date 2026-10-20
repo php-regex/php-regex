@@ -53,8 +53,8 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * branches differ in length. The lookbehind is then refused whatever
  * follows.
  *
- * The validator, which raises PCRE's errors as it measures, hears about
- * each lookaround, group body and reference met on the way.
+ * Validation\LookbehindChecks, which raises PCRE's errors as it measures,
+ * hears about each lookaround, group body and reference met on the way.
  *
  * A group, or a lookbehind, measured once is not measured again while none
  * of the groups its measure called is being measured where it is met: one
