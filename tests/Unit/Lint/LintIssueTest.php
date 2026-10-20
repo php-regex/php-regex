@@ -20,6 +20,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSearchCost;
@@ -112,6 +113,41 @@ final class LintIssueTest extends TestCase
         $this->assertSame($validation->errorCode?->value, $diagnostic->code);
         $this->assertSame($validation->caretSnippet, $diagnostic->snippet);
         $this->assertSame($validation->hint, $diagnostic->suggestion);
+    }
+
+    #[Test]
+    public function test_a_pattern_the_grammar_reads_and_the_rules_refuse_is_a_semantic_diagnostic(): void
+    {
+        $validation = RegexParser::create()->validate('/a{2,1}/');
+        $this->assertFalse($validation->isValid);
+
+        $this->assertSame(DiagnosticType::Semantic, (new LintIssue(LintSeverity::Error, 'Reversed.', 'a.php', 1, validation: $validation))->diagnostic()->type);
+    }
+
+    #[Test]
+    public function test_a_validation_without_an_error_code_gives_a_diagnostic_without_one(): void
+    {
+        $diagnostic = (new LintIssue(LintSeverity::Error, 'Refused.', 'a.php', 1, validation: new ValidationResult(false, 'Refused.')))->diagnostic();
+
+        $this->assertSame(DiagnosticType::Syntax, $diagnostic->type);
+        $this->assertNull($diagnostic->code);
+    }
+
+    /**
+     * An analysis that found a search cost still gives the ReDoS verdict
+     * its own attack: only the search cost issue shows the search's.
+     */
+    #[Test]
+    public function test_a_redos_verdict_shows_its_own_attack_beside_a_search_cost(): void
+    {
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/\s+$/', RedosSeverity::Low, RedosMode::Theoretical);
+        $this->assertInstanceOf(RedosSearchCost::class, $analysis->searchCost);
+        $evidence = RedosVerdict::evidence($analysis);
+
+        $diagnostic = (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, issueId: RedosVerdict::ISSUE_ID, analysis: $analysis))->diagnostic();
+
+        $this->assertSame([] === $evidence ? null : implode("\n", $evidence), $diagnostic->snippet);
+        $this->assertNotSame(implode("\n", RedosVerdict::searchEvidence($analysis->searchCost, $analysis->pcreVersion)), $diagnostic->snippet);
     }
 
     #[Test]

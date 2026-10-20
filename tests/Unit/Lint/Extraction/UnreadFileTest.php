@@ -157,6 +157,19 @@ final class UnreadFileTest extends TestCase
         $this->assertSame($this->file, $issues[0]->file);
     }
 
+    /**
+     * The error stands at the top of the file: the patterns it holds have
+     * no place known.
+     */
+    #[Test]
+    public function test_an_unread_file_is_reported_at_its_first_line_and_column(): void
+    {
+        $issues = (new AnalysisService(RegexParser::create(['cache' => null])))->lint([new PatternOccurrence('', '/x.php', 7, 'php', column: 9, unread: 'Not linted.')]);
+
+        $this->assertCount(1, $issues);
+        $this->assertSame(['/x.php', 1, 1, 'Not linted.', 'php'], [$issues[0]->file, $issues[0]->line, $issues[0]->column, $issues[0]->message, $issues[0]->source]);
+    }
+
     #[Test]
     public function test_the_other_analyses_pass_an_unread_file_over(): void
     {

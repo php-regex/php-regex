@@ -80,6 +80,11 @@ final class AnalysisServiceGuardTest extends TestCase
 
         $this->assertCount(2, $analyzed->byPattern);
         $this->assertSame([2, 3], array_column($suggestions, 'line'));
+        // Read under the guard, the pattern is kept under the versions the
+        // guard keeps, then the pattern.
+        $keys = array_keys($analyzed->byPattern);
+        $this->assertContains('/[0-9]+x/', $keys);
+        $this->assertCount(1, preg_grep('~^\d+/\d+\.\d+(?:,\d+/\d+\.\d+)*\x00/\[0-9\]\+x/$~', $keys) ?: []);
     }
 
     /**
@@ -105,6 +110,19 @@ final class AnalysisServiceGuardTest extends TestCase
         $expected = false === @preg_match('/(?a)[0-9]+z/', '') ? ['/\d+x/', '/\d+y/'] : ['/\d+x/', '/\d+y/', '/(?a)\d+z/'];
         $this->assertSame($expected, array_map(static fn (array $entry): string => $entry['optimization']->optimized, $suggestions));
         $this->assertSame([], $analysis->suggestOptimizations([PatternOccurrence::unread('a.php', 'Not read.'), PatternOccurrence::parserFallback('a.php', 'Broken.')], 1));
+    }
+
+    /**
+     * Narrowed by a guard, a pattern is judged at the lowest version kept
+     * and validated at each later one: PHP 8.5 refuses a \K in a
+     * lookbehind that PHP 8.4 accepts.
+     */
+    #[Test]
+    public function test_a_guarded_pattern_is_validated_at_the_later_versions_kept(): void
+    {
+        $issues = $this->analysis()->lint([self::occurrence('/(?<=a\Kb)c/', 'php>=8.4.25 <8.5.10')]);
+
+        $this->assertSame([['php' => '8.5', 'pcre' => '10.44', 'guard' => '>=8.4.25 <8.5.10']], array_map(static fn (LintIssue $issue): ?array => $issue->target, $issues));
     }
 
     /**
