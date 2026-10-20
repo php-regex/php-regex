@@ -184,8 +184,14 @@ printed `<b(?<=a)>` (the `<` delimiter counted), `{^a\Q{\E2}$}` printed
 `{^a\{2}$}`, `[[a-d[m-p]]]` normalized to `[[a-d[m-p]\]]` and
 `{a(?#{)b}c}` to `{a(?#{)b\}c}`.
 
-Parser structure: `TokenParser` split (class and conditional parsing
-apart); then `Validator` split by concern; `QuantifierNode` carrying its bounds instead
+Parser structure: the extended-class parsing still in `TokenParser`
+(`parseExtendedClass`, `parseOperandAt`) apart; the error-offset rule read
+through `PcreTarget::faultOffset()` in `Validator`, `Lexer` and
+`FirstErrorLocator` too, and the booleans `TokenParser` hands to
+`GroupNameReader`, `ExtendedClassReader`, `PcreVerb` and
+`VersionCondition` replaced by the target; the last messages without a
+final period (`TokenStream::consume`, `GroupNameReader`, the unknown flag);
+then `Validator` split by concern; `QuantifierNode` carrying its bounds instead
 of 47 re-parses; the error-offset rule, the 65535 limit and the UTF-8 width
 written once; the exception types and the snippet renderer unified; the
 public renames (node properties, error codes, getters, `PcreFeature`) to
