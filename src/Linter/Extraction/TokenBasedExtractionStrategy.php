@@ -19,8 +19,13 @@ use PHPRegex\Parser\Text\Ascii;
 /**
  * Token-based extraction strategy mirroring PHPStan's preg_* handling.
  *
- * This relies on a small token state machine to track argument positions
- * and only extracts patterns from constant string expressions.
+ * It walks the tokens of a file for the calls the registry knows and reads
+ * the pattern each passes; the readers it asks are each one job of that
+ * walk: TokenNameResolver for the namespace and the imports, CallArguments
+ * for which argument holds the pattern, ArrayLiteralPatterns for the items
+ * of an array of patterns, StringExpressionReader for what a constant
+ * string expression folds to. A pattern no literal gives is held, and read
+ * by TokenValueCollector in a second walk of the file.
  *
  * @internal
  */

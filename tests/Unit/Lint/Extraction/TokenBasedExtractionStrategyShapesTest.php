@@ -257,6 +257,18 @@ final class TokenBasedExtractionStrategyShapesTest extends TestCase
     }
 
     /**
+     * A call an editor has left open is read as far as it goes: a call
+     * nested in it that closes leaves its arguments known.
+     */
+    #[Test]
+    public function test_a_call_left_open_is_read_past_a_nested_call_that_closes(): void
+    {
+        $read = (new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()))->extractSource("<?php\npreg_match('/open/', trim(\$s)");
+
+        $this->assertSame(['/open/'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $read));
+    }
+
+    /**
      * An item of an array of patterns that is itself an array() holds no
      * pattern, as a [] item holds none: PHP reads it as the string "Array"
      * ("Delimiter must not be alphanumeric"), and an array is no key.

@@ -197,6 +197,9 @@ final class StringExpressionReader
     }
 
     /**
+     * The tokens without the parentheses that wrap them all, as many pairs
+     * as there are: (('/a/')) is '/a/', ('/a/') . ('i') is kept whole.
+     *
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $tokenIndexes
      *
@@ -204,11 +207,8 @@ final class StringExpressionReader
      */
     public static function stripParentheses(array $tokens, array $tokenIndexes): array
     {
+        // No tokens hold no significant one: the loop stops at once.
         $totalTokens = \count($tokens);
-        if (0 === $totalTokens) {
-            return [$tokens, $tokenIndexes];
-        }
-
         while (true) {
             $startIndex = PhpTokens::nextSignificant($tokens, 0, $totalTokens);
             $endIndex = PhpTokens::previousSignificant($tokens, $totalTokens - 1);

@@ -153,6 +153,9 @@ final class CallArgumentsBindingTest extends TestCase
         yield 'the value itself, when not required' => ['argument' => "'/a/'", 'required' => false, 'found' => "'/a/'"];
         yield 'a nested value that is no array' => ['argument' => "['options' => \$o]", 'required' => false, 'found' => null];
         yield 'nothing' => ['argument' => '', 'required' => true, 'found' => null];
+        yield 'an empty array(), when not required' => ['argument' => 'array()', 'required' => false, 'found' => null];
+        // A source half typed in an editor.
+        yield 'an array keyword opening no parenthesis' => ['argument' => "array ['options' => ['regexp' => '/a/']]", 'required' => true, 'found' => null];
     }
 
     #[Test]
@@ -215,6 +218,7 @@ final class CallArgumentsBindingTest extends TestCase
         yield 'new with arguments' => ['argument' => 'new Upper(1, [2])', 'whole' => true];
         yield 'new with a class in a bracket' => ['argument' => 'new $classes["a"]', 'whole' => true];
         yield 'new anonymous class' => ['argument' => 'new class (1) extends A { }', 'whole' => true];
+        yield 'new anonymous class, no space' => ['argument' => 'new class{}', 'whole' => true];
         yield 'an object cast' => ['argument' => '(object) $a', 'whole' => true];
         yield 'an array cast of a member chain' => ['argument' => '(array) $a->b[0]::$c', 'whole' => true];
         yield 'a clone' => ['argument' => 'clone $this->a', 'whole' => true];
@@ -230,6 +234,7 @@ final class CallArgumentsBindingTest extends TestCase
         yield 'an array added to' => ['argument' => '[$a] + $b', 'whole' => false];
         yield 'new, then more' => ['argument' => 'new Upper() ?: $b', 'whole' => false];
         yield 'new left open' => ['argument' => 'new Upper(', 'whole' => false];
+        yield 'new with a class in a bracket, then more' => ['argument' => 'new $classes["a"]() ?: $b', 'whole' => false];
         yield 'a closure, then more' => ['argument' => 'function () {} ?: $b', 'whole' => false];
         yield 'a function with no body' => ['argument' => 'function ()', 'whole' => false];
         yield '$this, then more' => ['argument' => '$this ?: $b', 'whole' => false];

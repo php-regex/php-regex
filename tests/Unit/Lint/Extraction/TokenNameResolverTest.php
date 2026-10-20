@@ -37,6 +37,8 @@ final class TokenNameResolverTest extends TestCase
         yield 'a class' => ['source' => 'use X\K;', 'function' => 'f', 'class' => 'X\K', 'constant' => ['C']];
         yield 'a class under an alias' => ['source' => 'use X\Y as K;', 'function' => 'f', 'class' => 'X\Y', 'constant' => ['C']];
         yield 'a function under an alias' => ['source' => 'use function X\g as f;', 'function' => 'X\g', 'class' => 'K', 'constant' => ['C']];
+        yield 'a function named like a class' => ['source' => 'use function X\K;', 'function' => 'f', 'class' => 'K', 'constant' => ['C']];
+        yield 'a constant named like a class' => ['source' => 'use const X\K;', 'function' => 'f', 'class' => 'K', 'constant' => ['C']];
         yield 'a constant' => ['source' => 'use const X\C;', 'function' => 'f', 'class' => 'K', 'constant' => ['X\C']];
         yield 'a group' => ['source' => 'use X\{K, function f, const C};', 'function' => 'X\f', 'class' => 'X\K', 'constant' => ['X\C']];
         yield 'a group of functions' => ['source' => 'use function X\{f, g};', 'function' => 'X\f', 'class' => 'K', 'constant' => ['C']];
@@ -72,6 +74,19 @@ final class TokenNameResolverTest extends TestCase
         $this->assertSame($function, $context->resolveFunction('f'));
         $this->assertSame($class, $context->resolveClass('K'));
         $this->assertSame($constant, $context->resolveConstant('C'));
+    }
+
+    /**
+     * The names after the "::" of a conflict block are no imports.
+     */
+    #[Test]
+    public function test_a_conflict_block_imports_nothing_after_its_operator(): void
+    {
+        $context = $this->read('<?php use X\\K, Y\\K { K::a insteadof Y; }')[0];
+
+        $this->assertSame('X\\K', $context->resolveClass('K'));
+        $this->assertSame('Y', $context->resolveClass('Y'));
+        $this->assertSame('a', $context->resolveClass('a'));
     }
 
     /**
