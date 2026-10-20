@@ -435,7 +435,8 @@ parameters:
 ```
 {: data-file="phpstan.neon" }
 
-A name the library does not know is passed over, without a warning.
+A name that is no preset stops the analysis, with the preset it most likely
+means: `Unknown extraction preset "phpunt" in phpRegex.interop: did you mean "phpunit"?`.
 
 The rule reads static calls only. An assertion called on the test case,
 `$this->assertMatchesRegularExpression()` or `self::…`, PHPUnit's

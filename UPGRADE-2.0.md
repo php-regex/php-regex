@@ -1217,8 +1217,8 @@ under `phpRegex.interop`. A name that is no preset is a configuration error
 everywhere, which names the preset it most likely means: `regex lint` and
 `regex debug` exit with code 2, the Symfony bundle throws
 `InvalidConfigurationException` as the container is built, Laravel's
-`regex:lint` stops with `Invalid config/php-regex.php`, PHPStan refuses the
-configuration, and the language server shows the error and reads as without
+`regex:lint` stops with `Invalid config/php-regex.php`, PHPStan stops with the
+same error, and the language server shows the error and reads as without
 `regex.json`. Left out, the name would leave a list that reads fewer calls
 than meant, the native calls only when it was the only one. If you followed
 the 2.x branch before 2.0, the preset `laravel-str` is now

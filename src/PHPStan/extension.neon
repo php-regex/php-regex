@@ -13,9 +13,10 @@ parametersSchema:
         locale: schema(string(), nullable()),
         # Libraries whose static methods carry a pattern, as the lint's
         # extraction.interop; null for every preset, [] for the native
-        # functions only. A name that is no preset stops the analysis: left
+        # functions only. A name that is no preset stops the analysis when
+        # the rule is built, naming the preset it most likely means: left
         # out, it would leave a list that reads fewer calls than meant
-        interop: schema(listOf(schema(string(), pattern('composer-pcre|nette-utils|spatie-regex|illuminate-support|phpunit|webmozart-assert|beberlei-assert|symfony-validator'))), nullable()),
+        interop: schema(listOf(string()), nullable()),
         checks: structure([
             lint: structure([
                 enabled: bool()

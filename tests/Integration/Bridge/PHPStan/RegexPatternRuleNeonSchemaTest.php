@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\PHPStan;
 
 use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPStan\DependencyInjection\Container;
 use PHPStan\DependencyInjection\ContainerFactory;
@@ -103,26 +105,42 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
     }
 
     /**
-     * A name that is no preset stops PHPStan while it loads the
-     * configuration, the schema naming the key and the presets it takes:
-     * left out, it would leave a list that reads fewer calls than meant.
+     * A name that is no preset stops PHPStan when it builds the rule, the
+     * error naming the key and the preset the name most likely means, as
+     * the other bridges say it: left out, it would leave a list that reads
+     * fewer calls than meant. The schema takes any list of names, so a
+     * preset a later release adds needs no edit of it.
      *
-     * @return iterable<string, array{string}>
+     * @return iterable<string, array{neon: string, message: string}>
      */
     public static function provideUnknownPresets(): iterable
     {
-        yield 'the name before the rename' => ['interop: [laravel-str]'];
-        yield 'beside a known one' => ['interop: [nette-utils, phpunt]'];
+        yield 'the name before the rename' => ['neon' => 'interop: [laravel-str]', 'message' => 'Unknown extraction preset "laravel-str" in phpRegex.interop: did you mean "illuminate-support"?'];
+        yield 'beside a known one' => ['neon' => 'interop: [nette-utils, phpunt]', 'message' => 'Unknown extraction preset "phpunt" in phpRegex.interop: did you mean "phpunit"?'];
+        yield 'nothing near' => ['neon' => 'interop: [zzz]', 'message' => 'Unknown extraction preset "zzz" in phpRegex.interop: the presets are '.implode(', ', InteropPresets::names()).'.'];
     }
 
     #[Test]
     #[DataProvider('provideUnknownPresets')]
-    public function test_schema_refuses_an_unknown_preset(string $neon): void
+    public function test_the_rule_refuses_an_unknown_preset(string $neon, string $message): void
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessageMatches("/'parameters\u{A0}›\u{A0}phpRegex\u{A0}›\u{A0}interop\u{A0}›\u{A0}\\d' expects to match pattern '".preg_quote(implode('|', InteropPresets::names()), '/')."', '[a-z-]+' given/");
+        $container = $this->loadExtensionWith($neon);
 
-        $this->loadExtensionWith($neon);
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains($message);
+
+        $container->getByType(RegexPatternRule::class);
+    }
+
+    #[Test]
+    public function test_the_schema_reads_every_preset_from_the_presets(): void
+    {
+        $neon = (string) file_get_contents(\dirname(__DIR__, 4).'/src/PHPStan/extension.neon');
+
+        $this->assertStringNotContainsString(InteropPresets::COMPOSER_PCRE.'|', $neon);
+        $parameters = $this->loadExtensionWith('interop: ['.implode(', ', InteropPresets::names()).']')->getParameter('phpRegex');
+        $this->assertIsArray($parameters);
+        $this->assertSame(InteropPresets::names(), $parameters['interop'] ?? null);
     }
 
     /**

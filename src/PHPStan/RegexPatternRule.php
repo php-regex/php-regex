@@ -143,7 +143,8 @@ final class RegexPatternRule implements Rule
      *                                                               between runs, for the next run and the other workers:
      *                                                               under PHPStan's tmpDir; none keeps it in memory only
      *
-     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read
+     * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read,
+     *                                     or "interop" names a preset that does not exist
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
     public function __construct(
@@ -156,9 +157,13 @@ final class RegexPatternRule implements Rule
         ClassSetProvider::persistIn($this->cacheDirectory);
         $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange, $reflectionProvider);
         $interop = $config['interop'] ?? null;
-        $this->registry = PatternFunctionRegistry::native()->withPresets(
-            \is_array($interop) ? array_values(array_filter($interop, \is_string(...))) : InteropPresets::DEFAULT_PRESETS,
-        );
+        $presets = \is_array($interop) ? array_values(array_filter($interop, \is_string(...))) : InteropPresets::DEFAULT_PRESETS;
+        foreach ($presets as $preset) {
+            if (!InteropPresets::exists($preset)) {
+                throw new InvalidRegexOptionException(InteropPresets::unknownError($preset, 'phpRegex.interop'));
+            }
+        }
+        $this->registry = PatternFunctionRegistry::native()->withPresets($presets);
     }
 
     public function getNodeType(): string
