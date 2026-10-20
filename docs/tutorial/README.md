@@ -136,15 +136,15 @@ Format  : console
 
   [2/2] Explanation
 Regex matches
-  Anchor: the beginning of a line
+  Anchor: the start of the subject
   'c'
   'a'
   't'
-    Wildcard: any character (may or may not match line terminators) (zero or more times)
+  Wildcard: any character but a newline (\n) (zero or more times)
   'd'
   'o'
   'g'
-  Anchor: the end of a line
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 ```bash

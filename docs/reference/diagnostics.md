@@ -168,12 +168,12 @@ vendor/bin/regex --no-ansi analyze '/(a+)+$/'
 
   [4/4] Explanation
 Regex matches
-  Start Quantified Group (one or more times)
+  Quantified group (one or more times)
     Capturing group
-            'a' (one or more times)
+      'a' (one or more times)
     End group
-  End Quantified Group
-  Anchor: the end of a line
+  End quantified group
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 **What to notice:**

@@ -141,9 +141,9 @@ Explain a pattern in plain English:
 ```php
 echo Regex::explain('/^\d{4}$/');
 // Regex matches
-//   Anchor: the beginning of a line
-//     Character Type: A digit: [0-9] (exactly 4 times)
-//   Anchor: the end of a line
+//   Anchor: the start of the subject
+//   Character Type: A digit: [0-9] (exactly 4 times)
+//   Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 Check one for ReDoS:

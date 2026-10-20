@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\NodeVisitor;
 
 use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Explain\TextExplainer;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -75,5 +76,75 @@ final class ExplainerAgreementTest extends TestCase
         yield 'a short hexadecimal code' => ['pattern' => '/\x41/', 'description' => 'Character with hexadecimal value 0x41'];
         yield 'an octal code' => ['pattern' => '/\o{101}/', 'description' => 'Character with octal value 0101'];
         yield 'a legacy octal code' => ['pattern' => '/\101/', 'description' => 'Character with octal value 0101'];
+    }
+
+    /**
+     * Every line of the text explanation, a meaning, a heading or the
+     * description of a repetition, is said in the same words in the HTML
+     * one, on the page or in a tooltip: neither format words a construct on
+     * its own.
+     */
+    #[Test]
+    #[DataProvider('providePatterns')]
+    public function test_every_line_of_the_text_is_said_in_the_html(string $pattern): void
+    {
+        $tree = RegexParser::create()->parse($pattern);
+        $text = (string) $tree->accept(new TextExplainer());
+        $markup = (string) $tree->accept(new HtmlExplainer());
+        // What the page shows, and the tooltips it holds.
+        $html = html_entity_decode(strip_tags($markup)."\n".$markup, \ENT_QUOTES | \ENT_HTML5, 'UTF-8');
+
+        foreach (explode("\n", $text) as $line) {
+            $line = trim($line);
+            // The words that only lay the text out.
+            if (\in_array($line, ['EITHER', 'OR', 'ELSE', 'IF', 'THEN'], true) || str_starts_with($line, 'End ')) {
+                continue;
+            }
+
+            $this->assertStringContainsString((string) LibraryPcre::replace('/^IF \((.*)\) THEN$/', 'IF ($1)', $line), $html, $pattern);
+        }
+    }
+
+    /**
+     * The branches of an alternation are items of one list, each holding its
+     * own: "OR" does not stand inside the branch before it.
+     */
+    #[Test]
+    public function test_the_html_lists_the_branches_of_an_alternation_side_by_side(): void
+    {
+        $html = (string) RegexParser::create()->parse('/(a|b|c)/')->accept(new HtmlExplainer());
+        $this->assertNotSame('', $html);
+        $document = new \DOMDocument();
+        $this->assertTrue($document->loadXML($html));
+
+        $branches = (new \DOMXPath($document))->query('//li[strong="EITHER:" or strong="OR:"]');
+        $this->assertNotFalse($branches);
+        $this->assertCount(3, $branches);
+        $parents = [];
+        foreach ($branches as $branch) {
+            $this->assertInstanceOf(\DOMElement::class, $branch);
+            $this->assertInstanceOf(\DOMElement::class, $branch->parentNode);
+            $parents[] = $branch->parentNode;
+            // Its own branch only: one literal.
+            $this->assertSame(1, $branch->getElementsByTagName('li')->length);
+        }
+        $this->assertSame($parents[0], $parents[1]);
+        $this->assertSame($parents[0], $parents[2]);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function providePatterns(): iterable
+    {
+        foreach ([
+            '/^(?<year>\d{4})-(\d{2})$/m', '/(a|b)*c+?/', '/(?:ab){2,5}/', '/(?>a)(?=b)(?!c)(?<=d)(?<!e)/', '/(?|(a)|(b))/',
+            '/(?i:a)(?i)b/', '/(?s).\N\X/u', '/[^a-z\d[:alpha:]]/', '/\x41\x{1F600}\101\o{101}\cA\N{U+41}/u', '/\Ka\b\B\A\z\Z\G/',
+            '/(a)(?R)(?1)(?&n)(?<n>b)/', '/(*FAIL)(*LIMIT_MATCH=10)(?C1)(?C"x")(?C)/', '/a(?#note)b/', '/(a)(?(1)b|c)(?(?=x)y)/',
+            '/(?(DEFINE)(?<d>\d))(?&d)/', '/(*sr:\d+)(*asr:\w)/', '/(*scan:(1)a)(b)/', '/(?[ [a-z] - [aeiou] ])/', '/\p{Lu}\P{L}\p{Greek}/u',
+            '/(a)\1\k<n>(?<n>b)\g{-2}/', '/é[à-é]/u', "/a\tb c/",
+        ] as $pattern) {
+            yield $pattern => ['pattern' => $pattern];
+        }
     }
 }

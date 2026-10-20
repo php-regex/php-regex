@@ -81,10 +81,10 @@ Hovering the pattern `/^\w+@\w+\.\w+$/` returns this markdown (abridged):
 **Explanation**
 
 Regex matches
-  Anchor: the beginning of a line
-    Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+  Anchor: the start of the subject
+  Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
   …
-  Anchor: the end of a line
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 ````
 
 Code actions are offered on the pattern they fix:

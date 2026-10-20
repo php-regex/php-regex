@@ -98,7 +98,7 @@ final class HtmlExplainSweepTest extends TestCase
         // Test quantifier with complex child to hit multiline quantifier explanation
         $ast = $this->regex->parse('/(a|b)+/');
         $result = $ast->accept($this->htmlExplainVisitor);
-        $this->assertStringContainsString('Quantifier', $result);
+        $this->assertStringContainsString('<strong>Quantified group (one or more times):</strong>', $result);
         $this->assertStringContainsString('one or more times', $result);
     }
 
@@ -113,7 +113,7 @@ final class HtmlExplainSweepTest extends TestCase
     {
         $ast = $this->regex->parse('/\K/');
         $result = $ast->accept($this->htmlExplainVisitor);
-        $this->assertStringContainsString('reset match start', $result);
+        $this->assertStringContainsString('the match reported starts here', $result);
     }
 
     public function test_html_explain_visitor_octal_legacy_node(): void
@@ -258,7 +258,7 @@ final class HtmlExplainSweepTest extends TestCase
         foreach ($patterns as $pattern) {
             $ast = $this->regexService->parse($pattern);
             $result = $ast->accept($this->htmlExplainVisitor);
-            $this->assertStringContainsString('Look', $result);
+            $this->assertMatchesRegularExpression('/(Positive|Negative) look(ahead|behind)/', $result);
         }
     }
 

@@ -38,10 +38,10 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $ast = $this->regex->parse($regex);
         $output = $ast->accept($this->visitor);
 
-        $this->assertStringContainsString('<strong>Conditional: IF</strong>', $output);
+        $this->assertStringContainsString('<strong>IF:</strong>', $output);
         $this->assertStringContainsString('<strong>THEN:</strong>', $output);
-        $this->assertStringContainsString('<span title="Literal: &#039;b&#039;">Literal: <strong>&#039;b&#039;</strong></span>', $output);
-        $this->assertStringContainsString('<span title="Literal: &#039;c&#039;">Literal: <strong>&#039;c&#039;</strong></span>', $output);
+        $this->assertStringContainsString('<span title="&#039;b&#039;"><strong>&#039;b&#039;</strong></span>', $output);
+        $this->assertStringContainsString('<span title="&#039;c&#039;"><strong>&#039;c&#039;</strong></span>', $output);
         $this->assertStringContainsString('<strong>ELSE:</strong>', $output);
     }
 
@@ -52,13 +52,13 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $output = $ast->accept($this->visitor);
 
         // Named group (tests escaping for name and type)
-        $this->assertStringContainsString('Start Capturing Group (named: &#039;tag&#039;)', $output);
+        $this->assertStringContainsString('<strong>Capturing group (named: &#039;tag&#039;):</strong>', $output);
         // Inline flags (tests flag value)
-        $this->assertStringContainsString('Start Group (with flags: &#039;i&#039;)', $output);
+        $this->assertStringContainsString('<strong>Inline flags &#039;i&#039;:</strong>', $output);
         // Negative Lookbehind
-        $this->assertStringContainsString('Start Negative Lookbehind', $output);
+        $this->assertStringContainsString('<strong>Negative lookbehind:</strong>', $output);
         // Atomic Group
-        $this->assertStringContainsString('Start Atomic Group', $output);
+        $this->assertStringContainsString('<strong>Atomic group (no backtracking):</strong>', $output);
     }
 
     public function test_visit_complex_char_class_parts(): void
@@ -67,10 +67,9 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $ast = $this->regex->parse($regex);
         $output = $ast->accept($this->visitor);
 
-        // Unicode Prop (\P{L} handled by logic) - note: inside char class, tags are stripped
-        $this->assertStringContainsString('Unicode Property: \P{L}', $output);
-        // Octal (\o{77} handled by logic) - note: inside char class, tags are stripped
-        $this->assertStringContainsString('Octal: \o{77}', $output);
+        // A class names the meaning of each of its parts.
+        $this->assertStringContainsString('Unicode Property: any character non-matching &quot;L&quot;', $output);
+        $this->assertStringContainsString('Character with octal value 077', $output);
         // POSIX Class
         $this->assertStringContainsString('POSIX Class: [[:alnum:]]', $output);
     }
@@ -81,10 +80,10 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $ast = $this->regex->parse($regex);
         $output = $ast->accept($this->visitor);
 
-        $this->assertStringContainsString('Literal: <strong>&#039;\\t&#039; (tab)</strong>', $output);
-        $this->assertStringContainsString('Literal: <strong>&#039;\\r&#039; (carriage return)</strong>', $output);
-        $this->assertStringContainsString('Literal: <strong>&#039;\\n&#039; (newline)</strong>', $output);
-        $this->assertStringContainsString('Literal: <strong>&#039; &#039; (space)</strong>', $output);
+        $this->assertStringContainsString('<strong>&#039;\\t&#039; (tab)</strong>', $output);
+        $this->assertStringContainsString('<strong>&#039;\\r&#039; (carriage return)</strong>', $output);
+        $this->assertStringContainsString('<strong>&#039;\\n&#039; (newline)</strong>', $output);
+        $this->assertStringContainsString('<strong>&#039; &#039; (space)</strong>', $output);
     }
 
     public function test_visit_complex_quantified_group(): void
@@ -95,7 +94,7 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $output = $ast->accept($this->visitor);
 
         // This ensures the logic that wraps complex children in a new <ul>/<li> is hit
-        $this->assertStringContainsString('<li><strong>Quantifier (exactly 2 times):</strong>', $output);
+        $this->assertStringContainsString('<li><strong>Quantified group (exactly 2 times):</strong>', $output);
         $this->assertStringContainsString('<ul><li><strong>EITHER:</strong>', $output);
     }
 
@@ -106,8 +105,8 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $ast = $this->regex->parse($regex);
         $output = $ast->accept($this->visitor);
 
-        // This ensures the logic that injects the quantifier into the child's <li> is hit
-        $this->assertStringContainsString('<li>(exactly 2 times) <span title="Literal: &#039;a&#039;">Literal: <strong>&#039;a&#039;</strong></span>', $output);
+        // The count follows the literal in its item, and in its tooltip.
+        $this->assertStringContainsString('<li><span title="&#039;a&#039; (exactly 2 times)"><strong>&#039;a&#039;</strong></span> (exactly 2 times)</li>', $output);
     }
 
     public function test_visit_range_with_non_literal_bounds(): void
@@ -160,9 +159,9 @@ final class HtmlExplainVisitorEdgeCasesTest extends TestCase
         $class = (string) $this->regex->parse('/[a-f<]/')->accept($this->visitor);
         $condition = (string) $this->regex->parse('/(?(?=a)b|c)/')->accept($this->visitor);
 
-        $this->assertStringContainsString('Character Class: [ Range: from &#039;a&#039; to &#039;f&#039;, Literal: &#039;&lt;&#039; ]', $class);
-        $this->assertStringContainsString('title="any character in [ Range: from &#039;a&#039; to &#039;f&#039;, Literal: &#039;&lt;&#039; ]"', $class);
-        $this->assertStringContainsString("(Start Positive Lookahead:\nLiteral: &#039;a&#039;)", $condition);
+        $this->assertStringContainsString('Character Class: <strong>any character in [ Range: from &#039;a&#039; to &#039;f&#039;, &#039;&lt;&#039; ]</strong>', $class);
+        $this->assertStringContainsString('title="Character Class: any character in [ Range: from &#039;a&#039; to &#039;f&#039;, &#039;&lt;&#039; ]"', $class);
+        $this->assertStringContainsString("<li><strong>IF:</strong>\n<ul><li><span title=\"Positive lookahead\"><strong>Positive lookahead:</strong></span>\n<ul><li><span title=\"&#039;a&#039;\"><strong>&#039;a&#039;</strong></span></li></ul>", $condition);
         $this->assertStringNotContainsString('&amp;', $class.$condition);
     }
 }

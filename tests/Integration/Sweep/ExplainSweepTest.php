@@ -115,8 +115,8 @@ final class ExplainSweepTest extends TestCase
         // Test quantifier with complex child (multiline output) to hit lines 149-159
         $ast = $this->regex->parse('/(a|b|c)+/');
         $result = $ast->accept($this->explainVisitor);
-        $this->assertStringContainsString('Start Quantified Group', $result);
-        $this->assertStringContainsString('End Quantified Group', $result);
+        $this->assertStringContainsString('Quantified group (one or more times)', $result);
+        $this->assertStringContainsString('End quantified group', $result);
     }
 
     public function test_explain_visitor_dot_node(): void
@@ -130,7 +130,7 @@ final class ExplainSweepTest extends TestCase
     {
         $ast = $this->regex->parse('/\K/');
         $result = $ast->accept($this->explainVisitor);
-        $this->assertStringContainsString('reset match start', $result);
+        $this->assertStringContainsString('Assertion: the match reported starts here', $result);
     }
 
     public function test_explain_visitor_comment_node(): void

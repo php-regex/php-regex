@@ -53,15 +53,15 @@ echo $regex->explain('/^(?<user>\w+)@(?<host>\w+)$/');
 **Output:**
 ```
 Regex matches
-  Anchor: the beginning of a line
+  Anchor: the start of the subject
   Capturing group (named: 'user')
-        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+    Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
   End group
   '@'
   Capturing group (named: 'host')
-        Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+    Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
   End group
-  Anchor: the end of a line
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 ### 2. Validate Syntax
@@ -164,13 +164,13 @@ echo $regex->explain($pattern);
 **Output:**
 ```
 Regex matches (with flags: i)
-  Anchor: the beginning of a line
-    Character Class: any character in [   Range: from 'a' to 'z',   Range: from '0' to '9',   '.',   '_',   '%',   '+',   '-' ] (one or more times)
+  Anchor: the start of the subject
+  Character Class: any character in [ Range: from 'a' to 'z', Range: from '0' to '9', '.', '_', '%', '+', '-' ] (one or more times)
   '@'
-    Character Class: any character in [   Range: from 'a' to 'z',   Range: from '0' to '9',   '.',   '-' ] (one or more times)
+  Character Class: any character in [ Range: from 'a' to 'z', Range: from '0' to '9', '.', '-' ] (one or more times)
   '.'
-    Character Class: any character in [   Range: from 'a' to 'z' ] (at least 2 times)
-  Anchor: the end of a line
+  Character Class: any character in [ Range: from 'a' to 'z' ] (at least 2 times)
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 ### Step 3: Check for ReDoS Risk
@@ -268,9 +268,9 @@ $regex = Regex::create();
 
 echo $regex->explain($pattern);
 // Regex matches
-//   Anchor: the beginning of a line
-//     Character Class: any character in [   Range: from '0' to '9' ] (one or more times)
-//   Anchor: the end of a line
+//   Anchor: the start of the subject
+//   Character Class: any character in [ Range: from '0' to '9' ] (one or more times)
+//   Anchor: the end of the subject, or just before a newline (\n) that ends it
 
 echo "Input: '$input'\n";
 echo "The pattern requires ALL characters to be digits.\n";
@@ -388,21 +388,21 @@ Output (the samples are random — yours will differ):
 ```
 === Pattern Explanation ===
 Regex matches
-  Anchor: the beginning of a line
+  Anchor: the start of the subject
   Positive lookahead
-        Wildcard: any character (may or may not match line terminators) (zero or more times)
-    Character Class: any character in [     Range: from 'A' to 'Z' ]
+    Wildcard: any character but a newline (\n) (zero or more times)
+    Character Class: any character in [ Range: from 'A' to 'Z' ]
   End group
   Positive lookahead
-        Wildcard: any character (may or may not match line terminators) (zero or more times)
-    Character Class: any character in [     Range: from 'a' to 'z' ]
+    Wildcard: any character but a newline (\n) (zero or more times)
+    Character Class: any character in [ Range: from 'a' to 'z' ]
   End group
   Positive lookahead
-        Wildcard: any character (may or may not match line terminators) (zero or more times)
+    Wildcard: any character but a newline (\n) (zero or more times)
     Character Type: A digit: [0-9]
   End group
-    Character Class: any character in [   Range: from 'A' to 'Z',   Range: from 'a' to 'z',   Character Type: A digit: [0-9] ] (at least 8 times)
-  Anchor: the end of a line
+  Character Class: any character in [ Range: from 'A' to 'Z', Range: from 'a' to 'z', Character Type: A digit: [0-9] ] (at least 8 times)
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 
 === Syntax Validation ===
 Valid

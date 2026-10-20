@@ -91,8 +91,8 @@ final class VisitorDepthScalingTest extends TestCase
     }
 
     /**
-     * Visiting a quantified child once gives the explanation it gave when
-     * the child was visited again to indent it.
+     * A quantified child is explained once, at the depth it stands at: each
+     * line keeps the indentation of its level.
      */
     #[Test]
     #[DataProvider('provideNestedExplanations')]
@@ -108,62 +108,62 @@ final class VisitorDepthScalingTest extends TestCase
     {
         yield '/(?:a|bc)*/' => ['/(?:a|bc)*/', implode("\n", [
             'Regex matches',
-            '  Start Quantified Group (zero or more times)',
+            '  Quantified group (zero or more times)',
             '    Non-capturing group',
-            '        EITHER',
-            '          \'a\'',
-            '        OR',
-            '          \'b\'',
-            '          \'c\'',
+            '      EITHER',
+            '        \'a\'',
+            '      OR',
+            '        \'b\'',
+            '        \'c\'',
             '    End group',
-            '  End Quantified Group',
+            '  End quantified group',
         ])];
         yield '/(?:(?:ab)+c)*/' => ['/(?:(?:ab)+c)*/', implode("\n", [
             'Regex matches',
-            '  Start Quantified Group (zero or more times)',
+            '  Quantified group (zero or more times)',
             '    Non-capturing group',
-            '      Start Quantified Group (one or more times)',
+            '      Quantified group (one or more times)',
             '        Non-capturing group',
             '          \'a\'',
             '          \'b\'',
             '        End group',
-            '      End Quantified Group',
+            '      End quantified group',
             '      \'c\'',
             '    End group',
-            '  End Quantified Group',
+            '  End quantified group',
         ])];
         yield '/(a(?:b|c)+)?d{2,3}/' => ['/(a(?:b|c)+)?d{2,3}/', implode("\n", [
             'Regex matches',
-            '  Start Quantified Group (once or not at all)',
+            '  Quantified group (once or not at all)',
             '    Capturing group',
             '      \'a\'',
-            '      Start Quantified Group (one or more times)',
+            '      Quantified group (one or more times)',
             '        Non-capturing group',
-            '            EITHER',
-            '              \'b\'',
-            '            OR',
-            '              \'c\'',
+            '          EITHER',
+            '            \'b\'',
+            '          OR',
+            '            \'c\'',
             '        End group',
-            '      End Quantified Group',
+            '      End quantified group',
             '    End group',
-            '  End Quantified Group',
-            '    \'d\' (at least 2 but not more than 3 times)',
+            '  End quantified group',
+            '  \'d\' (at least 2 but not more than 3 times)',
         ])];
         yield '/(?:(?:(?:x)*)+)?/' => ['/(?:(?:(?:x)*)+)?/', implode("\n", [
             'Regex matches',
-            '  Start Quantified Group (once or not at all)',
+            '  Quantified group (once or not at all)',
             '    Non-capturing group',
-            '      Start Quantified Group (one or more times)',
+            '      Quantified group (one or more times)',
             '        Non-capturing group',
-            '          Start Quantified Group (zero or more times)',
+            '          Quantified group (zero or more times)',
             '            Non-capturing group',
             '              \'x\'',
             '            End group',
-            '          End Quantified Group',
+            '          End quantified group',
             '        End group',
-            '      End Quantified Group',
+            '      End quantified group',
             '    End group',
-            '  End Quantified Group',
+            '  End quantified group',
         ])];
     }
 }

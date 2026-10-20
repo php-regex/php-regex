@@ -39,7 +39,7 @@ final class ExplainCharacterTypeTest extends TestCase
 
     private const UNICODE_NON_DIGIT = 'A non-digit: any character but a Unicode decimal digit (\P{Nd})';
 
-    private const WORD = 'A word character: [a-zA-Z_0-9], or a letter or digit of the LC_CTYPE locale when it is not C';
+    private const WORD = 'A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C';
 
     private const UNICODE_WORD = 'A word character: a Unicode letter (\p{L}) or number (\p{N}), an underscore, and from PCRE2 10.43 a non-spacing mark (\p{Mn}) or connector punctuation (\p{Pc})';
 

@@ -63,16 +63,16 @@ final class ExplainVisitorTest extends TestCase
         $text = $ast->accept(new TextExplainer());
         $html = $ast->accept(new HtmlExplainer());
 
-        $this->assertStringNotContainsString('Start Quantified Group', $text); // Simple format
-        $this->assertStringContainsString('<li>(zero or more times)', $html); // Injected into <li>
+        $this->assertStringNotContainsString('Quantified group', $text); // Simple format
+        $this->assertStringContainsString('</span> (zero or more times)</li>', $html); // In the item of the literal
 
         // Complex: (a|b)* -> multi line block
         $ast = $this->regex->parse('/(a|b)*/');
         $text = $ast->accept(new TextExplainer());
         $html = $ast->accept(new HtmlExplainer());
 
-        $this->assertStringContainsString('Start Quantified Group', $text);
-        $this->assertStringContainsString('<li><strong>Quantifier', $html); // Wrapped
+        $this->assertStringContainsString('Quantified group (zero or more times)', $text);
+        $this->assertStringContainsString('<li><strong>Quantified group (zero or more times):', $html); // Wrapped
     }
 
     public function test_conditional_no_else_branch(): void

@@ -60,9 +60,9 @@ $ast = RegexParser::create()->parse('/[A-Z][a-z]+\d*/');
 
 echo $ast->accept(new TextExplainer());
 // Regex matches
-//   Character Class: any character in [   Range: from 'A' to 'Z' ]
-//     Character Class: any character in [   Range: from 'a' to 'z' ] (one or more times)
-//     Character Type: A digit: [0-9] (zero or more times)
+//   Character Class: any character in [ Range: from 'A' to 'Z' ]
+//   Character Class: any character in [ Range: from 'a' to 'z' ] (one or more times)
+//   Character Type: A digit: [0-9] (zero or more times)
 ```
 
 Print the AST itself as a tree:
@@ -106,7 +106,7 @@ use PHPRegex\Explain\HtmlExplainer;
 echo RegexParser::create()->parse('/\d{3}-\d{4}/')->accept(new HtmlExplainer());
 // <div class="regex-explain">
 // <strong>Regex matches:</strong>
-// <ul><li>(exactly 3 times) <span title="Character Type: A digit: [0-9]">…</span></li>…
+// <ul><li><span title="Character Type: A digit: [0-9] (exactly 3 times)">Character Type: <strong>\d</strong> (A digit: [0-9])</span> (exactly 3 times)</li>…
 // </ul>
 // </div>
 ```

@@ -53,7 +53,7 @@ final class TextExplainerTest extends TestCase
         ], 0, 3);
         $visitor = new TextExplainer();
 
-        $this->assertSame("  EITHER\n    'a'\n  OR\n    'b'", $node->accept($visitor));
+        $this->assertSame("EITHER\n  'a'\nOR\n  'b'", $node->accept($visitor));
     }
 
     public function test_visit_sequence_node(): void
@@ -151,7 +151,7 @@ final class TextExplainerTest extends TestCase
         $node = new PosixClassNode('alpha', 0, 8);
         $visitor = new TextExplainer();
 
-        $this->assertSame('POSIX Class: alpha', $node->accept($visitor));
+        $this->assertSame('POSIX Class: [[:alpha:]]', $node->accept($visitor));
     }
 
     public function test_visit_comment_node(): void
@@ -201,6 +201,6 @@ final class TextExplainerTest extends TestCase
         );
         $visitor = new TextExplainer();
 
-        $this->assertSame("DEFINE block (defines subpatterns without matching)\n  'a'\nEnd DEFINE Block", $node->accept($visitor));
+        $this->assertSame("DEFINE block (defines subpatterns without matching)\n  'a'\nEnd DEFINE block", $node->accept($visitor));
     }
 }

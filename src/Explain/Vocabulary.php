@@ -42,7 +42,7 @@ final class Vocabulary
         'S' => 'A non-whitespace character: [^\\s]',
         'v' => 'A vertical whitespace character: [\\n\\x0B\\f\\r\\x85\\u2028\\u2029]',
         'V' => 'A non-vertical whitespace character: [^\\v]',
-        'w' => 'A word character: [a-zA-Z_0-9], or a letter or digit of the LC_CTYPE locale when it is not C',
+        'w' => 'A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C',
         'W' => 'A non-word character: [^\\w]',
         'R' => 'Any Unicode linebreak sequence (\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])',
         'X' => 'An extended grapheme cluster: a character with the marks that combine with it, or a \\r\\n pair',
@@ -111,13 +111,7 @@ final class Vocabulary
     public static function condition(NodeInterface $condition): ?string
     {
         if ($condition instanceof BackrefNode) {
-            $ref = $condition->ref;
-
-            return match ($ref[0] ?? '') {
-                '-' => \sprintf('the capturing group %s back from here has matched', substr($ref, 1)),
-                '+' => \sprintf('the capturing group %s ahead of here has matched', substr($ref, 1)),
-                default => \sprintf('the capturing group "%s" has matched', $ref),
-            };
+            return self::group($condition->ref).' has matched';
         }
 
         if (!$condition instanceof SubroutineNode) {
@@ -129,6 +123,15 @@ final class Vocabulary
         return '' === $group
             ? 'a recursion is in progress, into the whole pattern or any group'
             : \sprintf('the most recent recursion is into the capturing group "%s"', $group);
+    }
+
+    /**
+     * What a backreference matches, "\1", "\g{-1}" or "\k<name>": what its
+     * group matched.
+     */
+    public static function backreference(string $reference): string
+    {
+        return 'whatever '.self::group(LibraryPcre::replace('/^\\\\[gk]?|[{}<>\']/', '', $reference) ?? $reference).' matched';
     }
 
     /**
@@ -284,6 +287,19 @@ final class Vocabulary
         $raw = str_starts_with($value, '\\') ? substr($value, 1) : $value;
 
         return str_starts_with($raw, '0') ? $raw : '0'.$raw;
+    }
+
+    /**
+     * The group a reference names, by number or name, or counted back or
+     * ahead from where it stands.
+     */
+    private static function group(string $reference): string
+    {
+        return match ($reference[0] ?? '') {
+            '-' => \sprintf('the capturing group %s back from here', substr($reference, 1)),
+            '+' => \sprintf('the capturing group %s ahead of here', substr($reference, 1)),
+            default => \sprintf('the capturing group "%s"', $reference),
+        };
     }
 
     /**

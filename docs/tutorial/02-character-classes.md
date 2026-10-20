@@ -90,17 +90,17 @@ $regex = Regex::create();
 echo $regex->explain('/[aeiou]/');
 // Output:
 // Regex matches
-//   Character Class: any character in [   'a',   'e',   'i',   'o',   'u' ]
+//   Character Class: any character in [ 'a', 'e', 'i', 'o', 'u' ]
 
 echo $regex->explain('/[0-9]/');
 // Output:
 // Regex matches
-//   Character Class: any character in [   Range: from '0' to '9' ]
+//   Character Class: any character in [ Range: from '0' to '9' ]
 
 echo $regex->explain('/[a-zA-Z]/');
 // Output:
 // Regex matches
-//   Character Class: any character in [   Range: from 'a' to 'z',   Range: from 'A' to 'Z' ]
+//   Character Class: any character in [ Range: from 'a' to 'z', Range: from 'A' to 'Z' ]
 ```
 
 ---
@@ -132,7 +132,7 @@ $regex = Regex::create();
 echo $regex->explain('/[^0-9]/');
 // Output:
 // Regex matches
-//   Character Class: any character except [   Range: from '0' to '9' ]
+//   Character Class: any character except [ Range: from '0' to '9' ]
 ```
 
 ---
@@ -174,17 +174,17 @@ $regex = Regex::create();
 echo $regex->explain('/\d+/');
 // Output:
 // Regex matches
-//     Character Type: A digit: [0-9] (one or more times)
+//   Character Type: A digit: [0-9] (one or more times)
 
 echo $regex->explain('/\w+/');
 // Output:
 // Regex matches
-//     Character Type: A word character: [a-zA-Z_0-9] (one or more times)
+//   Character Type: A word character: [a-zA-Z_0-9], and the letters of the LC_CTYPE locale when it is not C (one or more times)
 
 echo $regex->explain('/\s+/');
 // Output:
 // Regex matches
-//     Character Type: A whitespace character: [ \t\n\x0B\f\r] (one or more times)
+//   Character Type: A whitespace character: [ \t\n\x0B\f\r] (one or more times)
 ```
 
 ---
@@ -233,9 +233,9 @@ $regex = Regex::create();
 echo $regex->explain('/^\p{L}+$/u');
 // Output:
 // Regex matches (with flags: u)
-//   Anchor: the beginning of a line
-//     Unicode Property: any character matching "L" (one or more times)
-//   Anchor: the end of a line
+//   Anchor: the start of the subject
+//   Unicode Property: any character matching "L" (one or more times)
+//   Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 ---

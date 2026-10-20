@@ -192,7 +192,7 @@ final class RegexTest extends TestCase
     {
         yield 'simple literal' => ['/a/', "'a'"];
         yield 'quantifier' => ['/a+/', "'a' (one or more times)"];
-        yield 'character class' => ['/[a-z]/', "Character Class: any character in [   Range: from 'a' to 'z' ]"];
+        yield 'character class' => ['/[a-z]/', "Character Class: any character in [ Range: from 'a' to 'z' ]"];
     }
 
     public static function provideInvalidRegexForParsing(): \Generator

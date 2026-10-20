@@ -364,15 +364,15 @@ echo $regex->explain('/^(?<email>[^@]+)@(?<domain>[^@]+)$/');
 **Output:**
 ```
 Regex matches
-  Anchor: the beginning of a line
+  Anchor: the start of the subject
   Capturing group (named: 'email')
-        Character Class: any character except [     '@' ] (one or more times)
+    Character Class: any character except [ '@' ] (one or more times)
   End group
   '@'
   Capturing group (named: 'domain')
-        Character Class: any character except [     '@' ] (one or more times)
+    Character Class: any character except [ '@' ] (one or more times)
   End group
-  Anchor: the end of a line
+  Anchor: the end of the subject, or just before a newline (\n) that ends it
 ```
 
 ### 3. Detect ReDoS Vulnerabilities

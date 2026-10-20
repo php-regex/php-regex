@@ -47,14 +47,14 @@ echo $result;
 /*
 Output:
 Regex matches
-    EITHER
-      'f'
-      'o'
-      'o'
-    OR
-      'b'
-      'a'
-      'r'
+  EITHER
+    'f'
+    'o'
+    'o'
+  OR
+    'b'
+    'a'
+    'r'
 */
 ```
 

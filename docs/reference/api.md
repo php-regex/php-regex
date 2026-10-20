@@ -690,9 +690,9 @@ $text = Regex::create()->explain('/\d{3}-\d{4}/');
 echo $text;
 /*
 Regex matches
-    Character Type: A digit: [0-9] (exactly 3 times)
+  Character Type: A digit: [0-9] (exactly 3 times)
   '-'
-    Character Type: A digit: [0-9] (exactly 4 times)
+  Character Type: A digit: [0-9] (exactly 4 times)
 */
 
 // HTML explanation for docs/UIs
@@ -701,9 +701,9 @@ echo $html;
 /*
 <div class="regex-explain">
 <strong>Regex matches:</strong>
-<ul><li>(exactly 3 times) <span title="Character Type: A digit: [0-9]">Character Type: <strong>\d</strong> (A digit: [0-9])</span></li>
-<li><span title="Literal: &#039;-&#039;">Literal: <strong>&#039;-&#039;</strong></span></li>
-<li>(exactly 4 times) <span title="Character Type: A digit: [0-9]">Character Type: <strong>\d</strong> (A digit: [0-9])</span></li></ul>
+<ul><li><span title="Character Type: A digit: [0-9] (exactly 3 times)">Character Type: <strong>\d</strong> (A digit: [0-9])</span> (exactly 3 times)</li>
+<li><span title="&#039;-&#039;"><strong>&#039;-&#039;</strong></span></li>
+<li><span title="Character Type: A digit: [0-9] (exactly 4 times)">Character Type: <strong>\d</strong> (A digit: [0-9])</span> (exactly 4 times)</li></ul>
 </div>
 */
 ```

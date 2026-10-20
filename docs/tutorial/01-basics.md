@@ -264,7 +264,7 @@ echo $regex->explain('/\./');
 echo $regex->explain('/./');
 // Output:
 // Regex matches
-//   Wildcard: any character (may or may not match line terminators)
+//   Wildcard: any character but a newline (\n)
 ```
 
 ---

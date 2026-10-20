@@ -130,14 +130,14 @@ final class AdvancedPcreFeaturesTest extends TestCase
         $ast = $regexService->parse('/(?C1)abc/');
         $explainer = new HtmlExplainer();
         $explanation = $ast->accept($explainer);
-        $this->assertStringContainsString('Callout: <strong>(?C1)</strong></span></li>', $explanation);
-        $this->assertStringContainsString('title="passes control to user function with argument 1"', $explanation);
+        $this->assertStringContainsString('Callout: <strong>(?C1)</strong> (passes control to user function with argument 1)</span></li>', $explanation);
+        $this->assertStringContainsString('title="Callout: passes control to user function with argument 1"', $explanation);
 
         $ast = $regexService->parse('/(?C"my_func")abc/');
         $explainer = new HtmlExplainer();
         $explanation = $ast->accept($explainer);
-        $this->assertStringContainsString('Callout: <strong>(?C&quot;my_func&quot;)</strong></span></li>', $explanation);
-        $this->assertStringContainsString('title="passes control to user function with argument &quot;my_func&quot;"', $explanation);
+        $this->assertStringContainsString('Callout: <strong>(?C&quot;my_func&quot;)</strong> (passes control to user function with argument &quot;my_func&quot;)</span></li>', $explanation);
+        $this->assertStringContainsString('title="Callout: passes control to user function with argument &quot;my_func&quot;"', $explanation);
     }
 
     public function test_it_explains_callouts_without_argument(): void
@@ -151,8 +151,8 @@ final class AdvancedPcreFeaturesTest extends TestCase
 
         $htmlExplainer = new HtmlExplainer();
         $html = $ast->accept($htmlExplainer);
-        $this->assertStringContainsString('Callout: <strong>(?C)</strong></span></li>', $html);
-        $this->assertStringContainsString('title="passes control to user function with no argument"', $html);
+        $this->assertStringContainsString('Callout: <strong>(?C)</strong> (passes control to user function with no argument)</span></li>', $html);
+        $this->assertStringContainsString('title="Callout: passes control to user function with no argument"', $html);
     }
 
     public function test_it_optimizes_callouts_correctly(): void

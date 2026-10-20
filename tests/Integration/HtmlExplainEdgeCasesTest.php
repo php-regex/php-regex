@@ -244,8 +244,7 @@ final class HtmlExplainEdgeCasesTest extends TestCase
         $ast = $this->regexService->parse('/\\x01/');
         $result = $ast->accept($this->visitor);
 
-        // Non-printable characters are now represented as a generic Unicode
-        // escape in the HTML output; just ensure we mention Unicode.
-        $this->assertStringContainsString('Unicode:', $result);
+        // The code as written, beside the value it stands for.
+        $this->assertStringContainsString('<strong>\\x01</strong> (Character with hexadecimal value 0x01)', $result);
     }
 }

@@ -120,7 +120,7 @@ final class ScanSubstringTest extends TestCase
         $ast = $regex->parse($pattern);
 
         $this->assertStringContainsString('Substring scan of groups 1', $regex->explain($pattern));
-        $this->assertStringContainsString('Substring Scan (of groups 1)', $regex->explain($pattern, 'html'));
+        $this->assertStringContainsString('<strong>Substring scan of groups 1:</strong>', $regex->explain($pattern, 'html'));
         $tree = $ast->accept(new AsciiTreeRenderer());
         $diagram = $ast->accept(new RailroadSvgRenderer());
         $this->assertIsString($tree);

@@ -73,9 +73,9 @@ echo $regex->explain('/\d{3}-\d{4}/'), "\n";
 ```
 ```
 Regex matches
-    Character Type: A digit: [0-9] (exactly 3 times)
+  Character Type: A digit: [0-9] (exactly 3 times)
   '-'
-    Character Type: A digit: [0-9] (exactly 4 times)
+  Character Type: A digit: [0-9] (exactly 4 times)
 ```
 
 Validate a pattern before it reaches `preg_match` — the failing branch says where and why:

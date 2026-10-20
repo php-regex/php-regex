@@ -51,7 +51,7 @@ final class ExplainInlineSettingTest extends TestCase
         // preg_match('/(?i)a|B/', 'b') === 1: the later branch is reached
         yield 'a setting reaches the later branches' => [
             'pattern' => '/(?i)a|B/',
-            'expected' => "Regex matches\n    EITHER\n      Inline flags 'i' (from here to the end of the pattern)\n      'a'\n    OR\n      'B'",
+            'expected' => "Regex matches\n  EITHER\n    Inline flags 'i' (from here to the end of the pattern)\n    'a'\n  OR\n    'B'",
         ];
 
         // preg_match('/(?(?=a)a(?i)b|C)D/', 'cD') === 1, preg_match('/(?(?=a)a(?i)b|c)D/', 'aBd') === 0
@@ -98,7 +98,7 @@ final class ExplainInlineSettingTest extends TestCase
         // preg_match('/a|/', '') === 1
         yield 'an empty branch is the empty string' => [
             'pattern' => '/a|/',
-            'expected' => "Regex matches\n    EITHER\n      'a'\n    OR\n      '' (empty string)",
+            'expected' => "Regex matches\n  EITHER\n    'a'\n  OR\n    '' (empty string)",
         ];
 
         yield 'an empty group holds the empty string' => [
@@ -124,7 +124,7 @@ final class ExplainInlineSettingTest extends TestCase
 
         $this->assertStringContainsString('Inline flags &#039;i&#039; (from here to the end of the group)', $output);
         $this->assertStringContainsString('Inline flags &#039;-i&#039; (from here to the end of the pattern)', $output);
-        $this->assertStringNotContainsString('Start Group (with flags: &#039;i&#039;)', $output);
+        $this->assertStringNotContainsString('<strong>Inline flags &#039;i&#039;:</strong>', $output);
         $this->assertStringNotContainsString('\x00', $output);
     }
 
@@ -158,8 +158,8 @@ final class ExplainInlineSettingTest extends TestCase
     {
         $output = RegexParser::create()->parse('/(?i:)a|/')->accept(new HtmlExplainer());
 
-        $this->assertStringContainsString('Start Group (with flags: &#039;i&#039;)', $output);
-        $this->assertStringContainsString('Literal: <strong>&#039;&#039; (empty string)</strong>', $output);
+        $this->assertStringContainsString('<strong>Inline flags &#039;i&#039;:</strong>', $output);
+        $this->assertStringContainsString('<strong>&#039;&#039; (empty string)</strong>', $output);
         $this->assertStringNotContainsString('\x00', $output);
     }
 }

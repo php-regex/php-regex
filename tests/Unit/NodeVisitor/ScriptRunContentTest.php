@@ -58,11 +58,11 @@ final class ScriptRunContentTest extends TestCase
     public function test_an_atomic_script_run_is_named_so(): void
     {
         $this->assertSame(
-            "Regex matches\n  Atomic script run: every character from one script\n    'a'\n    'b'\n  End script run",
+            "Regex matches\n  Atomic script run (every character from one script)\n    'a'\n    'b'\n  End script run",
             $this->tree('/(*asr:ab)/')->accept(new TextExplainer()),
         );
-        $this->assertStringContainsString('<strong>Atomic script run</strong>', $this->tree('/(*asr:ab)/')->accept(new HtmlExplainer()));
-        $this->assertStringContainsString('<strong>Script run</strong>', $this->tree('/(*sr:ab)/')->accept(new HtmlExplainer()));
+        $this->assertStringContainsString('<strong>Atomic script run (every character from one script):</strong>', $this->tree('/(*asr:ab)/')->accept(new HtmlExplainer()));
+        $this->assertStringContainsString('<strong>Script run (every character from one script):</strong>', $this->tree('/(*sr:ab)/')->accept(new HtmlExplainer()));
     }
 
     /**
@@ -74,8 +74,8 @@ final class ScriptRunContentTest extends TestCase
     {
         $node = new ScriptRunNode('', 0, 6);
 
-        $this->assertSame('Script run: every character from one script', $node->accept(new TextExplainer()));
-        $this->assertSame('<li><strong>Script run</strong>: every character from one script</li>', $node->accept(new HtmlExplainer()));
+        $this->assertSame('Script run (every character from one script)', $node->accept(new TextExplainer()));
+        $this->assertSame('<li><span title="Script run (every character from one script)"><strong>Script run (every character from one script)</strong></span></li>', $node->accept(new HtmlExplainer()));
     }
 
     #[Test]

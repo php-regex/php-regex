@@ -262,9 +262,9 @@ $explanation = Regex::create()->explain('/\d{3}-\d{4}/');
 echo $explanation;
 /*
 Regex matches
-    Character Type: A digit: [0-9] (exactly 3 times)
+  Character Type: A digit: [0-9] (exactly 3 times)
   '-'
-    Character Type: A digit: [0-9] (exactly 4 times)
+  Character Type: A digit: [0-9] (exactly 4 times)
 */
 ```
 

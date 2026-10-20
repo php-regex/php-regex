@@ -175,8 +175,8 @@ vendor/bin/regex analyze '/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i'
 
   [4/4] Explanation
 Regex matches (with flags: i)
-  Anchor: the beginning of a line
-    Character Class: any character in [   Range: from 'a' to 'z',   Range: from '0' to '9',   '.',   '_',   '%',   '+',   '-' ] (one or more times)
+  Anchor: the start of the subject
+  Character Class: any character in [ Range: from 'a' to 'z', Range: from '0' to '9', '.', '_', '%', '+', '-' ] (one or more times)
   '@'
   ...
 ```
