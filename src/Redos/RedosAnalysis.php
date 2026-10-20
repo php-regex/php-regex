@@ -164,7 +164,7 @@ final class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null, upper_bound_degree: int|null}
      */
     public function jsonSerialize(): array
     {
@@ -193,6 +193,7 @@ final class RedosAnalysis implements \JsonSerializable
             'php_version' => $this->phpVersion,
             'analysis_version' => $this->analysisVersion,
             'search_cost' => $this->searchCost?->toArray(),
+            'upper_bound_degree' => $this->upperBoundDegree,
         ];
     }
 }

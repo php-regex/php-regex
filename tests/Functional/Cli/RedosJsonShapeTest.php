@@ -40,6 +40,8 @@ final class RedosJsonShapeTest extends TestCase
         'php_version', 'analysis_version',
         // The search cost.
         'search_cost',
+        // The ceiling on the steps of one attempt.
+        'upper_bound_degree',
     ];
 
     /**

@@ -50,7 +50,7 @@ final class JsonContract
             'severity', 'score', 'mode', 'confirmed', 'confidence', 'vulnerable_part',
             'trigger', 'false_positive_risk', 'suggested_rewrite', 'recommendations', 'error', 'findings',
             'hotspots', 'confirmation', 'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions',
-            'pcre_version', 'php_version', 'analysis_version', 'search_cost',
+            'pcre_version', 'php_version', 'analysis_version', 'search_cost', 'upper_bound_degree',
         ],
         'redos_analysis.findings[]' => ['severity', 'message', 'pattern', 'trigger', 'suggested_rewrite', 'confidence', 'false_positive_risk'],
         'redos_analysis.hotspots[]' => ['start', 'end', 'severity', 'pattern', 'trigger'],

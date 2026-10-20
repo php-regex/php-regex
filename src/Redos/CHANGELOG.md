@@ -10,6 +10,8 @@ CHANGELOG
    `hotspots` or `recommendations`, and its `vulnerablePart`, `trigger`,
    `falsePositiveRisk`, `suggestedRewrite` and `culpritNode` are `null`: the
    structural heuristics no longer run once the proof settles the verdict.
+ * `RedosAnalysis::jsonSerialize()` carries `upper_bound_degree`, the
+   `$upperBoundDegree` it left out.
  * The structural heuristics measure a capture with the parser's
    `LengthRangeCalculator`: `(\cA)` is one character, as `(\x01)` is, `\R`
    one or two, a lookaround none. A script run can match nothing only when

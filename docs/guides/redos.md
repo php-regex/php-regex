@@ -344,6 +344,8 @@ linear. It is `null` when such a state exists — witnessed or not — and when 
 leaves the model. Never below a proven degree, it turns about a fifth of the corpus
 patterns left `unknown` into ones with a polynomial ceiling.
 
+The JSON carries it as `upper_bound_degree`.
+
 ## Reading the result
 
 Next to `severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendations` and `confirmation`, `RedosAnalysis` carries:
@@ -372,7 +374,7 @@ $analyzer->analyze('/(a)?(?(1)a|b)/')->isSafe();         // true:  no risk found
 $analyzer->analyze('/(a)?(?(1)a|b)/')->isProvenSafe();   // false
 ```
 
-The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`, `search_cost`), and the witness as its three escaped parts; the [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis) lists every key:
+The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`, `search_cost`, `upper_bound_degree`), and the witness as its three escaped parts; the [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis) lists every key:
 
 ```json
 "complexity": "exponential",
@@ -388,7 +390,8 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 "pcre_version": "10.49",
 "php_version": "8.4.26",
 "analysis_version": "1",
-"search_cost": null
+"search_cost": null,
+"upper_bound_degree": null
 ```
 
 ## On real code

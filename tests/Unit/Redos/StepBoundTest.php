@@ -44,6 +44,16 @@ final class StepBoundTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideBounds')]
+    public function test_the_json_carries_the_ceiling(string $pattern, ?int $bound): void
+    {
+        $json = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern)->jsonSerialize();
+
+        $this->assertArrayHasKey('upper_bound_degree', $json);
+        $this->assertSame($bound, $json['upper_bound_degree']);
+    }
+
+    #[Test]
     #[DataProvider('provideUnwitnessedPatterns')]
     public function test_an_ambiguity_without_witness_still_gets_a_ceiling(string $pattern, int $bound): void
     {

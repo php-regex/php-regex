@@ -923,6 +923,7 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `php_version` | string | The PHP release that ran the analysis, as `8.4.26`: under `iu` the proof reads a character's other case from its mbstring tables |
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
+| `upper_bound_degree` | int \| null | The degree `d` of a proven bound `n^d` on the steps of one attempt, with or without an attack; `null` when no polynomial bound is proven. A ceiling, not the verdict: it may be above 1 next to a linear one |
 
 ### Finding: `redos_analysis.findings[]`
 
