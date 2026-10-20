@@ -289,14 +289,14 @@ final class ParserUtilityTest extends TestCase
     {
         // Simulate (?(.)...) where T_DOT is not a valid condition (should be Backref or Group)
         $tokens = [
-            $this->accessor->createToken(TokenType::Dot, '.', 2), // Jeton T_DOT
-            $this->accessor->createToken(TokenType::GroupClose, ')', 3),
+            $this->accessor->createToken(TokenType::Dot, '.', 3), // Jeton T_DOT
+            $this->accessor->createToken(TokenType::GroupClose, ')', 4),
         ];
-        $this->accessor->setTokens($tokens);
+        $this->accessor->setTokens($tokens, '(?(.)');
         $this->accessor->setPosition(0);
 
         $this->expectException(ParserException::class);
-        $this->expectExceptionMessageIsOrContains('Invalid conditional construct at position 2. Condition must be a group reference, lookaround, or (DEFINE).');
+        $this->expectExceptionMessageIsOrContains('Invalid conditional construct at position 3. Condition must be a group reference, lookaround, or (DEFINE).');
 
         $this->accessor->callConditionMethod('readCondition', [0]);
     }

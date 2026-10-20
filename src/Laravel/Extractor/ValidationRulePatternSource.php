@@ -17,6 +17,7 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Linter\Source\PatternSourceInterface;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 
 /**
  * Extracts regex patterns from Laravel validation rules.
@@ -139,12 +140,14 @@ final class ValidationRulePatternSource implements PatternSourceInterface
         // The pattern runs until the quote that opened the string literal,
         // so the other quote character (and escaped quotes) may appear
         // inside it, e.g. 'regex:/^[^"]+$/'.
-        if (false === LibraryPcre::matchAll(self::RULE_PATTERN, $content, $matches, \PREG_OFFSET_CAPTURE)) {
+        try {
+            LibraryPcre::matchAll(self::RULE_PATTERN, $content, $matches, \PREG_OFFSET_CAPTURE);
+        } catch (InternalFailureException $failure) {
             $this->failures[] = [
                 'file' => $filePath,
                 'message' => \sprintf(
                     'Validation rules not read: the rule regex gave up on this file (%s).',
-                    \PREG_BACKTRACK_LIMIT_ERROR === LibraryPcre::lastError() ? 'backtrack limit reached' : 'PCRE error '.LibraryPcre::lastError(),
+                    \PREG_BACKTRACK_LIMIT_ERROR === $failure->pcreError ? 'backtrack limit reached' : 'PCRE error '.$failure->pcreError,
                 ),
             ];
 

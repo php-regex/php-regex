@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Hir;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\NoJit;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -507,12 +508,18 @@ final class ClassSetProvider
         $regex = $prefix.$atom.$delimiter.($unicodeFlag ? 'u' : '');
         $parser = self::$parser ??= RegexParser::create();
 
-        if (!$parser->validate($regex)->isValid) {
+        // The library's own regexes giving up under the caller's limits
+        // leave the class unread, as the engine giving up on a member does.
+        try {
+            if (!$parser->validate($regex)->isValid) {
+                return null;
+            }
+
+            // Valid, the tree is the one the validation read, from the cache.
+            $tree = $parser->parse($regex)->pattern;
+        } catch (InternalFailureException) {
             return null;
         }
-
-        // Valid, the tree is the one the validation read, from the cache.
-        $tree = $parser->parse($regex)->pattern;
 
         $class = $tree instanceof SequenceNode ? $tree->children[array_key_last($tree->children)] ?? null : $tree;
         if (!$class instanceof CharClassNode || ($tree instanceof SequenceNode && !self::onlyOptionsBefore($tree, $class))) {
@@ -793,16 +800,13 @@ final class ClassSetProvider
 
         try {
             $result = LibraryPcre::matchAll($pattern, $block, $matches);
-            $error = LibraryPcre::lastError();
+        } catch (InternalFailureException $failure) {
+            return self::gaveUp($failure);
         } finally {
             restore_error_handler();
         }
 
-        if (false !== $result) {
-            return $matches[0] ?? [];
-        }
-
-        return \in_array($error, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR, \PREG_JIT_STACKLIMIT_ERROR], true) ? null : false;
+        return false === $result ? false : $matches[0] ?? [];
     }
 
     /**
@@ -821,16 +825,24 @@ final class ClassSetProvider
 
         try {
             $result = LibraryPcre::matchAll($pattern, $block, $matches, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL);
-            $error = LibraryPcre::lastError();
+        } catch (InternalFailureException $failure) {
+            return self::gaveUp($failure);
         } finally {
             restore_error_handler();
         }
 
-        if (false !== $result) {
-            return $matches;
-        }
+        return false === $result ? false : $matches;
+    }
 
-        return \in_array($error, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR, \PREG_JIT_STACKLIMIT_ERROR], true) ? null : false;
+    /**
+     * What a probe that gave no answer says: null when the engine gave up
+     * under its limits, false when PCRE refused the probe.
+     *
+     * @return false|null
+     */
+    private static function gaveUp(InternalFailureException $failure): ?bool
+    {
+        return \in_array($failure->pcreError, [\PREG_BACKTRACK_LIMIT_ERROR, \PREG_RECURSION_LIMIT_ERROR, \PREG_JIT_STACKLIMIT_ERROR], true) ? null : false;
     }
 
     /**

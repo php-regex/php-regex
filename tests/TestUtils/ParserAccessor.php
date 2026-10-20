@@ -55,8 +55,10 @@ final class ParserAccessor
      * Sets the internal TokenStream by creating one from an array of tokens.
      *
      * @param array<string|Token> $tokens
+     * @param string              $pattern the pattern the tokens were read from, which
+     *                                     the readers that look past a token read
      */
-    public function setTokens(array $tokens): void
+    public function setTokens(array $tokens, string $pattern = ''): void
     {
         $processedTokens = [];
         $pos = 0;
@@ -71,7 +73,7 @@ final class ParserAccessor
         }
         $processedTokens[] = $this->createToken(TokenType::Eof, '', $pos);
 
-        $stream = new TokenStream($processedTokens, '');
+        $stream = new TokenStream($processedTokens, $pattern);
 
         $property = $this->reflection->getProperty('stream');
         $property->setValue($this->parser, $stream);

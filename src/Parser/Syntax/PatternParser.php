@@ -161,7 +161,7 @@ final class PatternParser
             }
 
             $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
-            if (!LibraryPcre::match($allowedPattern, $flags)) {
+            if (1 !== LibraryPcre::match($allowedPattern, $flags)) {
                 // Find the invalid flag for a better error message
                 $invalid = LibraryPcre::replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
 

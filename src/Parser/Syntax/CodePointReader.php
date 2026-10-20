@@ -53,15 +53,15 @@ final class CodePointReader
     {
         $matches = [];
 
-        if (LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $representation, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\x([0-9a-fA-F]{1,2})$/', $representation, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
-        if (LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $representation, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\u([0-9a-fA-F]{4})$/', $representation, $matches)) {
             return (int) hexdec($matches[1]);
         }
 
-        if (LibraryPcre::match('/^\\\\[xu]\\{[ \t]*+([0-9a-fA-F]++)[ \t]*+\\}$/', $representation, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\[xu]\\{[ \t]*+([0-9a-fA-F]++)[ \t]*+\\}$/', $representation, $matches)) {
             return self::digits($matches[1], 16);
         }
 
@@ -74,7 +74,7 @@ final class CodePointReader
     public static function fromNamedEscape(string $representation): int
     {
         $matches = [];
-        if (!LibraryPcre::match('/^\\\\N\\{(.+)}$/', $representation, $matches)) {
+        if (1 !== LibraryPcre::match('/^\\\\N\\{(.+)}$/', $representation, $matches)) {
             return self::UNKNOWN;
         }
 
@@ -103,11 +103,11 @@ final class CodePointReader
     {
         $matches = [];
 
-        if (LibraryPcre::match('/^\\\\o\\{[ \t]*+([0-7]++)[ \t]*+\\}$/', $representation, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\o\\{[ \t]*+([0-7]++)[ \t]*+\\}$/', $representation, $matches)) {
             return self::digits($matches[1], 8);
         }
 
-        if (LibraryPcre::match('/^\\\\([0-7]{1,3})$/', $representation, $matches)) {
+        if (1 === LibraryPcre::match('/^\\\\([0-7]{1,3})$/', $representation, $matches)) {
             return (int) octdec($matches[1]);
         }
 

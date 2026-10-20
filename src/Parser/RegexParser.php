@@ -25,6 +25,7 @@ use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -171,6 +172,9 @@ final class RegexParser
 
     /**
      * Parse a regular expression into an Abstract Syntax Tree (AST).
+     *
+     * @throws RegexException           when the pattern is invalid, or past a limit of the library
+     * @throws InternalFailureException when the library cannot finish its own work, no verdict on the pattern
      */
     public function parse(string $regex): RegexNode
     {
@@ -182,6 +186,8 @@ final class RegexParser
      * errors instead of throwing on invalid input.
      *
      * @param string $regex The regular expression to parse
+     *
+     * @throws InternalFailureException when the library cannot finish its own work, no verdict on the pattern
      */
     public function parseTolerant(string $regex): TolerantParseResult
     {
@@ -207,7 +213,13 @@ final class RegexParser
      * lookup, without reading the tree cache again. clearCaches() empties
      * them.
      *
-     * @param string $regex The regular expression to validate
+     * @param string $regex the regular expression to validate
+     *
+     * A failure of the library itself, one of its regexes giving up under
+     * PCRE limits it could not raise, is no verdict on the pattern: it is
+     * thrown, never reported as an invalid pattern
+     *
+     * @throws InternalFailureException when the library cannot finish its own work
      *
      * @return ValidationResult Detailed validation result
      */
@@ -408,6 +420,10 @@ final class RegexParser
             return $this->buildValidationFailure($e);
         } catch (LexerException|ParserException $e) {
             return $this->buildValidationFailure($this->firstParseError($regex, $e));
+        } catch (InternalFailureException $e) {
+            // The library could not finish: no verdict, and no error of the
+            // pattern either.
+            throw $e;
         } catch (ExceptionInterface $e) {
             // Only a judgement on the pattern; a failure of the library
             // surfaces, never reported as a pattern error.

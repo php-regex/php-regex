@@ -146,7 +146,7 @@ final class PcreVerb
         }
 
         $matches = [];
-        if (LibraryPcre::match('/^LIMIT_MATCH=(\d++)\z/i', $verb, $matches)) {
+        if (1 === LibraryPcre::match('/^LIMIT_MATCH=(\d++)\z/i', $verb, $matches)) {
             return new self($verb, null, null, (int) $matches[1]);
         }
 

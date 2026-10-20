@@ -331,7 +331,7 @@ enum ErrorCode: string
     case GroupListRelativeZero = 'regex.group_list.relative_zero';
 
     /**
-     * PCRE failed while the library was reading the pattern.
+     * Not reported for a pattern: a regex of the library that gives up throws InternalFailureException, no verdict on the pattern.
      */
     case InternalPcreFailure = 'regex.internal.pcre_failure';
 

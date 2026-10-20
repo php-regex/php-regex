@@ -19,6 +19,7 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -191,7 +192,13 @@ final class ValidationRuleExtractionFailureTest extends LaravelTestCase
         try {
             // Under a limit of 0 any regex that repeats gives up, a
             // possessive run included (PCRE2 10.49, JIT on and off).
-            $this->assertFalse(LibraryPcre::matchAll('/regex:([^\']++)/', "'regex:/^[a-z]+$/'"));
+            $gaveUp = null;
+            try {
+                LibraryPcre::matchAll('/regex:([^\']++)/', "'regex:/^[a-z]+$/'");
+            } catch (InternalFailureException $failure) {
+                $gaveUp = $failure->pcreError;
+            }
+            $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $gaveUp);
             $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, LibraryPcre::lastError());
 
             $code = Artisan::call('regex:lint', [

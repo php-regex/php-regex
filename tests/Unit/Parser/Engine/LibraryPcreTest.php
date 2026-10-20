@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Parser\Engine;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -190,8 +191,9 @@ final class LibraryPcreTest extends TestCase
 
     /**
      * A raise PHP refuses (a disabled ini_set, a php_admin_value) leaves
-     * the call under the caller's limits: the same result and the same
-     * last error as the bare call, and no exception.
+     * the call under the caller's limits, where the bare call gives up: the
+     * wrapper says so with an InternalFailureException carrying the same
+     * last error, never a false a caller would read as "no match".
      */
     #[Test]
     public function test_a_refused_raise_leaves_the_call_under_the_callers_limits(): void
@@ -206,15 +208,106 @@ final class LibraryPcreTest extends TestCase
             return false;
         });
 
-        [$refused, $after] = self::underLimits('19', '100000', static fn (): array => [
-            [LibraryPcre::match(self::NO_JIT_PROBE, $subject), preg_last_error()],
-            ini_get('pcre.backtrack_limit'),
-        ]);
+        [$refused, $after] = self::underLimits('19', '100000', static function () use ($subject): array {
+            try {
+                return [LibraryPcre::match(self::NO_JIT_PROBE, $subject), ini_get('pcre.backtrack_limit')];
+            } catch (InternalFailureException $exception) {
+                return [[$exception->pcreError, preg_last_error()], ini_get('pcre.backtrack_limit')];
+            }
+        });
 
         $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], $bare);
         $this->assertGreaterThan(0, $attempts, 'The floor did not even try to raise the limit.');
-        $this->assertSame($bare, $refused);
+        $this->assertSame([\PREG_BACKTRACK_LIMIT_ERROR, \PREG_BACKTRACK_LIMIT_ERROR], $refused);
         $this->assertSame('19', $after);
+    }
+
+    /**
+     * Each wrapper reports a regex that gave up under the caller's limits
+     * with an InternalFailureException, its message naming the limit.
+     *
+     * @param \Closure(string): mixed $call
+     */
+    #[Test]
+    #[DataProvider('provideWrappers')]
+    public function test_each_wrapper_throws_when_its_regex_gives_up(\Closure $call): void
+    {
+        LibraryPcre::useIniSetter(static fn (): bool => false);
+        $subject = str_repeat('ab', 10).'c';
+
+        $caught = self::underLimits('19', '100000', static function () use ($call, $subject): ?InternalFailureException {
+            try {
+                $call($subject);
+            } catch (InternalFailureException $exception) {
+                return $exception;
+            }
+
+            return null;
+        });
+
+        $this->assertInstanceOf(InternalFailureException::class, $caught);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, LibraryPcre::lastError());
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $caught->pcreError);
+        $this->assertStringContainsString('pcre.backtrack_limit', $caught->getMessage());
+    }
+
+    /**
+     * @return iterable<string, array{call: \Closure(string): mixed}>
+     */
+    public static function provideWrappers(): iterable
+    {
+        yield 'match' => ['call' => static fn (string $subject): mixed => LibraryPcre::match(self::NO_JIT_PROBE, $subject)];
+        yield 'matchAll' => ['call' => static fn (string $subject): mixed => LibraryPcre::matchAll(self::NO_JIT_PROBE, $subject)];
+        yield 'replace' => ['call' => static fn (string $subject): mixed => LibraryPcre::replace(self::NO_JIT_PROBE, 'x', $subject)];
+        yield 'replaceCallback' => ['call' => static fn (string $subject): mixed => LibraryPcre::replaceCallback(self::NO_JIT_PROBE, static fn (): string => 'x', $subject)];
+        yield 'split' => ['call' => static fn (string $subject): mixed => LibraryPcre::split(self::NO_JIT_PROBE, $subject)];
+    }
+
+    /**
+     * A subject that is not UTF-8 for a "u" regex is an answer about the
+     * subject, not the library giving up: each wrapper gives PHP's failure
+     * value, the '//u' probe of a string's encoding included.
+     */
+    #[Test]
+    public function test_a_subject_that_is_not_utf8_keeps_phps_failure_value(): void
+    {
+        $this->assertSame(1, LibraryPcre::match('//u', 'é'));
+        $this->assertFalse(LibraryPcre::match('//u', "\xFF"));
+        $this->assertFalse(LibraryPcre::matchAll('/./u', "\xFF"));
+        $this->assertNull(LibraryPcre::replace('/./u', '', "\xFF"));
+        $this->assertNull(LibraryPcre::replaceCallback('/./u', static fn (): string => '', "\xFF"));
+        $this->assertFalse(LibraryPcre::split('//u', "a\xFF"));
+        $this->assertFalse(LibraryPcre::match('/./u', "\xC3\xA9", $matches, 0, 1), 'An offset inside a character.');
+        $this->assertSame(\PREG_BAD_UTF8_OFFSET_ERROR, LibraryPcre::lastError());
+    }
+
+    /**
+     * A regex the engine refuses to compile is a fault of the library, which
+     * built it: it surfaces as well, after PHP's warning.
+     */
+    #[Test]
+    public function test_a_regex_that_does_not_compile_throws(): void
+    {
+        $warnings = [];
+        set_error_handler(static function (int $level, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        });
+
+        try {
+            LibraryPcre::match('/(/', 'a');
+            $caught = null;
+        } catch (InternalFailureException $exception) {
+            $caught = $exception;
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertInstanceOf(InternalFailureException::class, $caught);
+        $this->assertSame(\PREG_INTERNAL_ERROR, $caught->pcreError);
+        $this->assertStringContainsString('PCRE error 1', $caught->getMessage());
+        $this->assertCount(1, $warnings);
     }
 
     #[Test]

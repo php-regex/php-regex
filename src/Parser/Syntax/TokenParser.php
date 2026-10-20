@@ -1246,7 +1246,7 @@ final class TokenParser
         // \g{N} or \gN (numeric, incl. relative) -> Backreference; \g'N',
         // like \g<N>, calls the group instead. Braces hold one sign at most,
         // then digits only: "\g{1-}" and "\g{--1}" are refused below.
-        if (LibraryPcre::match('/^\\\\g(?:\{[+-]?\d++\}|[0-9+-]++)$/', $value)) {
+        if (1 === LibraryPcre::match('/^\\\\g(?:\{[+-]?\d++\}|[0-9+-]++)$/', $value)) {
             return new BackrefNode($value, $startPosition, $endPosition);
         }
 
@@ -1260,7 +1260,7 @@ final class TokenParser
 
         // \g{name} is a back reference, like \k{name}; it is recorded that
         // way, and the compiler gives back the spelling the pattern used.
-        if (LibraryPcre::match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
+        if (1 === LibraryPcre::match('/^\\\\g\{([\p{L}\p{Nd}_]++)\}$/u', $value, $m)) {
             return new BackrefNode('\\k{'.$m[1].'}', $startPosition, $endPosition);
         }
 
@@ -1279,11 +1279,11 @@ final class TokenParser
 
         // \g<name> and \g'name' (non-numeric) call the group -> Subroutine;
         // a sign before a name is no name.
-        if (LibraryPcre::match('/^\\\\g<([+-]?\d++|[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
+        if (1 === LibraryPcre::match('/^\\\\g<([+-]?\d++|[\p{L}\p{Nd}_]++)>$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 
-        if (LibraryPcre::match('/^\\\\g\'([+-]?\d++|[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
+        if (1 === LibraryPcre::match('/^\\\\g\'([+-]?\d++|[\p{L}\p{Nd}_]++)\'$/u', $value, $m)) {
             return new SubroutineNode($m[1], 'g', $startPosition, $endPosition);
         }
 

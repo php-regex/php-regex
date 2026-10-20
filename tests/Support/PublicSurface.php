@@ -61,7 +61,7 @@ final class PublicSurface
             'Exception/ExceptionInterface', 'Exception/RegexException', 'Exception/LexerException',
             'Exception/ParserException', 'Exception/SyntaxErrorException', 'Exception/SemanticErrorException',
             'Exception/LimitException', 'Exception/RecursionLimitException', 'Exception/ResourceLimitException',
-            'Exception/InvalidRegexOptionException', 'Exception/CacheException', 'Exception/FormattingException', 'Exception/VisualContextInterface',
+            'Exception/InvalidRegexOptionException', 'Exception/CacheException', 'Exception/InternalFailureException', 'Exception/FormattingException', 'Exception/VisualContextInterface',
             'Node/*',
         ],
         'PHPStan' => ['RegexPatternRule', 'RegexPatternArgumentRule'],

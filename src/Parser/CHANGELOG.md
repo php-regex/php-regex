@@ -13,6 +13,10 @@ CHANGELOG
    read from the engine once per process. `PcreTarget::withLocale()` and
    `key()`, and `RegexParser::withTarget()`, a parser for another target
    with every other option.
+ * `Exception\InternalFailureException`: the library could not finish its own
+   work, one of its regexes giving up under PCRE limits PHP would not raise.
+   `parse()`, `parseTolerant()` and `validate()` throw it, where they
+   reported an error of the pattern.
  * `Attribute\RegexPattern`: marks a parameter that receives a regex pattern, for
    the tools that read it (`regex lint`).
  * `RegexParser::validate()` keeps the results of the last 1024 patterns an

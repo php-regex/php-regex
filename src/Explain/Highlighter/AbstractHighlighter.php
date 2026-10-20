@@ -15,6 +15,7 @@ namespace PHPRegex\Explain\Highlighter;
 
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -443,7 +444,9 @@ abstract class AbstractHighlighter extends AbstractNodeVisitor
     {
         // The three alternatives cover every byte, so the parts put back
         // together are the text.
-        if (false === LibraryPcre::matchAll('/[!&+|\-^]|[()]|[^!&+|\-^()]++/', $text, $parts)) {
+        try {
+            LibraryPcre::matchAll('/[!&+|\-^]|[()]|[^!&+|\-^()]++/', $text, $parts);
+        } catch (InternalFailureException) {
             return $this->escape($text);
         }
 

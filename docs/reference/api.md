@@ -884,6 +884,7 @@ Exception hierarchy (simplified):
 - `ExceptionInterface`
   - `InvalidRegexOptionException` (invalid configuration option)
   - `CacheException` (a cache directory or file that cannot be written)
+  - `InternalFailureException` (the library could not finish its own work: no verdict on the pattern)
   - `LintException` (a lint formatter or worker that failed)
   - `RegexException` (base exception with position and error code)
     - `LexerException` (tokenization failure)
@@ -903,6 +904,15 @@ every parse-time failure. `LimitException` sits beside it too: a limit of the
 library (`max_pattern_length`, `max_recursion_depth`) is no grammar error, the
 pattern was not read to its end, and `validate()` reports it with the `limit`
 category.
+
+`InternalFailureException` is no `RegexException`: the library could not
+finish its own work, which says nothing of the pattern, so `parse()`,
+`parseTolerant()` and `validate()` throw it rather than report an invalid
+pattern. Its usual cause is a host where PHP refuses to raise
+`pcre.backtrack_limit` or `pcre.recursion_limit` (a disabled `ini_set()`, a
+`php_admin_value`) while they stand below PHP's defaults: one of the regexes
+the library reads patterns with then gives up. `$pcreError` holds the
+`preg_last_error()` code. Raise the limits, or allow `ini_set()`.
 
 `VisualContextInterface` marks the exceptions that carry the failing pattern
 with a caret under the offending character: `getVisualSnippet(): string` on

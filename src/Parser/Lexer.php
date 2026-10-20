@@ -15,6 +15,7 @@ namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Syntax\BadEscape;
 use PHPRegex\Parser\Syntax\CodePointReader;
@@ -225,7 +226,6 @@ final class Lexer
     private const PATTERN_UNICODE_PROP_BRACE_START = 1; // After {
     private const PATTERN_UNICODE_PROP_BRACE_END = -1; // Before }
     private const PATTERN_UNICODE_PROP_NEGATION_START = 1; // After ^
-    private const ERROR_CONTEXT_LENGTH = 10;
 
     /**
      * Modifier letters accepted inside "(?...)": what the parser takes, plus
@@ -603,7 +603,7 @@ final class Lexer
         // way PCRE compiles them outside UTF mode. In UTF mode, set by /u or
         // by "(*UTF)" among the settings that open the pattern, PCRE itself
         // refuses them, at the first byte that starts no UTF-8 character.
-        $this->byteMode = !LibraryPcre::match('//u', $pattern);
+        $this->byteMode = 1 !== LibraryPcre::match('//u', $pattern);
         $this->utf = str_contains($flags, 'u')
             || StartOptions::turnUtfOn($pattern);
         if ($this->byteMode && $this->utf) {
@@ -1183,17 +1183,7 @@ final class Lexer
                 continue;
             }
 
-            $result = LibraryPcre::match($this->getRegexBodyItem($extended), $this->pattern, $read, 0, $at);
-            if (false === $result) {
-                throw LexerException::withContext(
-                    \sprintf('PCRE Error during tokenization: %s', (string) preg_last_error_msg()),
-                    ErrorCode::InternalPcreFailure,
-                    $at,
-                    $this->pattern,
-                );
-            }
-
-            if (1 === $result) {
+            if (1 === LibraryPcre::match($this->getRegexBodyItem($extended), $this->pattern, $read, 0, $at)) {
                 $at += \strlen($read[0]);
 
                 continue;
@@ -1583,41 +1573,24 @@ final class Lexer
      */
     private function matchAtPosition(string $regex): array
     {
-        $result = LibraryPcre::match($regex, $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position);
-
-        if (false === $result) {
-            throw LexerException::withContext(
-                \sprintf('PCRE Error during tokenization: %s', (string) preg_last_error_msg()),
-                ErrorCode::InternalPcreFailure,
-                $this->position,
-                $this->pattern,
-            );
-        }
-
-        if (0 === $result) {
-            $context = substr($this->pattern, $this->position, self::ERROR_CONTEXT_LENGTH);
-
+        if (1 !== LibraryPcre::match($regex, $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
             // Every character starts a token but a backslash with nothing
             // after it, which PCRE reports where the pattern ends.
-            $trailing = '\\' === $context;
-            $position = $trailing ? $this->length : $this->position;
+            if ('\\' !== substr($this->pattern, $this->position)) {
+                throw InternalFailureException::unexpectedState(\sprintf('No token of the lexer starts at offset %d of the pattern.', $this->position));
+            }
 
             throw LexerException::withContext(
-                \sprintf('Unable to tokenize pattern at position %d. Context: "%s..."', $position, $context),
-                $trailing ? ErrorCode::EscapeTrailingBackslash : ErrorCode::InternalUnexpectedState,
-                $position,
+                \sprintf('Unable to tokenize pattern at position %d. Context: "\\..."', $this->length),
+                ErrorCode::EscapeTrailingBackslash,
+                $this->length,
                 $this->pattern,
             );
         }
 
         // Unreachable: a successful match always holds its whole-match string.
         if (!isset($matches[0]) || !\is_string($matches[0])) {
-            throw LexerException::withContext(
-                'Lexer internal error: Missing matched token.',
-                ErrorCode::InternalUnexpectedState,
-                $this->position,
-                $this->pattern,
-            );
+            throw InternalFailureException::unexpectedState('A token the lexer matched holds no text.');
         }
 
         $matchedValue = (string) $matches[0];
@@ -1687,12 +1660,7 @@ final class Lexer
             return new Token($type, $value, $startPos, \strlen($matchedValue));
         }
 
-        throw LexerException::withContext(
-            \sprintf('Lexer internal error: No known token matched at position %d.', $startPos),
-            ErrorCode::InternalUnexpectedState,
-            $startPos,
-            $this->pattern,
-        );
+        throw InternalFailureException::unexpectedState(\sprintf('A token the lexer matched at offset %d has no known type.', $startPos));
     }
 
     /**
@@ -1877,7 +1845,7 @@ final class Lexer
     private function readInlineFlags(int $at): ?array
     {
         $matches = [];
-        if (!LibraryPcre::match('/\G(\^?[a-zA-Z]*(?:-[a-zA-Z]+)?)([:)])/A', $this->pattern, $matches, 0, $at)) {
+        if (1 !== LibraryPcre::match('/\G(\^?[a-zA-Z]*(?:-[a-zA-Z]+)?)([:)])/A', $this->pattern, $matches, 0, $at)) {
             return null;
         }
 
@@ -2060,16 +2028,11 @@ final class Lexer
         if (null === $run || $this->position < $run[0] || $this->position > $run[1]) {
             // "\z", not "$": "$" stops before a final newline, which the
             // quoted run holds, and would drop it.
-            if (!LibraryPcre::match($this->anchored('(.*?)((\\\\E|\z))', 's'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
-                // Nothing here can fail to match, so a failure means PCRE
-                // itself gave up. Leaving quote mode and skipping to the end
+            if (1 !== LibraryPcre::match($this->anchored('(.*?)((\\\\E|\z))', 's'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
+                // Nothing here can fail to match, and PCRE giving up throws
+                // on its own. Leaving quote mode and skipping to the end
                 // would drop the rest of the pattern without a word.
-                throw LexerException::withContext(
-                    \sprintf('PCRE Error while reading a quoted run: %s', (string) preg_last_error_msg()),
-                    ErrorCode::InternalPcreFailure,
-                    $this->position,
-                    $this->pattern,
-                );
+                throw InternalFailureException::unexpectedState('The regex reading a quoted run did not match.');
             }
 
             // Both groups always take part in the match; the null the
@@ -2106,13 +2069,9 @@ final class Lexer
 
     private function consumeCommentMode(): ?Token
     {
-        if (!LibraryPcre::match($this->anchored('([^)]*)(\)|$)'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
-            throw LexerException::withContext(
-                \sprintf('PCRE Error while reading a comment: %s', (string) preg_last_error_msg()),
-                ErrorCode::InternalPcreFailure,
-                $this->position,
-                $this->pattern,
-            );
+        // Nothing here can fail to match, and PCRE giving up throws on its own.
+        if (1 !== LibraryPcre::match($this->anchored('([^)]*)(\)|$)'), $this->pattern, $matches, \PREG_UNMATCHED_AS_NULL, $this->position)) {
+            throw InternalFailureException::unexpectedState('The regex reading a comment did not match.');
         }
 
         $commentText = (string) $matches[1];

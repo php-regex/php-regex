@@ -1119,7 +1119,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         if (
             !$node->isStringIdentifier
             && \is_string($node->identifier)
-            && LibraryPcre::match('/^[A-Z_a-z]\w*+$/', $node->identifier)
+            && 1 === LibraryPcre::match('/^[A-Z_a-z]\w*+$/', $node->identifier)
         ) {
             return '(?C'.$node->identifier.')';
         }

@@ -17,6 +17,7 @@ use PHPRegex\Explain\AsciiTreeRenderer;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
@@ -499,8 +500,9 @@ final class AlphaAssertionBodyTest extends TestCase
     /**
      * The library's own regexes run under at least PHP's default limits;
      * when that raise is refused they run under the caller's. A body item
-     * the engine then gives up on is reported where it stands, as an
-     * internal PCRE failure, never read as a body that does not close.
+     * the engine then gives up on is a failure of the library, which
+     * surfaces as one, never read as a body that does not close nor as an
+     * error of the pattern.
      *
      * Without the JIT, a callout string of 200 letters exhausts a
      * backtrack limit of 10 while the opener "(*pla:" passes it: the regexes
@@ -523,7 +525,7 @@ final class AlphaAssertionBodyTest extends TestCase
 
             try {
                 (new Lexer())->tokenize($pattern);
-            } catch (LexerException $exception) {
+            } catch (InternalFailureException $exception) {
                 $caught = $exception;
             }
         } finally {
@@ -531,10 +533,10 @@ final class AlphaAssertionBodyTest extends TestCase
             LibraryPcre::useIniSetter(null);
         }
 
-        $this->assertInstanceOf(LexerException::class, $caught);
-        $this->assertSame(ErrorCode::InternalPcreFailure, $caught->errorCode);
-        $this->assertSame(6, $caught->position);
-        $this->assertStringContainsString('Backtrack limit exhausted', $caught->getMessage());
+        $this->assertInstanceOf(InternalFailureException::class, $caught);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, LibraryPcre::lastError());
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $caught->pcreError);
+        $this->assertStringContainsString('backtrack limit', $caught->getMessage());
 
         $tokens = (new Lexer())->tokenize($pattern)->getTokens();
         $this->assertSame([TokenType::PcreVerb, TokenType::Eof], array_map(static fn ($token): TokenType => $token->type, $tokens));

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lexer;
 
-use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
@@ -41,7 +41,8 @@ final class LexerEdgeCasesTest extends TestCase
 
         $method = $ref->getMethod('matchAtPosition');
 
-        $this->expectException(LexerException::class);
+        // A regex of the lexer PCRE refuses is the library's fault.
+        $this->expectException(InternalFailureException::class);
         set_error_handler(static fn (int $errno): bool => \E_WARNING === $errno);
 
         try {
@@ -49,6 +50,24 @@ final class LexerEdgeCasesTest extends TestCase
         } finally {
             restore_error_handler();
         }
+    }
+
+    /**
+     * Every character starts a token but a backslash that ends the pattern:
+     * a token regex that matches nothing elsewhere is the library's fault.
+     */
+    public function test_match_at_position_matching_nothing_is_an_internal_failure(): void
+    {
+        $lexer = new Lexer();
+        $ref = new \ReflectionClass($lexer);
+        $ref->getProperty('pattern')->setValue($lexer, 'a\\');
+        $ref->getProperty('length')->setValue($lexer, 2);
+        $ref->getProperty('position')->setValue($lexer, 0);
+
+        $this->expectException(InternalFailureException::class);
+        $this->expectExceptionMessageIsOrContains('No token of the lexer starts at offset 0 of the pattern.');
+
+        $ref->getMethod('matchAtPosition')->invoke($lexer, '/b/A');
     }
 
     public function test_create_token_without_matching_map_throws(): void
@@ -61,7 +80,8 @@ final class LexerEdgeCasesTest extends TestCase
 
         $method = $ref->getMethod('createToken');
 
-        $this->expectException(LexerException::class);
+        $this->expectException(InternalFailureException::class);
+        $this->expectExceptionMessageIsOrContains('has no known type');
         $method->invoke($lexer, ['T_UNKNOWN'], [], 'a', 0, []);
     }
 
@@ -137,15 +157,15 @@ final class LexerEdgeCasesTest extends TestCase
         // Reading a malformed byte as UTF-8 is what tokenize() avoids by
         // choosing byte mode; forced into it, the lexer must say so rather
         // than skip to the end of the pattern and lose everything after the
-        // quoted run.
+        // quoted run. It is the library's fault, not the pattern's.
         $invalid = "\xC3";
         $accessor->setPattern($invalid);
         $accessor->setLength(\strlen($invalid));
         $accessor->setPosition(0);
         $accessor->setInQuoteMode(true);
 
-        $this->expectException(LexerException::class);
-        $this->expectExceptionMessageIsOrContains('PCRE Error while reading a quoted run');
+        $this->expectException(InternalFailureException::class);
+        $this->expectExceptionMessageIsOrContains('The regex reading a quoted run did not match.');
 
         $accessor->callPrivateMethod('consumeQuoteMode');
     }
@@ -204,8 +224,8 @@ final class LexerEdgeCasesTest extends TestCase
         $accessor->setPosition(0);
         $accessor->setInCommentMode(true);
 
-        $this->expectException(LexerException::class);
-        $this->expectExceptionMessageIsOrContains('PCRE Error while reading a comment');
+        $this->expectException(InternalFailureException::class);
+        $this->expectExceptionMessageIsOrContains('The regex reading a comment did not match.');
 
         $accessor->callPrivateMethod('consumeCommentMode');
     }

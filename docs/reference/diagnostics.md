@@ -591,7 +591,7 @@ Each value reads `regex.<area>.<problem>`. The one value without a problem segme
 | `regex.group_list.item_expected` | `GroupListItemExpected` | A list of groups, as "(*scs:(1,<n>)" or "(?1(2))" holds, has an item that is no group number or name. |
 | `regex.group_list.missing_group` | `GroupListMissingGroup` | A list of groups, as "(*scs:(1,<n>)" or "(?1(2))" holds, names a group the pattern does not have. |
 | `regex.group_list.relative_zero` | `GroupListRelativeZero` | A list of groups, as "(*scs:(1,<n>)" or "(?1(2))" holds, has the relative number zero. |
-| `regex.internal.pcre_failure` | `InternalPcreFailure` | PCRE failed while the library was reading the pattern. |
+| `regex.internal.pcre_failure` | `InternalPcreFailure` | Not reported for a pattern: a regex of the library that gives up throws InternalFailureException, no verdict on the pattern. |
 | `regex.internal.unexpected_state` | `InternalUnexpectedState` | The library reached a state it does not expect, which is a bug to report. |
 | `regex.keep.in_lookaround` | `KeepInLookaround` | "\K" is used inside a lookaround, which the targeted PHP refuses. |
 | `regex.lookbehind.too_complex` | `LookbehindTooComplex` | PCRE gave up measuring the lookbehinds: past 2,001 branches measured for all of them, a group counted again at each call after a branch reset. |

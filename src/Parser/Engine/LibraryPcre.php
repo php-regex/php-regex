@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Engine;
 
+use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -31,6 +32,14 @@ use PHPRegex\Parser\Text\Ascii;
  * Only regexes the library owns go through here: a user's pattern keeps
  * the caller's limits, also when the library meets it inside a window
  * (leaveTheWindow()).
+ *
+ * A regex that gives no answer, one that exhausts a limit PHP would not
+ * raise or one that does not compile, throws an InternalFailureException:
+ * a false read as "no match" would turn the library's failure into a
+ * verdict on the pattern it reads. A subject, or an offset, that is not
+ * UTF-8 for a "u" regex is an answer about the subject, which the '//u'
+ * probe of a string's encoding relies on: there each wrapper gives PHP's
+ * own failure value, false or null.
  *
  * @internal
  */
@@ -196,22 +205,27 @@ final class LibraryPcre
      *     )
      * ) $matches
      *
-     * @return 0|1|false
+     * @throws InternalFailureException when the regex gives no answer
+     *
+     * @return 0|1|false false only for a subject or an offset that is not
+     *                   UTF-8 for a "u" regex
      */
     public static function match(string $pattern, string $subject, mixed &$matches = null, int $flags = 0, int $offset = 0): int|false
     {
         if (self::atFloor()) {
             $result = preg_match($pattern, $subject, $matches, $flags, $offset);
             self::$lastError = preg_last_error();
+        } else {
+            [$result, $matches] = self::run(static function () use ($pattern, $subject, $flags, $offset): array {
+                $result = preg_match($pattern, $subject, $found, $flags, $offset);
 
-            return $result;
+                return [$result, $found];
+            });
         }
 
-        [$result, $matches] = self::run(static function () use ($pattern, $subject, $flags, $offset): array {
-            $result = preg_match($pattern, $subject, $found, $flags, $offset);
-
-            return [$result, $found];
-        });
+        if (false === $result) {
+            self::failUnlessNotUtf8();
+        }
 
         return $result;
     }
@@ -240,22 +254,27 @@ final class LibraryPcre
      *     )
      * ) $matches
      *
-     * @return 0|positive-int|false
+     * @throws InternalFailureException when the regex gives no answer
+     *
+     * @return 0|positive-int|false false only for a subject or an offset
+     *                              that is not UTF-8 for a "u" regex
      */
     public static function matchAll(string $pattern, string $subject, mixed &$matches = null, int $flags = 0, int $offset = 0): int|false
     {
         if (self::atFloor()) {
             $result = preg_match_all($pattern, $subject, $matches, $flags, $offset);
             self::$lastError = preg_last_error();
+        } else {
+            [$result, $matches] = self::run(static function () use ($pattern, $subject, $flags, $offset): array {
+                $result = preg_match_all($pattern, $subject, $found, $flags, $offset);
 
-            return $result;
+                return [$result, $found];
+            });
         }
 
-        [$result, $matches] = self::run(static function () use ($pattern, $subject, $flags, $offset): array {
-            $result = preg_match_all($pattern, $subject, $found, $flags, $offset);
-
-            return [$result, $found];
-        });
+        if (false === $result) {
+            self::failUnlessNotUtf8();
+        }
 
         return $result;
     }
@@ -267,22 +286,27 @@ final class LibraryPcre
      *
      * @param-out 0|positive-int $count
      *
-     * @return ($subject is array ? array<string>|null : string|null)
+     * @throws InternalFailureException when the regex gives no answer
+     *
+     * @return ($subject is array ? array<string>|null : string|null) null only
+     *                                                                for a subject that is not UTF-8 for a "u" regex
      */
     public static function replace(string|array $pattern, string|array $replacement, string|array $subject, int $limit = -1, mixed &$count = null): string|array|null
     {
         if (self::atFloor()) {
             $result = preg_replace($pattern, $replacement, $subject, $limit, $count);
             self::$lastError = preg_last_error();
+        } else {
+            [$result, $count] = self::run(static function () use ($pattern, $replacement, $subject, $limit): array {
+                $result = preg_replace($pattern, $replacement, $subject, $limit, $found);
 
-            return $result;
+                return [$result, $found];
+            });
         }
 
-        [$result, $count] = self::run(static function () use ($pattern, $replacement, $subject, $limit): array {
-            $result = preg_replace($pattern, $replacement, $subject, $limit, $found);
-
-            return [$result, $found];
-        });
+        if (null === $result) {
+            self::failUnlessNotUtf8();
+        }
 
         return $result;
     }
@@ -298,22 +322,27 @@ final class LibraryPcre
      *
      * @param-out 0|positive-int $count
      *
-     * @return ($subject is array ? array<string>|null : string|null)
+     * @throws InternalFailureException when the regex gives no answer
+     *
+     * @return ($subject is array ? array<string>|null : string|null) null only
+     *                                                                for a subject that is not UTF-8 for a "u" regex
      */
     public static function replaceCallback(string|array $pattern, callable $callback, string|array $subject, int $limit = -1, mixed &$count = null, int $flags = 0): string|array|null
     {
         if (self::atFloor()) {
             $result = preg_replace_callback($pattern, $callback, $subject, $limit, $count, $flags);
             self::$lastError = preg_last_error();
+        } else {
+            [$result, $count] = self::run(static function () use ($pattern, $callback, $subject, $limit, $flags): array {
+                $result = preg_replace_callback($pattern, $callback, $subject, $limit, $found, $flags);
 
-            return $result;
+                return [$result, $found];
+            });
         }
 
-        [$result, $count] = self::run(static function () use ($pattern, $callback, $subject, $limit, $flags): array {
-            $result = preg_replace_callback($pattern, $callback, $subject, $limit, $found, $flags);
-
-            return [$result, $found];
-        });
+        if (null === $result) {
+            self::failUnlessNotUtf8();
+        }
 
         return $result;
     }
@@ -321,18 +350,41 @@ final class LibraryPcre
     /**
      * @param int-mask<\PREG_SPLIT_NO_EMPTY, \PREG_SPLIT_DELIM_CAPTURE, \PREG_SPLIT_OFFSET_CAPTURE> $flags
      *
-     * @return ($flags is 0|1|2|3 ? list<string>|false : list<array{string, int<0, max>}>|false)
+     * @throws InternalFailureException when the regex gives no answer
+     *
+     * @return ($flags is 0|1|2|3 ? list<string>|false : list<array{string, int<0, max>}>|false) false
+     *                                                                                           only for a subject that is not UTF-8 for a "u" regex
      */
     public static function split(string $pattern, string $subject, int $limit = -1, int $flags = 0): array|false
     {
         if (self::atFloor()) {
             $result = preg_split($pattern, $subject, $limit, $flags);
             self::$lastError = preg_last_error();
-
-            return $result;
+        } else {
+            $result = self::run(static fn (): array|false => preg_split($pattern, $subject, $limit, $flags));
         }
 
-        return self::run(static fn (): array|false => preg_split($pattern, $subject, $limit, $flags));
+        if (false === $result) {
+            self::failUnlessNotUtf8();
+        }
+
+        return $result;
+    }
+
+    /**
+     * Lets a wrapper give PHP's failure value when it says the subject, or
+     * the offset, is not UTF-8 for a "u" regex; any other failure is the
+     * regex giving no answer.
+     *
+     * @throws InternalFailureException
+     */
+    private static function failUnlessNotUtf8(): void
+    {
+        if (\PREG_BAD_UTF8_ERROR === self::$lastError || \PREG_BAD_UTF8_OFFSET_ERROR === self::$lastError) {
+            return;
+        }
+
+        throw InternalFailureException::pcreGaveUp(self::$lastError);
     }
 
     /**
