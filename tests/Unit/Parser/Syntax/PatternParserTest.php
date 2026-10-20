@@ -134,6 +134,9 @@ final class PatternParserTest extends TestCase
         $this->assertSame('a', $pattern);
         $this->assertSame('e', $flags);
         $this->assertSame('/', $delimiter);
+
+        // "e" joins the other modifiers, it does not replace them.
+        $this->assertSame(['a', 'ie', '/'], PatternParser::extractPatternAndFlags('/a/ie', PcreTarget::bundledWith(50600)));
     }
 
     public function test_supports_modifier_r_runtime_detection(): void
