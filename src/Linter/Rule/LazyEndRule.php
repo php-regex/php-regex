@@ -29,7 +29,7 @@ use PHPRegex\Parser\Node\QuantifierType;
  */
 final class LazyEndRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.quantifier.lazyEnd';
+    public const ID = 'regex.lint.quantifier.lazyEnd';
 
     public function getRuleIds(): array
     {

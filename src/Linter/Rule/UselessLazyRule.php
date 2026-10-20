@@ -36,7 +36,7 @@ use PHPRegex\Parser\Syntax\StartOptions;
  */
 final class UselessLazyRule extends AbstractLintRule
 {
-    private const ID = 'regex.lint.quantifier.uselessLazy';
+    public const ID = 'regex.lint.quantifier.uselessLazy';
 
     private readonly QuestionBudget $questions;
 

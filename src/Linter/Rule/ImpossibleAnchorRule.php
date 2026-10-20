@@ -42,6 +42,12 @@ use PHPRegex\Parser\Syntax\StartOptions;
  */
 final class ImpossibleAnchorRule extends AbstractLintRule
 {
+    public const ID_START = 'regex.lint.anchor.impossible.start';
+
+    public const ID_END = 'regex.lint.anchor.impossible.end';
+
+    public const ID_BOUNDARY = 'regex.lint.anchor.impossible.boundary';
+
     /**
      * The ASCII word characters, which are word characters in every mode.
      */
@@ -83,7 +89,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
     public function getRuleIds(): array
     {
-        return ['regex.lint.anchor.impossible.start', 'regex.lint.anchor.impossible.end', 'regex.lint.anchor.impossible.boundary'];
+        return [self::ID_START, self::ID_END, self::ID_BOUNDARY];
     }
 
     public function getNodeTypes(): array
@@ -129,7 +135,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
                 if (!$skipForMultiline && $i > 0 && !$prefixCanBeEmpty) {
                     $issues[] = new RuleViolation(
-                        'regex.lint.anchor.impossible.start',
+                        self::ID_START,
                         \sprintf(
                             "Start anchor '%s' appears after consuming characters, making it impossible to match.",
                             NodePredicates::anchorDisplay($child),
@@ -146,7 +152,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                     && !$this->tailCanContinueEndOfLine($child, null === $before || $before->isEmpty() ? null : $before, \array_slice($children, $i + 1), $flags, $node, $context)
                 ) {
                     $issues[] = new RuleViolation(
-                        'regex.lint.anchor.impossible.end',
+                        self::ID_END,
                         \sprintf(
                             "End anchor '%s' appears before consuming characters, making it impossible to match.",
                             NodePredicates::anchorDisplay($child),
@@ -203,7 +209,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         }
 
         return new RuleViolation(
-            'regex.lint.anchor.impossible.boundary',
+            self::ID_BOUNDARY,
             'b' === $boundary->value
                 ? \sprintf("Word boundary '\\b' sits between two %s characters, so it can never match.", $kindBefore ? 'word' : 'non-word')
                 : "Non-boundary '\\B' sits between a word and a non-word character, so it can never match.",

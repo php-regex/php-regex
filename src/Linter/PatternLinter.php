@@ -20,6 +20,7 @@ use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\LintRuleInterface;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\PatternInfo;
+use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Parser\AbstractNodeVisitor;
@@ -395,12 +396,7 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     public static function enables(array $enabledRules, string $ruleId): bool
     {
-        // Remove the 'regex.lint.' prefix if present for lookup
-        $shortId = str_starts_with($ruleId, 'regex.lint.')
-            ? substr($ruleId, \strlen('regex.lint.'))
-            : $ruleId;
-
-        // Explicit config takes precedence
+        $shortId = RuleId::short($ruleId);
         if (\array_key_exists($shortId, $enabledRules)) {
             return $enabledRules[$shortId];
         }
