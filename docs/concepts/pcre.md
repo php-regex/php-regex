@@ -250,22 +250,34 @@ read nor its verdict (see [PCRE settings](#pcre-settings)).
 
 Where the library still departs from what the target's PCRE2 reports:
 
-- **Where a pattern too large is reported, from PCRE2 10.48.** PCRE2 reports
-  "regular expression is too large" at offset 0 when an item or a branch
-  passes the limit, and at the end of the pattern when only the check made
-  where a group ends finds it. The library measures each item at the length
-  PCRE2 compiles it to. A few lengths it does not know for sure: a class in
-  UTF mode that holds a character past 255, or past ASCII under `i`, or a
-  type or a POSIX class under UCP; a class whose cases follow the locale
-  PHP builds its tables from: `[iI]`, which Turkish tables keep apart, and
-  without UTF a class of bytes past ASCII such as `[\xe9\xc9]`; a caseless
-  letter under
-  `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or `r`; a string callout;
-  `(*scan_substring:...)`. When a group of several branches holding
-  one of these is measured before the limit is passed, it may be the group
-  PCRE2 found too large where it ends, so the library reports the end of the
-  pattern, as up to 10.46: `/(?:[\x{100}-\x{200}]|a){5000}/u` is at offset
-  29 where PCRE2 10.48 and 10.49 say 0.
+- **Patterns too large to compile.** PCRE2 refuses a pattern whose compiled
+  form passes 64 KiB, "regular expression is too large", as its first pass
+  counts it: the library counts each item as the first pass of the targeted
+  release does, from 10.32 to 10.49. A few lengths it does not know for
+  sure: a caseless class that holds a character past 255, or past ASCII
+  without UTF, whose other cases come from the Unicode tables of each
+  release (Latin-1 is known); a class of two characters past 255 that may be
+  one and its other case, such as `[āĀ]` under `u`; a class whose cases
+  follow the locale PHP builds its tables from: `[iI]`, which Turkish tables
+  keep apart, without UTF a class of bytes past ASCII such as `[\xe9\xc9]`,
+  and from PCRE2 10.45 a class of types or caseless letters that holds all
+  of ASCII without UTF, which may then hold every byte; from 10.45, a class
+  that holds every character past 255 and a property, whose characters below
+  256 may complete its map, as `[[:^ascii:][:^blank:][:space:]]` under `u`;
+  a caseless letter under `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or
+  `r`; `(*scan_substring:...)` and an extended class `(?[...])`; a class of
+  more than 256 members; up to PCRE2 10.34, a lookbehind after a DEFINE
+  group that opens on a group inside a lookbehind, and on 10.34 one after
+  the second DEFINE group of a pattern that opens on a group, which these
+  releases may leave without the length to move back. Such an item is
+  counted at the least it may compile to, so a pattern PCRE2 refuses for it
+  may be reported valid, never the reverse: `/(?:[à-ÿ]x){1400}/iu` holds
+  Latin-1 only and is refused, but `/(?:[à-ž]x){1300}/iu` is reported valid
+  where PCRE2 refuses it. From 10.48, PCRE2 reports the error at offset 0
+  when an item or a branch passes the limit, and at the end of the pattern
+  when only the check made where a group ends finds it; when a group of
+  several branches holding one of these items is measured before the limit
+  is passed, the library reports the end of the pattern, as up to 10.46.
 - **A DEFINE group in a lookbehind, or one that opens with a group, on
   PCRE2 10.32 to 10.34** (PHP 7.3 and 7.4). These releases step over one item too many of their
   internal form of the pattern after `(?(DEFINE)`, both when they measure a
@@ -307,12 +319,14 @@ and a target has it from the release it arrived in on
 | `NonAsciiGroupNames` | 10.33 | Under UTF a group name may hold letters and decimal digits of any script, as "(?<nämed>a)". |
 | `BadEscapeInClassStaysRefused` | 10.33 | Under PCRE2_EXTRA_BAD_ESCAPE_IS_LITERAL, as PHP 7.3 and 7.4 compile, an escape a class refuses once it has read it, as "[\B]", "[\N]" or the "\d" of "[a-\d]", stays refused, where it was read as its letter. |
 | `NamesReadWhole` | 10.33 | A name is read whole before it is judged: a verb name holds letters, digits and underscores, not letters only, and a name too long is refused where it ends, not at the character past the limit. |
+| `AnyPropertyMatchesAnyCharacter` | 10.33 | "\p{Any}" compiles to a match of any character, one unit, where it was a property of three. |
 | `QuantifiedAccept` | 10.34 | "(*ACCEPT)" may be repeated, as "(*ACCEPT)??". |
 | `PossessiveRepeatOnceIsAtomic` | 10.34 | A possessive "{1}+" on a group or a subroutine call makes it atomic, where it was ignored as "{1}" is. |
 | `NonAtomicAssertionNames` | 10.34 | The non-atomic lookarounds: "(*napla:", "(*naplb:" and their long forms. |
 | `LookbehindInLookaheadMeasured` | 10.34 | A lookbehind inside a lookahead met while a lookbehind is measured is measured too, where the lookahead was skipped whole. |
 | `LookbehindLengthOverflowRefused` | 10.34 | A lookbehind branch whose length passes what a 32-bit integer holds is too long, where its length wrapped around. |
 | `LongestLookbehindCountsItsBranchesOnly` | 10.34 | The longest lookbehind reported is the longest branch of a lookbehind, where it was the longest branch measured for one, of a group or a called group too. |
+| `CasePairClassIsACaselessCharacter` | 10.34 | A class of a character and its other case, as "[aA]", compiles to that character matched caselessly, where it was a class. |
 | `NonAtomicAssertionShortSyntax` | 10.35 | "(?*" and "(?<*" spell the non-atomic lookarounds. |
 | `GroupHoldingItsOwnReferenceBacktracks` | 10.35 | A group that holds a reference to itself may be backtracked into, where it was atomic. |
 | `RepeatedAssertionKeepsItsCount` | 10.35 | A repeated assertion runs as many times as its count asks, where it ran once. |
@@ -343,6 +357,8 @@ and a target has it from the release it arrived in on
 | `EmptyQuoteOpeningClassIsUnclosed` | 10.45 | "[\E" or "[\Q\E" at the end of the pattern is a class left open, not a trailing backslash. |
 | `ClassEscapeEndingRangeRefusedAsEscape` | 10.45 | An escape a class refuses, as "\N" or "\z", ending a range is refused as that escape, not as an invalid range. |
 | `NamedCharacterBraceRefusedInClass` | 10.45 | "\N{" in a class is refused as a character name whatever follows the brace, where a count after "\N" was read as one. |
+| `ClassesCompiledFromMergedRanges` | 10.45 | A class compiles from its ranges sorted and merged: the other cases a caseless class adds past the map are added once, "[\p{Any}]" or a class of every byte compiles to a match of any character and "\P{Any}" to a class of none, where each member added its own. |
+| `CaselessReferenceHoldsItsCaseRules` | 10.45 | A caseless back reference compiles to one unit more, which holds its case rules. |
 | `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
 | `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
 | `GroupListErrors` | 10.47 | A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere. |
@@ -358,6 +374,7 @@ and a target has it from the release it arrived in on
 | `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
 | `ExtendedClassBesideLookbehindCompiles` | 10.48 | A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed. |
 | `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. |
+| `PossessiveReferenceRepeatedInPlace` | 10.48 | A possessive count on a back reference compiles to a possessive repeat, where it wrapped the reference in an atomic group. |
 
 ## A known JIT crash
 

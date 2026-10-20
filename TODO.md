@@ -145,22 +145,20 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Compiled size verdicts
+## Errors met after a pattern passes the size limit
 
-Each checked with pcre2test 10.32 to 10.49.
+Each checked with pcre2test 10.32 to 10.49 and PHP 8.4.
 
-- The verdict "regular expression is too large" still rests on the size
-  floors, on every release: a pattern whose floor stays under 64 KiB is
-  valid for the library, though PCRE2 compiles it larger and refuses it.
-  `(?:a{2,}){7000}`, `(?:\d{2}|\w){5000}` and `(?:é|b){5000}/u` are too large
-  on 10.32 to 10.49, the library says valid; in a generated sweep of near
-  limit patterns, most of those PCRE2 refuses. The lengths PCRE2 10.48
-  compiles to are known item by item now; older releases would need theirs
-  checked one by one before the verdict can use them, and the cost on long
-  patterns measured.
-- `\p{Any}` compiles to one unit from 10.33 (three on 10.32), and `[\p{Any}]`
-  from 10.45, where the floor counts three: `(?:\p{Any}){9000}` compiles on
-  10.33 to 10.49, the library says too large.
+- PCRE2 checks the size limit item by item as its first pass reads the
+  pattern, and resolves a reference to a name, a call to a name, a
+  condition on a name, and a numbered reference that may be read as one,
+  as that pass meets it: one written after the item that passes the limit
+  is never reached. `(c)(?:[^a]){8634}|\k<n>` is "regular expression is
+  too large" (at the end up to 10.46, at offset 0 from 10.47), where the
+  library says `regex.backref.missing_named_group` at 21; the same for
+  `(?(<n>)a|b)`, `(?&n)` and `\5` in its place, and for
+  `(?:[^a]){8634}|\1` under `n`. Written before that item, the reference
+  is refused first, as the library says.
 
 ## The articles section: what is left
 

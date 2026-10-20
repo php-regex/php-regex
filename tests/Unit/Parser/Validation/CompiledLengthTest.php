@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Validation\CompiledLength;
@@ -37,10 +38,39 @@ final class CompiledLengthTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideLengthsOnEachRelease')]
+    public function test_the_length_is_the_one_each_release_compiles(string $pattern, string $release, int $length): void
+    {
+        $this->assertSame($length, self::lengthOf($pattern, $release), \sprintf('%s on PCRE2 %s', $pattern, $release));
+    }
+
+    #[Test]
     #[DataProvider('provideLengthsNotKnown')]
     public function test_a_length_not_known_for_sure_is_left_out(string $pattern): void
     {
         $this->assertNull(self::lengthOf($pattern), $pattern);
+    }
+
+    #[Test]
+    #[DataProvider('provideLengthsNotKnownOnARelease')]
+    public function test_a_length_not_known_on_a_release_is_left_out(string $pattern, string $release): void
+    {
+        $this->assertNull(self::lengthOf($pattern, $release), \sprintf('%s on PCRE2 %s', $pattern, $release));
+    }
+
+    /**
+     * Up to 10.34 a DEFINE group inside a lookbehind is read by another
+     * measure, and on 10.34 a second DEFINE group that opens on a group
+     * moves where the measure of lookbehinds stops: the lookbehinds after
+     * them are not known for sure.
+     *
+     * @return iterable<string, array{pattern: string, release: string}>
+     */
+    public static function provideLengthsNotKnownOnARelease(): iterable
+    {
+        yield 'lookbehind after a DEFINE group inside a lookbehind, 10.33' => ['pattern' => '/(?<=(?(DEFINE)(a))b)c(?<=d)/', 'release' => '10.33'];
+        yield 'lookbehind after a DEFINE group inside a lookbehind, 10.34' => ['pattern' => '/(?<=(?(DEFINE)(a))b)c(?<=d)/', 'release' => '10.34'];
+        yield 'lookbehind after two DEFINE groups that open on a group, 10.34' => ['pattern' => '/(c)(?(DEFINE)(?<=x)b)(?(DEFINE)(?<!y)c)(?<=a)/', 'release' => '10.34'];
     }
 
     #[Test]
@@ -288,6 +318,217 @@ final class CompiledLengthTest extends TestCase
         yield 'starred conditional' => ['pattern' => '/(a)(?(1)b|c)*/', 'length' => 34];
         yield 'possessive star on a conditional' => ['pattern' => '/(a)(?(1)b|c)*+/', 'length' => 40];
         yield 'conditional counted two times or more, possessive' => ['pattern' => '/(a)(?(1)b|c){2,}+/', 'length' => 61];
+        yield 'conditional on a group name' => ['pattern' => '/(?<n>a)(?(<n>)b|c)/', 'length' => 33];
+        yield 'class of every character under UTF without UCP' => ['pattern' => '/(*UTF)[\\d\\D]/', 'length' => 8];
+        yield 'atomic script run' => ['pattern' => '/(*asr:a)/', 'length' => 21];
+        yield 'counted negated property of any character' => ['pattern' => '/\\P{Any}{2}/', 'length' => 45];
+        yield 'class of a letter and a character past 255 in UTF mode' => ['pattern' => '/[a\\x{100}]/u', 'length' => 47];
+        yield 'conditional on an assertion with one branch' => ['pattern' => '/(?(?=x)b)/', 'length' => 23];
+        yield 'class of a range and a character past 255 in UTF mode' => ['pattern' => '/[a-c\\x{100}]/u', 'length' => 47];
+        yield 'conditional on a group number with one branch' => ['pattern' => '/(a)(?(1)b)/', 'length' => 28];
+        yield 'accept counted zero times' => ['pattern' => '/(*ACCEPT){0}/', 'length' => 15];
+        yield 'accept counted once' => ['pattern' => '/(*ACCEPT){1}/', 'length' => 14];
+        // A name resolves to the groups it stands for, as PCRE2 resolves it.
+        yield 'reference by name' => ['pattern' => '/(?<n>a)\\k<n>/', 'length' => 20];
+        yield 'caseless reference by name' => ['pattern' => '/(?<n>a)\\k<n>/i', 'length' => 21];
+        yield 'counted reference by name' => ['pattern' => '/(?<n>a)\\k<n>{2}/', 'length' => 25];
+        yield 'reference by name in a conditional of one branch' => ['pattern' => '/(?<n>a)(?(1)\\k<n>)/', 'length' => 29];
+        yield 'condition on a name written before its group' => ['pattern' => '/(?(<n>)a|b)(?<n>c)/', 'length' => 33];
+        yield 'condition on a name two groups hold' => ['pattern' => '/(?<n>a)(?<n>b)(?(<n>)c|d)/J', 'length' => 45];
+        yield 'reference by a name two groups hold' => ['pattern' => '/(?<n>a)(?<n>b)\\k<n>/J', 'length' => 32];
+        yield 'counted conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a){2}/', 'length' => 25];
+        yield 'empty lookahead' => ['pattern' => '/(?=)/', 'length' => 13];
+        yield 'empty negative lookahead' => ['pattern' => '/(?!)/', 'length' => 8];
+    }
+
+    /**
+     * The lengths that changed from one release to the next, each the
+     * length pcre2test prints on that release, or, where the first pass
+     * counts more than the code holds, the length that pass counted, which
+     * is the one PCRE2 checks against the limit.
+     *
+     * @return iterable<string, array{pattern: string, release: string, length: int}>
+     */
+    public static function provideLengthsOnEachRelease(): iterable
+    {
+        // "\p{Any}" is a property up to 10.32; "\P{Any}" a negated property
+        // up to 10.44, a class of none from 10.45.
+        yield 'property of any character, 10.32' => ['pattern' => '/\\p{Any}/', 'release' => '10.32', 'length' => 10];
+        yield 'property of any character, 10.33' => ['pattern' => '/\\p{Any}/', 'release' => '10.33', 'length' => 8];
+        yield 'counted property of any character, 10.32' => ['pattern' => '/\\p{Any}{2}/', 'release' => '10.32', 'length' => 13];
+        yield 'negated property of any character, 10.44' => ['pattern' => '/\\P{Any}/', 'release' => '10.44', 'length' => 10];
+        yield 'counted negated property of any character, 10.44' => ['pattern' => '/\\P{Any}{2}/', 'release' => '10.44', 'length' => 13];
+        yield 'counted negated property of any character, 10.45' => ['pattern' => '/\\P{Any}{2}/', 'release' => '10.45', 'length' => 45];
+        // A class of a letter and its other case is a class up to 10.33.
+        yield 'class of a letter and its other case, 10.33' => ['pattern' => '/[aA]/', 'release' => '10.33', 'length' => 40];
+        yield 'class of a letter and its other case, 10.34' => ['pattern' => '/[aA]/', 'release' => '10.34', 'length' => 9];
+        yield 'class of i and its other case, 10.33' => ['pattern' => '/[iI]/', 'release' => '10.33', 'length' => 40];
+        yield 'class of a two-byte letter and its other case in UTF mode, 10.33' => ['pattern' => '/[éÉ]/u', 'release' => '10.33', 'length' => 40];
+        // A caseless reference holds its case rules from 10.45.
+        yield 'caseless reference, 10.44' => ['pattern' => '/(a)\\1/i', 'release' => '10.44', 'length' => 20];
+        yield 'caseless reference, 10.45' => ['pattern' => '/(a)\\1/i', 'release' => '10.45', 'length' => 21];
+        yield 'caseless reference by name, 10.44' => ['pattern' => '/(?<n>a)\\k<n>/i', 'release' => '10.44', 'length' => 20];
+        // A possessive count on a reference wraps it in an atomic group up
+        // to 10.47.
+        yield 'possessive star on a reference, 10.47' => ['pattern' => '/(a)\\1*+/', 'release' => '10.47', 'length' => 27];
+        yield 'possessive star on a reference, 10.48' => ['pattern' => '/(a)\\1*+/', 'release' => '10.48', 'length' => 21];
+        yield 'possessive count on a caseless reference, 10.44' => ['pattern' => '/(a)\\1{2}+/i', 'release' => '10.44', 'length' => 31];
+        yield 'possessive count on a caseless reference, 10.45' => ['pattern' => '/(a)\\1{2}+/i', 'release' => '10.45', 'length' => 32];
+        // "{1}+" leaves a group or a call as it is up to 10.33.
+        yield 'group counted once, possessive, 10.33' => ['pattern' => '/(?:a){1}+/', 'release' => '10.33', 'length' => 15];
+        yield 'call counted once, possessive, 10.33' => ['pattern' => '/(a)(?1){1}+/', 'release' => '10.33', 'length' => 20];
+        yield 'call counted once, possessive, 10.34' => ['pattern' => '/(a)(?1){1}+/', 'release' => '10.34', 'length' => 26];
+        // Up to 10.34 an assertion counted at least once is compiled once,
+        // one counted from zero as optional.
+        yield 'counted lookahead, 10.34' => ['pattern' => '/(?=a){2}/', 'release' => '10.34', 'length' => 15];
+        yield 'counted lookahead, 10.35' => ['pattern' => '/(?=a){2}/', 'release' => '10.35', 'length' => 23];
+        yield 'lookahead counted up to three times, 10.34' => ['pattern' => '/(?=a){0,3}/', 'release' => '10.34', 'length' => 16];
+        yield 'possessive count on a lookbehind, 10.34' => ['pattern' => '/(?<=a){2}+/', 'release' => '10.34', 'length' => 18];
+        yield 'possessive count on a lookbehind, 10.35' => ['pattern' => '/(?<=a){2}+/', 'release' => '10.35', 'length' => 35];
+        // Up to 10.44 the Kelvin sign and the long s join a caseless class
+        // for each "k", "K", "s" or "S" its members hold; from 10.45 once.
+        yield 'caseless class of k and its other case in UTF mode, 10.44' => ['pattern' => '/[kK]/iu', 'release' => '10.44', 'length' => 52];
+        yield 'caseless class of k twice in UTF mode, 10.44' => ['pattern' => '/[kk]/iu', 'release' => '10.44', 'length' => 52];
+        yield 'caseless class of k twice in UTF mode, 10.45' => ['pattern' => '/[kk]/iu', 'release' => '10.45', 'length' => 48];
+        yield 'caseless ranges of both cases in UTF mode, 10.44' => ['pattern' => '/[a-zA-Z]/iu', 'release' => '10.44', 'length' => 58];
+        yield 'caseless range from K to k in UTF mode, 10.44' => ['pattern' => '/[K-k]/iu', 'release' => '10.44', 'length' => 55];
+        yield 'caseless range from K to k in UTF mode, 10.45' => ['pattern' => '/[K-k]/iu', 'release' => '10.45', 'length' => 51];
+        // A class of every byte is a map up to 10.44, a match of any
+        // character from 10.45; "[\p{Any}]" an extended class up to 10.44.
+        yield 'class of every byte, 10.44' => ['pattern' => '/[\\x00-\\xff]/', 'release' => '10.44', 'length' => 40];
+        yield 'class of every byte, 10.45' => ['pattern' => '/[\\x00-\\xff]/', 'release' => '10.45', 'length' => 8];
+        yield 'class of every byte but none, 10.45' => ['pattern' => '/[^\\x00-\\xff]/', 'release' => '10.45', 'length' => 40];
+        yield 'class of every byte in a type and a range, 10.44' => ['pattern' => '/[\\D0-9]/', 'release' => '10.44', 'length' => 40];
+        yield 'class of any character, 10.44' => ['pattern' => '/[\\p{Any}]/', 'release' => '10.44', 'length' => 15];
+        yield 'class of any character, 10.45' => ['pattern' => '/[\\p{Any}]/', 'release' => '10.45', 'length' => 8];
+        yield 'negated class of any character, 10.44' => ['pattern' => '/[^\\p{Any}]/', 'release' => '10.44', 'length' => 15];
+        yield 'negated class of any character, 10.45' => ['pattern' => '/[^\\p{Any}]/', 'release' => '10.45', 'length' => 40];
+        // The first pass counts a repeated DEFINE group once per copy;
+        // pcre2test prints 16, what the compiled pattern holds.
+        yield 'counted definitions' => ['pattern' => '/(?(DEFINE)a){2}/', 'release' => '10.44', 'length' => 25];
+        yield 'counted script run, 10.33' => ['pattern' => '/(*sr:a){2}/', 'release' => '10.33', 'length' => 23];
+        yield 'atomic script run, 10.33' => ['pattern' => '/(*asr:a)/', 'release' => '10.33', 'length' => 21];
+        yield 'counted accept, 10.34' => ['pattern' => '/(*ACCEPT)?/', 'release' => '10.34', 'length' => 15];
+        yield 'accept counted twice, 10.44' => ['pattern' => '/(*ACCEPT){2}/', 'release' => '10.44', 'length' => 21];
+        // Each branch of a lookbehind of some length starts with the length
+        // to move back: one number, or from 10.43 two where it varies.
+        yield 'lookbehind, 10.32' => ['pattern' => '/(?<=a)b/', 'release' => '10.32', 'length' => 20];
+        yield 'lookbehind of two branches, 10.44' => ['pattern' => '/(?<=a|bc)b/', 'release' => '10.44', 'length' => 30];
+        yield 'lookbehind of no length, 10.48' => ['pattern' => '/(?<=\\b)b/', 'release' => '10.48', 'length' => 16];
+        yield 'lookbehind of a branch of varying length, 10.43' => ['pattern' => '/(?<=a|b?)c/', 'release' => '10.43', 'length' => 32];
+        yield 'lookbehind of one branch of varying length, 10.49' => ['pattern' => '/(?<=a?)b/', 'release' => '10.49', 'length' => 22];
+        // A string callout holds its delimiters, a doubled one twice in the
+        // first pass (pcre2test prints 21).
+        yield 'string callout' => ['pattern' => '/(?C"ab")/', 'release' => '10.40', 'length' => 20];
+        yield 'string callout holding its delimiter' => ['pattern' => '/(?C"a""b")/', 'release' => '10.48', 'length' => 22];
+        yield 'reference by name' => ['pattern' => '/(?<n>a)\\k<n>/', 'release' => '10.42', 'length' => 20];
+        yield 'empty negative lookahead' => ['pattern' => '/(?!)/', 'release' => '10.44', 'length' => 8];
+        yield 'empty lookahead' => ['pattern' => '/(?=)/', 'release' => '10.44', 'length' => 13];
+        yield 'conditional of one branch' => ['pattern' => '/(a)(?(1)b)/', 'release' => '10.44', 'length' => 28];
+        yield 'conditional of an empty second branch' => ['pattern' => '/(a)(?(1)b|)/', 'release' => '10.44', 'length' => 31];
+        yield 'conditional on an assertion, of one branch' => ['pattern' => '/(?(?=a)b)/', 'release' => '10.44', 'length' => 23];
+        yield 'accept with a name' => ['pattern' => '/(*ACCEPT:x)/', 'release' => '10.44', 'length' => 12];
+        // "(?!)" holding only comments is a failure, a lookaround holding
+        // options a group.
+        yield 'negative lookahead holding only comments' => ['pattern' => '/(?!(?#c)(?#d))/', 'release' => '10.44', 'length' => 8];
+        yield 'lookahead holding only options and a comment' => ['pattern' => '/(?=(?i)(?#c))/', 'release' => '10.48', 'length' => 13];
+        // An extended class: its opcode, link and flags, the map when it
+        // holds characters below 256, its items, the end of the list.
+        yield 'class past 255 in UTF mode' => ['pattern' => '/[\\x{100}a]/u', 'release' => '10.40', 'length' => 47];
+        yield 'class of a letter and a character past 255 sharing its low byte' => ['pattern' => '/[a\\x{161}]/u', 'release' => '10.48', 'length' => 47];
+        yield 'counted class past 255 in UTF mode' => ['pattern' => '/[\\x{100}a]{2}/u', 'release' => '10.44', 'length' => 52];
+        yield 'class holding a type under UCP' => ['pattern' => '/[\\d]/u', 'release' => '10.32', 'length' => 15];
+        yield 'class holding a property' => ['pattern' => '/[\\p{L}a]/', 'release' => '10.49', 'length' => 47];
+        yield 'class of a range past 255 in UTF mode' => ['pattern' => '/[\\x{100}-\\x{200}]/u', 'release' => '10.45', 'length' => 17];
+        yield 'class of a property in UTF mode' => ['pattern' => '/[\\p{L}]/u', 'release' => '10.47', 'length' => 15];
+        // Up to 10.44 the horizontal spaces past 255 are six items; from
+        // 10.45 the six ranges go in lists beside the code (16 bytes).
+        yield 'class of horizontal spaces in UTF mode, 10.44' => ['pattern' => '/[\\h]/u', 'release' => '10.44', 'length' => 71];
+        yield 'class of horizontal spaces in UTF mode, 10.45' => ['pattern' => '/[\\h]/u', 'release' => '10.45', 'length' => 63];
+        yield 'class of what is not a horizontal space in UTF mode, 10.44' => ['pattern' => '/[\\H]/u', 'release' => '10.44', 'length' => 93];
+        yield 'class of what is not a horizontal space in UTF mode, 10.49' => ['pattern' => '/[\\H]/u', 'release' => '10.49', 'length' => 79];
+        // A two-byte character with three cases is three units in a class
+        // up to 10.44, merged with its neighbour into a range from 10.45.
+        yield 'class of a titlecase letter and its small letter in UTF mode, 10.44' => ['pattern' => '/[ǅǆ]/u', 'release' => '10.44', 'length' => 18];
+        yield 'class of a titlecase letter and its small letter in UTF mode, 10.45' => ['pattern' => '/[ǅǆ]/u', 'release' => '10.45', 'length' => 17];
+        yield 'class of every character in two vertical space types' => ['pattern' => '/[\\v\\V]/', 'release' => '10.48', 'length' => 8];
+        // A recursive back reference wraps its capture in an atomic group
+        // up to 10.34.
+        yield 'capture holding a reference to itself, 10.34' => ['pattern' => '/(a)(\\2)/', 'release' => '10.34', 'length' => 34];
+        yield 'capture holding a reference to itself, 10.35' => ['pattern' => '/(a)(\\2)/', 'release' => '10.35', 'length' => 28];
+        yield 'reference to a name two groups bear' => ['pattern' => '/(?<n>a)|(?<n>b)\\k<n>/J', 'release' => '10.44', 'length' => 35];
+        yield 'caseless reference to a name two groups bear, 10.45' => ['pattern' => '/(?<n>a)|(?<n>b)\\k<n>/iJ', 'release' => '10.45', 'length' => 36];
+        yield 'condition on a name two groups bear' => ['pattern' => '/(?<n>a)|(?<n>b)(?(<n>)c)/J', 'release' => '10.44', 'length' => 43];
+        yield 'condition on a name' => ['pattern' => '/(?<n>a)(?(<n>)c)/', 'release' => '10.48', 'length' => 28];
+        // In UTF mode the other cases of a Latin-1 letter are the same on
+        // every release; four of them are past 255.
+        yield 'caseless class of a Latin-1 letter and its other case in UTF mode, 10.33' => ['pattern' => '/[éÉ]/iu', 'release' => '10.33', 'length' => 40];
+        yield 'caseless class of a Latin-1 letter and its other case in UTF mode, 10.48' => ['pattern' => '/[éÉ]/iu', 'release' => '10.48', 'length' => 10];
+        yield 'caseless class of a Latin-1 range in UTF mode' => ['pattern' => '/[à-þ]/iu', 'release' => '10.44', 'length' => 48];
+        yield 'caseless class of the micro sign in UTF mode' => ['pattern' => '/[µx]/iu', 'release' => '10.32', 'length' => 50];
+        yield 'caseless class of the y with a diaeresis in UTF mode' => ['pattern' => '/[ÿx]/iu', 'release' => '10.49', 'length' => 47];
+        // A character of more than one other case brings its whole set:
+        // up to 10.44 each member the runs of its set, from 10.45 once.
+        yield 'caseless class of a titlecase letter and its small letter, 10.44' => ['pattern' => '/[ǅǆ]/iu', 'release' => '10.44', 'length' => 28];
+        yield 'caseless class of a titlecase letter and its small letter, 10.45' => ['pattern' => '/[ǅǆ]/iu', 'release' => '10.45', 'length' => 17];
+        yield 'caseless class of two Greek mus, 10.44' => ['pattern' => '/[Μμ]/iu', 'release' => '10.44', 'length' => 56];
+        yield 'caseless class of two Greek mus, 10.45' => ['pattern' => '/[Μμ]/iu', 'release' => '10.45', 'length' => 50];
+        yield 'caseless class of the two small sigmas, 10.44' => ['pattern' => '/[ςσ]/iu', 'release' => '10.44', 'length' => 32];
+        yield 'caseless class of the two small sigmas, 10.45' => ['pattern' => '/[ςσ]/iu', 'release' => '10.45', 'length' => 20];
+        yield 'class of six characters past 255, 10.44' => ['pattern' => '/[\\x{100}\\x{102}\\x{104}\\x{106}\\x{108}\\x{10a}]/u', 'release' => '10.44', 'length' => 30];
+        yield 'class of six characters past 255 in lists, 10.45' => ['pattern' => '/[\\x{100}\\x{102}\\x{104}\\x{106}\\x{108}\\x{10a}]/u', 'release' => '10.45', 'length' => 31];
+        // Up to 10.34 the measure of lookbehinds skips the first item of a
+        // DEFINE group, and 10.34 stops where a DEFINE group that opens on a
+        // group ends: a lookbehind left unmeasured has no length to move
+        // back.
+        yield 'lookbehind a DEFINE group opens on, and one after, 10.32' => ['pattern' => '/(c)(?(DEFINE)(?<=x)b)(?<=a)/', 'release' => '10.32', 'length' => 45];
+        yield 'lookbehind a DEFINE group opens on, and one after, 10.34' => ['pattern' => '/(c)(?(DEFINE)(?<=x)b)(?<=a)/', 'release' => '10.34', 'length' => 42];
+        yield 'lookbehind a DEFINE group opens on, and one after, 10.35' => ['pattern' => '/(c)(?(DEFINE)(?<=x)b)(?<=a)/', 'release' => '10.35', 'length' => 48];
+        yield 'lookbehind after a DEFINE group opening on a capture, 10.33' => ['pattern' => '/(c)(?(DEFINE)(b))(?<=q)r/', 'release' => '10.33', 'length' => 47];
+        yield 'lookbehind after a DEFINE group opening on a capture, 10.34' => ['pattern' => '/(c)(?(DEFINE)(b))(?<=q)r/', 'release' => '10.34', 'length' => 44];
+        yield 'lookbehind in the group around a DEFINE group opening on a capture, 10.34' => ['pattern' => '/(c)(?:(?(DEFINE)(b))|(?<=q)r)/', 'release' => '10.34', 'length' => 56];
+        // A type and its negation hold every byte whatever the locale: a
+        // match of any character from 10.45.
+        yield 'class of a type and its negation, 10.44' => ['pattern' => '/[\\d\\D]/', 'release' => '10.44', 'length' => 40];
+        yield 'class of a type and its negation, 10.45' => ['pattern' => '/[\\d\\D]/', 'release' => '10.45', 'length' => 8];
+        yield 'counted class of a type and its negation in UTF mode, 10.49' => ['pattern' => '/(*UTF)[\\d\\D]{2}/', 'release' => '10.49', 'length' => 11];
+        // Under UCP "[:blank:]" is "\\h", and a negated "[:ascii:]" holds every
+        // character past 255.
+        yield 'class of the POSIX blanks under UCP, 10.44' => ['pattern' => '/[[:blank:]]/u', 'release' => '10.44', 'length' => 71];
+        yield 'class of the POSIX blanks under UCP, 10.45' => ['pattern' => '/[[:blank:]]/u', 'release' => '10.45', 'length' => 63];
+        yield 'class of what is not ASCII under UCP, 10.44' => ['pattern' => '/[[:^ascii:]]/u', 'release' => '10.44', 'length' => 40];
+        // Up to 10.44 a run of other cases inside the member adds nothing.
+        yield 'caseless range of titlecase letters, 10.44' => ['pattern' => '/[Ǆ-Ǉ]/iu', 'release' => '10.44', 'length' => 32];
+        yield 'caseless range of titlecase letters, 10.45' => ['pattern' => '/[Ǆ-Ǉ]/iu', 'release' => '10.45', 'length' => 17];
+        yield 'caseless class of the y with a diaeresis in UTF mode, 10.44' => ['pattern' => '/[ÿx]/iu', 'release' => '10.44', 'length' => 47];
+        yield 'negative lookahead' => ['pattern' => '/(?!ab)/', 'release' => '10.44', 'length' => 17];
+        yield 'DEFINE group holding a comment, then a lookbehind, 10.34' => ['pattern' => '/(?(DEFINE)(?#c))(?<=a)/', 'release' => '10.34', 'length' => 25];
+        // A condition on a version is one unit, true or false, and the first
+        // pass repeats the conditional as any other.
+        yield 'conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a|b)/', 'release' => '10.32', 'length' => 21];
+        yield 'counted conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a|b){2}/', 'release' => '10.44', 'length' => 35];
+        yield 'counted conditional on a false version' => ['pattern' => '/(?(VERSION>=99.0)a|b){2}/', 'release' => '10.49', 'length' => 35];
+        yield 'possessive count on a conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a|b){2}+/', 'release' => '10.48', 'length' => 41];
+        yield 'call returning a group, 10.47' => ['pattern' => '/(a)(b)(?1(2))/', 'release' => '10.47', 'length' => 33];
+        yield 'counted call returning a group, 10.49' => ['pattern' => '/(a)(b)(?1(2)){2}/', 'release' => '10.49', 'length' => 39];
+        yield 'starred call returning a group, 10.48' => ['pattern' => '/(a)(b)(?1(2))*/', 'release' => '10.48', 'length' => 40];
+        yield 'conditional on a callout and an assertion' => ['pattern' => '/(?(?C1)(?=b)c|d)/', 'release' => '10.44', 'length' => 34];
+        yield 'counted conditional on a callout and an assertion' => ['pattern' => '/(?(?C1)(?=b)c|d){2}/', 'release' => '10.33', 'length' => 61];
+        yield 'empty script run' => ['pattern' => '/(*sr:)/', 'release' => '10.33', 'length' => 13];
+        yield 'empty atomic script run' => ['pattern' => '/(*asr:)/', 'release' => '10.45', 'length' => 19];
+        yield 'counted empty atomic script run' => ['pattern' => '/(*asr:){2}/', 'release' => '10.49', 'length' => 31];
+        yield 'possessive star on an empty atomic script run' => ['pattern' => '/(*asr:)*+/', 'release' => '10.44', 'length' => 26];
+        yield 'class holding a space, then under xx' => ['pattern' => '/[a ](?xx)[a ]/', 'release' => '10.48', 'length' => 42];
+        yield 'class holding a space under xx, then not' => ['pattern' => '/(?xx)[a ](?-xx)[a ]/', 'release' => '10.48', 'length' => 42];
+        yield 'caseless k under UCP without UTF, 10.34' => ['pattern' => '/(*UCP)k/i', 'release' => '10.34', 'length' => 9];
+        yield 'caseless k under UCP without UTF, 10.35' => ['pattern' => '/(*UCP)k/i', 'release' => '10.35', 'length' => 10];
+        yield 'caseless class of the micro sign in UTF mode, 10.48' => ['pattern' => '/[µx]/iu', 'release' => '10.48', 'length' => 50];
+        yield 'caseless class of the a with a ring in UTF mode, 10.48' => ['pattern' => '/[Åx]/iu', 'release' => '10.48', 'length' => 48];
+        yield 'condition on the recursion of a name' => ['pattern' => '/(?<n>a)(?(R&n)c)/', 'release' => '10.48', 'length' => 28];
+        yield 'condition on the recursion of a name two groups bear' => ['pattern' => '/(?<n>a)|(?<n>b)(?(R&n)c)/J', 'release' => '10.34', 'length' => 43];
+        yield 'DEFINE group holding two comments, then a lookbehind, 10.34' => ['pattern' => '/(?(DEFINE)(?#c)(?#d))(?<=a)/', 'release' => '10.34', 'length' => 25];
+        // The lists are kept once, whatever the copies of the group.
+        yield 'counted group holding a class in lists, 10.45' => ['pattern' => '/(?:[\\x{100}\\x{102}\\x{104}\\x{106}\\x{108}\\x{10a}]){2}/u', 'release' => '10.45', 'length' => 51];
     }
 
     /**
@@ -295,54 +536,40 @@ final class CompiledLengthTest extends TestCase
      */
     public static function provideLengthsNotKnown(): iterable
     {
-        // Each branch of a lookbehind starts with the length to move back.
-        yield 'lookbehind' => ['pattern' => '/(?<=a)b/'];
-        // A caseless class past ASCII may hold the other cases of its letters.
-        yield 'caseless class of a letter past ASCII and its other case' => ['pattern' => '/[éÉ]/iu'];
-        yield 'class past 255 in UTF mode' => ['pattern' => '/[\x{100}a]/u'];
-        yield 'class holding a type under UCP' => ['pattern' => '/[\d]/u'];
-        yield 'class of every character' => ['pattern' => '/[\d\D]/'];
+        // A caseless class past 255 may hold other cases from the Unicode
+        // tables of each release.
+        yield 'caseless class of a range past 255' => ['pattern' => '/[ā-ž]/iu'];
+        yield 'class of a letter past 255 and its other case' => ['pattern' => '/[āĀ]/u'];
+        yield 'caseless class of a long range past 255' => ['pattern' => '/[\\x{100}-\\x{400}]/iu'];
+        // Without UTF, the other cases of a byte past ASCII follow the
+        // locale PHP builds its tables from.
+        yield 'caseless class of bytes past ASCII under UCP without UTF' => ['pattern' => '/(*UCP)[\\xe0-\\xfe]/i'];
+        // A class that holds every character past 255 writes no property,
+        // whose characters below 256 join its map, which may then hold every
+        // byte.
+        yield 'class of what is not a blank or ASCII, and spaces, under UCP' => ['pattern' => '/[\\x{205f}[:^blank:]É[:space:][:^ascii:]9]/u'];
+        // An inline "a" may hold the types of a class to ASCII.
+        yield 'class holding a type under ASCII options' => ['pattern' => '/(?aD)[\\dx]/u'];
         yield 'class of every character in POSIX names and a range' => ['pattern' => '/[[:^ascii:][:cntrl:]\x20-\x7e]/'];
-        yield 'class of every character in two vertical space types' => ['pattern' => '/[\v\V]/'];
-        yield 'string callout' => ['pattern' => '/(?C"ab")/'];
-        // A name may stand for several groups.
-        yield 'reference by name' => ['pattern' => '/(?<n>a)\k<n>/'];
         // Rules that change the cases of "i", "k" and "s".
         yield 'caseless k under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k/iu'];
         yield 'class of i and its other case under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[iI]/u'];
         yield 'quoted caseless letters under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\Qks\\E/iu'];
-        yield 'counted class past 255 in UTF mode' => ['pattern' => '/[\\x{100}a]{2}/u'];
         // Without UTF, "é" is two bytes: a range that ends on it is read as
         // one ending on the first, then the second.
         yield 'range ending on a two-byte letter in byte mode' => ['pattern' => '/[é-\\xff]/'];
-        yield 'class holding a property' => ['pattern' => '/[\\p{L}a]/'];
-        // "(?!)" compiles to a failure, and so may a lookaround holding
-        // nothing but options and comments.
-        yield 'lookahead holding only options and a comment' => ['pattern' => '/(?=(?i)(?#c))/'];
-        // A counted verb is wrapped in a group, a named accept is a mark too.
-        yield 'counted accept' => ['pattern' => '/(*ACCEPT)?/'];
-        yield 'accept with a name' => ['pattern' => '/(*ACCEPT:x)/'];
-        // A script run and a conditional on a version are not counted.
-        yield 'counted script run' => ['pattern' => '/(*sr:a){2}/'];
         // Without UTF, the cases of a byte past ASCII follow the locale PHP
         // builds its tables from.
         // Turkish tables make the other case of "i" a byte past ASCII.
         yield 'class of i and its other case' => ['pattern' => '/[iI]/'];
         yield 'class of every ASCII character in a POSIX name' => ['pattern' => '/[[:ascii:]]/'];
-        // A character past 255 whose low byte is a letter's other case is no
-        // case pair: the class holds it past the map (47 units).
-        yield 'class of a letter and a character past 255 sharing its low byte' => ['pattern' => '/[a\\x{161}]/u'];
         yield 'class of two bytes past ASCII' => ['pattern' => '/[\\xe9\\xc9]/'];
         yield 'caseless class of every ASCII character and a byte past it' => ['pattern' => '/[\\x00-\\x7f\\xe9]/i'];
         // A class of thousands of types is not measured member by member.
         yield 'class of three thousand types' => ['pattern' => '/['.str_repeat('\\D', 3000).']/'];
-        yield 'counted conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a){2}/'];
         // An inline "a" may hold the types to ASCII under UCP.
         yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u'];
         yield 'counted type under UCP and an inline a' => ['pattern' => '/(?a)\\d{2}/u'];
-        yield 'counted negated property of any character' => ['pattern' => '/\\P{Any}{2}/'];
-        yield 'accept counted once' => ['pattern' => '/(*ACCEPT){1}/'];
-        yield 'accept counted zero times' => ['pattern' => '/(*ACCEPT){0}/'];
         yield 'caseless I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)I/iu'];
         yield 'caseless i under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)i/iu'];
         yield 'caseless dotted capital I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{130}/iu'];
@@ -350,15 +577,7 @@ final class CompiledLengthTest extends TestCase
         yield 'counted caseless I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)I{2}/iu'];
         yield 'caseless k under the r modifier' => ['pattern' => '/k/iur'];
         yield 'caseless k under an inline r' => ['pattern' => '/(?r)k/iu'];
-        // A conditional with no second branch may be written with its "|".
-        yield 'conditional on an assertion with one branch' => ['pattern' => '/(?(?=x)b)/'];
-        yield 'conditional on a group number with one branch' => ['pattern' => '/(a)(?(1)b)/'];
-        yield 'conditional on a group name' => ['pattern' => '/(?<n>a)(?(<n>)b|c)/'];
-        yield 'atomic script run' => ['pattern' => '/(*asr:a)/'];
         yield 'scan substring' => ['pattern' => '/(a)(*scs:(1)b)/'];
-        yield 'class of a letter and a character past 255 in UTF mode' => ['pattern' => '/[a\\x{100}]/u'];
-        yield 'class of a range and a character past 255 in UTF mode' => ['pattern' => '/[a-c\\x{100}]/u'];
-        yield 'class of every character under UTF without UCP' => ['pattern' => '/(*UTF)[\\d\\D]/'];
     }
 
     /**
@@ -373,14 +592,14 @@ final class CompiledLengthTest extends TestCase
     #[DataProvider('provideCeilings')]
     public function test_an_item_of_unknown_length_counts_up_to_its_ceiling(string $pattern, ?int $ceiling): void
     {
-        $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->parse($pattern);
+        $regex = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.48', 'runtime_pcre_validation' => false])->parse($pattern);
         $source = (string) $regex->source;
         $utf = str_contains($regex->flags, 'u') || StartOptions::turnUtfOn($source);
         $ucp = str_contains($regex->flags, 'u') || \in_array('UCP', StartOptions::items($source), true);
 
         $known = [];
         foreach (range(0, 40) as $floor) {
-            if (null !== (new CompiledLength(static fn (): int => $floor, $source, $utf, $ucp, $regex->flags))->of($regex->pattern)) {
+            if (null !== (new CompiledLength(static fn (): int => $floor, $source, $utf, $ucp, $regex->flags, new PcreTarget(80400, '10.48')))->of($regex->pattern)) {
                 $known[] = $floor;
             }
         }
@@ -409,20 +628,6 @@ final class CompiledLengthTest extends TestCase
         yield 'caseless k under UCP without UTF, rules kept to ASCII' => ['pattern' => '/(*UCP)(*CASELESS_RESTRICT)k/i', 'ceiling' => 3];
         yield 'counted caseless k under UCP without UTF, rules kept to ASCII' => ['pattern' => '/(*UCP)(*CASELESS_RESTRICT)k{2}/i', 'ceiling' => 6];
         yield 'caseless i under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)i/iu', 'ceiling' => 3];
-        // A name may stand for several groups, and the reference be caseless.
-        yield 'reference by name' => ['pattern' => '/(?<n>a)\\k<n>/', 'ceiling' => 6];
-        yield 'caseless reference by name' => ['pattern' => '/(?<n>a)\\k<n>/i', 'ceiling' => 6];
-        yield 'counted reference by name' => ['pattern' => '/(?<n>a)\\k<n>{2}/', 'ceiling' => null];
-        // A condition on a name is a number, or a name that stands for
-        // several groups and their count (pcre2test 10.49: 3 units, 5 for a
-        // name two groups hold under J).
-        yield 'condition on a group name' => ['pattern' => '/(?<n>a)(?(<n>)b|c)/', 'ceiling' => 5];
-        // A conditional with no "|" may be written with one, three units
-        // more: a reference by name in it is the item of unknown length.
-        yield 'reference by name in a conditional of one branch' => ['pattern' => '/(?<n>a)(?(1)\\k<n>)/', 'ceiling' => 9];
-        // "(?=)" compiles to a group, "(?!)" to a failure.
-        yield 'empty lookahead' => ['pattern' => '/(?=)/', 'ceiling' => 6];
-        yield 'empty negative lookahead' => ['pattern' => '/(?!)/', 'ceiling' => 6];
         yield 'character past 255 without UTF' => ['pattern' => '/\\x{100}/', 'ceiling' => null];
         yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u', 'ceiling' => null];
     }
@@ -446,7 +651,7 @@ final class CompiledLengthTest extends TestCase
     {
         $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->parse($pattern);
 
-        $this->assertSame($insideABranch, (new CompiledLength(static fn (): int => 0, (string) $regex->source, false, false, $regex->flags))->passedInsideABranch($regex->pattern), $pattern);
+        $this->assertSame($insideABranch, (new CompiledLength(static fn (): int => 0, (string) $regex->source, false, false, $regex->flags, new PcreTarget(80400, '10.48')))->passedInsideABranch($regex->pattern), $pattern);
     }
 
     /**
@@ -486,13 +691,13 @@ final class CompiledLengthTest extends TestCase
         yield 'atomic script run of two branches before a repeat past the limit' => ['pattern' => '/(*asr:(?:a){8189}aa|b)(?:c){8200}/', 'insideABranch' => true];
     }
 
-    private static function lengthOf(string $pattern): ?int
+    private static function lengthOf(string $pattern, string $release = '10.48'): ?int
     {
-        $regex = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->parse($pattern);
+        $regex = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release, 'runtime_pcre_validation' => false])->parse($pattern);
         $source = (string) $regex->source;
         $utf = str_contains($regex->flags, 'u') || StartOptions::turnUtfOn($source);
         $ucp = str_contains($regex->flags, 'u') || \in_array('UCP', StartOptions::items($source), true);
 
-        return (new CompiledLength(static fn (): int => 0, $source, $utf, $ucp, $regex->flags))->of($regex->pattern);
+        return (new CompiledLength(static fn (): int => 0, $source, $utf, $ucp, $regex->flags, new PcreTarget(80400, $release)))->of($regex->pattern);
     }
 }

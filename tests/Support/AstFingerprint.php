@@ -43,6 +43,7 @@ final class AstFingerprint
         'src/Parser/Validation/Validator.php',
         'src/Parser/Validation/FirstErrorLocator.php',
         'src/Parser/Validation/CompiledLength.php',
+        'src/Parser/Validation/ClassLength.php',
         // Hands the flags, the delimiter and the options to the parser; the
         // version it holds is left out of its own fingerprint.
         'src/Parser/RegexParser.php',

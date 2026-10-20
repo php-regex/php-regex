@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Validation;
 
+use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\Analysis\LookbehindLength;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -43,18 +45,24 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 
 /**
- * Measures a pattern as the first pass of PCRE2 10.48 and later compiles
- * it, to tell which check finds it too large. Each item is added to the
- * length of its branch, which may not pass the limit; each branch but the
- * last of a group is added to the branches before it, which may not pass it
- * either: both report the error at offset 0. The last branch is added where
- * the group ends, by a check that sets no offset, so at the end of the
- * pattern.
+ * Measures a pattern as the first pass of the PCRE2 targeted compiles it:
+ * the length that pass counts is the one PCRE2 checks against the limit,
+ * though the code it then compiles may be shorter. Each item is added to
+ * the length of its branch, which may not pass the limit; each branch but
+ * the last of a group is added to the branches before it, which may not
+ * pass it either: from 10.48 both report the error at offset 0. The last
+ * branch is added where the group ends, by a check that sets no offset, so
+ * at the end of the pattern. Every sum checked is part of the length of the
+ * whole pattern, so the pattern is too large exactly when that length
+ * passes the limit, on every release.
  *
  * An item is counted at the length PCRE2 compiles it to where this class
  * knows that length, and at the floor the validator measures otherwise,
@@ -152,6 +160,18 @@ final class CompiledLength
     ];
 
     /**
+     * Empty script runs, which the parser reads as verbs, and the groups
+     * they compile to.
+     */
+    private const EMPTY_SCRIPT_RUNS = ['sr:' => 6, 'script_run:' => 6, 'asr:' => 12, 'atomic_script_run:' => 12];
+
+    /**
+     * Whether the measure passed the limit where a class was compiled, up to
+     * 10.47: see measureItems().
+     */
+    public bool $passedAtClassLists = false;
+
+    /**
      * Whether a group of several branches was measured whole before the
      * limit was passed, and may have passed it where it ends: its length is
      * not known and its ceiling is past the limit, or not known either.
@@ -160,22 +180,93 @@ final class CompiledLength
 
     /**
      * The captures open around the item measured, since the assertion it
-     * stands in: "(*ACCEPT)" closes each of them. Each group measured puts
-     * back the count it found, none once the pattern is measured.
+     * stands in: "(*ACCEPT)" closes each of them.
      */
     private int $openCaptures = 0;
 
     /**
-     * Whether the source may set rules that change the cases of "i", "k"
-     * or "s": the Turkish ones, or those that keep ASCII apart.
+     * The capturing groups open around the item measured, each with whether
+     * a back reference inside it names it: up to 10.34 such a group is
+     * wrapped in an atomic group.
+     *
+     * @var array<int, bool>
      */
-    private readonly bool $caseRulesVary;
+    private array $openGroups = [];
+
+    /**
+     * The bytes of the lists the classes measured keep beside the code, from
+     * 10.45: counted once for each class written, against the limit too.
+     */
+    private int $charLists = 0;
+
+    /**
+     * Whether the source may set rules that change the cases of "i", "k"
+     * or "s", once read.
+     */
+    private ?bool $caseRulesVary = null;
 
     /**
      * Whether the source may hold an inline "a", which keeps "\d", "\s" and
-     * "\w" to ASCII under UCP.
+     * "\w" to ASCII under UCP, once read.
      */
-    private readonly bool $asciiOptions;
+    private ?bool $asciiOptions = null;
+
+    /**
+     * The pattern measured, whose groups a lookbehind may call.
+     */
+    private ?NodeInterface $pattern = null;
+
+    /**
+     * The measure of the lengths a lookbehind matches, once one is met.
+     */
+    private ?LookbehindLength $lookbehinds = null;
+
+    /**
+     * Up to PCRE2 10.34, where the measure of lookbehinds stops and the
+     * lookbehinds it skips, once read: see unmeasuredLookbehinds().
+     *
+     * @var array{0: int, 1: array<int, true>, 2: bool}|null
+     */
+    private ?array $unmeasured = null;
+
+    /**
+     * Whether a class may read differently from its text, under "xx",
+     * once read.
+     */
+    private ?bool $spacesSkipped = null;
+
+    /**
+     * The measure of classes, once one is met.
+     */
+    private ?ClassLength $classes = null;
+
+    /**
+     * The length of each class measured, and the bytes of its lists, by its
+     * text and whether it is caseless.
+     *
+     * @var array<string, array{0: ?int, 1: int}>
+     */
+    private array $classLengths = [];
+
+    /**
+     * The members of each class read, by its text.
+     *
+     * @var array<string, array{0: list<int>, 1: list<array{0: int, 1: int}>, 2: list<array{0: int, 1: int}>}|null>
+     */
+    private array $members = [];
+
+    /**
+     * The least and the most of each quantifier read, by its text.
+     *
+     * @var array<string, array{0: int, 1: ?int}>
+     */
+    private array $bounds = [];
+
+    /**
+     * The groups of the pattern measured, once a reference or a lookbehind
+     * needs them.
+     */
+    private ?GroupIndex $groups = null;
 
     /**
      * @param \Closure(NodeInterface): int $floor  the fewest units a node may
@@ -189,6 +280,8 @@ final class CompiledLength
      *                                             Unicode
      * @param string                       $flags  the flags after the
      *                                             closing delimiter
+     * @param PcreTarget                   $target the PCRE2 release whose
+     *                                             first pass is measured
      */
     public function __construct(
         private readonly \Closure $floor,
@@ -196,11 +289,8 @@ final class CompiledLength
         private readonly bool $utf,
         private readonly bool $ucp,
         private readonly string $flags,
-    ) {
-        $this->caseRulesVary = str_contains($flags, 'r') || str_contains($source, 'TURKISH_CASING') || str_contains($source, 'CASELESS_RESTRICT')
-            || 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*r/', $source);
-        $this->asciiOptions = 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*a/', $source);
-    }
+        private readonly PcreTarget $target,
+    ) {}
 
     /**
      * Whether PCRE2 10.48 and later find the pattern too large inside a
@@ -209,23 +299,62 @@ final class CompiledLength
      */
     public function passedInsideABranch(NodeInterface $pattern): bool
     {
-        $this->branchesMayEndPastTheLimit = false;
-        // The end marker comes first, then the brackets around the pattern.
-        [$found] = $this->measureBranches(self::branchesOf($pattern), 1, [self::BRACKETS, self::BRACKETS], str_contains($this->flags, 'i'));
+        [$found] = $this->measure($pattern);
 
         return false === $found && !$this->branchesMayEndPastTheLimit;
     }
 
     /**
-     * The length PCRE2 10.48 and later compile the pattern to, its end
-     * marker included, or null when it is not known for sure or passes the
-     * limit.
+     * Whether the first pass finds the pattern too large for sure: every
+     * item counted at its length or, where that is not known, at its floor.
+     */
+    public function passesTheLimit(NodeInterface $pattern): bool
+    {
+        return null !== $this->measure($pattern)[0];
+    }
+
+    /**
+     * The length the first pass counts for the pattern, its end marker
+     * included, or null when it is not known for sure or passes the limit.
      */
     public function of(NodeInterface $pattern): ?int
     {
-        [$found, $length, $ceiling] = $this->measureBranches(self::branchesOf($pattern), 1, [self::BRACKETS, self::BRACKETS], str_contains($this->flags, 'i'));
+        [$found, $length, $ceiling] = $this->measure($pattern);
 
         return null === $found && $length === $ceiling ? $length + 1 : null;
+    }
+
+    /**
+     * @return array{0: bool|null, 1: int, 2: ?int} as measureBranches() does
+     *
+     * @phpstan-impure it records a group of branches that may end past the limit
+     */
+    private function measure(NodeInterface $pattern): array
+    {
+        $this->branchesMayEndPastTheLimit = false;
+        $this->openCaptures = 0;
+        $this->openGroups = [];
+        $this->charLists = 0;
+        $this->passedAtClassLists = false;
+        if ($this->pattern !== $pattern) {
+            $this->pattern = $pattern;
+            $this->lookbehinds = null;
+            $this->groups = null;
+            $this->unmeasured = null;
+        }
+
+        // The end marker comes first, then the brackets around the pattern.
+        [$found, $length, $ceiling] = $this->measureBranches(self::branchesOf($pattern), 1, [self::BRACKETS, self::BRACKETS], str_contains($this->flags, 'i'));
+        if (null !== $found) {
+            return [$found, $length, $ceiling];
+        }
+
+        // The lists the classes keep beside the code count against the
+        // limit once the pattern is measured, by a check that reports offset
+        // 0 from 10.48.
+        $length += $this->charLists;
+
+        return [1 + $length > self::LIMIT ? false : null, $length, self::sum($ceiling, $this->charLists)];
     }
 
     /**
@@ -242,9 +371,8 @@ final class CompiledLength
      *                                              where the group ends
      *                                              (true), inside a branch
      *                                              (false), or not at all
-     *                                              (null); and, where it is
-     *                                              not, the length and the
-     *                                              ceiling of the group
+     *                                              (null); and the length and
+     *                                              the ceiling of the group
      *
      * @phpstan-impure it records a group of branches that may end past the limit
      */
@@ -254,23 +382,23 @@ final class CompiledLength
         $done = 0;
         $last = \count($branches) - 1;
         foreach ($branches as $index => $branch) {
-            [$found, $length, $branchCeiling, $caseless] = $this->measureItems($branch, $length, $caseless);
+            [$found, $length, $branchCeiling, $caseless] = $this->measureItems($branch, $length, $caseless, $done);
             $ceiling = self::sum($ceiling, $branchCeiling);
             if (null !== $found) {
-                return [$found, $length, null];
+                return [$found, $done + $length, null];
             }
 
             if ($index < $last) {
                 $length += self::ALTERNATION;
                 $ceiling = self::sum($ceiling, self::ALTERNATION);
                 if ($before + $done + $length > self::LIMIT) {
-                    return [false, $length, null];
+                    return [false, $done + $length, null];
                 }
 
                 $done += $length;
                 $length = 0;
             } elseif ($before + $done + $length > self::LIMIT) {
-                return [true, $length, null];
+                return [true, $done + $length, null];
             }
         }
 
@@ -293,14 +421,14 @@ final class CompiledLength
      *
      * @phpstan-impure it records a group of branches that may end past the limit
      */
-    private function measureItems(NodeInterface $branch, int $length, bool $caseless): array
+    private function measureItems(NodeInterface $branch, int $length, bool $caseless, int $before = 0): array
     {
         $ceiling = 0;
         foreach (self::itemsOf($branch) as $item) {
             // Most items are one ASCII letter, or one byte without UTF:
             // measured at once.
             $units = $item instanceof LiteralNode && 1 === \strlen($item->value)
-                ? (!$caseless || !($this->utf || $this->ucp) || (!isset(self::CASELESS_SETS[\ord($item->value)]) && !$this->caseRulesVary) ? 2 : $this->characterLength(\ord($item->value), true))
+                ? (!$caseless || !$this->unicodeCases() || (!isset(self::CASELESS_SETS[\ord($item->value)]) && !$this->caseRulesVary()) ? 2 : $this->characterLength(\ord($item->value), true))
                 : null;
             if (null !== $units) {
                 $length += $units;
@@ -318,9 +446,20 @@ final class CompiledLength
                 continue;
             }
 
+            $lists = $this->charLists;
             [$found, $itemLength, $itemCeiling] = $this->measureItem($item, $caseless);
             if (null !== $found) {
-                return [$found, $length, null, $caseless];
+                return [$found, $length + $itemLength, null, $caseless];
+            }
+
+            // Up to 10.47 a class whose lists, with its header and what the
+            // group holds before it, pass the limit is refused as it is
+            // compiled, by a check that sets no offset.
+            $lists = $this->charLists - $lists;
+            if ($lists > 0 && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) && $before + $length + 4 + $lists > self::LIMIT) {
+                $this->passedAtClassLists = true;
+
+                return [true, $length + $itemLength, null, $caseless];
             }
 
             $length += $itemLength;
@@ -341,6 +480,11 @@ final class CompiledLength
      */
     private function measureItem(NodeInterface $item, bool $caseless): array
     {
+        // "(?!)" not counted is a failure, one unit.
+        if ($item instanceof GroupNode && GroupType::LookaheadNegative === $item->type && $this->holdsOnlyComments($item->child)) {
+            return [null, 1, 1];
+        }
+
         $repeated = $item instanceof QuantifierNode ? $item->node : $item;
         $group = $this->groupOf($repeated, $caseless);
         if (null === $group) {
@@ -351,31 +495,46 @@ final class CompiledLength
 
         [$branches, $frame, $bodyCaseless, $condition] = $group;
         if (null !== $condition) {
-            // An assertion as the condition is compiled first, as a group.
-            [$found, $conditionLength, $conditionCeiling] = $this->measureItem($condition, $caseless);
+            // An assertion as the condition is compiled first, as a group,
+            // after the callouts before it.
+            [$found, $conditionLength, $conditionCeiling] = $condition instanceof SequenceNode ? $this->measureItems($condition, 0, $caseless) : $this->measureItem($condition, $caseless);
             if (null !== $found) {
                 return [$found, $conditionLength, null];
             }
 
-            [$frameLength, $frameCeiling] = $frame;
-            $frameLength += $conditionLength;
-            if ($frameLength > self::LIMIT) {
-                return [false, $frameLength, null];
+            $frame = [$frame[0] + $conditionLength, self::sum($frame[1], $conditionCeiling)];
+            if ($frame[0] > self::LIMIT) {
+                return [false, $frame[0], null];
             }
-
-            $frame = [$frameLength, self::sum($frameCeiling, $conditionCeiling)];
         }
 
         $open = $this->openCaptures;
+        $capture = $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::Capturing, GroupType::Named], true);
         $this->openCaptures = match (true) {
-            $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::Capturing, GroupType::Named], true) => $open + 1,
+            $capture => $open + 1,
             $repeated instanceof GroupNode && \in_array($repeated->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true) => 0,
             default => $open,
         };
+        if ($capture) {
+            $this->openGroups[spl_object_id($repeated)] = false;
+        }
+
         [$found, $length, $ceiling] = $this->measureBranches($branches, 0, $frame, $bodyCaseless);
         $this->openCaptures = $open;
+        $referenced = $capture && $this->openGroups[spl_object_id($repeated)];
+        if ($capture) {
+            unset($this->openGroups[spl_object_id($repeated)]);
+        }
+
         if (null !== $found) {
             return [$found, $length, null];
+        }
+
+        // Up to 10.34 a capture holding a back reference to itself is
+        // wrapped in an atomic group.
+        if ($referenced && !$this->target->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks)) {
+            $length += self::BRACKETS;
+            $ceiling = self::sum($ceiling, self::BRACKETS);
         }
 
         if ($this->mayHoldBranches($repeated, $branches) && (null === $ceiling || $ceiling > self::LIMIT)) {
@@ -409,30 +568,34 @@ final class CompiledLength
                 GroupType::Capturing, GroupType::Named => [self::branchesOf($node->child), [self::BRACKETS + 2, self::BRACKETS + 2], $caseless, null],
                 GroupType::NonCapturing, GroupType::Atomic, GroupType::BranchReset => [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], $caseless, null],
                 GroupType::InlineFlags => [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], self::caselessAfter((string) $node->flags, $caseless), null],
-                // "(?=)" compiles to a group, "(?!)" to a failure, and so
-                // may one that holds only options or comments: left to the
-                // floor.
-                GroupType::LookaheadPositive, GroupType::LookaheadNegative => $this->isBlank($node->child) ? null : [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], $caseless, null],
+                // "(?=)" compiles to a group, and so does "(?!)" counted.
+                GroupType::LookaheadPositive, GroupType::LookaheadNegative => [self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS], $caseless, null],
                 // Each branch of a lookbehind of some length starts with
                 // the length to move back, in one number or two.
-                GroupType::LookbehindPositive, GroupType::LookbehindNegative => $this->isBlank($node->child) ? null : [$branches = self::branchesOf($node->child), [self::BRACKETS, self::BRACKETS + 5 * \count($branches)], $caseless, null],
+                GroupType::LookbehindPositive, GroupType::LookbehindNegative => [$branches = self::branchesOf($node->child), $this->lookbehindFrame($node, $branches), $caseless, null],
                 default => [self::branchesOf($node->child), [self::BRACKETS, null], $caseless, null],
             };
         }
 
         if ($node instanceof ConditionalNode) {
-            $branches = self::isEmpty($node->no) ? [$node->yes] : [$node->yes, $node->no];
             // An empty second branch may be written, "(?(1)a|)", or not.
-            $ceiling = self::isEmpty($node->no) ? self::BRACKETS + self::ALTERNATION : self::BRACKETS;
+            $written = self::isEmpty($node->no) ? $this->secondBranchWritten($node) : true;
+            $branches = true === $written ? [$node->yes, $node->no] : [$node->yes];
+            $ceiling = null === $written ? self::BRACKETS + self::ALTERNATION : self::BRACKETS;
             $condition = $node->condition;
-            if ($condition instanceof GroupNode) {
+            if ($condition instanceof GroupNode || self::isCalloutsThenAssertion($condition)) {
                 return [$branches, [self::BRACKETS, $ceiling], $caseless, $condition];
             }
 
             // A group number, or the recursion it tests, is a number; a name
-            // may stand for several groups, or the condition be a version.
-            $length = ($condition instanceof BackrefNode && 1 === LibraryPcre::match('/^[+-]?\d++$/', $condition->ref))
-                || ($condition instanceof SubroutineNode && 1 === LibraryPcre::match('/^R\d*+$/', $condition->reference)) ? 3 : null;
+            // several groups bear an index and a count; a version is true
+            // or false, one unit.
+            $length = match (true) {
+                $condition instanceof VersionConditionNode => 1,
+                ($condition instanceof BackrefNode && 1 === LibraryPcre::match('/^[+-]?\d++$/', $condition->ref))
+                    || ($condition instanceof SubroutineNode && 1 === LibraryPcre::match('/^R\d*+$/', $condition->reference)) => 3,
+                default => $this->namedConditionLength($condition),
+            };
 
             return [$branches, null === $length ? [self::BRACKETS + ($this->floor)($condition), $ceiling + 5] : [self::BRACKETS + $length, $ceiling + $length], $caseless, null];
         }
@@ -444,7 +607,7 @@ final class CompiledLength
 
         if ($node instanceof ScriptRunNode && null !== $node->content) {
             // An atomic script run is a script run inside an atomic group.
-            return [self::branchesOf($node->content), $node->atomic ? [self::BRACKETS, 2 * self::BRACKETS] : [self::BRACKETS, self::BRACKETS], $caseless, null];
+            return [self::branchesOf($node->content), $node->atomic ? [2 * self::BRACKETS, 2 * self::BRACKETS] : [self::BRACKETS, self::BRACKETS], $caseless, null];
         }
 
         return null;
@@ -459,17 +622,32 @@ final class CompiledLength
      */
     private function groupRepeat(QuantifierNode $node, NodeInterface $repeated): ?\Closure
     {
-        [$min, $max] = self::boundsOf($node);
+        [$min, $max] = $this->boundsOf($node);
         $possessive = QuantifierType::Possessive === $node->type;
+        $atomicOnce = $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic);
         if ($repeated instanceof GroupNode) {
             $assertion = \in_array($repeated->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true);
 
-            return static fn (int $copy): int => self::repeatGroup($copy, $min, $assertion && null === $max ? $min + 1 : $max, $possessive, false);
+            // Up to 10.34 an assertion counted at least once is compiled
+            // once, and one counted from zero as optional.
+            if ($assertion && !$this->target->supports(PcreFeature::RepeatedAssertionKeepsItsCount)) {
+                return $min > 0 ? static fn (int $copy): int => $copy : static fn (int $copy): int => self::repeatGroup($copy, 0, 0 === $max ? 0 : 1, $possessive, false, $atomicOnce);
+            }
+
+            return static fn (int $copy): int => self::repeatGroup($copy, $min, $assertion && null === $max ? $min + 1 : $max, $possessive, false, $atomicOnce);
         }
 
-        // A conditional on a version may be false, and its repeat ignored.
-        if ($repeated instanceof ConditionalNode && ($repeated->condition instanceof GroupNode || $repeated->condition instanceof BackrefNode || $repeated->condition instanceof SubroutineNode)) {
-            return static fn (int $copy): int => self::repeatGroup($copy, $min, $max, $possessive, true);
+        // A script run takes no possessive brackets of its own: a possessive
+        // count wraps it as it does a conditional.
+        if ($repeated instanceof ScriptRunNode) {
+            return static fn (int $copy): int => self::repeatGroup($copy, $min, $max, $possessive, true, $atomicOnce);
+        }
+
+        // The first pass counts a DEFINE group, or a conditional on a false
+        // version, repeated as any conditional, though the code holds it
+        // once.
+        if ($repeated instanceof DefineNode || ($repeated instanceof ConditionalNode && ($repeated->condition instanceof GroupNode || $repeated->condition instanceof BackrefNode || $repeated->condition instanceof SubroutineNode || $repeated->condition instanceof VersionConditionNode || self::isCalloutsThenAssertion($repeated->condition)))) {
+            return static fn (int $copy): int => self::repeatGroup($copy, $min, $max, $possessive, true, $atomicOnce);
         }
 
         return null;
@@ -481,11 +659,16 @@ final class CompiledLength
      * innermost not), and an open maximum as a last copy that loops. A
      * possessive count wraps it all in an atomic group, unless it may be
      * written with the possessive brackets of a group repeated at most once
-     * first; a conditional has none.
+     * first; a conditional has none. Up to 10.33 a possessive count of one
+     * is ignored ($atomicOnce false).
      */
-    private static function repeatGroup(int $copy, int $min, ?int $max, bool $possessive, bool $conditional): int
+    private static function repeatGroup(int $copy, int $min, ?int $max, bool $possessive, bool $conditional, bool $atomicOnce): int
     {
         $wrap = $possessive ? self::BRACKETS : 0;
+        if (1 === $min && 1 === $max) {
+            return $copy + ($atomicOnce ? $wrap : 0);
+        }
+
         if (0 === $min) {
             return self::cap(match (true) {
                 // Kept, behind a marker that skips it.
@@ -524,12 +707,14 @@ final class CompiledLength
             $node instanceof DotNode, $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof KeepNode => 1,
             $node instanceof CommentNode => 0,
             $node instanceof CharTypeNode => $this->typeLength($node),
-            // "\p{Any}" is a match of any character, "\P{Any}" a class of none.
-            $node instanceof UnicodePropNode => self::isAnyProperty($node) ? (str_contains($node->prop, '^') ? 33 : 1) : 3,
+            $node instanceof UnicodePropNode => $this->propertyLength($node),
             $node instanceof CharClassNode => $this->classLength($node, $caseless),
-            $node instanceof BackrefNode => self::isGroupNumber($node) ? ($caseless ? 4 : 3) : null,
-            $node instanceof SubroutineNode => 3,
-            $node instanceof CalloutNode => $node->isStringIdentifier ? null : 6,
+            $node instanceof BackrefNode => $this->referenceLength($node, $caseless),
+            // A call that returns groups lists them, a number each.
+            $node instanceof SubroutineNode => 3 + 3 * \count($node->returnedGroups),
+            // A string callout holds the string as written, delimiters and
+            // a doubled delimiter included, after its opcode and four links.
+            $node instanceof CalloutNode => \is_string($node->identifier) && $node->isStringIdentifier ? 9 + $node->getEndPosition() - $node->getStartPosition() - 4 : 6,
             $node instanceof PcreVerbNode => $this->verbLength($node->verb),
             $node instanceof LimitMatchNode => 0,
             default => null,
@@ -541,25 +726,21 @@ final class CompiledLength
      */
     private function leafCeiling(NodeInterface $node): ?int
     {
+        [$min, $max] = $node instanceof QuantifierNode ? $this->boundsOf($node) : [1, 1];
+        $item = $node instanceof QuantifierNode ? $node->node : $node;
+
         // A character whose cases are not known is a caseless character, or
         // a property of three units: the longer of the two. A count of zero
-        // or of one leaves the item as it is. Only a character of three
-        // bytes or more is longer than the property, so a byte without UTF is
-        // measured as its UTF-8 form, of two bytes at most.
-        $codePoint = $this->codePointOf($node instanceof QuantifierNode ? $node->node : $node);
-        if (null !== $codePoint && ($this->utf || $codePoint < 0x100)) {
-            $units = \strlen((string) mb_chr($codePoint, 'UTF-8'));
-            $single = max(1 + $units, 3);
-            if (!$node instanceof QuantifierNode) {
-                return $single;
-            }
+        // or of one leaves the item as it is.
+        $codePoint = $this->codePointOf($item);
+        if (null !== $codePoint && $codePoint <= 0x10FFFF && ($this->utf || $codePoint <= 0xFF)) {
+            $units = $this->utf ? \strlen((string) mb_chr($codePoint, 'UTF-8')) : 1;
 
-            [$min, $max] = self::boundsOf($node);
-
-            return 0 === $max || (1 === $min && 1 === $max) ? $single : max(self::repeatSingle($units, 1 + $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
+            return 0 === $max || (1 === $min && 1 === $max) ? max(1 + $units, 3) : max(self::repeatSingle($units, 1 + $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
         }
 
         return match (true) {
+            $node instanceof QuantifierNode => null,
             // A reference to a name that stands for several groups, caseless.
             $node instanceof BackrefNode => 6,
             $node instanceof GroupNode && $this->isBlank($node->child) => self::BRACKETS,
@@ -573,15 +754,20 @@ final class CompiledLength
      */
     private function repeatedLength(QuantifierNode $node, bool $caseless): ?int
     {
-        [$min, $max] = self::boundsOf($node);
+        [$min, $max] = $this->boundsOf($node);
         $item = $node->node;
         if ($item instanceof SubroutineNode) {
-            return self::repeatCall($min, $max, QuantifierType::Possessive === $node->type);
+            return self::repeatCall(3 + 3 * \count($item->returnedGroups), $min, $max, QuantifierType::Possessive === $node->type, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic));
         }
 
         // A counted verb, "(*ACCEPT)?", is wrapped in a group first.
         if ($item instanceof PcreVerbNode) {
-            return null;
+            $verb = $this->verbLength($item->verb);
+            // An empty script run is a group already, wrapped as a
+            // conditional is when possessive.
+            $scriptRun = isset(self::EMPTY_SCRIPT_RUNS[$item->verb]);
+
+            return null === $verb ? null : self::repeatGroup(($scriptRun ? 0 : self::BRACKETS) + $verb, $min, $max, QuantifierType::Possessive === $node->type, $scriptRun, $this->target->supports(PcreFeature::PossessiveRepeatOnceIsAtomic));
         }
 
         // A count of zero drops the item, but its length stays counted.
@@ -596,21 +782,33 @@ final class CompiledLength
             return null === $repeat ? null : self::repeatSingle($repeat[0], $repeat[1], $min, $max);
         }
 
+        $count = (null === $max && $min < 2) || (0 === $min && 1 === $max) ? 1 : 5;
         if ($item instanceof DotNode || $item instanceof CharTypeNode || $item instanceof UnicodePropNode) {
             $length = $this->leafLength($item, $caseless);
 
             // A type repeats with its opcode, and a property its two values;
-            // "\P{Any}" is a class.
-            return null === $length || $length > 3 ? null : self::repeatSingle(0, $length, $min, $max);
+            // "\P{Any}" is a class from 10.45, which takes its count after it.
+            if (null !== $length && $length > 3) {
+                return $length + $count;
+            }
+
+            return null === $length ? null : self::repeatSingle(0, $length, $min, $max);
         }
 
         // A class or a reference takes its count after it: "*", "+" and "?"
-        // in one unit, any other count in five. Nothing else the parser
-        // lets a count follow is left here, but a lookahead that holds
-        // nothing, whose length is not known.
-        $length = $this->leafLength($item, $caseless);
+        // in one unit, any other count in five. Nothing else repeats. Up to
+        // 10.47 a possessive count wraps a reference in an atomic group.
+        $length = $item instanceof CharClassNode || $item instanceof BackrefNode ? $this->leafLength($item, $caseless) : null;
 
-        return null === $length ? null : $length + ((null === $max && $min < 2) || (0 === $min && 1 === $max) ? 1 : 5);
+        // A class of every character is a match of any, which repeats as a
+        // type does.
+        if ($item instanceof CharClassNode && 1 === $length) {
+            return self::repeatSingle(0, 1, $min, $max);
+        }
+
+        $wrap = $item instanceof BackrefNode && QuantifierType::Possessive === $node->type && !$this->target->supports(PcreFeature::PossessiveReferenceRepeatedInPlace) ? self::BRACKETS : 0;
+
+        return null === $length ? null : $length + $count + $wrap;
     }
 
     /**
@@ -619,23 +817,26 @@ final class CompiledLength
      *
      * @return array{0: int, 1: ?int}
      */
-    private static function boundsOf(QuantifierNode $node): array
+    private function boundsOf(QuantifierNode $node): array
     {
-        $bounds = QuantifierBounds::parse($node->quantifier);
+        if (!isset($this->bounds[$node->quantifier])) {
+            $bounds = QuantifierBounds::parse($node->quantifier);
+            $this->bounds[$node->quantifier] = null === $bounds ? [1, 1] : [$bounds->min, $bounds->max];
+        }
 
-        return null === $bounds ? [1, 1] : [$bounds->min, $bounds->max];
+        return $this->bounds[$node->quantifier];
     }
 
     /**
      * A character or a type repeated: one opcode for "*", "+" and "?", one
      * and a count for an upper bound, an exact count and a second opcode for
-     * a count of at least two; the item after each opcode. $item is the
-     * units of the item alone, its opcode included; $mc those of a
-     * character after its opcode, 0 for a type, whose opcode is the item.
+     * a count of at least two; the item after each opcode. $mc is the units
+     * of a character, 0 for a type of $type units.
      */
-    private static function repeatSingle(int $mc, int $item, int $min, ?int $max): int
+    private static function repeatSingle(int $mc, int $type, int $min, ?int $max): int
     {
-        $unit = 0 === $mc ? $item : $mc;
+        $unit = 0 === $mc ? $type : $mc;
+        $item = 0 === $mc ? $type : 1 + $mc;
         $open = null === $max;
 
         return match (true) {
@@ -650,17 +851,21 @@ final class CompiledLength
      * A counted call to a group: the mandatory copies as they are, then the
      * call wrapped in brackets and repeated as a group for what is left.
      */
-    private static function repeatCall(int $min, ?int $max, bool $possessive): int
+    private static function repeatCall(int $call, int $min, ?int $max, bool $possessive, bool $atomicOnce): int
     {
-        if ($min > 0 && (1 !== $min || null !== $max)) {
-            if ($min === $max) {
-                return self::cap(3 * $min + ($possessive ? self::BRACKETS : 0));
-            }
-
-            return self::cap(3 * $min + self::repeatGroup(3 + self::BRACKETS, 0, null === $max ? null : $max - $min, $possessive, false));
+        if (1 === $min && 1 === $max && (!$possessive || !$atomicOnce)) {
+            return $call;
         }
 
-        return self::repeatGroup(3 + self::BRACKETS, $min, $max, $possessive, false);
+        if ($min > 0 && (1 !== $min || null !== $max)) {
+            if ($min === $max) {
+                return self::cap($call * $min + ($possessive ? self::BRACKETS : 0));
+            }
+
+            return self::cap($call * $min + self::repeatGroup($call + self::BRACKETS, 0, null === $max ? null : $max - $min, $possessive, false, $atomicOnce));
+        }
+
+        return self::repeatGroup($call + self::BRACKETS, $min, $max, $possessive, false, $atomicOnce);
     }
 
     /**
@@ -684,7 +889,7 @@ final class CompiledLength
             // the negated code point, minus one.
             [$first, $second] = $members[0] + [1 => -1];
 
-            return !$node->isNegated && 2 === \count($members[0]) && true === $this->isCasePair($first, $second) ? -1 - $first : null;
+            return !$node->isNegated && 2 === \count($members[0]) && $this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter) && true === $this->isCasePair($first, $second) ? -1 - $first : null;
         }
 
         return $this->codePointOf($node);
@@ -702,13 +907,15 @@ final class CompiledLength
     private function characterRepeat(int $codePoint, bool $caseless): ?array
     {
         if ($codePoint < 0) {
-            // A letter and its other case: one caseless ASCII letter.
-            return [1, 2];
+            // A letter and its other case: one caseless letter.
+            $units = $this->utf ? \strlen((string) mb_chr(-1 - $codePoint, 'UTF-8')) : 1;
+
+            return [$units, 1 + $units];
         }
 
-        if ($caseless && ($this->utf || $this->ucp)) {
+        if ($caseless && $this->unicodeCases()) {
             $set = isset(self::CASELESS_SETS[$codePoint]);
-            if ($this->caseRulesVary && ($set || \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true))) {
+            if ($this->caseRulesVary() && ($set || \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true))) {
                 return null;
             }
 
@@ -757,68 +964,41 @@ final class CompiledLength
             return 1;
         }
 
-        // An inline "a" may hold these types to ASCII.
-        return $this->asciiOptions ? null : 3;
+        return $this->asciiOptions() ? null : 3;
     }
 
     /**
-     * A class of more than a character, or of a pair of cases, is a map of
-     * 32 bytes after its opcode, when all it holds fits in the map: no
-     * types, properties or POSIX names, which may reach past it, nothing
-     * past 255, and, under a caseless Unicode option, nothing past ASCII,
-     * whose other cases may. There, the Kelvin sign and the long s, other
-     * cases of "k" and "s", join the class after the map. One that holds
-     * every character compiles to less.
+     * Whether the source may hold an inline "a", which keeps types and
+     * POSIX names to ASCII.
+     */
+    private function asciiOptions(): bool
+    {
+        return $this->asciiOptions ??= 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*a/', $this->source);
+    }
+
+    /**
+     * A class of more than a character, or of a character and a letter that
+     * is not its other case: see ClassLength. A pair of cases whose being one
+     * is not known here has no length.
      */
     private function classLength(CharClassNode $node, bool $caseless): ?int
     {
-        $members = $this->classMembers($node);
-        if (null === $members || (!$node->isNegated && [] === $members[1] && [] === $members[2] && 2 === \count($members[0]) && null === $this->isCasePair(...$members[0]))) {
+        $members = $node->isNegated || !$this->target->supports(PcreFeature::CasePairClassIsACaselessCharacter) ? null : $this->classMembers($node);
+        if (null !== $members && [] === $members[1] && [] === $members[2] && 2 === \count($members[0]) && null === $this->isCasePair(...$members[0])) {
             return null;
         }
 
-        [$characters, $ranges, $types] = $members;
-        foreach ($characters as $codePoint) {
-            $ranges[] = [$codePoint, $codePoint];
+        // A class written again measures the same.
+        $key = ($caseless ? 'i' : '-').$this->classKey($node);
+        if (!isset($this->classLengths[$key])) {
+            $this->classes ??= new ClassLength($this->utf, $this->ucp, $this->caseRulesVary(), $this->asciiOptions(), $this->target);
+            $this->classLengths[$key] = [$this->classes->of($node, $caseless), $this->classes->charListBytes];
         }
 
-        // What the characters and ranges hold, then what the types and the
-        // POSIX names add.
-        $covered = [];
-        foreach ([...$ranges, ...$types] as $index => [$low, $high]) {
-            if ($high > 0xFF || ($caseless && ($this->utf || $this->ucp) && ($this->caseRulesVary || $high > 0x7F))) {
-                return null;
-            }
+        [$length, $lists] = $this->classLengths[$key];
+        $this->charLists += $lists;
 
-            for ($codePoint = $low; $codePoint <= $high; $codePoint++) {
-                $covered[$codePoint] = true;
-                if ($caseless && Ascii::isAlpha(\chr($codePoint)) && $codePoint < 0x80) {
-                    $covered[\ord(Ascii::lower(\chr($codePoint)))] = true;
-                    $covered[\ord(Ascii::upper(\chr($codePoint)))] = true;
-                }
-            }
-
-            if ($index === \count($ranges) - 1) {
-                $literals = $covered;
-            }
-        }
-
-        // Without UTF, what a type or a caseless letter matches past ASCII
-        // follows the locale PHP builds its tables from: a class that holds
-        // all of ASCII may hold every character there.
-        $asciiCovered = \count(array_filter(array_keys($covered), static fn (int $codePoint): bool => $codePoint < 0x80)) >= 0x80;
-        if (\count($covered) >= 256 || (!$this->utf && ($caseless || [] !== $types) && $asciiCovered)) {
-            return null;
-        }
-
-        // The opcode, its link, its flags, the map, each character past it
-        // (its tag and its UTF-8 bytes) and the end of the list. Only a "k"
-        // or an "s" written as such, not one a type or a POSIX name holds,
-        // brings in the Kelvin sign or the long s.
-        $literals ??= [];
-        $past = $caseless && $this->utf ? (isset($literals[0x6B]) ? 4 : 0) + (isset($literals[0x73]) ? 3 : 0) : 0;
-
-        return 0 === $past ? 33 : 33 + 3 + $past + 1;
+        return $length;
     }
 
     /**
@@ -830,6 +1010,20 @@ final class CompiledLength
      * @return array{0: list<int>, 1: list<array{0: int, 1: int}>, 2: list<array{0: int, 1: int}>}|null
      */
     private function classMembers(CharClassNode $node): ?array
+    {
+        // A class written again holds the same.
+        $key = $this->classKey($node);
+        if (\array_key_exists($key, $this->members)) {
+            return $this->members[$key];
+        }
+
+        return $this->members[$key] = $this->readClassMembers($node);
+    }
+
+    /**
+     * @return array{0: list<int>, 1: list<array{0: int, 1: int}>, 2: list<array{0: int, 1: int}>}|null
+     */
+    private function readClassMembers(CharClassNode $node): ?array
     {
         $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
         if (\count($members) > 256) {
@@ -933,6 +1127,16 @@ final class CompiledLength
     }
 
     /**
+     * Whether the source may set rules that change the cases of "i", "k" or
+     * "s": the Turkish ones, or those that keep ASCII apart.
+     */
+    private function caseRulesVary(): bool
+    {
+        return $this->caseRulesVary ??= str_contains($this->flags, 'r') || str_contains($this->source, 'TURKISH_CASING') || str_contains($this->source, 'CASELESS_RESTRICT')
+            || 1 === LibraryPcre::match('/\(\?[\^a-zA-Z]*r/', $this->source);
+    }
+
+    /**
      * Whether a group of flags sets options for the rest of its group, as
      * "(?i)" does, rather than holding a body, as "(?i:)" does.
      */
@@ -955,10 +1159,14 @@ final class CompiledLength
 
     private static function caselessAfter(string $flags, bool $caseless): bool
     {
-        // "^" turns every option off first, "-" those after it.
-        [$on, $off] = explode('-', $flags) + [1 => ''];
+        if (str_starts_with($flags, '^')) {
+            $caseless = false;
+            $flags = substr($flags, 1);
+        }
 
-        return !str_contains($off, 'i') && (str_contains($on, 'i') || ($caseless && !str_starts_with($flags, '^')));
+        [$on, $off] = explode('-', $flags, 2) + [1 => ''];
+
+        return str_contains($off, 'i') ? false : ($caseless || str_contains($on, 'i'));
     }
 
     /**
@@ -968,12 +1176,26 @@ final class CompiledLength
      * where the other case follows Unicode, or without UTF the locale PHP
      * builds its tables from; for "i", whose other case Turkish tables make
      * a byte past ASCII; where rules that change the cases of "k" and "s"
-     * may be set.
+     * may be set. A character past ASCII is no case of an ASCII letter, but
+     * for the dotted and dotless i, and in Turkish tables the bytes of "i";
+     * one with more than one other case is no pair.
      */
     private function isCasePair(int $first, int $second): ?bool
     {
+        // In UTF mode a Latin-1 letter has the other case every release
+        // gives it.
+        if ($this->utf && $first > 0x7F && $first <= 0xFF) {
+            return ClassLength::otherCaseOf($first) === $second;
+        }
+
+        // A character with more than one other case is never read as a
+        // pair, a byte without UTF included.
+        if ($first > 0x7F && isset(self::CASELESS_SETS[$first])) {
+            return false;
+        }
+
         if ($first > 0x7F) {
-            return null;
+            return $second <= 0x7F && ($this->utf ? !\in_array($first, [0x130, 0x131], true) : 'i' !== Ascii::lower(\chr($second))) ? false : null;
         }
 
         $letter = Ascii::lower(\chr($first));
@@ -985,25 +1207,289 @@ final class CompiledLength
             return 'i' === $letter && $second > 0x7F ? null : false;
         }
 
-        if ('i' === $letter || (\in_array($letter, ['k', 's'], true) && $this->caseRulesVary)) {
+        if ('i' === $letter || (\in_array($letter, ['k', 's'], true) && $this->caseRulesVary())) {
             return null;
         }
 
         return !\in_array($letter, ['k', 's'], true);
     }
 
-    private static function isAnyProperty(UnicodePropNode $node): bool
+    /**
+     * A property is its opcode and two values. "\p{Any}" is a match of any
+     * character from 10.33; "\P{Any}" a class of none from 10.45.
+     */
+    private function propertyLength(UnicodePropNode $node): int
     {
-        return 'any' === Ascii::lower((string) LibraryPcre::replace('/[\s_\-^{}]/', '', $node->prop));
+        if (!self::isAnyProperty($node)) {
+            return 3;
+        }
+
+        if (str_contains($node->prop, '^')) {
+            return $this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges) ? 33 : 3;
+        }
+
+        return $this->target->supports(PcreFeature::AnyPropertyMatchesAnyCharacter) ? 1 : 3;
     }
 
     /**
-     * Whether a reference names its group by number: "\1" to "\9" and the
-     * "\g" forms are always references, "\12" may be a character.
+     * A reference to one group is its opcode and the group number, one to
+     * a name several groups bear its opcode, an index and a count; from
+     * 10.45 either is one unit more when caseless. The reference marks the
+     * capturing groups it names that are open around it.
      */
-    private static function isGroupNumber(BackrefNode $node): bool
+    private function referenceLength(BackrefNode $node, bool $caseless): ?int
     {
-        return 1 === LibraryPcre::match('/^\\\\(?:[1-9]|g\{?[+-]?\d++\}?)$/', $node->ref);
+        $numbers = [];
+        foreach ($this->groupIndex()->groupsReferencedBy($node) as $group) {
+            if (isset($this->openGroups[spl_object_id($group)])) {
+                $this->openGroups[spl_object_id($group)] = true;
+            }
+
+            $numbers[$this->groupIndex()->numberOf($group) ?? -1] = true;
+        }
+
+        if ([] === $numbers) {
+            return null; // a reference to no group is refused before any measure
+        }
+
+        return (\count($numbers) > 1 ? 5 : 3) + ($caseless && $this->target->supports(PcreFeature::CaselessReferenceHoldsItsCaseRules) ? 1 : 0);
+    }
+
+    /**
+     * The length of a condition on a name, "(?(<n>)" or "(?(R&n)": a group
+     * number, or an index and a count where several groups bear the name.
+     */
+    private function namedConditionLength(NodeInterface $condition): ?int
+    {
+        $numbers = match (true) {
+            $condition instanceof BackrefNode => array_map(fn (GroupNode $group): ?int => $this->groupIndex()->numberOf($group), $this->groupIndex()->groupsReferencedBy($condition)),
+            $condition instanceof SubroutineNode && str_starts_with($condition->reference, 'R&') => $this->groupIndex()->numbersNamed(substr($condition->reference, 2)),
+            default => [], // no other condition comes here
+        };
+        $numbers = array_unique($numbers);
+
+        return match (\count($numbers)) {
+            0 => null, // a condition on no group is refused before any measure
+            1 => 3,
+            default => 5,
+        };
+    }
+
+    /**
+     * The key a class is measured once under: its text, but where "xx" may
+     * make spaces in it skipped, its node.
+     */
+    private function classKey(CharClassNode $node): string
+    {
+        $this->spacesSkipped ??= 1 === LibraryPcre::match('/\(\?[\^a-zA-Z-]*xx/', $this->source);
+
+        return $this->spacesSkipped ? '#'.spl_object_id($node) : substr($this->source, $node->getStartPosition(), $node->getEndPosition() - $node->getStartPosition());
+    }
+
+    /**
+     * Whether caseless characters past ASCII follow Unicode: in UTF mode,
+     * and under UCP without it from 10.35.
+     */
+    private function unicodeCases(): bool
+    {
+        return $this->utf || ($this->ucp && $this->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
+    }
+
+    /**
+     * Whether a condition is callouts, then an assertion.
+     */
+    private static function isCalloutsThenAssertion(NodeInterface $condition): bool
+    {
+        if (!$condition instanceof SequenceNode || [] === $condition->children) {
+            return false;
+        }
+
+        $children = array_values($condition->children);
+        $last = array_pop($children);
+
+        return $last instanceof GroupNode && [] === array_filter($children, static fn (NodeInterface $child): bool => !$child instanceof CalloutNode);
+    }
+
+    private function groupIndex(): GroupIndex
+    {
+        return $this->groups ??= GroupIndex::of($this->pattern ?? new LiteralNode('', 0, 0));
+    }
+
+    /**
+     * The brackets of a lookbehind and, for each branch of some length, the
+     * length to move back: one number, or two where the lookbehind is of
+     * varying length and the branch longer than its shortest (from 10.43).
+     * When a branch is of no known length, the most each may add.
+     *
+     * @param list<NodeInterface> $branches
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function lookbehindFrame(GroupNode $node, array $branches): array
+    {
+        // Up to PCRE2 10.34 the measure of lookbehinds skips the first item
+        // of a DEFINE group: a lookbehind there is left no length to move
+        // back. 10.34 then reads a DEFINE group that opens on a group as if
+        // it closed one level early, and stops where the outermost group
+        // around it closes: the lookbehinds after are left none either.
+        if (!$this->target->supports(PcreFeature::DefineSkippedInLookbehind)) {
+            $this->unmeasured ??= $this->unmeasuredLookbehinds();
+            [$from, $skipped, $known] = $this->unmeasured;
+            if (!$known && $node->getStartPosition() > $from) {
+                return [self::BRACKETS, self::BRACKETS + 3 * \count($branches)];
+            }
+
+            if ($known && ($node->getStartPosition() >= $from || isset($skipped[spl_object_id($node)]))) {
+                return [self::BRACKETS, self::BRACKETS];
+            }
+        }
+
+        $this->lookbehinds ??= new LookbehindLength(
+            $this->groupIndex(),
+            $this->utf,
+            $this->target->supports(PcreFeature::VariableLengthLookbehind),
+            inLookaheads: $this->target->supports(PcreFeature::LookbehindInLookaheadMeasured),
+            skipsDefine: $this->target->supports(PcreFeature::DefineSkippedInLookbehind),
+            readsNesting: !$this->target->supports(PcreFeature::ExtendedCharClass) || $this->target->supports(PcreFeature::ExtendedClassBesideLookbehindCompiles),
+        );
+        $lengths = [];
+        foreach ($branches as $branch) {
+            [$length] = $this->lookbehinds->branch($branch);
+            if (null === $length[1]) {
+                return [self::BRACKETS, self::BRACKETS + 5 * \count($branches)]; // a branch of no bound is refused before any measure
+            }
+
+            $lengths[] = [$length[0], $length[1]];
+        }
+
+        $shortest = \PHP_INT_MAX;
+        foreach ($lengths as [$least]) {
+            $shortest = min($shortest, $least);
+        }
+
+        $varying = [] !== array_filter($lengths, static fn (array $length): bool => $length[0] !== $length[1]);
+        $units = self::BRACKETS;
+        foreach ($lengths as [, $longest]) {
+            if ($longest > 0) {
+                $units += !$varying || $shortest === $longest ? 3 : 5;
+            }
+        }
+
+        return [$units, $units];
+    }
+
+    /**
+     * Up to PCRE2 10.34: where the measure of lookbehinds stops, the end of
+     * the outermost item around the first DEFINE group that opens on a
+     * group on 10.34; the lookbehinds a DEFINE group opens on, by node; and
+     * whether that is known: not for a DEFINE group inside a lookbehind,
+     * which another measure reads, nor on 10.34 for a second DEFINE group
+     * that opens on a group, where only the start of the first is given.
+     *
+     * @return array{0: int, 1: array<int, true>, 2: bool}
+     */
+    private function unmeasuredLookbehinds(): array
+    {
+        $found = [];
+        foreach (null === $this->pattern ? [] : self::branchesOf($this->pattern) as $branch) {
+            foreach (self::itemsOf($branch) as $item) {
+                $this->findDefinesOpeningOnAGroup($item, $item->getEndPosition(), false, $found);
+            }
+        }
+
+        if ([] === $found) {
+            return [\PHP_INT_MAX, [], true];
+        }
+
+        usort($found, static fn (array $a, array $b): int => $a[0]->getStartPosition() <=> $b[0]->getStartPosition());
+        $closesEarly = $this->target->supports(PcreFeature::LookbehindInLookaheadMeasured);
+        $skipped = [];
+        foreach ($found as [$define, , $inLookbehind, $first]) {
+            if ($inLookbehind || ($closesEarly && \count($found) > 1)) {
+                return [$define->getStartPosition(), [], false];
+            }
+
+            if ($first instanceof GroupNode && \in_array($first->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+                $skipped[spl_object_id($first)] = true;
+            }
+        }
+
+        return [$closesEarly ? $found[0][1] : \PHP_INT_MAX, $skipped, true];
+    }
+
+    /**
+     * Gather in $found each DEFINE group whose first item opens a group,
+     * with the end of the outermost item around it, whether it sits in a
+     * lookbehind, and that first item.
+     *
+     * @param list<array{0: DefineNode, 1: int, 2: bool, 3: NodeInterface}> $found
+     *
+     * @param-out list<array{0: DefineNode, 1: int, 2: bool, 3: NodeInterface}> $found
+     */
+    private function findDefinesOpeningOnAGroup(NodeInterface $node, int $end, bool $inLookbehind, array &$found): void
+    {
+        if ($node instanceof DefineNode) {
+            $item = $node->content;
+            while ($item instanceof SequenceNode || $item instanceof AlternationNode) {
+                $children = $item instanceof SequenceNode ? array_values(array_filter($item->children, static fn (NodeInterface $child): bool => !$child instanceof CommentNode)) : array_values($item->alternatives);
+                if ([] === $children) {
+                    break;
+                }
+
+                $item = $children[0];
+            }
+
+            $item = $item instanceof QuantifierNode ? $item->node : $item;
+            if (($item instanceof GroupNode && !(GroupType::InlineFlags === $item->type && $this->setsOptionsOnly($item))) || $item instanceof ConditionalNode || $item instanceof DefineNode || $item instanceof ScriptRunNode) {
+                $found[] = [$node, $end, $inLookbehind, $item];
+            }
+        }
+
+        $lookbehind = $inLookbehind || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true));
+        foreach ($node->getChildren() as $child) {
+            $this->findDefinesOpeningOnAGroup($child, $end, $lookbehind, $found);
+        }
+    }
+
+    /**
+     * Whether a conditional's empty second branch is written, "(?(1)a|)",
+     * as the source tells: null when something else stands there, as a
+     * comment under "x".
+     */
+    private function secondBranchWritten(ConditionalNode $node): ?bool
+    {
+        $start = $node->yes->getEndPosition();
+        $between = trim(substr($this->source, $start, max(0, $node->getEndPosition() - 1 - $start)), " \t\n\r\v\f");
+
+        return match ($between) {
+            '|' => true,
+            '' => false,
+            default => null,
+        };
+    }
+
+    /**
+     * Whether a node holds nothing but comments: "(?!)" holding only those
+     * is a failure, one holding options a group.
+     */
+    private function holdsOnlyComments(NodeInterface $node): bool
+    {
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!$this->holdsOnlyComments($child)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return self::isEmpty($node) || $node instanceof CommentNode;
+    }
+
+    private static function isAnyProperty(UnicodePropNode $node): bool
+    {
+        return 'any' === Ascii::lower((string) LibraryPcre::replace('/[\s_\-^{}]/', '', $node->prop));
     }
 
     private function verbLength(string $verb): ?int
@@ -1017,9 +1503,18 @@ final class CompiledLength
             return 1;
         }
 
-        // The opcode, after one that closes each capture open around it.
+        // The opcode, after one that closes each capture open around it; a
+        // name is a mark before it.
+        if (isset(self::EMPTY_SCRIPT_RUNS[$verb])) {
+            return self::EMPTY_SCRIPT_RUNS[$verb];
+        }
+
         if ('ACCEPT' === $verb) {
             return 1 + 3 * $this->openCaptures;
+        }
+
+        if (str_starts_with($verb, 'ACCEPT:')) {
+            return 3 + \strlen($verb) - 7 + 1 + 3 * $this->openCaptures;
         }
 
         // The opcode, the length of the name, the name and its terminator.
@@ -1070,6 +1565,20 @@ final class CompiledLength
     {
         if (!$branch instanceof SequenceNode) {
             return [$branch];
+        }
+
+        // A sequence seldom nests another: it is its own list of items.
+        $nested = false;
+        foreach ($branch->children as $child) {
+            if ($child instanceof SequenceNode) {
+                $nested = true;
+
+                break;
+            }
+        }
+
+        if (!$nested) {
+            return array_values($branch->children);
         }
 
         $items = [];

@@ -197,7 +197,8 @@ final class RegexGenerateTest extends TestCase
     }
 
     /**
-     * Oracle: PCRE2 refuses eight thousand "\ba" as too large; the library
+     * Oracle: PCRE2 refuses the pattern as too large, its caseless class
+     * adding other cases past 255 the library does not count; the library
      * judges the pattern valid, and reads it.
      */
     #[Test]
@@ -213,7 +214,7 @@ final class RegexGenerateTest extends TestCase
      */
     public static function provideUncompilable(): iterable
     {
-        yield 'too large for the engine' => ['/(?:\\ba){8000}/', str_repeat('a', 8000)];
+        yield 'too large for the engine' => ['/(?:a[à-ž]{0}){1300}/iu', str_repeat('a', 1300)];
     }
 
     /**

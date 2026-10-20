@@ -49,10 +49,11 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create();
 
-        // Repeated past the 64 KiB PCRE compiles, yet below the smallest size
-        // the static checks can prove, which counts no unit for "\b": only
-        // PCRE itself refuses it.
-        $result = $regex->validate('/(?:\ba){8000}/');
+        // Repeated past the 64 KiB PCRE compiles, but the other cases the
+        // caseless class adds past 255 come from the Unicode tables of the
+        // engine, which the static checks do not read: only PCRE itself
+        // refuses it.
+        $result = $regex->validate('/(?:a[à-ž]{0}){1300}/iu');
 
         $this->assertTrue($result->isValid);
     }
@@ -61,7 +62,7 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-        $result = $regex->validate('/(?:\ba){8000}/');
+        $result = $regex->validate('/(?:a[à-ž]{0}){1300}/iu');
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ValidationErrorCategory::PcreRuntime, $result->category);
@@ -69,7 +70,7 @@ final class RegexApiTest extends TestCase
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
         // PCRE2 10.48 reports "regular expression is too large" at offset 0,
         // the releases before at the end of the pattern.
-        $this->assertContains($result->offset, [0, 13]);
+        $this->assertContains($result->offset, [0, 21]);
     }
 
     public function test_optimize(): void

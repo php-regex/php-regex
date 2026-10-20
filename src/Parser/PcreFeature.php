@@ -46,6 +46,11 @@ enum PcreFeature
     case NamesReadWhole;
 
     /**
+     * "\p{Any}" compiles to a match of any character, one unit, where it was a property of three.
+     */
+    case AnyPropertyMatchesAnyCharacter;
+
+    /**
      * "(*ACCEPT)" may be repeated, as "(*ACCEPT)??".
      */
     case QuantifiedAccept;
@@ -74,6 +79,11 @@ enum PcreFeature
      * The longest lookbehind reported is the longest branch of a lookbehind, where it was the longest branch measured for one, of a group or a called group too.
      */
     case LongestLookbehindCountsItsBranchesOnly;
+
+    /**
+     * A class of a character and its other case, as "[aA]", compiles to that character matched caselessly, where it was a class.
+     */
+    case CasePairClassIsACaselessCharacter;
 
     /**
      * "(?*" and "(?<*" spell the non-atomic lookarounds.
@@ -227,6 +237,16 @@ enum PcreFeature
     case NamedCharacterBraceRefusedInClass;
 
     /**
+     * A class compiles from its ranges sorted and merged: the other cases a caseless class adds past the map are added once, "[\p{Any}]" or a class of every byte compiles to a match of any character and "\P{Any}" to a class of none, where each member added its own.
+     */
+    case ClassesCompiledFromMergedRanges;
+
+    /**
+     * A caseless back reference compiles to one unit more, which holds its case rules.
+     */
+    case CaselessReferenceHoldsItsCaseRules;
+
+    /**
      * The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits.
      */
     case VersionConditionWholeNumbers;
@@ -302,6 +322,11 @@ enum PcreFeature
     case TooLargeAtGroupEndReportedAtPatternEnd;
 
     /**
+     * A possessive count on a back reference compiles to a possessive repeat, where it wrapped the reference in an atomic group.
+     */
+    case PossessiveReferenceRepeatedInPlace;
+
+    /**
      * The PCRE2 release the behaviour arrived in, as "10.45".
      */
     public function release(): string
@@ -311,13 +336,15 @@ enum PcreFeature
             self::ScriptRuns,
             self::NonAsciiGroupNames,
             self::BadEscapeInClassStaysRefused,
-            self::NamesReadWhole => '10.33',
+            self::NamesReadWhole,
+            self::AnyPropertyMatchesAnyCharacter => '10.33',
             self::QuantifiedAccept,
             self::PossessiveRepeatOnceIsAtomic,
             self::NonAtomicAssertionNames,
             self::LookbehindInLookaheadMeasured,
             self::LookbehindLengthOverflowRefused,
-            self::LongestLookbehindCountsItsBranchesOnly => '10.34',
+            self::LongestLookbehindCountsItsBranchesOnly,
+            self::CasePairClassIsACaselessCharacter => '10.34',
             self::NonAtomicAssertionShortSyntax,
             self::GroupHoldingItsOwnReferenceBacktracks,
             self::RepeatedAssertionKeepsItsCount,
@@ -347,7 +374,9 @@ enum PcreFeature
             self::HexEscapeNeedsDigits,
             self::EmptyQuoteOpeningClassIsUnclosed,
             self::ClassEscapeEndingRangeRefusedAsEscape,
-            self::NamedCharacterBraceRefusedInClass => '10.45',
+            self::NamedCharacterBraceRefusedInClass,
+            self::ClassesCompiledFromMergedRanges,
+            self::CaselessReferenceHoldsItsCaseRules => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
             self::GroupListErrors,
@@ -362,7 +391,8 @@ enum PcreFeature
             self::TooLargeAtPatternStart => '10.47',
             self::UnclosedBraceAtPatternEnd,
             self::ExtendedClassBesideLookbehindCompiles,
-            self::TooLargeAtGroupEndReportedAtPatternEnd => '10.48',
+            self::TooLargeAtGroupEndReportedAtPatternEnd,
+            self::PossessiveReferenceRepeatedInPlace => '10.48',
         };
     }
 }

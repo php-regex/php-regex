@@ -54,21 +54,23 @@ final class ValidationMemoTest extends TestCase
     }
 
     /**
-     * "(?:\ba){8000}" is past the 64 KiB PCRE compiles, below what the
-     * static checks prove: only the running engine refuses it.
+     * "(?:[à-ž]x){1300}" under "iu" is past the 64 KiB PCRE compiles, but the
+     * other cases its class adds past 255 come from the Unicode tables of
+     * the engine, which the static checks do not read: only the running
+     * engine refuses it.
      */
     #[Test]
     public function test_a_refusal_of_the_running_engine_is_kept(): void
     {
         $parser = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => true]);
 
-        $refused = $parser->validate('/(?:\ba){8000}/');
-        $valid = $parser->validate('/(?:\ba){8}/');
+        $refused = $parser->validate('/(?:[à-ž]x){1300}/iu');
+        $valid = $parser->validate('/(?:[à-ž]x){8}/iu');
 
         $this->assertSame(ValidationErrorCategory::PcreRuntime, $refused->category);
-        $this->assertSame($refused, $parser->validate('/(?:\ba){8000}/'));
+        $this->assertSame($refused, $parser->validate('/(?:[à-ž]x){1300}/iu'));
         $this->assertTrue($valid->isValid);
-        $this->assertSame($valid, $parser->validate('/(?:\ba){8}/'));
+        $this->assertSame($valid, $parser->validate('/(?:[à-ž]x){8}/iu'));
     }
 
     #[Test]

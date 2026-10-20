@@ -300,6 +300,21 @@ final class Validator extends AbstractNodeVisitor
      */
     private ?string $source = null;
 
+    /**
+     * Whether the pattern measured may hold a caseless item, and whether a
+     * capture in it may be wrapped for a reference to itself (up to 10.34):
+     * what its ceiling allows for.
+     */
+    private bool $compiledCaseless = true;
+
+    private bool $compiledMayWrapCaptures = true;
+
+    /**
+     * Whether the pattern measured may hold an inline "a", which keeps types
+     * and POSIX names to ASCII under UCP.
+     */
+    private bool $compiledAsciiOptions = true;
+
     private int $charClassDepth = 0;
 
     /**
@@ -597,11 +612,12 @@ final class Validator extends AbstractNodeVisitor
 
         // PCRE measures the compiled pattern last, once it has read it all.
         // A pattern that holds no "{" and is short enough cannot reach the
-        // limit, whatever it holds: it is not measured.
+        // limit, whatever it holds: it is not measured. "(*ACCEPT)" closes
+        // each capture open around it, three units each.
         $source = $node->source;
-        $belowTheLimit = null !== $source && !str_contains($source, '{')
+        $belowTheLimit = null !== $source && !str_contains($source, '{') && !str_contains($source, 'ACCEPT')
             && \strlen($source) * self::MAX_UNITS_PER_BYTE_UNCOUNTED + self::COMPILED_FRAME_SIZE <= self::MAX_COMPILED_SIZE;
-        if (!$belowTheLimit && $this->compiledSizeFloor($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE) {
+        if (!$belowTheLimit && $this->mayBeTooLarge($node) && $this->isTooLarge($node)) {
             $this->raiseSemanticError(
                 'Regular expression is too large: PCRE would compile it to more than 64 KiB.',
                 $this->tooLargeOffset($node),
@@ -4017,8 +4033,15 @@ final class Validator extends AbstractNodeVisitor
             $node instanceof SubroutineNode => 3,
             $node instanceof CharClassNode => $this->classSizeFloor($node),
             // Under UCP, "\d", "\s" and "\w" are Unicode properties.
-            $node instanceof CharTypeNode => $this->unicodeFlag && str_contains('dDsSwW', $node->value) ? 3 : 1,
-            $node instanceof UnicodePropNode => 3,
+            // Under UCP, "\d", "\s" and "\w" are properties, but where an
+            // inline "a" may keep them to ASCII.
+            $node instanceof CharTypeNode => $this->unicodeFlag && !$this->compiledAsciiOptions && str_contains('dDsSwW', $node->value) ? 3 : 1,
+            // "\p{Any}" is a match of any character, one unit, from 10.33.
+            $node instanceof UnicodePropNode => self::isAnyCharacterProperty($node) ? 1 : 3,
+            // A DEFINE group is brackets and a condition never true, a script
+            // run brackets, inside an atomic group when atomic.
+            $node instanceof DefineNode => $this->compiledSizeFloor($node->content) + self::COMPILED_GROUP_SIZE + 1,
+            $node instanceof ScriptRunNode => null === $node->content ? 0 : $this->compiledSizeFloor($node->content) + ($node->atomic ? 2 : 1) * self::COMPILED_GROUP_SIZE,
             $node instanceof DotNode, $node instanceof CharLiteralNode => 1,
             // A callout carries its number or its string; a verb its name.
             $node instanceof CalloutNode => \is_string($node->identifier) && $node->isStringIdentifier ? 11 + \strlen($node->identifier) : 6,
@@ -4027,6 +4050,248 @@ final class Validator extends AbstractNodeVisitor
         };
 
         return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * The most units the first pass of any release may count for the node:
+     * a pattern whose ceiling stays under the limit is not measured further.
+     * A literal is two units a byte at most, three for a caseless "k" or
+     * "s"; a class of ASCII characters its map and what a caseless one adds
+     * past it, any other its header, map and end and 64 units a byte of it;
+     * a group its brackets, its number, an atomic group around a capture
+     * holding a reference to itself (up to 10.34) and five units for each
+     * branch of a lookbehind; a counted group each copy, seven units more
+     * for each optional one, a "may skip" marker and atomic brackets around
+     * a possessive count; "(*ACCEPT)" closes up to 250 captures.
+     */
+    private function compiledSizeCeiling(NodeInterface $node): int
+    {
+        $size = match (true) {
+            $node instanceof SequenceNode => $this->compiledSizeCeilingOfAll($node->children),
+            $node instanceof AlternationNode => $this->compiledSizeCeilingOfAll($node->alternatives) + 3 * (\count($node->alternatives) - 1),
+            $node instanceof GroupNode => $this->compiledSizeCeiling($node->child) + $this->groupFrameCeiling($node),
+            $node instanceof ConditionalNode => ($node->condition instanceof GroupNode || $node->condition instanceof SequenceNode ? $this->compiledSizeCeiling($node->condition) : 5) + $this->compiledSizeCeiling($node->yes) + $this->compiledSizeCeiling($node->no) + self::COMPILED_GROUP_SIZE + 3,
+            $node instanceof DefineNode => $this->compiledSizeCeiling($node->content) + self::COMPILED_GROUP_SIZE + 1,
+            $node instanceof ScriptRunNode => (null === $node->content ? 0 : $this->compiledSizeCeiling($node->content)) + 2 * self::COMPILED_GROUP_SIZE,
+            $node instanceof QuantifierNode => $this->repeatedSizeCeiling($node),
+            $node instanceof LiteralNode => 2 * \strlen($node->value) + ($this->compiledCaseless ? self::caselessSetBytes($node->value) : 0),
+            $node instanceof CharLiteralNode, $node instanceof ControlCharNode => 5,
+            $node instanceof DotNode, $node instanceof CharTypeNode => 3,
+            // "\P{Any}" is a class of none from 10.45.
+            $node instanceof UnicodePropNode => str_contains($node->prop, '^') ? 33 : 3,
+            $node instanceof CharClassNode => $this->classSizeCeiling($node),
+            $node instanceof BackrefNode => 6,
+            $node instanceof SubroutineNode => 3 + 3 * \count($node->returnedGroups),
+            $node instanceof CalloutNode => 9 + $node->getEndPosition() - $node->getStartPosition(),
+            // An empty script run reads as a verb: two groups at most.
+            $node instanceof PcreVerbNode => 4 + \strlen($node->verb) + (str_starts_with($node->verb, 'ACCEPT') ? 750 : 0) + (str_ends_with($node->verb, ':') ? 2 * self::COMPILED_GROUP_SIZE : 0),
+            $node instanceof AnchorNode, $node instanceof AssertionNode, $node instanceof KeepNode => 1,
+            $node instanceof CommentNode, $node instanceof LimitMatchNode => 0,
+            default => self::COMPILED_SIZE_CAP, // an extended class, which PHP does not let a pattern open: measured then
+        };
+
+        return min($size, self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * @param array<NodeInterface> $nodes
+     */
+    private function compiledSizeCeilingOfAll(array $nodes): int
+    {
+        $size = 0;
+        foreach ($nodes as $node) {
+            $size = min($size + $this->compiledSizeCeiling($node), self::COMPILED_SIZE_CAP);
+        }
+
+        return $size;
+    }
+
+    /**
+     * The bytes of a literal that may stand for a character of more than
+     * one other case, a property of three units when caseless: "k" and "s",
+     * and without UTF the micro sign and the a with a ring.
+     */
+    private static function caselessSetBytes(string $value): int
+    {
+        return \strlen($value) - \strlen(str_replace(['k', 'K', 's', 'S', "\xB5", "\xC5", "\xE5"], '', $value));
+    }
+
+    private function groupFrameCeiling(GroupNode $node): int
+    {
+        $capture = GroupType::Capturing === $node->type || GroupType::Named === $node->type;
+        $branches = $node->child instanceof AlternationNode ? \count($node->child->alternatives) : 1;
+
+        return self::COMPILED_GROUP_SIZE + ($capture ? 2 + ($this->compiledMayWrapCaptures ? self::COMPILED_GROUP_SIZE : 0) : 0)
+            + (\in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true) ? 5 * $branches : 0)
+            + (GroupType::ScanSubstring === $node->type ? 5 * (\count($node->scannedGroups) + 1) : 0);
+    }
+
+    /**
+     * A class of ASCII characters and ranges is a map of 33 units at most.
+     * Any other is an extended class at most: its header, map and end, a
+     * range past 255 that a negated type adds, the lists beside the code,
+     * and for each member what it adds past the map: nothing to 49 units,
+     * the Kelvin sign and the long s a caseless ASCII member adds, up to
+     * three other cases for a caseless character past ASCII; a caseless
+     * range past ASCII adds the other cases of each of its characters, with
+     * no bound.
+     */
+    private function classSizeCeiling(CharClassNode $node): int
+    {
+        $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
+        $items = 0;
+        $map = !$this->compiledCaseless;
+        $negated = false;
+        $wide = false;
+        foreach ($members as $member) {
+            $ceiling = $this->classMemberCeiling($member);
+            if (null === $ceiling) {
+                return self::COMPILED_SIZE_CAP;
+            }
+
+            [$units, $character, $past255, $negatedType] = $ceiling;
+            $items += $units;
+            $map = $map && $character && !$past255;
+            $negated = $negated || $negatedType;
+            $wide = $wide || $past255;
+        }
+
+        if ($map) {
+            return 33;
+        }
+
+        return 38 + $items + ($negated ? 7 : 0) + ($wide ? 23 : 0);
+    }
+
+    /**
+     * What a member of a class may add past the map, whether it is ASCII
+     * characters, whether it may reach past 255 or the lists beside the
+     * code, and whether it is a negated type; null for no bound.
+     *
+     * @return array{0: int, 1: bool, 2: bool, 3: bool}|null
+     */
+    private function classMemberCeiling(NodeInterface $member): ?array
+    {
+        $caseless = $this->compiledCaseless;
+        if ($member instanceof RangeNode) {
+            $ascii = $this->isAsciiCharacter($member->start) && $this->isAsciiCharacter($member->end);
+            if (!$ascii && $caseless) {
+                return null;
+            }
+
+            return [$ascii ? ($caseless ? 14 : 0) : 9, true, !$ascii, false];
+        }
+
+        if ($member instanceof LiteralNode) {
+            $ascii = 1 !== LibraryPcre::match('/[\x80-\xff]/', $member->value);
+
+            return [\strlen($member->value) * ($ascii ? ($caseless ? 14 : 0) : ($caseless ? 15 : 5)), true, !$ascii, false];
+        }
+
+        if ($member instanceof CharLiteralNode || $member instanceof ControlCharNode) {
+            $ascii = $member->codePoint < 0x80;
+
+            return [$ascii ? ($caseless ? 14 : 0) : ($caseless ? 15 : 5), true, !$ascii, false];
+        }
+
+        if ($member instanceof CharTypeNode) {
+            $spaces = str_contains('hHvV', $member->value);
+
+            return [match ($member->value) {
+                'h' => 27,
+                'H' => 49,
+                'v' => 7,
+                'V' => 14,
+                default => 3,
+            }, false, $spaces, str_contains('DSW', $member->value)];
+        }
+
+        if ($member instanceof PosixClassNode) {
+            $blank = str_ends_with($member->class, 'blank');
+
+            return [$blank ? 49 : 3, false, $blank, str_starts_with($member->class, '^')];
+        }
+
+        return $member instanceof UnicodePropNode ? [3, false, false, false] : null;
+    }
+
+    private function isAsciiCharacter(NodeInterface $node): bool
+    {
+        return ($node instanceof LiteralNode && 1 === \strlen($node->value) && \ord($node->value) < 0x80)
+            || (($node instanceof CharLiteralNode || $node instanceof ControlCharNode) && $node->codePoint < 0x80);
+    }
+
+    /**
+     * A class or a reference takes its count after it, "*", "+" and "?" in
+     * one unit, any other in five, and up to 10.47 a possessive count wraps
+     * a reference; a character or a type is at most two items and their
+     * counts; a group, a call or a verb one copy for each repetition, seven
+     * units more for each optional one, a "may skip" marker and atomic
+     * brackets around a possessive count.
+     */
+    private function repeatedSizeCeiling(QuantifierNode $node): int
+    {
+        $item = $node->node;
+        $copy = $this->compiledSizeCeiling($item);
+        [$min, $max] = $this->getQuantifierBounds($node->quantifier);
+        $short = (0 === $min && (-1 === $max || 1 === $max)) || (1 === $min && -1 === $max);
+        if ($item instanceof CharClassNode || $item instanceof BackrefNode) {
+            return $copy + ($short ? 1 : 5) + ($item instanceof BackrefNode ? self::COMPILED_GROUP_SIZE : 0);
+        }
+
+        $possessive = QuantifierType::Possessive === $node->type;
+        if (!$item instanceof GroupNode && !$item instanceof ConditionalNode && !$item instanceof DefineNode && !$item instanceof ScriptRunNode
+            && !$item instanceof SubroutineNode && !$item instanceof PcreVerbNode) {
+            return match (true) {
+                0 === $max || (1 === $min && 1 === $max) => $copy,
+                $short => $copy + 1,
+                default => 2 * $copy + 6,
+            };
+        }
+
+        // A call or a verb is wrapped in a group to be repeated.
+        if ($item instanceof SubroutineNode || $item instanceof PcreVerbNode) {
+            $copy += self::COMPILED_GROUP_SIZE;
+        }
+
+        $optional = -1 === $max ? 1 : max($max - $min, 0);
+
+        return min(max($min, 1) * $copy + $optional * ($copy + self::COMPILED_OPTIONAL_COPY_SIZE) + ($possessive ? 2 * self::COMPILED_GROUP_SIZE : 0) + (0 === $min ? 1 : 0), self::COMPILED_SIZE_CAP);
+    }
+
+    /**
+     * Whether the ceiling of the pattern passes the limit, which only then
+     * is measured.
+     */
+    private function mayBeTooLarge(RegexNode $node): bool
+    {
+        $source = $node->source ?? '';
+        $this->compiledCaseless = str_contains($node->flags, 'i') || str_contains($source, '(?');
+        $this->compiledMayWrapCaptures = !$this->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks) && 1 === LibraryPcre::match('/\\\\[1-9gk]|\\(\\?P=/', $source);
+
+        return $this->compiledSizeCeiling($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE;
+    }
+
+    /**
+     * Whether the first pass of PCRE2 finds the pattern too large: past the
+     * limit even at its floor, or at the length that pass counts, each item
+     * whose length is not known for sure counted at its floor.
+     */
+    private function isTooLarge(RegexNode $node): bool
+    {
+        $this->compiledAsciiOptions = 1 === LibraryPcre::match('/\(\?[\^a-zA-Z-]*a/', $node->source ?? '');
+        if ($this->compiledSizeFloor($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE) {
+            return true;
+        }
+
+        return $this->compiledLength($node)->passesTheLimit($node->pattern);
+    }
+
+    private function compiledLength(RegexNode $node): CompiledLength
+    {
+        $source = $node->source ?? '';
+
+        return new CompiledLength($this->compiledSizeFloor(...), $source, $this->unicodeMode, $this->unicodeFlag || \in_array('UCP', StartOptions::items($source), true), $node->flags, $this->target);
     }
 
     /**
@@ -4042,16 +4307,18 @@ final class Validator extends AbstractNodeVisitor
             return $end;
         }
 
+        // On 10.47 a class whose lists pass the limit as it is compiled is
+        // refused by a check that sets no offset.
         if (!$this->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd)) {
-            return 0;
+            $length = $this->compiledLength($node);
+            $length->passesTheLimit($node->pattern);
+
+            return $length->passedAtClassLists ? $end : 0;
         }
 
         // Past the limit inside a branch, at offset 0; where a group ends,
         // or when that cannot be told for sure, at the end, as up to 10.46.
-        $source = $node->source ?? '';
-        $length = new CompiledLength($this->compiledSizeFloor(...), $source, $this->unicodeMode, $this->unicodeFlag || \in_array('UCP', StartOptions::items($source), true), $node->flags);
-
-        return $length->passedInsideABranch($node->pattern) ? 0 : $end;
+        return $this->compiledLength($node)->passedInsideABranch($node->pattern) ? 0 : $end;
     }
 
     /**
@@ -4085,8 +4352,22 @@ final class Validator extends AbstractNodeVisitor
         $covered = 0;
         $pastMap = false;
         foreach ($members as $member) {
+            // A class holding "\p{Any}" may compile to a match of any
+            // character, one unit, from 10.45, where "\P{Any}" adds nothing.
+            if ($member instanceof UnicodePropNode && 'any' === Ascii::lower(str_replace([' ', '_', '-', '^', '{', '}'], '', $member->prop))) {
+                if (self::isAnyCharacterProperty($member)) {
+                    return 1;
+                }
+
+                continue;
+            }
+
+            // Under UCP a type but "\h" and "\v", or a POSIX name but
+            // "ascii", "blank" and "xdigit", is a property; those are lists
+            // of characters, which with their negations may hold them all.
             if ($member instanceof UnicodePropNode
-                || ($this->unicodeFlag && ($member instanceof CharTypeNode || $member instanceof PosixClassNode))) {
+                || ($this->unicodeFlag && !$this->compiledAsciiOptions && $member instanceof CharTypeNode && str_contains('dDsSwW', $member->value))
+                || ($this->unicodeFlag && !$this->compiledAsciiOptions && $member instanceof PosixClassNode && !\in_array(Ascii::lower(ltrim($member->class, '^')), ['ascii', 'blank', 'xdigit'], true))) {
                 $extended += 3;
 
                 continue;
@@ -4094,6 +4375,13 @@ final class Validator extends AbstractNodeVisitor
 
             $ends = array_map($this->classCodePoint(...), $member instanceof RangeNode ? [$member->start, $member->end] : [$member]);
             if (\in_array(null, $ends, true)) {
+                return 1;
+            }
+
+            // Ranges to the last character hold every character past 255:
+            // from 10.45 what the class holds below 256 then decides, and it
+            // may be a match of any character.
+            if ($this->unicodeMode && 0x10FFFF === max($ends)) {
                 return 1;
             }
 
@@ -4108,8 +4396,9 @@ final class Validator extends AbstractNodeVisitor
 
         $distinct = array_values(array_unique($codePoints));
         if ([] === $distinct) {
-            // Only properties and UCP types: an extended class of those.
-            return 5 + $extended;
+            // Only properties and UCP types: an extended class of those; a
+            // class of "\P{Any}" alone may be one of every character, negated.
+            return 0 === $extended ? 1 : 5 + $extended;
         }
 
         if (\count($distinct) < 2 || $covered >= ($this->unicodeMode ? 0x110000 : 256)) {
@@ -4121,7 +4410,12 @@ final class Validator extends AbstractNodeVisitor
             return 2;
         }
 
-        return 0 < $extended ? 5 + $extended : 33;
+        // An extended class that holds a character below 256 holds the map
+        // too, but where its characters reach the last one, all past 255
+        // being in it.
+        $map = $this->unicodeMode && min($distinct) <= 0xFF && max($distinct) < 0x10FFFF;
+
+        return 0 < $extended ? 5 + $extended + ($map ? 32 : 0) : 33;
     }
 
     /**
@@ -4170,10 +4464,17 @@ final class Validator extends AbstractNodeVisitor
             // A lookaround that holds nothing compiles to at most one unit:
             // "(?!)" is a plain failure.
             $this->isLookaround($node) && 0 === $body => 0,
-            GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value => 0,
+            // "(?i)" sets options for the rest of the group; "(?i:)" is a
+            // group, and so is "(?x: )", whose space "x" skips.
+            GroupType::InlineFlags === $node->type && $node->child instanceof LiteralNode && '' === $node->child->value && (null === $this->source || $this->setsOptionsOnly($node)) => 0,
             GroupType::Capturing === $node->type, GroupType::Named === $node->type => self::COMPILED_GROUP_SIZE + 2,
             default => self::COMPILED_GROUP_SIZE,
         };
+    }
+
+    private static function isAnyCharacterProperty(UnicodePropNode $node): bool
+    {
+        return !str_contains($node->prop, '^') && 'any' === Ascii::lower(str_replace([' ', '_', '-', '{', '}'], '', $node->prop));
     }
 
     /**
@@ -4191,7 +4492,17 @@ final class Validator extends AbstractNodeVisitor
         // length and three units.
         if ($node->node instanceof PcreVerbNode && 1 === LibraryPcre::match('/^ACCEPT(?::(.*))?$/s', $node->node->verb, $accept)) {
             $copy = self::COMPILED_GROUP_SIZE + 1 + (isset($accept[1]) && '' !== $accept[1] ? 3 + \strlen($accept[1]) : 0);
-        } elseif (!$node->node instanceof GroupNode && !$node->node instanceof ConditionalNode && !$node->node instanceof SubroutineNode) {
+        } elseif (!$node->node instanceof GroupNode && !$node->node instanceof ConditionalNode && !$node->node instanceof SubroutineNode && !$node->node instanceof DefineNode && !$node->node instanceof ScriptRunNode) {
+            // A count other than "*", "+", "?", zero or one is at least two
+            // units more: "a{2}" is an opcode, the count and the letter.
+            [$min, $max] = $this->getQuantifierBounds($node->quantifier);
+            $short = (0 === $min && (-1 === $max || 1 === $max)) || (1 === $min && -1 === $max);
+
+            return 0 === $max || (1 === $min && 1 === $max) || $short ? $copy : $copy + 2;
+        }
+
+        // Up to PCRE2 10.34 an assertion is compiled once whatever its count.
+        if ($node->node instanceof GroupNode && $this->isLookaround($node->node)) {
             return $copy;
         }
 

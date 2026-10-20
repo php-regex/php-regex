@@ -134,11 +134,20 @@ final class PatternTooLargeOffsetTest extends TestCase
         yield 'groups of caseless POSIX classes under UTF, 10.49' => ['pattern' => '/(*UTF)(?:(?:[[:alpha:]]){1400}|(?:[[:alpha:]]){1400})(?:a){9000}/i', 'php' => '8.5', 'release' => '10.49', 'offset' => 64];
         yield 'group of branches after a group of options holding a space, 10.48' => ['pattern' => '/(?:(?i: )(?:k){7300}|(?:b){1000})/xu', 'php' => '8.4', 'release' => '10.48', 'offset' => 33];
 
-        // A group of branches holding an item whose length is not known for
-        // sure may have passed the limit where it ends: the end is kept, as
-        // up to 10.46, though PCRE2 10.48 reports this one at 0 (a known
-        // difference: a class past 255 compiles to a list of ranges).
-        yield 'group of branches holding a class past 255, 10.48' => ['pattern' => '/(?:[\\x{100}-\\x{200}]|a){5000}/u', 'php' => '8.4', 'release' => '10.48', 'offset' => 29];
+        // An assertion as the condition passes the limit, and a repeated
+        // conditional on a version is measured as any other: at offset 0.
+        yield 'condition past the limit on its own, 10.49' => ['pattern' => '/(?(?=(?:a){8190}a)(?i))/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'repeated conditional on a version, 10.49' => ['pattern' => '/(?(VERSION>=10.0)(?:a){5000}|b){2}/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'lookbehind of a long branch past the limit, 10.49' => ['pattern' => '/(?<='.str_repeat('a', 32757).'|b)/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        yield 'lookbehind of a longer branch past the limit, 10.49' => ['pattern' => '/(?<='.str_repeat('a', 32763).'|b)/', 'php' => '8.5', 'release' => '10.49', 'offset' => 0];
+        // Up to 10.47 a class whose lists, with the branch before it, pass
+        // the limit is refused where it is compiled, by a check that sets
+        // no offset: at the end on 10.47 too.
+        yield 'class whose lists pass the limit, 10.47' => ['pattern' => '/'.str_repeat('[\\x{100}a]', 1637).str_repeat('[\\x{100}\\x{300}\\x{500}\\x{700}\\x{900}\\x{B00}\\x{D00}a]', 2).'/u', 'php' => '8.5', 'release' => '10.47', 'offset' => 16474];
+        yield 'class whose lists pass the limit, 10.48' => ['pattern' => '/'.str_repeat('[\\x{100}a]', 1637).str_repeat('[\\x{100}\\x{300}\\x{500}\\x{700}\\x{900}\\x{B00}\\x{D00}a]', 2).'/u', 'php' => '8.5', 'release' => '10.48', 'offset' => 0];
+        // A group of branches holding a class past 255, measured whole and
+        // repeated, is past the limit where the repeat is added.
+        yield 'group of branches holding a class past 255, 10.48' => ['pattern' => '/(?:[\\x{100}-\\x{200}]|a){5000}/u', 'php' => '8.4', 'release' => '10.48', 'offset' => 0];
 
         // A group of branches measured before the limit is passed, and too
         // large where it ends: at the end of the pattern, as up to 10.46.
