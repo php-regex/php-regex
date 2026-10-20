@@ -23,6 +23,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  manifests:
+    # The root manifest and the seventeen package manifests, strictly: a
+    # warning Packagist would show, an unbound requirement or a schema
+    # mistake fails here, before a tag publishes it. No lock file is
+    # committed, so none is checked.
+    name: Validate the manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          dependencies: none
+
+      - name: Validate every manifest
+        run: |
+          status=0
+          for manifest in composer.json src/*/composer.json; do
+            composer validate --strict --no-interaction --no-check-lock "$manifest" || status=1
+          done
+          exit "$status"
+
   standalone:
     # Each package as Packagist serves it: its directory alone, required in a
     # bare project, its php-regex siblings reached through path repositories
@@ -65,6 +94,11 @@ jobs:
           ' "$PACKAGE" "$project"
           composer install -d "$project" --no-interaction --no-progress
           echo "project=$project" >> "$GITHUB_ENV"
+
+      # The root requires no package for an audit to read: the advisories
+      # are read here, against what a consumer of this package installs.
+      - name: Audit what it installed
+        run: composer audit -d "$project" --no-interaction
 
       - name: Validate a pattern with what it installed
         run: |
