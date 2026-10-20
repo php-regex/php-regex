@@ -13,6 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony;
 
+use PHPRegex\Symfony\DependencyInjection\ValidatorMappingPass;
+use Symfony\Component\DependencyInjection\Compiler\PassConfig;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
@@ -20,6 +23,14 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  */
 final class PHPRegexBundle extends Bundle
 {
+    #[\Override]
+    public function build(ContainerBuilder $container): void
+    {
+        // After the passes of other bundles, which may give the validator
+        // mapping files of their own.
+        $container->addCompilerPass(new ValidatorMappingPass(), PassConfig::TYPE_BEFORE_OPTIMIZATION, -1024);
+    }
+
     /**
      * @return string the absolute path to the bundle's root directory
      */

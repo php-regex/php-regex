@@ -11,12 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Fixtures\Symfony\ValidatorDuplicate;
+namespace PHPRegex\Tests\Fixtures\Symfony\ValidatorMapping\Entity;
 
-use Symfony\Component\Validator\Constraints as Assert;
-
-final class RegexConstrainedEntity
+/**
+ * Mapped in config/validator/account.xml.
+ */
+final class Account
 {
-    #[Assert\Regex('/attribute-and-validator/')]
-    public string $name = '';
+    public string $code = '';
+
+    public string $iban = '';
 }

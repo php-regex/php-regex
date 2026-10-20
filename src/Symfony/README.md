@@ -29,7 +29,7 @@ Features
 * A `Regex` service, autowired as `PHPRegex\Toolkit\Regex`, to validate, parse, optimize, transpile and ReDoS-check patterns from your own code
 * A `ValidRegex` constraint for a pattern your users submit: valid as `regex validate` judges it, and optionally free of ReDoS
 * Seven console commands: `regex:lint`, `regex:routes`, `regex:security`, `regex:analyze`, `regex:compare`, `regex:explain` and `regex:transpile`, with the options of the same commands in the CLI and the Laravel package
-* `regex:lint` reads your PHP files, your route requirements and your validator constraints in one pass
+* `regex:lint` reads your PHP files, your route requirements and the `Regex` constraints of your validator mapping files (`config/validator/*.yaml`, `*.xml`) in one pass, each reported at the line that writes it
 * In PHP files, `regex:lint` reads the calls `regex lint` reads: `preg_*`, `RegexIterator`, `filter_var()`, `new Regex()` and `#[Assert\Regex]`, the wrapper libraries, PHPUnit's regex assertions, and a pattern held in a constant, a variable or a property of the same file
 * Reports in console, JSON, GitHub, Checkstyle and JUnit formats, with clickable editor links
 * `regex:lint` judges patterns for the PHP your `composer.json` supports, not for the one running it
@@ -66,7 +66,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `report_unmatched_ignores` | `true` | `regex:lint` reports each `@regex-ignore` marker, or issue identifier it names, that silences nothing, as `regex.ignore.unmatched` |
 | `ide` | `'%env(default::SYMFONY_IDE)%'` | IDE behind the clickable links; falls back to `framework.ide` |
 
-The bundle does not read `regex.json`: `extraction` is set here. A later configuration file's `extraction.interop` or `extraction.functions` list replaces the earlier one, where `paths` and `exclude` add up. A name in `extraction.interop` that is no preset is a configuration error, raised as the container is built, which names the preset it most likely means. A `#[Assert\Regex]` constraint read both from the PHP file and from the validator's metadata is reported once.
+The bundle does not read `regex.json`: `extraction` is set here. A later configuration file's `extraction.interop` or `extraction.functions` list replaces the earlier one, where `paths` and `exclude` add up. A name in `extraction.interop` that is no preset is a configuration error, raised as the container is built, which names the preset it most likely means.
 
 Usage
 -----

@@ -13,417 +13,213 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Extractor;
 
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceContext;
 use PHPRegex\Symfony\Extractor\ValidatorPatternSource;
+use PHPRegex\Tests\Fixtures\Symfony\ValidatorMapping\Entity\Account;
+use PHPRegex\Tests\Fixtures\Symfony\ValidatorMapping\Entity\Customer;
+use PHPRegex\Tests\Support\TemporaryProject;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Regex;
-use Symfony\Component\Validator\Mapping\ClassMetadata;
-use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
-use Symfony\Component\Validator\Mapping\Loader\LoaderInterface;
-use Symfony\Component\Validator\Mapping\PropertyMetadataInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * The source reads each mapping file with the validator's own loader and
+ * places each pattern on the line that writes it.
+ */
 final class ValidatorPatternSourceTest extends TestCase
 {
-    protected function setUp(): void
+    use TemporaryProject;
+
+    private const CUSTOMER = Customer::class;
+
+    private const MAPPING_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"
+        ."<constraint-mapping xmlns=\"http://symfony.com/schema/dic/constraint-mapping\">\n";
+
+    #[Test]
+    public function test_the_source_is_named_validators(): void
     {
-        if (!interface_exists(ValidatorInterface::class)) {
-            $this->markTestSkipped('Symfony Validator component is not available');
-        }
+        $this->assertSame('validators', (new ValidatorPatternSource())->getName());
     }
 
-    public function test_construct(): void
+    #[Test]
+    public function test_the_source_reads_nothing_without_mapping_files(): void
     {
         $source = new ValidatorPatternSource();
-        $this->assertSame('validators', $source->getName());
-    }
 
-    public function test_construct_with_validator(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub();
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $this->assertTrue($source->isSupported());
-    }
-
-    public function test_get_name(): void
-    {
-        $source = new ValidatorPatternSource();
-        $this->assertSame('validators', $source->getName());
-    }
-
-    public function test_is_supported_returns_false_when_no_validator(): void
-    {
-        $source = new ValidatorPatternSource();
         $this->assertFalse($source->isSupported());
-    }
-
-    public function test_is_supported_returns_false_when_no_loader(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $source = new ValidatorPatternSource($validator);
-        $this->assertFalse($source->isSupported());
-    }
-
-    public function test_is_supported_returns_true_when_both_present(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub();
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $this->assertTrue($source->isSupported());
-    }
-
-    public function test_extract_returns_empty_when_not_supported(): void
-    {
-        $source = new ValidatorPatternSource();
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_with_empty_mapped_classes(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([]);
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_skips_non_string_mapped_classes(): void
-    {
-        $validator = $this->createMock(ValidatorInterface::class);
-        $validator->expects($this->never())->method('getMetadataFor');
-        $loader = $this->createLoaderStub([null, 123, '']);
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_with_regex_constraint(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        // Mock metadata for a class
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([]);
-        $metadata->method('getConstrainedProperties')->willReturn(['email']);
-
-        $propertyMetadata = $this->createStub(PropertyMetadataInterface::class);
-        $propertyMetadata->method('getPropertyName')->willReturn('email');
-        $propertyMetadata->method('getConstraints')->willReturn([
-            new Regex(pattern: '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'),
-        ]);
-
-        $metadata->method('getPropertyMetadata')->willReturn([$propertyMetadata]);
-        $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertCount(1, $result);
-        $this->assertSame('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $result[0]->pattern);
-        $this->assertSame(__FILE__, $result[0]->file);
-        $this->assertSame('validator:'.TestEntity::class.'::$email', $result[0]->source);
-    }
-
-    public function test_extract_with_class_level_regex_constraint(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $regexConstraint = new Regex(pattern: '/^valid$/');
-
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([$regexConstraint]);
-        $metadata->method('getConstrainedProperties')->willReturn([]);
-
-        $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertCount(1, $result);
-        $this->assertSame('/^valid$/', $result[0]->pattern);
-        $this->assertSame('validator:'.TestEntity::class, $result[0]->source);
-    }
-
-    public function test_extract_ignores_null_patterns(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $regexConstraint = new Regex(pattern: '/placeholder/');
-        $regexConstraint->pattern = null;
-
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([$regexConstraint]);
-        $metadata->method('getConstrainedProperties')->willReturn([]);
-
-        $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_ignores_empty_patterns(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $regexConstraint = new Regex(pattern: '');
-
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([$regexConstraint]);
-        $metadata->method('getConstrainedProperties')->willReturn([]);
-
-        $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_ignores_non_regex_constraints(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $notConstraint = new NotBlank();
-
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([$notConstraint]);
-        $metadata->method('getConstrainedProperties')->willReturn([]);
-
-        $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_handles_metadata_exceptions(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $validator->method('getMetadataFor')->willThrowException(new \Exception('Metadata not found'));
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_handles_invalid_mapped_classes(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([
-            TestEntity::class, // Valid
-            '', // Empty string
-            null, // Null
-            123, // Not a string
-        ]);
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        // Should not crash and return empty since metadata retrieval will fail
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_with_class_file(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([
-            new Regex(pattern: '/test/'),
-        ]);
-        $metadata->method('getConstrainedProperties')->willReturn([]);
-
-        $validator->method('getMetadataFor')->willReturn($metadata);
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertCount(1, $result);
-        $this->assertStringEndsWith('ValidatorPatternSourceTest.php', $result[0]->file);
-    }
-
-    public function test_extract_handles_loader_exceptions(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([], new \Exception('Loader error'));
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_handles_loader_without_method(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderWithoutMappedClasses();
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_extract_skips_when_symfony_not_available(): void
-    {
-        if (interface_exists(ValidatorInterface::class)) {
-            $this->markTestSkipped('Symfony Validator is available, skipping test');
-        }
-
-        // This test will only run when Symfony is not available
-        $source = new ValidatorPatternSource();
-        $this->assertFalse($source->isSupported());
-        $this->assertSame('validators', $source->getName());
-    }
-
-    public function test_get_mapped_classes_returns_empty_when_loader_missing(): void
-    {
-        $source = new ValidatorPatternSource(null, null);
-
-        $reflection = new \ReflectionClass($source);
-        $method = $reflection->getMethod('getMappedClasses');
-
-        $this->assertSame([], $method->invoke($source));
-    }
-
-    public function test_get_mapped_classes_returns_empty_for_invalid_loader_response(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = new class implements LoaderInterface {
-            public function loadClassMetadata(ClassMetadata $metadata): bool
-            {
-                return true;
-            }
-
-            public function getMappedClasses(): string
-            {
-                return 'invalid';
-            }
-        };
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $reflection = new \ReflectionClass($source);
-        $method = $reflection->getMethod('getMappedClasses');
-
-        $this->assertSame([], $method->invoke($source));
-    }
-
-    public function test_extract_skips_non_property_metadata_entries(): void
-    {
-        $validator = $this->createStub(ValidatorInterface::class);
-        $loader = $this->createLoaderStub([TestEntity::class]);
-
-        $metadata = $this->createStub(ClassMetadataInterface::class);
-        $metadata->method('getConstraints')->willReturn([]);
-        $metadata->method('getConstrainedProperties')->willReturn(['email']);
-        $metadata->method('getPropertyMetadata')->willReturn([new \stdClass()]);
-
-        $validator->method('getMetadataFor')->willReturn($metadata);
-
-        $source = new ValidatorPatternSource($validator, $loader);
-        $context = new PatternSourceContext(['.'], []);
-
-        $result = $source->extract($context);
-
-        $this->assertSame([], $result);
-    }
-
-    public function test_get_class_file_returns_null_for_unknown_class(): void
-    {
-        $source = new ValidatorPatternSource();
-
-        $reflection = new \ReflectionClass($source);
-        $method = $reflection->getMethod('getClassFile');
-
-        $this->assertNull($method->invoke($source, 'UnknownClassName'));
+        $this->assertSame([], $source->extract(new PatternSourceContext([], [])));
     }
 
     /**
-     * @param array<int, string|int|null> $mappedClasses
+     * @param list<array{int, string, string}> $expected each pattern's line, member and pattern
      */
-    private function createLoaderStub(array $mappedClasses = [], ?\Throwable $exception = null): LoaderInterface
+    #[Test]
+    #[DataProvider('provideYamlMappings')]
+    public function test_a_yaml_pattern_is_placed_on_the_line_that_writes_it(string $mapping, array $expected): void
     {
-        return new class($mappedClasses, $exception) implements LoaderInterface {
-            /**
-             * @param array<int, string|int|null> $mappedClasses
-             */
-            public function __construct(private readonly array $mappedClasses, private readonly ?\Throwable $exception) {}
-
-            public function loadClassMetadata(ClassMetadata $metadata): bool
-            {
-                return true;
-            }
-
-            /**
-             * @return array<int, string|int|null>
-             */
-            public function getMappedClasses(): array
-            {
-                if (null !== $this->exception) {
-                    throw $this->exception;
-                }
-
-                return $this->mappedClasses;
-            }
-        };
+        $this->assertSame($expected, $this->read('customer.yaml', self::CUSTOMER.":\n".$mapping));
     }
 
-    private function createLoaderWithoutMappedClasses(): LoaderInterface
+    /**
+     * @return iterable<string, array{mapping: string, expected: list<array{int, string, string}>}>
+     */
+    public static function provideYamlMappings(): iterable
     {
-        return new class implements LoaderInterface {
-            public function loadClassMetadata(ClassMetadata $metadata): bool
-            {
-                return true;
-            }
-        };
-    }
-}
+        yield 'plain' => [
+            'mapping' => "    properties:\n        name:\n            - Regex: /[a-z/\n",
+            'expected' => [[4, '::$name', '/[a-z/']],
+        ];
 
-/**
- * Test entity class for testing validator extraction.
- */
-class TestEntity
-{
-    public string $email;
+        yield 'single-quoted, a quote doubled' => [
+            'mapping' => "    properties:\n        name:\n            - Regex: { pattern: '/it''s(/' }\n",
+            'expected' => [[4, '::$name', "/it's(/"]],
+        ];
+
+        yield 'double-quoted, a backslash escaped' => [
+            'mapping' => "    properties:\n        name:\n            - Regex:\n                pattern: \"/\\\\d+(/\"\n",
+            'expected' => [[5, '::$name', '/\d+(/']],
+        ];
+
+        yield 'one pattern written twice' => [
+            'mapping' => "    properties:\n        name:\n            - Regex: '/(a/'\n        nickname:\n            - Regex: '/(a/'\n",
+            'expected' => [[4, '::$name', '/(a/'], [6, '::$nickname', '/(a/']],
+        ];
+
+        yield 'a pattern that is the start of a longer one' => [
+            'mapping' => "    properties:\n        name:\n            - Regex: '/(a/i'\n        nickname:\n            - Regex: '/(a/'\n",
+            'expected' => [[4, '::$name', '/(a/i'], [6, '::$nickname', '/(a/']],
+        ];
+
+        yield 'written over several lines, on the line of its class' => [
+            'mapping' => "    properties:\n        name:\n            - Regex:\n                pattern: >-\n                    /[a-z\n                    (/\n",
+            'expected' => [[1, '::$name', '/[a-z (/']],
+        ];
+
+        yield 'nested in a composite constraint' => [
+            'mapping' => "    properties:\n        tags:\n            - All:\n                - Regex: '/#(/'\n            - Collection:\n                fields:\n                    first:\n                        - Regex: '/1(/'\n",
+            'expected' => [[5, '::$tags', '/#(/'], [9, '::$tags', '/1(/']],
+        ];
+
+        yield 'on a getter' => [
+            'mapping' => "    getters:\n        email:\n            - Regex: '/[@/'\n",
+            'expected' => [[4, '::getEmail()', '/[@/']],
+        ];
+    }
+
+    /**
+     * @param list<array{int, string, string}> $expected each pattern's line, member and pattern
+     */
+    #[Test]
+    #[DataProvider('provideXmlMappings')]
+    public function test_an_xml_pattern_is_placed_on_the_line_that_writes_it(string $mapping, array $expected): void
+    {
+        $this->assertSame($expected, $this->read('account.xml', self::MAPPING_XML.'    <class name="'.Account::class."\">\n".$mapping."    </class>\n</constraint-mapping>\n"));
+    }
+
+    /**
+     * @return iterable<string, array{mapping: string, expected: list<array{int, string, string}>}>
+     */
+    public static function provideXmlMappings(): iterable
+    {
+        yield 'an option' => [
+            'mapping' => "        <property name=\"code\">\n            <constraint name=\"Regex\">\n                <option name=\"pattern\">/(abc/</option>\n            </constraint>\n        </property>\n",
+            'expected' => [[6, '::$code', '/(abc/']],
+        ];
+
+        yield 'the text of the constraint, an entity in it' => [
+            'mapping' => "        <property name=\"iban\">\n            <constraint name=\"Regex\">/[A-Z&amp;&lt;/</constraint>\n        </property>\n",
+            'expected' => [[5, '::$iban', '/[A-Z&</']],
+        ];
+
+        yield 'a CDATA section' => [
+            'mapping' => "        <property name=\"iban\">\n            <constraint name=\"Regex\"><![CDATA[/[<&/]]></constraint>\n        </property>\n",
+            'expected' => [[5, '::$iban', '/[<&/']],
+        ];
+
+        yield 'written over several lines, on the line of its class' => [
+            'mapping' => "        <property name=\"code\">\n            <constraint name=\"Regex\">\n                <option name=\"pattern\"><![CDATA[/(a\nb/]]></option>\n            </constraint>\n        </property>\n",
+            'expected' => [[3, '::$code', "/(a\nb/"]],
+        ];
+    }
+
+    /**
+     * A class whose line cannot be found either, its name written in a
+     * double-quoted key, leaves the pattern on the first line of the file.
+     */
+    #[Test]
+    public function test_a_pattern_no_line_spells_under_a_class_no_line_names_is_placed_on_the_first_line(): void
+    {
+        $key = '"'.str_replace('\\', '\\\\', self::CUSTOMER).'"';
+
+        $this->assertSame([[1, '::$name', '/[a-z (/']], $this->read('customer.yaml', "# The customers.\n".$key.":\n    properties:\n        name:\n            - Regex:\n                pattern: >-\n                    /[a-z\n                    (/\n"));
+    }
+
+    #[Test]
+    public function test_a_file_the_validator_cannot_read_is_reported_as_unread(): void
+    {
+        $project = $this->makeProject([
+            'broken.yaml' => self::CUSTOMER.":\n    properties: [\n",
+            'unknown.yaml' => self::CUSTOMER.":\n    properties:\n        nope:\n            - Regex: '/a/'\n",
+        ]);
+
+        $occurrences = (new ValidatorPatternSource([$project.'/broken.yaml', $project.'/unknown.yaml']))->extract(new PatternSourceContext([], []));
+
+        $this->assertCount(2, $occurrences);
+        $this->assertSame([$project.'/broken.yaml', $project.'/unknown.yaml'], [$occurrences[0]->file, $occurrences[1]->file]);
+        $this->assertStringContainsString('does not contain valid YAML', (string) $occurrences[0]->unread);
+        $this->assertStringContainsString('"nope"', (string) $occurrences[1]->unread);
+        $this->assertSame('', $occurrences[1]->pattern);
+    }
+
+    #[Test]
+    public function test_a_file_under_an_excluded_directory_is_left_out(): void
+    {
+        $mapping = self::CUSTOMER.":\n    properties:\n        name:\n            - Regex: '/(a/'\n";
+        $project = $this->makeProject(['config/validator/customer.yaml' => $mapping, 'vendor/acme/bundle/config/validation.yaml' => $mapping]);
+        $source = new ValidatorPatternSource([$project.'/config/validator/customer.yaml', $project.'/vendor/acme/bundle/config/validation.yaml']);
+
+        $files = static fn (PatternSourceContext $context): array => array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->file, $source->extract($context));
+
+        $this->assertSame([$project.'/config/validator/customer.yaml'], $files(new PatternSourceContext(['src'], ['vendor'], excludeBase: $project)));
+        $this->assertSame([$project.'/config/validator/customer.yaml'], $files(new PatternSourceContext(['src'], ['', '/', 'vendor'])));
+        // An exclude names a directory of the project, not one above it.
+        $this->assertCount(2, $files(new PatternSourceContext(['src'], [basename(\dirname($project))], excludeBase: $project)));
+    }
+
+    #[Test]
+    public function test_the_source_of_a_pattern_names_its_class_and_member(): void
+    {
+        $occurrences = $this->occurrences('customer.yaml', self::CUSTOMER.":\n    properties:\n        name:\n            - Regex: '/(a/'\n");
+
+        $this->assertSame('validator:'.Customer::class.'::$name', $occurrences[0]->source);
+        $this->assertNull($occurrences[0]->unread);
+    }
+
+    /**
+     * @return array<array{int, string, string}> each pattern's line, member and pattern
+     */
+    private function read(string $name, string $contents): array
+    {
+        return array_map(
+            static fn (PatternOccurrence $occurrence): array => [$occurrence->line, (string) strstr($occurrence->source, '::'), $occurrence->pattern],
+            $this->occurrences($name, $contents),
+        );
+    }
+
+    /**
+     * @return array<PatternOccurrence>
+     */
+    private function occurrences(string $name, string $contents): array
+    {
+        $project = $this->makeProject([$name => $contents]);
+        $occurrences = (new ValidatorPatternSource([$project.'/'.$name]))->extract(new PatternSourceContext([], []));
+
+        foreach ($occurrences as $occurrence) {
+            $this->assertNull($occurrence->unread, (string) $occurrence->unread);
+            $this->assertSame($project.'/'.$name, $occurrence->file);
+        }
+
+        return $occurrences;
+    }
 }

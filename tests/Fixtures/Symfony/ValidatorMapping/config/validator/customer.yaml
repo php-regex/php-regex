@@ -1,0 +1,14 @@
+PHPRegex\Tests\Fixtures\Symfony\ValidatorMapping\Entity\Customer:
+    properties:
+        name:
+            - NotBlank: ~
+            - Regex: { pattern: '/[a-z/' }
+        nickname:
+            - Regex:
+                pattern: "/\\d+(/"
+        tags:
+            - All:
+                - Regex: { pattern: '/#[a-z/' }
+    getters:
+        email:
+            - Regex: '/[@/'

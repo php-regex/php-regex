@@ -115,11 +115,9 @@ return static function (ContainerConfigurator $container): void {
         ])
         ->tag('php_regex.pattern_source');
 
+    // The mapping files are set by ValidatorMappingPass.
     $services->set(ValidatorPatternSource::class)
-        ->args([
-            '$validator' => service('validator')->nullOnInvalid(),
-            '$validatorLoader' => service('validator.mapping.loader')->nullOnInvalid(),
-        ])
+        ->arg('$mappingFiles', [])
         ->tag('php_regex.pattern_source');
 
     $services->set('php_regex.service.regex_lint', LintService::class)

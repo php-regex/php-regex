@@ -109,4 +109,31 @@ final class PatternSourceCollectionTest extends TestCase
 
         $this->assertSame(['preg_match() /read/', 'other:run-together p/read/'], $read);
     }
+
+    /**
+     * Each source reads patterns of its own: one the PHP files also give,
+     * for the same file, stays.
+     */
+    #[Test]
+    public function test_a_source_keeps_a_pattern_the_php_files_also_give(): void
+    {
+        $project = $this->makeProject(['src/Check.php' => "<?php\n\npreg_match('/read/', \$s);\n"]);
+
+        $other = $this->createStub(PatternSourceInterface::class);
+        $other->method('getName')->willReturn('other');
+        $other->method('isSupported')->willReturn(true);
+        $other->method('extract')->willReturn([new PatternOccurrence('/read/', $project.'/src/Check.php', 40, 'other:same')]);
+
+        $collection = new PatternSourceCollection([
+            new PhpFilePatternSource(new PatternExtractor(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()))),
+            $other,
+        ]);
+
+        $read = array_map(
+            static fn (PatternOccurrence $occurrence): string => $occurrence->source,
+            array_values(array_filter($collection->collect(new PatternSourceContext([$project.'/src'], [])), static fn (PatternOccurrence $occurrence): bool => null === $occurrence->ignores)),
+        );
+
+        $this->assertSame(['preg_match()', 'other:same'], $read);
+    }
 }

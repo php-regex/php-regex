@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` reads the `Regex` constraints of the validator mapping files
+   FrameworkBundle hands the validator (`config/validator/`,
+   `framework.validation.mapping.paths`, the bundles' validation files), where
+   it read none: it asked for a service FrameworkBundle does not define. Each
+   pattern is reported at its YAML or XML file, on the line that writes it,
+   where a running counter stood in for the line; a mapping file the
+   validator cannot read is `regex.lint.source.unreadable`. An attribute is
+   read from the PHP file alone.
  * `regex:lint` reads `paths` and `exclude` from `%kernel.project_dir%`,
    whatever directory it runs from; the paths given on the command line are
    read from the working directory.
@@ -76,9 +84,7 @@ CHANGELOG
    `extraction` in `regex.json`; a later configuration file's list replaces
    the earlier one. An unknown preset is an `InvalidConfigurationException`
    that names the preset it most likely means; an entry of either list that
-   is no string is ignored with a warning naming its type. A `Regex`
-   constraint read from both the PHP file and the validator's metadata is
-   reported once.
+   is no string is ignored with a warning naming its type.
  * `php_regex.extraction.interop` and `functions` take one name written
    without a list, and a `functions` spec the lint cannot read is ignored
    with a warning, `Malformed pattern function "x#a", ignored.`

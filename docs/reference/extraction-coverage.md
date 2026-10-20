@@ -53,9 +53,11 @@ narrows them. Psalm reads no preset.
 | `symfony-validator`: `new Regex(...)`, `#[Assert\Regex(...)]` | Yes | Yes | Yes | No | No | Yes | Yes¹ |
 | A method called on an object of a library (`$str->match()`, `u($s)->match()`, `Assert::that($v)->regex()`) | No | No | No | No | No | No | No |
 
-¹ The Symfony bundle also reads every `Regex` constraint from the validator's
-metadata, YAML and XML mappings included; a constraint both sources read is
-reported once.
+¹ The Symfony bundle also reads the `Regex` constraints of the validator's
+YAML and XML mapping files, those FrameworkBundle hands the validator
+(`config/validator/`, `framework.validation.mapping.paths`, each bundle's
+validation files), and reports each at the file and the line that write it.
+An attribute is read from the PHP file, once.
 
 ## Your own helpers
 

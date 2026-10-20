@@ -137,10 +137,31 @@ with `Malformed pattern function "x#a", ignored.`
 One name written without a list, `interop: nette-utils`, is a list of that
 name.
 
-A `Regex` constraint written as an attribute is read twice, by the PHP
-extractor (`symfony-validator` preset) and from the validator's metadata;
-`regex:lint` reports it once. A constraint mapped in YAML or XML comes from
-the validator alone.
+`regex:lint` reads the `Regex` constraints of the validator mapping files
+FrameworkBundle hands the validator: `config/validator/*.yaml` and `*.xml`,
+the files and directories of `framework.validation.mapping.paths`, and the
+`validation.yaml` or `validation.xml` of each bundle, those under an
+`exclude` directory (`vendor/`) left out. Each file is read with the
+validator's own loader, nested constraints (`All`, `Collection`,
+`Sequentially`) included, and each pattern is reported at the file and the
+line that write it, its source naming the class and the member,
+`validator:App\Entity\User::$name`:
+
+```yaml
+# config/validator/user.yaml
+App\Entity\User:
+    properties:
+        name:
+            - Regex: { pattern: '/[a-z/' }   # reported at config/validator/user.yaml:4
+```
+
+A pattern written over several lines, which no line spells whole, is
+reported on the line of its class. A mapping file the validator cannot read,
+or one that maps a property its class lacks, is reported as
+`regex.lint.source.unreadable` with the validator's message. A constraint
+written as an attribute, `#[Assert\Regex]`, is read from the PHP file (the
+`symfony-validator` preset), once. `--no-validators` leaves the mapping files
+out.
 
 ## Using the service
 

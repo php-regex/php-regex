@@ -228,7 +228,7 @@ return [
         'PHPRegex\Symfony\DependencyInjection\PHPRegexExtension::load()' => ['host-return', 3],
     ],
     'src/Symfony/Extractor/ValidatorPatternSource.php' => [
-        'PHPRegex\Symfony\Extractor\ValidatorPatternSource::getMappedClasses()' => ['host-return', 1],
+        'PHPRegex\Symfony\Extractor\ValidatorPatternSource::patterns()' => ['reflection-sink', 1],
     ],
     'src/Symfony/Security/SecurityConfigExtractor.php' => [
         'PHPRegex\Symfony\Security\SecurityConfigExtractor::build()' => ['host-return', 1],
