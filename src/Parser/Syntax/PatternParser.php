@@ -99,13 +99,11 @@ final class PatternParser
                     break;
                 }
             }
-
-            $candidates = null === $endIndex ? [] : [$endIndex];
         } else {
             // PHP ends the pattern at the first delimiter a backslash does not
             // escape, whatever construct it sits in: a class, a comment or a
             // \Q...\E run does not hide it, so "/[/]/" has the flags "]/".
-            $candidates = [];
+            $endIndex = null;
             for ($k = 1; $k < $len; $k++) {
                 if ('\\' === $regex[$k]) {
                     $k++;
@@ -113,7 +111,7 @@ final class PatternParser
                     continue;
                 }
                 if ($regex[$k] === $closingDelimiter) {
-                    $candidates = [$k];
+                    $endIndex = $k;
 
                     break;
                 }
@@ -122,78 +120,70 @@ final class PatternParser
 
         // Before PHP 8.2 the scan for the closing delimiter stops at a NUL.
         $nul = $readsNul ? false : strpos($regex, "\0", 1);
-        if (false !== $nul && ([] === $candidates || $nul < $candidates[0])) {
+        if (false !== $nul && (null === $endIndex || $nul < $endIndex)) {
             throw self::nulByte($nul - 1, $regex);
         }
 
-        foreach ($candidates as $i) {
-            if ($regex[$i] === $closingDelimiter) {
-                // Check if escaped (count odd number of backslashes before it)
-                $escapes = 0;
-                for ($j = $i - 1; $j > 0 && '\\' === $regex[$j]; $j--) {
-                    $escapes++;
-                }
+        // Both scans step over what a backslash escapes: the delimiter found
+        // is the one that ends the pattern.
+        if (null !== $endIndex) {
+            $i = $endIndex;
+            $pattern = substr($regex, 1, $i - 1);
+            $flagsWithWhitespace = substr($regex, $i + 1);
+            // PHP skips a space, "\n" and "\r" among the modifiers;
+            // any other whitespace is an unknown modifier.
+            $flags = str_replace([' ', "\n", "\r"], '', $flagsWithWhitespace);
 
-                if (0 === $escapes % 2) {
-                    // Found the end delimiter
-                    $pattern = substr($regex, 1, $i - 1);
-                    $flagsWithWhitespace = substr($regex, $i + 1);
-                    // PHP skips a space, "\n" and "\r" among the modifiers;
-                    // any other whitespace is an unknown modifier.
-                    $flags = str_replace([' ', "\n", "\r"], '', $flagsWithWhitespace);
-
-                    // "n" arrived in PHP 8.2; "r" in PHP 8.4, which reads it
-                    // only when built against PCRE2 10.43 or later; "e" left
-                    // in PHP 7.0.
-                    $allowedFlags = 'imsxADSUXJu'.($phpVersionId >= PhpVersionGates::NO_AUTO_CAPTURE_MODIFIER ? 'n' : '');
-                    if ($phpVersionId >= PhpVersionGates::CASELESS_RESTRICT_MODIFIER && $target->supports(PcreFeature::CaselessRestrictModifier)) {
-                        $allowedFlags .= 'r';
-                    }
-                    if ($phpVersionId < PhpVersionGates::EVAL_MODIFIER_REMOVED) {
-                        $allowedFlags .= 'e';
-                    }
-
-                    // Validate flags (only allow standard PCRE flags)
-                    // n = NO_AUTO_CAPTURE, r = PCRE2_EXTRA_CASELESS_RESTRICT (if supported)
-                    // When the closing delimiter shows up again among the
-                    // "flags", an unescaped one cut the pattern off early.
-                    // Offsets count from the body; the snippet shows the
-                    // pattern as written, one character further for the
-                    // opening delimiter.
-                    if (str_contains($flags, $closingDelimiter)) {
-                        throw new ParserException(\sprintf(
-                            'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
-                            $closingDelimiter,
-                            $i - 1,
-                        ), ErrorCode::DelimiterUnescaped, $i - 1, $regex, null, $i);
-                    }
-
-                    $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
-                    if (!LibraryPcre::match($allowedPattern, $flags)) {
-                        // Find the invalid flag for a better error message
-                        $invalid = LibraryPcre::replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
-
-                        // The first modifier PHP refuses, whitespace skipped.
-                        $faultyFlag = strspn($flagsWithWhitespace, $allowedFlags." \n\r");
-                        $flagPosition = $i + $faultyFlag;
-
-                        if (!$readsNul && "\0" === ($flagsWithWhitespace[$faultyFlag] ?? '')) {
-                            throw self::nulByte($flagPosition, $regex);
-                        }
-
-                        if (str_contains((string) $invalid, 'e')) {
-                            throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $regex, null, $flagPosition + 1);
-                        }
-
-                        // Format each invalid flag individually with quotes
-                        $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', DisplayEscaper::escape($flag)), Bytes::split($invalid ?? $flags)));
-
-                        throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $regex, null, $flagPosition + 1);
-                    }
-
-                    return [$pattern, $flags, $delimiter];
-                }
+            // "n" arrived in PHP 8.2; "r" in PHP 8.4, which reads it
+            // only when built against PCRE2 10.43 or later; "e" left
+            // in PHP 7.0.
+            $allowedFlags = 'imsxADSUXJu'.($phpVersionId >= PhpVersionGates::NO_AUTO_CAPTURE_MODIFIER ? 'n' : '');
+            if ($phpVersionId >= PhpVersionGates::CASELESS_RESTRICT_MODIFIER && $target->supports(PcreFeature::CaselessRestrictModifier)) {
+                $allowedFlags .= 'r';
             }
+            if ($phpVersionId < PhpVersionGates::EVAL_MODIFIER_REMOVED) {
+                $allowedFlags .= 'e';
+            }
+
+            // Validate flags (only allow standard PCRE flags)
+            // n = NO_AUTO_CAPTURE, r = PCRE2_EXTRA_CASELESS_RESTRICT (if supported)
+            // When the closing delimiter shows up again among the
+            // "flags", an unescaped one cut the pattern off early.
+            // Offsets count from the body; the snippet shows the
+            // pattern as written, one character further for the
+            // opening delimiter.
+            if (str_contains($flags, $closingDelimiter)) {
+                throw new ParserException(\sprintf(
+                    'Unescaped delimiter "%1$s" at position %2$d ends the pattern early; what follows is read as modifiers. Escape it as "\\%1$s" or use another delimiter.',
+                    $closingDelimiter,
+                    $i - 1,
+                ), ErrorCode::DelimiterUnescaped, $i - 1, $regex, null, $i);
+            }
+
+            $allowedPattern = '/^['.preg_quote($allowedFlags, '/').']*+$/';
+            if (!LibraryPcre::match($allowedPattern, $flags)) {
+                // Find the invalid flag for a better error message
+                $invalid = LibraryPcre::replace('/['.preg_quote($allowedFlags, '/').']/', '', $flags);
+
+                // The first modifier PHP refuses, whitespace skipped.
+                $faultyFlag = strspn($flagsWithWhitespace, $allowedFlags." \n\r");
+                $flagPosition = $i + $faultyFlag;
+
+                if (!$readsNul && "\0" === ($flagsWithWhitespace[$faultyFlag] ?? '')) {
+                    throw self::nulByte($flagPosition, $regex);
+                }
+
+                if (str_contains((string) $invalid, 'e')) {
+                    throw new ParserException('The \'e\' flag (preg_replace /e) was removed in PHP 7.0; use preg_replace_callback() instead.', ErrorCode::FlagRemovedE, $flagPosition, $regex, null, $flagPosition + 1);
+                }
+
+                // Format each invalid flag individually with quotes
+                $formattedFlags = implode(', ', array_map(static fn (string $flag): string => \sprintf('"%s"', DisplayEscaper::escape($flag)), Bytes::split($invalid ?? $flags)));
+
+                throw new ParserException(\sprintf('Unknown regex flag(s) found: %s', $formattedFlags), ErrorCode::FlagUnknown, $flagPosition, $regex, null, $flagPosition + 1);
+            }
+
+            return [$pattern, $flags, $delimiter];
         }
 
         $pattern = substr($regex, 1);

@@ -36,7 +36,7 @@ final class TokenStreamTest extends TestCase
         $this->assertSame(0, $stream->getPosition());
         $this->assertSame('a', $stream->current()->value);
 
-        $stream->next();
+        $stream->advance();
         $this->assertSame(1, $stream->getPosition());
         $this->assertSame('b', $stream->current()->value);
 
@@ -54,12 +54,12 @@ final class TokenStreamTest extends TestCase
         ];
 
         $stream = new TokenStream($tokens, 'xy');
-        $stream->next(); // consume x
+        $stream->advance(); // step over x
 
         $peekBack = $stream->peek(-1);
         $this->assertSame('x', $peekBack->value);
 
-        $stream->next(); // consume y
+        $stream->advance(); // step over y
         $this->assertSame(TokenType::Eof, $stream->current()->type);
 
         $stream->rewind(2);
@@ -75,14 +75,14 @@ final class TokenStreamTest extends TestCase
         ];
 
         $stream = new TokenStream($tokens, 'a');
-        $stream->next();
+        $stream->advance();
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessageIsOrContains('Cannot rewind 2 tokens, would go before start of stream');
         $stream->rewind(2);
     }
 
-    public function test_next_and_current_throw_when_exhausted(): void
+    public function test_advance_stops_on_the_end_of_the_pattern(): void
     {
         $tokens = [
             new Token(TokenType::Literal, 'a', 0),
@@ -90,12 +90,11 @@ final class TokenStreamTest extends TestCase
         ];
         $stream = new TokenStream($tokens, 'a');
 
-        $stream->next(); // move to EOF
-        $stream->next(); // consume EOF, buffer exhausted
+        $stream->advance(); // move to EOF
+        $stream->advance(); // the end-of-pattern token is never stepped over
 
-        $this->expectException(\LogicException::class);
-        $this->expectExceptionMessageIsOrContains('Token stream is exhausted');
-        $stream->next();
+        $this->assertSame(1, $stream->getPosition());
+        $this->assertSame(TokenType::Eof, $stream->current()->type);
     }
 
     public function test_set_position_forward_and_backward(): void
@@ -141,7 +140,7 @@ final class TokenStreamTest extends TestCase
 
         $this->assertSame('a', $stream->getPattern());
         $this->assertCount(2, $stream->getTokens());
-        $this->assertTrue($stream->hasMore());
+        $this->assertFalse($stream->isAtEnd());
     }
 
     public function test_set_position_throws_on_out_of_bounds(): void
@@ -180,10 +179,10 @@ final class TokenStreamTest extends TestCase
 
         $this->assertFalse($stream->isAtEnd());
 
-        $stream->next();
+        $stream->advance();
         $this->assertTrue($stream->isAtEnd());
 
-        $stream->next();
+        $stream->advance();
         $this->assertTrue($stream->isAtEnd());
     }
 
@@ -195,7 +194,7 @@ final class TokenStreamTest extends TestCase
         ];
 
         $stream = new TokenStream($tokens, 'a');
-        $stream->next();
+        $stream->advance();
         $stream->rewind(0);
 
         $this->assertSame(1, $stream->getPosition());
@@ -209,8 +208,7 @@ final class TokenStreamTest extends TestCase
         ];
 
         $stream = new TokenStream($tokens, 'a');
-        $stream->next(); // consume a
-        $stream->next(); // consume EOF, buffer exhausted
+        $stream->setPosition(2); // past the end-of-pattern token
 
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessageIsOrContains('Token stream is exhausted');

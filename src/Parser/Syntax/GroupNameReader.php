@@ -92,11 +92,6 @@ final class GroupNameReader
         $this->pastTheFault = $pastTheFault;
     }
 
-    public function maxNameLength(): int
-    {
-        return $this->maxNameLength;
-    }
-
     public function readWhole(bool $readsWhole): void
     {
         $this->readsWhole = $readsWhole;

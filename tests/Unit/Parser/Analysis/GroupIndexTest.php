@@ -169,15 +169,16 @@ final class GroupIndexTest extends TestCase
         $regex = $this->parse('/(a)(?|(b)|(c))/');
         $index = GroupIndex::of($regex->pattern);
         $groups = NodeFinder::findInstanceOf($regex, GroupNode::class);
-        $inReset = [];
+        $numbers = [];
         foreach ($groups as $group) {
             if (GroupType::Capturing === $group->type) {
-                $inReset[self::text($regex, $group)] = $index->isInBranchReset($group);
+                $numbers[self::text($regex, $group)] = $index->numberOf($group);
             }
         }
 
         $this->assertTrue($index->hasBranchReset());
-        $this->assertSame(['(a)' => false, '(b)' => true, '(c)' => true], $inReset);
+        // The branches of the reset number their groups from the same 2.
+        $this->assertSame(['(a)' => 1, '(b)' => 2, '(c)' => 2], $numbers);
         $this->assertFalse(GroupIndex::of($this->parse('/(a)(b)/')->pattern)->hasBranchReset());
     }
 

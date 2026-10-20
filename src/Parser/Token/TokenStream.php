@@ -51,18 +51,6 @@ final class TokenStream
     /**
      * @throws \LogicException
      */
-    public function next(): void
-    {
-        if ($this->position > $this->maxPosition) {
-            throw new \LogicException('Token stream is exhausted');
-        }
-
-        $this->position++;
-    }
-
-    /**
-     * @throws \LogicException
-     */
     public function rewind(int $count = 1): void
     {
         if ($count < 1) {
@@ -106,11 +94,6 @@ final class TokenStream
         }
 
         return $this->tokens[$targetPos];
-    }
-
-    public function hasMore(): bool
-    {
-        return $this->position <= $this->maxPosition;
     }
 
     public function getPosition(): int

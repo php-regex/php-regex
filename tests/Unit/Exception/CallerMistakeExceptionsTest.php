@@ -208,14 +208,8 @@ final class CallerMistakeExceptionsTest extends TestCase
      */
     public static function provideWalksPastTheBounds(): iterable
     {
-        yield 'next past the end' => [static function (TokenStream $stream): void {
-            $stream->next();
-            $stream->next();
-            $stream->next();
-        }];
         yield 'current past the end' => [static function (TokenStream $stream): mixed {
-            $stream->next();
-            $stream->next();
+            $stream->setPosition(2);
 
             return $stream->current();
         }];

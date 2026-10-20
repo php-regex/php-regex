@@ -64,11 +64,6 @@ final class GroupIndex
      */
     private array $nextNumberAt = [];
 
-    /**
-     * @var array<int, true> the groups a branch reset holds, by node
-     */
-    private array $inBranchReset = [];
-
     private bool $hasBranchReset = false;
 
     /**
@@ -166,11 +161,6 @@ final class GroupIndex
         }
 
         return false;
-    }
-
-    public function isInBranchReset(GroupNode $group): bool
-    {
-        return isset($this->inBranchReset[spl_object_id($group)]);
     }
 
     /**
@@ -274,7 +264,7 @@ final class GroupIndex
      * Number the capturing groups as PCRE does, branch resets included, and
      * note where each call or reference sits in that count.
      */
-    private function index(NodeInterface $node, int &$nextGroupNumber, bool $inBranchReset = false): void
+    private function index(NodeInterface $node, int &$nextGroupNumber): void
     {
         // Most nodes are characters and classes, which hold no group.
         if ($node instanceof LiteralNode || $node instanceof CharClassNode || $node instanceof CharTypeNode) {
@@ -303,7 +293,7 @@ final class GroupIndex
             $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
             foreach ($branches as $branch) {
                 $nextGroupNumber = $base;
-                $this->index($branch, $nextGroupNumber, true);
+                $this->index($branch, $nextGroupNumber);
                 $highest = max($highest, $nextGroupNumber);
             }
             $nextGroupNumber = $highest;
@@ -324,12 +314,9 @@ final class GroupIndex
                 if (null !== $node->name) {
                     $this->byName[$node->name][] = $node;
                 }
-                if ($inBranchReset) {
-                    $this->inBranchReset[spl_object_id($node)] = true;
-                }
             }
 
-            $this->index($node->child, $nextGroupNumber, $inBranchReset);
+            $this->index($node->child, $nextGroupNumber);
 
             return;
         }
@@ -345,7 +332,7 @@ final class GroupIndex
         };
 
         foreach ($children as $child) {
-            $this->index($child, $nextGroupNumber, $inBranchReset);
+            $this->index($child, $nextGroupNumber);
         }
     }
 }
