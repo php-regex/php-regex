@@ -191,18 +191,18 @@ final class ClassLength
     private array $member = [0, 0];
 
     /**
-     * @param bool       $utf          whether PCRE reads the pattern as UTF-8
-     * @param bool       $ucp          whether types and POSIX names follow
-     *                                 Unicode
-     * @param bool       $turkish      whether Turkish case rules are set, from
-     *                                 10.45
-     * @param bool       $asciiOptions whether the source may hold an inline
-     *                                 "a", which keeps types and POSIX names
-     *                                 to ASCII
-     * @param PcreTarget $target       the PCRE2 release whose first pass is
-     *                                 measured
+     * @param bool                 $utf          whether PCRE reads the pattern as UTF-8
+     * @param bool                 $ucp          whether types and POSIX names follow
+     *                                           Unicode
+     * @param bool                 $turkish      whether Turkish case rules are set, from
+     *                                           10.45
+     * @param bool                 $asciiOptions whether the source may hold an inline
+     *                                           "a", which keeps types and POSIX names
+     *                                           to ASCII
+     * @param PcreTarget           $target       the PCRE2 release whose first pass is
+     *                                           measured
      * @param CharacterTables|null $tables       the tables PHP hands PCRE2 under
-     *                                 the locale judged, if known
+     *                                           the locale judged, if known
      */
     public function __construct(
         private readonly bool $utf,
