@@ -218,7 +218,7 @@ final class ClassLength
             return null;
         }
 
-        return self::otherCaseBelow256($codePoint, true) ?? self::OTHER_CASE_PAST_255[$codePoint] ?? null;
+        return self::OTHER_CASE_PAST_255[$codePoint] ?? self::otherCaseBelow256($codePoint, true);
     }
 
     /**
@@ -810,7 +810,8 @@ final class ClassLength
                     continue;
                 }
 
-                $start = $end = 0;
+                // No range is left.
+                $start = $end = \PHP_INT_MIN;
             }
 
             if ($end >= $listStart && $end < $listEnd) {

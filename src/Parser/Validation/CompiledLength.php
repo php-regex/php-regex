@@ -225,7 +225,7 @@ final class CompiledLength
      * Up to PCRE2 10.34, where the measure of lookbehinds stops and the
      * lookbehinds it skips, once read: see unmeasuredLookbehinds().
      *
-     * @var array{0: int, 1: array<int, true>, 2: bool}|null
+     * @var array{0: int, 1: array<int, GroupNode>, 2: bool}|null
      */
     private ?array $unmeasured = null;
 
@@ -372,7 +372,9 @@ final class CompiledLength
      *                                              (true), inside a branch
      *                                              (false), or not at all
      *                                              (null); and the length and
-     *                                              the ceiling of the group
+     *                                              the ceiling of the group,
+     *                                              the length of no use once
+     *                                              the limit is passed
      *
      * @phpstan-impure it records a group of branches that may end past the limit
      */
@@ -392,13 +394,13 @@ final class CompiledLength
                 $length += self::ALTERNATION;
                 $ceiling = self::sum($ceiling, self::ALTERNATION);
                 if ($before + $done + $length > self::LIMIT) {
-                    return [false, $done + $length, null];
+                    return [false, $length, null];
                 }
 
                 $done += $length;
                 $length = 0;
             } elseif ($before + $done + $length > self::LIMIT) {
-                return [true, $done + $length, null];
+                return [true, $length, null];
             }
         }
 
@@ -449,7 +451,7 @@ final class CompiledLength
             $lists = $this->charLists;
             [$found, $itemLength, $itemCeiling] = $this->measureItem($item, $caseless);
             if (null !== $found) {
-                return [$found, $length + $itemLength, null, $caseless];
+                return [$found, $length, null, $caseless];
             }
 
             // Up to 10.47 a class whose lists, with its header and what the
@@ -459,7 +461,7 @@ final class CompiledLength
             if ($lists > 0 && !$this->target->supports(PcreFeature::TooLargeAtGroupEndReportedAtPatternEnd) && $before + $length + 4 + $lists > self::LIMIT) {
                 $this->passedAtClassLists = true;
 
-                return [true, $length + $itemLength, null, $caseless];
+                return [true, $length, null, $caseless];
             }
 
             $length += $itemLength;
@@ -504,7 +506,7 @@ final class CompiledLength
 
             $frame = [$frame[0] + $conditionLength, self::sum($frame[1], $conditionCeiling)];
             if ($frame[0] > self::LIMIT) {
-                return [false, $frame[0], null];
+                return [false, $conditionLength, null];
             }
         }
 
@@ -734,9 +736,11 @@ final class CompiledLength
         // or of one leaves the item as it is.
         $codePoint = $this->codePointOf($item);
         if (null !== $codePoint && $codePoint <= 0x10FFFF && ($this->utf || $codePoint <= 0xFF)) {
-            $units = $this->utf ? \strlen((string) mb_chr($codePoint, 'UTF-8')) : 1;
+            // Without UTF a character is one byte, at most two counted here,
+            // which a property of three units outgrows whatever its count.
+            $units = \strlen((string) mb_chr($codePoint, 'UTF-8'));
 
-            return 0 === $max || (1 === $min && 1 === $max) ? max(1 + $units, 3) : max(self::repeatSingle($units, 1 + $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
+            return 0 === $max || (1 === $min && 1 === $max) ? max(1 + $units, 3) : max(self::repeatSingle($units, $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
         }
 
         return match (true) {
@@ -1161,7 +1165,6 @@ final class CompiledLength
     {
         if (str_starts_with($flags, '^')) {
             $caseless = false;
-            $flags = substr($flags, 1);
         }
 
         [$on, $off] = explode('-', $flags, 2) + [1 => ''];
@@ -1304,7 +1307,7 @@ final class CompiledLength
             return false;
         }
 
-        $children = array_values($condition->children);
+        $children = $condition->children;
         $last = array_pop($children);
 
         return $last instanceof GroupNode && [] === array_filter($children, static fn (NodeInterface $child): bool => !$child instanceof CalloutNode);
@@ -1386,7 +1389,7 @@ final class CompiledLength
      * which another measure reads, nor on 10.34 for a second DEFINE group
      * that opens on a group, where only the start of the first is given.
      *
-     * @return array{0: int, 1: array<int, true>, 2: bool}
+     * @return array{0: int, 1: array<int, GroupNode>, 2: bool}
      */
     private function unmeasuredLookbehinds(): array
     {
@@ -1410,7 +1413,7 @@ final class CompiledLength
             }
 
             if ($first instanceof GroupNode && \in_array($first->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
-                $skipped[spl_object_id($first)] = true;
+                $skipped[spl_object_id($first)] = $first;
             }
         }
 
@@ -1431,7 +1434,7 @@ final class CompiledLength
         if ($node instanceof DefineNode) {
             $item = $node->content;
             while ($item instanceof SequenceNode || $item instanceof AlternationNode) {
-                $children = $item instanceof SequenceNode ? array_values(array_filter($item->children, static fn (NodeInterface $child): bool => !$child instanceof CommentNode)) : array_values($item->alternatives);
+                $children = $item instanceof SequenceNode ? array_values(array_filter($item->children, static fn (NodeInterface $child): bool => !$child instanceof CommentNode)) : $item->alternatives;
                 if ([] === $children) {
                     break;
                 }
@@ -1459,7 +1462,7 @@ final class CompiledLength
     private function secondBranchWritten(ConditionalNode $node): ?bool
     {
         $start = $node->yes->getEndPosition();
-        $between = trim(substr($this->source, $start, max(0, $node->getEndPosition() - 1 - $start)), " \t\n\r\v\f");
+        $between = trim(substr($this->source, $start, $node->getEndPosition() - 1 - $start), " \t\n\r\v\f");
 
         return match ($between) {
             '|' => true,

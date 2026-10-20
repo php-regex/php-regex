@@ -71,6 +71,7 @@ final class CompiledLengthTest extends TestCase
         yield 'lookbehind after a DEFINE group inside a lookbehind, 10.33' => ['pattern' => '/(?<=(?(DEFINE)(a))b)c(?<=d)/', 'release' => '10.33'];
         yield 'lookbehind after a DEFINE group inside a lookbehind, 10.34' => ['pattern' => '/(?<=(?(DEFINE)(a))b)c(?<=d)/', 'release' => '10.34'];
         yield 'lookbehind after two DEFINE groups that open on a group, 10.34' => ['pattern' => '/(c)(?(DEFINE)(?<=x)b)(?(DEFINE)(?<!y)c)(?<=a)/', 'release' => '10.34'];
+        yield 'lookbehind after a DEFINE group that opens on a group after a comment, 10.34' => ['pattern' => '/(?<=(?(DEFINE)(?#c)(a))b)c(?<=d)/', 'release' => '10.34'];
     }
 
     #[Test]
@@ -339,6 +340,16 @@ final class CompiledLengthTest extends TestCase
         yield 'counted conditional on a version' => ['pattern' => '/(?(VERSION>=10.0)a){2}/', 'length' => 25];
         yield 'empty lookahead' => ['pattern' => '/(?=)/', 'length' => 13];
         yield 'empty negative lookahead' => ['pattern' => '/(?!)/', 'length' => 8];
+        // A Latin-1 letter with a third case is no pair in UTF mode; one whose
+        // other case is past 255 is.
+        yield 'class of a ring a and its other case, which has a third' => ['pattern' => '/[åÅ]/u', 'length' => 40];
+        yield 'class of the micro sign and its other case, which has a third' => ['pattern' => '/[µΜ]/u', 'length' => 47];
+        yield 'class of the sharp s and its capital' => ['pattern' => '/[ßẞ]/u', 'length' => 10];
+        yield 'class of y with diaeresis and its capital' => ['pattern' => '/[ÿŸ]/u', 'length' => 10];
+        yield 'empty second branch written after a space under x' => ['pattern' => '/(a)(?(1)b |)/x', 'length' => 31];
+        yield 'accept with a name in a capture' => ['pattern' => '/(a(*ACCEPT:x))/', 'length' => 25];
+        yield 'accept with a name in two captures' => ['pattern' => '/((a)(*ACCEPT:xy))/', 'length' => 34];
+        yield 'condition on a name two groups of one number hold' => ['pattern' => '/(?|(?<n>a)|(?<n>b))(?(<n>)c|d)/', 'length' => 52];
     }
 
     /**
@@ -578,6 +589,7 @@ final class CompiledLengthTest extends TestCase
         yield 'caseless k under the r modifier' => ['pattern' => '/k/iur'];
         yield 'caseless k under an inline r' => ['pattern' => '/(?r)k/iu'];
         yield 'scan substring' => ['pattern' => '/(a)(*scs:(1)b)/'];
+        yield 'condition on a name no group holds' => ['pattern' => '/(?(<x>)a|b)/'];
     }
 
     /**
