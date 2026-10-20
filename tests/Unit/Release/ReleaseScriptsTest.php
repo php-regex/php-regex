@@ -555,6 +555,67 @@ exit 1
         $this->assertSame($head, trim((string) shell_exec('git -C '.escapeshellarg($remotes.'/.github.git').' rev-parse main')));
     }
 
+    /**
+     * In CI the remote base carries the token: no message shows it, whether
+     * the run only says what it would push or fails to reach a repository.
+     */
+    #[Test]
+    public function test_split_never_shows_the_credential_of_a_remote(): void
+    {
+        mkdir($this->root.'/src/Parser');
+        file_put_contents($this->root.'/src/Parser/Parser.php', '<?php');
+        $this->commit();
+        $head = trim($this->git('rev-parse', 'HEAD'));
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\necho {$head}\n");
+        chmod($this->root.'/fake/splitsh-lite', 0o755);
+        $base = 'https://x-access-token:s3cr3t-t0ken@127.0.0.1:1/php-regex';
+
+        $dryRun = $this->split(['--branch', '2.x', '--only', 'regex-parser', '--dry-run'], $base);
+        $run = $this->split(['--branch', '2.x', '--only', 'regex-parser'], $base);
+
+        $this->assertSame(0, $dryRun[0], $dryRun[1]);
+        $this->assertStringContainsString('https://127.0.0.1:1/php-regex/regex-parser.git', $dryRun[1]);
+        $this->assertStringNotContainsString('s3cr3t-t0ken', $dryRun[1]);
+        $this->assertStringNotContainsString('x-access-token', $dryRun[1]);
+        $this->assertSame(1, $run[0], $run[1]);
+        $this->assertStringContainsString('cannot read https://127.0.0.1:1/php-regex/regex-parser.git', $run[1]);
+        $this->assertStringNotContainsString('s3cr3t-t0ken', $run[1]);
+        $this->assertStringNotContainsString('x-access-token', $run[1]);
+    }
+
+    /**
+     * A repository pushed to a branch of its own is still a redirect to the
+     * monorepo when the branch being split holds bin/split there.
+     */
+    #[Test]
+    public function test_split_never_pushes_into_the_monorepo_from_a_repository_with_its_own_branch(): void
+    {
+        mkdir($this->root.'/bin');
+        mkdir($this->root.'/.github/organization/profile', 0o777, true);
+        file_put_contents($this->root.'/bin/split', '#');
+        file_put_contents($this->root.'/.github/organization/profile/README.md', '# PHPRegex');
+        $this->commit();
+        $remotes = $this->root.'/remotes';
+        mkdir($remotes);
+        exec('git init -q --bare '.escapeshellarg($remotes.'/.github.git'));
+        $this->git('push', '-q', $remotes.'/.github.git', 'HEAD:refs/heads/2.x');
+        $this->git('rm', '-q', 'bin/split');
+        $this->git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'without split');
+        $split = trim($this->git('rev-parse', 'HEAD'));
+        mkdir($this->root.'/fake');
+        file_put_contents($this->root.'/fake/splitsh-lite', "#!/usr/bin/env bash\necho {$split}\n");
+        chmod($this->root.'/fake/splitsh-lite', 0o755);
+
+        [$code, $output] = $this->split(['--branch', '2.x', '--only', '.github'], $remotes);
+
+        $this->assertSame(0, $code, $output);
+        $this->assertStringContainsString('serves the monorepo (its 2.x holds bin/split)', $output);
+        $this->assertStringContainsString('skipped', $output);
+        $refs = (string) shell_exec('git -C '.escapeshellarg($remotes.'/.github.git').' for-each-ref --format="%(refname)"');
+        $this->assertSame("refs/heads/2.x\n", $refs);
+    }
+
     #[Test]
     public function test_status_offline_lists_every_package(): void
     {
@@ -639,6 +700,31 @@ exit 1
         exec('git -C '.escapeshellarg($this->root).' '.implode(' ', array_map(escapeshellarg(...), $arguments)).' 2>&1', $output);
 
         return implode("\n", $output);
+    }
+
+    /**
+     * Runs bin/split on the scratch repository, with the fakes first on the
+     * PATH and the repositories reached at $base.
+     *
+     * @param list<string> $arguments
+     *
+     * @return array{int, string}
+     */
+    private function split(array $arguments, string $base): array
+    {
+        $process = proc_open(
+            [\dirname(__DIR__, 3).'/bin/split', '--root', $this->root, ...$arguments],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+            null,
+            ['PATH' => $this->root.'/fake:'.getenv('PATH'), 'SPLIT_REMOTE_BASE' => $base, 'GIT_TERMINAL_PROMPT' => '0', 'HOME' => (string) getenv('HOME')],
+        );
+        $this->assertIsResource($process);
+        $output = (string) stream_get_contents($pipes[1]).(string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+
+        return [proc_close($process), $output];
     }
 
     /**

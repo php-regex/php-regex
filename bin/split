@@ -86,6 +86,10 @@ if ! git rev-parse -q --verify "$origin^{commit}" >/dev/null; then
     origin="refs/remotes/origin/$branch"
 fi
 
+# A remote is shown without the credential it may carry, as the token the
+# split workflow puts in $SPLIT_REMOTE_BASE; so is what git says about it.
+redact() { printf '%s' "$1" | sed -E 's#://[^/@[:space:]]*@#://#g'; }
+
 failed=0
 for split in "${SPLITS[@]}"; do
     prefix=${split%%:*}
@@ -99,12 +103,13 @@ for split in "${SPLITS[@]}"; do
         target_tag=""
     fi
     remote="$base/$repository.git"
+    shown=$(redact "$remote")
     if [ "${#only[@]}" -gt 0 ] && ! printf '%s\n' "${only[@]}" | grep -qxF "$repository"; then
         continue
     fi
 
     if [ "$dry_run" -eq 1 ]; then
-        echo "$prefix -> $remote ($target${target_tag:+, tag $target_tag})"
+        echo "$prefix -> $shown ($target${target_tag:+, tag $target_tag})"
         continue
     fi
 
@@ -115,30 +120,38 @@ for split in "${SPLITS[@]}"; do
     fi
     # A repository that serves the monorepo is never overwritten: until a
     # package's repository exists, GitHub may redirect its old name to the
-    # monorepo, and a forced push would replace the monorepo's branch.
-    # A repository that cannot be read is not pushed: the check above needs it.
-    if ! listing=$(git ls-remote "$remote" "refs/heads/$target" 2>&1); then
-        echo "✗ $repository: cannot read $remote ($(printf '%s' "$listing" | tail -1)); nothing pushed" >&2
+    # monorepo, and a forced push would replace the monorepo's branch. Both
+    # the branch pushed to and the branch split are looked at, as a
+    # repository with a branch of its own pushes to a branch the monorepo
+    # may not have. A repository that cannot be read is not pushed: the
+    # check needs it.
+    if ! listing=$(git ls-remote "$remote" "refs/heads/$target" "refs/heads/$branch" 2>&1); then
+        echo "✗ $repository: cannot read $shown ($(redact "$(printf '%s' "$listing" | tail -1)")); nothing pushed" >&2
         failed=$((failed + 1))
         continue
     fi
-    current=$(printf '%s' "$listing" | cut -f1)
-    if [ -n "$current" ]; then
-        git cat-file -e "$current^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "refs/heads/$target" 2>/dev/null || true
-        if git cat-file -e "$current:bin/split" 2>/dev/null; then
-            # Only a repository not created yet does that: skipped, not failed.
-            echo "⚠ $repository: $remote serves the monorepo (its $target holds bin/split), so the repository does not exist yet; skipped" >&2
-            continue
+    serving=""
+    while read -r ref_sha ref; do
+        [ -n "$ref_sha" ] || continue
+        git cat-file -e "$ref_sha^{commit}" 2>/dev/null || git fetch -q --no-tags "$remote" "$ref" 2>/dev/null || true
+        if git cat-file -e "$ref_sha:bin/split" 2>/dev/null; then
+            serving=${ref#refs/heads/}
+            break
         fi
+    done <<< "$listing"
+    if [ -n "$serving" ]; then
+        # Only a repository not created yet does that: skipped, not failed.
+        echo "⚠ $repository: $shown serves the monorepo (its $serving holds bin/split), so the repository does not exist yet; skipped" >&2
+        continue
     fi
-    if ! git push -q --no-follow-tags "$remote" "$sha:refs/heads/$target" -f; then
-        echo "✗ $repository: the push failed" >&2
+    if ! pushed=$(git push -q --no-follow-tags "$remote" "$sha:refs/heads/$target" -f 2>&1); then
+        echo "✗ $repository: the push failed ($(redact "$(printf '%s' "$pushed" | tail -1)"))" >&2
         failed=$((failed + 1))
         continue
     fi
     if [ -n "$target_tag" ]; then
         tag_sha=$("$splitsh" --prefix="$prefix" --origin="refs/tags/$target_tag" 2>/dev/null) || { echo "✗ $repository: the tag split failed" >&2; failed=$((failed + 1)); continue; }
-        git push -q "$remote" "$tag_sha:refs/tags/$target_tag" || { echo "✗ $repository: the tag push failed" >&2; failed=$((failed + 1)); continue; }
+        pushed=$(git push -q "$remote" "$tag_sha:refs/tags/$target_tag" 2>&1) || { echo "✗ $repository: the tag push failed ($(redact "$(printf '%s' "$pushed" | tail -1)"))" >&2; failed=$((failed + 1)); continue; }
     fi
     echo "✓ $repository ${sha:0:8}"
 done

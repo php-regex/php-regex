@@ -14,8 +14,12 @@ on:
 permissions:
   contents: read
 
+# One group for every run, whatever ref started it: a branch run and a tag
+# run push to the same repositories, so each waits for the one before. A
+# run already waiting is replaced by GitHub when another starts: re-run a
+# tag run cancelled that way.
 concurrency:
-  group: split-${{ github.ref }}
+  group: split
   cancel-in-progress: false
 
 jobs:
@@ -31,9 +35,17 @@ jobs:
           persist-credentials: false
 
       - name: Install splitsh-lite
+        # The release archive, checked against the checksum pinned here
+        # before anything of it runs: it runs with the token in reach.
+        env:
+          VERSION: '1.0.1'
+          SHA256: 2539301ce5e21d0ca44b689d0dd2c1b20d9f9e996c1fe6c462afb8af4e7141cc
         run: |
           mkdir -p "$RUNNER_TEMP/splitsh"
-          curl -sSfL https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz | tar -xz -C "$RUNNER_TEMP/splitsh" ./splitsh-lite
+          archive="$RUNNER_TEMP/lite_linux_amd64.tar.gz"
+          curl -fsSL -o "$archive" "https://github.com/splitsh/lite/releases/download/v${VERSION}/lite_linux_amd64.tar.gz"
+          echo "$SHA256  $archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP/splitsh" ./splitsh-lite
           echo "$RUNNER_TEMP/splitsh" >> "$GITHUB_PATH"
 
       - name: Split and push
