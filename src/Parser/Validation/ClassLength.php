@@ -680,7 +680,20 @@ final class ClassLength
             return $ranges;
         }
 
-        for ($codePoint = $this->nextCased($low, $high); null !== $codePoint; $codePoint = $this->nextCased($codePoint + 1, $high)) {
+        // Below 256 each character, past it those the tables give another
+        // case, a caseless set or Turkish rules give one.
+        if ($high <= 0xFF) {
+            $cased = range($low, $high);
+        } else {
+            $cased = array_keys(($this->cases ??= OtherCases::of($this->target))->between($low, $high));
+            foreach ($this->casedWithoutOtherCase() as $codePoint) {
+                if ($low <= $codePoint && $codePoint <= $high) {
+                    $cased[] = $codePoint;
+                }
+            }
+        }
+
+        foreach ($cased as $codePoint) {
             if ($this->turkish && !$restricted && isset(self::TURKISH_SETS[$codePoint])) {
                 $others = self::TURKISH_SETS[$codePoint];
             } else {
@@ -688,8 +701,11 @@ final class ClassLength
                 $others = null !== $set && (!$restricted || $set[0] > 0x7F) ? $set : [$this->otherCase($codePoint)];
             }
 
+            // An other case inside the range adds nothing.
             foreach ($others as $other) {
-                $ranges[] = [$other, $other];
+                if ($other < $low || $other > $high) {
+                    $ranges[] = [$other, $other];
+                }
             }
         }
 
@@ -716,13 +732,24 @@ final class ClassLength
 
         $from = max($from, 0x100);
         $next = ($this->cases ??= OtherCases::of($this->target))->nextCased($from) ?? \PHP_INT_MAX;
-        foreach ($this->turkish ? [...self::CASED_UNDER_TURKISH_RULES, ...self::CASED_WITHOUT_OTHER_CASE] : self::CASED_WITHOUT_OTHER_CASE as $codePoint) {
+        foreach ($this->casedWithoutOtherCase() as $codePoint) {
             if ($codePoint >= $from && $codePoint < $next) {
                 $next = $codePoint;
             }
         }
 
         return $next <= $to ? $next : null;
+    }
+
+    /**
+     * The characters past 255 that have a caseless set, or that Turkish
+     * rules give one, but no other case in the tables.
+     *
+     * @return list<int>
+     */
+    private function casedWithoutOtherCase(): array
+    {
+        return $this->turkish ? [...self::CASED_UNDER_TURKISH_RULES, ...self::CASED_WITHOUT_OTHER_CASE] : self::CASED_WITHOUT_OTHER_CASE;
     }
 
     /**

@@ -100,6 +100,29 @@ final class OtherCasesTest extends TestCase
     }
 
     /**
+     * @param array<int, int> $otherCases
+     */
+    #[Test]
+    #[DataProvider('provideOtherCasesOfARange')]
+    public function test_the_other_cases_of_a_range_are_listed_in_order(string $release, int $low, int $high, array $otherCases): void
+    {
+        $this->assertSame($otherCases, OtherCases::of(new PcreTarget(80400, $release))->between($low, $high));
+    }
+
+    /**
+     * @return iterable<string, array{release: string, low: int, high: int, otherCases: array<int, int>}>
+     */
+    public static function provideOtherCasesOfARange(): iterable
+    {
+        yield 'digits and the capitals that follow them' => ['release' => '10.49', 'low' => 0x30, 'high' => 0x43, 'otherCases' => [0x41 => 0x61, 0x42 => 0x62, 0x43 => 0x63]];
+        yield 'one capital' => ['release' => '10.49', 'low' => 0x41, 'high' => 0x41, 'otherCases' => [0x41 => 0x61]];
+        yield 'none in a range of digits' => ['release' => '10.49', 'low' => 0x30, 'high' => 0x39, 'otherCases' => []];
+        yield 'Latin capital u with a stroke to capital glottal i, 10.33' => ['release' => '10.33', 'low' => 0xA7B8, 'high' => 0xA7BC, 'otherCases' => [0xA7B8 => 0xA7B9, 0xA7B9 => 0xA7B8]];
+        yield 'Latin capital u with a stroke to capital glottal i, 10.34' => ['release' => '10.34', 'low' => 0xA7B8, 'high' => 0xA7BC, 'otherCases' => [0xA7B8 => 0xA7B9, 0xA7B9 => 0xA7B8, 0xA7BA => 0xA7BB, 0xA7BB => 0xA7BA, 0xA7BC => 0xA7BD]];
+        yield 'past the last character' => ['release' => '10.49', 'low' => 0x10FFF0, 'high' => 0x10FFFF, 'otherCases' => []];
+    }
+
+    /**
      * Unicode 15 (PCRE2 10.43) left the long s and the Kelvin sign, each in
      * a caseless set with an ASCII letter, without an other case of their
      * own, as pcre2_ucd.c gives it: the set decides their cases before,

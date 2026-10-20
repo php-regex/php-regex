@@ -82,6 +82,28 @@ final class OtherCases
      */
     public function nextCased(int $codePoint): ?int
     {
+        return $this->codePoints[$this->indexOf($codePoint)] ?? null;
+    }
+
+    /**
+     * The other case of each character from $low to $high that has one, by
+     * code point in order.
+     *
+     * @return array<int, int>
+     */
+    public function between(int $low, int $high): array
+    {
+        $first = $this->indexOf($low);
+
+        return \array_slice($this->otherCases, $first, $this->indexOf($high + 1) - $first, true);
+    }
+
+    /**
+     * The index of the first code point from $codePoint on, or the count of
+     * them past the last one.
+     */
+    private function indexOf(int $codePoint): int
+    {
         [$first, $last] = [0, \count($this->codePoints)];
         while ($first < $last) {
             $middle = ($first + $last) >> 1;
@@ -92,7 +114,7 @@ final class OtherCases
             }
         }
 
-        return $this->codePoints[$first] ?? null;
+        return $first;
     }
 
     /**
