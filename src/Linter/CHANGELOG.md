@@ -13,6 +13,9 @@ CHANGELOG
    report links each finding to the docs on php-regex.com: `docs_url` in the
    JSON report, a `Read more:` line in the GitHub and Checkstyle messages.
  * The Checkstyle `source` is the issue's identifier, without a prefix.
+ * `PatternLinter` throws `UnknownLintRuleException` for a rules map naming
+   a rule it does not run, the nearest rule named, where a typo turned
+   nothing off; the map takes each id short or in full.
  * `checks.lint.rules` takes a rule id in full as well as short, and a
    misspelt id is told the nearest one, in `regex.json` and on the command
    line; an inline marker reads a short id as that issue, where it was a

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
-use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleId;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -46,13 +46,13 @@ final class RuleIdTest extends TestCase
     }
 
     #[Test]
-    public function test_the_linter_reads_a_rules_map_under_either_spelling(): void
+    public function test_a_rules_map_is_read_under_either_spelling(): void
     {
-        $this->assertFalse(PatternLinter::enables(['quantifier.useless' => false], 'regex.lint.quantifier.useless'));
-        $this->assertFalse(PatternLinter::enables(['quantifier.useless' => false], 'quantifier.useless'));
-        $this->assertTrue(PatternLinter::enables(['quantifier.uselessLazy' => true], 'regex.lint.quantifier.uselessLazy'));
-        $this->assertFalse(PatternLinter::enables([], 'regex.lint.quantifier.uselessLazy'));
-        $this->assertTrue(PatternLinter::enables([], 'regex.lint.quantifier.useless'));
-        $this->assertTrue(PatternLinter::enables([], 'regex.lint.no.such.rule'));
+        $this->assertFalse(RuleCatalog::enables(['quantifier.useless' => false], 'regex.lint.quantifier.useless'));
+        $this->assertFalse(RuleCatalog::enables(['quantifier.useless' => false], 'quantifier.useless'));
+        $this->assertTrue(RuleCatalog::enables(['quantifier.uselessLazy' => true], 'regex.lint.quantifier.uselessLazy'));
+        $this->assertFalse(RuleCatalog::enables([], 'regex.lint.quantifier.uselessLazy'));
+        $this->assertTrue(RuleCatalog::enables([], 'regex.lint.quantifier.useless'));
+        $this->assertTrue(RuleCatalog::enables([], 'regex.lint.no.such.rule'));
     }
 }

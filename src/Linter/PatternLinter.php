@@ -20,6 +20,7 @@ use PHPRegex\Linter\Rule\LintRuleInterface;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\PatternInfo;
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Parser\AbstractNodeVisitor;
@@ -120,10 +121,22 @@ final class PatternLinter extends AbstractNodeVisitor
     private ?PcreTarget $target = null;
 
     /**
-     * @param array<string, bool> $enabledRules the rules to turn on or off by id; the others keep their default
+     * The rules to turn on or off by id, short or in full.
+     *
+     * @var array<string, bool>
      */
-    public function __construct(private readonly array $enabledRules = [])
+    private array $enabledRules;
+
+    /**
+     * @param array<string, bool> $enabledRules the rules to turn on or off by id, as regex.json's
+     *                                          checks.lint.rules names them, without "regex.lint." or
+     *                                          in full; the others keep their default
+     *
+     * @throws UnknownLintRuleException when the map names a rule the linter does not run
+     */
+    public function __construct(array $enabledRules = [])
     {
+        $this->enabledRules = self::known($enabledRules);
         $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->groups = PcreGroups::empty();
         $this->useRules(new LintRuleRegistry());
@@ -139,7 +152,8 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     public static function withRegistry(array $enabledRules, LintRuleRegistry $registry): self
     {
-        $linter = new self($enabledRules);
+        $linter = new self();
+        $linter->enabledRules = self::known($enabledRules, $registry);
         $linter->useRules($registry);
 
         return $linter;
@@ -385,14 +399,30 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
-     * Whether a rules map, as regex.json's checks.lint.rules writes it,
-     * turns a lint rule on: as it says, else as the rule is by default.
+     * The rules map, each identifier of which a rules map may name or a
+     * rule of the registry reports, short or in full.
      *
      * @param array<string, bool> $enabledRules
+     *
+     * @throws UnknownLintRuleException
+     *
+     * @return array<string, bool>
      */
-    public static function enables(array $enabledRules, string $ruleId): bool
+    private static function known(array $enabledRules, ?LintRuleRegistry $registry = null): array
     {
-        return RuleCatalog::enables($enabledRules, $ruleId);
+        $reported = [];
+        foreach ($registry?->all() ?? [] as $rule) {
+            array_push($reported, ...$rule->getRuleIds());
+        }
+
+        foreach (array_keys($enabledRules) as $id) {
+            $id = (string) $id;
+            if (!RuleCatalog::isConfigurable($id) && !\in_array(RuleId::full($id), $reported, true)) {
+                throw new UnknownLintRuleException($id, RuleCatalog::suggestion($id));
+            }
+        }
+
+        return $enabledRules;
     }
 
     /**
@@ -472,7 +502,7 @@ final class PatternLinter extends AbstractNodeVisitor
      */
     private function isRuleEnabled(string $ruleId): bool
     {
-        return self::enables($this->enabledRules, $ruleId);
+        return RuleCatalog::enables($this->enabledRules, $ruleId);
     }
 
     /**

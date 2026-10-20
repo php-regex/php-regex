@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\Config\LintConfigSchema;
-use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -123,9 +122,9 @@ final class LintRuleConfigurationTest extends TestCase
     {
         foreach (RuleCatalog::lintRuleIds() as $key) {
             $default = !\in_array($key, RuleCatalog::rulesOffByDefault(), true);
-            $this->assertSame($default, PatternLinter::enables([], $key), $key);
-            $this->assertSame($default, PatternLinter::enables([], 'regex.lint.'.$key), $key);
-            $this->assertSame(!$default, PatternLinter::enables([$key => !$default], $key), $key);
+            $this->assertSame($default, RuleCatalog::enables([], $key), $key);
+            $this->assertSame($default, RuleCatalog::enables([], 'regex.lint.'.$key), $key);
+            $this->assertSame(!$default, RuleCatalog::enables([$key => !$default], $key), $key);
         }
     }
 

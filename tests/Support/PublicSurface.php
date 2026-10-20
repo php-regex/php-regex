@@ -39,7 +39,7 @@ final class PublicSurface
         'Generator' => ['SampleGenerator', 'TestCaseGenerator', 'SampleGenerationException'],
         'LanguageServer' => [],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
-        'Linter' => ['PatternLinter', 'LintSeverity', 'LintException', 'Rule/RuleViolation'],
+        'Linter' => ['PatternLinter', 'LintSeverity', 'LintException', 'Rule/RuleViolation', 'UnknownLintRuleException'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
             'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',

@@ -426,7 +426,8 @@ final class TextDocumentHandlerTest extends TestCase
         yield 'the complexity score, never reported' => ['identifier' => 'regex.lint.complexity', 'lintRules' => [], 'reported' => false];
         yield 'the change of meaning, never reported' => ['identifier' => 'regex.lint.compat.meaningChanges', 'lintRules' => [], 'reported' => false];
         yield 'a lint rule turned off' => ['identifier' => 'regex.lint.charclass.single', 'lintRules' => ['charclass.single' => false], 'reported' => false];
-        yield 'no rule, turned off all the same' => ['identifier' => 'regex.lint.no.such.rule', 'lintRules' => ['no.such.rule' => false], 'reported' => true];
+        yield 'a lint rule turned on' => ['identifier' => 'regex.lint.charclass.single', 'lintRules' => ['charclass.single' => true], 'reported' => true];
+        yield 'no rule' => ['identifier' => 'regex.lint.no.such.rule', 'lintRules' => [], 'reported' => true];
     }
 
     /**

@@ -94,7 +94,7 @@ regex.lint.quantifier.nested: Nested quantifiers can cause catastrophic backtrac
 regex.lint.group.quantifiedCapture: Quantified capturing group "(...)" with "+": only the last iteration's capture is retained.
 ```
 
-Turn rules on or off by id — the same map `checks.lint.rules` reads from `regex.json`:
+Turn rules on or off by id — the same map `checks.lint.rules` reads from `regex.json`, each id without `regex.lint.` or in full. An id the linter does not run throws `UnknownLintRuleException`, which names the nearest one:
 
 ```php
 use PHPRegex\Linter\PatternLinter;
