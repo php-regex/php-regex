@@ -69,6 +69,34 @@ final class CodePointReaderTest extends TestCase
         ];
     }
 
+    /**
+     * Past a PHP integer, hexdec() and octdec() give a float no int holds:
+     * the value reads as the largest int, never as one the cast wraps to,
+     * and without a warning, a notice or a deprecation from PHP 8.5 on.
+     */
+    #[Test]
+    #[DataProvider('provideValuesPastAPhpInteger')]
+    public function test_a_value_past_a_php_integer_reads_as_the_largest_int(string $escape, CharLiteralType $type, int $codePoint): void
+    {
+        $this->assertSame($codePoint, CodePointReader::fromLiteral($escape, $type));
+    }
+
+    /**
+     * @return iterable<string, array{escape: string, type: CharLiteralType, codePoint: int}>
+     */
+    public static function provideValuesPastAPhpInteger(): iterable
+    {
+        yield 'braced hex, 2 to the 64' => ['escape' => '\x{10000000000000000}', 'type' => CharLiteralType::Unicode, 'codePoint' => \PHP_INT_MAX];
+        yield 'braced hex, 2 to the 63' => ['escape' => '\x{8000000000000000}', 'type' => CharLiteralType::Unicode, 'codePoint' => \PHP_INT_MAX];
+        yield 'braced hex, the largest int' => ['escape' => '\x{7FFFFFFFFFFFFFFF}', 'type' => CharLiteralType::Unicode, 'codePoint' => \PHP_INT_MAX];
+        yield 'braced hex, zeros before a small value' => ['escape' => '\x{000000000000000041}', 'type' => CharLiteralType::Unicode, 'codePoint' => 65];
+        yield 'braced hex, fifteen digits' => ['escape' => '\x{FFFFFFFFFFFFFFF}', 'type' => CharLiteralType::Unicode, 'codePoint' => 0xFFFFFFFFFFFFFFF];
+        yield 'named code point, 2 to the 64' => ['escape' => '\N{U+10000000000000000}', 'type' => CharLiteralType::UnicodeNamed, 'codePoint' => \PHP_INT_MAX];
+        yield 'braced octal, 2 to the 63' => ['escape' => '\o{1000000000000000000000}', 'type' => CharLiteralType::Octal, 'codePoint' => \PHP_INT_MAX];
+        yield 'braced octal, the largest int' => ['escape' => '\o{777777777777777777777}', 'type' => CharLiteralType::Octal, 'codePoint' => \PHP_INT_MAX];
+        yield 'braced octal, zeros before a small value' => ['escape' => '\o{0000000000000000000000101}', 'type' => CharLiteralType::Octal, 'codePoint' => 65];
+    }
+
     #[Test]
     public function test_a_unicode_name_is_resolved_when_intl_can(): void
     {

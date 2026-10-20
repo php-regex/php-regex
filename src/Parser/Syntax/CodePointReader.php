@@ -62,7 +62,7 @@ final class CodePointReader
         }
 
         if (LibraryPcre::match('/^\\\\[xu]\\{[ \t]*+([0-9a-fA-F]++)[ \t]*+\\}$/', $representation, $matches)) {
-            return (int) hexdec($matches[1]);
+            return self::digits($matches[1], 16);
         }
 
         return self::UNKNOWN;
@@ -83,7 +83,7 @@ final class CodePointReader
         $hex = [];
         // No digit but padding is U+0000 from PCRE2 10.43: "\N{U+ }".
         if (1 === LibraryPcre::match('/^[ \t]*+U\+(?:([0-9a-fA-F]++)[ \t]*+|[ \t]++)$/', $name, $hex)) {
-            return (int) hexdec($hex[1] ?? '0');
+            return self::digits($hex[1] ?? '0', 16);
         }
 
         if (class_exists(\IntlChar::class)) {
@@ -104,7 +104,7 @@ final class CodePointReader
         $matches = [];
 
         if (LibraryPcre::match('/^\\\\o\\{[ \t]*+([0-7]++)[ \t]*+\\}$/', $representation, $matches)) {
-            return (int) octdec($matches[1]);
+            return self::digits($matches[1], 8);
         }
 
         if (LibraryPcre::match('/^\\\\([0-7]{1,3})$/', $representation, $matches)) {
@@ -126,5 +126,26 @@ final class CodePointReader
         }
 
         return \ord(Ascii::upper($char)) ^ 64;
+    }
+
+    /**
+     * The value of hexadecimal or octal digits, PHP_INT_MAX for one past it:
+     * no int holds the float hexdec() and octdec() give there, and a code
+     * point that large is refused all the same.
+     *
+     * @param 8|16 $base
+     */
+    private static function digits(string $digits, int $base): int
+    {
+        // The digits sure to fit, one bit kept for the sign: 15 hexadecimal
+        // and 21 octal on a 64-bit PHP.
+        $fitting = 16 === $base ? 2 * \PHP_INT_SIZE - 1 : intdiv(8 * \PHP_INT_SIZE - 1, 3);
+        $significant = ltrim($digits, '0');
+
+        if (\strlen($significant) > $fitting) {
+            return \PHP_INT_MAX;
+        }
+
+        return (int) (16 === $base ? hexdec($digits) : octdec($digits));
     }
 }

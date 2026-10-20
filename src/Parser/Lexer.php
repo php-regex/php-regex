@@ -2599,7 +2599,7 @@ final class Lexer
             TokenType::Literal, TokenType::LiteralEscaped, TokenType::Range => match (true) {
                 1 === \strlen($value) => \ord($value),
                 $this->utf && 1 === mb_strlen($value, 'UTF-8') => mb_ord($value, 'UTF-8'),
-                !$this->utf && \strlen($value) > 1 => \ord($start ? substr($value, -1) : $value),
+                !$this->utf && \strlen($value) > 1 => \ord(substr($value, $start ? -1 : 0, 1)),
                 default => null,
             },
             TokenType::Unicode => CodePointReader::fromHexEscape($value),
