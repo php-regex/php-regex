@@ -53,6 +53,10 @@ use PHPRegex\Parser\PcreTarget;
  * start; "\b", "\B" and "^" under /m are not kept. A bounded repeat is
  * unrolled up to the cutoff and read as unbounded past it.
  *
+ * Built with its lookarounds in place, the search reads a lookaround's body
+ * where it stands, as a branch tried first that ends nowhere: what the body
+ * reads each time the search passes it.
+ *
  * Inline options hold where PCRE reads them: one set inside an alternative
  * also holds in the alternatives after it, up to the end of the group around
  * them. The caseless restriction r and the ASCII options are read per scope,
@@ -203,11 +207,17 @@ final class PnfaBuilder
      */
     private readonly bool $scriptsAlone;
 
+    /**
+     * @param bool $inPlace whether the lookarounds are read in place, in the
+     *                      pattern's own search, instead of as searches of
+     *                      their own
+     */
     public function __construct(
         private readonly RegexNode $regex,
         private readonly Budget $budget,
         private readonly int $boundedRepeatCutoff,
         ?PcreTarget $target = null,
+        private readonly bool $inPlace = false,
     ) {
         $this->scriptsAlone = ClassSetProvider::readsScriptsAlone($target);
         $this->unicode = str_contains($regex->flags, 'u');
@@ -446,6 +456,10 @@ final class PnfaBuilder
                     throw ModelLimit::outOfModel('A non-atomic lookaround');
                 }
 
+                if ($this->inPlace) {
+                    return $this->readInPlace($node, $next, $flags, $pnfa, $search);
+                }
+
                 $index = \count($this->searches);
                 $sub = new Pnfa(
                     $this->unicode,
@@ -589,6 +603,26 @@ final class PnfaBuilder
         }
 
         return $entry;
+    }
+
+    /**
+     * A lookaround read in place: its body, then nowhere, tried before what
+     * follows it. Its states are marked with the lookaround they lie in, the
+     * innermost one. A lookbehind is read forward from its mark: what it
+     * reads itself is bounded, so no loop of the pattern's own lies in it,
+     * only in a lookahead it holds.
+     */
+    private function readInPlace(GroupNode $node, int $next, int $flags, Pnfa $pnfa, int $search): int
+    {
+        $first = \count($pnfa->kinds);
+        $body = $this->node($node->child, $pnfa->epsilon(), $flags, $pnfa, $search);
+        $lookaround = \count($pnfa->lookarounds);
+        $pnfa->lookarounds[] = $node->getStartPosition();
+        for ($state = $first; $state < \count($pnfa->kinds); $state++) {
+            $pnfa->insideLookaround[$state] ??= $lookaround;
+        }
+
+        return $pnfa->epsilon([$body, $next]);
     }
 
     /**

@@ -137,6 +137,18 @@ final class Pnfa
     public array $approximated = [];
 
     /**
+     * @var list<int> where each lookaround read in place starts in the
+     *                pattern, in the order their bodies were built
+     */
+    public array $lookarounds = [];
+
+    /**
+     * @var array<int, int> the lookaround read in place each of its states
+     *                      lies in, the innermost one
+     */
+    public array $insideLookaround = [];
+
+    /**
      * The characters "\b" counts as word characters, set when the search
      * holds a boundary.
      */

@@ -141,6 +141,34 @@ final class AmbiguityFinder
     }
 
     /**
+     * Where the first lookaround read in place stands whose loop a loop
+     * outside it links to, on one word, both loops the pattern's own: the
+     * body reads that word again from each position the outer loop gives,
+     * a product of the two. Null when there is none. The search is the one
+     * built with its lookarounds in place; whether a run in their bodies is
+     * abandoned or not, the engine reads it.
+     */
+    public function rereadLookaround(): ?int
+    {
+        $pnfa = $this->automaton->pnfa;
+        $this->components(false);
+        $found = null;
+        foreach ($this->links() as $from => $targets) {
+            $outside = $this->lookaroundOf($from);
+            foreach ($targets as $to => $_) {
+                $inside = $this->lookaroundOf($to);
+                if (null === $inside || $inside === $outside || !$this->loopsOwn($from) || !$this->loopsOwn($to)) {
+                    continue;
+                }
+
+                $found = min($found ?? \PHP_INT_MAX, $pnfa->lookarounds[$inside]);
+            }
+        }
+
+        return $found;
+    }
+
+    /**
      * An upper bound on the steps one attempt takes, as the degree d of
      * n^d, or null when an exponential ambiguity may exist. Without a state
      * that has two distinct paths back to itself on one word, two items of a
@@ -304,6 +332,32 @@ final class AmbiguityFinder
     public function unwitnessedItem(int $offset): ?int
     {
         return $this->unwitnessedItems[$offset] ?? null;
+    }
+
+    /**
+     * The lookaround read in place a cyclic component lies in, null for the
+     * search itself: a component never leaves one, whose body ends nowhere.
+     */
+    private function lookaroundOf(int $component): ?int
+    {
+        return $this->automaton->pnfa->insideLookaround[$this->automaton->states[$this->cyclic[$component][0]]] ?? null;
+    }
+
+    /**
+     * Whether a cyclic component goes round a loop of the pattern, not only
+     * one the model made of a bounded repeat.
+     */
+    private function loopsOwn(int $component): bool
+    {
+        foreach ($this->cyclic[$component] as $item) {
+            foreach ($this->automaton->successors[$item] as $index => $successor) {
+                if (($this->component[$successor] ?? null) === $component && 0 !== ($this->automaton->edges[$item][$index] & ItemAutomaton::EDGE_LOOP)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -72,7 +72,7 @@ final class BacktrackProver
         $search = null;
 
         try {
-            $result = $this->attempt($regex, $pattern, $builder, $budget, $stepBound, $search);
+            $result = $this->attempt($regex, $pattern, $builder, $budget, $stepBound, $search, $target);
         } catch (ModelLimit $limit) {
             return ProofOutcome::limited($limit, $builder->abstractions(), $stepBound, $search);
         }
@@ -92,7 +92,7 @@ final class BacktrackProver
      *
      * @throws ModelLimit
      */
-    private function attempt(RegexNode $regex, ?string $pattern, PnfaBuilder $builder, Budget $budget, ?int &$stepBound, ?array &$search): ProofResult
+    private function attempt(RegexNode $regex, ?string $pattern, PnfaBuilder $builder, Budget $budget, ?int &$stepBound, ?array &$search, ?PcreTarget $target): ProofResult
     {
         $searches = $builder->build();
 
@@ -171,6 +171,8 @@ final class BacktrackProver
 
         $unicode = str_contains($regex->flags, 'u');
         if (null === $best) {
+            $this->rereadLookarounds($regex, $searches, $target);
+
             return new ProofResult(RedosComplexity::Linear, null, null, null, null, [], $unicode);
         }
 
@@ -269,6 +271,45 @@ final class BacktrackProver
         }
 
         return $again;
+    }
+
+    /**
+     * Refuses a linear verdict whose lookaround reads a run again at each
+     * step of a loop. A lookaround runs each time the attempt passes it, and
+     * its body is a search of its own: one that reads a run, from each
+     * position a loop around or before it gives, costs the attempt a
+     * product, quadratic or more, though each search alone is linear and
+     * PCRE2's step counter grows only linearly. The pattern is built again
+     * with its lookarounds read in place, and a loop that links, on one word,
+     * to a loop inside one of them refuses the proof. A lookbehind reads at
+     * most a bounded run back, but a lookahead it holds reads on. Only a
+     * lookaround holding a loop of the pattern's own can read a run, so only
+     * then is the pattern built again, on a budget of its own, its attempts
+     * started after each kind of character: a pattern that does not look
+     * at the character before reads the same from each.
+     *
+     * @param list<Pnfa> $searches
+     *
+     * @throws ModelLimit
+     */
+    private function rereadLookarounds(RegexNode $regex, array $searches, ?PcreTarget $target): void
+    {
+        $loops = false;
+        foreach ($searches as $pnfa) {
+            $loops = $loops || (null !== $pnfa->parent && [] !== array_diff($pnfa->loops, array_keys($pnfa->abstractedLoops)));
+        }
+
+        if (!$loops) {
+            return;
+        }
+
+        $budget = new Budget($this->maxSteps, $this->maxStates);
+        $inPlace = (new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target, true))->build()[0];
+        $contexts = [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER];
+        $offset = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, $contexts), $budget))->rereadLookaround();
+        if (null !== $offset) {
+            throw ModelLimit::rereadLookaround($offset);
+        }
     }
 
     /**

@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A proof of a linear attempt counts the work inside its lookaheads: a loop
+   that reads, on the same characters, into a loop of a lookahead's body (as
+   in `/^(?:(?=a+)a)+$/`, quadratic) refuses the proof, and `abstractions`
+   lists `lookaround at offset N read again at each step of a loop`.
  * A `RedosAnalysis` that proves one attempt linear carries no `findings`,
    `hotspots` or `recommendations`, and its `vulnerablePart`, `trigger`,
    `falsePositiveRisk`, `suggestedRewrite` and `culpritNode` are `null`: the

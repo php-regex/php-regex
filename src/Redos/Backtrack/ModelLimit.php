@@ -44,6 +44,18 @@ final class ModelLimit extends \RuntimeException implements ExceptionInterface
         return new self(Ascii::upperFirst($entry), false, true, $entry);
     }
 
+    /**
+     * A lookaround whose body reads a run again at each step of a loop
+     * around or before it: each search is linear, the attempt is not, and
+     * the model does not count the product.
+     */
+    public static function rereadLookaround(int $offset): self
+    {
+        $entry = \sprintf('lookaround at offset %d read again at each step of a loop', $offset);
+
+        return new self(Ascii::upperFirst($entry), false, true, $entry);
+    }
+
     public static function outOfModel(string $construct): self
     {
         return new self($construct.' is outside the backtracking model', false);
