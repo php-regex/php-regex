@@ -231,6 +231,16 @@ Integrations:
   24-parameter `RedosAnalysis`, and the solver's internal methods on its
   public class.
 
+## Transpiler: after the oracle
+
+The transpiled output now matches `preg_match()` in node and python on
+the whole corpus. Left: atomic groups and possessive quantifiers for
+Python 3.11+ (refused today, since emitting them sets a minimum Python
+version), and the empty-repetition rules for JavaScript, which refuse some
+patterns that would behave the same. A pattern without `u` is read by PHP
+byte by byte and by the targets character by character: the docs should
+say so where the transpiler is described.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
