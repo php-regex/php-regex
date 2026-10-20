@@ -44,7 +44,6 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
-use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Parser\Validation\RangeVerdict;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -103,7 +102,7 @@ final class AnalysisService
         private readonly int $warningThreshold = 50,
         string $redosThreshold = 'high',
         private readonly array $redosIgnoredPatterns = [],
-        RedosMode|string $redosMode = RedosMode::Theoretical,
+        RedosMode $redosMode = RedosMode::Theoretical,
         private readonly ?ConfirmationOptions $redosConfirmOptions = null,
         bool $redosEnabled = false,
         private readonly bool $lintEnabled = true,
@@ -114,14 +113,7 @@ final class AnalysisService
     ) {
         $this->redosSeverityThreshold = RedosSeverity::fromConfig($redosThreshold);
 
-        // When redosEnabled is false, force mode to OFF
-        if (!$redosEnabled) {
-            $this->redosMode = RedosMode::Off;
-        } else {
-            $this->redosMode = $redosMode instanceof RedosMode
-                ? $redosMode
-                : (RedosMode::tryFrom(Ascii::lower((string) $redosMode)) ?? RedosMode::Theoretical);
-        }
+        $this->redosMode = $redosEnabled ? $redosMode : RedosMode::Off;
     }
 
     /**

@@ -25,6 +25,7 @@ use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
@@ -47,7 +48,7 @@ final class AnalysisServiceTest extends TestCase
             50,
             'low',
             [],
-            'theoretical',
+            RedosMode::Theoretical,
             null,
             true, // redosEnabled
         );

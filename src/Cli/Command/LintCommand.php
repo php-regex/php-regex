@@ -47,6 +47,7 @@ use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\ConfirmationOptions;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
@@ -210,7 +211,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $regex->parser(),
             warningThreshold: $arguments->complexityThreshold,
             redosThreshold: $arguments->redosThreshold ?? RedosSeverity::High->value,
-            redosMode: $arguments->redosMode,
+            redosMode: RedosMode::tryFrom($arguments->redosMode) ?? RedosMode::Theoretical,
             redosConfirmOptions: new ConfirmationOptions(),
             redosEnabled: $checkRedos,
             lintEnabled: $arguments->checkLint,

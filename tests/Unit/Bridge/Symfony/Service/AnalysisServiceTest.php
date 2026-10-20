@@ -18,6 +18,7 @@ use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
 
@@ -364,7 +365,7 @@ final class AnalysisServiceTest extends TestCase
             $warningThreshold,
             $redosThreshold,
             $ignoredPatterns,
-            'theoretical',
+            RedosMode::Theoretical,
             null,
             true, // redosEnabled
         );
