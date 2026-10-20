@@ -41,7 +41,8 @@ composer require php-regex/regex-toolkit:2.x-dev
 
 Every package runs on PHP 8.1 or later, `php-regex/php-regex` included:
 `regex-symfony` on Symfony 6.4, 7.4 and 8, `regex-laravel` on Laravel 10.37
-to 13.
+to 13. `php-regex/php-regex` refuses an older Symfony or Laravel as those two
+packages do, so Composer says so at install time.
 
 ### Names
 

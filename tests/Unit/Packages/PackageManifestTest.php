@@ -369,23 +369,48 @@ final class PackageManifestTest extends TestCase
 
     /**
      * The monorepo package carries every bridge, but only its own manifest
-     * reaches a project that installs it: the host releases a bridge cannot
-     * run on are refused there as the bridge's package refuses them.
+     * reaches a project that installs it: a host release older than every
+     * package that requires the host takes is refused there, as the
+     * packages' own manifests refuse it, and so is a release a package
+     * conflicts with. Without it, a Laravel 9 application would install the
+     * monorepo package and load the provider its package discovery finds,
+     * on an Illuminate the bridge was never written for.
      */
     #[Test]
     public function test_the_monorepo_package_refuses_the_hosts_its_bridges_refuse(): void
     {
-        $root = self::decode(self::root().'/composer.json');
+        $floors = [];
+        $conflicts = [];
+        foreach (array_keys(self::PACKAGES) as $directory) {
+            $manifest = self::manifest($directory);
+            foreach (self::strings(self::dig($manifest, 'require')) as $package => $constraint) {
+                if ('php' === $package || str_starts_with($package, 'ext-') || str_starts_with($package, 'php-regex/')) {
+                    continue;
+                }
+                $floor = self::lowestRelease($constraint);
+                if (!isset($floors[$package]) || version_compare($floor, $floors[$package], '<')) {
+                    $floors[$package] = $floor;
+                }
+            }
+            foreach (self::strings(self::dig($manifest, 'conflict')) as $package => $constraint) {
+                $conflicts[$package] = $constraint;
+            }
+        }
+        foreach ($floors as $package => $floor) {
+            $conflicts[$package] ??= '<'.$floor;
+        }
+        ksort($conflicts);
 
-        $this->assertSame('<2.4', self::dig($root, 'conflict', 'rector/rector'));
-        $this->assertSame('<6.19', self::dig($root, 'conflict', 'vimeo/psalm'));
-        // The PHPUnit bridge's floor is 9.6, the oldest the assertions still
-        // serve, so the monorepo refuses every host older than that.
-        $this->assertSame('<9.6', self::dig($root, 'conflict', 'phpunit/phpunit'));
+        $root = self::strings(self::dig(self::decode(self::root().'/composer.json'), 'conflict'));
+        ksort($root);
+
+        $this->assertSame($conflicts, $root);
         // The PHPStan bridge's neon is written on the config keys PHPStan 2
         // alone reads, and the extension installer includes it on every
         // PHPStan it finds: the host is refused before it loads it.
-        $this->assertSame('<2.0', self::dig($root, 'conflict', 'phpstan/phpstan'));
+        $this->assertSame('<2.0', $root['phpstan/phpstan']);
+        $this->assertSame('<10.37', $root['illuminate/support']);
+        $this->assertSame('<6.4', $root['symfony/http-kernel']);
     }
 
     /**
@@ -757,6 +782,27 @@ final class PackageManifestTest extends TestCase
         foreach (array_keys(self::PACKAGES) as $directory) {
             yield $directory => [$directory];
         }
+    }
+
+    /**
+     * The oldest release a constraint written as caret alternatives takes:
+     * "^10.37|^11.0" takes 10.37 and later.
+     */
+    private static function lowestRelease(string $constraint): string
+    {
+        $releases = array_map(static function (string $alternative) use ($constraint): string {
+            self::assertMatchesRegularExpression('~^\^\d+(?:\.\d+)+$~', $alternative, \sprintf('"%s" is not written as caret alternatives.', $constraint));
+
+            return substr($alternative, 1);
+        }, explode('|', $constraint));
+        $lowest = $releases[0];
+        foreach ($releases as $release) {
+            if (version_compare($release, $lowest, '<')) {
+                $lowest = $release;
+            }
+        }
+
+        return $lowest;
     }
 
     private static function floor(string $constraint): string

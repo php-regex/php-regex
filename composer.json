@@ -120,10 +120,18 @@
         }
     },
     "conflict": {
+        "illuminate/console": "<10.37",
+        "illuminate/contracts": "<10.37",
+        "illuminate/routing": "<10.37",
+        "illuminate/support": "<10.37",
         "nikic/php-parser": "<4.18",
         "phpstan/phpstan": "<2.0",
         "phpunit/phpunit": "<9.6",
         "rector/rector": "<2.4",
+        "symfony/config": "<6.4",
+        "symfony/console": "<6.4",
+        "symfony/dependency-injection": "<6.4",
+        "symfony/http-kernel": "<6.4",
         "vimeo/psalm": "<6.19"
     },
     "suggest": {
