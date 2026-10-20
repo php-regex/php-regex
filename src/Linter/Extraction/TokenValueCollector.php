@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
-use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -47,9 +46,6 @@ final class TokenValueCollector
         \T_CONCAT_EQUAL => true, \T_MOD_EQUAL => true, \T_AND_EQUAL => true, \T_OR_EQUAL => true,
         \T_XOR_EQUAL => true, \T_SL_EQUAL => true, \T_SR_EQUAL => true, \T_POW_EQUAL => true, \T_COALESCE_EQUAL => true,
     ];
-    private const IGNORABLE = [\T_WHITESPACE => true, \T_COMMENT => true, \T_DOC_COMMENT => true];
-
-    private const IDENTIFIER = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
 
     /**
      * Keywords whose parenthesis opens no argument list.
@@ -168,7 +164,7 @@ final class TokenValueCollector
         // writes: only the declarations are read then. A keyword after "::"
         // or "->" is a member name: Fixer::function($re) calls a method.
         $previous = \is_array($token) ? $this->previous($index - 1) : null;
-        if ((!$this->watchesWrites && !isset(self::DECLARES[$id])) || (null !== $previous && $this->isObjectOrStaticOperator($previous))) {
+        if ((!$this->watchesWrites && !isset(self::DECLARES[$id])) || (null !== $previous && PhpTokens::isObjectOrStaticOperator($this->tokens[$previous]))) {
             return;
         }
 
@@ -304,7 +300,7 @@ final class TokenValueCollector
         // A heredoc holds a "." only in the "{$" and "${" it interpolates.
         for ($i = $first; $i <= $last; $i++) {
             $token = $this->tokens[$i];
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $last;
             } elseif ('.' === $token) {
                 $operands[] = [$operandStart, $i];
@@ -432,14 +428,14 @@ final class TokenValueCollector
             return ValueExpr::unknown();
         }
 
-        $name = $this->identifier($this->tokens[$last]);
+        $name = PhpTokens::identifier($this->tokens[$last]);
         if (null === $name) {
             return ValueExpr::unknown();
         }
 
         $operator = $this->tokens[$second];
         if (\is_array($operator) && \T_DOUBLE_COLON === $operator[0]) {
-            $class = \is_array($token) && \T_STATIC === $token[0] ? 'static' : $this->name($token);
+            $class = \is_array($token) && \T_STATIC === $token[0] ? 'static' : PhpTokens::name($token);
 
             return null === $class || 'class' === Ascii::lower($name) ? ValueExpr::unknown() : $this->classConstant($class, $name, $first, $context);
         }
@@ -460,7 +456,7 @@ final class TokenValueCollector
         }
 
         if (\T_CONSTANT_ENCAPSED_STRING === $token[0]) {
-            return ValueExpr::literal(self::decodeString($token[1]), $this->offsets[$index], $token[2]);
+            return ValueExpr::literal(PhpTokens::stringValue($token[1]), $this->offsets[$index], $token[2]);
         }
 
         if (\T_LNUMBER === $token[0] || \T_DNUMBER === $token[0]) {
@@ -471,7 +467,7 @@ final class TokenValueCollector
             return '$this' === $token[1] ? ValueExpr::unknown() : ValueExpr::variable($this->scopeAt($index), substr($token[1], 1), $this->offsets[$index]);
         }
 
-        $name = $this->name($token);
+        $name = PhpTokens::name($token);
         if (null === $name) {
             return ValueExpr::unknown();
         }
@@ -594,7 +590,7 @@ final class TokenValueCollector
                 return;
             }
 
-            if ($this->opensNesting($this->tokens[$i])) {
+            if (PhpTokens::opensNesting($this->tokens[$i])) {
                 $i = $this->closers[$i] ?? $count;
             }
         }
@@ -605,7 +601,7 @@ final class TokenValueCollector
         }
 
         $key = null;
-        $owner = $named ? ValueExpr::classKey($context->declaredName((string) $this->name($this->tokens[$nameIndex]))) : null;
+        $owner = $named ? ValueExpr::classKey($context->declaredName((string) PhpTokens::name($this->tokens[$nameIndex]))) : null;
         if (null !== $owner && \T_TRAIT === $kind) {
             $this->values->declareTrait($owner);
         } elseif (null !== $owner) {
@@ -629,7 +625,7 @@ final class TokenValueCollector
         $i = $open + 1;
         while ($i < $close) {
             $token = $this->tokens[$i];
-            if ($this->isIgnorable($token)) {
+            if (PhpTokens::isIgnorable($token)) {
                 $i++;
 
                 continue;
@@ -669,7 +665,7 @@ final class TokenValueCollector
                 if (\T_USE === $id && null !== $owner) {
                     // use A, B { ... }: the names before the brace or the ";".
                     for ($j = $i + 1; $j < $end && '{' !== $this->tokens[$j]; $j++) {
-                        $trait = $this->name($this->tokens[$j]);
+                        $trait = PhpTokens::name($this->tokens[$j]);
                         if (null !== $trait) {
                             $this->values->useTrait($owner, ValueExpr::classKey($context->resolveClass($trait)));
                         }
@@ -689,7 +685,7 @@ final class TokenValueCollector
                 continue;
             }
 
-            $i = ($this->opensNesting($token) ? ($this->closers[$i] ?? $close) : $i) + 1;
+            $i = (PhpTokens::opensNesting($token) ? ($this->closers[$i] ?? $close) : $i) + 1;
         }
     }
 
@@ -726,7 +722,7 @@ final class TokenValueCollector
                 $name = substr($token[1], 1);
             } elseif ('=' === $token && null === $equals) {
                 $equals = $i;
-            } elseif ($this->opensNesting($token)) {
+            } elseif (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $close;
             }
         }
@@ -766,7 +762,7 @@ final class TokenValueCollector
                 return $this->closers[$i] ?? $close;
             }
 
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $close;
             }
         }
@@ -786,7 +782,7 @@ final class TokenValueCollector
         foreach ($this->split($start, $end) as [$from, $to]) {
             $equals = $this->find($from, $to, static fn (array|string $token): bool => '=' === $token);
             $name = null === $equals ? null : $this->previous($equals - 1, $from);
-            $identifier = null === $name ? null : $this->identifier($this->tokens[$name]);
+            $identifier = null === $name ? null : PhpTokens::identifier($this->tokens[$name]);
             if (null !== $equals && null !== $identifier) {
                 $items[] = [$identifier, $this->expression($equals + 1, $to, $context)];
             }
@@ -818,7 +814,7 @@ final class TokenValueCollector
 
         // A closure has no name: Closure::bind() may give it another class.
         $bound = true;
-        if (null !== $open && null !== $this->identifier($this->tokens[$open])) {
+        if (null !== $open && null !== PhpTokens::identifier($this->tokens[$open])) {
             $open = $this->next($open + 1);
             $bound = false;
         }
@@ -844,7 +840,7 @@ final class TokenValueCollector
 
         // The return type, then the body or the ";" of an abstract method.
         while (null !== $i && '{' !== $this->tokens[$i] && ';' !== $this->tokens[$i]) {
-            $i = $this->next(($this->opensNesting($this->tokens[$i]) ? ($this->closers[$i] ?? $i) : $i) + 1);
+            $i = $this->next((PhpTokens::opensNesting($this->tokens[$i]) ? ($this->closers[$i] ?? $i) : $i) + 1);
         }
 
         if (null !== $i && '{' === $this->tokens[$i] && isset($this->closers[$i])) {
@@ -885,7 +881,7 @@ final class TokenValueCollector
 
         $arrow = $this->next($close + 1);
         while (null !== $arrow && !$this->is($arrow, \T_DOUBLE_ARROW)) {
-            $arrow = $this->next(($this->opensNesting($this->tokens[$arrow]) ? ($this->closers[$arrow] ?? $arrow) : $arrow) + 1);
+            $arrow = $this->next((PhpTokens::opensNesting($this->tokens[$arrow]) ? ($this->closers[$arrow] ?? $arrow) : $arrow) + 1);
         }
 
         if (null === $arrow) {
@@ -919,7 +915,7 @@ final class TokenValueCollector
                 $ternaries--;
             } elseif ('?' === $token) {
                 $ternaries++;
-            } elseif ($this->opensNesting($token)) {
+            } elseif (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $count;
             }
         }
@@ -962,7 +958,7 @@ final class TokenValueCollector
             }
 
             for (; $i < $count && ',' !== $this->tokens[$i] && ';' !== $this->tokens[$i]; $i++) {
-                if ($this->opensNesting($this->tokens[$i])) {
+                if (PhpTokens::opensNesting($this->tokens[$i])) {
                     $i = $this->closers[$i] ?? $count;
                 }
             }
@@ -1226,7 +1222,7 @@ final class TokenValueCollector
                     $depth++;
                     $i = $body;
                 }
-            } elseif ($this->opensNesting($this->tokens[$i])) {
+            } elseif (PhpTokens::opensNesting($this->tokens[$i])) {
                 $i = $this->closers[$i] ?? $count;
             }
         }
@@ -1261,7 +1257,7 @@ final class TokenValueCollector
                 }
 
                 $i = $inner;
-            } elseif ($this->opensNesting($this->tokens[$i])) {
+            } elseif (PhpTokens::opensNesting($this->tokens[$i])) {
                 $i = $this->closers[$i] ?? $count;
             }
         }
@@ -1280,7 +1276,7 @@ final class TokenValueCollector
         $first = $this->next($start, $end);
         $last = null === $first ? null : $this->fetchArgument($first, $end);
         $before = null === $last ? null : $this->previous($last - 1);
-        if (null !== $last && null !== $before && $this->isObjectOperator($before) && null !== $this->identifier($this->tokens[$last])) {
+        if (null !== $last && null !== $before && $this->isObjectOperator($before) && null !== PhpTokens::identifier($this->tokens[$last])) {
             $this->writeBackward($last, $this->scopeAt($index));
         } elseif ($this->inClassBody($index)) {
             $this->values->writeAnyProperty($this->classAt($index));
@@ -1410,7 +1406,7 @@ final class TokenValueCollector
         $id = \is_array($token) ? $token[0] : null;
         // A local array of literals proves no pattern either: it is not
         // built.
-        if (!\in_array($token, ['(', '-', '+'], true) && null === $this->name($token)
+        if (!\in_array($token, ['(', '-', '+'], true) && null === PhpTokens::name($token)
             && !\in_array($id, [\T_CONSTANT_ENCAPSED_STRING, \T_START_HEREDOC, \T_STATIC, \T_LNUMBER, \T_DNUMBER], true)) {
             return ValueExpr::unknown();
         }
@@ -1425,7 +1421,7 @@ final class TokenValueCollector
                 break;
             }
 
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $count;
             }
         }
@@ -1451,15 +1447,15 @@ final class TokenValueCollector
         $before = $this->previous($callee - 1);
         if (\is_array($token) && \T_VARIABLE === $token[0]) {
             // $callback($re)
-        } elseif (null !== $before && $this->isObjectOrStaticOperator($before) && null !== $this->identifier($token)) {
+        } elseif (null !== $before && PhpTokens::isObjectOrStaticOperator($this->tokens[$before]) && null !== PhpTokens::identifier($token)) {
             // $object->method($re), Foo::method($re)
-        } elseif (null !== $this->name($token)) {
+        } elseif (null !== PhpTokens::name($token)) {
             if (null !== $before && ($this->is($before, \T_FUNCTION) || ($this->isAmpersand($before) && $this->isPreceded($before, \T_FUNCTION)))) {
                 return; // a declaration
             }
 
             if (null === $before || !$this->is($before, \T_NEW)) {
-                $function = $this->name($token);
+                $function = PhpTokens::name($token);
             }
         } elseif ('"' === $token || $this->is($callee, \T_CONSTANT_ENCAPSED_STRING, \T_END_HEREDOC)) {
             // 'normalize'($re): a string names the function.
@@ -1484,7 +1480,7 @@ final class TokenValueCollector
                 return;
             }
 
-            if ('}' === $token && (null === $beforeOpener || (!$this->isObjectOrStaticOperator($beforeOpener) && '$' !== $this->tokens[$beforeOpener]))) {
+            if ('}' === $token && (null === $beforeOpener || (!PhpTokens::isObjectOrStaticOperator($this->tokens[$beforeOpener]) && '$' !== $this->tokens[$beforeOpener]))) {
                 return;
             }
         } else {
@@ -1541,7 +1537,7 @@ final class TokenValueCollector
     {
         foreach ($this->split($open + 1, $close) as $position => [$from, $to]) {
             $first = $this->next($from, $to);
-            $name = null === $first ? null : $this->identifier($this->tokens[$first]);
+            $name = null === $first ? null : PhpTokens::identifier($this->tokens[$first]);
             $colon = null === $name || null === $first ? null : $this->next($first + 1, $to);
             if (null !== $colon && ':' === $this->tokens[$colon]) {
                 if ('array' === $name) {
@@ -1573,7 +1569,7 @@ final class TokenValueCollector
             return;
         }
 
-        $constant = self::decodeString($nameToken[1]);
+        $constant = PhpTokens::stringValue($nameToken[1]);
         if ('' !== $constant) {
             $this->values->declareConstant($constant, $this->expression($arguments[1][0], $arguments[1][1], $context));
         }
@@ -1594,7 +1590,7 @@ final class TokenValueCollector
             return $this->next($first + 1, $to);
         }
 
-        $colon = null === $this->identifier($this->tokens[$first]) ? null : $this->next($first + 1, $to);
+        $colon = null === PhpTokens::identifier($this->tokens[$first]) ? null : $this->next($first + 1, $to);
         if (null !== $colon && ':' === $this->tokens[$colon]) {
             return $this->next($colon + 1, $to);
         }
@@ -1634,7 +1630,7 @@ final class TokenValueCollector
             }
 
             $member = $this->next($next + 1, $limit);
-            if (null === $member || ('{' !== $this->tokens[$member] && null === $this->identifier($this->tokens[$member]) && !$this->is($member, \T_VARIABLE))) {
+            if (null === $member || ('{' !== $this->tokens[$member] && null === PhpTokens::identifier($this->tokens[$member]) && !$this->is($member, \T_VARIABLE))) {
                 return null;
             }
 
@@ -1678,7 +1674,7 @@ final class TokenValueCollector
             \is_array($token) && \T_VARIABLE === $token[0] => true,
             ']' === $token => null !== $beforeOpener && $this->endsOperand($beforeOpener),
             '}' === $token => null !== $beforeOpener && $this->isObjectOperator($beforeOpener),
-            default => $member && null !== $this->identifier($token),
+            default => $member && null !== PhpTokens::identifier($token),
         };
 
         $i = $last;
@@ -1688,9 +1684,9 @@ final class TokenValueCollector
             $opener = $this->openers[$i] ?? null;
             $beforeOpener = null === $opener ? null : $this->previous($opener - 1);
 
-            if (\is_array($token) && \T_VARIABLE === $token[0] || null !== $this->identifier($token)) {
+            if (\is_array($token) && \T_VARIABLE === $token[0] || null !== PhpTokens::identifier($token)) {
                 // ->member, ->$member, Foo::$static, Foo::method(): the receiver comes before.
-                if (null !== $before && $this->isObjectOrStaticOperator($before)) {
+                if (null !== $before && PhpTokens::isObjectOrStaticOperator($this->tokens[$before])) {
                     $i = $this->previous($before - 1);
 
                     continue;
@@ -1813,7 +1809,7 @@ final class TokenValueCollector
                 return;
             }
 
-            $name = $this->identifier($token);
+            $name = PhpTokens::identifier($token);
             if (null !== $name && null !== $before && $this->isObjectOperator($before)) {
                 $this->values->writeProperty($name);
                 $index = $this->previous($before - 1);
@@ -1833,7 +1829,7 @@ final class TokenValueCollector
     {
         for ($i = $from; $i < $to; $i++) {
             $token = $this->tokens[$i];
-            if ($this->isIgnorable($token)) {
+            if (PhpTokens::isIgnorable($token)) {
                 continue;
             }
 
@@ -1851,7 +1847,7 @@ final class TokenValueCollector
                 continue;
             }
 
-            $name = $this->identifier($token);
+            $name = PhpTokens::identifier($token);
             $after = $this->next($i + 1, $to);
             if (null !== $name && null !== $before && $this->isObjectOperator($before) && (null === $after || '(' !== $this->tokens[$after])) {
                 $this->values->writeProperty($name);
@@ -1896,7 +1892,7 @@ final class TokenValueCollector
             if (',' === $token) {
                 $ranges[] = [$from, $i];
                 $from = $i + 1;
-            } elseif ($this->opensNesting($token)) {
+            } elseif (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $end;
             }
         }
@@ -1919,7 +1915,7 @@ final class TokenValueCollector
                 return $i;
             }
 
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $end;
             }
         }
@@ -1939,7 +1935,7 @@ final class TokenValueCollector
                 return $i;
             }
 
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $i = $this->closers[$i] ?? $limit;
             }
         }
@@ -1985,38 +1981,20 @@ final class TokenValueCollector
         return false;
     }
 
-    private static function decodeString(string $token): string
-    {
-        if ('b' === Ascii::lower($token[0] ?? '')) {
-            $token = substr($token, 1);
-        }
-
-        // A T_CONSTANT_ENCAPSED_STRING is always quoted: decode() reads it.
-        return PhpStringLiteral::decode($token) ?? '';
-    }
-
+    /**
+     * The next significant token of the file from $start, before $end.
+     */
     private function next(int $start, ?int $end = null): ?int
     {
-        // A range left open by a file cut short runs past the last token.
-        $end = min($end ?? \PHP_INT_MAX, \count($this->tokens));
-        for ($i = $start; $i < $end; $i++) {
-            if (!$this->isIgnorable($this->tokens[$i])) {
-                return $i;
-            }
-        }
-
-        return null;
+        return PhpTokens::nextSignificant($this->tokens, $start, $end ?? \PHP_INT_MAX);
     }
 
+    /**
+     * The previous significant token of the file from $start, not before $floor.
+     */
     private function previous(int $start, int $floor = 0): ?int
     {
-        for ($i = min($start, \count($this->tokens) - 1); $i >= $floor; $i--) {
-            if (!$this->isIgnorable($this->tokens[$i])) {
-                return $i;
-            }
-        }
-
-        return null;
+        return PhpTokens::previousSignificant($this->tokens, $start, $floor);
     }
 
     private function isPreceded(int $index, int $id): bool
@@ -2043,11 +2021,6 @@ final class TokenValueCollector
         return $this->is($index, \T_OBJECT_OPERATOR, \T_NULLSAFE_OBJECT_OPERATOR);
     }
 
-    private function isObjectOrStaticOperator(int $index): bool
-    {
-        return $this->is($index, \T_OBJECT_OPERATOR, \T_NULLSAFE_OBJECT_OPERATOR, \T_DOUBLE_COLON);
-    }
-
     /**
      * Whether the token ends an operand an offset may follow: $a[...],
      * $a->b[...], f()[...], "abc"[...].
@@ -2055,68 +2028,12 @@ final class TokenValueCollector
     private function endsOperand(int $index): bool
     {
         $token = $this->tokens[$index];
-        if (\in_array($token, [']', ')', '}'], true) || $this->is($index, \T_VARIABLE, \T_CONSTANT_ENCAPSED_STRING) || null !== $this->name($token)) {
+        if (\in_array($token, [']', ')', '}'], true) || $this->is($index, \T_VARIABLE, \T_CONSTANT_ENCAPSED_STRING) || null !== PhpTokens::name($token)) {
             return true;
         }
 
         $before = $this->previous($index - 1);
 
-        return null !== $this->identifier($token) && null !== $before && $this->isObjectOrStaticOperator($before);
-    }
-
-    /**
-     * @param array{int, string, int}|string $token
-     */
-    private function isIgnorable(array|string $token): bool
-    {
-        return \is_array($token) && isset(self::IGNORABLE[$token[0]]);
-    }
-
-    /**
-     * @param array{int, string, int}|string $token
-     */
-    private function opensNesting(array|string $token): bool
-    {
-        if (!\is_array($token)) {
-            return '(' === $token || '[' === $token || '{' === $token;
-        }
-
-        return \in_array($token[0], [\T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES, \T_ATTRIBUTE], true);
-    }
-
-    /**
-     * A name as written: Foo, Foo\Bar, \Foo, namespace\Foo.
-     *
-     * @param array{int, string, int}|string $token
-     */
-    private function name(array|string $token): ?string
-    {
-        return \is_array($token) && \in_array($token[0], [\T_STRING, \T_NAME_QUALIFIED, \T_NAME_FULLY_QUALIFIED, \T_NAME_RELATIVE], true) ? $token[1] : null;
-    }
-
-    /**
-     * Any token spelling an identifier, a reserved word included: a member
-     * name may be one.
-     *
-     * @param array{int, string, int}|string $token
-     */
-    private function identifier(array|string $token): ?string
-    {
-        if (!\is_array($token)) {
-            return null;
-        }
-
-        if (\T_STRING === $token[0]) {
-            return $token[1];
-        }
-
-        // A variable, a literal, a number or an operator starts with no
-        // letter: no pattern needs to say so.
-        $first = $token[1][0] ?? '';
-        if ('_' !== $first && !Ascii::isAlpha($first) && \ord($first) < 0x80) {
-            return null;
-        }
-
-        return 1 === LibraryPcre::match(self::IDENTIFIER, $token[1]) ? $token[1] : null;
+        return null !== PhpTokens::identifier($token) && null !== $before && PhpTokens::isObjectOrStaticOperator($this->tokens[$before]);
     }
 }

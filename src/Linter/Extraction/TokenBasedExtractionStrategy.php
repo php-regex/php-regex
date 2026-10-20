@@ -27,19 +27,6 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternFunctionAwareInterface
 {
-    private const IGNORABLE_TOKENS = [
-        \T_WHITESPACE => true,
-        \T_COMMENT => true,
-        \T_DOC_COMMENT => true,
-    ];
-
-    /**
-     * Matches an identifier, so a reserved word used as a method name — the
-     * "match" of Preg::match() is tokenized as T_MATCH, not T_STRING — is
-     * still read as one.
-     */
-    private const IDENTIFIER_PATTERN = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
-
     private readonly PatternFunctionRegistry $registry;
 
     /**
@@ -93,8 +80,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // PHP hands preg_match() the bytes of its source, valid UTF-8 or not,
         // a NUL byte among them: the tokenizer reads them as they stand.
         $tokens = token_get_all($content);
-        $tokenOffsets = $this->buildTokenOffsets($tokens);
-        $closers = $this->matchBrackets($tokens);
+        $tokenOffsets = PhpTokens::offsets($tokens);
+        $closers = PhpTokens::closers($tokens);
         /** @var \ArrayObject<int, PatternOccurrence|PendingPattern<array{int, int}>> $found */
         $found = new \ArrayObject();
         /** @var list<int> $patternArguments */
@@ -106,7 +93,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         for ($i = 0; $i < $totalTokens; $i++) {
             $token = $tokens[$i];
-            if (!\is_array($token) || isset(self::IGNORABLE_TOKENS[$token[0]]) || isset($attributeNames[$i])) {
+            if (!\is_array($token) || isset(PhpTokens::IGNORABLE[$token[0]]) || isset($attributeNames[$i])) {
                 continue;
             }
 
@@ -193,8 +180,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function soleVariable(array $tokens, int $start, int $end): ?string
     {
-        $first = $this->nextSignificantTokenIndex($tokens, $start, $end);
-        if (null === $first || null !== $this->nextSignificantTokenIndex($tokens, $first + 1, $end)) {
+        $first = PhpTokens::nextSignificant($tokens, $start, $end);
+        if (null === $first || null !== PhpTokens::nextSignificant($tokens, $first + 1, $end)) {
             return null;
         }
 
@@ -218,7 +205,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 continue;
             }
 
-            $target = $this->previousSignificantTokenIndex($tokens, $index - 1);
+            $target = PhpTokens::previousSignificant($tokens, $index - 1);
             $targetToken = null === $target ? null : $tokens[$target];
             if (\is_array($targetToken) && \T_VARIABLE === $targetToken[0]) {
                 $assigned[$targetToken[1]] = true;
@@ -367,8 +354,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 if (\T_VARIABLE === $token[0]) {
                     $variables[$token[1]] = true;
                 } elseif (!$properties && \T_STRING === $token[0]) {
-                    $before = $this->previousSignificantTokenIndex($tokens, $i - 1);
-                    $properties = null !== $before && $this->isObjectOrStaticOperator($tokens[$before]);
+                    $before = PhpTokens::previousSignificant($tokens, $i - 1);
+                    $properties = null !== $before && PhpTokens::isObjectOrStaticOperator($tokens[$before]);
                 }
             }
         }
@@ -444,22 +431,22 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         for ($i = $index + 1; $i <= $close; $i++) {
             $token = $tokens[$i];
             if (',' !== $token && $i !== $close) {
-                if ($this->opensNesting($token)) {
+                if (PhpTokens::opensNesting($token)) {
                     $i = $closers[$i] ?? $close;
                 }
 
                 continue;
             }
 
-            $nameIndex = $this->nextSignificantTokenIndex($tokens, $itemStart, $i);
-            $name = null === $nameIndex ? null : $this->readNameToken($tokens[$nameIndex]);
+            $nameIndex = PhpTokens::nextSignificant($tokens, $itemStart, $i);
+            $name = null === $nameIndex ? null : PhpTokens::name($tokens[$nameIndex]);
             $itemStart = $i + 1;
             if (null === $nameIndex || null === $name) {
                 continue;
             }
 
             $attributeNames[$nameIndex] = true;
-            $open = $this->nextSignificantTokenIndex($tokens, $nameIndex + 1, $i);
+            $open = PhpTokens::nextSignificant($tokens, $nameIndex + 1, $i);
             $function = $this->registry->lookupAttribute($context->resolveClass($name));
             if (null !== $open && '(' === $tokens[$open] && null !== $function) {
                 $matches[] = [$function, $open];
@@ -478,9 +465,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function matchConstructor(array $tokens, int $index, int $totalTokens, NameResolutionContext $context): ?array
     {
-        $classIndex = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
-        $class = null === $classIndex ? null : $this->readNameToken($tokens[$classIndex]);
-        $open = null === $classIndex ? null : $this->nextSignificantTokenIndex($tokens, $classIndex + 1, $totalTokens);
+        $classIndex = PhpTokens::nextSignificant($tokens, $index + 1, $totalTokens);
+        $class = null === $classIndex ? null : PhpTokens::name($tokens[$classIndex]);
+        $open = null === $classIndex ? null : PhpTokens::nextSignificant($tokens, $classIndex + 1, $totalTokens);
         if (null === $class || null === $open || '(' !== $tokens[$open]) {
             return null;
         }
@@ -499,12 +486,12 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function readNamespaceDeclaration(array $tokens, int $index, int $totalTokens, NameResolutionContext $context): int
     {
-        $nameIndex = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
+        $nameIndex = PhpTokens::nextSignificant($tokens, $index + 1, $totalTokens);
         if (null === $nameIndex) {
             return $index;
         }
 
-        $name = $this->readNameToken($tokens[$nameIndex]);
+        $name = PhpTokens::name($tokens[$nameIndex]);
         if (null === $name) {
             // "namespace { ... }" declares the global namespace.
             if ('{' === $tokens[$nameIndex]) {
@@ -534,7 +521,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function readUseStatement(array $tokens, int $index, int $totalTokens, NameResolutionContext $context): int
     {
-        $cursor = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
+        $cursor = PhpTokens::nextSignificant($tokens, $index + 1, $totalTokens);
         if (null === $cursor) {
             return $index;
         }
@@ -555,7 +542,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         $token = $tokens[$cursor];
         if (\is_array($token) && (\T_CONST === $token[0] || \T_FUNCTION === $token[0])) {
             $kind = $token[0];
-            $next = $this->nextSignificantTokenIndex($tokens, $cursor + 1, $totalTokens);
+            $next = PhpTokens::nextSignificant($tokens, $cursor + 1, $totalTokens);
             if (null === $next) {
                 return $index;
             }
@@ -572,7 +559,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         for (; $cursor < $totalTokens; $cursor++) {
             $token = $tokens[$cursor];
 
-            if ($this->isIgnorableToken($token)) {
+            if (PhpTokens::isIgnorable($token)) {
                 continue;
             }
 
@@ -636,7 +623,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 continue;
             }
 
-            $read = $this->readNameToken($token);
+            $read = PhpTokens::name($token);
             if (null === $read) {
                 continue;
             }
@@ -682,9 +669,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             }
 
             // The brace the "use" sits in: "namespace {" or "namespace A\B {".
-            $before = $this->previousSignificantTokenIndex($tokens, $i - 1);
+            $before = PhpTokens::previousSignificant($tokens, $i - 1);
             if (null !== $before && \is_array($tokens[$before]) && \in_array($tokens[$before][0], [\T_STRING, \T_NAME_QUALIFIED], true)) {
-                $before = $this->previousSignificantTokenIndex($tokens, $before - 1);
+                $before = PhpTokens::previousSignificant($tokens, $before - 1);
             }
 
             return null === $before || !\is_array($tokens[$before]) || \T_NAMESPACE !== $tokens[$before][0];
@@ -749,7 +736,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         // static::assertMatchesRegularExpression(...)
         if (\is_array($token) && \T_STATIC === $token[0]) {
-            $nextIndex = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
+            $nextIndex = PhpTokens::nextSignificant($tokens, $index + 1, $totalTokens);
 
             return null !== $nextIndex && $this->isDoubleColonToken($tokens[$nextIndex])
                 ? $this->matchStaticMethodCall($tokens, $index, $nextIndex, $totalTokens, $context)
@@ -757,17 +744,17 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         // A name after "->" is a T_STRING, whatever word spells it.
-        $name = $this->readNameToken($token);
+        $name = PhpTokens::name($token);
         if (null === $name) {
             return null;
         }
 
-        $nextIndex = $this->nextSignificantTokenIndex($tokens, $index + 1, $totalTokens);
+        $nextIndex = PhpTokens::nextSignificant($tokens, $index + 1, $totalTokens);
         if (null !== $nextIndex && $this->isDoubleColonToken($tokens[$nextIndex])) {
             return $this->matchStaticMethodCall($tokens, $index, $nextIndex, $totalTokens, $context);
         }
 
-        $prevIndex = $this->previousSignificantTokenIndex($tokens, $index - 1);
+        $prevIndex = PhpTokens::previousSignificant($tokens, $index - 1);
 
         // $this->assertMatchesRegularExpression(...): a method matched by
         // its name.
@@ -779,7 +766,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // whether it is a registered function.
         if (null !== $prevIndex) {
             $prevToken = $tokens[$prevIndex];
-            if ($this->isDefinitionToken($prevToken) || $this->isObjectOrStaticOperator($prevToken)) {
+            if ($this->isDefinitionToken($prevToken) || PhpTokens::isObjectOrStaticOperator($prevToken)) {
                 return null;
             }
         }
@@ -806,23 +793,23 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function matchStaticMethodCall(array $tokens, int $classIndex, int $doubleColonIndex, int $totalTokens, NameResolutionContext $context): ?array
     {
-        $methodIndex = $this->nextSignificantTokenIndex($tokens, $doubleColonIndex + 1, $totalTokens);
+        $methodIndex = PhpTokens::nextSignificant($tokens, $doubleColonIndex + 1, $totalTokens);
         if (null === $methodIndex) {
             return null;
         }
 
-        $methodName = $this->readIdentifierToken($tokens[$methodIndex]);
+        $methodName = PhpTokens::identifier($tokens[$methodIndex]);
         if (null === $methodName) {
             return null;
         }
 
-        $openParenIndex = $this->nextSignificantTokenIndex($tokens, $methodIndex + 1, $totalTokens);
+        $openParenIndex = PhpTokens::nextSignificant($tokens, $methodIndex + 1, $totalTokens);
         if (null === $openParenIndex || '(' !== $tokens[$openParenIndex]) {
             return null;
         }
 
         $classToken = $tokens[$classIndex];
-        $className = \is_array($classToken) && \T_STATIC === $classToken[0] ? 'static' : $this->readNameToken($classToken);
+        $className = \is_array($classToken) && \T_STATIC === $classToken[0] ? 'static' : PhpTokens::name($classToken);
         if (null === $className) {
             return null;
         }
@@ -849,21 +836,21 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function matchThisMethodCall(array $tokens, int $methodIndex, int $operatorIndex, ?int $openParenIndex): ?array
     {
         // The name first: most method calls are no pattern function.
-        $method = $this->readIdentifierToken($tokens[$methodIndex]);
+        $method = PhpTokens::identifier($tokens[$methodIndex]);
         $patternFunction = null === $method ? null : $this->registry->lookupNamedMethod($method);
         if (null === $patternFunction) {
             return null;
         }
 
-        $receiver = $this->previousSignificantTokenIndex($tokens, $operatorIndex - 1);
+        $receiver = PhpTokens::previousSignificant($tokens, $operatorIndex - 1);
         if (null === $receiver || null === $openParenIndex || '(' !== $tokens[$openParenIndex]
             || !\is_array($tokens[$receiver]) || \T_VARIABLE !== $tokens[$receiver][0] || '$this' !== $tokens[$receiver][1]) {
             return null;
         }
 
         // $other->$this->method() reads a property named by $this.
-        $beforeReceiver = $this->previousSignificantTokenIndex($tokens, $receiver - 1);
-        if (null !== $beforeReceiver && ($this->isObjectOrStaticOperator($tokens[$beforeReceiver]) || '$' === $tokens[$beforeReceiver])) {
+        $beforeReceiver = PhpTokens::previousSignificant($tokens, $receiver - 1);
+        if (null !== $beforeReceiver && (PhpTokens::isObjectOrStaticOperator($tokens[$beforeReceiver]) || '$' === $tokens[$beforeReceiver])) {
             return null;
         }
 
@@ -902,7 +889,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // makes the call unknown.
         if (!isset($closers[$startIndex - 1])) {
             for ($i = $startIndex; $i < $totalTokens; $i++) {
-                if ($this->opensNesting($tokens[$i]) && !isset($closers[$i])) {
+                if (PhpTokens::opensNesting($tokens[$i]) && !isset($closers[$i])) {
                     return [];
                 }
             }
@@ -953,7 +940,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             return [];
         }
 
-        [$argumentTokens, $argumentIndexes] = $this->sliceTokens($tokens, $range[0], $range[1]);
+        [$argumentTokens, $argumentIndexes] = PhpTokens::slice($tokens, $range[0], $range[1]);
 
         return $this->extractFromArgumentTokens($argumentTokens, $argumentIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
     }
@@ -986,7 +973,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             foreach ($items as [$keyRange, $valueRange]) {
                 if (null === $keyRange) {
                     // A spread may hold the key, replacing what came before.
-                    $first = $this->nextSignificantTokenIndex($tokens, $valueRange[0], $valueRange[1]);
+                    $first = PhpTokens::nextSignificant($tokens, $valueRange[0], $valueRange[1]);
                     if (null !== $first && \is_array($tokens[$first]) && \T_ELLIPSIS === $tokens[$first][0]) {
                         $found = null;
                     }
@@ -994,7 +981,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                     continue;
                 }
 
-                [$keyTokens, $keyIndexes] = $this->sliceTokens($tokens, $keyRange[0], $keyRange[1]);
+                [$keyTokens, $keyIndexes] = PhpTokens::slice($tokens, $keyRange[0], $keyRange[1]);
                 [$keyTokens, $keyIndexes] = $this->stripOuterParentheses($keyTokens, $keyIndexes);
                 $literal = $this->parseConstantStringExpression($keyTokens, $keyIndexes, $tokenOffsets, $content);
                 if (null !== $literal && $key === $literal['pattern']) {
@@ -1024,11 +1011,11 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function arrayItems(array $tokens, int $start, int $end, array $closers): ?array
     {
-        $first = $this->nextSignificantTokenIndex($tokens, $start, $end);
-        $last = $this->previousSignificantTokenIndex($tokens, $end - 1);
+        $first = PhpTokens::nextSignificant($tokens, $start, $end);
+        $last = PhpTokens::previousSignificant($tokens, $end - 1);
         while (null !== $first && null !== $last && '(' === $tokens[$first] && ($closers[$first] ?? null) === $last) {
-            $first = $this->nextSignificantTokenIndex($tokens, $first + 1, $last);
-            $last = $this->previousSignificantTokenIndex($tokens, $last - 1);
+            $first = PhpTokens::nextSignificant($tokens, $first + 1, $last);
+            $last = PhpTokens::previousSignificant($tokens, $last - 1);
         }
 
         if (null === $first || null === $last) {
@@ -1037,7 +1024,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         $open = $first;
         if (\is_array($tokens[$first]) && \T_ARRAY === $tokens[$first][0]) {
-            $open = $this->nextSignificantTokenIndex($tokens, $first + 1, $last + 1);
+            $open = PhpTokens::nextSignificant($tokens, $first + 1, $last + 1);
             if (null === $open || '(' !== $tokens[$open]) {
                 return null;
             }
@@ -1054,7 +1041,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         for ($i = $open + 1; $i <= $last; $i++) {
             $token = $tokens[$i];
             if (',' !== $token && $i !== $last) {
-                if ($this->opensNesting($token)) {
+                if (PhpTokens::opensNesting($token)) {
                     $i = $closers[$i] ?? $last;
                 }
 
@@ -1069,12 +1056,12 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                     break;
                 }
 
-                if ($this->opensNesting($tokens[$j])) {
+                if (PhpTokens::opensNesting($tokens[$j])) {
                     $j = $closers[$j] ?? $i;
                 }
             }
 
-            if (null !== $this->nextSignificantTokenIndex($tokens, $itemStart, $i)) {
+            if (null !== PhpTokens::nextSignificant($tokens, $itemStart, $i)) {
                 $items[] = null === $arrow ? [null, [$itemStart, $i]] : [[$itemStart, $arrow], [$arrow + 1, $i]];
             }
 
@@ -1092,33 +1079,10 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function soleName(array $tokens, int $start, int $end): ?string
     {
         // (FILTER_VALIDATE_REGEXP) is the constant: PHP drops the parentheses.
-        [$slice] = $this->stripOuterParentheses(...$this->sliceTokens($tokens, $start, $end));
-        $significant = array_values(array_filter($slice, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+        [$slice] = $this->stripOuterParentheses(...PhpTokens::slice($tokens, $start, $end));
+        $significant = array_values(array_filter($slice, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
 
-        return 1 === \count($significant) ? $this->readNameToken($significant[0]) : null;
-    }
-
-    /**
-     * The index of the token closing each bracket: ( [ { and the "{$", "${"
-     * and "#[" a plain "}" or "]" closes. An opener left open has none.
-     *
-     * @param array<int, array{int, string, int}|string> $tokens
-     *
-     * @return array<int, int>
-     */
-    private function matchBrackets(array $tokens): array
-    {
-        $closers = [];
-        $open = [];
-        foreach ($tokens as $index => $token) {
-            if ($this->opensNesting($token)) {
-                $open[] = $index;
-            } elseif ((')' === $token || ']' === $token || '}' === $token) && [] !== $open) {
-                $closers[array_pop($open)] = $index;
-            }
-        }
-
-        return $closers;
+        return 1 === \count($significant) ? PhpTokens::name($significant[0]) : null;
     }
 
     /**
@@ -1135,9 +1099,9 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             $token = $tokens[$i];
             if (')' === $token || ',' === $token) {
                 $argument = $this->readArgument($tokens, $argumentStart, $i);
-                $value = null === $argument ? null : $this->nextSignificantTokenIndex($tokens, $argument['valueStart'], $i);
+                $value = null === $argument ? null : PhpTokens::nextSignificant($tokens, $argument['valueStart'], $i);
                 if (null !== $value && ('?' === $tokens[$value] || (\is_array($tokens[$value]) && \T_ELLIPSIS === $tokens[$value][0]))
-                    && null === $this->nextSignificantTokenIndex($tokens, $value + 1, $i)) {
+                    && null === PhpTokens::nextSignificant($tokens, $value + 1, $i)) {
                     return true;
                 }
                 if (')' === $token) {
@@ -1145,7 +1109,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 }
 
                 $argumentStart = $i + 1;
-            } elseif ($this->opensNesting($token)) {
+            } elseif (PhpTokens::opensNesting($token)) {
                 $i = $closers[$i] ?? $totalTokens;
             }
         }
@@ -1202,7 +1166,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 }
 
                 $argumentStart = $i + 1;
-            } elseif ($this->opensNesting($token)) {
+            } elseif (PhpTokens::opensNesting($token)) {
                 // Step over the bracket; one left open runs to the end.
                 $i = $closers[$i] ?? $totalTokens;
             }
@@ -1242,7 +1206,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 }
 
                 $argumentStart = $i + 1;
-            } elseif ($this->opensNesting($token)) {
+            } elseif (PhpTokens::opensNesting($token)) {
                 $i = $closers[$i] ?? $totalTokens;
             }
         }
@@ -1263,7 +1227,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function readArgument(array $tokens, int $start, int $end): ?array
     {
-        $first = $this->nextSignificantTokenIndex($tokens, $start, $end);
+        $first = PhpTokens::nextSignificant($tokens, $start, $end);
         if (null === $first) {
             return null;
         }
@@ -1275,28 +1239,13 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         // "pattern: '/re/'": an identifier, any reserved word included,
         // followed by a single colon.
-        $name = $this->readIdentifierToken($token);
-        $colon = null === $name ? null : $this->nextSignificantTokenIndex($tokens, $first + 1, $end);
+        $name = PhpTokens::identifier($token);
+        $colon = null === $name ? null : PhpTokens::nextSignificant($tokens, $first + 1, $end);
         if (null !== $colon && ':' === $tokens[$colon]) {
             return ['name' => $name, 'spread' => false, 'valueStart' => $colon + 1];
         }
 
         return ['name' => null, 'spread' => false, 'valueStart' => $start];
-    }
-
-    /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     *
-     * @return array{0: list<array{int, string, int}|string>, 1: list<int>}
-     */
-    private function sliceTokens(array $tokens, int $start, int $end): array
-    {
-        // A name with no value after it, "pattern:)", leaves nothing. A call
-        // whose brackets never balance, as in half-typed code, runs to the
-        // end of the file and no further.
-        $end = min($end, \count($tokens));
-
-        return [array_values(\array_slice($tokens, $start, $end - $start)), $end > $start ? range($start, $end - 1) : []];
     }
 
     /**
@@ -1316,15 +1265,15 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function isObjectOrArray(array $tokens, int $start, int $end, array $closers, NameResolutionContext $context): bool
     {
         // An empty value leaves $first past $last: nothing below matches.
-        $first = $this->nextSignificantTokenIndex($tokens, $start, $end) ?? $end;
-        $last = $this->previousSignificantTokenIndex($tokens, $end - 1) ?? $start;
+        $first = PhpTokens::nextSignificant($tokens, $start, $end) ?? $end;
+        $last = PhpTokens::previousSignificant($tokens, $end - 1) ?? $start;
         while ('(' === ($tokens[$first] ?? null) && ($closers[$first] ?? null) === $last) {
-            $first = $this->nextSignificantTokenIndex($tokens, $first + 1, $last) ?? $last;
-            $last = $this->previousSignificantTokenIndex($tokens, $last - 1) ?? $first;
+            $first = PhpTokens::nextSignificant($tokens, $first + 1, $last) ?? $last;
+            $last = PhpTokens::previousSignificant($tokens, $last - 1) ?? $first;
         }
 
         $token = $tokens[$first] ?? ';';
-        $next = $this->nextSignificantTokenIndex($tokens, $first + 1, $last + 1) ?? $last + 1;
+        $next = PhpTokens::nextSignificant($tokens, $first + 1, $last + 1) ?? $last + 1;
 
         if ('[' === $token) {
             return ($closers[$first] ?? null) === $last;
@@ -1360,7 +1309,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // parenthesis ending the argument.
         while (\is_array($tokens[$index] ?? null) && \in_array($tokens[$index][0], [\T_ATTRIBUTE, \T_STATIC], true)) {
             $after = \T_ATTRIBUTE === $tokens[$index][0] ? ($closers[$index] ?? $last) : $index;
-            $index = $this->nextSignificantTokenIndex($tokens, $after + 1, $last + 1) ?? $last + 1;
+            $index = PhpTokens::nextSignificant($tokens, $after + 1, $last + 1) ?? $last + 1;
         }
 
         $token = $tokens[$index] ?? ';';
@@ -1396,7 +1345,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             }
 
             // new $classes['a'] names its class with a bracket.
-            if ($this->opensNesting($tokens[$i])) {
+            if (PhpTokens::opensNesting($tokens[$i])) {
                 $i = $closers[$i] ?? $last;
             }
         }
@@ -1416,7 +1365,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         // With no body, $i passes $last, where no bracket opens.
         $i = $index;
         while ($i <= $last && '{' !== $tokens[$i]) {
-            $i = ($this->opensNesting($tokens[$i]) ? ($closers[$i] ?? $last) : $i) + 1;
+            $i = (PhpTokens::opensNesting($tokens[$i]) ? ($closers[$i] ?? $last) : $i) + 1;
         }
 
         return $closers[$i] ?? null;
@@ -1435,22 +1384,22 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         $afterOperator = false;
         for ($i = $from; $i <= $to; $i++) {
             $token = $tokens[$i];
-            if ($this->isIgnorableToken($token) || '$' === $token) {
+            if (PhpTokens::isIgnorable($token) || '$' === $token) {
                 continue;
             }
 
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $i = $closers[$i] ?? $to + 1;
                 $afterOperator = false;
 
                 continue;
             }
 
-            if ($afterOperator ? null === $this->readIdentifierToken($token) && !$this->isVariableToken($token) : !$this->startsMemberChain($token)) {
+            if ($afterOperator ? null === PhpTokens::identifier($token) && !$this->isVariableToken($token) : !$this->startsMemberChain($token)) {
                 return false;
             }
 
-            $afterOperator = $this->isObjectOrStaticOperator($token);
+            $afterOperator = PhpTokens::isObjectOrStaticOperator($token);
         }
 
         return $from <= $to && $i === $to + 1;
@@ -1461,8 +1410,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function startsMemberChain(array|string $token): bool
     {
-        return $this->isVariableToken($token) || $this->isObjectOrStaticOperator($token)
-            || null !== $this->readNameToken($token) || (\is_array($token) && \T_STATIC === $token[0]);
+        return $this->isVariableToken($token) || PhpTokens::isObjectOrStaticOperator($token)
+            || null !== PhpTokens::name($token) || (\is_array($token) && \T_STATIC === $token[0]);
     }
 
     /**
@@ -1482,8 +1431,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function isFirstClassCallable(array $tokens, int $first, int $last, array $closers): bool
     {
-        $ellipsis = $this->previousSignificantTokenIndex($tokens, $last - 1) ?? $last;
-        $open = $this->previousSignificantTokenIndex($tokens, $ellipsis - 1) ?? $ellipsis;
+        $ellipsis = PhpTokens::previousSignificant($tokens, $last - 1) ?? $last;
+        $open = PhpTokens::previousSignificant($tokens, $ellipsis - 1) ?? $ellipsis;
         $token = $tokens[$ellipsis];
 
         return \is_array($token) && \T_ELLIPSIS === $token[0] && ($closers[$open] ?? null) === $last
@@ -1498,30 +1447,16 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function isClosureFromCallable(array $tokens, int $first, int $next, int $last, array $closers, NameResolutionContext $context): bool
     {
-        $class = $this->readNameToken($tokens[$first]);
+        $class = PhpTokens::name($tokens[$first]);
         if (null === $class || 'closure' !== Ascii::lower($context->resolveClass($class)) || !$this->isDoubleColonToken($tokens[$next] ?? '')) {
             return false;
         }
 
-        $method = $this->nextSignificantTokenIndex($tokens, $next + 1, $last + 1) ?? $last;
-        $open = $this->nextSignificantTokenIndex($tokens, $method + 1, $last + 1) ?? $last;
+        $method = PhpTokens::nextSignificant($tokens, $next + 1, $last + 1) ?? $last;
+        $open = PhpTokens::nextSignificant($tokens, $method + 1, $last + 1) ?? $last;
 
-        return 'fromcallable' === Ascii::lower($this->readIdentifierToken($tokens[$method]) ?? '')
+        return 'fromcallable' === Ascii::lower(PhpTokens::identifier($tokens[$method]) ?? '')
             && '(' === $tokens[$open] && ($closers[$open] ?? null) === $last;
-    }
-
-    /**
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function opensNesting(array|string $token): bool
-    {
-        if (!\is_array($token)) {
-            return '(' === $token || '[' === $token || '{' === $token;
-        }
-
-        // "{$x}" and "${x}" inside a string, and "#[" of an attribute, are
-        // closed by a plain "}" or "]".
-        return \in_array($token[0], [\T_CURLY_OPEN, \T_DOLLAR_OPEN_CURLY_BRACES, \T_ATTRIBUTE], true);
     }
 
     /**
@@ -1592,7 +1527,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
      */
     private function mayName(array $tokens): bool
     {
-        $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+        $significant = array_values(array_filter($tokens, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
         if (\in_array('.', $significant, true)) {
             return true;
         }
@@ -1600,7 +1535,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         [$first, $second, $third] = $significant + [null, null, null];
         $count = \count($significant);
         if (1 === $count && \is_array($first)) {
-            $name = $this->readNameToken($first);
+            $name = PhpTokens::name($first);
 
             return \T_VARIABLE === $first[0] ? '$this' !== $first[1] : null !== $name && !\in_array(Ascii::lower(ltrim($name, '\\')), ['true', 'false', 'null'], true);
         }
@@ -1610,7 +1545,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         if (\T_DOUBLE_COLON === $second[0]) {
-            return \T_STATIC === $first[0] || null !== $this->readNameToken($first);
+            return \T_STATIC === $first[0] || null !== PhpTokens::name($first);
         }
 
         return \T_VARIABLE === $first[0] && '$this' === $first[1] && \T_OBJECT_OPERATOR === $second[0];
@@ -1656,7 +1591,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             $token = $tokens[$i];
             $tokenIndex = $tokenIndexes[$i] ?? -1;
 
-            if ($this->isIgnorableToken($token)) {
+            if (PhpTokens::isIgnorable($token)) {
                 if ($collecting) {
                     $segmentTokens[] = $token;
                     $segmentTokenIndexes[] = $tokenIndex;
@@ -1666,7 +1601,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             }
 
             if (\is_array($token) && \T_ARRAY === $token[0]) {
-                $nextIndex = $this->nextSignificantTokenIndex($tokens, $i + 1, $totalTokens);
+                $nextIndex = PhpTokens::nextSignificant($tokens, $i + 1, $totalTokens);
                 if (null !== $nextIndex && '(' === $tokens[$nextIndex]) {
                     $stack[] = ')';
                     if ($collecting) {
@@ -1679,7 +1614,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 }
             }
 
-            if ($this->opensNesting($token)) {
+            if (PhpTokens::opensNesting($token)) {
                 $stack[] = $this->closingTokenFor($token);
                 if ($collecting) {
                     $segmentTokens[] = $token;
@@ -1756,7 +1691,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function isStringKey(array $tokens, array $tokenIndexes, array $tokenOffsets, string $content): bool
     {
         [$tokens, $tokenIndexes] = $this->stripOuterParentheses($tokens, $tokenIndexes);
-        $significant = array_values(array_filter($tokens, fn (array|string $token): bool => !$this->isIgnorableToken($token)));
+        $significant = array_values(array_filter($tokens, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
 
         // An int, a float, true or false, signed or not: PHP stores an int.
         $sign = 0;
@@ -1767,7 +1702,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         $scalar = $significant[$sign] ?? null;
         if (\is_array($scalar) && $sign + 1 === \count($significant)) {
             $isNumber = \T_LNUMBER === $scalar[0] || \T_DNUMBER === $scalar[0];
-            $isBool = 0 === $sign && null !== $this->readNameToken($scalar) && \in_array(Ascii::lower(ltrim($scalar[1], '\\')), ['true', 'false'], true);
+            $isBool = 0 === $sign && null !== PhpTokens::name($scalar) && \in_array(Ascii::lower(ltrim($scalar[1], '\\')), ['true', 'false'], true);
             if ($isNumber || $isBool) {
                 return false;
             }
@@ -1924,7 +1859,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                 continue;
             }
 
-            if ($this->isIgnorableToken($token)) {
+            if (PhpTokens::isIgnorable($token)) {
                 continue;
             }
 
@@ -1954,7 +1889,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
                     continue;
                 }
 
-                $parts[] = $this->decodeStringToken($token[1]);
+                $parts[] = PhpTokens::stringValue($token[1]);
                 $expectString = false;
 
                 continue;
@@ -1974,7 +1909,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         // ('/a/') . 'i' starts at its parenthesis, as php-parser places it.
-        $lead = $this->nextSignificantTokenIndex($tokens, 0, \count($tokens));
+        $lead = PhpTokens::nextSignificant($tokens, 0, \count($tokens));
         $leadOffset = '(' === $tokens[$lead ?? 0] ? ($tokenOffsets[$tokenIndexes[$lead] ?? -1] ?? null) : null;
         if (null !== $leadOffset && null !== $firstTokenOffset) {
             $firstLine -= substr_count($content, "\n", $leadOffset, $firstTokenOffset - $leadOffset);
@@ -2004,100 +1939,6 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
             'offset' => $firstTokenOffset,
             'column' => $firstTokenColumn,
         ];
-    }
-
-    /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     *
-     * @return array<int, int>
-     */
-    private function buildTokenOffsets(array $tokens): array
-    {
-        $offsets = [];
-        $offset = 0;
-
-        foreach ($tokens as $index => $token) {
-            $offsets[$index] = $offset;
-            $text = \is_array($token) ? $token[1] : $token;
-            $offset += \strlen($text);
-        }
-
-        return $offsets;
-    }
-
-    /**
-     * The value of a quoted string token, as PHP reads it. The b of a binary
-     * string, b'/a/' or B"/a/", changes nothing.
-     */
-    private function decodeStringToken(string $token): string
-    {
-        if ('b' === Ascii::lower($token[0] ?? '')) {
-            $token = substr($token, 1);
-        }
-
-        // A token that is no quoted literal: what lies between its ends.
-        return PhpStringLiteral::decode($token) ?? substr($token, 1, -1);
-    }
-
-    /**
-     * Read a token used as a member name.
-     *
-     * Any reserved word is a valid method name, so this accepts every token
-     * whose text is an identifier rather than T_STRING alone.
-     *
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function readIdentifierToken(array|string $token): ?string
-    {
-        if (!\is_array($token)) {
-            return null;
-        }
-
-        if (\T_STRING === $token[0]) {
-            return $token[1];
-        }
-
-        // A variable, a literal, a number or an operator starts with no
-        // letter: no pattern needs to say so.
-        $first = $token[1][0] ?? '';
-        if ('_' !== $first && !Ascii::isAlpha($first) && \ord($first) < 0x80) {
-            return null;
-        }
-
-        if (1 !== LibraryPcre::match(self::IDENTIFIER_PATTERN, $token[1])) {
-            return null;
-        }
-
-        return $token[1];
-    }
-
-    /**
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function readNameToken(array|string $token): ?string
-    {
-        if (!\is_array($token)) {
-            return null;
-        }
-
-        $id = $token[0];
-        if (\T_STRING === $id) {
-            return $token[1];
-        }
-
-        if (\defined('T_NAME_QUALIFIED') && \T_NAME_QUALIFIED === $id) {
-            return $token[1];
-        }
-
-        if (\defined('T_NAME_FULLY_QUALIFIED') && \T_NAME_FULLY_QUALIFIED === $id) {
-            return $token[1];
-        }
-
-        if (\defined('T_NAME_RELATIVE') && \T_NAME_RELATIVE === $id) {
-            return $token[1];
-        }
-
-        return null;
     }
 
     private function shouldSkipContent(string $content): bool
@@ -2130,60 +1971,6 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function isDefinitionToken(array|string $token): bool
     {
         return \is_array($token) && \in_array($token[0], [\T_FUNCTION, \T_FN, \T_NEW], true);
-    }
-
-    /**
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function isObjectOrStaticOperator(array|string $token): bool
-    {
-        if (!\is_array($token)) {
-            return false;
-        }
-
-        $operators = [\T_DOUBLE_COLON, \T_OBJECT_OPERATOR];
-        if (\defined('T_NULLSAFE_OBJECT_OPERATOR')) {
-            $operators[] = \T_NULLSAFE_OBJECT_OPERATOR;
-        }
-
-        return \in_array($token[0], $operators, true);
-    }
-
-    /**
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function isIgnorableToken(array|string $token): bool
-    {
-        return \is_array($token) && isset(self::IGNORABLE_TOKENS[$token[0]]);
-    }
-
-    /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     */
-    private function nextSignificantTokenIndex(array $tokens, int $startIndex, int $totalTokens): ?int
-    {
-        // A range left open by a file cut short runs past the last token.
-        for ($i = $startIndex, $end = min($totalTokens, \count($tokens)); $i < $end; $i++) {
-            if (!$this->isIgnorableToken($tokens[$i])) {
-                return $i;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     */
-    private function previousSignificantTokenIndex(array $tokens, int $startIndex): ?int
-    {
-        for ($i = min($startIndex, \count($tokens) - 1); $i >= 0; $i--) {
-            if (!$this->isIgnorableToken($tokens[$i])) {
-                return $i;
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -2238,8 +2025,8 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         while (true) {
-            $startIndex = $this->nextSignificantTokenIndex($tokens, 0, $totalTokens);
-            $endIndex = $this->previousSignificantTokenIndex($tokens, $totalTokens - 1);
+            $startIndex = PhpTokens::nextSignificant($tokens, 0, $totalTokens);
+            $endIndex = PhpTokens::previousSignificant($tokens, $totalTokens - 1);
 
             if (null === $startIndex || null === $endIndex) {
                 break;
@@ -2283,7 +2070,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function findArrayStartIndex(array $tokens): ?int
     {
         $totalTokens = \count($tokens);
-        $startIndex = $this->nextSignificantTokenIndex($tokens, 0, $totalTokens);
+        $startIndex = PhpTokens::nextSignificant($tokens, 0, $totalTokens);
         if (null === $startIndex) {
             return null;
         }
@@ -2294,7 +2081,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         }
 
         if (\is_array($token) && \T_ARRAY === $token[0]) {
-            $openParenIndex = $this->nextSignificantTokenIndex($tokens, $startIndex + 1, $totalTokens);
+            $openParenIndex = PhpTokens::nextSignificant($tokens, $startIndex + 1, $totalTokens);
             if (null !== $openParenIndex && '(' === $tokens[$openParenIndex]) {
                 return $openParenIndex;
             }

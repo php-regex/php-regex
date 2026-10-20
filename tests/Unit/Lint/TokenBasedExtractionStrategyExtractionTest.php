@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\NameResolutionContext;
 use PHPRegex\Linter\Extraction\PatternFunction;
+use PHPRegex\Linter\Extraction\PhpTokens;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\TestCase;
@@ -130,7 +131,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
-            $this->invoke($strategy, 'matchBrackets', $tokens),
+            PhpTokens::closers($tokens),
             new NameResolutionContext(),
         );
 
@@ -162,7 +163,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
-            $this->invoke($strategy, 'matchBrackets', $tokens),
+            PhpTokens::closers($tokens),
             new NameResolutionContext(),
         );
 
@@ -188,7 +189,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
-            $this->invoke($strategy, 'matchBrackets', $tokens),
+            PhpTokens::closers($tokens),
             new NameResolutionContext(),
         );
 
@@ -217,7 +218,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
-            $this->invoke($strategy, 'matchBrackets', $tokens),
+            PhpTokens::closers($tokens),
             new NameResolutionContext(),
         );
 
@@ -243,7 +244,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
             'test.php',
             $tokenOffsets,
             $content,
-            $this->invoke($strategy, 'matchBrackets', $tokens),
+            PhpTokens::closers($tokens),
             new NameResolutionContext(),
         );
 
@@ -508,10 +509,9 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
     public function test_decode_string_token_edge_cases(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
-
-        $this->assertSame('', $this->invoke($strategy, 'decodeStringToken', ''));
-        $this->assertSame('foo', $this->invoke($strategy, 'decodeStringToken', '`foo`'));
+        $this->assertSame('', PhpTokens::stringValue(''));
+        // A backtick string runs a shell command: it holds no string value.
+        $this->assertSame('', PhpTokens::stringValue('`foo`'));
     }
 
     /**
