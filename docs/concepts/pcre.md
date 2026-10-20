@@ -105,7 +105,10 @@ release knows are modelled: 10.32 has no `Unknown`, 10.34 added the Unicode
 7.3 and 7.4 without `X`. So are the letters and decimal digits a group name
 holds under UTF, those of each release's Unicode tables, from Unicode 11 for
 10.33 to Unicode 17 for 10.48: `(?<aࡰ>x)/u`, whose `ࡰ` Unicode 14 added, is
-refused up to 10.38. Which characters a `\p{...}` holds is not: the
+refused up to 10.38. So are the other cases a caseless class, or a class of
+a character and its other case, compiles to when the library decides
+whether a pattern is too large, from Unicode 11 for 10.32: `[\x{1C89}\x{1C8A}]`
+under `u` is one caseless character from 10.45, two before. Which characters a `\p{...}` holds is not: the
 Unicode data of an old release is a blind spot below 10.39. Neither are the
 matching bugs of an old release, such as a
 `(?(DEFINE)...)` inside a lookbehind before 10.35, which some releases refuse
@@ -207,16 +210,19 @@ running PHP and is refused with a target that is not that engine.
 
 #### Verdicts that depend on the running PHP
 
-Case folding is not read from PCRE2. Where a verdict needs a character's
-other case under `iu`, it asks the running PHP's mbstring, whose Unicode
-tables ship with the PHP release, not with the target's PCRE2:
+Case folding is not read from PCRE2, but for the size of a pattern, which
+the other cases of the target's Unicode tables decide. Where another verdict
+needs a character's other case under `iu`, it asks the running PHP's
+mbstring, whose Unicode tables ship with the PHP release, not with the
+target's PCRE2:
 
 - `regex.lint.flag.useless.i`: whether a letter has another case at all;
 - `regex.lint.alternation.overlap`: two branches compared caseless under `u`;
 - the ReDoS search-cost witness (`search_cost`): the other case a class may
   read under `iu`;
-- the floor of the compiled size behind "Regular expression is too large": a
-  class of two case variants counts as one caseless character.
+- the floor of the compiled size behind "Regular expression is too large",
+  for a class whose length is not known for sure: a class of two case
+  variants counts as one caseless character.
 
 PHP and PCRE2 update their Unicode data on their own schedules, so for a
 character a recent Unicode version added, two machines may disagree on one of
@@ -253,27 +259,25 @@ Where the library still departs from what the target's PCRE2 reports:
 - **Patterns too large to compile.** PCRE2 refuses a pattern whose compiled
   form passes 64 KiB, "regular expression is too large", as its first pass
   counts it: the library counts each item as the first pass of the targeted
-  release does, from 10.32 to 10.49. A few lengths it does not know for
-  sure: a caseless class that holds a character past 255, or past ASCII
-  without UTF, whose other cases come from the Unicode tables of each
-  release (Latin-1 is known); a class of two characters past 255 that may be
-  one and its other case, such as `[āĀ]` under `u`; a class whose cases
-  follow the locale PHP builds its tables from: `[iI]`, which Turkish tables
-  keep apart, without UTF a class of bytes past ASCII such as `[\xe9\xc9]`,
-  and from PCRE2 10.45 a class of types or caseless letters that holds all
+  release does, from 10.32 to 10.49, the other cases of a caseless item
+  from the Unicode tables of that release, under the case rules in force
+  where it is written (`r`, `(?r)`, `(*CASELESS_RESTRICT)`,
+  `(*TURKISH_CASING)`): `/(?:[à-ž]x){1214}/iu` is refused on every
+  release, `/(?:[à-ž]x){1213}/iu` compiles. A few lengths it does not know
+  for sure: a class whose cases follow the locale PHP builds its tables
+  from: `[iI]`, which Turkish tables keep apart, without UTF a class of
+  bytes past ASCII such as `[\xe9\xc9]` (under UCP from 10.35 they follow
+  the Unicode tables), and from PCRE2 10.45 a class of types or caseless letters that holds all
   of ASCII without UTF, which may then hold every byte; from 10.45, a class
   that holds every character past 255 and a property, whose characters below
   256 may complete its map, as `[[:^ascii:][:^blank:][:space:]]` under `u`;
-  a caseless letter under `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or
-  `r`; `(*scan_substring:...)` and an extended class `(?[...])`; a class of
+  `(*scan_substring:...)` and an extended class `(?[...])`; a class of
   more than 256 members; up to PCRE2 10.34, a lookbehind after a DEFINE
   group that opens on a group inside a lookbehind, and on 10.34 one after
   the second DEFINE group of a pattern that opens on a group, which these
   releases may leave without the length to move back. Such an item is
   counted at the least it may compile to, so a pattern PCRE2 refuses for it
-  may be reported valid, never the reverse: `/(?:[à-ÿ]x){1400}/iu` holds
-  Latin-1 only and is refused, but `/(?:[à-ž]x){1300}/iu` is reported valid
-  where PCRE2 refuses it. From 10.48, PCRE2 reports the error at offset 0
+  may be reported valid, never the reverse. From 10.48, PCRE2 reports the error at offset 0
   when an item or a branch passes the limit, and at the end of the pattern
   when only the check made where a group ends finds it; when a group of
   several branches holding one of these items is measured before the limit

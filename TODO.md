@@ -142,10 +142,6 @@ compiled length the size verdict counts at its least, so a pattern near the
 64 KiB limit PCRE2 refuses may be reported valid (never the reverse). Count
 each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
 
-- caseless classes past 255 (`/(?:[à-ž]x){1300}/iu`) and pairs past 255
-  such as `[āĀ]`: the other cases come from each release's Unicode tables
-  (`pcre2_ucd.c`), shipped as data per Unicode version;
-- a caseless letter under `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or `r`;
 - `(*scan_substring:...)`, extended classes `(?[...])` and classes of more
   than 256 members;
 - the classes whose cases follow the locale PHP builds its character tables

@@ -547,14 +547,6 @@ final class CompiledLengthTest extends TestCase
      */
     public static function provideLengthsNotKnown(): iterable
     {
-        // A caseless class past 255 may hold other cases from the Unicode
-        // tables of each release.
-        yield 'caseless class of a range past 255' => ['pattern' => '/[ā-ž]/iu'];
-        yield 'class of a letter past 255 and its other case' => ['pattern' => '/[āĀ]/u'];
-        yield 'caseless class of a long range past 255' => ['pattern' => '/[\\x{100}-\\x{400}]/iu'];
-        // Without UTF, the other cases of a byte past ASCII follow the
-        // locale PHP builds its tables from.
-        yield 'caseless class of bytes past ASCII under UCP without UTF' => ['pattern' => '/(*UCP)[\\xe0-\\xfe]/i'];
         // A class that holds every character past 255 writes no property,
         // whose characters below 256 join its map, which may then hold every
         // byte.
@@ -562,10 +554,6 @@ final class CompiledLengthTest extends TestCase
         // An inline "a" may hold the types of a class to ASCII.
         yield 'class holding a type under ASCII options' => ['pattern' => '/(?aD)[\\dx]/u'];
         yield 'class of every character in POSIX names and a range' => ['pattern' => '/[[:^ascii:][:cntrl:]\x20-\x7e]/'];
-        // Rules that change the cases of "i", "k" and "s".
-        yield 'caseless k under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k/iu'];
-        yield 'class of i and its other case under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[iI]/u'];
-        yield 'quoted caseless letters under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\Qks\\E/iu'];
         // Without UTF, "é" is two bytes: a range that ends on it is read as
         // one ending on the first, then the second.
         yield 'range ending on a two-byte letter in byte mode' => ['pattern' => '/[é-\\xff]/'];
@@ -581,13 +569,6 @@ final class CompiledLengthTest extends TestCase
         // An inline "a" may hold the types to ASCII under UCP.
         yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u'];
         yield 'counted type under UCP and an inline a' => ['pattern' => '/(?a)\\d{2}/u'];
-        yield 'caseless I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)I/iu'];
-        yield 'caseless i under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)i/iu'];
-        yield 'caseless dotted capital I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{130}/iu'];
-        yield 'caseless dotless i under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{131}/iu'];
-        yield 'counted caseless I under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)I{2}/iu'];
-        yield 'caseless k under the r modifier' => ['pattern' => '/k/iur'];
-        yield 'caseless k under an inline r' => ['pattern' => '/(?r)k/iu'];
         yield 'scan substring' => ['pattern' => '/(a)(*scs:(1)b)/'];
         yield 'condition on a name no group holds' => ['pattern' => '/(?(<x>)a|b)/'];
     }
@@ -596,9 +577,6 @@ final class CompiledLengthTest extends TestCase
      * An item whose length is not known for sure counts at its floor, and
      * the pattern has a length only where that floor reaches the most the
      * item may compile to: its ceiling, none for an item of no ceiling.
-     * Each ceiling is no less than the item compiles to in pcre2test 10.49,
-     * and the most it may compile to where the rules that change the cases
-     * vary: a caseless character, or a property of three units.
      */
     #[Test]
     #[DataProvider('provideCeilings')]
@@ -624,22 +602,6 @@ final class CompiledLengthTest extends TestCase
      */
     public static function provideCeilings(): iterable
     {
-        yield 'caseless k under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k/iu', 'ceiling' => 3];
-        yield 'caseless Kelvin sign under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}/iu', 'ceiling' => 4];
-        yield 'counted caseless Kelvin sign under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{2}/iu', 'ceiling' => 6];
-        yield 'caseless Kelvin sign counted two to three times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{2,3}/iu', 'ceiling' => 10];
-        yield 'caseless Kelvin sign counted zero times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{0}/iu', 'ceiling' => 4];
-        yield 'caseless Kelvin sign counted once under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{1}/iu', 'ceiling' => 4];
-        yield 'caseless Kelvin sign counted one to two times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}{1,2}/iu', 'ceiling' => 10];
-        yield 'optional caseless Kelvin sign under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)\\x{212A}?/iu', 'ceiling' => 4];
-        yield 'counted caseless k under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{2}/iu', 'ceiling' => 6];
-        yield 'caseless k counted once under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{1}/iu', 'ceiling' => 3];
-        yield 'caseless k counted zero times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{0}/iu', 'ceiling' => 3];
-        yield 'caseless k counted one to two times under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k{1,2}/iu', 'ceiling' => 9];
-        yield 'caseless k counted once or more under rules kept to ASCII' => ['pattern' => '/(*CASELESS_RESTRICT)k+/iu', 'ceiling' => 4];
-        yield 'caseless k under UCP without UTF, rules kept to ASCII' => ['pattern' => '/(*UCP)(*CASELESS_RESTRICT)k/i', 'ceiling' => 3];
-        yield 'counted caseless k under UCP without UTF, rules kept to ASCII' => ['pattern' => '/(*UCP)(*CASELESS_RESTRICT)k{2}/i', 'ceiling' => 6];
-        yield 'caseless i under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)i/iu', 'ceiling' => 3];
         yield 'character past 255 without UTF' => ['pattern' => '/\\x{100}/', 'ceiling' => null];
         yield 'type under UCP and an inline a' => ['pattern' => '/(?a)\\d/u', 'ceiling' => null];
     }

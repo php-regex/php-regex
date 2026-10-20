@@ -215,6 +215,18 @@ final class CompiledLength
     private ?bool $caseRulesVary = null;
 
     /**
+     * Whether the case rules kept to ASCII are in force where the item
+     * measured is written: "r", "(*CASELESS_RESTRICT)", "(?r)" to the end
+     * of its group.
+     */
+    private bool $restricted = false;
+
+    /**
+     * Whether Turkish case rules are set, "(*TURKISH_CASING)", once read.
+     */
+    private ?bool $turkish = null;
+
+    /**
      * Whether the source may hold an inline "a", which keeps "\d", "\s" and
      * "\w" to ASCII under UCP, once read.
      */
@@ -346,6 +358,7 @@ final class CompiledLength
         $this->charLists = 0;
         $this->passedAtClassLists = false;
         $this->stoppedAt = \PHP_INT_MAX;
+        $this->restricted = $this->caseRulesVary() && (str_contains($this->flags, 'r') || \in_array('CASELESS_RESTRICT', StartOptions::items($this->source), true));
         if ($this->pattern !== $pattern) {
             $this->pattern = $pattern;
             $this->lookbehinds = null;
@@ -465,6 +478,7 @@ final class CompiledLength
 
             if ($item instanceof GroupNode && GroupType::InlineFlags === $item->type && $this->setsOptionsOnly($item)) {
                 $caseless = self::caselessAfter((string) $item->flags, $caseless);
+                $this->restricted = self::optionAfter((string) $item->flags, 'r', $this->restricted);
 
                 continue;
             }
@@ -547,7 +561,14 @@ final class CompiledLength
             $this->openGroups[spl_object_id($repeated)] = false;
         }
 
+        // The options a group sets, or its branches set, end with it.
+        $restricted = $this->restricted;
+        if ($repeated instanceof GroupNode && GroupType::InlineFlags === $repeated->type) {
+            $this->restricted = self::optionAfter((string) $repeated->flags, 'r', $restricted);
+        }
+
         [$found, $length, $ceiling] = $this->measureBranches($branches, 0, $frame, $bodyCaseless);
+        $this->restricted = $restricted;
         $this->openCaptures = $open;
         $referenced = $capture && $this->openGroups[spl_object_id($repeated)];
         if ($capture) {
@@ -756,21 +777,6 @@ final class CompiledLength
      */
     private function leafCeiling(NodeInterface $node): ?int
     {
-        [$min, $max] = $node instanceof QuantifierNode ? $this->boundsOf($node) : [1, 1];
-        $item = $node instanceof QuantifierNode ? $node->node : $node;
-
-        // A character whose cases are not known is a caseless character, or
-        // a property of three units: the longer of the two. A count of zero
-        // or of one leaves the item as it is.
-        $codePoint = $this->codePointOf($item);
-        if (null !== $codePoint && $codePoint <= 0x10FFFF && ($this->utf || $codePoint <= 0xFF)) {
-            // Without UTF a character is one byte, at most two counted here,
-            // which a property of three units outgrows whatever its count.
-            $units = \strlen((string) mb_chr($codePoint, 'UTF-8'));
-
-            return 0 === $max || (1 === $min && 1 === $max) ? max(1 + $units, 3) : max(self::repeatSingle($units, $units, $min, $max), self::repeatSingle(0, 3, $min, $max));
-        }
-
         return match (true) {
             $node instanceof QuantifierNode => null,
             // A reference to a name that stands for several groups, caseless.
@@ -930,8 +936,7 @@ final class CompiledLength
     /**
      * The opcode and code units of a character, or null: under a caseless
      * Unicode option, a letter with more than one other case is a property
-     * of three units; where rules that change the cases of "i", "k" and "s"
-     * may be set, the letters they touch are not known here.
+     * of three units, under the case rules in force (hasCaselessSet()).
      *
      * @return array{0: int, 1: int}|null the units of the character, 0 for a
      *                                    property, and the units of the item
@@ -945,15 +950,8 @@ final class CompiledLength
             return [$units, 1 + $units];
         }
 
-        if ($caseless && $this->unicodeCases()) {
-            $set = isset(self::CASELESS_SETS[$codePoint]);
-            if ($this->caseRulesVary() && ($set || \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true))) {
-                return null;
-            }
-
-            if ($set) {
-                return [0, 3];
-            }
+        if ($caseless && $this->unicodeCases() && $this->hasCaselessSet($codePoint)) {
+            return [0, 3];
         }
 
         if (!$this->utf) {
@@ -1021,11 +1019,8 @@ final class CompiledLength
         }
 
         // A class written again measures the same.
-        $key = ($caseless ? 'i' : '-').$this->classKey($node);
-        if (!isset($this->classLengths[$key])) {
-            $this->classes ??= new ClassLength($this->utf, $this->ucp, $this->caseRulesVary(), $this->asciiOptions(), $this->target);
-            $this->classLengths[$key] = [$this->classes->of($node, $caseless), $this->classes->charListBytes];
-        }
+        $key = ($caseless ? ($this->restricted ? 'r' : 'i') : '-').$this->classKey($node);
+        $this->classLengths[$key] ??= [$this->classes()->of($node, $caseless, $this->restricted), $this->classes()->charListBytes];
 
         [$length, $lists] = $this->classLengths[$key];
         $this->charLists += $lists;
@@ -1169,6 +1164,35 @@ final class CompiledLength
     }
 
     /**
+     * Whether Turkish case rules are set, from 10.45.
+     */
+    private function turkishCasing(): bool
+    {
+        return $this->turkish ??= $this->caseRulesVary() && $this->target->supports(PcreFeature::CasingSettingVerbs) && \in_array('TURKISH_CASING', StartOptions::items($this->source), true);
+    }
+
+    /**
+     * Whether a caseless character compiles to a property of its caseless
+     * set: one of more than one other case, but for those of a set that
+     * starts in ASCII under rules kept to ASCII ("k", "s", the Kelvin sign
+     * and the long s); and under Turkish rules, but where rules kept to
+     * ASCII are in force, "i", "I", the dotted capital I and the dotless i.
+     */
+    private function hasCaselessSet(int $codePoint): bool
+    {
+        if (\in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true)) {
+            return $this->turkishCasing() && !$this->restricted;
+        }
+
+        return isset(self::CASELESS_SETS[$codePoint]) && !($this->restricted && \in_array($codePoint, [0x4B, 0x53, 0x6B, 0x73, 0x17F, 0x212A], true));
+    }
+
+    private function classes(): ClassLength
+    {
+        return $this->classes ??= new ClassLength($this->utf, $this->ucp, $this->turkishCasing(), $this->asciiOptions(), $this->target);
+    }
+
+    /**
      * Whether a group of flags sets options for the rest of its group, as
      * "(?i)" does, rather than holding a body, as "(?i:)" does.
      */
@@ -1191,38 +1215,56 @@ final class CompiledLength
 
     private static function caselessAfter(string $flags, bool $caseless): bool
     {
+        return self::optionAfter($flags, 'i', $caseless);
+    }
+
+    /**
+     * Whether an option is on after a group of flags: "^" turns "i" and
+     * "r" off, as others it does not set apart.
+     */
+    private static function optionAfter(string $flags, string $option, bool $on): bool
+    {
         if (str_starts_with($flags, '^')) {
-            $caseless = false;
+            $on = false;
         }
 
-        [$on, $off] = explode('-', $flags, 2) + [1 => ''];
+        [$set, $unset] = explode('-', $flags, 2) + [1 => ''];
 
-        return str_contains($off, 'i') ? false : ($caseless || str_contains($on, 'i'));
+        return !str_contains($unset, $option) && ($on || str_contains($set, $option));
     }
 
     /**
      * Whether a class of two characters is a letter and its other case, one
      * PCRE compiles as a caseless letter: an ASCII letter but "k" and "s",
-     * which have a third case. Null when that is not known: past ASCII,
-     * where the other case follows Unicode, or without UTF the locale PHP
-     * builds its tables from; for "i", whose other case Turkish tables make
-     * a byte past ASCII; where rules that change the cases of "k" and "s"
-     * may be set. A character past ASCII is no case of an ASCII letter, but
-     * for the dotted and dotless i, and in Turkish tables the bytes of "i";
-     * one with more than one other case is no pair.
+     * which have a third case, unless rules kept to ASCII are in force; past
+     * ASCII under a Unicode option, the other case the Unicode tables of the
+     * release give. Null when that is not known: without UTF or UCP the
+     * cases past ASCII follow the locale PHP builds its tables from; for
+     * "i", whose other case Turkish tables make a byte past ASCII. A byte
+     * past ASCII is no case of an ASCII letter, but in Turkish tables the
+     * bytes of "i"; one with more than one other case is no pair.
      */
     private function isCasePair(int $first, int $second): ?bool
     {
-        // In UTF mode a Latin-1 letter has the other case every release
-        // gives it.
-        if ($this->utf && $first > 0x7F && $first <= 0xFF) {
-            return ClassLength::otherCaseOf($first) === $second;
+        // Turkish rules keep the cases of "i" and "I" from such a pair, but
+        // where rules kept to ASCII are in force.
+        if ($this->turkishCasing() && !$this->restricted && \in_array($first, [0x49, 0x69, 0x130, 0x131], true)) {
+            return false;
         }
 
         // A character with more than one other case is never read as a
-        // pair, a byte without UTF included.
-        if ($first > 0x7F && isset(self::CASELESS_SETS[$first])) {
+        // pair, a byte without UTF included, but for two ASCII letters
+        // under rules kept to ASCII.
+        if (isset(self::CASELESS_SETS[$first]) && !($this->restricted && $first <= 0x7F && $second <= 0x7F)) {
             return false;
+        }
+
+        // Past ASCII, under a Unicode option, the other case is the one the
+        // Unicode tables of the release give.
+        if ($first > 0x7F && $this->unicodeCases()) {
+            $other = $this->classes()->otherCase($first);
+
+            return $other !== $first && $other === $second;
         }
 
         if ($first > 0x7F) {
@@ -1235,14 +1277,11 @@ final class CompiledLength
         }
 
         if ($second > 0x7F || $letter !== Ascii::lower(\chr($second))) {
-            return 'i' === $letter && $second > 0x7F ? null : false;
+            // The other case of "i" a locale gives is a byte.
+            return 'i' === $letter && $second > 0x7F && $second <= 0xFF ? null : false;
         }
 
-        if ('i' === $letter || (\in_array($letter, ['k', 's'], true) && $this->caseRulesVary())) {
-            return null;
-        }
-
-        return !\in_array($letter, ['k', 's'], true);
+        return 'i' === $letter ? null : true;
     }
 
     /**

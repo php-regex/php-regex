@@ -301,11 +301,13 @@ final class Validator extends AbstractNodeVisitor
     private ?string $source = null;
 
     /**
-     * Whether the pattern measured may hold a caseless item, and whether a
-     * capture in it may be wrapped for a reference to itself (up to 10.34):
-     * what its ceiling allows for.
+     * Whether the pattern measured may hold a caseless item, may set the
+     * Turkish case rules, and whether a capture in it may be wrapped for a
+     * reference to itself (up to 10.34): what its ceiling allows for.
      */
     private bool $compiledCaseless = true;
+
+    private bool $compiledTurkish = true;
 
     private bool $compiledMayWrapCaptures = true;
 
@@ -4099,7 +4101,7 @@ final class Validator extends AbstractNodeVisitor
             $node instanceof DefineNode => $this->compiledSizeCeiling($node->content) + self::COMPILED_GROUP_SIZE + 1,
             $node instanceof ScriptRunNode => (null === $node->content ? 0 : $this->compiledSizeCeiling($node->content)) + 2 * self::COMPILED_GROUP_SIZE,
             $node instanceof QuantifierNode => $this->repeatedSizeCeiling($node),
-            $node instanceof LiteralNode => 2 * \strlen($node->value) + ($this->compiledCaseless ? self::caselessSetBytes($node->value) : 0),
+            $node instanceof LiteralNode => 2 * \strlen($node->value) + ($this->compiledCaseless ? self::caselessSetBytes($node->value, $this->compiledTurkish) : 0),
             $node instanceof CharLiteralNode, $node instanceof ControlCharNode => 5,
             $node instanceof DotNode, $node instanceof CharTypeNode => 3,
             // "\P{Any}" is a class of none from 10.45.
@@ -4134,11 +4136,12 @@ final class Validator extends AbstractNodeVisitor
     /**
      * The bytes of a literal that may stand for a character of more than
      * one other case, a property of three units when caseless: "k" and "s",
-     * and without UTF the micro sign and the a with a ring.
+     * and without UTF the micro sign and the a with a ring; "i" and "I"
+     * under Turkish case rules.
      */
-    private static function caselessSetBytes(string $value): int
+    private static function caselessSetBytes(string $value, bool $turkish): int
     {
-        return \strlen($value) - \strlen(str_replace(['k', 'K', 's', 'S', "\xB5", "\xC5", "\xE5"], '', $value));
+        return \strlen($value) - \strlen(str_replace($turkish ? ['k', 'K', 's', 'S', "\xB5", "\xC5", "\xE5", 'i', 'I'] : ['k', 'K', 's', 'S', "\xB5", "\xC5", "\xE5"], '', $value));
     }
 
     private function groupFrameCeiling(GroupNode $node): int
@@ -4292,6 +4295,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $source = $node->source ?? '';
         $this->compiledCaseless = str_contains($node->flags, 'i') || str_contains($source, '(?');
+        $this->compiledTurkish = str_contains($source, 'TURKISH_CASING');
         $this->compiledMayWrapCaptures = !$this->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks) && 1 === LibraryPcre::match('/\\\\[1-9gk]|\\(\\?P=/', $source);
 
         return $this->compiledSizeCeiling($node->pattern) + self::COMPILED_FRAME_SIZE > self::MAX_COMPILED_SIZE;
@@ -4430,8 +4434,10 @@ final class Validator extends AbstractNodeVisitor
             return 1;
         }
 
-        // A pair of case variants is one caseless character: two units.
-        if (2 === \count($distinct) && mb_strtolower((string) mb_chr($distinct[0], 'UTF-8'), 'UTF-8') === mb_strtolower((string) mb_chr($distinct[1], 'UTF-8'), 'UTF-8')) {
+        // A pair of case variants is one caseless character: two units, as
+        // the running PHP or the Unicode tables of the target pair them.
+        if (2 === \count($distinct) && (mb_strtolower((string) mb_chr($distinct[0], 'UTF-8'), 'UTF-8') === mb_strtolower((string) mb_chr($distinct[1], 'UTF-8'), 'UTF-8')
+            || OtherCases::of($this->target)->otherCase($distinct[0]) === $distinct[1])) {
             return 2;
         }
 

@@ -42,8 +42,12 @@ use PHPRegex\Parser\Text\Bytes;
  * ranges past 255 or more go in lists kept beside the code, counted against
  * the limit as well.
  *
- * A length that depends on what is not known here is null: the other cases
- * of a character past ASCII, the case rules the source may set, what the
+ * The other cases of a caseless class come from the Unicode tables of the
+ * release (OtherCases), under the case rules in force where it is written:
+ * rules kept to ASCII leave "k" and "s" a letter and its other case, and
+ * Turkish rules give "i" and "I" the dotted capital I and the dotless i.
+ *
+ * A length that depends on what is not known here is null: what the
  * locale PHP builds its tables from adds to a map that may then hold every
  * character, a class of more members than a measure goes through.
  *
@@ -138,10 +142,10 @@ final class ClassLength
     ];
 
     /**
-     * The Latin-1 letters whose one other case is past 255: the sharp s and
-     * the y with a diaeresis.
+     * The Latin-1 characters whose other case is past 255: the micro sign
+     * (one of its two), the sharp s and the y with a diaeresis.
      */
-    private const OTHER_CASE_PAST_255 = [0xDF => 0x1E9E, 0xFF => 0x178];
+    private const OTHER_CASE_PAST_255 = [0xB5 => 0x3BC, 0xDF => 0x1E9E, 0xFF => 0x178];
 
     /**
      * The bytes of the lists the class last measured keeps beside the code:
@@ -157,30 +161,43 @@ final class ClassLength
     private static ?array $sets = null;
 
     /**
-     * @param bool       $utf           whether PCRE reads the pattern as UTF-8
-     * @param bool       $ucp           whether types and POSIX names follow
-     *                                  Unicode
-     * @param bool       $caseRulesVary whether the source may set rules that
-     *                                  change the cases of "i", "k" or "s"
-     * @param bool       $asciiOptions  whether the source may hold an inline
-     *                                  "a", which keeps types and POSIX
-     *                                  names to ASCII
-     * @param PcreTarget $target        the PCRE2 release whose first pass is
-     *                                  measured
+     * The other cases of the release, once a character past 255 needs them.
+     */
+    private ?OtherCases $cases = null;
+
+    /**
+     * Up to 10.44, the first and the last character of the member whose
+     * other cases are added: an other case inside it adds nothing.
+     *
+     * @var array{0: int, 1: int}
+     */
+    private array $member = [0, 0];
+
+    /**
+     * @param bool       $utf          whether PCRE reads the pattern as UTF-8
+     * @param bool       $ucp          whether types and POSIX names follow
+     *                                 Unicode
+     * @param bool       $turkish      whether Turkish case rules are set, from
+     *                                 10.45
+     * @param bool       $asciiOptions whether the source may hold an inline
+     *                                 "a", which keeps types and POSIX names
+     *                                 to ASCII
+     * @param PcreTarget $target       the PCRE2 release whose first pass is
+     *                                 measured
      */
     public function __construct(
         private readonly bool $utf,
         private readonly bool $ucp,
-        private readonly bool $caseRulesVary,
+        private readonly bool $turkish,
         private readonly bool $asciiOptions,
         private readonly PcreTarget $target,
     ) {}
 
     /**
      * The length of the class in the code, without the lists it keeps
-     * beside it (charListBytes).
+     * beside it (charListBytes), under rules kept to ASCII or not.
      */
-    public function of(CharClassNode $node, bool $caseless): ?int
+    public function of(CharClassNode $node, bool $caseless, bool $restricted = false): ?int
     {
         $this->charListBytes = 0;
         $members = $this->membersOf($node);
@@ -188,37 +205,27 @@ final class ClassLength
             return null;
         }
 
-        // The other cases of a character past 255 that is in no caseless
-        // set, or past ASCII without UTF, or of "i", "k" and "s" under rules
-        // the source may set, are not known here.
-        if ($caseless && ($this->utf || ($this->ucp && $this->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf)))) {
-            foreach ($members as $member) {
-                if ('range' === $member[0] && ($this->caseRulesVary || !$this->casesKnown((int) $member[1], (int) $member[2]))) {
-                    return null;
-                }
-            }
-        }
-
         if (($this->ucp || !$this->utf) && $this->asciiOptions && [] !== array_filter($members, static fn (array $member): bool => 'type' === $member[0] || 'posix' === $member[0])) {
             return null;
         }
 
         return $this->target->supports(PcreFeature::ClassesCompiledFromMergedRanges)
-            ? $this->merged($members, $node->isNegated, $caseless)
-            : $this->memberByMember($members, $node->isNegated, $caseless);
+            ? $this->merged($members, $node->isNegated, $caseless, $restricted)
+            : $this->memberByMember($members, $node->isNegated, $caseless, $restricted);
     }
 
     /**
-     * The one other case of a Latin-1 character in UTF mode, below 256 or
-     * past it, or null for none or more than one.
+     * The other case of a character in the Unicode tables of the release,
+     * or the character itself when it has none. Below 256 they are the same
+     * in every release.
      */
-    public static function otherCaseOf(int $codePoint): ?int
+    public function otherCase(int $codePoint): int
     {
-        if (isset(self::sets()[$codePoint])) {
-            return null;
+        if ($codePoint > 0xFF) {
+            return ($this->cases ??= OtherCases::of($this->target))->otherCase($codePoint);
         }
 
-        return self::OTHER_CASE_PAST_255[$codePoint] ?? self::otherCaseBelow256($codePoint, true);
+        return self::OTHER_CASE_PAST_255[$codePoint] ?? self::otherCaseBelow256($codePoint, true) ?? $codePoint;
     }
 
     /**
@@ -229,7 +236,7 @@ final class ClassLength
      *
      * @param list<array{0: string, 1: int|string, 2: int|bool}> $members
      */
-    private function memberByMember(array $members, bool $negated, bool $caseless): int
+    private function memberByMember(array $members, bool $negated, bool $caseless, bool $restricted): int
     {
         $items = 0;
         $map = false;
@@ -239,15 +246,18 @@ final class ClassLength
         foreach ($members as [$kind, $first, $second]) {
             if ('range' === $kind) {
                 \assert(\is_int($first) && \is_int($second));
-                $map = $map || $first <= 0xFF;
-                // The other cases past 255 of each character a caseless member
-                // holds, for each member.
+                // A caseless member in UTF mode writes the other cases of its
+                // characters, each member its own.
                 if ($caseless && $this->utf) {
-                    [$others, $inMap] = self::otherCaseItems($first, $second);
-                    $items += $others;
+                    $this->member = [$first, $second];
+                    [$units, $inMap] = $this->withOtherCasesWritten($first, $second, $restricted, true);
+                    $items += $units;
                     $map = $map || $inMap;
+
+                    continue;
                 }
 
+                $map = $map || $first <= 0xFF;
                 if ($this->utf && $second > 0xFF) {
                     $items += self::itemUnits(max($first, 0x100), $second);
                 }
@@ -318,7 +328,7 @@ final class ClassLength
      *
      * @param list<array{0: string, 1: int|string, 2: int|bool}> $members
      */
-    private function merged(array $members, bool $negated, bool $caseless): ?int
+    private function merged(array $members, bool $negated, bool $caseless, bool $restricted): ?int
     {
         $ranges = [];
         $map = false;
@@ -330,7 +340,7 @@ final class ClassLength
             if ('range' === $kind) {
                 \assert(\is_int($first) && \is_int($second));
                 $map = $map || !$this->utf;
-                array_push($ranges, ...($caseless ? $this->withOtherCases($first, $second) : [[$first, $second]]));
+                array_push($ranges, ...($caseless ? $this->withOtherCases($first, $second, $restricted) : [[$first, $second]]));
 
                 continue;
             }
@@ -550,122 +560,183 @@ final class ClassLength
     }
 
     /**
-     * Whether the other cases of each character of a range are known: below
-     * 128, below 256 in UTF mode, or in a caseless set.
-     */
-    private function casesKnown(int $low, int $high): bool
-    {
-        $known = $this->utf ? 0xFF : 0x7F;
-        if ($high <= $known) {
-            return true;
-        }
-
-        if (!$this->utf || $high - max($low, $known + 1) > 0x200) {
-            return false;
-        }
-
-        for ($codePoint = max($low, $known + 1); $codePoint <= $high; $codePoint++) {
-            if (!isset(self::sets()[$codePoint])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * What the other cases of the characters of a caseless member add past
-     * the map up to 10.44, the member added on its own: for a character in
-     * a caseless set, each run of consecutive members of its set that does
-     * not start on it, but those inside the member; for the sharp s and the
-     * y with a diaeresis, their other case. And whether a run falls in the
-     * map.
+     * Up to 10.44, in UTF mode: a caseless range as PCRE2 adds it to the
+     * class, add_to_class() and get_othercase_range(). For each character
+     * of more than one other case, each run of its set that does not start
+     * on it, unless rules kept to ASCII leave out a set that starts in
+     * ASCII; for each run of characters whose other cases follow one
+     * another, the run of those other cases, which extends the range where
+     * it touches it, adds nothing where it falls inside the member, and is
+     * added on its own otherwise; then the range, an item past 255. The
+     * units of its items past the map, and whether it sets a character of
+     * the map.
      *
      * @return array{0: int, 1: bool}
      */
-    private static function otherCaseItems(int $low, int $high): array
+    private function withOtherCasesWritten(int $start, int $end, bool $restricted, bool $caseless): array
     {
-        $items = 0;
+        $units = 0;
         $map = false;
-        foreach (self::sets() as $codePoint => $set) {
-            if ($codePoint < $low || $codePoint > $high) {
+        $from = $start;
+        while ($caseless && null !== $run = $this->otherCaseRun($from, $end, $restricted)) {
+            [$from, $set, $low, $high] = $run;
+            $added = [];
+            if (null !== $set) {
+                $added = self::runsOf($set, $low);
+            } elseif ($low >= $this->member[0] && $high <= $this->member[1]) {
                 continue;
+            } elseif ($low < $start && $high >= $start - 1) {
+                $start = $low;
+            } elseif ($high > $end && $low <= $end + 1) {
+                $end = $high;
+            } else {
+                $added[] = [$low, $high];
             }
 
-            // Each run of consecutive members but one that starts on the
-            // character itself, which a run started before may hold.
-            $count = \count($set);
-            for ($index = 0; $index < $count; $index++) {
-                if ($set[$index] === $codePoint) {
-                    continue;
-                }
-
-                $start = $set[$index];
-                while ($index + 1 < $count && $set[$index] + 1 === $set[$index + 1]) {
-                    $index++;
-                }
-
-                $end = $set[$index];
-                if ($start > $low && $end < $high) {
-                    continue;
-                }
-
-                if ($end <= 0xFF) {
-                    $map = true;
-
-                    continue;
-                }
-
-                $items += self::itemUnits(max($start, 0x100), $end);
+            foreach ($added as [$first, $last]) {
+                [$more, $inMap] = $this->withOtherCasesWritten($first, $last, $restricted, false);
+                $units += $more;
+                $map = $map || $inMap;
             }
         }
 
-        foreach (self::OTHER_CASE_PAST_255 as $codePoint => $other) {
-            if ($low <= $codePoint && $codePoint <= $high && $other > $high) {
-                $items += self::itemUnits($other, $other);
-            }
+        // A run of other cases inside the member adds nothing.
+        if ($start > $this->member[0] && $end < $this->member[1]) {
+            return [$units, $map];
         }
 
-        return [$items, $map];
+        return [$units + ($end > 0xFF ? self::itemUnits(max($start, 0x100), $end) : 0), $map || $start <= 0xFF];
     }
 
     /**
-     * A range and the other cases of its characters, as ranges: in the map
-     * for an ASCII letter and, in UTF mode, for a Latin-1 one; the whole set
-     * of a character in a caseless set; the other case past 255 of the
-     * sharp s and the y with a diaeresis.
+     * Up to 10.44: from the first character from $from to $to that has
+     * another case, where the range goes on, and either its caseless set,
+     * unless rules kept to ASCII leave it out, or the run of the other cases
+     * of it and of the characters after it whose other cases follow; null
+     * when none has another case.
+     *
+     * @return array{0: int, 1: list<int>|null, 2: int, 3: int}|null
+     */
+    private function otherCaseRun(int $from, int $to, bool $restricted): ?array
+    {
+        for ($codePoint = $this->nextCased($from, $to); null !== $codePoint; $codePoint = $this->nextCased($codePoint + 1, $to)) {
+            $set = self::sets()[$codePoint] ?? null;
+            if (null !== $set && (!$restricted || $set[0] > 0x7F)) {
+                return [$codePoint + 1, $set, $codePoint, $codePoint];
+            }
+
+            $low = $this->otherCase($codePoint);
+            if ($low === $codePoint) {
+                continue;
+            }
+
+            // A character of a caseless set ends the run.
+            for ($high = $low; $codePoint < $to && !isset(self::sets()[$codePoint + 1]) && $this->otherCase($codePoint + 1) === $high + 1; $high++) {
+                $codePoint++;
+            }
+
+            return [$codePoint + 1, null, $low, $high];
+        }
+
+        return null;
+    }
+
+    /**
+     * From 10.45: a range and the other cases of its characters, as ranges.
+     * In UTF mode, each character brings its caseless set, unless rules
+     * kept to ASCII leave out a set that starts in ASCII, or its other case;
+     * Turkish rules give "i" and the dotted capital I one set, "I" and the
+     * dotless i another. Without UTF only the map: the other case of an
+     * ASCII letter, under UCP of a Latin-1 one below 256.
      *
      * @return list<array{0: int, 1: int}>
      */
-    private function withOtherCases(int $low, int $high): array
+    private function withOtherCases(int $low, int $high, bool $restricted): array
     {
         $ranges = [[$low, $high]];
-        for ($codePoint = $low; $codePoint <= min($high, 0xFF); $codePoint++) {
-            $other = self::otherCaseBelow256($codePoint, $this->utf);
-            if (null !== $other) {
-                $ranges[] = [$other, $other];
-            }
-        }
-
         if (!$this->utf) {
+            for ($codePoint = $low; $codePoint <= $high; $codePoint++) {
+                $other = $codePoint < 0x80 || $this->ucp ? $this->otherCase($codePoint) : $codePoint;
+                if ($other !== $codePoint && $other <= 0xFF) {
+                    $ranges[] = [$other, $other];
+                }
+            }
+
             return $ranges;
         }
 
-        foreach (self::sets() as $codePoint => $set) {
-            if ($low <= $codePoint && $codePoint <= $high) {
-                foreach ($set as $member) {
-                    $ranges[] = [$member, $member];
-                }
+        for ($codePoint = $this->nextCased($low, $high); null !== $codePoint; $codePoint = $this->nextCased($codePoint + 1, $high)) {
+            if ($this->turkish && !$restricted && \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true)) {
+                $others = 0x69 === $codePoint || 0x130 === $codePoint ? [0x69, 0x130] : [0x49, 0x131];
+            } else {
+                $set = self::sets()[$codePoint] ?? null;
+                $others = null !== $set && (!$restricted || $set[0] > 0x7F) ? $set : [$this->otherCase($codePoint)];
             }
-        }
 
-        foreach (self::OTHER_CASE_PAST_255 as $codePoint => $other) {
-            if ($low <= $codePoint && $codePoint <= $high) {
+            foreach ($others as $other) {
                 $ranges[] = [$other, $other];
             }
         }
 
         return $ranges;
+    }
+
+    /**
+     * The first character from $from to $to that has another case or a
+     * caseless set, or that Turkish rules give one, or null. Past 255 the
+     * long s and the Kelvin sign are the only characters of a set without
+     * another case of their own, from 10.43.
+     */
+    private function nextCased(int $from, int $to): ?int
+    {
+        for ($codePoint = $from; $codePoint <= min($to, 0xFF); $codePoint++) {
+            if (isset(self::sets()[$codePoint]) || $this->otherCase($codePoint) !== $codePoint) {
+                return $codePoint;
+            }
+        }
+
+        if ($to <= 0xFF) {
+            return null;
+        }
+
+        $from = max($from, 0x100);
+        $next = ($this->cases ??= OtherCases::of($this->target))->nextCased($from) ?? \PHP_INT_MAX;
+        foreach ($this->turkish ? [0x130, 0x131, 0x17F, 0x212A] : [0x17F, 0x212A] as $codePoint) {
+            if ($codePoint >= $from && $codePoint < $next) {
+                $next = $codePoint;
+            }
+        }
+
+        return $next <= $to ? $next : null;
+    }
+
+    /**
+     * The runs of consecutive characters of a caseless set, as PCRE2 adds
+     * them to a class for one of them: that one left out where a run would
+     * start on it, kept where a run started before holds it.
+     *
+     * @param list<int> $set
+     *
+     * @return list<array{0: int, 1: int}>
+     */
+    private static function runsOf(array $set, int $except): array
+    {
+        $runs = [];
+        $count = \count($set);
+        for ($index = 0; $index < $count; $index++) {
+            if ($set[$index] === $except) {
+                continue;
+            }
+
+            $first = $set[$index];
+            while ($index + 1 < $count && $set[$index] + 1 === $set[$index + 1]) {
+                $index++;
+            }
+
+            $runs[] = [$first, $set[$index]];
+        }
+
+        return $runs;
     }
 
     /**
