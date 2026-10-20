@@ -103,5 +103,9 @@ final class NameReadingReleaseTest extends TestCase
         yield 'Python group name too long, 10.32' => ['pattern' => '/(?P<'.str_repeat('a', 129).'/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 37];
         yield 'call name too long, 10.32' => ['pattern' => '/(?<n>a)(?&'.str_repeat('a', 33).'x/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 43];
         yield 'closed call name past 32, 10.32' => ['pattern' => '/(?<n>a)(?&'.str_repeat('a', 128).')/X', 'php' => '7.3', 'release' => '10.32', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 43];
+        yield 'name past 128 in the groups a scan reads' => ['pattern' => '/(*scan_substring:(<'.str_repeat('b', 129).'>)x)/', 'php' => '8.4', 'release' => '10.45', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 148];
+        yield 'name past 128 in the groups a call returns' => ['pattern' => '/(?<n>a)(?&n(<'.str_repeat('b', 129).'>))/', 'php' => '8.4', 'release' => '10.47', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 142];
+        yield 'quoted name past 128 in the groups a call returns' => ['pattern' => "/(?<n>a)(?&n('".str_repeat('b', 129)."'))/", 'php' => '8.5', 'release' => '10.49', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 142];
+        yield 'name past 128 nothing closes in the groups a call returns' => ['pattern' => '/(?<n>a)(?&n(<'.str_repeat('b', 129).'/', 'php' => '8.4', 'release' => '10.48', 'code' => ErrorCode::GroupNameTooLong, 'offset' => 142];
     }
 }

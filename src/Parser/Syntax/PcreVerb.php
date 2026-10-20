@@ -196,6 +196,13 @@ final class PcreVerb
                     LibraryPcre::match('/\G\w*+/', $pattern, $name, 0, $nameStart);
                     $nameEnd = $nameStart + \strlen($name[0] ?? '');
                 }
+
+                // Lists arrived in PCRE2 10.45, which takes names of 128
+                // code units; it measures one before it looks for its quote.
+                if ($nameEnd - $nameStart > GroupNameReader::MAX_NAME_LENGTH) {
+                    return [$nameEnd, ErrorCode::GroupNameTooLong, \sprintf('Group name is too long at position %d: PCRE allows at most %d code units.', $nameEnd, GroupNameReader::MAX_NAME_LENGTH)];
+                }
+
                 if ($nameEnd === $nameStart) {
                     return [$nameStart, ErrorCode::GroupNameExpected, \sprintf('Group name expected at position %d.', $nameStart)];
                 }
