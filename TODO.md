@@ -196,11 +196,10 @@ Integrations:
 - Symfony: validator-mapped patterns are never linted (the bundle wires a
   service FrameworkBundle does not define); `regex:lint` resolves `paths`
   against the working directory and passes on a missing path (Laravel
-  too); `regex:security` reads YAML by hand and passes on a flow-style
-  `access_control` or a `%parameter%`; `regex:routes` never reports a
-  partial overlap (routing is first-match, not best-match); the `ide`
-  fallback never fires; `AbstractBundle`, no container parameters, no
-  autowirable internal services.
+  too); `regex:security` counts a narrower `access_control` rule placed
+  first on purpose (`^/admin/public` before `^/admin`) as an overlap; the
+  `ide` fallback never fires; `AbstractBundle`, no container parameters,
+  no autowirable internal services.
 - The Symfony and Laravel `regex:lint` commands and their output helpers
   are forks: one shared runner.
 - PHPStan: a repo-only rule ships in the public extension;
