@@ -35,7 +35,7 @@ final class ExplainCommandTest extends TestCase
         $display = $tester->getDisplay();
         $this->assertStringContainsString('Pattern', $display);
         $this->assertStringContainsString('Explanation', $display);
-        $this->assertStringContainsString('Anchor: the beginning of a line', $display);
+        $this->assertStringContainsString('Anchor: the start of the subject', $display);
     }
 
     #[Test]

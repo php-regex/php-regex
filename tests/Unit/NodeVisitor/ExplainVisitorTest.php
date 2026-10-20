@@ -37,7 +37,7 @@ final class ExplainVisitorTest extends TestCase
 
         $this->assertStringContainsString('Regex matches (with flags: i)', $output);
         $this->assertStringContainsString('EITHER', $output);
-        $this->assertStringContainsString('Anchor: the beginning of a line', $output);
+        $this->assertStringContainsString('Anchor: the start of the subject', $output);
         $this->assertStringContainsString('OR', $output);
     }
 

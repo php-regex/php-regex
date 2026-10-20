@@ -319,8 +319,8 @@ final class ExplainSweepTest extends TestCase
     {
         $ast = $this->regexService->parse('/^test$/');
         $result = $ast->accept($this->explainVisitor);
-        $this->assertStringContainsString('beginning of a line', $result);
-        $this->assertStringContainsString('end of a line', $result);
+        $this->assertStringContainsString('start of the subject', $result);
+        $this->assertStringContainsString('end of the subject, or just before a newline', $result);
     }
 
     public function test_explain_visitor_assertions(): void

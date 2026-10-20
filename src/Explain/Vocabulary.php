@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\NewlineConvention;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -43,20 +44,6 @@ final class Vocabulary
         'R' => 'Any Unicode linebreak sequence (\\u000D\\u000A|[\\u000A\\u000B\\u000C\\u000D\\u0085\\u2028\\u2029])',
     ];
 
-    public const ANCHORS = [
-        '^' => 'the beginning of a line',
-        '$' => 'the end of a line',
-    ];
-
-    public const ASSERTIONS = [
-        'A' => 'the beginning of the input',
-        'z' => 'the end of the input',
-        'Z' => 'the end of the input but for the final terminator, if any',
-        'G' => 'the end of the previous match',
-        'b' => 'a word boundary',
-        'B' => 'a non-word boundary',
-    ];
-
     public const UNICODE_PROPERTIES = [
         'lower' => 'A lower-case alphabetic character: [a-z]',
         'upper' => 'An upper-case alphabetic character: [A-Z]',
@@ -81,6 +68,42 @@ final class Vocabulary
         'isalphabetic' => 'An alphabetic character (binary property)',
         'sc' => 'A currency symbol',
     ];
+
+    /**
+     * Where "^" or "$" matches, by the flags in force: with m at the start
+     * or end of any line, without it at the start of the subject and at its
+     * end or, unless D, before a newline that ends it.
+     */
+    public static function anchor(string $anchor, MatchSettings $settings): string
+    {
+        $newline = self::newline($settings->newline);
+
+        return match (true) {
+            '^' === $anchor && $settings->multiline => \sprintf('the start of a line: the start of the subject, or just after %s that does not end it', $newline),
+            '^' === $anchor => 'the start of the subject',
+            '$' !== $anchor => $anchor,
+            $settings->multiline => \sprintf('the end of a line: just before %s, or at the end of the subject', $newline),
+            $settings->dollarEndOnly => 'the end of the subject',
+            default => \sprintf('the end of the subject, or just before %s that ends it', $newline),
+        };
+    }
+
+    /**
+     * Where an assertion escape matches, "\A", "\z", "\Z", "\G", "\b" or
+     * "\B": none of them reads m or D, "\Z" reads the newline convention.
+     */
+    public static function assertion(string $assertion, MatchSettings $settings): string
+    {
+        return match ($assertion) {
+            'A' => 'the start of the subject',
+            'z' => 'the end of the subject',
+            'Z' => \sprintf('the end of the subject, or just before %s that ends it', self::newline($settings->newline)),
+            'G' => 'where the match attempt starts: the offset the search starts at, or the end of the previous match',
+            'b' => 'a word boundary',
+            'B' => 'a non-word boundary',
+            default => '\\'.$assertion,
+        };
+    }
 
     /**
      * How many times a quantifier repeats, and how greedily.
@@ -197,6 +220,21 @@ final class Vocabulary
         $raw = str_starts_with($value, '\\') ? substr($value, 1) : $value;
 
         return str_starts_with($raw, '0') ? $raw : '0'.$raw;
+    }
+
+    /**
+     * What a newline is under a newline convention.
+     */
+    private static function newline(NewlineConvention $convention): string
+    {
+        return 'a newline ('.match ($convention) {
+            NewlineConvention::Cr => '\\r',
+            NewlineConvention::Lf => '\\n',
+            NewlineConvention::CrLf => '\\r\\n',
+            NewlineConvention::AnyCrLf => '\\r, \\n or \\r\\n',
+            NewlineConvention::Any => 'any Unicode line break',
+            NewlineConvention::Nul => 'the NUL character',
+        }.')';
     }
 
     /**

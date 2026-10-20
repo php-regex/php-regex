@@ -48,11 +48,13 @@ final class ExplainerAgreementTest extends TestCase
         yield 'a horizontal space' => ['pattern' => '/\h/', 'description' => 'A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]'];
         yield 'a linebreak' => ['pattern' => '/\R/', 'description' => 'Any Unicode linebreak sequence'];
         yield 'an unknown type' => ['pattern' => '/\X/', 'description' => 'unknown (\X)'];
-        yield 'the start of a line' => ['pattern' => '/^a/', 'description' => 'the beginning of a line'];
-        yield 'the end of a line' => ['pattern' => '/a$/', 'description' => 'the end of a line'];
-        yield 'the end but a terminator' => ['pattern' => '/a\Z/', 'description' => 'the end of the input but for the final terminator, if any'];
+        yield 'the start of the subject' => ['pattern' => '/^a/', 'description' => 'the start of the subject'];
+        yield 'the start of a line' => ['pattern' => '/^a/m', 'description' => 'the start of a line: the start of the subject, or just after a newline (\n) that does not end it'];
+        yield 'the end of the subject' => ['pattern' => '/a$/', 'description' => 'the end of the subject, or just before a newline (\n) that ends it'];
+        yield 'the end of a line' => ['pattern' => '/a$/m', 'description' => 'the end of a line: just before a newline (\n), or at the end of the subject'];
+        yield 'the end but a terminator' => ['pattern' => '/a\Z/', 'description' => 'the end of the subject, or just before a newline (\n) that ends it'];
         yield 'a word boundary' => ['pattern' => '/\ba/', 'description' => 'a word boundary'];
-        yield 'the previous match' => ['pattern' => '/\Ga/', 'description' => 'the end of the previous match'];
+        yield 'the previous match' => ['pattern' => '/\Ga/', 'description' => 'where the match attempt starts: the offset the search starts at, or the end of the previous match'];
         yield 'a known property' => ['pattern' => '/\p{Lu}/u', 'description' => 'An uppercase letter (category)'];
         yield 'a negated property' => ['pattern' => '/\P{Lu}/u', 'description' => 'Any character except an uppercase letter (category)'];
         yield 'an unknown property' => ['pattern' => '/\p{Greek}/u', 'description' => 'any character matching "Greek"'];

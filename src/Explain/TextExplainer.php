@@ -132,7 +132,14 @@ final class TextExplainer extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): string
     {
         if (InlineSetting::is($node)) {
+            $this->settings = $this->settings->with($node->flags ?? '');
+
             return $this->line(InlineSetting::describe($node, $this->groupDepth > 0));
+        }
+
+        $settings = $this->settings;
+        if (GroupType::InlineFlags === $node->type) {
+            $this->settings = $settings->with($node->flags ?? '');
         }
 
         $this->indentLevel++;
@@ -140,6 +147,7 @@ final class TextExplainer extends AbstractNodeVisitor
         $childExplain = $node->child->accept($this);
         $this->groupDepth--;
         $this->indentLevel--;
+        $this->settings = $settings;
 
         $type = match ($node->type) {
             GroupType::Capturing => 'Capturing group',
@@ -204,13 +212,13 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitAnchor(AnchorNode $node): string
     {
-        return $this->line('Anchor: '.(Vocabulary::ANCHORS[$node->value] ?? $node->value));
+        return $this->line('Anchor: '.(Vocabulary::anchor($node->value, $this->settings)));
     }
 
     #[\Override]
     public function visitAssertion(AssertionNode $node): string
     {
-        return $this->line('Assertion: '.(Vocabulary::ASSERTIONS[$node->value] ?? '\\'.$node->value));
+        return $this->line('Assertion: '.(Vocabulary::assertion($node->value, $this->settings)));
     }
 
     #[\Override]
@@ -290,11 +298,13 @@ final class TextExplainer extends AbstractNodeVisitor
             return $this->line($title);
         }
 
+        $settings = $this->settings;
         $this->indentLevel++;
         $this->groupDepth++;
         $content = $node->content->accept($this);
         $this->groupDepth--;
         $this->indentLevel--;
+        $this->settings = $settings;
 
         return implode("\n", [$this->line($title), $content, $this->line('End script run')]);
     }
@@ -355,6 +365,7 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node): string
     {
+        $settings = $this->settings;
         $this->indentLevel++;
         $this->groupDepth++;
         $cond = $node->condition->accept($this);
@@ -366,6 +377,7 @@ final class TextExplainer extends AbstractNodeVisitor
 
         $this->groupDepth--;
         $this->indentLevel--;
+        $this->settings = $settings;
 
         if ('' === $no) {
             return implode("\n", [
@@ -396,17 +408,22 @@ final class TextExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): string
     {
+        // An option such as "(*CR)" is a verb only where the pattern opens.
+        $this->settings = $this->settings->withOption($node->verb);
+
         return $this->line('PCRE Verb: (*'.$node->verb.')');
     }
 
     #[\Override]
     public function visitDefine(DefineNode $node): string
     {
+        $settings = $this->settings;
         $this->indentLevel++;
         $this->groupDepth++;
         $content = $node->content->accept($this);
         $this->groupDepth--;
         $this->indentLevel--;
+        $this->settings = $settings;
 
         return implode("\n", [
             $this->line('DEFINE block (defines subpatterns without matching)'),

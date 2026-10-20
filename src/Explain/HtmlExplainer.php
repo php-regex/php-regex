@@ -115,12 +115,13 @@ final class HtmlExplainer extends AbstractNodeVisitor
     public function visitGroup(GroupNode $node): string
     {
         if (InlineSetting::is($node)) {
+            $this->settings = $this->settings->with($node->flags ?? '');
             $setting = $this->e(InlineSetting::describe($node, $this->groupDepth > 0));
 
             return \sprintf('<li><span title="%s">%s</span></li>', $setting, $setting);
         }
 
-        $childExplain = $this->explainInGroup($node->child);
+        $childExplain = $this->explainInGroup($node->child, GroupType::InlineFlags === $node->type ? $node->flags : null);
         $type = match ($node->type) {
             GroupType::Capturing => 'Start Capturing Group',
             GroupType::NonCapturing => 'Start Non-Capturing Group',
@@ -203,7 +204,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitAnchor(AnchorNode $node): string
     {
-        $explanation = Vocabulary::ANCHORS[$node->value] ?? $node->value;
+        $explanation = Vocabulary::anchor($node->value, $this->settings);
 
         return \sprintf(
             '<li><span title="%s">Anchor: <strong>%s</strong> (%s)</span></li>',
@@ -216,7 +217,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitAssertion(AssertionNode $node): string
     {
-        $explanation = Vocabulary::ASSERTIONS[$node->value] ?? '\\'.$node->value;
+        $explanation = Vocabulary::assertion($node->value, $this->settings);
 
         return \sprintf(
             '<li><span title="%s">Assertion: <strong>\%s</strong> (%s)</span></li>',
@@ -417,6 +418,9 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): string
     {
+        // An option such as "(*CR)" is a verb only where the pattern opens.
+        $this->settings = $this->settings->withOption($node->verb);
+
         return \sprintf(
             '<li><span title="PCRE Verb">PCRE Verb: <strong>(*%s)</strong></span></li>',
             $this->e($node->verb),
@@ -494,14 +498,24 @@ final class HtmlExplainer extends AbstractNodeVisitor
         );
     }
 
-    private function explainInGroup(NodeInterface $node): string
+    /**
+     * The explanation of what a group holds, under the flags it sets: they
+     * hold to its end, as does a bare "(?m)" inside it.
+     */
+    private function explainInGroup(NodeInterface $node, ?string $flags = null): string
     {
+        $settings = $this->settings;
+        if (null !== $flags) {
+            $this->settings = $settings->with($flags);
+        }
+
         $this->groupDepth++;
 
         try {
             return (string) $node->accept($this);
         } finally {
             $this->groupDepth--;
+            $this->settings = $settings;
         }
     }
 
