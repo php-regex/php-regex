@@ -35,10 +35,18 @@ use PHPUnit\Framework\TestCase;
 final class LargeCountExpansionTest extends TestCase
 {
     /**
-     * A count PCRE refuses, or many it takes, is read in a few milliseconds;
-     * this leaves room for a busy machine or a coverage driver.
+     * A count PCRE refuses is read in a few milliseconds, and each count it
+     * takes in a few more: forty of the largest took 0.17 s on an arm64 Mac
+     * and up to 0.61 s on GitHub's shared Ubuntu runners. This leaves room
+     * for a busy machine or a coverage driver; a count walked repetition by
+     * repetition took minutes.
      */
     private const BUDGET = 0.5;
+
+    /**
+     * The budget on a shared runner, slower by a factor of three or four.
+     */
+    private const SHARED_RUNNER_BUDGET = 2.0;
 
     /**
      * The literals of x{n}, read from the pattern, are x's joined n times.
@@ -84,7 +92,8 @@ final class LargeCountExpansionTest extends TestCase
         $result = Regex::create(['cache' => null])->literals($regex);
         $time = CpuClock::seconds() - $start;
 
-        $this->assertLessThan(self::BUDGET, $time, \sprintf('%s: %.3f s.', $regex, $time));
+        $budget = false !== getenv('CI') && '' !== getenv('CI') ? self::SHARED_RUNNER_BUDGET : self::BUDGET;
+        $this->assertLessThan($budget, $time, \sprintf('%s: %.3f s.', $regex, $time));
         $this->assertFalse($result->literalSet->complete, $regex);
     }
 
