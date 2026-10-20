@@ -38,6 +38,20 @@ final class RedosAnalyzer
     public const ANALYSIS_VERSION = '1';
 
     /**
+     * What the heuristics report where a proof settles the verdict: nothing.
+     */
+    private const NO_HEURISTICS = [
+        'severity' => RedosSeverity::Safe,
+        'recommendations' => [],
+        'vulnerablePattern' => null,
+        'trigger' => null,
+        'confidence' => null,
+        'falsePositiveRisk' => null,
+        'suggestedRewrite' => null,
+        'findings' => [],
+    ];
+
+    /**
      * @var array<string>
      */
     private array $ignoredPatternsNormalized = [];
@@ -91,10 +105,6 @@ final class RedosAnalyzer
                 return self::notAnalyzed($mode, $validation->error ?? 'The pattern is invalid.');
             }
 
-            $visitor = new RedosProfiler(CharSetAnalyzer::forRegex($ast));
-            $ast->accept($visitor);
-            $heuristics = $visitor->getResult();
-
             $prover = new BacktrackProver(
                 $this->options->maxStates,
                 $this->options->maxSteps,
@@ -112,6 +122,17 @@ final class RedosAnalyzer
                 $proofKind = $limit->budgetExceeded ? RedosProof::BudgetExceeded : RedosProof::Heuristic;
                 $keepsAbstractions = $limit->budgetExceeded || $limit->approximated;
                 $reason = $limit->abstraction;
+            }
+
+            // A proof of a linear attempt settles the verdict: the structural
+            // heuristics would only guess at a risk it rules out, so they do
+            // not run, and the result carries none of their findings.
+            $profiler = null;
+            $heuristics = self::NO_HEURISTICS;
+            if (RedosComplexity::Linear !== $proof?->complexity) {
+                $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($ast));
+                $ast->accept($profiler);
+                $heuristics = $profiler->getResult();
             }
 
             $severity = null === $proof ? $heuristics['severity'] : self::provenSeverity($proof);
@@ -137,8 +158,8 @@ final class RedosAnalyzer
                 $heuristics['falsePositiveRisk'],
                 array_values($heuristics['findings']),
                 $heuristics['suggestedRewrite'],
-                culpritNode: $visitor->getCulpritNode(),
-                hotspots: $visitor->getHotspots(),
+                culpritNode: $profiler?->getCulpritNode(),
+                hotspots: $profiler?->getHotspots() ?? [],
                 mode: $mode,
                 confirmation: null,
                 complexity: $proof->complexity ?? RedosComplexity::Unknown,

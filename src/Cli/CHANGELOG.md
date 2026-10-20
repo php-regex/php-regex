@@ -23,9 +23,8 @@ CHANGELOG
  * `regex.phar` is built from the release tag by a GitHub Actions workflow
    and carries a build provenance attestation:
    `gh attestation verify regex.phar --repo php-regex/php-regex` checks it.
- * `regex analyze` and `regex debug` show no hotspot for a pattern proven
-   safe, and `debug` lists its findings under `Heuristic hints`: the proof
-   overrides the heuristics they come from.
+ * `regex analyze` and `regex debug` show no hotspot or finding for a pattern
+   proven safe: the analysis carries none.
  * `regex debug` names no culprit or trigger and generates no attack subject
    for a pattern proven safe; a subject given with `--input` is still shown.
  * The progress and the steps of `regex lint` go to stderr, so that a report

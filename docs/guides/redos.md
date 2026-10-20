@@ -360,7 +360,7 @@ Next to `severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendati
 | `analysisVersion` | `string` | `RedosAnalyzer::ANALYSIS_VERSION`, raised when the model changes |
 | `searchCost` | `?RedosSearchCost` | the witness of a quadratic unanchored search, looked for when one attempt is proven linear; `null` when none was found, never a proof of a linear search |
 
-`findings` and `hotspots` come from the structural heuristics, `severity` from the proof when there is one: they are hints, and a proof overrides them. `/a+/` is `safe (proven)` with a `medium` finding on its `a+`; `analyze` and `debug` print no hotspot for a verdict proven safe, and `debug` lists its findings under `Heuristic hints`, names no culprit and generates no attack subject.
+`findings` and `hotspots` come from the structural heuristics, `severity` from the proof when there is one. A proof that one attempt is linear settles the verdict, so the result carries none of the heuristics' output: no `findings`, `hotspots` or `recommendations`, and no `vulnerablePart`, `trigger`, `falsePositiveRisk`, `suggestedRewrite` or `culpritNode`. `/a+/` and `/^(?:a|ab)+c/`, which the heuristics alone call `medium` and `critical`, are `safe (proven)` with none of them, so `analyze` and `debug` print no hotspot, culprit or finding and generate no attack subject. A proven vulnerable verdict and a heuristic one keep them: they point at the loop at fault.
 
 `isSafe()` keeps its meaning (`safe` or `low`); `isProvenSafe()` is true only for a proven linear verdict:
 

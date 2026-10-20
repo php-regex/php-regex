@@ -18,6 +18,10 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * Encapsulates the results of a Regular Expression Denial of Service (ReDoS) analysis.
  *
+ * The findings, hotspots, recommendations, culprit and trigger come from the
+ * structural heuristics: a result whose attempt is proven linear carries none
+ * of them, as the proof settles the verdict.
+ *
  * @api
  *
  * @phpstan-import-type WitnessArray from RedosWitness

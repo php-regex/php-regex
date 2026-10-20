@@ -312,9 +312,10 @@ vendor/bin/regex debug '/(a+)+$/'
 ```
 
 The carets under the pattern mark the hotspot. A pattern proven safe, as
-`/a+/`, gets no carets, no `Hotspots:`, `Culprit:` or `Trigger:` line and no
-generated `Input:` (one given with `--input` is still shown), and its findings
-are listed under `Heuristic hints`: the proof overrides them. With
+`/a+/`, gets no carets, no `Hotspots:`, `Culprit:` or `Trigger:` line, no
+`Findings` step and no generated `Input:` (one given with `--input` is still
+shown): the proof settles the verdict, and the analysis carries nothing of
+the heuristics. With
 `--redos-mode=confirmed`, the `Replayed on …` or `Not reproduced on …` line
 follows the attack, a `[2/3] Confirmation` step follows the heatmap, and the
 exit code follows the same rule as `analyze`.

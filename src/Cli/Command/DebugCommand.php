@@ -149,10 +149,9 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $hasConfirmation = RedosMode::Confirmed === $analysis->mode && null !== $analysis->confirmation;
             // One number per section printed: Heatmap, then Confirmation and Findings when there are any.
             $steps = 1 + ($hasConfirmation ? 1 : 0) + ([] !== $analysis->findings ? 1 : 0);
-            // The hotspots are the profiler's guess; a proof of a linear
-            // attempt overrides them, and the findings are only hints.
-            $provenSafe = $analysis->isProvenSafe();
-            $hotspots = $provenSafe ? [] : $analysis->hotspots;
+            // A proof of a linear attempt leaves no hotspot, finding or
+            // culprit in the analysis: what it holds is printed as it is.
+            $hotspots = $analysis->hotspots;
             $heatmap = new Heatmap();
             $heatmapBody = $heatmap->highlight($patternInfo->pattern, $hotspots, $output->isAnsi());
             $heatmapPattern = $patternInfo->delimiter.$heatmapBody.$patternInfo->delimiter.$patternInfo->flags;
@@ -169,10 +168,8 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 }
             }
 
-            // An attack built from the profiler's culprit has nothing to
-            // attack once the proof says every attempt is linear.
             $inputSource = '';
-            if (null === $inputValue && !$provenSafe && null !== $analysis->culpritNode) {
+            if (null === $inputValue && null !== $analysis->culpritNode) {
                 $inputValue = (new InputGenerator())->generate(
                     $analysis->culpritNode,
                     $patternInfo->flags,
@@ -212,7 +209,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 $output->write($heatmapPrefix.$heatmapPattern."\n");
 
                 // The caret marks the primary hotspot on the line right above it.
-                $hotspot = $provenSafe ? null : $analysis->primaryHotspot();
+                $hotspot = $analysis->primaryHotspot();
                 if (null !== $hotspot) {
                     $start = max(0, $hotspot->start);
                     $length = max(1, $hotspot->end - $hotspot->start);
@@ -240,11 +237,11 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
             $output->write('  Mode:      '.Ascii::upper($analysis->mode->value)."\n");
             $output->write('  Confidence: '.Ascii::upper($analysis->confidence->value)."\n");
 
-            if (!$provenSafe && null !== $analysis->vulnerablePart) {
+            if (null !== $analysis->vulnerablePart) {
                 $output->write('  Culprit:    '.$analysis->vulnerablePart."\n");
             }
 
-            if (!$provenSafe && null !== $analysis->trigger && '' !== $analysis->trigger) {
+            if (null !== $analysis->trigger && '' !== $analysis->trigger) {
                 $output->write('  Trigger:    '.$analysis->trigger."\n");
             }
 
@@ -289,7 +286,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
             if ([] !== $analysis->findings) {
                 $output->write("\n");
-                $style->renderSection($provenSafe ? 'Heuristic hints' : 'Findings', $steps, $steps);
+                $style->renderSection('Findings', $steps, $steps);
                 foreach ($analysis->findings as $finding) {
                     $findingSeverity = $this->formatRedosSeverity($analysis, $output, $finding->severity);
                     $output->write('  - ['.$findingSeverity.'] '.$finding->message."\n");

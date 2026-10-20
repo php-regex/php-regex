@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A `RedosAnalysis` that proves one attempt linear carries no `findings`,
+   `hotspots` or `recommendations`, and its `vulnerablePart`, `trigger`,
+   `falsePositiveRisk`, `suggestedRewrite` and `culpritNode` are `null`: the
+   structural heuristics no longer run once the proof settles the verdict.
  * A Unicode class is read as the union of its members, each member read
    from the engine once per process, a negated one as the rest of the
    alphabet and every general category from one read: the analysis of a

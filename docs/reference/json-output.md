@@ -488,8 +488,7 @@ and the exit code is 1.
 | `source` | string \| null | `user` for `--input`, `auto` for a generated subject, `null` without one; an open set |
 
 No subject is generated for a pattern proven safe: with no `--input`, both
-keys are `null`. The analysis still carries `vulnerable_part` and `trigger`,
-as hints the proof overrides.
+keys are `null`, as the analysis names no culprit to build one from.
 
 ## Redos
 
@@ -911,8 +910,8 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `suggested_rewrite` | string \| null | A rewrite to try, for people; verify it |
 | `recommendations` | list of strings | Advice, for people |
 | `error` | string \| null | Why the analysis could not finish |
-| `findings` | list of objects | Each problem the structural heuristics found; hints, see below |
-| `hotspots` | list of objects | Each span the structural heuristics point at; hints, see below |
+| `findings` | list of objects | Each problem the structural heuristics found; empty when one attempt is proven linear, see below |
+| `hotspots` | list of objects | Each span the structural heuristics point at; empty when one attempt is proven linear, see below |
 | `confirmation` | object \| null | The replay in confirmed mode; `null` otherwise |
 | `complexity` | string | `linear`, `polynomial`, `exponential` or `unknown`; an open set |
 | `degree` | int \| null | The degree of a polynomial verdict, 2 or more; `null` otherwise |
@@ -928,12 +927,12 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 ### Finding: `redos_analysis.findings[]`
 
 The findings and the hotspots come from the structural heuristics, the
-verdict from the proof when there is one. They are hints, not verdicts: next
-to `"proof": "proven"` and `"complexity": "linear"` they may still name a
-`medium` construct, as `/a+/` does, and the proof overrides them. The console
-of `analyze` and `debug` shows no hotspot for such a verdict, and `debug` lists
-its findings as heuristic hints, names no culprit or trigger, and builds no
-attack subject.
+verdict from the proof when there is one. A proof that one attempt is linear
+settles the verdict: next to `"proof": "proven"` and `"complexity": "linear"`
+the analysis carries no finding and no hotspot, and `vulnerable_part`,
+`trigger`, `false_positive_risk` and `suggested_rewrite` are `null` and
+`recommendations` empty. `/a+/`, which the heuristics alone call `medium`, is
+`safe (proven)` with none of them.
 
 | key | type | meaning |
 |---|---|---|

@@ -17,7 +17,6 @@ use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\Command\DebugCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
-use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,8 +25,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * The hotspots come from the heuristic profiler, the verdict from the proof.
  * When the proof says no input drives one attempt beyond linear steps, the
- * console does not point at a part of the pattern as risky: a hotspot under
- * "safe (proven)" reads as a contradiction. The JSON keeps them, as hints.
+ * analysis carries no hotspot, finding or culprit, and the console points
+ * at no part of the pattern as risky: a hotspot under "safe (proven)" would
+ * read as a contradiction.
  */
 final class ProvenSafeHotspotTest extends TestCase
 {
@@ -36,12 +36,12 @@ final class ProvenSafeHotspotTest extends TestCase
     private const VULNERABLE = '/(a+)+$/';
 
     #[Test]
-    public function test_the_profiler_marks_a_hotspot_in_a_proven_safe_pattern(): void
+    public function test_a_proven_safe_analysis_carries_no_hotspot(): void
     {
         $analysis = (new RedosAnalyzer())->analyze(self::PROVEN_SAFE);
 
         $this->assertTrue($analysis->isProvenSafe());
-        $this->assertInstanceOf(Hotspot::class, $analysis->primaryHotspot(), 'The heuristic still marks a+: what the console hides.');
+        $this->assertNull($analysis->primaryHotspot(), 'The proof settles the verdict: the heuristic does not mark a+.');
     }
 
     #[Test]
@@ -70,11 +70,11 @@ final class ProvenSafeHotspotTest extends TestCase
     }
 
     #[Test]
-    public function test_debug_lists_the_findings_of_a_proven_safe_pattern_as_heuristic_hints(): void
+    public function test_debug_lists_no_findings_for_a_proven_safe_pattern(): void
     {
         $buffer = $this->runCommand(new DebugCommand(), 'debug', [self::PROVEN_SAFE]);
 
-        $this->assertStringContainsString('Heuristic hints', $buffer);
+        $this->assertStringNotContainsString('Heuristic hints', $buffer);
         $this->assertStringNotContainsString('Findings', $buffer);
     }
 

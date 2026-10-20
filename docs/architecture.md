@@ -205,7 +205,7 @@ Analysis results are wrapped in `RedosAnalysis` and include the severity, the co
 - `CharSetAnalyzer` compares alternation branches to detect overlap inside repetition.
 - Backreference loops inside unbounded quantifiers are flagged as high risk.
 
-Findings are collected as `Finding` objects, and the visitor records a `culpritNode` and `hotspots` so the CLI can highlight where the risk originates. They are hints: when the prover shows every attempt linear, the console hides the hotspots and `debug` lists the findings as heuristic hints, while the JSON keeps both.
+Findings are collected as `Finding` objects, and the visitor records a `culpritNode` and `hotspots` so the CLI can highlight where the risk originates. The profiler runs only when the prover does not show one attempt linear: such a proof settles the verdict, and the analysis then carries no finding, hotspot or culprit.
 
 ## CLI Lint Pipeline
 
