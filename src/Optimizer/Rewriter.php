@@ -358,12 +358,20 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): NodeInterface
     {
+        // The group a quantifier repeats keeps its parentheses however deep
+        // a quantifier of its own sits inside it: the flag comes back to
+        // what the enclosing item set, never to false.
+        $wasInsideQuantifier = $this->isInsideQuantifier;
         $this->isInsideQuantifier = true;
-        $optimizedNode = $node->node->accept($this);
-        $this->isInsideQuantifier = false;
+
+        try {
+            $optimizedNode = $node->node->accept($this);
+        } finally {
+            $this->isInsideQuantifier = $wasInsideQuantifier;
+        }
 
         if ($optimizedNode !== $node->node) {
-            $node = new QuantifierNode($optimizedNode, $node->quantifier, $node->type, $node->startPosition, $node->endPosition);
+            $node = new QuantifierNode($this->repeatable($optimizedNode), $node->quantifier, $node->type, $node->startPosition, $node->endPosition);
         }
 
         $normalized = $this->normalizeQuantifier($node);
@@ -587,6 +595,28 @@ final class Rewriter extends AbstractNodeVisitor
             $node instanceof CharClassNode, $node instanceof UnicodePropNode => true,
             default => false,
         };
+    }
+
+    /**
+     * The node as a quantifier may repeat it: one character, a group or a
+     * reference stands as written, anything else goes into a group, as a
+     * quantifier repeats the one item written before it. "ab" counted four
+     * times is "(?:ab){4}", never "ab{4}", and nothing repeated twice is
+     * "(?:){2}", never "{2}".
+     */
+    private function repeatable(NodeInterface $node): NodeInterface
+    {
+        if ($this->isSingleCharacter($node)
+            || $node instanceof GroupNode
+            || $node instanceof ConditionalNode
+            || $node instanceof BackrefNode
+            || $node instanceof SubroutineNode
+            || $node instanceof ControlCharNode
+        ) {
+            return $node;
+        }
+
+        return new GroupNode($node, GroupType::NonCapturing, null, null, $node->getStartPosition(), $node->getEndPosition());
     }
 
     /**
@@ -1167,8 +1197,10 @@ final class Rewriter extends AbstractNodeVisitor
                 $fromQuantifier = true;
             }
 
-            // Never compact nodes that can affect capture numbering or backreferences
-            if ($this->isCaptureSensitive($baseNode)) {
+            // Never compact nodes that can affect capture numbering or
+            // backreferences, nor an assertion: "$$$$" counted is no shorter,
+            // and PCRE refuses "${4}".
+            if ($this->isCaptureSensitive($baseNode) || self::isZeroWidth($baseNode)) {
                 $this->flushCompactedSequence($compacted, $currentNode, $currentCount, $currentFromQuantifier);
                 $compacted[] = $child;
 
@@ -1217,6 +1249,22 @@ final class Rewriter extends AbstractNodeVisitor
         $currentNode = null;
         $currentCount = 0;
         $currentFromQuantifier = false;
+    }
+
+    /**
+     * Whether the item matches no character and takes no quantifier
+     * written straight after it: an anchor, an assertion, "\K", a verb, a
+     * callout or a comment.
+     */
+    private static function isZeroWidth(NodeInterface $node): bool
+    {
+        return $node instanceof AnchorNode
+            || $node instanceof AssertionNode
+            || $node instanceof KeepNode
+            || $node instanceof PcreVerbNode
+            || $node instanceof LimitMatchNode
+            || $node instanceof CalloutNode
+            || $node instanceof CommentNode;
     }
 
     private function parseQuantifierCount(string $quantifier): ?int
@@ -1293,7 +1341,7 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         return new QuantifierNode(
-            $node,
+            $this->repeatable($node),
             '{'.$count.'}',
             QuantifierType::Greedy,
             $node->getStartPosition(),
