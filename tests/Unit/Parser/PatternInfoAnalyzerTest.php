@@ -388,8 +388,21 @@ final class PatternInfoAnalyzerTest extends TestCase
         yield 'group called from two lookbehinds' => ['pattern' => '/(abcde)(?<=(?1){0}x)(?<=(?1){0}y)/', 'expected' => ['10.32' => 5, '10.34' => 1]];
         // A lookbehind valid only as its length wraps past 2^31, which it
         // does before 10.34: the group of 65535 is the longest branch.
-        yield 'lookbehind whose length wraps around' => ['pattern' => '/(a{65535})(b{2048})(?<=\\1{65535}\\2{64})/', 'expected' => ['10.32' => 65535, '10.33' => 65535]];
+        // From 10.34 it is too long, and prints none.
+        yield 'lookbehind whose length wraps around' => ['pattern' => '/(a{65535})(b{2048})(?<=\\1{65535}\\2{64})/', 'expected' => ['10.32' => 65535, '10.33' => 65535, '10.34' => 0, '10.49' => 0]];
         yield 'met outside any lookbehind and through a call' => ['pattern' => '/(?<=(?1))((?<=ab)c)/', 'expected' => ['10.32' => 2, '10.35' => 2, '10.49' => 2]];
+        // A lookbehind met twice is measured once, and those met after it
+        // are measured too.
+        yield 'met twice, then in a lookahead after them' => ['pattern' => '/(?<=(?1))(?<=x(?=(?<=abcdef)))((?<=ab)c)/', 'expected' => ['10.32' => 2, '10.33' => 2, '10.34' => 6, '10.35' => 6, '10.49' => 6]];
+        // Up to 10.34 the first item of a DEFINE group in a lookbehind is
+        // skipped and the rest measured: without u, the first byte of a
+        // character of several bytes.
+        yield 'DEFINE group opened by a two-byte character' => ['pattern' => '/(?<=(?(DEFINE)éab)c)/', 'expected' => ['10.32' => 4, '10.33' => 4, '10.34' => 4, '10.35' => 1, '10.49' => 1]];
+        yield 'DEFINE group opened by a three-byte character' => ['pattern' => '/(?<=(?(DEFINE)€ab)c)/', 'expected' => ['10.32' => 5, '10.34' => 5, '10.35' => 1, '10.49' => 1]];
+        yield 'DEFINE group opened by a counted two-byte character' => ['pattern' => '/(?<=(?(DEFINE)é{2}a.)c)/', 'expected' => ['10.32' => 5, '10.33' => 5, '10.34' => 5, '10.35' => 1, '10.49' => 1]];
+        yield 'DEFINE group opened by a counted three-byte character' => ['pattern' => '/(?<=(?(DEFINE)€{2}ab.)c)/', 'expected' => ['10.32' => 7, '10.34' => 7, '10.35' => 1, '10.49' => 1]];
+        // A lookbehind of no bound is refused, and none is printed.
+        yield 'lookbehind of no bound' => ['pattern' => '/(?<=a+)b/', 'expected' => ['10.32' => 0, '10.34' => 0, '10.49' => 0]];
     }
 
     #[Test]

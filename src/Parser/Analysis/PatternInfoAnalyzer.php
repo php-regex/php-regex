@@ -161,7 +161,7 @@ final class PatternInfoAnalyzer
             if (isset($measured[$id])) {
                 continue;
             }
-            $measured[$id] = true;
+            $measured[$id] = $lookbehind;
 
             foreach ($lookbehind->child instanceof AlternationNode ? $lookbehind->child->alternatives : [$lookbehind->child] as $branch) {
                 // A branch the target refuses as too long counts for nothing.
