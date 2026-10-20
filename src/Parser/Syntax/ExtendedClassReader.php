@@ -23,6 +23,8 @@ use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\ClassSetOperator;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Reads the expression of a Perl extended class "(?[...])", PCRE2 10.45,
@@ -70,8 +72,9 @@ final class ExtendedClassReader
      * @param \Closure(LexerException|LimitException|ParserException, int, list<NodeInterface>):never $fail          refuses
      *                                                                                                               the pattern at an offset, or for an error in an
      *                                                                                                               operand, given the operands read before
-     * @param bool                                                                                    $pastTheFault  whether the nesting limit is reported
-     *                                                                                                               on the character, as PCRE2 10.47 does
+     * @param PcreTarget                                                                              $target        the release read, which says where the
+     *                                                                                                               nesting limit is reported: on the "(" from
+     *                                                                                                               PCRE2 10.47, past it before
      * @param bool                                                                                    $utf           whether the pattern is read by UTF-8 character
      * @param int                                                                                     $maxOperations the most operations read, so the tree stays
      *                                                                                                               one the visitors can walk
@@ -84,7 +87,7 @@ final class ExtendedClassReader
         private readonly \Closure $escape,
         private readonly \Closure $class,
         private readonly \Closure $fail,
-        private readonly bool $pastTheFault,
+        private readonly PcreTarget $target,
         private readonly bool $utf = false,
         private readonly int $maxOperations = 1024,
         private readonly ?\Closure $nest = null,
@@ -497,7 +500,9 @@ final class ExtendedClassReader
     private function enter(int $position): void
     {
         if (++$this->depth > self::MAX_DEPTH) {
-            $this->refuse('Extended class nested too deeply', ErrorCode::ExtendedClassNestedTooDeep, $this->pastTheFault ? $position : $position + 1);
+            // Here PCRE2 10.47 moved the offset back: onto the "(", where it
+            // was past it.
+            $this->refuse('Extended class nested too deeply', ErrorCode::ExtendedClassNestedTooDeep, $this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? $position : $position + 1);
         }
     }
 

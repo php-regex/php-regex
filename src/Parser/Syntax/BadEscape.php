@@ -46,11 +46,6 @@ final class BadEscape
      */
     public const CLASS_ESCAPE_LETTERS = 'ABCDGHKNPRSVWXZdhkpsvwz';
     /**
-     * The groups and the counts PCRE2 numbers at most.
-     */
-    private const MAX_NUMBER = 65535;
-
-    /**
      * The largest number the digits after a backslash may make.
      */
     private const MAX_BACKSLASH_NUMBER = 214_748_363;
@@ -189,7 +184,7 @@ final class BadEscape
      */
     private static function readsCount(string $pattern, int $at): bool
     {
-        $min = self::readNumber($pattern, $at, self::MAX_NUMBER);
+        $min = self::readNumber($pattern, $at, PcreNumber::MAX);
         if (null === $min || false === $min[0]) {
             return false;
         }
@@ -208,7 +203,7 @@ final class BadEscape
             return true;
         }
 
-        $max = self::readNumber($pattern, $at, self::MAX_NUMBER);
+        $max = self::readNumber($pattern, $at, PcreNumber::MAX);
 
         return null !== $max && false !== $max[0] && '}' === ($pattern[$max[1]] ?? '') && $max[0] >= $min[0];
     }
@@ -355,7 +350,7 @@ final class BadEscape
     {
         $sign = $pattern[$at] ?? '';
         $digits = '+' === $sign || '-' === $sign ? $at + 1 : $at;
-        $number = self::readNumber($pattern, $digits, self::MAX_NUMBER);
+        $number = self::readNumber($pattern, $digits, PcreNumber::MAX);
         if (null === $number) {
             return null;
         }
@@ -372,7 +367,7 @@ final class BadEscape
         // read_number() adds the groups opened so far to "+n", and refuses
         // the sum past 65535.
         if ('+' === $sign) {
-            return [null === $captures ? null : $value > self::MAX_NUMBER - $captures, $end];
+            return [null === $captures ? null : $value > PcreNumber::MAX - $captures, $end];
         }
 
         if ('-' !== $sign) {
@@ -455,12 +450,12 @@ final class BadEscape
             }
 
             if ($value < 10 || $pattern[$digit] >= '8') {
-                return $value > self::MAX_NUMBER;
+                return $value > PcreNumber::MAX;
             }
 
             // A group opened so far: a reference. Not knowing them, the
             // escape is no literal until they are known.
-            if ($value <= self::MAX_NUMBER && (null === $captures || $value <= $captures)) {
+            if ($value <= PcreNumber::MAX && (null === $captures || $value <= $captures)) {
                 return false;
             }
         }

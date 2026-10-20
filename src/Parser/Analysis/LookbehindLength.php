@@ -31,6 +31,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\Syntax\PcreNumber;
 
 /**
  * The length range of a lookbehind branch, the way PCRE measures it: a call
@@ -68,11 +69,6 @@ use PHPRegex\Parser\Node\SubroutineNode;
  */
 final class LookbehindLength
 {
-    /**
-     * The longest branch PCRE2 measures (LOOKBEHIND_MAX).
-     */
-    private const MAX_BRANCH_LENGTH = 65535;
-
     private const LOOKAROUNDS = [
         GroupType::LookaheadPositive,
         GroupType::LookaheadNegative,
@@ -124,8 +120,9 @@ final class LookbehindLength
     private bool $unfixed = false;
 
     /**
-     * The length the branch reached when it passed MAX_BRANCH_LENGTH, which
-     * ends the measure there; null while it has not.
+     * The length the branch reached when it passed PcreNumber::MAX, the
+     * longest branch PCRE2 measures (LOOKBEHIND_MAX), which ends the measure
+     * there; null while it has not.
      */
     private ?int $tooLong = null;
 
@@ -275,7 +272,7 @@ final class LookbehindLength
             return $length;
         }
 
-        if ($length[1] >= 0 && $length[1] <= self::MAX_BRANCH_LENGTH) {
+        if ($length[1] >= 0 && $length[1] <= PcreNumber::MAX) {
             if ($length[1] > $this->longestBranch) {
                 $this->longestBranch = $length[1];
             }
@@ -316,7 +313,7 @@ final class LookbehindLength
      */
     private function passes(?int $length): bool
     {
-        if (null !== $length && $length > self::MAX_BRANCH_LENGTH) {
+        if (null !== $length && $length > PcreNumber::MAX) {
             $this->tooLong ??= $length;
         }
 
@@ -359,7 +356,7 @@ final class LookbehindLength
                 }
 
                 $reached = $this->wrapsLengths ? self::wrap($before + $max) : $before + $max;
-                if ($reached > self::MAX_BRANCH_LENGTH && $this->passes($reached)) {
+                if ($reached > PcreNumber::MAX && $this->passes($reached)) {
                     break;
                 }
             }
@@ -431,7 +428,7 @@ final class LookbehindLength
             // repeat of variable count, or of none, comes too late.
             if (!$this->unfixed && null !== $childMax) {
                 $reached = $this->wrapsLengths ? self::wrap($before + $childMax) : $before + $childMax;
-                if ($reached > self::MAX_BRANCH_LENGTH) {
+                if ($reached > PcreNumber::MAX) {
                     $this->tooLong ??= $reached;
 
                     return [$childMin, $childMax];

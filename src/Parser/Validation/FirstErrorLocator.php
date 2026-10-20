@@ -202,7 +202,7 @@ final class FirstErrorLocator
 
         // The escapes read up to that end, which starts before the limit.
         return EscapeChecks::forPattern($pattern, $flags, $this->target)
-            ->firstErrorBefore($tokens, $end->position + ($this->target->supports(PcreFeature::ErrorOffsetPastTheFault) ? 2 : 1));
+            ->firstErrorBefore($tokens, $this->target->faultOffset($end->position + 2));
     }
 
     /**

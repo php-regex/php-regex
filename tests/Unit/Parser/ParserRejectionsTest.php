@@ -188,7 +188,7 @@ final class ParserRejectionsTest extends TestCase
         $patternProp = $ref->getProperty('pattern');
         $patternProp->setValue($parser, '?=a)');
         // parse() builds the name reader and the reading state alongside the stream.
-        $ref->getProperty('groupNames')->setValue($parser, new GroupNameReader($stream));
+        $ref->getProperty('groupNames')->setValue($parser, new GroupNameReader($stream, PcreTarget::runtime()));
         $ref->getProperty('state')->setValue($parser, new ParseState($stream, '?=a)', PcreTarget::runtime(), false, false));
 
         $conditions = $ref->getMethod('conditions')->invoke($parser);

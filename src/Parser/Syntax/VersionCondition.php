@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Syntax;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
@@ -71,8 +73,18 @@ final class VersionCondition
      * PCRE reads one when "VERSION" is not followed by ")" and the pattern
      * holds at least ten more characters. It stops on a character it cannot
      * take where it expects a digit, a "." or the ")"; from PCRE2 10.47,
-     * which $pastTheFault stands for, past it, unless the comparison began
-     * with ">". Under $utf, past it is past the whole character.
+     * past it, unless the comparison began with ">". Under $utf, past it is
+     * past the whole character. Up to PCRE2 10.45 the minor is two digits.
+     */
+    public static function errorOffsetFor(string $pattern, int $position, PcreTarget $target, bool $utf = false): ?int
+    {
+        return self::errorOffset($pattern, $position, !$target->supports(PcreFeature::VersionConditionWholeNumbers), $target->supports(PcreFeature::ErrorOffsetPastTheFault), $utf);
+    }
+
+    /**
+     * errorOffsetFor() with what the target decides spelled out: whether the
+     * minor is two digits ($twoDigitMinor), whether PCRE reports past the
+     * character it stops on ($pastTheFault).
      */
     public static function errorOffset(string $pattern, int $position, bool $twoDigitMinor = false, bool $pastTheFault = true, bool $utf = false): ?int
     {

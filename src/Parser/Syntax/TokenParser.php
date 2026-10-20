@@ -300,17 +300,8 @@ final class TokenParser
         $this->stream = $stream;
         $this->pattern = $stream->getPattern();
         $this->flags = $flags;
-        $this->groupNames = new GroupNameReader($stream);
+        $this->groupNames = new GroupNameReader($stream, $this->target);
         $this->groupNames->allowDuplicates(str_contains($flags, 'J'));
-        $this->groupNames->reportPastTheFault($this->supports(PcreFeature::ErrorOffsetPastTheFault));
-        $this->groupNames->readWhole($this->supports(PcreFeature::NamesReadWhole));
-        // PCRE2 10.44 took names from 32 code units to 128; PHP bundles it
-        // from 8.4.
-        $this->groupNames->limitNameLength(
-            $this->supports(PcreFeature::LongGroupNames)
-                ? GroupNameReader::MAX_NAME_LENGTH
-                : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044,
-        );
         // Group names take any letter in Unicode mode, "u" or "(*UTF)" at
         // the start, from PCRE2 10.33.
         $this->unicodeMode = str_contains($flags, 'u')
@@ -1332,7 +1323,7 @@ final class TokenParser
         $call = '{' !== $opener;
 
         return match (true) {
-            \strlen(ltrim($digits, '0')) > 5 || $value > 65535 || ('+' === $sign && $value + $this->captureCount > 65535) => [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'],
+            PcreNumber::exceeds($digits) || ('+' === $sign && $value + $this->captureCount > PcreNumber::MAX) => [ErrorCode::GroupNumberTooBig, 'the group number is too big: PCRE takes at most 65535'],
             '' !== $sign && 0 === $value => [$call ? ErrorCode::SubroutineRelativeZero : ErrorCode::BackrefZero, 'a relative number may not be zero'],
             '-' === $sign && $value > $this->captureCount => [$call ? ErrorCode::SubroutineRelativeMissing : ErrorCode::BackrefRelative, \sprintf('-%d counts back past the %d groups opened before it', $value, $this->captureCount)],
             default => null,
@@ -1787,7 +1778,7 @@ final class TokenParser
             function (LexerException|LimitException|ParserException $reason, int $at, array $operands) use ($token): never {
                 throw $this->firstOperandError($operands, $token->position) ?? $reason;
             },
-            $this->supports(PcreFeature::ErrorOffsetPastTheFault),
+            $this->target,
             $this->unicodeMode || str_contains($this->flags, 'u'),
             $this->maxRecursionDepth,
             // Parentheses nest as groups do, against the same limit.
@@ -2177,7 +2168,7 @@ final class TokenParser
     {
         // What stops PCRE reading the list, if anything; the numbers it has
         // read before are judged first.
-        $fault = PcreVerb::groupListFault($this->pattern, $at - 1, $this->supports(PcreFeature::ErrorOffsetPastTheFault), $this->unicodeMode ? $this->target : null);
+        $fault = PcreVerb::groupListFault($this->pattern, $at - 1, $this->target, $this->unicodeMode);
 
         $groups = [];
         while (true) {
@@ -2191,7 +2182,7 @@ final class TokenParser
             $digits = $matches[2] ?? '';
             if ('' !== $digits) {
                 [$refused, $code] = match (true) {
-                    \strlen(ltrim($digits, '0')) > 5 || (int) $digits > 65535 => ['is too big', ErrorCode::GroupNumberTooBig],
+                    PcreNumber::exceeds($digits) => ['is too big', ErrorCode::GroupNumberTooBig],
                     0 === (int) $digits => '' === $sign
                         ? ['names no group', ErrorCode::GroupListMissingGroup]
                         : ['is a relative zero', ErrorCode::GroupListRelativeZero],
@@ -2646,7 +2637,7 @@ final class TokenParser
             [$number, $sign, $digits] = $matches;
             $end = $position + \strlen($number);
             $tooBig = RepeatCount::tooBigOffset($digits, $position + \strlen($sign), $this->target)
-                ?? ('+' === $sign && (int) $digits + $this->captureCount > 65535 ? $end : null);
+                ?? ('+' === $sign && (int) $digits + $this->captureCount > PcreNumber::MAX ? $end : null);
 
             return match (true) {
                 null !== $tooBig => [$tooBig, ErrorCode::GroupNumberTooBig, 'Group number '.$number.' is too big at position %d: PCRE takes at most 65535.'],

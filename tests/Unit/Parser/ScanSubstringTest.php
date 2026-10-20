@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Redos\RedosAnalysis;
@@ -138,9 +139,10 @@ final class ScanSubstringTest extends TestCase
             $this->assertNotSame('', $error->getMessage());
         }
 
-        $this->assertNull(PcreVerb::groupListFault('(1,2)', 0));
-        $this->assertSame([2, ErrorCode::GroupUnclosed], \array_slice(PcreVerb::groupListFault('(1x', 0) ?? [], 0, 2));
-        $this->assertSame([1, ErrorCode::GroupListItemExpected], \array_slice(PcreVerb::groupListFault('(?', 0) ?? [], 0, 2));
+        $newest = new PcreTarget(80500, '10.49');
+        $this->assertNull(PcreVerb::groupListFault('(1,2)', 0, $newest));
+        $this->assertSame([2, ErrorCode::GroupUnclosed], \array_slice(PcreVerb::groupListFault('(1x', 0, $newest) ?? [], 0, 2));
+        $this->assertSame([1, ErrorCode::GroupListItemExpected], \array_slice(PcreVerb::groupListFault('(?', 0, $newest) ?? [], 0, 2));
 
         foreach (['javascript', 'python'] as $target) {
             try {

@@ -414,7 +414,7 @@ final class ConditionParser
 
         $nameEnd = $nameStart + \strlen($name[0]);
         // A name too long is refused as one before anything else.
-        $longest = $this->target->supports(PcreFeature::LongGroupNames) ? GroupNameReader::MAX_NAME_LENGTH : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
+        $longest = GroupNameReader::maxNameLength($this->target);
         if (\strlen($name[0]) > $longest) {
             return $this->state->error(\sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameEnd, $longest), ErrorCode::GroupNameTooLong, $nameEnd);
         }
@@ -603,7 +603,7 @@ final class ConditionParser
 
         // "(?(+n)" counts the groups before it too: past 65535 in all, PCRE
         // refuses it where the digits end.
-        if ('+' === $sign && (int) $num + $groupsBefore > 65535) {
+        if ('+' === $sign && (int) $num + $groupsBefore > PcreNumber::MAX) {
             $position = $this->stream->current()->position;
 
             throw $this->state->error(\sprintf('Group number %s%s is too big at position %d: with the groups before it, it goes past 65535.', $sign, $num, $position), ErrorCode::GroupNumberTooBig, $position);
@@ -845,7 +845,7 @@ final class ConditionParser
      */
     private function versionConditionErrorOffset(int $start): ?int
     {
-        return VersionCondition::errorOffset($this->pattern, $start, !$this->target->supports(PcreFeature::VersionConditionWholeNumbers), $this->target->supports(PcreFeature::ErrorOffsetPastTheFault), $this->state->unicodeMode);
+        return VersionCondition::errorOffsetFor($this->pattern, $start, $this->target, $this->state->unicodeMode);
     }
 
     /**

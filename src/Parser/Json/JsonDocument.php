@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Json;
 
+use PHPRegex\Parser\Text\Utf8;
+
 /**
  * One JSON document as every command prints it: pretty-printed, slashes and
  * Unicode unescaped, ending with exactly one newline.
@@ -91,7 +93,7 @@ final class JsonDocument
         $spelled = '';
         $length = \strlen($text);
         for ($i = 0; $i < $length;) {
-            $sequence = substr($text, $i, self::sequenceLength(\ord($text[$i])));
+            $sequence = substr($text, $i, Utf8::width($text, $i));
             // The lead byte announces the length; mb_check_encoding() then
             // rejects a short, overlong or surrogate sequence.
             if (mb_check_encoding($sequence, 'UTF-8')) {
@@ -145,19 +147,5 @@ final class JsonDocument
         }
 
         return $value;
-    }
-
-    /**
-     * The length of the UTF-8 sequence a lead byte opens; 1 for a byte that
-     * opens none, which the caller then spells.
-     */
-    private static function sequenceLength(int $byte): int
-    {
-        return match (true) {
-            $byte >= 0xF0 => 4,
-            $byte >= 0xE0 => 3,
-            $byte >= 0xC0 => 2,
-            default => 1,
-        };
     }
 }

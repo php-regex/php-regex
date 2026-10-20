@@ -36,8 +36,6 @@ use PHPRegex\Parser\Token\Token;
  */
 final class RepeatCount
 {
-    private const MAX_COUNT = 65535;
-
     /**
      * Past the digit that takes the first number after the "{" at $brace,
      * or the one after its comma, over 65535. Null when neither does.
@@ -51,7 +49,7 @@ final class RepeatCount
             while (Ascii::isDigit($pattern[$at] ?? '')) {
                 $value = $value * 10 + (int) $pattern[$at];
                 $at++;
-                if ($value > self::MAX_COUNT) {
+                if ($value > PcreNumber::MAX) {
                     return $at;
                 }
             }
@@ -106,7 +104,7 @@ final class RepeatCount
         LibraryPcre::matchAll('/\d++/', $quantifier, $numbers);
 
         foreach ($numbers[0] as $digits) {
-            if (\strlen(ltrim($digits, '0')) > 5 || (int) $digits > self::MAX_COUNT) {
+            if (PcreNumber::exceeds($digits)) {
                 return ErrorCode::QuantifierTooBig;
             }
         }
@@ -141,7 +139,7 @@ final class RepeatCount
         $value = 0;
         foreach (Bytes::split($digits) as $read => $digit) {
             $value = $value * 10 + (int) $digit;
-            if ($value > self::MAX_COUNT) {
+            if ($value > PcreNumber::MAX) {
                 return $at + ($target->supports(PcreFeature::NumberTooBigPastWholeNumber) ? \strlen($digits) : $read + 1);
             }
         }

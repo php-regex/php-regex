@@ -328,7 +328,7 @@ final class ConditionParserTest extends TestCase
         $target ??= new PcreTarget(80500, '10.49');
         $stream = (new Lexer($target))->tokenize($pattern);
         $state = new ParseState($stream, $pattern, $target, false, false);
-        $groupNames = new GroupNameReader($stream);
+        $groupNames = new GroupNameReader($stream, $target);
         $branches = static function () use ($stream): NodeInterface {
             $branches = [];
             $start = $stream->current()->position;

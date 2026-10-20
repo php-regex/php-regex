@@ -20,11 +20,13 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Syntax\BadEscape;
 use PHPRegex\Parser\Syntax\CodePointReader;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
+use PHPRegex\Parser\Syntax\GroupNameReader;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\PcreVerb;
 use PHPRegex\Parser\Syntax\PosixItem;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Utf8;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenStream;
 use PHPRegex\Parser\Token\TokenType;
@@ -45,19 +47,6 @@ final class Lexer
      * 10.37, which reads one past it as an octal escape and text.
      */
     private const LARGEST_NUMBER_BEFORE_PCRE_10_37 = 214_748_363;
-
-    /**
-     * The longest name PCRE2 10.32 reads, a verb's or a group's.
-     */
-    private const NAME_LENGTH_BEFORE_PCRE_10_33 = 32;
-
-    /**
-     * The longest name PCRE2 reads, a verb's or a group's: 32 code units up
-     * to 10.43, 128 from 10.44.
-     */
-    private const NAME_LENGTH_BEFORE_PCRE_10_44 = 32;
-
-    private const NAME_LENGTH = 128;
 
     private const TOKENS_OUTSIDE = [
         'T_COMMENT_OPEN', 'T_CALLOUT', 'T_PCRE_VERB', 'T_GROUP_MODIFIER_OPEN',
@@ -386,12 +375,6 @@ final class Lexer
     private readonly bool $wideRepeatCounts;
 
     /**
-     * Whether errors are reported past the character at fault, as PCRE2
-     * 10.47 does, rather than on it.
-     */
-    private readonly bool $reportsPastTheFault;
-
-    /**
      * Whether "(*scs:" and "(*scan_substring:" are read.
      */
     private readonly bool $readsScanSubstring;
@@ -493,7 +476,6 @@ final class Lexer
         $this->target = $target;
         $this->pcre2Ten32 = !$target->supports(PcreFeature::BadEscapeInClassStaysRefused);
         $this->wideRepeatCounts = $target->supports(PcreFeature::OpenAndPaddedRepeatCounts);
-        $this->reportsPastTheFault = $target->supports(PcreFeature::ErrorOffsetPastTheFault);
         $this->readsScanSubstring = $target->supports(PcreFeature::ScanSubstring);
         $this->readsExtendedClass = $target->supports(PcreFeature::ExtendedCharClass);
         $this->emptyQuoteOpeningClassIsUnclosed = $target->supports(PcreFeature::EmptyQuoteOpeningClassIsUnclosed);
@@ -1065,7 +1047,7 @@ final class Lexer
         }
 
         $listOpen = $this->position + 3 + \strlen($name);
-        $fault = PcreVerb::groupListFault($this->pattern, $listOpen, $this->reportsPastTheFault, $this->utf ? $this->target : null);
+        $fault = PcreVerb::groupListFault($this->pattern, $listOpen, $this->target, $this->utf);
         if (null !== $fault) {
             if (!$this->target->supports(PcreFeature::GroupListErrors)) {
                 $fault = PcreVerb::groupListFaultBefore1047($fault, $this->length);
@@ -1512,12 +1494,7 @@ final class Lexer
      */
     private function characterLength(int $at): int
     {
-        $end = $at + 1;
-        while (!$this->byteMode && $end < $this->length && self::isContinuationByte($this->pattern[$end])) {
-            $end++;
-        }
-
-        return $end - $at;
+        return $this->byteMode ? 1 : Utf8::width($this->pattern, $at);
     }
 
     /**
@@ -1633,7 +1610,7 @@ final class Lexer
                     throw LexerException::withContext(
                         '\\c must be followed by a printable ASCII character.',
                         ErrorCode::ControlCharInvalid,
-                        $this->reportsPastTheFault ? $this->afterCharacter($startPos + 2) : $startPos + 2,
+                        $this->target->faultOffset($this->afterCharacter($startPos + 2), $this->afterCharacter($startPos + 2) - $startPos - 2),
                         $this->pattern,
                     );
                 }
@@ -2193,11 +2170,8 @@ final class Lexer
             return $this->length;
         }
 
-        if ($this->utf && 1 === LibraryPcre::match('/\G./su', $this->pattern, $matches, 0, $position)) {
-            return $position + \strlen($matches[0]);
-        }
-
-        return $position + 1;
+        // A pattern that is no UTF-8 is read byte by byte, whatever its flags.
+        return $position + ($this->utf && !$this->byteMode ? Utf8::width($this->pattern, $position) : 1);
     }
 
     /**
@@ -2364,7 +2338,7 @@ final class Lexer
      */
     private function refuseAlphabeticNameEndingThePattern(string $name, int $length, int $start): void
     {
-        if (!$this->reportsPastTheFault || $length !== \strlen($name) || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $start + $length + 3 !== $this->length) {
+        if (!$this->target->supports(PcreFeature::ErrorOffsetPastTheFault) || $length !== \strlen($name) || 1 !== LibraryPcre::match('/^[a-z]/', $name) || $start + $length + 3 !== $this->length) {
             return;
         }
 
@@ -2385,7 +2359,7 @@ final class Lexer
      */
     private function refuseVerbNameTooLong(int $length, int $start): void
     {
-        $longest = $this->target->supports(PcreFeature::LongGroupNames) ? self::NAME_LENGTH : self::NAME_LENGTH_BEFORE_PCRE_10_44;
+        $longest = GroupNameReader::maxNameLength($this->target);
         if ($length > $longest) {
             throw LexerException::withContext(
                 \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $start + 2 + $length, $longest),
@@ -2402,8 +2376,9 @@ final class Lexer
      */
     private function refuseLongVerbName(int $letters, int $start): void
     {
-        if ($letters > self::NAME_LENGTH_BEFORE_PCRE_10_33) {
-            $offset = $start + 2 + self::NAME_LENGTH_BEFORE_PCRE_10_33 + 1;
+        // PCRE2 10.32 reads a verb name as the 32 letters a group name holds.
+        if ($letters > GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044) {
+            $offset = $start + 2 + GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044 + 1;
 
             throw LexerException::withContext(
                 \sprintf('Verb name too long at position %d: PCRE2 before 10.33 takes at most 32 letters.', $offset),
@@ -2440,7 +2415,7 @@ final class Lexer
      */
     private function followsNameOpener(int $position): bool
     {
-        $window = min($position, 2 * self::NAME_LENGTH);
+        $window = min($position, 2 * GroupNameReader::MAX_NAME_LENGTH);
         $before = substr($this->pattern, $position - $window, $window);
 
         return 1 === LibraryPcre::match('/\(\?(?:[<\'&]|P[<>=]|\((?:[<\']|R&)?)\w*+\z/', $before);
@@ -2675,7 +2650,7 @@ final class Lexer
                 throw LexerException::withContext(
                     'Range out of order in character class.',
                     ErrorCode::RangeReversed,
-                    $this->reportsPastTheFault ? $reversed : $reversed - 1,
+                    $this->target->faultOffset($reversed),
                     $this->pattern,
                 );
             }

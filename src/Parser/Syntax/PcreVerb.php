@@ -171,18 +171,18 @@ final class PcreVerb
      * a digit or is not closed, or no "," or ")" after an item. Null when the
      * list closes. What the numbers name is left to the caller.
      *
-     * @param bool            $pastTheDigit  whether a name starting with a digit
-     *                                       is refused past the digit, as from
-     *                                       PCRE2 10.47
-     * @param PcreTarget|null $unicodeTables in UTF mode, the release whose
-     *                                       Unicode tables say what a name
-     *                                       holds
+     * @param PcreTarget $target  the release read: where it refuses a name
+     *                            that starts with a digit, on the digit or
+     *                            past it, and in UTF mode which letters and
+     *                            digits a name holds
+     * @param bool       $unicode whether the pattern is read in UTF mode
      *
      * @return array{0: int, 1: ErrorCode, 2: string}|null the offset, the
      *                                                     code and the message
      */
-    public static function groupListFault(string $pattern, int $open, bool $pastTheDigit = true, ?PcreTarget $unicodeTables = null): ?array
+    public static function groupListFault(string $pattern, int $open, PcreTarget $target, bool $unicode = false): ?array
     {
+        $unicodeTables = $unicode ? $target : null;
         if ('(' !== ($pattern[$open] ?? '')) {
             return [$open, ErrorCode::ScanSubstringMissingList, \sprintf('Missing "(" to open the list of groups at position %d.', $open)];
         }
@@ -194,7 +194,7 @@ final class PcreVerb
                 $nameStart = $at + 1;
                 $digit = null !== $unicodeTables ? NameCharacters::digitAt($pattern, $nameStart, $unicodeTables) : (Ascii::isDigit($pattern[$nameStart] ?? '') ? 1 : 0);
                 if ($digit > 0) {
-                    $offset = $nameStart + ($pastTheDigit ? $digit : 0);
+                    $offset = $target->faultOffset($nameStart + $digit, $digit);
 
                     return [$offset, ErrorCode::GroupNameInvalid, \sprintf('A group name must not start with a digit, at position %d.', $offset)];
                 }
@@ -440,7 +440,7 @@ final class PcreVerb
         }
 
         $length = strspn($pattern, self::WORD_NAME, $nameStart);
-        $longest = $target->supports(PcreFeature::LongGroupNames) ? GroupNameReader::MAX_NAME_LENGTH : GroupNameReader::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
+        $longest = GroupNameReader::maxNameLength($target);
         if ($length > $longest) {
             return SyntaxErrorException::withContext(
                 \sprintf('Verb name too long at position %d: PCRE takes at most %d characters.', $nameStart + $length, $longest),

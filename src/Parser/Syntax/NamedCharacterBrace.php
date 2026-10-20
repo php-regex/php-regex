@@ -33,8 +33,6 @@ use PHPRegex\Parser\PcreTarget;
  */
 final class NamedCharacterBrace
 {
-    private const MAX_COUNT = 65535;
-
     /**
      * The error check_escape() gives "\N" followed by the "{" at $brace in a
      * class, null when it reads a count there. A code point, which
@@ -86,6 +84,6 @@ final class NamedCharacterBrace
     {
         $digits = ltrim($digits, '0');
 
-        return \strlen($digits) > 5 || (int) $digits > self::MAX_COUNT;
+        return \strlen($digits) > 5 || (int) $digits > PcreNumber::MAX;
     }
 }

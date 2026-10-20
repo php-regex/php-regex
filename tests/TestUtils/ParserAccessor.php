@@ -81,7 +81,9 @@ final class ParserAccessor
         // parse() builds these alongside the stream; a test that installs a
         // stream by hand has to install them too, or the parser is half set up.
         $groupNames = $this->reflection->getProperty('groupNames');
-        $groupNames->setValue($this->parser, new GroupNameReader($stream));
+        $target = $this->reflection->getProperty('target')->getValue($this->parser);
+        \assert($target instanceof PcreTarget);
+        $groupNames->setValue($this->parser, new GroupNameReader($stream, $target));
         $this->installState();
     }
 

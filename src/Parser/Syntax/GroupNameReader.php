@@ -16,6 +16,7 @@ namespace PHPRegex\Parser\Syntax;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Token\TokenStream;
@@ -40,20 +41,17 @@ final class GroupNameReader
 
     public const MAX_NAME_LENGTH_BEFORE_PCRE_1044 = 32;
 
-    private int $maxNameLength = self::MAX_NAME_LENGTH;
-
     /**
-     * Whether a name starting with a digit is refused past the digit, as
-     * PCRE2 10.47 does, rather than on it.
+     * The longest name the release read takes, in code units.
      */
-    private bool $pastTheFault = true;
+    private readonly int $maxNameLength;
 
     /**
      * Whether a name is read whole before its length is judged, as from
      * PCRE2 10.33, and one too long refused where it ends; before, at the
      * character that takes it past the limit.
      */
-    private bool $readsWhole = true;
+    private readonly bool $readsWhole;
 
     /**
      * The group numbers each name was given so far.
@@ -77,24 +75,23 @@ final class GroupNameReader
      */
     private ?PcreTarget $unicodeTables = null;
 
-    public function __construct(private readonly TokenStream $stream) {}
+    /**
+     * @param PcreTarget $target the release the names are read for: how long
+     *                           one may be, and where PCRE refuses one
+     */
+    public function __construct(private readonly TokenStream $stream, private readonly PcreTarget $target)
+    {
+        $this->maxNameLength = self::maxNameLength($target);
+        $this->readsWhole = $target->supports(PcreFeature::NamesReadWhole);
+    }
 
     /**
-     * The longest name the PCRE2 release read takes, in code units.
+     * The longest name $target takes, a group's or a verb's, in code units:
+     * 32 up to PCRE2 10.43, 128 from 10.44, which PHP bundles from 8.4.
      */
-    public function limitNameLength(int $maxNameLength): void
+    public static function maxNameLength(PcreTarget $target): int
     {
-        $this->maxNameLength = $maxNameLength;
-    }
-
-    public function reportPastTheFault(bool $pastTheFault): void
-    {
-        $this->pastTheFault = $pastTheFault;
-    }
-
-    public function readWhole(bool $readsWhole): void
-    {
-        $this->readsWhole = $readsWhole;
+        return $target->supports(PcreFeature::LongGroupNames) ? self::MAX_NAME_LENGTH : self::MAX_NAME_LENGTH_BEFORE_PCRE_1044;
     }
 
     /**
@@ -265,14 +262,14 @@ final class GroupNameReader
         if (null !== $this->unicodeTables) {
             $digit = NameCharacters::digitAt($pattern, $position, $this->unicodeTables);
             if ($digit > 0) {
-                return $position + ($this->pastTheFault ? $digit : 0);
+                return $this->target->faultOffset($position + $digit, $digit);
             }
 
             return NameCharacters::end($pattern, $position, $this->unicodeTables);
         }
 
         if (Ascii::isDigit($pattern[$position] ?? '')) {
-            return $position + ($this->pastTheFault ? 1 : 0);
+            return $this->target->faultOffset($position + 1);
         }
 
         LibraryPcre::match('/\G\w*+/', $pattern, $matches, 0, $position);
