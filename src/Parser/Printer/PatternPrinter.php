@@ -2216,7 +2216,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             }
         }
 
-        return $this->unlessMisread(PatternLayout::finishLines($this->renderRoot($node, $flags, true, $trail), $trail, $this->countsCodePoints), $written);
+        return $this->unlessMisread(PatternLayout::finishLines($this->renderRoot($node, $flags, true, $trail), $trail, $this->countsCodePoints), $written, $inline);
     }
 
     /**
@@ -2414,11 +2414,20 @@ final class PatternPrinter extends AbstractNodeVisitor
      * The pattern formatted or compacted, or, where PHP would not end it
      * where PCRE does, the pattern as written, refused: no spelling of the
      * brackets it holds pairs those PHP counts (see endingWhereWritten).
-     * Pretty printing never refuses.
+     * Pretty printing never refuses: it writes the pattern on one line
+     * instead, as it does where the formatter refuses.
      */
-    private function unlessMisread(string $rendered, ?string $written): string
+    private function unlessMisread(string $rendered, ?string $written, ?string $inline = null): string
     {
-        if (!$this->delimiterMisread || self::MODE_PRETTY === $this->mode || null === $written) {
+        if (!$this->delimiterMisread) {
+            return $rendered;
+        }
+
+        if (self::MODE_PRETTY === $this->mode) {
+            return $inline ?? $rendered;
+        }
+
+        if (null === $written) {
             return $rendered;
         }
 

@@ -196,6 +196,10 @@ final class PatternPrinterRoundTripTest extends TestCase
         // lets PHP read past its "#".
         yield 'a comment after a control backslash' => ['pattern' => '#\c\#c#x', 'subjects' => ["\x1C", 'c', "\x1Cc"]];
         yield 'a comment after a control backslash, in a long pattern' => ['pattern' => '#aaaaaaaaaaaaaaaaaaaaaaaaaaa\c\#c#x', 'subjects' => ["aaaaaaaaaaaaaaaaaaaaaaaaaaa\x1C", 'a']];
+        // Laid out, "\c\" no longer hides the ")" closing the group from PHP,
+        // which the ")" of the comment then leaves alone: pretty printing
+        // writes it on one line.
+        yield 'a closing parenthesis after a control backslash, under x' => ['pattern' => "((?:# )\na\\c\\)# {\n:)x", 'subjects' => ["a\x1C:", 'a:']];
         yield 'a parenthesis after a control backslash' => ['pattern' => '(\N\10(?#()(?#c){[a]\101[]]\]\x{100}\c\(?<!b))u', 'subjects' => ["x\x08{aA]]Ā\x1C", 'a']];
     }
 
