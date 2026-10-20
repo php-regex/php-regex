@@ -158,6 +158,13 @@ final class PatternPrinter extends AbstractNodeVisitor
     /**
      * The characters a literal escapes in a class.
      */
+    private const NAMED_GROUP_SYMBOLS = [
+        'plb' => '(?<=', 'positive_lookbehind' => '(?<=',
+        'nlb' => '(?<!', 'negative_lookbehind' => '(?<!',
+        'naplb' => '(?<*', 'non_atomic_positive_lookbehind' => '(?<*',
+        'atomic' => '(?>',
+    ];
+
     private const CHAR_CLASS_META = [
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
@@ -1474,6 +1481,15 @@ final class PatternPrinter extends AbstractNodeVisitor
             && '(' === ($this->source[$node->getStartPosition()] ?? '')
             && !\in_array($this->source[$node->getStartPosition() + 1] ?? '', ['?', '*'], true)) {
             return '(';
+        }
+
+        // Under "<>", the symbol of a lookbehind or an atomic group holds a
+        // bracket PHP counts, which the name it was written with does not:
+        // the name stays.
+        if (null !== $this->source && '<' === $this->delimiter
+            && 1 === LibraryPcre::match('/\G\(\*([a-z_]++):/', $this->source, $matches, 0, $node->getStartPosition())
+            && $opening === (self::NAMED_GROUP_SYMBOLS[$matches[1]] ?? null)) {
+            return $matches[0];
         }
 
         if (null === $this->source || GroupType::Named !== $node->type || null === $node->name) {

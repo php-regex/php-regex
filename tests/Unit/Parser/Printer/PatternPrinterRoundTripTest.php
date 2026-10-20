@@ -149,6 +149,29 @@ final class PatternPrinterRoundTripTest extends TestCase
         yield 'the word boundaries of a POSIX spelling' => ['pattern' => '<[[:<:]]été[[:>:]]>u', 'subjects' => ['été', 'aété', 'étéa']];
     }
 
+    #[Test]
+    #[DataProvider('provideGroupsByName')]
+    public function test_a_group_written_by_name_keeps_it_under_angle_brackets(string $pattern, string $name, string $formatted): void
+    {
+        $this->requiresCompile($pattern);
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+
+        $this->assertSame($pattern, $regex->accept(PatternPrinter::asWritten()));
+        $this->assertSame($formatted, $regex->accept(PatternPrinter::forFormatting(20)));
+        $this->assertStringContainsString($name, $regex->accept(PatternPrinter::forCompacting()));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, name: string, formatted: string}>
+     */
+    public static function provideGroupsByName(): iterable
+    {
+        yield 'a lookbehind' => ['pattern' => '<(*positive_lookbehind:foo)bar>', 'name' => '(*positive_lookbehind:', 'formatted' => "<\n    (*positive_lookbehind:\n        foo\n    )\n    bar\n>x"];
+        yield 'a negative lookbehind' => ['pattern' => '<b(*negative_lookbehind:a)>', 'name' => '(*negative_lookbehind:', 'formatted' => "<\n    b\n    (*negative_lookbehind:\n        a\n    )\n>x"];
+        yield 'an atomic group' => ['pattern' => '<(*atomic:a+)\w>', 'name' => '(*atomic:', 'formatted' => '<(*atomic:a+)\w>'];
+        yield 'a non-atomic lookbehind' => ['pattern' => '<(*non_atomic_positive_lookbehind:(.)..|(.)...)(\1|\2)>', 'name' => '(*non_atomic_positive_lookbehind:', 'formatted' => "<\n    (*non_atomic_positive_lookbehind:\n        (.)..\n      | (.)...\n    )\n    (\\1|\\2)\n>x"];
+    }
+
     /**
      * @param list<string> $subjects
      */
