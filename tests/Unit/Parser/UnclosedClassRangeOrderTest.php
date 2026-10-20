@@ -30,17 +30,26 @@ final class UnclosedClassRangeOrderTest extends TestCase
 {
     use PcreGates;
 
+    /**
+     * Each row's offset is the one PCRE2 10.47 and later report, past the
+     * end of the range; up to 10.46 it is one byte before (pcre2test 10.32
+     * to 10.49, php:8.2-cli, php:8.3-cli, php:8.4-cli and PHP with PCRE2
+     * 10.49, row by row).
+     */
     #[Test]
     #[DataProvider('provideUnclosedClasses')]
     public function test_a_reversed_range_is_refused_before_the_missing_bracket(string $pattern, int $offset): void
     {
         $this->assertFalse(@preg_match($pattern, ''));
 
-        $result = Regex::create(['cache' => null])->validate($pattern);
+        foreach ([['8.2', '10.40', $offset - 1], ['8.4', '10.46', $offset - 1], ['8.4', '10.47', $offset], ['8.5', '10.49', $offset]] as [$php, $release, $expected]) {
+            $result = self::parser($php, $release)->validate($pattern);
+            $target = \sprintf('%s on PHP %s with PCRE2 %s', $pattern, $php, $release);
 
-        $this->assertFalse($result->isValid, $pattern);
-        $this->assertSame($offset, $result->offset, $pattern);
-        $this->assertSame(ErrorCode::RangeReversed, $result->errorCode, $pattern);
+            $this->assertFalse($result->isValid, $target);
+            $this->assertSame($expected, $result->offset, $target);
+            $this->assertSame(ErrorCode::RangeReversed, $result->errorCode, $target);
+        }
     }
 
     #[Test]
