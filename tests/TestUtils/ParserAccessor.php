@@ -98,6 +98,20 @@ final class ParserAccessor
     }
 
     /**
+     * Calls a private method of the reader of conditions the parser holds,
+     * made on the reading state installed with the tokens.
+     *
+     * @param array<mixed> $args
+     */
+    public function callConditionMethod(string $methodName, array $args = []): mixed
+    {
+        $conditions = $this->reflection->getMethod('conditions')->invoke($this->parser);
+        \assert(\is_object($conditions));
+
+        return (new \ReflectionMethod($conditions, $methodName))->invoke($conditions, ...$args);
+    }
+
+    /**
      * Calls a private method of the reading state installed with the tokens.
      *
      * @param array<mixed> $args
@@ -191,5 +205,6 @@ final class ParserAccessor
 
         $this->reflection->getProperty('state')->setValue($this->parser, new ParseState($stream, \is_string($pattern) ? $pattern : '', $target, false, false));
         $this->reflection->getProperty('classes')->setValue($this->parser, null);
+        $this->reflection->getProperty('conditions')->setValue($this->parser, null);
     }
 }

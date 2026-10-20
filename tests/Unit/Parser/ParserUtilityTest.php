@@ -279,7 +279,7 @@ final class ParserUtilityTest extends TestCase
         $this->accessor->setPosition(0);
 
         // Simulate the state where the parser has consumed '(?('
-        $condition = $this->accessor->callPrivateMethod('parseConditionalCondition');
+        $condition = $this->accessor->callConditionMethod('readCondition', [0]);
 
         $this->assertInstanceOf(AssertionNode::class, $condition);
         $this->assertSame('DEFINE', $condition->value);
@@ -298,7 +298,7 @@ final class ParserUtilityTest extends TestCase
         $this->expectException(ParserException::class);
         $this->expectExceptionMessageIsOrContains('Invalid conditional construct at position 2. Condition must be a group reference, lookaround, or (DEFINE).');
 
-        $this->accessor->callPrivateMethod('parseConditionalCondition');
+        $this->accessor->callConditionMethod('readCondition', [0]);
     }
 
     /**

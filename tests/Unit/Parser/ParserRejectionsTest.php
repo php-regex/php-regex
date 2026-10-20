@@ -191,8 +191,9 @@ final class ParserRejectionsTest extends TestCase
         $ref->getProperty('groupNames')->setValue($parser, new GroupNameReader($stream));
         $ref->getProperty('state')->setValue($parser, new ParseState($stream, '?=a)', PcreTarget::runtime(), false, false));
 
-        $method = $ref->getMethod('parseConditionalCondition');
-        $node = $method->invoke($parser);
+        $conditions = $ref->getMethod('conditions')->invoke($parser);
+        \assert(\is_object($conditions));
+        $node = (new \ReflectionMethod($conditions, 'readCondition'))->invoke($conditions, 0);
 
         $this->assertInstanceOf(GroupNode::class, $node);
         $this->assertSame(GroupType::LookaheadPositive, $node->type);
