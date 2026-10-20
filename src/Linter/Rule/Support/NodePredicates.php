@@ -206,6 +206,25 @@ final class NodePredicates
                 || ($node->child instanceof SequenceNode && [] === $node->child->children));
     }
 
+    /**
+     * Whether an "(*ACCEPT)" stands anywhere under the node: the match may
+     * end there, whatever is written after it.
+     */
+    public static function holdsAccept(NodeInterface $node): bool
+    {
+        if ($node instanceof PcreVerbNode) {
+            return 'ACCEPT' === explode(':', $node->verb, 2)[0];
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsAccept($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function isOptionalNode(NodeInterface $node): bool
     {
         if ($node instanceof LiteralNode) {

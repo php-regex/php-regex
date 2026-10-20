@@ -119,9 +119,12 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         $spelled = false;
 
         // What the items before the current one read, kept as the loop goes:
-        // whether they may all read nothing, and the characters the last of
-        // them reads (an empty set when none reads one, null when unknown).
+        // whether they may all read nothing, whether one may end the match,
+        // and the characters the last of them reads (an empty set when none
+        // reads one, null when unknown).
         $prefixCanBeEmpty = true;
+        $accepted = false;
+        $prefix = null;
         $before = ByteCharSet::empty();
         $tailCanBeEmpty = null;
 
@@ -134,7 +137,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                     && '^' === $child->value
                     && str_contains($flags, 'm');
 
-                if (!$skipForMultiline && $i > 0 && !$prefixCanBeEmpty) {
+                if (!$skipForMultiline && $i > 0 && !$prefixCanBeEmpty && !$accepted) {
                     $issues[] = new RuleViolation(
                         self::ID_START,
                         \sprintf(
@@ -174,7 +177,11 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                 }
             }
 
-            $prefixCanBeEmpty = $prefixCanBeEmpty && NodePredicates::canBeEmpty($child);
+            // A reference or a call may read a group that matched nothing; an
+            // "(*ACCEPT)" may end the match before any anchor after it.
+            $prefixCanBeEmpty = $prefixCanBeEmpty && (NodePredicates::canBeEmpty($child)
+                || ($prefix ??= new EndOfLineTail($context->charSetAnalyzer, "\n", $context->groups->pcre ?? PcreGroups::empty()))->canMatchNothingAnywhere($child));
+            $accepted = $accepted || NodePredicates::holdsAccept($child);
             $last = EndOfLineTail::lastCharacters([$child], $context->charSetAnalyzer);
             if (null === $last || !$last->isEmpty()) {
                 $before = $last;

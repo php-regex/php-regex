@@ -203,6 +203,16 @@ final class EndOfLineTail
     }
 
     /**
+     * Whether the node may match nothing wherever it stands: every
+     * assertion may hold, a reference or a call may read a group that
+     * matched nothing.
+     */
+    public function canMatchNothingAnywhere(NodeInterface $node): bool
+    {
+        return $this->mayBeEmpty($node, self::ANYWHERE, true);
+    }
+
+    /**
      * Whether the items may match nothing at the end of the subject, after
      * the last newline a "$" or "\Z" before them let through.
      *
@@ -248,7 +258,7 @@ final class EndOfLineTail
 
         // Every item before the current one matches nothing.
         foreach ($nodes as $index => $node) {
-            if (self::holdsAccept($node)) {
+            if (NodePredicates::holdsAccept($node)) {
                 return true;
             }
 
@@ -261,10 +271,10 @@ final class EndOfLineTail
             if ($this->mayBeTheNewline($node, $dotAll)) {
                 if ($index >= $stop) {
                     $stop = $index + 1;
-                    while ($stop < $count && !self::holdsAccept($nodes[$stop]) && $this->mayBeEmpty($nodes[$stop], self::AFTER_THE_LAST_NEWLINE, $dotAll)) {
+                    while ($stop < $count && !NodePredicates::holdsAccept($nodes[$stop]) && $this->mayBeEmpty($nodes[$stop], self::AFTER_THE_LAST_NEWLINE, $dotAll)) {
                         $stop++;
                     }
-                    $stopEndsIt = $stop === $count || self::holdsAccept($nodes[$stop]);
+                    $stopEndsIt = $stop === $count || NodePredicates::holdsAccept($nodes[$stop]);
                 }
 
                 if ($stopEndsIt) {
@@ -286,7 +296,7 @@ final class EndOfLineTail
     private function allMayBeEmpty(array $nodes, int $where, bool $dotAll): bool
     {
         foreach ($nodes as $node) {
-            if (self::holdsAccept($node)) {
+            if (NodePredicates::holdsAccept($node)) {
                 return true;
             }
 
@@ -559,7 +569,7 @@ final class EndOfLineTail
                 continue;
             }
 
-            if (self::holdsAccept($node) || $this->mayStartWithNewline($node, $dotAll)) {
+            if (NodePredicates::holdsAccept($node) || $this->mayStartWithNewline($node, $dotAll)) {
                 return true;
             }
 
@@ -580,7 +590,7 @@ final class EndOfLineTail
     private function sequenceMayEndWithNewline(array $nodes): bool
     {
         foreach (array_reverse($nodes) as $node) {
-            if (self::holdsAccept($node) || $this->mayEndWithNewline($node)) {
+            if (NodePredicates::holdsAccept($node) || $this->mayEndWithNewline($node)) {
                 return true;
             }
 
@@ -742,25 +752,6 @@ final class EndOfLineTail
             || $node instanceof LimitMatchNode
             || $node instanceof DefineNode
             || $node instanceof VersionConditionNode;
-    }
-
-    /**
-     * Whether an "(*ACCEPT)" stands anywhere under the node: the match may
-     * end there, whatever is written after it.
-     */
-    private static function holdsAccept(NodeInterface $node): bool
-    {
-        if ($node instanceof PcreVerbNode) {
-            return 'ACCEPT' === explode(':', $node->verb, 2)[0];
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::holdsAccept($child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static function dotAllAfter(GroupNode $flags, bool $dotAll): bool
