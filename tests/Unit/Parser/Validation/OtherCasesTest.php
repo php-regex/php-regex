@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\OtherCases;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -87,5 +88,43 @@ final class OtherCasesTest extends TestCase
         yield 'from the capital glottal a, 10.33' => ['release' => '10.33', 'from' => 0xA7BA, 'next' => 0xAB53];
         yield 'from the capital glottal a, 10.34' => ['release' => '10.34', 'from' => 0xA7BA, 'next' => 0xA7BA];
         yield 'none after the last' => ['release' => '10.49', 'from' => 0x1E944, 'next' => null];
+        // A table a later one adds to keeps its characters in order.
+        yield 'from the small capital inverted r, 10.33' => ['release' => '10.33', 'from' => 0x281, 'next' => 0x283];
+        yield 'from the small capital inverted r, 10.34' => ['release' => '10.34', 'from' => 0x281, 'next' => 0x282];
+    }
+
+    /**
+     * Unicode 15 (PCRE2 10.43) left the long s and the Kelvin sign, each in
+     * a caseless set with an ASCII letter, without an other case of their
+     * own, as pcre2_ucd.c gives it: the set decides their cases before,
+     * the rules kept to ASCII ignore it from then on.
+     */
+    #[Test]
+    #[DataProvider('provideDroppedOtherCases')]
+    public function test_a_later_table_drops_an_other_case(string $release, int $codePoint, int $otherCase): void
+    {
+        $this->assertSame($otherCase, OtherCases::of(new PcreTarget(80400, $release))->otherCase($codePoint));
+    }
+
+    /**
+     * @return iterable<string, array{release: string, codePoint: int, otherCase: int}>
+     */
+    public static function provideDroppedOtherCases(): iterable
+    {
+        yield 'long s, 10.42' => ['release' => '10.42', 'codePoint' => 0x17F, 'otherCase' => 0x73];
+        yield 'long s, 10.43' => ['release' => '10.43', 'codePoint' => 0x17F, 'otherCase' => 0x17F];
+        yield 'Kelvin sign, 10.42' => ['release' => '10.42', 'codePoint' => 0x212A, 'otherCase' => 0x6B];
+        yield 'Kelvin sign, 10.49' => ['release' => '10.49', 'codePoint' => 0x212A, 'otherCase' => 0x212A];
+    }
+
+    #[Test]
+    public function test_the_tables_read_are_kept_until_the_caches_are_emptied(): void
+    {
+        $tables = OtherCases::of(new PcreTarget(80400, '10.49'));
+        $this->assertSame($tables, OtherCases::of(new PcreTarget(80400, '10.48')));
+
+        StaticCaches::clear();
+
+        $this->assertNotSame($tables, OtherCases::of(new PcreTarget(80400, '10.49')));
     }
 }
