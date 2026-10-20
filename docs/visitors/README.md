@@ -195,7 +195,9 @@ told when a layout would be unsafe, use `PatternFormatter` instead.
 
 ### Rewriter
 
-**Purpose:** Applies safe optimizations to make patterns more efficient without changing behavior.
+**Purpose:** Applies safe optimizations to make patterns more efficient without
+changing behavior. It is internal: call `Regex::optimize()` (or
+`Optimizer::optimize()`), which runs it and returns an `OptimizationResult`.
 
 **Optimizations Applied:**
 
@@ -209,14 +211,14 @@ told when a layout would be unsafe, use `PatternFormatter` instead.
 | `a{0,1}`        | `a?`   | Same bounds, shorter  |
 
 ```php
+use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Optimizer\Rewriter;
 
-$ast = Regex::create()->parse('/(?:foo)/');
-$optimized = $ast->accept(new Rewriter());
+echo Regex::create()->optimize('/(?:foo)/')->optimized;  // '/foo/'
 
-$pattern = $optimized->accept(new PatternPrinter());
-echo $pattern;  // '/foo/'
+$optimizer = new Optimizer(RegexParser::create());
+echo $optimizer->optimize('/a{0,1}/')->optimized;  // '/a?/'
 ```
 
 ---
@@ -817,7 +819,7 @@ For a transformation that spans the whole tree, every container node
 
 Compilation and transformation:
 - `PatternPrinter` converts the AST to a pattern string.
-- `Rewriter` applies safe optimizations.
+- `Rewriter` applies safe optimizations (internal: run it through `Regex::optimize()`).
 - `Modernizer` modernizes legacy syntax.
 
 Validation and linting:
@@ -849,9 +851,9 @@ Presentation and visualization:
 
 | Use Case                 | Visitor(s)                               |
 |--------------------------|------------------------------------------|
-| Check pattern validity   | `Validator`                   |
+| Check pattern validity   | `Regex::validate()` (uses internal visitor) |
 | Check for ReDoS          | `Regex::redos()` (uses internal visitor) |
-| Optimize pattern         | `Rewriter`                   |
+| Optimize pattern         | `Regex::optimize()` (uses internal visitor) |
 | Explain pattern to users | `TextExplainer`                     |
 | Generate test cases      | `TestCaseGenerator`           |
 | Count groups/metrics     | `MetricsCollector`                     |
