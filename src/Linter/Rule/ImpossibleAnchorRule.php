@@ -24,6 +24,7 @@ use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\SequenceNode;
@@ -355,7 +356,9 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     {
         $spelled = false;
         $reads = function (NodeInterface $atom, string $character) use ($flags, $sequence, $context, &$spelled): ?bool {
-            if (!LanguageQuestions::isOneCharacter($atom, $context->pattern->unicodeMode)) {
+            // An atom that may read more than one character, "\X" or "\R", may
+            // start with a newline and go on: its whole match says nothing.
+            if (!$atom instanceof ExtendedCharClassNode && !LanguageQuestions::isOneCharacter($atom, $context->pattern->unicodeMode)) {
                 return null;
             }
 

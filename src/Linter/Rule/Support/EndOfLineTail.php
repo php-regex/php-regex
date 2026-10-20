@@ -87,8 +87,7 @@ final class EndOfLineTail
     private const ANYWHERE = 4;
 
     /**
-     * The ASCII word characters; under UTF or UCP a byte above ASCII may be
-     * part of one too.
+     * The ASCII word characters, which are word characters in every mode.
      */
     private const WORD = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz';
 
@@ -367,7 +366,7 @@ final class EndOfLineTail
         }
 
         if ($node instanceof BackrefNode || $node instanceof SubroutineNode) {
-            return $this->anyGroupRead($node, fn (GroupNode $group): bool => $this->mayBeEmpty($group->child, self::HERE, true));
+            return $this->anyGroupRead($node, fn (GroupNode $group): bool => $this->mayBeEmpty($group->child, self::ANYWHERE, $dotAll));
         }
 
         // A keep, a comment, a callout or a DEFINE matches nothing and holds;
@@ -417,9 +416,11 @@ final class EndOfLineTail
             return true;
         }
 
+        // The sets hold ASCII only: a character above it makes the set
+        // unknown, and the character before unknown.
         $word = self::setOf(self::WORD);
 
-        return $this->before->intersects($boundary ? $word->union(ByteCharSet::fromRange(0x80, 0xFF)) : $word->complement());
+        return $this->before->intersects($boundary ? $word : $word->complement());
     }
 
     private static function setOf(string $characters): ByteCharSet
@@ -692,7 +693,7 @@ final class EndOfLineTail
 
         foreach ($groups as $group) {
             $id = spl_object_id($group);
-            if (isset($this->reading[$id])) {
+            if ($this->reading[$id] ?? false) {
                 return true;
             }
 
