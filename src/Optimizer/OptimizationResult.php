@@ -14,7 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 /**
- * Captures optimization output with a simple change log.
+ * A pattern and its rewrite, with the kinds of rewrite that made it: each
+ * named once, in the order first made, "Wrote [0-9] as \d." for "/[0-9]+/"
+ * into "/\d+/". A pattern left as written has none.
  */
 final class OptimizationResult implements \JsonSerializable
 {

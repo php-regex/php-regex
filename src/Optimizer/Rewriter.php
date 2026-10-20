@@ -61,7 +61,34 @@ use PHPRegex\Parser\Printer\PatternPrinter;
  */
 final class Rewriter extends AbstractNodeVisitor
 {
+    /*
+     * The kinds of rewrite, as OptimizationResult::$changes names them.
+     */
+    public const DIGITS = 'Wrote [0-9] as \\d.';
+    public const WORD = 'Wrote [a-zA-Z0-9_] as \\w.';
+    public const CLASS_MEMBERS = 'Sorted and merged the members of a class.';
+    public const ALTERNATION_TO_CLASS = 'Wrote an alternation of single characters as a class.';
+    public const MERGED_CLASSES = 'Merged the classes of an alternation into one.';
+    public const DUPLICATE_ALTERNATIVE = 'Removed an alternative written twice.';
+    public const FACTORED_PREFIX = 'Factored out the start the alternatives share.';
+    public const FACTORED_SUFFIX = 'Factored out the end the alternatives share.';
+    public const GROUP_REMOVED = 'Removed a group that changes nothing.';
+    public const RUN_COUNTED = 'Wrote a run of the same item as a count.';
+    public const SHORT_QUANTIFIER = 'Wrote a quantifier in its short form.';
+    public const COUNT_OF_ONE = 'Removed a quantifier that repeats once.';
+    public const REPEAT_OF_ZERO = 'Removed an item repeated zero times.';
+    public const POSSESSIVE = 'Made a quantifier possessive where nothing after it takes back what it matched.';
+    public const UNUSED_FLAG = 'Removed a flag nothing in the pattern reads.';
+    public const RESPELLED = 'Wrote a character without a backslash it does not need.';
+
     private const CHAR_CLASS_META = [']' => true, '\\' => true, '^' => true, '-' => true];
+
+    /**
+     * The kinds of rewrite made, in the order first made.
+     *
+     * @var array<string, true>
+     */
+    private array $changes = [];
 
     private string $flags = '';
 
@@ -148,16 +175,31 @@ final class Rewriter extends AbstractNodeVisitor
         $this->lazyByDefault = str_contains($this->flags, 'U');
         $this->inlineFlags = $this->containsInlineFlags($node->pattern);
         $this->possessify = $this->possessive && !$this->lazyByDefault && !$this->inlineFlags;
+        $this->changes = [];
         $optimizedPattern = $node->pattern->accept($this);
 
         // Remove useless flags
         $optimizedFlags = $this->removeUselessFlags($node->flags, $optimizedPattern);
+        if ($optimizedFlags !== $node->flags) {
+            $this->changed(self::UNUSED_FLAG);
+        }
 
         if ($optimizedPattern === $node->pattern && $optimizedFlags === $node->flags) {
             return $node;
         }
 
         return new RegexNode($optimizedPattern, $optimizedFlags, $node->delimiter, $node->startPosition, $node->endPosition);
+    }
+
+    /**
+     * The kinds of rewrite the last pattern visited went through, each
+     * once, in the order first made.
+     *
+     * @return list<string>
+     */
+    public function changes(): array
+    {
+        return array_keys($this->changes);
     }
 
     #[\Override]
@@ -184,17 +226,20 @@ final class Rewriter extends AbstractNodeVisitor
         // Try to merge adjacent character class nodes
         $mergedAlts = $this->mergeAdjacentCharClasses($optimizedAlts);
         if ($mergedAlts !== $optimizedAlts) {
+            $this->changed(self::MERGED_CLASSES);
             $hasChanged = true;
             $optimizedAlts = $mergedAlts;
         }
 
         $deduplicatedAlts = $this->deduplicateAlternation($optimizedAlts);
         if (\count($deduplicatedAlts) !== \count($optimizedAlts)) {
+            $this->changed(self::DUPLICATE_ALTERNATIVE);
             $hasChanged = true;
             $optimizedAlts = $deduplicatedAlts;
         }
 
         if ($this->canAlternationBeCharClass($optimizedAlts)) {
+            $this->changed(self::ALTERNATION_TO_CLASS);
             $expression = new AlternationNode($optimizedAlts, $node->startPosition, $node->endPosition);
 
             return new CharClassNode($expression, false, $node->startPosition, $node->endPosition);
@@ -203,6 +248,8 @@ final class Rewriter extends AbstractNodeVisitor
         // Try to convert simple alternations to character classes
         $charClass = $this->tryConvertAlternationToCharClass($optimizedAlts, $node->startPosition, $node->endPosition);
         if (null !== $charClass) {
+            $this->changed(self::ALTERNATION_TO_CLASS);
+
             return $charClass;
         }
 
@@ -210,21 +257,19 @@ final class Rewriter extends AbstractNodeVisitor
             return $node;
         }
 
-        $deduplicatedAlts = $this->deduplicateAlternation($optimizedAlts);
-        if (\count($deduplicatedAlts) !== \count($optimizedAlts)) {
-            $optimizedAlts = $deduplicatedAlts;
-        }
-
         if ($this->factorize) {
             $factoredAlts = $this->factorizeAlternation($optimizedAlts);
 
             if ($factoredAlts !== $optimizedAlts) {
+                $this->changed(self::FACTORED_PREFIX);
                 $optimizedAlts = $factoredAlts;
             }
 
             $suffixFactoredAlts = $this->factorizeSuffix($optimizedAlts);
 
             if ($suffixFactoredAlts !== $optimizedAlts) {
+                $this->changed(self::FACTORED_SUFFIX);
+
                 return new AlternationNode($suffixFactoredAlts, $node->startPosition, $node->endPosition);
             }
         }
@@ -266,6 +311,7 @@ final class Rewriter extends AbstractNodeVisitor
         /** @var array<NodeInterface> $optimizedChildren */
         $optimizedChildren = $this->compactSequence($optimizedChildren);
         if (\count($optimizedChildren) !== $originalCount) {
+            $this->changed(self::RUN_COUNTED);
             $hasChanged = true;
         }
 
@@ -300,6 +346,7 @@ final class Rewriter extends AbstractNodeVisitor
                 if ($count >= $this->minQuantifierCount) {
                     $baseNode = new LiteralNode($char, $child->startPosition, $child->endPosition);
                     $optimizedChildren[$i] = new QuantifierNode($baseNode, '{'.$count.'}', QuantifierType::Greedy, $child->startPosition, $child->endPosition);
+                    $this->changed(self::RUN_COUNTED);
                     $hasChanged = true;
                 }
             }
@@ -335,6 +382,7 @@ final class Rewriter extends AbstractNodeVisitor
                                 $current->startPosition,
                                 $current->endPosition,
                             );
+                            $this->changed(self::POSSESSIVE);
                             $hasChanged = true;
                         }
                     } catch (\Throwable) {
@@ -390,6 +438,8 @@ final class Rewriter extends AbstractNodeVisitor
                 || $optimizedChild instanceof UnicodePropNode
             )
         ) {
+            $this->changed(self::GROUP_REMOVED);
+
             return $optimizedChild;
         }
 
@@ -444,12 +494,16 @@ final class Rewriter extends AbstractNodeVisitor
             $part = $parts[0];
             if ($part instanceof RangeNode && $part->start instanceof LiteralNode && $part->end instanceof LiteralNode) {
                 if ('0' === $part->start->value && '9' === $part->end->value) {
+                    $this->changed(self::DIGITS);
+
                     return new CharTypeNode($node->isNegated ? 'D' : 'd', $node->startPosition, $node->endPosition);
                 }
             }
         }
 
         if ($this->optimizeWord && !$this->unicodeProperties && \in_array($this->locale, ['C', 'POSIX'], true) && $this->isFullWordClass($parts)) {
+            $this->changed(self::WORD);
+
             return new CharTypeNode($node->isNegated ? 'W' : 'w', $node->startPosition, $node->endPosition);
         }
 
@@ -464,7 +518,13 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         if ($this->canonicalizeCharClasses) {
-            [$optimizedParts, $normalizedChanged] = $this->normalizeCharClassParts($optimizedParts);
+            [$normalizedParts, $normalizedChanged] = $this->normalizeCharClassParts($optimizedParts);
+            // Ranges are taken apart and built again: only members that
+            // read otherwise were rewritten.
+            if ($normalizedChanged && $this->partsToString($normalizedParts) !== $this->partsToString($optimizedParts)) {
+                $this->changed(self::CLASS_MEMBERS);
+            }
+            $optimizedParts = $normalizedParts;
             $hasChanged = $hasChanged || $normalizedChanged;
         }
 
@@ -671,6 +731,14 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         return $node instanceof GroupNode && GroupType::Atomic === $node->type && $this->canMatchEmpty($node->child);
+    }
+
+    /**
+     * Records a kind of rewrite made.
+     */
+    private function changed(string $change): void
+    {
+        $this->changes[$change] = true;
     }
 
     /**
@@ -1475,20 +1543,17 @@ final class Rewriter extends AbstractNodeVisitor
     {
         $quantifier = $node->quantifier;
 
-        if ('{0,}' === $quantifier) {
-            return new QuantifierNode($node->node, '*', $node->type, $node->startPosition, $node->endPosition);
-        }
+        $short = ['{0,}' => '*', '{1,}' => '+', '{0,1}' => '?'][$quantifier] ?? null;
+        if (null !== $short) {
+            $this->changed(self::SHORT_QUANTIFIER);
 
-        if ('{1,}' === $quantifier) {
-            return new QuantifierNode($node->node, '+', $node->type, $node->startPosition, $node->endPosition);
-        }
-
-        if ('{0,1}' === $quantifier) {
-            return new QuantifierNode($node->node, '?', $node->type, $node->startPosition, $node->endPosition);
+            return new QuantifierNode($node->node, $short, $node->type, $node->startPosition, $node->endPosition);
         }
 
         // "X{1}+" is possessive, as an atomic group is: it never gives back.
         if (('{1}' === $quantifier || '{1,1}' === $quantifier) && QuantifierType::Possessive !== $node->type) {
+            $this->changed(self::COUNT_OF_ONE);
+
             return $node->node;
         }
 
@@ -1497,6 +1562,8 @@ final class Rewriter extends AbstractNodeVisitor
         // PCRE2 where a match may start: "(?:x|(?=a)){0}\w" never matches
         // "\tb", where "\w" does.
         if (('{0}' === $quantifier || '{0,0}' === $quantifier) && !$this->isCaptureSensitive($node->node) && !self::holdsAssertion($node->node)) {
+            $this->changed(self::REPEAT_OF_ZERO);
+
             return new LiteralNode('', $node->startPosition, $node->endPosition);
         }
 
@@ -1739,6 +1806,14 @@ final class Rewriter extends AbstractNodeVisitor
             \count($branches) - 1 => QuantifierType::Greedy,
             default => false,
         };
+    }
+
+    /**
+     * @param array<NodeInterface> $parts
+     */
+    private function partsToString(array $parts): string
+    {
+        return implode('', array_map($this->nodeToString(...), $parts));
     }
 
     private function nodeToString(NodeInterface $node): string

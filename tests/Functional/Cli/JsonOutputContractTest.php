@@ -371,7 +371,7 @@ final class JsonOutputContractTest extends TestCase
         $optimizations = JsonContract::asArray($byPattern['/[0-9]+/']['optimizations']);
         $this->assertCount(1, $optimizations);
         $optimization = JsonContract::asArray($optimizations[0]);
-        $this->assertSame(['original' => '/[0-9]+/', 'optimized' => '/\d+/', 'changes' => ['Optimized pattern.']], $optimization['optimization']);
+        $this->assertSame(['original' => '/[0-9]+/', 'optimized' => '/\d+/', 'changes' => ['Wrote [0-9] as \d.']], $optimization['optimization']);
         $this->assertSame(3, $optimization['savings']);
         $this->assertSame([], $byPattern['/[0-9]+/']['issues']);
     }

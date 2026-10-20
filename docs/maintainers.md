@@ -285,7 +285,7 @@ Use `vendor/bin/regex lint --format=json` for machine-readable output suitable f
           "optimization": {
             "original": "/^(?:[0-9]+\\s?)+$/",
             "optimized": "/^(?:\\d+\\s?)+$/",
-            "changes": ["Optimized pattern."]
+            "changes": ["Wrote [0-9] as \\d."]
           },
           "savings": 3,
           "source": "preg_match()"

@@ -295,7 +295,7 @@ vendor/bin/regex lint app/ --format=json
                         "original": "/^(?:[0-9]+\\s?)+$/",
                         "optimized": "/^(?:\\d+\\s?)+$/",
                         "changes": [
-                            "Optimized pattern."
+                            "Wrote [0-9] as \\d."
                         ]
                     },
                     "savings": 3,

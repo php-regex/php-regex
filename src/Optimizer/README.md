@@ -101,7 +101,7 @@ $optimizer = new Optimizer(RegexParser::create());
 $result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/');
 
 echo $result->optimized;   // '/\d{4}/'
-echo $result->changes[0];  // 'Optimized pattern.'
+echo $result->changes[0];  // 'Wrote [0-9] as \d.'
 ```
 
 Each rewrite is opt-out: turn off the ones you do not want, keep the rest.

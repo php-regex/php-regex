@@ -247,7 +247,7 @@ echo $result->original;    // '/[0-9]+/'
 echo $result->optimized;   // '/\d+/'
 var_export($result->changes);
 // array (
-//   0 => 'Optimized pattern.',
+//   0 => 'Wrote [0-9] as \\d.',
 // )
 ```
 

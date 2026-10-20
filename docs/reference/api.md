@@ -800,7 +800,9 @@ echo $report->explanation;
 
 ### OptimizationResult
 
-Returned by `optimize()`. Shows what changed.
+Returned by `optimize()`. Shows what changed: `$changes` names each kind of
+rewrite once, in the order the optimizer first made it, and is empty when the
+pattern comes back as written.
 
 ```php
 $result = Regex::create()->optimize('/[0-9]+/');
@@ -812,7 +814,7 @@ foreach ($result->changes as $change) {
     echo "- $change\n";
 }
 // Output:
-// - Optimized pattern.
+// - Wrote [0-9] as \d.
 ```
 
 ---

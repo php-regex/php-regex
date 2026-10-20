@@ -134,7 +134,17 @@ final class Optimizer
             }
         }
 
-        $appliedChanges = $optimizedPattern === $regex ? [] : ['Optimized pattern.'];
+        if ($optimizedPattern === $regex) {
+            return new OptimizationResult($regex, $regex, []);
+        }
+
+        // A member of a class or a literal the rewrite built again is
+        // written without the backslash it does not need: "[^\)]" becomes
+        // "[^)]" with nothing else to name.
+        $appliedChanges = $optimizer->changes();
+        if ([] === $appliedChanges) {
+            $appliedChanges = [Rewriter::RESPELLED];
+        }
 
         return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
     }
