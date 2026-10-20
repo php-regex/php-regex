@@ -366,6 +366,9 @@ final class Rewriter extends AbstractNodeVisitor
             // A quantifier repeats one character only: "(?:)*", "(?:^)*" or
             // "(?:\b)+" keep their group.
             && !($this->isInsideQuantifier && !$this->isSingleCharacter($optimizedChild))
+            // PCRE2 makes "\N" repeated right before "\R" possessive, though
+            // both match "\r": "\N*\R" misses "a\r\x0Bb\r", "(?:\N)*\R" does not.
+            && !($this->isInsideQuantifier && $optimizedChild instanceof CharTypeNode && 'N' === $optimizedChild->value)
             && (
                 $optimizedChild instanceof LiteralNode
                 || $optimizedChild instanceof CharLiteralNode
@@ -1312,6 +1315,27 @@ final class Rewriter extends AbstractNodeVisitor
             || $node instanceof CommentNode;
     }
 
+    /**
+     * Whether an anchor, an assertion or a lookaround stands anywhere under
+     * the node.
+     */
+    private static function holdsAssertion(NodeInterface $node): bool
+    {
+        if ($node instanceof AnchorNode || $node instanceof AssertionNode
+            || ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true))
+        ) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsAssertion($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function parseQuantifierCount(string $quantifier): ?int
     {
         // Only merge exact {n} counts; ranges and * + ? never merge.
@@ -1416,8 +1440,10 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         // A group repeated zero times still takes its number, and can still
-        // be called or referred to.
-        if (('{0}' === $quantifier || '{0,0}' === $quantifier) && !$this->isCaptureSensitive($node->node)) {
+        // be called or referred to. One holding an assertion still tells
+        // PCRE2 where a match may start: "(?:x|(?=a)){0}\w" never matches
+        // "\tb", where "\w" does.
+        if (('{0}' === $quantifier || '{0,0}' === $quantifier) && !$this->isCaptureSensitive($node->node) && !self::holdsAssertion($node->node)) {
             return new LiteralNode('', $node->startPosition, $node->endPosition);
         }
 
