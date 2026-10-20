@@ -116,6 +116,26 @@ final class PhpTokens
     }
 
     /**
+     * "=>", between an array key and its value.
+     *
+     * @param array{0: int, 1: string, 2?: int}|string $token
+     */
+    public static function isDoubleArrow(array|string $token): bool
+    {
+        return \is_array($token) ? \T_DOUBLE_ARROW === $token[0] : '=>' === $token;
+    }
+
+    /**
+     * "::", between a class and its member.
+     *
+     * @param array{0: int, 1: string, 2?: int}|string $token
+     */
+    public static function isDoubleColon(array|string $token): bool
+    {
+        return \is_array($token) && \T_DOUBLE_COLON === $token[0];
+    }
+
+    /**
      * The value of a T_CONSTANT_ENCAPSED_STRING, as PHP reads it. The b of a
      * binary string, b'/a/' or B"/a/", changes nothing.
      *

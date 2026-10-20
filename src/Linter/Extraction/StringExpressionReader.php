@@ -56,7 +56,7 @@ final class StringExpressionReader
             $regexBody = $matches[2];
             $flags = $matches[4];
 
-            // The pattern body returned from parseConstantStringExpression()
+            // The pattern body returned from read()
             // has already been decoded from the PHP string literal. Avoid
             // running stripslashes() again here, which would incorrectly
             // drop significant escapes like \\d, \\w, or \\x7f.

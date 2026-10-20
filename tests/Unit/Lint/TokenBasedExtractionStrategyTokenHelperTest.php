@@ -60,9 +60,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
 
     public function test_is_double_arrow_token_accepts_string(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
-
-        $this->assertTrue($this->invoke($strategy, 'isDoubleArrowToken', '=>'));
+        $this->assertTrue(PhpTokens::isDoubleArrow('=>'));
     }
 
     public function test_next_and_previous_significant_token_index_return_null(): void

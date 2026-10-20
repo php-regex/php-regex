@@ -128,6 +128,19 @@ final class PhpTokensTest extends TestCase
     }
 
     #[Test]
+    public function test_is_double_arrow_and_double_colon_hold_their_operator_only(): void
+    {
+        $this->assertTrue(PhpTokens::isDoubleArrow([\T_DOUBLE_ARROW, '=>', 1]));
+        $this->assertTrue(PhpTokens::isDoubleArrow('=>'));
+        $this->assertFalse(PhpTokens::isDoubleArrow([\T_DOUBLE_COLON, '::', 1]));
+        $this->assertFalse(PhpTokens::isDoubleArrow('='));
+
+        $this->assertTrue(PhpTokens::isDoubleColon([\T_DOUBLE_COLON, '::', 1]));
+        $this->assertFalse(PhpTokens::isDoubleColon([\T_DOUBLE_ARROW, '=>', 1]));
+        $this->assertFalse(PhpTokens::isDoubleColon('::'));
+    }
+
+    #[Test]
     public function test_next_and_previous_significant_skip_whitespace_and_comments(): void
     {
         $tokens = token_get_all("<?php a /* c */ b // d\n");
