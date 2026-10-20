@@ -346,6 +346,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- On PHP 8.5 and later, validating a class left open whose range ends on a character past ASCII without `u` (`/[a-é/`) raises no deprecation of `ord()`, and a value in `\x{...}`, `\o{...}` or `\N{U+...}` past what a PHP integer holds raises no warning of a float cast: it reads as the largest integer, where the cast wrapped it to 0 or below.
 - A value in `\x{...}` past what a PHP integer holds, `/\x{8000000000000000}/`, is refused as a code point past U+10FFFF, `regex.unicode.out_of_range`, where its value overflowed and the library said `regex.octal.out_of_range`, even under `u`.
 - From PCRE2 10.47 a surrogate written in braces under UTF, `\x{`, `\o{` or `\N{U+`, is refused where its digits and the spaces after them end, before the `}` is looked for (`/\x{d800/u` at offset 7, `/\N{U+D800/u` at 9, `regex.unicode.surrogate`), where the library said `regex.unicode.invalid_digit`.
 - Without nikic/php-parser, the lint reads a call whose brackets never balance, as half-typed code in an editor, `preg_match(''{)}(''.`, up to the end of the file: it raised "Undefined array key" past the last token.
