@@ -55,8 +55,10 @@ Every pattern of the workspace is judged for one target, a PHP and PCRE2 pair, r
 | `initializationOptions.phpVersion` | `"8.2"`, `"8.2.4"` or `80200` | `phpVersion` in `regex.json`, then `composer.json`, then the running PHP |
 | `initializationOptions.pcreVersion` | a PCRE2 release, `"10.42"` for instance | `pcreVersion` in `regex.json`, then the release the target PHP bundles |
 | `initializationOptions.locale` | an `LC_CTYPE` locale this machine can set, `"tr_TR.UTF-8"` for instance | `locale` in `regex.json`, then the one of the PHP running the server |
+| `initializationOptions.redos` | `true` or `false`: run the [ReDoS analysis](https://php-regex.com/guides/lsp/#redos-analysis) and publish its verdict on each pattern, with the mode and the threshold of `checks.redos` in `regex.json` | `checks.redos.enabled` in `regex.json`, then off |
+| `initializationOptions.trace` | `"off"`, `"messages"` or `"verbose"`: [log every frame](https://php-regex.com/guides/lsp/#tracing-the-frames) read and written on stderr | the `trace` of the `initialize` request, then `"off"`; `$/setTrace` changes it during the session |
 
-`regex.json` (and `regex.dist.json`) sits at the root of the first workspace folder. A value the server cannot read is logged as a warning and the next source is used. Changing the target takes a server restart.
+`regex.json` (and `regex.dist.json`) sits at the root of the first workspace folder. A value the server cannot read is logged as a warning and the next source is used. Changing the target or the ReDoS analysis takes a server restart.
 
 Usage
 -----
