@@ -50,15 +50,6 @@ use PHPRegex\Redos\RedosComplexity;
  */
 final class BacktrackProver
 {
-    private ?PnfaBuilder $builder = null;
-
-    private ?int $stepBound = null;
-
-    /**
-     * @var array{ItemAutomaton, Budget}|null
-     */
-    private ?array $search = null;
-
     public function __construct(
         private readonly int $maxStates,
         private readonly int $maxSteps,
@@ -66,18 +57,43 @@ final class BacktrackProver
     ) {}
 
     /**
+     * The outcome of the proof of one match attempt: the class proved, or
+     * the limit of the model met on the way, with what was read until then.
+     *
      * @param PcreTarget|null $target the PHP and PCRE2 the pattern is read for,
      *                                as its character sets go; the running
      *                                engine's reading when null
+     */
+    public function prove(RegexNode $regex, ?string $pattern = null, ?PcreTarget $target = null): ProofOutcome
+    {
+        $budget = new Budget($this->maxSteps, $this->maxStates);
+        $builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target);
+        $stepBound = null;
+        $search = null;
+
+        try {
+            $result = $this->attempt($regex, $pattern, $builder, $budget, $stepBound, $search);
+        } catch (ModelLimit $limit) {
+            return ProofOutcome::limited($limit, $builder->abstractions(), $stepBound, $search);
+        }
+
+        return ProofOutcome::proven($result, $builder->abstractions(), $stepBound, $search);
+    }
+
+    /**
+     * The proof itself. What a caller reads whichever way it ends is handed
+     * back as soon as it is known: the bound once every search was read, the
+     * pattern's own search once it was built.
+     *
+     * @param array{ItemAutomaton, Budget}|null $search
+     *
+     * @param-out int|null $stepBound
+     * @param-out array{ItemAutomaton, Budget}|null $search
      *
      * @throws ModelLimit
      */
-    public function prove(RegexNode $regex, ?string $pattern = null, ?PcreTarget $target = null): ProofResult
+    private function attempt(RegexNode $regex, ?string $pattern, PnfaBuilder $builder, Budget $budget, ?int &$stepBound, ?array &$search): ProofResult
     {
-        $budget = new Budget($this->maxSteps, $this->maxStates);
-        $this->stepBound = null;
-        $this->search = null;
-        $builder = $this->builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target);
         $searches = $builder->build();
 
         // A search's automaton is kept only while a lookaround of it is still
@@ -97,7 +113,7 @@ final class BacktrackProver
         $best = null;
         // A lookaround runs within the attempt that meets it: the bounds of
         // the searches add up, a ceiling for their product.
-        $stepBound = 0;
+        $bound = 0;
         foreach ($searches as $index => $pnfa) {
             if (null !== $pnfa->parent && null !== $pnfa->mark) {
                 // A lookaround's body starts where its mark stands, after the
@@ -121,13 +137,13 @@ final class BacktrackProver
             if (isset($parents[$index])) {
                 $automata[$index] = $automaton;
             }
-            $stepBound = null === $stepBound ? null : self::boundOf($automaton, $stepBound);
+            $bound = null === $bound ? null : $this->boundOf($automaton, $bound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
             $verdict = null === $pnfa->parent && null !== $pattern && [] !== $pnfa->marks
                 ? self::throughLookarounds($pattern, $searches, $index, $automaton, $contexts, $budget, $literals)
                 : (new AmbiguityFinder($automaton, $budget))->find($literals);
             if (null === $pnfa->parent) {
-                $this->search = [$automaton, $budget];
+                $search = [$automaton, $budget];
             }
             unset($automaton);
             if (null === $verdict || null === $reach[$index]) {
@@ -141,7 +157,7 @@ final class BacktrackProver
         }
 
         // Known before any verdict is refused: a ceiling needs no witness.
-        $this->stepBound = $stepBound;
+        $stepBound = $bound;
 
         if (null !== $best && null !== $best['unwitnessed']) {
             throw ModelLimit::unwitnessed($best['unwitnessed']);
@@ -155,7 +171,7 @@ final class BacktrackProver
 
         $unicode = str_contains($regex->flags, 'u');
         if (null === $best) {
-            return new ProofResult(RedosComplexity::Linear, null, null, null, null, [], $unicode, $builder->abstractions());
+            return new ProofResult(RedosComplexity::Linear, null, null, null, null, [], $unicode);
         }
 
         if ($best['approximated']) {
@@ -177,41 +193,8 @@ final class BacktrackProver
             Utf8::encode($best['published'], $unicode),
             array_values(array_unique($others)),
             $unicode,
-            $builder->abstractions(),
             $best['withoutMatches'],
         );
-    }
-
-    /**
-     * An upper bound on the steps of one match attempt, as the degree d of
-     * n^d, from the last proof: null when an exponential ambiguity may exist,
-     * when the pattern left the model, or when the bound outgrew its budget.
-     */
-    public function stepBound(): ?int
-    {
-        return $this->stepBound;
-    }
-
-    /**
-     * The automaton of the pattern's own search from the last proof and the
-     * budget it shares; null before a proof finished reading it.
-     *
-     * @return array{ItemAutomaton, Budget}|null
-     */
-    public function search(): ?array
-    {
-        return $this->search;
-    }
-
-    /**
-     * The bounded repeats read as unbounded so far: all of them after a
-     * proof, the ones met before the budget ran out otherwise.
-     *
-     * @return list<string>
-     */
-    public function abstractions(): array
-    {
-        return $this->builder?->abstractions() ?? [];
     }
 
     /**

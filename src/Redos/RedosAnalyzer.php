@@ -18,7 +18,6 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
-use PHPRegex\Redos\Backtrack\ModelLimit;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
@@ -105,18 +104,16 @@ final class RedosAnalyzer
                 $this->options->boundedRepeatCutoff,
             );
 
-            $keepsAbstractions = false;
-            $reason = null;
-
-            try {
-                $proof = $prover->prove($ast, $regex, $parser->target());
-                $proofKind = RedosProof::Proven;
-            } catch (ModelLimit $limit) {
-                $proof = null;
-                $proofKind = $limit->budgetExceeded ? RedosProof::BudgetExceeded : RedosProof::Heuristic;
-                $keepsAbstractions = $limit->budgetExceeded || $limit->approximated;
-                $reason = $limit->abstraction;
-            }
+            $outcome = $prover->prove($ast, $regex, $parser->target());
+            $proof = $outcome->result;
+            $limit = $outcome->limit;
+            $proofKind = match (true) {
+                null === $limit => RedosProof::Proven,
+                $limit->budgetExceeded => RedosProof::BudgetExceeded,
+                default => RedosProof::Heuristic,
+            };
+            $keepsAbstractions = null !== $limit && ($limit->budgetExceeded || $limit->approximated);
+            $reason = $limit?->abstraction;
 
             // A proof of a linear attempt settles the verdict: the structural
             // heuristics would only guess at a risk it rules out, so they do
@@ -138,7 +135,7 @@ final class RedosAnalyzer
             // replayed in confirmed mode when its severity, that of a proven
             // quadratic attempt, reaches the threshold.
             $searchCost = RedosComplexity::Linear === $proof?->complexity
-                ? (new SearchCostProver())->find($regex, $ast, $prover, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank())
+                ? (new SearchCostProver())->find($regex, $ast, $outcome, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank())
                 : null;
 
             $analysis = new RedosAnalysis(
@@ -159,9 +156,9 @@ final class RedosAnalyzer
                 proof: $proofKind,
                 witness: $witness,
                 abstractions: RedosProof::Proven === $proofKind || $keepsAbstractions
-                    ? [...$prover->abstractions(), ...(null === $reason ? [] : [$reason])]
+                    ? [...$outcome->abstractions, ...(null === $reason ? [] : [$reason])]
                     : [],
-                upperBoundDegree: $prover->stepBound(),
+                upperBoundDegree: $outcome->stepBound,
                 searchCost: $searchCost,
             );
 

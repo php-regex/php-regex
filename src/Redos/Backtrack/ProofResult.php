@@ -28,7 +28,6 @@ final class ProofResult
 {
     /**
      * @param list<string> $otherSuffixes
-     * @param list<string> $abstractions
      */
     public function __construct(
         public readonly RedosComplexity $complexity,
@@ -38,7 +37,6 @@ final class ProofResult
         public readonly ?string $suffix,
         public readonly array $otherSuffixes,
         public readonly bool $unicode,
-        public readonly array $abstractions,
         public readonly bool $withoutMatches = false,
     ) {}
 }

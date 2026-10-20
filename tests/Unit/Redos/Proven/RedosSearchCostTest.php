@@ -1012,9 +1012,10 @@ final class RedosSearchCostTest extends TestCase
         $ast = RegexParser::create()->parse($pattern);
         $options = new RedosOptions();
         $prover = new BacktrackProver($options->maxStates, $options->maxSteps, $options->boundedRepeatCutoff);
-        self::assertSame(RedosComplexity::Linear, $prover->prove($ast)->complexity, $pattern);
+        $outcome = $prover->prove($ast);
+        self::assertSame(RedosComplexity::Linear, $outcome->result?->complexity, $pattern);
 
-        return (new SearchCostProver($replayer))->find($pattern, $ast, $prover, true);
+        return (new SearchCostProver($replayer))->find($pattern, $ast, $outcome, true);
     }
 
     /**

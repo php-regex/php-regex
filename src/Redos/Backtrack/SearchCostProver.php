@@ -112,25 +112,27 @@ final class SearchCostProver
     public function __construct(private readonly SearchCostReplayer $replayer = new SearchCostReplayer()) {}
 
     /**
-     * The search-cost witness of the pattern the prover proved linear per
-     * attempt, replayed on the engine when asked; null when none is found.
+     * The search-cost witness of the pattern the proof found linear per
+     * attempt, read from the automaton of its own search, replayed on the
+     * engine when asked; null when none is found or the proof built no
+     * search.
      *
      * A library failure inside the search proof says nothing of one
      * attempt: it gives no witness, and the per-attempt verdict the caller
      * holds stands. Any other error is a bug, and surfaces.
      */
-    public function find(string $pattern, RegexNode $regex, BacktrackProver $prover, bool $replay): ?RedosSearchCost
+    public function find(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay): ?RedosSearchCost
     {
         try {
-            return $this->seek($pattern, $regex, $prover, $replay);
+            return $this->seek($pattern, $regex, $proof, $replay);
         } catch (ExceptionInterface) {
             return null;
         }
     }
 
-    private function seek(string $pattern, RegexNode $regex, BacktrackProver $prover, bool $replay): ?RedosSearchCost
+    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay): ?RedosSearchCost
     {
-        $search = $prover->search();
+        $search = $proof->search;
         if (null === $search || str_contains($regex->flags, 'A')) {
             return null;
         }
