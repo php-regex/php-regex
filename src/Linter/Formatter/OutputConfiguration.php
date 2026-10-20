@@ -52,30 +52,6 @@ final class OutputConfiguration
     }
 
     /**
-     * Create a configuration for verbose mode.
-     */
-    public static function verbose(): self
-    {
-        return new self(
-            verbosity: self::VERBOSITY_VERBOSE,
-            showHints: true,
-            showOptimizations: true,
-        );
-    }
-
-    /**
-     * Create a configuration for debug mode.
-     */
-    public static function debug(): self
-    {
-        return new self(
-            verbosity: self::VERBOSITY_DEBUG,
-            showHints: true,
-            showOptimizations: true,
-        );
-    }
-
-    /**
      * Check if hints should be shown based on verbosity level.
      */
     public function shouldShowHints(): bool

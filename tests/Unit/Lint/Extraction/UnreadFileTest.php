@@ -17,9 +17,10 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -163,7 +164,7 @@ final class UnreadFileTest extends TestCase
         $unread = [new PatternOccurrence('', '/x.php', 1, 'php', unread: 'Not linted.')];
 
         $this->assertSame([], $service->suggestOptimizations($unread, 1));
-        $this->assertSame([], $service->analyzeRedos($unread, RedosSeverity::Low));
+        $this->assertSame([], self::redosIssuesOf($service, $unread));
     }
 
     /**
@@ -188,5 +189,17 @@ final class UnreadFileTest extends TestCase
         file_put_contents($base.'.php', $content);
 
         return $base.'.php';
+    }
+
+    /**
+     * The ReDoS issues the lint reports for the patterns.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<LintIssue>
+     */
+    private static function redosIssuesOf(AnalysisService $analysis, array $patterns, int $workers = 1): array
+    {
+        return array_values(array_filter($analysis->lint($patterns, null, $workers), static fn (LintIssue $issue): bool => RedosVerdict::ISSUE_ID === $issue->issueId));
     }
 }

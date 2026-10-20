@@ -19,9 +19,9 @@ use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -58,10 +58,10 @@ final class AnalysisServiceGuardTest extends TestCase
     {
         $analysis = $this->analysis(redos: true);
 
-        $this->assertCount(1, $analysis->analyzeRedos([self::occurrence('/(a+)+$/', 'php>=8.4')], RedosSeverity::Low));
-        $this->assertSame([], $analysis->analyzeRedos([self::occurrence('/(a+)+$/', 'php>=9.0')], RedosSeverity::Low));
-        $this->assertSame([], $analysis->analyzeRedos([PatternOccurrence::scanned('a.php', [])], RedosSeverity::Low));
-        $this->assertCount(1, $analysis->analyzeRedos([PatternOccurrence::scanned('a.php', []), new PatternOccurrence('/(a+)+$/', 'a.php', 3, 'preg_match')], RedosSeverity::Low));
+        $this->assertCount(1, self::redosIssuesOf($analysis, [self::occurrence('/(a+)+$/', 'php>=8.4')]));
+        $this->assertSame([], self::redosIssuesOf($analysis, [self::occurrence('/(a+)+$/', 'php>=9.0')]));
+        $this->assertSame([], self::redosIssuesOf($analysis, [PatternOccurrence::scanned('a.php', [])]));
+        $this->assertCount(1, self::redosIssuesOf($analysis, [PatternOccurrence::scanned('a.php', []), new PatternOccurrence('/(a+)+$/', 'a.php', 3, 'preg_match')]));
     }
 
     /**
@@ -135,5 +135,17 @@ final class AnalysisServiceGuardTest extends TestCase
         $line = ['php>=8.4' => 2, 'php>=9.0' => 4][$constraint] ?? 1;
 
         return new PatternOccurrence($pattern, 'a.php', $line, 'preg_match', guard: TargetConstraint::fromMarker($constraint));
+    }
+
+    /**
+     * The ReDoS issues the lint reports for the patterns.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<LintIssue>
+     */
+    private static function redosIssuesOf(AnalysisService $analysis, array $patterns, int $workers = 1): array
+    {
+        return array_values(array_filter($analysis->lint($patterns, null, $workers), static fn (LintIssue $issue): bool => RedosVerdict::ISSUE_ID === $issue->issueId));
     }
 }

@@ -243,23 +243,6 @@ final class AnalysisService
 
     /**
      * @param array<PatternOccurrence> $patterns
-     *
-     * @throws LintException when a worker fails
-     *
-     * @return array<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
-     */
-    public function analyzeRedos(array $patterns, RedosSeverity $threshold, int $workers = 1): array
-    {
-        return $this->runOnWorkers(
-            $patterns,
-            $workers,
-            fn (array $chunk): array => $this->analyzeRedosChunk($chunk, $threshold),
-            null,
-        );
-    }
-
-    /**
-     * @param array<PatternOccurrence> $patterns
      * @param OptimizerOptions|null    $options  what an optimization may rewrite; by default, what lint
      *                                           allows, every rewrite checked with the automata
      * @param LintProgress|null        $progress advanced once per pattern, the ignored and the invalid
@@ -705,57 +688,6 @@ final class AnalysisService
     private function comparesTrees(): bool
     {
         return LintConfigSchema::leavesOn($this->lintRules, self::ISSUE_ID_MEANING_CHANGES);
-    }
-
-    /**
-     * @param array<PatternOccurrence> $patterns
-     *
-     * @return list<array{file: string, line: int, column?: int|null, fileOffset?: int|null, analysis: RedosAnalysis}>
-     */
-    private function analyzeRedosChunk(array $patterns, RedosSeverity $threshold): array
-    {
-        $issues = [];
-
-        foreach ($patterns as $occurrence) {
-            if ($occurrence->isIgnored || null !== $occurrence->unread || null !== $occurrence->parserFallback || null !== $occurrence->ignores) {
-                continue;
-            }
-
-            [$narrowed] = $this->narrowedFor($occurrence);
-            if (null !== $narrowed) {
-                if ($narrowed instanceof self) {
-                    array_push($issues, ...$narrowed->analyzeRedosChunk([$occurrence], $threshold));
-                }
-
-                continue;
-            }
-
-            $validation = $this->regex->validate($occurrence->pattern);
-            if (!$validation->isValid) {
-                continue;
-            }
-
-            $analysis = (new RedosAnalyzer($this->regex))->analyze(
-                $occurrence->pattern,
-                $threshold,
-                $this->redosMode,
-                $this->redosConfirmOptions,
-            );
-
-            if (!RedosVerdict::reported($analysis, $threshold, $this->redosMode)) {
-                continue;
-            }
-
-            $issues[] = [
-                'file' => $occurrence->file,
-                'line' => $occurrence->line,
-                'column' => $occurrence->column,
-                'fileOffset' => $occurrence->fileOffset,
-                'analysis' => $analysis,
-            ];
-        }
-
-        return $issues;
     }
 
     /**

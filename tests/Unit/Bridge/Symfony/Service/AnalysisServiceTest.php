@@ -16,10 +16,10 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Service;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
 
 final class AnalysisServiceTest extends TestCase
@@ -103,20 +103,19 @@ final class AnalysisServiceTest extends TestCase
         // We can't predict exact results since it depends on test files, but ensure it's an array
     }
 
-    public function test_analyze_redos_method(): void
+    public function test_redos_issues_carry_their_place_and_analysis(): void
     {
         $service = $this->createService(warningThreshold: 50, redosThreshold: 'low');
         $patterns = [
             new PatternOccurrence('/(a+)+b/', 'file.php', 1, 'php:preg_match()'),
         ];
 
-        $issues = $service->analyzeRedos($patterns, RedosSeverity::Low);
+        $issues = self::redosIssuesOf($service, $patterns);
 
-        $this->assertIsArray($issues);
         $this->assertNotEmpty($issues);
-        $this->assertArrayHasKey('file', $issues[0]);
-        $this->assertArrayHasKey('line', $issues[0]);
-        $this->assertArrayHasKey('analysis', $issues[0]);
+        $this->assertSame('file.php', $issues[0]->file);
+        $this->assertSame(1, $issues[0]->line);
+        $this->assertNotNull($issues[0]->analysis);
     }
 
     public function test_suggest_optimizations_method(): void
@@ -369,5 +368,17 @@ final class AnalysisServiceTest extends TestCase
             null,
             true, // redosEnabled
         );
+    }
+
+    /**
+     * The ReDoS issues the lint reports for the patterns.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<LintIssue>
+     */
+    private static function redosIssuesOf(AnalysisService $analysis, array $patterns, int $workers = 1): array
+    {
+        return array_values(array_filter($analysis->lint($patterns, null, $workers), static fn (LintIssue $issue): bool => RedosVerdict::ISSUE_ID === $issue->issueId));
     }
 }

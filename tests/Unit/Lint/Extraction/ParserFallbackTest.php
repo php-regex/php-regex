@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
+use PHPRegex\Linter\LintIssue;
+use PHPRegex\Linter\RedosVerdict;
 use PhpParser\ErrorHandler;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
@@ -25,7 +27,6 @@ use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -355,7 +356,7 @@ final class ParserFallbackTest extends TestCase
         $this->assertSame([], $issues);
         $this->assertSame(1, $progress->advancedTotal());
         $this->assertSame([], $service->suggestOptimizations($fallback, 1));
-        $this->assertSame([], $service->analyzeRedos($fallback, RedosSeverity::Low));
+        $this->assertSame([], self::redosIssuesOf($service, $fallback));
     }
 
     #[Test]
@@ -429,5 +430,17 @@ final class ParserFallbackTest extends TestCase
         $this->files[] = $base.'.php';
 
         return $base.'.php';
+    }
+
+    /**
+     * The ReDoS issues the lint reports for the patterns.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<LintIssue>
+     */
+    private static function redosIssuesOf(AnalysisService $analysis, array $patterns, int $workers = 1): array
+    {
+        return array_values(array_filter($analysis->lint($patterns, null, $workers), static fn (LintIssue $issue): bool => RedosVerdict::ISSUE_ID === $issue->issueId));
     }
 }

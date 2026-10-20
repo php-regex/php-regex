@@ -18,6 +18,7 @@ use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
@@ -26,7 +27,6 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\RecordingLintProgress;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -59,46 +59,46 @@ final class AnalysisServiceTest extends TestCase
         LintFunctionOverrides::reset();
     }
 
-    public function test_analyze_redos_returns_empty_array_for_no_patterns(): void
+    public function test_redos_issues_returns_empty_array_for_no_patterns(): void
     {
-        $result = $this->analysis->analyzeRedos([], RedosSeverity::Medium);
+        $result = self::redosIssuesOf($this->analysis, []);
 
         $this->assertSame([], $result);
     }
 
-    public function test_analyze_redos_returns_empty_array_for_invalid_pattern(): void
+    public function test_redos_issues_returns_empty_array_for_invalid_pattern(): void
     {
         $patterns = [
             new PatternOccurrence('/[a-z/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Medium);
+        $result = self::redosIssuesOf($this->analysis, $patterns);
 
         $this->assertSame([], $result);
     }
 
-    public function test_analyze_redos_detects_vulnerable_pattern(): void
+    public function test_redos_issues_detects_vulnerable_pattern(): void
     {
         $patterns = [
             // (a+)+ alone matches a…a! at once; before the end it fails at n=19 (PCRE2 10.49).
             new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low);
+        $result = self::redosIssuesOf($this->analysis, $patterns);
 
         $this->assertCount(1, $result);
-        $this->assertSame('test.php', $result[0]['file']);
-        $this->assertSame(1, $result[0]['line']);
-        $this->assertArrayHasKey('analysis', $result[0]);
+        $this->assertSame('test.php', $result[0]->file);
+        $this->assertSame(1, $result[0]->line);
+        $this->assertNotNull($result[0]->analysis);
     }
 
-    public function test_analyze_redos_filters_by_threshold(): void
+    public function test_redos_issues_filters_by_threshold(): void
     {
         $patterns = [
             new PatternOccurrence('/\w+/', 'test.php', 1, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::High);
+        $result = self::redosIssuesOf(new AnalysisService(RegexParser::create(), redosThreshold: 'high', redosEnabled: true), $patterns);
 
         $this->assertSame([], $result);
     }
@@ -159,22 +159,22 @@ final class AnalysisServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(1, \count($result));
     }
 
-    public function test_analyze_redos_continues_on_parse_error(): void
+    public function test_redos_issues_continues_on_parse_error(): void
     {
         $patterns = [
             new PatternOccurrence('/valid/', 'test.php', 1, 'preg_match'),
             new PatternOccurrence('/[unclosed/', 'test.php', 2, 'preg_match'),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Medium);
+        $result = self::redosIssuesOf($this->analysis, $patterns);
 
         $this->assertGreaterThanOrEqual(0, \count($result));
     }
 
-    public function test_extract_fragment_with_empty_pattern(): void
+    public function test_redos_issues_of_an_empty_pattern(): void
     {
         $patterns = [new PatternOccurrence('', 'test.php', 1, 'preg_match')];
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Medium);
+        $result = self::redosIssuesOf($this->analysis, $patterns);
 
         $this->assertSame([], $result);
     }
@@ -284,13 +284,13 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame(1, $progress->advancedTotal());
     }
 
-    public function test_analyze_redos_skips_ignored_patterns(): void
+    public function test_redos_issues_skips_ignored_patterns(): void
     {
         $patterns = [
             new PatternOccurrence('/(a+)+/', 'test.php', 1, 'preg_match', null, null, true),
         ];
 
-        $result = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low);
+        $result = self::redosIssuesOf($this->analysis, $patterns);
 
         $this->assertSame([], $result);
     }
@@ -394,7 +394,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame([], $result);
     }
 
-    public function test_analyze_redos_can_run_in_parallel(): void
+    public function test_redos_issues_can_run_in_parallel(): void
     {
         if (!\function_exists('pcntl_fork')) {
             $this->markTestSkipped('pcntl is not available.');
@@ -405,8 +405,8 @@ final class AnalysisServiceTest extends TestCase
             new PatternOccurrence('/foo/', 'test.php', 2, 'preg_match'),
         ];
 
-        $sequential = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low, 1);
-        $parallel = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low, 2);
+        $sequential = self::redosIssuesOf($this->analysis, $patterns, 1);
+        $parallel = self::redosIssuesOf($this->analysis, $patterns, 2);
 
         $this->assertEquals($sequential, $parallel);
     }
@@ -448,7 +448,7 @@ final class AnalysisServiceTest extends TestCase
 
         $this->assertSame([], $this->analysis->lint([], $lintProgress, 2));
         $this->assertSame([], $this->analysis->suggestOptimizations([], 0, null, 2, $optimizationProgress));
-        $this->assertSame([], $this->analysis->analyzeRedos([], RedosSeverity::Low, 2));
+        $this->assertSame([], self::redosIssuesOf($this->analysis, [], 2));
         $this->assertSame(0, $lintProgress->advancedTotal());
         $this->assertSame(0, $optimizationProgress->advancedTotal());
         $this->assertSame([], $lintProgress->workerCounts());
@@ -607,7 +607,7 @@ final class AnalysisServiceTest extends TestCase
 
         $serial = self::redosAnalyses($this->analysis->lint($patterns));
         $parallel = self::redosAnalyses($this->analysis->lint($patterns, new RecordingLintProgress(), 2));
-        $redos = $this->analysis->analyzeRedos($patterns, RedosSeverity::Low, 2);
+        $redos = self::redosIssuesOf($this->analysis, $patterns, 2);
 
         $this->assertCount(1, $serial);
         $this->assertCount(1, $parallel);
@@ -618,7 +618,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertCount(\count($serial[0]->findings), $read->findings);
         $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));
         $this->assertCount(1, $redos);
-        $this->assertInstanceOf(NodeInterface::class, $redos[0]['analysis']->culpritNode);
+        $this->assertInstanceOf(NodeInterface::class, $redos[0]->analysis?->culpritNode);
     }
 
     public function test_skip_risk_analysis_helpers(): void
@@ -687,5 +687,17 @@ final class AnalysisServiceTest extends TestCase
         $refMethod = $ref->getMethod($method);
 
         return $refMethod->invoke($refMethod->isStatic() ? null : $this->analysis, ...$args);
+    }
+
+    /**
+     * The ReDoS issues the lint reports for the patterns.
+     *
+     * @param array<PatternOccurrence> $patterns
+     *
+     * @return list<LintIssue>
+     */
+    private static function redosIssuesOf(AnalysisService $analysis, array $patterns, int $workers = 1): array
+    {
+        return array_values(array_filter($analysis->lint($patterns, null, $workers), static fn (LintIssue $issue): bool => RedosVerdict::ISSUE_ID === $issue->issueId));
     }
 }

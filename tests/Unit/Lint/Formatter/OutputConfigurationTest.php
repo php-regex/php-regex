@@ -70,9 +70,9 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->groupByFile);
     }
 
-    public function test_verbose_factory_method(): void
+    public function test_verbose_verbosity_keeps_every_other_default(): void
     {
-        $config = OutputConfiguration::verbose();
+        $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_VERBOSE);
 
         $this->assertSame(OutputConfiguration::VERBOSITY_VERBOSE, $config->verbosity);
         $this->assertTrue($config->ansi);
@@ -82,9 +82,9 @@ final class OutputConfigurationTest extends TestCase
         $this->assertTrue($config->groupByFile);
     }
 
-    public function test_debug_factory_method(): void
+    public function test_debug_verbosity_keeps_every_other_default(): void
     {
-        $config = OutputConfiguration::debug();
+        $config = new OutputConfiguration(verbosity: OutputConfiguration::VERBOSITY_DEBUG);
 
         $this->assertSame(OutputConfiguration::VERBOSITY_DEBUG, $config->verbosity);
         $this->assertTrue($config->ansi);
