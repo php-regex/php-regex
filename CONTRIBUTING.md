@@ -184,11 +184,16 @@ opening words and a link to the CHANGELOG when the section is longer than
 GitHub takes.
 
 The tag starts the phar workflow (`.github/workflows/phar.yml`): it builds
-`regex.phar` from the tag, attests its build provenance, attaches it and its
-SHA-256 checksum to the draft, and only then publishes the release, so the
-latest release never goes without its phar. If that run fails, the release
-stays a draft: fix the cause, then run the workflow by hand on the tag with
-"publish" set. Run by hand without "publish", it only builds the phar.
+`regex.phar` from the tag on PHP 8.2, as Box needs, then runs it on PHP 8.1,
+the lowest the packages support: its version must be the tag's, `validate`
+must tell a valid pattern from an invalid one by its exit code, and the
+language server must answer. It then attests the phar's build provenance,
+attaches it and its SHA-256 checksum to the draft, and only then publishes
+the release, so the latest release never goes without its phar. If that run
+fails, the release stays a draft: fix the cause, then run the workflow by
+hand on the tag with "publish" set. A release already published keeps its
+phar: the workflow refuses to build another for it. Run by hand without
+"publish", it only builds and checks the phar.
 
 The tag triggers the split workflow, which tags every `php-regex/regex-*`
 repository; Packagist picks the versions up from there. A pre-release

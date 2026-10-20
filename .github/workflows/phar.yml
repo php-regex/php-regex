@@ -46,14 +46,39 @@ jobs:
       TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
       PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
     steps:
+      # A run by hand names its tag: it becomes the ref checked out and the
+      # release edited, so it is a version tag as bin/release makes, or
+      # nothing runs.
+      - name: Check the tag
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(BETA|RC)[0-9]+)?$ ]]; then
+            echo "\"$TAG\" is not a release tag: use v2.1.0, v2.1.0-BETA1 or v2.1.0-RC1." >&2
+            exit 1
+          fi
+
+      # A published release keeps the phar it was published with: nothing is
+      # built, attested or attached for it again.
+      - name: Check the release is a draft
+        if: env.PUBLISH == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          draft=$(gh release view "$TAG" --json isDraft --jq .isDraft) || { echo "No release $TAG: bin/release drafts it before it pushes the tag." >&2; exit 1; }
+          if [ "$draft" != true ]; then
+            echo "The release $TAG is already published: its phar is never replaced." >&2
+            exit 1
+          fi
+
       - name: Checkout the tag
         uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ env.TAG }}
           persist-credentials: false
 
-      # The lowest PHP the phar runs on, so nothing newer reaches it.
-      - name: Setup PHP
+      # Box needs PHP 8.2 to build the phar; the phar itself needs no more
+      # than the packages, and is checked on that lowest PHP below.
+      - name: Setup PHP to build
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.2'
@@ -64,21 +89,60 @@ jobs:
       - name: Build
         run: phar/build
 
+      # The lowest PHP every package's manifest names: the checks that follow
+      # run the phar on it, so nothing newer reaches it unseen.
+      - name: Setup the lowest PHP the phar runs on
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.1'
+          extensions: mbstring, tokenizer
+          coverage: none
+
+      # The first line of --version is "PHPRegex <version> by <author>".
+      - name: Check the version
+        run: |
+          read -r name reported _ < <(php bin/regex.phar --version --no-ansi)
+          if [ "$name" != PHPRegex ] || [ "$reported" != "${TAG#v}" ]; then
+            echo "bin/regex.phar reports \"$name $reported\", not PHPRegex ${TAG#v}." >&2
+            exit 1
+          fi
+
+      # validate exits with 0 on a valid pattern and 1 on an invalid one.
+      - name: Check the phar validates a pattern
+        run: |
+          code=0
+          php bin/regex.phar validate --no-ansi '/^(?<year>\d{4})-(?<month>\d{2})$/' > "$RUNNER_TEMP/valid" || code=$?
+          if [ "$code" -ne 0 ]; then
+            echo "bin/regex.phar validate exited with $code on a valid pattern:" >&2; cat "$RUNNER_TEMP/valid" >&2; exit 1
+          fi
+          code=0
+          php bin/regex.phar validate --no-ansi '/(a/' > "$RUNNER_TEMP/invalid" || code=$?
+          if [ "$code" -ne 1 ]; then
+            echo "bin/regex.phar validate exited with $code on /(a/, not 1:" >&2; cat "$RUNNER_TEMP/invalid" >&2; exit 1
+          fi
+
+      # The server answers with framed messages, one header and one JSON body
+      # each, and may send more after its answer: each body is read whole by
+      # its length, and the answer to the request is read as JSON.
       - name: Check the phar carries the language server
         run: |
           message='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"capabilities":{}}}'
           printf 'Content-Length: %d\r\n\r\n%s' "${#message}" "$message" > "$RUNNER_TEMP/lsp-in"
           php bin/regex.phar lsp < "$RUNNER_TEMP/lsp-in" > "$RUNNER_TEMP/lsp-out"
-          grep -q '"serverInfo":{"name":"php-regex-lsp"' "$RUNNER_TEMP/lsp-out" || { echo "bin/regex.phar lsp did not answer initialize:" >&2; cat "$RUNNER_TEMP/lsp-out" >&2; exit 1; }
+          length=0
+          while IFS= read -r header; do
+            header=${header%$'\r'}
+            case "$header" in
+              Content-Length:*) length=${header#Content-Length: } ;;
+              '') dd bs=1 count="$length" status=none; echo ;;
+            esac
+          done < "$RUNNER_TEMP/lsp-out" > "$RUNNER_TEMP/lsp-messages"
+          if ! jq -e -s --arg version "${TAG#v}" 'map(select(.id == 1)) | .[0].result.serverInfo == {name: "php-regex-lsp", version: $version}' "$RUNNER_TEMP/lsp-messages" > /dev/null; then
+            echo "bin/regex.phar lsp did not answer initialize as php-regex-lsp ${TAG#v}:" >&2; cat "$RUNNER_TEMP/lsp-out" >&2; exit 1
+          fi
 
-      - name: Check the version and write the checksum
+      - name: Write the checksum
         run: |
-          version="${TAG#v}"
-          reported=$(php bin/regex.phar --version | head -1)
-          case "$reported" in
-            *"$version"*) ;;
-            *) echo "bin/regex.phar reports \"$reported\", not $version." >&2; exit 1 ;;
-          esac
           php -r 'echo hash_file("sha256", "bin/regex.phar"), "  regex.phar\n";' > bin/regex.phar.sha256
           cat bin/regex.phar.sha256
 
@@ -88,12 +152,12 @@ jobs:
         with:
           subject-path: bin/regex.phar
 
+      # --clobber replaces what an earlier run attached to the draft.
       - name: Attach to the release and publish it
         if: env.PUBLISH == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release view "$TAG" --json isDraft >/dev/null || { echo "No release $TAG: bin/release drafts it before it pushes the tag." >&2; exit 1; }
           gh release upload "$TAG" bin/regex.phar bin/regex.phar.sha256 --clobber
           gh release edit "$TAG" --draft=false
