@@ -132,5 +132,7 @@
       url: /visitors/
     - title: Extending
       url: /extending/
+    - title: Adding a lint rule
+      url: /adding-a-lint-rule/
     - title: Maintainers guide
       url: /maintainers/

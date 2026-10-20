@@ -65,6 +65,7 @@ License: MIT
 - [Nodes](https://php-regex.com/nodes/): every AST node type, one per construct
 - [Visitors](https://php-regex.com/visitors/): every built-in visitor, and how to build custom ones
 - [Extending](https://php-regex.com/extending/): adding new PCRE features, visitors and integrations
+- [Adding a lint rule](https://php-regex.com/adding-a-lint-rule/): for contributors, a lint rule from its class to its documentation and tests
 - [Maintainers guide](https://php-regex.com/maintainers/): embedding PHPRegex in a tool as a first-class component
 
 ## Tutorial track

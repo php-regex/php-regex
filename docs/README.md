@@ -81,7 +81,7 @@ The [correctness contracts](/reference/correctness-contracts/) define those boun
 - [Integrations](/guides/): CLI, PHPStan, Psalm, Rector, PHPUnit, Laravel, Symfony, language server.
 - [Concepts](/concepts/): AST, visitors, PCRE behavior, and ReDoS theory.
 - [Reference](/reference/): diagnostics, API, output contracts, support matrices, compatibility.
-- [Internals](/architecture/): architecture, traversal, AST nodes, visitors, extending, maintainer guide.
+- [Internals](/architecture/): architecture, traversal, AST nodes, visitors, extending, adding a lint rule, maintainer guide.
 
 ## Getting help
 
