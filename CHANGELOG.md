@@ -347,6 +347,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A second quantifier after an escape read as a character then text is refused, as PCRE2 refuses it: `/\10000**/` and `/\10000{2}*/` (the octal `\100` then `00`), `/\8888888888**/` up to PCRE2 10.44 and, on PHP 7.3 and 7.4, `/\g{-1}{1,3}*/` with no group before it, which were reported valid; on PHP 7.3 that error now comes before a reference to a missing name, as in `/\g{-1}\k<n>*?\g{-1}{1,3}*/` (at 24).
 - A class after `\c(?` (`/\c(?[a/`, where `\c` escapes the `(` and `?` repeats it) is a plain class, refused where PCRE2 refuses it (at 6, the class left open), where it was taken for the `(?[` of an extended class and refused on its `[`.
 - A group, subroutine or condition name that a `\c` ending the pattern, a `\x{}` or, before PCRE2 10.35, a `(?*` cuts short is refused where PCRE2 refuses it, on the backslash or the `(` (`/(?&\c/` at 3, `/(?<a\c/` at 4, `/(?&a\x{}/` at 4), as is a `(?\c` (at 2, past it from PCRE2 10.47), where the escape or the group was reported.
 - Java's property names (`\p{javaLowerCase}`, `\p{javaUpperCase}`, `\p{javaWhitespace}`, `\p{javaMirrored}`) and Unicode blocks (`\p{Block=Basic_Latin}`, `\p{blk=ASCII}`, even `\p{Blk=Foo}`) are refused, as `preg_match()` refuses them on every PCRE2 release PHP 8 bundles, where a target of PCRE2 10.40 or later reported them valid. PCRE2 has no Unicode blocks; the error points past the `}`, as PCRE2's does.

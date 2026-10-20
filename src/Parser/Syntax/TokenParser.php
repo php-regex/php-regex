@@ -745,8 +745,11 @@ final class TokenParser
             $children = $node->children;
             $text = array_pop($children) ?? $node;
             $last = $this->parseQuantifiedText($text);
+            // One sequence: a second quantifier finds the repeated character
+            // last in it, as it does after "\Qab\E*".
+            $tail = $last instanceof SequenceNode ? $last->children : [$last];
 
-            return $last === $text ? $node : new SequenceNode([...$children, $last], $node->startPosition, $last->getEndPosition());
+            return $last === $text ? $node : new SequenceNode([...$children, ...$tail], $node->startPosition, $last->getEndPosition());
         }
 
         // A quantifier after a comment repeats the item before the comment.

@@ -108,13 +108,13 @@ final class OctalEscapeReadingTest extends TestCase
         $this->assertSame(1, preg_match('/^\\10000*$/', '@0'));
         $this->assertSame(0, preg_match('/^\\10000*$/', '@'));
 
+        // One sequence, so that a second quantifier finds the "0*" last.
         $escape = $this->nodesOf('/^\\10000*$/')[1];
         $this->assertInstanceOf(SequenceNode::class, $escape);
-        $text = $escape->children[1];
-        $this->assertInstanceOf(SequenceNode::class, $text);
-        $this->assertInstanceOf(LiteralNode::class, $text->children[0]);
-        $this->assertSame('0', $text->children[0]->value);
-        $this->assertInstanceOf(QuantifierNode::class, $text->children[1]);
+        $this->assertCount(3, $escape->children);
+        $this->assertInstanceOf(LiteralNode::class, $escape->children[1]);
+        $this->assertSame('0', $escape->children[1]->value);
+        $this->assertInstanceOf(QuantifierNode::class, $escape->children[2]);
     }
 
     #[Test]
