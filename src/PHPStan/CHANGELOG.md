@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `phpRegex.locale` names the `LC_CTYPE` locale the patterns run under,
+   the one of the PHP running PHPStan by default; every version of the
+   range and every version a guard or a marker keeps is judged under it.
  * What the running PCRE2 answers about Unicode classes is kept under
    PHPStan's `tmpDir`, in `php-regex/`, for the next run and the other
    workers: `RegexPatternRule` takes it as its new `cacheDirectory`

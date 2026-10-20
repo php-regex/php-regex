@@ -59,8 +59,8 @@ final class LspCommand extends AbstractCommand
 
         // The editor, regex.json and composer.json name the target: one
         // given here would be ignored.
-        if (null !== $input->globalOptions->phpVersion || null !== $input->globalOptions->pcreVersion) {
-            return $this->usageError($output, 'regex lsp reads its target from the editor\'s initializationOptions, regex.json or composer.json, not from --php-version or --pcre-version.', $usage);
+        if (null !== $input->globalOptions->phpVersion || null !== $input->globalOptions->pcreVersion || null !== $input->globalOptions->locale) {
+            return $this->usageError($output, 'regex lsp reads its target from the editor\'s initializationOptions, regex.json or composer.json, not from --php-version, --pcre-version or --locale.', $usage);
         }
 
         if (!class_exists($this->serverClass)) {

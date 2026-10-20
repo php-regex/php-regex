@@ -506,8 +506,8 @@ final class ProjectTargetEdgeCasesTest extends TestCase
 
         $this->assertSame('8.3.7', $resolved->php());
         // php and the range both name the patch the flag gives.
-        $this->assertSame(['php' => '8.3.7', 'pcre' => '10.42', 'source' => '--php-version; --pcre-version', 'range' => [['php' => '8.3.7', 'pcre' => '10.42']]], $resolved->toArray());
-        $this->assertSame(['php_version' => 80307, 'pcre_version' => '10.42'], $resolved->regexOptions());
+        $this->assertSame(['php' => '8.3.7', 'pcre' => '10.42', 'locale' => 'C', 'source' => '--php-version; --pcre-version', 'range' => [['php' => '8.3.7', 'pcre' => '10.42']]], $resolved->toArray());
+        $this->assertSame(['php_version' => 80307, 'pcre_version' => '10.42', 'locale' => 'C'], $resolved->regexOptions());
     }
 
     #[Test]

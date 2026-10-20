@@ -14,14 +14,19 @@ declare(strict_types=1);
 namespace PHPRegex\Parser;
 
 use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Text\Ascii;
 
 /**
- * The PHP version and the PCRE2 release a pattern is judged for.
+ * The PHP version, the PCRE2 release and the LC_CTYPE locale a pattern is
+ * judged for.
  *
  * What PCRE2 accepts, and where it reports an error, moved across its
- * releases; a few rules belong to PHP itself. The engine that runs the
+ * releases; a few rules belong to PHP itself. The locale names the tables
+ * PHP hands PCRE2, which decide the other case of each byte and the bytes
+ * of each type without UCP: PCRE2's own under "C", PHP's default, those the
+ * C library gives under any other locale setlocale() names. The engine that runs the
  * analysis need not be the one that will run the pattern, so the target
  * is named once and read everywhere a rule depends on it. Releases older
  * than 10.39 are judged with the 10.39 rules, but for the few older changes
@@ -38,6 +43,12 @@ final class PcreTarget
     public readonly string $pcreVersion;
 
     /**
+     * The LC_CTYPE locale the patterns run under, as the C library names
+     * it: "C" for PCRE2's own tables.
+     */
+    public readonly string $locale;
+
+    /**
      * What supports() answered, by release number and feature name: the
      * lexer and the parser ask it many times per pattern, and the answer
      * depends on nothing else. As many entries as releases asked about times
@@ -50,18 +61,25 @@ final class PcreTarget
     private readonly int $release;
 
     /**
-     * @param int    $phpVersionId a PHP_VERSION_ID, 80400 for PHP 8.4
-     * @param string $pcreVersion  a PCRE2 release, "10.44", as PCRE_VERSION
-     *                             spells it or without its date
+     * @param int         $phpVersionId a PHP_VERSION_ID, 80400 for PHP 8.4
+     * @param string      $pcreVersion  a PCRE2 release, "10.44", as PCRE_VERSION
+     *                                  spells it or without its date
+     * @param string|null $locale       an LC_CTYPE locale, "tr_TR.UTF-8"; the
+     *                                  runtime's when null
      *
-     * @throws InvalidRegexOptionException when $pcreVersion names no release
+     * @throws InvalidRegexOptionException when $pcreVersion names no release, or
+     *                                     $locale one this machine cannot set
      */
-    public function __construct(public readonly int $phpVersionId, string $pcreVersion)
-    {
+    public function __construct(
+        public readonly int $phpVersionId,
+        string $pcreVersion,
+        ?string $locale = null
+    ) {
         [$major, $minor] = self::releaseParts($pcreVersion)
             ?? throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion));
         $this->release = (int) $major * 1000 + (int) $minor;
         $this->pcreVersion = (int) $major.'.'.$minor;
+        $this->locale = null === $locale ? CharacterTables::current() : CharacterTables::forLocale($locale)->locale;
     }
 
     /**
@@ -114,6 +132,17 @@ final class PcreTarget
     }
 
     /**
+     * The same PHP and PCRE2 under another locale, the runtime's for null.
+     *
+     * @throws InvalidRegexOptionException when $locale names one this machine
+     *                                     cannot set
+     */
+    public function withLocale(?string $locale): self
+    {
+        return new self($this->phpVersionId, $this->pcreVersion, $locale);
+    }
+
+    /**
      * The PCRE2 release whose rules judge this one: its own, or 10.39 for
      * an older release. The library knows the rules of 10.39 and later in
      * full; of an older release, only the few changes it names.
@@ -158,32 +187,45 @@ final class PcreTarget
 
     /**
      * Whether the running engine is the one judged: the same PHP minor
-     * version, linking the same PCRE2 release. Only then can PHP itself be
-     * asked about a pattern.
+     * version, linking the same PCRE2 release, under the same locale. Only
+     * then can PHP itself be asked about a pattern.
      */
     public function isRunningEngine(): bool
     {
         $running = self::runtime();
 
         return intdiv($this->phpVersionId, 100) === intdiv($running->phpVersionId, 100)
-            && $this->release === $running->release;
+            && $this->release === $running->release
+            && $this->locale === $running->locale;
     }
 
     /**
      * What a cached tree was read for: the PHP major and minor version, as
-     * no parse rule depends on a patch release, and the PCRE2 release. The
-     * rules that do, such as "\C" under "u" from PHP 8.4.25, belong to the
-     * validator, which runs on every call, cached tree or not.
+     * no parse rule depends on a patch release, the PCRE2 release, and the
+     * locale but "C", whose tables may judge a pattern otherwise. The rules
+     * that depend on a patch release, such as "\C" under "u" from PHP
+     * 8.4.25, belong to the validator, which runs on every call, cached
+     * tree or not.
      */
     public function cacheKey(): string
     {
         return \sprintf(
-            'php%d.%d/pcre%d.%d',
+            'php%d.%d/pcre%d.%d%s',
             intdiv($this->phpVersionId, 10000),
             intdiv($this->phpVersionId, 100) % 100,
             intdiv($this->release, 1000),
             $this->release % 1000,
+            CharacterTables::BUILT_IN === $this->locale ? '' : '/'.$this->locale,
         );
+    }
+
+    /**
+     * What tells this target from another: the PHP_VERSION_ID, the PCRE2
+     * release and the locale, as "80426/10.44/C".
+     */
+    public function key(): string
+    {
+        return $this->phpVersionId.'/'.$this->pcreVersion.'/'.$this->locale;
     }
 
     private static function releaseNumber(string $version): ?int

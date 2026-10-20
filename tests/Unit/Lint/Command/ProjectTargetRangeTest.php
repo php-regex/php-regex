@@ -238,6 +238,7 @@ final class ProjectTargetRangeTest extends TestCase
         $this->assertSame([
             'php' => '8.4',
             'pcre' => '10.44',
+            'locale' => 'C',
             'source' => 'composer.json require.php',
             'range' => [
                 ['php' => '8.4', 'pcre' => '10.44'],

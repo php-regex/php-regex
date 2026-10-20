@@ -48,9 +48,11 @@ php_regex:
     # Whether the php_regex.regex service also compiles every pattern
     # with the running PHP. regex:lint never does.
     runtime_pcre_validation: false
-    # The PHP version and PCRE2 release regex:lint judges patterns for.
+    # The PHP version, PCRE2 release and LC_CTYPE locale regex:lint
+    # judges patterns for.
     php_version: null      # "8.2", "8.2.4" or 80200
     pcre_version: null     # "10.42"
+    locale: null           # "tr_TR.UTF-8"; the locale of the PHP running the command
     cache:
         pool: null         # a PSR-6 pool service id, used before "directory"
         directory: '%kernel.cache_dir%/php_regex'
@@ -214,8 +216,9 @@ Each one is read as the pattern Symfony runs:
 ## The service and the lint judge for different targets
 
 The `php_regex.regex` service (autowired as `PHPRegex\Toolkit\Regex`) runs in
-your application: it judges patterns for the PHP running it, and
-`php_version` / `pcre_version` do not change that.
+your application: it judges patterns for the PHP running it, under the
+locale it runs under, and `php_version` / `pcre_version` / `locale` do not
+change that: a request may run under another `LC_CTYPE` than the console.
 
 `regex:lint` judges the patterns of your code for the PHP your project
 supports. It picks the target in this order:
@@ -229,15 +232,20 @@ supports. It picks the target in this order:
 
 Each version is chosen on its own: without `pcre_version`, the lint uses the
 PCRE2 release the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44
-for 8.4 and 8.5). A `regex.json` in the project is the configuration of the
-standalone `vendor/bin/regex` command, not of the bundle.
+for 8.4 and 8.5). The locale is `php_regex.locale`, else the one of the PHP
+running the command (see
+[Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)):
+its character tables decide the size of a few classes, and one the machine
+cannot set is a configuration error. A `regex.json` in the project is the
+configuration of the standalone `vendor/bin/regex` command, not of the
+bundle.
 
 The console report shows the target in its header. The JSON report carries it
 as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "source": "php_regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
+    "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "php_regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0},
     "results": []
 }
@@ -246,7 +254,7 @@ as a top-level `target` object:
 `source` names where each version came from: `php_regex.php_version`,
 `composer.json require.php`, `composer.json config.platform.php` or
 `running PHP`, followed by `php_regex.pcre_version` when the PCRE2 release
-came from there.
+came from there and `php_regex.locale` when the locale did.
 
 The report is the one `vendor/bin/regex lint --format=json` prints, and
 `regex:transpile --format=json` prints the same document as

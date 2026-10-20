@@ -514,12 +514,8 @@ final class TextDocumentHandler
             return null;
         }
 
-        $target = $this->regex->parser()->target();
-        if ($target->phpVersionId === $lowest->phpVersionId && $target->pcreVersion === $lowest->pcreVersion) {
-            return $this->regex;
-        }
-
-        return $this->narrowed[$lowest->phpVersionId.'/'.$lowest->pcreVersion] ??= Regex::create(['php_version' => $lowest->phpVersionId, 'pcre_version' => $lowest->pcreVersion, 'runtime_pcre_validation' => false]);
+        // The server's options, its locale included, for the lowest version.
+        return $this->narrowed[$lowest->key()] ??= $this->regex->withTarget($lowest);
     }
 
     /**

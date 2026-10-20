@@ -369,6 +369,10 @@ parameters:
         # The PCRE2 release, like '10.42', for a PHP that links another one
         # than it bundles; null for the bundled one.
         pcreVersion: null
+        # The LC_CTYPE locale the patterns run under, like 'tr_TR.UTF-8':
+        # its character tables decide the size of a few classes. null for
+        # the locale of the PHP running PHPStan.
+        locale: null
         # The libraries whose static methods carry a pattern:
         # composer-pcre, nette-utils, spatie-regex, illuminate-support,
         # phpunit, webmozart-assert, beberlei-assert, symfony-validator;
@@ -441,8 +445,14 @@ and `filter_var()` are read by `regex lint`, not by the extension (see the
 [extraction coverage](../reference/extraction-coverage.md)). Nette's
 `utf8: true` is not applied: the pattern is judged without the `u` it adds.
 
-A `phpVersion` or `pcreVersion` that names no release stops the analysis when
-it starts, not on the first file. So does a `threshold` that is not `low`,
+A `phpVersion` or `pcreVersion` that names no release, or a `locale` this
+machine cannot set, stops the analysis when it starts, not on the first file.
+Every version of the range, and every version a guard or a `@regex-target`
+marker keeps, is judged under the `locale`; a message names it when it is not
+`C` (`Regex pattern is invalid for PHP 8.4 with PCRE2 10.44 under the locale
+tr_TR.UTF-8: ...`). PHPStan itself reports what the running engine refuses,
+under the locale PHPStan runs with (see
+[Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)). So does a `threshold` that is not `low`,
 `medium`, `high` or `critical`, even while `redos` is off: `safe` and
 `unknown` are the verdicts a pattern gets, not thresholds. The configuration
 schema takes the four values in lower case; a rule built from an array, in

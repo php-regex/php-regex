@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `locale` in `config/php-regex.php` names the `LC_CTYPE` locale
+   `regex:lint` judges patterns under; the `Regex` service judges under the
+   running PHP's.
  * `report_unmatched_ignores`, on by default, makes `regex:lint` report each
    `@regex-ignore` marker, or issue identifier it names, that silences
    nothing, as `regex.ignore.unmatched`.

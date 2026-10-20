@@ -16,7 +16,9 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\InstalledLocales;
 use Illuminate\Support\Facades\Artisan;
 use Orchestra\Testbench\Attributes\WithConfig;
 use Orchestra\Testbench\Attributes\WithEnv;
@@ -32,6 +34,8 @@ use PHPUnit\Framework\Attributes\Test;
 #[WithConfig('php-regex.cache.store', null)]
 final class LaravelTargetConfigTest extends LaravelTestCase
 {
+    use InstalledLocales;
+
     /**
      * Valid from PCRE2 10.43 (variable-length lookbehind, PcreFeature::
      * VariableLengthLookbehind), refused by 10.40, the release PHP 8.2
@@ -124,6 +128,42 @@ final class LaravelTargetConfigTest extends LaravelTestCase
         $this->assertSame(1, $status);
         $this->assertSame('8.2', $json['target']['php'] ?? null);
         $this->assertSame(1, $json['stats']['errors'] ?? null);
+    }
+
+    #[Test]
+    public function test_the_locale_defaults_to_null(): void
+    {
+        $this->assertTrue(config()->has('php-regex.locale'));
+        $this->assertNull(config('php-regex.locale'));
+    }
+
+    /**
+     * The locale drives the lint, as php_version does; the Regex service
+     * judges under the running PHP's.
+     */
+    #[Test]
+    #[WithConfig('php-regex.locale', 'fr_FR.ISO8859-1')]
+    public function test_the_locale_drives_the_lint_command_target_only(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The locale of config/php-regex.php');
+
+        [, $json] = $this->lintJson();
+
+        $this->assertSame('fr_FR.ISO8859-1', $json['target']['locale'] ?? null);
+        $this->assertSame('running PHP; config php-regex.locale', $json['target']['source'] ?? null);
+        $this->assertSame(PcreTarget::runtime()->locale, $this->regexService()->target()->locale);
+    }
+
+    #[Test]
+    #[WithConfig('php-regex.locale', 'xx_YY.NOWHERE')]
+    public function test_a_locale_the_machine_cannot_set_stops_the_lint(): void
+    {
+        [$status, $json] = $this->lintJson();
+
+        $this->assertSame(2, $status);
+        $error = $json['error'] ?? null;
+        $this->assertIsString($error);
+        $this->assertStringContainsString('"locale" names "xx_YY.NOWHERE"', $error);
     }
 
     #[Test]

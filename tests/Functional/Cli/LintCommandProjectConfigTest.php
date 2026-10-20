@@ -22,6 +22,7 @@ use PHPRegex\Linter\Config\LintArgumentParser;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\LintExtractorFactory;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -35,6 +36,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class LintCommandProjectConfigTest extends TestCase
 {
+    use InstalledLocales;
     use TemporaryProject;
 
     private const PHP_FILE = <<<'PHP'
@@ -129,7 +131,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -142,7 +144,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src'], '8.4');
 
-        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'source' => '--php-version', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'locale' => 'C', 'source' => '--php-version', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -156,7 +158,7 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'source' => 'regex.json', 'range' => [['php' => '8.2', 'pcre' => '10.40']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'regex.json', 'range' => [['php' => '8.2', 'pcre' => '10.40']]], $payload['target'] ?? null);
     }
 
     #[Test]
@@ -169,7 +171,54 @@ final class LintCommandProjectConfigTest extends TestCase
 
         $payload = $this->lintJson(['src']);
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $payload['target'] ?? null);
+    }
+
+    /**
+     * The locale is --locale, else regex.json's, else the runtime's, the
+     * same at every version of the range.
+     */
+    #[Test]
+    public function test_lint_json_names_the_locale_and_where_it_came_from(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The locale of a lint run');
+        $this->enterProject([
+            'regex.json' => '{"phpVersion": "8.4", "locale": "C"}',
+            'src/a.php' => self::PHP_FILE,
+        ]);
+
+        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'locale' => 'C', 'source' => 'regex.json', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $this->lintJson(['src'])['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => '10.44', 'locale' => 'fr_FR.ISO8859-1', 'source' => 'regex.json; --locale', 'range' => [['php' => '8.4', 'pcre' => '10.44']]], $this->lintJson(['src'], null, 'fr_FR.ISO8859-1')['target'] ?? null);
+    }
+
+    /**
+     * A locale this machine cannot set stops the run: a usage error on the
+     * command line, a configuration one in regex.json.
+     */
+    #[Test]
+    public function test_lint_refuses_a_locale_the_machine_cannot_set(): void
+    {
+        $this->enterProject(['src/a.php' => self::PHP_FILE]);
+
+        [$exitCode, $stdout] = $this->runLint(['src', '--format=json', '--jobs=1'], null, 'xx_YY.NOWHERE');
+        $payload = json_decode($stdout, true);
+
+        $this->assertSame(2, $exitCode);
+        $this->assertIsArray($payload);
+        $this->assertSame('usage', $payload['stage'] ?? null);
+        $this->assertIsString($payload['error'] ?? null);
+        $this->assertStringContainsString('--locale names "xx_YY.NOWHERE"', (string) $payload['error']);
+
+        $this->enterProject(['regex.json' => '{"locale": "xx_YY.NOWHERE"}', 'src/a.php' => self::PHP_FILE]);
+
+        [$exitCode, $stdout] = $this->runLint(['src', '--format=json', '--jobs=1']);
+        $payload = json_decode($stdout, true);
+
+        $this->assertSame(2, $exitCode);
+        $this->assertIsArray($payload);
+        $this->assertSame('config', $payload['stage'] ?? null);
+        $this->assertIsString($payload['error'] ?? null);
+        $this->assertStringContainsString('"xx_YY.NOWHERE"', (string) $payload['error']);
     }
 
     /**
@@ -177,9 +226,9 @@ final class LintCommandProjectConfigTest extends TestCase
      *
      * @return array<string, mixed>
      */
-    private function lintJson(array $args, ?string $phpVersion = null): array
+    private function lintJson(array $args, ?string $phpVersion = null, ?string $locale = null): array
     {
-        [$exitCode, $stdout] = $this->runLint([...$args, '--format=json', '--jobs=1', '--no-redos'], $phpVersion);
+        [$exitCode, $stdout] = $this->runLint([...$args, '--format=json', '--jobs=1', '--no-redos'], $phpVersion, $locale);
 
         $this->assertSame(0, $exitCode, $stdout);
         /** @var array<string, mixed>|null $payload */
@@ -196,7 +245,7 @@ final class LintCommandProjectConfigTest extends TestCase
      *
      * @return array{int, string}
      */
-    private function runLint(array $args, ?string $phpVersion = null): array
+    private function runLint(array $args, ?string $phpVersion = null, ?string $locale = null): array
     {
         $command = new LintCommand(
             new HelpCommand(),
@@ -209,8 +258,8 @@ final class LintCommandProjectConfigTest extends TestCase
         $input = new Input(
             'lint',
             $args,
-            new GlobalOptions(false, false, false, true, $phpVersion, null),
-            null === $phpVersion ? [] : ['php_version' => $phpVersion],
+            new GlobalOptions(false, false, false, true, $phpVersion, null, locale: $locale),
+            array_filter(['php_version' => $phpVersion, 'locale' => $locale], static fn (?string $value): bool => null !== $value),
         );
 
         ob_start();

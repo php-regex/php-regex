@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.json` takes `locale`, the `LC_CTYPE` locale the patterns run
+   under; the JSON report names it as `target.locale`.
  * `group.alwaysEmptyCapture` asks the automata about a capturing group only
    when no subject built from the pattern shows the engine filling it, and
    keeps each answer per pattern and target: the same findings, about eight

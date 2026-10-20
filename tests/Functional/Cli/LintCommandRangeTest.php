@@ -158,7 +158,7 @@ final class LintCommandRangeTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('lint', $document);
         $this->assertSame(
-            ['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php', 'range' => self::FULL_RANGE],
+            ['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => self::FULL_RANGE],
             $document['target'] ?? null,
         );
     }

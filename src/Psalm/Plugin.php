@@ -36,21 +36,24 @@ use Psalm\Plugin\RegistrationInterface;
  *     <pluginClass class="PHPRegex\Psalm\Plugin">
  *         <phpVersion>8.4</phpVersion>
  *         <pcreVersion>10.44</pcreVersion>
+ *         <locale>tr_TR.UTF-8</locale>
  *     </pluginClass>
  *
  * <phpVersion> takes a version ("8.4"), a PHP_VERSION_ID (80400) or
  * "runtime", the PHP running Psalm with the PCRE2 it links; <pcreVersion>
- * a PCRE2 release.
+ * a PCRE2 release; <locale> the LC_CTYPE locale the patterns run under,
+ * the one of the PHP running Psalm by default.
  */
 final class Plugin implements PluginEntryPointInterface
 {
     /**
-     * @throws InvalidRegexOptionException when <phpVersion> or <pcreVersion> cannot be read; Psalm stops on it before reading any file
+     * @throws InvalidRegexOptionException when <phpVersion>, <pcreVersion> or <locale> cannot be read; Psalm stops on it before reading any
+     *                                     file
      * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1, as regex lint refuses it
      */
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {
-        PregCallAnalyzer::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'));
+        PregCallAnalyzer::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'), self::option($config, 'locale'));
         // What the engine answers about Unicode classes, kept in Psalm's
         // cache directory, which --clear-cache empties; none under --no-cache.
         $cacheDirectory = Config::getInstance()->getCacheDirectory();

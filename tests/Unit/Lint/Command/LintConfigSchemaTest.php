@@ -84,6 +84,17 @@ final class LintConfigSchemaTest extends TestCase
     }
 
     #[Test]
+    public function test_a_locale_is_read(): void
+    {
+        $this->assertSame([], $this->validate(json_decode('{"locale": "tr_TR.UTF-8"}', false, 512, \JSON_THROW_ON_ERROR)));
+
+        $this->enterProject(['regex.json' => '{"locale": "C"}']);
+        $loaded = (new LintConfigLoader())->load();
+        $this->assertNull($loaded->error);
+        $this->assertSame('C', $loaded->config['locale'] ?? null);
+    }
+
+    #[Test]
     #[DataProvider('provideRefusedConfigs')]
     public function test_schema_and_loader_both_refuse(string $json): void
     {
@@ -117,6 +128,8 @@ final class LintConfigSchemaTest extends TestCase
         yield 'threshold unknown' => ['{"checks": {"redos": {"threshold": "unknown"}}}'];
         yield 'minQuantifierCount below 2' => ['{"checks": {"optimizations": {"options": {"minQuantifierCount": 1}}}}'];
         yield 'jobs below 1' => ['{"jobs": 0}'];
+        yield 'locale as a number' => ['{"locale": 5}'];
+        yield 'empty locale' => ['{"locale": ""}'];
         yield 'complexity as a boolean' => ['{"checks": {"complexity": true}}'];
         yield 'complexity off as a boolean' => ['{"checks": {"complexity": false}}'];
         yield 'complexity threshold zero' => ['{"checks": {"complexity": {"threshold": 0}}}'];

@@ -143,11 +143,7 @@ compiled length the size verdict counts at its least, so a pattern near the
 each exactly, checked with the first-pass length of pcre2test 10.32 to 10.49:
 
 - `(*scan_substring:...)`, extended classes `(?[...])` and classes of more
-  than 256 members;
-- the classes whose cases follow the locale PHP builds its character tables
-  from (`[iI]`, bytes past ASCII without UTF): a new optional `locale`
-  setting names the locale the patterns run under, the runtime's
-  `LC_CTYPE` locale by default.
+  than 256 members.
 
 The DEFINE quirk of PCRE2 10.32 to 10.34 stays documented, not planned: it
 would mean replaying their internal form of the pattern (10.35 fixed it).

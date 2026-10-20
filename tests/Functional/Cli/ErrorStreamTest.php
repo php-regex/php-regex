@@ -91,5 +91,8 @@ final class ErrorStreamTest extends TestCase
         yield 'a PHP version, as JSON' => [['--php-version=abc', 'analyze', '/a/', '--json'], '"error": "Invalid option: --php-version must be a version string'];
         yield 'a PHP version, for lint' => [['--php-version=abc', 'lint', __FILE__, '--jobs=1'], 'Invalid option: --php-version must be a version string like "8.2"'];
         yield 'a PCRE2 release, for lint' => [['--pcre-version=abc', 'lint', __FILE__, '--jobs=1'], 'Invalid option: --pcre-version must be a PCRE2 release like "10.44", not "abc".'];
+        yield 'a locale' => [['--locale=xx_YY.NOWHERE', 'validate', '/a/'], 'Invalid option: --locale names "xx_YY.NOWHERE", which this machine cannot set'];
+        yield 'a locale beside a PHP version' => [['--locale=xx_YY.NOWHERE', '--php-version=8.4', 'validate', '/a/'], 'Invalid option: --locale names "xx_YY.NOWHERE", which this machine cannot set'];
+        yield 'a locale, for lint' => [['--locale=xx_YY.NOWHERE', 'lint', __FILE__, '--jobs=1'], 'Invalid option: --locale names "xx_YY.NOWHERE", which this machine cannot set'];
     }
 }

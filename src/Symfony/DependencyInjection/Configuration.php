@@ -34,6 +34,8 @@ final class Configuration implements ConfigurationInterface
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('php_regex');
+        // The target settings, each read as Regex::create() reads it.
+        $target = static fn (string $key): \Closure => static fn (mixed $value): string|int|null => self::targetVersion($key, $value);
 
         $treeBuilder->getRootNode()
             ->children()
@@ -54,14 +56,21 @@ final class Configuration implements ConfigurationInterface
                     ->defaultNull()
                     ->info('The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP.')
                     ->validate()
-                        ->always(static fn (mixed $version): string|int|null => self::targetVersion('php_version', $version))
+                        ->always($target('php_version'))
                     ->end()
                 ->end()
                 ->scalarNode('pcre_version')
                     ->defaultNull()
                     ->info('The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the release php_version bundles.')
                     ->validate()
-                        ->always(static fn (mixed $release): string|int|null => self::targetVersion('pcre_version', $release))
+                        ->always($target('pcre_version'))
+                    ->end()
+                ->end()
+                ->scalarNode('locale')
+                    ->defaultNull()
+                    ->info('The LC_CTYPE locale regex:lint judges patterns under ("tr_TR.UTF-8"): its character tables decide the size of some classes. Unset: the locale of the PHP running the command. The php_regex.regex service always judges under the running PHP\'s locale.')
+                    ->validate()
+                        ->always($target('locale'))
                     ->end()
                 ->end()
                 ->arrayNode('cache')
@@ -257,9 +266,10 @@ final class Configuration implements ConfigurationInterface
     }
 
     /**
-     * The version as given, once Regex::create() could read it.
+     * The version or the locale as given, once Regex::create() could read
+     * it.
      *
-     * @throws InvalidRegexOptionException when it names no version
+     * @throws InvalidRegexOptionException when it names no version, or a locale the machine cannot set
      */
     private static function targetVersion(string $key, mixed $version): string|int|null
     {

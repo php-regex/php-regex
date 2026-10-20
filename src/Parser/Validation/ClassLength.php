@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Validation;
 
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -49,7 +50,8 @@ use PHPRegex\Parser\Text\Bytes;
  *
  * A length that depends on what is not known here is null: what the
  * locale PHP builds its tables from adds to a map that may then hold every
- * character, a class of more members than a measure goes through.
+ * character where those tables are not given, a class of more members than
+ * a measure goes through.
  *
  * @internal
  */
@@ -199,6 +201,8 @@ final class ClassLength
      *                                 to ASCII
      * @param PcreTarget $target       the PCRE2 release whose first pass is
      *                                 measured
+     * @param CharacterTables|null $tables       the tables PHP hands PCRE2 under
+     *                                 the locale judged, if known
      */
     public function __construct(
         private readonly bool $utf,
@@ -206,6 +210,7 @@ final class ClassLength
         private readonly bool $turkish,
         private readonly bool $asciiOptions,
         private readonly PcreTarget $target,
+        private readonly ?CharacterTables $tables = null,
     ) {}
 
     /**
@@ -394,9 +399,11 @@ final class ClassLength
                 continue;
             }
 
-            $localeMaps = true;
+            // Caseless, "upper" and "lower" are read as "alpha".
+            $name = $caseless && \in_array($name, ['upper', 'lower'], true) ? 'alpha' : $name;
+            $localeMaps = null === $this->tables;
             $complements[$name][(int) $negatedMember] = true;
-            $set = self::MAP_RANGES[$name] ?? [];
+            $set = $this->tables?->bytesOf($name) ?? self::MAP_RANGES[$name] ?? [];
             array_push($ranges, ...self::below256($negatedMember ? self::complement($set, 0xFF) : $set));
             if ($negatedMember) {
                 $flip = true;
@@ -472,7 +479,7 @@ final class ClassLength
                 return 0 === $bytes && !$localeMaps ? 1 : 33;
             }
 
-            if (($localeMaps || ($caseless && !$this->utf)) && 0x80 === $ascii) {
+            if (null === $this->tables && ($localeMaps || ($caseless && !$this->utf)) && 0x80 === $ascii) {
                 return 256 === $bytes && !$localeMaps ? 1 : null;
             }
 
@@ -662,7 +669,9 @@ final class ClassLength
      * kept to ASCII leave out a set that starts in ASCII, or its other case;
      * Turkish rules give "i" and the dotted capital I one set, "I" and the
      * dotless i another. Without UTF only the map: the other case of an
-     * ASCII letter, under UCP of a Latin-1 one below 256.
+     * ASCII letter, under UCP of a Latin-1 one below 256; where the tables
+     * of the locale are given, they give the other case of each byte, but
+     * of a byte past ASCII under UCP.
      *
      * @return list<array{0: int, 1: int}>
      */
@@ -671,7 +680,7 @@ final class ClassLength
         $ranges = [[$low, $high]];
         if (!$this->utf) {
             for ($codePoint = $low; $codePoint <= $high; $codePoint++) {
-                $other = $codePoint < 0x80 || $this->ucp ? $this->otherCase($codePoint) : $codePoint;
+                $other = $codePoint >= 0x80 && $this->ucp ? $this->otherCase($codePoint) : ($this->tables?->otherCase($codePoint, $this->target) ?? ($codePoint < 0x80 ? $this->otherCase($codePoint) : $codePoint));
                 if ($other !== $codePoint && $other <= 0xFF) {
                     $ranges[] = [$other, $other];
                 }

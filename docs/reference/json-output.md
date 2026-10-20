@@ -253,6 +253,7 @@ short for `--format=json`.
     "target": {
         "php": "8.2",
         "pcre": "10.40",
+        "locale": "C",
         "source": "composer.json require.php",
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
@@ -304,7 +305,7 @@ short for `--format=json`.
 
 | key | type | meaning |
 |---|---|---|
-| `target` | object | The PHP and PCRE2 the patterns were judged for, and every PHP and PCRE2 they were validated at |
+| `target` | object | The PHP, PCRE2 and locale the patterns were judged for, and every PHP and PCRE2 they were validated at |
 | `host` | object | The PHP and PCRE2 that ran the lint |
 | `stats` | object | The counts of the run |
 | `results` | list of objects | One entry per pattern with at least one issue or optimization; `[]` when there is nothing to report |
@@ -315,7 +316,8 @@ short for `--format=json`.
 |---|---|---|
 | `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when its patch is not 0 (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`); always the first `range` entry's `php` |
 | `pcre` | string | The PCRE2 release, as `major.minor` |
-| `source` | string | Where the target came from, such as `--php-version`, `regex.json`, `composer.json require.php` or `running PHP` |
+| `locale` | string | The `LC_CTYPE` locale the patterns were judged under, as the C library names it: `C` for PCRE2's own character tables; the same at every `range` entry |
+| `source` | string | Where the target came from, such as `--php-version`, `regex.json`, `composer.json require.php` or `running PHP`, then where the PCRE2 release and the locale came from when it was elsewhere (`running PHP; --locale`) |
 | `range` | list of objects | Every PHP and PCRE2 the patterns were validated at, the floor first; a single entry, the target, unless the PHP came from `composer.json require.php` |
 
 `php`, `pcre` and `source` name the floor: the lint rules and the ReDoS

@@ -33,8 +33,8 @@ use PHPRegex\Toolkit\Regex;
 abstract class AbstractCommand implements CommandInterface
 {
     /**
-     * @param array{php_version?: string, pcre_version?: string} $options the versions the command line names
-     * @param bool                                               $json    whether the command line asked for JSON: the error is then the envelope
+     * @param array{php_version?: string, pcre_version?: string, locale?: string} $options the target the command line names
+     * @param bool                                                                $json    whether the command line asked for JSON: the error is then the envelope
      */
     protected function createRegex(Output $output, array $options, bool $json = false): ?Regex
     {
@@ -42,7 +42,7 @@ abstract class AbstractCommand implements CommandInterface
             // A PHP the command line names is the target, as lint takes it:
             // one that ships PCRE1 is refused.
             if (isset($options['php_version'])) {
-                $options = ProjectTarget::fromSources(['--php-version' => $options['php_version']], ['--pcre-version' => $options['pcre_version'] ?? null], null, [])->regexOptions();
+                $options = ProjectTarget::fromSources(['--php-version' => $options['php_version']], ['--pcre-version' => $options['pcre_version'] ?? null], null, [], ['--locale' => $options['locale'] ?? null])->regexOptions();
             }
 
             return Regex::fromOptions(ParserOptions::fromArray($options));
@@ -67,16 +67,16 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * The message of an option the library refused. A version the command
-     * line gave is named by its option, --php-version or --pcre-version,
-     * not by the library's key.
+     * The message of an option the library refused. A version or a locale
+     * the command line gave is named by its option, --php-version,
+     * --pcre-version or --locale, not by the library's key.
      *
-     * @param array{php_version?: string, pcre_version?: string} $fromCommandLine the library options the command line set
+     * @param array{php_version?: string, pcre_version?: string, locale?: string} $fromCommandLine the library options the command line set
      */
     protected function invalidOptionMessage(InvalidRegexOptionException $e, array $fromCommandLine): string
     {
         $flags = [];
-        foreach (['php_version' => '--php-version', 'pcre_version' => '--pcre-version'] as $key => $flag) {
+        foreach (['php_version' => '--php-version', 'pcre_version' => '--pcre-version', 'locale' => '--locale'] as $key => $flag) {
             if (isset($fromCommandLine[$key])) {
                 $flags['"'.$key.'"'] = $flag;
             }
@@ -242,8 +242,8 @@ abstract class AbstractCommand implements CommandInterface
     }
 
     /**
-     * The banner lines naming the PHP version and the PCRE2 release asked
-     * for on the command line.
+     * The banner lines naming the PHP version, the PCRE2 release and the
+     * locale asked for on the command line.
      *
      * @return array<string, string>
      */
@@ -255,6 +255,9 @@ abstract class AbstractCommand implements CommandInterface
         }
         if (null !== $input->globalOptions->pcreVersion) {
             $meta['Target PCRE2'] = $output->warning('PCRE2 '.$input->globalOptions->pcreVersion);
+        }
+        if (null !== $input->globalOptions->locale) {
+            $meta['Target locale'] = $output->warning($input->globalOptions->locale);
         }
 
         return $meta;

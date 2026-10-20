@@ -63,6 +63,17 @@ final class GlobalOptionsParserTest extends TestCase
         $this->assertSame('Missing value for --pcre-version.', $parser->parse(['--pcre-version'])->options->error);
     }
 
+    public function test_parse_collects_the_locale(): void
+    {
+        $parser = new GlobalOptionsParser();
+
+        $this->assertSame('tr_TR.UTF-8', $parser->parse(['--locale', 'tr_TR.UTF-8', 'lint'])->options->locale);
+        $this->assertSame(['lint', 'src'], $parser->parse(['lint', '--locale=C', 'src'])->args);
+        $this->assertSame('C', $parser->parse(['lint', '--locale=C', 'src'])->options->locale);
+        $this->assertNull($parser->parse(['lint'])->options->locale);
+        $this->assertSame('Missing value for --locale.', $parser->parse(['--locale'])->options->error);
+    }
+
     public function test_parse_collects_the_cache_directory(): void
     {
         $parser = new GlobalOptionsParser();

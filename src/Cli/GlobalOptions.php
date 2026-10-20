@@ -31,5 +31,10 @@ final class GlobalOptions
          * runs, nowhere by default.
          */
         public readonly ?string $cacheDirectory = null,
+        /**
+         * The LC_CTYPE locale the patterns are judged under, the --locale
+         * option.
+         */
+        public readonly ?string $locale = null,
     ) {}
 }

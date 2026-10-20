@@ -164,6 +164,11 @@ target, chosen once, when the editor sends `initialize`:
    lowest version `require.php` allows;
 4. the PHP running the server.
 
+The locale is chosen the same way: `initializationOptions.locale`, then
+`locale` in `regex.json`, then the one of the PHP running the server (see
+[Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)).
+Every version a `@regex-target` marker keeps is judged under it.
+
 The root folder is the first entry of `workspaceFolders`, else `rootUri`.
 Each version is chosen on its own: without a PCRE2 release, the server uses
 the one the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44 for
@@ -174,20 +179,23 @@ PHP.
 {
   "initializationOptions": {
     "phpVersion": "8.2",
-    "pcreVersion": "10.40"
+    "pcreVersion": "10.40",
+    "locale": "tr_TR.UTF-8"
   }
 }
 ```
 
 `phpVersion` takes `"8.2"`, `"8.2.4"` or `80200`; `pcreVersion` takes a
-release such as `"10.42"`. A value the server cannot read is logged as a
-warning and the next source is used.
+release such as `"10.42"`; `locale` a locale this machine can set. A value
+the server cannot read is logged as a warning and the next source is used. A
+`locale` in `regex.json` the machine cannot set is shown as an error, and no
+pattern is judged.
 
 The server logs the target once through `window/logMessage`, where most
 editors show the language server output:
 
 ```text
-Target: PHP 8.2, PCRE2 10.40 (initializationOptions)
+Target: PHP 8.2, PCRE2 10.40, locale tr_TR.UTF-8 (initializationOptions)
 ```
 
 What it noticed on the way, such as a `composer.json` without `require.php`,
@@ -569,7 +577,7 @@ are checked as it writes them. A custom server goes under `lsp` in
 
 Configured as an object beside the built-in servers, it keeps them on:
 Intelephense still serves PHP. The other `initializationOptions` the server
-reads, `phpVersion`, `pcreVersion` and `trace`, go under `initialization`
+reads, `phpVersion`, `pcreVersion`, `locale` and `trace`, go under `initialization`
 too.
 
 ---

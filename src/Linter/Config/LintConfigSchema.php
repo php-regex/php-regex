@@ -207,6 +207,13 @@ final class LintConfigSchema
                     'pattern' => '^[0-9]+\.[0-9]{2}$',
                     'examples' => ['10.42', '10.44'],
                 ],
+                'locale' => [
+                    'description' => 'The LC_CTYPE locale the patterns run under, as setlocale() names it: its character tables decide the other case of each byte and the bytes of each type without UCP, and with them the size of some classes. Omit to use the locale of the PHP running the command, "C" unless it called setlocale(). A locale this machine cannot set is an error. The --locale option wins over it.',
+                    'x-expected' => 'a locale name like "tr_TR.UTF-8"',
+                    'type' => 'string',
+                    'minLength' => 1,
+                    'examples' => ['C', 'tr_TR.UTF-8', 'fr_FR.ISO8859-1'],
+                ],
                 'extraction' => self::extraction(),
                 'jobs' => [
                     'type' => 'integer',

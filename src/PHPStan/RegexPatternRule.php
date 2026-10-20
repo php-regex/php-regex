@@ -57,6 +57,7 @@ use PHPStan\Type\Type;
  * @phpstan-type ConfigArray array{
  *     phpVersion?: string|int|null,
  *     pcreVersion?: string|null,
+ *     locale?: string|null,
  *     interop?: list<string>|null,
  *     checks?: array{
  *         lint?: array{enabled?: bool},

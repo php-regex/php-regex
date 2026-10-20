@@ -9,6 +9,8 @@ CHANGELOG
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The `RegexSetList::UPGRADE_2_0` set: code written for `yoeunes/regex-parser`
    1.3 moves to the 2.0 names, every class, enum case and renamed method.
+ * The rules judge the PHP the code targets under the locale Rector runs
+   with, and keep a proof per locale.
  * `EscapeLiteralBraceRector` and the `RegexSetList::PCRE_UPGRADE` set: a
    brace PCRE2 before 10.43 reads as text and PHP 8.4's PCRE2 as a quantifier
    is escaped, `/a{,3}/` to `/a\{,3}/`, for code that targets a PHP below 8.4.

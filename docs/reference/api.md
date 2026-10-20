@@ -187,20 +187,30 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `max_recursion_depth`     | `int`                                  | `1024`            | Parser recursion guard         | Low - prevents stack overflow   |
 | `php_version`             | `string` \| `int`                      | the running PHP   | PHP version judged, with the PCRE2 it bundles | Low - feature validation        |
 | `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
+| `locale`                  | `string`                               | the runtime's     | `LC_CTYPE` locale judged, `"tr_TR.UTF-8"` | Low - read once per process |
 
 Without `php_version` nor `pcre_version`, patterns are judged for the running PHP
-and the PCRE2 it links. `runtime_pcre_validation` compiles with the running PHP,
-so it is refused with a target that is not that engine. See
-[Which PHP and which PCRE2 judge a pattern](../concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern).
+and the PCRE2 it links; without `locale`, under the locale of the running PHP,
+`C` unless it called `setlocale()`. A locale the machine cannot set is refused
+with `InvalidRegexOptionException`. `runtime_pcre_validation` compiles with the
+running PHP, under its locale, so it is refused with a target that is not that
+engine. See
+[Which PHP and which PCRE2 judge a pattern](../concepts/pcre.md#which-php-and-which-pcre2-judge-a-pattern)
+and [Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern).
 
 ### target(): PcreTarget
 
-The PHP version (`$phpVersionId`) and the PCRE2 release (`$pcreVersion`) the
-instance judges for. `PcreTarget::runtime()` is the running engine,
-`PcreTarget::bundledWith(80400)` a PHP version with its bundled PCRE2, and
-`new PcreTarget(80400, '10.42')` any pair. `RegexParser` judges for one too
-(its `target()`), and `ParserOptions` carries the one the `php_version` and
-`pcre_version` options name.
+The PHP version (`$phpVersionId`), the PCRE2 release (`$pcreVersion`) and the
+`LC_CTYPE` locale (`$locale`) the instance judges for. `PcreTarget::runtime()`
+is the running engine, `PcreTarget::bundledWith(80400)` a PHP version with its
+bundled PCRE2, and `new PcreTarget(80400, '10.42', 'tr_TR.UTF-8')` any of them,
+under the runtime's locale when the third is left out. `withLocale()` gives the
+same PHP and PCRE2 under another locale, and `key()` tells two targets apart,
+as `'80400/10.42/tr_TR.UTF-8'`. `RegexParser` judges for one too (its
+`target()`), and `ParserOptions` carries the one the `php_version`,
+`pcre_version` and `locale` options name. `withTarget()`, on `Regex` and on
+`RegexParser`, gives an instance judging for another target with every other
+option and the same cache.
 
 A rule that depends on the release asks the target for a behaviour, named in
 `PcreFeature`, rather than for a release written by hand:

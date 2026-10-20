@@ -70,7 +70,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-ae32cefc8e6637485be6cdce138764d4';
+    public const CACHE_VERSION = 'ast-d49c82eadb5a59414477cd182dcb9360';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -266,11 +266,35 @@ final class RegexParser
     }
 
     /**
-     * The PHP version and the PCRE2 release patterns are judged for.
+     * The PHP version, the PCRE2 release and the locale patterns are judged
+     * for.
      */
     public function target(): PcreTarget
     {
         return $this->target;
+    }
+
+    /**
+     * A parser judging for another target with every other option of this
+     * one, its cache included: this one for its own target. The running
+     * PHP judges only the running engine: a parser for another target does
+     * not compile the pattern with it.
+     */
+    public function withTarget(PcreTarget $target): self
+    {
+        if ($target->key() === $this->target->key()) {
+            return $this;
+        }
+
+        return new self(
+            $this->maxPatternLength,
+            $this->maxLookbehindLength,
+            $this->cache,
+            $this->runtimePcreValidation && $target->isRunningEngine(),
+            $this->maxRecursionDepth,
+            $target,
+            $this->engine,
+        );
     }
 
     public function getCache(): CacheInterface
@@ -337,14 +361,14 @@ final class RegexParser
      * @internal
      *
      * @param string     $regex             The regex as written, delimiters included
-     * @param PcreTarget $target            The PHP and PCRE2 judged
+     * @param PcreTarget $target            The PHP, PCRE2 and locale judged
      * @param int        $maxRecursionDepth The parse recursion limit in force
      */
     public static function cacheSeed(string $regex, PcreTarget $target, int $maxRecursionDepth): string
     {
-        // The PHP and the PCRE2 judged shape the tree, so they are part of
-        // the key: a shared cache directory must not serve a tree read for
-        // another engine. The recursion limit does too: a pattern cached
+        // The PHP, the PCRE2 and the locale judged shape the tree and its
+        // verdict, so they are part of the key: a shared cache directory
+        // must not serve a tree read for another engine. The recursion limit does too: a pattern cached
         // under a high limit may be one a lower limit refuses to parse at
         // all, and the exception must still be thrown.
         return $regex

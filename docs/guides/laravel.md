@@ -33,9 +33,11 @@ return [
     // Whether the Regex service also compiles every pattern with the running
     // PHP. regex:lint never does.
     'runtime_pcre_validation' => false,
-    // The PHP version and PCRE2 release regex:lint judges patterns for.
+    // The PHP version, PCRE2 release and LC_CTYPE locale regex:lint judges
+    // patterns for.
     'php_version' => null,   // "8.2", "8.2.4" or 80200
     'pcre_version' => null,  // "10.42"
+    'locale' => null,        // "tr_TR.UTF-8"; the locale of the PHP running the command
     'cache' => [
         'store' => null,     // a Laravel cache store, used before "directory"
         'directory' => '{storage_path}/framework/cache/php-regex',
@@ -193,7 +195,9 @@ $request->validate([
 ## The service and the lint judge for different targets
 
 The `Regex` service runs in your application: it judges patterns for the PHP
-running it, and `php_version` / `pcre_version` do not change that.
+running it, under the locale it runs under, and `php_version` /
+`pcre_version` / `locale` do not change that: a request may run under another
+`LC_CTYPE` than the console.
 
 `regex:lint` judges the patterns of your code for the PHP your project
 supports. It picks the target in this order:
@@ -207,12 +211,16 @@ supports. It picks the target in this order:
 
 Each version is chosen on its own: without `pcre_version`, the lint uses the
 PCRE2 release the target PHP bundles (10.40 for PHP 8.2, 10.42 for 8.3, 10.44
-for 8.4 and 8.5). The console report shows the target in its header; the JSON
-report carries it as a top-level `target` object:
+for 8.4 and 8.5). The locale is `locale`, else the one of the PHP running the
+command (see
+[Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)):
+its character tables decide the size of a few classes, and one the machine
+cannot set stops the command. The console report shows the target in its
+header; the JSON report carries it as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "source": "config php-regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
+    "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "config php-regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0},
     "results": []
 }

@@ -54,6 +54,7 @@ final class PHPRegexExtension extends Extension
          *     runtime_pcre_validation: bool,
          *     php_version: string|int|null,
          *     pcre_version: string|null,
+         *     locale: string|null,
          *     cache: array{
          *         pool: string|null,
          *         directory: string|null,
@@ -103,6 +104,7 @@ final class PHPRegexExtension extends Extension
         $container->setParameter('php_regex.runtime_pcre_validation', $config['runtime_pcre_validation']);
         $container->setParameter('php_regex.php_version', $config['php_version']);
         $container->setParameter('php_regex.pcre_version', $config['pcre_version']);
+        $container->setParameter('php_regex.locale', $config['locale']);
         // Where regex:lint reads composer.json; never the working directory.
         $container->setParameter('php_regex.project_dir', $container->hasParameter('kernel.project_dir') ? '%kernel.project_dir%' : null);
         $container->setParameter('php_regex.cache', $config['cache']);

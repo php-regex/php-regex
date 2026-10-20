@@ -116,6 +116,9 @@ final class HelpCommand extends AbstractCommand
         if (null !== $input->globalOptions->pcreVersion) {
             $meta['Target PCRE2'] = $output->warning('PCRE2 '.$input->globalOptions->pcreVersion);
         }
+        if (null !== $input->globalOptions->locale) {
+            $meta['Target locale'] = $output->warning($input->globalOptions->locale);
+        }
         $this->renderHeader($style, $meta);
 
         $specificCommand = $input->args[0] ?? null;
@@ -141,6 +144,7 @@ final class HelpCommand extends AbstractCommand
             ['--no-visuals', 'Disable banner and section visuals'],
             ['--php-version <ver>', 'Target PHP version for validation'],
             ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+            ['--locale <name>', 'Target LC_CTYPE locale for validation'],
             ['--cache-dir <dir>', 'Keep the Unicode class scans in <dir> for the next run'],
             ['--help', 'Display this help message'],
         ];
@@ -264,6 +268,7 @@ final class HelpCommand extends AbstractCommand
                     ['--validate', 'Validate the pattern after parsing'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: [],
                 examples: [
@@ -279,6 +284,7 @@ final class HelpCommand extends AbstractCommand
                     ['--json', 'Same as --format=json'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                     ['--redos-mode <mode>', 'ReDoS mode (off, theoretical, confirmed)'],
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
                 ],
@@ -297,6 +303,7 @@ final class HelpCommand extends AbstractCommand
                     ['--minimizer <algo>', 'hopcroft (default) or moore'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: ['Compares the regular subset: lookarounds, \b and anchors are read; backreferences, recursion and atomic groups are refused.'],
                 examples: [
@@ -326,6 +333,7 @@ final class HelpCommand extends AbstractCommand
                     ['--redos-threshold <sev>', 'Minimum ReDoS severity (low, medium, high, critical)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: ['Provides detailed ReDoS analysis including attack vectors and complexity heatmaps.'],
                 examples: [
@@ -353,6 +361,7 @@ final class HelpCommand extends AbstractCommand
                     ['--show-input', 'Print full input string'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: ['Use the same input for both patterns to compare timing and resource usage.'],
                 examples: [
@@ -368,6 +377,7 @@ final class HelpCommand extends AbstractCommand
                     ['--output <file>', 'Write output to file'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: [],
                 examples: [
@@ -381,6 +391,7 @@ final class HelpCommand extends AbstractCommand
                     ['--format <format>', 'Output format (auto, console, html)'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: [],
                 examples: [
@@ -393,6 +404,7 @@ final class HelpCommand extends AbstractCommand
                 options: [
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: [],
                 examples: [
@@ -422,6 +434,7 @@ final class HelpCommand extends AbstractCommand
                     ['--json', 'Same as --format=json'],
                     ['--php-version <ver>', 'Target PHP version for validation'],
                     ['--pcre-version <ver>', 'Target PCRE2 release for validation'],
+                    ['--locale <name>', 'Target LC_CTYPE locale for validation'],
                 ],
                 notes: [
                     'Prints the pattern alone, so that it can be piped or pasted back. A pattern that fits the width comes back unchanged.',

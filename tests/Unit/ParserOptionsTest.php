@@ -19,12 +19,14 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class ParserOptionsTest extends TestCase
 {
+    use InstalledLocales;
     use PhpUnitForwardCompat;
 
     public function test_create_with_unknown_option_throws(): void
@@ -295,5 +297,44 @@ final class ParserOptionsTest extends TestCase
         $this->assertEquals(PcreTarget::runtime(), ParserOptions::fromArray(['php_version' => 'runtime'])->target);
         $this->assertEquals(PcreTarget::runtime(), ParserOptions::fromArray(['php_version' => ' Runtime '])->target);
         $this->assertSame('10.42', ParserOptions::fromArray(['php_version' => 'runtime', 'pcre_version' => '10.42'])->target->pcreVersion);
+    }
+
+    public function test_the_locale_is_part_of_the_target(): void
+    {
+        $this->assertSame('C', ParserOptions::fromArray(['locale' => 'C'])->target->locale);
+        $this->assertSame('C', ParserOptions::fromArray(['php_version' => '8.2', 'locale' => 'C'])->target->locale);
+        $this->assertSame(80200, ParserOptions::fromArray(['php_version' => '8.2', 'locale' => 'C'])->target->phpVersionId);
+        $this->assertSame('10.40', ParserOptions::fromArray(['php_version' => '8.2', 'locale' => 'C'])->target->pcreVersion);
+        $this->assertSame(PcreTarget::runtime()->locale, ParserOptions::fromArray(['locale' => null])->target->locale);
+        $this->assertSame(PcreTarget::runtime()->locale, ParserOptions::fromArray(['php_version' => '8.2'])->target->locale);
+        $this->assertSame('C', Regex::create(['locale' => 'C'])->target()->locale);
+    }
+
+    public function test_the_locale_must_be_a_name(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains('"locale" must be a locale name like "tr_TR.UTF-8", not a int.');
+        ParserOptions::fromArray(['locale' => 1]);
+    }
+
+    public function test_a_locale_the_machine_cannot_set_is_refused(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains('"locale" names "xx_YY.NOWHERE", which this machine cannot set');
+        ParserOptions::fromArray(['locale' => 'xx_YY.NOWHERE']);
+    }
+
+    /**
+     * PHP compiles under the runtime's locale: it judges a target of
+     * another locale no more than one of another release.
+     */
+    public function test_runtime_validation_needs_the_runtimes_locale(): void
+    {
+        $this->requiresLocale('tr_TR.ISO8859-9', 'Runtime validation under another locale');
+        $other = 'C' === PcreTarget::runtime()->locale ? 'tr_TR.ISO8859-9' : 'C';
+
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains(\sprintf('"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (locale "%s"); drop one of them.', $other));
+        ParserOptions::fromArray(['runtime_pcre_validation' => true, 'locale' => $other]);
     }
 }

@@ -67,6 +67,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static string                        generate(string $regex)
  * @method static list<Token>                   tokenize(string $regex)
  * @method static PcreTarget                    target()
+ * @method static ToolkitRegex                  withTarget(PcreTarget $target)
  * @method static CacheInterface                getCache()
  * @method static array{hits: int, misses: int} getCacheStats()
  * @method static void                          clearCaches()

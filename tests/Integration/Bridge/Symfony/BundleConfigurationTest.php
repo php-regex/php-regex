@@ -13,9 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\DependencyInjection\PHPRegexExtension;
+use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,6 +36,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 final class BundleConfigurationTest extends TestCase
 {
+    use InstalledLocales;
+    use PhpUnitForwardCompat;
+
     /**
      * Valid from PCRE2 10.43 (variable-length lookbehind, PcreFeature::
      * VariableLengthLookbehind), refused by 10.40, the release PHP 8.2
@@ -130,7 +136,7 @@ final class BundleConfigurationTest extends TestCase
 
         $report = $this->lint($container);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $report['target']);
+        $this->assertSame(['php' => '8.2', 'pcre' => '10.40', 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => '10.40'], ['php' => '8.3', 'pcre' => '10.42'], ['php' => '8.4', 'pcre' => '10.44'], ['php' => '8.4.25', 'pcre' => '10.44'], ['php' => '8.5', 'pcre' => '10.44'], ['php' => '8.5.10', 'pcre' => '10.44']]], $report['target']);
         $this->assertSame(1, $report['errors']);
     }
 
@@ -147,6 +153,32 @@ final class BundleConfigurationTest extends TestCase
         $expectedErrors = Regex::create()->validate(self::NEWER_ENGINE_ONLY)->isValid ? 0 : 1;
         $this->assertSame($expectedErrors, $report['errors']);
         $this->assertSame('running PHP', $report['target']['source'] ?? null);
+    }
+
+    /**
+     * The locale drives the lint, as php_version does; the runtime service
+     * judges under the running PHP's.
+     */
+    #[Test]
+    public function test_locale_drives_the_lint_command_target_only(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The bundle\'s locale');
+        $container = $this->compile(['locale' => 'fr_FR.ISO8859-1']);
+
+        $report = $this->lint($container);
+
+        $this->assertSame('fr_FR.ISO8859-1', $report['target']['locale'] ?? null);
+        $this->assertSame('running PHP; php_regex.locale', $report['target']['source'] ?? null);
+        $this->assertSame(PcreTarget::runtime()->locale, $this->regexService($container)->target()->locale);
+    }
+
+    #[Test]
+    public function test_the_container_refuses_a_locale_the_machine_cannot_set(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageIsOrContains('"locale" names "xx_YY.NOWHERE"');
+
+        $this->compile(['locale' => 'xx_YY.NOWHERE']);
     }
 
     #[Test]

@@ -127,7 +127,9 @@ final class PregCall
 
     /**
      * The parser that reads patterns as the PHP the code targets does,
-     * with the PCRE2 its sources bundle.
+     * with the PCRE2 its sources bundle, under the locale Rector runs with:
+     * Rector names no other, and a rule rewrites no pattern whose answer
+     * moves with the locale (see TrivialMatchClassifier).
      */
     public static function targetParser(int $phpVersion): RegexParser
     {

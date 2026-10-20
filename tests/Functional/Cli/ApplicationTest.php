@@ -358,6 +358,22 @@ final class ApplicationTest extends TestCase
         $this->assertSame(['php_version' => '8.4', 'pcre_version' => '10.42'], $command->lastInput->regexOptions);
     }
 
+    public function test_run_with_locale_option_sets_regex_options(): void
+    {
+        $output = OutputFactory::create();
+        $help = new DummyCommand('help');
+        $command = new DummyCommand('test');
+        $app = new Application(new GlobalOptionsParser(), $output, $help);
+        $app->register($command);
+
+        $buffer = '';
+        $exitCode = $this->runApp($app, ['regex', '--locale=C', 'test'], $buffer);
+
+        $this->assertSame(0, $exitCode);
+        $this->assertInstanceOf(Input::class, $command->lastInput);
+        $this->assertSame(['locale' => 'C'], $command->lastInput->regexOptions);
+    }
+
     /**
      * Runs a command that throws a LintException, and gives the exception
      * and what stdout received before it.

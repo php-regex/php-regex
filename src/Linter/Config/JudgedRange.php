@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Config;
 
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 
@@ -23,31 +22,28 @@ use PHPRegex\Parser\RegexParser;
  * or a "@regex-target" marker narrows.
  *
  * @internal
- *
- * @phpstan-import-type OptionsArray from ParserOptions
  */
 final class JudgedRange
 {
     /**
-     * The parser of each version judged, by PHP_VERSION_ID and PCRE2.
+     * The parser of each version judged, by PHP_VERSION_ID, PCRE2 and
+     * locale.
      *
      * @var array<string, RegexParser>
      */
     private array $parsers = [];
 
     /**
-     * @param list<PcreTarget>           $points       the versions judged, the floor first
-     * @param list<array{int, int|null}> $admitted     the PHP versions the project installs on
-     * @param string|null                $pinnedPcre   the PCRE2 release named for every version
-     * @param RegexParser                $floor        the parser of the floor
-     * @param OptionsArray               $regexOptions what the floor's parser was created with, its target aside
+     * @param list<PcreTarget>           $points     the versions judged, the floor first
+     * @param list<array{int, int|null}> $admitted   the PHP versions the project installs on
+     * @param string|null                $pinnedPcre the PCRE2 release named for every version
+     * @param RegexParser                $floor      the parser of the floor, whose locale every version keeps
      */
     public function __construct(
         private readonly array $points,
         private readonly array $admitted,
         private readonly ?string $pinnedPcre,
         private readonly RegexParser $floor,
-        private readonly array $regexOptions = [],
     ) {}
 
     /**
@@ -89,18 +85,7 @@ final class JudgedRange
      */
     public function parserFor(PcreTarget $target): RegexParser
     {
-        $floor = $this->floor->target();
-        if ($floor->phpVersionId === $target->phpVersionId && $floor->pcreVersion === $target->pcreVersion) {
-            return $this->floor;
-        }
-
-        // Compiling with the running PHP judges one version: the floor's.
-        return $this->parsers[$target->phpVersionId.'/'.$target->pcreVersion] ??= RegexParser::fromOptions(ParserOptions::fromArray([
-            'php_version' => $target->phpVersionId,
-            'pcre_version' => $target->pcreVersion,
-            'cache' => $this->floor->getCache(),
-            'runtime_pcre_validation' => false,
-        ] + $this->regexOptions));
+        return $this->parsers[$target->key()] ??= $this->floor->withTarget($target);
     }
 
     /**
@@ -129,6 +114,6 @@ final class JudgedRange
             }
         }
 
-        return new PcreTarget($phpVersionId, $this->pinnedPcre ?? PcreTarget::bundledWith($phpVersionId)->pcreVersion);
+        return new PcreTarget($phpVersionId, $this->pinnedPcre ?? PcreTarget::bundledWith($phpVersionId)->pcreVersion, $this->floor->target()->locale);
     }
 }

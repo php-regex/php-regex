@@ -225,7 +225,7 @@ return [
         'PHPRegex\Symfony\Command\SecurityCommand::normalizeStringList()' => ['host-return', 1],
     ],
     'src/Symfony/DependencyInjection/Configuration.php' => [
-        'PHPRegex\Symfony\DependencyInjection\Configuration::getConfigTreeBuilder()' => ['host-contract', 3],
+        'PHPRegex\Symfony\DependencyInjection\Configuration::getConfigTreeBuilder()' => ['host-contract', 2],
         'PHPRegex\Symfony\DependencyInjection\Configuration::redosThreshold()' => ['validator-input', 1],
         'PHPRegex\Symfony\DependencyInjection\Configuration::targetVersion()' => ['validator-input', 1],
     ],

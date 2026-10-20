@@ -64,6 +64,7 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `max_pattern_length`, `max_lookbehind_length` | `100000`, `255` | Longest pattern string accepted; longest variable-length lookbehind |
 | `runtime_pcre_validation` | `false` | The `Regex` service also compiles each pattern with the running PHP |
 | `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
+| `locale` | `null` | `LC_CTYPE` locale `regex:lint` judges under (`"tr_TR.UTF-8"`); `null` for the one of the PHP running the command. The `Regex` service judges under the running PHP's |
 | `cache.store`, `cache.directory`, `cache.prefix` | `null`, `'{storage_path}/framework/cache/php-regex'`, `'regex_'` | Cache for parsed patterns: a Laravel store, else this directory |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported (`low` to `critical`), patterns skipped |
 | `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |

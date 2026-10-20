@@ -157,6 +157,8 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
     private static ?string $pcreVersion = null;
 
+    private static ?string $locale = null;
+
     /**
      * @var array<string, RegexParser> by target options
      */
@@ -198,16 +200,18 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     private static array $judgedRanges = [];
 
     /**
-     * The plugin's <phpVersion> and <pcreVersion>, null when not given. A
-     * PHP below 7.3 is refused as regex lint refuses it: it ships PCRE1.
+     * The plugin's <phpVersion>, <pcreVersion> and <locale>, null when not
+     * given. A PHP below 7.3 is refused as regex lint refuses it: it ships
+     * PCRE1.
      *
-     * @throws InvalidRegexOptionException when either cannot be read
+     * @throws InvalidRegexOptionException when one cannot be read
      * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1
      */
-    public static function configure(?string $phpVersion, ?string $pcreVersion): void
+    public static function configure(?string $phpVersion, ?string $pcreVersion, ?string $locale = null): void
     {
         self::check('phpVersion', 'php_version', $phpVersion, 'a version like "8.4", a PHP_VERSION_ID like 80400, or "runtime"');
         self::check('pcreVersion', 'pcre_version', $pcreVersion, 'a PCRE2 release like "10.44"');
+        self::check('locale', 'locale', $locale, 'a locale this machine can set, like "tr_TR.UTF-8"');
 
         if (null !== $phpVersion && 'runtime' !== $phpVersion) {
             $named = ParserOptions::fromArray(['php_version' => $phpVersion])->target->phpVersionId;
@@ -218,6 +222,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         self::$phpVersion = $phpVersion;
         self::$pcreVersion = $pcreVersion;
+        self::$locale = $locale;
     }
 
     public static function afterExpressionAnalysis(AfterExpressionAnalysisEvent $event): ?bool
@@ -842,6 +847,9 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         if (null !== self::$pcreVersion) {
             $options['pcre_version'] = self::$pcreVersion;
         }
+        if (null !== self::$locale) {
+            $options['locale'] = self::$locale;
+        }
 
         return self::$parsers[serialize($options)] ??= RegexParser::create($options);
     }
@@ -1034,10 +1042,11 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         $reason = rtrim(explode("\n", $validation->error ?? 'Invalid regex.')[0], '.');
 
         return \sprintf(
-            'Regex pattern is invalid for PHP %d.%d with PCRE2 %s: %s%s.',
+            'Regex pattern is invalid for PHP %d.%d with PCRE2 %s%s: %s%s.',
             intdiv($target->phpVersionId, 10000),
             intdiv($target->phpVersionId, 100) % 100,
             $target->pcreVersion,
+            'C' === $target->locale ? '' : ' under the locale '.$target->locale,
             $reason,
             null === $validation->offset ? '' : ' (offset '.$validation->offset.')',
         );
@@ -1057,11 +1066,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
     }
 
     /**
-     * The PHP release and the PCRE2 judged: a rule may depend on a patch release.
+     * The PHP release, the PCRE2 and the locale judged: a rule may depend on
+     * a patch release, and a verdict on the tables of the locale.
      */
     private static function targetKey(RegexParser $parser): string
     {
-        return $parser->target()->phpVersionId.'/'.$parser->target()->pcreVersion;
+        return $parser->target()->key();
     }
 
     /**

@@ -7,6 +7,10 @@ parametersSchema:
         # PCRE2 release patterns are judged for, like '10.42' or PCRE_VERSION
         # ('10.44 2024-06-07'); null for the one the PHP version bundles
         pcreVersion: schema(string(), pattern('\d+\.\d+(-[A-Za-z0-9]+)?(\s.*)?'), nullable()),
+        # LC_CTYPE locale patterns are judged under, like 'tr_TR.UTF-8':
+        # its character tables decide the size of some classes; null for
+        # the locale of the PHP running PHPStan
+        locale: schema(string(), nullable()),
         # Libraries whose static methods carry a pattern, as the lint's
         # extraction.interop; null for every preset, [] for the native
         # functions only. A name that is no preset stops the analysis: left
@@ -58,6 +62,7 @@ parameters:
         # engine refuses.
         phpVersion: null
         pcreVersion: null
+        locale: null
         interop: null
 
         # Off by default; rules.neon turns lint and ReDoS on, and leaves

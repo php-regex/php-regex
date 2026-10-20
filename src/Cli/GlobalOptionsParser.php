@@ -29,6 +29,7 @@ final class GlobalOptionsParser
         $visuals = true;
         $phpVersion = null;
         $pcreVersion = null;
+        $locale = null;
         $cacheDirectory = null;
         $error = null;
         $remaining = [];
@@ -62,6 +63,7 @@ final class GlobalOptionsParser
 
             if ($this->isValuedOption('--pcre-version', $arg, $args, $i, $pcreVersion, $error)
                 || $this->isValuedOption('--php-version', $arg, $args, $i, $phpVersion, $error)
+                || $this->isValuedOption('--locale', $arg, $args, $i, $locale, $error)
                 || $this->isValuedOption('--cache-dir', $arg, $args, $i, $cacheDirectory, $error)) {
                 if (null !== $error) {
                     break;
@@ -73,7 +75,7 @@ final class GlobalOptionsParser
             $remaining[] = $arg;
         }
 
-        $options = new GlobalOptions($quiet, $ansi, $help, $visuals, $phpVersion, $error, $pcreVersion, $cacheDirectory);
+        $options = new GlobalOptions($quiet, $ansi, $help, $visuals, $phpVersion, $error, $pcreVersion, $cacheDirectory, $locale);
 
         return new ParsedGlobalOptions($options, $remaining);
     }

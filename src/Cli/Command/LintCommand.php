@@ -147,6 +147,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 $lintConfigResult->config,
                 getcwd() ?: '.',
                 getenv(),
+                $input->globalOptions->locale,
             );
             $regex = Regex::create($target->regexOptions());
             $range = $target->rangeParsers($regex->parser());
@@ -157,7 +158,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         } catch (InvalidRegexOptionException $e) {
             // A version given on the command line is a usage error; one
             // read from regex.json or the environment, a configuration one.
-            $fromCommandLine = null !== $input->globalOptions->phpVersion || null !== $input->globalOptions->pcreVersion;
+            $fromCommandLine = null !== $input->globalOptions->phpVersion || null !== $input->globalOptions->pcreVersion || null !== $input->globalOptions->locale;
 
             return $this->fail($output, $json, $this->invalidOptionMessage($e, $input->regexOptions), $fromCommandLine ? JsonDocument::STAGE_USAGE : JsonDocument::STAGE_CONFIG, self::INVALID);
         }
@@ -192,7 +193,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 $output->writeError('Note: '.$notice."\n");
             }
             if (!$json) {
-                $output->writeError(\sprintf("Target: PHP %s, PCRE2 %s (%s)\n", $target->php(), $target->target()->pcreVersion, $target->source()));
+                $output->writeError(\sprintf("Target: %s (%s)\n", $target->label(), $target->source()));
             }
         }
 

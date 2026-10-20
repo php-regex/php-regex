@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ServerInlineIgnoreTest extends TestCase
 {
+    use InstalledLocales;
+
     /**
      * @var resource
      */
@@ -175,6 +178,35 @@ final class ServerInlineIgnoreTest extends TestCase
     }
 
     /**
+     * The versions a marker keeps are judged under the locale the editor
+     * names: "(?:[\Wa-zA-Z0-9_]){8000}" is too large under fr_FR.ISO8859-1,
+     * where "\W" leaves the Latin-1 letters out, and compiles to 56007 units
+     * under C (pcre2test 10.49 with "locale=", PHP 8.4.26 under setlocale()).
+     */
+    #[Test]
+    public function test_a_target_marker_keeps_the_locale_named(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The language server under a Latin-1 locale');
+        file_put_contents($this->root.'/composer.json', '{"require": {"php": "^8.2"}}');
+        $uri = $this->uri('src/Matcher.php');
+        $code = <<<'CODE'
+            <?php
+            preg_match('/(?:[\Wa-zA-Z0-9_]){8000}/', $s); // @regex-target php>=8.4
+            preg_match('/(?:[\Wa-zA-Z0-9_]){8000}/', $s);
+            CODE;
+
+        $this->initialize(['pcreVersion' => '10.49', 'locale' => 'fr_FR.ISO8859-1']);
+        $this->send($this->didOpen($uri, $code));
+
+        $this->assertSame([[1, 'regex.pattern.too_large', 1], [2, 'regex.pattern.too_large', 1]], $this->diagnosed($uri));
+
+        $this->initialize(['pcreVersion' => '10.49', 'locale' => 'C']);
+        $this->send($this->didOpen($uri, $code));
+
+        $this->assertSame([], array_values(array_filter($this->diagnosed($uri), static fn (array $diagnostic): bool => 'regex.pattern.too_large' === $diagnostic[1])));
+    }
+
+    /**
      * A guard on PHP_VERSION_ID narrows the versions a pattern is judged
      * for, as in `regex lint`, which reads the same tokens.
      */
@@ -298,11 +330,14 @@ preg_match('/(a/', \$subject);
         ]];
     }
 
-    private function initialize(): void
+    /**
+     * @param array<string, string> $options the initializationOptions
+     */
+    private function initialize(array $options = []): void
     {
         $this->server = new Server(null, $this->input);
         $this->send(
-            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root]],
+            ['id' => 1, 'method' => 'initialize', 'params' => ['rootUri' => 'file://'.$this->root] + ([] === $options ? [] : ['initializationOptions' => $options])],
             ['method' => 'initialized', 'params' => []],
         );
     }

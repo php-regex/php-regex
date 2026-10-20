@@ -54,6 +54,7 @@ Every pattern of the workspace is judged for one target, a PHP and PCRE2 pair, r
 |--------|---------|-------------|
 | `initializationOptions.phpVersion` | `"8.2"`, `"8.2.4"` or `80200` | `phpVersion` in `regex.json`, then `composer.json`, then the running PHP |
 | `initializationOptions.pcreVersion` | a PCRE2 release, `"10.42"` for instance | `pcreVersion` in `regex.json`, then the release the target PHP bundles |
+| `initializationOptions.locale` | an `LC_CTYPE` locale this machine can set, `"tr_TR.UTF-8"` for instance | `locale` in `regex.json`, then the one of the PHP running the server |
 
 `regex.json` (and `regex.dist.json`) sits at the root of the first workspace folder. A value the server cannot read is logged as a warning and the next source is used. Changing the target takes a server restart.
 

@@ -406,7 +406,7 @@ final class Application
         GlobalOptions $options,
     ): Input {
         $regexOptions = array_filter(
-            ['php_version' => $options->phpVersion, 'pcre_version' => $options->pcreVersion],
+            ['php_version' => $options->phpVersion, 'pcre_version' => $options->pcreVersion, 'locale' => $options->locale],
             static fn (?string $version): bool => null !== $version,
         );
 

@@ -54,6 +54,7 @@ Every key is optional and lives under `php_regex` in `config/packages/php_regex.
 | `max_pattern_length`, `max_lookbehind_length` | `100000`, `255` | Longest pattern string; longest variable-length lookbehind |
 | `runtime_pcre_validation` | `false` | The service also compiles each pattern with the running PHP |
 | `php_version`, `pcre_version` | `null` | PHP version and PCRE2 release `regex:lint` judges for (`"8.2"`, `"10.42"`) |
+| `locale` | `null` | `LC_CTYPE` locale `regex:lint` judges under (`"tr_TR.UTF-8"`); `null` for the one of the PHP running the command. The `php_regex.regex` service judges under the running PHP's |
 | `cache.pool`, `cache.directory`, `cache.prefix` | `null`, `'%kernel.cache_dir%/php_regex'`, `'regex_'` | Cache for parsed ASTs: a PSR-6 pool, else this directory |
 | `extractor_service` | `null` | Service id of a custom pattern extractor |
 | `extraction.interop`, `extraction.functions` | every preset, `[]` | The libraries whose calls `regex:lint` reads patterns from (a list for exactly those, `[]` for the native calls only), and your own helpers carrying a pattern, as `extraction` of `regex.json`; unused with `extractor_service` |

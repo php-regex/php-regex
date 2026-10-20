@@ -91,6 +91,7 @@ PHPRegex CLI provides these commands:
 | `--silent`            | Same as `--quiet`                 |
 | `--php-version <ver>` | Target PHP version for validation |
 | `--pcre-version <ver>` | Target PCRE2 release for validation, as `10.42` |
+| `--locale <name>`      | Target `LC_CTYPE` locale for validation, as `tr_TR.UTF-8` (see [The locale](#the-locale)) |
 | `--cache-dir <dir>`    | Keep the Unicode class scans in `<dir>` for the next run (see [Unicode classes between runs](#unicode-classes-between-runs)) |
 | `--no-visuals`         | Disable banner and section visuals (aliases: `--no-art`, `--no-splash`) |
 | `--help`              | Show help                         |
@@ -993,6 +994,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `reportUnmatchedIgnores`        | boolean          | Report the inline markers and baseline entries that silence nothing, as `regex.ignore.unmatched` (default `true`, see [Markers that silence nothing](#markers-that-silence-nothing)) |
 | `phpVersion`                    | string or int    | PHP version the patterns are judged for: `"8.3"`, `80300`, or `"runtime"` for the PHP running the command |
 | `pcreVersion`                   | string           | PCRE2 release the patterns are judged for: `"10.44"`     |
+| `locale`                        | string           | `LC_CTYPE` locale the patterns run under: `"tr_TR.UTF-8"` (default: the one of the PHP running the command) |
 | `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` the native calls only) |
 | `extraction.functions`          | array            | Project helpers carrying patterns                        |
 | `checks.validation`             | boolean          | Report patterns PCRE2 refuses (default `true`)           |
@@ -1071,6 +1073,27 @@ the one the target PHP bundles (10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for
 8.0, 10.39 for 8.1, 10.40 for 8.2, 10.42 for
 8.3, 10.44 for 8.4 and 8.5), or the PCRE2 of the running PHP when the target is the running
 PHP.
+
+#### The locale
+
+PHP hands PCRE2 the character tables of the `LC_CTYPE` locale a call of
+`setlocale()` names, and they decide the size of a few classes (see
+[Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)).
+The locale is chosen in this order, the same for every version of the range:
+
+1. `--locale` on the command line;
+2. `locale` in `regex.json`;
+3. the locale of the PHP running the command, `C` unless it called
+   `setlocale()`.
+
+The target line names it when it is not `C`, and the JSON report always, as
+`target.locale`:
+
+```text
+Target: PHP 8.2, PCRE2 10.40, locale fr_FR.ISO8859-1 (composer.json require.php; --locale)
+```
+
+A locale this machine cannot set is an error, exit code 2.
 
 The lowest PHP is the one that matters because a library, or an application
 deployed on several servers, runs on every version its constraint allows: a
@@ -1308,9 +1331,9 @@ The PHPStan extension, the Psalm plugin and the language server read the
 same markers.
 
 Single-pattern commands, such as `analyze` or `validate`, judge for the
-running PHP unless `--php-version` or `--pcre-version` is given; their
-banners show `Target PHP` / `Target PCRE2` rows only when those flags are
-passed.
+running PHP unless `--php-version`, `--pcre-version` or `--locale` is given;
+their banners show `Target PHP` / `Target PCRE2` / `Target locale` rows only
+when those flags are passed.
 
 ### Errors and Exit Codes
 
@@ -1345,7 +1368,8 @@ never replayed, leave 0 too.
 
 Code 2 covers an unknown command or option, an option without its value or
 with a value the command does not accept (an unknown `--format`, `--target`,
-`--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`),
+`--method` or `--redos-mode`, an invalid `--php-version` or `--pcre-version`,
+a `--locale` this machine cannot set),
 a missing pattern, an argument the command does not take (one pattern more
 than it reads, or anything after `version`, `self-update` or `lsp`), a
 target given to `lsp` (the server reads it from the editor), an

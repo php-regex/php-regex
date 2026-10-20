@@ -66,7 +66,7 @@ use PHPRegex\Redos\RedosAnalysis;
 final class JsonFormatter extends AbstractOutputFormatter
 {
     /**
-     * @param array{php: string, pcre: string, source: string, range?: list<TargetDescription>}|null $target the PHP and PCRE2 the patterns were judged for, where that came from, and every PHP and PCRE2 they were validated at
+     * @param array{php: string, pcre: string, locale?: string, source: string, range?: list<TargetDescription>}|null $target the PHP, PCRE2 and locale the patterns were judged for, where that came from, and every PHP and PCRE2 they were validated at
      */
     public function __construct(OutputConfiguration $config = new OutputConfiguration(), private readonly ?array $target = null)
     {

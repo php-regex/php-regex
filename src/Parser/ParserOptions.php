@@ -40,6 +40,7 @@ use PHPRegex\Parser\Text\Ascii;
  *     max_recursion_depth?: int,
  *     php_version?: int|string|null,
  *     pcre_version?: string|null,
+ *     locale?: string|null,
  * }
  */
 final class ParserOptions
@@ -56,10 +57,12 @@ final class ParserOptions
         'max_recursion_depth',
         'php_version',
         'pcre_version',
+        'locale',
     ];
 
     /**
-     * The PHP version and the PCRE2 release patterns are judged for.
+     * The PHP version, the PCRE2 release and the locale patterns are judged
+     * for.
      */
     public readonly PcreTarget $target;
 
@@ -73,7 +76,7 @@ final class ParserOptions
      * @param array<string>   $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
      * @param bool            $runtimePcreValidation Whether to validate against the PCRE runtime
      * @param int             $maxRecursionDepth     Maximum recursion depth during parsing
-     * @param PcreTarget|null $target                The PHP and PCRE2 judged; the running ones when null
+     * @param PcreTarget|null $target                The PHP, PCRE2 and locale judged; the running ones when null
      */
     public function __construct(
         public readonly int $maxPatternLength,
@@ -86,14 +89,16 @@ final class ParserOptions
     ) {
         $this->target = $target ?? PcreTarget::runtime();
 
-        // PHP compiles with the engine that runs: it judges the target only
-        // when the target is that engine.
+        // PHP compiles with the engine that runs, under the runtime's
+        // locale: it judges the target only when the target is that engine.
         if ($this->runtimePcreValidation && !$this->target->isRunningEngine()) {
+            $running = PcreTarget::runtime();
+
             throw new InvalidRegexOptionException(\sprintf(
-                '"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (PHP %d.%d, PCRE2 %s); drop one of them.',
-                intdiv($this->target->phpVersionId, 10000),
-                intdiv($this->target->phpVersionId, 100) % 100,
-                $this->target->pcreVersion,
+                '"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (%s); drop one of them.',
+                $this->target->withLocale($running->locale)->isRunningEngine()
+                    ? \sprintf('locale "%s"', $this->target->locale)
+                    : \sprintf('PHP %d.%d, PCRE2 %s', intdiv($this->target->phpVersionId, 10000), intdiv($this->target->phpVersionId, 100) % 100, $this->target->pcreVersion),
             ));
         }
     }
@@ -245,14 +250,20 @@ final class ParserOptions
     }
 
     /**
-     * The PHP and the PCRE2 judged: the running ones by default, a PHP
-     * version alone with the PCRE2 it bundles, a PCRE2 release alone with
-     * the running PHP.
+     * The PHP, the PCRE2 and the locale judged: the running ones by
+     * default, a PHP version alone with the PCRE2 it bundles, a PCRE2
+     * release alone with the running PHP, either under the runtime's locale
+     * unless one is named.
      *
      * @param array<string, mixed> $options Configuration options
      */
     private static function getTarget(array $options): PcreTarget
     {
+        $locale = $options['locale'] ?? null;
+        if (null !== $locale && !\is_string($locale)) {
+            throw new InvalidRegexOptionException(\sprintf('"locale" must be a locale name like "tr_TR.UTF-8", not a %s.', get_debug_type($locale)));
+        }
+
         $pcreVersion = $options['pcre_version'] ?? null;
 
         if (null !== $pcreVersion && !\is_string($pcreVersion)) {
@@ -263,16 +274,16 @@ final class ParserOptions
         // the PCRE2 it links unless a release is given beside it.
         $phpVersion = $options['php_version'] ?? null;
         if (\is_string($phpVersion) && 'runtime' === Ascii::lower(trim($phpVersion, " \t\n\r\0\x0B"))) {
-            return null === $pcreVersion ? PcreTarget::runtime() : new PcreTarget(PcreTarget::runtime()->phpVersionId, $pcreVersion);
+            return new PcreTarget(\PHP_VERSION_ID, $pcreVersion ?? \PCRE_VERSION, $locale);
         }
 
         $phpVersionId = self::getPhpVersionId($options);
 
-        return match (true) {
-            null === $phpVersionId && null === $pcreVersion => PcreTarget::runtime(),
-            null === $pcreVersion => PcreTarget::bundledWith((int) $phpVersionId),
-            default => new PcreTarget($phpVersionId ?? PcreTarget::runtime()->phpVersionId, $pcreVersion),
-        };
+        return new PcreTarget(
+            $phpVersionId ?? \PHP_VERSION_ID,
+            $pcreVersion ?? (null === $phpVersionId ? \PCRE_VERSION : PcreTarget::bundledWith($phpVersionId)->pcreVersion),
+            $locale,
+        );
     }
 
     /**

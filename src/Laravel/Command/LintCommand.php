@@ -146,10 +146,11 @@ final class LintCommand extends Command
                 ['config php-regex.pcre_version' => $this->configRelease('pcre_version')],
                 base_path(),
                 getenv(),
+                ['config php-regex.locale' => $this->configLocale()],
             );
             $parser = Regex::create(PHPRegexServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
-            $range = $target->rangeParsers($parser, PHPRegexServiceProvider::regexOptions($this->laravel));
-            $judged = $target->judgedRange($parser, PHPRegexServiceProvider::regexOptions($this->laravel));
+            $range = $target->rangeParsers($parser);
+            $judged = $target->judgedRange($parser);
             /** @var \PHPRegex\Linter\AnalysisService $appAnalysis */
             $appAnalysis = $this->laravel->make('php-regex.analysis');
             /** @var \PHPRegex\Linter\LintService $appLint */
@@ -312,9 +313,10 @@ final class LintCommand extends Command
         $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
         $this->line('<fg=white;options=bold>'.str_pad('Runtime', $maxLabelLength).'</> : PHP <fg=yellow>'.\PHP_VERSION.'</>');
         $this->line('<fg=white;options=bold>'.str_pad('Target', $maxLabelLength).'</> : '.\sprintf(
-            'PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</> (%s)',
+            'PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)',
             $target->php(),
             $target->target()->pcreVersion,
+            'C' === $target->target()->locale ? '' : ', locale <fg=yellow>'.$target->target()->locale.'</>',
             $target->source(),
         ));
         $this->line('<fg=white;options=bold>'.str_pad('Processes', $maxLabelLength).'</> : <fg=yellow>'.$jobs.'</>');
@@ -348,7 +350,7 @@ final class LintCommand extends Command
         foreach ($warnings as $warning) {
             $stderr->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
         }
-        $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
+        $stderr->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->source()), OutputInterface::OUTPUT_RAW);
     }
 
     /**
@@ -372,6 +374,16 @@ final class LintCommand extends Command
         }
 
         throw new InvalidRegexOptionException(\sprintf('"%s" must be a PCRE2 release string like "10.42", not a %s.', $key, get_debug_type($value)));
+    }
+
+    private function configLocale(): ?string
+    {
+        $value = config('php-regex.locale');
+        if (null === $value || \is_string($value)) {
+            return $value;
+        }
+
+        throw new InvalidRegexOptionException(\sprintf('"locale" must be a locale name like "tr_TR.UTF-8", not a %s.', get_debug_type($value)));
     }
 
     /**

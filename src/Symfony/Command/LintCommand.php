@@ -101,6 +101,7 @@ final class LintCommand extends Command
      * @param array<string>           $warnings               what the bundle's configuration holds that the run
      *                                                        ignores, printed before the report
      * @param bool                    $reportUnmatchedIgnores the bundle's report_unmatched_ignores
+     * @param string|null             $locale                 the bundle's locale
      */
     public function __construct(
         private readonly LintService $lint,
@@ -118,6 +119,7 @@ final class LintCommand extends Command
         private readonly bool $checkComplexity = false,
         private readonly array $warnings = [],
         private readonly bool $reportUnmatchedIgnores = true,
+        private readonly ?string $locale = null,
     ) {
         $this->defaultPaths = $this->normalizeStringList($defaultPaths);
         $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
@@ -211,10 +213,11 @@ final class LintCommand extends Command
                 ['php_regex.pcre_version' => $this->pcreVersion],
                 $this->projectDir,
                 getenv(),
+                ['php_regex.locale' => $this->locale],
             );
             $parser = Regex::fromOptions(ParserOptions::fromArray($this->regexOptions + $target->regexOptions()))->parser();
-            $range = $target->rangeParsers($parser, $this->regexOptions);
-            $judged = $target->judgedRange($parser, $this->regexOptions);
+            $range = $target->rangeParsers($parser);
+            $judged = $target->judgedRange($parser);
         } catch (UnsupportedTargetException $e) {
             return $this->renderFailure($format, $output, $io, $e->getMessage(), JsonDocument::STAGE_TARGET, Command::INVALID);
         } catch (InvalidRegexOptionException $e) {
@@ -364,12 +367,14 @@ final class LintCommand extends Command
         foreach ($this->warnings as $warning) {
             $stderr->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
         }
-        $stderr->writeln(\sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()), OutputInterface::OUTPUT_RAW);
+        $stderr->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->source()), OutputInterface::OUTPUT_RAW);
     }
 
     private function describeTarget(ProjectTarget $target): string
     {
-        return \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</> (%s)', $target->php(), $target->target()->pcreVersion, $target->source());
+        $locale = $target->target()->locale;
+
+        return \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->source());
     }
 
     /**

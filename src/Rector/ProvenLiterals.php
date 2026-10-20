@@ -15,11 +15,14 @@ namespace PHPRegex\Rector;
 
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 
 /**
- * What the automata prove of a pattern, asked once per pattern and target
- * PHP version: a project repeats its patterns, the proof costs a solver run.
+ * What the automata prove of a pattern, asked once per pattern and target:
+ * a project repeats its patterns, the proof costs a solver run. The target
+ * is the PHP version the code targets, with the PCRE2 it bundles, under the
+ * locale Rector runs with, which may change between two calls.
  *
  * A verdict holds only when the PHP the code targets reads the pattern as
  * the running engine does: the pattern compiles there, and the automata,
@@ -43,9 +46,9 @@ final class ProvenLiterals
     private ?TrivialMatchClassifier $running = null;
 
     /**
-     * The classifier and the parser per target PHP version.
+     * The classifier and the parser per target (PcreTarget::key()).
      *
-     * @var array<int, array{TrivialMatchClassifier, RegexParser}>
+     * @var array<string, array{TrivialMatchClassifier, RegexParser}>
      */
     private array $targets = [];
 
@@ -56,7 +59,7 @@ final class ProvenLiterals
      */
     public function of(string $pattern, int $phpVersion): ?string
     {
-        $key = $phpVersion.':'.$pattern;
+        $key = self::targetKey($phpVersion).':'.$pattern;
         if (!\array_key_exists($key, $this->literals)) {
             $literal = $this->runs($pattern, $phpVersion) ? $this->running()->matchedLiteral($pattern) : null;
             $agrees = null !== $literal && $literal === $this->target($phpVersion)[0]->matchedLiteral($pattern);
@@ -75,7 +78,7 @@ final class ProvenLiterals
      */
     public function match(string $pattern, int $phpVersion): ?TrivialMatch
     {
-        $key = $phpVersion.':'.$pattern;
+        $key = self::targetKey($phpVersion).':'.$pattern;
         if (!\array_key_exists($key, $this->matches)) {
             $match = $this->runs($pattern, $phpVersion) ? $this->running()->classify($pattern) : null;
             $target = null === $match ? null : $this->target($phpVersion)[0]->classify($pattern);
@@ -107,11 +110,21 @@ final class ProvenLiterals
      */
     private function target(int $phpVersion): array
     {
-        if (!isset($this->targets[$phpVersion])) {
+        $key = self::targetKey($phpVersion);
+        if (!isset($this->targets[$key])) {
             $parser = PregCall::targetParser($phpVersion);
-            $this->targets[$phpVersion] = [new TrivialMatchClassifier($parser), $parser];
+            $this->targets[$key] = [new TrivialMatchClassifier($parser), $parser];
         }
 
-        return $this->targets[$phpVersion];
+        return $this->targets[$key];
+    }
+
+    /**
+     * The PHP version the code targets, the PCRE2 it bundles and the
+     * locale Rector runs with: a proof under one locale is not another's.
+     */
+    private static function targetKey(int $phpVersion): string
+    {
+        return PcreTarget::bundledWith($phpVersion)->key();
     }
 }

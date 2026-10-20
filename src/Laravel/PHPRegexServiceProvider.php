@@ -296,7 +296,8 @@ final class PHPRegexServiceProvider extends ServiceProvider
     private function registerRegex(): void
     {
         // The application's own service: it judges for the running PHP,
-        // whatever php_version / pcre_version say (they drive regex:lint).
+        // under its locale, whatever php_version / pcre_version / locale say
+        // (they drive regex:lint).
         $this->app->singleton(Regex::class, static fn (Application $app): Regex => Regex::create(self::regexOptions($app) + [
             'runtime_pcre_validation' => true === self::config($app)->get('php-regex.runtime_pcre_validation'),
         ]));

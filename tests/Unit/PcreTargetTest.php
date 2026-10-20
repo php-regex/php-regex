@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 
 final class PcreTargetTest extends TestCase
 {
+    use InstalledLocales;
     use PhpUnitForwardCompat;
 
     #[Test]
@@ -191,7 +193,7 @@ final class PcreTargetTest extends TestCase
     #[Test]
     public function test_the_cache_key_names_both_versions(): void
     {
-        $this->assertSame('php8.4/pcre10.44', (new PcreTarget(80400, '10.44'))->cacheKey());
+        $this->assertSame('php8.4/pcre10.44', (new PcreTarget(80400, '10.44', 'C'))->cacheKey());
         $this->assertNotSame((new PcreTarget(80400, '10.42'))->cacheKey(), (new PcreTarget(80400, '10.44'))->cacheKey());
         // No parse rule depends on a PHP patch release, and "10.4" is "10.04".
         $this->assertSame((new PcreTarget(80400, '10.44'))->cacheKey(), (new PcreTarget(80426, '10.44 2024-06-07'))->cacheKey());
@@ -206,5 +208,67 @@ final class PcreTargetTest extends TestCase
         // where a rule starts: \C under u refused from 8.4.25 and 8.5.10, \K
         // in a lookaround refused from 8.5.
         $this->assertSame([70300, 70400, 80000, 80100, 80200, 80300, 80400, 80425, 80500, 80510], PcreTarget::phpVersionBoundaries());
+    }
+
+    /**
+     * The LC_CTYPE locale the patterns run under: the runtime's by default,
+     * "C" for PHP's own start, where PCRE2's built-in tables are used.
+     */
+    #[Test]
+    public function test_the_locale_is_the_runtimes_unless_one_is_named(): void
+    {
+        $this->assertSame(PcreTarget::runtime()->locale, (new PcreTarget(80400, '10.44'))->locale);
+        $this->assertSame('C', (new PcreTarget(80400, '10.44', 'C'))->locale);
+        $this->assertSame('C', (new PcreTarget(80400, '10.44'))->withLocale('C')->locale);
+        $this->assertSame(80400, (new PcreTarget(80400, '10.44'))->withLocale('C')->phpVersionId);
+        $this->assertSame('10.44', (new PcreTarget(80400, '10.44'))->withLocale('C')->pcreVersion);
+        $this->assertSame(PcreTarget::runtime()->locale, (new PcreTarget(80400, '10.44', 'C'))->withLocale(null)->locale);
+    }
+
+    #[Test]
+    public function test_a_locale_the_machine_cannot_set_is_refused(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains('"locale" names "xx_YY.NOWHERE", which this machine cannot set');
+
+        new PcreTarget(80400, '10.44', 'xx_YY.NOWHERE');
+    }
+
+    #[Test]
+    public function test_two_locales_never_share_a_cache_key(): void
+    {
+        $this->requiresLocale('tr_TR.ISO8859-9', 'The cache key of a Turkish target');
+        $turkish = new PcreTarget(80400, '10.44', 'tr_TR.ISO8859-9');
+
+        $this->assertSame('tr_TR.ISO8859-9', $turkish->locale);
+        $this->assertSame('php8.4/pcre10.44/tr_TR.ISO8859-9', $turkish->cacheKey());
+        $this->assertNotSame((new PcreTarget(80400, '10.44', 'C'))->cacheKey(), $turkish->cacheKey());
+    }
+
+    /**
+     * The running engine compiles under the runtime's locale: a target of
+     * another locale is not it.
+     */
+    #[Test]
+    public function test_the_running_engine_runs_under_the_runtimes_locale(): void
+    {
+        $this->requiresLocale('tr_TR.ISO8859-9', 'The running engine under another locale');
+        $running = PcreTarget::runtime();
+
+        $this->assertTrue($running->withLocale($running->locale)->isRunningEngine());
+        $this->assertFalse($running->withLocale('C' === $running->locale ? 'tr_TR.ISO8859-9' : 'C')->isRunningEngine());
+    }
+
+    /**
+     * What tells two targets apart, the PHP patch release and the locale
+     * included.
+     */
+    #[Test]
+    public function test_the_key_names_the_php_the_release_and_the_locale(): void
+    {
+        $this->assertSame('80426/10.44/C', (new PcreTarget(80426, '10.44 2024-06-07', 'C'))->key());
+        $this->assertNotSame((new PcreTarget(80400, '10.44', 'C'))->key(), (new PcreTarget(80425, '10.44', 'C'))->key());
+        $this->requiresLocale('tr_TR.ISO8859-9', 'The key of a Turkish target');
+        $this->assertSame('80400/10.44/tr_TR.ISO8859-9', (new PcreTarget(80400, '10.44', 'tr_TR.ISO8859-9'))->key());
     }
 }

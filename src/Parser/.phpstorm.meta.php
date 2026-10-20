@@ -11,7 +11,8 @@ registerArgumentsSet(
     'runtime_pcre_validation',
     'max_recursion_depth',
     'php_version',
-    'pcre_version'
+    'pcre_version',
+    'locale'
 );
 
 registerArgumentsSet(

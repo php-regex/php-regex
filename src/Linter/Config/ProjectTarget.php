@@ -22,14 +22,16 @@ use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Validation\RangeDiff;
 
 /**
- * The PHP and PCRE2 a project's patterns are judged for, and where each
- * came from.
+ * The PHP, the PCRE2 and the locale a project's patterns are judged for,
+ * and where each came from.
  *
  * The PHP version is the --php-version option, else regex.json's
  * phpVersion, else composer.json (config.platform.php, then the lowest
  * version require.php allows), else the running PHP. The PCRE2 release is
  * the --pcre-version option, else regex.json's pcreVersion, else the one the
  * PHP version bundles (the running one when the PHP is the running PHP).
+ * The LC_CTYPE locale is the --locale option, else regex.json's locale,
+ * else the runtime's: it is the same at every version of the range.
  * A project is judged for its lowest PHP because a pattern must compile on
  * every version the project installs on.
  *
@@ -57,7 +59,6 @@ use PHPRegex\Parser\Validation\RangeDiff;
  *
  * @phpstan-type TargetDescription array{php: string, pcre: string, guard?: string, guard_pcre?: string}
  *
- * @phpstan-import-type OptionsArray from ParserOptions
  * @phpstan-import-type LintConfig from LintConfigResult
  */
 final class ProjectTarget
@@ -86,38 +87,45 @@ final class ProjectTarget
      * @param LintConfig            $config     the loaded regex.json
      * @param string                $projectDir where composer.json is read, never a parent of it
      * @param array<string, string> $env        the environment, for COMPOSER
+     * @param string|null           $localeFlag the --locale option
      *
-     * @throws InvalidRegexOptionException when an option or regex.json names no version
+     * @throws InvalidRegexOptionException when an option or regex.json names no version, or a locale the
+     *                                     machine cannot set
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
      */
-    public static function resolve(?string $phpFlag, ?string $pcreFlag, array $config, string $projectDir, array $env): self
+    public static function resolve(?string $phpFlag, ?string $pcreFlag, array $config, string $projectDir, array $env, ?string $localeFlag = null): self
     {
         $configPhp = $config['phpVersion'] ?? null;
         $configPcre = $config['pcreVersion'] ?? null;
+        $configLocale = $config['locale'] ?? null;
 
         return self::fromSources(
             ['--php-version' => $phpFlag, 'regex.json' => \is_string($configPhp) || \is_int($configPhp) ? $configPhp : null],
             ['--pcre-version' => $pcreFlag, 'regex.json' => \is_string($configPcre) ? $configPcre : null],
             $projectDir,
             $env,
+            ['--locale' => $localeFlag, 'regex.json' => \is_string($configLocale) ? $configLocale : null],
         );
     }
 
     /**
      * The target of an entry point that names its own settings: for each
      * field, the first source that is set, in the order given; then, for
-     * the PHP version, composer.json and the running PHP, and for the PCRE2
-     * release, the one the PHP version bundles.
+     * the PHP version, composer.json and the running PHP, for the PCRE2
+     * release, the one the PHP version bundles, and for the locale, the
+     * runtime's.
      *
      * @param array<string, string|int|null> $php        source name => version, e.g. "php_regex.php_version" => "8.2"
      * @param array<string, string|null>     $pcre       source name => PCRE2 release
      * @param string|null                    $projectDir where composer.json is read, never a parent of it; null reads none
      * @param array<string, string>          $env        the environment, for COMPOSER
+     * @param array<string, string|null>     $locale     source name => LC_CTYPE locale
      *
-     * @throws InvalidRegexOptionException when a source that is set names no version
+     * @throws InvalidRegexOptionException when a source that is set names no version, or a locale the machine
+     *                                     cannot set
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
      */
-    public static function fromSources(array $php, array $pcre, ?string $projectDir, array $env): self
+    public static function fromSources(array $php, array $pcre, ?string $projectDir, array $env, array $locale = []): self
     {
         $notices = [];
         $runningPhp = false;
@@ -162,11 +170,22 @@ final class ProjectTarget
             }
         }
 
+        $localeName = null;
+        $localeSource = null;
+        foreach ($locale as $name => $value) {
+            if (null !== $value) {
+                [$localeName, $localeSource] = [$value, (string) $name];
+
+                break;
+            }
+        }
+
         $pinnedPcre = $pcreVersion;
         $pcreVersion ??= $runningPhp ? PcreTarget::runtime()->pcreVersion : PcreTarget::bundledWith($phpVersionId)->pcreVersion;
 
         $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
-        $target = new PcreTarget($phpVersionId, $pcreVersion);
+        $source = null === $localeSource || str_contains('; '.$source.';', '; '.$localeSource.';') ? $source : $source.'; '.$localeSource;
+        $target = new PcreTarget($phpVersionId, $pcreVersion, $localeName);
         $range = self::rangeFor($target, $constraint, $pinnedPcre);
         $admitted = null === $constraint ? null : self::admittedFrom($phpVersionId, self::intervals($constraint) ?? []);
 
@@ -187,16 +206,18 @@ final class ProjectTarget
      * read again from the composer.json of $projectDir when the analyser
      * read it from there, refused when it named it.
      *
-     * @param string                $name       what named the version, as "phpVersion"
-     * @param string|null           $projectDir where the analyser read composer.json, null when it did not
-     * @param array<string, string> $env        the environment, for COMPOSER
+     * @param string                     $name       what named the version, as "phpVersion"
+     * @param string|null                $projectDir where the analyser read composer.json, null when it did not
+     * @param array<string, string>      $env        the environment, for COMPOSER
+     * @param array<string, string|null> $locale     source name => LC_CTYPE locale
      *
-     * @throws UnsupportedTargetException when the PHP to judge for ships PCRE1
+     * @throws InvalidRegexOptionException when a locale is one the machine cannot set
+     * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1
      */
-    public static function belowPcre2(int $phpVersionId, string $name, ?string $projectDir, array $env): self
+    public static function belowPcre2(int $phpVersionId, string $name, ?string $projectDir, array $env, array $locale = []): self
     {
         if (null !== $projectDir) {
-            $target = self::fromSources([], [], $projectDir, $env);
+            $target = self::fromSources([], [], $projectDir, $env, $locale);
             if ('running PHP' !== $target->source) {
                 return $target;
             }
@@ -210,12 +231,13 @@ final class ProjectTarget
      * as lint judges a require.php range: from its lowest PHP on PCRE2, with
      * a note when the range starts below it, refused when it allows none.
      *
-     * @param string $name what named the range, as "phpVersion"
+     * @param string                     $name   what named the range, as "phpVersion"
+     * @param array<string, string|null> $locale source name => LC_CTYPE locale
      *
-     * @throws InvalidRegexOptionException when a bound names no version
+     * @throws InvalidRegexOptionException when a bound names no version, or a locale the machine cannot set
      * @throws UnsupportedTargetException  when the range allows no PHP on PCRE2
      */
-    public static function fromRange(int $min, int $max, string $name): self
+    public static function fromRange(int $min, int $max, string $name, array $locale = []): self
     {
         $firstOnPcre2 = PcreTarget::phpVersionBoundaries()[0];
         if ($max < $firstOnPcre2) {
@@ -223,10 +245,10 @@ final class ProjectTarget
         }
 
         if ($min >= $firstOnPcre2) {
-            return self::fromSources([$name => $min], [], null, []);
+            return self::fromSources([$name => $min], [], null, [], $locale);
         }
 
-        $target = self::fromSources([$name => $firstOnPcre2], [], null, []);
+        $target = self::fromSources([$name => $firstOnPcre2], [], null, [], $locale);
         $note = \sprintf(
             '%s allows PHP %d.%d, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP %s, the lowest version it allows on PCRE2.',
             $name,
@@ -261,24 +283,15 @@ final class ProjectTarget
      * options of the floor's parser: they share its cache, so the targets
      * that read a pattern the same way parse it once.
      *
-     * @param RegexParser  $floor        the parser of the floor
-     * @param OptionsArray $regexOptions what the floor's parser was created with, its target aside
-     *
-     * @throws InvalidRegexOptionException when an option names no setting
+     * @param RegexParser $floor the parser of the floor
      *
      * @return list<RegexParser>
      */
-    public function rangeParsers(RegexParser $floor, array $regexOptions = []): array
+    public function rangeParsers(RegexParser $floor): array
     {
         $parsers = [];
         foreach (\array_slice($this->range, 1) as $target) {
-            // Compiling with the running PHP judges one version: the floor's.
-            $parsers[] = RegexParser::fromOptions(ParserOptions::fromArray([
-                'php_version' => $target->phpVersionId,
-                'pcre_version' => $target->pcreVersion,
-                'cache' => $floor->getCache(),
-                'runtime_pcre_validation' => false,
-            ] + $regexOptions));
+            $parsers[] = $floor->withTarget($target);
         }
 
         return $parsers;
@@ -290,14 +303,13 @@ final class ProjectTarget
      * judged gets a parser with the options of the floor's, sharing its
      * cache, as rangeParsers() builds them.
      *
-     * @param RegexParser  $floor        the parser of the floor
-     * @param OptionsArray $regexOptions what the floor's parser was created with, its target aside
+     * @param RegexParser $floor the parser of the floor
      */
-    public function judgedRange(RegexParser $floor, array $regexOptions = []): JudgedRange
+    public function judgedRange(RegexParser $floor): JudgedRange
     {
         $admitted = $this->admitted ?? [[$this->target->phpVersionId, self::nextAt($this->target->phpVersionId, 2)]];
 
-        return new JudgedRange($this->range, $admitted, $this->pinnedPcre, $floor, $regexOptions);
+        return new JudgedRange($this->range, $admitted, $this->pinnedPcre, $floor);
     }
 
     /**
@@ -339,7 +351,7 @@ final class ProjectTarget
     /**
      * Where the target came from: "--php-version", "regex.json",
      * "composer.json require.php", "running PHP"; the PHP's source first,
-     * then the PCRE2's when it came from elsewhere.
+     * then the PCRE2's and the locale's when they came from elsewhere.
      */
     public function source(): string
     {
@@ -368,21 +380,31 @@ final class ProjectTarget
     /**
      * The options that make Regex::create() judge for this target.
      *
-     * @return array{php_version: int, pcre_version: string}
+     * @return array{php_version: int, pcre_version: string, locale: string}
      */
     public function regexOptions(): array
     {
-        return ['php_version' => $this->target->phpVersionId, 'pcre_version' => $this->target->pcreVersion];
+        return ['php_version' => $this->target->phpVersionId, 'pcre_version' => $this->target->pcreVersion, 'locale' => $this->target->locale];
     }
 
     /**
-     * @return array{php: string, pcre: string, source: string, range: list<TargetDescription>}
+     * The target as a line of the report names it: "PHP 8.4, PCRE2 10.44",
+     * with the locale when it is not "C".
+     */
+    public function label(): string
+    {
+        return \sprintf('PHP %s, PCRE2 %s%s', $this->php(), $this->target->pcreVersion, 'C' === $this->target->locale ? '' : ', locale '.$this->target->locale);
+    }
+
+    /**
+     * @return array{php: string, pcre: string, locale: string, source: string, range: list<TargetDescription>}
      */
     public function toArray(): array
     {
         return [
             'php' => $this->php(),
             'pcre' => $this->target->pcreVersion,
+            'locale' => $this->target->locale,
             'source' => $this->source,
             'range' => array_map(self::describe(...), $this->range),
         ];
@@ -433,7 +455,7 @@ final class ProjectTarget
             // A branch that allows nothing, ">=8.4 <8.2", holds no point.
             foreach ($intervals as [$lowest, $below]) {
                 if ($point >= $lowest && (null === $below || $point < $below)) {
-                    $range[] = new PcreTarget($point, $pinnedPcre ?? PcreTarget::bundledWith($point)->pcreVersion);
+                    $range[] = new PcreTarget($point, $pinnedPcre ?? PcreTarget::bundledWith($point)->pcreVersion, $floor->locale);
 
                     continue 2;
                 }

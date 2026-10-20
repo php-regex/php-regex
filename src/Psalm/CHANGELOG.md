@@ -8,6 +8,8 @@ CHANGELOG
    `preg_match_all()` from the pattern and reports invalid patterns as
    `InvalidRegexPattern`; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `<locale>` names the `LC_CTYPE` locale the patterns run under, the one
+   of the PHP running Psalm by default.
  * What the running PCRE2 answers about Unicode classes is kept in Psalm's
    cache directory, in `php-regex/`, for the next run: `--clear-cache`
    removes it, `--no-cache` keeps none.

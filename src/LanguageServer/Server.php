@@ -51,7 +51,8 @@ use PHPRegex\Toolkit\Regex;
  * Patterns are judged for the workspace's target, resolved once at
  * "initialize" for the first workspace folder, else rootUri:
  * initializationOptions.phpVersion / pcreVersion, then regex.json there, then
- * composer.json there, then the running PHP. A Regex handed to the
+ * composer.json there, then the running PHP; the LC_CTYPE locale from
+ * initializationOptions.locale, then regex.json, then the runtime's. A Regex handed to the
  * constructor is used as it is.
  *
  * The calls read are those `regex lint` reads: the native functions, the
@@ -481,12 +482,12 @@ final class Server
 
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
-            self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion));
+            self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s%s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion, 'C' === $target->locale ? '' : ', locale '.$target->locale));
             $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores);
         } else {
             try {
                 $target = $this->resolveTarget($params, $root, $config);
-            } catch (UnsupportedTargetException $e) {
+            } catch (UnsupportedTargetException|InvalidRegexOptionException $e) {
                 $message = $e->getMessage().' No pattern is judged.';
                 self::log(self::LOG_ERROR, $message);
                 Response::notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
@@ -497,7 +498,7 @@ final class Server
             foreach ($target->notices() as $notice) {
                 self::log(self::LOG_INFO, $notice);
             }
-            self::log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s (%s)', $target->php(), $target->target()->pcreVersion, $target->source()));
+            self::log(self::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->source()));
 
             $regex = Regex::create($target->regexOptions());
             $this->judgeWith($regex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores, $target->judgedRange($regex->parser()));
@@ -701,7 +702,9 @@ final class Server
 
         $configPhp = $config['phpVersion'] ?? null;
         $configPcre = $config['pcreVersion'] ?? null;
+        $configLocale = $config['locale'] ?? null;
         $pcre = self::readVersion($options, 'pcreVersion', 'pcre_version');
+        $locale = self::readVersion($options, 'locale', 'locale', 'a locale this machine can set');
 
         // regex.json was checked against its schema when it was loaded.
         return ProjectTarget::fromSources(
@@ -715,17 +718,22 @@ final class Server
             ],
             $root,
             getenv(),
+            [
+                'initializationOptions' => \is_string($locale) ? $locale : null,
+                'regex.json' => \is_string($configLocale) ? $configLocale : null,
+            ],
         );
     }
 
     /**
-     * An initializationOptions version, or null when it is unset or cannot
-     * be read: what cannot be read is a warning, and the next source is
-     * used.
+     * An initializationOptions version or locale, or null when it is unset
+     * or cannot be read: what cannot be read is a warning, and the next
+     * source is used.
      *
      * @param array<array-key, mixed> $options
+     * @param string                  $what    what the value must be, for the warning
      */
-    private static function readVersion(array $options, string $key, string $regexOption): string|int|null
+    private static function readVersion(array $options, string $key, string $regexOption, string $what = 'a version'): string|int|null
     {
         $value = $options[$key] ?? null;
         if (null === $value) {
@@ -743,9 +751,10 @@ final class Server
         }
 
         self::log(self::LOG_WARNING, \sprintf(
-            'initializationOptions.%s %s is not a version: ignored.',
+            'initializationOptions.%s %s is not %s: ignored.',
             $key,
             \is_string($value) || \is_int($value) ? '"'.$value.'"' : get_debug_type($value),
+            $what,
         ));
 
         return null;

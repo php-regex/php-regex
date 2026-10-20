@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\NullCache;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -82,5 +84,43 @@ final class RegexParserTest extends TestCase
 
         $this->assertSame($regex->target(), $regex->parser()->target());
         $this->assertInstanceOf(NullCache::class, $regex->parser()->getCache());
+    }
+
+    /**
+     * A parser for another target keeps every other option: the limits,
+     * the cache, and the runtime check, which only the running engine
+     * makes.
+     */
+    #[Test]
+    public function test_a_parser_for_another_target_keeps_the_other_options(): void
+    {
+        $cache = new ArrayCache();
+        $parser = RegexParser::create(['cache' => $cache, 'max_pattern_length' => 10, 'max_lookbehind_length' => 7, 'max_recursion_depth' => 64, 'runtime_pcre_validation' => true]);
+        $target = new PcreTarget(80200, '10.40', 'C');
+
+        $derived = $parser->withTarget($target);
+
+        $this->assertSame($target, $derived->target());
+        $this->assertSame($cache, $derived->getCache());
+        $this->assertSame(10, (new \ReflectionProperty($derived, 'maxPatternLength'))->getValue($derived));
+        $this->assertSame(7, (new \ReflectionProperty($derived, 'maxLookbehindLength'))->getValue($derived));
+        $this->assertSame(64, (new \ReflectionProperty($derived, 'maxRecursionDepth'))->getValue($derived));
+        $this->assertFalse((new \ReflectionProperty($derived, 'runtimePcreValidation'))->getValue($derived));
+        $this->assertTrue((new \ReflectionProperty($parser->withTarget(PcreTarget::runtime()), 'runtimePcreValidation'))->getValue($parser->withTarget(PcreTarget::runtime())));
+        $this->assertSame($parser, $parser->withTarget($parser->target()));
+    }
+
+    #[Test]
+    public function test_a_facade_for_another_target_keeps_the_other_options(): void
+    {
+        $regex = Regex::create(['cache' => null, 'redos_ignored_patterns' => ['/a+/']]);
+        $target = new PcreTarget(80200, '10.40', 'C');
+
+        $derived = $regex->withTarget($target);
+
+        $this->assertSame($target, $derived->target());
+        $this->assertSame($regex->parser()->getCache(), $derived->parser()->getCache());
+        $this->assertSame(['/a+/'], (new \ReflectionProperty($derived, 'redosIgnoredPatterns'))->getValue($derived));
+        $this->assertSame($regex, $regex->withTarget($regex->target()));
     }
 }

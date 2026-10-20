@@ -19,6 +19,7 @@ use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Analysis\LookbehindLength;
 use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
@@ -314,6 +315,20 @@ final class Validator extends AbstractNodeVisitor
      * and POSIX names to ASCII under UCP.
      */
     private bool $compiledAsciiOptions = true;
+
+    /**
+     * Whether the pattern measured may be read under UCP, where Unicode
+     * folds the bytes past ASCII of a caseless class without UTF.
+     */
+    private bool $compiledUcp = true;
+
+    /**
+     * Whether each caseless class of bytes measured may hold every byte, by
+     * its ranges: a class written again folds the same.
+     *
+     * @var array<string, bool>
+     */
+    private array $foldsToEveryByte = [];
 
     private int $charClassDepth = 0;
 
@@ -4242,6 +4257,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $source = $node->source ?? '';
         $this->compiledCaseless = str_contains($node->flags, 'i') || str_contains($source, '(?');
+        $this->compiledUcp = $this->unicodeFlag || str_contains($source, 'UCP');
         $this->compiledMayWrapCaptures = !$this->supports(PcreFeature::GroupHoldingItsOwnReferenceBacktracks) && 1 === LibraryPcre::match('/\\\\[1-9gk]|\\(\\?P=/', $source);
 
         // Under Turkish case rules "i" and "I" are each a property of three
@@ -4272,7 +4288,7 @@ final class Validator extends AbstractNodeVisitor
     {
         $source = $node->source ?? '';
 
-        return new CompiledLength($this->compiledSizeFloor(...), $source, $this->unicodeMode, $this->unicodeFlag || \in_array('UCP', StartOptions::items($source), true), $node->flags, $this->target);
+        return new CompiledLength($this->compiledSizeFloor(...), $source, $this->unicodeMode, $this->unicodeFlag || \in_array('UCP', StartOptions::items($source), true), $node->flags, $this->target, CharacterTables::forLocale($this->target->locale));
     }
 
     /**
@@ -4320,16 +4336,20 @@ final class Validator extends AbstractNodeVisitor
      * characters past 255, goes in an extended class: its header, then its
      * items; so do properties, and the types and POSIX classes UCP reads.
      * PCRE compiles smaller a class of one member, a pair of case variants
-     * such as "[aA]" or "[ǅǆ]", and one that may match every character: those
-     * count one unit, and so does a type or a POSIX class the map would hold.
-     * Characters PCRE may merge into one range, or fold under a caseless
-     * option set anywhere, count as a single item. All to stay a lower bound.
+     * such as "[aA]" or "[ǅǆ]", or of a byte and the other case the tables
+     * of the locale give it, and one that may match every character, a
+     * caseless one whose bytes and their other cases are all the bytes
+     * included: those count one unit, and so does a type or a POSIX class
+     * the map would hold. Characters PCRE may merge into one range, or fold
+     * under a caseless option set anywhere, count as a single item. All to
+     * stay a lower bound.
      */
     private function classSizeFloor(CharClassNode $node): int
     {
         $members = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
         $extended = 0;
         $codePoints = [];
+        $ranges = [];
         $covered = 0;
         $pastMap = false;
         foreach ($members as $member) {
@@ -4368,6 +4388,7 @@ final class Validator extends AbstractNodeVisitor
 
             $codePoints[] = min($ends);
             $codePoints[] = max($ends);
+            $ranges[] = [min($ends), max($ends)];
             $covered += max($ends) - min($ends) + 1;
             $pastMap = $pastMap || ($this->unicodeMode && max($ends) > 255);
         }
@@ -4382,12 +4403,12 @@ final class Validator extends AbstractNodeVisitor
             return 0 === $extended ? 1 : 5 + $extended;
         }
 
-        if (\count($distinct) < 2 || $covered >= ($this->unicodeMode ? 0x110000 : 256)) {
+        if (\count($distinct) < 2 || $covered >= ($this->unicodeMode ? 0x110000 : 256) || ($this->compiledCaseless && !$this->unicodeMode && $this->mayFoldToEveryByte($ranges, $covered))) {
             return 1;
         }
 
         // A pair of case variants is one caseless character: two units.
-        if (2 === \count($distinct) && mb_strtolower((string) mb_chr($distinct[0], 'UTF-8'), 'UTF-8') === mb_strtolower((string) mb_chr($distinct[1], 'UTF-8'), 'UTF-8')) {
+        if (2 === \count($distinct) && (mb_strtolower((string) mb_chr($distinct[0], 'UTF-8'), 'UTF-8') === mb_strtolower((string) mb_chr($distinct[1], 'UTF-8'), 'UTF-8') || $this->mayBeCasePairInTables($distinct[0], $distinct[1]))) {
             return 2;
         }
 
@@ -4403,6 +4424,59 @@ final class Validator extends AbstractNodeVisitor
         $map = $this->unicodeMode && min($distinct) <= 0xFF && max($distinct) < 0x10FFFF;
 
         return 0 < $extended ? 5 + $extended + ($map ? 32 : 0) : 33;
+    }
+
+    /**
+     * Whether a class of two characters may be a pair of cases in the tables
+     * of the locale: an ASCII character, or a byte without UTF, whose other
+     * case is the other one.
+     */
+    private function mayBeCasePairInTables(int $first, int $second): bool
+    {
+        $tables = CharacterTables::forLocale($this->target->locale);
+        $last = $this->unicodeMode ? 0x7F : 0xFF;
+
+        return ($first <= $last && $tables->otherCase($first, $this->target) === $second)
+            || ($second <= $last && $tables->otherCase($second, $this->target) === $first);
+    }
+
+    /**
+     * Whether a caseless class of bytes may hold every byte, a match of any
+     * character from 10.45, once the tables add the other case of each: a
+     * class of fewer than 128 bytes does not. Under UCP, which the pattern
+     * may set, Unicode folds the bytes past ASCII too.
+     *
+     * @param list<array{0: int, 1: int}> $ranges
+     */
+    private function mayFoldToEveryByte(array $ranges, int $covered): bool
+    {
+        if ($covered < 128 || !$this->supports(PcreFeature::ClassesCompiledFromMergedRanges)) {
+            return false;
+        }
+
+        return $this->foldsToEveryByte[($this->compiledUcp ? 'u' : '-').json_encode($ranges)] ??= $this->foldToEveryByte($ranges);
+    }
+
+    /**
+     * @param list<array{0: int, 1: int}> $ranges
+     */
+    private function foldToEveryByte(array $ranges): bool
+    {
+        $tables = CharacterTables::forLocale($this->target->locale);
+        $held = [];
+        foreach ($ranges as [$low, $high]) {
+            for ($byte = $low; $byte <= min($high, 0xFF); $byte++) {
+                $held[$byte] = $held[$tables->otherCase($byte, $this->target)] = true;
+                // Unicode gives a Latin-1 letter its other case below 256,
+                // but for the micro sign, the sharp s and the y with a
+                // diaeresis.
+                if ($this->compiledUcp && $byte >= 0xC0 && 0xD7 !== $byte && 0xF7 !== $byte && 0xDF !== $byte && 0xFF !== $byte) {
+                    $held[$byte ^ 0x20] = true;
+                }
+            }
+        }
+
+        return 256 === \count($held);
     }
 
     /**

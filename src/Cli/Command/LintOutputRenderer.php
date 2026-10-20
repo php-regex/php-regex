@@ -88,7 +88,7 @@ final class LintOutputRenderer
 
         $lines = [
             'Runtime' => 'PHP '.$output->warning(\PHP_VERSION).', PCRE2 '.$output->warning($runningPcre),
-            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).' ('.$target->source().')',
+            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).('C' === $target->target()->locale ? '' : ', locale '.$output->warning($target->target()->locale)).' ('.$target->source().')',
             'Processes' => $output->warning((string) $jobs),
         ];
         $lines['PCRE JIT'] = $output->warning($runtime->jitSetting ?? 'unknown');

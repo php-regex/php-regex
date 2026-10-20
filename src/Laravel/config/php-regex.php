@@ -52,20 +52,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Target PHP and PCRE2
+    | Target PHP, PCRE2 and locale
     |--------------------------------------------------------------------------
     |
-    | The PHP version ("8.2", "8.2.4" or 80200) and the PCRE2 release
-    | ("10.42") regex:lint judges patterns for. Left null, the PHP version is
-    | the lowest one composer.json allows (base_path('composer.json')), else
-    | the running PHP, and the PCRE2 release is the one that PHP bundles.
-    | The Regex service always judges for the running PHP: it is the one the
-    | application runs on.
+    | The PHP version ("8.2", "8.2.4" or 80200), the PCRE2 release ("10.42")
+    | and the LC_CTYPE locale ("tr_TR.UTF-8") regex:lint judges patterns for.
+    | Left null, the PHP version is the lowest one composer.json allows
+    | (base_path('composer.json')), else the running PHP, the PCRE2 release
+    | is the one that PHP bundles, and the locale is the one of the PHP
+    | running the command. The locale's character tables decide the size of
+    | some classes. The Regex service always judges for the running PHP,
+    | under its locale: it is the one the application runs on.
     |
     */
     'php_version' => null,
 
     'pcre_version' => null,
+
+    'locale' => null,
 
     /*
     |--------------------------------------------------------------------------

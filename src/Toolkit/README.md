@@ -57,6 +57,7 @@ Configuration
 | `redos_ignored_patterns` | `[]` | Patterns the ReDoS analysis skips |
 | `runtime_pcre_validation` | `false` | Compile each pattern with the running PCRE to validate it; only when the running engine is the target (`php_version` unset or `"runtime"`, no other `pcre_version`), otherwise `create()` throws |
 | `php_version`, `pcre_version` | running releases | The PHP (`"8.3"`, `80300`, `"runtime"`) and PCRE2 (`"10.44"`) the patterns are judged for |
+| `locale` | the running PHP's | The `LC_CTYPE` locale (`"tr_TR.UTF-8"`) the patterns run under; one the machine cannot set is refused |
 
 Usage
 -----

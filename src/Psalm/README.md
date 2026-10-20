@@ -308,6 +308,7 @@ PCRE2 release that PHP bundles: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
     <pluginClass class="PHPRegex\Psalm\Plugin">
         <phpVersion>8.2</phpVersion>
         <pcreVersion>10.40</pcreVersion>
+        <locale>tr_TR.UTF-8</locale>
     </pluginClass>
 </plugins>
 ```
@@ -316,8 +317,11 @@ PCRE2 release that PHP bundles: 10.39 for 8.1, 10.40 for 8.2, 10.42 for 8.3,
   `runtime`, the PHP running Psalm with the PCRE2 it links.
 * `<pcreVersion>`: a PCRE2 release (`10.40`), for a PHP built against another
   PCRE2 than the one it bundles, as some Linux distributions do.
+* `<locale>`: the `LC_CTYPE` locale the patterns run under (`tr_TR.UTF-8`),
+  the one of the PHP running Psalm by default.
 
-A value the plugin cannot read stops Psalm before any file is analysed.
+A value the plugin cannot read, or a locale this machine cannot set, stops
+Psalm before any file is analysed.
 
 With `<phpVersion>8.2</phpVersion>`, on Psalm running with PHP 8.4, the
 `(?a…)` options of PCRE2 10.43 are reported in `app/numbers.php`:

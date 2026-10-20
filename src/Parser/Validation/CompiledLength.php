@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Validation;
 
 use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Analysis\LookbehindLength;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -315,6 +316,10 @@ final class CompiledLength
      *                                             closing delimiter
      * @param PcreTarget                   $target the PCRE2 release whose
      *                                             first pass is measured
+     * @param CharacterTables|null         $tables the tables PHP hands PCRE2
+     *                                             under the locale judged; the
+     *                                             lengths they decide are not
+     *                                             known without them
      */
     public function __construct(
         private readonly \Closure $floor,
@@ -323,6 +328,7 @@ final class CompiledLength
         private readonly bool $ucp,
         private readonly string $flags,
         private readonly PcreTarget $target,
+        private readonly ?CharacterTables $tables = null,
     ) {}
 
     /**
@@ -1202,7 +1208,7 @@ final class CompiledLength
 
     private function classes(): ClassLength
     {
-        return $this->classes ??= new ClassLength($this->utf, $this->ucp, $this->turkishCasing(), $this->asciiOptions(), $this->target);
+        return $this->classes ??= new ClassLength($this->utf, $this->ucp, $this->turkishCasing(), $this->asciiOptions(), $this->target, $this->tables);
     }
 
     /**
@@ -1251,11 +1257,13 @@ final class CompiledLength
      * PCRE compiles as a caseless letter: an ASCII letter but "k" and "s",
      * which have a third case, unless rules kept to ASCII are in force; past
      * ASCII under a Unicode option, the other case the Unicode tables of the
-     * release give. Null when that is not known: without UTF or UCP the
-     * cases past ASCII follow the locale PHP builds its tables from; for
-     * "i", whose other case Turkish tables make a byte past ASCII. A byte
-     * past ASCII is no case of an ASCII letter, but in Turkish tables the
-     * bytes of "i"; one with more than one other case is no pair.
+     * release give; an ASCII character, and a byte without a Unicode
+     * option, the other case the tables of the locale give. Null when that
+     * is not known, without those tables: the cases past ASCII follow the
+     * locale PHP builds its tables from; for "i", whose other case Turkish
+     * tables make a byte past ASCII. A byte past ASCII is no case of an
+     * ASCII letter, but in Turkish tables the bytes of "i"; one with more
+     * than one other case is no pair.
      */
     private function isCasePair(int $first, int $second): ?bool
     {
@@ -1276,6 +1284,14 @@ final class CompiledLength
         // Unicode tables of the release give.
         if ($first > 0x7F && $this->unicodeCases()) {
             $other = $this->classes()->otherCase($first);
+
+            return $other !== $first && $other === $second;
+        }
+
+        // The tables of the locale give the other case of an ASCII
+        // character, and of a byte without a Unicode option.
+        if (null !== $this->tables && $first <= 0xFF) {
+            $other = $this->tables->otherCase($first, $this->target);
 
             return $other !== $first && $other === $second;
         }

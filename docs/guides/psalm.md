@@ -368,13 +368,15 @@ other:
 Patterns are judged for the PHP version Psalm analyses for (below 7.3, see
 below), with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.4,
 10.35 for 8.0, 10.39 for 8.1, 10.40 for 8.2,
-10.42 for 8.3, 10.44 for 8.4 and 8.5. Two options of the plugin override it:
+10.42 for 8.3, 10.44 for 8.4 and 8.5. Two options of the plugin override it,
+and a third names the locale:
 
 ```xml
 <plugins>
     <pluginClass class="PHPRegex\Psalm\Plugin">
         <phpVersion>8.2</phpVersion>
         <pcreVersion>10.40</pcreVersion>
+        <locale>tr_TR.UTF-8</locale>
     </pluginClass>
 </plugins>
 ```
@@ -382,7 +384,12 @@ below), with the PCRE2 release that version bundles: 10.32 for 7.3, 10.33 for 7.
 `<phpVersion>` takes a version (`8.2`), a `PHP_VERSION_ID` (`80200`) or
 `runtime`, the PHP running Psalm and the PCRE2 it links. `<pcreVersion>`
 takes a PCRE2 release, for a PHP linked against another PCRE2 than the one it
-bundles. A value the plugin cannot read stops Psalm before it reads any file.
+bundles. `<locale>` takes the `LC_CTYPE` locale the patterns run under, the
+one of the PHP running Psalm by default: its character tables decide the size
+of a few classes (see
+[Which locale judges a pattern](../concepts/pcre.md#which-locale-judges-a-pattern)).
+A value the plugin cannot read, or a locale this machine cannot set, stops
+Psalm before it reads any file.
 
 The target follows the rules of [`regex lint`](cli.md#target-php-and-pcre2): PHP
 7.2 and earlier ship PCRE1, which the library does not judge. A

@@ -196,6 +196,48 @@ parameters:
         pcreVersion: '10.42'  # or: PHPStan's PHP version with this PCRE2 release
 ```
 
+### Which locale judges a pattern
+
+PHP hands PCRE2 the character tables of the `LC_CTYPE` locale a call of
+`setlocale()` named: PCRE2's own under `C`, PHP's default, and those the C
+library gives under any other locale. They decide the other case of each
+byte without UTF, the other case of each ASCII letter, and the bytes `\d`,
+`\s`, `\w` and the POSIX classes hold without UCP. A few compiled sizes
+follow them: under `fr_FR.ISO8859-15`, `[\xa6\xa8]` (Š and š) compiles to one
+caseless character from PCRE2 10.34, and `/[\x00-\xfe]/i` to a match of any
+character from 10.45, as Ÿ brings ÿ in. Under `C`, both are a class of 33
+units.
+
+The `locale` option names the locale the patterns run under. Without it, the
+target takes the runtime's (`setlocale(LC_CTYPE, 0)`), read as `C` where PHP
+still compiles with PCRE2's own tables, as it does from its start under
+`C.UTF-8`:
+
+```php
+$regex = Regex::create(['php_version' => '8.4', 'locale' => 'tr_TR.UTF-8']);
+$regex->target()->locale; // 'tr_TR.UTF-8'
+```
+
+The tables are read from the engine itself, once per process: the library
+sets `LC_CTYPE` to the locale for the time of the read and sets it back after.
+Where PHP started under `C.UTF-8` with its own tables, and the C library reads
+that locale past ASCII (macOS does), setting the name back would change the
+tables PHP compiles with: `C` is set back there instead, which keeps them.
+The tables are the analysing machine's: two C libraries may give one name
+different tables, so judge on a machine like the one the patterns run on.
+Under a UTF-8 locale, the C library of macOS gives a byte the capital of the
+character of that code point, which may be past 255 (ÿ, U+0178): PCRE2 before
+10.43 kept its low byte (`[\xff\x78]` is then one caseless character), 10.43
+and later the byte itself. The library reads that capital from Unicode, for
+the releases on the other side of 10.43 than the running one. A
+locale the machine cannot set is refused with an
+`InvalidRegexOptionException` that names it.
+
+The command line takes `--locale`, `regex.json` takes `locale`, and every
+bridge has a `locale` setting beside its PHP and PCRE2 ones. The runtime
+services of the Symfony bundle and the Laravel package judge under the locale
+of the running PHP, as they judge for the running PHP.
+
 The test suite runs on every supported PHP with the PCRE2 its php-src
 bundles (8.2 with 10.40, 8.3 with 10.42, 8.4 and 8.5 with 10.44), with the
 10.42 Ubuntu 24.04 ships, and with the latest release, so the answers taken
@@ -263,14 +305,10 @@ Where the library still departs from what the target's PCRE2 reports:
   release does, from 10.32 to 10.49, the other cases of a caseless item
   from the Unicode tables of that release, under the case rules in force
   where it is written (`r`, `(?r)`, `(*CASELESS_RESTRICT)`,
-  `(*TURKISH_CASING)`): `/(?:[à-ž]x){1214}/iu` is refused on every
-  release, `/(?:[à-ž]x){1213}/iu` compiles. A few lengths it does not know
-  for sure: a class whose cases follow the locale PHP builds its tables
-  from: `[iI]`, which Turkish tables keep apart, without UTF a class of
-  bytes past ASCII such as `[\xe9\xc9]` (under UCP from 10.35 they follow
-  the Unicode tables), and from PCRE2 10.45 a class of types or caseless
-  letters that holds all of ASCII without UTF, which may then hold every
-  byte; from 10.45, a class
+  `(*TURKISH_CASING)`), and those of a byte from the character tables of
+  the locale (see [Which locale judges a pattern](#which-locale-judges-a-pattern)):
+  `/(?:[à-ž]x){1214}/iu` is refused on every release, `/(?:[à-ž]x){1213}/iu`
+  compiles. A few lengths it does not know for sure: from 10.45, a class
   that holds every character past 255 and a property, whose characters below
   256 may complete its map, as `[[:^ascii:][:^blank:][:space:]]` under `u`;
   `(*scan_substring:...)` and an extended class `(?[...])`; a class of

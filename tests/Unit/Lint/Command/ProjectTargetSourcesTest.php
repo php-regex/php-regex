@@ -14,8 +14,12 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Command;
 
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectTargetSourcesTest extends TestCase
 {
+    use InstalledLocales;
+    use PhpUnitForwardCompat;
     use TemporaryProject;
 
     #[Test]
@@ -56,7 +62,7 @@ final class ProjectTargetSourcesTest extends TestCase
             [],
         );
 
-        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'source' => 'php_regex.php_version', 'range' => [['php' => '8.3', 'pcre' => '10.42']]], $resolved->toArray());
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => 'C', 'source' => 'php_regex.php_version', 'range' => [['php' => '8.3', 'pcre' => '10.42']]], $resolved->toArray());
     }
 
     #[Test]
@@ -90,5 +96,58 @@ final class ProjectTargetSourcesTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
 
         ProjectTarget::fromSources(['php_regex.php_version' => 'eight'], [], null, []);
+    }
+
+    /**
+     * The locale is the first set source, after the PHP's and the PCRE2's
+     * in the source named; every version of the range, every parser of it
+     * and every version a guard keeps run under it.
+     */
+    #[Test]
+    public function test_the_first_set_locale_wins_and_every_version_keeps_it(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The locale of a project target');
+        $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^8.2"}}']);
+
+        $resolved = ProjectTarget::fromSources([], [], $directory, [], ['--locale' => null, 'regex.json' => 'fr_FR.ISO8859-1']);
+
+        $this->assertSame('fr_FR.ISO8859-1', $resolved->target()->locale);
+        $this->assertSame('composer.json require.php; regex.json', $resolved->source());
+        $this->assertSame('fr_FR.ISO8859-1', $resolved->regexOptions()['locale']);
+        $this->assertSame('PHP 8.2, PCRE2 10.40, locale fr_FR.ISO8859-1', $resolved->label());
+        $this->assertSame('fr_FR.ISO8859-1', $resolved->toArray()['locale']);
+        foreach ($resolved->range() as $target) {
+            $this->assertSame('fr_FR.ISO8859-1', $target->locale);
+        }
+
+        $floor = RegexParser::create($resolved->regexOptions());
+        foreach ($resolved->rangeParsers($floor) as $parser) {
+            $this->assertSame('fr_FR.ISO8859-1', $parser->target()->locale);
+            $this->assertSame($floor->getCache(), $parser->getCache());
+        }
+
+        $judged = $resolved->judgedRange($floor);
+        foreach ($judged->narrow(TargetConstraint::phpFrom(80300, null)) as $target) {
+            $this->assertSame('fr_FR.ISO8859-1', $target->locale);
+            $this->assertSame('fr_FR.ISO8859-1', $judged->parserFor($target)->target()->locale);
+        }
+    }
+
+    #[Test]
+    public function test_a_locale_named_where_the_php_is_is_named_once(): void
+    {
+        $resolved = ProjectTarget::fromSources(['regex.json' => '8.4'], [], null, [], ['regex.json' => 'C']);
+
+        $this->assertSame('regex.json', $resolved->source());
+        $this->assertSame('PHP 8.4, PCRE2 10.44', $resolved->label());
+    }
+
+    #[Test]
+    public function test_a_locale_the_machine_cannot_set_is_refused(): void
+    {
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains('"locale" names "xx_YY.NOWHERE"');
+
+        ProjectTarget::fromSources([], [], null, [], ['regex.json' => 'xx_YY.NOWHERE']);
     }
 }

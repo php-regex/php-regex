@@ -24,6 +24,7 @@ namespace PHPRegex\Linter\Config;
  *     exclude?: string|list<string>,
  *     phpVersion?: string|int,
  *     pcreVersion?: string,
+ *     locale?: string,
  *     extraction?: array{interop?: list<string>, functions?: list<string>},
  *     jobs?: int,
  *     format?: string,

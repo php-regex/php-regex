@@ -448,7 +448,7 @@ final class LintCommandStreamsTest extends TestCase
         $this->assertStringContainsString('Note: PCRE2 10.32 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.', $stderr);
         $document = json_decode($stdout, true, flags: \JSON_THROW_ON_ERROR);
         $this->assertIsArray($document);
-        $this->assertSame(['php' => '7.3', 'pcre' => '10.32', 'source' => '--php-version', 'range' => [['php' => '7.3', 'pcre' => '10.32']]], $document['target'] ?? null);
+        $this->assertSame(['php' => '7.3', 'pcre' => '10.32', 'locale' => 'C', 'source' => '--php-version', 'range' => [['php' => '7.3', 'pcre' => '10.32']]], $document['target'] ?? null);
     }
 
     /**

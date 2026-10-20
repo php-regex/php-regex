@@ -52,6 +52,7 @@ Configuration
 | --- | --- | --- | --- |
 | `php_version` | `"8.3"`, `80300` or `"runtime"` | running PHP | PHP release the patterns are judged for; alone, it means the PCRE2 it bundles |
 | `pcre_version` | `"10.44"` | bundled with the target PHP | PCRE2 release the patterns are judged for |
+| `locale` | `"tr_TR.UTF-8"` | the runtime's, `C` by default | `LC_CTYPE` locale the patterns run under: its character tables decide the size of a few classes; one the machine cannot set is refused |
 | `max_pattern_length` | positive int | `100000` | pattern length beyond which parsing is refused |
 | `max_lookbehind_length` | non-negative int | `255` | maximum length of a variable-length lookbehind, PCRE2's own `max_varlookbehind` |
 | `max_recursion_depth` | positive int | `1024` | how deep groups may nest before the parser stops |

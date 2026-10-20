@@ -138,6 +138,17 @@ final class Regex
     }
 
     /**
+     * A facade judging for another target with every other option of this
+     * one: this one for its own target (see RegexParser::withTarget()).
+     */
+    public function withTarget(PcreTarget $target): self
+    {
+        $parser = $this->parser->withTarget($target);
+
+        return $parser === $this->parser ? $this : new self($parser, $this->redosIgnoredPatterns, $this->engine);
+    }
+
+    /**
      * The parser this facade reads and judges patterns with, to hand to
      * whatever else reads patterns under the same options.
      */
