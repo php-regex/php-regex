@@ -49,11 +49,11 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create();
 
-        // Repeated past the 64 KiB PCRE compiles, but the other cases the
-        // caseless class adds past 255 come from the Unicode tables of the
-        // engine, which the static checks do not read: only PCRE itself
-        // refuses it.
-        $result = $regex->validate('/(?:a[à-ž]{0}){1300}/iu');
+        // Repeated past the 64 KiB PCRE compiles, but its two classes are
+        // counted at their floor by the static checks, one of more than 256
+        // members, one of every character past 255 and a property: only
+        // PCRE itself refuses it.
+        $result = $regex->validate(self::tooLargeForTheEngine());
 
         $this->assertTrue($result->isValid);
     }
@@ -62,15 +62,15 @@ final class RegexApiTest extends TestCase
     {
         $regex = Regex::create(['runtime_pcre_validation' => true]);
 
-        $result = $regex->validate('/(?:a[à-ž]{0}){1300}/iu');
+        $result = $regex->validate(self::tooLargeForTheEngine());
 
         $this->assertFalse($result->isValid);
         $this->assertSame(ValidationErrorCategory::PcreRuntime, $result->category);
         $this->assertSame(ErrorCode::PcreRuntime, $result->errorCode);
         $this->assertStringContainsString('PCRE runtime error', (string) $result->error);
-        // PCRE2 10.48 reports "regular expression is too large" at offset 0,
-        // the releases before at the end of the pattern.
-        $this->assertContains($result->offset, [0, 21]);
+        // PCRE2 10.47 and later report "regular expression is too large" at
+        // offset 0, the releases before at the end of the pattern.
+        $this->assertContains($result->offset, [0, \strlen(self::tooLargeForTheEngine()) - 3]);
     }
 
     public function test_optimize(): void
@@ -192,5 +192,13 @@ final class RegexApiTest extends TestCase
         $ast7 = $regex->parsePattern('abc', 'i', '#');
         $ast8 = $regex->parse('#abc#i');
         $this->assertEquals($ast7, $ast8);
+    }
+
+    /**
+     * Too large on every PCRE2 release, judged valid by the static checks.
+     */
+    private static function tooLargeForTheEngine(): string
+    {
+        return '/(?:a['.implode('', array_map(static fn (int $i): string => \sprintf('\\x{%x}', 0x1000 + 2 * $i), range(0, 299))).']{0}[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
     }
 }

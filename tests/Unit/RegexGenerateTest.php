@@ -197,9 +197,10 @@ final class RegexGenerateTest extends TestCase
     }
 
     /**
-     * Oracle: PCRE2 refuses the pattern as too large, its caseless class
-     * adding other cases past 255 the library does not count; the library
-     * judges the pattern valid, and reads it.
+     * Oracle: PCRE2 refuses the pattern as too large, counting two classes
+     * the library counts at their floor (one of more than 256 members, one
+     * of every character past 255 and a property, whose map may hold every
+     * byte from 10.45); the library judges the pattern valid, and reads it.
      */
     #[Test]
     #[DataProvider('provideUncompilable')]
@@ -214,7 +215,7 @@ final class RegexGenerateTest extends TestCase
      */
     public static function provideUncompilable(): iterable
     {
-        yield 'too large for the engine' => ['/(?:a[à-ž]{0}){1300}/iu', str_repeat('a', 1300)];
+        yield 'too large for the engine' => [self::tooLargeForTheEngine(), str_repeat('a', 1900)];
     }
 
     /**
@@ -268,5 +269,13 @@ final class RegexGenerateTest extends TestCase
 
         $this->expectException(SampleGenerationException::class);
         Regex::create()->generate('/(?1)a/');
+    }
+
+    /**
+     * Too large on every PCRE2 release, judged valid by the library.
+     */
+    private static function tooLargeForTheEngine(): string
+    {
+        return '/(?:a['.implode('', array_map(static fn (int $i): string => \sprintf('\\x{%x}', 0x1000 + 2 * $i), range(0, 299))).']{0}[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
     }
 }

@@ -54,21 +54,22 @@ final class ValidationMemoTest extends TestCase
     }
 
     /**
-     * "(?:[à-ž]x){1300}" under "iu" is past the 64 KiB PCRE compiles, but the
-     * other cases its class adds past 255 come from the Unicode tables of
-     * the engine, which the static checks do not read: only the running
-     * engine refuses it.
+     * The pattern is past the 64 KiB PCRE compiles, but its two classes are
+     * counted at their floor by the static checks, one of more than 256
+     * members, one of every character past 255 and a property: only the
+     * running engine refuses it.
      */
     #[Test]
     public function test_a_refusal_of_the_running_engine_is_kept(): void
     {
         $parser = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => true]);
 
-        $refused = $parser->validate('/(?:[à-ž]x){1300}/iu');
+        $tooLarge = '/(?:a['.implode('', array_map(static fn (int $i): string => \sprintf('\\x{%x}', 0x1000 + 2 * $i), range(0, 299))).']{0}[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
+        $refused = $parser->validate($tooLarge);
         $valid = $parser->validate('/(?:[à-ž]x){8}/iu');
 
         $this->assertSame(ValidationErrorCategory::PcreRuntime, $refused->category);
-        $this->assertSame($refused, $parser->validate('/(?:[à-ž]x){1300}/iu'));
+        $this->assertSame($refused, $parser->validate($tooLarge));
         $this->assertTrue($valid->isValid);
         $this->assertSame($valid, $parser->validate('/(?:[à-ž]x){8}/iu'));
     }
