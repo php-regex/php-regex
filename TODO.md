@@ -135,43 +135,7 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
-## Class and reference errors still reported wrong
-
-Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
-
-- In the body of an alphabetic assertion, a range from a class escape is
-  refused after a `\c` PCRE refuses later in the class: `(*pla:[\d-a\cé])`
-  is "invalid range in character class" at offset 9 from 10.33 (10 from
-  10.45), the library says 13 (`\c` before a character past ASCII); the
-  same class in `(?=...)` is reported right.
-- Under `u`, `\pé` is "malformed \P or \p sequence" at offset 3 up to
-  10.46, inside the `é` (4 from 10.47); the library says 4 on every
-  release, and 5 for 4 in `[\pé]`.
-- PHP 7.3 without `X` (10.32) reads `\P` ending a range from a `[` as its
-  letter: `[^a[-\P{]a)` is "range out of order" at offset 6 (php:7.3-cli),
-  the library says 11 (class left open), reading `\P{` as a property no `}`
-  closes.
-- A name nothing closes in a call by name, `(?<n>a)(?&n )` or
-  `(?<n>a)(?P>n )`, is "syntax error in subpattern name (missing
-  terminator?)" from 10.33 to 10.46, at the offset the library gives, where
-  the library says `regex.group.unclosed`. Without UTF, `(?<n>a)(?&é)` is
-  "subpattern name expected" at 10 on every release (the library says
-  `regex.group.unclosed`), and so are `(?<n>a)(?&١)` and `(?<n>a)(?P>١)`
-  (the library says `regex.group.name_invalid`).
-- From 10.47 a pattern too large, `(?:a){65535}`, is refused at offset 0;
-  the library says 12.
-- Up to 10.43 a reference name past 32 characters that nothing closes,
-  `(?<n>a)\k<abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb ` (33 characters), is
-  "subpattern name is too long" at the end of the name (43); the library
-  says `regex.group.name_unterminated` there, and one byte late for a padded
-  `\k{` or `\g{` on 10.43. From 10.44 the missing terminator comes first.
-- Under UTF the letters and digits of a name are those of the release's
-  Unicode tables: `(?<a>x)\k<𖫀>/u` (U+16AC0, a digit from Unicode 14) is
-  "subpattern name expected" on 10.33 to 10.37, where the library says
-  `regex.group.name_invalid`; `(?<aࡰ>x)/u` is refused at 4 on 10.33 to
-  10.38 and accepted by the library.
-
-## Lookbehind measures still reported wrong
+## Lookbehind measures and sizes still reported wrong
 
 Each checked with pcre2test 10.32 to 10.49.
 
@@ -180,17 +144,19 @@ Each checked with pcre2test 10.32 to 10.49.
   `(?<=x(?(DEFINE)(a))b+)c` and `(?<=(?:(?(DEFINE)(a)))b+)` compile there,
   and `(?<=(?<=(?(DEFINE)(a))d+)b)` is "lookbehind assertion is not fixed
   length" at offset 0, on the outer lookbehind; the library refuses the
-  first three at 0 and the last at 4, as 10.35 does. Following it means
-  measuring the rest of the pattern one level up through every group and
-  lookbehind that holds the DEFINE group, which the tree the library
-  measures does not hold.
-- Up to 10.42 a repeat of variable count has no fixed length whatever it
-  repeats, an empty group included: `(?<=(?:)?)`, `(?<=()?)`,
-  `(?<=(?:){1,2})`, `(?<=(?<=a)?)`, `(?<=(?:(?=a))?)` and, from 10.34,
-  `(?<=(*ACCEPT)?)` and `(?<=a(*ACCEPT:x)??)` are "lookbehind assertion is
-  not fixed length" at offset 0; the library accepts them. A lookahead
-  repeated directly, `(?<=(?=a)?)`, stays fixed. The measure needs an
-  outcome for a length that is neither fixed nor unbounded.
+  first three at 0 and the last at 4, as 10.35 does. On 10.34 the
+  lookbehinds after it in the pattern are then never measured:
+  `(?<=(?(DEFINE)(a))b)(?<=c+)` compiles there, and is refused at 20 on
+  10.32, 10.33 and 10.35. A repeat of such a DEFINE group is left alone:
+  `(?<=(?(DEFINE)(a))??)` compiles on 10.32 to 10.34.
+- On 10.34 a lookbehind in a DEFINE group inside a lookahead inside a
+  lookbehind is never measured: `(?<=(?=(?(DEFINE)(?<=b+))))` compiles
+  there, and is refused at 17 from 10.35; the library refuses it at 17 on
+  10.34 too.
+- Up to 10.42 an item is added to the length of its branch before the
+  repeat after it is read: `(?<=a{65535}b?)` is "lookbehind assertion is
+  too long" at 0 there, where the library says
+  `regex.lookbehind.variable_length_not_supported` (same offset).
 - From 10.48 a pattern too large is reported at 0 when an item or a branch
   passes the limit, at its end when only the check where a group ends finds
   it. The library measures on its size floors, and keeps the end once a
@@ -198,24 +164,6 @@ Each checked with pcre2test 10.32 to 10.49.
   `(?:x|(?:b){8190})` are at 0 on 10.48 and 10.49, the library says 13 and
   17; `(?:a{2}){7000}|(?:bb){1000}` is at 0, the library says 27, as the
   floor counts `a{2}` two units where PCRE2 compiles four.
-  first three at 0 and the last at 4, as 10.35 does. On 10.34 the
-  lookbehinds after it in the pattern are then never measured:
-  `(?<=(?(DEFINE)(a))b)(?<=c+)` compiles there, and is refused at 20 on
-  10.32, 10.33 and 10.35. Following it means reading the pattern again with
-  one parenthesis fewer from the DEFINE group on, the data PCRE2 keeps for
-  the skipped opening read as characters (their count depends on how
-  PCRE2 was built), which the tree the library measures does not hold. A
-  repeat of such a DEFINE group is left alone: `(?<=(?(DEFINE)(a))??)`
-  compiles on 10.32 to 10.34.
-- On 10.34 a lookbehind in a DEFINE group inside a lookahead inside a
-  lookbehind is never measured: `(?<=(?=(?(DEFINE)(?<=b+))))` compiles
-  there, and is refused at 17 from 10.35; the library refuses it at 17 on
-  10.34 too.
-
-- Up to 10.42 an item is added to the length of its branch before the
-  repeat after it is read: `(?<=a{65535}b?)` is "lookbehind assertion is
-  too long" at 0 there, where the library says
-  `regex.lookbehind.variable_length_not_supported` (same offset).
 - `Regex::info()` reports the longest lookbehind of one PCRE never measures:
   `(?<=(*ACCEPT)(?<=abcd))` and `(?<=(?(DEFINE)(?<=abcd)))` have no
   "Max lookbehind" in pcre2test 10.49 `/I`; the library says 4.
