@@ -238,6 +238,14 @@ final class CaselessLengthTest extends TestCase
         yield 'class of a letter and a Latin-1 letter, 10.44' => ['pattern' => '/[aé]/u', 'release' => '10.44', 'length' => 40];
         yield 'class of a letter and a Latin-1 letter, 10.45' => ['pattern' => '/[aé]/u', 'release' => '10.45', 'length' => 40];
         yield 'class of a letter and a Latin-1 letter, 10.49' => ['pattern' => '/[aé]/u', 'release' => '10.49', 'length' => 40];
+        yield 'caseless class of the long s and a character past 255, 10.32' => ['pattern' => '/[ſ\\x{200}]/iu', 'release' => '10.32', 'length' => 52];
+        yield 'caseless class of the long s and a character past 255, 10.44' => ['pattern' => '/[ſ\\x{200}]/iu', 'release' => '10.44', 'length' => 52];
+        yield 'caseless class of the long s and a character past 255, 10.45' => ['pattern' => '/[ſ\\x{200}]/iu', 'release' => '10.45', 'length' => 52];
+        yield 'caseless class of the long s and a character past 255, 10.49' => ['pattern' => '/[ſ\\x{200}]/iu', 'release' => '10.49', 'length' => 52];
+        yield 'caseless class of the Kelvin sign and a character past 255, 10.32' => ['pattern' => '/[\\x{212A}\\x{200}]/iu', 'release' => '10.32', 'length' => 53];
+        yield 'caseless class of the Kelvin sign and a character past 255, 10.44' => ['pattern' => '/[\\x{212A}\\x{200}]/iu', 'release' => '10.44', 'length' => 53];
+        yield 'caseless class of the Kelvin sign and a character past 255, 10.45' => ['pattern' => '/[\\x{212A}\\x{200}]/iu', 'release' => '10.45', 'length' => 53];
+        yield 'caseless class of the Kelvin sign and a character past 255, 10.49' => ['pattern' => '/[\\x{212A}\\x{200}]/iu', 'release' => '10.49', 'length' => 53];
     }
 
     #[Test]
