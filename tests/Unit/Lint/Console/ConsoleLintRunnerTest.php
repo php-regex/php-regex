@@ -294,20 +294,15 @@ final class ConsoleLintRunnerTest extends TestCase
 
     /**
      * The format is named in any case, folded as ASCII whatever the
-     * locale: under a Turkish one, PHP 8.1's strtolower() reads "I" as
-     * a dotless i.
+     * locale (Ascii::lower(), which AsciiTest holds every package on PHP
+     * 8.1 to: under a Turkish locale its strtolower() reads "I" as a
+     * dotless i). Changing the locale here would change the character
+     * tables of every pattern compiled after it in this process.
      */
     #[Test]
     public function test_the_format_is_read_in_any_case(): void
     {
-        $locale = setlocale(\LC_CTYPE, '0');
-        setlocale(\LC_CTYPE, 'tr_TR.UTF-8', 'tr_TR.ISO8859-9', 'tr_TR');
-
-        try {
-            $status = $this->lint(self::request([], format: 'CHECKSTYLE'));
-        } finally {
-            setlocale(\LC_CTYPE, false === $locale ? 'C' : $locale);
-        }
+        $status = $this->lint(self::request([], format: 'CHECKSTYLE'));
 
         $this->assertSame(0, $status);
         $this->assertStringStartsWith('<?xml', $this->standard());
