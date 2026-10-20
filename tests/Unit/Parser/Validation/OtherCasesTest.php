@@ -28,6 +28,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class OtherCasesTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        // Each test reads the tables afresh.
+        StaticCaches::clear();
+    }
+
     #[Test]
     #[DataProvider('provideOtherCases')]
     public function test_each_release_reads_the_other_cases_of_its_unicode_tables(string $release, int $codePoint, int $otherCase): void

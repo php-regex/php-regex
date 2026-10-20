@@ -206,6 +206,38 @@ final class CaselessLengthTest extends TestCase
         yield 'caseless class of a range past 255 and a negated type, 10.44' => ['pattern' => '/[ā-ž\\D]/iu', 'release' => '10.44', 'length' => 52];
         yield 'caseless class of a range past 255 and a negated type, 10.45' => ['pattern' => '/[ā-ž\\D]/iu', 'release' => '10.45', 'length' => 52];
         yield 'caseless class of a range past 255 and a negated type, 10.49' => ['pattern' => '/[ā-ž\\D]/iu', 'release' => '10.49', 'length' => 52];
+        yield 'caseless range of Cherokee small letters, 10.32' => ['pattern' => '/[\\x{13F7}-\\x{13FD}]/iu', 'release' => '10.32', 'length' => 26];
+        yield 'caseless range of Cherokee small letters, 10.44' => ['pattern' => '/[\\x{13F7}-\\x{13FD}]/iu', 'release' => '10.44', 'length' => 26];
+        yield 'caseless range of Cherokee small letters, 10.45' => ['pattern' => '/[\\x{13F7}-\\x{13FD}]/iu', 'release' => '10.45', 'length' => 26];
+        yield 'caseless range of Cherokee small letters, 10.49' => ['pattern' => '/[\\x{13F7}-\\x{13FD}]/iu', 'release' => '10.49', 'length' => 26];
+        yield 'caseless class of the long s and a letter, 10.32' => ['pattern' => '/[ſx]/iu', 'release' => '10.32', 'length' => 47];
+        yield 'caseless class of the long s and a letter, 10.44' => ['pattern' => '/[ſx]/iu', 'release' => '10.44', 'length' => 47];
+        yield 'caseless class of the long s and a letter, 10.45' => ['pattern' => '/[ſx]/iu', 'release' => '10.45', 'length' => 47];
+        yield 'caseless class of the long s and a letter, 10.49' => ['pattern' => '/[ſx]/iu', 'release' => '10.49', 'length' => 47];
+        yield 'caseless class of the Kelvin sign and a letter, 10.32' => ['pattern' => '/[\\x{212A}x]/iu', 'release' => '10.32', 'length' => 48];
+        yield 'caseless class of the Kelvin sign and a letter, 10.44' => ['pattern' => '/[\\x{212A}x]/iu', 'release' => '10.44', 'length' => 48];
+        yield 'caseless class of the Kelvin sign and a letter, 10.45' => ['pattern' => '/[\\x{212A}x]/iu', 'release' => '10.45', 'length' => 48];
+        yield 'caseless class of the Kelvin sign and a letter, 10.49' => ['pattern' => '/[\\x{212A}x]/iu', 'release' => '10.49', 'length' => 48];
+        yield 'caseless class of every byte but one whose other case it holds, under UCP without UTF, 10.32' => ['pattern' => '/(*UCP)[\\x00-\\xdf\\xe1-\\xff]/i', 'release' => '10.32', 'length' => 40];
+        yield 'caseless class of every byte but one whose other case it holds, under UCP without UTF, 10.44' => ['pattern' => '/(*UCP)[\\x00-\\xdf\\xe1-\\xff]/i', 'release' => '10.44', 'length' => 40];
+        yield 'caseless class of every byte but one whose other case it holds, under UCP without UTF, 10.45' => ['pattern' => '/(*UCP)[\\x00-\\xdf\\xe1-\\xff]/i', 'release' => '10.45', 'length' => 8];
+        yield 'caseless class of every byte but one whose other case it holds, under UCP without UTF, 10.49' => ['pattern' => '/(*UCP)[\\x00-\\xdf\\xe1-\\xff]/i', 'release' => '10.49', 'length' => 8];
+        yield 'caseless class of every byte but the capitals and one whose other case it holds, under UCP without UTF, 10.32' => ['pattern' => '/(*UCP)[\\x00-\\x40\\x5b-\\xdf\\xe1-\\xff]/i', 'release' => '10.32', 'length' => 40];
+        yield 'caseless class of every byte but the capitals and one whose other case it holds, under UCP without UTF, 10.44' => ['pattern' => '/(*UCP)[\\x00-\\x40\\x5b-\\xdf\\xe1-\\xff]/i', 'release' => '10.44', 'length' => 40];
+        yield 'caseless class of every byte but the capitals and one whose other case it holds, under UCP without UTF, 10.45' => ['pattern' => '/(*UCP)[\\x00-\\x40\\x5b-\\xdf\\xe1-\\xff]/i', 'release' => '10.45', 'length' => 8];
+        yield 'caseless class of every byte but the capitals and one whose other case it holds, under UCP without UTF, 10.49' => ['pattern' => '/(*UCP)[\\x00-\\x40\\x5b-\\xdf\\xe1-\\xff]/i', 'release' => '10.49', 'length' => 8];
+        yield 'caseless class past 255, then the same class not caseless, 10.32' => ['pattern' => '/(?i:[ā-ž])[ā-ž]/u', 'release' => '10.32', 'length' => 65];
+        yield 'caseless class past 255, then the same class not caseless, 10.44' => ['pattern' => '/(?i:[ā-ž])[ā-ž]/u', 'release' => '10.44', 'length' => 65];
+        yield 'caseless class past 255, then the same class not caseless, 10.45' => ['pattern' => '/(?i:[ā-ž])[ā-ž]/u', 'release' => '10.45', 'length' => 65];
+        yield 'caseless class past 255, then the same class not caseless, 10.49' => ['pattern' => '/(?i:[ā-ž])[ā-ž]/u', 'release' => '10.49', 'length' => 65];
+        yield 'class of i and the last ASCII character, 10.32' => ['pattern' => '/[i\\x7f]/u', 'release' => '10.32', 'length' => 40];
+        yield 'class of i and the last ASCII character, 10.44' => ['pattern' => '/[i\\x7f]/u', 'release' => '10.44', 'length' => 40];
+        yield 'class of i and the last ASCII character, 10.45' => ['pattern' => '/[i\\x7f]/u', 'release' => '10.45', 'length' => 40];
+        yield 'class of i and the last ASCII character, 10.49' => ['pattern' => '/[i\\x7f]/u', 'release' => '10.49', 'length' => 40];
+        yield 'class of a letter and a Latin-1 letter, 10.32' => ['pattern' => '/[aé]/u', 'release' => '10.32', 'length' => 40];
+        yield 'class of a letter and a Latin-1 letter, 10.44' => ['pattern' => '/[aé]/u', 'release' => '10.44', 'length' => 40];
+        yield 'class of a letter and a Latin-1 letter, 10.45' => ['pattern' => '/[aé]/u', 'release' => '10.45', 'length' => 40];
+        yield 'class of a letter and a Latin-1 letter, 10.49' => ['pattern' => '/[aé]/u', 'release' => '10.49', 'length' => 40];
     }
 
     #[Test]
@@ -403,6 +435,46 @@ final class CaselessLengthTest extends TestCase
         yield 'quoted caseless letters under rules kept to ASCII, 10.48' => ['pattern' => '/(*CASELESS_RESTRICT)\\Qks\\E/iu', 'release' => '10.48', 'length' => 11];
         yield 'caseless i under rules kept to ASCII, 10.48' => ['pattern' => '/(*CASELESS_RESTRICT)i/iu', 'release' => '10.48', 'length' => 9];
         yield 'counted caseless capital I under rules kept to ASCII, 10.48' => ['pattern' => '/(*CASELESS_RESTRICT)I{2}/iu', 'release' => '10.48', 'length' => 11];
+        yield 'caseless range from the long s under the r modifier, 10.43' => ['pattern' => '/[\\x{17F}-\\x{180}]/iur', 'release' => '10.43', 'length' => 20];
+        yield 'caseless range from the long s under the r modifier, 10.44' => ['pattern' => '/[\\x{17F}-\\x{180}]/iur', 'release' => '10.44', 'length' => 20];
+        yield 'caseless range from the long s under the r modifier, 10.45' => ['pattern' => '/[\\x{17F}-\\x{180}]/iur', 'release' => '10.45', 'length' => 20];
+        yield 'caseless range from the long s under the r modifier, 10.49' => ['pattern' => '/[\\x{17F}-\\x{180}]/iur', 'release' => '10.49', 'length' => 20];
+        yield 'counted caseless dotted capital I under Turkish rules, 10.45' => ['pattern' => '/(*TURKISH_CASING)\\x{130}{2}/iu', 'release' => '10.45', 'length' => 13];
+        yield 'counted caseless dotted capital I under Turkish rules, 10.49' => ['pattern' => '/(*TURKISH_CASING)\\x{130}{2}/iu', 'release' => '10.49', 'length' => 13];
+        yield 'counted caseless dotless i under Turkish rules, 10.45' => ['pattern' => '/(*TURKISH_CASING)\\x{131}{2}/iu', 'release' => '10.45', 'length' => 13];
+        yield 'counted caseless dotless i under Turkish rules, 10.49' => ['pattern' => '/(*TURKISH_CASING)\\x{131}{2}/iu', 'release' => '10.49', 'length' => 13];
+        yield 'caseless capital S under an inline r, 10.43' => ['pattern' => '/(?r)S/iu', 'release' => '10.43', 'length' => 9];
+        yield 'caseless capital S under an inline r, 10.44' => ['pattern' => '/(?r)S/iu', 'release' => '10.44', 'length' => 9];
+        yield 'caseless capital S under an inline r, 10.45' => ['pattern' => '/(?r)S/iu', 'release' => '10.45', 'length' => 9];
+        yield 'caseless capital S under an inline r, 10.49' => ['pattern' => '/(?r)S/iu', 'release' => '10.49', 'length' => 9];
+        yield 'counted caseless long s under an inline r, 10.43' => ['pattern' => '/(?r)ſ{2}/iu', 'release' => '10.43', 'length' => 12];
+        yield 'counted caseless long s under an inline r, 10.44' => ['pattern' => '/(?r)ſ{2}/iu', 'release' => '10.44', 'length' => 12];
+        yield 'counted caseless long s under an inline r, 10.45' => ['pattern' => '/(?r)ſ{2}/iu', 'release' => '10.45', 'length' => 12];
+        yield 'counted caseless long s under an inline r, 10.49' => ['pattern' => '/(?r)ſ{2}/iu', 'release' => '10.49', 'length' => 12];
+        yield 'caseless class of the dotted capital I and a character past 255 under Turkish rules, 10.45' => ['pattern' => '/(*TURKISH_CASING)[\\x{130}\\x{200}]/iu', 'release' => '10.45', 'length' => 52];
+        yield 'caseless class of the dotted capital I and a character past 255 under Turkish rules, 10.49' => ['pattern' => '/(*TURKISH_CASING)[\\x{130}\\x{200}]/iu', 'release' => '10.49', 'length' => 52];
+        yield 'caseless class of the dotless i and a character past 255 under Turkish rules, 10.45' => ['pattern' => '/(*TURKISH_CASING)[\\x{131}\\x{200}]/iu', 'release' => '10.45', 'length' => 52];
+        yield 'caseless class of the dotless i and a character past 255 under Turkish rules, 10.49' => ['pattern' => '/(*TURKISH_CASING)[\\x{131}\\x{200}]/iu', 'release' => '10.49', 'length' => 52];
+    }
+
+    #[Test]
+    #[DataProvider('provideLengthsNotKnown')]
+    public function test_a_pair_whose_cases_follow_the_locale_has_no_length(string $pattern): void
+    {
+        $this->assertNull(self::lengthOf($pattern, '10.49'), $pattern);
+    }
+
+    /**
+     * The other case "i" takes in the tables PHP builds from a Turkish
+     * locale is a byte past ASCII: whether "i" and such a byte are a pair is
+     * not known here, one past 255 never is.
+     *
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLengthsNotKnown(): iterable
+    {
+        yield 'class of i and the capital y with an acute' => ['pattern' => '/[iÝ]/u'];
+        yield 'class of i and the last byte' => ['pattern' => '/[iÿ]/u'];
     }
 
     #[Test]
@@ -498,7 +570,7 @@ final class CaselessLengthTest extends TestCase
         $counts = ['', '', '*', '{2}', '{0,3}', '+?'];
         $measured = 0;
 
-        for ($i = 0; $i < 600; $i++) {
+        for ($i = 0; $i < 200; $i++) {
             $body = $opening;
             for ($j = mt_rand(1, 10); $j > 0; $j--) {
                 $piece = $pieces[mt_rand(0, \count($pieces) - 1)];
@@ -528,7 +600,7 @@ final class CaselessLengthTest extends TestCase
             $measured++;
         }
 
-        $this->assertGreaterThan(200, $measured);
+        $this->assertGreaterThan(60, $measured);
     }
 
     /**

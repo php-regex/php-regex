@@ -160,6 +160,18 @@ final class CompiledLength
     ];
 
     /**
+     * The characters Turkish case rules give a caseless set of their own:
+     * "i" with the dotted capital I, "I" with the dotless i.
+     */
+    private const TURKISH_CASED = [0x49 => true, 0x69 => true, 0x130 => true, 0x131 => true];
+
+    /**
+     * The characters of the caseless sets that start in ASCII, which rules
+     * kept to ASCII leave out: "k", "s", the Kelvin sign and the long s.
+     */
+    private const ASCII_SET_MEMBERS = [0x4B => true, 0x53 => true, 0x6B => true, 0x73 => true, 0x17F => true, 0x212A => true];
+
+    /**
      * Empty script runs, which the parser reads as verbs, and the groups
      * they compile to.
      */
@@ -1164,11 +1176,12 @@ final class CompiledLength
     }
 
     /**
-     * Whether Turkish case rules are set, from 10.45.
+     * Whether Turkish case rules are set: from 10.45, as an older release
+     * refuses the setting.
      */
     private function turkishCasing(): bool
     {
-        return $this->turkish ??= $this->caseRulesVary() && $this->target->supports(PcreFeature::CasingSettingVerbs) && \in_array('TURKISH_CASING', StartOptions::items($this->source), true);
+        return $this->turkish ??= \in_array('TURKISH_CASING', StartOptions::items($this->source), true);
     }
 
     /**
@@ -1180,11 +1193,11 @@ final class CompiledLength
      */
     private function hasCaselessSet(int $codePoint): bool
     {
-        if (\in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true)) {
+        if (isset(self::TURKISH_CASED[$codePoint])) {
             return $this->turkishCasing() && !$this->restricted;
         }
 
-        return isset(self::CASELESS_SETS[$codePoint]) && !($this->restricted && \in_array($codePoint, [0x4B, 0x53, 0x6B, 0x73, 0x17F, 0x212A], true));
+        return isset(self::CASELESS_SETS[$codePoint]) && !($this->restricted && isset(self::ASCII_SET_MEMBERS[$codePoint]));
     }
 
     private function classes(): ClassLength
@@ -1228,7 +1241,7 @@ final class CompiledLength
             $on = false;
         }
 
-        [$set, $unset] = explode('-', $flags, 2) + [1 => ''];
+        [$set, $unset] = explode('-', $flags) + [1 => ''];
 
         return !str_contains($unset, $option) && ($on || str_contains($set, $option));
     }
@@ -1248,14 +1261,14 @@ final class CompiledLength
     {
         // Turkish rules keep the cases of "i" and "I" from such a pair, but
         // where rules kept to ASCII are in force.
-        if ($this->turkishCasing() && !$this->restricted && \in_array($first, [0x49, 0x69, 0x130, 0x131], true)) {
+        if ($this->turkishCasing() && !$this->restricted && isset(self::TURKISH_CASED[$first])) {
             return false;
         }
 
         // A character with more than one other case is never read as a
-        // pair, a byte without UTF included, but for two ASCII letters
-        // under rules kept to ASCII.
-        if (isset(self::CASELESS_SETS[$first]) && !($this->restricted && $first <= 0x7F && $second <= 0x7F)) {
+        // pair, a byte without UTF included, but for an ASCII letter under
+        // rules kept to ASCII, whose other case is then its ASCII one.
+        if (isset(self::CASELESS_SETS[$first]) && !($this->restricted && $first < 0x80)) {
             return false;
         }
 

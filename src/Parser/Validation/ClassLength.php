@@ -148,6 +148,21 @@ final class ClassLength
     private const OTHER_CASE_PAST_255 = [0xB5 => 0x3BC, 0xDF => 0x1E9E, 0xFF => 0x178];
 
     /**
+     * Under Turkish case rules, the set of "i" and the dotted capital I, and
+     * that of "I" and the dotless i, by each of them.
+     */
+    private const TURKISH_SETS = [0x69 => [0x69, 0x130], 0x130 => [0x69, 0x130], 0x49 => [0x49, 0x131], 0x131 => [0x49, 0x131]];
+
+    /**
+     * The characters past 255 that have a caseless set but no other case of
+     * their own from 10.43, the long s and the Kelvin sign, then those only
+     * Turkish rules give one, the dotted capital I and the dotless i.
+     */
+    private const CASED_WITHOUT_OTHER_CASE = [0x17F, 0x212A];
+
+    private const CASED_UNDER_TURKISH_RULES = [0x130, 0x131];
+
+    /**
      * The bytes of the lists the class last measured keeps beside the code:
      * a copy of the class in a repeated group shares them.
      */
@@ -197,7 +212,7 @@ final class ClassLength
      * The length of the class in the code, without the lists it keeps
      * beside it (charListBytes), under rules kept to ASCII or not.
      */
-    public function of(CharClassNode $node, bool $caseless, bool $restricted = false): ?int
+    public function of(CharClassNode $node, bool $caseless, bool $restricted): ?int
     {
         $this->charListBytes = 0;
         $members = $this->membersOf($node);
@@ -221,11 +236,11 @@ final class ClassLength
      */
     public function otherCase(int $codePoint): int
     {
-        if ($codePoint > 0xFF) {
-            return ($this->cases ??= OtherCases::of($this->target))->otherCase($codePoint);
+        if ($codePoint < 0x100) {
+            return self::OTHER_CASE_PAST_255[$codePoint] ?? self::otherCaseBelow256($codePoint, true) ?? $codePoint;
         }
 
-        return self::OTHER_CASE_PAST_255[$codePoint] ?? self::otherCaseBelow256($codePoint, true) ?? $codePoint;
+        return ($this->cases ??= OtherCases::of($this->target))->otherCase($codePoint);
     }
 
     /**
@@ -666,8 +681,8 @@ final class ClassLength
         }
 
         for ($codePoint = $this->nextCased($low, $high); null !== $codePoint; $codePoint = $this->nextCased($codePoint + 1, $high)) {
-            if ($this->turkish && !$restricted && \in_array($codePoint, [0x49, 0x69, 0x130, 0x131], true)) {
-                $others = 0x69 === $codePoint || 0x130 === $codePoint ? [0x69, 0x130] : [0x49, 0x131];
+            if ($this->turkish && !$restricted && isset(self::TURKISH_SETS[$codePoint])) {
+                $others = self::TURKISH_SETS[$codePoint];
             } else {
                 $set = self::sets()[$codePoint] ?? null;
                 $others = null !== $set && (!$restricted || $set[0] > 0x7F) ? $set : [$this->otherCase($codePoint)];
@@ -701,7 +716,7 @@ final class ClassLength
 
         $from = max($from, 0x100);
         $next = ($this->cases ??= OtherCases::of($this->target))->nextCased($from) ?? \PHP_INT_MAX;
-        foreach ($this->turkish ? [0x130, 0x131, 0x17F, 0x212A] : [0x17F, 0x212A] as $codePoint) {
+        foreach ($this->turkish ? [...self::CASED_UNDER_TURKISH_RULES, ...self::CASED_WITHOUT_OTHER_CASE] : self::CASED_WITHOUT_OTHER_CASE as $codePoint) {
             if ($codePoint >= $from && $codePoint < $next) {
                 $next = $codePoint;
             }

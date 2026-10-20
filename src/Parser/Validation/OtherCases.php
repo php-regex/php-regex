@@ -46,14 +46,15 @@ final class OtherCases
 
     public static function of(PcreTarget $target): self
     {
-        $unicode = null;
-        foreach (OtherCaseTables::RELEASES as $release => $unicode) {
+        $unicode = OtherCaseTables::RELEASES[array_key_last(OtherCaseTables::RELEASES)];
+        foreach (OtherCaseTables::RELEASES as $release => $version) {
             if ($target->pcreAtLeast($release)) {
+                $unicode = $version;
+
                 break;
             }
         }
 
-        $unicode = (string) $unicode;
         if (!isset(self::$tables[$unicode])) {
             StaticCaches::register(self::class, static function (): void {
                 self::$tables = [];
@@ -105,13 +106,12 @@ final class OtherCases
         ['base' => $base, 'add' => $add, 'drop' => $drop] = OtherCaseTables::TABLES[$unicode];
         $otherCases = null === $base ? [] : self::read($base);
         foreach ('' === $drop ? [] : explode(' ', $drop) as $codePoint) {
-            unset($otherCases[(int) hexdec($codePoint)]);
+            unset($otherCases[intval($codePoint, 16)]);
         }
 
         foreach ('' === $add ? [] : explode(' ', $add) as $run) {
             [$first, $count, $distance] = explode(':', $run);
-            [$first, $count] = [(int) hexdec($first), (int) hexdec($count)];
-            $distance = str_starts_with($distance, '-') ? -(int) hexdec(substr($distance, 1)) : (int) hexdec($distance);
+            [$first, $count, $distance] = [intval($first, 16), intval($count, 16), intval($distance, 16)];
             for ($offset = 0; $offset < $count; $offset++) {
                 // A distance of 0 is a run of pairs, each the other case of
                 // the other.
