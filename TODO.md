@@ -151,9 +151,9 @@ would mean replaying their internal form of the pattern (10.35 fixed it).
 
 ## Linter: the last pass before 2.0.0
 
-Left: the token helpers shared by the two extraction strategies, the
-console formatter split, and the argument parsing that lives in
-`Linter\Config` though only the CLI and the language server read it.
+Left: the token helpers shared by the two extraction strategies, and the
+argument parsing that lives in `Linter\Config` though only the CLI and the
+language server read it.
 
 ## Architecture and contributor path: the last pass before 2.0.0
 
@@ -192,14 +192,10 @@ settle before the tag.
 Integrations:
 
 - Symfony: validator-mapped patterns are never linted (the bundle wires a
-  service FrameworkBundle does not define); `regex:lint` resolves `paths`
-  against the working directory and passes on a missing path (Laravel
-  too); `regex:security` counts a narrower `access_control` rule placed
+  service FrameworkBundle does not define); `regex:security` counts a narrower `access_control` rule placed
   first on purpose (`^/admin/public` before `^/admin`) as an overlap; the
   `ide` fallback never fires; `AbstractBundle`, no container parameters,
   no autowirable internal services.
-- The Symfony and Laravel `regex:lint` commands and their output helpers
-  are forks: one shared runner.
 - PHPStan: a repo-only rule ships in the public extension;
   `PatternChecker` split. Psalm: the calls into `Psalm\Internal` isolated
   in one adapter; `PregCallAnalyzer` marked internal and split.
