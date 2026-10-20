@@ -47,6 +47,7 @@ final class AstFingerprint
         'src/Parser/Validation/ExtendedClassLength.php',
         'src/Parser/Validation/OtherCases.php',
         'src/Parser/Validation/OtherCaseTables.php',
+        'src/Parser/Validation/PcreTables.php',
         // Hands the flags, the delimiter and the options to the parser; the
         // version it holds is left out of its own fingerprint.
         'src/Parser/RegexParser.php',

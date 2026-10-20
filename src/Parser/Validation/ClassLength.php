@@ -73,32 +73,6 @@ final class ClassLength
     private const POSIX_PROPERTIES = ['alpha', 'lower', 'upper', 'alnum', 'cntrl', 'digit', 'graph', 'print', 'punct', 'space', 'word'];
 
     /**
-     * The characters below 256 each type and POSIX name matches in the
-     * tables PCRE2 ships, which a locale may extend past ASCII.
-     */
-    private const MAP_RANGES = [
-        'd' => [[0x30, 0x39]],
-        'digit' => [[0x30, 0x39]],
-        's' => [[0x09, 0x0D], [0x20, 0x20]],
-        'space' => [[0x09, 0x0D], [0x20, 0x20]],
-        'w' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A]],
-        'word' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A]],
-        'h' => [[0x09, 0x09], [0x20, 0x20], [0xA0, 0xA0]],
-        'v' => [[0x0A, 0x0D], [0x85, 0x85]],
-        'alpha' => [[0x41, 0x5A], [0x61, 0x7A]],
-        'alnum' => [[0x30, 0x39], [0x41, 0x5A], [0x61, 0x7A]],
-        'upper' => [[0x41, 0x5A]],
-        'lower' => [[0x61, 0x7A]],
-        'xdigit' => [[0x30, 0x39], [0x41, 0x46], [0x61, 0x66]],
-        'blank' => [[0x09, 0x09], [0x20, 0x20]],
-        'cntrl' => [[0x00, 0x1F], [0x7F, 0x7F]],
-        'punct' => [[0x21, 0x2F], [0x3A, 0x40], [0x5B, 0x60], [0x7B, 0x7E]],
-        'graph' => [[0x21, 0x7E]],
-        'print' => [[0x20, 0x7E]],
-        'ascii' => [[0x00, 0x7F]],
-    ];
-
-    /**
      * The lists past 255 a class of six ranges or more keeps beside the
      * code, from the highest: where each starts and ends, and the bytes of
      * each item.
@@ -106,41 +80,6 @@ final class ClassLength
     private const CHAR_LISTS = [[0x10000, 0x7FFFFFFF, 4], [0x8000, 0xFFFF, 2], [0x100, 0x7FFF, 2]];
 
     private const MAX_CODE_POINT = 0x10FFFF;
-
-    /**
-     * The characters of more than one other case, each set with its other
-     * cases, the same in the Unicode tables of every release (pcre2_ucd.c,
-     * ucd_caseless_sets, but for the Turkish casing ones).
-     */
-    private const CASELESS_SETS = [
-        [0x0053, 0x0073, 0x017F],
-        [0x01C4, 0x01C5, 0x01C6],
-        [0x01C7, 0x01C8, 0x01C9],
-        [0x01CA, 0x01CB, 0x01CC],
-        [0x01F1, 0x01F2, 0x01F3],
-        [0x0345, 0x0399, 0x03B9, 0x1FBE],
-        [0x00B5, 0x039C, 0x03BC],
-        [0x03A3, 0x03C2, 0x03C3],
-        [0x0392, 0x03B2, 0x03D0],
-        [0x0398, 0x03B8, 0x03D1, 0x03F4],
-        [0x03A6, 0x03C6, 0x03D5],
-        [0x03A0, 0x03C0, 0x03D6],
-        [0x039A, 0x03BA, 0x03F0],
-        [0x03A1, 0x03C1, 0x03F1],
-        [0x0395, 0x03B5, 0x03F5],
-        [0x0412, 0x0432, 0x1C80],
-        [0x0414, 0x0434, 0x1C81],
-        [0x041E, 0x043E, 0x1C82],
-        [0x0421, 0x0441, 0x1C83],
-        [0x0422, 0x0442, 0x1C84, 0x1C85],
-        [0x042A, 0x044A, 0x1C86],
-        [0x0462, 0x0463, 0x1C87],
-        [0x1E60, 0x1E61, 0x1E9B],
-        [0x03A9, 0x03C9, 0x2126],
-        [0x004B, 0x006B, 0x212A],
-        [0x00C5, 0x00E5, 0x212B],
-        [0x1C88, 0xA64A, 0xA64B],
-    ];
 
     /**
      * The Latin-1 characters whose other case is past 255: the micro sign
@@ -175,13 +114,6 @@ final class ClassLength
      * of no use where it keeps no lists.
      */
     public int $unitsBeforeLists = 0;
-
-    /**
-     * The set of each character of CASELESS_SETS, once read.
-     *
-     * @var array<int, list<int>>|null
-     */
-    private static ?array $sets = null;
 
     /**
      * The other cases of the release, once a character past 255 needs them.
@@ -480,7 +412,7 @@ final class ClassLength
             $name = $caseless && \in_array($name, ['upper', 'lower'], true) ? 'alpha' : $name;
             $localeMaps = null === $this->tables;
             $complements[$name][(int) $negatedMember] = true;
-            $set = $this->tables?->bytesOf($name) ?? self::MAP_RANGES[$name] ?? [];
+            $set = $this->tables?->bytesOf($name) ?? PcreTables::MAP_RANGES[$name] ?? [];
             array_push($ranges, ...self::below256($negatedMember ? self::complement($set, 0xFF) : $set));
             if ($negatedMember) {
                 $flip = true;
@@ -617,7 +549,7 @@ final class ClassLength
 
             if ($member instanceof PosixClassNode) {
                 $name = Ascii::lower(ltrim($member->class, '^'));
-                if (!isset(self::MAP_RANGES[$name])) {
+                if (!isset(PcreTables::MAP_RANGES[$name])) {
                     return null; // PCRE refuses an unknown POSIX name before any measure
                 }
 
@@ -717,7 +649,7 @@ final class ClassLength
     private function otherCaseRun(int $from, int $to, bool $restricted): ?array
     {
         for ($codePoint = $this->nextCased($from, $to); null !== $codePoint; $codePoint = $this->nextCased($codePoint + 1, $to)) {
-            $set = self::sets()[$codePoint] ?? null;
+            $set = PcreTables::caselessSets()[$codePoint] ?? null;
             if (null !== $set && (!$restricted || $set[0] > 0x7F)) {
                 return [$codePoint + 1, $set, $codePoint, $codePoint];
             }
@@ -728,7 +660,7 @@ final class ClassLength
             }
 
             // A character of a caseless set ends the run.
-            for ($high = $low; $codePoint < $to && !isset(self::sets()[$codePoint + 1]) && $this->otherCase($codePoint + 1) === $high + 1; $high++) {
+            for ($high = $low; $codePoint < $to && !isset(PcreTables::caselessSets()[$codePoint + 1]) && $this->otherCase($codePoint + 1) === $high + 1; $high++) {
                 $codePoint++;
             }
 
@@ -781,7 +713,7 @@ final class ClassLength
             if ($this->turkish && !$restricted && isset(self::TURKISH_SETS[$codePoint])) {
                 $others = self::TURKISH_SETS[$codePoint];
             } else {
-                $set = self::sets()[$codePoint] ?? null;
+                $set = PcreTables::caselessSets()[$codePoint] ?? null;
                 $others = null !== $set && (!$restricted || $set[0] > 0x7F) ? $set : [$this->otherCase($codePoint)];
             }
 
@@ -805,7 +737,7 @@ final class ClassLength
     private function nextCased(int $from, int $to): ?int
     {
         for ($codePoint = $from; $codePoint <= min($to, 0xFF); $codePoint++) {
-            if (isset(self::sets()[$codePoint]) || $this->otherCase($codePoint) !== $codePoint) {
+            if (isset(PcreTables::caselessSets()[$codePoint]) || $this->otherCase($codePoint) !== $codePoint) {
                 return $codePoint;
             }
         }
@@ -884,23 +816,6 @@ final class ClassLength
             $codePoint >= 0xE0 && $codePoint <= 0xFE => $codePoint - 0x20,
             default => null,
         };
-    }
-
-    /**
-     * @return array<int, list<int>>
-     */
-    private static function sets(): array
-    {
-        if (null === self::$sets) {
-            self::$sets = [];
-            foreach (self::CASELESS_SETS as $set) {
-                foreach ($set as $codePoint) {
-                    self::$sets[$codePoint] = $set;
-                }
-            }
-        }
-
-        return self::$sets;
     }
 
     /**

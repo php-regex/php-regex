@@ -25,7 +25,7 @@ namespace PHPRegex\Tests\Tools;
  * as what it adds to the table before it and drops from it. The caseless
  * sets, the characters of more than one other case, are the same in every
  * release but for the two Turkish ones 10.45 added: the script fails when a
- * release differs from those ClassLength knows.
+ * release differs from those PcreTables knows.
  *
  * Usage: php tests/Tools/write_other_cases.php [--check] <release>...
  *
@@ -36,7 +36,7 @@ namespace PHPRegex\Tests\Tools;
 
 require_once __DIR__.'/../../vendor/autoload.php';
 
-use PHPRegex\Parser\Validation\ClassLength;
+use PHPRegex\Parser\Validation\PcreTables;
 
 /**
  * The text of a file of a release source tree.
@@ -211,13 +211,12 @@ if ([] === $sources) {
     exit(2);
 }
 
-$known = (new \ReflectionClassConstant(ClassLength::class, 'CASELESS_SETS'))->getValue();
 $tables = [];
 foreach ($sources as $source) {
     [$release, $unicode, $other, $sets] = readRelease($source);
     $turkish = version_compare($release, '10.45', '>=') ? [[0x69, 0x130], [0x49, 0x131]] : [];
-    if ([...(\is_array($known) ? $known : []), ...$turkish] !== $sets) {
-        throw new \RuntimeException(\sprintf('The caseless sets of PCRE2 %s are not those ClassLength knows.', $release));
+    if ([...PcreTables::CASELESS_SETS, ...$turkish] !== $sets) {
+        throw new \RuntimeException(\sprintf('The caseless sets of PCRE2 %s are not those PcreTables knows.', $release));
     }
 
     [$major, $minor] = explode('.', $release);

@@ -101,67 +101,6 @@ final class CompiledLength
     private const CAP = 1 << 40;
 
     /**
-     * The characters below 256 each type and POSIX name of a class matches
-     * when UCP is off, as ranges. PCRE matches the vertical tab with "\s".
-     */
-    private const MAP_RANGES = [
-        'd' => [[0x30, 0x39]],
-        'digit' => [[0x30, 0x39]],
-        's' => [[0x09, 0x0D], [0x20, 0x20]],
-        'space' => [[0x09, 0x0D], [0x20, 0x20]],
-        'w' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A]],
-        'word' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A]],
-        'h' => [[0x09, 0x09], [0x20, 0x20], [0xA0, 0xA0]],
-        'v' => [[0x0A, 0x0D], [0x85, 0x85]],
-        'alpha' => [[0x41, 0x5A], [0x61, 0x7A]],
-        'alnum' => [[0x30, 0x39], [0x41, 0x5A], [0x61, 0x7A]],
-        'upper' => [[0x41, 0x5A]],
-        'lower' => [[0x61, 0x7A]],
-        'xdigit' => [[0x30, 0x39], [0x41, 0x46], [0x61, 0x66]],
-        'blank' => [[0x09, 0x09], [0x20, 0x20]],
-        'cntrl' => [[0x00, 0x1F], [0x7F, 0x7F]],
-        'punct' => [[0x21, 0x2F], [0x3A, 0x40], [0x5B, 0x60], [0x7B, 0x7E]],
-        'graph' => [[0x21, 0x7E]],
-        'print' => [[0x20, 0x7E]],
-        'ascii' => [[0x00, 0x7F]],
-    ];
-
-    /**
-     * The characters of PCRE2 10.48's caseless sets, each with more than one
-     * other case (pcre2_ucd.c, ucd_caseless_sets): under a caseless Unicode
-     * option, one of them compiles to a property of its set.
-     */
-    private const CASELESS_SETS = [
-        0x0053 => true, 0x0073 => true, 0x017F => true,
-        0x01C4 => true, 0x01C5 => true, 0x01C6 => true,
-        0x01C7 => true, 0x01C8 => true, 0x01C9 => true,
-        0x01CA => true, 0x01CB => true, 0x01CC => true,
-        0x01F1 => true, 0x01F2 => true, 0x01F3 => true,
-        0x0345 => true, 0x0399 => true, 0x03B9 => true, 0x1FBE => true,
-        0x00B5 => true, 0x039C => true, 0x03BC => true,
-        0x03A3 => true, 0x03C2 => true, 0x03C3 => true,
-        0x0392 => true, 0x03B2 => true, 0x03D0 => true,
-        0x0398 => true, 0x03B8 => true, 0x03D1 => true, 0x03F4 => true,
-        0x03A6 => true, 0x03C6 => true, 0x03D5 => true,
-        0x03A0 => true, 0x03C0 => true, 0x03D6 => true,
-        0x039A => true, 0x03BA => true, 0x03F0 => true,
-        0x03A1 => true, 0x03C1 => true, 0x03F1 => true,
-        0x0395 => true, 0x03B5 => true, 0x03F5 => true,
-        0x0412 => true, 0x0432 => true, 0x1C80 => true,
-        0x0414 => true, 0x0434 => true, 0x1C81 => true,
-        0x041E => true, 0x043E => true, 0x1C82 => true,
-        0x0421 => true, 0x0441 => true, 0x1C83 => true,
-        0x0422 => true, 0x0442 => true, 0x1C84 => true, 0x1C85 => true,
-        0x042A => true, 0x044A => true, 0x1C86 => true,
-        0x0462 => true, 0x0463 => true, 0x1C87 => true,
-        0x1E60 => true, 0x1E61 => true, 0x1E9B => true,
-        0x03A9 => true, 0x03C9 => true, 0x2126 => true,
-        0x004B => true, 0x006B => true, 0x212A => true,
-        0x00C5 => true, 0x00E5 => true, 0x212B => true,
-        0x1C88 => true, 0xA64A => true, 0xA64B => true,
-    ];
-
-    /**
      * The characters Turkish case rules give a caseless set of their own:
      * "i" with the dotted capital I, "I" with the dotless i.
      */
@@ -498,7 +437,7 @@ final class CompiledLength
             // Most items are one ASCII letter, or one byte without UTF:
             // measured at once.
             $units = $item instanceof LiteralNode && 1 === \strlen($item->value)
-                ? (!$caseless || !$this->unicodeCases() || (!isset(self::CASELESS_SETS[\ord($item->value)]) && !$this->caseRulesVary()) ? 2 : $this->characterLength(\ord($item->value), true))
+                ? (!$caseless || !$this->unicodeCases() || (!isset(PcreTables::caselessSets()[\ord($item->value)]) && !$this->caseRulesVary()) ? 2 : $this->characterLength(\ord($item->value), true))
                 : null;
             if (null !== $units) {
                 $length += $units;
@@ -1243,7 +1182,7 @@ final class CompiledLength
     private function mapSet(string $name): ?array
     {
         $negated = str_starts_with($name, '^') || (1 === \strlen($name) && Ascii::lower($name) !== $name);
-        $ranges = self::MAP_RANGES[Ascii::lower(ltrim($name, '^'))] ?? null;
+        $ranges = PcreTables::MAP_RANGES[Ascii::lower(ltrim($name, '^'))] ?? null;
         if (null === $ranges || $this->ucp || ($this->utf && \in_array(Ascii::lower($name), ['h', 'v'], true))) {
             return null;
         }
@@ -1307,7 +1246,7 @@ final class CompiledLength
             return $this->turkishCasing() && !$this->restricted;
         }
 
-        return isset(self::CASELESS_SETS[$codePoint]) && !($this->restricted && isset(self::ASCII_SET_MEMBERS[$codePoint]));
+        return isset(PcreTables::caselessSets()[$codePoint]) && !($this->restricted && isset(self::ASCII_SET_MEMBERS[$codePoint]));
     }
 
     private function classes(): ClassLength
@@ -1380,7 +1319,7 @@ final class CompiledLength
         // A character with more than one other case is never read as a
         // pair, a byte without UTF included, but for an ASCII letter under
         // rules kept to ASCII, whose other case is then its ASCII one.
-        if (isset(self::CASELESS_SETS[$first]) && !($this->restricted && $first < 0x80)) {
+        if (isset(PcreTables::caselessSets()[$first]) && !($this->restricted && $first < 0x80)) {
             return false;
         }
 
