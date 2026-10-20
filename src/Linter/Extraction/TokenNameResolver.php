@@ -60,9 +60,8 @@ final class TokenNameResolver
     /**
      * Record the aliases an import statement brings into scope.
      *
-     * Closure "use ($var)" and trait imports are skipped; the latter cannot be
-     * told apart from a class import by tokens alone, and treating one as an
-     * alias is harmless.
+     * A closure's "use ($var)" and the "use" of a trait in a class body
+     * import nothing, and are skipped.
      *
      * @param array<int, array{int, string, int}|string> $tokens
      *

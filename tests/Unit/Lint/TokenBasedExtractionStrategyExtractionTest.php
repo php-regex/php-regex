@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\Extraction\NameResolutionContext;
 use PHPRegex\Linter\Extraction\PatternFunction;
 use PHPRegex\Linter\Extraction\PhpTokens;
+use PHPRegex\Linter\Extraction\StringExpressionReader;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPUnit\Framework\TestCase;
@@ -434,7 +435,6 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
     public function test_parse_regex_expression_preserves_flags(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
         $tokens = [
             [\T_CONSTANT_ENCAPSED_STRING, "'/foo/i'", 1],
         ];
@@ -443,7 +443,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $tokenOffsets = $this->buildTokenOffsets($tokens);
         $content = $this->tokensToContent($tokens);
 
-        $result = $this->invoke($strategy, 'parseRegexExpression', $tokens, $tokenIndexes, $tokenOffsets, $content);
+        $result = StringExpressionReader::readPattern($tokens, $tokenIndexes, $tokenOffsets, $content);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('pattern', $result);
@@ -452,7 +452,6 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
     public function test_parse_constant_string_expression_handles_concatenation(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
         $tokens = [
             [\T_CONSTANT_ENCAPSED_STRING, "'foo'", 1],
             '.',
@@ -463,7 +462,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $tokenOffsets = $this->buildTokenOffsets($tokens);
         $content = $this->tokensToContent($tokens);
 
-        $result = $this->invoke($strategy, 'parseConstantStringExpression', $tokens, $tokenIndexes, $tokenOffsets, $content);
+        $result = StringExpressionReader::read($tokens, $tokenIndexes, $tokenOffsets, $content);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('pattern', $result);
@@ -472,7 +471,6 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
     public function test_parse_constant_string_expression_skips_parentheses(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
         $tokens = [
             '(',
             [\T_CONSTANT_ENCAPSED_STRING, "'foo'", 1],
@@ -483,7 +481,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $tokenOffsets = $this->buildTokenOffsets($tokens);
         $content = $this->tokensToContent($tokens);
 
-        $result = $this->invoke($strategy, 'parseConstantStringExpression', $tokens, $tokenIndexes, $tokenOffsets, $content);
+        $result = StringExpressionReader::read($tokens, $tokenIndexes, $tokenOffsets, $content);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('pattern', $result);
@@ -492,7 +490,6 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
 
     public function test_parse_constant_string_expression_returns_null_for_invalid_sequence(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
         $tokens = [
             [\T_CONSTANT_ENCAPSED_STRING, "'foo'", 1],
             [\T_VARIABLE, '$bar', 1],
@@ -502,7 +499,7 @@ final class TokenBasedExtractionStrategyExtractionTest extends TestCase
         $tokenOffsets = $this->buildTokenOffsets($tokens);
         $content = $this->tokensToContent($tokens);
 
-        $result = $this->invoke($strategy, 'parseConstantStringExpression', $tokens, $tokenIndexes, $tokenOffsets, $content);
+        $result = StringExpressionReader::read($tokens, $tokenIndexes, $tokenOffsets, $content);
 
         $this->assertNull($result);
     }

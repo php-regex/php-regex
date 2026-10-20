@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\Extraction\PhpTokens;
+use PHPRegex\Linter\Extraction\StringExpressionReader;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
@@ -84,20 +85,18 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
 
     public function test_strip_outer_parentheses_branches(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
-
-        $this->assertSame([[], []], $this->invoke($strategy, 'stripOuterParentheses', [], []));
+        $this->assertSame([[], []], StringExpressionReader::stripParentheses([], []));
 
         $tokens = ['(', 'a', ')'];
-        $this->assertSame([['a'], [1]], $this->invoke($strategy, 'stripOuterParentheses', $tokens, array_keys($tokens)));
+        $this->assertSame([['a'], [1]], StringExpressionReader::stripParentheses($tokens, array_keys($tokens)));
 
         $tokens = [
             [\T_WHITESPACE, ' ', 1],
         ];
-        $this->assertSame([$tokens, [0]], $this->invoke($strategy, 'stripOuterParentheses', $tokens, array_keys($tokens)));
+        $this->assertSame([$tokens, [0]], StringExpressionReader::stripParentheses($tokens, array_keys($tokens)));
 
         $tokens = ['(', 'a', ')', '(', 'b', ')'];
-        $this->assertSame([$tokens, array_keys($tokens)], $this->invoke($strategy, 'stripOuterParentheses', $tokens, array_keys($tokens)));
+        $this->assertSame([$tokens, array_keys($tokens)], StringExpressionReader::stripParentheses($tokens, array_keys($tokens)));
     }
 
     public function test_find_array_start_index_variants(): void
