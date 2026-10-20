@@ -127,7 +127,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
             'Linter\Extraction\TokenBasedExtractionStrategy', 'Linter\RedosVerdict',
-            'Linter\Rule\InvisibleCharacterRule', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
+            'Linter\Rule\InvisibleCharacterRule', 'Linter\Rule\RuleId', 'Parser\Text\Ascii', 'Parser\Engine\IniFlag',
             'Parser\Engine\LibraryPcre',
         ],
         'Laravel' => [
