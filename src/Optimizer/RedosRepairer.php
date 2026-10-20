@@ -94,7 +94,7 @@ final class RedosRepairer
                 continue; // a guard: flattening keeps the language, a possessive the solver reads is inert
             }
 
-            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate, $parser), $analysis->complexity);
+            $repairs[] = new RedosRepair($candidate, $sameSubjects, $this->sameMatches($regex, $candidate, $parser));
         }
 
         // Certified first, then those that also keep $matches.
@@ -131,7 +131,9 @@ final class RedosRepairer
         foreach ($edits as $edit) {
             $candidates[] = $wrap(self::apply($source, [$edit]));
         }
-        $candidates[] = (new Optimizer($parser))->optimize($pattern)->optimized;
+        // The optimizer's rewrite, proven to write the same $matches, as the
+        // lint's suggestions are: one it cannot prove is no candidate.
+        $candidates[] = (new Optimizer($parser))->optimize($pattern, new OptimizerOptions(verifyWithAutomata: true))->optimized;
         foreach ($possessive as $edit) {
             $candidates[] = $wrap(self::apply($source, [$edit]));
         }

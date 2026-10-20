@@ -1069,6 +1069,13 @@ line stays on one line, where every group and alternation was broken, and a
 with a stored string needs that string written again. To format a pattern for
 a reader, keeping its spelling, use `Regex::format()` or `PatternFormatter`.
 
+#### `RedosRepair` has no `$complexity`
+
+`RedosRepairer::repair()` returns only rewrites the backtracking model proves
+linear, so `RedosRepair::$complexity` always said `RedosComplexity::Linear`:
+it is gone. `isCertified()` is `true === $repair->sameSubjects`, the attempts
+proven linear for every repair.
+
 #### `LiteralExtractionResult::$confidence` is an enum
 
 `Regex::literals()` gives its confidence as `LiteralConfidence::High`,

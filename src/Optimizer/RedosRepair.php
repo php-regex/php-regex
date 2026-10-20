@@ -13,11 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Optimizer;
 
-use PHPRegex\Redos\RedosComplexity;
-
 /**
  * A rewrite of a pattern open to catastrophic backtracking, with what was
- * proven about it.
+ * proven about it. Its attempts are proven linear, every one of them: a
+ * rewrite the backtracking model cannot prove linear is no repair.
  */
 final class RedosRepair
 {
@@ -31,15 +30,14 @@ final class RedosRepair
         public readonly string $pattern,
         public readonly ?bool $sameSubjects,
         public readonly ?bool $sameMatches,
-        public readonly RedosComplexity $complexity,
     ) {}
 
     /**
      * Whether both proofs hold: the same subjects, and attempts proven
-     * linear.
+     * linear, as every repair's are.
      */
     public function isCertified(): bool
     {
-        return true === $this->sameSubjects && RedosComplexity::Linear === $this->complexity;
+        return true === $this->sameSubjects;
     }
 }

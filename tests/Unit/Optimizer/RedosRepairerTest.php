@@ -13,8 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Optimizer;
 
+use PHPRegex\Optimizer\Optimizer;
+use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RedosRepair;
 use PHPRegex\Optimizer\RedosRepairer;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -41,7 +45,7 @@ final class RedosRepairerTest extends TestCase
         $this->assertSame($repair, $best->pattern);
         $this->assertTrue($best->sameSubjects);
         $this->assertSame($sameMatches, $best->sameMatches);
-        $this->assertSame(RedosComplexity::Linear, $best->complexity);
+        $this->assertSame(RedosComplexity::Linear, (new RedosAnalyzer())->analyze($best->pattern)->complexity);
         $this->assertTrue($best->isCertified());
 
         foreach (self::SUBJECTS as $subject) {
@@ -57,11 +61,44 @@ final class RedosRepairerTest extends TestCase
         $this->assertNotSame([], $repairs);
         foreach ($repairs as $repair) {
             $this->assertInstanceOf(RedosRepair::class, $repair);
-            $this->assertSame(RedosComplexity::Linear, $repair->complexity);
+            $this->assertSame(RedosComplexity::Linear, (new RedosAnalyzer())->analyze($repair->pattern)->complexity);
             if (null === $repair->sameSubjects) {
                 $this->assertFalse($repair->isCertified());
             }
         }
+    }
+
+    /**
+     * Every repair is proven linear, so the result carries no complexity
+     * of its own: it would always say linear. Certified means the same
+     * subjects.
+     */
+    #[Test]
+    public function test_a_repair_carries_its_proofs_and_no_constant_complexity(): void
+    {
+        $this->assertFalse(property_exists(RedosRepair::class, 'complexity'));
+
+        $repair = new RedosRepair('/^a+$/', true, null);
+        $this->assertTrue($repair->isCertified());
+        $this->assertFalse((new RedosRepair('/^a+$/', null, true))->isCertified());
+        $this->assertFalse((new RedosRepair('/^a+$/', false, true))->isCertified());
+    }
+
+    /**
+     * The optimizer's rewrite counts as a repair only once the automata
+     * prove it writes the same $matches, as the lint's suggestions are:
+     * here its class of one letter for an alternation of the same letter.
+     */
+    #[Test]
+    public function test_the_optimizer_repair_is_the_verified_rewrite(): void
+    {
+        $repairs = (new RedosRepairer())->repair('/^(?:a|a)+$/');
+
+        $this->assertNotSame([], $repairs);
+        $this->assertSame('/^(?:[a])+$/', $repairs[0]->pattern);
+        $this->assertTrue($repairs[0]->sameSubjects);
+        $this->assertTrue($repairs[0]->sameMatches);
+        $this->assertSame('/^(?:[a])+$/', (new Optimizer(RegexParser::create()))->optimize('/^(?:a|a)+$/', new OptimizerOptions(verifyWithAutomata: true))->optimized);
     }
 
     #[Test]
