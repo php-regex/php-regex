@@ -15,7 +15,6 @@ namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\LintReport;
-use PHPRegex\Linter\LintSeverity;
 
 /**
  * Checkstyle XML output formatter.
@@ -50,7 +49,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
                 // gives it; the attribute is optional, left out when unknown.
                 $entryColumn = $entry['column'] ?? null;
                 $column = null !== $entryColumn ? \sprintf(' column="%d"', $entryColumn) : '';
-                $severity = $this->mapCheckstyleSeverity($problem->severity);
+                $severity = $problem->severity->level();
                 $message = $this->formatProblemMessage($problem, $entry);
                 $source = $this->formatCheckstyleSource($problem);
 
@@ -126,15 +125,6 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
     private function normalizeLine(int $line): int
     {
         return max(1, $line);
-    }
-
-    private function mapCheckstyleSeverity(LintSeverity $severity): string
-    {
-        return match ($severity) {
-            LintSeverity::Error, LintSeverity::Critical => 'error',
-            LintSeverity::Warning => 'warning',
-            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'info',
-        };
     }
 
     /**

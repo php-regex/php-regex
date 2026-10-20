@@ -538,7 +538,7 @@ final class AnalysisService
                     // backtracking the engine may need, so any rewrite the
                     // user applies has to be verified by hand.
                     $issueEntry = [
-                        'type' => self::issueType($issue->severity),
+                        'type' => $issue->severity->level(),
                         'file' => $occurrence->file,
                         'line' => $occurrence->line,
                         'column' => $this->resolveColumn($occurrence),
@@ -1177,19 +1177,6 @@ final class AnalysisService
         } catch (ExceptionInterface) {
             return false;
         }
-    }
-
-    /**
-     * The one mapping from a rule severity to an issue type: Critical and
-     * Error fail the run, Warning warns, Style, Perf and Info inform.
-     */
-    private static function issueType(LintSeverity $severity): string
-    {
-        return match ($severity) {
-            LintSeverity::Critical, LintSeverity::Error => 'error',
-            LintSeverity::Warning => 'warning',
-            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'info',
-        };
     }
 
     /**

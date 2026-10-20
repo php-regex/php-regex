@@ -174,10 +174,10 @@ final class DiagnosticConverter
      */
     private function mapSeverity(LintSeverity $severity): int
     {
-        return match ($severity) {
-            LintSeverity::Critical, LintSeverity::Error => self::SEVERITY_ERROR,
-            LintSeverity::Warning => self::SEVERITY_WARNING,
-            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => self::SEVERITY_INFORMATION,
+        return match ($severity->level()) {
+            'error' => self::SEVERITY_ERROR,
+            'warning' => self::SEVERITY_WARNING,
+            'info' => self::SEVERITY_INFORMATION,
         };
     }
 }

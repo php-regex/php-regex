@@ -111,11 +111,10 @@ final class GithubFormatter extends AbstractOutputFormatter
 
     private function mapAnnotationLevel(LintSeverity $severity): string
     {
-        return match ($severity) {
-            LintSeverity::Error, LintSeverity::Critical => 'error',
-            LintSeverity::Warning => 'warning',
-            LintSeverity::Style, LintSeverity::Perf, LintSeverity::Info => 'notice',
-        };
+        // GitHub calls an info a notice.
+        $level = $severity->level();
+
+        return 'info' === $level ? 'notice' : $level;
     }
 
     private function formatProblemTitle(Diagnostic $problem): string

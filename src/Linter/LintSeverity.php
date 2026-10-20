@@ -14,14 +14,16 @@ declare(strict_types=1);
 namespace PHPRegex\Linter;
 
 /**
- * Severity levels for lint issues.
+ * The severity of a finding. Every report shows one of three levels for
+ * it (level()): Critical and Error are errors, and fail the run; Warning
+ * warns; Style, Perf and Info inform.
  *
- * - Critical: Security vulnerabilities (e.g., severe ReDoS)
- * - Error: Critical issues that will cause the regex to fail or have security implications
- * - Warning: Potential bugs or issues that should be addressed
- * - Style: Style preferences that don't affect functionality
- * - Perf: Performance suggestions for optimization
- * - Info: Informational messages
+ * - Critical: a security risk, as a ReDoS verdict confirmed critical
+ * - Error: a pattern that does not match what it says, or that is refused
+ * - Warning: a likely bug, or a pattern left unjudged at a limit
+ * - Style: a spelling that reads better another way, the match unchanged
+ * - Perf: a spelling the engine runs faster, the match unchanged
+ * - Info: a fact worth knowing, no change needed
  */
 enum LintSeverity: string
 {
@@ -31,4 +33,26 @@ enum LintSeverity: string
     case Style = 'style';
     case Perf = 'perf';
     case Info = 'info';
+
+    /**
+     * The level every report shows: "error", "warning" or "info".
+     *
+     * @return 'error'|'warning'|'info'
+     */
+    public function level(): string
+    {
+        return match ($this) {
+            self::Critical, self::Error => 'error',
+            self::Warning => 'warning',
+            self::Style, self::Perf, self::Info => 'info',
+        };
+    }
+
+    /**
+     * Whether a finding of this severity fails a lint run.
+     */
+    public function failsRun(): bool
+    {
+        return 'error' === $this->level();
+    }
 }
