@@ -17,7 +17,7 @@ on:
       - 'composer.json'
       - '.github/workflows/demo.yml'
   schedule:
-    - cron: '37 4 * * 1'
+    - cron: '47 6 * * 1'
   workflow_dispatch:
 
 permissions:

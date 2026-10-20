@@ -7,7 +7,7 @@ on:
     branches: [ 2.x ]
   schedule:
     # Every Monday: the mutation run over the parser.
-    - cron: '0 4 * * 1'
+    - cron: '29 4 * * 1'
   workflow_dispatch:
 
 permissions:

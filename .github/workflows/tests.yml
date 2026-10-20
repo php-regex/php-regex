@@ -10,7 +10,7 @@ on:
     branches: [ 2.x ]
   schedule:
     # Every Monday, against the week's tool releases, which no lock file pins.
-    - cron: '0 4 * * 1'
+    - cron: '17 2 * * 1'
   workflow_dispatch:
 
 permissions:

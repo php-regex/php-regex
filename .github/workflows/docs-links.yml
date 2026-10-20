@@ -7,7 +7,7 @@ on:
       - 'docs/**'
       - '.github/workflows/docs-links.yml'
   schedule:
-    - cron: '23 4 * * 1'
+    - cron: '23 6 * * 1'
   workflow_dispatch:
 
 permissions:
