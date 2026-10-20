@@ -174,13 +174,28 @@ final class LiteralExtractor extends AbstractNodeVisitor
             /** @var LiteralSet $childSet */
             $childSet = $node->node->accept($this);
 
-            // Repeat concatenation
+            // Repeat concatenation. Each set depends on the one before it
+            // only: once a set comes back, those after it come back in the
+            // same order, and the repetitions left are walked modulo that
+            // period, whatever the count.
             $result = $childSet;
+            $seen = [];
             for ($i = 1; $i < $count; $i++) {
                 $result = $result->concat($childSet);
                 if (\count($result->prefixes) > self::MAX_LITERALS_COUNT) {
                     return LiteralSet::empty();
                 }
+
+                $state = hash('xxh128', serialize([$result->prefixes, $result->suffixes, $result->complete]));
+                if (isset($seen[$state])) {
+                    $left = ($count - 1 - $i) % ($i - $seen[$state]);
+                    for ($j = 0; $j < $left; $j++) {
+                        $result = $result->concat($childSet);
+                    }
+
+                    return $result;
+                }
+                $seen[$state] = $i;
             }
 
             return $result;

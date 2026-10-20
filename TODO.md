@@ -171,13 +171,6 @@ Each checked with pcre2test 10.32 to 10.49 and the php:X-cli images.
   `regex.group.name_invalid`; `(?<aࡰ>x)/u` is refused at 4 on 10.33 to
   10.38 and accepted by the library.
 
-## Literal extraction on a count PCRE refuses
-
-`Regex::literals('/a{99999999}/')` does not validate first and joins the
-literal 99,999,999 times: it runs for many seconds where PCRE2 refuses the
-count. A count past 65535, or a product of counts past a bound, should end
-the extraction before it is expanded.
-
 ## Lookbehind measures still reported wrong
 
 Each checked with pcre2test 10.32 to 10.49.
@@ -214,6 +207,10 @@ Each checked with pcre2test 10.32 to 10.49.
   PCRE2 was built), which the tree the library measures does not hold. A
   repeat of such a DEFINE group is left alone: `(?<=(?(DEFINE)(a))??)`
   compiles on 10.32 to 10.34.
+- On 10.34 a lookbehind in a DEFINE group inside a lookahead inside a
+  lookbehind is never measured: `(?<=(?=(?(DEFINE)(?<=b+))))` compiles
+  there, and is refused at 17 from 10.35; the library refuses it at 17 on
+  10.34 too.
 
 ## The articles section: what is left
 

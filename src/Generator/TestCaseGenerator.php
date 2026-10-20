@@ -77,8 +77,14 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     #[\Override]
     public function visitRegex(RegexNode $node): array
     {
-        $candidates = $node->pattern->accept($this);
+        // No case is kept for a pattern the engine refuses: none is built,
+        // however long its counts would make each one.
         $pattern = $node->accept(new PatternPrinter());
+        if (null !== $this->engine->compile($pattern)) {
+            return ['matching' => [], 'non_matching' => []];
+        }
+
+        $candidates = $node->pattern->accept($this);
 
         $matching = $this->kept($pattern, $candidates['matching'], true);
         if ([] === $matching) {
