@@ -85,13 +85,7 @@ final class RedosAnalyzer
         $threshold ??= $this->threshold;
 
         if (RedosMode::Off === $mode || $this->shouldIgnore($regex)) {
-            return new RedosAnalysis(
-                RedosSeverity::Safe,
-                0,
-                confidence: RedosConfidence::Low,
-                mode: $mode,
-                proof: RedosProof::NotAnalyzed,
-            );
+            return RedosAnalysis::skipped($mode);
         }
 
         try {
@@ -102,7 +96,7 @@ final class RedosAnalyzer
             // safe: PCRE refuses to compile it.
             $validation = $parser->validate($regex);
             if (!$validation->isValid) {
-                return self::notAnalyzed($mode, $validation->error ?? 'The pattern is invalid.');
+                return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.');
             }
 
             $prover = new BacktrackProver(
@@ -148,20 +142,18 @@ final class RedosAnalyzer
                 : null;
 
             $analysis = new RedosAnalysis(
-                $severity,
-                self::score($severity),
-                $heuristics['vulnerablePattern'],
-                array_values($heuristics['recommendations']),
-                null,
-                $heuristics['trigger'],
-                null === $proof ? ($heuristics['confidence'] ?? RedosConfidence::Low) : self::provenConfidence($proof, null),
-                $heuristics['falsePositiveRisk'],
-                array_values($heuristics['findings']),
-                $heuristics['suggestedRewrite'],
+                severity: $severity,
+                score: self::score($severity),
+                vulnerablePart: $heuristics['vulnerablePattern'],
+                recommendations: array_values($heuristics['recommendations']),
+                trigger: $heuristics['trigger'],
+                confidence: null === $proof ? ($heuristics['confidence'] ?? RedosConfidence::Low) : self::provenConfidence($proof, null),
+                falsePositiveRisk: $heuristics['falsePositiveRisk'],
+                findings: array_values($heuristics['findings']),
+                suggestedRewrite: $heuristics['suggestedRewrite'],
                 culpritNode: $profiler?->getCulpritNode(),
                 hotspots: $profiler?->getHotspots() ?? [],
                 mode: $mode,
-                confirmation: null,
                 complexity: $proof->complexity ?? RedosComplexity::Unknown,
                 degree: $proof?->degree,
                 proof: $proofKind,
@@ -184,37 +176,15 @@ final class RedosAnalyzer
             $runner = $this->confirmationRunner ?? new ConfirmationRunner();
             $confirmation = $runner->confirm($regex, $analysis, $confirmOptions);
 
-            return self::with(
-                $analysis,
+            return $analysis->withConfirmation(
                 $confirmation,
                 $confirmation->confirmed ? RedosConfidence::High : $analysis->confidence,
                 $analysis->witness,
                 null,
             );
         } catch (ExceptionInterface $e) {
-            return self::notAnalyzed($mode, $e::class.': '.$e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
+            return RedosAnalysis::failed($mode, $e::class.': '.$e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
         }
-    }
-
-    private static function notAnalyzed(RedosMode $mode, string $error, ?string $recommendation = null): RedosAnalysis
-    {
-        return new RedosAnalysis(
-            RedosSeverity::Unknown,
-            0,
-            null,
-            [$recommendation ?? 'Analysis incomplete: '.$error],
-            $error,
-            null,
-            RedosConfidence::Low,
-            null,
-            [],
-            null,
-            null,
-            [],
-            $mode,
-            null,
-            proof: RedosProof::NotAnalyzed,
-        );
     }
 
     /**
@@ -247,22 +217,22 @@ final class RedosAnalyzer
             // $matches when the witness needs PHP's retry of an empty match.
             [$confirmation, $reproduced] = (new WitnessReplayer())->replay($regex, $candidates, $options ?? new ConfirmationOptions(), $proof->withoutMatches);
             if (null !== $reproduced) {
-                return self::with($analysis, $confirmation, self::provenConfidence($proof, true), $reproduced, true);
+                return $analysis->withConfirmation($confirmation, self::provenConfidence($proof, true), $reproduced, true);
             }
 
-            return self::with($analysis, $confirmation, self::provenConfidence($proof, false), $witness, $confirmation->wasSkipped() ? null : false);
+            return $analysis->withConfirmation($confirmation, self::provenConfidence($proof, false), $witness, $confirmation->wasSkipped() ? null : false);
         }
 
         $first = null;
         foreach ($candidates as $candidate) {
-            $confirmation = $this->confirmationRunner->confirm($regex, self::with($analysis, null, $analysis->confidence, $candidate, null), $options);
+            $confirmation = $this->confirmationRunner->confirm($regex, $analysis->withConfirmation(null, $analysis->confidence, $candidate, null), $options);
             $first ??= $confirmation;
             if (self::reproduced($confirmation)) {
-                return self::with($analysis, $confirmation, self::provenConfidence($proof, true), $candidate, true);
+                return $analysis->withConfirmation($confirmation, self::provenConfidence($proof, true), $candidate, true);
             }
         }
 
-        return self::with($analysis, $first, self::provenConfidence($proof, false), $witness, $first->wasSkipped() ? null : false);
+        return $analysis->withConfirmation($first, self::provenConfidence($proof, false), $witness, $first->wasSkipped() ? null : false);
     }
 
     /**
@@ -284,36 +254,6 @@ final class RedosAnalyzer
         // A runner that records no error code in its samples speaks through
         // its evidence.
         return !$errors && $confirmation->confirmed && 'backtrack_limit' === $confirmation->evidence;
-    }
-
-    private static function with(RedosAnalysis $analysis, ?Confirmation $confirmation, RedosConfidence $confidence, ?RedosWitness $witness, ?bool $replayed): RedosAnalysis
-    {
-        return new RedosAnalysis(
-            $analysis->severity,
-            $analysis->score,
-            $analysis->vulnerablePart,
-            $analysis->recommendations,
-            $analysis->error,
-            $analysis->trigger,
-            $confidence,
-            $analysis->falsePositiveRisk,
-            $analysis->findings,
-            $analysis->suggestedRewrite,
-            culpritNode: $analysis->culpritNode,
-            hotspots: $analysis->hotspots,
-            mode: $analysis->mode,
-            confirmation: $confirmation,
-            complexity: $analysis->complexity,
-            degree: $analysis->degree,
-            proof: $analysis->proof,
-            witness: $witness,
-            replayed: $replayed,
-            abstractions: $analysis->abstractions,
-            pcreVersion: $analysis->pcreVersion,
-            analysisVersion: $analysis->analysisVersion,
-            upperBoundDegree: $analysis->upperBoundDegree,
-            searchCost: $analysis->searchCost,
-        );
     }
 
     private static function provenSeverity(ProofResult $proof): RedosSeverity

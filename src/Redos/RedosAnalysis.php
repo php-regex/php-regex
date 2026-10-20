@@ -85,6 +85,73 @@ final class RedosAnalysis implements \JsonSerializable
         $this->phpVersion = \PHP_VERSION;
     }
 
+    /**
+     * The analysis of a pattern left out: the analysis is off, or the
+     * pattern is one the caller ignores. Nothing ran, so nothing is at risk.
+     *
+     * @internal built by RedosAnalyzer::analyze()
+     */
+    public static function skipped(RedosMode $mode): self
+    {
+        return new self(RedosSeverity::Safe, 0, confidence: RedosConfidence::Low, mode: $mode, proof: RedosProof::NotAnalyzed);
+    }
+
+    /**
+     * The analysis of a pattern the library refuses, or could not finish:
+     * the error says why, and the one recommendation what was not done.
+     *
+     * @internal built by RedosAnalyzer::analyze()
+     */
+    public static function failed(RedosMode $mode, string $error, ?string $recommendation = null): self
+    {
+        return new self(
+            RedosSeverity::Unknown,
+            0,
+            recommendations: [$recommendation ?? 'Analysis incomplete: '.$error],
+            error: $error,
+            confidence: RedosConfidence::Low,
+            mode: $mode,
+            proof: RedosProof::NotAnalyzed,
+        );
+    }
+
+    /**
+     * The same analysis once the running engine was asked: its confirmation,
+     * the confidence it leaves, the witness it replayed and whether that
+     * witness reproduced. Every other field is kept.
+     *
+     * @internal built by RedosAnalyzer::analyze()
+     */
+    public function withConfirmation(?Confirmation $confirmation, RedosConfidence $confidence, ?RedosWitness $witness, ?bool $replayed): self
+    {
+        return new self(
+            $this->severity,
+            $this->score,
+            $this->vulnerablePart,
+            $this->recommendations,
+            $this->error,
+            $this->trigger,
+            $confidence,
+            $this->falsePositiveRisk,
+            $this->findings,
+            $this->suggestedRewrite,
+            $this->culpritNode,
+            $this->hotspots,
+            $this->mode,
+            $confirmation,
+            $this->complexity,
+            $this->degree,
+            $this->proof,
+            $witness,
+            $replayed,
+            $this->abstractions,
+            $this->pcreVersion,
+            $this->analysisVersion,
+            $this->upperBoundDegree,
+            $this->searchCost,
+        );
+    }
+
     public function isSafe(): bool
     {
         return RedosSeverity::Safe === $this->severity || RedosSeverity::Low === $this->severity;
