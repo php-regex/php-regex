@@ -1960,9 +1960,20 @@ final class PatternPrinter extends AbstractNodeVisitor
     private function compileCharClassNode(NodeInterface $node, ?NodeInterface $next): string
     {
         // Where "[" is the delimiter, pretty printing marks it as escapeString
-        // does: the balance decides.
+        // does: the balance decides. Before ":", "." or "=" it may only come
+        // back counted quoted.
         if ($node instanceof LiteralNode && '[' === $node->value) {
-            return $this->writtenText($node) ?? ($this->shouldEscapeCharClassOpen($next) ? '\\[' : ($this->bracketMarkFor('[') ?? '').'[');
+            $written = $this->writtenText($node);
+            if (null !== $written) {
+                return $written;
+            }
+
+            $mark = $this->bracketMarkFor('[');
+            if ($this->shouldEscapeCharClassOpen($next)) {
+                return null === $mark ? '\\[' : $mark.'Q[';
+            }
+
+            return ($mark ?? '').'[';
         }
 
         if ($node instanceof RangeNode) {
@@ -1977,8 +1988,17 @@ final class PatternPrinter extends AbstractNodeVisitor
         return $node->accept($this);
     }
 
+    /**
+     * Whether a "[" in a class goes before ":", "." or "=", where unescaped
+     * it would open a POSIX class: the next member, or the start of the
+     * range it opens, "[\[:-;:]" for one.
+     */
     private function shouldEscapeCharClassOpen(?NodeInterface $next): bool
     {
+        if ($next instanceof RangeNode) {
+            $next = $next->start;
+        }
+
         if (!$next instanceof LiteralNode) {
             return false;
         }
