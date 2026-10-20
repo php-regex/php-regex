@@ -3,7 +3,7 @@ parametersSchema:
         # PHP version patterns are judged for: null for PHPStan's phpVersion
         # (the PHP running PHPStan unless configured), 'runtime' for the PHP
         # running PHPStan, a version like '8.2' or a PHP_VERSION_ID like 80200
-        phpVersion: schema(anyOf(schema(string(), pattern('runtime|\d{5,}|\d+\.\d+.*')), schema(int(), min(1))), nullable()),
+        phpVersion: schema(anyOf(schema(string(), pattern('runtime|\d{5,}|\d+\.\d{1,2}(\.\d{1,2})?')), schema(int(), min(1))), nullable()),
         # PCRE2 release patterns are judged for, like '10.42' or PCRE_VERSION
         # ('10.44 2024-06-07'); null for the one the PHP version bundles
         pcreVersion: schema(string(), pattern('\d+\.\d+(-[A-Za-z0-9]+)?(\s.*)?'), nullable()),

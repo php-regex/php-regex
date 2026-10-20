@@ -28,8 +28,8 @@ use PHPRegex\Parser\Text\Ascii;
  * including limits, caching, and ReDoS pattern exclusions.
  *
  * The keys are closed and each value has its type; the ranges (a positive
- * length, a version that names a release) are checked when the options are
- * read, where an InvalidRegexOptionException says which one is wrong.
+ * length, a version that names a release) are checked where the options
+ * are built, an InvalidRegexOptionException saying which one is wrong.
  *
  * @phpstan-type OptionsArray array{
  *     max_pattern_length?: int,
@@ -45,6 +45,17 @@ use PHPRegex\Parser\Text\Ascii;
  */
 final class ParserOptions
 {
+    /**
+     * What "php_version" takes, said when it holds something else.
+     */
+    public const PHP_VERSION_EXPECTED = '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".';
+
+    /**
+     * The smallest PHP_VERSION_ID "php_version" takes, PHP 7.0's: a smaller
+     * integer is a version written as a number ("8", "82") or no version.
+     */
+    public const OLDEST_PHP_VERSION_ID = 70000;
+
     /**
      * Allowed option keys for configuration.
      */
@@ -77,6 +88,8 @@ final class ParserOptions
      * @param bool            $runtimePcreValidation Whether to validate against the PCRE runtime
      * @param int             $maxRecursionDepth     Maximum recursion depth during parsing
      * @param PcreTarget|null $target                The PHP, PCRE2 and locale judged; the running ones when null
+     *
+     * @throws InvalidRegexOptionException when a length or a depth is out of its range
      */
     public function __construct(
         public readonly int $maxPatternLength,
@@ -87,6 +100,18 @@ final class ParserOptions
         public readonly int $maxRecursionDepth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
     ) {
+        if ($maxPatternLength <= 0) {
+            throw new InvalidRegexOptionException('"max_pattern_length" must be a positive integer.');
+        }
+
+        if ($maxLookbehindLength < 0) {
+            throw new InvalidRegexOptionException('"max_lookbehind_length" must be a non-negative integer.');
+        }
+
+        if ($maxRecursionDepth <= 0) {
+            throw new InvalidRegexOptionException('"max_recursion_depth" must be a positive integer.');
+        }
+
         $this->target = $target ?? PcreTarget::runtime();
 
         // PHP compiles with the engine that runs, under the runtime's
@@ -182,7 +207,8 @@ final class ParserOptions
     {
         $length = $options['max_pattern_length'] ?? RegexParser::DEFAULT_MAX_PATTERN_LENGTH;
 
-        if (!\is_int($length) || $length <= 0) {
+        // The range is the constructor's to check.
+        if (!\is_int($length)) {
             throw new InvalidRegexOptionException(
                 '"max_pattern_length" must be a positive integer.',
             );
@@ -202,7 +228,7 @@ final class ParserOptions
     {
         $length = $options['max_lookbehind_length'] ?? RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH;
 
-        if (!\is_int($length) || $length < 0) {
+        if (!\is_int($length)) {
             throw new InvalidRegexOptionException(
                 '"max_lookbehind_length" must be a non-negative integer.',
             );
@@ -240,7 +266,7 @@ final class ParserOptions
     {
         $depth = $options['max_recursion_depth'] ?? RegexParser::DEFAULT_MAX_RECURSION_DEPTH;
 
-        if (!\is_int($depth) || $depth <= 0) {
+        if (!\is_int($depth)) {
             throw new InvalidRegexOptionException(
                 '"max_recursion_depth" must be a positive integer.',
             );
@@ -287,7 +313,11 @@ final class ParserOptions
     }
 
     /**
-     * Get target PHP version ID from options.
+     * The PHP_VERSION_ID a "php_version" names: an integer, its digits, or a
+     * version, "8.2" or "8.2.1", each part of the version after the major at
+     * most 99, as PHP_VERSION_ID counts them. An integer below PHP 7.0's id
+     * is refused, a number of one or two digits, which reads as a major or a
+     * major and a minor run together, with the way to write it.
      *
      * @param array<string, mixed> $options Configuration options
      */
@@ -299,47 +329,33 @@ final class ParserOptions
             return null;
         }
 
-        if (\is_int($version)) {
-            if ($version <= 0) {
-                throw new InvalidRegexOptionException(
-                    '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
-                );
-            }
-
-            return $version;
-        }
-
         if (\is_string($version)) {
-            $trimmed = trim($version, " \t\n\r\0\x0B");
-            if ('' === $trimmed) {
-                throw new InvalidRegexOptionException(
-                    '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
-                );
+            $version = trim($version, " \t\n\r\0\x0B");
+
+            // A version names a release, old as it may be: "5.6" is PHP
+            // 5.6, which the caller may refuse as no PHP on PCRE2.
+            if (1 === LibraryPcre::match('/^([0-9]++)\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D', $version, $parts)) {
+                return (int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0);
             }
 
-            if (Ascii::isDigit($trimmed)) {
-                $asInt = (int) $trimmed;
-                if ($asInt < 10000) {
-                    throw new InvalidRegexOptionException(
-                        '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
-                    );
-                }
-
-                return $asInt;
-            }
-
-            if (1 === LibraryPcre::match('/^(\d+)(?:\.(\d+))?(?:\.(\d+))?/', $trimmed, $matches)) {
-                $major = (int) $matches[1];
-                $minor = isset($matches[2]) && \is_string($matches[2]) ? (int) $matches[2] : 0;
-                $patch = isset($matches[3]) && \is_string($matches[3]) ? (int) $matches[3] : 0;
-
-                return ($major * 10000) + ($minor * 100) + $patch;
-            }
+            $version = Ascii::isDigit($version) && \strlen($version) <= 9 ? (int) $version : null;
         }
 
-        throw new InvalidRegexOptionException(
-            '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".',
-        );
+        if (!\is_int($version)) {
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+        }
+
+        if ($version > 0 && $version < 100) {
+            [$major, $minor] = $version < 10 ? [$version, 0] : [intdiv($version, 10), $version % 10];
+
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %d is no PHP_VERSION_ID: write PHP %2$d.%3$d as %4$d or "%2$d.%3$d".', $version, $major, $minor, $major * 10000 + $minor * 100));
+        }
+
+        if ($version < self::OLDEST_PHP_VERSION_ID) {
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+        }
+
+        return $version;
     }
 
     /**

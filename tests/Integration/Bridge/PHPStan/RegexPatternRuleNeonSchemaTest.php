@@ -182,6 +182,9 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         yield 'php version empty' => ["phpVersion: ''", 'phpVersion'];
         yield 'php version zero' => ['phpVersion: 0', 'phpVersion'];
         yield 'php version negative' => ['phpVersion: -80200', 'phpVersion'];
+        yield 'php version with text after it' => ["phpVersion: '8.2foo'", 'phpVersion'];
+        yield 'php version with a patch past 99' => ["phpVersion: '8.2.100'", 'phpVersion'];
+        yield 'php version with four parts' => ["phpVersion: '8.2.1.9'", 'phpVersion'];
         yield 'pcre version word' => ['pcreVersion: ten', 'pcreVersion'];
         yield 'pcre version without a minor' => ["pcreVersion: '10'", 'pcreVersion'];
     }

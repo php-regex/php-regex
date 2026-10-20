@@ -73,6 +73,8 @@ final class LintConfigMessagesTest extends TestCase
         yield 'boolean complexity form' => ['{"checks": {"complexity": false}}', 'expected an object (write {"enabled": false})'];
         yield 'complexity threshold below 1' => ['{"checks": {"complexity": {"threshold": 0}}}', 'Invalid "checks.complexity.threshold" in '];
         yield 'PHP_VERSION_ID too small' => ['{"phpVersion": 83}', 'a PHP_VERSION_ID like 80300'];
+        yield 'PHP_VERSION_ID below PHP 7' => ['{"phpVersion": 69999}', 'a PHP_VERSION_ID like 80300'];
+        yield 'patch past 99' => ['{"phpVersion": "8.2.100"}', 'a version like "8.3"'];
     }
 
     /**

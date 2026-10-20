@@ -526,8 +526,8 @@
         "string",
         "integer"
       ],
-      "pattern": "^([0-9]+\\.[0-9]+(\\.[0-9]+)?|[Rr][Uu][Nn][Tt][Ii][Mm][Ee])$",
-      "minimum": 10000,
+      "pattern": "^([0-9]+\\.[0-9]{1,2}(\\.[0-9]{1,2})?|[Rr][Uu][Nn][Tt][Ii][Mm][Ee])$",
+      "minimum": 70000,
       "examples": [
         "8.2",
         "8.4",

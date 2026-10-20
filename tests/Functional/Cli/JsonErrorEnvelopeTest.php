@@ -168,7 +168,7 @@ final class JsonErrorEnvelopeTest extends TestCase
         yield 'lint, --generate-baseline naming a directory' => ['arguments' => ['lint', 'src', '--jobs=1', '--json', '--generate-baseline=src'], 'error' => 'Baseline file not writable: src'];
         yield 'redos, --input-file that does not exist' => ['arguments' => ['redos', '/a/', '--input-file=missing.txt', '--json'], 'error' => 'Input file not readable: missing.txt'];
         yield 'lint, invalid --pcre-version' => ['arguments' => ['--pcre-version=banana', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --pcre-version must be a PCRE2 release like "10.44", not "banana".'];
-        yield 'lint, invalid --php-version beside a valid --pcre-version' => ['arguments' => ['--php-version=99', '--pcre-version=10.44', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".'];
+        yield 'lint, invalid --php-version beside a valid --pcre-version' => ['arguments' => ['--php-version=99', '--pcre-version=10.44', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --php-version 99 is no PHP_VERSION_ID: write PHP 9.9 as 90900 or "9.9".'];
     }
 
     /**
@@ -299,7 +299,7 @@ final class JsonErrorEnvelopeTest extends TestCase
     public function test_invalid_library_option_is_reported_with_its_message(string $command, bool $json): void
     {
         $this->enterProject();
-        $message = 'Invalid option: --php-version must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".';
+        $message = 'Invalid option: --php-version 99 is no PHP_VERSION_ID: write PHP 9.9 as 90900 or "9.9".';
 
         [$exitCode, $stdout, $stderr] = $this->runRegex(['--php-version=99', $command, '/a/', ...($json ? ['--json'] : [])]);
 
@@ -341,7 +341,7 @@ final class JsonErrorEnvelopeTest extends TestCase
 
         $this->assertSame(2, $exitCode, $stdout);
         $this->assertSame('', $stdout);
-        $this->assertSame("Invalid option: --php-version must be a version string like \"8.2\", a PHP_VERSION_ID integer, or \"runtime\".\n", $stderr);
+        $this->assertSame("Invalid option: --php-version 99 is no PHP_VERSION_ID: write PHP 9.9 as 90900 or \"9.9\".\n", $stderr);
     }
 
     /**

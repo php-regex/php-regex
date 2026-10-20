@@ -189,6 +189,10 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
 | `locale`                  | `string`                               | the runtime's     | `LC_CTYPE` locale judged, `"tr_TR.UTF-8"` | Low - read once per process |
 
+`php_version` is a version, `"8.2"` or `"8.2.1"`, each part after the major at
+most 99, a PHP_VERSION_ID of 70000 or more (`80200`, or `"80200"`), or
+`"runtime"`; anything else throws `InvalidRegexOptionException`.
+
 Without `php_version` nor `pcre_version`, patterns are judged for the running PHP
 and the PCRE2 it links; without `locale`, under the locale of the running PHP,
 `C` unless it called `setlocale()`. A locale the machine cannot set is refused

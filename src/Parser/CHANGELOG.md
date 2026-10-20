@@ -13,6 +13,9 @@ CHANGELOG
    read from the engine once per process. `PcreTarget::withLocale()` and
    `key()`, and `RegexParser::withTarget()`, a parser for another target
    with every other option.
+ * `php_version` is read whole, each part after the major at most 99, and a
+   PHP_VERSION_ID is at least `ParserOptions::OLDEST_PHP_VERSION_ID`, 70000;
+   the constructor of `ParserOptions` checks the ranges of the limits.
  * `Exception\InternalFailureException`: the library could not finish its own
    work, one of its regexes giving up under PCRE limits PHP would not raise.
    `parse()`, `parseTolerant()` and `validate()` throw it, where they
