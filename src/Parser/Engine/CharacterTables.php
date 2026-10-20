@@ -291,7 +291,7 @@ final class CharacterTables
                     continue;
                 }
 
-                $lowByte = \chr($capital & 0xFF);
+                $lowByte = \chr($capital % 0x100);
                 if ($running && \chr($byte) === $otherCases[$byte]) {
                     $before[$byte] = $lowByte;
                 } elseif (!$running && $lowByte === $otherCases[$byte]) {

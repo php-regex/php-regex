@@ -207,6 +207,27 @@ final class ServerInlineIgnoreTest extends TestCase
     }
 
     /**
+     * A locale regex.json names that this machine cannot set leaves the
+     * session without a target: the editor is told, and nothing is judged.
+     */
+    #[Test]
+    public function test_a_locale_the_machine_cannot_set_judges_nothing(): void
+    {
+        file_put_contents($this->root.'/regex.json', '{"locale": "xx_YY.NOWHERE"}');
+        $uri = $this->uri('src/Matcher.php');
+
+        $this->initialize();
+        $this->send($this->didOpen($uri, "<?php\npreg_match('/(a/', \$s);\n"));
+
+        $messages = array_column($this->notifications('window/showMessage'), 'message');
+        $this->assertCount(1, $messages);
+        $this->assertIsString($messages[0]);
+        $this->assertStringContainsString('"locale" names "xx_YY.NOWHERE"', (string) $messages[0]);
+        $this->assertStringEndsWith('No pattern is judged.', $messages[0]);
+        $this->assertSame([], $this->notifications('textDocument/publishDiagnostics'));
+    }
+
+    /**
      * A guard on PHP_VERSION_ID narrows the versions a pattern is judged
      * for, as in `regex lint`, which reads the same tokens.
      */

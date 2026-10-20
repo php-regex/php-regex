@@ -195,6 +195,21 @@ final class ParserOptionsTest extends TestCase
         ParserOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => '8.4', 'pcre_version' => '10.100']);
     }
 
+    /**
+     * The message names the major and the minor of the PHP judged.
+     */
+    public function test_runtime_validation_names_the_php_it_does_not_judge(): void
+    {
+        foreach (['8.0.8' => 'PHP 8.0, PCRE2 10.100', 89991 => 'PHP 8.99, PCRE2 10.100'] as $phpVersion => $named) {
+            try {
+                ParserOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => $phpVersion, 'pcre_version' => '10.100']);
+                $this->fail('Runtime validation was taken for another engine.');
+            } catch (InvalidRegexOptionException $e) {
+                $this->assertStringContainsString('does not judge the target ('.$named.')', $e->getMessage());
+            }
+        }
+    }
+
     public function test_from_array_invalid_max_pattern_length(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
