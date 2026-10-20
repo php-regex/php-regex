@@ -27,17 +27,12 @@ use PHPRegex\LanguageServer\Protocol\MessageLimits;
 use PHPRegex\LanguageServer\Protocol\TraceLevel;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\Linter\Config\JudgedRange;
-use PHPRegex\Linter\Config\LintArguments;
-use PHPRegex\Linter\Config\LintConfigLoader;
-use PHPRegex\Linter\Config\LintConfigResult;
-use PHPRegex\Linter\Config\LintDefaultsBuilder;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Parser\Engine\IniFlag;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
@@ -49,11 +44,8 @@ use PHPRegex\Toolkit\Regex;
  * for regex patterns in PHP source files.
  *
  * Patterns are judged for the workspace's target, resolved once at
- * "initialize" for the first workspace folder, else rootUri:
- * initializationOptions.phpVersion / pcreVersion, then regex.json there, then
- * composer.json there, then the running PHP; the LC_CTYPE locale from
- * initializationOptions.locale, then regex.json, then the runtime's. A Regex handed to the
- * constructor is used as it is.
+ * "initialize" from the settings WorkspaceSettings reads. A Regex handed to
+ * the constructor is used as it is.
  *
  * The calls read are those `regex lint` reads: the native functions, the
  * presets regex.json's "extraction.interop" names (every one by default) and
@@ -64,22 +56,10 @@ use PHPRegex\Toolkit\Regex;
  * the libraries of vendor/ whatever "exclude" says, and from each open
  * document as it changes. A document in vendor/ is not diagnosed.
  *
- * The ReDoS analysis runs only when initializationOptions.redos, else
- * checks.redos.enabled in regex.json, turns it on.
- *
- * @phpstan-import-type LintConfig from LintConfigResult
- *
  * @internal
  */
 final class Server
 {
-    /**
-     * window/logMessage and window/showMessage types.
-     */
-    private const LOG_ERROR = 1;
-    private const LOG_WARNING = 2;
-    private const LOG_INFO = 3;
-
     /**
      * The id of the watched-files registration, the one an unregister
      * request would name.
@@ -311,32 +291,6 @@ final class Server
     }
 
     /**
-     * The level "initialize" asks for: initializationOptions.trace, else the
-     * protocol's "trace", else off. A value that is not a level is ignored,
-     * with a warning, and the next source is read.
-     */
-    private function traceLevel(Message $initialize): TraceLevel
-    {
-        $params = $initialize->params ?? [];
-        $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
-
-        foreach (['initializationOptions.trace' => $options['trace'] ?? null, 'trace' => $params['trace'] ?? null] as $source => $value) {
-            if (null === $value) {
-                continue;
-            }
-
-            $level = \is_string($value) ? TraceLevel::tryFrom($value) : null;
-            if (null !== $level) {
-                return $level;
-            }
-
-            $this->log(self::LOG_WARNING, \sprintf('%s %s is not off, messages or verbose: ignored.', $source, \is_string($value) ? '"'.$value.'"' : get_debug_type($value)));
-        }
-
-        return TraceLevel::Off;
-    }
-
-    /**
      * Answer a request whose handler failed, and leave a trace of every
      * failure on stderr, where the editor collects the server log.
      */
@@ -469,48 +423,47 @@ final class Server
     private function handleInitialize(Message $message): void
     {
         // The frame log starts with the request that turns it on.
-        $this->trace = $this->traceLevel($message);
+        $params = $message->params ?? [];
+        $this->trace = WorkspaceSettings::traceLevel($params, $this->transport);
         $this->traceInbound($message);
 
         $this->initHandler->handle($message);
         $this->initialized = true;
 
-        $params = $message->params ?? [];
-        $root = self::rootDirectory($params);
-        $config = null === $root ? [] : $this->loadConfig($root);
+        $workspace = WorkspaceSettings::read($params, $this->transport);
         // The lint rules regex.json turns on or off, as `regex lint` reads them.
-        $arguments = LintArguments::fromDefaults((new LintDefaultsBuilder())->build($config));
+        $arguments = $workspace->lintArguments();
         $lintRules = $arguments->lintRules;
         // The calls read, as `regex lint` reads them.
         $this->documents->readWith(new RegexFinder(PatternFunctionRegistry::create($arguments->interop, $arguments->patternFunctions)));
-        [$redosMode, $redosThreshold] = self::redos($params, $arguments);
+        [$redosMode, $redosThreshold] = $workspace->redos($arguments);
 
         if (null !== $this->givenRegex) {
             $target = $this->givenRegex->target();
-            $this->log(self::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s%s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion, 'C' === $target->locale ? '' : ', locale '.$target->locale));
+            $this->log(Transport::LOG_INFO, \sprintf('Target: PHP %s, PCRE2 %s%s (the Regex the server was started with)', ProjectTarget::phpLabel($target->phpVersionId), $target->pcreVersion, 'C' === $target->locale ? '' : ', locale '.$target->locale));
             $this->judgeWith($this->givenRegex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores);
         } else {
             try {
-                $target = $this->resolveTarget($params, $root, $config);
+                $target = $workspace->target();
             } catch (UnsupportedTargetException|InvalidRegexOptionException $e) {
                 $message = $e->getMessage().' No pattern is judged.';
-                $this->log(self::LOG_ERROR, $message);
-                $this->transport->notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
+                $this->log(Transport::LOG_ERROR, $message);
+                $this->transport->notification('window/showMessage', ['type' => Transport::LOG_ERROR, 'message' => $message]);
                 $this->refused = true;
 
                 return;
             }
             foreach ($target->notices() as $notice) {
-                $this->log(self::LOG_INFO, $notice);
+                $this->log(Transport::LOG_INFO, $notice);
             }
-            $this->log(self::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->source()));
+            $this->log(Transport::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->source()));
 
             $regex = Regex::create($target->regexOptions());
             $this->judgeWith($regex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores, $target->judgedRange($regex->parser()));
         }
 
-        if (null !== $root) {
-            $this->readDeclarations($root, $config);
+        if (null !== $workspace->root) {
+            $this->readDeclarations($workspace->root, $workspace);
         }
     }
 
@@ -574,65 +527,15 @@ final class Server
     }
 
     /**
-     * The ReDoS analysis to run: none unless initializationOptions.redos,
-     * else checks.redos.enabled in regex.json, turns it on; the mode and
-     * the threshold of regex.json, high by default, as `regex lint` reads
-     * them.
-     *
-     * @param array<array-key, mixed> $params the "initialize" params
-     *
-     * @return array{RedosMode, RedosSeverity}
-     */
-    private static function redos(array $params, LintArguments $arguments): array
-    {
-        $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
-        $enabled = \is_bool($options['redos'] ?? null) ? $options['redos'] : $arguments->checkRedos;
-        $threshold = RedosSeverity::tryFrom($arguments->redosThreshold ?? '');
-
-        return [
-            $enabled ? (RedosMode::tryFrom($arguments->redosMode) ?? RedosMode::Theoretical) : RedosMode::Off,
-            null === $threshold || RedosSeverity::Safe === $threshold || RedosSeverity::Unknown === $threshold ? RedosSeverity::High : $threshold,
-        ];
-    }
-
-    /**
-     * regex.json at the root; a file that cannot be read is an error shown
-     * to the user, and no configuration: the server reads as without the
-     * file, every extraction preset included, rather than a part of it.
-     *
-     * @return LintConfig
-     */
-    private function loadConfig(string $root): array
-    {
-        $loaded = (new LintConfigLoader())->load($root);
-        if (null !== $loaded->error) {
-            $message = 'regex.json ignored: '.$loaded->error;
-            $this->log(self::LOG_ERROR, $message);
-            $this->transport->notification('window/showMessage', ['type' => self::LOG_ERROR, 'message' => $message]);
-
-            return [];
-        }
-
-        // What the file holds that is ignored, the rest of it kept.
-        foreach ($loaded->warnings as $warning) {
-            $this->log(self::LOG_WARNING, 'regex.json: '.$warning);
-        }
-
-        return $loaded->config;
-    }
-
-    /**
      * Reads the workspace for the functions that declare a pattern parameter,
      * under the "paths" and out of the "exclude" entries `regex lint` reads,
      * and the libraries of vendor/, which `regex lint` reads whatever
      * "exclude" says.
-     *
-     * @param LintConfig $config
      */
-    private function readDeclarations(string $root, array $config): void
+    private function readDeclarations(string $root, WorkspaceSettings $workspace): void
     {
-        $paths = self::stringList($config['paths'] ?? null);
-        $exclude = \array_key_exists('exclude', $config) ? self::stringList($config['exclude']) : ['vendor'];
+        $paths = $workspace->paths();
+        $exclude = $workspace->exclude();
 
         $declarations = $this->documents->declarations();
         if (!$declarations->scanWorkspace($root, [] === $paths ? ['.'] : $paths, $exclude)) {
@@ -681,110 +584,8 @@ final class Server
      */
     private function warn(string $message): void
     {
-        $this->log(self::LOG_WARNING, $message);
-        $this->transport->notification('window/showMessage', ['type' => self::LOG_WARNING, 'message' => $message]);
-    }
-
-    /**
-     * A path of regex.json, or its list of paths, as a list.
-     *
-     * @param string|list<string>|null $value
-     *
-     * @return list<string>
-     */
-    private static function stringList(string|array|null $value): array
-    {
-        return \is_string($value) ? [$value] : $value ?? [];
-    }
-
-    /**
-     * @param array<array-key, mixed> $params the "initialize" params
-     * @param LintConfig              $config regex.json
-     */
-    private function resolveTarget(array $params, ?string $root, array $config): ProjectTarget
-    {
-        $options = \is_array($params['initializationOptions'] ?? null) ? $params['initializationOptions'] : [];
-
-        $configPhp = $config['phpVersion'] ?? null;
-        $configPcre = $config['pcreVersion'] ?? null;
-        $configLocale = $config['locale'] ?? null;
-        $pcre = $this->readVersion($options, 'pcreVersion', 'pcre_version');
-        $locale = $this->readVersion($options, 'locale', 'locale', 'a locale this machine can set');
-
-        // regex.json was checked against its schema when it was loaded.
-        return ProjectTarget::fromSources(
-            [
-                'initializationOptions' => $this->readVersion($options, 'phpVersion', 'php_version'),
-                'regex.json' => \is_string($configPhp) || \is_int($configPhp) ? $configPhp : null,
-            ],
-            [
-                'initializationOptions' => \is_string($pcre) ? $pcre : null,
-                'regex.json' => \is_string($configPcre) ? $configPcre : null,
-            ],
-            $root,
-            getenv(),
-            [
-                'initializationOptions' => \is_string($locale) ? $locale : null,
-                'regex.json' => \is_string($configLocale) ? $configLocale : null,
-            ],
-        );
-    }
-
-    /**
-     * An initializationOptions version or locale, or null when it is unset
-     * or cannot be read: what cannot be read is a warning, and the next
-     * source is used.
-     *
-     * @param array<array-key, mixed> $options
-     * @param string                  $what    what the value must be, for the warning
-     */
-    private function readVersion(array $options, string $key, string $regexOption, string $what = 'a version'): string|int|null
-    {
-        $value = $options[$key] ?? null;
-        if (null === $value) {
-            return null;
-        }
-
-        if (\is_string($value) || \is_int($value)) {
-            try {
-                ParserOptions::fromArray([$regexOption => $value]);
-
-                return $value;
-            } catch (InvalidRegexOptionException) {
-                // Reported below, like a value of the wrong type.
-            }
-        }
-
-        $this->log(self::LOG_WARNING, \sprintf(
-            'initializationOptions.%s %s is not %s: ignored.',
-            $key,
-            \is_string($value) || \is_int($value) ? '"'.$value.'"' : get_debug_type($value),
-            $what,
-        ));
-
-        return null;
-    }
-
-    /**
-     * The directory of the first workspace folder, else of rootUri; null
-     * when neither is a local directory.
-     *
-     * @param array<array-key, mixed> $params
-     */
-    private static function rootDirectory(array $params): ?string
-    {
-        $folders = $params['workspaceFolders'] ?? null;
-        $uri = \is_array($folders) && \is_array($folders[0] ?? null) ? ($folders[0]['uri'] ?? null) : null;
-        $uri ??= $params['rootUri'] ?? null;
-
-        if (!\is_string($uri) || !str_starts_with($uri, 'file://')) {
-            return null;
-        }
-
-        // parse_url() reads file:///C:/project as C:/project.
-        $path = rawurldecode((string) parse_url($uri, \PHP_URL_PATH));
-
-        return is_dir($path) ? $path : null;
+        $this->log(Transport::LOG_WARNING, $message);
+        $this->transport->notification('window/showMessage', ['type' => Transport::LOG_WARNING, 'message' => $message]);
     }
 
     /**

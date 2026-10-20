@@ -33,11 +33,11 @@ return [
         'PHPRegex\LanguageServer\Protocol\Transport::send()' => ['reflection-sink', 1],
         'PHPRegex\LanguageServer\Protocol\Transport::success()' => ['protocol-slot', 1],
     ],
-    'src/LanguageServer/Server.php' => [
-        'PHPRegex\LanguageServer\Server::readVersion()' => ['protocol-slot', 1],
-        'PHPRegex\LanguageServer\Server::redos()' => ['protocol-slot', 1],
-        'PHPRegex\LanguageServer\Server::resolveTarget()' => ['protocol-slot', 1],
-        'PHPRegex\LanguageServer\Server::rootDirectory()' => ['protocol-slot', 1],
+    'src/LanguageServer/WorkspaceSettings.php' => [
+        'PHPRegex\LanguageServer\WorkspaceSettings::__construct()' => ['protocol-slot', 1],
+        'PHPRegex\LanguageServer\WorkspaceSettings::read()' => ['protocol-slot', 1],
+        'PHPRegex\LanguageServer\WorkspaceSettings::rootDirectory()' => ['protocol-slot', 1],
+        'PHPRegex\LanguageServer\WorkspaceSettings::traceLevel()' => ['protocol-slot', 1],
     ],
     'src/Laravel/Command/LintCommand.php' => [
         'PHPRegex\Laravel\Command\LintCommand::normalizeOptimizations()' => ['validator-input', 1],

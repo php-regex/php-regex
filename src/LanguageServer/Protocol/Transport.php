@@ -33,6 +33,13 @@ final class Transport
      */
     public const INTERNAL_ERROR = -32603;
 
+    /**
+     * The types of window/logMessage and window/showMessage.
+     */
+    public const LOG_ERROR = 1;
+    public const LOG_WARNING = 2;
+    public const LOG_INFO = 3;
+
     private const JSON_FLAGS = \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE;
 
     /**
