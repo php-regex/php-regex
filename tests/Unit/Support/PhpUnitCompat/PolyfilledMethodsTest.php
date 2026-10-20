@@ -109,22 +109,81 @@ final class PolyfilledMethodsTest extends TestCase
      */
     public function test_every_feature_trait_loads_where_no_phpunit_is_installed(): void
     {
+        $this->assertSame([0, self::polyfills()], self::loadWithoutPhpUnit(''));
+    }
+
+    /**
+     * The analysis inside Rector looks a class up by including its file
+     * with every read trapped: PHP then counts the file as included though
+     * nothing in it ran. Such a lookup of an implementation, before the
+     * feature trait loads it, leaves the trait to load all the same.
+     */
+    public function test_every_feature_trait_loads_after_a_lookup_that_ran_none_of_its_file(): void
+    {
+        $files = [];
+        foreach (array_keys(PolyfilledMethods::FEATURES) as $trait) {
+            $files[] = PolyfilledMethods::file($trait, false);
+        }
+
+        $trap = <<<'PHP'
+            final class TrappedRead
+            {
+                public $context;
+                public function stream_open(string $path, string $mode, int $options, ?string &$opened): bool { return true; }
+                public function stream_read(int $count): string { return ''; }
+                public function stream_eof(): bool { return true; }
+                public function stream_stat(): array { return []; }
+                public function stream_set_option(int $option, int $first, ?int $second): bool { return false; }
+                public function url_stat(string $path, int $flags): array { return []; }
+            }
+            stream_wrapper_unregister('file');
+            stream_wrapper_register('file', TrappedRead::class);
+            foreach (%s as $file) { include $file; }
+            stream_wrapper_restore('file');
+            PHP;
+
+        $this->assertSame([0, self::polyfills()], self::loadWithoutPhpUnit(\sprintf($trap, var_export($files, true))));
+    }
+
+    /**
+     * Runs $before, then loads every feature trait with Composer's
+     * autoloader alone, in a PHP of its own: no PHPUnit is installed there.
+     *
+     * @return array{int, list<string>} the exit code, then whether PHPUnit was loaded and each feature trait's implementation, a line each
+     */
+    private static function loadWithoutPhpUnit(string $before): array
+    {
         $root = \dirname(__DIR__, 4);
-        $script = \sprintf(
-            'require %s; require %s; echo class_exists(%s, false) ? "PHPUnit loaded" : "", "\n"; foreach (%s as $trait) { echo $trait, " ", (new ReflectionClass($trait))->getName(), "\n"; }',
+        $script = sys_get_temp_dir().'/phpunit-compat-'.bin2hex(random_bytes(6)).'.php';
+        file_put_contents($script, \sprintf(
+            "<?php\n%s\nrequire %s;\nrequire %s;\necho class_exists(%s, false) ? 'PHPUnit loaded' : '', \"\\n\";\nforeach (%s as \$trait) { echo \$trait, ' ', (new ReflectionClass(\$trait))->getName(), \"\\n\"; }\n",
+            $before,
             var_export($root.'/vendor/autoload.php', true),
             var_export($root.'/tests/Support/PhpUnitCompat/bootstrap.php', true),
             var_export(TestCase::class, true),
             var_export(array_keys(PolyfilledMethods::FEATURES), true),
-        );
+        ));
 
-        exec(escapeshellarg(\PHP_BINARY).' -r '.escapeshellarg($script).' 2>&1', $output, $code);
+        try {
+            exec(escapeshellarg(\PHP_BINARY).' '.escapeshellarg($script).' 2>&1', $output, $code);
+        } finally {
+            @unlink($script);
+        }
 
+        return [$code, $output];
+    }
+
+    /**
+     * @return list<string> no PHPUnit loaded, then each feature trait standing for its implementation on the older API
+     */
+    private static function polyfills(): array
+    {
         $expected = [''];
         foreach (array_keys(PolyfilledMethods::FEATURES) as $trait) {
             $expected[] = $trait.' '.PolyfilledMethods::implementation($trait, false);
         }
-        $this->assertSame([0, $expected], [$code, $output]);
+
+        return $expected;
     }
 
     /**

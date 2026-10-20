@@ -81,14 +81,21 @@ final class PolyfilledMethods
     /**
      * Loads the implementation the running PHPUnit calls for under the
      * feature's name. It requires the file itself, for the static analysis
-     * loads the traits with no Composer autoloader.
+     * loads the traits with no Composer autoloader; and requires it again
+     * while the trait is missing, for the analysis inside Rector looks a
+     * class up by including its file with every read trapped, which leaves
+     * the file counted as included though nothing in it ran.
      *
      * @param trait-string $trait
      */
     public static function load(string $trait): void
     {
         $native = self::isNative($trait);
-        require_once self::file($trait, $native);
-        class_alias(self::implementation($trait, $native), $trait, false);
+        $implementation = self::implementation($trait, $native);
+        if (!trait_exists($implementation, false)) {
+            require self::file($trait, $native);
+        }
+
+        class_alias($implementation, $trait, false);
     }
 }
