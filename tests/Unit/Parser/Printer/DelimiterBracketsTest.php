@@ -83,6 +83,7 @@ final class DelimiterBracketsTest extends TestCase
         // Unescaped, "{2}" would read as a repeat, and "\d{" may open the
         // braces of an escape.
         yield 'a brace before a count, quoted' => ['body' => "\x03{2\x03}(*MARK:})", 'opening' => '{', 'closing' => '}', 'expected' => '\Q{\E2\}(*MARK:})', 'subject' => '{2}'];
+        yield 'a brace after a letter, unescaped' => ['body' => "a\x03{b(*MARK:})", 'opening' => '{', 'closing' => '}', 'expected' => 'a{b(*MARK:})', 'subject' => 'a{b'];
         yield 'a brace after an escape, quoted' => ['body' => "\\d\x03{a(*MARK:})", 'opening' => '{', 'closing' => '}', 'expected' => '\d\Q{\Ea(*MARK:})', 'subject' => '1{a'];
         yield 'a closing brace after a count, quoted' => ['body' => "(*MARK:{)\\{2\x03}", 'opening' => '{', 'closing' => '}', 'expected' => '(*MARK:{)\{2\Q}\E', 'subject' => '{2}'];
         yield 'a parenthesis marked to be quoted' => ['body' => "(*MARK:()a\x03Q)", 'opening' => '(', 'closing' => ')', 'expected' => '(*MARK:()a\Q)\E', 'subject' => 'a)'];

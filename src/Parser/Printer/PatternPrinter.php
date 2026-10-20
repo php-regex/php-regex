@@ -779,12 +779,11 @@ final class PatternPrinter extends AbstractNodeVisitor
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): string
     {
-        $binding = self::classSetBinding($node->operator);
         if (null === $node->left) {
-            return '!'.$this->classSetOperand($node->right, $binding, false);
+            return '!'.$this->classSetOperand($node->right, $node->operator, false);
         }
 
-        return $this->classSetOperand($node->left, $binding, false).$node->symbol.$this->classSetOperand($node->right, $binding, true);
+        return $this->classSetOperand($node->left, $node->operator, false).$node->symbol.$this->classSetOperand($node->right, $node->operator, true);
     }
 
     #[\Override]
@@ -1402,32 +1401,24 @@ final class PatternPrinter extends AbstractNodeVisitor
     /**
      * An operand of an extended class operation, in parentheses where it is
      * an operation that binds looser than the one it stands in, or as
-     * tightly on its right: the operators of one precedence bind left to
+     * tightly on its right: "!" binds tightest, then "&", then "+", "|",
+     * "-" and "^" alike, and the operators of one precedence bind left to
      * right.
      */
-    private function classSetOperand(NodeInterface $operand, int $binding, bool $isRight): string
+    private function classSetOperand(NodeInterface $operand, ClassSetOperator $outer, bool $isRight): string
     {
         $text = $operand->accept($this);
-        if (!$operand instanceof ClassSetOperationNode) {
+        if (!$operand instanceof ClassSetOperationNode || ClassSetOperator::Complement === $operand->operator) {
             return $text;
         }
 
-        $inner = self::classSetBinding($operand->operator);
-
-        return $inner < $binding || ($isRight && $inner === $binding) ? '('.$text.')' : $text;
-    }
-
-    /**
-     * How tightly an extended class operator binds: "!" most, then "&",
-     * then "+", "|", "-" and "^" alike.
-     */
-    private static function classSetBinding(ClassSetOperator $operator): int
-    {
-        return match ($operator) {
-            ClassSetOperator::Complement => 3,
-            ClassSetOperator::Intersection => 2,
-            default => 1,
+        $parenthesised = match (true) {
+            ClassSetOperator::Complement === $outer => true,
+            ClassSetOperator::Intersection === $operand->operator => ClassSetOperator::Intersection === $outer && $isRight,
+            default => ClassSetOperator::Intersection === $outer || $isRight,
         };
+
+        return $parenthesised ? '('.$text.')' : $text;
     }
 
     /**

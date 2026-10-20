@@ -368,6 +368,19 @@ final class FormatCommandTest extends TestCase
     }
 
     #[Test]
+    public function test_format_notes_a_delimiter_a_control_backslash_hides_from_php(): void
+    {
+        $this->enterProject();
+        $pattern = '#aaaaaaaaaaaaaaaaaaaaaaaaaaa\\c\\#c#x';
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['format', $pattern, '--width=20']);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertSame($pattern."\n", $stdout);
+        $this->assertSame("Note: left as written: a \\c\\ hides a character of the delimiter from PHP, which laid out it would read, ending the pattern elsewhere.\n", $stderr);
+    }
+
+    #[Test]
     public function test_format_exits_1_on_a_pattern_that_does_not_parse_as_json(): void
     {
         $this->enterProject();

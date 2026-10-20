@@ -236,6 +236,47 @@ final class PatternPrinterRoundTripTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('provideSpellings')]
+    public function test_a_printer_writes_the_spelling_it_names(string $printer, string $pattern, string $expected): void
+    {
+        $this->requiresCompile($pattern);
+        $written = RegexParser::create(['cache' => null])->parse($pattern)->accept(match ($printer) {
+            'as written' => PatternPrinter::asWritten(),
+            'normalized' => PatternPrinter::normalized(),
+            'pretty' => PatternPrinter::pretty(),
+            default => new PatternPrinter(false, true),
+        });
+
+        $this->assertSame($expected, $written);
+        $this->assertNotFalse(@preg_match($written, ''), $written);
+    }
+
+    /**
+     * @return iterable<string, array{printer: string, pattern: string, expected: string}>
+     */
+    public static function provideSpellings(): iterable
+    {
+        // A collapsed comment writes a bracket it held only where a verb name
+        // needs it, and a ")" in a "#" comment, which ends as it did.
+        yield 'a collapsed comment closing a verb name' => ['printer' => 'collapsed', 'pattern' => "{(*MARK:{)a # }\n}x", 'expected' => '{(*MARK:{)a(?#...})}x'];
+        yield 'a collapsed comment holding a pair' => ['printer' => 'collapsed', 'pattern' => "{a # {}\n}x", 'expected' => '{a(?#...)}x'];
+        yield 'a collapsed "#" comment closing a parenthesis' => ['printer' => 'collapsed', 'pattern' => "((*MARK:()a # )\nb)x", 'expected' => "((*MARK:()a#...)\nb)x"];
+        // An extended class has parentheses only where precedence needs them.
+        yield 'a complement of a complement' => ['printer' => 'normalized', 'pattern' => '/(?[!![a]])/', 'expected' => '/(?[!![a]])/'];
+        yield 'a complement of an intersection' => ['printer' => 'normalized', 'pattern' => '/(?[!([a]&[ab])])/', 'expected' => '/(?[!([a]&[ab])])/'];
+        yield 'a complement in parentheses' => ['printer' => 'normalized', 'pattern' => '/(?[(![a])&[ab]])/', 'expected' => '/(?[![a]&[ab]])/'];
+        yield 'an intersection on the right of one' => ['printer' => 'normalized', 'pattern' => '/(?[[a]&([b]&[c])])/', 'expected' => '/(?[[a]&([b]&[c])])/'];
+        yield 'an intersection on the left of one' => ['printer' => 'normalized', 'pattern' => '/(?[([a]&[b])&[c]])/', 'expected' => '/(?[[a]&[b]&[c]])/'];
+        yield 'an intersection in a union' => ['printer' => 'normalized', 'pattern' => '/(?[[a]+([b]&[c])])/', 'expected' => '/(?[[a]+[b]&[c]])/'];
+        yield 'a union in an intersection' => ['printer' => 'normalized', 'pattern' => '/(?[([a]+[b])&[c]])/', 'expected' => '/(?[([a]+[b])&[c]])/'];
+        yield 'a difference on the right of one' => ['printer' => 'normalized', 'pattern' => '/(?[[a]-([b]-[c])])/', 'expected' => '/(?[[a]-([b]-[c])])/'];
+        yield 'a difference on the left of one' => ['printer' => 'normalized', 'pattern' => '/(?[([a]-[b])-[c]])/', 'expected' => '/(?[[a]-[b]-[c]])/'];
+        // A "[" that starts a range keeps the spelling it was written with.
+        yield 'an escaped "[" starting a range, as written' => ['printer' => 'as written', 'pattern' => '/[a\[-c]/', 'expected' => '/[a\[-c]/'];
+        yield 'an escaped "[" starting a range, pretty printed under "["' => ['printer' => 'pretty', 'pattern' => '[[\[-c]\]]', 'expected' => '[[\[-c]\]]'];
+    }
+
+    #[Test]
     #[DataProvider('provideGroupsByName')]
     public function test_a_group_written_by_name_keeps_it_under_angle_brackets(string $pattern, string $name, string $formatted): void
     {

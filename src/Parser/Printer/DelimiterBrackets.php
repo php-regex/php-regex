@@ -968,19 +968,26 @@ final class DelimiterBrackets
      * Whether a literal bracket marked from $start to $end means the same
      * unescaped: a "{" opening no repeat nor the braces of an escape before
      * it, a "}" after no "{" that could open a repeat, a "[" before no ":",
-     * "." or "=", which would open a POSIX class (see markedBalanced). The
-     * marks around it are read as the brackets they stand before.
+     * "." or "=", which would open a POSIX class (see markedBalanced). A
+     * mark before the "}" that could close a repeat is read as the bracket
+     * it stands before.
      *
      * @param non-empty-string $mark
      */
     private static function standsBare(string $body, int $start, int $end, string $bracket, string $mark): bool
     {
-        $unmarked = [$mark.self::MARK_BARE => '', $mark.self::MARK_QUOTED => '', $mark => ''];
+        if ('}' === $bracket) {
+            $count = $start;
+            while ($count > 0 && str_contains(" \t0123456789,", $body[$count - 1])) {
+                $count--;
+            }
+
+            return 0 === $count || '{' !== $body[$count - 1];
+        }
 
         return match ($bracket) {
-            '{' => 1 !== LibraryPcre::match('/^[ \t]*+(?:[0-9]++[ \t]*+(?:,[ \t]*+[0-9]*+[ \t]*+)?|,[ \t]*+[0-9]++[ \t]*+)\\\\?\}/', strtr(substr($body, $end, 64), $unmarked))
+            '{' => 1 !== LibraryPcre::match('/\G[ \t]*+(?:[0-9]++[ \t]*+(?:,[ \t]*+[0-9]*+[ \t]*+)?|,[ \t]*+[0-9]++[ \t]*+)(?:\\\\|'.preg_quote($mark, '/').'[BQ]?)?\}/', $body, $matches, 0, $end)
                 && !($start >= 2 && '\\' === $body[$start - 2] && Ascii::isAlpha($body[$start - 1])),
-            '}' => 1 !== LibraryPcre::match('/\{[ \t0-9,]*+$/', strtr(substr($body, max(0, $start - 64), min(64, $start)), $unmarked)),
             '[' => !str_contains(':.=', $body[$end] ?? ':'),
             default => true,
         };
