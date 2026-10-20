@@ -32,6 +32,7 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\NodeVisitorInterface;
@@ -183,6 +184,19 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $signature = $this->invokePrivate($visitor, 'getPrefixSignature', [$group]);
 
         $this->assertSame('DOT', $signature);
+    }
+
+    /**
+     * A script run matches what its body matches: nothing only when the body
+     * can, and nothing at all when it has none.
+     */
+    public function test_a_script_run_matches_nothing_only_when_its_body_can(): void
+    {
+        $visitor = new RedosProfiler();
+
+        $this->assertTrue($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 6)]));
+        $this->assertFalse($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 7, new LiteralNode('a', 0, 1))]));
+        $this->assertTrue($this->invokePrivate($visitor, 'nullableStatus', [new ScriptRunNode('sr', 0, 8, new QuantifierNode(new LiteralNode('a', 0, 1), '*', QuantifierType::Greedy, 0, 2))]));
     }
 
     public function test_capture_length_and_quantifier_bounds_helpers(): void
