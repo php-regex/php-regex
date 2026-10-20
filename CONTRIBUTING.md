@@ -130,8 +130,8 @@ php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-thre
 On that same coverage, CI mutates the lines a pull request or a push changes,
 held to the scores `infection.json.dist` declares, and every Monday the whole
 parser. Run mutation testing on your machine with `composer infection`,
-pointed at what you are working on (`--filter=src/Parser/Lexer.php`, or
-`--git-diff-lines --git-diff-base=origin/2.x` for your branch).
+pointed at what you are working on (`composer infection src/Parser/Lexer.php`,
+or `--git-diff-lines --git-diff-base=origin/2.x` for your branch).
 
 ## Submitting Changes
 

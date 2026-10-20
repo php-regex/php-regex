@@ -24,11 +24,14 @@ jobs:
     # The suite under PCOV on one engine: line coverage must not drop below
     # the percentage in .github/coverage-threshold, raised by hand as the
     # coverage grows. The mutations run on that same coverage: those of the
-    # lines a pull request or a push changes, and every Monday those of the
-    # parser, each held to the scores infection.json.dist declares.
+    # lines a pull request or a push changes here, held to the scores
+    # infection.json.dist declares; those of the whole parser in the
+    # parser-mutations job.
     name: Coverage and Mutations
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    outputs:
+      base: ${{ steps.scope.outputs.base }}
 
     steps:
       - name: Checkout Code
@@ -58,21 +61,142 @@ jobs:
       - name: Check the Line Coverage
         run: php tests/Tools/check_coverage.php var/coverage/clover.xml .github/coverage-threshold
 
-      - name: Mutate the Changed Lines
-        if: github.event_name != 'schedule'
+      - name: Choose What to Mutate
+        # The lines a pull request changes from its base, and the lines a
+        # push adds to the commit before it (its parent when that commit is
+        # gone); on a manual run of a branch, the lines it changes from 2.x.
+        # The whole parser on Mondays and on a manual run of 2.x itself,
+        # which has no base to read changes against.
+        id: scope
         env:
-          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          case "$EVENT" in
+            pull_request) base="origin/$BASE_REF" ;;
+            push) base="$BEFORE" ;;
+            workflow_dispatch) if [ "$REF" = refs/heads/2.x ]; then base=''; else base=origin/2.x; fi ;;
+            *) base='' ;;
+          esac
+          if [ "$EVENT" = push ] && ! git cat-file -e "${base:-0000000000000000000000000000000000000000}^{commit}" 2>/dev/null; then
+            base=$(git rev-parse HEAD^)
+          fi
+          if [ -n "$base" ]; then
+            base=$(git merge-base "$base" HEAD)
+            git diff "$base" --diff-filter=AM --name-only -- src > var/coverage/mutated-paths
+            echo "base=$base" >> "$GITHUB_OUTPUT"
+          else
+            echo 'src/Parser/' > var/coverage/mutated-paths
+          fi
+          echo "Mutating $(wc -l < var/coverage/mutated-paths) path(s) from ${base:-no base: the whole parser}"
+
+      - name: Reduce the Coverage to What Is Mutated
+        # The report of the whole suite names every data set of every test
+        # that reached a line, a gigabyte for some parser files, and the
+        # mutation tool keeps the report of each file it reads in memory:
+        # the files the run does not mutate leave the index, and the data
+        # sets of a test collapse into its method.
+        run: |
+          mapfile -t paths < var/coverage/mutated-paths
+          php tests/Tools/reduce_mutation_coverage.php var/coverage/coverage-xml "${paths[@]}"
+
+      - name: Mutate the Changed Lines
+        if: steps.scope.outputs.base != ''
+        timeout-minutes: 60
+        env:
+          BASE: ${{ steps.scope.outputs.base }}
         run: >
           tools/infection/vendor/bin/infection
           --coverage=var/coverage --skip-initial-tests
           --git-diff-lines --git-diff-base="$BASE"
           --ignore-msi-with-no-mutations
-          --only-covering-test-cases --threads=max
+          --only-covering-test-cases --threads=3
 
-      - name: Mutate the Parser
-        if: github.event_name == 'schedule'
+      - name: Hand the Parser Coverage to the Mutation Shards
+        if: steps.scope.outputs.base == ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: parser-coverage
+          path: |
+            var/coverage/junit.xml
+            var/coverage/coverage-xml/index.xml
+            var/coverage/coverage-xml/Parser/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Keep the Mutation Logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-logs
+          path: |
+            .cache/infection/
+            var/coverage/clover.xml
+            var/coverage/mutated-paths
+          if-no-files-found: ignore
+          retention-days: 14
+
+  parser-mutations:
+    # The parser holds some twenty thousand mutants, hours of one runner:
+    # they are dealt to shards, largest file first, each mutated on its own
+    # runner from the coverage the job above measured, and each held to the
+    # scores infection.json.dist declares.
+    name: Parser Mutations (${{ matrix.shard }}/8)
+    needs: coverage
+    if: needs.coverage.outputs.base == ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [ 1, 2, 3, 4, 5, 6, 7, 8 ]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP 8.4 and the project
+        uses: ./.github/actions/setup-php-project
+        with:
+          php-version: '8.4'
+          ini-values: phar.readonly=0
+          # The coverage is measured already: the mutants run without a driver.
+          coverage: none
+          tools: phpunit phpstan phpbench infection
+
+      - name: Fetch the Parser Coverage
+        uses: actions/download-artifact@v8
+        with:
+          name: parser-coverage
+          path: var/coverage
+
+      - name: Keep the Coverage of This Shard
+        env:
+          SHARD: ${{ matrix.shard }}
         run: >
-          tools/infection/vendor/bin/infection
-          --coverage=var/coverage --skip-initial-tests
-          --filter=src/Parser/
-          --only-covering-test-cases --threads=max
+          php tests/Tools/reduce_mutation_coverage.php var/coverage/coverage-xml
+          --shard="$SHARD/8" --list=var/coverage/mutated-paths src/Parser/
+
+      - name: Mutate This Shard of the Parser
+        timeout-minutes: 120
+        run: |
+          mapfile -t paths < var/coverage/mutated-paths
+          tools/infection/vendor/bin/infection \
+            --coverage=var/coverage --skip-initial-tests \
+            --only-covering-test-cases --threads=3 \
+            "${paths[@]}"
+
+      - name: Keep the Mutation Logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: parser-mutation-logs-${{ matrix.shard }}
+          path: |
+            .cache/infection/
+            var/coverage/mutated-paths
+          if-no-files-found: ignore
+          retention-days: 14
