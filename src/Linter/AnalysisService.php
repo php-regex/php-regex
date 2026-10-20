@@ -878,9 +878,10 @@ final class AnalysisService
                 && !(new LanguageSolver($this->regex, $this->dfas()))->readAlike($optimization->original, $optimization->optimized)) {
                 return null;
             }
-        } catch (\Throwable) {
-            // A suggestion is optional: whatever stops one pattern's rewrite,
-            // the run goes on without it.
+        } catch (ExceptionInterface) {
+            // A suggestion is optional: a failure of the library while one
+            // pattern is rewritten or checked leaves it without one, and the
+            // run goes on. Anything else is a bug, and surfaces.
             return null;
         }
 
