@@ -177,7 +177,7 @@
         },
         "rules": {
           "type": "object",
-          "description": "Enable or disable specific lint rules. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier, anchor.dollarNewline and lookaround.redundant.",
+          "description": "Enable or disable specific lint rules, each named without \"regex.lint.\" or in full, as an issue names it. All rules are enabled by default except unicode.shorthandWithoutU, charclass.single, literal.multipleSpaces, quantifier.lazyToClass, quantifier.uselessLazy, lookaround.edgeQuantifier, anchor.dollarNewline and lookaround.redundant.",
           "additionalProperties": false,
           "properties": {
             "unicode.shorthandWithoutU": {
@@ -454,6 +454,11 @@
               "type": "boolean",
               "description": "Warn when a later PHP of the project range parses the pattern into another meaning, as \"a{,3}\" (text before PCRE2 10.43, a quantifier from it).",
               "default": true
+            }
+          },
+          "patternProperties": {
+            "^regex\\.lint\\.(?:unicode\\.shorthandWithoutU|unicode\\.propertyWithoutU|unicode\\.bracedHexWithoutU|unicode\\.multibyteInClassWithoutU|unicode\\.quantifiedMultibyteWithoutU|flag\\.useless\\.i|flag\\.useless\\.m|flag\\.useless\\.s|flag\\.useless\\.D|flag\\.useless\\.x|flag\\.redundant|flag\\.override|charclass\\.redundant|charclass\\.suspiciousRange|charclass\\.suspiciousPipe|charclass\\.duplicateChars|charclass\\.backrefAsOctal|charclass\\.literalMetachar|alternation\\.empty|alternation\\.duplicateDisjunction|alternation\\.overlap|alternation\\.dotNewline|quantifier\\.useless|quantifier\\.zero|quantifier\\.nested|quantifier\\.concatenation|quantifier\\.assertion|quantifier\\.lazyEnd|group\\.redundant|group\\.quantifiedCapture|anchor\\.impossible\\.start|anchor\\.impossible\\.end|backref\\.undefined|backref\\.useless|dotstar\\.nested|escape\\.suspicious|range\\.useless|overlap\\.charset|quantifier\\.emptyRepeat|anchor\\.alternationPrecedence|quantifier\\.possessiveImpossible|anchor\\.impossible\\.boundary|lookaround\\.impossible|group\\.alwaysEmptyCapture|group\\.empty|charclass\\.single|literal\\.multipleSpaces|quantifier\\.lazyToClass|quantifier\\.uselessLazy|lookaround\\.edgeQuantifier|anchor\\.dollarNewline|literal\\.invisible|lookaround\\.redundant|redos\\.search|compat\\.meaningChanges)$": {
+              "type": "boolean"
             }
           }
         }

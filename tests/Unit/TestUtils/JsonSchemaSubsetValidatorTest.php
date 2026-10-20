@@ -110,9 +110,24 @@ final class JsonSchemaSubsetValidatorTest extends TestCase
     public function test_validate_refuses_a_keyword_it_does_not_implement(): void
     {
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessageIsOrContains('"patternProperties"');
+        $this->expectExceptionMessageIsOrContains('"dependentSchemas"');
 
-        (new JsonSchemaSubsetValidator())->validate(['patternProperties' => []], new \stdClass());
+        (new JsonSchemaSubsetValidator())->validate(['dependentSchemas' => []], new \stdClass());
+    }
+
+    /**
+     * A property a pattern names is checked against the pattern's schema,
+     * and is no additional property.
+     */
+    #[Test]
+    public function test_validate_reads_pattern_properties(): void
+    {
+        $schema = ['type' => 'object', 'additionalProperties' => false, 'properties' => ['a' => ['type' => 'boolean']], 'patternProperties' => ['^x\\.' => ['type' => 'boolean']]];
+        $validator = new JsonSchemaSubsetValidator();
+
+        $this->assertSame([], $validator->validate($schema, (object) ['a' => true, 'x.b' => false]));
+        $this->assertSame(['$.x.b: expected type boolean'], $validator->validate($schema, (object) ['x.b' => 1]));
+        $this->assertSame(['$.y.b: unknown property'], $validator->validate($schema, (object) ['y.b' => true]));
     }
 
     /**

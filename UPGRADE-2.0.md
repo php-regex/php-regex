@@ -532,6 +532,13 @@ or a line of a doc comment. One written in the middle of a sentence,
 `// legacy, @regex-ignore`, no longer silences its line: move it to the start
 of the comment, `// @regex-ignore legacy`.
 
+A marker reads the short id of a lint rule or of an analysis issue, as
+`regex.json` names it, as that issue: `// @regex-ignore quantifier.useless`
+silences `regex.lint.quantifier.useless` only, and is reported when that
+issue is not on its line. Such a word was a note before, which silenced every
+issue of the line. A marker meant to silence the whole line names nothing,
+or starts its note with a word that is no rule id.
+
 `regex lint`, Symfony's and Laravel's `regex:lint` and the language server
 report each `@regex-ignore` or `@regex-ignore-next-line` marker that
 silences nothing, and `regex lint --baseline` each entry no issue takes any

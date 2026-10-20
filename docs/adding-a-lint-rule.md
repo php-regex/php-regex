@@ -158,11 +158,11 @@ RedundantLookaroundRule::ID => ['Report a lookaround at the edge of a lookaround
 Everything else reads the catalogue:
 
 - the `checks.lint.rules` key of `regex.json`, the id without `regex.lint.`
-  (`"lookaround.redundant": true`), with its
+  (`"lookaround.redundant": true`; the id in full is accepted too), with its
   description and its default, and the list of the rules off by default in
   the description of `checks.lint.rules`;
 - `--enable-rule` and `--disable-rule`, which refuse an id the catalogue
-  does not hold;
+  does not hold, and the inline markers, which read the short id;
 - the link of each finding: `docs_url` in the JSON report, the last line of
   the GitHub and Checkstyle messages, the `codeDescription` of the editor's
   diagnostic and the "Read more" tip of the PHPStan error. The PHPStan rule

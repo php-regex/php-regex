@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
+use PHPRegex\Linter\Rule\RuleId;
 
 /**
  * Reads regex.dist.json, then regex.json, from the working directory.
@@ -23,7 +24,8 @@ use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
  * preset included. A spec of "extraction.functions" the lint cannot read is
  * a warning, never a problem: it is left out of the result.
  * regex.json overrides regex.dist.json: objects merge key by key, anything
- * else (a list included) is replaced whole. The result keeps the shape of
+ * else (a list included) is replaced whole; a lint rule named in full is
+ * read under its short identifier first. The result keeps the shape of
  * the file.
  *
  * @phpstan-import-type LintConfig from LintConfigResult
@@ -75,7 +77,7 @@ final class LintConfigLoader
                 continue;
             }
 
-            $merged = self::merge($merged, $document);
+            $merged = self::merge($merged, self::withShortRuleIds($document));
             $files[] = $path;
         }
 
@@ -121,6 +123,36 @@ final class LintConfigLoader
         $extraction->functions = $kept;
         $document = clone $document;
         $document->extraction = $extraction;
+
+        return $document;
+    }
+
+    /**
+     * The document with each lint rule of checks.lint.rules named without
+     * "regex.lint.", the one spelling the rules read: so regex.json
+     * overrides what regex.dist.json says of a rule whatever the spelling of
+     * either.
+     */
+    private static function withShortRuleIds(\stdClass $document): \stdClass
+    {
+        $checks = $document->checks ?? null;
+        $lint = $checks instanceof \stdClass ? $checks->lint ?? null : null;
+        $rules = $lint instanceof \stdClass ? $lint->rules ?? null : null;
+        if (!$checks instanceof \stdClass || !$lint instanceof \stdClass || !$rules instanceof \stdClass) {
+            return $document;
+        }
+
+        $short = new \stdClass();
+        foreach (get_object_vars($rules) as $id => $enabled) {
+            $short->{RuleId::short((string) $id)} = $enabled;
+        }
+
+        $lint = clone $lint;
+        $lint->rules = $short;
+        $checks = clone $checks;
+        $checks->lint = $lint;
+        $document = clone $document;
+        $document->checks = $checks;
 
         return $document;
     }

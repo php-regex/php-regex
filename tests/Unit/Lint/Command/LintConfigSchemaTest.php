@@ -124,6 +124,10 @@ final class LintConfigSchemaTest extends TestCase
         yield 'unknown option' => ['{"checks": {"optimizations": {"options": {"unknownOption": true}}}}'];
         yield 'unknown extraction key' => ['{"extraction": {"unknownExtraction": []}}'];
         yield 'unknown lint rule id' => ['{"checks": {"lint": {"rules": {"not.a.rule": true}}}}'];
+        yield 'unknown full lint rule id' => ['{"checks": {"lint": {"rules": {"regex.lint.not.a.rule": true}}}}'];
+        yield 'full lint rule id not a boolean' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": 1}}}}'];
+        yield 'a lint rule id with a prefix and a suffix' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.uselessX": true}}}}'];
+        yield 'a lint rule id inside another' => ['{"checks": {"lint": {"rules": {"x.regex.lint.quantifier.useless": true}}}}'];
         yield 'threshold safe' => ['{"checks": {"redos": {"threshold": "safe"}}}'];
         yield 'threshold unknown' => ['{"checks": {"redos": {"threshold": "unknown"}}}'];
         yield 'minQuantifierCount below 2' => ['{"checks": {"optimizations": {"options": {"minQuantifierCount": 1}}}}'];
@@ -164,6 +168,7 @@ final class LintConfigSchemaTest extends TestCase
         yield 'complexity off' => ['{"checks": {"complexity": {"enabled": false}}}'];
         yield 'complexity threshold of one' => ['{"checks": {"complexity": {"threshold": 1}}}'];
         yield 'empty lists' => ['{"paths": [], "exclude": [], "extraction": {"interop": [], "functions": []}}'];
+        yield 'lint rules in full' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": false, "regex.lint.redos.search": false, "regex.lint.compat.meaningChanges": true}}}}'];
     }
 
     /**

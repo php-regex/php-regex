@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -153,6 +154,45 @@ final class InlineIgnoresTest extends TestCase
 
         $this->assertSame([3 => true], InlineIgnores::suppressedLines($content));
         $this->assertCount(2, InlineIgnores::markers($content));
+    }
+
+    /**
+     * A marker reads an issue of the lint as the configuration names it,
+     * without "regex.lint.", as the issue in full: it silences that issue
+     * only, and is reported when no such issue is on its line. A word the
+     * lint knows no issue by is a note, as before.
+     *
+     * @param list<string> $identifiers
+     */
+    #[Test]
+    #[DataProvider('provideShortIdentifiers')]
+    public function test_a_marker_reads_a_short_identifier_as_the_issue_in_full(string $comment, array $identifiers): void
+    {
+        $markers = InlineIgnores::markers("<?php\npreg_match('/a{1}/', \$s); ".$comment."\n");
+
+        $this->assertCount(1, $markers);
+        $this->assertSame($identifiers, $markers[0]->identifiers);
+        $this->assertSame([] === $identifiers ? [2 => true] : [], InlineIgnores::suppressedLines("<?php\npreg_match('/a{1}/', \$s); ".$comment."\n"));
+    }
+
+    /**
+     * @return iterable<string, array{comment: string, identifiers: list<string>}>
+     */
+    public static function provideShortIdentifiers(): iterable
+    {
+        yield 'a lint rule' => ['comment' => '// @regex-ignore quantifier.useless', 'identifiers' => ['regex.lint.quantifier.useless']];
+        yield 'a lint rule off by default' => ['comment' => '// @regex-ignore charclass.single', 'identifiers' => ['regex.lint.charclass.single']];
+        yield 'an analysis issue' => ['comment' => '// @regex-ignore redos', 'identifiers' => ['regex.lint.redos']];
+        yield 'an analysis issue of two words' => ['comment' => '// @regex-ignore redos.search', 'identifiers' => ['regex.lint.redos.search']];
+        yield 'both spellings in a list' => ['comment' => '// @regex-ignore quantifier.useless, regex.lint.redos', 'identifiers' => ['regex.lint.quantifier.useless', 'regex.lint.redos']];
+        yield 'a short identifier then a note' => ['comment' => '// @regex-ignore flag.useless.s legacy input', 'identifiers' => ['regex.lint.flag.useless.s']];
+        yield 'a note after a full identifier' => ['comment' => '// @regex-ignore regex.lint.redos quantifier.useless', 'identifiers' => ['regex.lint.redos']];
+        yield 'a note that starts with a word' => ['comment' => '// @regex-ignore legacy input', 'identifiers' => []];
+        yield 'a short identifier inside a note' => ['comment' => '// @regex-ignore legacy quantifier.useless', 'identifiers' => []];
+        yield 'a misspelt rule is a note' => ['comment' => '// @regex-ignore quantifier.uselss', 'identifiers' => []];
+        yield 'a rule glued to a word' => ['comment' => '// @regex-ignore redos-prone, see #12', 'identifiers' => []];
+        yield 'another case is a note' => ['comment' => '// @regex-ignore Quantifier.Useless', 'identifiers' => []];
+        yield 'a known short identifier after an unknown one' => ['comment' => '// @regex-ignore regex.lint.a, quantifier.useless', 'identifiers' => ['regex.lint.a', 'regex.lint.quantifier.useless']];
     }
 
     /**

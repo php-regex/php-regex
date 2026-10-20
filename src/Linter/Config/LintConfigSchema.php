@@ -332,6 +332,7 @@ final class LintConfigSchema
         }
         $off = RuleCatalog::rulesOffByDefault();
         $last = array_pop($off) ?? '';
+        $inFull = '^regex\\.lint\\.(?:'.implode('|', array_map(static fn (string $id): string => str_replace('.', '\\.', $id), RuleCatalog::configurableIds())).')$';
 
         return [
             'type' => 'object',
@@ -345,9 +346,11 @@ final class LintConfigSchema
                 ],
                 'rules' => [
                     'type' => 'object',
-                    'description' => 'Enable or disable specific lint rules. All rules are enabled by default except '.implode(', ', $off).' and '.$last.'.',
+                    'description' => 'Enable or disable specific lint rules, each named without "regex.lint." or in full, as an issue names it. All rules are enabled by default except '.implode(', ', $off).' and '.$last.'.',
                     'additionalProperties' => false,
                     'properties' => $rules,
+                    // The same rules in full: "regex.lint.quantifier.useless".
+                    'patternProperties' => [$inFull => ['type' => 'boolean']],
                 ],
             ],
         ];

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Parser\Engine\LibraryPcre;
 
 /**
@@ -23,9 +25,11 @@ use PHPRegex\Parser\Engine\LibraryPcre;
  * declaration's for a pattern the file proves.
  *
  * A marker may name the issues it silences, comma-separated, right after
- * it: "@regex-ignore regex.lint.quantifier.nested, regex.lint.redos". What
- * follows that list, or a marker that names none, is a note. A marker that
- * names no issue silences every issue of its line.
+ * it: "@regex-ignore regex.lint.quantifier.nested, regex.lint.redos". An
+ * issue of the lint may be named without "regex.lint.", as regex.json names
+ * it ("quantifier.nested", "redos"), and is read in full; any other word
+ * ends the list. What follows the list, or a marker that names none, is a
+ * note. A marker that names no issue silences every issue of its line.
  *
  * @internal
  */
@@ -34,9 +38,9 @@ final class InlineIgnores
     private const NEXT_LINE = '@regex-ignore-next-line';
 
     /**
-     * An identifier: "regex." then dot-separated words.
+     * A word that may be an identifier: dot-separated words, read whole.
      */
-    private const IDENTIFIER = '[ \t]*(regex\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)';
+    private const IDENTIFIER = '[ \t]*([A-Za-z0-9_]++(?:\.[A-Za-z0-9_]++)*+)';
 
     /**
      * The lines every issue of which is silenced, one-based: those of the
@@ -135,11 +139,34 @@ final class InlineIgnores
         $identifiers = [];
         $pattern = '/\G'.self::IDENTIFIER.'/';
         while (1 === LibraryPcre::match($pattern, $comment, $match, 0, $from)) {
-            $identifiers[] = $match[1];
             $from += \strlen($match[0]);
+            $identifier = self::identifier($match[1], $comment[$from] ?? '');
+            if (null === $identifier) {
+                break;
+            }
+
+            $identifiers[] = $identifier;
             $pattern = '/\G[ \t]*,'.self::IDENTIFIER.'/';
         }
 
         return $identifiers;
+    }
+
+    /**
+     * The identifier a word of the list names: one that starts with
+     * "regex." as written, an issue of the lint named without
+     * "regex.lint." in full; null for any other word, which starts the
+     * note. A short identifier glued to a hyphen, as "redos-prone", is a
+     * word of the note.
+     */
+    private static function identifier(string $word, string $next): ?string
+    {
+        if (str_starts_with($word, 'regex.')) {
+            return $word;
+        }
+
+        $full = RuleId::full($word);
+
+        return '-' !== $next && null !== RuleCatalog::docsUrl($full) ? $full : null;
     }
 }

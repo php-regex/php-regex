@@ -1001,7 +1001,7 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `checks.redos`                  | object           | `enabled` (default `false`), `mode` (`theoretical` or `confirmed`), `threshold` (`low`, `medium`, `high`, `critical`) |
 | `checks.optimizations`          | object           | `enabled` (default `true`), `minSavings`, `options`      |
 | `checks.optimizations.options`  | object           | digits, word, ranges, canonicalizeCharClasses, possessive, factorize, minQuantifierCount, verifyWithAutomata |
-| `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false`; `redos.search` turns the search cost of the ReDoS check off |
+| `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false`, the id written without `regex.lint.` (`quantifier.useless`) or in full (`regex.lint.quantifier.useless`); `redos.search` turns the search cost of the ReDoS check off |
 | `checks.complexity`             | object           | `enabled` (default `false`) and `threshold`, an integer of at least 1 (default `50`): a warning, `regex.lint.complexity`, for each pattern whose complexity score reaches it |
 
 `checks.redos`, `checks.optimizations`, `checks.lint` and `checks.complexity`
@@ -1012,7 +1012,11 @@ are objects, and only their `enabled` key switches a check on or off: setting
 The lint command refuses a file it cannot fully use. Every unknown key, every
 unknown lint rule id and every value of the wrong kind is an error, and the
 command lists all of them at once, each with the key it is about, then exits
-with code 2 before scanning anything.
+with code 2 before scanning anything. A misspelt key or rule id is told the
+one it most likely means, in the spelling it was written in
+(`Did you mean "regex.lint.quantifier.nested"?`), and a rule named in both
+spellings in one file is an error too. A rule `regex.json` names in one
+spelling overrides what `regex.dist.json` says of it in the other.
 
 ### Removed Keys
 
@@ -1452,9 +1456,25 @@ preg_match('/\d+[11]/i', $input); // @regex-ignore regex.lint.flag.useless.i
 ```
 
 The identifiers are the `issue_id` of the JSON report (the error code, such
-as `regex.group.unclosed`, for a pattern that does not compile). Anything
-after the list, or after a marker that names none, is a note for the reader:
-`// @regex-ignore legacy input, see #12` silences the whole line.
+as `regex.group.unclosed`, for a pattern that does not compile). An issue of
+the lint may be named without `regex.lint.`, as `regex.json` names it:
+`// @regex-ignore flag.useless.i, redos` names `regex.lint.flag.useless.i`
+and `regex.lint.redos`. The list ends at the first word that is neither an
+identifier starting with `regex.` nor the short id of an issue of the lint;
+that word and the rest of the comment, or all of it after a marker that names
+nothing, is a note for the reader: `// @regex-ignore legacy input, see #12`
+silences the whole line.
+
+The grammar, after the marker and one space or tab:
+
+```text
+list       = identifier { [ " " | "\t" ] "," [ " " | "\t" ] identifier }
+identifier = "regex." word { "." word }        (as written)
+           | short-id                           (read as "regex.lint." short-id)
+word       = one or more of A-Z a-z 0-9 _
+short-id   = the id of a lint rule or analysis issue, without "regex.lint.",
+             not followed by "-"
+```
 
 #### Markers that silence nothing
 
@@ -1680,7 +1700,8 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 analysis; the confirmation always runs without JIT. Any other mode is a usage
 error (exit code 2), as is an unknown `--format`, and an `--enable-rule` or
 `--disable-rule` id that `checks.lint.rules` in `regex.json` would refuse
-(`Unknown lint rule "quantifer.nested" in --disable-rule.`).
+(`Unknown lint rule "quantifer.nested" in --disable-rule. Did you mean "quantifier.nested"?`).
+Both options take the id without `regex.lint.` or in full.
 
 When `nikic/php-parser` is installed, and the lint reads files with it, a
 file the PHP parser cannot read (a syntax error, for one) is read again

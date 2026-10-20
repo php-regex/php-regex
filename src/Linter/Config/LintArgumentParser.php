@@ -17,6 +17,7 @@ use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\RedosMode;
@@ -76,13 +77,14 @@ final class LintArgumentParser
 
             if (str_starts_with($arg, '--enable-rule=') || str_starts_with($arg, '--disable-rule=')) {
                 [$option, $ruleId] = explode('=', $arg, 2);
-                // A rule reads its setting under its short id, as regex.json writes it.
-                $shortId = str_starts_with($ruleId, 'regex.lint.') ? substr($ruleId, \strlen('regex.lint.')) : $ruleId;
-                if (!RuleCatalog::isConfigurable($shortId)) {
-                    return new LintParseResult(null, \sprintf('Unknown lint rule "%s" in %s.', $ruleId, $option));
+                if (!RuleCatalog::isConfigurable($ruleId)) {
+                    $suggestion = RuleCatalog::suggestion($ruleId);
+
+                    return new LintParseResult(null, \sprintf('Unknown lint rule "%s" in %s.%s', $ruleId, $option, null === $suggestion ? '' : \sprintf(' Did you mean "%s"?', $suggestion)));
                 }
 
-                $arguments = $this->withLintRule($arguments, $shortId, '--enable-rule' === $option);
+                // A rule reads its setting under its short id, as regex.json writes it.
+                $arguments = $this->withLintRule($arguments, RuleId::short($ruleId), '--enable-rule' === $option);
 
                 continue;
             }

@@ -13,6 +13,10 @@ CHANGELOG
    report links each finding to the docs on php-regex.com: `docs_url` in the
    JSON report, a `Read more:` line in the GitHub and Checkstyle messages.
  * The Checkstyle `source` is the issue's identifier, without a prefix.
+ * `checks.lint.rules` takes a rule id in full as well as short, and a
+   misspelt id is told the nearest one, in `regex.json` and on the command
+   line; an inline marker reads a short id as that issue, where it was a
+   note that silenced the whole line.
  * `regex.json` takes `locale`, the `LC_CTYPE` locale the patterns run
    under; the JSON report names it as `target.locale`.
  * `group.alwaysEmptyCapture` asks the automata about a capturing group only

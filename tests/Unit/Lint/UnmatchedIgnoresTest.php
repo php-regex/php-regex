@@ -72,6 +72,27 @@ final class UnmatchedIgnoresTest extends TestCase
     }
 
     /**
+     * A marker naming an issue as regex.json names it, without
+     * "regex.lint.", silences that issue only, and is reported when it
+     * silences nothing: it was a note silencing the whole line.
+     *
+     * @param class-string<ExtractorInterface> $strategy
+     */
+    #[Test]
+    #[DataProvider('provideStrategies')]
+    public function test_a_marker_naming_a_short_identifier_silences_only_that_issue(string $strategy): void
+    {
+        $report = $this->lint($strategy, "<?php\npreg_match('/\\d+[11]/i', \$s); // @regex-ignore flag.useless.i\n// @regex-ignore-next-line flag.useless.s\npreg_match('/\\d+[11]/i', \$s);\n");
+
+        $this->assertSame([
+            [2, 'regex.lint.charclass.redundant'],
+            [3, 'regex.ignore.unmatched'],
+            [4, 'regex.lint.charclass.redundant'],
+            [4, 'regex.lint.flag.useless.i'],
+        ], self::issues($report));
+    }
+
+    /**
      * @param class-string<ExtractorInterface> $strategy
      */
     #[Test]

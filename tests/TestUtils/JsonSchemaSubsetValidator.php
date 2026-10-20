@@ -71,6 +71,7 @@ final class JsonSchemaSubsetValidator
                 'enum' => \in_array($this->plain($value), $this->list($argument), true) ? [] : [$at.': not one of the enum values'],
                 'const' => $this->plain($value) === $argument ? [] : [$at.': not the constant value'],
                 'properties' => $this->checkProperties($this->map($argument), $value, $at),
+                'patternProperties' => $this->checkPatternProperties($this->map($argument), $value, $at),
                 'additionalProperties' => $this->checkAdditional($schema, $argument, $value, $at),
                 'required' => $this->checkRequired($this->list($argument), $value, $at),
                 'items' => $this->checkItems($this->map($argument), $value, $at),
@@ -158,6 +159,41 @@ final class JsonSchemaSubsetValidator
     }
 
     /**
+     * Each property whose name a pattern matches checked against the schema
+     * of that pattern.
+     *
+     * @param array<array-key, mixed> $patternProperties
+     *
+     * @return list<string>
+     */
+    private function checkPatternProperties(array $patternProperties, mixed $value, string $at): array
+    {
+        if (!$value instanceof \stdClass) {
+            return [];
+        }
+
+        $errors = [];
+        foreach (get_object_vars($value) as $name => $property) {
+            foreach ($patternProperties as $pattern => $schema) {
+                if ($this->matches((string) $pattern, (string) $name)) {
+                    array_push($errors, ...$this->check($this->map($schema), $property, $at.'.'.$name));
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Whether an ECMA-262 pattern of the schema finds a match in the text,
+     * unanchored as JSON Schema reads it.
+     */
+    private function matches(string $pattern, string $text): bool
+    {
+        return 1 === preg_match('/'.str_replace('/', '\/', $pattern).'/u', $text);
+    }
+
+    /**
      * @param array<array-key, mixed> $schema
      *
      * @return list<string>
@@ -169,9 +205,10 @@ final class JsonSchemaSubsetValidator
         }
 
         $known = isset($schema['properties']) ? $this->map($schema['properties']) : [];
+        $patterns = isset($schema['patternProperties']) ? array_keys($this->map($schema['patternProperties'])) : [];
         $errors = [];
         foreach (get_object_vars($value) as $name => $property) {
-            if (\array_key_exists($name, $known)) {
+            if (\array_key_exists($name, $known) || [] !== array_filter($patterns, fn (int|string $pattern): bool => $this->matches((string) $pattern, (string) $name))) {
                 continue;
             }
             if (false === $additional) {

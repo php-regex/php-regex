@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Config;
 
 use PHPRegex\Linter\Extraction\InteropPresets;
+use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Linter\Rule\RuleId;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\NearMiss;
@@ -29,6 +31,11 @@ use PHPRegex\Parser\Text\NearMiss;
  */
 final class LintConfigValidator
 {
+    /**
+     * The map of the lint rules, whose keys are rule identifiers.
+     */
+    private const RULES = 'checks.lint.rules';
+
     /**
      * @var array<string, mixed>
      */
@@ -105,6 +112,8 @@ final class LintConfigValidator
     private function checkObject(array $schema, \stdClass $value, string $path, string $file, array &$errors): void
     {
         $properties = $this->map($schema['properties']);
+        $patterns = $this->map($schema['patternProperties'] ?? []);
+        $rules = self::RULES === $path;
 
         foreach (get_object_vars($value) as $name => $property) {
             $name = (string) $name;
@@ -116,12 +125,33 @@ final class LintConfigValidator
                 continue;
             }
 
-            $suggestion = NearMiss::closest($name, array_map(strval(...), array_keys($properties)));
+            // A name a pattern of "patternProperties" finds, unanchored as
+            // JSON Schema reads a pattern, is checked against its schema.
+            foreach ($patterns as $pattern => $patternSchema) {
+                if (1 === LibraryPcre::match('/'.str_replace('/', '\/', (string) $pattern).'/u', $name)) {
+                    $this->checkNode($this->map($patternSchema), $property, $childPath, $file, $errors);
+
+                    continue 2;
+                }
+            }
+
+            // A lint rule is told the nearest one in the spelling it was
+            // written in, short or in full.
+            $suggestion = $rules ? RuleCatalog::suggestion($name) : NearMiss::closest($name, array_map(strval(...), array_keys($properties)));
             $hint = null === $suggestion ? '' : \sprintf(' Did you mean "%s"?', $suggestion);
 
-            $errors[] = 'checks.lint.rules' === $path
+            $errors[] = $rules
                 ? \sprintf('Unknown lint rule "%s" in %s of %s.%s', $name, $path, $file, $hint)
                 : \sprintf('Unknown key "%s" in %s.%s', $childPath, $file, $hint);
+        }
+
+        if ($rules) {
+            foreach (array_keys(get_object_vars($value)) as $name) {
+                $name = (string) $name;
+                if ($name !== RuleId::full($name) && property_exists($value, RuleId::full($name))) {
+                    $errors[] = \sprintf('Lint rule "%s" is named twice in %s of %s, as "%s" and "%s": keep one.', $name, $path, $file, $name, RuleId::full($name));
+                }
+            }
         }
     }
 

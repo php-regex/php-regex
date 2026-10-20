@@ -63,7 +63,8 @@ final class LintArgumentParserTest extends TestCase
      */
     public static function provideUnknownRuleIds(): iterable
     {
-        yield 'a misspelt id disabled' => ['argument' => '--disable-rule=quantifer.nested', 'error' => 'Unknown lint rule "quantifer.nested" in --disable-rule.'];
+        yield 'a misspelt id disabled' => ['argument' => '--disable-rule=quantifer.nested', 'error' => 'Unknown lint rule "quantifer.nested" in --disable-rule. Did you mean "quantifier.nested"?'];
+        yield 'a misspelt full id' => ['argument' => '--disable-rule=regex.lint.quantifer.nested', 'error' => 'Unknown lint rule "regex.lint.quantifer.nested" in --disable-rule. Did you mean "regex.lint.quantifier.nested"?'];
         yield 'an unknown id enabled' => ['argument' => '--enable-rule=nope.nope', 'error' => 'Unknown lint rule "nope.nope" in --enable-rule.'];
         yield 'an unknown full id' => ['argument' => '--disable-rule=regex.lint.nope', 'error' => 'Unknown lint rule "regex.lint.nope" in --disable-rule.'];
         yield 'an empty id' => ['argument' => '--enable-rule=', 'error' => 'Unknown lint rule "" in --enable-rule.'];

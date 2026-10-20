@@ -53,6 +53,12 @@ final class LintConfigMessagesTest extends TestCase
         yield 'snake_case option' => ['{"checks": {"optimizations": {"options": {"min_quantifier_count": 3}}}}', 'Did you mean "minQuantifierCount"?'];
         yield 'a mistyped key' => ['{"pths": ["src"]}', 'Did you mean "paths"?'];
         yield 'unknown lint rule' => ['{"checks": {"lint": {"rules": {"not.a.rule": true}}}}', 'Unknown lint rule "not.a.rule"'];
+        yield 'misspelt lint rule' => ['{"checks": {"lint": {"rules": {"quantifier.nestd": true}}}}', 'Unknown lint rule "quantifier.nestd" in checks.lint.rules of '];
+        yield 'misspelt lint rule, its suggestion' => ['{"checks": {"lint": {"rules": {"quantifier.nestd": true}}}}', 'Did you mean "quantifier.nested"?'];
+        yield 'misspelt full lint rule' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.nestd": true}}}}', 'Did you mean "regex.lint.quantifier.nested"?'];
+        yield 'unknown full lint rule' => ['{"checks": {"lint": {"rules": {"regex.lint.not.a.rule": true}}}}', 'Unknown lint rule "regex.lint.not.a.rule"'];
+        yield 'full lint rule, not a boolean' => ['{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": "no"}}}}', 'Invalid "checks.lint.rules.regex.lint.quantifier.useless" in '];
+        yield 'one rule named twice' => ['{"checks": {"lint": {"rules": {"quantifier.useless": true, "regex.lint.quantifier.useless": false}}}}', 'Lint rule "quantifier.useless" is named twice in checks.lint.rules of '];
         yield 'integer minimum' => ['{"jobs": "four"}', 'expected an integer >= 1'];
         yield 'enum' => ['{"format": "xml"}', 'expected one of console, json, github, checkstyle, junit'];
         yield 'boolean' => ['{"checks": {"validation": "yes"}}', 'expected a boolean'];
@@ -100,6 +106,24 @@ final class LintConfigMessagesTest extends TestCase
         yield 'none' => [''];
         yield 'named' => ['vscode'];
         yield 'template' => ['myeditor://open?file=%f&line=%l'];
+    }
+
+    /**
+     * A rule is named in checks.lint.rules as the docs and the issues name
+     * it, in full, or without "regex.lint.": the result names it short, so
+     * that regex.json overrides what regex.dist.json says of it whatever the
+     * spelling of either.
+     */
+    #[Test]
+    public function test_load_reads_a_rule_named_in_full_under_its_short_id(): void
+    {
+        $result = (new LintConfigLoader())->load($this->makeProject([
+            'regex.dist.json' => '{"checks": {"lint": {"rules": {"regex.lint.quantifier.useless": false, "charclass.single": true, "regex.lint.redos.search": false}}}}',
+            'regex.json' => '{"checks": {"lint": {"rules": {"regex.lint.charclass.single": false, "quantifier.useless": true}}}}',
+        ]));
+
+        $this->assertNull($result->error);
+        $this->assertSame(['checks' => ['lint' => ['rules' => ['quantifier.useless' => true, 'charclass.single' => false, 'redos.search' => false]]]], $result->config);
     }
 
     #[Test]
