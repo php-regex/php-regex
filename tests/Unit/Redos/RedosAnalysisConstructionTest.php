@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Redos;
 
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\Finding;
 use PHPRegex\Redos\Hotspot;
@@ -147,7 +149,29 @@ final class RedosAnalysisConstructionTest extends TestCase
     {
         $analysis = (new RedosAnalyzer())->analyze('/a{2,1}/');
 
+        $this->assertSame(RegexParser::create()->validate('/a{2,1}/')->error, $analysis->error, 'The validator says why.');
         $this->assertEquals(RedosAnalysis::failed(RedosMode::Theoretical, (string) $analysis->error), $analysis);
+    }
+
+    /**
+     * A pattern the parser cannot read fails with the class of the
+     * exception before its message, and advice made of the message alone.
+     */
+    #[Test]
+    public function test_the_analyzer_fails_on_a_pattern_it_cannot_parse(): void
+    {
+        try {
+            RegexParser::create()->parse('/(/');
+            $this->fail('The parser reads an unclosed group.');
+        } catch (ParserException $exception) {
+        }
+
+        $analysis = (new RedosAnalyzer())->analyze('/(/', null, RedosMode::Confirmed);
+
+        $this->assertSame($exception::class.': '.$exception->getMessage(), $analysis->error);
+        $this->assertSame(['Analysis incomplete: '.$exception->getMessage()], $analysis->recommendations);
+        $this->assertSame(RedosMode::Confirmed, $analysis->mode);
+        $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);
     }
 
     private static function everyFieldSet(): RedosAnalysis

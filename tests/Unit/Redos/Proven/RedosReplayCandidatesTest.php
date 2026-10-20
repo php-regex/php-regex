@@ -21,6 +21,7 @@ use PHPRegex\Redos\ConfirmationSample;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
+use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -260,6 +261,43 @@ final class RedosReplayCandidatesTest extends TestCase
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertNotTrue($analysis->replayed);
+    }
+
+    /**
+     * A runner's sample that ran into the backtrack limit is the replay: the
+     * verdict is replayed, with the candidate the runner was given and the
+     * confidence of a reproduced verdict.
+     */
+    #[Test]
+    public function test_backtrack_limit_sample_from_a_runner_replays_the_verdict(): void
+    {
+        $runner = new class implements ConfirmationRunnerInterface {
+            public ?RedosWitness $asked = null;
+
+            public function confirm(string $regex, RedosAnalysis $analysis, ?ConfirmationOptions $options = null): Confirmation
+            {
+                $this->asked ??= $analysis->witness;
+
+                return new Confirmation(
+                    true,
+                    [new ConfirmationSample(2, 0.1, 'a!', \PREG_BACKTRACK_LIMIT_ERROR, 'Backtrack limit exhausted')],
+                    '0',
+                    100_000,
+                    1,
+                    1,
+                    50.0,
+                    false,
+                    'backtrack_limit',
+                );
+            }
+        };
+
+        $analysis = (new RedosAnalyzer(confirmationRunner: $runner))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+
+        $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
+        $this->assertTrue($analysis->replayed);
+        $this->assertSame(RedosConfidence::High, $analysis->confidence);
+        $this->assertSame($runner->asked, $analysis->witness);
     }
 
     /**

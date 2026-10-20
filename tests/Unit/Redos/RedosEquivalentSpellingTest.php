@@ -88,6 +88,8 @@ final class RedosEquivalentSpellingTest extends TestCase
         // A script run of one character is that character.
         yield 'a script run of one letter, captured' => ['written' => '/^(?:((*sr:a))\1)+$/', 'equivalent' => '/^(?:(a)\1)+$/'];
         yield 'a script run of one letter, repeated' => ['written' => '/(?:(*sr:a))*a(c)\1/', 'equivalent' => '/(?:a)*a(c)\1/'];
+        yield 'a script run around a capture of two lengths and its reference, repeated' => ['written' => '/^(?:(*sr:(a|bc)\1))*$/', 'equivalent' => '/^(?:(?:(a|bc)\1))*$/'];
+        yield 'an empty script run, repeated' => ['written' => '/(?:(*sr:))*a(c)\1/', 'equivalent' => '/(?:)*a(c)\1/'];
         yield 'a script run around a capture and its reference' => ['written' => '/^(?:(*sr:(a+)\1))+$/', 'equivalent' => '/^(?:(?:(a+)\1))+$/'];
 
         // A condition that picks between two characters reads one.
