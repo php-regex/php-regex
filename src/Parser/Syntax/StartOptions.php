@@ -40,18 +40,28 @@ final class StartOptions
     private const NEWLINES = ['CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true];
 
     /**
+     * What an option is written with: the capitals, digits and "_" of its
+     * name, then "=" and the digits of a limit.
+     */
+    private const OPTION_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_=';
+
+    /**
      * The run of options the source opens with, as written.
      */
     public static function of(string $source): string
     {
         $end = 0;
-        while ('(*' === substr($source, $end, 2)) {
-            $close = strpos($source, ')', $end);
-            if (false === $close) {
+        // An option is read up to its ")" over the characters it is written
+        // with alone: anything else ends the run, and the rest of the source
+        // is not searched for a ")", nor copied, at every "(*" it opens with.
+        while ('(' === ($source[$end] ?? '') && '*' === ($source[$end + 1] ?? '')) {
+            $length = strspn($source, self::OPTION_CHARACTERS, $end + 2);
+            $close = $end + 2 + $length;
+            if (')' !== ($source[$close] ?? '')) {
                 break;
             }
 
-            $item = substr($source, $end + 2, $close - $end - 2);
+            $item = substr($source, $end + 2, $length);
             $equals = strpos($item, '=');
             $name = false === $equals ? $item : substr($item, 0, $equals);
             $value = false === $equals ? null : substr($item, $equals + 1);

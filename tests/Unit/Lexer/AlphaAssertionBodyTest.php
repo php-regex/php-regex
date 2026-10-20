@@ -652,6 +652,28 @@ final class AlphaAssertionBodyTest extends TestCase
     }
 
     /**
+     * Each body is read with the options the pattern opens with, which are
+     * read up to their ")" alone: a pattern that opens with "(*" and no
+     * option, as an alphabetic assertion, is not searched for a ")" again
+     * for every body. Measured when it was, after a first body holding a
+     * line comment of 50 characters for each body after it: 1 000 then
+     * 4 000 bodies parsed in 0.10 s then 0.95 s, ten times as long.
+     */
+    #[Test]
+    #[DataProvider('provideNestedAssertionOpeners')]
+    public function test_parse_reads_bodies_after_a_long_first_body_in_linear_time(string $opener): void
+    {
+        $this->assertLinearTime(
+            static function (int $count) use ($opener): void {
+                Regex::create(['cache' => null, 'max_pattern_length' => 1_000_000])
+                    ->parse('/(*pla:#'.str_repeat('x', 50 * $count)."\n)".str_repeat($opener.'b)', $count).'/x');
+            },
+            1_000,
+            $opener.'b) after "(*pla:#...)"',
+        );
+    }
+
+    /**
      * Text after each nested body, "(*pla:a(*pla:a b) b)": the end of each
      * body is found once, and holds for the shorter text of every body
      * around it. Measured when each level read its bodies again: 500 then

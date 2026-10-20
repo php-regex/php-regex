@@ -992,9 +992,12 @@ final class Lexer
         $end = $this->bodiesInPlace && $inPlace ? null : $this->alphabeticAssertionEnd($opener);
         $start = $this->position;
         if (null !== $end) {
-            $text = substr($this->pattern, $start, $end - $start);
+            // The body is copied once, into the value of its token: the name
+            // is judged on the characters up to the first one no name holds,
+            // which are all a verb name is judged on.
+            $this->refuseVerbName(substr($this->pattern, $start + 2, strspn($this->pattern, PcreVerb::WORD_NAME, $start + 2) + 1), $start, $tokens);
             $this->position = $end;
-            $tokens[] = $this->createToken(['T_PCRE_VERB'], ['T_PCRE_VERB' => $text], $text, $start, $tokens);
+            $tokens[] = new Token(TokenType::PcreVerb, substr($this->pattern, $start + 2, $end - $start - 3), $start, $end - $start);
 
             return true;
         }
@@ -1679,7 +1682,7 @@ final class Lexer
         }
 
         if (TokenType::PcreVerb === $type && !$this->inCharClass) {
-            $this->refuseVerbName($matchedValue, $startPos, $currentTokens);
+            $this->refuseVerbName(substr($matchedValue, self::OFFSET_VERB_START, self::OFFSET_VERB_END), $startPos, $currentTokens);
         }
 
         // Before PCRE2 10.37 a backslash and its digits are one number, refused
@@ -2219,12 +2222,12 @@ final class Lexer
      * of "(?(" it reads no verb: it wants a group name on the "*". A setting
      * the pattern opens with is no verb, and is read before.
      *
-     * @param string      $verb   the verb as written, "(*NAME:arg)"
+     * @param string      $name   the verb as written between "(*" and ")", "NAME:arg",
+     *                            or up to the first character no name holds
      * @param list<Token> $tokens the tokens read before it
      */
-    private function refuseVerbName(string $verb, int $start, array $tokens): void
+    private function refuseVerbName(string $name, int $start, array $tokens): void
     {
-        $name = substr($verb, 2, -1);
         if ('' === $name || $this->followsNameOpener($start)) {
             return;
         }
