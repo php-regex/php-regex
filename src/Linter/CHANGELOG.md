@@ -23,6 +23,9 @@ CHANGELOG
    misspelt id is told the nearest one, in `regex.json` and on the command
    line; an inline marker reads a short id as that issue, where it was a
    note that silenced the whole line.
+ * The Symfony and Laravel bridges run their `regex:lint` through the
+   linter's own console run, on `symfony/console`, which the package
+   suggests.
  * `regex.json` takes `locale`, the `LC_CTYPE` locale the patterns run
    under; the JSON report names it as `target.locale`.
  * `group.alwaysEmptyCapture` asks the automata about a capturing group only

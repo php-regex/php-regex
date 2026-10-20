@@ -20,21 +20,20 @@ use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Text\DisplayEscaper;
 
 /**
- * Console output formatter shared by the framework bridges.
+ * The console report of the framework bridges' regex:lint, in console tags.
  *
- * Renders the classic Nuno-style layout with console tags. Laravel builds its
- * console on Symfony's, so both bridges render the report the same way; each
- * one only names the formatter it exposes. The text it quotes is escaped as
- * Symfony Console's OutputFormatter::escape() escapes it, so the linter does
- * not depend on Symfony Console.
+ * Laravel builds its console on Symfony's, so both bridges render the report
+ * the same way. The text it quotes is escaped as Symfony Console's
+ * OutputFormatter::escape() escapes it, so the report needs no console to be
+ * built.
  *
- * @internal shared by the Symfony and Laravel bridges, not for extension
+ * @internal
  *
  * @phpstan-import-type OptimizationEntry from LintReport
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
  */
-abstract class AbstractConsoleTagFormatter implements OutputFormatterInterface
+final class ConsoleTagFormatter implements OutputFormatterInterface
 {
     private const ARROW_LABEL = "\u{21B3}";
 

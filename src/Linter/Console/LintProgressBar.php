@@ -11,16 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Laravel\Output;
+namespace PHPRegex\Linter\Console;
 
-use Illuminate\Console\OutputStyle;
 use PHPRegex\Linter\LintProgress;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * The progress of regex:lint, drawn with a console progress bar.
+ * The progress of the bridges' regex:lint, drawn with a console progress
+ * bar on the error output of a console, as `regex lint` draws its steps:
+ * the standard output keeps the report.
  *
  * The scan steps (files found, declarations, functions, patterns) share a
  * bar named on the line above it, both redrawn in place on a terminal, so
@@ -90,10 +91,12 @@ final class LintProgressBar implements LintProgress
 
     private int $workersStarted = 1;
 
-    public function __construct(private readonly OutputStyle $output, private readonly int $steps)
+    /**
+     * @param int $steps the steps the run numbers: 3 when it suggests optimizations, 2 otherwise
+     */
+    public function __construct(OutputInterface $output, private readonly int $steps)
     {
-        $stream = $output->getOutput();
-        $this->stream = $stream instanceof ConsoleOutputInterface ? $stream->getErrorOutput() : $stream;
+        $this->stream = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
         $this->bar = $this->createBar();
     }
 
@@ -106,8 +109,8 @@ final class LintProgressBar implements LintProgress
         if (isset(self::HEADINGS[$step])) {
             [$number, $heading] = self::HEADINGS[$step];
             $this->close();
-            $this->output->newLine();
-            $this->output->writeln(\sprintf('  <fg=gray>[%d/%d] %s</>', $number, $this->steps, $heading));
+            $this->stream->writeln('');
+            $this->stream->writeln(\sprintf('  <fg=gray>[%d/%d] %s</>', $number, $this->steps, $heading));
             $this->label = '';
             $this->bar = $this->createBar();
         } else {
@@ -201,6 +204,16 @@ final class LintProgressBar implements LintProgress
     }
 
     /**
+     * A line of the run between two steps, on the bar's output: the bar's
+     * line is ended first.
+     */
+    public function writeln(string $line): void
+    {
+        $this->close();
+        $this->stream->writeln($line);
+    }
+
+    /**
      * Ends the line the bar is drawn on, before anything else is written.
      */
     public function close(): void
@@ -229,8 +242,9 @@ final class LintProgressBar implements LintProgress
 
     private function createBar(): ProgressBar
     {
-        $bar = $this->output->createProgressBar();
+        $bar = new ProgressBar($this->stream);
         $bar->setBarWidth(self::BAR_WIDTH);
+        $bar->setBarCharacter('▓');
         $bar->setProgressCharacter('▓');
         $bar->setEmptyBarCharacter('░');
 

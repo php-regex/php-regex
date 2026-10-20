@@ -40,7 +40,7 @@ Installation
 composer require php-regex/regex-linter
 ```
 
-Requires PHP 8.1+ with the `tokenizer` extension. The extractor runs on it by default; install `nikic/php-parser` to extract from a full PHP parser instead.
+Requires PHP 8.1+ with the `tokenizer` extension. The extractor runs on it by default; install `nikic/php-parser` to extract from a full PHP parser instead. `symfony/console` is needed only to run the lint from a console command, as the Symfony and Laravel bridges do.
 
 To lint a whole codebase from the terminal, add the console package:
 

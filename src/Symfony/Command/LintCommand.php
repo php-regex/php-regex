@@ -15,40 +15,27 @@ namespace PHPRegex\Symfony\Command;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Console\ConsoleLintRequest;
+use PHPRegex\Linter\Console\ConsoleLintRunner;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
-use PHPRegex\Linter\Formatter\JsonFormatter;
-use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\LintException;
-use PHPRegex\Linter\LintReport;
-use PHPRegex\Linter\LintRequest;
-use PHPRegex\Linter\LintRunFailure;
-use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
-use PHPRegex\Linter\Parallel\WorkerCount;
-use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Linter\LintSetup;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Cache\CacheInterface;
-use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Parser\ParserOptions;
-use PHPRegex\Symfony\Output\ConsoleWriter;
-use PHPRegex\Symfony\Output\LintProgressBar;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Lint regex patterns in PHP source code.
+ *
+ * The command reads its command line and the bundle's configuration; the
+ * run itself is the one the Laravel package's regex:lint makes.
  *
  * The options patterns are read with are RegexOptions: those of
  * Regex::create() but the target, which is the project's, and the runtime
@@ -62,9 +49,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  *     max_recursion_depth?: int,
  * }
  *
- * @phpstan-import-type LintResult from LintReport
- * @phpstan-import-type LintStats from LintReport
- *
  * @internal
  */
 #[AsCommand(
@@ -73,21 +57,15 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class LintCommand extends Command
 {
-    private const FORMAT_CONSOLE = 'console';
-
-    private RelativePathHelper $pathHelper;
-
-    private LinkFormatter $linkFormatter;
+    /**
+     * @var list<string>
+     */
+    private readonly array $defaultPaths;
 
     /**
-     * @var array<string>
+     * @var list<string>
      */
-    private array $defaultPaths;
-
-    /**
-     * @var array<string>
-     */
-    private array $defaultExcludePaths;
+    private readonly array $defaultExcludePaths;
 
     private readonly OptimizerOptions $defaultOptimizations;
 
@@ -123,21 +101,13 @@ final class LintCommand extends Command
         private readonly bool $reportUnmatchedIgnores = true,
         private readonly ?string $locale = null,
     ) {
-        $this->defaultPaths = $this->normalizeStringList($defaultPaths);
-        $this->defaultExcludePaths = $this->normalizeStringList($defaultExcludePaths);
-        $this->defaultOptimizations = $this->normalizeOptimizations($defaultOptimizations);
+        $paths = self::stringList($defaultPaths);
+        $exclude = self::stringList($defaultExcludePaths);
+        $this->defaultPaths = [] === $paths ? ['src'] : $paths;
+        $this->defaultExcludePaths = [] === $exclude ? ['vendor'] : $exclude;
+        // Lint checks every rewrite with the automata unless told otherwise.
+        $this->defaultOptimizations = OptimizerOptions::fromArray($defaultOptimizations + ['verify_with_automata' => true]);
 
-        if ([] === $this->defaultPaths) {
-            $this->defaultPaths = ['src'];
-        }
-
-        if ([] === $this->defaultExcludePaths) {
-            $this->defaultExcludePaths = ['vendor'];
-        }
-
-        // Initialize with temporary path helper, will be updated in execute()
-        $this->pathHelper = new RelativePathHelper(getcwd() ?: null);
-        $this->linkFormatter = new LinkFormatter($this->editorUrl, $this->pathHelper);
         parent::__construct();
     }
 
@@ -147,10 +117,10 @@ final class LintCommand extends Command
             ->addArgument('paths', InputArgument::IS_ARRAY | InputArgument::OPTIONAL, \sprintf('The paths to analyze, read from the working directory (default: %s, read from the project directory)', implode(', ', $this->defaultPaths)))
             ->addOption('exclude', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Paths to exclude', $this->defaultExcludePaths)
             ->addOption('min-savings', null, InputOption::VALUE_OPTIONAL, 'Minimum optimization savings in characters', 1)
-             ->addOption('jobs', 'j', InputOption::VALUE_OPTIONAL, 'Parallel workers for analysis (auto-detected if not specified)', -1)
+            ->addOption('jobs', 'j', InputOption::VALUE_OPTIONAL, 'Parallel workers for analysis (auto-detected if not specified)')
             ->addOption('no-routes', null, InputOption::VALUE_NONE, 'Skip route validation')
             ->addOption('no-validators', null, InputOption::VALUE_NONE, 'Skip validator validation')
-            ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Output format (console, json, github, checkstyle, junit)', self::FORMAT_CONSOLE)
+            ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Output format (console, json, github, checkstyle, junit)', 'console')
             ->setHelp(<<<'EOF'
                 The <info>%command.name%</info> command scans your PHP code for regex patterns and provides:
 
@@ -170,8 +140,8 @@ final class LintCommand extends Command
                 Show only significant optimizations:
                 <info>php %command.full_name% --min-savings=10</info>
 
-                 Run analysis in parallel (auto-detected by default):
-                 <info>php %command.full_name% --jobs=4</info>
+                Run analysis in parallel (auto-detected by default):
+                <info>php %command.full_name% --jobs=4</info>
 
                 Skip specific validations:
                 <info>php %command.full_name% --no-routes --no-validators</info>
@@ -188,301 +158,65 @@ final class LintCommand extends Command
     #[\Override]
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $io = new SymfonyStyle($input, $output);
-
-        $workingDir = getcwd() ?: null;
-        $this->pathHelper = new RelativePathHelper($workingDir);
-        $this->linkFormatter = new LinkFormatter($this->editorUrl, $this->pathHelper);
-
         // The configured paths are the project's, read from its directory
         // whatever directory the command runs from; the paths given on the
         // command line are read from the working directory, as lint:yaml
         // reads them.
-        $givenPaths = $this->normalizeStringList($input->getArgument('paths'));
+        $givenPaths = self::stringList($input->getArgument('paths'));
         $configured = [] === $givenPaths;
-        $paths = $configured ? $this->fromProject($this->defaultPaths) : $givenPaths;
-        $exclude = $this->normalizeStringList($input->getOption('exclude'));
-        $minSavingsValue = $input->getOption('min-savings');
-        $minSavings = is_numeric($minSavingsValue) ? (int) $minSavingsValue : 1;
-        $skipRoutes = (bool) $input->getOption('no-routes');
-        $skipValidators = (bool) $input->getOption('no-validators');
+        $format = $input->getOption('format');
+        $minSavings = $input->getOption('min-savings');
+        $jobs = $input->getOption('jobs');
 
-        try {
-            $format = $this->validateAndNormalizeFormat($input, $io);
-        } catch (InvalidRegexOptionException) {
-            return Command::INVALID;
-        }
-
-        try {
-            LintRunner::checkPaths($paths, $configured ? 'php_regex.paths' : null);
-        } catch (LintRunFailure $e) {
-            return $this->renderFailure($format, $output, $io, $e->getMessage(), $e->stage, $e->exitCode);
-        }
-
-        // The runtime service judges for the running PHP; the lint judges
-        // for the project's target, and never compiles with the running PHP.
-        try {
-            $target = ProjectTarget::fromSources(
-                ['php_regex.php_version' => $this->phpVersion],
-                ['php_regex.pcre_version' => $this->pcreVersion],
-                $this->projectDir,
-                getenv(),
-                ['php_regex.locale' => $this->locale],
-            );
-            $parser = Regex::fromOptions(ParserOptions::fromArray($this->regexOptions + $target->regexOptions()))->parser();
-            $range = $target->rangeParsers($parser);
-            $judged = $target->judgedRange($parser);
-        } catch (UnsupportedTargetException $e) {
-            return $this->renderFailure($format, $output, $io, $e->getMessage(), JsonDocument::STAGE_TARGET, Command::INVALID);
-        } catch (InvalidRegexOptionException $e) {
-            return $this->renderFailure($format, $output, $io, 'Invalid option: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, Command::INVALID);
-        }
-        $analysis = $this->analysis->withParser($parser, $range, $judged);
-        $lint = $this->lint->withAnalysis($analysis);
-
-        $this->formatterRegistry->register(
-            self::FORMAT_CONSOLE,
-            new SymfonyConsoleFormatter($analysis, $this->linkFormatter, $output->isDecorated()),
-        );
-        $this->formatterRegistry->register('json', new JsonFormatter(target: $target->toArray()));
-
-        $jobsExplicitlySet = $input->hasParameterOption(['--jobs', '-j']);
-        $jobsValue = $input->getOption('jobs');
-        $jobs = is_numeric($jobsValue) ? (int) $jobsValue : -1;
-
-        if ($jobsExplicitlySet) {
-            if ($jobs < 1) {
-                return $this->renderFailure($format, $output, $io, 'The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, Command::INVALID);
-            }
-        } else {
-            // Without pcntl no worker can start.
-            $jobs = (new WorkerCount())->count();
-        }
-
-        if (self::FORMAT_CONSOLE === $format) {
-            $this->showBanner($io, $jobs, $target);
-        } else {
-            $this->reportTargetOnStderr($output, $target);
-        }
-
-        $startTime = (float) microtime(true);
-        $progress = null;
-        if (self::FORMAT_CONSOLE === $format && OutputInterface::VERBOSITY_QUIET !== $output->getVerbosity()) {
-            $io->writeln('  <fg=gray>[1/3] Scanning files</>');
-            $progress = new LintProgressBar($io, optimizations: true);
-        }
-
-        try {
-            $request = new LintRequest(
-                paths: $paths,
-                excludePaths: $exclude,
-                minSavings: $minSavings,
-                disabledSources: array_values(array_filter([
-                    $skipRoutes ? 'routes' : null,
-                    $skipValidators ? 'validators' : null,
-                ], static fn (?string $source): bool => null !== $source)),
-                analysisWorkers: $jobs,
-                optimizations: $this->defaultOptimizations,
-                checkRedos: $this->checkRedos,
-                checkComplexity: $this->checkComplexity,
-                reportUnmatchedIgnores: $this->reportUnmatchedIgnores,
-                // The functions marked #[RegexPattern] are read in the
-                // configured paths and in vendor/, whatever paths are linted.
-                declarationPaths: $this->fromProject($this->defaultPaths),
-                vendorPaths: [($this->projectDir ?? $workingDir ?? '.').'/vendor'],
-                // An exclude names a directory of the project: one of the same
-                // name above it, where the project lives, excludes nothing.
-                excludeBase: $configured ? $this->projectDir : null,
-            );
-            $patterns = $lint->collectPatterns($request, $progress);
-        } catch (\Throwable $e) {
-            $progress?->endLine();
-
-            return $this->renderFailure($format, $output, $io, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, Command::FAILURE);
-        }
-
-        // A file read with the tokenizer holds no pattern of its own: it is
-        // counted in the stats only.
-        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
-        if (null !== $progress) {
-            $progress->endLine();
-            $io->writeln('  <fg=gray>Scanned '.$progress->files().' files, found '.$patternCount.' patterns.</>');
-        }
-
-        if (LintService::holdsNothing($patterns, $this->reportUnmatchedIgnores)) {
-            return $this->renderEmptyResults($format, $output, $io);
-        }
-
-        // A worker lost on the way stops the run: no report to give.
-        try {
-            $report = $lint->analyze($patterns, $request, $progress);
-        } catch (LintException $e) {
-            $progress?->endLine();
-
-            return $this->renderFailure($format, $output, $io, $e->getMessage(), JsonDocument::STAGE_ANALYZE, Command::FAILURE);
-        }
-
-        if (null !== $progress) {
-            $io->newLine();
-        }
-
-        $report = new LintReport(
-            $this->sortResultsByFileAndLine($report->results),
-            $report->stats,
-        );
-
-        $stats = $report->stats;
-
-        $this->writeReport($format, $output, $this->formatterRegistry->get($format)->format($report));
-
-        if (self::FORMAT_CONSOLE === $format) {
-            $elapsed = (float) microtime(true) - $startTime;
-            $peakMemory = memory_get_peak_usage(true);
-            // No cache count: the workers parse the patterns, not this process.
-            $io->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
-            $io->newLine();
-        }
-
-        return $stats['errors'] > 0 ? Command::FAILURE : Command::SUCCESS;
-    }
-
-    private function showBanner(SymfonyStyle $io, int $jobs, ProjectTarget $target): void
-    {
-        $version = Regex::VERSION;
-
-        $io->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
-        $io->newLine();
-
-        $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
-        $io->writeln('<fg=white;options=bold>'.str_pad('Runtime', $maxLabelLength).'</> : PHP <fg=yellow>'.\PHP_VERSION.'</>');
-        $io->writeln('<fg=white;options=bold>'.str_pad('Target', $maxLabelLength).'</> : '.$this->describeTarget($target));
-        $io->writeln('<fg=white;options=bold>'.str_pad('Processes', $maxLabelLength).'</> : <fg=yellow>'.$jobs.'</>');
-        foreach ($target->notices() as $notice) {
-            $io->writeln('<fg=gray>Note: '.$notice.'</>');
-        }
-        foreach ($this->warnings as $warning) {
-            $io->writeln('<fg=yellow>Warning: '.OutputFormatter::escape($warning).'</>');
-        }
-
-        $io->newLine();
-    }
-
-    /**
-     * Outside the console format, stdout holds the report alone: the target
-     * and what resolving it noticed go to stderr, when there is one.
-     */
-    private function reportTargetOnStderr(OutputInterface $output, ProjectTarget $target): void
-    {
-        if (!$output instanceof ConsoleOutputInterface) {
-            return;
-        }
-
-        $stderr = $output->getErrorOutput();
-        foreach ($target->notices() as $notice) {
-            $stderr->writeln('Note: '.$notice, OutputInterface::OUTPUT_RAW);
-        }
-        foreach ($this->warnings as $warning) {
-            $stderr->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
-        }
-        $stderr->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->source()), OutputInterface::OUTPUT_RAW);
-    }
-
-    private function describeTarget(ProjectTarget $target): string
-    {
-        $locale = $target->target()->locale;
-
-        return \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->source());
-    }
-
-    /**
-     * A run that stops: an error block on the console, the format's own
-     * error document otherwise (the JSON envelope names the stage).
-     */
-    private function renderFailure(
-        string $format,
-        OutputInterface $output,
-        SymfonyStyle $io,
-        string $message,
-        string $stage,
-        int $exitCode,
-    ): int {
-        if (self::FORMAT_CONSOLE === $format) {
-            $io->error($message);
-
-            return $exitCode;
-        }
-
-        $formatter = $this->formatterRegistry->get($format);
-        $error = $formatter instanceof JsonFormatter ? $formatter->formatError($message, $stage) : $formatter->formatError($message);
-        $this->writeReport($format, $output, str_ends_with($error, "\n") ? $error : $error."\n");
-
-        return $exitCode;
-    }
-
-    /**
-     * The console report goes through the console styles; a machine format
-     * is written as it is, never read for tags, and even under --quiet: it
-     * is the output asked for, not a status line.
-     */
-    private function writeReport(string $format, OutputInterface $output, string $report): void
-    {
-        if (self::FORMAT_CONSOLE === $format) {
-            $output->write($report);
-
-            return;
-        }
-
-        ConsoleWriter::document($output, $report);
-    }
-
-    private function renderEmptyResults(string $format, OutputInterface $output, SymfonyStyle $io): int
-    {
-        if (self::FORMAT_CONSOLE === $format) {
-            $this->renderEmptySummary($io);
-
-            return Command::SUCCESS;
-        }
-
-        $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
-
-        $this->writeReport($format, $output, $this->formatterRegistry->get($format)->format($emptyReport));
-
-        return Command::SUCCESS;
-    }
-
-    private function renderEmptySummary(SymfonyStyle $io): void
-    {
-        $io->newLine();
-        $io->writeln('  <bg=green;fg=white;options=bold> PASS </> <fg=gray>No regex patterns found.</>');
-        $io->newLine();
-        ConsoleWriter::footer($io);
-    }
-
-    private function validateAndNormalizeFormat(InputInterface $input, SymfonyStyle $io): string
-    {
-        $formatOption = $input->getOption('format');
-        $format = \is_string($formatOption) ? strtolower($formatOption) : self::FORMAT_CONSOLE;
-
-        if (!$this->formatterRegistry->has($format)) {
-            $io->error(\sprintf(
-                "Invalid format '%s'. Supported formats: %s",
-                $format,
-                implode(', ', $this->formatterRegistry->getNames()),
-            ));
-
-            throw new InvalidRegexOptionException('Invalid format');
-        }
-
-        return $format;
+        return (new ConsoleLintRunner($this->formatterRegistry))->run(new ConsoleLintRequest(
+            format: \is_string($format) ? $format : 'console',
+            paths: $configured ? $this->fromProject($this->defaultPaths) : $givenPaths,
+            pathsSetting: $configured ? 'php_regex.paths' : null,
+            exclude: self::stringList($input->getOption('exclude')),
+            // An exclude names a directory of the project: one of the same
+            // name above it, where the project lives, excludes nothing.
+            excludeBase: $configured ? $this->projectDir : null,
+            minSavings: is_numeric($minSavings) ? (int) $minSavings : 1,
+            // --jobs with no value is no count either.
+            jobs: $input->hasParameterOption(['--jobs', '-j'], true) ? (\is_string($jobs) ? $jobs : '') : null,
+            disabledSources: array_keys(array_filter(['routes' => (bool) $input->getOption('no-routes'), 'validators' => (bool) $input->getOption('no-validators')])),
+            optimizations: $this->defaultOptimizations,
+            checkRedos: $this->checkRedos,
+            checkComplexity: $this->checkComplexity,
+            reportUnmatchedIgnores: $this->reportUnmatchedIgnores,
+            // The functions marked #[RegexPattern] are read in the
+            // configured paths and in vendor/, whatever paths are linted.
+            declarationPaths: $this->fromProject($this->defaultPaths),
+            vendorPaths: [($this->projectDir ?? (getcwd() ?: '.')).'/vendor'],
+            editorUrl: $this->editorUrl,
+            displayBase: null,
+            // The runtime service judges for the running PHP; the lint judges
+            // for the project's target, and never compiles with the running PHP.
+            setup: fn (): LintSetup => LintSetup::forTarget(
+                ProjectTarget::fromSources(
+                    ['php_regex.php_version' => $this->phpVersion],
+                    ['php_regex.pcre_version' => $this->pcreVersion],
+                    $this->projectDir,
+                    getenv(),
+                    ['php_regex.locale' => $this->locale],
+                ),
+                $this->regexOptions,
+                $this->analysis,
+                $this->lint,
+                self::stringList($this->warnings),
+            ),
+            invalidOptionPrefix: 'Invalid option: ',
+            version: Regex::VERSION,
+        ), $output);
     }
 
     /**
      * The configured paths read from the project directory; as they are
      * written when the bundle knows of none.
      *
-     * @param array<string> $paths
+     * @param list<string> $paths
      *
-     * @return array<string>
+     * @return list<string>
      */
     private function fromProject(array $paths): array
     {
@@ -495,42 +229,14 @@ final class LintCommand extends Command
     }
 
     /**
-     * @return array<string>
+     * @return list<string>
      */
-    private function normalizeStringList(mixed $value): array
+    private static function stringList(mixed $value): array
     {
         if (!\is_array($value)) {
             return [];
         }
 
         return array_values(array_filter($value, static fn ($item): bool => \is_string($item) && '' !== $item));
-    }
-
-    /**
-     * @param array<string, bool|int> $optimizations
-     */
-    private function normalizeOptimizations(array $optimizations): OptimizerOptions
-    {
-        // Lint checks every rewrite with the automata unless told otherwise.
-        return OptimizerOptions::fromArray($optimizations + ['verify_with_automata' => true]);
-    }
-
-    /**
-     * @phpstan-param array<LintResult> $results
-     *
-     * @phpstan-return array<LintResult>
-     */
-    private function sortResultsByFileAndLine(array $results): array
-    {
-        usort($results, static function (array $a, array $b): int {
-            $fileCompare = strcmp((string) $a['file'], (string) $b['file']);
-            if (0 !== $fileCompare) {
-                return $fileCompare;
-            }
-
-            return $a['line'] <=> $b['line'];
-        });
-
-        return $results;
     }
 }

@@ -18,21 +18,13 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * The lines the package's commands write alike.
+ * The patterns the package's commands write alike; the lines every bridge
+ * writes alike are Linter\Console\ConsoleWriter's.
  *
  * @internal
  */
 final class ConsoleWriter
 {
-    /**
-     * The document as it is, never read for console tags, and written even
-     * under --quiet: it is the output asked for, not a status line.
-     */
-    public static function document(OutputInterface $output, string $document): void
-    {
-        $output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
-    }
-
     /**
      * The pattern highlighted on a decorated output; elsewhere, as plain
      * text, so that no escape sequence reaches a pipe or --no-ansi.

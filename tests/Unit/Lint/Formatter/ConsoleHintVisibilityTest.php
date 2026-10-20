@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
@@ -29,7 +29,6 @@ use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -134,8 +133,8 @@ final class ConsoleHintVisibilityTest extends TestCase
 
         return match ($name) {
             'console' => new ConsoleFormatter($service, new OutputConfiguration(ansi: false)),
-            'symfony' => new SymfonyConsoleFormatter($service, $links, false),
-            default => new LaravelConsoleFormatter($service, $links, false),
+            'symfony' => new ConsoleTagFormatter($service, $links, false),
+            default => new ConsoleTagFormatter($service, $links, false),
         };
     }
 

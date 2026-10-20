@@ -191,7 +191,7 @@ final class ConsoleFormatterTest extends TestCase
      * in a file name is spelled "\xHH", so that a name cannot draw a line
      * of a report of its own.
      */
-    #[DataProviderExternal(AbstractConsoleTagFormatterTest::class, 'provideFileFields')]
+    #[DataProviderExternal(ConsoleTagFormatterTest::class, 'provideFileFields')]
     public function test_format_shows_the_file_field_on_one_line(string $file, int $line, string $expected): void
     {
         $formatter = new ConsoleFormatter(config: new OutputConfiguration(ansi: false));

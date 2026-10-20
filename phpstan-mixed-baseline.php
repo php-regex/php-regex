@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use PHPRegex\Parser\Printer\JsonDumper;
+
 /*
  * This file is part of the PHPRegex package.
  *
@@ -144,7 +146,7 @@ return [
         'PHPRegex\Parser\Printer\StructuralFingerprint::isLiteral()' => ['reflection-sink', 1],
     ],
     'src/Parser/Printer/JsonDumper.php' => [
-        'PHPRegex\Parser\Printer\JsonDumper' => ['reflection-sink', 1],
+        JsonDumper::class => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::all()' => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::visitAlternation()' => ['reflection-sink', 1],
         'PHPRegex\Parser\Printer\JsonDumper::visitAnchor()' => ['reflection-sink', 1],
@@ -210,12 +212,12 @@ return [
         'PHPRegex\PHPUnit\PatternLab::export()' => ['validator-input', 1],
         'PHPRegex\PHPUnit\PatternLab::judge()' => ['validator-input', 1],
     ],
+    'src/Symfony/Command/LintCommand.php' => [
+        'PHPRegex\Symfony\Command\LintCommand::stringList()' => ['host-return', 1],
+    ],
     'src/Symfony/Command/CompareCommand.php' => [
         'PHPRegex\Symfony\Command\CompareCommand::resolveDeterminizationAlgorithm()' => ['host-return', 1],
         'PHPRegex\Symfony\Command\CompareCommand::resolveMinimizationAlgorithm()' => ['host-return', 1],
-    ],
-    'src/Symfony/Command/LintCommand.php' => [
-        'PHPRegex\Symfony\Command\LintCommand::normalizeStringList()' => ['host-return', 1],
     ],
     'src/Symfony/DependencyInjection/Configuration.php' => [
         'PHPRegex\Symfony\DependencyInjection\Configuration::getConfigTreeBuilder()' => ['host-contract', 2],

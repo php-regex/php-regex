@@ -29,10 +29,10 @@ use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -145,31 +145,32 @@ final class LintCommandTest extends TestCase
     {
         $command = $this->createCommand();
 
-        // Test the private method through reflection
-        $reflection = new \ReflectionClass($command);
-        $method = $reflection->getMethod('normalizeStringList');
+        $method = (new \ReflectionClass($command))->getMethod('stringList');
 
         $this->assertSame([], $method->invoke($command, null));
         $this->assertSame([], $method->invoke($command, 'string'));
         $this->assertSame(['a', 'b'], $method->invoke($command, ['a', '', 'b', null, 123]));
     }
 
+    /**
+     * The results come out by file and line, whatever order the sources
+     * gave the patterns in.
+     */
     #[Test]
     public function test_sort_results_by_file_and_line(): void
     {
-        $command = $this->createCommand();
-
-        $reflection = new \ReflectionClass($command);
-        $method = $reflection->getMethod('sortResultsByFileAndLine');
-
-        $results = [
-            ['file' => 'b.php', 'line' => 10],
-            ['file' => 'a.php', 'line' => 5],
-            ['file' => 'a.php', 'line' => 1],
+        $patterns = [
+            new PatternOccurrence('/(/', 'b.php', 10, 'php'),
+            new PatternOccurrence('/(/', 'a.php', 5, 'php'),
+            new PatternOccurrence('/(/', 'a.php', 1, 'php'),
         ];
+        $tester = new CommandTester($this->createCommandWithSources([self::occurrences($patterns)]));
+        $tester->execute(['paths' => ['.'], '--format' => 'json', '--jobs' => '1']);
 
+        $document = json_decode($tester->getDisplay(), true);
+        $this->assertIsArray($document);
         /** @var array<array{file: string, line: int}> $sorted */
-        $sorted = $method->invoke($command, $results);
+        $sorted = $document['results'];
 
         $this->assertSame('a.php', $sorted[0]['file']);
         $this->assertSame(1, $sorted[0]['line']);
@@ -179,39 +180,27 @@ final class LintCommandTest extends TestCase
         $this->assertSame(10, $sorted[2]['line']);
     }
 
+    /**
+     * The banner: the title, a blank line, the runtime, the target and the
+     * processes, then a blank line before the report.
+     */
     #[Test]
     public function test_show_banner_outputs_correct_format(): void
     {
-        $command = $this->createCommand();
+        $tester = new CommandTester($this->createCommand());
+        $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true]);
 
-        $reflection = new \ReflectionClass($command);
-        $method = $reflection->getMethod('showBanner');
-
-        $io = $this->createMock(SymfonyStyle::class);
-        $io->expects($this->exactly(2))->method('newLine');
-        // Title, runtime, target and processes.
-        $io->expects($this->exactly(4))->method('writeln');
-
-        $method->invoke($command, $io, 1, ProjectTarget::fromSources([], [], null, []));
+        $target = ProjectTarget::fromSources([], [], null, []);
+        $this->assertStringStartsWith(\sprintf("PHPRegex %s by Younes ENNAJI\n\nRuntime   : PHP %s\nTarget    : PHP %s, PCRE2 %s (%s)\nProcesses : 1\n\n", Regex::VERSION, \PHP_VERSION, $target->php(), $target->target()->pcreVersion, $target->source()), $tester->getDisplay());
     }
 
     #[Test]
     public function test_the_empty_summary_ends_with_the_footer_after_a_blank_line(): void
     {
-        $command = $this->createCommand();
+        $tester = new CommandTester($this->createCommand());
+        $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true]);
 
-        $reflection = new \ReflectionClass($command);
-        $method = $reflection->getMethod('renderEmptySummary');
-
-        $io = $this->createMock(SymfonyStyle::class);
-        $io->expects($this->exactly(3))->method('newLine');
-        $io->expects($this->exactly(2))->method('writeln')
-            ->with($this->logicalOr(
-                '  <bg=green;fg=white;options=bold> PASS </> <fg=gray>No regex patterns found.</>',
-                '  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex</>',
-            ));
-
-        $method->invoke($command, $io);
+        $this->assertStringEndsWith("\n\n   PASS  No regex patterns found.\n\n  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $tester->getDisplay());
     }
 
     #[Test]
@@ -768,6 +757,34 @@ final class LintCommandTest extends TestCase
         self::assertIsArray($data['results'][0]['issues'][0] ?? null);
 
         return $data['results'][0]['issues'][0];
+    }
+
+    /**
+     * @param list<PatternOccurrence> $occurrences
+     */
+    private static function occurrences(array $occurrences): PatternSourceInterface
+    {
+        return new class($occurrences) implements PatternSourceInterface {
+            /**
+             * @param list<PatternOccurrence> $occurrences
+             */
+            public function __construct(private readonly array $occurrences) {}
+
+            public function getName(): string
+            {
+                return 'custom';
+            }
+
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function extract(PatternSourceContext $context): array
+            {
+                return $this->occurrences;
+            }
+        };
     }
 
     private static function sourceOf(string ...$patterns): PatternSourceInterface

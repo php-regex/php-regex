@@ -13,9 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
+use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\Formatter\ReportSpelling;
@@ -24,7 +23,6 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -35,12 +33,12 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
  * text it quotes is escaped as Symfony Console's OutputFormatter::escape()
  * does, without the linter depending on Symfony Console.
  */
-final class AbstractConsoleTagFormatterTest extends TestCase
+final class ConsoleTagFormatterTest extends TestCase
 {
     private const FIXTURES = __DIR__.'/../../../Fixtures/Lint/';
 
     /**
-     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     * @param class-string<ConsoleTagFormatter> $formatterClass
      */
     #[Test]
     #[DataProvider('provideRenderings')]
@@ -60,7 +58,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
      */
     public static function provideRenderings(): iterable
     {
-        foreach ([SymfonyConsoleFormatter::class, LaravelConsoleFormatter::class] as $class) {
+        foreach ([ConsoleTagFormatter::class] as $class) {
             yield $class.' decorated' => [$class, true, 'console-tag-report.decorated.txt'];
             yield $class.' plain' => [$class, false, 'console-tag-report.plain.txt'];
         }
@@ -70,7 +68,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     #[DataProvider('provideTagLikeText')]
     public function test_quoted_text_is_escaped_as_symfony_console_escapes_it(string $text): void
     {
-        $formatter = new SymfonyConsoleFormatter(
+        $formatter = new ConsoleTagFormatter(
             new AnalysisService(RegexParser::create(['cache' => null])),
             new LinkFormatter(null, new RelativePathHelper('/project')),
         );
@@ -117,7 +115,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
      * in a file name is spelled "\xHH", so that a name cannot draw a line
      * of a report of its own.
      *
-     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     * @param class-string<ConsoleTagFormatter> $formatterClass
      */
     #[Test]
     #[DataProvider('provideFileFieldsPerFormatter')]
@@ -143,11 +141,11 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{formatterClass: class-string<AbstractConsoleTagFormatter>, file: string, line: int, expected: string}>
+     * @return iterable<string, array{formatterClass: class-string<ConsoleTagFormatter>, file: string, line: int, expected: string}>
      */
     public static function provideFileFieldsPerFormatter(): iterable
     {
-        foreach ([SymfonyConsoleFormatter::class, LaravelConsoleFormatter::class] as $class) {
+        foreach ([ConsoleTagFormatter::class] as $class) {
             foreach (self::provideFileFields() as $name => $row) {
                 yield $class.', '.$name => ['formatterClass' => $class] + $row;
             }
@@ -173,7 +171,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
      * The location field is one line too; a message keeps its line
      * breaks, which lay it out.
      *
-     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     * @param class-string<ConsoleTagFormatter> $formatterClass
      */
     #[Test]
     #[DataProvider('provideFormatterClasses')]
@@ -202,18 +200,18 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{formatterClass: class-string<AbstractConsoleTagFormatter>}>
+     * @return iterable<string, array{formatterClass: class-string<ConsoleTagFormatter>}>
      */
     public static function provideFormatterClasses(): iterable
     {
-        yield 'symfony' => ['formatterClass' => SymfonyConsoleFormatter::class];
-        yield 'laravel' => ['formatterClass' => LaravelConsoleFormatter::class];
+        yield 'symfony' => ['formatterClass' => ConsoleTagFormatter::class];
+        yield 'laravel' => ['formatterClass' => ConsoleTagFormatter::class];
     }
 
     #[Test]
     public function test_a_pattern_that_does_not_parse_is_quoted_escaped_without_highlighting(): void
     {
-        $formatter = new LaravelConsoleFormatter(
+        $formatter = new ConsoleTagFormatter(
             new AnalysisService(RegexParser::create(['cache' => null])),
             new LinkFormatter(null, new RelativePathHelper('/project')),
         );
@@ -235,7 +233,7 @@ final class AbstractConsoleTagFormatterTest extends TestCase
      * A route requirement is a pattern body with no delimiter: it is shown
      * as written, whatever its first character, as the CLI shows it.
      *
-     * @param class-string<AbstractConsoleTagFormatter> $formatterClass
+     * @param class-string<ConsoleTagFormatter> $formatterClass
      */
     #[Test]
     #[DataProvider('provideRequirementsPerFormatter')]
@@ -258,11 +256,11 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{formatterClass: class-string<AbstractConsoleTagFormatter>, decorated: bool, requirement: string}>
+     * @return iterable<string, array{formatterClass: class-string<ConsoleTagFormatter>, decorated: bool, requirement: string}>
      */
     public static function provideRequirementsPerFormatter(): iterable
     {
-        foreach ([SymfonyConsoleFormatter::class, LaravelConsoleFormatter::class] as $class) {
+        foreach ([ConsoleTagFormatter::class] as $class) {
             foreach ([false, true] as $decorated) {
                 foreach (['\\d+', 'en|fr', '[a-z]+'] as $requirement) {
                     yield \sprintf('%s, %s, %s', $class, $decorated ? 'decorated' : 'plain', $requirement) => ['formatterClass' => $class, 'decorated' => $decorated, 'requirement' => $requirement];
@@ -272,7 +270,12 @@ final class AbstractConsoleTagFormatterTest extends TestCase
     }
 
     #[Test]
-    public function test_the_linter_does_not_depend_on_symfony_console(): void
+    /**
+     * The linter reads, reports and formats with no console: only its
+     * Console namespace, which runs the bridges' regex:lint on a Symfony
+     * console, needs symfony/console, which the package suggests.
+     */
+    public function test_the_linter_depends_on_symfony_console_only_in_its_console_namespace(): void
     {
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(
             \dirname(__DIR__, 4).'/src/Linter',
@@ -281,6 +284,9 @@ final class AbstractConsoleTagFormatterTest extends TestCase
 
         foreach ($files as $file) {
             $this->assertInstanceOf(\SplFileInfo::class, $file);
+            if (str_contains(str_replace('\\', '/', $file->getPathname()), '/src/Linter/Console/')) {
+                continue;
+            }
             $this->assertStringNotContainsString(
                 'Symfony\Component\Console',
                 (string) file_get_contents($file->getPathname()),

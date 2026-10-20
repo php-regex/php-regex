@@ -15,6 +15,7 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use PHPRegex\Laravel\Output\ConsoleWriter;
+use PHPRegex\Linter\Console\ConsoleWriter as DocumentWriter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
@@ -78,7 +79,7 @@ final class TranspileCommand extends Command
             $registry->get($target);
         } catch (TranspileException $e) {
             if ('json' === $format) {
-                ConsoleWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
+                DocumentWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
             } else {
                 $this->error(\sprintf(
                     "Invalid target '%s'. Supported targets: %s",
@@ -95,7 +96,7 @@ final class TranspileCommand extends Command
         $validation = $this->regex->validate($pattern);
         if (!$validation->isValid) {
             if ('json' === $format) {
-                ConsoleWriter::document($this->output, JsonDocument::error(
+                DocumentWriter::document($this->output, JsonDocument::error(
                     $validation->error ?? 'Invalid pattern.',
                     JsonDocument::STAGE_PATTERN,
                     ['validation' => $validation],
@@ -117,7 +118,7 @@ final class TranspileCommand extends Command
             $result = $this->regex->transpile($pattern, $target, $options);
 
             if ('json' === $format) {
-                ConsoleWriter::document($this->output, JsonDocument::encode($result->jsonSerialize()));
+                DocumentWriter::document($this->output, JsonDocument::encode($result->jsonSerialize()));
 
                 return self::SUCCESS;
             }
@@ -157,7 +158,7 @@ final class TranspileCommand extends Command
         } catch (LexerException|ParserException|TranspileException $e) {
             // A valid pattern the target cannot express.
             if ('json' === $format) {
-                ConsoleWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
+                DocumentWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
             } else {
                 $this->error('Transpilation failed: '.$e->getMessage());
             }

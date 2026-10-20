@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\GithubFormatter;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\JunitFormatter;
@@ -29,7 +30,6 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -263,7 +263,7 @@ final class PatternSpellingFormatterTest extends TestCase
         return [
             'github' => new GithubFormatter(),
             'console' => new ConsoleFormatter(null, new OutputConfiguration(ansi: false)),
-            'symfony console' => new SymfonyConsoleFormatter(
+            'symfony console' => new ConsoleTagFormatter(
                 new AnalysisService(RegexParser::create(['cache' => null])),
                 new LinkFormatter(null, new RelativePathHelper('/project')),
                 false,

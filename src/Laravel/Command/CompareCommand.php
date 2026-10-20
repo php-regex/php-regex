@@ -20,6 +20,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Laravel\Output\ConsoleWriter;
+use PHPRegex\Linter\Console\ConsoleWriter as DocumentWriter;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\DisplayEscaper;
@@ -115,7 +116,7 @@ final class CompareCommand extends Command
             if ($json) {
                 // Every key whatever the method, in the same order, null
                 // where the method fills none.
-                ConsoleWriter::document($this->output, JsonDocument::encode(array_replace([
+                DocumentWriter::document($this->output, JsonDocument::encode(array_replace([
                     'pattern1' => $pattern1,
                     'pattern2' => $pattern2,
                     'method' => $method,
@@ -187,7 +188,7 @@ final class CompareCommand extends Command
     private function refuse(bool $json, string $message, string $stage, int $exitCode): int
     {
         if ($json) {
-            ConsoleWriter::document($this->output, JsonDocument::error($message, $stage));
+            DocumentWriter::document($this->output, JsonDocument::error($message, $stage));
         } else {
             $this->error($message);
         }
@@ -202,7 +203,7 @@ final class CompareCommand extends Command
     private function invalidPattern(bool $json, string $which, ValidationResult $validation): int
     {
         if ($json) {
-            ConsoleWriter::document($this->output, JsonDocument::error(
+            DocumentWriter::document($this->output, JsonDocument::error(
                 $validation->error ?? 'Invalid pattern.',
                 JsonDocument::STAGE_PATTERN,
                 ['validation' => $validation],

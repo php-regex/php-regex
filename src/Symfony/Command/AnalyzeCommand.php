@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Command;
 
+use PHPRegex\Linter\Console\ConsoleWriter;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Redos\RedosSeverity;
@@ -23,7 +24,6 @@ use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\ReportSection;
 use PHPRegex\Symfony\Analyzer\SecurityReport;
-use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Symfony\Security\SecurityConfigException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

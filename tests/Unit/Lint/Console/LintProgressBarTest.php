@@ -11,27 +11,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Bridge\Laravel\Output;
+namespace PHPRegex\Tests\Unit\Lint\Console;
 
-use Illuminate\Console\OutputStyle;
-use PHPRegex\Laravel\Output\LintProgressBar;
+use PHPRegex\Linter\Console\LintProgressBar;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Tests\Support\TerminalScreen;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\ConsoleSectionOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\StreamOutput;
 
 /**
- * regex:lint's progress on a console progress bar: the scan's sub-steps on
- * a name line and a bar line redrawn in place on a terminal, a name line
- * and bar lines each in a log, and the
- * clock redrawn while the run waits on a terminal only.
+ * The progress of the bridges' regex:lint on a console progress bar: the
+ * scan's sub-steps on a name line and a bar line redrawn in place on a
+ * terminal, a name line and bar lines each in a log, the headings of the
+ * analysis and the optimizations, and the clock redrawn while the run waits
+ * on a terminal only, all on the error output of a console.
  *
  * The clock is a fake one, set as the bars' elapsed placeholder: it moves
  * on every redraw, so a redraw shows as a new frame without the test
@@ -406,16 +405,18 @@ final class LintProgressBarTest extends TestCase
     }
 
     /**
-     * On a console with an error output the bars and their line ends go
-     * there; the headings stay with the report.
+     * On a console with an error output the bars, their headings, their
+     * line ends and the lines written between the steps go there, as
+     * `regex lint` writes its steps: the standard output keeps the report.
      */
     #[Test]
-    public function test_bars_are_drawn_on_the_error_output_of_a_console(): void
+    public function test_bars_and_headings_are_drawn_on_the_error_output_of_a_console(): void
     {
         $errors = self::memory();
         $console = self::console($this->stream, new StreamOutput($errors, OutputInterface::VERBOSITY_NORMAL, true));
-        $progress = new LintProgressBar(new OutputStyle(new ArrayInput([]), $console), 3);
+        $progress = new LintProgressBar($console, 3);
 
+        $progress->writeln('  <fg=gray>[1/3] Scanning files</>');
         self::scan($progress, files: 1, declarations: 1, functions: 1, patterns: 1);
         $progress->step(LintProgress::STEP_ANALYSIS, 1);
         $progress->advance();
@@ -425,12 +426,30 @@ final class LintProgressBarTest extends TestCase
         $error = self::read($errors);
         fclose($errors);
 
-        $this->assertStringContainsString('[2/3] Analyzing patterns', $standard);
-        $this->assertStringNotContainsString('Patterns', $standard);
-        $this->assertStringNotContainsString('1/1', $standard);
+        $this->assertSame('', $standard);
+        $this->assertStringContainsString('[1/3] Scanning files', $error);
         $this->assertStringContainsString('Patterns', $error);
         $this->assertStringContainsString('1/1', $error);
-        $this->assertStringNotContainsString('Analyzing patterns', $error);
+        $this->assertStringContainsString("\n\n  \x1b[90m[2/3] Analyzing patterns", $error);
+        $this->assertStringEndsWith("\n", $error);
+    }
+
+    /**
+     * A line written between two steps ends the bar's line first, and
+     * stands on a line of its own.
+     */
+    #[Test]
+    #[DataProvider('provideDecorated')]
+    public function test_writeln_ends_the_bar_line_first(bool $decorated): void
+    {
+        $progress = $this->progress($decorated);
+        $progress->step(LintProgress::STEP_PATTERNS, 2);
+        $progress->advance(2);
+        $progress->finish();
+
+        $progress->writeln('  Scanned 1 files, found 2 patterns.');
+
+        $this->assertMatchesRegularExpression('/2\/2 \[[^\n]*\n  Scanned 1 files, found 2 patterns\.\n$/', self::read($this->stream));
     }
 
     /**
@@ -469,9 +488,9 @@ final class LintProgressBarTest extends TestCase
     /**
      * @param resource $stream
      */
-    private static function style($stream, bool $decorated): OutputStyle
+    private static function style($stream, bool $decorated): OutputInterface
     {
-        return new OutputStyle(new ArrayInput([]), new StreamOutput($stream, OutputInterface::VERBOSITY_NORMAL, $decorated));
+        return new StreamOutput($stream, OutputInterface::VERBOSITY_NORMAL, $decorated);
     }
 
     /**

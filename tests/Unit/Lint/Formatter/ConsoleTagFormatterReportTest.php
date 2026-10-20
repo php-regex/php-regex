@@ -11,9 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace PHPRegex\Tests\Unit\Bridge\Symfony\Output;
+namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintIssue;
@@ -21,11 +22,10 @@ use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Formatter\OutputFormatter;
 
-final class SymfonyConsoleFormatterTest extends TestCase
+final class ConsoleTagFormatterReportTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -44,7 +44,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
@@ -60,7 +60,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = 'Test error message';
 
@@ -75,7 +75,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => 'test.php',
@@ -102,7 +102,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => 'test.php',
@@ -129,7 +129,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => 'test.php',
@@ -154,7 +154,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter, false);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter, false);
 
         $optimization = new OptimizationResult('original', 'optimized');
         $result = [
@@ -189,7 +189,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter, false);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter, false);
 
         $result = [
             'file' => 'test.php',
@@ -218,7 +218,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => 'test.php',
@@ -244,7 +244,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result1 = [
             'file' => 'file1.php',
@@ -282,7 +282,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => 'test.php',
@@ -307,7 +307,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => 'test.php',
@@ -334,7 +334,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter, false);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter, false);
 
         $result = [
             'file' => 'test.php',
@@ -361,7 +361,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $report = new LintReport([], ['errors' => 2, 'warnings' => 1, 'optimizations' => 3]);
 
@@ -377,7 +377,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $report = new LintReport([], ['errors' => 0, 'warnings' => 2, 'optimizations' => 1]);
 
@@ -393,7 +393,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $relativePathHelper = new RelativePathHelper();
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
 
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $report = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 3]);
 
@@ -408,7 +408,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $analysis = new AnalysisService(RegexParser::create());
         $relativePathHelper = new RelativePathHelper('/app');
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $result = [
             'file' => '/app/src/File.php',
@@ -429,7 +429,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $analysis = new AnalysisService(RegexParser::create());
         $relativePathHelper = new RelativePathHelper('/app');
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $output = $this->invokePrivate($formatter, 'safelyHighlightPattern', ['/\d+/']);
 
@@ -442,7 +442,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $analysis = new AnalysisService(RegexParser::create());
         $relativePathHelper = new RelativePathHelper('/app');
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $output = $this->invokePrivate($formatter, 'displayOptimizations', [[
             ['optimization' => 'noop'],
@@ -457,7 +457,7 @@ final class SymfonyConsoleFormatterTest extends TestCase
         $analysis = new AnalysisService(RegexParser::create());
         $relativePathHelper = new RelativePathHelper('/app');
         $linkFormatter = new LinkFormatter(null, $relativePathHelper);
-        $formatter = new SymfonyConsoleFormatter($analysis, $linkFormatter);
+        $formatter = new ConsoleTagFormatter($analysis, $linkFormatter);
 
         $badge = '<bg=gray;fg=white;options=bold> INFO </>';
         $message = "Top line\nLine 12: details\nMore";

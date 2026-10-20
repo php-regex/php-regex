@@ -258,6 +258,12 @@ php artisan regex:compare '/[0-9]+/' '/\d+/' --method=equivalence
 php artisan regex:transpile '/^[a-z]+$/' -t python
 ```
 
+`regex:lint` writes its banner and its report on stdout. Its steps, their
+progress bars and an error that stops the run (`Error: Path not found:
+app/Legacy`) go to stderr, as `regex lint` writes them, so
+`php artisan regex:lint > lint.txt` keeps the report alone. The Symfony bundle and
+the Laravel package run the same lint, and print it the same way.
+
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration
 cannot be used (see [the CLI guide](cli.md#exit-codes)).

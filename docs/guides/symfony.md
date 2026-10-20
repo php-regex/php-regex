@@ -293,6 +293,12 @@ bin/console regex:analyze --redos-threshold=medium
 
 `--redos-threshold` takes the same values as `redos.threshold`, in any case.
 
+`regex:lint` writes its banner and its report on stdout. Its steps, their
+progress bars and an error that stops the run (`Error: Path not found:
+src/Legacy`) go to stderr, as `regex lint` writes them, so
+`bin/console regex:lint > lint.txt` keeps the report alone. The Symfony bundle and
+the Laravel package run the same lint, and print it the same way.
+
 Every command is listed by `bin/console list`. They take the options of the
 same command in the CLI and in the Laravel package, under the same names and
 short forms (`-j` for `--jobs`, `-t` for `--target`): `regex:compare

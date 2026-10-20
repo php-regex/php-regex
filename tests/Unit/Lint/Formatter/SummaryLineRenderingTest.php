@@ -15,9 +15,9 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Cli\Command\LintOutputRenderer;
 use PHPRegex\Cli\Output;
-use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\LintSummary;
@@ -25,7 +25,6 @@ use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -126,8 +125,8 @@ final class SummaryLineRenderingTest extends TestCase
         $service = new AnalysisService(RegexParser::create(['cache' => null]));
         $links = new LinkFormatter(null, new RelativePathHelper('/project'));
 
-        $this->assertSame(self::eol($tags), (new SymfonyConsoleFormatter($service, $links, true))->format(new LintReport([], $stats)));
-        $this->assertSame(self::eol($tags), (new LaravelConsoleFormatter($service, $links, true))->format(new LintReport([], $stats)));
+        $this->assertSame(self::eol($tags), (new ConsoleTagFormatter($service, $links, true))->format(new LintReport([], $stats)));
+        $this->assertSame(self::eol($tags), (new ConsoleTagFormatter($service, $links, true))->format(new LintReport([], $stats)));
     }
 
     /**

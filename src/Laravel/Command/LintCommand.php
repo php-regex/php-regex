@@ -15,37 +15,27 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
-use PHPRegex\Laravel\Output\ConsoleWriter;
-use PHPRegex\Laravel\Output\LaravelConsoleFormatter;
-use PHPRegex\Laravel\Output\LintProgressBar;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\UnsupportedTargetException;
+use PHPRegex\Linter\Console\ConsoleLintRequest;
+use PHPRegex\Linter\Console\ConsoleLintRunner;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
-use PHPRegex\Linter\Formatter\JsonFormatter;
-use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
-use PHPRegex\Linter\LintRequest;
-use PHPRegex\Linter\LintRunFailure;
-use PHPRegex\Linter\LintRunner;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\LintSetup;
 use PHPRegex\Linter\LintSeverity;
-use PHPRegex\Linter\LintStatsCounter;
-use PHPRegex\Linter\Parallel\WorkerCount;
-use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
-use Symfony\Component\Console\Formatter\OutputFormatter;
-use Symfony\Component\Console\Output\ConsoleOutputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Lint regex patterns in PHP source code.
+ *
+ * The command reads its command line and config/php-regex.php; the run
+ * itself is the one the Symfony bundle's regex:lint makes.
  *
  * @phpstan-import-type LintResult from LintReport
  *
@@ -54,8 +44,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class LintCommand extends Command
 {
     use ReadsStringInput;
-
-    private const FORMAT_CONSOLE = 'console';
 
     /**
      * The identifier of a source file an extractor could not read.
@@ -98,192 +86,70 @@ final class LintCommand extends Command
      */
     public function handle(): int
     {
-        $workingDir = base_path();
-        $pathHelper = new RelativePathHelper($workingDir);
-        $editorUrl = config('php-regex.ide');
-        $linkFormatter = new LinkFormatter(\is_string($editorUrl) ? $editorUrl : null, $pathHelper);
-
-        /** @var array<string>|null $pathsArg */
-        $pathsArg = $this->argument('paths');
         // A null or empty php-regex.paths reads app/, the published default.
         // The configured paths are the application's, read from its base
         // path whatever directory the command runs from; the paths given on
         // the command line are read from the working directory.
-        $defaultPaths = array_values(array_filter((array) config('php-regex.paths', ['app']), \is_string(...)));
-        $configured = null === $pathsArg || [] === $pathsArg;
-        $paths = $configured ? self::fromBasePath([] === $defaultPaths ? ['app'] : $defaultPaths) : $pathsArg;
-
-        /** @var array<string>|null $excludeOption */
-        $excludeOption = $this->option('exclude');
-        /** @var array<string> $defaultExclude */
-        $defaultExclude = config('php-regex.exclude', ['vendor', 'node_modules', 'storage']);
-        $exclude = !empty($excludeOption) ? $excludeOption : $defaultExclude;
-
-        $minSavings = (int) $this->option('min-savings');
-        $skipRoutes = (bool) $this->option('no-routes');
+        // The strings of an argument, an option or a setting, the empty ones
+        // left out.
+        $strings = static fn ($value): array => array_values(array_filter(array_filter((array) $value, \is_string(...)), static fn (string $item): bool => '' !== $item));
+        $givenPaths = $strings($this->argument('paths'));
+        $configured = [] === $givenPaths;
+        $defaultPaths = $strings(config('php-regex.paths', ['app']));
+        $exclude = $strings($this->option('exclude'));
         $skipValidators = (bool) $this->option('no-validators');
-        $format = strtolower($this->stringOption('format'));
-
-        if (!$this->formatterRegistry->has($format)) {
-            $this->error(\sprintf(
-                "Invalid format '%s'. Supported formats: %s",
-                $format,
-                implode(', ', $this->formatterRegistry->getNames()),
-            ));
-
-            return self::INVALID;
-        }
-
+        $editorUrl = config('php-regex.ide');
         $jobs = $this->option('jobs');
-        if (null === $jobs) {
-            $jobs = (new WorkerCount())->count();
-        } else {
-            $jobs = filter_var($jobs, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-            if (false === $jobs) {
-                return $this->renderFailure($format, 'The --jobs value must be a positive integer.', JsonDocument::STAGE_USAGE, self::INVALID);
-            }
-        }
 
-        try {
-            LintRunner::checkPaths($paths, $configured ? 'php-regex.paths' : null);
-        } catch (LintRunFailure $e) {
-            return $this->renderFailure($format, $e->getMessage(), $e->stage, $e->exitCode);
-        }
+        return (new ConsoleLintRunner($this->formatterRegistry))->run(new ConsoleLintRequest(
+            format: $this->stringOption('format'),
+            paths: $configured ? self::fromBasePath([] === $defaultPaths ? ['app'] : $defaultPaths) : $givenPaths,
+            pathsSetting: $configured ? 'php-regex.paths' : null,
+            exclude: [] !== $exclude ? $exclude : $strings(config('php-regex.exclude', ['vendor', 'node_modules', 'storage'])),
+            // An exclude names a directory of the application: one of the
+            // same name above it, where the application lives (Testbench's
+            // skeleton lives under vendor/), excludes nothing.
+            excludeBase: $configured ? base_path() : null,
+            minSavings: (int) $this->option('min-savings'),
+            jobs: null === $jobs ? null : (\is_string($jobs) ? $jobs : ''),
+            disabledSources: array_keys(array_filter(['routes' => (bool) $this->option('no-routes'), 'validators' => $skipValidators])),
+            optimizations: self::normalizeOptimizations(config('php-regex.optimizations', [])),
+            checkRedos: true === config('php-regex.redos.enabled'),
+            checkComplexity: true === config('php-regex.analysis.complexity'),
+            reportUnmatchedIgnores: false !== config('php-regex.report_unmatched_ignores'),
+            // The functions marked #[RegexPattern] are read in the
+            // configured paths, the linted ones when none are, as
+            // `regex lint` reads them, and in vendor/, whatever paths are
+            // linted. A setting that is no list (one path) is read as one.
+            declarationPaths: [] === $defaultPaths ? ($configured ? self::fromBasePath(['app']) : $givenPaths) : self::fromBasePath($defaultPaths),
+            vendorPaths: [base_path('vendor')],
+            editorUrl: \is_string($editorUrl) ? $editorUrl : null,
+            displayBase: base_path(),
+            // The Regex service judges for the running PHP; the lint judges
+            // for the project's target, and never compiles with the running
+            // PHP. The services are resolved here, so that a setting they
+            // cannot use is reported as one.
+            setup: function (): LintSetup {
+                $target = ProjectTarget::fromSources(
+                    ['config php-regex.php_version' => $this->configVersion('php_version')],
+                    ['config php-regex.pcre_version' => $this->configRelease('pcre_version')],
+                    base_path(),
+                    getenv(),
+                    ['config php-regex.locale' => $this->configLocale()],
+                );
+                /** @var AnalysisService $analysis */
+                $analysis = $this->laravel->make('php-regex.analysis');
+                /** @var LintService $lint */
+                $lint = $this->laravel->make('php-regex.lint');
 
-        // The Regex service judges for the running PHP; the lint judges for
-        // the project's target, and never compiles with the running PHP.
-        try {
-            $target = ProjectTarget::fromSources(
-                ['config php-regex.php_version' => $this->configVersion('php_version')],
-                ['config php-regex.pcre_version' => $this->configRelease('pcre_version')],
-                base_path(),
-                getenv(),
-                ['config php-regex.locale' => $this->configLocale()],
-            );
-            $parser = Regex::create(PHPRegexServiceProvider::regexOptions($this->laravel) + $target->regexOptions())->parser();
-            $range = $target->rangeParsers($parser);
-            $judged = $target->judgedRange($parser);
-            /** @var \PHPRegex\Linter\AnalysisService $appAnalysis */
-            $appAnalysis = $this->laravel->make('php-regex.analysis');
-            /** @var \PHPRegex\Linter\LintService $appLint */
-            $appLint = $this->laravel->make('php-regex.lint');
-        } catch (UnsupportedTargetException $e) {
-            return $this->renderFailure($format, $e->getMessage(), JsonDocument::STAGE_TARGET, self::INVALID);
-        } catch (InvalidRegexOptionException $e) {
-            return $this->renderFailure($format, 'Invalid config/php-regex.php: '.$e->getMessage(), JsonDocument::STAGE_CONFIG, self::INVALID);
-        }
-        $analysis = $appAnalysis->withParser($parser, $range, $judged);
-        $lint = $appLint->withAnalysis($analysis);
-
-        $this->formatterRegistry->register(
-            self::FORMAT_CONSOLE,
-            new LaravelConsoleFormatter($analysis, $linkFormatter, $this->output->isDecorated()),
-        );
-        $this->formatterRegistry->register('json', new JsonFormatter(target: $target->toArray()));
-
-        // What config/php-regex.php holds that the run ignores: one warning
-        // each, and the run goes on.
-        $warnings = PHPRegexServiceProvider::extraction($this->laravel)['warnings'];
-        if (self::FORMAT_CONSOLE === $format) {
-            $this->showBanner($jobs, $target, $warnings);
-        } else {
-            $this->reportOnStderr($target, $warnings);
-        }
-
-        $startTime = (float) microtime(true);
-        $showProgress = self::FORMAT_CONSOLE === $format && !$this->option('quiet');
-        $progress = null;
-
-        $defaultOptimizations = $this->normalizeOptimizations(config('php-regex.optimizations', []));
-
-        try {
-            $request = new LintRequest(
-                paths: $paths,
-                excludePaths: $exclude,
-                minSavings: $minSavings,
-                disabledSources: array_values(array_filter([
-                    $skipRoutes ? 'routes' : null,
-                    $skipValidators ? 'validators' : null,
-                ])),
-                analysisWorkers: $jobs,
-                optimizations: $defaultOptimizations,
-                checkRedos: true === config('php-regex.redos.enabled'),
-                checkComplexity: true === config('php-regex.analysis.complexity'),
-                reportUnmatchedIgnores: false !== config('php-regex.report_unmatched_ignores'),
-                // The functions marked #[RegexPattern] are read in the
-                // configured paths, the linted ones when none are, as
-                // `regex lint` reads them, and in vendor/, whatever paths are
-                // linted. A setting that is no list (one path) is read as one.
-                declarationPaths: $this->declarationPaths($paths),
-                vendorPaths: [base_path('vendor')],
-                // An exclude names a directory of the application: one of the
-                // same name above it, where the application lives (Testbench's
-                // skeleton lives under vendor/), excludes nothing.
-                excludeBase: $configured ? base_path() : null,
-            );
-
-            if ($showProgress) {
-                // The optimizations are a step of their own when they run.
-                $steps = $request->checkOptimizations ? 3 : 2;
-                $progress = new LintProgressBar($this->output, $steps);
-                $this->line('  <fg=gray>[1/'.$steps.'] Scanning files</>');
-            }
-
-            $patterns = $lint->collectPatterns($request, $progress);
-        } catch (\Throwable $e) {
-            $progress?->close();
-
-            return $this->renderFailure($format, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, self::FAILURE);
-        }
-
-        $unreadFiles = $skipValidators ? [] : $this->unreadFileResults();
-
-        // A file read with the tokenizer holds no pattern of its own: it is
-        // counted in the stats only.
-        $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
-        if (null !== $progress) {
-            $progress->close();
-            $this->line('  <fg=gray>Scanned '.$progress->filesFound().' files, found '.$patternCount.' patterns.</>');
-            $this->newLine();
-        }
-
-        if (LintService::holdsNothing($patterns, false !== config('php-regex.report_unmatched_ignores')) && [] === $unreadFiles) {
-            return $this->renderEmptyResults($format);
-        }
-
-        try {
-            $report = $lint->analyze($patterns, $request, $progress);
-        } catch (LintException $e) {
-            // A worker lost: the run stops, naming the files it was reading.
-            $progress?->close();
-
-            return $this->renderFailure($format, $e->getMessage(), JsonDocument::STAGE_ANALYZE, self::FAILURE);
-        }
-
-        if (null !== $progress) {
-            $progress->close();
-            $this->newLine();
-        }
-
-        $results = [...$report->results, ...$unreadFiles];
-        $report = new LintReport(
-            $this->sortResultsByFileAndLine($results),
-            LintStatsCounter::count($results, $patterns),
-        );
-
-        $stats = $report->stats;
-
-        $this->writeReport($format, $this->formatterRegistry->get($format)->format($report));
-
-        if (self::FORMAT_CONSOLE === $format) {
-            $elapsed = (float) microtime(true) - $startTime;
-            $peakMemory = memory_get_peak_usage(true);
-            // No cache count: the workers parse the patterns, not this process.
-            $this->line('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
-            $this->newLine();
-        }
-
-        return $stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
+                // What config/php-regex.php holds that the run ignores: one
+                // warning each, and the run goes on.
+                return LintSetup::forTarget($target, PHPRegexServiceProvider::regexOptions($this->laravel), $analysis, $lint, PHPRegexServiceProvider::extraction($this->laravel)['warnings']);
+            },
+            invalidOptionPrefix: 'Invalid config/php-regex.php: ',
+            version: Regex::VERSION,
+            unread: fn (): array => $skipValidators ? [] : $this->unreadFileResults(),
+        ), $this->output->getOutput());
     }
 
     /**
@@ -314,59 +180,6 @@ final class LintCommand extends Command
         }
 
         return $results;
-    }
-
-    /**
-     * @param list<string> $warnings
-     */
-    private function showBanner(int $jobs, ProjectTarget $target, array $warnings): void
-    {
-        $version = Regex::VERSION;
-
-        $this->line('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.$version.'</> by Younes ENNAJI');
-        $this->newLine();
-
-        $maxLabelLength = max(array_map(strlen(...), ['Runtime', 'Target', 'Processes']));
-        $this->line('<fg=white;options=bold>'.str_pad('Runtime', $maxLabelLength).'</> : PHP <fg=yellow>'.\PHP_VERSION.'</>');
-        $this->line('<fg=white;options=bold>'.str_pad('Target', $maxLabelLength).'</> : '.\sprintf(
-            'PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)',
-            $target->php(),
-            $target->target()->pcreVersion,
-            'C' === $target->target()->locale ? '' : ', locale <fg=yellow>'.$target->target()->locale.'</>',
-            $target->source(),
-        ));
-        $this->line('<fg=white;options=bold>'.str_pad('Processes', $maxLabelLength).'</> : <fg=yellow>'.$jobs.'</>');
-        foreach ($target->notices() as $notice) {
-            $this->line('<fg=gray>Note: '.$notice.'</>');
-        }
-        foreach ($warnings as $warning) {
-            $this->line('<fg=yellow>Warning: '.OutputFormatter::escape($warning).'</>');
-        }
-
-        $this->newLine();
-    }
-
-    /**
-     * Outside the console format, stdout holds the report alone: the
-     * target, the notices and the warnings go to stderr, when there is one.
-     *
-     * @param list<string> $warnings
-     */
-    private function reportOnStderr(ProjectTarget $target, array $warnings): void
-    {
-        $output = $this->output->getOutput();
-        if (!$output instanceof ConsoleOutputInterface) {
-            return;
-        }
-
-        $stderr = $output->getErrorOutput();
-        foreach ($target->notices() as $line) {
-            $stderr->writeln($line, OutputInterface::OUTPUT_RAW);
-        }
-        foreach ($warnings as $warning) {
-            $stderr->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
-        }
-        $stderr->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->source()), OutputInterface::OUTPUT_RAW);
     }
 
     /**
@@ -403,81 +216,6 @@ final class LintCommand extends Command
     }
 
     /**
-     * A run that stops: an error line on the console, the format's own
-     * error document otherwise (the JSON envelope names the stage).
-     */
-    private function renderFailure(string $format, string $message, string $stage, int $exitCode): int
-    {
-        if (self::FORMAT_CONSOLE === $format) {
-            $this->error($message);
-
-            return $exitCode;
-        }
-
-        $formatter = $this->formatterRegistry->get($format);
-        $error = $formatter instanceof JsonFormatter ? $formatter->formatError($message, $stage) : $formatter->formatError($message);
-        $this->writeReport($format, str_ends_with($error, "\n") ? $error : $error."\n");
-
-        return $exitCode;
-    }
-
-    /**
-     * The console report goes through the console styles; a machine format
-     * is written as it is, never read for tags, and even under --quiet: it
-     * is the output asked for, not a status line.
-     */
-    private function writeReport(string $format, string $report): void
-    {
-        if (self::FORMAT_CONSOLE === $format) {
-            $this->output->write($report);
-
-            return;
-        }
-
-        ConsoleWriter::document($this->output, $report);
-    }
-
-    private function renderEmptyResults(string $format): int
-    {
-        if (self::FORMAT_CONSOLE === $format) {
-            $this->newLine();
-            $this->line('  <bg=green;fg=white;options=bold> PASS </> <fg=gray>No regex patterns found.</>');
-            $this->showFooter();
-
-            return self::SUCCESS;
-        }
-
-        $emptyReport = new LintReport([], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
-
-        $this->writeReport($format, $this->formatterRegistry->get($format)->format($emptyReport));
-
-        return self::SUCCESS;
-    }
-
-    private function showFooter(): void
-    {
-        $this->newLine();
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $this->line('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
-        $this->newLine();
-    }
-
-    /**
-     * Where the functions marked #[RegexPattern] are read, besides vendor/:
-     * the paths of config/php-regex.php, the linted ones when it names none.
-     *
-     * @param array<string> $linted
-     *
-     * @return list<string>
-     */
-    private function declarationPaths(array $linted): array
-    {
-        $configured = array_values(array_filter((array) config('php-regex.paths', ['app']), \is_string(...)));
-
-        return [] === $configured ? array_values($linted) : self::fromBasePath($configured);
-    }
-
-    /**
      * The configured paths read from the application's base path.
      *
      * @param list<string> $paths
@@ -496,27 +234,8 @@ final class LintCommand extends Command
      * the optimizer reads them. Lint checks every rewrite with the automata
      * unless the config says otherwise.
      */
-    private function normalizeOptimizations(mixed $optimizations): OptimizerOptions
+    private static function normalizeOptimizations(mixed $optimizations): OptimizerOptions
     {
         return OptimizerOptions::fromArray((\is_array($optimizations) ? $optimizations : []) + ['verify_with_automata' => true]);
-    }
-
-    /**
-     * @phpstan-param array<LintResult> $results
-     *
-     * @phpstan-return array<LintResult>
-     */
-    private function sortResultsByFileAndLine(array $results): array
-    {
-        usort($results, static function (array $a, array $b): int {
-            $fileCompare = strcmp((string) $a['file'], (string) $b['file']);
-            if (0 !== $fileCompare) {
-                return $fileCompare;
-            }
-
-            return $a['line'] <=> $b['line'];
-        });
-
-        return $results;
     }
 }

@@ -11,6 +11,10 @@ CHANGELOG
    command line are read from the working directory.
  * `regex:lint` stops with exit code 2 on a path that does not exist, as
    `regex lint` does, where it passed.
+ * `regex:lint` runs the lint the Symfony bundle runs, and prints it as `regex lint`
+   does: the steps and their progress bars on stderr, the banner and the
+   report on stdout, and an error that stops the run as one line on stderr,
+   `Error: ...`.
  * `locale` in `config/php-regex.php` names the `LC_CTYPE` locale
    `regex:lint` judges patterns under; the `Regex` service judges under the
    running PHP's.

@@ -15,25 +15,15 @@ namespace PHPRegex\Symfony\Output;
 
 use PHPRegex\Parser\Text\DisplayEscaper;
 use Symfony\Component\Console\Formatter\OutputFormatter;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * The lines the bundle's commands and reports write alike.
+ * The parts of a line the bundle's reports write alike; the lines every
+ * bridge writes alike are Linter\Console\ConsoleWriter's.
  *
  * @internal
  */
 final class ConsoleWriter
 {
-    /**
-     * The document as it is, never read for console tags, and written even
-     * under --quiet: it is the output asked for, not a status line.
-     */
-    public static function document(OutputInterface $output, string $document): void
-    {
-        $output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
-    }
-
     /**
      * A "label : value" line of a report's header, the labels padded to
      * the longest.
@@ -70,12 +60,5 @@ final class ConsoleWriter
         }
 
         return DisplayEscaper::quote($example, '<fg=cyan>', '</>');
-    }
-
-    public static function footer(SymfonyStyle $io): void
-    {
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
-        $io->newLine();
     }
 }

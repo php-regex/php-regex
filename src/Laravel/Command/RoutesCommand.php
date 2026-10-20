@@ -15,9 +15,9 @@ namespace PHPRegex\Laravel\Command;
 
 use Illuminate\Console\Command;
 use Illuminate\Routing\Router;
-use PHPRegex\Laravel\Output\ConsoleWriter;
 use PHPRegex\Laravel\Routing\RouteAction;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
+use PHPRegex\Linter\Console\ConsoleWriter;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
 

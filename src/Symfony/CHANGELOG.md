@@ -11,6 +11,10 @@ CHANGELOG
    read from the working directory.
  * `regex:lint` stops with exit code 2 on a path that does not exist, as
    `regex lint` does, where it passed.
+ * `regex:lint` runs the lint the Laravel package runs, and prints it as `regex lint`
+   does: the steps and their progress bars on stderr, the banner and the
+   report on stdout, and an error that stops the run as one line on stderr,
+   `Error: ...`.
  * `locale` names the `LC_CTYPE` locale `regex:lint` judges patterns
    under; the `php_regex.regex` service judges under the running PHP's.
  * `report_unmatched_ignores`, on by default, makes `regex:lint` report each

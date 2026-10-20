@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Command;
 
+use PHPRegex\Linter\Console\ConsoleWriter;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
-use PHPRegex\Symfony\Output\ConsoleWriter;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileException;

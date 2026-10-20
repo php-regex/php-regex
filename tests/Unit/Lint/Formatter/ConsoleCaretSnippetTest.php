@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
+use PHPRegex\Linter\Formatter\ConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
@@ -22,7 +23,6 @@ use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -59,7 +59,7 @@ final class ConsoleCaretSnippetTest extends TestCase
             $this->markTestSkipped('Symfony Console is not installed.');
         }
 
-        $formatter = new SymfonyConsoleFormatter(
+        $formatter = new ConsoleTagFormatter(
             new AnalysisService(RegexParser::create()),
             new LinkFormatter(null, new RelativePathHelper()),
             false,

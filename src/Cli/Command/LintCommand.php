@@ -32,7 +32,6 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
-use PHPRegex\Linter\LintException;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintRunFailure;
@@ -236,7 +235,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $sources = new PatternSourceCollection([
             new PhpFilePatternSource($extractor),
         ]);
-        $lint = new LintService($analysis, $sources);
+        $runner = new LintRunner(new LintService($analysis, $sources));
 
         if ('console' === $format && OutputConfiguration::VERBOSITY_QUIET !== $verbosity && $input->globalOptions->visuals) {
             $output->write($this->outputRenderer->renderBanner($output, $target, $jobs, $lintConfigFiles));
@@ -263,8 +262,13 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 checkComplexity: $arguments->checkComplexity,
                 reportUnmatchedIgnores: $arguments->reportUnmatchedIgnores,
             );
-            $patterns = $lint->collectPatterns($request, $progress);
-        } catch (\Throwable $e) {
+            $patterns = $runner->collect($request, $progress);
+        } catch (LintRunFailure $e) {
+            $progress?->abandon();
+
+            return $this->fail($output, $json, $e->getMessage(), $e->stage, $e->exitCode);
+        } catch (InvalidRegexOptionException $e) {
+            // An optimizer option of regex.json the request cannot take.
             $progress?->abandon();
 
             return $this->fail($output, $json, 'Failed to collect patterns: '.$e->getMessage(), JsonDocument::STAGE_COLLECT, self::FAILURE);
@@ -302,16 +306,16 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         if (null !== $progress && $showSteps) {
-            $patternCount = \count(array_filter($patterns, static fn (PatternOccurrence $pattern): bool => null === $pattern->parserFallback && null === $pattern->ignores));
+            $patternCount = LintRunner::patternCount($patterns);
             $output->writeError('  '.$output->dim("Scanned {$progress->files()} files, found {$patternCount} patterns.")."\n\n");
         }
 
         try {
-            $report = $lint->analyze($patterns, $request, $progress);
-        } catch (LintException $e) {
+            $report = $runner->analyze($patterns, $request, $progress);
+        } catch (LintRunFailure $e) {
             $progress?->abandon();
 
-            return $this->fail($output, $json, $e->getMessage(), JsonDocument::STAGE_ANALYZE, self::FAILURE);
+            return $this->fail($output, $json, $e->getMessage(), $e->stage, $e->exitCode);
         }
 
         // A generated baseline must cover the FULL report, before any
