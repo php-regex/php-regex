@@ -151,11 +151,9 @@ would mean replaying their internal form of the pattern (10.35 fixed it).
 
 ## Linter: the last pass before 2.0.0
 
-Left: one rule catalogue (with the docs URL in every output: JSON, LSP,
-Checkstyle, GitHub), the token helpers shared by the two extraction
-strategies, the console formatter split, and the config side of rule ids
-(`regex.json` refusing the full `regex.lint.*` spelling, an inline marker
-naming a short id read as a note).
+Left: the token helpers shared by the two extraction strategies, the
+console formatter split, and the argument parsing that lives in
+`Linter\Config` though only the CLI and the language server read it.
 
 ## Architecture and contributor path: the last pass before 2.0.0
 
