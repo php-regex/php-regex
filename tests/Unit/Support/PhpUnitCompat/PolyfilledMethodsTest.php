@@ -146,6 +146,33 @@ final class PolyfilledMethodsTest extends TestCase
     }
 
     /**
+     * Each passing and each failing expectation of the feature's probe, run
+     * by the PHPUnit running this test, ends as its name says.
+     *
+     * @param trait-string     $trait
+     * @param non-empty-string $method
+     * @param non-empty-string $since
+     */
+    #[DataProvider('provideFeatures')]
+    public function test_each_expectation_of_the_probe_passes_or_fails_as_its_name_says(string $trait, string $method, string $since): void
+    {
+        $name = substr($trait, (int) strrpos($trait, '\\') + 1);
+        $probe = \dirname(__DIR__, 3).'/Fixtures/PhpUnitCompat/'.$name.'Probe.php';
+        $this->assertFileExists($probe, 'Every feature has a probe.');
+
+        $outcomes = $this->runProbe($probe);
+
+        $passing = array_filter($outcomes, static fn (string $test): bool => str_starts_with($test, 'test_passes_'), \ARRAY_FILTER_USE_KEY);
+        $failing = array_filter($outcomes, static fn (string $test): bool => str_starts_with($test, 'test_fails_'), \ARRAY_FILTER_USE_KEY);
+
+        $this->assertNotSame([], $passing, 'The probe has a passing expectation.');
+        $this->assertNotSame([], $failing, 'The probe has a failing expectation.');
+        $this->assertSame(\count($outcomes), \count($passing) + \count($failing), 'Every probe test says how it ends.');
+        $this->assertSame(array_fill_keys(array_keys($passing), 'passed'), $passing);
+        $this->assertSame(array_fill_keys(array_keys($failing), 'failed'), $failing);
+    }
+
+    /**
      * Runs $before, then loads every feature trait with Composer's
      * autoloader alone, in a PHP of its own: no PHPUnit is installed there.
      *
@@ -184,33 +211,6 @@ final class PolyfilledMethodsTest extends TestCase
         }
 
         return $expected;
-    }
-
-    /**
-     * Each passing and each failing expectation of the feature's probe, run
-     * by the PHPUnit running this test, ends as its name says.
-     *
-     * @param trait-string     $trait
-     * @param non-empty-string $method
-     * @param non-empty-string $since
-     */
-    #[DataProvider('provideFeatures')]
-    public function test_each_expectation_of_the_probe_passes_or_fails_as_its_name_says(string $trait, string $method, string $since): void
-    {
-        $name = substr($trait, (int) strrpos($trait, '\\') + 1);
-        $probe = \dirname(__DIR__, 3).'/Fixtures/PhpUnitCompat/'.$name.'Probe.php';
-        $this->assertFileExists($probe, 'Every feature has a probe.');
-
-        $outcomes = $this->runProbe($probe);
-
-        $passing = array_filter($outcomes, static fn (string $test): bool => str_starts_with($test, 'test_passes_'), \ARRAY_FILTER_USE_KEY);
-        $failing = array_filter($outcomes, static fn (string $test): bool => str_starts_with($test, 'test_fails_'), \ARRAY_FILTER_USE_KEY);
-
-        $this->assertNotSame([], $passing, 'The probe has a passing expectation.');
-        $this->assertNotSame([], $failing, 'The probe has a failing expectation.');
-        $this->assertSame(\count($outcomes), \count($passing) + \count($failing), 'Every probe test says how it ends.');
-        $this->assertSame(array_fill_keys(array_keys($passing), 'passed'), $passing);
-        $this->assertSame(array_fill_keys(array_keys($failing), 'failed'), $failing);
     }
 
     /**
