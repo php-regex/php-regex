@@ -88,6 +88,29 @@ final class PatternPrinterRoundTripTest extends TestCase
     /**
      * @param list<string> $subjects
      */
+    #[Test]
+    #[DataProvider('provideQuotedBrackets')]
+    public function test_a_quoted_bracket_of_the_delimiter_prints_back_the_same_pattern(string $pattern, array $subjects): void
+    {
+        $this->assertEveryPrinterKeepsThePattern($pattern, $subjects);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subjects: list<string>}>
+     */
+    public static function provideQuotedBrackets(): iterable
+    {
+        // PHP counts the "{" of "\Q{\E": spelled "\{" it would not, and
+        // the "}" after it would end the pattern.
+        yield 'a quoted brace before a count' => ['pattern' => '{^a\Q{\E2}$}', 'subjects' => ['a{2}', 'aa', 'a{2', '{2}']];
+        yield 'a quoted brace before a closing one' => ['pattern' => '{\Q{\E}}', 'subjects' => ['{}', '{', '}']];
+        yield 'a quoted run holding a brace and a line break' => ['pattern' => "{\\Q{a\nb\\E}}", 'subjects' => ["{a\nb}", "{a\nb", 'ab}']];
+        yield 'a quoted angle bracket before a closing one' => ['pattern' => '<a\Q<\E>b>', 'subjects' => ['a<>b', 'a<b', 'ab']];
+    }
+
+    /**
+     * @param list<string> $subjects
+     */
     private function assertEveryPrinterKeepsThePattern(string $pattern, array $subjects): void
     {
         $this->requiresCompile($pattern);

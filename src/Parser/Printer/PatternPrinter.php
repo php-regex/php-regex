@@ -504,6 +504,12 @@ final class PatternPrinter extends AbstractNodeVisitor
             : $node->source;
         $this->quotedSpans = null;
         $this->sourcePattern = $node->pattern;
+        // A "\Q...\E" run holding a bracket of the delimiter that pairs with
+        // one PHP counts stays as written: respelled "\{", PHP would not
+        // count it.
+        $this->keptQuotedBrackets = $this->delimiter === $this->closingDelimiter
+            ? []
+            : DelimiterBrackets::asWritten($node, $this->source, $this->quotedSpans(), false)[1];
 
         $body = DelimiterBrackets::spelledToEnd(
             $this->ignorableText(0, $node->pattern->getStartPosition())
