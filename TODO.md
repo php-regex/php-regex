@@ -135,6 +135,26 @@ Flex guesses `PHPRegexSymfonyBundle` or `SymfonyBundle`, never
 nothing (the guide says so). By hand: open a recipe PR on
 symfony/recipes-contrib once 2.0.0 is on Packagist.
 
+## After 2.0.0: exact size for the items still counted at their floor
+
+"Known differences" in `docs/concepts/pcre.md` lists the items whose
+compiled length the size verdict counts at its least, so a pattern near the
+64 KiB limit PCRE2 refuses may be reported valid (never the reverse). Those
+whose length the engine fixes, the same on every machine, can be counted
+exactly, each checked with the first-pass length of pcre2test 10.32 to 10.49:
+
+- caseless classes past 255 (`/(?:[à-ž]x){1300}/iu`) and pairs past 255
+  such as `[āĀ]`: the other cases come from each release's Unicode tables
+  (`pcre2_ucd.c`), which would ship as data per Unicode version;
+- a caseless letter under `(*TURKISH_CASING)`, `(*CASELESS_RESTRICT)` or `r`;
+- `(*scan_substring:...)`, extended classes `(?[...])` and classes of more
+  than 256 members.
+
+They stay documented, not planned: the classes whose cases follow the locale
+PHP builds its tables from (`[iI]`, bytes past ASCII without UTF), unknown
+before the pattern runs, and the DEFINE quirk of PCRE2 10.32 to 10.34, which
+would mean replaying their internal form of the pattern (10.35 fixed it).
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
