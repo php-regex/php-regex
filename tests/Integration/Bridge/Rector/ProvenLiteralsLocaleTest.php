@@ -47,5 +47,12 @@ final class ProvenLiteralsLocaleTest extends TestCase
         /** @var array<string, mixed> $targets */
         $targets = (new \ReflectionProperty($literals, 'targets'))->getValue($literals);
         $this->assertSame(['80400/10.44/C', '80400/10.44/fr_FR.ISO8859-1'], array_keys($targets));
+        /** @var array<string, mixed> $proofs */
+        $proofs = (new \ReflectionProperty($literals, 'literals'))->getValue($literals);
+        $this->assertSame(['80400/10.44/C:/abc/', '80400/10.44/fr_FR.ISO8859-1:/abc/'], array_keys($proofs));
+        $this->assertNull($literals->match('/a+/', 80400));
+        /** @var array<string, mixed> $matches */
+        $matches = (new \ReflectionProperty($literals, 'matches'))->getValue($literals);
+        $this->assertSame(['80400/10.44/fr_FR.ISO8859-1:/a+/'], array_keys($matches));
     }
 }

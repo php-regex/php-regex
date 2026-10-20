@@ -18,6 +18,8 @@ use PHPRegex\LanguageServer\Document\RegexFinder;
 use PHPRegex\LanguageServer\Handler\TextDocumentHandler;
 use PHPRegex\LanguageServer\Protocol\Message;
 use PHPRegex\LanguageServer\Protocol\Response;
+use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
@@ -32,6 +34,27 @@ final class TextDocumentHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->documents = new DocumentManager(new RegexFinder());
+    }
+
+    /**
+     * The versions a "@regex-target" marker keeps are judged with the
+     * server's options, its locale included, by one Regex per version kept,
+     * whichever marker asks for it.
+     */
+    #[Test]
+    public function test_a_marker_keeps_the_options_of_the_server_and_one_regex_per_version(): void
+    {
+        $regex = Regex::create(['cache' => null, 'max_recursion_depth' => 64, 'locale' => 'C']);
+        $target = ProjectTarget::fromSources(['composer.json' => '8.2'], [], null, [], ['regex.json' => 'C']);
+        $handler = new TextDocumentHandler($this->documents, $regex->withTarget($target->target()), judged: $target->judgedRange($regex->parser()));
+        $regexFor = new \ReflectionMethod($handler, 'regexFor');
+
+        $narrowed = $regexFor->invoke($handler, TargetConstraint::phpFrom(80205, null));
+        $this->assertInstanceOf(Regex::class, $narrowed);
+        $this->assertSame(80205, $narrowed->target()->phpVersionId);
+        $this->assertSame('C', $narrowed->target()->locale);
+        $this->assertSame(64, (new \ReflectionProperty($narrowed->parser(), 'maxRecursionDepth'))->getValue($narrowed->parser()));
+        $this->assertSame($narrowed, $regexFor->invoke($handler, TargetConstraint::phpFrom(80205, 80250)));
     }
 
     /**

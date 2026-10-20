@@ -64,6 +64,7 @@ final class HelpCommandTest extends TestCase
 
         $this->assertArrayHasKey('lint', self::section($overview, 'Commands'));
         $this->assertArrayHasKey('--php-version <ver>', self::section($overview, 'Global Options'));
+        $this->assertArrayHasKey('--locale <name>', self::section($overview, 'Global Options'));
         $this->assertArrayHasKey('--cache-dir <dir>', self::section($overview, 'Global Options'));
         $this->assertMatchesRegularExpression('/^  Run \S+ help <command> for the options of a command\.$/m', $overview);
         foreach (['Lint', 'Diagram', 'Transpile', 'Format', 'Analyze', 'Debug', 'ReDoS Benchmark'] as $section) {
@@ -78,7 +79,7 @@ final class HelpCommandTest extends TestCase
      * parser: LintArgumentParser for lint, the parseArguments() of compare,
      * analyze, debug, redos and transpile, the readArguments() call of
      * diagram. An option a parser learns is added to its list here too.
-     * Options every command takes (--php-version, --pcre-version) are
+     * Options every command takes (--php-version, --pcre-version, --locale) are
      * expected where the page lists them.
      */
     #[Test]
@@ -101,14 +102,14 @@ final class HelpCommandTest extends TestCase
                 '--verbose', '--debug',
                 '--lint', '--enable-rule', '--disable-rule', '-j', '--no-redos',
             ],
-            'compare' => ['--method', '--determinizer', '--minimizer', '--php-version', '--pcre-version'],
-            'diagram' => ['--format', '--output', '--php-version', '--pcre-version'],
-            'analyze' => ['--format', '--redos-mode', '--redos-threshold', '--php-version', '--pcre-version', '--json'],
-            'debug' => ['--input', '--format', '--redos-mode', '--redos-threshold', '--php-version', '--pcre-version', '--json'],
+            'compare' => ['--method', '--determinizer', '--minimizer', '--php-version', '--pcre-version', '--locale'],
+            'diagram' => ['--format', '--output', '--php-version', '--pcre-version', '--locale'],
+            'analyze' => ['--format', '--redos-mode', '--redos-threshold', '--php-version', '--pcre-version', '--locale', '--json'],
+            'debug' => ['--input', '--format', '--redos-mode', '--redos-threshold', '--php-version', '--pcre-version', '--locale', '--json'],
             'redos' => [
                 '--safe', '--input', '--input-file', '--repeat', '--prefix', '--suffix', '--iterations', '--warmup',
                 '--jit', '--backtrack-limit', '--recursion-limit', '--time-limit', '--format', '--show-input',
-                '--php-version', '--pcre-version', '--json',
+                '--php-version', '--pcre-version', '--locale', '--json',
             ],
             'transpile' => ['--target', '--format', '--json'],
             'format' => ['--compact', '--width', '--format', '--json'],
@@ -119,6 +120,25 @@ final class HelpCommandTest extends TestCase
                 yield $command.' '.$option => ['command' => $command, 'option' => $option];
             }
         }
+    }
+
+    /**
+     * The locale goes with the PHP and the PCRE2 release: every page that
+     * offers --pcre-version offers --locale.
+     */
+    #[Test]
+    public function test_every_page_that_names_the_pcre2_release_names_the_locale(): void
+    {
+        $pages = 0;
+        foreach (['parse', 'analyze', 'compare', 'explain', 'debug', 'redos', 'diagram', 'highlight', 'validate', 'transpile', 'format', 'lint', 'graph'] as $command) {
+            $options = self::optionNames(self::section(self::commandHelp($command), 'Options'));
+            if (\in_array('--pcre-version', $options, true)) {
+                $this->assertContains('--locale', $options, 'help '.$command.' does not list --locale.');
+                $pages++;
+            }
+        }
+
+        $this->assertSame(9, $pages);
     }
 
     /**

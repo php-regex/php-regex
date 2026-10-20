@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lsp;
 
 use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\LanguageServer\Server;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ServerTargetTest extends TestCase
 {
+    use InstalledLocales;
+
     /**
      * "(?a)", ASCII-only classes, arrived in PCRE2 10.43
      * (PcreFeature::AsciiOptions): PHP 8.2's 10.40 refuses it, this PHP's
@@ -223,6 +226,26 @@ final class ServerTargetTest extends TestCase
 
         $this->assertSame(['Target: PHP 8.2, PCRE2 10.40 (the Regex the server was started with)'], $this->targetLogs());
         $this->assertNotSame([], $this->diagnostics(), 'PCRE2 10.40 refuses "(?a)".');
+    }
+
+    #[Test]
+    public function test_the_regex_the_server_was_started_with_is_logged_with_its_locale(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The locale of the Regex the server was started with');
+        $this->serve(['rootUri' => $this->rootUri()], regex: Regex::create(['php_version' => '8.2', 'pcre_version' => '10.40', 'locale' => 'fr_FR.ISO8859-1']));
+
+        $this->assertSame(['Target: PHP 8.2, PCRE2 10.40, locale fr_FR.ISO8859-1 (the Regex the server was started with)'], $this->targetLogs());
+    }
+
+    #[Test]
+    public function test_the_target_is_logged_with_its_locale(): void
+    {
+        $this->requiresLocale('fr_FR.ISO8859-1', 'The locale of the target logged');
+        file_put_contents($this->root.'/regex.json', (string) json_encode(['phpVersion' => '8.2', 'locale' => 'fr_FR.ISO8859-1']));
+
+        $this->serve(['rootUri' => $this->rootUri()]);
+
+        $this->assertSame(['Target: PHP 8.2, PCRE2 10.40, locale fr_FR.ISO8859-1 (regex.json)'], $this->targetLogs());
     }
 
     /**

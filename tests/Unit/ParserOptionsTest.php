@@ -200,7 +200,7 @@ final class ParserOptionsTest extends TestCase
      */
     public function test_runtime_validation_names_the_php_it_does_not_judge(): void
     {
-        foreach (['8.0.8' => 'PHP 8.0, PCRE2 10.100', 89991 => 'PHP 8.99, PCRE2 10.100'] as $phpVersion => $named) {
+        foreach (['8.0.7' => 'PHP 8.0, PCRE2 10.100', 89991 => 'PHP 8.99, PCRE2 10.100'] as $phpVersion => $named) {
             try {
                 ParserOptions::fromArray(['runtime_pcre_validation' => true, 'php_version' => $phpVersion, 'pcre_version' => '10.100']);
                 $this->fail('Runtime validation was taken for another engine.');
