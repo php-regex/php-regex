@@ -87,6 +87,7 @@ final class ClassFormLengthTest extends TestCase
         yield 'substring scan of a name no group bears' => ['pattern' => '/(*scs:(<x>)a)/'];
         // Without UTF, what the locale holds past ASCII may complete a map.
         yield 'caseless classes of every byte, that of ASCII first' => ['pattern' => '/(?[ [\\x00-\\x7f] | [\\x80-\\xff] ])/i'];
+        yield 'caseless class of every ASCII byte joined after a letter' => ['pattern' => '/(?[ [a] | [\\x00-\\x7f] ])/i'];
         yield 'counted caseless class that may hold every byte but for the locale' => ['pattern' => '/(?[ [^\\x00-\\x7e] | [\\x00-\\x7e] ]){2}/i'];
         yield 'counted union of what may hold every character without UTF' => ['pattern' => '/(?[ [^a] | !\\p{Lu} ]){2}/i'];
         yield 'counted intersection with every character of what may hold every character' => ['pattern' => '/(?[ ( [^a] | !\\D ) & \\p{Any} ]){2}/u'];
