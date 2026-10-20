@@ -20,15 +20,15 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit coverage for the fixture verifier: every floor observation in the
  * committed suite fixture is re-observed on the PCRE2 10.40 pcre2test, and
- * every assertable case on the 10.48 pcre2test under PHP's compile context;
+ * every assertable case on the 10.49 pcre2test under PHP's compile context;
  * any difference is reported with the case id.
  *
  * The observers here are fakes that return what the real binaries print for
  * these patterns under PHP's compile context (checked with both builds):
  * "[abc" error 106 at 4 on both, "abc" compiles on both, "(?=a\Kb)ab"
  * compiles on both with allow_lookaround_bsk, "\x{ 41 }" is error 167 at 3 on
- * 10.40 and compiles on 10.48, "\xthing" compiles on 10.40 and is error 178
- * at 2 on 10.48.
+ * 10.40 and compiles on 10.49, "\xthing" compiles on 10.40 and is error 178
+ * at 2 on 10.49.
  *
  * @phpstan-type Observation = array{verdict: string, offset: int|null, pcre2Code: int|null}
  */
@@ -226,7 +226,7 @@ final class Pcre2FixtureVerifierTest extends TestCase
         ];
 
         return [
-            'meta' => ['pin' => '10.48', 'phpVersion' => '8.4.26', 'pcreVersion' => '10.48 2026-08-31', 'floorVersion' => '10.40', 'crossChecked' => 'not checked here'],
+            'meta' => ['pin' => '10.49', 'phpVersion' => '8.4.26', 'pcreVersion' => '10.49 2026-09-28', 'floorVersion' => '10.40', 'crossChecked' => 'not checked here'],
             'testinput1' => [
                 $row(1, '[abc', 'reject', 4, 106, null, ['verdict' => 'reject', 'offset' => 4, 'pcre2Code' => 106], null),
                 $row(3, 'abc', 'accept', null, null, null, ['verdict' => 'accept', 'offset' => null, 'pcre2Code' => null], null),

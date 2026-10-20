@@ -36,7 +36,7 @@ use PHPUnit\Framework\TestCase;
  *
  * PCRE2-side values in these tests are the engine's own: the messages and
  * offsets were read from the vendored testoutput files and cross-checked with
- * preg_match on PCRE2 10.48. Library-side values were measured against the
+ * preg_match on PCRE2 10.49. Library-side values were measured against the
  * library as shipped, not assumed.
  *
  * @phpstan-type Pcre2Override = array{reason: string, verdict: string, offset: int|null, pcre2Code: int|null}
@@ -46,7 +46,7 @@ use PHPUnit\Framework\TestCase;
 final class Pcre2CaseRunnerTest extends TestCase
 {
     /**
-     * PCRE2 10.48 text for error 106 ("Failed: error 106 at offset 4: ..."
+     * PCRE2 10.49 text for error 106 ("Failed: error 106 at offset 4: ..."
      * in testoutput2; preg_match('/[abc/', '') warns "Compilation failed:
      * missing terminating ] for character class at offset 4").
      */
@@ -54,7 +54,7 @@ final class Pcre2CaseRunnerTest extends TestCase
 
     /**
      * Shared rejections whose offset differs between PCRE2 10.40 (the floor)
-     * and 10.48 (the pin). Both engines were run: pcre2test 10.48 and a 10.40
+     * and 10.49 (the pin). Both engines were run: pcre2test 10.49 and a 10.40
      * pcre2test built from the release tarball, under PHP's compile context.
      * The library's offset was measured for each. A library offset equal to
      * either engine's passes; any other offset is a defect on both engines.
@@ -69,32 +69,32 @@ final class Pcre2CaseRunnerTest extends TestCase
         $pastTheFault = version_compare(explode(' ', \PCRE_VERSION)[0], '10.47', '>=');
 
         // PHP: "range out of order in character class".
-        yield 'range out of order — 10.48 at 4, 10.40 at 3, library as the running release' => [
+        yield 'range out of order — 10.49 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('[z-a]', 'reject', 4, 'range out of order in character class', pcre2Code: 108, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 108]),
             'libraryOffset' => $pastTheFault ? 4 : 3,
             'outcome' => 'pass-either-offset',
         ];
 
         // PHP: "unrecognized character after (? or (?-".
-        yield 'unknown (? construct — 10.48 at 4, 10.40 at 3, library as the running release' => [
+        yield 'unknown (? construct — 10.49 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('a(?{)b', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 111]),
             'libraryOffset' => $pastTheFault ? 4 : 3,
             'outcome' => 'pass-either-offset',
         ];
 
-        // PHP: "unrecognized character after (? or (?-": 10.48 takes "a" as
+        // PHP: "unrecognized character after (? or (?-": 10.49 takes "a" as
         // an option and stops past the "Z", 10.40 stops on the "a". PCRE2
         // 10.43 to 10.46 take the "a" and stop on the "Z", an offset neither
         // pinned release reports.
         $readsAsciiOptions = version_compare(explode(' ', \PCRE_VERSION)[0], '10.43', '>=');
-        yield 'option letter — 10.48 at 4, 10.40 at 2, library as the running release' => [
+        yield 'option letter — 10.49 at 4, 10.40 at 2, library as the running release' => [
             'case' => self::case('(?aZ)', 'reject', 4, 'unrecognized character after (? or (?-', pcre2Code: 111, floor: ['verdict' => 'reject', 'offset' => 2, 'pcre2Code' => 111]),
             'libraryOffset' => $pastTheFault ? 4 : ($readsAsciiOptions ? 3 : 2),
             'outcome' => $pastTheFault || !$readsAsciiOptions ? 'pass-either-offset' : 'offset-defect',
         ];
 
         // testinput2:347.
-        yield 'unmatched closing parenthesis — 10.48 at 4, 10.40 at 3, library as the running release' => [
+        yield 'unmatched closing parenthesis — 10.49 at 4, 10.40 at 3, library as the running release' => [
             'case' => self::case('abc)', 'reject', 4, 'unmatched closing parenthesis', pcre2Code: 122, floor: ['verdict' => 'reject', 'offset' => 3, 'pcre2Code' => 122]),
             'libraryOffset' => $pastTheFault ? 4 : 3,
             'outcome' => 'pass-either-offset',
@@ -102,7 +102,7 @@ final class Pcre2CaseRunnerTest extends TestCase
 
         // testinput2:4797. The library reports the offset of the PCRE2 PHP
         // runs: 13 from 10.45, 8 before.
-        yield 'subpattern number too big — 10.48 at 13, 10.40 at 8, library as the running PCRE2' => [
+        yield 'subpattern number too big — 10.49 at 13, 10.40 at 8, library as the running PCRE2' => [
             'case' => self::case('(?(8000000000', 'reject', 13, 'subpattern number is too big', pcre2Code: 161, floor: ['verdict' => 'reject', 'offset' => 8, 'pcre2Code' => 161]),
             'libraryOffset' => PhpErrorOffset::of('/(?(8000000000/') ?? 13,
             'outcome' => 'pass-either-offset',
@@ -174,9 +174,9 @@ final class Pcre2CaseRunnerTest extends TestCase
         $this->assertSame('accept', $result['verdict']);
         $this->assertSame('false-accept', $result['outcome']);
 
-        // "[^^--]": 10.48 error 108 at 5, 10.40 at 4. This was the sample false
+        // "[^^--]": 10.49 error 108 at 5, 10.40 at 4. This was the sample false
         // accept until the library stopped reading "--" as a class
-        // subtraction; it now rejects it where the range ends, at 10.48's
+        // subtraction; it now rejects it where the range ends, at 10.49's
         // offset (PHP: "range out of order in character class at offset 5").
         $result = (new Pcre2CaseRunner())->run(self::case(
             '[^^--]',
@@ -190,9 +190,9 @@ final class Pcre2CaseRunnerTest extends TestCase
         $this->assertSame('reject', $result['verdict']);
         $this->assertSame('pass-either-offset', $result['outcome']);
 
-        // "(?Cab)xx" (testinput2:1066): 10.48 error 182 at 4, 10.40 at 3. This
+        // "(?Cab)xx" (testinput2:1066): 10.49 error 182 at 4, 10.40 at 3. This
         // was the sample false accept until the library refused it; it now
-        // reports 10.48's offset.
+        // reports 10.49's offset.
         $result = (new Pcre2CaseRunner())->run(self::case(
             '(?Cab)xx',
             'reject',
@@ -204,8 +204,8 @@ final class Pcre2CaseRunnerTest extends TestCase
 
         $this->assertSame('pass-either-offset', $result['outcome']);
 
-        // "[\B]": 10.48 error 107 at 3, 10.40 at 2. This was the sample false
-        // accept until the library rejected it; it now reports 10.48's offset.
+        // "[\B]": 10.49 error 107 at 3, 10.40 at 2. This was the sample false
+        // accept until the library rejected it; it now reports 10.49's offset.
         $result = (new Pcre2CaseRunner())->run(self::case(
             '[\B]',
             'reject',

@@ -10,7 +10,7 @@ the ground truth for the library's compile-verdict conformance test
 | path | what it is |
 |---|---|
 | `testdata/testinput1`, `testinput2`, `testinput4`, `testinput5` | raw pattern/subject input files of the official suite |
-| `testdata/testoutput1`, `testoutput2`, `testoutput4`, `testoutput5` | the matching expected-output files, recorded from a real PCRE2 10.48 run |
+| `testdata/testoutput1`, `testoutput2`, `testoutput4`, `testoutput5` | the matching expected-output files, recorded from a real PCRE2 10.49 run |
 | `testdata/LICENCE.md` | the PCRE2 project's licence file, copied from the source repository |
 | `suite-cases.json` | the extracted compilation cases (pattern body, delimiter, PHP flags, expected verdict/offset/error and PCRE2 error number, what PCRE2 10.40 did with it, or skip category), one entry per pattern line, under a `meta` record naming the pin, the PHP/PCRE2 build and the floor release that extracted them, and `crossChecked`, a checksum of the engine-derived fields that catches accidental edits (it is no proof of provenance: `verify_pcre2_fixture.php` is) |
 | `release-outcomes.json` | what every PCRE2 release from 10.32 to 10.49 does with the compilation cases of every release's own suite, for the cases on which they do not all agree: one case per line (pattern body, delimiter, PHP flags, and the outcome on each release as runs, the release from which an outcome holds), under a `meta` record naming the releases, the PHP versions judged, a SHA-256 digest of each release's testdata files read, the wording of each PCRE2 error the cases hold, release by release, and `crossChecked`, a checksum of the cases |
@@ -33,17 +33,17 @@ differences are listed in `tests/TestUtils/Pcre2LiveCrossCheck.php`.
 ## Source
 
 - Upstream project: <https://github.com/PCRE2Project/pcre2>
-- Pinned tag: [`pcre2-10.48`](https://github.com/PCRE2Project/pcre2/tree/pcre2-10.48)
+- Pinned tag: [`pcre2-10.49`](https://github.com/PCRE2Project/pcre2/tree/pcre2-10.49)
 - Files, as vendored verbatim from that tag:
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testinput1>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testoutput1>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testinput2>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testoutput2>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testinput4>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testoutput4>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testinput5>
-  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/testdata/testoutput5>
-- Licence: <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.48/LICENCE.md>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testinput1>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testoutput1>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testinput2>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testoutput2>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testinput4>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testoutput4>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testinput5>
+  - <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/testdata/testoutput5>
+- Licence: <https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/LICENCE.md>
 
 ## Licence and attribution
 
@@ -63,21 +63,21 @@ deliberately: the suite is the ground truth the conformance claims rest on.
 ## Regenerating
 
 After changing the extractor, the runner, the library, or the vendored files.
-Extraction needs two engines: a PHP linked to PCRE2 10.48 (check
+Extraction needs two engines: a PHP linked to PCRE2 10.49 (check
 `php -r 'echo PCRE_VERSION;'`), and a `pcre2test` of PCRE2 10.40, the oldest
 PCRE2 a supported PHP ships. Checking the committed fixture needs `pcre2test`
-of both 10.40 and 10.48. Build each from its release tarball, outside the
+of both 10.40 and 10.49. Build each from its release tarball, outside the
 repository; every step runs in its own subshell, so the `php` commands still
 run from the repository root:
 
 ```console
 (cd /tmp && curl -fsSL -O https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.40/pcre2-10.40.tar.gz && tar xzf pcre2-10.40.tar.gz)
 (cd /tmp/pcre2-10.40 && ./configure --disable-shared --enable-unicode && make pcre2test)
-(cd /tmp && curl -fsSL -O https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.48/pcre2-10.48.tar.gz && tar xzf pcre2-10.48.tar.gz)
-(cd /tmp/pcre2-10.48 && ./configure --disable-shared --enable-unicode && make pcre2test)
+(cd /tmp && curl -fsSL -O https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.49/pcre2-10.49.tar.gz && tar xzf pcre2-10.49.tar.gz)
+(cd /tmp/pcre2-10.49 && ./configure --disable-shared --enable-unicode && make pcre2test)
 php tests/Tools/extract_pcre2_testdata.php --floor-pcre2test=/tmp/pcre2-10.40/pcre2test
 php tests/Tools/generate_pcre2_conformance_table.php --baseline
-php tests/Tools/verify_pcre2_fixture.php --floor-pcre2test=/tmp/pcre2-10.40/pcre2test --pin-pcre2test=/tmp/pcre2-10.48/pcre2test
+php tests/Tools/verify_pcre2_fixture.php --floor-pcre2test=/tmp/pcre2-10.40/pcre2test --pin-pcre2test=/tmp/pcre2-10.49/pcre2test
 ```
 
 The extraction command rewrites `suite-cases.json`. It compiles every
@@ -102,7 +102,7 @@ peak memory; the page itself carries no date or timing.
 
 The third command needs no particular PHP. It re-observes the committed
 fixture on both engines — every recorded floor observation on 10.40, every
-assertable case on 10.48 under PHP's compile options (a `phpOverride` must
+assertable case on 10.49 under PHP's compile options (a `phpOverride` must
 match that observation) — and exits 1, listing each mismatch, if any record
 differs from what the engines do. A CI job runs it, with both
 engines built from the tarballs as above.

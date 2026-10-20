@@ -17,9 +17,9 @@ declare(strict_types=1);
  * Usage: php tests/Tools/verify_pcre2_fixture.php --floor-pcre2test=<path> --pin-pcre2test=<path> [<fixture>]
  *
  * --floor-pcre2test must be a pcre2test of PCRE2 10.40 and --pin-pcre2test
- * one of PCRE2 10.48, each built with the options PHP's bundled PCRE2 uses
+ * one of PCRE2 10.49, each built with the options PHP's bundled PCRE2 uses
  * (checked through "pcre2test -C"). Every row carrying a floor observation is
- * compiled again on 10.40, every assertable row on 10.48 under PHP's compile
+ * compiled again on 10.40, every assertable row on 10.49 under PHP's compile
  * context, and each result must equal what the fixture records. The fixture
  * defaults to tests/Fixtures/Pcre2/suite-cases.json.
  *

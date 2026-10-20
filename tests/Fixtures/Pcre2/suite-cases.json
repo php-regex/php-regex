@@ -1,8 +1,8 @@
 {
     "meta": {
-        "pin": "10.48",
+        "pin": "10.49",
         "phpVersion": "8.4.26",
-        "pcreVersion": "10.48 2026-08-31",
+        "pcreVersion": "10.49 2026-09-28",
         "floorVersion": "10.40",
         "crossChecked": "a82b15e149b032979a17313a7e581d1b"
     },
@@ -22887,7 +22887,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6571",
@@ -22905,7 +22905,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6574",
@@ -22923,7 +22923,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6577",
@@ -22941,7 +22941,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6580",
@@ -22959,7 +22959,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6583",
@@ -22977,7 +22977,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6586",
@@ -22995,7 +22995,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6589",
@@ -23013,7 +23013,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6594",
@@ -23031,7 +23031,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6597",
@@ -23049,7 +23049,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6600",
@@ -23067,7 +23067,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6603",
@@ -23085,7 +23085,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6606",
@@ -23103,7 +23103,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6609",
@@ -23121,7 +23121,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6618",
@@ -23337,7 +23337,7 @@
                 "pcre2Code": 162
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 162 at offset 7; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 162 at offset 7; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6667",
@@ -23391,7 +23391,7 @@
                 "pcre2Code": 162
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 162 at offset 6; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 162 at offset 6; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6676",
@@ -23445,7 +23445,7 @@
                 "pcre2Code": 162
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 162 at offset 14; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 162 at offset 14; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6685",
@@ -23571,7 +23571,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6794",
@@ -23661,7 +23661,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6811",
@@ -23697,7 +23697,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6817",
@@ -23811,7 +23811,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6860",
@@ -23829,7 +23829,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6866",
@@ -23847,7 +23847,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6874",
@@ -23865,7 +23865,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6879",
@@ -23883,7 +23883,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6884",
@@ -23901,7 +23901,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6890",
@@ -23919,7 +23919,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6896",
@@ -23937,7 +23937,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6902",
@@ -23955,7 +23955,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6908",
@@ -23973,7 +23973,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6913",
@@ -23991,7 +23991,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6918",
@@ -24009,7 +24009,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6923",
@@ -24027,7 +24027,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6930",
@@ -24045,7 +24045,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6938",
@@ -24063,7 +24063,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6946",
@@ -24081,7 +24081,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6952",
@@ -24099,7 +24099,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6958",
@@ -24117,7 +24117,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6968",
@@ -24135,7 +24135,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6973",
@@ -24153,7 +24153,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6978",
@@ -24171,7 +24171,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6983",
@@ -24189,7 +24189,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6988",
@@ -24207,7 +24207,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:6993",
@@ -24225,7 +24225,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7000",
@@ -24243,7 +24243,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7005",
@@ -24261,7 +24261,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7010",
@@ -24279,7 +24279,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7015",
@@ -24297,7 +24297,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7020",
@@ -24315,7 +24315,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7025",
@@ -24333,7 +24333,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7030",
@@ -24351,7 +24351,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7038",
@@ -24369,7 +24369,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7043",
@@ -24387,7 +24387,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7048",
@@ -24405,7 +24405,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7054",
@@ -24423,7 +24423,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7059",
@@ -24441,7 +24441,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7064",
@@ -24459,7 +24459,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7070",
@@ -24477,7 +24477,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7079",
@@ -24495,7 +24495,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7084",
@@ -24513,7 +24513,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7089",
@@ -24531,7 +24531,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7095",
@@ -24549,7 +24549,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7100",
@@ -24567,7 +24567,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7105",
@@ -24585,7 +24585,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7111",
@@ -24603,7 +24603,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7118",
@@ -24621,7 +24621,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7127",
@@ -24639,7 +24639,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7133",
@@ -24657,7 +24657,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7139",
@@ -24675,7 +24675,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7145",
@@ -24693,7 +24693,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7152",
@@ -24711,7 +24711,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput1:7157",
@@ -46641,7 +46641,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:4107",
@@ -46659,7 +46659,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:4109",
@@ -46677,7 +46677,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:4111",
@@ -47019,7 +47019,7 @@
                 "pcre2Code": 179
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 179 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 179 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:4184",
@@ -51159,7 +51159,7 @@
                 "pcre2Code": 148
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 61; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 61; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:5008",
@@ -51429,7 +51429,7 @@
                 "pcre2Code": 148
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 131; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 131; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:5069",
@@ -57023,7 +57023,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6214",
@@ -58183,7 +58183,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 17; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 17; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6443",
@@ -58569,7 +58569,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6525",
@@ -58587,7 +58587,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6530",
@@ -58637,7 +58637,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:6536",
@@ -59097,7 +59097,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6638",
@@ -59197,7 +59197,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6663",
@@ -59251,7 +59251,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6673",
@@ -59467,7 +59467,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6699",
@@ -59485,7 +59485,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6701",
@@ -59503,7 +59503,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6703",
@@ -59521,7 +59521,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6705",
@@ -59539,7 +59539,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6707",
@@ -59557,7 +59557,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6709",
@@ -59575,7 +59575,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6711",
@@ -59593,7 +59593,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6713",
@@ -59611,7 +59611,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6715",
@@ -59629,7 +59629,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6717",
@@ -59647,7 +59647,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6719",
@@ -59665,7 +59665,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6721",
@@ -59701,7 +59701,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 14; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 14; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6730",
@@ -59719,7 +59719,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 32; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 32; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6734",
@@ -59737,7 +59737,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 25; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 25; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6739",
@@ -59755,7 +59755,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 53; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 53; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6743",
@@ -59773,7 +59773,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6747",
@@ -59791,7 +59791,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6750",
@@ -59809,7 +59809,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 21; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 21; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6753",
@@ -59827,7 +59827,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6758",
@@ -59845,7 +59845,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6763",
@@ -59863,7 +59863,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6769",
@@ -59881,7 +59881,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 23; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 23; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6772",
@@ -59899,7 +59899,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 14; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 14; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6775",
@@ -59917,7 +59917,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6778",
@@ -59935,7 +59935,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6781",
@@ -59953,7 +59953,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6784",
@@ -59971,7 +59971,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 20; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 20; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6788",
@@ -59989,7 +59989,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 23; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 23; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6792",
@@ -60007,7 +60007,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6796",
@@ -60025,7 +60025,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6800",
@@ -60043,7 +60043,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6804",
@@ -60061,7 +60061,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6809",
@@ -60079,7 +60079,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 9; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 9; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6812",
@@ -60097,7 +60097,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6815",
@@ -60115,7 +60115,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6818",
@@ -60133,7 +60133,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6821",
@@ -60151,7 +60151,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6824",
@@ -60169,7 +60169,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6827",
@@ -60187,7 +60187,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 11; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6830",
@@ -60205,7 +60205,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6833",
@@ -60223,7 +60223,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6836",
@@ -60241,7 +60241,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 20; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 20; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6839",
@@ -60259,7 +60259,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6842",
@@ -60277,7 +60277,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 30; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 30; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6845",
@@ -60295,7 +60295,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 54; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 54; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6851",
@@ -60313,7 +60313,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 13; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 13; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6856",
@@ -60331,7 +60331,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 18; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 18; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6859",
@@ -60349,7 +60349,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 24; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 24; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6863",
@@ -60367,7 +60367,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6866",
@@ -60385,7 +60385,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6869",
@@ -60403,7 +60403,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6872",
@@ -60421,7 +60421,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6875",
@@ -60439,7 +60439,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6878",
@@ -60457,7 +60457,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 15; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6881",
@@ -60475,7 +60475,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 30; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 30; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6886",
@@ -60493,7 +60493,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 29; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 29; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6891",
@@ -60511,7 +60511,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 51; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 51; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6898",
@@ -60529,7 +60529,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 9; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 9; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6902",
@@ -60547,7 +60547,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 24; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 24; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6906",
@@ -60565,7 +60565,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 17; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 17; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6909",
@@ -60583,7 +60583,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 26; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 26; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6913",
@@ -60601,7 +60601,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 8; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6916",
@@ -60619,7 +60619,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 12; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 12; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6921",
@@ -60637,7 +60637,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 17; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 17; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6923",
@@ -60655,7 +60655,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 29; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 29; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6925",
@@ -60673,7 +60673,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 29; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 29; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6927",
@@ -60691,7 +60691,7 @@
                 "pcre2Code": 195
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 43; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 195 at offset 43; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:6931",
@@ -60871,7 +60871,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:6959",
@@ -60889,7 +60889,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:6965",
@@ -63091,7 +63091,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:7538",
@@ -63163,7 +63163,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:7553",
@@ -63209,7 +63209,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:7559",
@@ -63227,7 +63227,7 @@
                 "pcre2Code": null
             },
             "skipCategory": "stricter-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.48 rejects it"
+            "skipReason": "PCRE2 10.40 (the floor) compiles this pattern; PHP on PCRE2 10.49 rejects it"
         },
         {
             "id": "testinput2:7561",
@@ -63877,7 +63877,7 @@
                 "pcre2Code": 107
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 107 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 107 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:7656",
@@ -64629,7 +64629,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8147",
@@ -64647,7 +64647,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 17; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 17; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8150",
@@ -64665,7 +64665,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8153",
@@ -64683,7 +64683,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8158",
@@ -64701,7 +64701,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8166",
@@ -64719,7 +64719,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8173",
@@ -64737,7 +64737,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 20; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 20; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8176",
@@ -64773,7 +64773,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 7; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 7; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8183",
@@ -64791,7 +64791,7 @@
                 "pcre2Code": 158
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 158 at offset 33; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 158 at offset 33; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8193",
@@ -64809,7 +64809,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 6; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 6; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8201",
@@ -64827,7 +64827,7 @@
                 "pcre2Code": 142
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 142 at offset 263; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 142 at offset 263; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8211",
@@ -64845,7 +64845,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 9; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 9; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8216",
@@ -64863,7 +64863,7 @@
                 "pcre2Code": 158
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 158 at offset 19; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 158 at offset 19; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8219",
@@ -64881,7 +64881,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 26; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 26; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8222",
@@ -64899,7 +64899,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 27; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 27; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8225",
@@ -64917,7 +64917,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8228",
@@ -64935,7 +64935,7 @@
                 "pcre2Code": 142
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 142 at offset 39; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 142 at offset 39; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8231",
@@ -64953,7 +64953,7 @@
                 "pcre2Code": 142
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 142 at offset 40; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 142 at offset 40; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8234",
@@ -65025,7 +65025,7 @@
                 "pcre2Code": 114
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 28; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 114 at offset 28; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput2:8248",
@@ -76161,7 +76161,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2847",
@@ -76179,7 +76179,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2850",
@@ -76197,7 +76197,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2853",
@@ -76215,7 +76215,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2856",
@@ -76233,7 +76233,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2859",
@@ -76251,7 +76251,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2862",
@@ -76269,7 +76269,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2865",
@@ -76287,7 +76287,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2870",
@@ -76305,7 +76305,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2873",
@@ -76323,7 +76323,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2876",
@@ -76341,7 +76341,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2879",
@@ -76359,7 +76359,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2884",
@@ -76377,7 +76377,7 @@
                 "pcre2Code": 137
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 137 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 137 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2887",
@@ -76395,7 +76395,7 @@
                 "pcre2Code": 164
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 164 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 164 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2890",
@@ -76413,7 +76413,7 @@
                 "pcre2Code": 167
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 167 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 167 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2893",
@@ -76647,7 +76647,7 @@
                 "pcre2Code": 147
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 147 at offset 12; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 147 at offset 12; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:2960",
@@ -76751,7 +76751,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3009",
@@ -76769,7 +76769,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3015",
@@ -76787,7 +76787,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3023",
@@ -76805,7 +76805,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3029",
@@ -76823,7 +76823,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3035",
@@ -76841,7 +76841,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3042",
@@ -76859,7 +76859,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3050",
@@ -76877,7 +76877,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3059",
@@ -76895,7 +76895,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3066",
@@ -76913,7 +76913,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3073",
@@ -76931,7 +76931,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3081",
@@ -76949,7 +76949,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3089",
@@ -76967,7 +76967,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3096",
@@ -76985,7 +76985,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3103",
@@ -77003,7 +77003,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput4:3110",
@@ -77021,7 +77021,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         }
     ],
     "testinput5": [
@@ -87231,7 +87231,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2290",
@@ -87263,7 +87263,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 6; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 6; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2304",
@@ -87295,7 +87295,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 6; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 6; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2318",
@@ -87825,7 +87825,7 @@
                 "pcre2Code": 160
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 160 at offset 16; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 160 at offset 16; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2541",
@@ -88089,7 +88089,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2607",
@@ -88107,7 +88107,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2611",
@@ -88125,7 +88125,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2616",
@@ -88143,7 +88143,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2622",
@@ -88269,7 +88269,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2655",
@@ -88287,7 +88287,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 5; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2662",
@@ -88413,7 +88413,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2685",
@@ -88431,7 +88431,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 4; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2692",
@@ -88575,7 +88575,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2725",
@@ -88593,7 +88593,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2731",
@@ -88643,7 +88643,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2746",
@@ -88661,7 +88661,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2752",
@@ -88679,7 +88679,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 3; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2758",
@@ -88769,7 +88769,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2786",
@@ -88787,7 +88787,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 2; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2789",
@@ -88805,7 +88805,7 @@
                 "pcre2Code": 111
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 25; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 111 at offset 25; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2796",
@@ -88841,7 +88841,7 @@
                 "pcre2Code": 125
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 125 at offset 0; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2805",
@@ -88913,7 +88913,7 @@
                 "pcre2Code": 148
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 61; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 61; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2816",
@@ -88949,7 +88949,7 @@
                 "pcre2Code": 148
             },
             "skipCategory": "newer-than-floor",
-            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 63; PHP on PCRE2 10.48 compiles it"
+            "skipReason": "PCRE2 10.40 (the floor) rejects this pattern with error 148 at offset 63; PHP on PCRE2 10.49 compiles it"
         },
         {
             "id": "testinput5:2824",

@@ -47,7 +47,7 @@ final class Pcre2ExtractorFidelityTest extends TestCase
     /**
      * Suite cases PHP compiles although testoutput2 rejects them with error
      * 199: php-src sets PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK by default, and
-     * preg_match returns 0 for each of these on PCRE2 10.48. The ids are line
+     * preg_match returns 0 for each of these on PCRE2 10.49. The ids are line
      * numbers in the vendored testinput2, so they move when a pin bump adds or
      * removes lines above them; tests/Fixtures/Pcre2/README.md lists the same
      * ids in its pin-bump steps, and both change together with the table of
@@ -183,7 +183,7 @@ final class Pcre2ExtractorFidelityTest extends TestCase
             }
         }
 
-        $this->assertGreaterThan(0, $floorSkips, 'no case differs between PCRE2 10.40 and 10.48: the floor was not run');
+        $this->assertGreaterThan(0, $floorSkips, 'no case differs between PCRE2 10.40 and 10.49: the floor was not run');
     }
 
     #[Test]

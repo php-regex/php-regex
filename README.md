@@ -134,7 +134,7 @@ PHP's native `preg_match()`:
 - Additional behavioral tests cover named groups, lookarounds, conditionals,
   atomic groups, and other features (`BehavioralComplianceTest`,
   `AdvancedFeaturesComplianceTest`).
-- PCRE2's own official test suite (10.48, pinned) is replayed at compile level
+- PCRE2's own official test suite (10.49, pinned) is replayed at compile level
   under PHP's compile options: the compile verdict agrees on more than 4,100
   of the roughly 4,400 extractable cases, and fewer than 100 patterns that PHP
   refuses to compile are accepted. The exact counts, the skipped cases and the

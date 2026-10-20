@@ -52,7 +52,7 @@ final class Pcre2TestdataExtractor
      * cross-checks every case against the running preg_match, so it must
      * run on a PHP linked to exactly this release.
      */
-    public const PCRE2_PIN = '10.48';
+    public const PCRE2_PIN = '10.49';
 
     /**
      * Regex::DEFAULT_MAX_PATTERN_LENGTH, checked against the reconstructed

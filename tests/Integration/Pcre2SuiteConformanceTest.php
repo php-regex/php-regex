@@ -20,7 +20,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Conformance of Regex::validate() with the pinned PCRE2 10.48 suite.
+ * Conformance of Regex::validate() with the pinned PCRE2 10.49 suite.
  *
  * Every extractable case of the suite (the case set comes from the committed
  * fixture only, so it is identical on every PHP version and machine) must
@@ -94,7 +94,7 @@ final class Pcre2SuiteConformanceTest extends TestCase
         $this->assertIsString($outcome, \sprintf('Case %s produced a non-string outcome.', $id));
 
         // A shared rejection whose offset differs between PCRE2 10.40 and
-        // 10.48 passes when the library reports either engine's offset.
+        // 10.49 passes when the library reports either engine's offset.
         if ('pass' === $outcome || 'pass-either-offset' === $outcome) {
             $this->assertArrayNotHasKey($id, $baseline, \sprintf(
                 'Case %s passes validate() but has a baseline entry — remove the stale entry.',
