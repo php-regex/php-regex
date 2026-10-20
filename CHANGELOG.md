@@ -780,6 +780,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
+- The PCRE page lists the known differences from the target's PCRE2: a DEFINE group that opens with a group on PCRE2 10.32 to 10.34, which those releases misread and the library judges as 10.35 does.
 - Added the PHPUnit guide (`docs/guides/phpunit.md`): the capture-expectation vocabulary, the byte-offset and one-match-attempt semantics, the validation failures, and the failure-prefix taxonomy of `assertPatternIsLinear()`.
 - The CLI guide says which commands take `--format` (`parse`, `validate` and `compare` take none); the JSON reference says when `redos` running out of `--time-limit` is ended by PHP itself (exit code 124, empty stdout) instead of printing the error envelope; the CLI README's GitHub example is a real run's output.
 - Added comprehensive LSP integration guide (`docs/guides/lsp.md`) with configuration for VS Code, PhpStorm (LSP4IJ), Neovim, Vim, Emacs, Sublime Text, Helix, and Zed.

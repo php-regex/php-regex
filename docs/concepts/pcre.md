@@ -331,6 +331,35 @@ and a target has it from the release it arrived in on
 | `ExtendedClassBesideLookbehindCompiles` | 10.48 | A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed. |
 | `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. |
 
+## Known differences
+
+Where a verdict of the library departs from the target's PCRE2:
+
+- **A DEFINE group that opens with a group, on PCRE2 10.32 to 10.34** (PHP
+  7.3 and 7.4). These releases step over one item too many of their
+  internal form of the pattern after `(?(DEFINE)`, both when they measure a
+  lookbehind and when they look for the lookbehinds to measure. The library
+  follows the item skipped, but not what comes of it where that item opens
+  a group or a lookaround: the `)` of that group then closes the DEFINE
+  group, and the `)` of the DEFINE group closes what holds it, so that what
+  follows in a lookbehind goes unmeasured. `(?<=(?(DEFINE)(a))b+)`,
+  `(?<=x(?(DEFINE)(a))b+)c` and `(?<=(?:(?(DEFINE)(a)))b+)` compile there and
+  are refused here, as 10.35 refuses them, and `(?<=(?<=(?(DEFINE)(a))d+)b)`
+  is refused at offset 0 there and at 4 here. On 10.34 the search for the
+  lookbehinds to measure also stops at the end of such a DEFINE group,
+  inside a lookbehind or not: `(?(DEFINE)(a))(?<=b+)` and
+  `(?<=(?(DEFINE)(a))b)(?<=c+)` compile on 10.34, refused at 14 and 20 on
+  10.32, 10.33 and here. A lookbehind that opens a DEFINE group is never
+  measured: `(?(DEFINE)(?<=b+))` compiles on 10.32 to 10.34, and on 10.34 so
+  does `(?<=(?=(?(DEFINE)(?<=b+))))`, both refused here at the inner
+  lookbehind, as from 10.35. Which lookbehinds `maxLookbehind` counts, and
+  how long, follows the same reading as the verdict, not theirs: those
+  releases also count words of their internal form as characters after the
+  item skipped, and `pcre2test` 10.32 to 10.34 give
+  `(?<=(?(DEFINE)(?<=abcd)))` a "Max lookbehind" of 6, the library 4.
+  Reproducing this would mean replaying that internal form of the pattern;
+  PCRE2 10.35 fixed it.
+
 ## A known JIT crash
 
 PCRE2's JIT compiler, which PHP uses by default (`pcre.jit=1`), crashes the
