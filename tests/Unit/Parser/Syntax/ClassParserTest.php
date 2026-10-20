@@ -19,6 +19,8 @@ use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -89,6 +91,69 @@ final class ClassParserTest extends TestCase
             ], 1, 7), false, 0, 8),
             $class,
         );
+    }
+
+    /**
+     * The bytes between the first and the last of a character of three
+     * bytes are members of their own: "[a-€-z]" is a to 0xE2, 0x82, then
+     * 0xAC to z.
+     */
+    #[Test]
+    public function test_parse_keeps_the_middle_bytes_of_a_range_end_as_members(): void
+    {
+        $this->assertEquals(
+            new CharClassNode(new AlternationNode([
+                new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode("\xE2", 3, 4), 1, 4),
+                new LiteralNode("\x82", 4, 5),
+                new RangeNode(new LiteralNode("\xAC", 5, 6), new LiteralNode('z', 7, 8), 5, 8),
+            ], 1, 8), false, 0, 9),
+            self::parse('[a-€-z]'),
+        );
+    }
+
+    /**
+     * Where no range is read, the "-" is a member, read again from where
+     * the range would have started.
+     */
+    #[Test]
+    #[DataProvider('provideHyphensLeftAsMembers')]
+    public function test_parse_reads_the_hyphen_again_as_a_member_where_no_range_forms(string $pattern, string $release, CharClassNode $expected): void
+    {
+        $this->assertEquals($expected, self::parse($pattern, '', new PcreTarget(80500, $release)));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, release: string, expected: CharClassNode}>
+     */
+    public static function provideHyphensLeftAsMembers(): iterable
+    {
+        // A code point past a byte is refused as it is read, before the "-".
+        yield 'after a code point PCRE refuses' => [
+            'pattern' => '[\x{100}-a]',
+            'release' => '10.49',
+            'expected' => new CharClassNode(new AlternationNode([
+                new CharLiteralNode('\x{100}', 0x100, CharLiteralType::Unicode, 1, 8),
+                new LiteralNode('-', 8, 9),
+                new LiteralNode('a', 9, 10),
+            ], 1, 10), false, 0, 11),
+        ];
+        // Before PCRE2 10.45 a type the class ends after keeps its "-".
+        yield 'after a type, before the "]", before 10.45' => [
+            'pattern' => '[\w-]',
+            'release' => '10.44',
+            'expected' => new CharClassNode(new AlternationNode([new CharTypeNode('w', 1, 3), new LiteralNode('-', 3, 4)], 1, 4), false, 0, 5),
+        ];
+        // From 10.45 the end is read first, and a code point PCRE refuses
+        // there is reported as itself.
+        yield 'before a code point PCRE refuses, from 10.45' => [
+            'pattern' => '[\w-\x{100}]',
+            'release' => '10.49',
+            'expected' => new CharClassNode(new AlternationNode([
+                new CharTypeNode('w', 1, 3),
+                new LiteralNode('-', 3, 4),
+                new CharLiteralNode('\x{100}', 0x100, CharLiteralType::Unicode, 4, 11),
+            ], 1, 11), false, 0, 12),
+        ];
     }
 
     #[Test]

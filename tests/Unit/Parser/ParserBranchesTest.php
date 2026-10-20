@@ -16,6 +16,9 @@ namespace PHPRegex\Tests\Unit\Parser;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
+use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Syntax\TokenParser;
 use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\Token\TokenType;
@@ -304,5 +307,65 @@ final class ParserBranchesTest extends TestCase
 
         // Call parseGroupModifier which should match * and call parsePcreVerbInGroup with argument collection break
         $accessor->callPrivateMethod('parseGroupModifier');
+    }
+
+    /**
+     * Test Parser.parsePcreVerbInGroup() reading a verb, its argument and
+     * what follows it
+     */
+    public function test_parser_parse_pcre_verb_in_group_reads_the_verb_and_its_argument(): void
+    {
+        $parser = new TokenParser();
+        $accessor = new ParserAccessor($parser);
+
+        // (?(*MARK:x)e
+        $tokens = [
+            new Token(TokenType::GroupModifierOpen, '(?', 0),
+            new Token(TokenType::Literal, '*', 2),
+            new Token(TokenType::Literal, 'M', 3),
+            new Token(TokenType::Literal, 'A', 4),
+            new Token(TokenType::Literal, 'R', 5),
+            new Token(TokenType::Literal, 'K', 6),
+            new Token(TokenType::Literal, ':', 7),
+            new Token(TokenType::Literal, 'x', 8),
+            new Token(TokenType::GroupClose, ')', 9),
+            new Token(TokenType::Literal, 'e', 10),
+            new Token(TokenType::Eof, '', 11),
+        ];
+        $accessor->setTokens($tokens);
+        $accessor->advance();
+
+        $node = $accessor->callPrivateMethod('parseGroupModifier');
+
+        $this->assertInstanceOf(SequenceNode::class, $node);
+        $this->assertEquals([new PcreVerbNode('MARK:x', 3, 10), new LiteralNode('e', 10, 11)], $node->children);
+    }
+
+    /**
+     * Test Parser.parsePcreVerbInGroup() reading a verb with no argument
+     */
+    public function test_parser_parse_pcre_verb_in_group_reads_a_verb_without_argument(): void
+    {
+        $parser = new TokenParser();
+        $accessor = new ParserAccessor($parser);
+
+        // (?(*FAIL)
+        $tokens = [
+            new Token(TokenType::GroupModifierOpen, '(?', 0),
+            new Token(TokenType::Literal, '*', 2),
+            new Token(TokenType::Literal, 'F', 3),
+            new Token(TokenType::Literal, 'A', 4),
+            new Token(TokenType::Literal, 'I', 5),
+            new Token(TokenType::Literal, 'L', 6),
+            new Token(TokenType::GroupClose, ')', 7),
+            new Token(TokenType::Eof, '', 8),
+        ];
+        $accessor->setTokens($tokens);
+        $accessor->advance();
+
+        $node = $accessor->callPrivateMethod('parseGroupModifier');
+
+        $this->assertInstanceOf(SequenceNode::class, $node);
+        $this->assertEquals([new PcreVerbNode('FAIL', 3, 8), new LiteralNode('', 8, 8)], $node->children);
     }
 }
