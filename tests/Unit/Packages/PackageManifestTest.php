@@ -330,6 +330,23 @@ final class PackageManifestTest extends TestCase
         }
     }
 
+    /**
+     * What a package's archive leaves out is what the package holds: a line
+     * naming a path it does not have tells a reader of the file something
+     * false about the package.
+     */
+    #[Test]
+    #[DataProvider('provideDirectories')]
+    public function test_a_package_leaves_out_of_its_archive_only_paths_it_has(string $directory): void
+    {
+        $path = self::root().'/src/'.$directory;
+        preg_match_all('~^/(\S+)\s+export-ignore$~m', (string) file_get_contents($path.'/.gitattributes'), $ignored);
+
+        $missing = array_values(array_filter($ignored[1], static fn (string $entry): bool => !file_exists($path.'/'.$entry)));
+
+        $this->assertSame([], $missing, \sprintf('src/%s/.gitattributes leaves out paths the package does not have.', $directory));
+    }
+
     #[Test]
     public function test_a_package_ships_the_files_its_manifest_names(): void
     {
