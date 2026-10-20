@@ -13,11 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintReport;
-use PHPRegex\Linter\LintSeverity;
 use PHPUnit\Framework\TestCase;
 
 final class JsonFormatterTest extends TestCase
@@ -33,9 +30,6 @@ final class JsonFormatterTest extends TestCase
                 'pattern' => '/a+/',
                 'issues' => [],
                 'optimizations' => [],
-                'problems' => [
-                    new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'noise'),
-                ],
             ]],
             stats: ['errors' => 0, 'warnings' => 0, 'optimizations' => 0],
         );

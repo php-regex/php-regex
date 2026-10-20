@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Engine\LibraryPcre;
@@ -25,7 +26,6 @@ use PHPRegex\Parser\Text\DisplayEscaper;
 /**
  * Console output formatter with ANSI colors and verbosity levels.
  *
- * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type OptimizationEntry from LintReport
  * @phpstan-import-type LintResult from LintReport
  * @phpstan-import-type LintStats from LintReport
@@ -184,14 +184,14 @@ class ConsoleFormatter extends AbstractOutputFormatter
         $parts = [];
 
         foreach ($issues as $issue) {
-            $issueType = (string) ($issue['type'] ?? 'info');
+            $issueType = $issue->severity->level();
             $badge = $this->issueBadge($issueType);
             $parts[] = $this->displaySingleIssue($badge, ConsoleResultText::messageWithSnippet($issue, $pattern));
 
             // An invalid pattern shows the fix its validation names; a ReDoS
             // error its hint, which opens on the evidence, and a lint rule
             // at Error its fix.
-            $hint = isset($issue['validation']) ? $issue['validation']->hint : ($issue['hint'] ?? null);
+            $hint = null !== $issue->validation ? $issue->validation->hint : $issue->hint;
             if (\is_string($hint) && '' !== $hint && $this->config->shouldShowHints()) {
                 $formattedHint = ReportSpelling::displayText($this->formatHint($hint));
                 if ('' !== $formattedHint) {

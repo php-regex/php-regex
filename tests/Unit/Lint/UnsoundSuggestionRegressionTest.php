@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternLinter;
@@ -62,18 +63,17 @@ final class UnsoundSuggestionRegressionTest extends TestCase
     #[DataProvider('provideNestedQuantifierPatterns')]
     public function test_nested_quantifier_warnings_carry_no_automatic_rewrite(string $pattern, string $issueId): void
     {
-        /** @var array<int, array<string, mixed>> $issues */
+        /** @var array<LintIssue> $issues */
         $issues = $this->analyze($pattern)['issues'] ?? [];
         $matching = array_values(array_filter(
             $issues,
-            static fn (array $issue): bool => ($issue['issueId'] ?? '') === $issueId,
+            static fn (LintIssue $issue): bool => ($issue->issueId ?? '') === $issueId,
         ));
 
         $this->assertNotSame([], $matching, $pattern);
         foreach ($matching as $issue) {
-            $this->assertArrayNotHasKey('suggestedPattern', $issue, $pattern);
-            $hint = $issue['hint'] ?? '';
-            $this->assertStringContainsStringIgnoringCase('verify', \is_string($hint) ? $hint : '', $pattern);
+            $this->assertObjectNotHasProperty('suggestedPattern', $issue, $pattern);
+            $this->assertStringContainsStringIgnoringCase('verify', $issue->hint ?? '', $pattern);
         }
     }
 
@@ -148,15 +148,8 @@ final class UnsoundSuggestionRegressionTest extends TestCase
     {
         $result = $this->analyze($pattern);
 
+        // An issue suggests no pattern: only the optimizations do.
         $pairs = [];
-        /** @var array<int, array<string, mixed>> $resultIssues */
-        $resultIssues = $result['issues'] ?? [];
-        foreach ($resultIssues as $issue) {
-            if (isset($issue['suggestedPattern']) && \is_string($issue['suggestedPattern'])) {
-                $pairs[] = [$pattern, $issue['suggestedPattern']];
-            }
-        }
-
         /** @var array<int, array<string, mixed>> $resultOptimizations */
         $resultOptimizations = $result['optimizations'] ?? [];
         foreach ($resultOptimizations as $optimization) {

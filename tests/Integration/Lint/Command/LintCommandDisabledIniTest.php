@@ -127,19 +127,19 @@ final class LintCommandDisabledIniTest extends TestCase
             $occurrence = new \PHPRegex\Linter\PatternOccurrence('/^(a|a)+$/', 'file.php', 1, 'php:preg_match()');
             $out = ['ini_set' => function_exists('ini_set'), 'issues' => [], 'problems' => []];
             foreach ($service->lint([$occurrence]) as $issue) {
-                if (isset($issue['analysis'])) {
+                if (null !== $issue->analysis) {
                     $out['issues'][] = [
-                        'type' => $issue['type'],
-                        'replayed' => $issue['analysis']->replayed,
-                        'proof' => $issue['analysis']->proof->value,
-                        'severity' => $issue['analysis']->severity->value,
+                        'type' => $issue->severity->level(),
+                        'replayed' => $issue->analysis->replayed,
+                        'proof' => $issue->analysis->proof->value,
+                        'severity' => $issue->analysis->severity->value,
                     ];
                 }
             }
             $report = (new \PHPRegex\Linter\LintService($service, new \PHPRegex\Linter\Source\PatternSourceCollection([])))
                 ->analyze([$occurrence], new \PHPRegex\Linter\LintRequest([], [], 0, checkRedos: true));
             foreach ($report->results as $result) {
-                foreach ($result['problems'] as $problem) {
+                foreach (\PHPRegex\Linter\LintReport::problems($result) as $problem) {
                     if (\PHPRegex\Linter\DiagnosticType::Security === $problem->type) {
                         $out['problems'][] = $problem->severity->value;
                     }

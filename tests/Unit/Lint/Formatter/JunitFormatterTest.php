@@ -13,11 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\JunitFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Tests\Support\LintIssueFixtures;
 use PHPUnit\Framework\TestCase;
 
 final class JunitFormatterTest extends TestCase
@@ -42,14 +41,7 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_with_critical_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Security,
-            LintSeverity::Critical,
-            'Critical security issue',
-            'regex.redos',
-            'vulnerable pattern',
-            'Use atomic groups',
-        );
+        $problem = LintIssueFixtures::redos(LintSeverity::Critical, 'Critical security issue', 'regex.redos');
 
         $result = [
             'file' => '/path/to/file.php',
@@ -57,9 +49,8 @@ final class JunitFormatterTest extends TestCase
             'source' => 'preg_match',
             'pattern' => '/test/',
             'location' => 'in function call',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -71,28 +62,20 @@ final class JunitFormatterTest extends TestCase
         $this->assertStringContainsString('<error message="Critical security issue">', $output);
         $this->assertStringContainsString('Critical security issue', $output);
         $this->assertStringContainsString('Location: in function call', $output);
-        $this->assertStringContainsString('vulnerable pattern', $output);
-        $this->assertStringContainsString('Suggestion: Use atomic groups', $output);
+        $this->assertStringContainsString(htmlspecialchars(LintIssueFixtures::REDOS_EVIDENCE, \ENT_XML1 | \ENT_QUOTES), $output);
+        $this->assertStringContainsString('Suggestion: '.htmlspecialchars(LintIssueFixtures::redosAdvice(), \ENT_XML1 | \ENT_QUOTES), $output);
     }
 
     public function test_format_with_error_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Syntax,
-            LintSeverity::Error,
-            'Syntax error',
-            'regex.syntax',
-            'bad syntax',
-            'Fix syntax',
-        );
+        $problem = LintIssueFixtures::invalid('Syntax error');
 
         $result = [
             'file' => 'test.php',
             'line' => 5,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -100,28 +83,20 @@ final class JunitFormatterTest extends TestCase
         $output = $this->formatter->format($report);
 
         $this->assertStringContainsString('<testsuite name="php-regex" tests="1" failures="1" errors="0" skipped="0">', $output);
-        $this->assertStringContainsString('<testcase name="Syntax (regex.syntax)" classname="test.php:5">', $output);
+        $this->assertStringContainsString('<testcase name="Syntax ('.LintIssueFixtures::INVALID_CODE.')" classname="test.php:5">', $output);
         $this->assertStringContainsString('<failure message="Syntax error">', $output);
     }
 
     public function test_format_with_warning_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Warning,
-            'Lint warning',
-            'regex.lint',
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Warning, 'Lint warning', 'regex.lint');
 
         $result = [
             'file' => 'file.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -135,22 +110,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_with_info_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Info,
-            'Info message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Info message');
 
         $result = [
             'file' => 'info.php',
             'line' => 2,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -164,18 +131,17 @@ final class JunitFormatterTest extends TestCase
     public function test_format_with_multiple_problems(): void
     {
         $problems = [
-            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null),
-            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null),
-            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical 1', null, null, null),
+            LintIssueFixtures::invalid('Error 1'),
+            LintIssueFixtures::finding(LintSeverity::Warning, 'Warning 1'),
+            LintIssueFixtures::redos(LintSeverity::Critical, 'Critical 1', null),
         ];
 
         $result = [
             'file' => 'multi.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => $problems,
+            'issues' => $problems,
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
@@ -183,7 +149,7 @@ final class JunitFormatterTest extends TestCase
         $output = $this->formatter->format($report);
 
         $this->assertStringContainsString('<testsuite name="php-regex" tests="3" failures="1" errors="1" skipped="0">', $output);
-        $this->assertStringContainsString('<testcase name="Syntax"', $output);
+        $this->assertStringContainsString('<testcase name="Syntax ('.LintIssueFixtures::INVALID_CODE.')"', $output);
         $this->assertStringContainsString('<testcase name="Lint"', $output);
         $this->assertStringContainsString('<testcase name="Security"', $output);
         $this->assertStringContainsString('<error message="Critical 1">', $output);
@@ -193,15 +159,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_normalizes_file_paths(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'C:\\Windows\\test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -213,15 +178,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_normalizes_line_numbers(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'test.php',
             'line' => 0,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -233,15 +197,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_calculates_column_positions(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -256,22 +219,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_escapes_xml(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            'Message with <tags> & "quotes"',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Message with <tags> & "quotes"');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -283,22 +238,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_problem_title_with_code(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            'Test message',
-            'regex.lint.test',
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message', 'regex.lint.test');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -310,22 +257,14 @@ final class JunitFormatterTest extends TestCase
 
     public function test_format_problem_title_without_code(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Security,
-            LintSeverity::Error,
-            'Test message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::redos(LintSeverity::Error, 'Test message', null);
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);

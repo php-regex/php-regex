@@ -381,7 +381,7 @@ An issue repeats the location of its result, so it can be read alone.
 
 | key | type | meaning |
 |---|---|---|
-| `severity` | string | `error`, `warning` or `info`; an open set |
+| `severity` | string | `error` for a finding that fails the run (an invalid pattern, a lint rule of error severity, a ReDoS verdict confirmed at `high` or above), `warning` for one that warns, `info` for a lint rule of style, performance or info severity; an open set |
 | `file` | string | As in the result |
 | `line` | int | As in the result |
 | `column` | int \| null | As in the result |

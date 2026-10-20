@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
@@ -37,7 +38,7 @@ final class AnalysisServiceProvenRedosTest extends TestCase
     {
         $issue = $this->redosIssue(new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true), $pattern);
 
-        $this->assertStringContainsString($headline, $issue['message']);
+        $this->assertStringContainsString($headline, $issue->message);
     }
 
     /**
@@ -58,7 +59,7 @@ final class AnalysisServiceProvenRedosTest extends TestCase
     {
         $issue = $this->redosIssue(new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true), '/^(?:(?:a{16}){16}){16}(a+)+$/');
 
-        $text = $issue['message'].' '.$issue['hint'];
+        $text = $issue->message.' '.($issue->hint ?? '');
         $this->assertStringContainsString('budget exceeded', $text);
         $this->assertStringNotContainsString('not analyzed (budget exceeded)', $text);
     }
@@ -70,7 +71,7 @@ final class AnalysisServiceProvenRedosTest extends TestCase
 
         $witness = (new RedosAnalyzer())->analyze('/(a+)+$/')->witness;
         $this->assertInstanceOf(RedosWitness::class, $witness);
-        $this->assertStringContainsString('Attack: '.$witness->render(), $issue['hint']);
+        $this->assertStringContainsString('Attack: '.$witness->render(), (string) $issue->hint);
     }
 
     #[Test]
@@ -78,8 +79,8 @@ final class AnalysisServiceProvenRedosTest extends TestCase
     {
         $issue = $this->redosIssue(new AnalysisService(RegexParser::create(), redosThreshold: 'high', redosEnabled: true), '/(a+)+$/');
 
-        $this->assertSame('warning', $issue['type']);
-        $analysis = $issue['analysis'];
+        $this->assertSame('warning', $issue->severity->level());
+        $analysis = $issue->analysis;
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertObjectHasProperty('replayed', $analysis);
         $this->assertNull($analysis->replayed);
@@ -92,8 +93,8 @@ final class AnalysisServiceProvenRedosTest extends TestCase
 
         $issue = $this->redosIssue($service, '/(a+)+$/');
 
-        $this->assertSame('error', $issue['type']);
-        $this->assertStringContainsString('Replayed on PCRE2 '.self::pcreRelease().': preg_match fails from length ', $issue['message'].' '.$issue['hint']);
+        $this->assertSame('error', $issue->severity->level());
+        $this->assertStringContainsString('Replayed on PCRE2 '.self::pcreRelease().': preg_match fails from length ', $issue->message.' '.($issue->hint ?? ''));
     }
 
     /**
@@ -108,8 +109,8 @@ final class AnalysisServiceProvenRedosTest extends TestCase
 
         $issue = $this->redosIssue($service, $pattern);
 
-        $this->assertSame('warning', $issue['type']);
-        $analysis = $issue['analysis'];
+        $this->assertSame('warning', $issue->severity->level());
+        $analysis = $issue->analysis;
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertObjectHasProperty('replayed', $analysis);
         $this->assertNull($analysis->replayed);
@@ -138,36 +139,24 @@ final class AnalysisServiceProvenRedosTest extends TestCase
     }
 
     /**
-     * The issue's texts, the hint empty when there is none.
-     *
-     * @return array{message: string, hint: string, type: string, analysis: mixed}
+     * The one ReDoS issue of the pattern.
      */
-    private function redosIssue(AnalysisService $service, string $pattern): array
+    private function redosIssue(AnalysisService $service, string $pattern): LintIssue
     {
         $issues = self::redosIssues($service->lint([new PatternOccurrence($pattern, 'file.php', 1, 'php:preg_match()')]));
         $this->assertCount(1, $issues, $pattern.' raised no ReDoS issue');
 
-        $issue = $issues[0];
-        $message = $issue['message'] ?? null;
-        $type = $issue['type'] ?? null;
-        $hint = $issue['hint'] ?? null;
-        $this->assertIsString($message);
-        $this->assertIsString($type);
-        if (null !== $hint) {
-            $this->assertIsString($hint);
-        }
-
-        return ['message' => $message, 'hint' => $hint ?? '', 'type' => $type, 'analysis' => $issue['analysis'] ?? null];
+        return $issues[0];
     }
 
     /**
-     * @param array<array<string, mixed>> $issues
+     * @param array<LintIssue> $issues
      *
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private static function redosIssues(array $issues): array
     {
-        return array_values(array_filter($issues, static fn (array $issue): bool => 'regex.lint.redos' === ($issue['issueId'] ?? null)));
+        return array_values(array_filter($issues, static fn (LintIssue $issue): bool => 'regex.lint.redos' === $issue->issueId));
     }
 
     private static function pcreRelease(): string

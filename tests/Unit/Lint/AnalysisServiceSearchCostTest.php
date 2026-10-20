@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
@@ -41,8 +42,8 @@ final class AnalysisServiceSearchCostTest extends TestCase
         $issues = self::searchIssues(self::service(redosThreshold: $threshold), '/\s+$/');
 
         $this->assertCount(1, $issues);
-        $this->assertSame('warning', $issues[0]['type'] ?? null);
-        $analysis = $issues[0]['analysis'] ?? null;
+        $this->assertSame('warning', $issues[0]->severity->level());
+        $analysis = $issues[0]->analysis;
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertInstanceOf(RedosSearchCost::class, $analysis->searchCost);
     }
@@ -99,9 +100,9 @@ final class AnalysisServiceSearchCostTest extends TestCase
     {
         $issues = self::searchIssues(self::service(redosThreshold: 'medium'), '/\s+$/');
         $this->assertCount(1, $issues);
-        $message = $issues[0]['message'] ?? null;
+        $message = $issues[0]->message;
         $this->assertIsString($message);
-        $hint = $issues[0]['hint'] ?? '';
+        $hint = $issues[0]->hint ?? '';
         $this->assertIsString($hint);
 
         $this->assertStringContainsString("one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter", (string) $message);
@@ -134,7 +135,7 @@ final class AnalysisServiceSearchCostTest extends TestCase
 
         $perAttempt = self::issuesWithId($issues, 'regex.lint.redos');
         $this->assertCount(1, $perAttempt, $pattern);
-        $analysis = $perAttempt[0]['analysis'] ?? null;
+        $analysis = $perAttempt[0]->analysis;
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertNull(self::searchCostOf($analysis), $pattern);
         $this->assertSame([], self::issuesWithId($issues, self::SEARCH), $pattern);
@@ -169,7 +170,7 @@ final class AnalysisServiceSearchCostTest extends TestCase
         $issues = self::searchIssues($service, '/\s+$/');
 
         $this->assertCount(1, $issues);
-        $this->assertSame('warning', $issues[0]['type'] ?? null);
+        $this->assertSame('warning', $issues[0]->severity->level());
     }
 
     /**
@@ -219,10 +220,10 @@ final class AnalysisServiceSearchCostTest extends TestCase
 
         $search = self::issuesWithId($issues, self::SEARCH);
         $this->assertCount(1, $search);
-        $this->assertSame('file.php', $search[0]['file'] ?? null);
-        $this->assertSame(3, $search[0]['line'] ?? null);
-        $this->assertSame(7, $search[0]['column'] ?? null);
-        $this->assertSame(42, $search[0]['fileOffset'] ?? null);
+        $this->assertSame('file.php', $search[0]->file);
+        $this->assertSame(3, $search[0]->line);
+        $this->assertSame(7, $search[0]->column);
+        $this->assertSame(42, $search[0]->fileOffset);
     }
 
     #[Test]
@@ -231,7 +232,7 @@ final class AnalysisServiceSearchCostTest extends TestCase
         $issues = self::searchIssues(self::service(redosThreshold: 'medium'), '/\s+$/');
         $this->assertCount(1, $issues);
 
-        $message = $issues[0]['message'] ?? null;
+        $message = $issues[0]->message;
         $this->assertIsString($message);
         $this->assertStringEndsWith('Severity: MEDIUM.', $message);
     }
@@ -250,11 +251,11 @@ final class AnalysisServiceSearchCostTest extends TestCase
 
         $issues = self::searchIssues($service, $pattern);
         $this->assertCount(1, $issues, $pattern);
-        $analysis = $issues[0]['analysis'] ?? null;
+        $analysis = $issues[0]->analysis;
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertSame($replayed, self::searchCostOf($analysis)?->replayed, $pattern);
 
-        $hint = $issues[0]['hint'] ?? null;
+        $hint = $issues[0]->hint;
         $this->assertIsString($hint, $pattern);
         foreach (['Replayed on PCRE2', 'Not confirmed by the step replay'] as $candidate) {
             if ($candidate === $line) {
@@ -288,7 +289,7 @@ final class AnalysisServiceSearchCostTest extends TestCase
 
         $issues = self::searchIssues(self::service(redosThreshold: 'medium'), '/^\s+|\s+$/');
         $this->assertCount(1, $issues);
-        $hint = $issues[0]['hint'] ?? null;
+        $hint = $issues[0]->hint;
         $this->assertIsString($hint);
         $this->assertStringContainsString('Attack: '.$cost->render().'.', (string) $hint);
         $this->assertStringStartsWith('"', $cost->render());
@@ -301,7 +302,7 @@ final class AnalysisServiceSearchCostTest extends TestCase
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private static function searchIssues(AnalysisService $service, string $pattern): array
     {
@@ -309,13 +310,13 @@ final class AnalysisServiceSearchCostTest extends TestCase
     }
 
     /**
-     * @param array<array<string, mixed>> $issues
+     * @param array<LintIssue> $issues
      *
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private static function issuesWithId(array $issues, string $issueId): array
     {
-        return array_values(array_filter($issues, static fn (array $issue): bool => $issueId === ($issue['issueId'] ?? null)));
+        return array_values(array_filter($issues, static fn (LintIssue $issue): bool => $issueId === $issue->issueId));
     }
 
     /**

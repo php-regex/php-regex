@@ -16,13 +16,16 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
@@ -123,7 +126,7 @@ final class LintServiceTest extends TestCase
         $this->assertCount(1, $result->results);
 
         $messages = array_map(
-            static fn (array $issue): string => (string) $issue['message'],
+            static fn (LintIssue $issue): string => (string) $issue->message,
             $result->results[0]['issues'],
         );
 
@@ -147,7 +150,7 @@ final class LintServiceTest extends TestCase
         // because they are fundamental errors that should always be reported
         $this->assertCount(1, $result->results);
         $this->assertCount(1, $result->results[0]['issues']);
-        $this->assertArrayHasKey('validation', $result->results[0]['issues'][0]);
+        $this->assertInstanceOf(ValidationResult::class, $result->results[0]['issues'][0]->validation);
     }
 
     #[Test]
@@ -164,17 +167,18 @@ final class LintServiceTest extends TestCase
 
         $this->assertCount(1, $result->results);
         $this->assertSame('/(a+)+$/', $result->results[0]['pattern']);
-        $warnings = array_filter($result->results[0]['issues'], static fn ($issue) => 'warning' === $issue['type']);
+        $warnings = array_filter($result->results[0]['issues'], static fn (LintIssue $issue) => 'warning' === $issue->severity->level());
         $this->assertNotSame([], $warnings, 'The linter reported no warning for a nested quantifier.');
 
         $nestedWarnings = array_values(array_filter(
             $result->results[0]['issues'],
-            static fn (array $issue): bool => ($issue['issueId'] ?? '') === 'regex.lint.quantifier.nested',
+            static fn (LintIssue $issue): bool => ($issue->issueId ?? '') === 'regex.lint.quantifier.nested',
         ));
 
         $this->assertCount(1, $nestedWarnings);
-        $this->assertArrayNotHasKey('suggestedPattern', $nestedWarnings[0]);
-        $this->assertStringContainsStringIgnoringCase('verify', (string) ($nestedWarnings[0]['hint'] ?? ''));
+
+        $this->assertObjectNotHasProperty('suggestedPattern', $nestedWarnings[0]);
+        $this->assertStringContainsStringIgnoringCase('verify', (string) ($nestedWarnings[0]->hint ?? ''));
     }
 
     #[Test]
@@ -191,11 +195,12 @@ final class LintServiceTest extends TestCase
 
         $nestedWarnings = array_values(array_filter(
             $result->results[0]['issues'],
-            static fn (array $issue): bool => ($issue['issueId'] ?? '') === 'regex.lint.quantifier.nested',
+            static fn (LintIssue $issue): bool => ($issue->issueId ?? '') === 'regex.lint.quantifier.nested',
         ));
 
         $this->assertCount(1, $nestedWarnings);
-        $this->assertArrayNotHasKey('suggestedPattern', $nestedWarnings[0]);
+
+        $this->assertObjectNotHasProperty('suggestedPattern', $nestedWarnings[0]);
     }
 
     #[Test]
@@ -211,12 +216,13 @@ final class LintServiceTest extends TestCase
 
         $dotstarWarnings = array_values(array_filter(
             $result->results[0]['issues'],
-            static fn (array $issue): bool => ($issue['issueId'] ?? '') === 'regex.lint.dotstar.nested',
+            static fn (LintIssue $issue): bool => ($issue->issueId ?? '') === 'regex.lint.dotstar.nested',
         ));
 
         $this->assertCount(1, $dotstarWarnings);
-        $this->assertArrayNotHasKey('suggestedPattern', $dotstarWarnings[0]);
-        $this->assertStringContainsStringIgnoringCase('verify', (string) ($dotstarWarnings[0]['hint'] ?? ''));
+
+        $this->assertObjectNotHasProperty('suggestedPattern', $dotstarWarnings[0]);
+        $this->assertStringContainsStringIgnoringCase('verify', (string) ($dotstarWarnings[0]->hint ?? ''));
     }
 
     #[Test]
@@ -263,8 +269,8 @@ final class LintServiceTest extends TestCase
         $result = $service->analyze([$occurrence, $occurrence], $request, null);
 
         $this->assertCount(1, $result->results);
-        $found = array_values(array_filter($result->results[0]['issues'], static fn (array $issue): bool => $issueId === ($issue['issueId'] ?? null)));
-        $this->assertSame($positions, array_map(static fn (array $issue): ?int => $issue['position'] ?? null, $found));
+        $found = array_values(array_filter($result->results[0]['issues'], static fn (LintIssue $issue): bool => $issueId === $issue->issueId));
+        $this->assertSame($positions, array_map(static fn (LintIssue $issue): ?int => $issue->position, $found));
     }
 
     #[Test]
@@ -355,7 +361,7 @@ final class LintServiceTest extends TestCase
         // Complexity issues should be filtered out by filterLintIssues
         $complexityIssues = array_filter(
             $result->results[0]['issues'] ?? [],
-            static fn ($issue) => ($issue['issueId'] ?? '') === 'regex.lint.complexity',
+            static fn (LintIssue $issue) => ($issue->issueId ?? '') === 'regex.lint.complexity',
         );
         $this->assertCount(0, $complexityIssues);
     }
@@ -389,8 +395,8 @@ final class LintServiceTest extends TestCase
         $messages = [];
         foreach ($result->results as $entry) {
             foreach ($entry['issues'] as $issue) {
-                if ('regex.lint.complexity' === ($issue['issueId'] ?? null)) {
-                    $messages[] = $issue['message'];
+                if ('regex.lint.complexity' === $issue->issueId) {
+                    $messages[] = $issue->message;
                 }
             }
         }
@@ -413,7 +419,7 @@ final class LintServiceTest extends TestCase
         // filtered, whether or not another finding keeps the pattern listed.
         $routeIssues = array_filter(
             array_merge([], ...array_map(static fn (array $entry): array => $entry['issues'] ?? [], $result->results)),
-            static fn ($issue) => ($issue['issueId'] ?? '') === 'regex.lint.quantifier.nested',
+            static fn (LintIssue $issue) => ($issue->issueId ?? '') === 'regex.lint.quantifier.nested',
         );
         $this->assertCount(0, $routeIssues);
     }
@@ -436,7 +442,7 @@ final class LintServiceTest extends TestCase
         if (!empty($result->results)) {
             $redosIssues = array_filter(
                 $result->results[0]['issues'] ?? [],
-                static fn ($issue) => isset($issue['analysis']),
+                static fn (LintIssue $issue) => null !== $issue->analysis,
             );
             $this->assertCount(0, $redosIssues, 'ReDoS issues should be filtered when checkRedos is false');
         }
@@ -475,7 +481,7 @@ final class LintServiceTest extends TestCase
         $this->assertNotEmpty($result->results, 'Analyzing a vulnerable pattern must produce a result');
 
         $redosProblems = array_filter(
-            $result->results[0]['problems'] ?? [],
+            LintReport::problems($result->results[0]),
             static fn ($problem) => DiagnosticType::Security === $problem->type,
         );
         $this->assertNotEmpty($redosProblems, 'Should create security problems for ReDoS issues');
@@ -532,7 +538,7 @@ final class LintServiceTest extends TestCase
 
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: $redos))
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
-        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+        $ids = array_map(static fn (LintIssue $issue): string => ($issue->issueId ?? ''), $issues);
 
         $kept
             ? $this->assertContains($heuristic, $ids, $pattern)
@@ -544,7 +550,7 @@ final class LintServiceTest extends TestCase
     {
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
             ->lint([new PatternOccurrence('/^(a+)+$/', 'test.php', 1, 'preg_match')]);
-        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+        $ids = array_map(static fn (LintIssue $issue): string => ($issue->issueId ?? ''), $issues);
 
         $this->assertContains('regex.lint.redos', $ids);
         $this->assertContains('regex.lint.quantifier.nested', $ids);
@@ -599,7 +605,7 @@ final class LintServiceTest extends TestCase
 
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
-        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+        $ids = array_map(static fn (LintIssue $issue): string => ($issue->issueId ?? ''), $issues);
 
         $exponential
             ? $this->assertContains($heuristic, $ids, $pattern)
@@ -638,7 +644,7 @@ final class LintServiceTest extends TestCase
 
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
-        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+        $ids = array_map(static fn (LintIssue $issue): string => ($issue->issueId ?? ''), $issues);
 
         $this->assertContains('regex.lint.dotstar.nested', $ids);
         $this->assertContains('regex.lint.redos', $ids);
@@ -675,7 +681,7 @@ final class LintServiceTest extends TestCase
 
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: true))
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
-        $ids = array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $issues);
+        $ids = array_map(static fn (LintIssue $issue): string => ($issue->issueId ?? ''), $issues);
 
         $this->assertContains($heuristic, $ids, $pattern);
     }
@@ -686,7 +692,7 @@ final class LintServiceTest extends TestCase
         $analysis = new AnalysisService(RegexParser::create(), redosIgnoredPatterns: ['(?:[a-m]|[a-z])+', '(a+)+']);
 
         $ids = array_map(
-            static fn (array $issue): string => $issue['issueId'] ?? '',
+            static fn (LintIssue $issue): string => ($issue->issueId ?? ''),
             $analysis->lint([
                 new PatternOccurrence('/^(?:[a-m]|[a-z])+$/', 'test.php', 1, 'preg_match'),
                 new PatternOccurrence('/^(a+)+$/', 'test.php', 2, 'preg_match'),
@@ -706,7 +712,7 @@ final class LintServiceTest extends TestCase
     {
         $occurrence = new PatternOccurrence('/(a+)+$/', 'test.php', 1, 'preg_match');
         $redosIds = static fn (AnalysisService $analysis): array => array_values(array_filter(
-            array_map(static fn (array $issue): string => $issue['issueId'] ?? '', $analysis->lint([$occurrence])),
+            array_map(static fn (LintIssue $issue): string => ($issue->issueId ?? ''), $analysis->lint([$occurrence])),
             static fn (string $id): bool => 'regex.lint.redos' === $id,
         ));
 
@@ -728,7 +734,7 @@ final class LintServiceTest extends TestCase
         $ids = [];
         foreach ($result->results as $item) {
             foreach ($item['issues'] as $issue) {
-                $ids[] = $issue['issueId'] ?? '';
+                $ids[] = $issue->issueId ?? '';
             }
         }
 
@@ -831,7 +837,7 @@ final class LintServiceTest extends TestCase
         $ids = [];
         foreach ($result->results as $item) {
             foreach ($item['issues'] as $issue) {
-                $ids[] = $issue['issueId'] ?? '';
+                $ids[] = $issue->issueId ?? '';
             }
         }
 

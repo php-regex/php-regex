@@ -16,7 +16,9 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
@@ -124,15 +126,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid regex pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid regex pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -155,16 +151,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Complex pattern detected',
-                    'hint' => 'Consider simplifying',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Warning, 'Complex pattern detected', 'test.php', 10, hint: 'Consider simplifying'),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -187,7 +176,6 @@ final class ConsoleFormatterTest extends TestCase
             'pattern' => null,
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -211,9 +199,8 @@ final class ConsoleFormatterTest extends TestCase
             'file' => $file,
             'line' => $line,
             'pattern' => '/a/',
-            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => $file, 'line' => $line]],
+            'issues' => [new LintIssue(LintSeverity::Warning, 'm', $file, $line)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
@@ -234,9 +221,8 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 1,
             'pattern' => '/a/',
             'location' => "route a\nb\tc\r\nd",
-            'issues' => [['type' => 'warning', 'message' => "first\nsecond", 'file' => 'src/Foo.php', 'line' => 1]],
+            'issues' => [new LintIssue(LintSeverity::Warning, "first\nsecond", 'src/Foo.php', 1)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
@@ -280,7 +266,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 1,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -302,7 +287,6 @@ final class ConsoleFormatterTest extends TestCase
             'pattern' => '/a+/',
             'issues' => [],
             'optimizations' => [['file' => 'test.php', 'line' => 10, 'optimization' => $optimization, 'savings' => 1]],
-            'problems' => [],
         ];
 
         $output = $formatter->format(new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]));
@@ -321,17 +305,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/(a+)+/',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Nested quantifiers can cause catastrophic backtracking.',
-                    'file' => 'test.php',
-                    'line' => 10,
-                    'issueId' => 'regex.lint.quantifier.nested',
-                    'hint' => 'Consider using atomic groups (?>...) or possessive quantifiers.',
-                ],
+                new LintIssue(LintSeverity::Warning, 'Nested quantifiers can cause catastrophic backtracking.', 'test.php', 10, issueId: 'regex.lint.quantifier.nested', hint: 'Consider using atomic groups (?>...) or possessive quantifiers.'),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -367,7 +343,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 1,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -388,15 +363,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -416,15 +385,9 @@ final class ConsoleFormatterTest extends TestCase
             'pattern' => '/test/',
             'location' => 'in function preg_match',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -457,7 +420,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 10,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -493,7 +455,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 0,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -519,7 +480,6 @@ final class ConsoleFormatterTest extends TestCase
                 'optimization' => new OptimizationResult("/\n\tfoo{1}\t# one\n\t[\t]\n/x", "/\n\tfoo\t# one\n\t[\t]\n/x", ['Optimized pattern.']),
                 'savings' => 3,
             ]],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]));
 
         $this->assertStringContainsString('-     foo{1}  # one', $output);
@@ -553,7 +513,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 0,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -561,66 +520,6 @@ final class ConsoleFormatterTest extends TestCase
         $output = $formatter->format($report);
 
         $this->assertStringContainsString('TIP', $output);
-    }
-
-    public function test_extract_pattern_from_issues(): void
-    {
-        $config = new OutputConfiguration(ansi: false);
-        $formatter = new ConsoleFormatter(config: $config);
-
-        // Result without direct pattern, but with pattern in issues
-        $result = [
-            'file' => 'test.php',
-            'line' => 10,
-            'pattern' => '', // Empty pattern to trigger fallback
-            'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                    'pattern' => '/test/',
-                ],
-            ],
-            'optimizations' => [],
-            'problems' => [],
-        ];
-
-        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
-
-        $output = $formatter->format($report);
-
-        $this->assertStringContainsString('/test/', $output);
-    }
-
-    public function test_extract_pattern_from_issues_regex_key(): void
-    {
-        $config = new OutputConfiguration(ansi: false);
-        $formatter = new ConsoleFormatter(config: $config);
-
-        // Result without direct pattern, but with regex key in issues
-        $result = [
-            'file' => 'test.php',
-            'line' => 10,
-            'pattern' => '', // Empty pattern to trigger fallback
-            'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                    'regex' => '/fallback/',
-                ],
-            ],
-            'optimizations' => [],
-            'problems' => [],
-        ];
-
-        $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
-
-        $output = $formatter->format($report);
-
-        $this->assertStringContainsString('/fallback/', $output);
     }
 
     public function test_format_with_file_only_context(): void
@@ -634,7 +533,6 @@ final class ConsoleFormatterTest extends TestCase
             'pattern' => null,
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -651,7 +549,6 @@ final class ConsoleFormatterTest extends TestCase
             'pattern' => null,
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -824,7 +721,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 1,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -844,15 +740,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => "Error occurred\nLine 5: specific issue\nLine 10: another issue",
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, "Error occurred\nLine 5: specific issue\nLine 10: another issue", 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -873,15 +763,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/[a-z]+\d{2,4}/',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Pattern could be optimized',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Warning, 'Pattern could be optimized', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -905,15 +789,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'info',
-                    'message' => 'Information message',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Info, 'Information message', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -933,15 +811,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '{test}i',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Warning',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Warning, 'Warning', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -961,15 +833,9 @@ final class ConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => 'invalid pattern without delimiters',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -1003,7 +869,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 0,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);

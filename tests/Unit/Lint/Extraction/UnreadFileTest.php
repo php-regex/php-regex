@@ -151,9 +151,9 @@ final class UnreadFileTest extends TestCase
         $issues = (new AnalysisService(RegexParser::create(['cache' => null])))->lint($occurrences);
 
         $this->assertCount(1, $issues);
-        $this->assertSame('error', $issues[0]['type']);
-        $this->assertSame('regex.lint.source.unreadable', $issues[0]['issueId'] ?? null);
-        $this->assertSame($this->file, $issues[0]['file']);
+        $this->assertSame('error', $issues[0]->severity->level());
+        $this->assertSame('regex.lint.source.unreadable', $issues[0]->issueId);
+        $this->assertSame($this->file, $issues[0]->file);
     }
 
     #[Test]

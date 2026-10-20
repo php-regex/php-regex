@@ -13,10 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -85,9 +84,8 @@ final class JsonFormatterTest extends TestCase
             'file' => 'a.php',
             'line' => 1,
             'pattern' => '/a/',
-            'issues' => [['type' => 'error', 'message' => 'm', 'file' => 'a.php', 'line' => 1, 'analysis' => $analysis]],
+            'issues' => [new LintIssue(LintSeverity::Error, 'm', 'a.php', 1, analysis: $analysis)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         try {
@@ -119,9 +117,8 @@ final class JsonFormatterTest extends TestCase
             'file' => 'a.php',
             'line' => 1,
             'pattern' => '/[0-9]/',
-            'issues' => [3 => ['type' => 'warning', 'message' => 'm', 'file' => 'a.php', 'line' => 1]],
+            'issues' => [3 => new LintIssue(LintSeverity::Warning, 'm', 'a.php', 1)],
             'optimizations' => [5 => ['file' => 'a.php', 'line' => 1, 'optimization' => new OptimizationResult('/[0-9]/', '/\d/', ['digit class']), 'savings' => 2]],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 1]);
 
         $decoded = json_decode($this->formatter->format($report), true);
@@ -182,11 +179,8 @@ final class JsonFormatterTest extends TestCase
             'pattern' => '/test1/',
             'source' => 'preg_match',
             'location' => 'function call',
-            'issues' => [['type' => 'error', 'message' => 'Error 1', 'file' => 'file1.php', 'line' => 10]],
+            'issues' => [new LintIssue(LintSeverity::Error, 'Error 1', 'file1.php', 10)],
             'optimizations' => [['file' => 'file1.php', 'line' => 10, 'optimization' => new OptimizationResult('/test1/', '/optimized/', ['test']), 'savings' => 5]],
-            'problems' => [
-                new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Problem 1', null, null, null),
-            ],
         ];
 
         $result2 = [
@@ -195,7 +189,6 @@ final class JsonFormatterTest extends TestCase
             'pattern' => '/test2/',
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 0, 'optimizations' => 1]);
@@ -255,7 +248,7 @@ final class JsonFormatterTest extends TestCase
     public function test_format_with_invalid_result(): void
     {
         $results = [
-            ['file' => 'valid.php', 'line' => 1, 'pattern' => '/test/', 'issues' => [], 'optimizations' => [], 'problems' => []],
+            ['file' => 'valid.php', 'line' => 1, 'pattern' => '/test/', 'issues' => [], 'optimizations' => []],
         ];
 
         $report = new LintReport($results, ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -274,7 +267,7 @@ final class JsonFormatterTest extends TestCase
     public function test_format_skips_non_array_results(): void
     {
         $results = [
-            ['file' => 'valid.php', 'line' => 1, 'pattern' => '/test/', 'issues' => [], 'optimizations' => [], 'problems' => []],
+            ['file' => 'valid.php', 'line' => 1, 'pattern' => '/test/', 'issues' => [], 'optimizations' => []],
             'invalid',
         ];
 
@@ -299,7 +292,6 @@ final class JsonFormatterTest extends TestCase
                 'pattern' => "/x\xFE\x80y/is",
                 'issues' => [],
                 'optimizations' => [],
-                'problems' => [],
             ],
         ];
 
@@ -358,7 +350,6 @@ final class JsonFormatterTest extends TestCase
             'pattern' => '/test/path/',
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);

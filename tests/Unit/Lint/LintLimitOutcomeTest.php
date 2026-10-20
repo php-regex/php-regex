@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\LintProgress;
+use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
@@ -75,7 +76,7 @@ final class LintLimitOutcomeTest extends TestCase
         $this->assertSame(0, $report->stats['errors']);
         $this->assertSame(1, $report->stats['warnings']);
 
-        $problems = $report->results[0]['problems'] ?? [];
+        $problems = LintReport::problems($report->results[0]);
         $this->assertCount(1, $problems);
         $this->assertSame(DiagnosticType::Limit, $problems[0]->type);
         $this->assertSame(LintSeverity::Warning, $problems[0]->severity);
@@ -94,7 +95,7 @@ final class LintLimitOutcomeTest extends TestCase
         );
 
         $this->assertSame(1, $report->stats['errors']);
-        $problems = $report->results[0]['problems'] ?? [];
+        $problems = LintReport::problems($report->results[0]);
         $this->assertSame(DiagnosticType::Syntax, $problems[0]->type);
         $this->assertSame(LintSeverity::Error, $problems[0]->severity);
     }

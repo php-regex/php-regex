@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Formatter;
 
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\Json\JsonDocument;
@@ -26,8 +27,8 @@ use PHPRegex\Redos\RedosAnalysis;
  * JSON output formatter for machine-readable output.
  *
  * Every object is written by the mapping below, key by key: a property
- * added to an issue array, a result or a value object does not reach the
- * report unless it is mapped here. Every issue carries every key, null
+ * added to an issue, a result or a value object does not reach the report
+ * unless it is mapped here. Every issue carries every key, null
  * when it does not apply.
  *
  * @phpstan-type JsonIssue array{
@@ -57,7 +58,6 @@ use PHPRegex\Redos\RedosAnalysis;
  * }
  *
  * @phpstan-import-type LintResult from LintReport
- * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type OptimizationEntry from LintReport
  * @phpstan-import-type TargetDescription from ProjectTarget
  *
@@ -146,31 +146,32 @@ final class JsonFormatter extends AbstractOutputFormatter
     }
 
     /**
-     * @phpstan-param LintIssue $issue
+     * The severity is the level of the issue's (LintSeverity::level()):
+     * a style or a performance rule is an info, a critical ReDoS an error.
      *
      * @return JsonIssue
      */
-    private function mapIssue(array $issue): array
+    private function mapIssue(LintIssue $issue): array
     {
         return [
-            'severity' => $issue['type'],
-            'file' => $issue['file'],
-            'line' => $issue['line'],
-            'column' => $issue['column'] ?? null,
-            'file_offset' => $issue['fileOffset'] ?? null,
-            'position' => $issue['position'] ?? null,
-            'issue_id' => $issue['issueId'] ?? null,
-            'message' => $issue['message'],
-            'hint' => $issue['hint'] ?? null,
-            'tip' => $issue['tip'] ?? null,
-            'source' => $issue['source'] ?? null,
-            'validation' => $issue['validation'] ?? null,
-            'analysis' => $issue['analysis'] ?? null,
+            'severity' => $issue->severity->level(),
+            'file' => $issue->file,
+            'line' => $issue->line,
+            'column' => $issue->column,
+            'file_offset' => $issue->fileOffset,
+            'position' => $issue->position,
+            'issue_id' => $issue->id(),
+            'message' => $issue->message,
+            'hint' => $issue->hint,
+            'tip' => $issue->tip,
+            'source' => $issue->source,
+            'validation' => $issue->validation,
+            'analysis' => $issue->analysis,
             // The PHP and PCRE2 of the range that refuse a pattern the
             // floor accepts, or that judged it under a guard or a marker,
             // with the constraint of the guard; null when the issue is the
             // floor's.
-            'target' => isset($issue['target']) ? self::target($issue['target']) : null,
+            'target' => null === $issue->target ? null : self::target($issue->target),
         ];
     }
 

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -46,7 +47,7 @@ final class LintReportLocationTest extends TestCase
 
         $this->assertCount(1, $results);
         $this->assertSame($expected, $results[0]['file']);
-        $this->assertSame($expected, $results[0]['issues'][0]['file'] ?? null);
+        $this->assertSame($expected, $results[0]['issues'][0]->file);
     }
 
     /**
@@ -144,7 +145,7 @@ final class LintReportLocationTest extends TestCase
         )->results;
 
         $this->assertCount(1, $results);
-        $this->assertSame($expected, array_map(static fn (array $issue): array => [$issue['position'] ?? null, $issue['issueId'] ?? null], array_values($results[0]['issues'])));
+        $this->assertSame($expected, array_map(static fn (LintIssue $issue): array => [$issue->position, $issue->issueId], array_values($results[0]['issues'])));
     }
 
     /**
@@ -170,8 +171,8 @@ final class LintReportLocationTest extends TestCase
         $results = self::lint([new PatternOccurrence('/(a/', 'a.php', 3, 'preg_match')])->results;
 
         $this->assertNull($results[0]['column'] ?? null);
-        $this->assertSame('regex.group.unclosed', $results[0]['issues'][0]['issueId'] ?? null);
-        $this->assertNull($results[0]['issues'][0]['column'] ?? null);
+        $this->assertSame('regex.group.unclosed', $results[0]['issues'][0]->id());
+        $this->assertNull($results[0]['issues'][0]->column);
     }
 
     #[Test]
@@ -195,7 +196,7 @@ final class LintReportLocationTest extends TestCase
 
         // (b+)+$: a nested-quantifier warning and a quantified-capture info,
         // both at position 0, ordered by identifier.
-        $issues = array_map(static fn (array $issue): array => [$issue['position'] ?? null, $issue['issueId'] ?? null], $forward[4]['issues']);
+        $issues = array_map(static fn (LintIssue $issue): array => [$issue->position, $issue->issueId], $forward[4]['issues']);
         $sorted = $issues;
         sort($sorted);
         $this->assertGreaterThan(1, \count($issues));

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintProgress;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
@@ -48,8 +49,8 @@ final class AnalysisServiceGuardTest extends TestCase
 
         $kept = $analysis->lint([self::occurrence('/(?a)\d+/', 'php>=8.0')]);
 
-        $this->assertSame(['regex.group.syntax'], array_map(static fn (array $issue): ?string => ($issue['validation'] ?? null)?->errorCode?->value, $kept));
-        $this->assertNull($kept[0]['target'] ?? null);
+        $this->assertSame(['regex.group.syntax'], array_map(static fn (LintIssue $issue): ?string => $issue->validation?->errorCode?->value, $kept));
+        $this->assertNull($kept[0]->target);
     }
 
     #[Test]

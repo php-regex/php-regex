@@ -13,11 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\GithubFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Tests\Support\LintIssueFixtures;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -42,14 +41,7 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_error_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Syntax,
-            LintSeverity::Error,
-            'Invalid regex pattern',
-            'regex.syntax.error',
-            'some snippet',
-            'Fix the pattern',
-        );
+        $problem = LintIssueFixtures::invalid('Invalid regex pattern');
 
         $result = [
             'file' => '/path/to/file.php',
@@ -58,9 +50,8 @@ final class GithubFormatterTest extends TestCase
             'source' => 'preg_match',
             'pattern' => '/test/',
             'location' => 'in function call',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -68,31 +59,23 @@ final class GithubFormatterTest extends TestCase
         $output = $this->formatter->format($report);
 
         // The column of the issue in the file, not the offset in the pattern.
-        $this->assertStringContainsString('::error file=/path/to/file.php,line=10,col=7,title=Syntax (regex.syntax.error)::', $output);
+        $this->assertStringContainsString('::error file=/path/to/file.php,line=10,col=7,title=Syntax ('.LintIssueFixtures::INVALID_CODE.')::', $output);
         $this->assertStringContainsString('Invalid regex pattern', $output);
         $this->assertStringContainsString('Location: in function call', $output);
-        $this->assertStringContainsString('some snippet', $output);
-        $this->assertStringContainsString('Suggestion: Fix the pattern', $output);
+        $this->assertStringContainsString('Line 1: a**', $output);
+        $this->assertStringContainsString('Suggestion: '.LintIssueFixtures::INVALID_HINT, $output);
     }
 
     public function test_format_with_warning_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Warning,
-            'Nested quantifier detected',
-            'regex.lint.quantifier.nested',
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Warning, 'Nested quantifier detected', 'regex.lint.quantifier.nested');
 
         $result = [
             'file' => 'file with spaces.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -106,22 +89,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_info_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Info,
-            'Info message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Info message');
 
         $result = [
             'file' => 'info.php',
             'line' => 3,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -134,22 +109,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_critical_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Security,
-            LintSeverity::Critical,
-            'Critical security issue',
-            'regex.redos',
-            'vulnerable pattern',
-            'Use atomic groups',
-        );
+        $problem = LintIssueFixtures::redos(LintSeverity::Critical, 'Critical security issue', 'regex.redos');
 
         $result = [
             'file' => 'critical.php',
             'line' => 8,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -159,31 +126,29 @@ final class GithubFormatterTest extends TestCase
         // The position in the pattern is not a column in the file.
         $this->assertStringContainsString('::error file=critical.php,line=8,title=Security (regex.redos)::', $output);
         $this->assertStringContainsString('Critical security issue', $output);
-        $this->assertStringContainsString('vulnerable pattern', $output);
-        $this->assertStringContainsString('Suggestion: Use atomic groups', $output);
+        $this->assertStringContainsString(LintIssueFixtures::REDOS_EVIDENCE, $output);
+        $this->assertStringContainsString('Suggestion: '.LintIssueFixtures::redosAdvice(), $output);
     }
 
     public function test_format_with_multiple_problems(): void
     {
-        $problem1 = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error 1', null, null, null);
-        $problem2 = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning 1', null, null, null);
+        $problem1 = LintIssueFixtures::invalid('Error 1');
+        $problem2 = LintIssueFixtures::finding(LintSeverity::Warning, 'Warning 1');
 
         $result1 = [
             'file' => 'file1.php',
             'line' => 1,
             'pattern' => '/test1/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem1],
+            'issues' => [$problem1],
         ];
 
         $result2 = [
             'file' => 'file2.php',
             'line' => 2,
             'pattern' => '/test2/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem2],
+            'issues' => [$problem2],
         ];
 
         $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
@@ -199,16 +164,15 @@ final class GithubFormatterTest extends TestCase
     #[Test]
     public function test_format_leaves_the_column_property_out_when_the_key_is_absent(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Invalid regex pattern', 'regex.syntax.error', 'some snippet', 'Fix the pattern');
+        $problem = LintIssueFixtures::invalid('Invalid regex pattern');
 
         // As the JUnit build writes it: no column key at all.
         $result = [
             'file' => '/path/to/file.php',
             'line' => 10,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -221,15 +185,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_empty_file(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => '',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -244,22 +207,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_problem_title_with_code(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            'Test message',
-            'regex.lint.test',
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message', 'regex.lint.test');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -271,22 +226,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_problem_title_without_code(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Security,
-            LintSeverity::Error,
-            'Test message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::redos(LintSeverity::Error, 'Test message', null);
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -298,22 +245,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_properties(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            'Test message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -332,14 +271,13 @@ final class GithubFormatterTest extends TestCase
     #[DataProvider('providePropertySeparators')]
     public function test_format_escapes_property_separators(string $file, ?string $code, string $expected): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Message: a, b', $code, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Message: a, b', $code);
         $report = new LintReport([[
             'file' => $file,
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $this->assertSame($expected."\n", $this->formatter->format($report));
@@ -364,22 +302,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_data(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            "Message with\nnewlines and\r\ncrlf",
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, "Message with\nnewlines and\r\ncrlf");
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -391,22 +321,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_title(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            'Test message',
-            'code with % and \n',
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test message', 'code with % and \n');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -418,22 +340,21 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_escapes_percent_in_data(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Matches 100% of the inputs', null, '50%0A', null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Warning, 'Matches 100% of the inputs', null, '50%0A');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'column' => 3,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $output = $this->formatter->format(new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]));
 
         // "%" first, so a literal "%0A" in the data does not read as a newline.
-        $this->assertStringContainsString('::warning file=test.php,line=1,col=3,title=Lint::Matches 100%25 of the inputs%0A50%250A', $output);
+        $this->assertStringContainsString('::warning file=test.php,line=1,col=3,title=Lint::Matches 100%25 of the inputs%0ASuggestion: 50%250A', $output);
     }
 
     public function test_format_error(): void
@@ -447,22 +368,14 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_minimal_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Info,
-            'Simple message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Simple message');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -474,30 +387,23 @@ final class GithubFormatterTest extends TestCase
 
     public function test_format_with_location_and_snippet(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Warning,
-            'Warning message',
-            null,
-            'code snippet here',
-            'fix suggestion',
-        );
+        $problem = LintIssueFixtures::invalid('Warning message', LintSeverity::Warning);
 
         $result = [
             'file' => 'test.php',
             'line' => 5,
             'pattern' => '/test/',
             'location' => 'inside preg_match call',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $this->formatter->format($report);
 
-        $expected = '::warning file=test.php,line=5,title=Lint::Warning message%0ALocation: inside preg_match call%0Acode snippet here%0ASuggestion: fix suggestion';
+        $expected = '::warning file=test.php,line=5,title=Syntax ('.LintIssueFixtures::INVALID_CODE.')::Warning message%0ALocation: inside preg_match call%0ALine 1: a**';
         $this->assertStringContainsString($expected, $output);
+        $this->assertStringEndsWith('%0ASuggestion: '.LintIssueFixtures::INVALID_HINT."\n", $output);
     }
 }

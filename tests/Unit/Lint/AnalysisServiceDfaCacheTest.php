@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\Test;
@@ -36,7 +37,7 @@ final class AnalysisServiceDfaCacheTest extends TestCase
 
         $issues = $analysis->lint(self::twice(['/a(?=b)c/', '/\d++\d/', '/[a-z]\b[0-9]/', '/[-a]\b-/']));
 
-        $ids = array_column($issues, 'issueId');
+        $ids = array_map(static fn (LintIssue $issue): string => (string) $issue->issueId, $issues);
         $this->assertSame(2, array_count_values($ids)['regex.lint.lookaround.impossible'] ?? 0);
         $this->assertSame(2, array_count_values($ids)['regex.lint.quantifier.possessiveImpossible'] ?? 0);
         $this->assertSame(2, array_count_values($ids)['regex.lint.anchor.impossible.boundary'] ?? 0);

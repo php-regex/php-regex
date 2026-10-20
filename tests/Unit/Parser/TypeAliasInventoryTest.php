@@ -67,8 +67,8 @@ use PHPUnit\Framework\TestCase;
  * reddens it until the inventory is updated on purpose.
  *
  * Two deliberate absences: LintService and the three lint formatters stop
- * declaring LintIssue, LintResult, LintStats, OptimizationEntry and
- * FlattenedProblem locally — they import the names from LintReport instead
+ * declaring LintResult, LintStats, OptimizationEntry and FlattenedProblem
+ * locally — they import the names from LintReport instead
  * (a docblock cannot declare and import the same name), so once the shapes
  * are single-sourced they export nothing.
  *
@@ -122,7 +122,7 @@ final class TypeAliasInventoryTest extends TestCase
 
         // Exported before the named-shape change and frozen since.
         RailroadLayoutVisitor::class => ['SvgBox', 'SvgLayout', 'SvgMarker', 'SvgNode', 'SvgPath', 'SvgPoint', 'SvgText'],
-        LintReport::class => ['FlattenedProblem', 'LintIssue', 'LintResult', 'LintStats', 'OptimizationEntry'],
+        LintReport::class => ['FlattenedProblem', 'LintResult', 'LintStats', 'OptimizationEntry'],
         RouteConflictReport::class => ['RouteConflict', 'RouteDescriptor', 'RouteSkip'],
         SecurityAccessControlReport::class => ['AccessConflict', 'AccessRule', 'AccessSkip'],
         SecurityConfigExtractor::class => ['AccessControlRule', 'FirewallRule'],

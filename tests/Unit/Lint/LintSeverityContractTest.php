@@ -16,7 +16,9 @@ namespace PHPRegex\Tests\Unit\Lint;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Diagnostic;
 use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LintSummary;
+use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
@@ -28,8 +30,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The lint pipeline honours the severity each rule declares: Critical and
- * Error are errors, Warning a warning, Style, Perf and Info an info.
+ * The lint pipeline honours the severity each rule declares: every issue
+ * keeps it, and every report shows its level, Critical and Error as
+ * errors, Warning as a warning, Style, Perf and Info as an info.
  */
 final class LintSeverityContractTest extends TestCase
 {
@@ -54,10 +57,10 @@ final class LintSeverityContractTest extends TestCase
         yield 'empty group' => ['pattern' => '/a(?:)b/', 'issueId' => 'regex.lint.group.empty', 'type' => 'warning', 'severity' => LintSeverity::Warning, 'lintRules' => []];
         // Info and Style rules are infos.
         yield 'unnamed quantified capture' => ['pattern' => '/(a)+/', 'issueId' => 'regex.lint.group.quantifiedCapture', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => []];
-        yield 'shorthand without u, a style rule' => ['pattern' => '/\w/', 'issueId' => 'regex.lint.unicode.shorthandWithoutU', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['unicode.shorthandWithoutU' => true]];
-        yield 'single-character class, a style rule' => ['pattern' => '/[a]/', 'issueId' => 'regex.lint.charclass.single', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['charclass.single' => true]];
-        yield 'run of spaces, a style rule' => ['pattern' => '/a  b/', 'issueId' => 'regex.lint.literal.multipleSpaces', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['literal.multipleSpaces' => true]];
-        yield 'lazy dot before a delimiter, a perf rule' => ['pattern' => '/".*?"/', 'issueId' => 'regex.lint.quantifier.lazyToClass', 'type' => 'info', 'severity' => LintSeverity::Info, 'lintRules' => ['quantifier.lazyToClass' => true]];
+        yield 'shorthand without u, a style rule' => ['pattern' => '/\w/', 'issueId' => 'regex.lint.unicode.shorthandWithoutU', 'type' => 'info', 'severity' => LintSeverity::Style, 'lintRules' => ['unicode.shorthandWithoutU' => true]];
+        yield 'single-character class, a style rule' => ['pattern' => '/[a]/', 'issueId' => 'regex.lint.charclass.single', 'type' => 'info', 'severity' => LintSeverity::Style, 'lintRules' => ['charclass.single' => true]];
+        yield 'run of spaces, a style rule' => ['pattern' => '/a  b/', 'issueId' => 'regex.lint.literal.multipleSpaces', 'type' => 'info', 'severity' => LintSeverity::Style, 'lintRules' => ['literal.multipleSpaces' => true]];
+        yield 'lazy dot before a delimiter, a perf rule' => ['pattern' => '/".*?"/', 'issueId' => 'regex.lint.quantifier.lazyToClass', 'type' => 'info', 'severity' => LintSeverity::Perf, 'lintRules' => ['quantifier.lazyToClass' => true]];
     }
 
     /**
@@ -73,13 +76,16 @@ final class LintSeverityContractTest extends TestCase
             ->lint([new PatternOccurrence($pattern, 'test.php', 1, 'preg_match')]);
 
         $types = [];
+        $severities = [];
         foreach ($issues as $issue) {
-            if ($issueId === ($issue['issueId'] ?? null)) {
-                $types[] = $issue['type'];
+            if ($issueId === $issue->issueId) {
+                $types[] = $issue->severity->level();
+                $severities[] = $issue->severity;
             }
         }
 
         $this->assertSame([$type], $types, $pattern);
+        $this->assertSame([$severity], $severities, $pattern);
     }
 
     /**
@@ -94,7 +100,7 @@ final class LintSeverityContractTest extends TestCase
 
         $severities = [];
         foreach ($report->results as $result) {
-            foreach ($result['problems'] as $problem) {
+            foreach (LintReport::problems($result) as $problem) {
                 if (DiagnosticType::Lint === $problem->type && $issueId === $problem->code) {
                     $severities[] = $problem->severity;
                 }
@@ -169,23 +175,24 @@ final class LintSeverityContractTest extends TestCase
     }
 
     #[Test]
-    public function test_a_style_rule_becomes_an_info_problem(): void
+    public function test_a_style_rule_keeps_its_severity_and_is_shown_as_an_info(): void
     {
-        // The Diagnostic carries the one mapping: no Style or Perf survives
-        // the pipeline, they are infos like Info.
+        // No round trip through the level: the diagnostic keeps Style, and
+        // the JSON report and the stats show it as an info.
         $service = new LintService(new AnalysisService(RegexParser::create(), lintRules: ['unicode.shorthandWithoutU' => true]), new PatternSourceCollection([]));
         $report = $service->analyze([new PatternOccurrence('/\w/', 'test.php', 1, 'preg_match')], new LintRequest(['.'], [], 0), null);
 
         $severities = [];
         foreach ($report->results as $result) {
-            foreach ($result['problems'] as $problem) {
+            foreach (LintReport::problems($result) as $problem) {
                 $this->assertInstanceOf(Diagnostic::class, $problem);
                 $severities[] = $problem->severity;
             }
         }
 
-        $this->assertNotContains(LintSeverity::Style, $severities);
-        $this->assertNotContains(LintSeverity::Warning, $severities);
+        $this->assertSame([LintSeverity::Style], $severities);
+        $this->assertSame(1, $report->stats['infos'] ?? null);
+        $this->assertStringContainsString('"severity": "info"', (new JsonFormatter())->format($report));
     }
 
     /**

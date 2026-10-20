@@ -17,7 +17,9 @@ use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -96,14 +98,8 @@ final class ConsolePenLinkTest extends TestCase
             'file' => $file,
             'line' => $line,
             'pattern' => '/a+/',
-            'issues' => [[
-                'type' => 'warning',
-                'message' => 'A warning.',
-                'file' => $file,
-                'line' => $line,
-            ]],
+            'issues' => [new LintIssue(LintSeverity::Warning, 'A warning.', $file, $line)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
     }
 }

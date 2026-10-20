@@ -97,11 +97,7 @@ final class CheckstyleFormatter extends AbstractOutputFormatter
         $flattened = [];
 
         foreach ($results as $result) {
-            foreach ((array) ($result['problems'] ?? []) as $problem) {
-                if (!$problem instanceof Diagnostic) {
-                    continue;
-                }
-
+            foreach (LintReport::problems($result) as $problem) {
                 $flattened[] = [
                     'file' => $result['file'],
                     'line' => $result['line'],

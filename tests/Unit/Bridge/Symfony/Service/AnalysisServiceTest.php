@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Service;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\TestCase;
 
@@ -29,7 +31,7 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertCount(1, $issues);
-        $this->assertSame('error', $issues[0]['type']);
+        $this->assertSame('error', $issues[0]->severity->level());
     }
 
     public function test_warns_on_complexity_threshold(): void
@@ -40,9 +42,9 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertCount(1, $issues);
-        $this->assertSame('warning', $issues[0]['type']);
-        $this->assertArrayHasKey('issueId', $issues[0]);
-        $this->assertSame('regex.lint.complexity', $issues[0]['issueId']);
+        $this->assertSame('warning', $issues[0]->severity->level());
+        $this->assertNotNull($issues[0]->issueId);
+        $this->assertSame('regex.lint.complexity', $issues[0]->issueId);
     }
 
     public function test_trivial_alternation_skips_risk_checks(): void
@@ -84,11 +86,11 @@ final class AnalysisServiceTest extends TestCase
 
         $redosIssues = array_values(array_filter(
             $issues,
-            static fn (array $issue): bool => 'regex.lint.redos' === ($issue['issueId'] ?? null),
+            static fn (LintIssue $issue): bool => 'regex.lint.redos' === $issue->issueId,
         ));
 
         $this->assertNotEmpty($redosIssues);
-        $this->assertSame('warning', $redosIssues[0]['type']);
+        $this->assertSame('warning', $redosIssues[0]->severity->level());
     }
 
     public function test_scan_method(): void
@@ -158,7 +160,7 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         // Should have warnings from the linter
-        $warnings = array_filter($issues, static fn ($issue) => 'warning' === $issue['type']);
+        $warnings = array_filter($issues, static fn (LintIssue $issue) => 'warning' === $issue->severity->level());
         $this->assertNotEmpty($warnings);
     }
 
@@ -171,7 +173,7 @@ final class AnalysisServiceTest extends TestCase
 
         $issues = $service->lint([$pattern]);
 
-        $complexityIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.complexity');
+        $complexityIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.complexity' === $issue->issueId);
         $this->assertNotEmpty($complexityIssues);
     }
 
@@ -182,9 +184,9 @@ final class AnalysisServiceTest extends TestCase
 
         $issues = $service->lint([$pattern]);
 
-        $redosIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.redos');
+        $redosIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.redos' === $issue->issueId);
         $this->assertNotEmpty($redosIssues);
-        $this->assertArrayHasKey('analysis', $redosIssues[array_key_first($redosIssues)]);
+        $this->assertInstanceOf(RedosAnalysis::class, $redosIssues[array_key_first($redosIssues)]->analysis);
     }
 
     public function test_suggest_optimizations_with_min_savings(): void
@@ -220,11 +222,11 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertNotEmpty($issues);
-        $errorIssue = array_filter($issues, static fn ($issue) => 'error' === $issue['type'])[0] ?? null;
-        $this->assertNotNull($errorIssue);
-        $this->assertArrayHasKey('tip', $errorIssue);
+        $errorIssue = array_filter($issues, static fn (LintIssue $issue) => 'error' === $issue->severity->level())[0] ?? null;
+        $this->assertInstanceOf(LintIssue::class, $errorIssue);
+        $this->assertNotNull($errorIssue->tip);
         /** @var string $tip */
-        $tip = $errorIssue['tip'];
+        $tip = $errorIssue->tip;
         $this->assertStringContainsString('delimiter', $tip);
     }
 
@@ -236,9 +238,9 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertNotEmpty($issues);
-        $errorIssue = array_filter($issues, static fn ($issue) => 'error' === $issue['type'])[0] ?? null;
-        $this->assertNotNull($errorIssue);
-        $this->assertArrayHasKey('tip', $errorIssue);
+        $errorIssue = array_filter($issues, static fn (LintIssue $issue) => 'error' === $issue->severity->level())[0] ?? null;
+        $this->assertInstanceOf(LintIssue::class, $errorIssue);
+        $this->assertNotNull($errorIssue->tip);
     }
 
     public function test_validation_error_tips_quantifier_range_fix(): void
@@ -249,9 +251,9 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertNotEmpty($issues);
-        $errorIssue = array_filter($issues, static fn ($issue) => 'error' === $issue['type'])[0] ?? null;
-        $this->assertNotNull($errorIssue);
-        $this->assertArrayHasKey('tip', $errorIssue);
+        $errorIssue = array_filter($issues, static fn (LintIssue $issue) => 'error' === $issue->severity->level())[0] ?? null;
+        $this->assertInstanceOf(LintIssue::class, $errorIssue);
+        $this->assertNotNull($errorIssue->tip);
     }
 
     public function test_validation_error_tips_backreference_fix(): void
@@ -262,9 +264,9 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertNotEmpty($issues);
-        $errorIssue = array_filter($issues, static fn ($issue) => 'error' === $issue['type'])[0] ?? null;
-        $this->assertNotNull($errorIssue);
-        $this->assertArrayHasKey('tip', $errorIssue);
+        $errorIssue = array_filter($issues, static fn (LintIssue $issue) => 'error' === $issue->severity->level())[0] ?? null;
+        $this->assertInstanceOf(LintIssue::class, $errorIssue);
+        $this->assertNotNull($errorIssue->tip);
     }
 
     public function test_validation_error_tips_lookbehind_fix(): void
@@ -275,9 +277,9 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         $this->assertNotEmpty($issues);
-        $errorIssue = array_filter($issues, static fn ($issue) => 'error' === $issue['type'])[0] ?? null;
-        $this->assertNotNull($errorIssue);
-        $this->assertArrayHasKey('tip', $errorIssue);
+        $errorIssue = array_filter($issues, static fn (LintIssue $issue) => 'error' === $issue->severity->level())[0] ?? null;
+        $this->assertInstanceOf(LintIssue::class, $errorIssue);
+        $this->assertNotNull($errorIssue->tip);
     }
 
     public function test_redos_hints_with_nested_quantifiers(): void
@@ -288,10 +290,10 @@ final class AnalysisServiceTest extends TestCase
 
         $issues = $service->lint([$pattern]);
 
-        $redosIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.redos');
+        $redosIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.redos' === $issue->issueId);
         $this->assertNotEmpty($redosIssues);
-        $this->assertArrayHasKey('hint', $redosIssues[array_key_first($redosIssues)]);
-        $hint = $redosIssues[array_key_first($redosIssues)]['hint'];
+        $this->assertNotNull($redosIssues[array_key_first($redosIssues)]->hint);
+        $hint = $redosIssues[array_key_first($redosIssues)]->hint;
         $this->assertStringContainsString('atomic groups', (string) $hint);
     }
 
@@ -303,9 +305,9 @@ final class AnalysisServiceTest extends TestCase
 
         $issues = $service->lint([$pattern]);
 
-        $redosIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.redos');
+        $redosIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.redos' === $issue->issueId);
         $this->assertNotEmpty($redosIssues);
-        $this->assertArrayHasKey('hint', $redosIssues[array_key_first($redosIssues)]);
+        $this->assertNotNull($redosIssues[array_key_first($redosIssues)]->hint);
     }
 
     public function test_trivially_safe_patterns_skip_analysis(): void
@@ -316,8 +318,8 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         // Should skip complexity and ReDoS checks for trivially safe patterns
-        $complexityIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.complexity');
-        $redosIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.redos');
+        $complexityIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.complexity' === $issue->issueId);
+        $redosIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.redos' === $issue->issueId);
         $this->assertEmpty($complexityIssues);
         $this->assertEmpty($redosIssues);
     }
@@ -347,7 +349,7 @@ final class AnalysisServiceTest extends TestCase
         $issues = $service->lint([$pattern]);
 
         // Should skip ReDoS check for ignored patterns
-        $redosIssues = array_filter($issues, static fn ($issue) => ($issue['issueId'] ?? null) === 'regex.lint.redos');
+        $redosIssues = array_filter($issues, static fn (LintIssue $issue) => 'regex.lint.redos' === $issue->issueId);
         $this->assertEmpty($redosIssues);
     }
 

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
@@ -32,7 +33,7 @@ final class LintServiceEdgeCasesTest extends TestCase
         $method = $this->getPrivateMethod($service, 'filterIssuesByRequest');
 
         $issues = [
-            ['validation' => new ValidationResult(false, 'error', 0)],
+            new LintIssue(LintSeverity::Error, 'error', 'a.php', 1, validation: new ValidationResult(false, 'error', 0)),
         ];
         $request = new LintRequest(
             paths: [],
@@ -50,14 +51,14 @@ final class LintServiceEdgeCasesTest extends TestCase
 
     public function test_severity_mapping_and_snippet_stripping(): void
     {
-        $service = $this->makeService();
+        // A verdict not confirmed is a warning, whatever its severity.
+        $mapRedosSeverity = new \ReflectionMethod(AnalysisService::class, 'redosSeverity');
+        $service = null;
 
-        $mapIssueSeverity = $this->getPrivateMethod($service, 'mapIssueSeverity');
-        $issueSeverity = $mapIssueSeverity->invoke($service, 'error');
-        $this->assertInstanceOf(LintSeverity::class, $issueSeverity);
-        $this->assertSame('error', $issueSeverity->value);
-
-        $mapRedosSeverity = $this->getPrivateMethod($service, 'mapRedosSeverity');
+        $analysis = new RedosAnalysis(RedosSeverity::Critical, 10, null, [], null);
+        $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
+        $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
+        $this->assertSame('warning', $redosSeverity->value);
 
         $analysis = new RedosAnalysis(RedosSeverity::High, 10, null, [], null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
@@ -70,6 +71,12 @@ final class LintServiceEdgeCasesTest extends TestCase
         $this->assertSame('warning', $redosSeverity->value);
 
         $analysis = new RedosAnalysis(RedosSeverity::Unknown, 10, null, [], null);
+        $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
+        $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
+        $this->assertSame('warning', $redosSeverity->value);
+
+        // A low verdict reported is a warning too, as the stats count it.
+        $analysis = new RedosAnalysis(RedosSeverity::Low, 10, null, [], null);
         $redosSeverity = $mapRedosSeverity->invoke($service, $analysis);
         $this->assertInstanceOf(LintSeverity::class, $redosSeverity);
         $this->assertSame('warning', $redosSeverity->value);

@@ -16,7 +16,9 @@ namespace PHPRegex\Tests\Unit\Lint\Formatter;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
@@ -184,7 +186,6 @@ final class ConsoleDelimiterConformanceTest extends TestCase
                 'optimization' => new OptimizationResult($original, $optimized, ['Optimized pattern.']),
                 'savings' => 3,
             ]],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
     }
 
@@ -194,9 +195,8 @@ final class ConsoleDelimiterConformanceTest extends TestCase
             'file' => 'f.php',
             'line' => 1,
             'pattern' => $pattern,
-            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => 'f.php', 'line' => 1]],
+            'issues' => [new LintIssue(LintSeverity::Warning, 'm', 'f.php', 1)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
     }
 

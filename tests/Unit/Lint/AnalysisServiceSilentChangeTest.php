@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,12 +37,12 @@ final class AnalysisServiceSilentChangeTest extends TestCase
         $issues = $this->rangeIssues($this->analysis($floor, [$later]), $pattern);
 
         $this->assertCount(1, $issues, $pattern);
-        $this->assertSame('warning', $issues[0]['type']);
-        $this->assertSame('regex.lint.compat.meaningChanges', $issues[0]['issueId'] ?? null);
-        $this->assertSame($message, $issues[0]['message']);
-        $this->assertSame($hint, $issues[0]['hint'] ?? null);
-        $this->assertSame(['php' => $php, 'pcre' => $pcre], $issues[0]['target'] ?? null);
-        $this->assertSame(['src/a.php', 3, 17, 42, 'preg_match'], [$issues[0]['file'], $issues[0]['line'], $issues[0]['column'] ?? null, $issues[0]['fileOffset'] ?? null, $issues[0]['source'] ?? null]);
+        $this->assertSame('warning', $issues[0]->severity->level());
+        $this->assertSame('regex.lint.compat.meaningChanges', $issues[0]->issueId);
+        $this->assertSame($message, $issues[0]->message);
+        $this->assertSame($hint, $issues[0]->hint);
+        $this->assertSame(['php' => $php, 'pcre' => $pcre], $issues[0]->target);
+        $this->assertSame(['src/a.php', 3, 17, 42, 'preg_match'], [$issues[0]->file, $issues[0]->line, $issues[0]->column, $issues[0]->fileOffset, $issues[0]->source]);
     }
 
     /**
@@ -89,13 +90,13 @@ final class AnalysisServiceSilentChangeTest extends TestCase
     {
         $otherTree = $this->rangeIssues($this->analysis('7.4', ['8.4']), '/(a|ab){1}+c{,3}/');
         $this->assertCount(1, $otherTree);
-        $message = $otherTree[0]['message'] ?? null;
+        $message = $otherTree[0]->message;
         $this->assertIsString($message);
         $this->assertStringContainsString('parses differently', (string) $message);
 
         $refused = $this->rangeIssues($this->analysis('7.4', ['8.5']), '/(?<=a\Kb)(a|ab){1}+c/');
         $this->assertCount(1, $refused);
-        $this->assertSame('error', $refused[0]['type']);
+        $this->assertSame('error', $refused[0]->severity->level());
     }
 
     /**
@@ -174,7 +175,7 @@ final class AnalysisServiceSilentChangeTest extends TestCase
         $issues = $this->rangeIssues($this->analysis('7.3', ['7.4', '8.0', '8.4']), '/^(a|ab|\1x)+b$/');
 
         $this->assertCount(1, $issues);
-        $this->assertSame(['php' => '8.0', 'pcre' => '10.35'], $issues[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.0', 'pcre' => '10.35'], $issues[0]->target);
     }
 
     #[Test]
@@ -230,7 +231,7 @@ final class AnalysisServiceSilentChangeTest extends TestCase
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private function rangeIssues(AnalysisService $analysis, string $pattern): array
     {
@@ -238,7 +239,7 @@ final class AnalysisServiceSilentChangeTest extends TestCase
 
         return array_values(array_filter(
             $analysis->lint([$occurrence]),
-            static fn (array $issue): bool => null !== ($issue['target'] ?? null),
+            static fn (LintIssue $issue): bool => null !== $issue->target,
         ));
     }
 }

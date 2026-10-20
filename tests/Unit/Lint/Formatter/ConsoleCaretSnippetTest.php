@@ -18,7 +18,9 @@ use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
 use PHPRegex\Toolkit\Regex;
@@ -77,16 +79,8 @@ final class ConsoleCaretSnippetTest extends TestCase
             'file' => 'test.php',
             'line' => 3,
             'pattern' => $pattern,
-            'issues' => [[
-                'type' => 'error',
-                'message' => (string) $validation->error,
-                'file' => 'test.php',
-                'line' => 3,
-                'position' => $validation->offset,
-                'validation' => $validation,
-            ]],
+            'issues' => [new LintIssue(LintSeverity::Error, (string) $validation->error, 'test.php', 3, position: $validation->offset, validation: $validation)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
     }
 

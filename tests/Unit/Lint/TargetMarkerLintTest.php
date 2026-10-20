@@ -19,6 +19,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -163,10 +164,10 @@ final class TargetMarkerLintTest extends TestCase
             [3, 'regex.target.invalid', null],
             [5, 'regex.target.invalid', null],
         ], self::issues($report));
-        $markers = array_values(array_filter(array_merge([], ...array_column($report->results, 'issues')), static fn (array $issue): bool => str_starts_with($issue['issueId'] ?? '', 'regex.target.')));
-        $this->assertSame([[2, 28], [3, 33], [5, 27]], array_map(static fn (array $issue): array => [$issue['line'], $issue['column'] ?? null], $markers));
-        $this->assertSame('Widen the marker to versions of the range, or remove the code it covers if it never runs there.', $markers[0]['hint'] ?? null);
-        $this->assertSame('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.', $markers[1]['hint'] ?? null);
+        $markers = array_values(array_filter(array_merge([], ...array_column($report->results, 'issues')), static fn (LintIssue $issue): bool => str_starts_with($issue->issueId ?? '', 'regex.target.')));
+        $this->assertSame([[2, 28], [3, 33], [5, 27]], array_map(static fn (LintIssue $issue): array => [$issue->line, $issue->column], $markers));
+        $this->assertSame('Widen the marker to versions of the range, or remove the code it covers if it never runs there.', $markers[0]->hint);
+        $this->assertSame('Write the versions the code runs on as a Composer constraint after "php", "pcre", or both.', $markers[1]->hint);
         $messages = array_column(array_merge([], ...array_column($report->results, 'issues')), 'message');
         $this->assertContains('The @regex-target marker "php>=9.0" keeps no version the project is judged for (PHP >=8.2 <9.0): the patterns it covers are not judged.', $messages);
         $this->assertContains('The @regex-target marker holds "php>=eight", which names no PHP or PCRE2 version constraint: write "@regex-target php>=8.4", "@regex-target pcre>=10.43" or "@regex-target php>=8.4 pcre>=10.43".', $messages);
@@ -205,11 +206,11 @@ final class TargetMarkerLintTest extends TestCase
         $issues = [];
         foreach ($report->results as $result) {
             foreach ($result['issues'] as $issue) {
-                $target = $issue['target'] ?? null;
+                $target = $issue->target;
                 if (null !== $target && !$withGuard) {
                     unset($target['guard'], $target['guard_pcre']);
                 }
-                $issues[] = [$issue['line'], $issue['issueId'] ?? null, $target];
+                $issues[] = [$issue->line, $issue->id(), $target];
             }
         }
         sort($issues);

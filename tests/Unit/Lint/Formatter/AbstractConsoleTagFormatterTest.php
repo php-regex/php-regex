@@ -19,7 +19,9 @@ use PHPRegex\Linter\Formatter\AbstractConsoleTagFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\Formatter\ReportSpelling;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
@@ -76,9 +78,8 @@ final class AbstractConsoleTagFormatterTest extends TestCase
             'file' => '/project/src/Foo.php',
             'line' => 1,
             'pattern' => '/a/',
-            'issues' => [['type' => 'warning', 'message' => 'm', 'hint' => $text, 'file' => '/project/src/Foo.php', 'line' => 1]],
+            'issues' => [new LintIssue(LintSeverity::Warning, 'm', '/project/src/Foo.php', 1, hint: $text)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $this->assertStringContainsString(
@@ -131,9 +132,8 @@ final class AbstractConsoleTagFormatterTest extends TestCase
             'file' => $file,
             'line' => $line,
             'pattern' => '/a/',
-            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => $file, 'line' => $line]],
+            'issues' => [new LintIssue(LintSeverity::Warning, 'm', $file, $line)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
@@ -189,9 +189,8 @@ final class AbstractConsoleTagFormatterTest extends TestCase
             'line' => 1,
             'pattern' => '/a/',
             'location' => "route a\nb\tc\r\nd",
-            'issues' => [['type' => 'warning', 'message' => "first\nsecond", 'file' => '/project/src/Foo.php', 'line' => 1]],
+            'issues' => [new LintIssue(LintSeverity::Warning, "first\nsecond", '/project/src/Foo.php', 1)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $output = $formatter->format($report);
@@ -224,7 +223,6 @@ final class AbstractConsoleTagFormatterTest extends TestCase
             'pattern' => '/(<a>/',
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
 
         $this->assertStringContainsString(
@@ -252,9 +250,8 @@ final class AbstractConsoleTagFormatterTest extends TestCase
             'file' => 'Route: blog_show',
             'line' => 0,
             'pattern' => $requirement,
-            'issues' => [['type' => 'warning', 'message' => 'm', 'file' => 'Route: blog_show', 'line' => 0]],
+            'issues' => [new LintIssue(LintSeverity::Warning, 'm', 'Route: blog_show', 0)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
 
         $this->assertStringContainsString('<fg=white>'.OutputFormatter::escape($requirement).'</>'.\PHP_EOL, $formatter->format($report));
@@ -302,20 +299,9 @@ final class AbstractConsoleTagFormatterTest extends TestCase
                 'pattern' => '/<foo>\d+/',
                 'location' => 'Route <app_home> \\',
                 'issues' => [
-                    [
-                        'type' => 'error',
-                        'message' => "Bad <tag> at \\<\nLine 3: detail <x>\\",
-                        'file' => '/project/src/Foo.php',
-                        'line' => 12,
-                    ],
-                    [
-                        'type' => 'warning',
-                        'message' => 'Prefer </> over <fg=red>',
-                        'hint' => 'Use <bar> instead\\',
-                        'file' => '/project/src/Foo.php',
-                        'line' => 12,
-                    ],
-                    ['type' => 'info', 'message' => 'note \\\\', 'file' => '/project/src/Foo.php', 'line' => 12],
+                    new LintIssue(LintSeverity::Error, "Bad <tag> at \\<\nLine 3: detail <x>\\", '/project/src/Foo.php', 12),
+                    new LintIssue(LintSeverity::Warning, 'Prefer </> over <fg=red>', '/project/src/Foo.php', 12, hint: 'Use <bar> instead\\'),
+                    new LintIssue(LintSeverity::Info, 'note \\\\', '/project/src/Foo.php', 12),
                 ],
                 'optimizations' => [[
                     'file' => '/project/src/Foo.php',
@@ -323,21 +309,13 @@ final class AbstractConsoleTagFormatterTest extends TestCase
                     'optimization' => new OptimizationResult('/a|b/', '/[ab]/'),
                     'savings' => 2,
                 ]],
-                'problems' => [],
             ],
             [
                 'file' => '/project/src/Bar.php',
                 'line' => 3,
-                'pattern' => null,
-                'issues' => [[
-                    'type' => 'warning',
-                    'message' => 'x > y',
-                    'pattern' => '#<b>#',
-                    'file' => '/project/src/Bar.php',
-                    'line' => 3,
-                ]],
+                'pattern' => '#<b>#',
+                'issues' => [new LintIssue(LintSeverity::Warning, 'x > y', '/project/src/Bar.php', 3)],
                 'optimizations' => [],
-                'problems' => [],
             ],
         ], ['errors' => 1, 'warnings' => 2, 'optimizations' => 1]);
     }

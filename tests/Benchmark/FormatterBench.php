@@ -20,8 +20,6 @@ use PhpBench\Attributes\OutputTimeUnit;
 use PhpBench\Attributes\ParamProviders;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\GithubFormatter;
@@ -29,6 +27,7 @@ use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\JunitFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
@@ -121,14 +120,6 @@ final class FormatterBench
 
         $pattern = '/(foo|bar)+/';
         $optimization = new OptimizationResult($pattern, '/(?:foo|bar)+/', ['group']);
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Warning,
-            'Nested quantifier detected',
-            'regex.lint.quantifier.nested',
-            '^',
-            'Consider making the quantifier possessive',
-        );
 
         for ($i = 1; $i <= $count; $i++) {
             $type = 0 === $i % 2 ? 'warning' : 'error';
@@ -145,14 +136,7 @@ final class FormatterBench
                 'source' => 'preg_match',
                 'pattern' => $pattern,
                 'location' => 'in function call',
-                'issues' => [[
-                    'type' => $type,
-                    'message' => 'Issue '.$i,
-                    'file' => $file,
-                    'line' => $i,
-                    'issueId' => 'regex.lint.demo',
-                    'hint' => 'Use a non-capturing group',
-                ]],
+                'issues' => [new LintIssue(LintSeverity::from($type), 'Issue '.$i, $file, $i, issueId: 'regex.lint.demo', hint: 'Use a non-capturing group')],
                 'optimizations' => [[
                     'file' => $file,
                     'line' => $i,
@@ -160,7 +144,6 @@ final class FormatterBench
                     'savings' => 1,
                     'source' => 'preg_match',
                 ]],
-                'problems' => [$problem],
             ];
         }
 

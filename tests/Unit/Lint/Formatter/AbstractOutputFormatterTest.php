@@ -150,7 +150,7 @@ final class AbstractOutputFormatterTest extends TestCase
      */
     private static function lintResult(string $file, int $line): array
     {
-        return ['file' => $file, 'line' => $line, 'pattern' => null, 'issues' => [], 'optimizations' => [], 'problems' => []];
+        return ['file' => $file, 'line' => $line, 'pattern' => null, 'issues' => [], 'optimizations' => []];
     }
 }
 

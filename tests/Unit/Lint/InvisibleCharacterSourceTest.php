@@ -17,6 +17,7 @@ use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -97,7 +98,7 @@ final class InvisibleCharacterSourceTest extends TestCase
     /**
      * @param list<PatternOccurrence> $occurrences
      *
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private function invisibleIssues(array $occurrences): array
     {
@@ -105,7 +106,7 @@ final class InvisibleCharacterSourceTest extends TestCase
 
         return array_values(array_filter(
             $service->lint($occurrences),
-            static fn (array $issue): bool => self::RULE === ($issue['issueId'] ?? null),
+            static fn (LintIssue $issue): bool => self::RULE === $issue->issueId,
         ));
     }
 }

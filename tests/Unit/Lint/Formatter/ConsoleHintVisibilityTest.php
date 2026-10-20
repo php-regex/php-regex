@@ -20,9 +20,11 @@ use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
 use PHPRegex\Linter\Formatter\OutputFormatterInterface;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
@@ -62,14 +64,14 @@ final class ConsoleHintVisibilityTest extends TestCase
 
         $report = self::lint('/[é]/');
         $issue = self::onlyIssue($report);
-        $this->assertSame('error', $issue['type'] ?? null);
-        $this->assertIsString($issue['hint'] ?? null);
-        $this->assertStringStartsWith('Add the /u flag', $issue['hint']);
+        $this->assertSame('error', $issue->severity->level());
+        $this->assertIsString($issue->hint);
+        $this->assertStringStartsWith('Add the /u flag', $issue->hint);
 
         $output = self::plain(self::formatter($formatter)->format($report));
 
         $this->assertMatchesRegularExpression('/^\s*FAIL\b/m', $output);
-        $this->assertStringContainsString('↳ '.$issue['hint'], $output);
+        $this->assertStringContainsString('↳ '.$issue->hint, $output);
     }
 
     #[Test]
@@ -81,15 +83,15 @@ final class ConsoleHintVisibilityTest extends TestCase
 
         $report = self::lint(self::unclosedPattern());
         $issue = self::onlyIssue($report);
-        $this->assertSame('error', $issue['type'] ?? null);
-        $this->assertInstanceOf(ValidationResult::class, $issue['validation'] ?? null);
-        $this->assertIsString($issue['tip'] ?? null);
-        $this->assertNotSame('', $issue['tip']);
+        $this->assertSame('error', $issue->severity->level());
+        $this->assertInstanceOf(ValidationResult::class, $issue->validation);
+        $this->assertIsString($issue->tip);
+        $this->assertNotSame('', $issue->tip);
 
         $output = self::plain(self::formatter($formatter)->format($report));
 
         $this->assertMatchesRegularExpression('/^\s*FAIL\b/m', $output);
-        $this->assertStringNotContainsString($issue['tip'], $output);
+        $this->assertStringNotContainsString($issue->tip, $output);
     }
 
     /**
@@ -147,13 +149,10 @@ final class ConsoleHintVisibilityTest extends TestCase
         );
     }
 
-    /**
-     * @return array<array-key, mixed>
-     */
-    private static function onlyIssue(LintReport $report): array
+    private static function onlyIssue(LintReport $report): LintIssue
     {
         self::assertCount(1, $report->results);
-        $issues = $report->results[0]['issues'] ?? [];
+        $issues = array_values($report->results[0]['issues']);
         self::assertCount(1, $issues);
 
         return $issues[0];
@@ -166,8 +165,8 @@ final class ConsoleHintVisibilityTest extends TestCase
     private static function reportWithHint(?ValidationResult $validation): LintReport
     {
         $issue = null === $validation
-            ? ['type' => 'error', 'message' => 'Rule at Error.', 'hint' => 'Close the group.', 'issueId' => 'regex.lint.test', 'file' => 'f.php', 'line' => 1]
-            : ['type' => 'error', 'message' => 'Expected ) at end of input (found eof)', 'hint' => 'Close the group.', 'validation' => $validation, 'file' => 'f.php', 'line' => 1];
+            ? new LintIssue(LintSeverity::Error, 'Rule at Error.', 'f.php', 1, hint: 'Close the group.', issueId: 'regex.lint.test')
+            : new LintIssue(LintSeverity::Error, 'Expected ) at end of input (found eof)', 'f.php', 1, hint: 'Close the group.', validation: $validation);
 
         return new LintReport([[
             'file' => 'f.php',
@@ -175,7 +174,6 @@ final class ConsoleHintVisibilityTest extends TestCase
             'pattern' => '/(a/',
             'issues' => [$issue],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
     }
 

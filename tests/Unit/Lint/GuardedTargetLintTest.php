@@ -194,7 +194,7 @@ final class GuardedTargetLintTest extends TestCase
         $targets = [];
         foreach ($this->lint(TokenBasedExtractionStrategy::class, self::CODE)->results as $result) {
             foreach ($result['issues'] as $issue) {
-                $targets[$issue['line']] = $issue['target'] ?? null;
+                $targets[$issue->line] = $issue->target;
             }
         }
 
@@ -264,7 +264,7 @@ final class GuardedTargetLintTest extends TestCase
         $issues = [];
         foreach ($report->results as $result) {
             foreach ($result['issues'] as $issue) {
-                $issues[] = [$issue['line'], $issue['issueId'] ?? null];
+                $issues[] = [$issue->line, $issue->id()];
             }
         }
         sort($issues);

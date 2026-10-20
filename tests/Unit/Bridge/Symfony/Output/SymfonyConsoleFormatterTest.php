@@ -16,7 +16,9 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Output;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Symfony\Output\SymfonyConsoleFormatter;
@@ -80,15 +82,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid regex pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid regex pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -113,16 +109,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Complex pattern detected',
-                    'hint' => 'Consider simplifying',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Warning, 'Complex pattern detected', 'test.php', 10, hint: 'Consider simplifying'),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -147,15 +136,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid regex pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid regex pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -187,7 +170,6 @@ final class SymfonyConsoleFormatterTest extends TestCase
                     'savings' => 5,
                 ],
             ],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 1]);
@@ -214,17 +196,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/(a+)+/',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Nested quantifiers can cause catastrophic backtracking.',
-                    'file' => 'test.php',
-                    'line' => 10,
-                    'issueId' => 'regex.lint.quantifier.nested',
-                    'hint' => 'Consider using atomic groups (?>...) or possessive quantifiers.',
-                ],
+                new LintIssue(LintSeverity::Warning, 'Nested quantifiers can cause catastrophic backtracking.', 'test.php', 10, issueId: 'regex.lint.quantifier.nested', hint: 'Consider using atomic groups (?>...) or possessive quantifiers.'),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 1, 'optimizations' => 0]);
@@ -252,15 +226,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'pattern' => '/test/',
             'location' => 'in function call',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid regex pattern',
-                    'file' => 'test.php',
-                    'line' => 0,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid regex pattern', 'test.php', 0),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -283,15 +251,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test1/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Error in file1',
-                    'file' => 'file1.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Error in file1', 'file1.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $result2 = [
@@ -299,15 +261,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 20,
             'pattern' => '/test2/',
             'issues' => [
-                [
-                    'type' => 'warning',
-                    'message' => 'Warning in file2',
-                    'file' => 'file2.php',
-                    'line' => 20,
-                ],
+                new LintIssue(LintSeverity::Warning, 'Warning in file2', 'file2.php', 20),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
@@ -333,15 +289,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'info',
-                    'message' => 'Pattern information',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Info, 'Pattern information', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -365,15 +315,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'location' => 'in function call',
             'pattern' => null,
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid regex pattern',
-                    'file' => 'test.php',
-                    'line' => 0,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid regex pattern', 'test.php', 0),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -397,15 +341,9 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'line' => 10,
             'pattern' => '/test/',
             'issues' => [
-                [
-                    'type' => 'error',
-                    'message' => 'Invalid regex pattern',
-                    'file' => 'test.php',
-                    'line' => 10,
-                ],
+                new LintIssue(LintSeverity::Error, 'Invalid regex pattern', 'test.php', 10),
             ],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -478,7 +416,6 @@ final class SymfonyConsoleFormatterTest extends TestCase
             'pattern' => null,
             'issues' => [],
             'optimizations' => [],
-            'problems' => [],
         ];
 
         $output = $this->invokePrivate($formatter, 'displayPatternContext', [$result]);

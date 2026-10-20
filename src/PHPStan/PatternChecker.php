@@ -384,7 +384,7 @@ final class PatternChecker
             foreach (($floorAnalysis ?? $this->getAnalysisService())->lint([$occurrence]) as $issue) {
                 // A pattern the library cannot read comes back without an
                 // issue id, alone: nothing below reports it.
-                $issueId = $issue['issueId'] ?? null;
+                $issueId = $issue->issueId;
                 if (self::ISSUE_ID_COMPLEXITY === $issueId) {
                     if ($this->complexityEnabled) {
                         $lintIssues[] = $issue;
@@ -409,17 +409,17 @@ final class PatternChecker
         }
 
         foreach ($constantSubject ? [] : $redosIssues as $issue) {
-            $analysis = $issue['analysis'] ?? null;
+            $analysis = $issue->analysis;
             if (!$analysis instanceof RedosAnalysis) {
                 continue; // never: a ReDoS issue carries its analysis; the check is for the type
             }
 
             // One attempt proven linear, the search retrying it is not: its
             // own message, frozen like the three others, and identifier.
-            if (self::ISSUE_ID_REDOS_SEARCH === ($issue['issueId'] ?? null)) {
+            if (self::ISSUE_ID_REDOS_SEARCH === $issue->issueId) {
                 $errors[] = RuleErrorBuilder::message(\sprintf('Quadratic search (ReDoS): %s', self::displayPattern($pattern)))
                     ->line($lineNumber)
-                    ->tip(self::getTipForSearchCost($issue['message'], $issue['hint'] ?? null))
+                    ->tip(self::getTipForSearchCost($issue->message, $issue->hint))
                     ->identifier(RegexPatternRule::IDENTIFIER_REDOS_SEARCH)
                     ->build();
 
@@ -458,16 +458,16 @@ final class PatternChecker
         }
 
         foreach ($lintIssues as $issue) {
-            $issueId = $issue['issueId'] ?? null;
-            if (!\is_string($issueId) || '' === $issueId) {
+            $issueId = $issue->issueId;
+            if (null === $issueId || '' === $issueId) {
                 continue; // a pattern the library cannot read, which the running engine compiles
             }
 
-            $builder = RuleErrorBuilder::message($issue['message'])
+            $builder = RuleErrorBuilder::message($issue->message)
                 ->line($lineNumber)
                 ->identifier($issueId);
             $tipParts = [];
-            $hint = $issue['hint'] ?? null;
+            $hint = $issue->hint;
             if (null !== $hint && '' !== $hint) {
                 $tipParts[] = $hint;
             }

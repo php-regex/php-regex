@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Cache\CacheInterface;
@@ -652,7 +653,7 @@ final class AnalysisServiceTest extends TestCase
     /**
      * The ReDoS analyses the issues carry, on the ReDoS issue.
      *
-     * @param array<array<string, mixed>> $issues
+     * @param array<LintIssue> $issues
      *
      * @return list<RedosAnalysis>
      */
@@ -660,8 +661,8 @@ final class AnalysisServiceTest extends TestCase
     {
         $analyses = [];
         foreach ($issues as $issue) {
-            if ('regex.lint.redos' === ($issue['issueId'] ?? null) && ($issue['analysis'] ?? null) instanceof RedosAnalysis) {
-                $analyses[] = $issue['analysis'];
+            if ('regex.lint.redos' === $issue->issueId && $issue->analysis instanceof RedosAnalysis) {
+                $analyses[] = $issue->analysis;
             }
         }
 

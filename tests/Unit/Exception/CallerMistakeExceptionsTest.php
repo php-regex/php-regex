@@ -21,7 +21,9 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -91,9 +93,8 @@ final class CallerMistakeExceptionsTest extends TestCase
             'file' => 'a.php',
             'line' => 1,
             'pattern' => '/a/',
-            'issues' => [['type' => 'error', 'message' => 'm', 'file' => 'a.php', 'line' => 1, 'analysis' => $analysis]],
+            'issues' => [new LintIssue(LintSeverity::Error, 'm', 'a.php', 1, analysis: $analysis)],
             'optimizations' => [],
-            'problems' => [],
         ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
 
         $this->expectException(LintException::class);

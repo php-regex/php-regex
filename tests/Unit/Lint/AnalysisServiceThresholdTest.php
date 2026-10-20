@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\RegexParser;
@@ -65,12 +66,12 @@ final class AnalysisServiceThresholdTest extends TestCase
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private function redosIssues(AnalysisService $service): array
     {
         $issues = $service->lint([new PatternOccurrence('/(a+)+$/', 'file.php', 1, 'php:preg_match()')]);
 
-        return array_values(array_filter($issues, static fn (array $issue): bool => 'regex.lint.redos' === ($issue['issueId'] ?? null)));
+        return array_values(array_filter($issues, static fn (LintIssue $issue): bool => 'regex.lint.redos' === $issue->issueId));
     }
 }

@@ -19,6 +19,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -109,9 +110,9 @@ final class UnmatchedIgnoresTest extends TestCase
         $this->assertSame(3, $report->stats['errors']);
         $this->assertSame(
             'The @regex-ignore marker silences nothing: no issue is reported on line 2. Remove it.',
-            $report->results[0]['issues'][0]['message'],
+            $report->results[0]['issues'][0]->message,
         );
-        $this->assertSame('The @regex-ignore-next-line marker silences nothing: no issue is reported on line 7. Remove it.', $report->results[1]['issues'][0]['message']);
+        $this->assertSame('The @regex-ignore-next-line marker silences nothing: no issue is reported on line 7. Remove it.', $report->results[1]['issues'][0]->message);
     }
 
     /**
@@ -192,13 +193,13 @@ final class UnmatchedIgnoresTest extends TestCase
         $request = new LintRequest([$project.'/src'], [], 1, checkValidation: false, checkOptimizations: false, analysisWorkers: 1);
         $report = $lint->analyze($lint->collectPatterns($request), $request);
         $this->assertSame([[8, 'regex.ignore.unmatched']], self::issues($report));
-        $this->assertSame('The @regex-ignore marker names regex.lint.no.such.rule, which no issue reports on line 8. Remove the identifier.', $report->results[0]['issues'][0]['message'] ?? null);
+        $this->assertSame('The @regex-ignore marker names regex.lint.no.such.rule, which no issue reports on line 8. Remove the identifier.', $report->results[0]['issues'][0]->message);
 
         // Every check on: each identifier silencing nothing is reported.
         $lint = new LintService(new AnalysisService($parser, redosEnabled: true, lintRules: ['charclass.single' => true]), $sources);
         $request = new LintRequest([$project.'/src'], [], 1, checkRedos: true, checkOptimizations: true, analysisWorkers: 1, checkComplexity: true);
         $report = $lint->analyze($lint->collectPatterns($request), $request);
-        $lines = array_count_values(array_column(array_filter(array_merge([], ...array_column($report->results, 'issues')), static fn (array $issue): bool => 'regex.ignore.unmatched' === ($issue['issueId'] ?? null)), 'line'));
+        $lines = array_count_values(array_column(array_filter(array_merge([], ...array_column($report->results, 'issues')), static fn (LintIssue $issue): bool => 'regex.ignore.unmatched' === $issue->issueId), 'line'));
         ksort($lines);
         $this->assertSame([2 => 2, 3 => 2, 4 => 1, 5 => 1, 6 => 1, 8 => 2], $lines);
     }
@@ -264,7 +265,7 @@ final class UnmatchedIgnoresTest extends TestCase
     {
         $report = $this->lint(TokenBasedExtractionStrategy::class, "<?php\n\$kept = 1; // @regex-ignore\n");
 
-        $this->assertSame(15, $report->results[0]['issues'][0]['column'] ?? null);
+        $this->assertSame(15, $report->results[0]['issues'][0]->column);
     }
 
     /**
@@ -305,7 +306,7 @@ final class UnmatchedIgnoresTest extends TestCase
         );
 
         $this->assertSame([[$project.'/src/a.php', 2, 'regex.ignore.unmatched']], array_map(
-            static fn (array $issue): array => [$issue['file'], $issue['line'], $issue['issueId'] ?? null],
+            static fn (LintIssue $issue): array => [$issue->file, $issue->line, $issue->issueId],
             array_merge([], ...array_column($report->results, 'issues')),
         ));
     }
@@ -352,7 +353,7 @@ final class UnmatchedIgnoresTest extends TestCase
         $issues = [];
         foreach ($report->results as $result) {
             foreach ($result['issues'] as $issue) {
-                $issues[] = [$issue['line'], $issue['issueId'] ?? null];
+                $issues[] = [$issue->line, $issue->issueId];
             }
         }
         sort($issues);

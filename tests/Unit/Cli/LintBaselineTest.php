@@ -16,10 +16,11 @@ namespace PHPRegex\Tests\Unit\Cli;
 use PHPRegex\Cli\CliException;
 use PHPRegex\Cli\Command\LintBaseline;
 use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
+use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -32,8 +33,8 @@ use PHPUnit\Framework\TestCase;
  * load, what a filtered result keeps, and the paths it holds when the
  * working directory cannot shorten them.
  *
- * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type LintResult from LintReport
+ * @phpstan-import-type OptimizationEntry from LintReport
  */
 final class LintBaselineTest extends TestCase
 {
@@ -176,27 +177,24 @@ final class LintBaselineTest extends TestCase
 
     /**
      * Of a result where the baseline knows one issue, the other issue
-     * stays, with its problem entry; the problem entry of an optimization
-     * stays even when its message is the one of the known issue, and the
-     * result keeps its column and file offset.
+     * stays, and so do the optimizations of the result, which keeps its
+     * column and file offset.
      */
     #[Test]
     public function test_filter_keeps_what_the_baseline_does_not_know_in_a_result(): void
     {
         $known = self::issue('regex.lint.known', 'Known issue', 'error');
         $unknown = self::issue('regex.lint.unknown', 'Unknown issue', 'warning');
-        $optimization = new Diagnostic(DiagnosticType::Optimization, LintSeverity::Info, 'Known issue');
-        $knownProblem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Known issue');
-        $unknownProblem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Unknown issue');
+        $optimization = ['file' => 'src/a.php', 'line' => 3, 'optimization' => new OptimizationResult('/a+b/', '/a++b/', ['possessive']), 'savings' => 1];
 
-        $baseline = $this->baselineOf(self::report([self::lintResult([$known], [$knownProblem])]));
+        $baseline = $this->baselineOf(self::report([self::lintResult([$known])]));
 
         $filtered = $baseline->filter(self::report([
-            self::lintResult([$known, $unknown], [$optimization, $knownProblem, $unknownProblem]),
+            self::lintResult([$known, $unknown], [$optimization]),
         ]));
 
-        $this->assertSame([self::lintResult([$unknown], [$optimization, $unknownProblem])], $filtered->results);
-        $this->assertSame(['errors' => 0, 'warnings' => 1, 'optimizations' => 0], $filtered->stats);
+        $this->assertSame([self::lintResult([$unknown], [$optimization])], $filtered->results);
+        $this->assertSame(['errors' => 0, 'warnings' => 1, 'optimizations' => 1], $filtered->stats);
     }
 
     /**
@@ -207,8 +205,8 @@ final class LintBaselineTest extends TestCase
     public function test_filter_keeps_the_parser_fallback_count(): void
     {
         $known = self::issue('regex.lint.known', 'Known issue', 'error');
-        $baseline = $this->baselineOf(self::report([self::lintResult([$known], [])]));
-        $results = [self::lintResult([$known], [])];
+        $baseline = $this->baselineOf(self::report([self::lintResult([$known])]));
+        $results = [self::lintResult([$known])];
 
         $filtered = $baseline->filter(new LintReport($results, ['parserFallbacks' => 1] + LintStatsCounter::count($results)));
 
@@ -227,21 +225,18 @@ final class LintBaselineTest extends TestCase
         $known = self::issue('regex.lint.known', 'Known issue', 'error', 'src/b.php');
         $unknown = self::issue('regex.lint.unknown', 'Unknown issue', 'warning', 'src/b.php');
         $other = self::issue('regex.lint.unknown', 'Unknown issue', 'warning');
-        $knownProblem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Known issue');
-        $unknownProblem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Unknown issue');
-
-        $baseline = $this->baselineOf(self::report([self::lintResult([$known], [$knownProblem])]));
+        $baseline = $this->baselineOf(self::report([self::lintResult([$known])]));
 
         $results = [
-            'src/a.php' => self::lintResult([$other], [$unknownProblem]),
-            'src/b.php' => ['file' => 'src/b.php', 'issues' => [7 => $unknown, 9 => $known]] + self::lintResult([], [$unknownProblem, $knownProblem]),
+            'src/a.php' => self::lintResult([$other]),
+            'src/b.php' => ['file' => 'src/b.php', 'issues' => [7 => $unknown, 9 => $known]] + self::lintResult([]),
         ];
 
         $filtered = $baseline->filter(new LintReport($results, LintStatsCounter::count($results)));
 
         $this->assertSame([
-            self::lintResult([$other], [$unknownProblem]),
-            ['file' => 'src/b.php', 'issues' => [$unknown]] + self::lintResult([], [$unknownProblem]),
+            self::lintResult([$other]),
+            ['file' => 'src/b.php', 'issues' => [$unknown]] + self::lintResult([]),
         ], $filtered->results);
     }
 
@@ -254,7 +249,7 @@ final class LintBaselineTest extends TestCase
     {
         $this->assertTrue(chdir('/'));
 
-        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', '/srv/app/a.php')], [])]);
+        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', '/srv/app/a.php')])]);
         $baseline = $this->baselineOf($report);
 
         $this->assertSame(['/srv/app/a.php'], self::filesOf(LintBaseline::generate($report)));
@@ -275,7 +270,7 @@ final class LintBaselineTest extends TestCase
         rmdir($gone);
         $this->assertDirectoryDoesNotExist($gone);
 
-        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'C:\\app\\src\\a.php')], [])]);
+        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'C:\\app\\src\\a.php')])]);
 
         try {
             $generated = LintBaseline::generate($report);
@@ -298,7 +293,7 @@ final class LintBaselineTest extends TestCase
     #[DataProvider('provideEntries')]
     public function test_filter_takes_out_an_issue_only_for_its_own_entry(array $entry, bool $known): void
     {
-        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error')], [])]);
+        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error')])]);
 
         $filtered = $this->baselineFrom(['version' => 1, 'issues' => [$entry]])->filter($report);
 
@@ -314,7 +309,7 @@ final class LintBaselineTest extends TestCase
     public function test_filter_matches_a_hand_written_entry_for_a_file_name_that_is_no_utf8(): void
     {
         $issue = self::issue('regex.lint.known', 'Known issue', 'error', "src/\xFF.php");
-        $report = self::report([self::lintResult([$issue], [])]);
+        $report = self::report([self::lintResult([$issue])]);
         $entry = ['file' => './src/\xFF.php'] + self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 3);
 
         $filtered = $this->baselineFrom(['version' => 1, 'issues' => [$entry]])->filter($report);
@@ -350,7 +345,7 @@ final class LintBaselineTest extends TestCase
     {
         $baseline = $this->baselineFrom(['version' => 1, 'issues' => [self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 20)]]);
 
-        $filtered = $baseline->filter(self::report([self::lintResult([self::issueOnLine(10), self::issueOnLine(20)], [])]));
+        $filtered = $baseline->filter(self::report([self::lintResult([self::issueOnLine(10), self::issueOnLine(20)])]));
 
         $this->assertSame([10], array_column($filtered->results[0]['issues'] ?? [], 'line'));
     }
@@ -364,7 +359,7 @@ final class LintBaselineTest extends TestCase
     {
         $baseline = $this->baselineFrom(['version' => 1, 'issues' => [self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 5)]]);
 
-        $filtered = $baseline->filter(self::report([self::lintResult([self::issueOnLine(10), self::issueOnLine(20)], [])]));
+        $filtered = $baseline->filter(self::report([self::lintResult([self::issueOnLine(10), self::issueOnLine(20)])]));
 
         $this->assertSame([20], array_column($filtered->results[0]['issues'] ?? [], 'line'));
     }
@@ -382,7 +377,7 @@ final class LintBaselineTest extends TestCase
             self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 40),
         ]]);
 
-        $filtered = $baseline->filter(self::report([self::lintResult([self::issueOnLine(10)], [])]));
+        $filtered = $baseline->filter(self::report([self::lintResult([self::issueOnLine(10)])]));
 
         $this->assertSame([], $filtered->results);
     }
@@ -402,16 +397,16 @@ final class LintBaselineTest extends TestCase
             self::entryFor('regex.lint.known', 'src/a.php', '/a+b/', 40),
             self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 7),
         ]]);
-        $report = self::report([self::lintResult([self::issueOnLine(10)], [])]);
+        $report = self::report([self::lintResult([self::issueOnLine(10)])]);
 
         $filtered = $baseline->filter($report, ['src/a.php']);
 
         $this->assertSame([['src/a.php', 30], ['src/a.php', 40]], array_map(static fn (array $result): array => [$result['file'], $result['line']], $filtered->results));
-        $this->assertSame(['regex.ignore.unmatched'], array_unique(array_column(array_merge([], ...array_column($filtered->results, 'issues')), 'issueId')));
+        $this->assertSame(['regex.ignore.unmatched'], array_unique(array_map(static fn (LintIssue $issue): ?string => $issue->issueId, array_merge([], ...array_column($filtered->results, 'issues')))));
         $this->assertSame(2, $filtered->stats['errors']);
         $this->assertSame([], $baseline->filter($report, ['src/c.php'])->results);
         $this->assertSame([], $baseline->filter($report)->results);
-        $this->assertSame(['regex.ignore.unmatched'], array_map(static fn (Diagnostic $problem): ?string => $problem->code, $filtered->results[0]['problems']));
+        $this->assertSame(['regex.ignore.unmatched'], array_map(static fn (Diagnostic $problem): ?string => $problem->code, LintReport::problems($filtered->results[0])));
     }
 
     /**
@@ -483,11 +478,10 @@ final class LintBaselineTest extends TestCase
             self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 30),
             self::entryFor('regex.lint.known', 'src/b.php', '/a+b/', 40),
         ]]);
-        $issue = self::issue('regex.lint.known', 'Known issue', 'error', 'src/b.php');
-        $issue['line'] = 40;
-        $kept = self::lintResult([self::issue('regex.lint.other', 'Other issue', 'error', 'src/c.php')], []);
+        $issue = self::issue('regex.lint.known', 'Known issue', 'error', 'src/b.php', 40);
+        $kept = self::lintResult([self::issue('regex.lint.other', 'Other issue', 'error', 'src/c.php')]);
         $kept['file'] = 'src/c.php';
-        $known = self::lintResult([$issue], []);
+        $known = self::lintResult([$issue]);
         $known['file'] = 'src/b.php';
         $known['line'] = 40;
 
@@ -519,7 +513,7 @@ final class LintBaselineTest extends TestCase
         )]);
         $found = array_map(self::issueOnLine(...), $issues);
         $results = $oneResultPerIssue
-            ? array_map(static fn (array $issue): array => self::lintResult([$issue], []), $found)
+            ? array_map(static fn (LintIssue $issue): array => self::lintResult([$issue]), $found)
             : [self::lintResult($found, [])];
 
         $filtered = $baseline->filter(self::report($results));
@@ -590,7 +584,7 @@ final class LintBaselineTest extends TestCase
     {
         chdir($this->directory);
 
-        $this->assertSame([$written], self::filesOf(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', $file)], [])]))));
+        $this->assertSame([$written], self::filesOf(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', $file)])]))));
     }
 
     /**
@@ -646,7 +640,7 @@ final class LintBaselineTest extends TestCase
     #[DataProvider('provideTextsThatAreNoUtf8')]
     public function test_generate_spells_each_byte_that_is_no_part_of_a_utf8_character(string $text, string $spelled): void
     {
-        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', $text, 'error')], [])])), true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', $text, 'error')])])), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($data);
         $this->assertIsArray($data['issues'] ?? null);
 
@@ -683,10 +677,10 @@ final class LintBaselineTest extends TestCase
     public function test_generate_names_an_issue_by_its_identifier_before_its_error_code(): void
     {
         $validation = new ValidationResult(false, 'Reference to a group that does not exist', errorCode: ErrorCode::BackrefMissingGroup);
-        $named = self::issue('regex.lint.known', 'Known issue', 'error') + ['validation' => $validation];
-        $unnamed = ['type' => 'error', 'message' => 'Invalid pattern', 'file' => 'src/a.php', 'line' => 3, 'validation' => $validation];
+        $named = new LintIssue(LintSeverity::Error, 'Known issue', 'src/a.php', 3, issueId: 'regex.lint.known', validation: $validation);
+        $unnamed = new LintIssue(LintSeverity::Error, 'Invalid pattern', 'src/a.php', 3, validation: $validation);
 
-        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([$named, $unnamed], [])])), true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([$named, $unnamed])])), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($data);
         $this->assertIsArray($data['issues'] ?? null);
 
@@ -719,9 +713,8 @@ final class LintBaselineTest extends TestCase
      */
     private static function entryFor(string $issueId, string $file, string $pattern, int $line): array
     {
-        $issue = self::issue($issueId, 'Known issue', 'error', $file);
-        $issue['line'] = $line;
-        $result = self::lintResult([$issue], []);
+        $issue = self::issue($issueId, 'Known issue', 'error', $file, $line);
+        $result = self::lintResult([$issue]);
         $result['pattern'] = $pattern;
 
         $data = json_decode(LintBaseline::generate(self::report([$result])), true, 512, \JSON_THROW_ON_ERROR);
@@ -732,15 +725,9 @@ final class LintBaselineTest extends TestCase
         return $data['issues'][0];
     }
 
-    /**
-     * @return array{type: string, message: string, file: string, line: int, issueId: string}
-     */
-    private static function issueOnLine(int $line): array
+    private static function issueOnLine(int $line): LintIssue
     {
-        $issue = self::issue('regex.lint.known', 'Known issue', 'error');
-        $issue['line'] = $line;
-
-        return $issue;
+        return new LintIssue(LintSeverity::Error, 'Known issue', 'src/a.php', $line, issueId: 'regex.lint.known');
     }
 
     /**
@@ -763,24 +750,21 @@ final class LintBaselineTest extends TestCase
         return new LintReport($results, LintStatsCounter::count($results));
     }
 
-    /**
-     * @return array{type: string, message: string, file: string, line: int, issueId: string}
-     */
-    private static function issue(string $issueId, string $message, string $type, string $file = 'src/a.php'): array
+    private static function issue(string $issueId, string $message, string $type, string $file = 'src/a.php', int $line = 3): LintIssue
     {
-        return ['type' => $type, 'message' => $message, 'file' => $file, 'line' => 3, 'issueId' => $issueId];
+        return new LintIssue(LintSeverity::from($type), $message, $file, $line, issueId: $issueId);
     }
 
     /**
-     * @param list<LintIssue>  $issues
-     * @param list<Diagnostic> $problems
+     * @param list<LintIssue>         $issues
+     * @param list<OptimizationEntry> $optimizations
      *
      * @return LintResult
      */
-    private static function lintResult(array $issues, array $problems): array
+    private static function lintResult(array $issues, array $optimizations = []): array
     {
         return [
-            'file' => $issues[0]['file'] ?? 'src/a.php',
+            'file' => ($issues[0]->file ?? 'src/a.php'),
             'line' => 3,
             'column' => 12,
             'fileOffset' => 40,
@@ -788,8 +772,7 @@ final class LintBaselineTest extends TestCase
             'pattern' => '/a+b/',
             'location' => null,
             'issues' => $issues,
-            'optimizations' => [],
-            'problems' => $problems,
+            'optimizations' => $optimizations,
         ];
     }
 }

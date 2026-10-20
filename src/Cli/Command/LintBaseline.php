@@ -14,8 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Cli\Command;
 
 use PHPRegex\Cli\CliException;
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\LintSeverity;
@@ -23,7 +22,6 @@ use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Parser\Validation\ValidationResult;
 
 /**
  * The issues a lint run already knows, read from a baseline file and taken
@@ -45,7 +43,6 @@ use PHPRegex\Parser\Validation\ValidationResult;
  *
  * @internal
  *
- * @phpstan-import-type LintIssue from LintReport
  * @phpstan-import-type LintResult from LintReport
  */
 final class LintBaseline
@@ -107,12 +104,12 @@ final class LintBaseline
             $pattern = $result['pattern'] ?? '';
             foreach ($result['issues'] as $issue) {
                 $issues[] = [
-                    'file' => self::relativePath($issue['file']),
-                    'line' => $issue['line'],
-                    'column' => $issue['column'] ?? null,
+                    'file' => self::relativePath($issue->file),
+                    'line' => $issue->line,
+                    'column' => $issue->column,
                     'issue_id' => self::issueId($issue),
-                    'message' => $issue['message'],
-                    'severity' => $issue['type'],
+                    'message' => $issue->message,
+                    'severity' => $issue->severity->level(),
                     'pattern' => $pattern,
                     'pattern_hash' => self::hash($pattern),
                 ];
@@ -126,8 +123,8 @@ final class LintBaseline
 
     /**
      * The report without the issues the baseline knows: a result keeps its
-     * column and file offset, loses the problem entry of each known issue,
-     * and leaves the report once nothing is left in it.
+     * column and file offset, and leaves the report once nothing is left in
+     * it.
      *
      * @param list<string>|null $scannedFiles the files the run read: given, each entry of one of
      *                                        them that no issue takes is reported, and so is each entry
@@ -142,7 +139,7 @@ final class LintBaseline
             foreach (\array_values($result['issues']) as $i => $issue) {
                 $key = $this->keyOf($issue, $result);
                 if (isset($this->lines[$key])) {
-                    $candidates[$key][] = [$r, $i, $issue['line']];
+                    $candidates[$key][] = [$r, $i, $issue->line];
                 }
             }
         }
@@ -167,33 +164,17 @@ final class LintBaseline
             }
 
             $issues = [];
-            $removed = [];
             foreach (\array_values($result['issues']) as $i => $issue) {
-                if (isset($known[$r][$i])) {
-                    $removed[] = $issue['message'];
-                } else {
+                if (!isset($known[$r][$i])) {
                     $issues[] = $issue;
                 }
             }
 
-            // Each issue has a problem entry with its message; the ones of
-            // the optimizations stay.
-            $problems = [];
-            foreach ($result['problems'] as $problem) {
-                $at = DiagnosticType::Optimization === $problem->type ? false : array_search($problem->message, $removed, true);
-                if (false === $at) {
-                    $problems[] = $problem;
-                } else {
-                    unset($removed[$at]);
-                }
-            }
-
-            if ([] === $issues && [] === $result['optimizations'] && [] === $problems) {
+            if ([] === $issues && [] === $result['optimizations']) {
                 continue;
             }
 
             $result['issues'] = $issues;
-            $result['problems'] = $problems;
             $results[] = $result;
         }
 
@@ -258,16 +239,8 @@ final class LintBaseline
                     'source' => null,
                     'pattern' => null,
                     'location' => null,
-                    'issues' => [[
-                        'type' => 'error',
-                        'file' => $file,
-                        'line' => $line,
-                        'issueId' => LintService::ISSUE_ID_UNMATCHED_IGNORE,
-                        'message' => $message,
-                        'hint' => $hint,
-                    ]],
+                    'issues' => [new LintIssue(LintSeverity::Error, $message, $file, $line, issueId: LintService::ISSUE_ID_UNMATCHED_IGNORE, hint: $hint)],
                     'optimizations' => [],
-                    'problems' => [new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, $message, LintService::ISSUE_ID_UNMATCHED_IGNORE, null, $hint)],
                 ];
             }
         }
@@ -428,12 +401,11 @@ final class LintBaseline
     }
 
     /**
-     * @param LintIssue  $issue
      * @param LintResult $result
      */
-    private function keyOf(array $issue, array $result): string
+    private function keyOf(LintIssue $issue, array $result): string
     {
-        return self::key(self::issueId($issue), self::escape(self::relativePath($issue['file'])), self::hash($result['pattern'] ?? ''));
+        return self::key(self::issueId($issue), self::escape(self::relativePath($issue->file)), self::hash($result['pattern'] ?? ''));
     }
 
     private static function key(string $issueId, string $file, string $patternHash): string
@@ -444,15 +416,10 @@ final class LintBaseline
     /**
      * The rule of a lint issue, the error code of a pattern that does not
      * compile.
-     *
-     * @param LintIssue $issue
      */
-    private static function issueId(array $issue): string
+    private static function issueId(LintIssue $issue): string
     {
-        $validation = $issue['validation'] ?? null;
-        $code = $issue['issueId'] ?? ($validation instanceof ValidationResult ? $validation->errorCode?->value : null) ?? '';
-
-        return self::escape($code);
+        return self::escape($issue->id() ?? '');
     }
 
     private static function hash(string $pattern): string

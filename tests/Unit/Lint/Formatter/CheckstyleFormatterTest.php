@@ -13,11 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintSeverity;
+use PHPRegex\Tests\Support\LintIssueFixtures;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -44,14 +43,7 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_with_single_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Syntax,
-            LintSeverity::Error,
-            'Invalid regex pattern',
-            'regex.syntax.error',
-            'some > snippet',
-            'Fix the pattern',
-        );
+        $problem = LintIssueFixtures::invalid('Invalid > pattern');
 
         $result = [
             'file' => '/path/to/file.php',
@@ -60,9 +52,8 @@ final class CheckstyleFormatterTest extends TestCase
             'source' => 'preg_match',
             'pattern' => '/test/',
             'location' => 'in function call',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -74,49 +65,33 @@ final class CheckstyleFormatterTest extends TestCase
         // The column of the pattern in the file, not the position 5 inside the pattern.
         $this->assertStringContainsString('column="12"', $output);
         $this->assertStringContainsString('severity="error"', $output);
-        $this->assertStringContainsString('source="php-regex.regex.syntax.error"', $output);
-        $this->assertStringContainsString('Invalid regex pattern', $output);
+        $this->assertStringContainsString('source="php-regex.'.LintIssueFixtures::INVALID_CODE.'"', $output);
+        $this->assertStringContainsString('Invalid &gt; pattern', $output);
         $this->assertStringContainsString('Location: in function call', $output);
-        $this->assertStringContainsString('some &gt; snippet', $output);
-        $this->assertStringContainsString('Suggestion: Fix the pattern', $output);
+        $this->assertStringContainsString('Line 1: a**', $output);
+        $this->assertStringContainsString('Suggestion: '.LintIssueFixtures::INVALID_HINT, $output);
     }
 
     public function test_format_with_multiple_problems(): void
     {
-        $problem1 = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Warning,
-            'Nested quantifier',
-            'regex.lint.quantifier.nested',
-            null,
-            null,
-        );
+        $problem1 = LintIssueFixtures::finding(LintSeverity::Warning, 'Nested quantifier', 'regex.lint.quantifier.nested');
 
-        $problem2 = new Diagnostic(
-            DiagnosticType::Security,
-            LintSeverity::Error,
-            'ReDoS risk',
-            'regex.redos',
-            'vulnerable pattern',
-            'Use atomic groups',
-        );
+        $problem2 = LintIssueFixtures::redos(LintSeverity::Error, 'ReDoS risk', 'regex.redos');
 
         $result1 = [
             'file' => 'file1.php',
             'line' => 5,
             'pattern' => '/test1/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem1],
+            'issues' => [$problem1],
         ];
 
         $result2 = [
             'file' => 'file2.php',
             'line' => 15,
             'pattern' => '/test2/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem2],
+            'issues' => [$problem2],
         ];
 
         $report = new LintReport([$result1, $result2], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]);
@@ -128,25 +103,24 @@ final class CheckstyleFormatterTest extends TestCase
         $this->assertStringContainsString('severity="warning"', $output);
         $this->assertStringContainsString('severity="error"', $output);
         $this->assertStringContainsString('php-regex.regex.lint.quantifier.nested', $output);
-        $this->assertStringContainsString('php-regex.regex.redos', $output);
+        $this->assertStringContainsString('php-regex.regex.redos"', $output);
     }
 
     public function test_format_with_different_severities(): void
     {
         $problems = [
-            new Diagnostic(DiagnosticType::Lint, LintSeverity::Info, 'Info message', null, null, null),
-            new Diagnostic(DiagnosticType::Lint, LintSeverity::Warning, 'Warning message', null, null, null),
-            new Diagnostic(DiagnosticType::Syntax, LintSeverity::Error, 'Error message', null, null, null),
-            new Diagnostic(DiagnosticType::Security, LintSeverity::Critical, 'Critical message', null, null, null),
+            LintIssueFixtures::finding(LintSeverity::Info, 'Info message'),
+            LintIssueFixtures::finding(LintSeverity::Warning, 'Warning message'),
+            LintIssueFixtures::invalid('Error message'),
+            LintIssueFixtures::redos(LintSeverity::Critical, 'Critical message', null),
         ];
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => $problems,
+            'issues' => $problems,
         ];
 
         $report = new LintReport([$result], ['errors' => 2, 'warnings' => 1, 'optimizations' => 0]);
@@ -164,15 +138,14 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_file_paths(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'C:\\Windows\\test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -184,15 +157,14 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_normalizes_line_numbers(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'test.php',
             'line' => 0,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -208,15 +180,14 @@ final class CheckstyleFormatterTest extends TestCase
      */
     public function test_format_normalizes_column_positions(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -229,16 +200,15 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_writes_the_column_of_the_pattern_in_the_file(): void
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, 'Test', null, null, null);
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Test');
 
         $result = [
             'file' => 'test.php',
             'line' => 4,
             'column' => 17,
             'pattern' => '/(a/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -250,22 +220,14 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_escapes_xml(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Error,
-            'Message with <tags> & "quotes"',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Error, 'Message with <tags> & "quotes"');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
@@ -290,22 +252,14 @@ final class CheckstyleFormatterTest extends TestCase
 
     public function test_format_with_minimal_problem(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Lint,
-            LintSeverity::Info,
-            'Simple message',
-            null,
-            null,
-            null,
-        );
+        $problem = LintIssueFixtures::finding(LintSeverity::Info, 'Simple message');
 
         $result = [
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/test/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
@@ -319,14 +273,7 @@ final class CheckstyleFormatterTest extends TestCase
     #[Test]
     public function test_format_leaves_the_column_out_when_the_key_is_absent(): void
     {
-        $problem = new Diagnostic(
-            DiagnosticType::Syntax,
-            LintSeverity::Error,
-            'Invalid regex pattern',
-            'regex.syntax.error',
-            'some > snippet',
-            'Fix the pattern',
-        );
+        $problem = LintIssueFixtures::invalid('Invalid regex pattern');
 
         // As the JUnit build writes it: no column key at all.
         $result = [
@@ -335,9 +282,8 @@ final class CheckstyleFormatterTest extends TestCase
             'source' => 'preg_match',
             'pattern' => '/test/',
             'location' => 'in function call',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ];
 
         $report = new LintReport([$result], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);

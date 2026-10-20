@@ -100,7 +100,7 @@ final class PackageManifestTest extends TestCase
             'LanguageServer\Server', 'Linter\AnalysisService', 'Linter\Config\LintArgumentParser',
             'Linter\Config\LintArguments', 'Linter\Config\LintConfigLoader', 'Linter\Config\LintDefaultsBuilder',
             'Linter\Config\LintExtractorFactory', 'Linter\Config\ProjectTarget',
-            'Linter\Config\UnsupportedTargetException', 'Linter\Diagnostic', 'Linter\DiagnosticType',
+            'Linter\Config\UnsupportedTargetException', 'Linter\LintIssue',
             'Linter\Formatter\ConsoleFormatter', 'Linter\Formatter\FormatterRegistry', 'Linter\Formatter\JsonFormatter',
             'Linter\Formatter\LinkFormatter', 'Linter\Formatter\OutputConfiguration',
             'Linter\Formatter\OutputFormatterInterface', 'Linter\Formatter\RelativePathHelper',
@@ -132,7 +132,7 @@ final class PackageManifestTest extends TestCase
         ],
         'Laravel' => [
             'Linter\AnalysisService', 'Linter\Config\ProjectTarget', 'Linter\Config\UnsupportedTargetException',
-            'Linter\Diagnostic', 'Linter\DiagnosticType', 'Linter\Extraction\ExtractorInterface',
+            'Linter\LintIssue', 'Linter\Extraction\ExtractorInterface',
             'Linter\Extraction\InteropPresets', 'Linter\Extraction\PatternFunctionRegistry',
             'Linter\Extraction\PhpParserExtractionStrategy', 'Linter\Extraction\RouteRequirementCompiler', 'Linter\Extraction\TokenBasedExtractionStrategy',
             'Linter\Formatter\AbstractConsoleTagFormatter', 'Linter\Formatter\FormatterRegistry',

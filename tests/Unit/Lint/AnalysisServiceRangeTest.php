@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
@@ -45,21 +46,21 @@ final class AnalysisServiceRangeTest extends TestCase
         $this->assertCount(1, $issues);
         $issue = $issues[0];
         $refusal = RegexParser::create(['php_version' => '8.5'])->validate(self::KEEP_IN_LOOKBEHIND);
-        $this->assertSame('error', $issue['type']);
-        $this->assertSame('src/a.php', $issue['file']);
-        $this->assertSame(3, $issue['line']);
-        $this->assertSame(17, $issue['column']);
-        $this->assertSame(42, $issue['fileOffset'] ?? null);
-        $this->assertSame($refusal->offset, $issue['position'] ?? null);
-        $this->assertSame(10, $issue['position'] ?? null);
-        $this->assertSame('On PHP 8.5 and later: '.($refusal->error ?? 'Invalid regex.'), $issue['message']);
-        $this->assertSame('preg_match', $issue['source'] ?? null);
-        $this->assertInstanceOf(ValidationResult::class, $issue['validation'] ?? null);
-        $this->assertSame($refusal->error, $issue['validation']->error);
-        $this->assertSame(['php' => '8.5', 'pcre' => '10.44'], $issue['target'] ?? null);
+        $this->assertSame('error', $issue->severity->level());
+        $this->assertSame('src/a.php', $issue->file);
+        $this->assertSame(3, $issue->line);
+        $this->assertSame(17, $issue->column);
+        $this->assertSame(42, $issue->fileOffset);
+        $this->assertSame($refusal->offset, $issue->position);
+        $this->assertSame(10, $issue->position);
+        $this->assertSame('On PHP 8.5 and later: '.($refusal->error ?? 'Invalid regex.'), $issue->message);
+        $this->assertSame('preg_match', $issue->source);
+        $this->assertInstanceOf(ValidationResult::class, $issue->validation);
+        $this->assertSame($refusal->error, $issue->validation->error);
+        $this->assertSame(['php' => '8.5', 'pcre' => '10.44'], $issue->target);
         // The tip a floor error with this message gets: none here.
-        $this->assertArrayHasKey('tip', $issue);
-        $this->assertNull($issue['tip']);
+        $this->assertObjectHasProperty('tip', $issue);
+        $this->assertNull($issue->tip);
     }
 
     /**
@@ -77,12 +78,12 @@ final class AnalysisServiceRangeTest extends TestCase
         $issues = $this->rangeIssues($analysis, '/a\y/');
 
         $this->assertCount(1, $issues);
-        $this->assertSame('error', $issues[0]['type']);
-        $this->assertSame('On PHP 8.0 and later: Unrecognized escape sequence "\y".', $issues[0]['message']);
-        $this->assertSame(['php' => '8.0', 'pcre' => '10.35'], $issues[0]['target'] ?? null);
+        $this->assertSame('error', $issues[0]->severity->level());
+        $this->assertSame('On PHP 8.0 and later: Unrecognized escape sequence "\y".', $issues[0]->message);
+        $this->assertSame(['php' => '8.0', 'pcre' => '10.35'], $issues[0]->target);
         $this->assertSame(
             'The lowest PHP of the range reads an escape its PCRE2 refuses as the character after the backslash, as PHP 7.3 and 7.4 do without the "X" modifier, and a later one refuses it: write that character without the backslash, or "\\\\" for a backslash before it.',
-            $issues[0]['tip'] ?? null,
+            $issues[0]->tip,
         );
     }
 
@@ -94,7 +95,7 @@ final class AnalysisServiceRangeTest extends TestCase
         $issues = $this->rangeIssues($analysis, self::KEEP_IN_LOOKBEHIND);
 
         $this->assertCount(1, $issues);
-        $this->assertNull($issues[0]['tip'] ?? null);
+        $this->assertNull($issues[0]->tip);
     }
 
     #[Test]
@@ -107,10 +108,10 @@ final class AnalysisServiceRangeTest extends TestCase
         $issues = $this->rangeIssues($analysis, '/(?<=a{1,2})x/');
 
         $this->assertCount(1, $issues);
-        $message = $issues[0]['message'] ?? null;
+        $message = $issues[0]->message;
         $this->assertIsString($message);
         $this->assertStringStartsWith('On PHP 8.4 and later, before 8.5: ', $message);
-        $this->assertSame(['php' => '8.4', 'pcre' => '10.40'], $issues[0]['target'] ?? null);
+        $this->assertSame(['php' => '8.4', 'pcre' => '10.40'], $issues[0]->target);
     }
 
     #[Test]
@@ -121,7 +122,7 @@ final class AnalysisServiceRangeTest extends TestCase
         $issues = $this->rangeIssues($analysis, '/(?<=a{1,2})x/');
 
         $this->assertCount(1, $issues);
-        $message = $issues[0]['message'] ?? null;
+        $message = $issues[0]->message;
         $this->assertIsString($message);
         $this->assertStringStartsWith('On PHP 8.4 and later, before 8.4.10; PHP 8.5 and later: ', $message);
     }
@@ -148,11 +149,11 @@ final class AnalysisServiceRangeTest extends TestCase
             $issues = $this->rangeIssues($analysis, $pattern);
 
             $this->assertCount(1, $issues, $pattern);
-            $this->assertSame('warning', $issues[0]['type']);
-            $this->assertSame('regex.lint.compat.meaningChanges', $issues[0]['issueId'] ?? null);
-            $this->assertSame('From PHP 8.4 (PCRE2 10.44) the pattern parses differently: the same text means something else there.', $issues[0]['message']);
-            $this->assertSame(['php' => '8.4', 'pcre' => '10.44'], $issues[0]['target'] ?? null);
-            $this->assertSame(3, $issues[0]['line']);
+            $this->assertSame('warning', $issues[0]->severity->level());
+            $this->assertSame('regex.lint.compat.meaningChanges', $issues[0]->issueId);
+            $this->assertSame('From PHP 8.4 (PCRE2 10.44) the pattern parses differently: the same text means something else there.', $issues[0]->message);
+            $this->assertSame(['php' => '8.4', 'pcre' => '10.44'], $issues[0]->target);
+            $this->assertSame(3, $issues[0]->line);
         }
     }
 
@@ -189,7 +190,7 @@ final class AnalysisServiceRangeTest extends TestCase
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<LintIssue>
      */
     private function rangeIssues(AnalysisService $analysis, string $pattern): array
     {
@@ -197,7 +198,7 @@ final class AnalysisServiceRangeTest extends TestCase
 
         return array_values(array_filter(
             $analysis->lint([$occurrence]),
-            static fn (array $issue): bool => null !== ($issue['target'] ?? null),
+            static fn (LintIssue $issue): bool => null !== $issue->target,
         ));
     }
 }

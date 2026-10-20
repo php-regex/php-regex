@@ -21,13 +21,12 @@ use PHPRegex\Laravel\Output\LintProgressBar;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\UnsupportedTargetException;
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\Formatter\JsonFormatter;
 use PHPRegex\Linter\Formatter\LinkFormatter;
 use PHPRegex\Linter\Formatter\RelativePathHelper;
 use PHPRegex\Linter\LintException;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
 use PHPRegex\Linter\LintRequest;
 use PHPRegex\Linter\LintService;
@@ -292,9 +291,8 @@ final class LintCommand extends Command
                 'source' => 'validation',
                 'pattern' => null,
                 'location' => 'Laravel validation rule',
-                'issues' => [['type' => 'error', 'message' => $failure['message'], 'file' => $failure['file'], 'line' => 1, 'issueId' => self::ISSUE_ID_SOURCE_UNREADABLE, 'source' => 'validation']],
+                'issues' => [new LintIssue(LintSeverity::Error, $failure['message'], $failure['file'], 1, issueId: self::ISSUE_ID_SOURCE_UNREADABLE, source: 'validation')],
                 'optimizations' => [],
-                'problems' => [new Diagnostic(DiagnosticType::Lint, LintSeverity::Error, $failure['message'], self::ISSUE_ID_SOURCE_UNREADABLE)],
             ];
         }
 

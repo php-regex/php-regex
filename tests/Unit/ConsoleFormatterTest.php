@@ -15,7 +15,9 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Linter\Formatter\ConsoleFormatter;
 use PHPRegex\Linter\Formatter\OutputConfiguration;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\LintReport;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +42,6 @@ final class ConsoleFormatterTest extends TestCase
                 'pattern' => '/a+/',
                 'issues' => [],
                 'optimizations' => [],
-                'problems' => [],
             ]],
             stats: ['errors' => 0, 'warnings' => 0, 'optimizations' => 0],
         );
@@ -138,13 +139,7 @@ final class ConsoleFormatterTest extends TestCase
                 'file' => './test.php',
                 'line' => 10,
                 'pattern' => $original,
-                'issues' => [[
-                    'type' => 'warning',
-                    'file' => './test.php',
-                    'line' => 10,
-                    'message' => 'Anything.',
-                    'issueId' => 'regex.lint.example',
-                ]],
+                'issues' => [new LintIssue(LintSeverity::Warning, 'Anything.', './test.php', 10, issueId: 'regex.lint.example')],
                 'optimizations' => [[
                     'file' => './test.php',
                     'line' => 10,
@@ -154,7 +149,6 @@ final class ConsoleFormatterTest extends TestCase
                     'savings' => 1,
                     'source' => 'optimizer',
                 ]],
-                'problems' => [],
             ]],
             stats: ['errors' => 0, 'warnings' => 1, 'optimizations' => 1],
         );

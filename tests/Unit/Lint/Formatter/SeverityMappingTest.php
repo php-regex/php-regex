@@ -14,8 +14,6 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Formatter;
 
 use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\Diagnostic;
-use PHPRegex\Linter\DiagnosticType;
 use PHPRegex\Linter\Formatter\CheckstyleFormatter;
 use PHPRegex\Linter\Formatter\GithubFormatter;
 use PHPRegex\Linter\Formatter\JsonFormatter;
@@ -27,6 +25,7 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\LintIssueFixtures;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -129,15 +128,14 @@ final class SeverityMappingTest extends TestCase
 
     private static function report(LintSeverity $severity): LintReport
     {
-        $problem = new Diagnostic(DiagnosticType::Lint, $severity, 'Message', 'regex.lint.test');
+        $problem = LintIssueFixtures::finding($severity, 'Message', 'regex.lint.test');
 
         return new LintReport([[
             'file' => 'test.php',
             'line' => 1,
             'pattern' => '/a/',
-            'issues' => [],
             'optimizations' => [],
-            'problems' => [$problem],
+            'issues' => [$problem],
         ]], ['errors' => 0, 'warnings' => 0, 'optimizations' => 0]);
     }
 

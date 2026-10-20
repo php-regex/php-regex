@@ -51,22 +51,22 @@ final class LintStatsCounter
 
         foreach ($results as $result) {
             foreach ($result['issues'] as $issue) {
-                if ('error' === $issue['type']) {
+                if ($issue->severity->failsRun()) {
                     $stats['errors']++;
                     // A ReDoS error or a lint rule at Error fails the run like
                     // any error, but the pattern compiles: the summaries name
                     // them apart.
-                    if (isset($issue['analysis'])) {
+                    if (null !== $issue->analysis) {
                         $redos++;
-                    } elseif (!isset($issue['validation'])) {
+                    } elseif (null === $issue->validation) {
                         $lintErrors++;
                     }
-                } elseif ('warning' === $issue['type']) {
+                } elseif ('warning' === $issue->severity->level()) {
                     $stats['warnings']++;
-                    if (ValidationErrorCategory::Limit === ($issue['validation'] ?? null)?->category) {
+                    if (ValidationErrorCategory::Limit === $issue->validation?->category) {
                         $notAnalyzed++;
                     }
-                } elseif ('info' === $issue['type']) {
+                } else {
                     $infos++;
                 }
             }

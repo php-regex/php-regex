@@ -21,6 +21,7 @@ use PHPRegex\LanguageServer\Protocol\Response;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
+use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
@@ -48,8 +49,6 @@ use PHPUnit\Framework\TestCase;
  * a pattern no single literal holds (a heredoc, a concatenation) and a
  * string whose first byte is no delimiter are reported by the command
  * alone — nothing in the editor can be underlined for them.
- *
- * @phpstan-import-type LintIssue from AnalysisService
  *
  * @phpstan-type ParityRange array{start: array{line: int, character: int}, end: array{line: int, character: int}}
  * @phpstan-type ParityDiagnostic array{code: string, severity: int, range: ParityRange, message: string}
@@ -340,12 +339,12 @@ final class LintParityTest extends TestCase
 
         $rows = [];
         foreach ($issues as $issue) {
-            $issueId = $issue['issueId'] ?? null;
-            $type = $issue['type'];
-            $line = $issue['line'];
-            $message = $issue['message'];
-            $position = $issue['position'] ?? null;
-            $validation = $issue['validation'] ?? null;
+            $issueId = $issue->issueId;
+            $type = $issue->severity->level();
+            $line = $issue->line;
+            $message = $issue->message;
+            $position = $issue->position;
+            $validation = $issue->validation;
 
             $limit = $validation instanceof ValidationResult && ValidationErrorCategory::Limit === $validation->category;
             $lint = \is_string($issueId);
@@ -388,11 +387,11 @@ final class LintParityTest extends TestCase
             if (($lint && !$redos && !$search) || $limit) {
                 $row['message'] = $message;
             } elseif ($redos) {
-                $analysis = $issue['analysis'] ?? null;
+                $analysis = $issue->analysis;
                 $this->assertInstanceOf(RedosAnalysis::class, $analysis);
                 $row['message'] = implode("\n", [$message, ...RedosVerdict::evidence($analysis)]);
             } elseif ($search) {
-                $analysis = $issue['analysis'] ?? null;
+                $analysis = $issue->analysis;
                 $this->assertInstanceOf(RedosAnalysis::class, $analysis);
                 $this->assertInstanceOf(RedosSearchCost::class, $analysis->searchCost);
                 $row['message'] = implode("\n", [$message, ...RedosVerdict::searchEvidence($analysis->searchCost, $analysis->pcreVersion)]);
@@ -412,13 +411,11 @@ final class LintParityTest extends TestCase
      * The ReDoS verdict covers the risky part the analysis names, the whole
      * body when it names none.
      *
-     * @param array<string, mixed> $issue
-     *
      * @return ParityRange
      */
-    private static function redosRange(array $issue, PatternSpan $span): array
+    private static function redosRange(LintIssue $issue, PatternSpan $span): array
     {
-        $analysis = $issue['analysis'] ?? null;
+        $analysis = $issue->analysis;
         self::assertInstanceOf(RedosAnalysis::class, $analysis);
 
         $hotspot = $analysis->primaryHotspot();

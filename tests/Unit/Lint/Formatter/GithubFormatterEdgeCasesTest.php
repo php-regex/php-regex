@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 
 final class GithubFormatterEdgeCasesTest extends TestCase
 {
-    public function test_flatten_problems_skips_non_regex_problem(): void
+    public function test_flatten_problems_of_a_result_without_issue_or_optimization_is_empty(): void
     {
         $formatter = new GithubFormatter();
         $method = (new \ReflectionClass($formatter))->getMethod('flattenProblems');
@@ -26,7 +26,9 @@ final class GithubFormatterEdgeCasesTest extends TestCase
         $result = $method->invoke($formatter, [[
             'file' => 'file.php',
             'line' => 1,
-            'problems' => ['not-a-problem'],
+            'pattern' => '/a/',
+            'issues' => [],
+            'optimizations' => [],
         ]]);
 
         $this->assertSame([], $result);

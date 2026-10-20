@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
+use PHPRegex\Linter\LintIssue;
+use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\LintStatsCounter;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
@@ -34,15 +36,14 @@ final class LintStatsCounterTest extends TestCase
                 'line' => 1,
                 'pattern' => '/(/',
                 'issues' => [
-                    ['type' => 'error', 'message' => 'invalid', 'file' => 'a.php', 'line' => 1, 'validation' => $invalid],
-                    ['type' => 'error', 'message' => 'redos', 'file' => 'a.php', 'line' => 1, 'analysis' => $redos],
-                    ['type' => 'error', 'message' => 'lint rule', 'file' => 'a.php', 'line' => 1],
-                    ['type' => 'warning', 'message' => 'warning', 'file' => 'a.php', 'line' => 1],
-                    ['type' => 'info', 'message' => 'info', 'file' => 'a.php', 'line' => 1],
-                    ['type' => 'info', 'message' => 'info', 'file' => 'a.php', 'line' => 1],
+                    new LintIssue(LintSeverity::Error, 'invalid', 'a.php', 1, validation: $invalid),
+                    new LintIssue(LintSeverity::Error, 'redos', 'a.php', 1, analysis: $redos),
+                    new LintIssue(LintSeverity::Error, 'lint rule', 'a.php', 1),
+                    new LintIssue(LintSeverity::Warning, 'warning', 'a.php', 1),
+                    new LintIssue(LintSeverity::Info, 'info', 'a.php', 1),
+                    new LintIssue(LintSeverity::Info, 'info', 'a.php', 1),
                 ],
                 'optimizations' => [],
-                'problems' => [],
             ],
         ];
 
@@ -65,13 +66,12 @@ final class LintStatsCounterTest extends TestCase
                 'line' => 1,
                 'pattern' => '/abcd/',
                 'issues' => [
-                    ['type' => 'warning', 'message' => 'Not analyzed: too long', 'file' => 'a.php', 'line' => 1, 'validation' => $limit],
+                    new LintIssue(LintSeverity::Warning, 'Not analyzed: too long', 'a.php', 1, validation: $limit),
                     // A warning of a validation that is no limit is not one.
-                    ['type' => 'warning', 'message' => 'warning', 'file' => 'a.php', 'line' => 1, 'validation' => $regex->validate('/a/')],
-                    ['type' => 'warning', 'message' => 'warning', 'file' => 'a.php', 'line' => 1],
+                    new LintIssue(LintSeverity::Warning, 'warning', 'a.php', 1, validation: $regex->validate('/a/')),
+                    new LintIssue(LintSeverity::Warning, 'warning', 'a.php', 1),
                 ],
                 'optimizations' => [],
-                'problems' => [],
             ],
         ];
 
@@ -87,10 +87,9 @@ final class LintStatsCounterTest extends TestCase
                 'line' => 1,
                 'pattern' => '/a/',
                 'issues' => [
-                    ['type' => 'warning', 'message' => 'warning', 'file' => 'a.php', 'line' => 1],
+                    new LintIssue(LintSeverity::Warning, 'warning', 'a.php', 1),
                 ],
                 'optimizations' => [],
-                'problems' => [],
             ],
         ];
 
