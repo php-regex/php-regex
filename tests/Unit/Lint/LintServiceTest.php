@@ -704,6 +704,21 @@ final class LintServiceTest extends TestCase
     }
 
     /**
+     * An ignored pattern loses its heuristic risk findings alone: the
+     * findings of the other rules after them stay.
+     */
+    #[Test]
+    public function test_analysis_keeps_the_other_findings_of_an_ignored_pattern(): void
+    {
+        $ids = array_map(
+            static fn (LintIssue $issue): string => $issue->issueId ?? '',
+            (new AnalysisService(RegexParser::create(), redosIgnoredPatterns: ['(a+)+b{1}']))->lint([new PatternOccurrence('/(a+)+b{1}/', 'test.php', 1, 'preg_match')]),
+        );
+
+        $this->assertSame(['regex.lint.group.quantifiedCapture', 'regex.lint.quantifier.useless'], $ids);
+    }
+
+    /**
      * The ReDoS ignore list takes patterns, fragments or full regexes: a full
      * regex, delimiters and modifiers included, skips its verdict too.
      */
