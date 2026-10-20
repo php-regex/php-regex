@@ -79,6 +79,16 @@ final class Rewriter extends AbstractNodeVisitor
      */
     private bool $possessify = false;
 
+    /**
+     * Whether "U" makes a plain quantifier lazy and "??" greedy.
+     */
+    private bool $lazyByDefault = false;
+
+    /**
+     * Whether an inline flag stands anywhere in the pattern visited.
+     */
+    private bool $inlineFlags = false;
+
     private ?PatternPrinter $compiler = null;
 
     private readonly int $minQuantifierCount;
@@ -114,7 +124,9 @@ final class Rewriter extends AbstractNodeVisitor
         $this->flags = $node->flags;
         $this->unicodeMode = str_contains($this->flags, 'u');
         $this->charSetAnalyzer = new CharSetAnalyzer($this->flags);
-        $this->possessify = $this->possessive && !str_contains($this->flags, 'U') && !$this->containsInlineFlags($node->pattern);
+        $this->lazyByDefault = str_contains($this->flags, 'U');
+        $this->inlineFlags = $this->containsInlineFlags($node->pattern);
+        $this->possessify = $this->possessive && !$this->lazyByDefault && !$this->inlineFlags;
         $optimizedPattern = $node->pattern->accept($this);
 
         // Remove useless flags
@@ -1502,8 +1514,15 @@ final class Rewriter extends AbstractNodeVisitor
     private function optionalGroup(array $rests): ?NodeInterface
     {
         $emptyBranch = self::emptyBranchQuantifier($rests);
-        if (false === $emptyBranch) {
+        // An inline flag may turn "U" on or off around the group, which
+        // swaps what "?" and "??" mean: the alternation stays as written.
+        if (false === $emptyBranch || (null !== $emptyBranch && $this->inlineFlags)) {
             return null;
+        }
+
+        // Under "U" the spellings swap: "?" is lazy, "??" greedy.
+        if (null !== $emptyBranch && $this->lazyByDefault) {
+            $emptyBranch = QuantifierType::Greedy === $emptyBranch ? QuantifierType::Lazy : QuantifierType::Greedy;
         }
 
         $kept = array_values(array_filter($rests, static fn (?LiteralNode $rest): bool => null !== $rest));

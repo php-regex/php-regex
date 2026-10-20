@@ -73,6 +73,10 @@ final class AlternationFactorizationPriorityTest extends TestCase
         yield 'escapes sharing a backslash' => ['pattern' => '/(\r\n|\r|\n)/s'];
         yield 'escaped dots sharing a prefix' => ['pattern' => '/src="(\.\.\/|\.\/)+/'];
         yield 'escaped slashes sharing a prefix' => ['pattern' => '/(\/\#\!\/|\/)/'];
+        yield 'shorter first under U' => ['pattern' => '/a|ab/U'];
+        yield 'longer first under U' => ['pattern' => '/ab|a/U'];
+        yield 'longer first after an inline U' => ['pattern' => '/(?U)(?:ab|a)/'];
+        yield 'longer first in a group turning U off' => ['pattern' => '/(?-U:ab|a)/U'];
     }
 
     /**
@@ -85,5 +89,11 @@ final class AlternationFactorizationPriorityTest extends TestCase
         yield 'no empty branch' => ['pattern' => '/ab|ac/', 'expected' => '/a(?:b|c)/'];
         yield 'prefix of a zero' => ['pattern' => '/0a|0b/', 'expected' => '/0(?:a|b)/'];
         yield 'prefix of escapes' => ['pattern' => '/\r\n|\r\t/', 'expected' => '/\r(?:\n|\t)/'];
+        // Under U a plain quantifier is lazy and "??" greedy: the order the
+        // branches are tried in is kept with the other spelling.
+        yield 'shorter first under U goes lazy' => ['pattern' => '/a|ab/U', 'expected' => '/a(?:b)?/U'];
+        yield 'shorter last under U stays greedy' => ['pattern' => '/ab|a/U', 'expected' => '/a(?:b)??/U'];
+        yield 'no empty branch under an inline U' => ['pattern' => '/(?U)(?:ab|ac)/', 'expected' => '/(?U)(?:a(?:b|c))/'];
+        yield 'an empty branch under an inline U' => ['pattern' => '/(?U)(?:ab|a)/', 'expected' => '/(?U)(?:ab|a)/'];
     }
 }
