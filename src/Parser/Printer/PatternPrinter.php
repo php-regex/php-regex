@@ -266,13 +266,25 @@ final class PatternPrinter extends AbstractNodeVisitor
     private array $keptQuotedBrackets = [];
 
     /**
-     * Where pretty printing writes a bracket delimiter, the mark that stands
+     * Where pretty printing writes a bracket delimiter, or a pattern is
+     * written again to balance one (see rebalancingMark), the mark that stands
      * for the backslash of a literal bracket until the balance is known: the
      * bracket stays counted when it pairs with one written as is.
      *
      * @var non-empty-string|null
      */
     private ?string $bracketMark = null;
+
+    /**
+     * While the pattern is written again, marked, because PHP would not end
+     * it where written, the mark (see bracketMark): every literal bracket of
+     * the delimiter is marked then, unescaped ones too, and each lookbehind
+     * or atomic group whose symbol holds one (see
+     * DelimiterBrackets::rebalanced).
+     *
+     * @var non-empty-string|null
+     */
+    private ?string $rebalancingMark = null;
 
     /**
      * The groups holding only comments that a compacted pattern drops, by
@@ -484,7 +496,13 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     public function groupOpening(GroupNode $node, string $flags): string
     {
-        return $this->openingAsWritten($node, $this->treeOpening($node, $flags));
+        $opening = $this->openingAsWritten($node, $this->treeOpening($node, $flags));
+
+        // Under "<>" the symbol of a lookbehind or an atomic group holds a
+        // bracket PHP counts: marked, it may take its name instead.
+        return null !== $this->rebalancingMark && '<' === $this->delimiter && isset(DelimiterBrackets::NAMED_OPENINGS[$opening])
+            ? $this->rebalancingMark.DelimiterBrackets::MARK_GROUP.$opening
+            : $opening;
     }
 
     #[\Override]
@@ -511,15 +529,16 @@ final class PatternPrinter extends AbstractNodeVisitor
             ? []
             : DelimiterBrackets::asWritten($node, $this->source, $this->quotedSpans(), false)[1];
 
-        $body = DelimiterBrackets::spelledToEnd(
-            $this->ignorableText(0, $node->pattern->getStartPosition())
-            .$node->pattern->accept($this)
-            .$this->ignorableText($node->pattern->getEndPosition(), null),
-            $node->delimiter,
-            $this->closingDelimiter,
-        );
+        $write = function () use ($node): string {
+            $this->capturesOpened = 0;
+            $this->flags = $node->flags;
 
-        return $node->delimiter.$body.$this->closingDelimiter.$node->flags;
+            return $this->ignorableText(0, $node->pattern->getStartPosition())
+                .$node->pattern->accept($this)
+                .$this->ignorableText($node->pattern->getEndPosition(), null);
+        };
+
+        return $node->delimiter.$this->endingWhereWritten($write(), $write).$this->closingDelimiter.$node->flags;
     }
 
     #[\Override]
@@ -686,7 +705,7 @@ final class PatternPrinter extends AbstractNodeVisitor
             return $this->writtenSpelling($node, $value, $value);
         }
 
-        return $this->writtenSpelling($node, $this->escapeString($value), $value);
+        return $this->markedWritten($this->writtenSpelling($node, $this->escapeString($value), $value));
     }
 
     #[\Override]
@@ -2006,7 +2025,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         if ($node instanceof LiteralNode && '[' === $node->value) {
             $written = $this->writtenText($node);
             if (null !== $written) {
-                return $written;
+                return $this->markedWritten($written);
             }
 
             $mark = $this->bracketMarkFor('[');
@@ -2019,8 +2038,10 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         if ($node instanceof RangeNode) {
             $start = $node->start;
+            // A "[" before "-" opens no POSIX class: it is written as the
+            // pattern wrote it, or unescaped.
             $startCompiled = $start instanceof LiteralNode && '[' === $start->value
-                ? ($this->bracketMarkFor('[') ?? '').'['
+                ? $this->markedWritten($this->writtenText($start) ?? ($this->bracketMarkFor('[') ?? '').'[')
                 : $start->accept($this);
 
             return $startCompiled.'-'.$node->end->accept($this);
@@ -2337,21 +2358,23 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function renderRoot(RegexNode $node, string $flags, bool $layout, string $trail = PatternLayout::TRAIL): string
     {
-        $this->capturesOpened = 0;
-        $this->flags = $flags;
-        $this->layout = new PatternLayout($this, $this->width, $this->countsCodePoints, $this->source, $trail, $layout);
-        $body = $this->layout->root($node->pattern);
+        $write = function () use ($node, $flags, $layout, $trail): string {
+            $this->capturesOpened = 0;
+            $this->flags = $flags;
+            $this->layout = new PatternLayout($this, $this->width, $this->countsCodePoints, $this->source, $trail, $layout);
+
+            return $this->layout->root($node->pattern);
+        };
+        $body = $write();
         $tail = $layout && str_contains($this->flags, 'x') ? "\n" : '';
 
         // PHP pairs bracket delimiters by counting them: a dropped comment
         // may leave one alone, a kept one hold the partner of a literal.
         if (null !== $this->bracketMark) {
             $body = DelimiterBrackets::markedBalanced($body, $this->bracketMark, $node->delimiter, $this->closingDelimiter);
-        } elseif (self::MODE_PRETTY !== $this->mode && $node->delimiter !== $this->closingDelimiter) {
-            $body = DelimiterBrackets::balanced($body, $node->delimiter, $this->closingDelimiter);
         }
 
-        return $node->delimiter.DelimiterBrackets::spelledToEnd($body, $node->delimiter, $this->closingDelimiter).$tail.$this->closingDelimiter.$flags;
+        return $node->delimiter.$this->endingWhereWritten($body, $write).$tail.$this->closingDelimiter.$flags;
     }
 
     /**
@@ -2372,6 +2395,62 @@ final class PatternPrinter extends AbstractNodeVisitor
         }
 
         return false;
+    }
+
+    /**
+     * The body spelled so that PHP ends the pattern at the closing delimiter
+     * written after it. Where the body as written does not, the brackets
+     * PHP counts do not pair: a printer that drops a comment, collapses it
+     * or writes a literal bracket or a group otherwise than its source may
+     * leave one alone. The body is then written again with its literal
+     * brackets and its lookbehind and atomic symbols marked, and each is
+     * spelled where it pairs (see DelimiterBrackets::rebalanced). Where no
+     * spelling pairs them, the body is given back as written.
+     *
+     * @param \Closure(): string $write writes the body again
+     */
+    private function endingWhereWritten(string $body, \Closure $write): string
+    {
+        $spelled = DelimiterBrackets::spelledToEnd($body, $this->delimiter, $this->closingDelimiter);
+        if ($this->delimiter === $this->closingDelimiter || DelimiterBrackets::endsWhereWritten($spelled, $this->delimiter, $this->closingDelimiter)) {
+            return $spelled;
+        }
+
+        $bracketMark = $this->bracketMark;
+        $mark = $bracketMark ?? self::markAbsentFrom($body, "\x03\x04", "\x04", self::BRACKET_MARKS);
+        $this->bracketMark = $this->rebalancingMark = $mark;
+
+        try {
+            $balanced = DelimiterBrackets::rebalanced($write(), $mark, $this->delimiter, $this->closingDelimiter);
+        } finally {
+            $this->bracketMark = $bracketMark;
+            $this->rebalancingMark = null;
+        }
+
+        return null === $balanced ? $spelled : DelimiterBrackets::spelledToEnd($balanced, $this->delimiter, $this->closingDelimiter);
+    }
+
+    /**
+     * A literal's text as written, marked where it is a bracket of the
+     * delimiter and the pattern is written again to balance them (see
+     * endingWhereWritten): unescaped, or escaped as escapeString marks it.
+     */
+    private function markedWritten(string $text): string
+    {
+        if (null === $this->rebalancingMark) {
+            return $text;
+        }
+
+        if ($text === $this->delimiter || $text === $this->closingDelimiter) {
+            return $this->rebalancingMark.DelimiterBrackets::MARK_BARE.$text;
+        }
+
+        $bracket = substr($text, 1);
+        if (2 === \strlen($text) && '\\' === $text[0] && ($bracket === $this->delimiter || $bracket === $this->closingDelimiter)) {
+            return ($this->bracketMarkFor($bracket) ?? '\\').$bracket;
+        }
+
+        return $text;
     }
 
     /**

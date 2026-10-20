@@ -106,6 +106,8 @@ The formatter changes the layout, never the vocabulary. Escapes, group-name synt
 
 `compact` only removes things. Where removing a comment or layout would fuse two tokens, it writes an empty group `(?:)` between them: `a{(?#c),2}` becomes `a{(?:),2}`, because `a{,2}` is a quantifier on PCRE2 10.43 and later.
 
+Under a bracket delimiter, `{…}` for one, PHP finds where the pattern ends by counting the brackets of the delimiter it does not see escaped. Where the output would leave one of them without the partner it had, a bracket of a verb name, a group or a class once a comment is dropped, a literal bracket of the delimiter is spelled so that the count still ends at the closing delimiter: escaped, left bare, or quoted (`\Q{\E`) where bare it would mean something else. Under `<>`, where no literal bracket pairs, a lookbehind or an atomic group is written by name, `(*plb:a)` for `(?<=a)`, whose symbol holds a `<` or a `>`.
+
 ## Guarantees
 
 - **A pattern that already fits comes back byte for byte.** A short pattern is left alone, unless it holds a raw line break, which is respelled `\n` so that every line break of the output is layout.

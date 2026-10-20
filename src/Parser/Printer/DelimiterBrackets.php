@@ -42,6 +42,38 @@ use PHPRegex\Parser\Text\Ascii;
 final class DelimiterBrackets
 {
     /**
+     * After a mark, a literal bracket written unescaped (see rebalanced).
+     */
+    public const MARK_BARE = 'B';
+
+    /**
+     * After a mark, a literal bracket written escaped that may only come
+     * back counted quoted, "\Q(\E" (see rebalanced).
+     */
+    public const MARK_QUOTED = 'Q';
+
+    /**
+     * After a mark, the opening of a lookbehind or an atomic group written
+     * with its symbol (see rebalanced).
+     */
+    public const MARK_GROUP = 'G';
+
+    /**
+     * The symbols of the lookbehinds and the atomic group, each holding a
+     * "<" or a ">", with the name that holds none: PCRE2 reads both from
+     * 10.34 on.
+     */
+    public const NAMED_OPENINGS = ['(?<=' => '(*plb:', '(?<!' => '(*nlb:', '(?<*' => '(*naplb:', '(?>' => '(*atomic:'];
+
+    private const KIND_FIXED = 0;
+
+    private const KIND_LITERAL = 1;
+
+    private const KIND_QUOTED = 2;
+
+    private const KIND_GROUP = 3;
+
+    /**
      * The "\Q...\E" regions of a pattern's source, as offsets: start, end.
      * A comment, a verb name or a callout string holds text, where a "\Q"
      * opens no quote, and only a backslash that starts an escape opens one:
@@ -158,40 +190,6 @@ final class DelimiterBrackets
     }
 
     /**
-     * Escape the delimiter brackets PHP would not pair once comments are
-     * dropped, "{a(?#{)b}c}" compacted for one: PHP counts the brackets of
-     * a body, skipping the escaped ones, to find where it ends.
-     */
-    public static function balanced(string $body, string $opening, string $closing): string
-    {
-        $open = [];
-        $unpaired = [];
-        $length = \strlen($body);
-        for ($i = 0; $i < $length; $i++) {
-            $character = $body[$i];
-            if ('\\' === $character) {
-                $i += self::escapeLength($body, $i) - 1;
-            } elseif ($closing === $character) {
-                if ([] === $open) {
-                    $unpaired[] = $i;
-                } else {
-                    array_pop($open);
-                }
-            } elseif ($opening === $character) {
-                $open[] = $i;
-            }
-        }
-
-        $unpaired = array_merge($unpaired, $open);
-        rsort($unpaired);
-        foreach ($unpaired as $offset) {
-            $body = substr_replace($body, '\\', $offset, 0);
-        }
-
-        return $body;
-    }
-
-    /**
      * A body pretty printing wrote with $mark for the backslash of each
      * literal bracket of the delimiter (followed by "Q" where the bracket
      * cannot stand unescaped, "(", ")" and "[" outside a class, "]" in one),
@@ -265,6 +263,88 @@ final class DelimiterBrackets
     }
 
     /**
+     * A body written with $mark before each literal bracket of the delimiter
+     * and before each symbol of a lookbehind or an atomic group that holds
+     * one, spelled so that PHP ends the pattern at the closing delimiter;
+     * null when no spelling of the marked items can.
+     *
+     * PHP counts each bracket of the delimiter it does not see escaped. The
+     * brackets nothing marks, a group's, a class's, a comment's, a name's,
+     * are counted as written. After the mark, a literal bracket is written
+     * unescaped ("B" then the bracket), escaped (the bracket alone) or
+     * escaped where it may only come back counted quoted ("Q" then the
+     * bracket); "G" then the symbol marks a group. Each stays as written
+     * unless PHP would then end the pattern too soon, at a closing bracket
+     * with nothing open, or never, past an opening one nothing closes.
+     * There a literal bracket nearby changes, counted or not, before a
+     * group takes its name, "(*plb:" for "(?<=", which holds no bracket:
+     * read left to right, a closing bracket with nothing open turns the
+     * nearest marked item before it; read right to left, an opening one
+     * nothing closes turns the nearest marked item after it.
+     *
+     * A literal bracket comes back counted unescaped where it means the same
+     * there, quoted otherwise, "\Q{\E" (see markedBalanced). "\c\" is
+     * spelled "\x1C" first, so that PHP pairs each backslash as PCRE does.
+     *
+     * @param non-empty-string $mark
+     */
+    public static function rebalanced(string $body, string $mark, string $opening, string $closing): ?string
+    {
+        $body = self::controlBackslashesSpelledAll($body);
+        $tokens = self::markedTokens($body, $mark, $opening, $closing);
+        $included = array_column($tokens, 5);
+        $order = array_keys($tokens);
+        if (!self::paired($tokens, $included, $order, true) || !self::paired($tokens, $included, array_reverse($order), false)) {
+            return null;
+        }
+
+        $result = '';
+        $from = 0;
+        foreach ($tokens as $index => [$start, $end, $bracket, , $kind]) {
+            if (self::KIND_FIXED === $kind) {
+                continue;
+            }
+
+            $result .= substr($body, $from, $start - $from).match (true) {
+                self::KIND_GROUP === $kind => self::groupSpelling(substr($body, $start + \strlen($mark) + 1, $end - $start - \strlen($mark) - 1), $included[$index]),
+                !$included[$index] => '\\'.$bracket,
+                self::KIND_LITERAL === $kind && self::standsBare($body, $start, $end, $bracket, $mark) => $bracket,
+                default => '\\Q'.$bracket.'\\E',
+            };
+            $from = $end;
+        }
+
+        return $result.substr($body, $from);
+    }
+
+    /**
+     * Whether PHP, pairing each backslash with the character after it, reads
+     * the whole body before the closing delimiter: no closing delimiter
+     * stands bare in it, or, for brackets, every one pairs.
+     */
+    public static function endsWhereWritten(string $body, string $opening, string $closing): bool
+    {
+        $depth = 0;
+        $length = \strlen($body);
+        for ($i = 0; $i < $length; $i++) {
+            $character = $body[$i];
+            if ('\\' === $character) {
+                $i++;
+            } elseif ($closing === $character) {
+                if ($opening === $closing || 0 === $depth) {
+                    return false;
+                }
+
+                $depth--;
+            } elseif ($opening === $character) {
+                $depth++;
+            }
+        }
+
+        return 0 === $depth;
+    }
+
+    /**
      * The body spelled so that PHP ends the pattern at the closing delimiter
      * written after it, where PCRE ends it.
      *
@@ -295,7 +375,7 @@ final class DelimiterBrackets
      * The owner is the comment that holds the bracket; true for a bracket
      * written as is, a name's, a group's, a class's, a repeat's; null for a
      * plain literal bracket, which may take a backslash where PHP would not
-     * pair it (see balanced), and for a quoted one. A line break, a tab, a
+     * pair it (see rebalanced), and for a quoted one. A line break, a tab, a
      * vertical tab or a form feed parts a quoted run the output writes:
      * each part is a run of its own.
      *
@@ -412,7 +492,7 @@ final class DelimiterBrackets
      * respelled where it stands alone or with another quoted one: taking
      * away pairs whose two brackets go leaves every other pair as it was.
      * Kept, it pairs with a bracket written as is, or with a literal one
-     * balanced leaves alone. A run is written whole: kept, it keeps each of
+     * rebalanced leaves alone. A run is written whole: kept, it keeps each of
      * its brackets, and each one's quoted partner keeps its own run.
      *
      * @param list<array{bool, CommentNode|true|null, int, bool, int}> $tokens
@@ -616,7 +696,7 @@ final class DelimiterBrackets
     }
 
     /**
-     * Pair brackets as balanced does, a closing one with the last opening
+     * Pair brackets as PHP counts them, a closing one with the last opening
      * one still open: for each, the index of its partner, or null.
      *
      * @param array<int, bool> $opens whether each bracket opens
@@ -687,29 +767,185 @@ final class DelimiterBrackets
     }
 
     /**
-     * Whether PHP, pairing each backslash with the character after it, reads
-     * the whole body before the closing delimiter: no closing delimiter
-     * stands bare in it, or, for brackets, every one pairs.
+     * Every "\c\" spelled "\x1C": PHP then pairs each backslash with the
+     * character after it as PCRE does.
      */
-    private static function endsWhereWritten(string $body, string $opening, string $closing): bool
+    private static function controlBackslashesSpelledAll(string $body): string
     {
-        $depth = 0;
+        if (!str_contains($body, '\\c\\')) {
+            return $body;
+        }
+
+        $spelled = '';
         $length = \strlen($body);
         for ($i = 0; $i < $length; $i++) {
-            $character = $body[$i];
-            if ('\\' === $character) {
-                $i++;
-            } elseif ($closing === $character) {
-                if ($opening === $closing || 0 === $depth) {
-                    return false;
+            if ('\\' !== $body[$i]) {
+                $spelled .= $body[$i];
+
+                continue;
+            }
+
+            $escape = substr($body, $i, self::escapeLength($body, $i));
+            $spelled .= '\\c\\' === $escape ? '\\x1C' : $escape;
+            $i += \strlen($escape) - 1;
+        }
+
+        return $spelled;
+    }
+
+    /**
+     * The brackets of the delimiter a marked body holds, in order, each as
+     * its start, its end, the bracket, whether it opens, its kind (one of
+     * the KIND_* constants) and whether PHP counts it as written.
+     *
+     * @param non-empty-string $mark
+     *
+     * @return list<array{int, int, string, bool, int, bool}>
+     */
+    private static function markedTokens(string $body, string $mark, string $opening, string $closing): array
+    {
+        $tokens = [];
+        $length = \strlen($body);
+        $markLength = \strlen($mark);
+        $i = 0;
+        while ($i < $length) {
+            if (0 === substr_compare($body, $mark, $i, $markLength)) {
+                $at = $i + $markLength;
+                $flag = $body[$at] ?? '';
+                if (self::MARK_GROUP === $flag) {
+                    $symbol = self::groupSymbolAt($body, $at + 1);
+                    $bracket = str_contains($symbol, $opening) ? $opening : $closing;
+                    $tokens[] = [$i, $at + 1 + \strlen($symbol), $bracket, $opening === $bracket, self::KIND_GROUP, true];
+                    $i = $at + 1 + \strlen($symbol);
+
+                    continue;
                 }
 
-                $depth--;
-            } elseif ($opening === $character) {
-                $depth++;
+                $flagged = self::MARK_BARE === $flag || self::MARK_QUOTED === $flag;
+                $bracket = $body[$flagged ? $at + 1 : $at];
+                $end = $flagged ? $at + 2 : $at + 1;
+                $tokens[] = [$i, $end, $bracket, $opening === $bracket, self::MARK_QUOTED === $flag ? self::KIND_QUOTED : self::KIND_LITERAL, self::MARK_BARE === $flag];
+                $i = $end;
+
+                continue;
+            }
+
+            $character = $body[$i];
+            if ('\\' === $character) {
+                $i += 2;
+
+                continue;
+            }
+
+            if ($opening === $character || $closing === $character) {
+                $tokens[] = [$i, $i + 1, $character, $opening === $character, self::KIND_FIXED, true];
+            }
+            $i++;
+        }
+
+        return $tokens;
+    }
+
+    /**
+     * The symbol of a group a mark stands before.
+     */
+    private static function groupSymbolAt(string $body, int $offset): string
+    {
+        foreach (array_keys(self::NAMED_OPENINGS) as $symbol) {
+            if (0 === substr_compare($body, $symbol, $offset, \strlen($symbol))) {
+                return $symbol;
             }
         }
 
-        return 0 === $depth;
+        return '';
+    }
+
+    /**
+     * Turn marked items so that, read in $order, no closing bracket stands
+     * with nothing open: read right to left, an opening bracket is the one
+     * that closes. A closing bracket with nothing open goes uncounted when
+     * it is a literal; otherwise the nearest literal before it turns, an
+     * opening one counted or a closing one uncounted, else the group it
+     * opens or closes takes its name, else the nearest group before it.
+     * False when nothing can turn.
+     *
+     * @param list<array{int, int, string, bool, int, bool}> $tokens
+     * @param array<int, bool>                               $included whether each token is counted
+     * @param list<int>                                      $order
+     */
+    private static function paired(array $tokens, array &$included, array $order, bool $forward): bool
+    {
+        $depth = 0;
+        $literals = [];
+        $groups = [];
+        foreach ($order as $index) {
+            [, , , $isOpening, $kind] = $tokens[$index];
+            $opens = $forward === $isOpening;
+            if (!$included[$index]) {
+                if ($opens) {
+                    $literals[] = $index;
+                }
+
+                continue;
+            }
+
+            if ($opens) {
+                $depth++;
+
+                continue;
+            }
+
+            if ($depth > 0) {
+                $depth--;
+                if (self::KIND_GROUP === $kind) {
+                    $groups[] = $index;
+                } elseif (self::KIND_FIXED !== $kind) {
+                    $literals[] = $index;
+                }
+
+                continue;
+            }
+
+            $turned = self::KIND_LITERAL === $kind || self::KIND_QUOTED === $kind
+                ? $index
+                : array_pop($literals) ?? (self::KIND_GROUP === $kind ? $index : array_pop($groups));
+            if (null === $turned) {
+                return false;
+            }
+
+            $included[$turned] = !$included[$turned];
+        }
+
+        return true;
+    }
+
+    /**
+     * A group's symbol, or its name where the symbol's bracket goes.
+     */
+    private static function groupSpelling(string $symbol, bool $counted): string
+    {
+        return $counted ? $symbol : self::NAMED_OPENINGS[$symbol] ?? $symbol;
+    }
+
+    /**
+     * Whether a literal bracket marked from $start to $end means the same
+     * unescaped: a "{" opening no repeat nor the braces of an escape before
+     * it, a "}" after no "{" that could open a repeat, a "[" before no ":",
+     * "." or "=", which would open a POSIX class (see markedBalanced). The
+     * marks around it are read as the brackets they stand before.
+     *
+     * @param non-empty-string $mark
+     */
+    private static function standsBare(string $body, int $start, int $end, string $bracket, string $mark): bool
+    {
+        $unmarked = [$mark.self::MARK_BARE => '', $mark.self::MARK_QUOTED => '', $mark => ''];
+
+        return match ($bracket) {
+            '{' => 1 !== LibraryPcre::match('/^[ \t]*+(?:[0-9]++[ \t]*+(?:,[ \t]*+[0-9]*+[ \t]*+)?|,[ \t]*+[0-9]++[ \t]*+)\\\\?\}/', strtr(substr($body, $end, 64), $unmarked))
+                && !($start >= 2 && '\\' === $body[$start - 2] && Ascii::isAlpha($body[$start - 1])),
+            '}' => 1 !== LibraryPcre::match('/\{[ \t0-9,]*+$/', strtr(substr($body, max(0, $start - 64), min(64, $start)), $unmarked)),
+            '[' => !str_contains(':.=', $body[$end] ?? ':'),
+            default => true,
+        };
     }
 }

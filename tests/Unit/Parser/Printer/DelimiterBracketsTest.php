@@ -33,30 +33,76 @@ final class DelimiterBracketsTest extends TestCase
 {
     #[Test]
     #[DataProvider('provideUnpairedBrackets')]
-    public function test_balanced_escapes_the_brackets_php_would_not_pair(string $body, string $opening, string $closing, string $expected): void
+    public function test_rebalanced_spells_the_marked_brackets_php_would_not_pair(string $body, string $opening, string $closing, string $expected): void
     {
-        $balanced = DelimiterBrackets::balanced($body, $opening, $closing);
+        $balanced = DelimiterBrackets::rebalanced($body, "\x03", $opening, $closing);
 
         $this->assertSame($expected, $balanced);
-        // The printer spells "\c\" before a bracket afterwards.
-        $pattern = $opening.DelimiterBrackets::spelledToEnd($balanced, $opening, $closing).$closing;
+        $pattern = $opening.DelimiterBrackets::spelledToEnd((string) $balanced, $opening, $closing).$closing;
         $this->assertNotFalse(@preg_match($pattern, ''), $pattern);
     }
 
     /**
+     * Each literal bracket of the delimiter is marked: "\x03B" before one
+     * written unescaped, "\x03" alone before one written escaped, "\x03Q"
+     * before one that may only come back counted quoted; "\x03G" before
+     * the symbol of a lookbehind or an atomic group.
+     *
      * @return iterable<string, array{body: string, opening: string, closing: string, expected: string}>
      */
     public static function provideUnpairedBrackets(): iterable
     {
-        yield 'an opening brace alone' => ['body' => 'a{b', 'opening' => '{', 'closing' => '}', 'expected' => 'a\{b'];
-        yield 'a closing brace before an opening one' => ['body' => 'a}b{c', 'opening' => '{', 'closing' => '}', 'expected' => 'a\}b\{c'];
-        yield 'a closing brace after an escaped opening one' => ['body' => '\{a}', 'opening' => '{', 'closing' => '}', 'expected' => '\{a\}'];
-        yield 'a pair, left as it is' => ['body' => 'a{b}c', 'opening' => '{', 'closing' => '}', 'expected' => 'a{b}c'];
-        yield 'a parenthesis closing nothing' => ['body' => '(a)b)', 'opening' => '(', 'closing' => ')', 'expected' => '(a)b\)'];
-        yield 'a square bracket closing nothing' => ['body' => '[a]]', 'opening' => '[', 'closing' => ']', 'expected' => '[a]\]'];
-        // "\c\" is one control character for PCRE: the brace after it is
-        // a bracket of its own.
-        yield 'a brace after a control backslash' => ['body' => '\c\{a', 'opening' => '{', 'closing' => '}', 'expected' => '\c\\\{a'];
+        yield 'an opening brace alone' => ['body' => "a\x03B{b", 'opening' => '{', 'closing' => '}', 'expected' => 'a\{b'];
+        yield 'a closing brace before an opening one' => ['body' => "a\x03B}b\x03B{c", 'opening' => '{', 'closing' => '}', 'expected' => 'a\}b\{c'];
+        yield 'a closing brace after an escaped opening one' => ['body' => "\x03{a\x03B}", 'opening' => '{', 'closing' => '}', 'expected' => '\{a\}'];
+        yield 'a pair, left as it is' => ['body' => "a\x03B{b\x03B}c", 'opening' => '{', 'closing' => '}', 'expected' => 'a{b}c'];
+        yield 'a parenthesis closing nothing' => ['body' => "(a)b\x03B)", 'opening' => '(', 'closing' => ')', 'expected' => '(a)b\)'];
+        yield 'a square bracket closing nothing' => ['body' => "[a]\x03B]", 'opening' => '[', 'closing' => ']', 'expected' => '[a]\]'];
+        // "\c\" is one control character for PCRE: it is spelled so that PHP
+        // reads the brace after it as a bracket of its own.
+        yield 'a brace after a control backslash' => ['body' => "\\c\\\x03B{a", 'opening' => '{', 'closing' => '}', 'expected' => '\x1C\{a'];
+    }
+
+    #[Test]
+    #[DataProvider('provideCountedBrackets')]
+    public function test_rebalanced_counts_a_marked_bracket_where_one_php_counts_needs_it(string $body, string $opening, string $closing, string $expected, string $subject): void
+    {
+        $balanced = DelimiterBrackets::rebalanced($body, "\x03", $opening, $closing);
+
+        $this->assertSame($expected, $balanced);
+        $this->assertSame(1, preg_match($opening.$balanced.$closing, $subject), $opening.$balanced.$closing);
+    }
+
+    /**
+     * @return iterable<string, array{body: string, opening: string, closing: string, expected: string, subject: string}>
+     */
+    public static function provideCountedBrackets(): iterable
+    {
+        yield 'an escaped brace a verb name closes' => ['body' => "\x03{a(*MARK:})", 'opening' => '{', 'closing' => '}', 'expected' => '{a(*MARK:})', 'subject' => '{a'];
+        yield 'an escaped brace a comment opens' => ['body' => "a(?#{)b\x03}c", 'opening' => '{', 'closing' => '}', 'expected' => 'a(?#{)b}c', 'subject' => 'ab}c'];
+        // Unescaped, "{2}" would read as a repeat, and "\d{" may open the
+        // braces of an escape.
+        yield 'a brace before a count, quoted' => ['body' => "\x03{2\x03}(*MARK:})", 'opening' => '{', 'closing' => '}', 'expected' => '\Q{\E2\}(*MARK:})', 'subject' => '{2}'];
+        yield 'a brace after an escape, quoted' => ['body' => "\\d\x03{a(*MARK:})", 'opening' => '{', 'closing' => '}', 'expected' => '\d\Q{\Ea(*MARK:})', 'subject' => '1{a'];
+        yield 'a closing brace after a count, quoted' => ['body' => "(*MARK:{)\\{2\x03}", 'opening' => '{', 'closing' => '}', 'expected' => '(*MARK:{)\{2\Q}\E', 'subject' => '{2}'];
+        yield 'a parenthesis marked to be quoted' => ['body' => "(*MARK:()a\x03Q)", 'opening' => '(', 'closing' => ')', 'expected' => '(*MARK:()a\Q)\E', 'subject' => 'a)'];
+        // In a class, "[" before ":" would open a POSIX class.
+        yield 'a square bracket before a colon, quoted' => ['body' => "[\x03[:-;:](?#])", 'opening' => '[', 'closing' => ']', 'expected' => '[\Q[\E:-;:](?#])', 'subject' => '['];
+        yield 'a square bracket before a letter' => ['body' => "[\x03[a](?#])", 'opening' => '[', 'closing' => ']', 'expected' => '[[a](?#])', 'subject' => '['];
+        // Where no literal bracket pairs, a lookbehind or an atomic group
+        // takes its name, which holds no bracket.
+        yield 'a lookbehind nothing closes' => ['body' => "a\x03G(?<=a)", 'opening' => '<', 'closing' => '>', 'expected' => 'a(*plb:a)', 'subject' => 'a'];
+        yield 'an atomic group nothing opens' => ['body' => "\x03G(?>a|ab)c", 'opening' => '<', 'closing' => '>', 'expected' => '(*atomic:a|ab)c', 'subject' => 'ac'];
+        yield 'a lookbehind a literal closes' => ['body' => "\x03G(?<=a)b\x03>", 'opening' => '<', 'closing' => '>', 'expected' => '(?<=a)b>', 'subject' => 'ab>'];
+        // A literal bracket turns before a group does.
+        yield 'a negative lookbehind before a pair of literals' => ['body' => "\x03G(?<!a)\x03B<b\x03B>", 'opening' => '<', 'closing' => '>', 'expected' => '(?<!a)\\<b>', 'subject' => '<b>'];
+    }
+
+    #[Test]
+    public function test_rebalanced_gives_up_where_no_marked_item_pairs(): void
+    {
+        $this->assertNull(DelimiterBrackets::rebalanced('(*MARK:{)a', "\x03", '{', '}'));
+        $this->assertNull(DelimiterBrackets::rebalanced("a(*MARK:})\x03B{", "\x03", '{', '}'));
     }
 
     #[Test]
