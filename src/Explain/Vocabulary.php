@@ -15,9 +15,12 @@ namespace PHPRegex\Explain;
 
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\NewlineConvention;
+use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierBounds;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Text\DisplayEscaper;
@@ -101,6 +104,35 @@ final class Vocabulary
         }
 
         return self::CHAR_TYPES[$type] ?? null;
+    }
+
+    /**
+     * The test a condition makes, when it is a group reference or a
+     * recursion check: whether the group has matched, whether a recursion
+     * is in progress. Null for a lookaround or a version, explained as
+     * themselves.
+     */
+    public static function condition(NodeInterface $condition): ?string
+    {
+        if ($condition instanceof BackrefNode) {
+            $ref = $condition->ref;
+
+            return match ($ref[0] ?? '') {
+                '-' => \sprintf('the capturing group %s back from here has matched', substr($ref, 1)),
+                '+' => \sprintf('the capturing group %s ahead of here has matched', substr($ref, 1)),
+                default => \sprintf('the capturing group "%s" has matched', $ref),
+            };
+        }
+
+        if (!$condition instanceof SubroutineNode) {
+            return null;
+        }
+
+        $group = ltrim(substr($condition->reference, 1), '&');
+
+        return '' === $group
+            ? 'a recursion is in progress, into the whole pattern or any group'
+            : \sprintf('the most recent recursion is into the capturing group "%s"', $group);
     }
 
     /**

@@ -368,7 +368,8 @@ final class TextExplainer extends AbstractNodeVisitor
         $settings = $this->settings;
         $this->indentLevel++;
         $this->groupDepth++;
-        $cond = $node->condition->accept($this);
+        // The condition stands in the line of the IF: none of its indent.
+        $cond = Vocabulary::condition($node->condition) ?? ltrim($node->condition->accept($this), ' ');
         $yes = $node->yes->accept($this);
 
         // Check if the 'no' branch is an empty literal node

@@ -173,7 +173,7 @@ final class TextExplainerTest extends TestCase
         );
         $visitor = new TextExplainer();
 
-        $this->assertSame("IF (  Backreference: whatever the capturing group \"1\" matched) THEN\n  'a'\nELSE\n  'b'", $node->accept($visitor));
+        $this->assertSame("IF (the capturing group \"1\" has matched) THEN\n  'a'\nELSE\n  'b'", $node->accept($visitor));
     }
 
     public function test_visit_subroutine_node(): void

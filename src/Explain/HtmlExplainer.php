@@ -372,7 +372,7 @@ final class HtmlExplainer extends AbstractNodeVisitor
     #[\Override]
     public function visitConditional(ConditionalNode $node): string
     {
-        $cond = $this->explainInGroup($node->condition);
+        $cond = $this->e(Vocabulary::condition($node->condition)) ?: $this->explainInGroup($node->condition);
         $yes = $this->explainInGroup($node->yes);
 
         // Check if the 'no' branch is an empty literal node
