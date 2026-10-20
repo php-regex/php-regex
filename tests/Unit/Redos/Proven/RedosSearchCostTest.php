@@ -19,6 +19,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Backtrack\SearchCostReplayer;
+use PHPRegex\Redos\Backtrack\SearchCostReplayerInterface;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
@@ -949,7 +950,7 @@ final class RedosSearchCostTest extends TestCase
     {
         $this->assertInstanceOf(RedosSearchCost::class, self::findSearchCost('/\s+$/', new SearchCostReplayer()), 'control: the witness is found and replayed');
 
-        $failing = new class extends SearchCostReplayer {
+        $failing = new class implements SearchCostReplayerInterface {
             public bool $called = false;
 
             public function replays(string $pattern, string $prefix, string $run, string $breaker): bool
@@ -965,12 +966,25 @@ final class RedosSearchCostTest extends TestCase
     }
 
     /**
+     * The replay a test replaces is the interface, never a subclass of the
+     * engine's replayer.
+     */
+    #[Test]
+    public function test_the_engine_replayer_is_final_behind_its_interface(): void
+    {
+        $replayer = new \ReflectionClass(SearchCostReplayer::class);
+
+        $this->assertTrue($replayer->isFinal());
+        $this->assertTrue($replayer->implementsInterface(SearchCostReplayerInterface::class));
+    }
+
+    /**
      * Anything else is a bug: it surfaces.
      */
     #[Test]
     public function test_search_cost_proof_lets_an_exception_from_outside_the_library_through(): void
     {
-        $failing = new class extends SearchCostReplayer {
+        $failing = new class implements SearchCostReplayerInterface {
             public function replays(string $pattern, string $prefix, string $run, string $breaker): bool
             {
                 throw new \LogicException('A bug in the replay.');
@@ -1007,7 +1021,7 @@ final class RedosSearchCostTest extends TestCase
      * What the search proof finds after a fresh per-attempt proof, replayed
      * by the replayer given.
      */
-    private static function findSearchCost(string $pattern, SearchCostReplayer $replayer): ?RedosSearchCost
+    private static function findSearchCost(string $pattern, SearchCostReplayerInterface $replayer): ?RedosSearchCost
     {
         $ast = RegexParser::create()->parse($pattern);
         $options = new RedosOptions();

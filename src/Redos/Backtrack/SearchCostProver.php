@@ -109,7 +109,7 @@ final class SearchCostProver
 
     private const VERTICAL_SPACES = [[0x0A, 0x0D], [0x85, 0x85], [0x2028, 0x2029]];
 
-    public function __construct(private readonly SearchCostReplayer $replayer = new SearchCostReplayer()) {}
+    public function __construct(private readonly SearchCostReplayerInterface $replayer = new SearchCostReplayer()) {}
 
     /**
      * The search-cost witness of the pattern the proof found linear per

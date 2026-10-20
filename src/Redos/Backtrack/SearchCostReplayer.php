@@ -41,12 +41,9 @@ use PHPRegex\Parser\Engine\PcreMatch;
  * (PCRE2 10.40 to 10.49), so every run goes through the engine, which turns
  * it off.
  *
- * Not final: a test replaces the replay to make it fail, as any engine
- * failure would; the prover catches the library's exceptions it throws.
- *
  * @internal
  */
-class SearchCostReplayer
+final class SearchCostReplayer implements SearchCostReplayerInterface
 {
     /**
      * The run words of the subject the steps are counted on.
@@ -61,6 +58,7 @@ class SearchCostReplayer
      * Whether the engine, without its JIT, starts attempts inside the run
      * that each read what is left of it, and matches nowhere.
      */
+    #[\Override]
     public function replays(string $pattern, string $prefix, string $run, string $breaker): bool
     {
         $counted = self::counted($pattern);
