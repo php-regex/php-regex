@@ -178,11 +178,6 @@ side of rule ids.
 
 ## Architecture and contributor path: the last pass before 2.0.0
 
-- Packaging: `bin/corpus-lint` and a dangling `bin/paratest` symlink ship in
-  the monorepo archive; the monorepo package does not conflict with the
-  Laravel and Symfony versions its bridges refuse; the 1.x to 2.0 Rector set
-  belongs in `regex-rector` as `RegexSetList::UPGRADE_2_0`; deptrac grants
-  siblings the manifests do not require.
 - The transpiler output is never run in its target engine: add a
   differential test against node and python.
 - Then, once the branches above are merged: `new Optimizer()` and
