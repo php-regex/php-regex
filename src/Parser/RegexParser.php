@@ -70,7 +70,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-9cacdabc8ec7e9420be22ca740c6d52b';
+    public const CACHE_VERSION = 'ast-95badf17acbe1cdac7c26a20d3a254df';
 
     /**
      * Default maximum allowed regex pattern length.
@@ -323,7 +323,7 @@ final class RegexParser
 
         try {
             ($this->front ?? $this->cache)->write($this->cache->generateKey($this->getCacheSeed($regex)), $ast);
-        } catch (\Throwable) {
+        } catch (\Exception) {
             // A cache that cannot store leaves the next parse() to parse.
         }
     }
@@ -512,7 +512,8 @@ final class RegexParser
 
         // A cache that cannot answer is a cache miss, the way a cache that
         // cannot store is already treated: parsing the pattern again is
-        // always an option, and it is never the pattern's fault.
+        // always an option, and it is never the pattern's fault. An \Error
+        // is a bug, in the cache or here, and surfaces.
         try {
             $cacheKey = $this->cache->generateKey($this->getCacheSeed($regex));
             $cachedResult = $this->front?->load($cacheKey);
@@ -521,7 +522,7 @@ final class RegexParser
             }
 
             $cachedResult = $this->cache->load($cacheKey);
-        } catch (\Throwable) {
+        } catch (\Exception) {
             return [null, null];
         }
 
@@ -553,8 +554,8 @@ final class RegexParser
 
         try {
             $this->cache->write($cacheKey, $ast);
-        } catch (\Throwable) {
-            // Cache failures are silently ignored
+        } catch (\Exception) {
+            // A cache that cannot store leaves the next parse to parse.
         }
     }
 

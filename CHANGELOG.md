@@ -305,7 +305,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Regex::CACHE_VERSION` is a fingerprint of the code that builds an AST rather than a number raised by hand: `task cache-version` writes it, `task lint` runs that, and the test suite fails while the constant and the code disagree. Cached ASTs written by an earlier state of `main` are ignored.
 - Persistent DFA caches are keyed on the version of the code that reads the pattern: `LanguageSolver` adds `RegexParser::CACHE_VERSION` to its cache key, and that fingerprint now also covers the code that turns a tree into automata. A `DfaCacheInterface` kept across an upgrade rebuilds its DFAs instead of answering with ones an older reading built.
 - `Regex::analyze()` only reports what the pattern itself causes: a failure that is not one of the library's exceptions now surfaces instead of being written into the report as a pattern error.
-- A cache that throws while reading is treated as a cache miss, the way a cache that throws while writing already was.
+- A cache that throws an exception while reading is treated as a cache miss, the way a cache that throws one while writing already was. An `\Error` thrown by the cache, a bug rather than a failure, is no longer hidden as a miss: it surfaces from `parse()`.
 - Symfony bundle `redos.enabled` configuration option (defaults to `false`).
 - Lint configuration `checks` section with nested ReDoS and optimization settings (schema + defaults).
 - PHPStan extension support for `checks` configuration overrides.
