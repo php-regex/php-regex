@@ -1067,6 +1067,6 @@ final class RewriterEdgeCasesTest extends TestCase
         $ref = new \ReflectionClass($target);
         $refMethod = $ref->getMethod($method);
 
-        return $refMethod->invokeArgs($target, $args);
+        return $refMethod->invokeArgs($refMethod->isStatic() ? null : $target, $args);
     }
 }

@@ -684,6 +684,6 @@ final class AnalysisServiceTest extends TestCase
         $ref = new \ReflectionClass($this->analysis);
         $refMethod = $ref->getMethod($method);
 
-        return $refMethod->invoke($this->analysis, ...$args);
+        return $refMethod->invoke($refMethod->isStatic() ? null : $this->analysis, ...$args);
     }
 }

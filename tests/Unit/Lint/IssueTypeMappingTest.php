@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintSeverity;
-use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -47,6 +46,6 @@ final class IssueTypeMappingTest extends TestCase
     {
         $issueType = new \ReflectionMethod(AnalysisService::class, 'issueType');
 
-        $this->assertSame($type, $issueType->invoke(new AnalysisService(RegexParser::create(['cache' => null])), $severity));
+        $this->assertSame($type, $issueType->invoke(null, $severity));
     }
 }
