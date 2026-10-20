@@ -17,6 +17,7 @@ use PHPRegex\Explain\HtmlExplainer;
 use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,6 +29,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExplainerAgreementTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideDescriptions')]
     public function test_text_and_html_describe_a_construct_alike(string $pattern, string $description): void
@@ -88,6 +91,8 @@ final class ExplainerAgreementTest extends TestCase
     #[DataProvider('providePatterns')]
     public function test_every_line_of_the_text_is_said_in_the_html(string $pattern): void
     {
+        // An extended class needs PCRE2 10.47, a substring scan 10.45.
+        $this->requiresCompile($pattern);
         $tree = RegexParser::create()->parse($pattern);
         $text = (string) $tree->accept(new TextExplainer());
         $markup = (string) $tree->accept(new HtmlExplainer());
@@ -140,8 +145,8 @@ final class ExplainerAgreementTest extends TestCase
         foreach ([
             '/^(?<year>\d{4})-(\d{2})$/m', '/(a|b)*c+?/', '/(?:ab){2,5}/', '/(?>a)(?=b)(?!c)(?<=d)(?<!e)/', '/(?|(a)|(b))/',
             '/(?i:a)(?i)b/', '/(?s).\N\X/u', '/[^a-z\d[:alpha:]]/', '/\x41\x{1F600}\101\o{101}\cA\N{U+41}/u', '/\Ka\b\B\A\z\Z\G/',
-            '/(a)(?R)(?1)(?&n)(?<n>b)/', '/(*FAIL)(*LIMIT_MATCH=10)(?C1)(?C"x")(?C)/', '/a(?#note)b/', '/(a)(?(1)b|c)(?(?=x)y)/',
-            '/(?(DEFINE)(?<d>\d))(?&d)/', '/(*sr:\d+)(*asr:\w)/', '/(*scan:(1)a)(b)/', '/(?[ [a-z] - [aeiou] ])/', '/\p{Lu}\P{L}\p{Greek}/u',
+            '/(a)(?R)(?1)(?&n)(?<n>b)/', '/(*LIMIT_MATCH=10)a(*FAIL)|(?C1)(?C"x")(?C)b/', '/a(?#note)b/', '/(a)(?(1)b|c)(?(?=x)y)/',
+            '/(?(DEFINE)(?<d>\d))(?&d)/', '/(*sr:\d+)(*asr:\w)/', '/(a)(*scs:(1)a)/', '/(?[ [a-z] - [aeiou] ])/', '/\p{Lu}\P{L}\p{Greek}/u',
             '/(a)\1\k<n>(?<n>b)\g{-2}/', '/é[à-é]/u', "/a\tb c/",
         ] as $pattern) {
             yield $pattern => ['pattern' => $pattern];
