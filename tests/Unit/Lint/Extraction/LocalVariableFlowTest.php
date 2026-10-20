@@ -166,6 +166,7 @@ final class LocalVariableFlowTest extends TestCase
         yield 'a switch, alternative syntax' => ['body' => "do switch (\$s):\n        case 'a': preg_match(\$re, \$s);\n    endswitch;\n    while (\$s);"];
         yield 'a declare' => ['body' => 'do declare(ticks=1) preg_match($re, $s); while ($s);'];
         yield 'an if, alternative syntax, holding another' => ['body' => "do if (\$s): if (\$t): preg_match(\$re, \$s); endif; endif;\n    while (\$s);"];
+        yield 'an if, alternative syntax, holding another, no space before the parentheses' => ['body' => "do if(\$s): if(\$t): preg_match(\$re, \$s); endif; endif;\n    while (\$s);"];
     }
 
     #[Test]

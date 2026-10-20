@@ -57,6 +57,8 @@ final class TokenNameResolverTest extends TestCase
         yield 'a namespace cut short' => ['source' => 'namespace', 'function' => 'f', 'class' => 'K', 'constant' => ['C']];
         yield 'a use cut short' => ['source' => 'use', 'function' => 'f', 'class' => 'K', 'constant' => ['C']];
         yield 'a use function cut short' => ['source' => 'use function', 'function' => 'f', 'class' => 'K', 'constant' => ['C']];
+        // A source half typed in an editor.
+        yield 'a stray character in an import' => ['source' => 'use X\K @;', 'function' => 'f', 'class' => 'X\K', 'constant' => ['C']];
         yield 'an empty alias' => ['source' => 'use X\ as;', 'function' => 'f', 'class' => 'K', 'constant' => ['C']];
     }
 

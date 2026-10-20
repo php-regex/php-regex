@@ -206,6 +206,18 @@ final class PropertyWriteShapesTest extends TestCase
     }
 
     /**
+     * The literal array may be passed under its name, after the callback.
+     */
+    #[Test]
+    public function test_array_walk_over_a_named_literal_array_leaves_the_properties_read(): void
+    {
+        $this->assertExtractedByBoth([
+            ['pattern' => '/property/', 'at' => "'/property/'", 'location' => 'via $this->re'],
+            ['pattern' => '/control/', 'at' => "'/control/'"],
+        ], self::matcher('array_walk(callback: function (&$v) { $v = 0; }, array: [1, 2]);'));
+    }
+
+    /**
      * A property iterated by reference is written, through any receiver:
      * its default stops proving a pattern, the other properties' do not.
      */
