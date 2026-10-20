@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Lint;
 
+use PHPRegex\Linter\Extraction\ArrayLiteralPatterns;
 use PHPRegex\Linter\Extraction\PhpTokens;
 use PHPRegex\Linter\Extraction\StringExpressionReader;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
@@ -76,9 +77,7 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
 
     public function test_closing_token_for_brace(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
-
-        $this->assertSame('}', $this->invoke($strategy, 'closingTokenFor', '{'));
+        $this->assertSame('}', (new \ReflectionMethod(ArrayLiteralPatterns::class, 'closingTokenFor'))->invoke(null, '{'));
     }
 
     public function test_strip_outer_parentheses_branches(): void
@@ -99,10 +98,8 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
 
     public function test_find_array_start_index_variants(): void
     {
-        $strategy = new TokenBasedExtractionStrategy();
-
         $tokens = ['[', [\T_CONSTANT_ENCAPSED_STRING, "'/a/'", 1], ']'];
-        $this->assertSame(0, $this->invoke($strategy, 'findArrayStartIndex', $tokens));
+        $this->assertSame(0, ArrayLiteralPatterns::startIndex($tokens));
 
         $tokens = [
             [\T_ARRAY, 'array', 1],
@@ -110,15 +107,15 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
             [\T_CONSTANT_ENCAPSED_STRING, "'/a/'", 1],
             ')',
         ];
-        $this->assertSame(1, $this->invoke($strategy, 'findArrayStartIndex', $tokens));
+        $this->assertSame(1, ArrayLiteralPatterns::startIndex($tokens));
 
         $tokens = [[\T_STRING, 'foo', 1]];
-        $this->assertNull($this->invoke($strategy, 'findArrayStartIndex', $tokens));
+        $this->assertNull(ArrayLiteralPatterns::startIndex($tokens));
 
         $tokens = [
             [\T_WHITESPACE, ' ', 1],
         ];
-        $this->assertNull($this->invoke($strategy, 'findArrayStartIndex', $tokens));
+        $this->assertNull(ArrayLiteralPatterns::startIndex($tokens));
     }
 
     public function test_the_source_reaches_the_tokenizer_byte_for_byte(): void
@@ -158,13 +155,5 @@ final class TokenBasedExtractionStrategyTokenHelperTest extends TestCase
         } finally {
             unlink($file);
         }
-    }
-
-    private function invoke(TokenBasedExtractionStrategy $strategy, string $method, mixed ...$args): mixed
-    {
-        $ref = new \ReflectionClass($strategy);
-        $refMethod = $ref->getMethod($method);
-
-        return $refMethod->invoke($strategy, ...$args);
     }
 }

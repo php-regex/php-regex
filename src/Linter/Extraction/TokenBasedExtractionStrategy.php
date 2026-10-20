@@ -717,7 +717,7 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
 
         // preg_replace(['/a/', '/b/'], ...) and preg_replace_callback_array(['/a/' => $fn])
         // hold several patterns in one argument.
-        if (null !== $this->findArrayStartIndex($stripped)) {
+        if (null !== ArrayLiteralPatterns::startIndex($stripped)) {
             return $this->extractFromArrayLiteral($stripped, $strippedIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
         }
 
@@ -808,134 +808,12 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
         PatternFunction $patternFunction,
         ?\ArrayObject $sink = null,
     ): array {
-        $startIndex = $this->findArrayStartIndex($tokens);
-        if (null === $startIndex) {
-            return [];
-        }
-
-        // Null until the first item says: a key that is a string selects the
-        // keys, no key or an int key the values.
-        $useKeys = $patternFunction->keysArePatterns ? (null === $patternFunction->replacementIndex ? true : null) : false;
         $occurrences = [];
-        $totalTokens = \count($tokens);
-        $stack = [$this->closingTokenFor($tokens[$startIndex])];
-        $collecting = true;
-        $segmentTokens = [];
-        /** @var array<int, int> $segmentTokenIndexes */
-        $segmentTokenIndexes = [];
-
-        for ($i = $startIndex + 1; $i < $totalTokens; $i++) {
-            $token = $tokens[$i];
-            $tokenIndex = $tokenIndexes[$i] ?? -1;
-
-            if (PhpTokens::isIgnorable($token)) {
-                if ($collecting) {
-                    $segmentTokens[] = $token;
-                    $segmentTokenIndexes[] = $tokenIndex;
-                }
-
-                continue;
-            }
-
-            // An array() item keeps its keyword: it is an array, as a []
-            // item is, and its parenthesis opens a nesting as any other.
-            if (PhpTokens::opensNesting($token)) {
-                $stack[] = $this->closingTokenFor($token);
-                if ($collecting) {
-                    $segmentTokens[] = $token;
-                    $segmentTokenIndexes[] = $tokenIndex;
-                }
-
-                continue;
-            }
-
-            if ($this->isClosingToken($token, end($stack))) {
-                array_pop($stack);
-                if (empty($stack)) {
-                    if (!$useKeys) {
-                        $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
-                    }
-
-                    break;
-                }
-
-                if ($collecting) {
-                    $segmentTokens[] = $token;
-                    $segmentTokenIndexes[] = $tokenIndex;
-                }
-
-                continue;
-            }
-
-            $atTopLevel = 1 === \count($stack);
-
-            if ($atTopLevel && ',' === $token) {
-                if (!$useKeys) {
-                    $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
-                }
-
-                $useKeys ??= false;
-                $collecting = true;
-                $segmentTokens = [];
-                $segmentTokenIndexes = [];
-
-                continue;
-            }
-
-            if ($atTopLevel && PhpTokens::isDoubleArrow($token)) {
-                $useKeys ??= $this->isStringKey($segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content);
-                if ($useKeys) {
-                    $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
-                    $collecting = false;
-                }
-
-                // Whatever was collected was the key; the value follows.
-                $segmentTokens = [];
-                $segmentTokenIndexes = [];
-
-                continue;
-            }
-
-            if ($collecting) {
-                $segmentTokens[] = $token;
-                $segmentTokenIndexes[] = $tokenIndex;
-            }
+        foreach (ArrayLiteralPatterns::segments($tokens, $tokenIndexes, $tokenOffsets, $content, $patternFunction) as [$segmentTokens, $segmentTokenIndexes]) {
+            $this->appendOccurrenceFromSegment($occurrences, $segmentTokens, $segmentTokenIndexes, $tokenOffsets, $content, $file, $patternFunction, $sink);
         }
 
         return $occurrences;
-    }
-
-    /**
-     * Whether an array key is a string once PHP stores it: an int literal or
-     * a numeric string is not; a key that is no literal is taken for one.
-     *
-     * @param array<int, array{int, string, int}|string> $tokens
-     * @param array<int, int>                            $tokenIndexes
-     * @param array<int, int>                            $tokenOffsets
-     */
-    private function isStringKey(array $tokens, array $tokenIndexes, array $tokenOffsets, string $content): bool
-    {
-        [$tokens, $tokenIndexes] = StringExpressionReader::stripParentheses($tokens, $tokenIndexes);
-        $significant = array_values(array_filter($tokens, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
-
-        // An int, a float, true or false, signed or not: PHP stores an int.
-        $sign = 0;
-        while ('+' === ($significant[$sign] ?? null) || '-' === ($significant[$sign] ?? null)) {
-            $sign++;
-        }
-
-        $scalar = $significant[$sign] ?? null;
-        if (\is_array($scalar) && $sign + 1 === \count($significant)) {
-            $isNumber = \T_LNUMBER === $scalar[0] || \T_DNUMBER === $scalar[0];
-            $isBool = 0 === $sign && null !== PhpTokens::name($scalar) && \in_array(Ascii::lower(ltrim($scalar[1], '\\')), ['true', 'false'], true);
-            if ($isNumber || $isBool) {
-                return false;
-            }
-        }
-
-        $key = StringExpressionReader::read($tokens, $tokenIndexes, $tokenOffsets, $content);
-
-        return null === $key || PatternFunction::isStringKey($key['pattern']);
     }
 
     /**
@@ -1009,57 +887,5 @@ final class TokenBasedExtractionStrategy implements ExtractorInterface, PatternF
     private function isDefinitionToken(array|string $token): bool
     {
         return \is_array($token) && \in_array($token[0], [\T_FUNCTION, \T_FN, \T_NEW], true);
-    }
-
-    /**
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function closingTokenFor(array|string $token): string
-    {
-        if (\is_array($token)) {
-            // "{$x}" and "${x}" in a string close on "}", "#[" on "]".
-            return \T_ATTRIBUTE === $token[0] ? ']' : '}';
-        }
-
-        return match ($token) {
-            '(' => ')',
-            '[' => ']',
-            '{' => '}',
-            default => ')',
-        };
-    }
-
-    /**
-     * @param array{0:int, 1:string, 2?:int}|string $token
-     */
-    private function isClosingToken(array|string $token, string $expected): bool
-    {
-        return $token === $expected;
-    }
-
-    /**
-     * @param array<int, array{int, string, int}|string> $tokens
-     */
-    private function findArrayStartIndex(array $tokens): ?int
-    {
-        $totalTokens = \count($tokens);
-        $startIndex = PhpTokens::nextSignificant($tokens, 0, $totalTokens);
-        if (null === $startIndex) {
-            return null;
-        }
-
-        $token = $tokens[$startIndex];
-        if ('[' === $token) {
-            return $startIndex;
-        }
-
-        if (\is_array($token) && \T_ARRAY === $token[0]) {
-            $openParenIndex = PhpTokens::nextSignificant($tokens, $startIndex + 1, $totalTokens);
-            if (null !== $openParenIndex && '(' === $tokens[$openParenIndex]) {
-                return $openParenIndex;
-            }
-        }
-
-        return null;
     }
 }
