@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Parser\Validation;
 
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ClassSetOperationNode;
@@ -64,10 +65,10 @@ final class ClassFormLengthTest extends TestCase
     }
 
     /**
-     * A caseless operand past 255 takes its other cases from the Unicode
-     * tables of each release; whether a counted extended class is a match
-     * of any character may follow what a property or the locale holds
-     * below 256; a name no group bears is refused before any measure.
+     * Whether a counted extended class is a match of any character may
+     * follow what a property holds below 256, or without UTF what the
+     * locale holds past ASCII where its tables are not given; a name no
+     * group bears is refused before any measure.
      */
     #[Test]
     #[DataProvider('provideLengthsNotKnown')]
@@ -81,8 +82,6 @@ final class ClassFormLengthTest extends TestCase
      */
     public static function provideLengthsNotKnown(): iterable
     {
-        yield 'caseless operand past 255 first' => ['pattern' => '/(?[ [\\x{100}] + \\d ])/iu'];
-        yield 'caseless operand past 255 second' => ['pattern' => '/(?[ \\d + [\\x{100}] ])/iu'];
         yield 'counted class that may hold every character but for a property' => ['pattern' => '/(?[ [^a] | !\\D ]){2}/u'];
         yield 'counted class that may hold every byte but for the locale' => ['pattern' => '/(?[ \\d ^ \\D ]){2}/'];
         yield 'substring scan of a name no group bears' => ['pattern' => '/(*scs:(<x>)a)/'];
@@ -91,6 +90,28 @@ final class ClassFormLengthTest extends TestCase
         yield 'counted caseless class that may hold every byte but for the locale' => ['pattern' => '/(?[ [^\\x00-\\x7e] | [\\x00-\\x7e] ]){2}/i'];
         yield 'counted union of what may hold every character without UTF' => ['pattern' => '/(?[ [^a] | !\\p{Lu} ]){2}/i'];
         yield 'counted intersection with every character of what may hold every character' => ['pattern' => '/(?[ ( [^a] | !\\D ) & \\p{Any} ]){2}/u'];
+    }
+
+    /**
+     * Under the tables of the locale, here those PCRE2 builds in, what a
+     * class without UTF holds past ASCII is known (pcre2test 10.49, whose
+     * tables they are).
+     */
+    #[Test]
+    #[DataProvider('provideLengthsUnderTheTablesOfTheLocale')]
+    public function test_the_length_is_known_under_the_tables_of_the_locale(string $pattern, int $length): void
+    {
+        $this->assertSame($length, self::lengthOf($pattern, '10.49', CharacterTables::builtIn()), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, length: int}>
+     */
+    public static function provideLengthsUnderTheTablesOfTheLocale(): iterable
+    {
+        yield 'counted class of every byte, a type and its negation' => ['pattern' => '/(?[ \\d ^ \\D ]){2}/', 'length' => 80];
+        yield 'caseless classes of every byte, that of ASCII first' => ['pattern' => '/(?[ [\\x00-\\x7f] | [\\x80-\\xff] ])/i', 'length' => 77];
+        yield 'counted caseless class of every byte' => ['pattern' => '/(?[ [^\\x00-\\x7e] | [\\x00-\\x7e] ]){2}/i', 'length' => 80];
     }
 
     /**
@@ -233,6 +254,10 @@ final class ClassFormLengthTest extends TestCase
         // other side over.
         yield 'symmetric difference of a type and its negation, 10.45' => ['pattern' => '/(?[ \\d ^ \\D ])/', 'release' => '10.45', 'length' => 77];
         yield 'symmetric difference of a negated type with itself, 10.49' => ['pattern' => '/(?[ \\D ^ \\D ])/', 'release' => '10.49', 'length' => 77];
+        // A caseless operand past 255 takes its other cases from the Unicode
+        // tables of the release.
+        yield 'caseless operand past 255 first, 10.45' => ['pattern' => '/(?[ [\\x{100}] + \\d ])/iu', 'release' => '10.45', 'length' => 30];
+        yield 'caseless operand past 255 second, 10.49' => ['pattern' => '/(?[ \\d + [\\x{100}] ])/iu', 'release' => '10.49', 'length' => 30];
         // An operation with every character or none keeps one side, or every
         // character or none, which count no operation.
         yield 'intersection with every character after, 10.45' => ['pattern' => '/(?[ \\p{L} & \\p{Any} ])/u', 'release' => '10.45', 'length' => 20];
@@ -369,13 +394,13 @@ final class ClassFormLengthTest extends TestCase
         return $class;
     }
 
-    private static function lengthOf(string $pattern, string $release): ?int
+    private static function lengthOf(string $pattern, string $release, ?CharacterTables $tables = null): ?int
     {
         $regex = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => $release, 'runtime_pcre_validation' => false])->parse($pattern);
         $source = (string) $regex->source;
         $utf = str_contains($regex->flags, 'u') || StartOptions::turnUtfOn($source);
         $ucp = str_contains($regex->flags, 'u') || \in_array('UCP', StartOptions::items($source), true);
 
-        return (new CompiledLength(static fn (): int => 0, $source, $utf, $ucp, $regex->flags, new PcreTarget(80400, $release)))->of($regex->pattern);
+        return (new CompiledLength(static fn (): int => 0, $source, $utf, $ucp, $regex->flags, new PcreTarget(80400, $release), $tables))->of($regex->pattern);
     }
 }

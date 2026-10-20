@@ -18,6 +18,7 @@ use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Tests\Support\CpuClock;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class RegexGenerateTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     #[Test]
@@ -197,15 +199,16 @@ final class RegexGenerateTest extends TestCase
     }
 
     /**
-     * Oracle: PCRE2 refuses the pattern as too large, counting two classes
-     * the library counts at their floor (one of more than 256 members, one
-     * of every character past 255 and a property, whose map may hold every
-     * byte from 10.45); the library judges the pattern valid, and reads it.
+     * Oracle: from 10.45 PCRE2 refuses the pattern as too large, counting a
+     * class the library counts at its floor (one of every character past
+     * 255 and a property, whose map may hold every byte); the library
+     * judges the pattern valid, and reads it.
      */
     #[Test]
     #[DataProvider('provideUncompilable')]
     public function test_a_pattern_this_php_cannot_compile_gets_a_sample_nothing_checks(string $pattern, string $sample): void
     {
+        $this->requiresPcre2('10.45', $pattern);
         $this->assertFalse(@preg_match($pattern, ''));
         $this->assertSame($sample, Regex::create(['cache' => null])->generate($pattern));
     }
@@ -276,6 +279,6 @@ final class RegexGenerateTest extends TestCase
      */
     private static function tooLargeForTheEngine(): string
     {
-        return '/(?:a['.implode('', array_map(static fn (int $i): string => \sprintf('\\x{%x}', 0x1000 + 2 * $i), range(0, 299))).']{0}[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
+        return '/(?:a[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
     }
 }

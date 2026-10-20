@@ -19,11 +19,14 @@ use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\TestCase;
 
 final class RegexApiTest extends TestCase
 {
+    use PcreGates;
+
     public function test_create_and_parse(): void
     {
         $regex = Regex::create();
@@ -47,12 +50,13 @@ final class RegexApiTest extends TestCase
 
     public function test_runtime_validation_disabled_by_default(): void
     {
+        $this->requiresPcre2('10.45', self::tooLargeForTheEngine());
         $regex = Regex::create();
 
-        // Repeated past the 64 KiB PCRE compiles, but its two classes are
-        // counted at their floor by the static checks, one of more than 256
-        // members, one of every character past 255 and a property: only
-        // PCRE itself refuses it.
+        // Repeated past the 64 KiB PCRE compiles, but from PCRE2 10.45 its
+        // class of every character past 255 and a property, whose map may
+        // hold every byte, is counted at its floor by the static checks:
+        // only PCRE itself refuses it.
         $result = $regex->validate(self::tooLargeForTheEngine());
 
         $this->assertTrue($result->isValid);
@@ -60,6 +64,7 @@ final class RegexApiTest extends TestCase
 
     public function test_runtime_validation_can_be_enabled(): void
     {
+        $this->requiresPcre2('10.45', self::tooLargeForTheEngine());
         $regex = Regex::create(['runtime_pcre_validation' => true]);
 
         $result = $regex->validate(self::tooLargeForTheEngine());
@@ -199,6 +204,6 @@ final class RegexApiTest extends TestCase
      */
     private static function tooLargeForTheEngine(): string
     {
-        return '/(?:a['.implode('', array_map(static fn (int $i): string => \sprintf('\\x{%x}', 0x1000 + 2 * $i), range(0, 299))).']{0}[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
+        return '/(?:a[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
     }
 }

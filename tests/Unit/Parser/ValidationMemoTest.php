@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ValidationMemoTest extends TestCase
 {
+    use PcreGates;
+
     private const KEPT = 1024;
 
     #[Test]
@@ -54,17 +57,18 @@ final class ValidationMemoTest extends TestCase
     }
 
     /**
-     * The pattern is past the 64 KiB PCRE compiles, but its two classes are
-     * counted at their floor by the static checks, one of more than 256
-     * members, one of every character past 255 and a property: only the
+     * The pattern is past the 64 KiB PCRE2 10.45 and later compile, but its
+     * class of every character past 255 and a property, whose map may hold
+     * every byte, is counted at its floor by the static checks: only the
      * running engine refuses it.
      */
     #[Test]
     public function test_a_refusal_of_the_running_engine_is_kept(): void
     {
+        $tooLarge = '/(?:a[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
+        $this->requiresPcre2('10.45', $tooLarge);
         $parser = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => true]);
 
-        $tooLarge = '/(?:a['.implode('', array_map(static fn (int $i): string => \sprintf('\\x{%x}', 0x1000 + 2 * $i), range(0, 299))).']{0}[\\x{100}-\\x{10FFFF}\\pL]{0}){1900}/u';
         $refused = $parser->validate($tooLarge);
         $valid = $parser->validate('/(?:[à-ž]x){8}/iu');
 
