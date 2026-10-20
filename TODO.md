@@ -58,6 +58,10 @@ The code is ready; what is left is the maintainer's, in this order.
    the tag's and that `regex.phar lsp` answers `initialize`, attests it,
    attaches it and its checksum, then publishes the draft; the split
    workflow tags the seventeen packages.
+   That path has never run on a real release (`v1.3.0` carries no
+   checksum): tag `2.0.0-RC1` first (`bin/release 2.0.0-RC1`, a GitHub
+   pre-release), check both assets, `gh attestation verify regex.phar --repo
+   php-regex/php-regex` and the phar on PHP 8.1, then tag 2.0.0.
 5. After the tag: `bin/status` and Packagist show `v2.0.0` for all seventeen
    packages (they require each other at `self.version`: one missing tag
    leaves the others uninstallable), and the "Latest" release carries the
