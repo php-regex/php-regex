@@ -85,9 +85,11 @@ final class LocaleIndependentShorthandTest extends TestCase
     #[DataProvider('provideKnownLocales')]
     public function test_the_word_class_becomes_a_shorthand_under_a_known_c_locale(string $pattern, ?string $locale, bool $optimizeWord, string $expected): void
     {
-        $rewritten = Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(optimizeWord: $optimizeWord, locale: $locale));
+        $rewriter = new Rewriter(optimizeWord: $optimizeWord, locale: $locale);
+        $rewritten = Regex::create(['cache' => null])->parse($pattern)->accept($rewriter);
 
         $this->assertSame($expected, $rewritten->accept(new PatternPrinter()));
+        $this->assertSame(str_contains($expected, '\\w') || str_contains($expected, '\\W'), \in_array(Rewriter::WORD, $rewriter->changes(), true));
     }
 
     /**
