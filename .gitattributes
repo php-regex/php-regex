@@ -26,22 +26,9 @@
 /.gitmessage            export-ignore
 
 # Development tools and configs
-/bin/php-cs-fixer       export-ignore
-/bin/phpbench           export-ignore
-/bin/phpcs              export-ignore
-/bin/phplint            export-ignore
-/bin/phpstan            export-ignore
-/bin/rector             export-ignore
-/bin/phpunit            export-ignore
-/bin/infection          export-ignore
-/bin/redos-bench        export-ignore
-/bin/regex              export-ignore
-/bin/regex-lsp          export-ignore
-/bin/split              export-ignore
-/bin/bump               export-ignore
-/bin/release            export-ignore
-/bin/status             export-ignore
-/bin/corpus             export-ignore
+# The scripts of bin/ run the repository's tooling; the executables an
+# install links are the packages' own, under src/
+/bin                    export-ignore
 /phpbench.json          export-ignore
 /phpstan.dist.neon      export-ignore
 /deptrac.yaml           export-ignore
