@@ -201,6 +201,47 @@ side of rule ids.
 - Internal, so it may follow the tag: split `Validator` (4,757 lines) by
   concern and `TokenParser` (4,583) by family of constructs.
 
+## Parser and integrations: the last pass before 2.0.0
+
+Parser bugs, each reproduced against the engine: `\p{javaLowerCase}`,
+`\p{Block=...}` and `\p{Blk=...}` are reported valid where every PCRE2
+refuses them; a trailing `\c` after an unfinished group name hides the
+name error (`/(?&\c/`); `\c(` before `?[` is taken for an extended class;
+one error order on the PHP 7.3 target; the library's own regexes giving up
+under a low `pcre.backtrack_limit` are reported as pattern errors;
+`php_version` and `ParserOptions` accept nonsense values.
+
+Parser structure: `TokenParser` (class and conditional parsing apart) and
+`PatternPrinter` (layout and bracket delimiters apart) split; then
+`Validator` split by concern; `QuantifierNode` carrying its bounds instead
+of 47 re-parses; the error-offset rule, the 65535 limit and the UTF-8 width
+written once; the exception types and the snippet renderer unified; the
+public renames (node properties, error codes, getters, `PcreFeature`) to
+settle before the tag.
+
+Integrations:
+
+- Symfony: validator-mapped patterns are never linted (the bundle wires a
+  service FrameworkBundle does not define); `regex:lint` resolves `paths`
+  against the working directory and passes on a missing path (Laravel
+  too); `regex:security` reads YAML by hand and passes on a flow-style
+  `access_control` or a `%parameter%`; `regex:routes` never reports a
+  partial overlap (routing is first-match, not best-match); the `ide`
+  fallback never fires; `AbstractBundle`, no container parameters, no
+  autowirable internal services.
+- The Symfony and Laravel `regex:lint` commands and their output helpers
+  are forks: one shared runner.
+- PHPStan: a repo-only rule ships in the public extension;
+  `PatternChecker` split. Psalm: the calls into `Psalm\Internal` isolated
+  in one adapter; `PregCallAnalyzer` marked internal and split.
+- PHPUnit: `assertPatternDoesNotMatch()` on a broken pattern is flagged
+  risky; the package stops depending on the facade.
+- CLI: one option declaration per command for parsing and help; the LSP
+  server's workspace settings apart; `OutputFormat` split per method in the
+  facade.
+- The target settings (PHP, PCRE2, locale) enter through one class, and
+  every parser derived for another target keeps the locale.
+
 ## The articles section: what is left
 
 - The next articles, in priority order: variable-length lookbehind across
