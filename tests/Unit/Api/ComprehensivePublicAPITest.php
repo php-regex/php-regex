@@ -513,7 +513,9 @@ final class ComprehensivePublicAPITest extends TestCase
 
     public function test_analyze_redos_provides_recommendations(): void
     {
-        $analysis = $this->regexService->redos('/(a+)+/');
+        // "(a+)+" alone is proven linear: its first attempt never fails. The
+        // "$" after it makes the attempt fail on "aaa!", exponentially.
+        $analysis = $this->regexService->redos('/(a+)+$/');
         $this->assertIsArray($analysis->recommendations);
         $this->assertNotEmpty($analysis->recommendations);
     }
