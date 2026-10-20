@@ -64,13 +64,42 @@ final class LintVisualsTest extends TestCase
     #[Test]
     public function test_the_footer_prints_no_cache_figure(): void
     {
-        $output = $this->lint(visuals: true);
+        $output = $this->lint(visuals: true, verbose: true);
 
         $this->assertStringContainsString('a GitHub star is appreciated', $output);
         $this->assertStringNotContainsString('Cache: 0 hits, 0 misses', $output);
     }
 
-    private function lint(bool $visuals): string
+    /**
+     * The author and the request for a star are for -v: a plain run names
+     * neither, as the bridges' regex:lint names neither.
+     */
+    #[Test]
+    public function test_the_author_and_the_footer_show_under_verbose_only(): void
+    {
+        $output = $this->lint(visuals: true);
+        $verbose = $this->lint(visuals: true, verbose: true);
+
+        $this->assertMatchesRegularExpression('/^PHPRegex \S+\n/', $output);
+        $this->assertStringNotContainsString('by Younes ENNAJI', $output);
+        $this->assertStringNotContainsString('GitHub star', $output);
+        $this->assertMatchesRegularExpression('/^PHPRegex \S+ by Younes ENNAJI\n/', $verbose);
+        $this->assertStringContainsString('GitHub star', $verbose);
+    }
+
+    /**
+     * Under -v a run that finds a pattern ends on the footer too.
+     */
+    #[Test]
+    public function test_a_verbose_report_ends_on_the_footer(): void
+    {
+        file_put_contents($this->directory.'/pattern.php', "<?php\npreg_match('/[a-z/', \$s);\n");
+
+        $this->assertStringEndsWith("a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $this->lint(visuals: true, verbose: true));
+        $this->assertStringNotContainsString('GitHub star', $this->lint(visuals: true));
+    }
+
+    private function lint(bool $visuals, bool $verbose = false): string
     {
         $command = new LintCommand(
             new HelpCommand(),
@@ -80,7 +109,7 @@ final class LintVisualsTest extends TestCase
             new LintExtractorFactory(),
             new LintOutputRenderer(),
         );
-        $input = new Input('lint', [$this->directory, '--jobs=1'], new GlobalOptions(false, false, false, $visuals, null, null), []);
+        $input = new Input('lint', [$this->directory, '--jobs=1', ...($verbose ? ['--verbose'] : [])], new GlobalOptions(false, false, false, $visuals, null, null), []);
 
         $cwd = (string) getcwd();
         chdir($this->directory);

@@ -6,6 +6,8 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex lint` names the author in its title and ends on the request for a
+   GitHub star under `--verbose` only, as the bridges' `regex:lint` does.
  * `--locale <name>` names the `LC_CTYPE` locale patterns are judged under,
    and wins over `locale` in `regex.json`.
  * `--cache-dir <dir>` keeps what the running PCRE2 answered about Unicode

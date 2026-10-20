@@ -33,6 +33,7 @@ use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\RequiresFunction;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -191,14 +192,14 @@ final class LintCommandTest extends TestCase
         $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true]);
 
         $target = ProjectTarget::fromSources([], [], null, []);
-        $this->assertStringStartsWith(\sprintf("PHPRegex %s by Younes ENNAJI\n\nRuntime   : PHP %s\nTarget    : PHP %s, PCRE2 %s (%s)\nProcesses : 1\n\n", Regex::VERSION, \PHP_VERSION, $target->php(), $target->target()->pcreVersion, $target->source()), $tester->getDisplay());
+        $this->assertStringStartsWith(\sprintf("PHPRegex %s\n\nRuntime   : PHP %s\nTarget    : PHP %s, PCRE2 %s (%s)\nProcesses : 1\n\n", Regex::VERSION, \PHP_VERSION, $target->php(), $target->target()->pcreVersion, $target->source()), $tester->getDisplay());
     }
 
     #[Test]
     public function test_the_empty_summary_ends_with_the_footer_after_a_blank_line(): void
     {
         $tester = new CommandTester($this->createCommand());
-        $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true]);
+        $tester->execute(['paths' => ['.'], '--jobs' => '1'], ['capture_stderr_separately' => true, 'verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
 
         $this->assertStringEndsWith("\n\n   PASS  No regex patterns found.\n\n  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $tester->getDisplay());
     }

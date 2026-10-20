@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Analyzer\Formatter;
 
+use PHPRegex\Linter\Console\ConsoleWriter as LintConsoleWriter;
 use PHPRegex\Symfony\Analyzer\AnalysisNotice;
 use PHPRegex\Symfony\Analyzer\CheckOutcome;
 use PHPRegex\Symfony\Analyzer\IssueDetail;
@@ -51,17 +52,22 @@ final class ConsoleReportFormatter
         }
     }
 
+    /**
+     * The title of the report; the author under -v, as every front end
+     * names him.
+     */
     public function renderBanner(SymfonyStyle $io): void
     {
-        $io->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.Regex::VERSION.'</> by Younes ENNAJI');
+        LintConsoleWriter::title($io, Regex::VERSION);
         $io->newLine();
     }
 
+    /**
+     * The request for a star, under -v only.
+     */
     public function renderFooter(SymfonyStyle $io): void
     {
-        $message = 'If PHPRegex helps, a GitHub star is appreciated: ';
-        $io->writeln('  <fg=gray>'.$message.'https://github.com/php-regex/php-regex</>');
-        $io->newLine();
+        LintConsoleWriter::footer($io);
     }
 
     private function renderSection(SymfonyStyle $io, ReportSection $section, bool $debug): void

@@ -19,6 +19,7 @@ use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
@@ -91,11 +92,16 @@ final class RoutesCommandTest extends TestCase
         $router->method('getRouteCollection')->willReturn(new RouteCollection());
 
         $tester = new CommandTester(new RoutesCommand(new RouteConflictAnalyzer(Regex::create()), new RouteConflictSuggestionBuilder(), $router));
-        $status = $tester->execute([]);
+        $status = $tester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
         $display = (string) $tester->getDisplay();
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString('No routes found.', $display);
         $this->assertStringContainsString('If PHPRegex helps, a GitHub star is appreciated', $display);
+        $this->assertStringContainsString('by Younes ENNAJI', $display);
+
+        $tester->execute([]);
+        $this->assertStringNotContainsString('GitHub star', $tester->getDisplay());
+        $this->assertStringNotContainsString('by Younes ENNAJI', $tester->getDisplay());
     }
 }

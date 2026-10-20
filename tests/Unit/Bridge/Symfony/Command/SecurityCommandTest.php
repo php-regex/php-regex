@@ -26,6 +26,7 @@ use PHPUnit\Framework\Attributes\After;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Yaml\Yaml;
 
@@ -95,12 +96,17 @@ final class SecurityCommandTest extends TestCase
         );
 
         $tester = new CommandTester($command);
-        $status = $tester->execute(['--config' => [dirname(__DIR__, 4).'/Fixtures/Symfony/routes_only.yaml']]);
+        $status = $tester->execute(['--config' => [dirname(__DIR__, 4).'/Fixtures/Symfony/routes_only.yaml']], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
         $display = (string) $tester->getDisplay();
 
         $this->assertSame(0, $status);
         $this->assertStringContainsString('No security configuration entries found.', $display);
         $this->assertStringContainsString('If PHPRegex helps, a GitHub star is appreciated', $display);
+        $this->assertStringContainsString('by Younes ENNAJI', $display);
+
+        $tester->execute(['--config' => [dirname(__DIR__, 4).'/Fixtures/Symfony/routes_only.yaml']]);
+        $this->assertStringNotContainsString('GitHub star', $tester->getDisplay());
+        $this->assertStringNotContainsString('by Younes ENNAJI', $tester->getDisplay());
     }
 
     /**

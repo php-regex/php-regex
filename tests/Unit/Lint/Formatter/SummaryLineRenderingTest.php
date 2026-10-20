@@ -131,7 +131,7 @@ final class SummaryLineRenderingTest extends TestCase
 
     /**
      * The CLI renderer's FAIL line, decorated, then the blank line before
-     * its footer.
+     * its footer, which a verbose run prints.
      */
     #[Test]
     public function test_cli_renderer_fail_line_renders_byte_for_byte(): void
@@ -142,7 +142,7 @@ final class SummaryLineRenderingTest extends TestCase
         ob_start();
 
         try {
-            (new LintOutputRenderer())->renderSummary(new Output(true, false, errorStream: $stream), ['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'lintErrors' => 1]);
+            (new LintOutputRenderer())->renderSummary(new Output(true, false, errorStream: $stream), ['errors' => 1, 'warnings' => 0, 'optimizations' => 0, 'lintErrors' => 1], verbose: true);
         } finally {
             $output = (string) ob_get_clean();
             fclose($stream);

@@ -154,6 +154,7 @@ final class ConsoleLintRunner
             // No cache count: the workers parse the patterns, not this process.
             $output->writeln('  <options=bold>Time:</> <fg=yellow>'.round($elapsed, 2).'s</> | <options=bold>Memory:</> <fg=yellow>'.round($peakMemory / 1024 / 1024, 2).' MB</> | <options=bold>Processes:</> <fg=yellow>'.($progress?->workersStarted() ?? 1).'</>');
             $output->writeln('');
+            ConsoleWriter::footer($output);
         }
 
         return $report->stats['errors'] > 0 ? LintRunFailure::EXIT_FAILURE : 0;
@@ -183,7 +184,7 @@ final class ConsoleLintRunner
     private function writeBanner(OutputInterface $output, ConsoleLintRequest $request, LintSetup $setup, int $jobs): void
     {
         $target = $setup->target;
-        $output->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.$request->version.'</> by Younes ENNAJI');
+        ConsoleWriter::title($output, $request->version);
         $output->writeln('');
 
         $locale = $target->target()->locale;

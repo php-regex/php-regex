@@ -31,8 +31,23 @@ final class ConsoleWriter
         $output->write($document, false, OutputInterface::OUTPUT_RAW | OutputInterface::VERBOSITY_QUIET);
     }
 
+    /**
+     * The title line of a report: the version, and under -v the author.
+     */
+    public static function title(OutputInterface $output, string $version): void
+    {
+        $output->writeln('<fg=cyan;options=bold>PHPRegex</> <fg=yellow>'.$version.'</>'.($output->isVerbose() ? ' by Younes ENNAJI' : ''));
+    }
+
+    /**
+     * The request for a star that ends a report, under -v only.
+     */
     public static function footer(OutputInterface $output): void
     {
+        if (!$output->isVerbose()) {
+            return;
+        }
+
         $output->writeln('  <fg=gray>If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex</>');
         $output->writeln('');
     }

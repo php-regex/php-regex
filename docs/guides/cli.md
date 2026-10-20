@@ -715,7 +715,7 @@ without any configuration.
 
 **Console Output:**
 ```
-PHPRegex 2.0.0-DEV by Younes ENNAJI
+PHPRegex 2.0.0-DEV
 
 Runtime       : PHP 8.4.26, PCRE2 10.49
 Target        : PHP 8.2, PCRE2 10.40 (composer.json require.php)
@@ -733,8 +733,10 @@ Configuration : regex.dist.json
 
   PASS No issues found, 0 optimizations available.
   Time: 0.02s  Memory: 8 MB  Processes: 1
-  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex
 ```
+
+Under `--verbose` the title names the author, and the report ends on a
+request for a GitHub star, as Symfony's and Laravel's `regex:lint -v` end.
 
 **With Issues:**
 

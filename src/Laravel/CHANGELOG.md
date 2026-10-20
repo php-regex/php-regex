@@ -15,6 +15,8 @@ CHANGELOG
    does: the steps and their progress bars on stderr, the banner and the
    report on stdout, and an error that stops the run as one line on stderr,
    `Error: ...`.
+ * The console reports name the author and end on the request for a GitHub
+   star under `-v` only.
  * `locale` in `config/php-regex.php` names the `LC_CTYPE` locale
    `regex:lint` judges patterns under; the `Regex` service judges under the
    running PHP's.

@@ -262,7 +262,9 @@ php artisan regex:transpile '/^[a-z]+$/' -t python
 progress bars and an error that stops the run (`Error: Path not found:
 app/Legacy`) go to stderr, as `regex lint` writes them, so
 `php artisan regex:lint > lint.txt` keeps the report alone. The Symfony bundle and
-the Laravel package run the same lint, and print it the same way.
+the Laravel package run the same lint, and print it the same way. Under
+`-v` the title names the author and the report ends on a request for a
+GitHub star.
 
 Each command exits with 0 when it found nothing wrong, 1 when the patterns or
 the files it judged have a problem, and 2 when an option or the configuration

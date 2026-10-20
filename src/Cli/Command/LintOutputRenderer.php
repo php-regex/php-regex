@@ -31,14 +31,17 @@ final class LintOutputRenderer
 {
     /**
      * @param LintStats $stats
+     * @param bool      $verbose whether the run is verbose, which ends it on the request for a star
      */
-    public function renderSummary(Output $output, array $stats, bool $isEmpty = false): void
+    public function renderSummary(Output $output, array $stats, bool $isEmpty = false, bool $verbose = false): void
     {
         $output->write("\n");
 
         if ($isEmpty) {
             $output->write('  '.$output->badge('PASS', Output::WHITE, Output::BG_GREEN).' '.$output->dim('No regex patterns found.')."\n");
-            $this->showFooter($output);
+            if ($verbose) {
+                $this->showFooter($output);
+            }
 
             return;
         }
@@ -68,17 +71,20 @@ final class LintOutputRenderer
                 ."\n");
         }
 
-        $this->showFooter($output);
+        if ($verbose) {
+            $this->showFooter($output);
+        }
     }
 
     /**
      * @param array<int, string> $configFiles
+     * @param bool               $verbose     whether the run is verbose, which names the author
      */
-    public function renderBanner(Output $output, ProjectTarget $target, int $jobs = 1, array $configFiles = []): string
+    public function renderBanner(Output $output, ProjectTarget $target, int $jobs = 1, array $configFiles = [], bool $verbose = false): string
     {
         $version = Regex::VERSION;
 
-        $banner = $output->color('PHPRegex', Output::CYAN.Output::BOLD).' '.$output->warning($version)." by Younes ENNAJI\n\n";
+        $banner = $output->color('PHPRegex', Output::CYAN.Output::BOLD).' '.$output->warning($version).($verbose ? ' by Younes ENNAJI' : '')."\n\n";
 
         $runtime = PcreRuntimeInfo::fromIni();
         // The running release, normalized the way every other surface spells

@@ -41,10 +41,33 @@ final class ConsoleWriterTest extends TestCase
     #[Test]
     public function test_footer_asks_for_a_star_and_leaves_a_blank_line(): void
     {
-        $output = new BufferedOutput();
+        $output = new BufferedOutput(OutputInterface::VERBOSITY_VERBOSE);
 
         ConsoleWriter::footer($output);
 
         $this->assertSame("  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $output->fetch());
+    }
+
+    #[Test]
+    public function test_footer_is_for_verbose_runs_only(): void
+    {
+        $output = new BufferedOutput();
+
+        ConsoleWriter::footer($output);
+
+        $this->assertSame('', $output->fetch());
+    }
+
+    #[Test]
+    public function test_title_names_the_author_under_verbose_only(): void
+    {
+        $plain = new BufferedOutput();
+        $verbose = new BufferedOutput(OutputInterface::VERBOSITY_VERBOSE);
+
+        ConsoleWriter::title($plain, '9.9.9');
+        ConsoleWriter::title($verbose, '9.9.9');
+
+        $this->assertSame("PHPRegex 9.9.9\n", $plain->fetch());
+        $this->assertSame("PHPRegex 9.9.9 by Younes ENNAJI\n", $verbose->fetch());
     }
 }

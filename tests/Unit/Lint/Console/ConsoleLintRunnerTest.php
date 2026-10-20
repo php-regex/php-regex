@@ -84,7 +84,7 @@ final class ConsoleLintRunnerTest extends TestCase
 
         $this->assertSame(1, $status);
         $standard = $this->standard();
-        $this->assertStringStartsWith("PHPRegex 9.9.9 by Younes ENNAJI\n\nRuntime   : PHP ".\PHP_VERSION."\nTarget    : PHP ", $standard);
+        $this->assertStringStartsWith("PHPRegex 9.9.9\n\nRuntime   : PHP ".\PHP_VERSION."\nTarget    : PHP ", $standard);
         $this->assertStringContainsString("Processes : 1\n", $standard);
         $this->assertStringContainsString('→ /[a-z/', $standard);
         $this->assertStringContainsString('FAIL  1 invalid patterns', $standard);
@@ -155,7 +155,33 @@ final class ConsoleLintRunnerTest extends TestCase
         $status = $this->lint(self::request([]));
 
         $this->assertSame(0, $status);
-        $this->assertStringEndsWith("\n\n   PASS  No regex patterns found.\n\n  If PHPRegex helps, a GitHub star is appreciated: https://github.com/php-regex/php-regex\n\n", $this->standard());
+        $this->assertStringEndsWith("\n\n   PASS  No regex patterns found.\n\n", $this->standard());
+        $this->assertStringNotContainsString('GitHub star', $this->standard());
+    }
+
+    /**
+     * Under -v the banner names the author, and the run ends on the footer,
+     * whatever it found, as `regex lint -v` ends.
+     *
+     * @param list<string> $patterns
+     */
+    #[Test]
+    #[DataProvider('provideVerboseRuns')]
+    public function test_verbose_console_names_the_author_and_ends_on_the_footer(array $patterns, string $before): void
+    {
+        $this->lint(self::request($patterns), OutputInterface::VERBOSITY_VERBOSE);
+
+        $this->assertStringStartsWith("PHPRegex 9.9.9 by Younes ENNAJI\n\n", $this->standard());
+        $this->assertMatchesRegularExpression('/'.$before.'\n\n  If PHPRegex helps, a GitHub star is appreciated: https:\/\/github\.com\/php-regex\/php-regex\n\n$/', $this->standard());
+    }
+
+    /**
+     * @return iterable<string, array{patterns: list<string>, before: string}>
+     */
+    public static function provideVerboseRuns(): iterable
+    {
+        yield 'no pattern' => ['patterns' => [], 'before' => 'No regex patterns found\.'];
+        yield 'a report' => ['patterns' => ['/[a-z/'], 'before' => 'Processes: 1'];
     }
 
     #[Test]

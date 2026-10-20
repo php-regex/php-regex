@@ -168,6 +168,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $exclude = $arguments->exclude;
         $minSavings = (int) $arguments->minSavings;
         $verbosity = $arguments->verbosity;
+        // The author and the request for a star are for -v, in every front
+        // end alike.
+        $verbose = \in_array($verbosity, [OutputConfiguration::VERBOSITY_VERBOSE, OutputConfiguration::VERBOSITY_DEBUG], true);
         $checkRedos = $arguments->checkRedos;
         $checkValidation = $arguments->checkValidation;
         $checkOptimizations = $arguments->checkOptimizations;
@@ -238,7 +241,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         $runner = new LintRunner(new LintService($analysis, $sources));
 
         if ('console' === $format && OutputConfiguration::VERBOSITY_QUIET !== $verbosity && $input->globalOptions->visuals) {
-            $output->write($this->outputRenderer->renderBanner($output, $target, $jobs, $lintConfigFiles));
+            $output->write($this->outputRenderer->renderBanner($output, $target, $jobs, $lintConfigFiles, $verbose));
         }
 
         $startTime = (float) microtime(true);
@@ -284,7 +287,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 return $this->failToWriteBaseline($output, $json, (string) $arguments->generateBaseline);
             }
             if ('console' === $format) {
-                $this->outputRenderer->renderSummary($output, $emptyReport->stats, true);
+                $this->outputRenderer->renderSummary($output, $emptyReport->stats, true, $verbose);
             } else {
                 $this->writeReport($output, $format, $formatter->format($emptyReport));
             }
@@ -296,7 +299,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
         // counted in the stats, and named under --verbose.
         // A file read twice is named once, as results name it.
         $parserFallbacks = LintStatsCounter::parserFallbacks($patterns);
-        if ([] !== $parserFallbacks && \in_array($verbosity, [OutputConfiguration::VERBOSITY_VERBOSE, OutputConfiguration::VERBOSITY_DEBUG], true) && !$output->isQuiet()) {
+        if ([] !== $parserFallbacks && $verbose && !$output->isQuiet()) {
             $writeLine = 'console' === $format ? $output->write(...) : $output->writeError(...);
             $workingDirectory = getcwd();
             foreach ($parserFallbacks as $fallback) {
@@ -342,7 +345,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             $processesStr = (string) ($progress?->processes() ?? 1);
             // No cache line: the binary keeps no cache between runs.
             $output->write('  '.$output->dim('Time: ').$output->warning($timeStr).'  '.$output->dim('Memory: ').$output->warning($memoryStr).'  '.$output->dim('Processes: ').$output->warning($processesStr)."\n");
-            $output->write($formatter->formatFooter());
+            if ($verbose) {
+                $output->write($formatter->formatFooter());
+            }
         }
 
         if (!$this->writeRequestedFiles($output, $arguments, $format, $formatter, $report)) {

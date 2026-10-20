@@ -297,7 +297,9 @@ bin/console regex:analyze --redos-threshold=medium
 progress bars and an error that stops the run (`Error: Path not found:
 src/Legacy`) go to stderr, as `regex lint` writes them, so
 `bin/console regex:lint > lint.txt` keeps the report alone. The Symfony bundle and
-the Laravel package run the same lint, and print it the same way.
+the Laravel package run the same lint, and print it the same way. Under
+`-v` the title names the author and the report ends on a request for a
+GitHub star, as in `regex:routes`, `regex:security` and `regex:analyze`.
 
 Every command is listed by `bin/console list`. They take the options of the
 same command in the CLI and in the Laravel package, under the same names and
